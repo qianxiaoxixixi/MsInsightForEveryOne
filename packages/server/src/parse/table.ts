@@ -229,4 +229,19 @@ export class Table {
             });
         });
     }
+
+    async queryThreadTraceList(trackId: number, startTime: number, endTime: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.db.all(`SELECT timestamp, duration, name, depth, track_id FROM slice 
+            WHERE track_id = ${trackId} 
+            AND timestamp >= ${startTime} AND timestamp <= ${endTime} ORDER BY timestamp`,
+            async (err, rows: any) => {
+                if (err) {
+                    console.log('track_id error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
+        });
+    }
 }
