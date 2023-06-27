@@ -1,0 +1,112 @@
+import fs from 'fs';
+import { SHA256 } from 'crypto-js';
+import { Table } from './table';
+
+export class Parser {
+    private counter = 0;
+    private ignoreCount = 0;
+    private readonly fd: number;
+    private readonly table: Table;
+
+    constructor(filePath: string, dbPath: string) {
+        this.table = new Table(dbPath);
+        this.fd = fs.openSync(filePath, 'r');
+    }
+
+    public async parse(readPosition: number, readSize: number): Promise<void> {
+        const buf = Buffer.alloc(readSize);
+        fs.readSync(this.fd, buf, 0, readSize, readPosition);
+        const str = buf.toString('utf-8');
+        const events = JSON.parse('[' + str + ']');
+        for (const event of events) {
+            await this.handler(event);
+        }
+    }
+
+    // 缓存入库
+    public async parseEnd(): Promise<void> {
+        fs.closeSync(this.fd);
+        await this.table.commitData();
+        await this.table.close();
+    }
+
+    public getCount(): number {
+        return this.counter;
+    }
+
+    public getIgnoreCount(): number {
+        return this.ignoreCount;
+    }
+
+    async handler(data: any): Promise<void> {
+        ++this.counter;
+        if (!('ph' in data)) {
+            ++this.ignoreCount;
+            return;
+        }
+        switch (data.ph) {
+            case 'M':
+                this.metadataEventsHandler(data);
+                break;
+            case 'X':
+                await this.CompleteEventsHandler(data);
+                break;
+            case 's':
+                this.flowEventsHandler(data);
+                break;
+            case 'f':
+                this.flowEventsHandler(data);
+                break;
+            default:
+                console.log('Unknown data type. ', data.ph);
+                ++this.ignoreCount;
+        }
+    }
+
+    metadataEventsHandler(data: { name: string; tid: number; pid: string; args: any }): void {
+        switch (data.name) {
+            case 'process_name':
+                this.table.updateProcessName(data.pid, data.args.name);
+                break;
+            case 'thread_name':
+                this.table.updateThreadName(this.getTrackId(data.tid, data.pid), data.tid, data.pid, data.args.name);
+                break;
+            case 'process_labels':
+                this.table.updateProcessLabel(data.pid, data.args.labels);
+                break;
+            case 'process_sort_index':
+                this.table.updateProcessSortIndex(data.pid, data.args.sort_index);
+                break;
+            case 'thread_sort_index':
+                this.table.updateThreadSortIndex(this.getTrackId(data.tid, data.pid), data.args.sort_index);
+                break;
+            default:
+                ++this.ignoreCount;
+        }
+    }
+
+    async CompleteEventsHandler(data: any): Promise<void> {
+        data.track_id = this.getTrackId(data.tid, data.pid);
+        data.ts = data.ts * 1000; // to ns
+        data.dur = data.dur * 1000; // to ns
+        await this.table.insertSlice(data);
+    }
+
+    flowEventsHandler(data: any): void {
+        data.track_id = this.getTrackId(data.tid, data.pid);
+        data.ts = data.ts * 1000; // to ns
+        if (data.ph === 's') {
+            this.table.updateFlowStartPosition(data);
+        } else if (data.ph === 'f') {
+            this.table.updateFlowEndPosition(data);
+        } else {
+            console.log('Unknown flow events.', data);
+        }
+    }
+
+    getTrackId(tid: number, pid: string): number {
+        const str = pid + tid.toString();
+        const hashDigest = SHA256(str);
+        return hashDigest.words[0];
+    }
+}
