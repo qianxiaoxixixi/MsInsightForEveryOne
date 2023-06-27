@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
-import { parseCardID } from './parse/metadata';
+import { parseCardID } from './utils/common_util';
 import { parse } from './parse/main';
 
 const execAsync = promisify(exec);
