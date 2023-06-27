@@ -17,7 +17,7 @@ export const threadTracesHandler = async (req: ThreadTracesRequest, client?: Cli
     // TO_DO
     // const traceId = getTrackId(req.threadId, String(req.processId));
     const traceId = -692972522;
-    const rawThreadTraces = await database.queryThreadTraceList(traceId, req.startTime, req.endTIme) as RawThreadTrace[];
+    const rawThreadTraces = await database.queryThreadTraceList(traceId, req.startTime, req.endTime) as RawThreadTrace[];
     const threadTraceList = rawThreadTraces.map(
         item => {
             return {
@@ -48,7 +48,7 @@ export type ThreadTracesRequest = {
     processId: number;
     threadId: number;
     startTime: number;
-    endTIme: number;
+    endTime: number;
 };
 
 export type ThreadTrace = {
