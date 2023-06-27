@@ -23,7 +23,7 @@ export const threadTracesHandler = async (req: ThreadTracesRequest, client?: Cli
  */
 export type ThreadTracesRequest = {
     deviceId: number;
-    cardId: string;
+    cardId: number;
     processId: number;
     threadId: number;
     startTime: number;
