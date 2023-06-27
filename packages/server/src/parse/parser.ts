@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { SHA256 } from 'crypto-js';
 import { Table } from './table';
+import { getTrackId } from '../utils/common_util';
 
 export class Parser {
     private counter = 0;
@@ -69,7 +69,7 @@ export class Parser {
                 this.table.updateProcessName(data.pid, data.args.name);
                 break;
             case 'thread_name':
-                this.table.updateThreadName(this.getTrackId(data.tid, data.pid), data.tid, data.pid, data.args.name);
+                this.table.updateThreadName(getTrackId(data.tid, data.pid), data.tid, data.pid, data.args.name);
                 break;
             case 'process_labels':
                 this.table.updateProcessLabel(data.pid, data.args.labels);
@@ -78,7 +78,7 @@ export class Parser {
                 this.table.updateProcessSortIndex(data.pid, data.args.sort_index);
                 break;
             case 'thread_sort_index':
-                this.table.updateThreadSortIndex(this.getTrackId(data.tid, data.pid), data.args.sort_index);
+                this.table.updateThreadSortIndex(getTrackId(data.tid, data.pid), data.args.sort_index);
                 break;
             default:
                 ++this.ignoreCount;
@@ -86,14 +86,14 @@ export class Parser {
     }
 
     async CompleteEventsHandler(data: any): Promise<void> {
-        data.track_id = this.getTrackId(data.tid, data.pid);
+        data.track_id = getTrackId(data.tid, data.pid);
         data.ts = data.ts * 1000; // to ns
         data.dur = data.dur * 1000; // to ns
         await this.table.insertSlice(data);
     }
 
     flowEventsHandler(data: any): void {
-        data.track_id = this.getTrackId(data.tid, data.pid);
+        data.track_id = getTrackId(data.tid, data.pid);
         data.ts = data.ts * 1000; // to ns
         if (data.ph === 's') {
             this.table.updateFlowStartPosition(data);
@@ -102,11 +102,5 @@ export class Parser {
         } else {
             console.log('Unknown flow events.', data);
         }
-    }
-
-    getTrackId(tid: number, pid: string): number {
-        const str = pid + tid.toString();
-        const hashDigest = SHA256(str);
-        return hashDigest.words[0];
     }
 }
