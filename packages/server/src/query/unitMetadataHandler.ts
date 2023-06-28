@@ -15,13 +15,13 @@ export const unitMetadataHandler = async (req: { rankId: number }): Promise<Reco
  *
  * @param rankId 即cardId
  */
-async function queryUnitsMetadata(rankId: number): Promise<any> {
+export async function queryUnitsMetadata(rankId: number): Promise<any> {
     const table = tableMap.get(rankId) as Table;
     const rows = await table.selectUnitsMetadata() as metadataDto[];
     const insightMetaData: InsightMetaData<any> = { type: 'card', metadata: { cardId: rankId } };
     if (rows.length === 0) {
         console.error('not find metadata, rank id: ', rankId);
-        return insightMetaData;
+        return { insightMetaData, extremumTimestamp: { maxTimestamp: 0, minTimestamp: 0 } };
     }
     let tmpPid = '';
     insightMetaData.children = [];
