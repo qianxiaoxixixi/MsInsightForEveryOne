@@ -689,3 +689,12 @@ export type CardMetaData = {
     cardId: number;
     cardName: string;
 };
+
+export type ThreadTrace = {
+    name: string;
+    duration: number;
+    startTime: number;
+    endTime: number;
+    depth: number;
+    threadId: number;
+};
