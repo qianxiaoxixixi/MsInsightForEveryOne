@@ -1,10 +1,6 @@
-import { Table } from './database/table';
+import { tableMap } from './database/tableManager';
 import { Client } from './types';
-// TO_DO
-// import { getTrackId } from './utils/common_util';
-
-// TO_DO should be delete
-const database = new Table('./trace_view.db');
+import { getTrackId } from './utils/common_util';
 
 /**
  * threadTraces handler
@@ -14,27 +10,31 @@ const database = new Table('./trace_view.db');
  * @returns threadThraces
  */
 export const threadTracesHandler = async (req: ThreadTracesRequest, client?: Client): Promise<Record<string, unknown>> => {
-    // TO_DO
-    // const traceId = getTrackId(req.threadId, String(req.processId));
-    const traceId = -692972522;
-    const rawThreadTraces = await database.queryThreadTraceList(traceId, req.startTime, req.endTime) as RawThreadTrace[];
-    const threadTraceList = rawThreadTraces.map(
-        item => {
-            return {
-                name: item.name,
-                duration: item.duration,
-                startTime: item.timestamp,
-                endTime: item.timestamp + item.duration,
-                depth: item.depth,
-                threadId: req.threadId,
-            };
-        });
+    const database = tableMap.get(req.cardId);
+    const traceId = getTrackId(req.threadId, String(req.processId));
+    const threadTraceList = await database?.queryThreadTraceList(req.threadId, traceId, req.startTime, req.endTime);
     return {
         data: threadTraceList,
     };
 };
 
-type RawThreadTrace = {
+/**
+ * chart threadTraces req
+ */
+export type ThreadTracesRequest = {
+    deviceId: number;
+    cardId: string;
+    processId: number;
+    threadId: number;
+    startTime: number;
+    endTime: number;
+};
+
+/**
+ * database single data type
+ */
+export type RowThreadTrace = {
+    id: number;
     timestamp: number;
     duration: number;
     name: string;
@@ -42,15 +42,9 @@ type RawThreadTrace = {
     trace_id: number;
 };
 
-export type ThreadTracesRequest = {
-    deviceId: number;
-    cardId: number;
-    processId: number;
-    threadId: number;
-    startTime: number;
-    endTime: number;
-};
-
+/**
+ * respnose data type
+ */
 export type ThreadTrace = {
     name: string;
     duration: number;
