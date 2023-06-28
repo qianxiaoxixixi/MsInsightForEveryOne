@@ -6,11 +6,11 @@ import { tableMap } from '../database/tableManager';
 import { EndMessage, ParseMessage } from './parser_worker';
 
 const defaultReadSize = 1024 * 1024 * 50;
-const parseTaskCount = new Map<string, number>(); // rankId, task count
-const callbackMap = new Map<string, Function>(); // rankId, callback
+const parseTaskCount = new Map<number, number>(); // rankId, task count
+const callbackMap = new Map<number, Function>(); // rankId, callback
 const threadPool = new ThreadPool('./dist/parse/parser_worker.js', parseFileEnd);
 
-export function parse(filePath: string, rankId: string, callback?: (err: Error | null, rankId: string) => void): void {
+export function parse(filePath: string, rankId: number, callback?: (err: Error | null, rankId: number) => void): void {
     if (tableMap.has(rankId)) {
         if (callback) {
             callback(new Error('repeat rank Id'), rankId);
@@ -25,13 +25,14 @@ export function parse(filePath: string, rankId: string, callback?: (err: Error |
     table.createTable().then(() => parseFile(filePath, dbPath, rankId));
 }
 
-function parseFile(filePath: string, dbPath: string, rankId: string): void {
+function parseFile(filePath: string, dbPath: string, rankId: number): void {
     const fileSize = fs.statSync(filePath).size;
     let readPosition = 0;
     let taskCount = 0;
     fs.open(filePath, 'rs', (err, fd) => {
         if (err) {
-            console.log(err);
+            parseCallback(err, rankId);
+            return;
         }
         while (readPosition < fileSize) {
             if (readPosition + defaultReadSize >= fileSize) {
@@ -52,10 +53,9 @@ function parseFile(filePath: string, dbPath: string, rankId: string): void {
     });
 }
 
-async function parseFileEnd(message: EndMessage): Promise<string> {
+async function parseFileEnd(message: EndMessage): Promise<void> {
     if (!tableMap.has(message.rankId) || !parseTaskCount.has(message.rankId)) {
         console.log(`can not find rankId, ${message.rankId}`);
-        return '';
     }
     const unfinishedTaskCount = parseTaskCount.get(message.rankId) as number;
     console.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
@@ -66,12 +66,9 @@ async function parseFileEnd(message: EndMessage): Promise<string> {
         await table.updateDepth();
         await table.close();
         console.log(`parse end. rankId:${message.rankId}`);
-        callbackMap.get(message.rankId)?.(null, message.rankId);
-        callbackMap.delete(message.rankId);
-        return message.rankId;
+        parseCallback(null, message.rankId);
     } else {
         parseTaskCount.set(message.rankId, unfinishedTaskCount - 1);
-        return '';
     }
 }
 
@@ -94,6 +91,11 @@ function getReadSize(fd: number, start: number): { readPosition: number; readSiz
     return { readPosition, readSize };
 }
 
-function getDbPath(filePath: string, rankId: string): string {
-    return './' + path.basename(filePath, '.json') + '_' + rankId + '.db';
+function getDbPath(filePath: string, rankId: number): string {
+    return './' + path.basename(filePath, '.json') + '_' + String(rankId) + '.db';
+}
+
+function parseCallback(err: Error | null, rankId: number): void {
+    callbackMap.get(rankId)?.(err, rankId);
+    callbackMap.delete(rankId);
 }
