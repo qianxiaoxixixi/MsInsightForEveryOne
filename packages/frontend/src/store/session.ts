@@ -14,7 +14,7 @@ export class SessionStore {
             availableUnits: [],
             startRecordTime: 123,
             endTimeAll: 456,
-            isNsMode: false,
+            isNsMode: true,
         });
     }
 

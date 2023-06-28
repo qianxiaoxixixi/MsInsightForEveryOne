@@ -4,56 +4,60 @@ import { chart, ChartDesc, InsightUnit, on, unit, UnitHeight } from '../../entit
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import {
-    CardMetaData, InsightMetaData, MetaData, ProcessMetaData, ThreadMetaData,
+    CardMetaData, InsightMetaData, MetaData, ProcessMetaData, ThreadMetaData, ThreadTrace,
 } from '../../entity/data';
 import { colorPalette } from './utils';
+import { getRange } from '../../cache/utils';
 
 const paramsTree = new Map();
 
 export const ThreadUnit = unit<ThreadMetaData>({
-    name: 'Trace',
+    name: 'Thread',
+    tag: 'Thread',
+    pinType: 'move',
     renderInfo: (session: Session, thread: ThreadMetaData) => {
         return `${thread.threadName} ${thread.threadId}`;
     },
     chart: chart({
         type: 'stackStatus',
         height: UnitHeight.STANDARD,
-        mapFunc: async (session: Session, processTraceMetadata: unknown) => {
-            const threadId = (processTraceMetadata as ThreadMetaData).threadId;
-            const threadStateList = {
-                result: true,
-                body: {
-                    threadStateList: [
-                        [
-                            {
-                                name: 'fun1',
-                                startTime: 13487501,
-                                endTime: 39216601,
-                                duration: 25729100,
-                                depth: 0,
-                                tid: 9888,
-                            },
-                            {
-                                name: 'fun2',
-                                startTime: 39216601,
-                                endTime: 64945701,
-                                duration: 25729100,
-                                depth: 2,
-                                tid: 9888,
-                            },
-                        ],
-                    ],
-                },
+        mapFunc: async (session: Session, metaData: unknown) => {
+            const threadMetaData = metaData as ThreadMetaData;
+            const [ startTime, endTime ] = getRange(session);
+            const requestParam = {
+                cardId: threadMetaData.cardId,
+                processId: threadMetaData.processId,
+                threadId: threadMetaData.threadId,
+                startTime: startTime,
+                endTime: endTime,
             };
-            return threadStateList.body.threadStateList.map((it) => it.map((data) => ({
-                startTime: data.startTime,
-                duration: data.duration,
-                name: data.name,
-                type: data.name,
-                color: colorPalette[hashToNumber(data.name, colorPalette.length)],
-                depth: data.depth,
-                threadId,
-            })));
+            try {
+                const request = await window.request('unit/threadTraces', requestParam);
+                const threadTraceList = request.data as ThreadTrace[];
+                const result: ThreadTrace[][] = [];
+                threadTraceList.forEach(it => {
+                    if (result[it.depth] === undefined) {
+                        result[it.depth] = [];
+                    } else {
+                        result[it.depth].push(it);
+                    }
+                });
+                for (let i = 0; i < result.length; i++) {
+                    if (result[i] === undefined) { result[i] = []; }
+                }
+                return result.map((it) => it.map((data) => ({
+                    startTime: data.startTime,
+                    duration: data.duration,
+                    name: data.name,
+                    type: data.name,
+                    color: colorPalette[hashToNumber(data.name, colorPalette.length)],
+                    depth: data.depth,
+                    threadId: data.threadId,
+                })));
+            } catch (e) {
+                console.warn('request threadTrace info failed', e);
+                return [];
+            }
         },
         config: {
             rowHeight: UnitHeight.STANDARD,
