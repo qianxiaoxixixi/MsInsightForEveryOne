@@ -672,7 +672,7 @@ export type InsightMetaData <T extends keyof MetaData> = {
 };
 
 export type ThreadMetaData = {
-    cardId?: string;
+    cardId?: number;
     processId?: string;
     threadId: number;
     threadName: string;
@@ -680,13 +680,13 @@ export type ThreadMetaData = {
 };
 
 export type ProcessMetaData = {
-    cardId?: string;
+    cardId?: number;
     processId: string;
     processName: string;
 };
 
 export type CardMetaData = {
-    cardId: string;
+    cardId: number;
     cardName?: string;
 };
 
