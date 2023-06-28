@@ -1,4 +1,5 @@
 import sqlite, { Statement } from 'sqlite3';
+import { RowThreadTrace, ThreadTrace } from '../trhead.trace.handler';
 
 export class Table {
     private readonly db: sqlite.Database;
@@ -389,18 +390,51 @@ export class Table {
         });
     }
 
-    async queryThreadTraceList(trackId: number, startTime: number, endTime: number): Promise<any> {
+    async queryThreadTraceList(threadId: number, trackId: number, startTime: number, endTime: number): Promise<ThreadTrace[][]> {
         return new Promise((resolve, reject) => {
-            this.db.all(`SELECT timestamp, duration, name, depth, track_id FROM slice
-            WHERE track_id = ${trackId}
-            AND timestamp >= ${startTime} AND timestamp <= ${endTime} ORDER BY timestamp`,
+            const rowDatas: ThreadTrace[][] = [];
+            this.db.all(`SELECT * FROM slice 
+            WHERE track_id = ${trackId} 
+            AND timestamp >= ${startTime} AND timestamp <= ${endTime} 
+            GROUP BY depth, id;`,
             async (err, rows: any) => {
                 if (err) {
                     console.log('track_id error:', err);
                     reject(err);
                 }
-                resolve(rows);
+                processThreadTracesRowData(threadId, rows, rowDatas);
+                resolve(rowDatas);
             });
         });
+    }
+}
+
+/**
+ * process threadTraces rowData
+ *
+ * @param threadId threadId
+ * @param rows rows
+ * @param rowDatas processed data
+ */
+function processThreadTracesRowData(threadId: number, rows: any, rowDatas: ThreadTrace[][]): void {
+    rows.forEach((it: RowThreadTrace) => {
+        if (rowDatas[it.depth] === undefined) {
+            rowDatas[it.depth] = [];
+        } else {
+            const threadTrace = {
+                name: it.name,
+                duration: it.duration,
+                startTime: it.timestamp,
+                endTime: it.timestamp + it.duration,
+                depth: it.depth,
+                threadId,
+            };
+            rowDatas[it.depth].push(threadTrace);
+        }
+    });
+    for (let i = 0; i < rowDatas.length; i++) {
+        if (rowDatas[i] === undefined) {
+            rowDatas[i] = [];
+        }
     }
 }
