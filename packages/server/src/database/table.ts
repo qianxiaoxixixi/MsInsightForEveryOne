@@ -40,8 +40,8 @@ export class Table {
 
     initStat(): void {
         if (this.sliceStat === undefined) {
-            const placeholders: string = '(?,?,?,?,?),'.repeat(this.maxCachesSize - 1).concat('(?,?,?,?,?)');
-            const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, args) VALUES ${placeholders}`;
+            const placeholders: string = '(?,?,?,?,?,?),'.repeat(this.maxCachesSize - 1).concat('(?,?,?,?,?,?)');
+            const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, cat, args) VALUES ${placeholders}`;
             this.sliceStat = this.db.prepare(sql);
         }
         if (this.flowStat === undefined) {
@@ -55,7 +55,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.serialize(() => {
                 this.db.run(`DROP TABLE IF EXISTS ${this.sliceTable}`)
-                    .run(`CREATE TABLE ${this.sliceTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER, name TEXT, depth INTEGER, track_id INTEGER, args TEXT)`)
+                    .run(`CREATE TABLE ${this.sliceTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER, name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT)`)
                     .run(`DROP TABLE IF EXISTS ${this.threadTable}`)
                     .run(`CREATE TABLE ${this.threadTable} (track_id INTEGER PRIMARY KEY, tid INTEGER, pid TEXT, thread_name TEXT, thread_sort_index INTEGER)`)
                     .run(`DROP TABLE IF EXISTS ${this.processTable}`)
@@ -95,10 +95,10 @@ export class Table {
         });
     }
 
-    async insertSliceList(dataList: Array<{ name: string; ts: number; dur: number; track_id: number; args: any }>): Promise<void> {
+    async insertSliceList(dataList: Array<{ name: string; ts: number; dur: number; track_id: number; cat: string; args: any }>): Promise<void> {
         return new Promise((resolve, reject) => {
             const paramsList: any[] = [];
-            dataList.forEach((data) => { paramsList.push(data.ts, data.dur, data.name, data.track_id, JSON.stringify(data.args)); });
+            dataList.forEach((data) => { paramsList.push(data.ts, data.dur, data.name, data.track_id, data.cat, JSON.stringify(data.args)); });
             if (dataList.length === this.maxCachesSize) {
                 if (this.sliceStat === undefined) {
                     this.initStat();
@@ -115,8 +115,8 @@ export class Table {
                     resolve();
                 });
             } else {
-                const placeholders: string = dataList.map(() => '(?,?,?,?,?)').join(',');
-                const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, args) VALUES ${placeholders}`;
+                const placeholders: string = dataList.map(() => '(?,?,?,?,?,?)').join(',');
+                const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, cat, args) VALUES ${placeholders}`;
                 this.db.run(sql, paramsList, (err) => {
                     if (err !== null) {
                         console.error(err.message);
@@ -132,7 +132,7 @@ export class Table {
         });
     }
 
-    async insertSlice(data: { name: string; ts: number; dur: number; track_id: number; args: any }): Promise<void> {
+    async insertSlice(data: { name: string; ts: number; dur: number; track_id: number; cat: string; args: any }): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sliceDataCaches.push(data);
             if (this.sliceDataCaches.length >= this.maxCachesSize) {
