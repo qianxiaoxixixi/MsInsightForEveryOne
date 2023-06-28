@@ -37,7 +37,7 @@ export class Session {
     caches: Caches | null = null;
 
     // Frontend start time of recording.
-    startRecordTime: TimeStamp | undefined;
+    startRecordTime: TimeStamp;
 
     // Relative to the startTimeOffset, which means that it will start from 0.
     private _endTimeAll: TimeStamp | undefined;
@@ -94,6 +94,7 @@ export class Session {
                 maxStackDepth: 10,
             },
         };
+        this.startRecordTime = 0;
         if (conf) {
             Object.assign(this, conf);
         }

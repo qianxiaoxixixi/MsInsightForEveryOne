@@ -2,8 +2,10 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
-import { parseCardID } from './utils/common_util';
-import { parse } from './parse/main';
+import { parseCardID } from '../utils/common_util';
+import { parse } from '../parse/main';
+import { Client } from '../types';
+import { queryUnitsMetadata } from '../query/unitMetadataHandler';
 
 const execAsync = promisify(exec);
 
@@ -12,8 +14,8 @@ type FolderInfo = {
     cardPath: string;
 };
 
-const folderSet = new Set<string>();
-const script = 'Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog; $result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
+const script = 'Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
+
 async function selectFolders(): Promise<FolderInfo[]> {
     const result: FolderInfo[] = [];
     try {
@@ -32,20 +34,12 @@ async function selectFolders(): Promise<FolderInfo[]> {
                 .map(dirent => dirent.name);
             for (const subfolder of subfolders) {
                 const subfolderPath = path.join(folderPath, subfolder);
-                if (folderSet.has(subfolderPath)) {
-                    continue;
-                }
-                folderSet.add(subfolderPath);
                 result.push({
                     cardName: subfolder,
                     cardPath: subfolderPath,
                 });
             }
         } else if (path.basename(path.dirname(folderPath)) === deviceFolder) {
-            if (folderSet.has(folderPath)) {
-                return result;
-            }
-            folderSet.add(folderPath);
             const cardName = path.basename(folderPath);
             result.push({
                 cardName,
@@ -58,8 +52,16 @@ async function selectFolders(): Promise<FolderInfo[]> {
     return result;
 }
 
-export const importHandler = async (): Promise<Record<string, unknown>> => {
+export const importedRankIdSet = new Set<number>();
+
+type CardInfo = {
+    cardName: string;
+    rankId: number;
+};
+
+export const importHandler = async (req: any, client: Client): Promise<Record<string, unknown>> => {
     const folders = await selectFolders();
+    const result: CardInfo[] = [];
     for (const folder of folders) {
         const files = fs.readdirSync(folder.cardPath, { withFileTypes: true })
             .filter(dirent => dirent.isFile())
@@ -70,17 +72,23 @@ export const importHandler = async (): Promise<Record<string, unknown>> => {
             }
             const filePath = path.join(folder.cardPath, file);
             const rankId = parseCardID(filePath);
-            parse(filePath, rankId, (rankId, err) => {
+            if (importedRankIdSet.has(rankId)) {
+                continue;
+            };
+            importedRankIdSet.add(rankId);
+            result.push({ cardName: folder.cardName, rankId });
+            parse(filePath, rankId, (ranId, err) => {
                 if (err) {
                     // this to send parse file error message
                     console.log(err);
                 }
                 // this to send parse file success message
+                queryUnitsMetadata(rankId).then((queryResult) => {
+                    client?.notify('parse/success', { unit: queryResult.insightMetaData, timeStamp: queryResult.extremumTimestamp });
+                });
                 console.log('send notify rankId parse end. ', rankId);
             });
         }
     }
-    return {
-        result: [folders],
-    };
+    return { result };
 };

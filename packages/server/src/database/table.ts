@@ -294,7 +294,7 @@ export class Table {
                                     pt.process_name as processName,
                                     pt.tid,
                                     pt.thread_name  as threadName,
-                                    max(depth)      as maxDepth
+                                    max(depth) + 1  as maxDepth
                              from (select p.pid,
                                           p.process_name,
                                           p.process_sort_index,

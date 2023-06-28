@@ -38,14 +38,22 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
     </Container>);
 });
 
+type CardInfo = {
+    cardName: string;
+    rankId: number;
+};
 const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatch<React.SetStateAction<boolean>>, session: Session): Promise<void> => {
     setIsImporting(true);
-    const result = await window.request('importCard', {});
-    session.phase = 'download';
-    session.domainRange = { domainStart: 0, domainEnd: 1000000000 };
-    session.endTimeAll = 1000000000;
-    session.units.push(new CardUnit({ cardId: result.result[0].cardPath, cardName: result.result[0].cardName }));
-    processUnits(session.units, 'download');
+    const result = await window.request('import/action', {});
+    runInAction(() => {
+        session.phase = 'download';
+        session.domainRange = { domainStart: 0, domainEnd: 1000000000 };
+        session.endTimeAll = 1000000000;
+        result.result.forEach((item: CardInfo) => {
+            session.units.push(new CardUnit({ cardId: item.rankId, cardName: item.cardName }));
+        });
+        processUnits(session.units, 'download');
+    });
     setIsImporting(false);
 };
 
@@ -53,5 +61,5 @@ const resetSession = async (session: Session): Promise<void> => {
     runInAction(() => {
         location.reload();
     });
-    await window.request('resetWindow', {});
+    await window.request('reset/window', {});
 };
