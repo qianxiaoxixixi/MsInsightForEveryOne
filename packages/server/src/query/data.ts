@@ -28,8 +28,11 @@ export type FlowResponse = {
 
 type FlowDetail = {
     title: string;
-    trackId: number;
+    tid: number;
+    pid: string;
     timestamp: number;
+    depth: number;
+    flowId: string;
 };
 
 export type LocationData = {
@@ -72,9 +75,7 @@ export type EventRequest = {
 
 export type FlowDetailRequest = {
     rankId: number;
-    trackId: number;
-    startTime: number;
-    title: string;
+    flowId: string;
 };
 
 export type SliceDao = {
