@@ -47,8 +47,8 @@ async function requestThreadTraces(requestParam: Record<string, unknown>): Promi
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         const param = requestParam as ThreadTraceRequest;
-        param.startTime = session?.startRecordTime ?? param.startTime;
-        param.endTime = Math.max(((session?.startRecordTime ?? 0) + (session?.endTimeAll ?? 0)), param.endTime);
+        param.startTime = 0;
+        param.endTime = session?.endTimeAll ?? 0;
         const request = await window.request('unit/threadTraces', requestParam);
         return request.data as ThreadTrace[][];
     } catch (e) {

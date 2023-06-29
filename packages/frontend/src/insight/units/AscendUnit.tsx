@@ -12,7 +12,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'move',
     renderInfo: (session: Session, thread: ThreadMetaData) => {
-        return `${thread.threadName} ${thread.threadId}`;
+        return `${thread.threadName}`;
     },
     chart: chart({
         type: 'stackStatus',
