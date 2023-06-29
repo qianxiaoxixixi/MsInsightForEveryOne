@@ -1,6 +1,7 @@
-import { tableMap } from './database/tableManager';
-import { Client } from './types';
-import { getTrackId } from './utils/common_util';
+import { tableMap } from '../database/tableManager';
+import { extremumTimestamp } from '../handlers/import';
+import { Client } from '../types';
+import { getTrackId } from '../utils/common_util';
 
 /**
  * threadTraces handler
@@ -12,7 +13,9 @@ import { getTrackId } from './utils/common_util';
 export const threadTracesHandler = async (req: ThreadTracesRequest, client?: Client): Promise<Record<string, unknown>> => {
     const database = tableMap.get(req.cardId);
     const traceId = getTrackId(req.threadId, String(req.processId));
-    const threadTraceList = await database?.queryThreadTraceList(req.threadId, traceId, req.startTime, req.endTime);
+    const startTime = req.startTime + extremumTimestamp.minTimestamp;
+    const endTime = req.endTime + extremumTimestamp.minTimestamp;
+    const threadTraceList = await database?.queryThreadTraceList(req.threadId, traceId, startTime, endTime);
     return {
         data: threadTraceList,
     };
