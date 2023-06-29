@@ -1,6 +1,6 @@
 import sqlite, { Statement } from 'sqlite3';
-import { extremumTimestamp } from '../handlers/import';
 import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
+import { Client } from '../types';
 
 export class Table {
     private readonly db: sqlite.Database;
@@ -16,6 +16,7 @@ export class Table {
     count = 0;
     private sliceStat: Statement | undefined;
     private flowStat: Statement | undefined;
+    private readonly _dbPath: string;
 
     constructor(dbPath: string) {
         this.db = new sqlite.Database(dbPath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE | sqlite.OPEN_SHAREDCACHE, (err) => {
@@ -24,6 +25,7 @@ export class Table {
             }
             console.log('Connect to database.');
         });
+        this._dbPath = dbPath;
     }
 
     async setConfig(): Promise<void> {
@@ -196,6 +198,10 @@ export class Table {
                 console.error(err.message);
             }
         });
+    }
+
+    get dbPath(): string {
+        return this._dbPath;
     }
 
     async insertFlowList(dataList: Array<{ name: string; cat: string; id: string; track_id: number; ts: number; ph: string }>): Promise<void> {
@@ -435,10 +441,10 @@ export class Table {
         });
     }
 
-    async queryThreadTraceList(threadId: number, trackId: number, startTime: number, endTime: number): Promise<ThreadTrace[][]> {
+    async queryThreadTraceList(threadId: number, trackId: number, startTime: number, endTime: number, client: Client): Promise<ThreadTrace[][]> {
         return new Promise((resolve, reject) => {
             const rowDatas: ThreadTrace[][] = [];
-            this.db.all(`SELECT id, timestamp - ${extremumTimestamp.minTimestamp}, duration, name, depth, track_id
+            this.db.all(`SELECT id, timestamp - ${client.shadowSession.extremumTimestamp.minTimestamp}, duration, name, depth, track_id
             FROM ${this.sliceTable}
             WHERE track_id = ${trackId}
             AND timestamp >= ${startTime} AND timestamp <= ${endTime}

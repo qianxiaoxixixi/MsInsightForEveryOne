@@ -1,5 +1,26 @@
+import { ExtremumTimestamp } from './query/data';
+
 export class ShadowSession {
     private readonly placeholder = {};
+
+    private _extremumTimestamp: ExtremumTimestamp = {
+        minTimestamp: Number.MAX_VALUE,
+        maxTimestamp: Number.MIN_VALUE,
+    };
+
+    private readonly _importedRankIdSet = new Set<number>();
+
+    get extremumTimestamp(): ExtremumTimestamp {
+        return this._extremumTimestamp;
+    }
+
+    set extremumTimestamp(value: ExtremumTimestamp) {
+        this._extremumTimestamp = value;
+    }
+
+    get importedRankIdSet(): Set<number> {
+        return this._importedRankIdSet;
+    }
 };
 
 export interface Client {

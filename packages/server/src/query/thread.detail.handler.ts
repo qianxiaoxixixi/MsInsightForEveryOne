@@ -15,18 +15,18 @@ import { InsightError } from '../utils/error';
 import { getTrackId } from '../utils/common_util';
 import { tableMap } from '../database/tableManager';
 import { Table } from '../database/table';
-import { extremumTimestamp } from '../handlers/import';
+import { Client } from '../types';
 
 const sliceTable = 'slice';
 const flowTable = 'flow';
 const threadTable = 'thread';
 
-export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<ThreadDetailResponse> => {
+export const threadInfoHandler = async (request: ThreadDetailRequest, client: Client): Promise<ThreadDetailResponse> => {
     const table = tableMap.get(request.rankId) as Table;
     const depth = request.depth;
     const pid = request.pid;
     const tid = request.tid;
-    const startTime = request.startTime + extremumTimestamp.minTimestamp;
+    const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const trackId = getTrackId(tid, pid);
     const param = [ depth, trackId, startTime ];
     const sql: string = `SELECT * FROM ${sliceTable}
@@ -60,12 +60,12 @@ export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<T
     return threadResponse;
 };
 
-export const threadsInfoHandler = async (request: ThreadsRequest): Promise<ThreadsResponse> => {
+export const threadsInfoHandler = async (request: ThreadsRequest, client: Client): Promise<ThreadsResponse> => {
     const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
-    const startTime = request.startTime + extremumTimestamp.minTimestamp;
-    const endTime = request.endTime + extremumTimestamp.minTimestamp;
+    const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
+    const endTime = request.endTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const trackId = getTrackId(tid, pid);
     const param = [ trackId, startTime, endTime ];
     const selfTimeKeyValue: Record<string, number> = {};
@@ -126,12 +126,12 @@ function reduceThread(rows: SliceDao[], selfTimeKeyValue: {[key: string]: any}):
     }, tmp);
 }
 
-export const flowNameHandler = async (request: EventRequest): Promise<FlowResponse> => {
+export const flowNameHandler = async (request: EventRequest, client: Client): Promise<FlowResponse> => {
     const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
     const trackId = getTrackId(tid, pid);
-    const startTime = request.startTime + extremumTimestamp.minTimestamp;
+    const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const response: FlowResponse = { flowDetail: [] };
     const param = [ trackId, startTime ];
     const sql: string = `SELECT * FROM ${flowTable}

@@ -16,7 +16,7 @@ export const parseSuccessHandler = (data: any): void => {
                 recursiveExpandUnit(data.unit.children ?? [], unit);
             }
         });
-        session.startRecordTime = data.timeStamp.minTimestamp;
-        session.endTimeAll = data.timeStamp.maxTimestamp - data.timeStamp.minTimestamp;
+        session.startRecordTime = 0;
+        session.endTimeAll = data.maxTimeStamp;
     });
 };
