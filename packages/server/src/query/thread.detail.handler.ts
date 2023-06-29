@@ -132,29 +132,15 @@ export const flowNameHandler = async (request: EventRequest, client: Client): Pr
     const tid = request.tid;
     const trackId = getTrackId(tid, pid);
     const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
+    const flowSql: string = `SELECT * FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ?`;
+    const flowParam = [ startTime, trackId ];
+    const flowRows = await table.selectData(flowSql, flowParam) as FlowDao[];
+    const type = flowRows[0].type;
     const response: FlowResponse = { flowDetail: [] };
-    const param = [ trackId, startTime ];
-    const sql: string = `SELECT * FROM ${flowTable}
-                            WHERE TRACK_ID = ? AND TIMESTAMP = ?`;
-    const result = await table.selectData(sql, param);
-    const rows = result as FlowDao[];
-    rows.forEach(row => {
-        response.flowDetail.push({ title: row.name, trackId: row.track_id, timestamp: row.timestamp });
-    });
-    return response;
-};
-
-export const flowDetailHandler = async (request: FlowDetailRequest): Promise<FlowDetailResponse> => {
-    const table = tableMap.get(request.rankId) as Table;
-    const trackId = request.trackId;
-    const startTime = request.startTime;
-    const title = request.title;
-    const flowSql: string = `SELECT * FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?`;
-    const flowParam = [ startTime, trackId, title ];
-    const flowResult = await table.selectData(flowSql, flowParam) as FlowDao[];
-    const type = flowResult[0].type;
-    const toParam = [ startTime, trackId, title, type, startTime, trackId, title, type ];
-    const toSql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID IN
+    for (const row of flowRows) {
+        const title = row.name;
+        const toParam = [ startTime, trackId, title, type, startTime, trackId, title, type ];
+        const toSql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID IN
                         (SELECT TRACK_ID FROM ${flowTable}
                             WHERE FLOW_ID IN
                                 (SELECT FLOW_ID FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?)
@@ -163,16 +149,48 @@ export const flowDetailHandler = async (request: FlowDetailRequest): Promise<Flo
                             (SELECT TIMESTAMP FROM ${flowTable} WHERE FLOW_ID IN
                                 (SELECT FLOW_ID FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?)
                                 AND TYPE <> ?)`;
-    const toSliceDetail = await table.selectData(toSql, toParam) as SliceDao[];
-    const toLocation = await getLocationDataByTimeTrackId(table,
-        [ toSliceDetail[0].timestamp, toSliceDetail[0].track_id ]);
-    const fromLocation = await getLocationDataByTimeTrackId(table, [ startTime, trackId ]);
+        const toSliceDetail = await table.selectData(toSql, toParam) as SliceDao[];
+        const location =
+            await getLocationDataByTimeTrackId(table, [ toSliceDetail[0].timestamp, toSliceDetail[0].track_id ]);
+        response.flowDetail.push({
+            title,
+            tid: location[0].tid,
+            pid: location[0].pid,
+            timestamp: toSliceDetail[0].timestamp,
+            depth: toSliceDetail[0].depth,
+            flowId: row.flow_id,
+        });
+    }
+
+    return response;
+};
+
+export const flowDetailHandler = async (request: FlowDetailRequest, client: Client): Promise<FlowDetailResponse> => {
+    const table = tableMap.get(request.rankId) as Table;
+    const flowId = request.flowId;
+    const sql: string = `SELECT * FROM ${flowTable} WHERE FLOW_ID = ?`;
+    const param = [flowId];
+    const rows = await table.selectData(sql, param) as FlowDao[];
+    let fromLocation = {} as LocationData[];
+    let toLocation = {} as LocationData[];
+    for (const row of rows) {
+        const location = await getLocationDataByTimeTrackId(table, [ row.timestamp, row.track_id ]);
+        location.forEach(row => {
+            row.timestamp -= client.shadowSession.extremumTimestamp.minTimestamp;
+        });
+        if (row.type === 's') {
+            fromLocation = location;
+        }
+        if (row.type === 'f') {
+            toLocation = location;
+        }
+    }
     return {
-        id: flowResult[0].flow_id,
-        title: flowResult[0].name,
-        cat: flowResult[0].cat,
-        from: type === 's' ? fromLocation[0] : toLocation[0],
-        to: type === 's' ? toLocation[0] : fromLocation[0],
+        title: rows[0].name,
+        cat: rows[0].cat,
+        id: rows[0].flow_id,
+        from: fromLocation[0],
+        to: toLocation[0],
     };
 };
 
