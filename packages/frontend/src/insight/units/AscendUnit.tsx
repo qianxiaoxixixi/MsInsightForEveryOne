@@ -6,7 +6,6 @@ import { chart, on, singleData, TriggerEvent, unit, UnitHeight } from '../../ent
 import {
     CardMetaData, ProcessMetaData, ThreadMetaData, ThreadTrace, AscendSliceDetail,
 } from '../../entity/data';
-import { simpleCache } from '../../cache/simplecache';
 import { createStackStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import React from 'react';
@@ -113,7 +112,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             };
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
-                const request = await simpleCache.tryFetchFromCache('unit/threadTraces', requestKey, requestParam);
+                const request = await session.simpleCache.tryFetchFromCache('unit/threadTraces', requestKey, requestParam);
                 if (request === undefined) {
                     return [];
                 }
@@ -154,6 +153,9 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 session.selectedData = data;
             });
         },
+        renderTooltip: (data) => new Map([
+            [ 'Name', data.name ],
+        ]),
         config: {
             rowHeight: UnitHeight.STANDARD,
         },

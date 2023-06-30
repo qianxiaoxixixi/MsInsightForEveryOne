@@ -2,7 +2,6 @@ import { store } from '../store';
 import { CardMetaData } from '../entity/data';
 import { runInAction } from 'mobx';
 import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
-import { simpleCache } from '../cache/simplecache';
 
 export const parseSuccessHandler = (data: any): void => {
     const { sessionStore } = store;
@@ -20,7 +19,7 @@ export const parseSuccessHandler = (data: any): void => {
         session.startRecordTime = 0;
         session.endTimeAll = data.maxTimeStamp;
         if (data.startTimeUpdated === true) {
-            simpleCache.clear();
-        };
+            session.simpleCache.clear();
+        }
     });
 };
