@@ -70,5 +70,3 @@ function sliceArr(params: Record<string, unknown>, data: Map<string, any>, param
         return subArr.slice(startIndex, endIndex + 1);
     });
 }
-
-export const simpleCache = new SimpleCache();
