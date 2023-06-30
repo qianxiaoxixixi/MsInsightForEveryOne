@@ -41,7 +41,7 @@ public class ExecutableUtils {
      */
     private static final String DIC_SERVER_PATH_WINDOWS = "frontend/static/profiler-server.exe";
 
-    private static final String INSIGHT_PATH = "/ascnend-insight";;
+    private static final String INSIGHT_PATH = "/ascnend-insight";
 
     /**
      * get server install path
@@ -108,7 +108,7 @@ public class ExecutableUtils {
     public static String ext(String windowsExtension, String macExtension) {
         if (SystemInfo.isWindows) {
             return windowsExtension;
-        } else if (SystemInfo.isMac) {
+        } else if (SystemInfo.isLinux) {
             return macExtension;
         } else {
             return "";

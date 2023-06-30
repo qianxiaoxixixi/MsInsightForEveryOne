@@ -153,10 +153,10 @@ clean {
 
 task copyExeToSandbox() {
     doLast {
-        copy {
-            from "${rootDir}/profiler/dist"
-            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
-        }
+//        copy {
+//            from "${rootDir}/profiler/dist"
+//            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
+//        }
         copy {
             from "${rootDir}/profiler/server"
             into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/"
@@ -164,8 +164,6 @@ task copyExeToSandbox() {
     }
 }
 
-//clean.dependsOn(copyExeToSandbox)
-//prepareSandbox.finalizedBy clean
 prepareSandbox.finalizedBy copyExeToSandbox
 compileJava.dependsOn(setLogProperties)
 buildPlugin.finalizedBy(copyZipToRootBuild)
