@@ -22,6 +22,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
@@ -282,9 +283,19 @@ public class InsightWindowFactory implements ToolWindowFactory {
         }
         String pluginsPath = PathManager.getPluginsPath() + "\\ascnend-insight\\tools";
         List<String> processArgs = new ArrayList<>();
-        processArgs.add(CmdConstants.WINDOWS_CMD);
-        processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
-        processArgs.add(CmdConstants.DIC_SERVER);
+        if (SystemInfo.isWindows) {
+            processArgs.add(CmdConstants.WINDOWS_CMD);
+            processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
+            processArgs.add(CmdConstants.DIC_SERVER);
+        } else if (SystemInfo.isLinux) {
+            processArgs.add("chmod");
+            processArgs.add("+x");
+            processArgs.add(CmdConstants.DIC_SERVER);
+            processArgs.add("&&");
+            processArgs.add("./" + CmdConstants.DIC_SERVER);
+        } else {
+            LOGGER.info("start dicServer error, system not supported");
+        }
         Optional<Process> process = ProcessUtils.execute(processArgs, pluginsPath);
         return process.isPresent();
     }
