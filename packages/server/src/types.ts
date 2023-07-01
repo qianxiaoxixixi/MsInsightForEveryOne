@@ -8,7 +8,7 @@ export class ShadowSession {
         maxTimestamp: -Number.MAX_VALUE,
     };
 
-    private readonly _importedRankIdSet = new Set<number>();
+    private readonly _importedRankIdSet = new Set<string>();
 
     get extremumTimestamp(): ExtremumTimestamp {
         return this._extremumTimestamp;
@@ -18,7 +18,7 @@ export class ShadowSession {
         this._extremumTimestamp = value;
     }
 
-    get importedRankIdSet(): Set<number> {
+    get importedRankIdSet(): Set<string> {
         return this._importedRankIdSet;
     }
 };

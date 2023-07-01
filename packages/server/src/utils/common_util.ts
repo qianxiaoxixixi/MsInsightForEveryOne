@@ -1,6 +1,7 @@
 import { SHA256 } from 'crypto-js';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 /**
  * get traceId
@@ -20,8 +21,8 @@ export function getTrackId(tid: number, pid: string): number {
  *
  * @param filePath 文件路径
  */
-export function parseCardID(filePath: string): number {
-    let rankId = -1;
+export function parseCardID(filePath: string): string {
+    let rankId = crypto.randomUUID() as string;
     try {
         const fd = fs.openSync(filePath, 'r');
         const buf = Buffer.alloc(128);
@@ -31,10 +32,15 @@ export function parseCardID(filePath: string): number {
         const start = bufString.indexOf('{');
         const end = bufString.indexOf('}');
         const rankIDJsonString = bufString.substring(start, end + 1);
+        if (!rankIDJsonString.includes('rank_id')) {
+            rankId = path.basename(path.dirname(path.dirname(filePath)));
+            return rankId;
+        }
         const rank = JSON.parse(rankIDJsonString);
-        rankId = rank.rank_id;
+        rankId = String(rank.rank_id);
     } catch (err) {
         console.log(err);
+        return rankId;
     }
     return rankId;
 }
@@ -45,6 +51,6 @@ export function parseCardID(filePath: string): number {
  * @param filePath
  * @param rankId
  */
-export function getDbPath(filePath: string, rankId: number): string {
-    return './' + path.basename(filePath, '.json') + '_' + String(rankId) + '.db';
+export function getDbPath(filePath: string, rankId: string): string {
+    return './' + path.basename(filePath, '.json') + '_' + rankId + '.db';
 }
