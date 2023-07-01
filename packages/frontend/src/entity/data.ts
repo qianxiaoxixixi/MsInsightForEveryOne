@@ -663,7 +663,7 @@ export type MetaData = {
     card: CardMetaData;
     process: ProcessMetaData;
     thread: ThreadMetaData;
-}
+};
 
 export type InsightMetaData <T extends keyof MetaData> = {
     type: T;
@@ -672,7 +672,7 @@ export type InsightMetaData <T extends keyof MetaData> = {
 };
 
 export type ThreadMetaData = {
-    cardId?: number;
+    cardId?: string;
     processId?: string;
     threadId: number;
     threadName: string;
@@ -680,14 +680,14 @@ export type ThreadMetaData = {
 };
 
 export type ProcessMetaData = {
-    cardId?: number;
+    cardId?: string;
     processId: string;
     processName: string;
     label?: string;
 };
 
 export type CardMetaData = {
-    cardId: number;
+    cardId: string;
     cardName?: string;
 };
 
@@ -701,11 +701,11 @@ export type ThreadTrace = {
 };
 
 export type ThreadTraceRequest = {
-    cardId: number,
-    processId: string,
-    threadId: number,
-    startTime: number,
-    endTime: number,
+    cardId: string;
+    processId: string;
+    threadId: number;
+    startTime: number;
+    endTime: number;
 };
 export type AscendSliceDetail = {
     pid?: string;

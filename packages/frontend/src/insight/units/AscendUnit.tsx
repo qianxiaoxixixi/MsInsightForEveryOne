@@ -208,7 +208,7 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     tag: 'Card',
     pinType: 'move',
-    renderInfo: (session: Session, metadata: { cardId: number }) => `${metadata.cardId}`,
+    renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {

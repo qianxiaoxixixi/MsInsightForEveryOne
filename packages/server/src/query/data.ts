@@ -51,7 +51,7 @@ export type FlowDetailResponse = {
 };
 
 export type ThreadDetailRequest = {
-    rankId: number;
+    rankId: string;
     pid: string;
     tid: number;
     startTime: number;
@@ -59,7 +59,7 @@ export type ThreadDetailRequest = {
 };
 
 export type ThreadsRequest = {
-    rankId: number;
+    rankId: string;
     pid: string;
     tid: number;
     startTime: number;
@@ -67,14 +67,14 @@ export type ThreadsRequest = {
 };
 
 export type EventRequest = {
-    rankId: number;
+    rankId: string;
     pid: string;
     tid: number;
     startTime: number;
 };
 
 export type FlowDetailRequest = {
-    rankId: number;
+    rankId: string;
     flowId: string;
 };
 
@@ -129,7 +129,7 @@ export type InsightMetaData <T extends keyof MetaData> = {
 };
 
 export type ThreadMetaData = {
-    cardId?: number;
+    cardId?: string;
     processId?: string;
     threadId: number;
     threadName: string;
@@ -137,14 +137,14 @@ export type ThreadMetaData = {
 };
 
 export type ProcessMetaData = {
-    cardId?: number;
+    cardId?: string;
     processId: string;
     processName: string;
     label?: string;
 };
 
 export type CardMetaData = {
-    cardId: number;
+    cardId: string;
     cardName?: string;
 };
 
