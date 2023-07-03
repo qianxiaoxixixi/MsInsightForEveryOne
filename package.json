@@ -14,14 +14,14 @@
         "buildServerWin": "cd .\\packages\\server&&npm install&&npm run build&&npm run packageWin",
         "clear": "rmdir .\\packages\\extension\\profiler /s /q",
         "copyFrontendWin": "xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y",
-        "copyServerWin": "xcopy .\\packages\\server\\profiler-server.exe .\\packages\\serverBuild\\ /E /I /Y",
+        "copyServerWin": "xcopy .\\packages\\server\\profiler-server.exe .\\serverBuild\\ /E /I /Y",
         "buildExtensionWin": "cd .\\packages\\extension&&npm install&&vsce package",
         "initProject": "cd .\\packages\\frontend&&npm install&&cd ..\\packages\\extension&&npm install&&mkdir profiler",
         "buildLinux": "npm run buildFrontendLinux&&npm run buildServerLinux&&npm run copyFrontendLinux&&npm run copyServerLinux&&npm run buildExtensionLinux",
         "buildFrontendLinux": "cd ./packages/frontend&&npm install&&npm run build",
         "buildServerLinux": "cd ./packages/server&&npm install&&npm run build&&npm run packageLinuxX64",
         "copyFrontendLinux": "cp -rf ./packages/frontend/build ./packages/extension/profiler",
-        "copyServerLinux": "cp -rf ./packages/server/profiler-server ./packages/serverBuild/",
+        "copyServerLinux": "mkdir -p serverBuild&&cp -rf ./packages/server/profiler-server ./serverBuild/",
         "buildExtensionLinux": "cd ./packages/extension&&npm install&&vsce package"
     }
 }

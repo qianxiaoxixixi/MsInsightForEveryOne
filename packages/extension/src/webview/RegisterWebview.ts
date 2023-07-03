@@ -58,7 +58,9 @@ export class RegisterWebview extends Webview {
             serverName = serverName + '.exe';
         }
         const serverPath = path.join(__dirname, serverName);
-        console.log(serverPath);
+        if (os.platform() !== 'win32') {
+            cp.spawn('chmod', ['+x', serverPath]);
+        }
         this.server = cp.spawn(serverPath, []);
         this.server.stdout.on('data', (data:any) => {
             console.log('[server][info]: ' + data);
