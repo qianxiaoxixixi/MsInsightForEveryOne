@@ -16,7 +16,7 @@ export abstract class Webview {
 
     newPanel() {
         this.panel = vscode.window.createWebviewPanel(this.viewType, this.title, {
-            viewColumn: vscode.ViewColumn.Nine,
+            viewColumn: vscode.ViewColumn.One,
             preserveFocus: true,
         }, {
             enableScripts: true,
