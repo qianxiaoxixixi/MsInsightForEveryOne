@@ -6,11 +6,11 @@ import { tableMap } from '../database/tableManager';
 import { EndMessage, ParseMessage } from './parser_worker';
 
 const defaultReadSize = 1024 * 1024 * 50;
-const parseTaskCount = new Map<number, number>(); // rankId, task count
-const callbackMap = new Map<number, Function>(); // rankId, callback
+const parseTaskCount = new Map<string, number>(); // rankId, task count
+const callbackMap = new Map<string, Function>(); // rankId, callback
 const threadPool = new ThreadPool(parseWorkerEnd);
 
-export function parse(filePath: string, rankId: number, callback?: (rankId: number, err?: Error) => void): void {
+export function parse(filePath: string, rankId: string, callback?: (rankId: string, err?: Error) => void): void {
     if (tableMap.has(rankId)) {
         if (callback) {
             callback(rankId, new Error('repeat rank Id'));
@@ -25,7 +25,7 @@ export function parse(filePath: string, rankId: number, callback?: (rankId: numb
     table.createTable().then(() => parseFile(filePath, dbPath, rankId));
 }
 
-function parseFile(filePath: string, dbPath: string, rankId: number): void {
+function parseFile(filePath: string, dbPath: string, rankId: string): void {
     const fileSize = fs.statSync(filePath).size;
     let readPosition = 0;
     let taskCount = 0;
@@ -90,7 +90,7 @@ function getReadSize(fd: number, start: number): { readPosition: number; readSiz
     return { readPosition, readSize };
 }
 
-function parseCallback(rankId: number, err?: Error): void {
+function parseCallback(rankId: string, err?: Error): void {
     callbackMap.get(rankId)?.(rankId, err);
     callbackMap.delete(rankId);
 }

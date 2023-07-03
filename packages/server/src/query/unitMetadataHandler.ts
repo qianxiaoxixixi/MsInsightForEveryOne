@@ -8,7 +8,7 @@ enum UnitType {
     Thread = 'thread',
 }
 
-export const unitMetadataHandler = async (req: { rankId: number }): Promise<Record<string, unknown>> => {
+export const unitMetadataHandler = async (req: { rankId: string }): Promise<Record<string, unknown>> => {
     if (req.rankId === undefined || !tableMap.has(req.rankId)) {
         console.error('rank id is invalid.');
         return {};
@@ -21,7 +21,7 @@ export const unitMetadataHandler = async (req: { rankId: number }): Promise<Reco
  *
  * @param rankId 即cardId
  */
-export async function queryUnitsMetadata(rankId: number): Promise<any> {
+export async function queryUnitsMetadata(rankId: string): Promise<any> {
     const table = tableMap.get(rankId) as Table;
     const rows = await table.selectUnitsMetadata() as metadataDto[];
     const insightMetaData: InsightMetaData<any> = { type: UnitType.Card, metadata: { cardId: rankId } };

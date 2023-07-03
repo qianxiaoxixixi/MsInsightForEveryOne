@@ -74,7 +74,7 @@ async function findTraceViewJson(): Promise<string[]> {
 
 type CardInfo = {
     cardName: string;
-    rankId: number;
+    rankId: string;
 };
 
 export const importHandler = async (req: any, client: Client): Promise<Record<string, unknown>> => {
@@ -88,7 +88,7 @@ export const importHandler = async (req: any, client: Client): Promise<Record<st
             continue;
         };
         result.push({ cardName: rankId.toString(), rankId });
-        parse(traceViewJsonPath, rankId, (ranId, err) => {
+        parse(traceViewJsonPath, rankId, (rankId, err) => {
             if (err) {
                 // this to send parse file error message
                 console.log(err);
