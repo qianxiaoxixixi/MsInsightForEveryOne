@@ -3,7 +3,7 @@ import { parentPort } from 'worker_threads';
 import { WorkMessageType, WorkStatus } from './threadPool';
 
 export type ParseMessage = {
-    rankId: number;
+    rankId: string;
     filePath: string;
     dbPath: string;
     readPosition: number;
@@ -11,7 +11,7 @@ export type ParseMessage = {
 };
 
 export type EndMessage = {
-    rankId: number;
+    rankId: string;
     count: number;
     ignoreCount: number;
 };

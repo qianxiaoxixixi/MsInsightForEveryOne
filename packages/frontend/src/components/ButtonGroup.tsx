@@ -40,7 +40,7 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
 
 type CardInfo = {
     cardName: string;
-    rankId: number;
+    rankId: string;
 };
 const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatch<React.SetStateAction<boolean>>, session: Session): Promise<void> => {
     setIsImporting(true);
