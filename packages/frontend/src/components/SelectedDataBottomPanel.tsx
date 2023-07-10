@@ -43,8 +43,8 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
                 <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>Args</div>
                 {!isHiddenArgs
                     ? Object.keys(args).map(key => {
-                        return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}><div style={{ minWidth: '110px', width: '10%', float: 'left', display: 'flex' }}>{key}</div>
-                            <div style={{ width: '90%', float: 'left' }} dangerouslySetInnerHTML={{ __html: key === 'Call stack' ? args[key].replace(/\n/g, '<br>') : args[key] }}></div></div>;
+                        return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}><div style={{ minWidth: '110px', width: '140px', float: 'left', display: 'flex' }}>{key}</div>
+                            <div style={{ float: 'left' }} dangerouslySetInnerHTML={{ __html: key === 'Call stack' ? args[key].replace(/\n/g, '<br>') : args[key] }}></div></div>;
                     })
                     : <></>}
             </StyledSliceArgsDiv>
