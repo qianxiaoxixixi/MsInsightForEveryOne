@@ -48,6 +48,7 @@ public class ProcessUtils {
             cmd.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
             return Optional.of(cmd.createProcess());
         } catch (com.intellij.execution.ExecutionException e) {
+            LOGGER.info(e.getMessage());
             return Optional.empty();
         }
     }
