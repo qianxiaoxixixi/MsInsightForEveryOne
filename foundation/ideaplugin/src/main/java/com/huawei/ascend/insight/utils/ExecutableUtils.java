@@ -41,7 +41,7 @@ public class ExecutableUtils {
      */
     private static final String DIC_SERVER_PATH_WINDOWS = "frontend/static/profiler-server.exe";
 
-    private static final String INSIGHT_PATH = "/ascnend-insight";
+    private static final String INSIGHT_PATH = "/ascend-insight";
 
     /**
      * get server install path

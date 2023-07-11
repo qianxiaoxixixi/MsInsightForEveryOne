@@ -4,12 +4,16 @@
 
 package com.huawei.ascend.insight.utils;
 
+import com.intellij.openapi.util.SystemInfo;
+
 /**
  * StringUtil
  *
  * @since 2022-11-24
  */
 public class StringUtil {
+
+    public static String lineSeparator = SystemInfo.isWindows ? "\\" : "/";
     /**
      * Anonymous String
      *

@@ -154,13 +154,9 @@ clean {
 
 task copyExeToSandbox() {
     doLast {
-//        copy {
-//            from "${rootDir}/profiler/dist"
-//            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
-//        }
         copy {
             from "${rootDir}/profiler/server"
-            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/"
+            into "${project.buildDir}/idea-sandbox/plugins/ascend-insight/tools/"
         }
     }
 }
