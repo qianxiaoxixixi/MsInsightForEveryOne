@@ -5,5 +5,5 @@ pluginManagement {
         }
     }
 }
-rootProject.name = 'ascnend-insight'
+rootProject.name = 'ascend-insight'
 
