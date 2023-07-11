@@ -45,11 +45,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -169,9 +164,11 @@ public class InsightWindowFactory implements ToolWindowFactory {
                         toolWindow.getContentManager().removeContent(content, true);
                         initInsightWindow(project, toolWindow);
                     } else {
-                        NotificationGroupManager.getInstance().getNotificationGroup(INSIGHT_NOTIFY)
-                                .createNotification(DynamicBundle.message(bundle, "singleInsightTip"),
-                                        NotificationType.INFORMATION).notify(project);
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup(INSIGHT_NOTIFY)
+                            .createNotification(DynamicBundle.message(bundle, "singleInsightTip"),
+                                NotificationType.INFORMATION)
+                            .notify(project);
                     }
                 }
             });
@@ -200,10 +197,8 @@ public class InsightWindowFactory implements ToolWindowFactory {
             LOGGER.info("start profiler server failed");
             BalloonNotification.show("Fail to start profiler server", NotificationType.WARNING);
         }
-//        initSocket();
         initJCEFBrowser(project, toolWindow);
     }
-
 
     /**
      * initJCEFBrowser
@@ -216,9 +211,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
         LOGGER.info("insightCount: start initJCEFBrowser");
         ProjectContext.setProject(project);
         LOGGER.info("insightCount: start createBrowser");
-        webView = JBCefBrowser.createBuilder()
-                .setOffScreenRendering(true)
-                .build();
+        webView = JBCefBrowser.createBuilder().setOffScreenRendering(true).build();
         webView.getJBCefClient().addRequestHandler(insightRequestHandler, webView.getCefBrowser());
         webView.getJBCefClient().addLifeSpanHandler(lifeSpanHandler, webView.getCefBrowser());
 
@@ -237,9 +230,8 @@ public class InsightWindowFactory implements ToolWindowFactory {
         toolWindow.getContentManager().addContent(content);
         addPropertyChangeListener(webView);
 
-        String homePage = Boolean.getBoolean(USE_DEBUG_HOME_PAGE_KEY)
-                ? URLConstants.DEBUG_HOME_PAGE
-                : URLConstants.HOME_PAGE;
+        String homePage =
+            Boolean.getBoolean(USE_DEBUG_HOME_PAGE_KEY) ? URLConstants.DEBUG_HOME_PAGE : URLConstants.HOME_PAGE;
         String url = homePage + "?language=" + DynamicBundle.getLocale().getLanguage();
         webView.loadURL(url);
         if (isDebugMode) {
@@ -263,8 +255,9 @@ public class InsightWindowFactory implements ToolWindowFactory {
         JComponent component = webView.getComponent();
         propertyChangeListener = event -> {
             String command = "window.setTheme(" + UIUtil.isUnderDarcula() + ");";
-            Optional.ofNullable(webView).map(JBCefBrowserBase::getCefBrowser)
-                    .ifPresent(cefBrowser -> cefBrowser.executeJavaScript(command, cefBrowser.getURL(), 0));
+            Optional.ofNullable(webView)
+                .map(JBCefBrowserBase::getCefBrowser)
+                .ifPresent(cefBrowser -> cefBrowser.executeJavaScript(command, cefBrowser.getURL(), 0));
         };
         component.addPropertyChangeListener("foreground", propertyChangeListener);
     }
@@ -283,58 +276,33 @@ public class InsightWindowFactory implements ToolWindowFactory {
         return project;
     }
 
-
     private boolean startServer() {
         if (ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
             return true;
         }
-        String pluginsPath = PathManager.getPluginsPath() + "\\ascnend-insight\\tools";
+        String pluginsPath = PathManager.getPluginsPath() + StringUtil.lineSeparator + "ascend-insight"
+            + StringUtil.lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
         if (SystemInfo.isWindows) {
             processArgs.add(CmdConstants.WINDOWS_CMD);
             processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
             processArgs.add(CmdConstants.DIC_SERVER);
+            Optional<Process> process = ProcessUtils.execute(processArgs, pluginsPath);
+            return process.isPresent();
         } else if (SystemInfo.isLinux) {
-            processArgs.add("chmod");
-            processArgs.add("+x");
-            processArgs.add(CmdConstants.DIC_SERVER);
-            processArgs.add("&&");
-            processArgs.add("./" + CmdConstants.DIC_SERVER);
+            boolean isStart = true;
+            try {
+                Runtime.getRuntime()
+                    .exec("chmod +x " + pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
+                Runtime.getRuntime().exec(pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
+            } catch (IOException e) {
+                LOGGER.info(e.getMessage());
+                isStart = false;
+            }
+            return isStart;
         } else {
             LOGGER.info("start dicServer error, system not supported");
+            return false;
         }
-        Optional<Process> process = ProcessUtils.execute(processArgs, pluginsPath);
-        return process.isPresent();
-    }
-
-    private void initSocket() {
-        ThreadUtil.runInUIThread(new Runnable() {
-            @Override public void run() {
-                while (!isCloseIDE) {
-                    try {
-                        ServerSocket serverSocket = new ServerSocket(3001);
-                        Socket socket = serverSocket.accept();
-                        InputStream in = socket.getInputStream();
-                        //从Socket中得到网络输出流，将数据发送到网络上
-                        OutputStream out = socket.getOutputStream();
-
-                        //接收客户端发来的数据
-                        byte[] bs = new byte[1024];
-                        //将数据存入bs数组中，返回值为数组的长度
-                        int len = in.read(bs);
-                        String str = new String(bs, 0, len, StandardCharsets.UTF_8);
-                        System.out.println("来自客户端的消息: " + str);
-
-                        //向客户端写数据,注意客户端代码中别忘记写read()方法,否则会抛异常
-                        out.write("欢迎访问，你好，我是服务端".getBytes());
-                        System.out.println("服务端正常结束");
-                        socket.close();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                }
-            }
-        });
     }
 }
