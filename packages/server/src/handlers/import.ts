@@ -25,7 +25,7 @@ function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number)
 }
 
 async function selectFolderWindows(): Promise<string> {
-    const script = 'Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
+    const script = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
     try {
         const { stdout } = await execute(`PowerShell -Command "${script}"`);
         const folderPath = stdout.trim();
