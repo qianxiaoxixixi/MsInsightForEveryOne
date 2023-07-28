@@ -322,6 +322,7 @@ export class Table {
                                              LEFT JOIN ${this.threadTable} t ON p.pid = t.pid
                                  ) AS pt
                                      LEFT JOIN ${this.sliceTable} s ON pt.track_id = s.track_id
+                             WHERE pt.process_name is not null
                              GROUP BY
                                  s.track_id
                              ORDER BY
