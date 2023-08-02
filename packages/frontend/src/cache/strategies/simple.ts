@@ -38,8 +38,6 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
 
     async getData<T extends any>(session: ValidSession, params: any): Promise<any> {
         if (this.data === undefined) {
-            // const getRange = this.useRelative ? getRelativeAll : getAll;
-            // const dataFunc = dataFuncMap[this.key];
             try {
                 // this.data = (await dataFunc(session, getRange, params))[this.key];
                 this.data = [];
@@ -52,7 +50,6 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
         if (this.data === undefined) {
             throw new Error('fetch data failed in SimpleOfflineTimeSeriesCache');
         }
-        // const getRange = defaultTimeStrategy[this.key];
         const [ start, end ] = getRange(session);
         const startIndex = binarySearchLastSmall(this.data as Array<any>, this.getTime, start);
         const endIndex = binarySearchFirstBig(this.data as Array<any>, this.getTime, end);
@@ -88,15 +85,11 @@ export class SimpleOfflineGroupedTimeSeriesCache<K extends KeysMatching<any, obj
 
     async getData<T extends any>(session: ValidSession, params: any): Promise<any> {
         if (this.data === undefined) {
-            // const getRange = this.useRelative ? getRelativeAll : getAll;
-            // const dataFunc = dataFuncMap[this.key];
-            // this.data = (await dataFunc(session, getRange, params))[this.key];
             this.data = [];
         }
         if (this.data === undefined) {
             throw new Error('fetch data failed in SimpleOfflineGroupedTimeSeriesCache');
         }
-        // const getRange = defaultTimeStrategy[this.key];
         const [ start, end ] = getRange(session);
         return {
             [this.key]: this.data.map((it: any[]) => {

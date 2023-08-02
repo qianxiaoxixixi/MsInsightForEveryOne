@@ -18,18 +18,15 @@ export class ThrottleCache<T extends any> implements Cache {
 
     constructor(key: T, threshold: number = 500) {
         this.key = key;
-        // this.data = emptyData[key];
         this.data = {};
         // params: DataParam<T>;
         this.fetch = (throttle(async (session: ValidSession, params: any) => {
-            // const getRange = defaultTimeStrategy[this.key];
-            // const dataFunc = dataFuncMap[this.key];
             try {
                 this.data = (await dataFunc(session, getRange, params)) as any[];
             } catch (e) {
                 // e: ErrorRes;
                 const err = e as (any | undefined);
-                err && Logger(`throttleCache/${this.key}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
+                Logger(`throttleCache/${this.key}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
             }
         }, threshold));
     };

@@ -10,6 +10,7 @@ import shutil
 import stat
 import csv
 import json
+import logging
 from bs4 import BeautifulSoup
 
 
@@ -33,9 +34,9 @@ def gen_result():
         module_report_path = os.path.join(Constant.SCRIPT_PATH,
                                           module, "coverage", "lcov-report")
         if not os.path.exists(module_report_path):
-            print("[Warning] No such file or directory:", module_report_path)
+            logging.info("[Warning] No such file or directory:%s", module_report_path)
             continue
-        print("[Info] Deal directory:", module_report_path)
+        logging.info("[Info] Deal directory:%s", module_report_path)
 
         with open(os.path.join(module_report_path, "index.html")) as report:
             report_content = report.read()
@@ -112,7 +113,7 @@ def write_total_coverage(results):
                 "branch_cov": cal_coverage(cov_branch, total_branch)
             }
             writer.writerow(line)
-            print("[module] %-28s  [line cov] %.3f  [method cov] %.3f  [branch cov] %.3f"
+            logging.info("[module] %-28s  [line cov] %.3f  [method cov] %.3f  [branch cov] %.3f"
                   % (module, line.get("line_cov"), line.get("method_cov"), line.get("branch_cov")))
             cov_line_cnt += cov_line
             total_line_cnt += total_line
@@ -124,9 +125,9 @@ def write_total_coverage(results):
     total_method_cov = cal_coverage(cov_method_cnt, total_method_cnt) * 100
     total_branch_cov = cal_coverage(cov_branch_cnt, total_branch_cnt) * 100
     write_junit_json(total_line_cov, total_method_cov, total_branch_cov)
-    print("Total line cov: %.2f" % total_line_cov)
-    print("Total method cov: %.2f" % total_method_cov)
-    print("Total branch cov: %.2f" % total_branch_cov)
+    logging.info("Total line cov: %.2f" % total_line_cov)
+    logging.info("Total method cov: %.2f" % total_method_cov)
+    logging.info("Total branch cov: %.2f" % total_branch_cov)
 
 
 def cal_coverage(cov, total):
@@ -134,6 +135,7 @@ def cal_coverage(cov, total):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     clear_old_result()
     results = gen_result()
     write_total_coverage(results)
