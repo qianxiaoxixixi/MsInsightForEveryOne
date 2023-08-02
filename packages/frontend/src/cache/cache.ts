@@ -1,6 +1,5 @@
-// import { TimeStamp } from '../entity/common';
 import { isValidSession, ValidSession } from '../entity/session';
-// import { Logger } from '../utils/Logger';
+import { Logger } from '../utils/Logger';
 import { dataFunc } from './utils';
 
 export interface Cache {
@@ -42,7 +41,7 @@ export default class DicCachedEngine {
 
         let jsonData: Partial<any> = {};
         for (const key in params) {
-            const requestKey = key as keyof any;
+            const requestKey: string = key;
             const currCache = null;
             if (dataFunc === undefined) {
                 continue;
@@ -50,16 +49,14 @@ export default class DicCachedEngine {
             let data;
             try {
                 if (currCache === null) {
-                    // data = await dataFunc(session, defaultTimeStrategy[requestKey], params);
                     data = [];
                 } else {
-                    data = []
-                    // data = await currCache.getData(session, params);
+                    data = [];
                 }
             } catch (e) {
                 // wedge ErrorRes
                 const err = e as (any | undefined);
-                // err && Logger(`DicCachedEngine/${requestKey}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
+                Logger(`DicCachedEngine/${requestKey}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
             }
             // The absolute time of milliseconds needs to be converted.
             if (msAbsoluteTimeInterfaces.includes(key as keyof any)) {

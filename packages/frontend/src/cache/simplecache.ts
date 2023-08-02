@@ -43,7 +43,6 @@ export class SimpleCache {
 
 async function requestThreadTraces(requestParam: Record<string, unknown>): Promise<ThreadTrace[][]> {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { store } = require('../store');
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
