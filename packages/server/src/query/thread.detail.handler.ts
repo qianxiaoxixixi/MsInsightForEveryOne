@@ -90,11 +90,6 @@ function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string,
             // 处理当前tmpSelfTime
             addData(selfTimeKeyValue, rows[i].name, tmpSelfTime);
             // 处理剩余元素
-            while (++i < rows.length) {
-                if (rows[i].timestamp <= endTime && rows[i].endTime >= startTime) {
-                    addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
-                }
-            }
             break;
         }
         // 层数相等 or 同一元素, j右移
@@ -126,6 +121,11 @@ function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string,
             tmpSelfTime -= rowJ.duration;
         }
         j++;
+    }
+    while (++i < rows.length) {
+        if (rows[i].timestamp <= endTime && rows[i].endTime >= startTime) {
+            addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
+        }
     }
 }
 
