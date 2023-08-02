@@ -33,13 +33,11 @@ export class RegisterWebview extends Webview {
     }
 
     entry() {
-        // const entryPath = vscode.Uri.joinPath(this._extensionUri, 'vue-dist', 'index.js');
         const entryPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', this.nameList.files['main.js']);
         return this.panel.webview.asWebviewUri(entryPath);
     }
 
     style() {
-        // const entryPath = vscode.Uri.joinPath(this._extensionUri, 'vue-dist', 'index.css');
         const entryPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', this.nameList.files['main.css']);
         return this.panel.webview.asWebviewUri(entryPath);
     }
