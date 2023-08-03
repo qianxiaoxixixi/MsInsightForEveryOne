@@ -17,7 +17,7 @@ module.exports = {
     ecmaFeatures: {
       jsx: true,
     },
-    project: './tsconfig.json',
+    project: process.env.NODE_ENV === 'production' ? './tsconfig-prod.json' : './tsconfig.json',
   },
   settings: {
     'import/resolver': {
