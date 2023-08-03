@@ -19,3 +19,8 @@ log.txt
 **/*.db
 **/profiler
 serverBuild
+**/coverage
+llt_cov
+junit
+out
+
