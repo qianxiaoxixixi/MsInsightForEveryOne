@@ -9,7 +9,6 @@ import { ReactComponent as ResetIcon } from '../assets/images/insights/ark_gc.sv
 import { runInAction } from 'mobx';
 import { useState } from 'react';
 import { CardUnit } from '../insight/units/AscendUnit';
-import { processUnits } from '../entity/insight';
 import { messageSender } from '../connection/messageSender';
 
 const Container = styled.div`
@@ -42,6 +41,7 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
 type CardInfo = {
     cardName: string;
     rankId: string;
+    result: boolean;
 };
 
 const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatch<React.SetStateAction<boolean>>, session: Session): Promise<void> => {
@@ -52,9 +52,14 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
         session.phase = 'download';
         session.endTimeAll = 1000000000;
         result.result.forEach((item: CardInfo) => {
-            session.units.push(new CardUnit({ cardId: item.rankId, cardName: item.cardName }));
+            const unit = new CardUnit({ cardId: item.rankId, cardName: item.cardName });
+            if (item.result as boolean) {
+                unit.phase = 'analyzing';
+            } else {
+                unit.phase = 'error';
+            }
+            session.units.push(unit);
         });
-        processUnits(session.units, 'analyzing');
     });
     setIsImporting(false);
 };
