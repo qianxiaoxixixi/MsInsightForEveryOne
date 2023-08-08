@@ -28,7 +28,7 @@ steps:
           set JAVA_HOME=D:\install\jdk17
           echo ---------------build frontend----------------------
           cd Insight_Kernel\\packages\\frontend
-          call npm install
+          call npm install --force
           call npm run build
           echo ---------------build server source----------------------
           cd ..\\server

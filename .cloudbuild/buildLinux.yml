@@ -28,7 +28,7 @@ steps:
           echo ---------------build frontend----------------------
           cd Insight_Kernel/packages/frontend
            npm config set strict-ssl false
-           npm install
+           npm install --force
            npm run build
           echo ---------------build server source----------------------
           cd ../server
