@@ -5,7 +5,7 @@ import { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, 
 import { ElementType, TreeNode } from './common';
 import { Session } from './session';
 import { TabState } from './tabDependency';
-import { CardMetaData } from "./data";
+import { CardMetaData } from './data';
 
 // #region chart desc
 /**
