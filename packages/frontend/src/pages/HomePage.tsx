@@ -1,36 +1,45 @@
-import { Tabs } from 'antd';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+import { Tabs, Switch } from 'antd';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { Session } from '../entity/session';
 import { SessionPage } from './SessionPage';
 import CommunicationAnalysis from './CommunicationAnalysis';
-import BandwidthAnalysis from '../components/communicationAnalysis/BandwidthAnalysis';
+import AnalysisSummary from './AnalysisSummary';
+
+const onChange = async (checked: boolean): Promise<void> => {
+    window.setTheme(checked);
+};
 
 const HomePage = observer(function ({ session, theme }: { session: Session;theme: string }) {
     const items = [
         {
             tab: 'Timeline View',
             key: 'timeline',
-            content: <SessionPage session={session}/>,
+            content: <div style={{ display: 'flex', height: '100%' }}><SessionPage session={session}/></div>,
+        },
+        {
+            tab: 'Analysis Summary',
+            key: 'AnalysisSummary',
+            content: <AnalysisSummary session={session}/>,
         },
         {
             tab: 'Communication Analysis',
             key: 'CommunicationAnalysis',
             content: <CommunicationAnalysis session={session}/>,
         },
-        {
-            tab: 'Total HCCL Operators',
-            key: 'Operators',
-            content: <BandwidthAnalysis session={session}/>,
-        },
     ];
     return (
         <div style={{ height: '100%', width: '100%' }} className={'theme_' + theme}>
-            <Tabs>
+            <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}
+                style={{ position: 'absolute', top: '10px', right: '50px', zIndex: 1000, display: 'none' }}/>
+            <Tabs >
                 {
                     items.map(item => (
                         <Tabs.TabPane tab={item.tab} key={item.key}>
-                            <div style={{ height: 'calc(100% - 62px)', width: '100%', position: 'absolute', display: 'flex' }}>
+                            <div style={{ height: 'calc(100% - 62px)', width: '100%', position: 'absolute' }}>
                                 {item.content}
                             </div>
                         </Tabs.TabPane>
