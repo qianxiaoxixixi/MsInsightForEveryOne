@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+    <artifact>
+        <versionType>${versionType}</versionType>
+        <repoType>Generic</repoType>
+        <id>
+            <offering>${offering}</offering>
+            <name>${component_name}</name>
+            <version>${version}</version>
+            <snapshot>${snapshot}</snapshot>
+        </id>
+        <isClear>N</isClear>
+        <copies>
+            <copy>
+                <source>ascend_insight_plugin_${version}.tar.gz</source>
+                <dest>distributions</dest>
+            </copy>
+            <copy>
+                <source>build.yml.lock</source>
+                <dest>build/yml/file</dest>
+            </copy>
+        </copies>
+    </artifact>
+</project>

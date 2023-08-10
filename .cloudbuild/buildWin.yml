@@ -1,16 +1,14 @@
 version: 2.0
 
 params:
-  - name: internal
-    value: "NO"
+  - name: product
+    value: cloudbuild2.0
   - name: pluginVersion
-    value: "0.0.1"
-  - name: releaseVersion
-    value: "0.0.0.1-SNAPSHOT"
+    value: "6.0.RC3.1"
+  - name: extensionVersion
+    value: "6.3.1"
   - name: serverBranch
     value: "dev_ci"
-  - name: buildVersion
-    value: "0.0.1_win"
 
 env:
   label: pap_build20 # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
@@ -46,17 +44,18 @@ steps:
           echo ---------------build vscode extension----------------------
           cd .\\packages\\extension
           call npm install
-          call vsce package %pluginVersion%
+          call npm version %extensionVersion% --no-git-tag-version --allow-same-version;
+          call vsce package
           cd ..\\..\\..\\
           xcopy .\\Insight_Kernel\\packages\\frontend\\build .\\IntelliJ_Based\\foundation\\ideaplugin\\src\\main\\resources\\frontend\\ /E /I /Y
           xcopy .\\Insight_Kernel\\serverBuild\\server\\* .\\IntelliJ_Based\\profiler\\server\\ /E /I /Y
           echo ---------------build intellij plugin----------------------
           cd .\\IntelliJ_Based
-          call gradlew.bat buildPlugin
+          call gradlew.bat buildPlugin -PPluginVersion=%pluginVersion%
           cd ..
           mkdir build
-          call xcopy Insight_Kernel\\packages\\extension\\ascend-insight-extension-%pluginVersion%.vsix build\\  /I /Y
-          call xcopy IntelliJ_Based\\build\\distributions\\ascend-insight-6.0.RC2.zip build\\  /I /Y
+          call xcopy Insight_Kernel\\packages\\extension\\ascend-insight-extension-%extensionVersion%.vsix build\\  /I /Y
+          call xcopy IntelliJ_Based\\build\\distributions\\ascend-insight-%pluginVersion%.zip build\\  /I /Y
           echo ---------------uploading----------------------
           cd build
           call tar -czvf ../build.tar.gz *

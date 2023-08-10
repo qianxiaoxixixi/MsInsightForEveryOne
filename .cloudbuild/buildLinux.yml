@@ -1,16 +1,14 @@
 version: 2.0
 
 params:
-  - name: internal
-    value: "NO"
+  - name: product
+    value: cloudbuild2.0
   - name: pluginVersion
-    value: "0.0.1"
-  - name: releaseVersion
-    value: "0.0.0.1-SNAPSHOT"
+    value: "6.0.RC3.1"
+  - name: extensionVersion
+    value: "6.3.1"
   - name: serverBranch
     value: "dev_ci"
-  - name: buildVersion
-    value: "0.0.1_linux"
 
 env:
   label: Bitfun2Yellow_x64_vpc # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
@@ -51,7 +49,8 @@ steps:
           npm install keytar@7.9.0 --ignore-scripts
           npm install @vscode/vsce@2.15.0  --registry=https://cmc.centralrepo.rnd.huawei.com/npm/
           npm install vsce@2.15.0 --registry=https://cmc.centralrepo.rnd.huawei.com/npm/
-            node_modules/.bin/vsce package ${pluginVersion}
+          npm version ${extensionVersion} --no-git-tag-version --allow-same-version;
+            node_modules/.bin/vsce package
           cd ../../../
           mkdir ./IntelliJ_Based/profiler
           mkdir ./IntelliJ_Based/profiler/server
@@ -60,11 +59,11 @@ steps:
           echo ---------------build intellij plugin----------------------
           cd ./IntelliJ_Based
           chmod +x ./gradlew
-           ./gradlew buildPlugin
+           ./gradlew buildPlugin -PPluginVersion=${pluginVersion}
           cd ..
           mkdir build
-           cp Insight_Kernel/packages/extension/ascend-insight-extension-${pluginVersion}.vsix build/
-           cp IntelliJ_Based/build/distributions/ascend-insight-6.0.RC2.zip build/
+           cp Insight_Kernel/packages/extension/ascend-insight-extension-${extensionVersion}.vsix build/
+           cp IntelliJ_Based/build/distributions/ascend-insight-${pluginVersion}.zip build/
           echo ---------------uploading-----------------------
           cd build
            tar -czvf ../build.tar.gz *
