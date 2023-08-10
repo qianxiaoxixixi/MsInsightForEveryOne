@@ -16,6 +16,7 @@ if (typeof window.cefQuery === 'function') {
 export interface IMessageSender {
     sendMessage: (ceq: any) => void;
     selectFolder: () => Promise<string>;
+    selectFile: () => Promise<string>;
 }
 
 export const removeAndAddEventListener = (resolve: (value: (string | PromiseLike<string>)) => void): void => {
