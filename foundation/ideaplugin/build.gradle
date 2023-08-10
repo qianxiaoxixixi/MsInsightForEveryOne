@@ -20,7 +20,7 @@ plugins {
 }
 
 group GroupId
-version Version_ // Plugin version
+version project.hasProperty("PluginVersion") ? PluginVersion : Version_ // Plugin version
 description 'MindStudio for intellij'
 
 def intellijVersion = '2022.3.2'
