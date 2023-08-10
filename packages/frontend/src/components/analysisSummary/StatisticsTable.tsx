@@ -6,7 +6,7 @@ import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
 import { PaginationWhithPgaeData } from '../communicationAnalysis/Common';
-import { computationCommunicationData } from '../../utils/mockData';
+import { computationCommunicationData } from '../../utils/__test__/mockData';
 
 const computingStatisticsColumns = [
     {

@@ -7,7 +7,7 @@ import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
-import { computationCommunicationData } from '../../utils/mockData';
+import { computationCommunicationData } from '../../utils/__test__/mockData';
 
 interface SummaryDataType{
     rankId: string ;
