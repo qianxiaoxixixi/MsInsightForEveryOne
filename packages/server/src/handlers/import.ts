@@ -10,6 +10,13 @@ import { promisify } from 'util';
 
 const execute = promisify(exec);
 function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number): void {
+    const stats = fs.statSync(dir);
+    if (stats.isFile()) {
+        if (path.basename(dir) === 'trace_view.json') {
+            traceViewJsonPaths.push(dir);
+        }
+        return;
+    }
     if (depth > 5) return; // 控制递归深度
     const files = fs.readdirSync(dir);
     for (const file of files) {
@@ -27,8 +34,7 @@ async function selectFolderWindows(): Promise<string> {
     const script = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
     try {
         const { stdout } = await execute(`PowerShell -Command "${script}"`);
-        const folderPath = stdout.trim();
-        return folderPath;
+        return stdout.trim();
     } catch (error) {
         console.error(error);
         return '';
@@ -38,8 +44,7 @@ async function selectFolderWindows(): Promise<string> {
 async function selectFolderLinux(): Promise<string> {
     try {
         const { stdout } = await execute('zenity --file-selection --directory');
-        const folderPath = stdout.trim();
-        return folderPath;
+        return stdout.trim();
     } catch (error) {
         console.error(error);
         return '';
