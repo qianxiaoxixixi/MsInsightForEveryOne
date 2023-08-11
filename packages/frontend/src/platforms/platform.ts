@@ -47,6 +47,23 @@ export class IntellijPlatform implements IMessageSender {
         });
     }
 
+    selectFile(): Promise<string> {
+        return new Promise(resolve => {
+            this.sendMessage({
+                request: JSON.stringify({
+                    key: 'ascend.selectFolder',
+                    data: {
+                        method: 'ascend.selectFile',
+                        params: {},
+                    },
+                }),
+                onSuccess: function (response: string) {
+                    resolve(JSON.parse(response).body);
+                },
+            });
+        });
+    }
+
     sendMessage(ceq: any): void {
         window.cefQuery(ceq);
     }
@@ -60,6 +77,13 @@ export class VsCodePlatform implements IMessageSender {
         });
     }
 
+    selectFile(): Promise<string> {
+        return new Promise(resolve => {
+            this.sendMessage({ command: 'ascend.selectFile' });
+            removeAndAddEventListener(resolve);
+        });
+    }
+
     sendMessage(ceq: any): void {
     }
 }
@@ -69,6 +93,10 @@ export class BrowserPlatform implements IMessageSender {
         return new Promise(resolve => {
             resolve('browser');
         });
+    }
+
+    selectFile(): Promise<string> {
+        return this.selectFolder();
     }
 
     sendMessage(): void {
