@@ -56,6 +56,9 @@ export function parseCardID(filePath: string): string {
  * @param filePath
  * @param rankId
  */
-export function getDbPath(filePath: string, rankId: string): string {
-    return './' + path.basename(filePath, '.json') + '_' + rankId + '.db';
+export function getDbPath(filePath: string[], rankId: string): string {
+    if (filePath.length > 1) {
+        return './' + rankId + '.db';
+    }
+    return './' + path.basename(filePath[0], '.json') + '_' + rankId + '.db';
 }
