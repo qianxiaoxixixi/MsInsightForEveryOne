@@ -51,7 +51,7 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
     runInAction(() => {
         session.phase = 'download';
         session.endTimeAll = 1000000000;
-        result.result.forEach((item: CardInfo) => {
+        result.cards.forEach((item: CardInfo) => {
             session.units.push(new CardUnit({ cardId: item.rankId, cardName: item.cardName }));
         });
         processUnits(session.units, 'analyzing');
