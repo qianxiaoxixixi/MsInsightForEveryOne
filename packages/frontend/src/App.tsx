@@ -103,7 +103,7 @@ export const App = observer(() => {
             <Window>
                 <AppErrorBoundary>
                     <SessionPageErrorBoundary>
-                        {session !== undefined ? <HomePage session={session} theme={themeInstance.currentTheme}/> : <StatePopover/>}
+                        {session !== undefined ? <HomePage session={session} /> : <StatePopover/>}
                     </SessionPageErrorBoundary>
                 </AppErrorBoundary>
             </Window>
