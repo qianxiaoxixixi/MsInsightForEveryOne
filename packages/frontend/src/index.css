@@ -226,3 +226,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled){
     background-color: var(--grey70);
 }
+
+.theme_dark tr.ant-table-placeholder:hover>td {
+    background: var(--grey80);
+}

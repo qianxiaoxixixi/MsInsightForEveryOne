@@ -8,12 +8,13 @@ import { Session } from '../entity/session';
 import { SessionPage } from './SessionPage';
 import CommunicationAnalysis from './CommunicationAnalysis';
 import AnalysisSummary from './AnalysisSummary';
+import { notNull } from '../components/communicationAnalysis/Common';
 
 const onChange = async (checked: boolean): Promise<void> => {
     window.setTheme(checked);
 };
 
-const HomePage = observer(function ({ session, theme }: { session: Session;theme: string }) {
+const HomePage = observer(function ({ session }: { session: Session }) {
     const items = [
         {
             tab: 'Timeline View',
@@ -24,11 +25,13 @@ const HomePage = observer(function ({ session, theme }: { session: Session;theme
             tab: 'Analysis Summary',
             key: 'AnalysisSummary',
             content: <AnalysisSummary session={session}/>,
+            display: notNull(session.allRankIds) && session.allRankIds.length > 0,
         },
         {
             tab: 'Communication Analysis',
             key: 'CommunicationAnalysis',
             content: <CommunicationAnalysis session={session}/>,
+            display: notNull(session.allRankIds) && session.allRankIds.length > 0,
         },
     ];
     return (
