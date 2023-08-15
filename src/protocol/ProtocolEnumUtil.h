@@ -27,7 +27,8 @@ const EnumStrMap<Protocol::SceneType> SCENE_TYPE_ES = { { Protocol::SceneType::G
                                                         { Protocol::SceneType::DATABASE, "database" },
                                                         { Protocol::SceneType::TOOL, "tool" },
                                                         { Protocol::SceneType::LOG, "log" },
-                                                        { Protocol::SceneType::HARMONY, "harmony" } };
+                                                        { Protocol::SceneType::HARMONY, "harmony" },
+                                                        { Protocol::SceneType::ASCEND, "ascend" }};
 
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };

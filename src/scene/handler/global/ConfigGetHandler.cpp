@@ -28,6 +28,9 @@ void ConfigGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if ((sceneMask == -1) || (sceneMask & static_cast<int>(SceneType::GLOBAL))) {
         response.body.globalConfig = SceneManager::Instance().GetGlobalConfig();
     }
+    if ((sceneMask == -1) || (sceneMask & static_cast<int>(SceneType::ASCEND))) {
+        response.body.ascendConfig = SceneManager::Instance().GetAscendConfig();
+    }
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
 }

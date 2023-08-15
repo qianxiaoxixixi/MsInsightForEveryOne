@@ -16,7 +16,9 @@ class SceneManager {
 public:
     static SceneManager &Instance();
     bool SetGlobalConfig(const GlobalConfig &config);
+    bool SetAscendConfig(const AscendConfig &config);
     const std::optional<GlobalConfig> GetGlobalConfig();
+    const std::optional<AscendConfig> GetAscendConfig();
     void OnDispatchSceneRequest(std::unique_ptr<Request> request);
 
 private:
