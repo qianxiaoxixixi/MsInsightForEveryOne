@@ -56,6 +56,7 @@ struct TokenCheckResponse : public Response {
 struct ConfigGetResBody {
     std::optional<GlobalConfig> globalConfig;
     std::optional<HarmonyConfig> harmonyConfig;
+    std::optional<AscendConfig> ascendConfig;
 };
 
 struct ConfigGetResponse : public Response {
