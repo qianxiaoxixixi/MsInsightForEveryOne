@@ -62,6 +62,7 @@ struct ConfigGetRequest : public Request {
 struct ConfigSetParams {
     std::optional<GlobalConfig> globalConfig;
     std::optional<HarmonyConfig> harmonyConfig;
+    std::optional<AscendConfig> ascendConfig;
 };
 
 struct ConfigSetRequest : public Request {
