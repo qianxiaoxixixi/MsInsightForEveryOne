@@ -5,6 +5,7 @@
 #include "ServerLog.h"
 #include "GlobalScene.h"
 #include "SceneManager.h"
+#include "AscendScene.h"
 
 namespace Dic {
 namespace Scene {
@@ -30,8 +31,11 @@ void SceneManager::Register()
     std::unique_lock<std::mutex> lock(mutex);
     sceneMap.clear();
     std::unique_ptr<GlobalScene> globalScene = std::make_unique<GlobalScene>();
+    std::unique_ptr<AscendScene> ascendScene = std::make_unique<AscendScene>();
     globalScene->RegisterRequestHandlers();
+    ascendScene->RegisterRequestHandlers();
     sceneMap.emplace(SceneType::GLOBAL, std::move(globalScene));
+    sceneMap.emplace(SceneType::ASCEND, std::move(ascendScene));
 }
 
 void SceneManager::UnRegister()
@@ -49,12 +53,27 @@ bool SceneManager::SetGlobalConfig(const GlobalConfig &config)
     return true;
 }
 
+bool SceneManager::SetAscendConfig(const AscendConfig &config) {
+    if (sceneMap.count(SceneType::ASCEND) == 0) {
+        return false;
+    }
+    ((AscendScene &)(*sceneMap.at(SceneType::ASCEND).get())).Config(config);
+    return true;
+}
+
 const std::optional<GlobalConfig> SceneManager::GetGlobalConfig()
 {
     if (sceneMap.count(SceneType::GLOBAL) == 0) {
         return std::nullopt;
     }
     return ((GlobalScene &)(*sceneMap.at(SceneType::GLOBAL).get())).GetConfig();
+}
+
+const std::optional<AscendConfig> SceneManager::GetAscendConfig() {
+    if (sceneMap.count(SceneType::ASCEND) == 0) {
+        return std::nullopt;
+    }
+    return ((AscendScene &)(*sceneMap.at(SceneType::ASCEND).get())).GetConfig();
 }
 
 void SceneManager::OnDispatchSceneRequest(std::unique_ptr<Request> request)

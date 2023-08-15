@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2012-2023. All rights reserved.
  */
 
 #include "ServerLog.h"
@@ -27,6 +27,9 @@ void ConfigSetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     SetBaseResponse(request, response);
     if (request.params.globalConfig.has_value()) {
         SceneManager::Instance().SetGlobalConfig(request.params.globalConfig.value());
+    }
+    if (request.params.ascendConfig.has_value()) {
+        SceneManager::Instance().SetAscendConfig(request.params.ascendConfig.value());
     }
     response.body.configSetTime = TimeUtil::Instance().NowUTC();
     SetResponseResult(response, true);
