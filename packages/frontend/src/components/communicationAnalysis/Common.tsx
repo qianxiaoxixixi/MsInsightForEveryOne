@@ -21,9 +21,10 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
             <div>{props.content}</div>
         </div>;
     }
-    return <div style={{ height: '100%', ...(props.style ?? {}) }}>
+    return <div className={'container-box'} style={{ height: '100%', ...(props.style ?? {}) }}>
         <div className={'container-header'}>{props.title}</div>
-        <div style={{ height: 'calc(100% - 20px', overflow: 'auto' }}>{props.content}</div>
+        <div className={'container-body'}
+            style={{ height: 'calc(100% - 20px', overflow: 'auto' }}>{props.content}</div>
     </div>;
 };
 
