@@ -56,8 +56,6 @@ const baseOption: any = {
             type: 'value',
             name: 'Time(ms)',
             min: 0,
-            max: 250,
-            interval: 50,
             axisLabel: {
                 formatter: '{value}',
             },
@@ -66,8 +64,6 @@ const baseOption: any = {
             type: 'value',
             name: 'Ratio',
             min: 0,
-            max: 25,
-            interval: 5,
             axisLabel: {
                 formatter: '{value}',
             },
@@ -141,8 +137,8 @@ const baseOption: any = {
 
 function wrapData(data: dataType): any {
     baseOption.xAxis[0].data = data['Rank ID'];
-    const order: Array<keyof dataType> = [ 'Elapse Time(ms)', 'Transit Time(ms)', 'Synchronization Time(ms)',
-        'Wait Time(ms)', 'Synchronization Time Ratio', 'Wait Time Ratio' ];
+    const order: Array<keyof dataType> = [ 'elapse_time', 'Transit_Time', 'synchronization_time',
+        'wait_time', 'synchronization_time_Ratio', 'wait_time_ratio' ];
     for (let i = 0; i < 6; i++) {
         baseOption.series[i].data = data[order[i]];
     }

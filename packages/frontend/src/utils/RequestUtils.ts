@@ -17,15 +17,15 @@ export const queryIterations = async(): Promise<any> => {
 };
 
 /**
- * 查询所有Rank ID
- * 无参
+ * 查询一次迭代下所有Rank ID
+ * @param {string} iterationId 迭代ID
  * @return {[]} 返回Rank数组[0,1,2,3]
  */
-export const queryAllRanks = async(): Promise<any> => {
+export const queryRanks = async(param: {iterationId: number }): Promise<any> => {
     if (isNull(window.request)) {
         return [ 0, 1, 2, 3 ];
     }
-    return window.request('communication/duration/ranks', {});
+    return window.request('communication/duration/ranks', param);
 };
 
 /**
@@ -38,7 +38,7 @@ export const queryOperators = async(param: {iterationId: string | number;rankIds
     if (isNull(window.request)) {
         return [ 'op1', 1, 2, 3 ];
     }
-    return window.request('communication/duration/operatorNames', param);
+    return window.request('communication/duration/operatorNames', { ...param, rankList: param.rankIds });
 };
 
 /**
@@ -55,7 +55,7 @@ export const queryCommunication = async(param: {
     if (isNull(window.request)) {
         return communicationAnalysisData;
     }
-    return window.request('communication/duration/list', param);
+    return window.request('communication/duration/list', { ...param, rankList: param.rankIds });
 };
 
 /**
@@ -67,7 +67,7 @@ export const queryCommunication = async(param: {
  * @return {[]} 返回数组
  */
 export const queryOperatorDetails = async(param: {
-    rankId: string; pageSize: number;currentPage: number;}): Promise<any> => {
+    iterationId: number; rankId: number; pageSize: number;currentPage: number;}): Promise<any> => {
     if (isNull(window.request)) {
         return OperatorDetailsData;
     }

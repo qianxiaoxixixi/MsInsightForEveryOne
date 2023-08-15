@@ -16,7 +16,7 @@ import BandwidthAnalysis from '../components/communicationAnalysis/BandwidthAnal
 import { Space, Tan } from '../components/communicationAnalysis/Common';
 import { queryCommunication } from '../utils/RequestUtils';
 
-const Operators = ({ returnHome, rankId, session }: any): JSX.Element => {
+const Operators = ({ returnHome, rankId, operatorName, session }: any): JSX.Element => {
     return (
         <div className={'fullbox'} style={{ padding: '0 20px' }}>
             <Breadcrumb>
@@ -25,7 +25,7 @@ const Operators = ({ returnHome, rankId, session }: any): JSX.Element => {
                 </Breadcrumb.Item>
                 <Breadcrumb.Item>Total HCCL Operators(RankId {rankId})</Breadcrumb.Item>
             </Breadcrumb>
-            <BandwidthAnalysis session={session}/>
+            <BandwidthAnalysis session={session} rankId={rankId} operatorName={operatorName}/>
         </div>
     );
 };
@@ -36,37 +36,37 @@ interface showDataType{
 }
 
 const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
-    const list = await queryCommunication(conditions);
+    const res = await queryCommunication(conditions);
+    res.duration.forEach((item: any) => { item.rankId = item.rank_id; });
     // 显示字段
-    const fields = [ 'Rank ID', 'Elapse Time(ms)', 'Transit Time(ms)', 'Synchronization Time(ms)',
-        'Wait Time(ms)', 'Synchronization Time Ratio', 'Wait Time Ratio' ];
+    const fields = [ 'rank_id', 'elapse_time', 'Transit_Time', 'synchronization_time',
+        'wait_time', 'synchronization_time_Ratio', 'wait_time_ratio' ];
     const chartData: chartDataType = {} as chartDataType;
     fields.forEach(field => {
-        chartData[field] = list.map((item: any) => item[field]);
+        chartData[field] = res.duration.map((item: any) => item[field]);
     });
 
-    return { chartData, tableData: list };
+    return { chartData, tableData: res.duration };
+};
+
+const isShow = (name: string): boolean => {
+    return name === 'CommunicationDurationAnalysis';
 };
 
 const CommunicationAnalysis = observer(function ({ session }: { session: Session }) {
-    const [ currentWindow, setCurrentWindow ] = useState('CommunicationDurationAnalysis');
     const [ rankId, setRankId ] = useState('');
     const [ showData, setShowData ] = useState<showDataType>({
         chartData: {} as chartDataType,
         tableData: [],
     });
-    const isShow = (page: string): boolean => {
-        return page === currentWindow;
-    };
+    const [ conditions, setConditions ] = useState<conditionDataType>(
+        { iterationId: '', rankIds: [], operatorName: '', type: '' });
     const showOperator = (rankId: string): void => {
         setRankId(rankId);
     };
     const returnHome = (): void => { setRankId(''); };
     const handleFilterChange = async(conditions: conditionDataType): Promise<void> => {
-        if (currentWindow !== conditions.type) {
-            setCurrentWindow(conditions.type);
-            return;
-        }
+        setConditions(conditions);
         const res = await searchData(conditions);
         setShowData(res);
     };
@@ -78,11 +78,11 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
             <Tan
                 position={'left'}
                 drag={<Help />}
-                main={
-                    <div style={{ padding: '0 16px' }}>
-                        <CommunicationTimeChart dataSource={showData.chartData}/>
-                        <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData}/>
-                    </div>
+                main={ <div style={{ padding: '0 16px' }}>
+                    <CommunicationTimeChart dataSource={showData.chartData}/>
+                    <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData}
+                        conditions={conditions} />
+                </div>
                 }
                 dragSize={400}
                 id={'communication-analysis'}
@@ -91,7 +91,8 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
             {/* 通信矩阵 */}
             <CommunicationMatrix isShow={isShow('CommunicationMatrix')}/>
             {/* 算子详情 */}
-            { rankId !== '' && <Operators rankId={rankId} session={session} returnHome={returnHome} /> }
+            { rankId !== '' && <Operators
+                rankId={rankId} session={session} returnHome={returnHome} operatorName={conditions.operatorName}/> }
         </div>
     );
 });
