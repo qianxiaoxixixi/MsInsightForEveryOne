@@ -8,9 +8,9 @@ import { Session } from '../../entity/session';
 import * as echarts from 'echarts';
 import { Col, Layout, Row, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { Header } from 'antd/es/layout/layout';
 // eslint-disable-next-line import/no-unresolved
 import { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
+import { Container } from './Common';
 
 const BandwidthTable: React.FC = (props: any) => {
     const [ data, setData ] = useState([]);
@@ -75,36 +75,18 @@ const BandwidthChart: React.FC = (props: any) => {
     );
 };
 
-const BandwidthAnalysis = observer(function ({ session }: { session: Session }) {
+const BandwidthAnalysis = observer(function ({ session, rankId, operatorName }:
+{ session: Session;rankId: number;operatorName: string }) {
     return (
         <Layout>
-            <Layout >
-                <Header className={'bandwidthHeader'}>
-                    <div style={{ textAlign: 'left', height: '30px' }}>
-                        Packet Distribution
-                    </div>
-                </Header>
-            </Layout>
-
-            <Row gutter={[ 40, 24 ]}>
-                <Col span={24}>
-                    <BandwidthChart/>
-                </Col>
-            </Row>
-
-            <Layout >
-                <Header className={'bandwidthHeader'}>
-                    <div style={{ textAlign: 'left', height: '30px' }}>
-                        Bandwidth Analysis
-                    </div>
-                </Header>
-            </Layout>
-
-            <Row gutter={[ 40, 24 ]}>
-                <Col span={24}>
-                    <BandwidthTable/>
-                </Col>
-            </Row>
+            <Container
+                title={'Packet Distribution'}
+                content={ <BandwidthChart/>}
+            />
+            <Container
+                title={'Bandwidth Analysis'}
+                content={ <BandwidthTable/> }
+            />
         </Layout>
     );
 });

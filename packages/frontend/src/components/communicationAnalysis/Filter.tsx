@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
 import { Label, Space, MultiSelectWithAll, notNullObj } from './Common';
 import { optionDataType, VoidFunction } from '../../utils/interface';
-import { queryIterations, queryAllRanks, queryOperators } from '../../utils/RequestUtils';
+import { queryIterations, queryOperators, queryRanks } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
 
 export interface conditionDataType{
@@ -43,24 +43,29 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
     }, [conditions]);
 
     const init = async(): Promise<void> => {
-        const iterationlist: number[] = await queryIterations();
+        const iterationRes: {iterationsOrRanks: Array<{iteration_id: number } > } = await queryIterations();
+        const iterationlist: number[] = iterationRes.iterationsOrRanks.map(item => item.iteration_id);
         const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
-        const rankIds: number[] = await queryAllRanks();
+        const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId: iterationlist[0] });
+        const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
         const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
-        const operatorlist: string[] = await queryOperators({ iterationId: iterationlist[0], rankIds: [] });
-        const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
+        const operatorRes: any = await queryOperators({ iterationId: iterationlist[0], rankIds: [] });
+        const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
+        const operatorOptions: optionDataType[] = [ { value: 'Total HCCL Operators', label: 'Total HCCL Operators' },
+            ...operatorlist.map(item => ({ value: item, label: item })) ];
         // 初始可选项
         setOptions({ ...options, iterationOptions, rankIdOptions, operatorOptions });
         // 初始查询条件
-        setConditions({ ...conditions, iterationId: iterationlist[0], operatorName: 'total' });
+        setConditions({ ...conditions, iterationId: iterationlist[0], operatorName: 'Total HCCL Operators' });
     };
 
     const updateOperator = async (rankIds: number[]): Promise<void> => {
-        const operatorlist: string[] = await queryOperators({ iterationId: conditions.iterationId, rankIds });
+        const operatorRes = await queryOperators({ iterationId: conditions.iterationId, rankIds });
+        const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
         const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
         setOptions({ ...options, operatorOptions });
         if (conditions.operatorName !== 'total' && !operatorlist.includes(conditions.operatorName)) {
-            setConditions({ ...conditions, operatorName: 'total' });
+            setConditions({ ...conditions, operatorName: 'Total HCCL Operators' });
         }
     };
 

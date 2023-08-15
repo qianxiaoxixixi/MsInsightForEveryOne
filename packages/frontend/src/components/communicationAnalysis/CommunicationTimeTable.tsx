@@ -27,53 +27,55 @@ export interface DataType {
 const commonColumns = [
     {
         title: 'Elapse Time(ms)',
-        dataIndex: 'Elapse Time(ms)',
+        dataIndex: 'elapse_time',
     },
     {
         title: 'Transit Time(ms)',
-        dataIndex: 'Transit Time(ms)',
+        dataIndex: 'Transit_Time',
     },
     {
         title: 'Synchronization Time(ms)',
-        dataIndex: 'Synchronization Time(ms)',
+        dataIndex: 'synchronization_time',
         sorter: (a: DataType, b: DataType) => a.SynchronizationTime - b.SynchronizationTime,
     },
     {
         title: 'Wait Time(ms)',
-        dataIndex: 'Wait Time(ms)',
+        dataIndex: 'wait_time',
     },
     {
         title: 'Synchronization Time Ratio',
-        dataIndex: 'Synchronization Time Ratio',
+        dataIndex: 'synchronization_time_Ratio',
     },
     {
         title: 'Wait Time Ratio',
-        dataIndex: 'Wait Time Ratio',
+        dataIndex: 'wait_time_ratio',
     },
     {
         title: 'Idle Time(ms)',
         dataIndex: 'Idle Time(ms)',
     } ];
 
-const defaultDataSource: DataType[] = [];
-
 // Total HCCL Opertators表
-const OperatorsTable = (record: any): JSX.Element => {
+const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     useEffect(() => {
-        updateData();
+        updateData({ current: 1, pageSize: 10 });
     }, [ ]);
     const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const { rankId } = record;
-    const updateData = async(page?: any): Promise<void> => {
-        const data = await queryOperatorDetails({ rankId, ...page });
-        setDataSource(data);
-        setPageInfo({ total: data.length });
+    const updateData = async(page: any): Promise<void> => {
+        const res = await queryOperatorDetails({
+            iterationId: conditions.iterationId,
+            rankId: record.rank_id,
+            currentPage: page.current,
+            pageSize: page.pageSize,
+        });
+        setDataSource(res.allOperators);
+        setPageInfo({ total: res.count });
     };
 
     const [ pageInfo, setPageInfo ] = useState({ total: 0 });
 
     const columns: TableColumnsType<DataType> = [
-        { title: 'Operator Name', dataIndex: 'Operator Name', key: 'Operator Name' },
+        { title: 'Operator Name', dataIndex: 'op_name', key: 'op_name' },
         ...commonColumns,
     ];
     return <div>
@@ -87,8 +89,8 @@ const getRankColumns = (handleAction: VoidFunction[]): any => {
     return [
         {
             title: 'Rank ID',
-            dataIndex: 'Rank ID',
-            key: 'Rank ID',
+            dataIndex: rowKey,
+            key: rowKey,
         },
         ...commonColumns,
         {
@@ -97,7 +99,7 @@ const getRankColumns = (handleAction: VoidFunction[]): any => {
             render: (_: any, record: DataType) => (
                 <Button type="link"
                     onClick={() => {
-                        showOperator(record['Rank ID']);
+                        showOperator(record[rowKey]);
                     }}>see more</Button>),
         },
         {
@@ -107,9 +109,9 @@ const getRankColumns = (handleAction: VoidFunction[]): any => {
                 onClick={() => {
                     setExpandedKeys((pre: any) => {
                         const list = [...pre];
-                        const keyIndex = list.indexOf(record['Rank ID']);
+                        const keyIndex = list.indexOf(record[rowKey]);
                         if (keyIndex === -1) {
-                            list.push(record['Rank ID']);
+                            list.push(record[rowKey]);
                         } else {
                             list.splice(keyIndex, 1);
                         }
@@ -119,10 +121,11 @@ const getRankColumns = (handleAction: VoidFunction[]): any => {
         },
     ];
 };
-const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[];showOperator: (rankid: string) => void}) {
+const rowKey = 'rank_id';
+const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any}) {
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const columns = getRankColumns([ props.showOperator, setExpandedKeys ]);
-    const dataSource: DataType[] = props.dataSource ?? defaultDataSource;
+    const dataSource: DataType[] = props.dataSource ?? [];
     return (
         <Container
             title={'DataAnalysis of Communication Time'}
@@ -130,11 +133,13 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
                 dataSource={dataSource}
                 columns={columns}
                 expandable={{
-                    expandedRowRender: (record: DataType) => <div style={{ marginLeft: '30px' }}><OperatorsTable record={record}/></div>,
+                    expandedRowRender: (record: DataType) => <div style={{ marginLeft: '30px' }}>
+                        <OperatorsTable record={record} conditions={props.conditions}/>
+                    </div>,
                     expandedRowKeys,
                     expandIcon: () => (<></>),
                 }}
-                rowKey={'Rank ID'}
+                rowKey={rowKey}
                 pagination={GetPageConfigWhithAllData(dataSource.length)}
                 size="small"
             />
