@@ -73,7 +73,6 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
                         rankList.push(arr[2]);
                     }
                     if (!stepList.includes(arr[0])) {
-                        console.log(arr[0]);
                         stepList.push(arr[0]);
                     }
                     CLUSTER_DATABASE.insertStepStatisticsInfo(mapperToStepStatisticsInfo(arr));
