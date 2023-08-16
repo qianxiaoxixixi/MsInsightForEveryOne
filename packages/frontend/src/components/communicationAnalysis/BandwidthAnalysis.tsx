@@ -12,7 +12,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { Container } from './Common';
 
-const BandwidthTable: React.FC<{ iterationId: number; rankId: number; operatorName: string }> = (props: any) => {
+const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [ data, setData ] = useState([]);
     useEffect(() => {
         updateData();
@@ -45,7 +45,7 @@ function wrapData(data: any): any {
     return [ { ...sdma, children: hp }, rdma ];
 }
 
-const BandwidthChart: React.FC<{ iterationId: number; rankId: number; operatorName: string }> = (props: any) => {
+const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     useEffect(() => {
         InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName);
         InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName);
@@ -78,7 +78,7 @@ const BandwidthChart: React.FC<{ iterationId: number; rankId: number; operatorNa
 };
 
 const BandwidthAnalysis = observer(function (props:
-{ iterationId: number; rankId: number; operatorName: string }) {
+{ iterationId: string; rankId: number; operatorName: string }) {
     return (
         <Layout>
             <Container

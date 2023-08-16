@@ -8,7 +8,7 @@ import { Breadcrumb } from 'antd';
 import { Session } from '../entity/session';
 import Help from '../components/communicationAnalysis/Help';
 import Filter, { conditionDataType } from '../components/communicationAnalysis/Filter';
-import CommunicationTimeTable from '../components/communicationAnalysis/CommunicationTimeTable';
+import CommunicationTimeTable, { DataType as tableDataType } from '../components/communicationAnalysis/CommunicationTimeTable';
 import CommunicationTimeChart, { dataType as chartDataType }
     from '../components/communicationAnalysis/CommunicationTimeChart';
 import CommunicationMatrix from '../components/communicationAnalysis/CommunicationMatrix';
@@ -38,17 +38,18 @@ interface showDataType{
 const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
     const res = await queryCommunication(conditions);
     res.duration.forEach((item: any) => { item.rankId = item.rank_id; });
+    return { chartData: wrapChartData(res.duration), tableData: res.duration };
+};
+const wrapChartData = (data: tableDataType[]): chartDataType => {
     // 显示字段
     const fields = [ 'rank_id', 'elapse_time', 'Transit_Time', 'synchronization_time',
         'wait_time', 'synchronization_time_Ratio', 'wait_time_ratio' ];
     const chartData: chartDataType = {} as chartDataType;
     fields.forEach(field => {
-        chartData[field] = res.duration.map((item: any) => item[field]);
+        chartData[field] = data.map((item: any) => item[field]);
     });
-
-    return { chartData, tableData: res.duration };
+    return chartData;
 };
-
 const isShow = (name: string): boolean => {
     return name === 'CommunicationDurationAnalysis';
 };
@@ -60,7 +61,7 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
         tableData: [],
     });
     const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: 0, rankIds: [], operatorName: '', type: '' });
+        { iterationId: '', rankIds: [], operatorName: '', type: '' });
     const showOperator = (rankId: string): void => {
         setRankId(rankId);
     };
@@ -81,7 +82,9 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
                 main={ <div style={{ padding: '0 16px' }}>
                     <CommunicationTimeChart dataSource={showData.chartData}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData}
-                        conditions={conditions} />
+                        conditions={conditions} updateSort={(data) => {
+                            setShowData({ ...showData, chartData: wrapChartData(data) });
+                        }}/>
                 </div>
                 }
                 dragSize={400}
