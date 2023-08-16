@@ -53,10 +53,10 @@ const Filter = observer((props: any) => {
     }, [props.groupData.init]);
     useEffect(() => {
         props.handleFilterChange(conditions);
-    }, [ conditions.step, conditions.orderBy ]);
+    }, [ conditions.step, conditions.orderBy, conditions.rankIds ]);
     useEffect(() => {
         props.handleFilterChange(conditions, false);
-    }, [ conditions.rankIds, conditions.top ]);
+    }, [conditions.top]);
     const initDefault = async (): Promise<void> => {
         const stepList: number[] = props.groupData.stepList;
         const stepOptions: optionDataType[] = [ 'All', ...stepList ].map(item => ({ value: item, label: item }));

@@ -184,18 +184,20 @@ const ComputationCommunicationOverview = (): JSX.Element => {
     useEffect(() => {
         handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
     }, [ ]);
+    useEffect(() => {
+        initCharts(dataSource, handleClick);
+    }, [dataSource]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (doQuery === false) {
-            let dataSource = [...allDataSource];
-            dataSource = dataSource.slice(0, conditions.top);
-            setDatasource(dataSource);
+            let data = [...allDataSource];
+            data = data.slice(0, conditions.top);
+            setDatasource(data);
             return;
         }
         const res = await queryTopSummary(conditions);
         const { summaryList, rankList, stepList } = res.result;
         setDatasource(summaryList);
         setAllDatasource(summaryList);
-        initCharts(summaryList, handleClick);
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });
         }
