@@ -228,5 +228,6 @@ export type SummaryStatisticsVO = {
 
 export type SummaryRequest = {
     limit: number;
+    stepId: string;
     orderBy: string;
 };
