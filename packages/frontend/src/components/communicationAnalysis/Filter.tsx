@@ -10,8 +10,8 @@ import { queryIterations, queryOperators, queryRanks } from '../../utils/Request
 import { Session } from '../../entity/session';
 
 export interface conditionDataType{
-    iterationId: number ;
-    rankIds: number[];
+    iterationId: string ;
+    rankIds: string[];
     operatorName: string ;
     type: string;
 }
@@ -21,8 +21,8 @@ interface optionMapDataType{
 }
 
 const getOptions = async(): Promise<any> => {
-    const iterationRes: {iterationsOrRanks: Array<{iteration_id: number } > } = await queryIterations();
-    const iterationlist: number[] = iterationRes.iterationsOrRanks.map(item => item.iteration_id);
+    const iterationRes: {iterationsOrRanks: Array<{iteration_id: string } > } = await queryIterations();
+    const iterationlist: string[] = iterationRes.iterationsOrRanks.map(item => item.iteration_id);
     const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
     const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId: iterationlist[0] });
     const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
@@ -33,9 +33,11 @@ const getOptions = async(): Promise<any> => {
     return { iterationOptions, rankIdOptions, operatorOptions, iterationId: iterationlist[0] };
 };
 
+export const totalOperator = 'Total Op Info';
+
 const Filter = observer((props: {session: Session;handleFilterChange: VoidFunction}) => {
     const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: 0, rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
+        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
     const [ options, setOptions ] = useState<optionMapDataType>(
         { iterationOptions: [], operatorOptions: [], rankIdOptions: [] },
     );
@@ -65,10 +67,10 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
         // 初始可选项
         setOptions({ ...options, iterationOptions, rankIdOptions, operatorOptions });
         // 初始查询条件
-        setConditions({ ...conditions, iterationId, operatorName: 'Total HCCL Operators' });
+        setConditions({ ...conditions, iterationId, operatorName: totalOperator });
     };
 
-    const updateRanks = async (iterationId: number): Promise<void> => {
+    const updateRanks = async (iterationId: string): Promise<void> => {
         const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId });
         const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
         const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
@@ -76,13 +78,13 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
         setConditions({ ...conditions, rankIds: [] });
     };
 
-    const updateOperator = async (rankIds: number[]): Promise<void> => {
+    const updateOperator = async (rankIds: string[]): Promise<void> => {
         const operatorRes = await queryOperators({ iterationId: conditions.iterationId, rankIds });
         const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
         const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
         setOptions({ ...options, operatorOptions });
-        if (conditions.operatorName !== 'Total HCCL Operators' && !operatorlist.includes(conditions.operatorName)) {
-            setConditions({ ...conditions, operatorName: 'Total HCCL Operators' });
+        if (conditions.operatorName !== totalOperator && !operatorlist.includes(conditions.operatorName)) {
+            setConditions({ ...conditions, operatorName: totalOperator });
         }
     };
 
@@ -96,7 +98,7 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
 const FilterCom = (props: any): JSX.Element => {
     const { conditions, handleChange, options = {} } = props;
     return (<div style={ { margin: '0 20px 10px' }}>
-        <Label name="Iteration ID" />
+        <Label name="Step" />
         <Select
             value={conditions.iterationId}
             style={{ width: 120 }}

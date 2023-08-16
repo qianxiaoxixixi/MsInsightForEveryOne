@@ -9,6 +9,7 @@ import { DownOutlined } from '@ant-design/icons';
 import { Container, GetPageConfigWhithAllData, PaginationWhithPgaeData } from './Common';
 import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
+import { totalOperator } from './Filter';
 
 export interface DataType {
     'Rank ID': string ;
@@ -119,12 +120,13 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
                         return list;
                     });
                 }}>see more<DownOutlined/></Button>),
-            display: conditions.operatorName === 'Total HCCL Operators',
+            display: conditions.operatorName === totalOperator,
         },
     ].filter((item: any) => item.display !== false);
 };
 const rowKey = 'rank_id';
-const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any}) {
+const CommunicationTimeTable = observer(function (props:
+{dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction}) {
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const columns = getRankColumns([ props.showOperator, setExpandedKeys ], props.conditions);
     const dataSource: DataType[] = props.dataSource ?? [];
@@ -144,6 +146,12 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
                 rowKey={rowKey}
                 pagination={GetPageConfigWhithAllData(dataSource.length)}
                 size="small"
+                onChange={(pagination, filters, sorter, extra) => {
+                    if (extra.action === 'sort') {
+                        props.updateSort(extra.currentDataSource);
+                    }
+                }
+                }
             />
             }
         />
