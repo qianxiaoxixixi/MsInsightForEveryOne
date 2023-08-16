@@ -128,7 +128,7 @@ export const importCommunication = (selectedPath: string, client: Client): void 
         logger.info('communication file is not found.');
         return;
     }
-    parseCommunicationFile(communicationFileArr);
+    parseCommunicationFile(communicationFileArr, client);
 };
 
 export const importKernelDetail = (parentPath: string, rankId: string): void => {

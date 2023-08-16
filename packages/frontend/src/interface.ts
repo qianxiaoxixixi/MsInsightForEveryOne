@@ -14,5 +14,6 @@ export type InterfaceDefs = {
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'test/notify': notificationTestHandler,
     'parse/success': parseSuccessHandler,
+    'parseCommunication/success': notificationTestHandler,
     'parse/fail': parseFailHandler,
 };
