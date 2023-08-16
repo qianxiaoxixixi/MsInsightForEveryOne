@@ -7,6 +7,8 @@
     "private": true,
     "dependencies": {
         "crypto-js": "^4.1.1",
+        "log4js": "6.7.1",
+        "lodash": "4.17.21",
         "sqlite3": "^5.1.5",
         "ws": "^8.5.0"
     },
@@ -15,6 +17,7 @@
         "@types/crypto-js": "^4.1.1",
         "@types/ws": "^8.5.4",
         "@typescript-eslint/eslint-plugin": "^5.59.2",
+        "@types/lodash": "^4.14.182",
         "eslint": "^8.40.0",
         "eslint-config-standard-with-typescript": "^22.0.0",
         "eslint-plugin-import": "^2.25.3",
