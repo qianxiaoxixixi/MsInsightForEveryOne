@@ -83,8 +83,6 @@ function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string,
     let j = 0;
     let tmpSelfTime = rows[0].duration;
     while (i < rows.length) {
-        const rowI = rows[i];
-        const rowJ = rows[j];
         // j滑完直接滑完所有i
         if (j === rows.length) {
             // 处理当前tmpSelfTime
@@ -97,6 +95,8 @@ function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string,
             }
             break;
         }
+        const rowI = rows[i];
+        const rowJ = rows[j];
         // 层数相等 or 同一元素, j右移
         if (rowI.depth === rowJ.depth || i >= j) {
             j++;
