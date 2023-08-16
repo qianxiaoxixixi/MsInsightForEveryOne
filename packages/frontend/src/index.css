@@ -191,7 +191,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     z-index: 10;
 }
 
-.theme_dark *{
+.theme_dark *:not(path){
     color:white;
 }
 
@@ -249,6 +249,10 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled){
     background-color: var(--grey70);
 }
+.theme_dark .ant-table-column-sorter-up.active svg,.theme_dark .ant-table-column-sorter-down.active svg {
+    color: #1890ff;
+}
+
 .loading {
     width: 18px;
     height: 18px;
@@ -278,3 +282,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .ant-layout {
     background: var(--grey80);
 }
+.theme_dark td.ant-table-column-sort {
+    background: var(--grey70);
+}
+

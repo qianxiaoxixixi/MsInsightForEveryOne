@@ -14,6 +14,15 @@ function InitCharts(data: dataType): void {
         myChart.setOption(wrapData(data));
     }
 }
+function wrapData(data: dataType): any {
+    baseOption.xAxis[0].data = data.rank_id;
+    const order: Array<keyof dataType> = [ 'elapse_time', 'Transit_Time', 'synchronization_time',
+        'wait_time', 'synchronization_time_Ratio', 'wait_time_ratio' ];
+    for (let i = 0; i < 6; i++) {
+        baseOption.series[i].data = data[order[i]];
+    }
+    return baseOption;
+}
 
 const baseOption: any = {
     tooltip: {
@@ -134,16 +143,6 @@ const baseOption: any = {
         },
     ],
 };
-
-function wrapData(data: dataType): any {
-    baseOption.xAxis[0].data = data['Rank ID'];
-    const order: Array<keyof dataType> = [ 'elapse_time', 'Transit_Time', 'synchronization_time',
-        'wait_time', 'synchronization_time_Ratio', 'wait_time_ratio' ];
-    for (let i = 0; i < 6; i++) {
-        baseOption.series[i].data = data[order[i]];
-    }
-    return baseOption;
-}
 
 export interface dataType{
     ranklist: string[];

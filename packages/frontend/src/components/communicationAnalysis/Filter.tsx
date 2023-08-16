@@ -10,7 +10,7 @@ import { queryIterations, queryOperators, queryRanks } from '../../utils/Request
 import { Session } from '../../entity/session';
 
 export interface conditionDataType{
-    iterationId: string | number;
+    iterationId: number ;
     rankIds: number[];
     operatorName: string ;
     type: string;
@@ -20,9 +20,22 @@ interface optionMapDataType{
     [props: string]: optionDataType[];
 }
 
+const getOptions = async(): Promise<any> => {
+    const iterationRes: {iterationsOrRanks: Array<{iteration_id: number } > } = await queryIterations();
+    const iterationlist: number[] = iterationRes.iterationsOrRanks.map(item => item.iteration_id);
+    const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
+    const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId: iterationlist[0] });
+    const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
+    const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
+    const operatorRes: any = await queryOperators({ iterationId: iterationlist[0], rankIds: [] });
+    const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
+    const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
+    return { iterationOptions, rankIdOptions, operatorOptions, iterationId: iterationlist[0] };
+};
+
 const Filter = observer((props: {session: Session;handleFilterChange: VoidFunction}) => {
     const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
+        { iterationId: 0, rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
     const [ options, setOptions ] = useState<optionMapDataType>(
         { iterationOptions: [], operatorOptions: [], rankIdOptions: [] },
     );
@@ -31,6 +44,10 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
     useEffect(() => {
         init();
     }, [props.session.allRankIds]);
+    // Iteration ID联动Rank ID
+    useEffect(() => {
+        updateRanks(conditions.iterationId);
+    }, [conditions.iterationId]);
     // Rank ID 联动算子选项
     useEffect(() => {
         updateOperator(conditions.rankIds);
@@ -43,20 +60,20 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
     }, [conditions]);
 
     const init = async(): Promise<void> => {
-        const iterationRes: {iterationsOrRanks: Array<{iteration_id: number } > } = await queryIterations();
-        const iterationlist: number[] = iterationRes.iterationsOrRanks.map(item => item.iteration_id);
-        const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
-        const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId: iterationlist[0] });
-        const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
-        const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
-        const operatorRes: any = await queryOperators({ iterationId: iterationlist[0], rankIds: [] });
-        const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
-        const operatorOptions: optionDataType[] = [ { value: 'Total HCCL Operators', label: 'Total HCCL Operators' },
-            ...operatorlist.map(item => ({ value: item, label: item })) ];
+        const optionsObj = await getOptions();
+        const { iterationOptions, rankIdOptions, operatorOptions, iterationId } = optionsObj;
         // 初始可选项
         setOptions({ ...options, iterationOptions, rankIdOptions, operatorOptions });
         // 初始查询条件
-        setConditions({ ...conditions, iterationId: iterationlist[0], operatorName: 'Total HCCL Operators' });
+        setConditions({ ...conditions, iterationId, operatorName: 'Total HCCL Operators' });
+    };
+
+    const updateRanks = async (iterationId: number): Promise<void> => {
+        const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId });
+        const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
+        const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
+        setOptions({ ...options, rankIdOptions });
+        setConditions({ ...conditions, rankIds: [] });
     };
 
     const updateOperator = async (rankIds: number[]): Promise<void> => {
@@ -64,7 +81,7 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
         const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
         const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
         setOptions({ ...options, operatorOptions });
-        if (conditions.operatorName !== 'total' && !operatorlist.includes(conditions.operatorName)) {
+        if (conditions.operatorName !== 'Total HCCL Operators' && !operatorlist.includes(conditions.operatorName)) {
             setConditions({ ...conditions, operatorName: 'Total HCCL Operators' });
         }
     };

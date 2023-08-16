@@ -12,19 +12,19 @@ const columns = [
     },
     {
         title: 'Computing',
-        dataIndex: 'totalPureCommunicationTime',
+        dataIndex: 'computingTime',
     },
     {
         title: 'Communication(Not Overlapped)',
-        dataIndex: 'totalPureCommunicationTime',
+        dataIndex: 'communicationNotOverLappedTime',
     },
     {
         title: 'Communication(Overlapped)',
-        dataIndex: 'totalCommunicationNotOverLapTime',
+        dataIndex: 'communicationOverLappedTime',
     },
     {
         title: 'Free',
-        dataIndex: 'totalFreeTime',
+        dataIndex: 'freeTime',
     },
     {
         title: 'Computing Time Ratio',
@@ -36,8 +36,9 @@ const columns = [
     },
 ];
 const SummaryTable = (props: any): JSX.Element => {
-    const { dataSource = [] } = props;
+    const { dataSource = [], style = {} } = props;
     return (<Table
+        style={style}
         dataSource={dataSource}
         columns={columns}
         pagination={GetPageConfigWhithAllData(dataSource.length)}

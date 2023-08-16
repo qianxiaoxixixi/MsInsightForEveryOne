@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import * as echarts from 'echarts';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import { VoidFunction } from '../../utils/interface';
@@ -11,11 +11,10 @@ import { queryTopSummary } from '../../utils/RequestUtils';
 
 interface SummaryDataType{
     rankId: string ;
-    totalComputeTime: number;
-    totalPureCommunicationTime: number;
-    totalCommunicationNotOverLapTime: number;
-    totalCommunicationTime: number;
-    totalFreeTime: number;
+    computingTime: number;
+    communicationNotOverLappedTime: number;
+    communicationOverLappedTime: number;
+    freeTime: number;
     ComputeTimeRatio?: string | number;
     CommunicationTimeRatio?: string | number;
 }
@@ -72,7 +71,7 @@ const baseOption: any = {
     ],
     series: [
         {
-            id: 'totalComputeTime',
+            id: 'compute',
             name: 'Computing',
             type: 'bar',
             stack: 'Ad',
@@ -87,7 +86,7 @@ const baseOption: any = {
             data: [ ],
         },
         {
-            id: 'totalCommunicationNotOverLapTime',
+            id: 'communicationNotOverLappedTime',
             name: 'Communication(Not Overlapped)',
             type: 'bar',
             stack: 'Ad',
@@ -102,7 +101,7 @@ const baseOption: any = {
             data: [ ],
         },
         {
-            id: 'totalCommunicationTime',
+            id: 'communicationOverLappedTime',
             name: 'Communication(Overlapped)',
             type: 'bar',
             stack: 'Ad',
@@ -117,7 +116,7 @@ const baseOption: any = {
             data: [ ],
         },
         {
-            id: 'totalFreeTime',
+            id: 'freeTime',
             name: 'Free',
             type: 'bar',
             stack: 'Ad',
@@ -157,8 +156,8 @@ const baseOption: any = {
 };
 function wrapData(data: SummaryDataType[]): any {
     baseOption.xAxis[0].data = data.map(item => item.rankId);
-    const order: Array<keyof SummaryDataType> = [ 'totalComputeTime', 'totalCommunicationNotOverLapTime',
-        'totalCommunicationTime', 'totalFreeTime', 'ComputeTimeRatio', 'CommunicationTimeRatio' ];
+    const order: Array<keyof SummaryDataType> = [ 'computingTime', 'communicationNotOverLappedTime',
+        'communicationOverLappedTime', 'freeTime', 'ComputeTimeRatio', 'CommunicationTimeRatio' ];
     for (let i = 0; i < order.length; i++) {
         baseOption.series[i].data = data.map(item => item[order[i]]);
     }
@@ -176,16 +175,21 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 }
 
 const ComputationCommunicationOverview = (): JSX.Element => {
-    const [ groupData, setGroupData ] = useState({ rankCount: 0, stepNum: 0 });
+    const [ groupData, setGroupData ] = useState({ rankList: [], stepList: [], init: false });
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ selected, setSelected ] = useState({ rankId: '', timeFlag: '' });
 
+    useEffect(() => {
+        handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
+    }, [ ]);
     const handleFilterChange = async (conditions: ConditionDataType): Promise<void> => {
-        const data = await queryTopSummary(conditions);
-        const { summaryList, rankCount, stepNum } = data;
+        const res = await queryTopSummary(conditions);
+        const { summaryList, rankList, stepList } = res.result;
         setDatasource(summaryList);
         initCharts(summaryList, handleClick);
-        setGroupData({ rankCount, stepNum });
+        if (!groupData.init) {
+            setGroupData({ rankList, stepList, init: true });
+        }
     };
 
     const handleClick = (param: any): void => {
@@ -196,12 +200,12 @@ const ComputationCommunicationOverview = (): JSX.Element => {
     };
     return <div style={{ textAlign: 'left', padding: '0 20px' }} className={'header-fixed-content-scroll'}>
         <div>
-            <div className={'common-title-bottom'}>Computation/CommunicationOverview</div>
+            <div className={'common-title-bottom'}>Computation/Communication Overview</div>
             <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
             <div id={'overview-chart'} style={{ height: '400px' }} ></div>
         </div>
         <div>
-            <SummaryTable dataSource={dataSource}/>
+            <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
             <StatisticsTable {...selected}/>
         </div>
     </div>;
