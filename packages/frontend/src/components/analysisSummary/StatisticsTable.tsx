@@ -6,24 +6,24 @@ import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
 import { PaginationWhithPgaeData, notNull } from '../communicationAnalysis/Common';
-import { querySummaryDetail, querySummaryStatistics } from '../../utils/RequestUtils';
+import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 
 const computingStatisticsColumns = [
     {
         title: 'Accelerator Core',
-        dataIndex: 'Accelerator Core',
-        key: 'Accelerator Core',
+        dataIndex: 'acceleratorCore',
+        key: 'acceleratorCore',
     },
     {
         title: 'Accelerator Core Durations(us)',
-        dataIndex: 'Accelerator Core Durations(us)',
-        key: 'Accelerator Core Durations(us)',
+        dataIndex: 'duration',
+        key: 'duration',
     },
 
     {
         title: 'Accelerator Core Utilization',
-        dataIndex: 'Accelerator Core Utilization',
-        key: 'Accelerator Core Utilization',
+        dataIndex: 'utilization',
+        key: 'utilization',
     },
 ];
 
@@ -46,48 +46,48 @@ const computingDetailColumns = [
     },
     {
         title: 'Wait Time(us)',
-        dataIndex: 'waitTime',
+        dataIndex: 'wait_time',
     },
     {
         title: 'Block Dim',
-        dataIndex: 'blockDim',
+        dataIndex: 'block_dim',
     },
     {
         title: 'Input Shapes',
-        dataIndex: 'inputShapes',
+        dataIndex: 'input_shapes',
     },
     {
         title: 'Input Data Types',
-        dataIndex: 'inputDataTypes',
+        dataIndex: 'input_data_types',
     },
     {
         title: 'Input Formats',
-        dataIndex: 'inputFormats',
+        dataIndex: 'input_formats',
     },
     {
         title: 'Output Shapes',
-        dataIndex: 'outputShapes',
+        dataIndex: 'output_shapes',
     },
     {
         title: 'Output Data Types',
-        dataIndex: 'outputDataTypes',
+        dataIndex: 'output_data_types',
     },
     {
         title: 'Output Formats',
-        dataIndex: 'outputFormats',
+        dataIndex: 'output_formats',
     },
 ];
 
 const communicationStatisticsColumns = [
     {
         title: 'Transport Type',
-        dataIndex: 'Transport Type',
-        key: 'Transport Type',
+        dataIndex: 'transportType',
+        key: 'transportType',
     },
     {
         title: 'Total Durations(us)',
-        dataIndex: 'Total Durations(us)',
-        key: 'Total Durations(us)',
+        dataIndex: 'duration',
+        key: 'duration',
     },
 ];
 
@@ -129,26 +129,24 @@ const communicationNotOverlappedColumns = [
 
 const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     const rowKeyMap: any = {
-        Computing: 'Accelerator Core',
-        ComputingDetail: 'Name',
-        'Communication(OverLapped)': 'Transport Type',
-        'Communication(Not OverLapped)': 'Transport Type',
+        compute: 'acceleratorCore',
+        communicationOverLappedTime: 'transportType',
+        communicationNotOverLappedTime: 'transportType',
     };
     const colMap: any = {
-        Computing: computingStatisticsColumns,
-        ComputingDetail: computingDetailColumns,
-        'Communication(OverLapped)': communicationStatisticsColumns,
-        'Communication(Not OverLapped)': communicationStatisticsColumns,
-        'Communication(OverLapped)Detail': communicationOverlappedColumns,
-        'Communication(Not OverLapped)Detail': communicationNotOverlappedColumns,
+        compute: computingStatisticsColumns,
+        computeDetail: computingDetailColumns,
+        communicationOverLappedTime: communicationStatisticsColumns,
+        communicationNotOverLappedTime: communicationStatisticsColumns,
+        communicationOverLappedTimeDetail: communicationOverlappedColumns,
+        communicationNotOverLappedTimeDetail: communicationNotOverlappedColumns,
     };
     const rowKey = rowKeyMap[timeFlag];
     const columns = notNull(colMap[timeFlag]) ? [...colMap[timeFlag]] : [];
 
-    if ([ 'Computing', 'Communication(OverLapped)', 'Communication(Not OverLapped)' ].includes(timeFlag)) {
+    if ([ 'compute', 'communicationOverLappedTime', 'communicationNotOverLappedTime' ].includes(timeFlag)) {
         const btnCol = {
-            title: 'See Details',
-            key: 'action',
+            title: 'Details',
             render: (_: any, record: any) => (<Button type="link"
                 onClick={() => {
                     setExpandedKeys((pre: string[]) => {
@@ -161,7 +159,7 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
                         }
                         return list;
                     });
-                }}>see details<DownOutlined/></Button>),
+                }}>details<DownOutlined/></Button>),
         };
         columns.push(btnCol);
     }
@@ -169,16 +167,36 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     return { rowKey, columns };
 };
 
-const DtetailTable = ({ rankId, timeFlag }: any): JSX.Element => {
+const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const { columns, rowKey } = getTableSet(timeFlag);
+    const { columns, rowKey } = getTableSet(name);
     useEffect(() => {
-        updateData();
+        updateData({ current: 1, pageSize: 10 });
     }, []);
-    const updateData = async(page?: any): Promise<void> => {
-        const data = await querySummaryDetail({ rankId, timeFlag, ...page });
+    const updateData = async(page: any): Promise<void> => {
+        let data;
+        let total;
+        if (name === 'computing') {
+            const res = await queryComputeDetail({
+                rankId,
+                timeFlag: record.acceleratorCore,
+                currentPage: page.current,
+                pageSize: page.pageSize,
+            });
+            data = res.computeDetail;
+            total = res.totalNum;
+        } else {
+            const res = await queryCommunicationDetail({
+                rankId,
+                timeFlag: record.transportType,
+                currentPage: page.current,
+                pageSize: page.pageSize,
+            });
+            data = res.communicationDetail;
+            total = res.totalNum;
+        }
         setDataSource(data);
-        setPageInfo({ total: data.length });
+        setPageInfo({ total });
     };
 
     const [ pageInfo, setPageInfo ] = useState({ total: 0 });
@@ -199,27 +217,28 @@ const DtetailTable = ({ rankId, timeFlag }: any): JSX.Element => {
 };
 
 const timeFlagMap: StringMap = {
-    totalComputeTime: 'Computing',
-    totalCommunicationNotOverLapTime: 'Communication(Not OverLapped)',
-    totalCommunicationTime: 'Communication(OverLapped)',
-    totalFreeTime: 'Free',
+    compute: 'Computing',
+    communicationNotOverLappedTime: 'Communication(Not OverLapped)',
+    communicationOverLappedTime: 'Communication(OverLapped)',
+    freeTime: 'Free',
 };
 function getTitle(timeFlag: string): string {
-    return (timeFlagMap[timeFlag] || '') + ' Detail';
+    return (timeFlagMap[timeFlag]) + ' Detail';
 }
 const StatisticsTable = (props: any): JSX.Element => {
-    let { timeFlag = '', rankId = '' } = props;
-    timeFlag = timeFlagMap[timeFlag];
-    useEffect(() => {
-        updateData();
-    }, [ props.rankId, props.timeFlag ]);
-    const updateData = async (): Promise<void> => {
-        const data = await querySummaryStatistics({ timeFlag, rankId });
-        setDataSource(data);
-    };
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
+    const { timeFlag = '', rankId = '' } = props;
+    const [ dataSource, setDataSource ] = useState<any>([]);
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
+
+    useEffect(() => {
+        updateData();
+        setExpandedKeys([]);
+    }, [ props.rankId, props.timeFlag ]);
+    const updateData = async (): Promise<void> => {
+        const res = await querySummaryStatistics({ timeFlag, rankId });
+        setDataSource(res.result as {acceleratorCore: string;duration: number;utilization: number});
+    };
 
     return notNull(rankId) && notNull(timeFlag)
         ? (
@@ -229,7 +248,8 @@ const StatisticsTable = (props: any): JSX.Element => {
                     dataSource={dataSource}
                     columns={columns}
                     expandable={{
-                        expandedRowRender: record => <DtetailTable timeFlag={timeFlag + 'Detail' } rankId={rankId}/>,
+                        expandedRowRender: record => <DtetailTable record={record}
+                            name={timeFlag + 'Detail' } rankId={rankId}/>,
                         expandedRowKeys,
                         expandIcon: () => (<></>),
                     }}

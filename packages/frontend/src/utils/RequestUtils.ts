@@ -97,28 +97,29 @@ export const querySummaryStatistics = async (param: {rankId: string; timeFlag: s
  * @param {number} currentPage
  * @return {[]} 返回数组
  */
-export const querySummaryDetail = async (param: {
+export const queryComputeDetail = async (param: {
     rankId: string; timeFlag: string; pageSize: number;currentPage: number;}): Promise<any> => {
     if (isNull(window.request)) {
         return [ ];
     }
-    return window.request('summary/statistic/detail', param);
+    return window.request('summary/queryComputeDetail', param);
+};
+
+export const queryCommunicationDetail = async (param: {
+    rankId: string; timeFlag: string; pageSize: number;currentPage: number;}): Promise<any> => {
+    if (isNull(window.request)) {
+        return [ ];
+    }
+    return window.request('summary/queryCommunicationDetail', param);
 };
 
 export const queryTopSummary = async (param:
 {
     step: string | number;
     rankIds: string[];
-    order: string | number;
+    orderBy: string ;
     top: number;
 },
 ): Promise<any> => {
-    if (isNull(window.request)) {
-        return {
-            summaryList: computationCommunicationData.top,
-            rankCount: 9,
-            stepNum: 10,
-        };
-    }
     return window.request('summary/queryTopData', param);
 };
