@@ -205,7 +205,6 @@ export class ClusterDatabase {
             this.insertCommunicationBandWidthList(this.communicationBandWidthCaches);
             this.communicationBandWidthCaches = [];
         }
-        this.close();
     }
 
     close(): void {
