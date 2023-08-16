@@ -87,6 +87,7 @@ export class InsightConnection {
                 method,
             });
             const reqCallback = (res: Response): void => {
+                console.log('【Request】', method, params);
                 console.log('[connector]', 'received:', res);
                 if (res.result !== undefined) {
                     // wedge: return cache resolve

@@ -9,7 +9,7 @@ import { Label, MultiSelectWithAll } from '../communicationAnalysis/Common';
 export interface ConditionDataType {
     step: string | number;
     rankIds: string[];
-    order: string | number;
+    orderBy: string ;
     top: number;
 }
 
@@ -22,22 +22,29 @@ interface optionDataType{
 interface optionMapDataType{
     [props: string]: optionDataType[];
 }
+const orderOptions = [
+    { label: 'Computing', value: 'computingTime' },
+    { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
+    { label: 'Communication(Overlapped)', value: 'communicationOverLappedTime' },
+    { label: 'Free', value: 'freeTime' },
+];
 
 const Filter = observer((props: any) => {
     const [ conditions, setConditions ] = useState<ConditionDataType>(
-        { step: 'All', rankIds: [], order: 'Computing', top: 0 });
+        { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
     const [ options, setOptions ] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
         initDefault();
-    }, [ props.groupData.rankCount, props.groupData.stepNum ]);
+    }, [props.groupData.init]);
+    useEffect(() => {
+        props.handleFilterChange(conditions);
+    }, [conditions]);
     const initDefault = async (): Promise<void> => {
-        const steplist: number[] = new Array(props.groupData.stepNum).fill(0).map((item, index) => index);
-        const stepOptions: optionDataType[] = [ 'All', ...steplist ].map(item => ({ value: item, label: item }));
-        const rankIds: number[] = new Array(props.groupData.rankCount).fill(0).map((item, index) => index);
+        const stepList: number[] = props.groupData.stepList;
+        const stepOptions: optionDataType[] = [ 'All', ...stepList ].map(item => ({ value: item, label: item }));
+        const rankIds: number[] = props.groupData.rankList;
         const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
-        const orderlist = [ 'Computing', 'Communication(Not Overlapped)', 'Communication(Overlapped)', 'Free' ];
-        const orderOptions: optionDataType[] = orderlist.map(item => ({ value: item, label: item }));
         const topOptions = getTopOptions(rankIds.length);
         setOptions({ stepOptions, topOptions, rankIdOptions, orderOptions });
         setConditions({ ...conditions, top: rankIds.length });
@@ -60,9 +67,6 @@ const Filter = observer((props: any) => {
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {
         setConditions({ ...conditions, [prop]: val });
     };
-    useEffect(() => {
-        props.handleFilterChange(conditions);
-    }, [conditions]);
 
     return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);
 });
@@ -87,9 +91,9 @@ const FilterCom = (props: any): JSX.Element => {
         />
         <Label name="Order By"/>
         <Select
-            value={conditions.order}
+            value={conditions.orderBy}
             style={{ width: 280 }}
-            onChange={(val: any) => handleChange('order', val)}
+            onChange={(val: any) => handleChange('orderBy', val)}
             options={options.orderOptions}
         />
         <Label name="Top"/>
