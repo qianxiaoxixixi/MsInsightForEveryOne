@@ -29,6 +29,20 @@ const orderOptions = [
     { label: 'Free', value: 'freeTime' },
 ];
 
+// Top可选项： 1、2、4、8.......n(All)
+const getTopOptions = (count: number): optionDataType[] => {
+    const logIndex = Math.ceil(Math.log2(count > 0 ? count : 1));
+    const toplist = [];
+    for (let i = 0; i < logIndex; i++) {
+        toplist.push(Math.pow(2, i));
+    }
+    const topOptions: optionDataType[] = toplist.map(item => ({ value: item, label: item }));
+    if (count > 0) {
+        topOptions.push({ value: count, label: `${count} ( All )` });
+    }
+    return topOptions;
+};
+
 const Filter = observer((props: any) => {
     const [ conditions, setConditions ] = useState<ConditionDataType>(
         { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
@@ -39,7 +53,10 @@ const Filter = observer((props: any) => {
     }, [props.groupData.init]);
     useEffect(() => {
         props.handleFilterChange(conditions);
-    }, [conditions]);
+    }, [ conditions.step, conditions.orderBy ]);
+    useEffect(() => {
+        props.handleFilterChange(conditions, false);
+    }, [ conditions.rankIds, conditions.top ]);
     const initDefault = async (): Promise<void> => {
         const stepList: number[] = props.groupData.stepList;
         const stepOptions: optionDataType[] = [ 'All', ...stepList ].map(item => ({ value: item, label: item }));
@@ -48,20 +65,6 @@ const Filter = observer((props: any) => {
         const topOptions = getTopOptions(rankIds.length);
         setOptions({ stepOptions, topOptions, rankIdOptions, orderOptions });
         setConditions({ ...conditions, top: rankIds.length });
-    };
-
-    // Top可选项： 1、2、4、8.......n(All)
-    const getTopOptions = (count: number): optionDataType[] => {
-        const logIndex = Math.ceil(Math.log2(count > 0 ? count : 1));
-        const toplist = [];
-        for (let i = 0; i < logIndex; i++) {
-            toplist.push(Math.pow(2, i));
-        }
-        const topOptions: optionDataType[] = toplist.map(item => ({ value: item, label: item }));
-        if (count > 0) {
-            topOptions.push({ value: count, label: `${count} ( All )` });
-        }
-        return topOptions;
     };
 
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {

@@ -176,7 +176,7 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
     const updateData = async(page: any): Promise<void> => {
         let data;
         let total;
-        if (name === 'computing') {
+        if (name === 'computeDetail') {
             const res = await queryComputeDetail({
                 rankId,
                 timeFlag: record.acceleratorCore,
@@ -237,7 +237,7 @@ const StatisticsTable = (props: any): JSX.Element => {
     }, [ props.rankId, props.timeFlag ]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId });
-        setDataSource(res.result as {acceleratorCore: string;duration: number;utilization: number});
+        setDataSource(res.result ?? []);
     };
 
     return notNull(rankId) && notNull(timeFlag)
