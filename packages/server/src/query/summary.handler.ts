@@ -44,7 +44,7 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
     return { result };
 };
 
-export const summaryStatisticHandler = async (request: {rankId: string; timeFlag: string}):
+export const summaryStatisticHandler = async (request: {rankId: string; timeFlag: string; stepId: string}):
 Promise<Record<string, SummaryStatisticsVO[]>> => {
     logger.info('request to summaryStatisticHandler', request.rankId, request.timeFlag);
     const table = tableMap.get(request.rankId);
@@ -52,9 +52,15 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
         logger.error('can not find this rank database,', request.rankId);
         return { result: [] };
     }
+    let param: any[] = [];
+    let stepCondition = '';
+    if (request.stepId !== undefined && request.stepId !== '' && request.stepId !== 'ALL') {
+        param.push(request.stepId);
+        stepCondition = 'and step_id = ?';
+    }
     const rows: SummaryStatisticsVO[] = [];
     if (request.timeFlag.includes('compute')) {
-        const computeStatistics = await table.queryComputeStatisticsData();
+        const computeStatistics = await table.queryComputeStatisticsData(stepCondition, param);
         let total = 0;
         computeStatistics?.forEach((row: any) => {
             total = total + row.duration;
@@ -68,7 +74,16 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
             });
         });
     } else {
-        const communicationStatistics = await table.queryCommunicationStatisticsData();
+        let timestampCondition = '';
+        if (stepCondition !== '') {
+            param = [];
+            const stepDuration = await table.queryStepDuration('ProfilerStep#' + request.stepId);
+            if (stepDuration !== undefined) {
+                timestampCondition = ' and timestamp > ? and timestamp < ? ';
+                param = [ stepDuration.timestamp, stepDuration.timestamp + stepDuration.duration ];
+            }
+        }
+        const communicationStatistics = await table.queryCommunicationStatisticsData(timestampCondition, param);
         communicationStatistics?.forEach((row: any) => {
             rows.push({ transportType: row.transportType, acceleratorCore: '', duration: row.duration, utilization: 0 });
         });
