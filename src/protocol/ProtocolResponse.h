@@ -114,9 +114,9 @@ struct UnitThreadTracesResponse : public Response {
 
 struct Threads {
     std::string title;
-    uint32_t wallDuration = 0;
-    uint32_t occurrences = 0;
-    uint32_t avgWallDuration = 0;
+    uint64_t wallDuration;
+    uint64_t occurrences;
+    uint64_t avgWallDuration;
     uint64_t selfTime;
 };
 
@@ -202,6 +202,29 @@ struct UnitChartBody {
 struct UnitChartResponse : public Response {
     UnitChartResponse() : Response(REQ_RES_UNIT_CHART) {}
     UnitChartBody body;
+};
+
+// struct
+struct RowThreadTrace {
+    int64_t id;
+    int64_t start_time;
+    int64_t duration;
+    std::string name;
+    int64_t depth;
+    int64_t trace_id;
+};
+
+struct ExtremumTimestamp {
+    int64_t minTimestamp;
+    int64_t maxTimestamp;
+};
+
+struct SimpleSlice {
+    int64_t timestamp;
+    int64_t duration;
+    int64_t endTime;
+    std::string name;
+    int64_t depth;
 };
 #pragma endregion
 } // end of namespace Protocol
