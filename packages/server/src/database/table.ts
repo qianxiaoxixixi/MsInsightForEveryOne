@@ -797,15 +797,15 @@ export class Table {
         });
     }
 
-    async queryComputeStatisticsData(): Promise<any> {
+    async queryComputeStatisticsData(stepCondition: string, param: string[]): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT
                                  sum(duration) as duration,
                                  accelerator_core as acceleratorCore
                                  FROM ${KERNEL_DETAIL_TABLE}
-                                 WHERE accelerator_core in ('AI_CPU','AI_CORE')
+                                 WHERE accelerator_core in ('AI_CPU','AI_CORE') ${stepCondition}
                                  GROUP BY accelerator_core`;
-            this.db.all(sql, [], async (err, rows) => {
+            this.db.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error('queryComputeStatisticsData error:', err.message);
                     reject(err);
@@ -816,19 +816,37 @@ export class Table {
         });
     }
 
-    async queryCommunicationStatisticsData(): Promise<any> {
+    async queryCommunicationStatisticsData(timestampCondition: string, param: number[]): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `select sum(duration) as duration,
                                     json_extract(args, '$.transport type') as  transportType
                                     from ${this.sliceTable}
                                     where track_id = (select track_id from thread where thread_name='Communication OP')
+                                    ${timestampCondition}
                                     group by json_extract(args, '$.transport type')`;
-            this.db.all(sql, [], async (err, rows) => {
+            this.db.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error('queryCommunicationStatisticsData error:', err.message);
                     reject(err);
                 } else {
                     resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryStepDuration(stepIdProfilerName: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `select duration,
+                                    timestamp
+                                    from ${this.sliceTable}
+                                    where name=?`;
+            this.db.get(sql, [stepIdProfilerName], async (err, result) => {
+                if (err !== undefined && err !== null) {
+                    logger.error('queryCommunicationStatisticsData error:', err.message);
+                    reject(err);
+                } else {
+                    resolve(result);
                 }
             });
         });

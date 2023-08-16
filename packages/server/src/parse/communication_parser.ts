@@ -9,10 +9,11 @@ import { mapperToBandWidthEntity, mapperToStepStatisticsInfo, mapperToTimeInfoEn
 import JSONStream from 'JSONStream';
 import readline from 'readline';
 import { getFolderSize } from '../utils/common_util';
+import { Client } from '../types';
 
 const logger = getLoggerByName('communicationParser', 'info');
 
-export function parseCommunicationFile(filePathArr: string[]): void {
+export function parseCommunicationFile(filePathArr: string[], client?: Client): void {
     const start = new Date().getTime();
     for (const filePath of filePathArr) {
         logger.info('start save communication data into db ,file:', filePath);
@@ -47,6 +48,7 @@ export function parseCommunicationFile(filePathArr: string[]): void {
         });
         parser.on('end', () => {
             CLUSTER_DATABASE.saveCommunicationData();
+            client?.notify('parseCommunication/success', { parseResult: 'ok' });
             const end = new Date().getTime();
             logger.info('cost time :', end - start);
             logger.info('Finished parsing file. time info:{}, bandWidth:{}', countTimeInfo, countBandWidth);
