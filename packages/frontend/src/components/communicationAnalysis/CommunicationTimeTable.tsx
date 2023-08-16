@@ -28,15 +28,16 @@ const commonColumns = [
     {
         title: 'Elapse Time(ms)',
         dataIndex: 'elapse_time',
+        sorter: (a: DataType, b: DataType) => a.elapse_time - b.elapse_time,
     },
     {
         title: 'Transit Time(ms)',
-        dataIndex: 'Transit_Time',
+        dataIndex: 'transit_time',
     },
     {
         title: 'Synchronization Time(ms)',
         dataIndex: 'synchronization_time',
-        sorter: (a: DataType, b: DataType) => a.SynchronizationTime - b.SynchronizationTime,
+        sorter: (a: DataType, b: DataType) => a.synchronization_time - b.synchronization_time,
     },
     {
         title: 'Wait Time(ms)',
@@ -44,7 +45,7 @@ const commonColumns = [
     },
     {
         title: 'Synchronization Time Ratio',
-        dataIndex: 'synchronization_time_Ratio',
+        dataIndex: 'synchronization_time_ratio',
     },
     {
         title: 'Wait Time Ratio',
@@ -52,7 +53,7 @@ const commonColumns = [
     },
     {
         title: 'Idle Time(ms)',
-        dataIndex: 'Idle Time(ms)',
+        dataIndex: 'idle_time',
     } ];
 
 // Total HCCL Opertators表
@@ -84,7 +85,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     </div>;
 };
 
-const getRankColumns = (handleAction: VoidFunction[]): any => {
+const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
     const [ showOperator, setExpandedKeys ] = handleAction;
     return [
         {
@@ -118,13 +119,14 @@ const getRankColumns = (handleAction: VoidFunction[]): any => {
                         return list;
                     });
                 }}>see more<DownOutlined/></Button>),
+            display: conditions.operatorName === 'Total HCCL Operators',
         },
-    ];
+    ].filter((item: any) => item.display !== false);
 };
 const rowKey = 'rank_id';
 const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any}) {
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
-    const columns = getRankColumns([ props.showOperator, setExpandedKeys ]);
+    const columns = getRankColumns([ props.showOperator, setExpandedKeys ], props.conditions);
     const dataSource: DataType[] = props.dataSource ?? [];
     return (
         <Container

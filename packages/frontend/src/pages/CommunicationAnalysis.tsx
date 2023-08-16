@@ -18,7 +18,7 @@ import { queryCommunication } from '../utils/RequestUtils';
 
 const Operators = ({ returnHome, rankId, operatorName, session }: any): JSX.Element => {
     return (
-        <div className={'fullbox'} style={{ padding: '0 20px' }}>
+        <div className={'fullbox'} style={{ padding: '0 20px', overflow: 'auto' }}>
             <Breadcrumb>
                 <Breadcrumb.Item onClick={returnHome }>
                     <a><ArrowLeftOutlined /><Space length={10}/><span>Communication Duration Analysis</span></a>
@@ -60,7 +60,7 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
         tableData: [],
     });
     const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: '' });
+        { iterationId: 0, rankIds: [], operatorName: '', type: '' });
     const showOperator = (rankId: string): void => {
         setRankId(rankId);
     };
