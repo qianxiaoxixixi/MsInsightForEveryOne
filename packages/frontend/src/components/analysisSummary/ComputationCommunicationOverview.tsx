@@ -17,6 +17,7 @@ interface SummaryDataType{
     freeTime: number;
     ComputeTimeRatio?: string | number;
     CommunicationTimeRatio?: string | number;
+    [propName: string]: any;
 }
 
 const baseOption: any = {
@@ -177,15 +178,23 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 const ComputationCommunicationOverview = (): JSX.Element => {
     const [ groupData, setGroupData ] = useState({ rankList: [], stepList: [], init: false });
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
+    const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
     const [ selected, setSelected ] = useState({ rankId: '', timeFlag: '' });
 
     useEffect(() => {
         handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
     }, [ ]);
-    const handleFilterChange = async (conditions: ConditionDataType): Promise<void> => {
+    const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
+        if (doQuery === false) {
+            let dataSource = [...allDataSource];
+            dataSource = dataSource.slice(0, conditions.top);
+            setDatasource(dataSource);
+            return;
+        }
         const res = await queryTopSummary(conditions);
         const { summaryList, rankList, stepList } = res.result;
         setDatasource(summaryList);
+        setAllDatasource(summaryList);
         initCharts(summaryList, handleClick);
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });

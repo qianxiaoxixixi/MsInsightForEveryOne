@@ -21,7 +21,7 @@ export const queryIterations = async(): Promise<any> => {
  * @param {string} iterationId 迭代ID
  * @return {[]} 返回Rank数组[0,1,2,3]
  */
-export const queryRanks = async(param: {iterationId: number }): Promise<any> => {
+export const queryRanks = async(param: {iterationId: string }): Promise<any> => {
     if (isNull(window.request)) {
         return [ 0, 1, 2, 3 ];
     }
@@ -34,7 +34,7 @@ export const queryRanks = async(param: {iterationId: number }): Promise<any> => 
  * @param {number[]} rankIds rankId数组
  * @return {[]} 返回算子名数组[0,1,2,3]
  */
-export const queryOperators = async(param: {iterationId: string | number;rankIds: number[]}): Promise<any> => {
+export const queryOperators = async(param: {iterationId: string ;rankIds: string[]}): Promise<any> => {
     if (isNull(window.request)) {
         return [ 'op1', 1, 2, 3 ];
     }
@@ -50,7 +50,7 @@ export const queryOperators = async(param: {iterationId: string | number;rankIds
  * @return {[]} 返回数组
  */
 export const queryCommunication = async(param: {
-    iterationId: string | number; rankIds: number[]; operatorName: string;
+    iterationId: string ; rankIds: string[]; operatorName: string;
 }): Promise<any> => {
     if (isNull(window.request)) {
         return communicationAnalysisData;
