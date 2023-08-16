@@ -11,21 +11,22 @@ export const KERNEL_DETAIL_TABLE = 'kernel_detail';
 export const CREATE_COMMUNICATION_TIME_INFO_SQL = `CREATE TABLE ${COMMUNICATION_TIME_INFO_TABLE}
                                                (
                                                    id                         INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                   iteration_id               INT,
-                                                   rank_id                    INT,
+                                                   iteration_id               VARCHAR(50),
+                                                   rank_id                    VARCHAR(50),
                                                    op_name                    VARCHAR(100),
                                                    elapse_time                double,
                                                    synchronization_time_ratio double,
                                                    synchronization_time       double,
                                                    transit_time               double,
                                                    wait_time_ratio            double,
-                                                   wait_time                  double
+                                                   wait_time                  double,
+                                                   idle_time                  double
                                                )`;
 export const CREATE_COMMUNICATION_BANDWIDTH_INFO_SQL = `CREATE TABLE ${COMMUNICATION_BAND_WIDTH_TABLE}
                                                     (
                                                         id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                        iteration_id          INT,
-                                                        rank_id               INT,
+                                                        iteration_id          VARCHAR(50),
+                                                        rank_id               VARCHAR(50),
                                                         op_name               VARCHAR(100),
                                                         transport_type        VARCHAR(20),
                                                         bandwidth_size        double,

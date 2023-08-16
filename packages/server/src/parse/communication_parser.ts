@@ -23,7 +23,7 @@ export function parseCommunicationFile(filePathArr: string[]): void {
         parser.on('data', (data: any) => {
             const tempPath = data.path;
             const tempData = data.value;
-            const tempStepId = tempPath[1];
+            const tempStepId = tempPath[1].replace('step', '');
             const tempOpName = tempPath[2];
             const tempRankId = tempPath[3];
             if (tempPath[4] === 'Communication Time Info') {
