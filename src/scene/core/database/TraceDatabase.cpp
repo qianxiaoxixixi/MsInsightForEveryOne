@@ -318,7 +318,7 @@ void TraceDatabase::UpdateDepth()
     ServerLog::Info("UpdateDepth.");
     StartTransaction();
     auto trackList = GetTrackIdList();
-    for (auto trackId : trackList) {
+    for (auto &trackId : trackList) {
         UpdateOneTrackDepth(trackId);
     }
     EndTransaction();
@@ -356,8 +356,7 @@ void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
     }
 }
 
-bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList)
-{
+bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList) {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT id, timestamp, duration FROM " + sliceTable + " WHERE track_id = ? ORDER BY timestamp;";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -420,6 +419,230 @@ void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int dept
         start = end;
     }
 }
+
+bool TraceDatabase::QueryThreadTraces(Protocol::UnitThreadTracesRequest &request,Protocol::UnitThreadTracesResponse &response,
+        int64_t minTimestamp, int64_t traceId) {
+    std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id "
+    "FROM slice WHERE track_id = ? AND start_time >= ? AND start_time <= ? GROUP BY depth, id ORDER BY start_time;";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_int64(stmt, index++, minTimestamp);
+        sqlite3_bind_int64(stmt, index++, traceId);
+        sqlite3_bind_int64(stmt, index++, request.params.startTime);
+        sqlite3_bind_int64(stmt, index++, request.params.endTime);
+        std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int col = resultStartIndex;
+            Protocol::RowThreadTrace rowThreadTrace {};
+            rowThreadTrace.id = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            rowThreadTrace.start_time = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            rowThreadTrace.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            rowThreadTrace.name = static_cast<std::string>(sqlite3_column_string(stmt, col++));
+            rowThreadTrace.depth = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            rowThreadTrace.trace_id = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            rowThreadTraceVec.emplace_back(rowThreadTrace);
+        }
+        std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
+        for(auto &item : rowThreadTraceVec) {
+            Protocol::ThreadTraces threadTraces {};
+            threadTraces.name = item.name;
+            threadTraces.duration = item.duration;
+            threadTraces.startTime = item.start_time;
+            threadTraces.endTime = item.start_time + item.duration;
+            threadTraces.depth = item.depth;
+            threadTraces.threadId = request.params.threadId;
+            if (threadTracesMap.find(item.depth) == threadTracesMap.end()) {
+                std::vector<Protocol::ThreadTraces> threadTracesVec;
+                threadTracesVec.emplace_back(threadTraces);
+                threadTracesMap.emplace(item.depth, threadTracesVec);
+            } else {
+                threadTracesMap.at(item.depth).emplace_back(threadTraces);
+            }
+        }
+        for(int i = 0; i < rowThreadTraceVec.size(); i++) {
+            if (threadTracesMap.find(i) != threadTracesMap.end()) {
+                response.body.data.emplace_back(threadTracesMap.at(i));
+            } else {
+                std::vector<Protocol::ThreadTraces> threadTracesVec;
+                response.body.data.emplace_back(threadTracesVec);
+            }
+        }
+    } else {
+        ServerLog::Error("QueryThreadTraces failed!");
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool TraceDatabase::QueryThreads(Protocol::UnitThreadsRequest &request, Protocol::UnitThreadsResponse &response, int64_t minTimestamp, int64_t traceId) {
+    int64_t startTime = request.params.startTime + minTimestamp;
+    int64_t endTime = request.params.endTime + minTimestamp;
+    Protocol::ExtremumTimestamp extremumTimestamp {};
+    bool isSuccessQueryExtremumTime = QueryExtremumTimeOfFirstDepth(traceId, startTime, endTime, extremumTimestamp);
+    if (!isSuccessQueryExtremumTime) {
+        return false;
+    }
+    std::string sql = "SELECT timestamp, duration, timestamp + duration AS endTime, name, depth FROM slice WHERE "
+                      "TRACK_ID = ? AND TIMESTAMP <= ? AND TIMESTAMP + DURATION >= ? ORDER BY  depth ASC,timestamp ASC";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_int64(stmt, index++, traceId);
+        sqlite3_bind_int64(stmt, index++, extremumTimestamp.maxTimestamp);
+        sqlite3_bind_int64(stmt, index++, extremumTimestamp.minTimestamp);
+        std::vector<Protocol::SimpleSlice> simpleSliceVec;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int col = resultStartIndex;
+            Protocol::SimpleSlice simpleSlice {};
+            simpleSlice.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            simpleSlice.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            simpleSlice.endTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            simpleSlice.name = static_cast<std::string>(sqlite3_column_string(stmt, col++));
+            simpleSlice.depth = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            simpleSliceVec.emplace_back(simpleSlice);
+        }
+        // process data
+        if (simpleSliceVec.size() == 0) {
+            response.body.emptyFlag = true;
+            return true;
+        }
+        std::map<std::string, int64_t> selfTimeKeyValue;
+        CalculateSelfTime(simpleSliceVec, selfTimeKeyValue, startTime, endTime);
+        std::vector<Protocol::SimpleSlice> nRows = ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
+        ReduceThread(nRows, selfTimeKeyValue, response);
+    } else {
+        ServerLog::Error("QueryThreads failed!");
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, int64_t startTime, int64_t endTime,  Protocol::ExtremumTimestamp &extremumTimestamp) {
+    std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp + duration) AS maxTimestamp FROM slice where "
+                      "TRACK_ID = ? AND TIMESTAMP <= ? AND TIMESTAMP + DURATION >= ? AND DEPTH = 0;";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_int64(stmt, index++, trackId);
+        sqlite3_bind_int64(stmt, index++, endTime);
+        sqlite3_bind_int64(stmt, index++, startTime);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int col = resultStartIndex;
+            extremumTimestamp.minTimestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            extremumTimestamp.maxTimestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        }
+    } else {
+        ServerLog::Error("QueryExtremumTimeOfFirstDepth failed!");
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, int64_t startTime, int64_t endTime) {
+    int32_t i = 0;
+    int32_t j = 0;
+    if (rows.size() == 0) {
+        ServerLog::Error("simpleSlice array size is zero!");
+        return;
+    }
+    int64_t tmpSelfTime = rows.at(0).duration;
+    while (i < rows.size()) {
+        // j滑完直接滑完所有i
+        if (j == rows.size()) {
+            // 处理当前tmpSelfTime
+            AddData(selfTimeKeyValue, rows.at(i).name, tmpSelfTime);
+            // 处理剩余元素
+            while (++i < rows.size()) {
+                if (rows.at(i).timestamp <= endTime && rows.at(i).endTime >= startTime) {
+                    AddData(selfTimeKeyValue, rows.at(i).name, rows.at(i).duration);
+                }
+            }
+            break;
+        }
+        Protocol::SimpleSlice rowI = rows.at(i);
+        Protocol::SimpleSlice rowJ = rows.at(j);
+        // 层数相等 or 同一元素, j右移
+        if (rowI.depth == rowJ.depth || i >= j) {
+            j++;
+            continue;
+        }
+        // rows[i]不属于框选范围内，跳过
+        if (rows.at(i).timestamp > endTime || rows.at(i).endTime < startTime) {
+            if (i + 1 == rows.size()) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows.at(i).duration;
+            continue;
+        }
+        // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
+        if (rowJ.endTime > rowI.endTime || rowI.depth + 1 < rowJ.depth) {
+            AddData(selfTimeKeyValue, rowI.name, tmpSelfTime);
+            if (i + 1 == rows.size()) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows.at(i).duration;
+            continue;
+        }
+        // 符合要求的元素
+        if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime) {
+            tmpSelfTime -= rowJ.duration;
+        }
+        j++;
+    }
+}
+
+void TraceDatabase::AddData(std::map<std::string, int64_t> &selfTimeKeyValue, std::string name, int64_t tmpSelfTime) {
+    if (selfTimeKeyValue.find(name) != selfTimeKeyValue.end()) {
+        selfTimeKeyValue.at(name) = selfTimeKeyValue.at(name) + tmpSelfTime;
+    } else {
+        selfTimeKeyValue.emplace(name, tmpSelfTime);
+    }
+}
+
+std::vector<Protocol::SimpleSlice> TraceDatabase::ThreadsInfoFilter(std::vector<Protocol::SimpleSlice> &simpleSliceVec, int64_t startTime, int64_t endTime) {
+    std::vector<Protocol::SimpleSlice> nRows;
+    for (auto &row : simpleSliceVec) {
+        if (row.timestamp <= endTime && row.endTime >= startTime) {
+            nRows.emplace_back(row);
+        }
+    }
+    return nRows;
+}
+
+void TraceDatabase::ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsResponse &threadsRes) {
+    for(auto &cur : rows) {
+        int index = -1;
+        for (int i = 0; i < threadsRes.body.data.size(); i++) {
+            if (threadsRes.body.data[i].title == cur.name) {
+                index = i;
+                break;
+            }
+        }
+        if (index == -1) {
+            Protocol::Threads threads {};
+            threads.title = cur.name;
+            threads.wallDuration = cur.duration;
+            threads.occurrences = 1;
+            threads.avgWallDuration = cur.duration;
+            threads.selfTime = selfTimeKeyValue.at(cur.name);
+            threadsRes.body.data.emplace_back(threads);
+        } else {
+            threadsRes.body.data[index].wallDuration += cur.duration;
+            threadsRes.body.data[index].occurrences += 1;
+            threadsRes.body.data[index].avgWallDuration = threadsRes.body.data[index].wallDuration / threadsRes.body.data[index].occurrences;
+        }
+    }
+}
+
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic
