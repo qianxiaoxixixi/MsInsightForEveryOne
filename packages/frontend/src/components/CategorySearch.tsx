@@ -249,14 +249,6 @@ const findUnitNameByResult = (result: ResultType[]): { unitName: string; resultO
 // 获取搜索的结果数量
 const queryDataCount = async (session: Session, result: ResultType[],
     setTime: React.Dispatch<React.SetStateAction<{ startTimeAll: number; endTimeAll: number; startRecordTime: number }>>): Promise<number> => {
-    // const { unitName, resultObj } = findUnitNameByResult(result);
-    // if (unitName === undefined) {
-    //     return 0;
-    // }
-    // const [ startTimeAll, endTimeAll ] = getRelativeAll(session as ValidSession);
-    // const time = { startRecordTime: session.startRecordTime ?? 0, startTimeAll, endTimeAll };
-    // setTime(time);
-    // return (await engine.fetchData({ session, params: { globalSearchCount: { ...time, ...resultObj } } })).globalSearchCount ?? 0;
     return 0;
 };
 
@@ -270,39 +262,6 @@ const doJumpSystraceSlice = (session: Session, taskData?: TaskData): void => {
     if (taskData === undefined) {
         Logger('doJumpSystraceSlice', 'taskData is undefined.', 'warn');
     }
-    runInAction(() => {
-        if (taskData?.type === 'threadTrace') {
-            // session.locateUnit = {
-            //     target: (unit) => unit instanceof CPUThreadTraceUnit && (unit.metadata as ThreadTraceMetadataChildren).tid === taskData.tid,
-            //     onSuccess: (unit) => {
-            //         const [ rangeStart, rangeEnd ] = calculateDomainRange(session, taskData.startTime, taskData.duration);
-            //         session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-            //         session.selectedData = {
-            //             threadId: taskData.tid,
-            //             duration: taskData.duration,
-            //             startTime: taskData.startTime,
-            //             depth: taskData.depth,
-            //             name: taskData.taskName,
-            //         };
-            //     },
-            // };
-        } else if (taskData?.type === 'userTrace') {
-            // session.locateUnit = {
-            //     target: (unit) => unit instanceof CPUUserTraceUnit && (unit.metadata as UserTraceMetadataChildren).pid === taskData.pid && (unit.metadata as UserTraceMetadataChildren).taskName === taskData.taskName,
-            //     onSuccess: (unit) => {
-            //         const [ rangeStart, rangeEnd ] = calculateDomainRange(session, taskData.startTime, taskData.duration);
-            //         session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-            //         session.selectedData = {
-            //             name: taskData.cookie,
-            //             taskName: taskData.taskName,
-            //             timestamp: taskData.startTime,
-            //             duration: taskData.duration,
-            //             depth: taskData.depth,
-            //         };
-            //     },
-            // };
-        }
-    });
 };
 
 // 帧跳转
