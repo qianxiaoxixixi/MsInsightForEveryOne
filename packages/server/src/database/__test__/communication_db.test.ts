@@ -7,7 +7,7 @@ import {
     DurationResponse,
     Durations,
     IterationsOrRanksObject,
-    IterationsOrRanksResponse,
+    IterationsOrRanksResponse, OperatorDetailsRequest,
     OperatorsObject,
     OperatorsResponse,
 } from '../../query/communicationAnalysisData';
@@ -87,7 +87,7 @@ it('query duration data with rank list', async function () {
 });
 
 it('query all Operator details with fenye', async function () {
-    const operatorNumber = await globalDatabase.queryOperatorsCount('1', '0');
+    const operatorNumber = await globalDatabase.queryOperatorsCount('2', '0');
     console.log(operatorNumber.length);
     const response: AllOperatorsResponse = {
         count: operatorNumber[0].nums,
@@ -95,8 +95,15 @@ it('query all Operator details with fenye', async function () {
         currentPage: 1,
         allOperators: [],
     };
-    response.allOperators = await globalDatabase.queryAllOperators('1',
-        '0', 1, 1);
+    const param: OperatorDetailsRequest = {
+        iterationId: '2',
+        rankId: '1',
+        pageSize: 10,
+        currentPage: 1,
+        orderBy: 'elapse_time',
+        order: 'DESC',
+    };
+    response.allOperators = await globalDatabase.queryAllOperators(param);
     expect(response).toEqual({
         count: 3,
         pageSize: 1,
