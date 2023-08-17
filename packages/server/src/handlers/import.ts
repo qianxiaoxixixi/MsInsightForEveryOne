@@ -7,7 +7,9 @@ import { queryUnitsMetadata } from '../query/unitMetadataHandler';
 import { exec } from 'child_process';
 import * as os from 'os';
 import { promisify } from 'util';
+import { getLoggerByName } from '../logger/loggger_configure';
 
+const logger = getLoggerByName('import', 'info');
 const execute = promisify(exec);
 function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number): void {
     const stats = fs.statSync(dir);
@@ -17,7 +19,7 @@ function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number)
         }
         return;
     }
-    if (depth > 5) return; // 控制递归深度
+    if (depth > 5) { return; } // 控制递归深度
     const files = fs.readdirSync(dir);
     for (const file of files) {
         const filePath = path.join(dir, file);
@@ -36,7 +38,7 @@ async function selectFolderWindows(): Promise<string> {
         const { stdout } = await execute(`PowerShell -Command "${script}"`);
         return stdout.trim();
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         return '';
     }
 }
@@ -46,7 +48,7 @@ async function selectFolderLinux(): Promise<string> {
         const { stdout } = await execute('zenity --file-selection --directory');
         return stdout.trim();
     } catch (error) {
-        console.error(error);
+        logger.error(error);
         return '';
     }
 }
@@ -70,12 +72,13 @@ async function findTraceViewJson(path: string): Promise<string[]> {
                     return traceViewJsonPaths;
                 }
                 findJsonFiles(folderPath, traceViewJsonPaths, 0);
+                return traceViewJsonPaths;
             });
         } else {
             findJsonFiles(path, traceViewJsonPaths, 0);
         }
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
     return traceViewJsonPaths;
 }
@@ -101,7 +104,7 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
         parse(traceViewJsonPath, rankId, (rankId, err) => {
             if (err) {
                 // this to send parse file error message
-                console.log(`parse error. ${err.message}`);
+                logger.error(`parse error. ${err.message}`);
                 cardInfo.result = false;
                 client?.notify('parse/fail', { rankId, errorMsg: err.message });
                 return;
@@ -117,7 +120,7 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
                 extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
                 client?.notify('parse/success', { unit: queryResult.insightMetaData, startTimeUpdated, maxTimeStamp: extremumTimestamp.maxTimestamp });
             });
-            console.log('send notify rankId parse end. ', rankId);
+            logger.info('send notify rankId parse end. ', rankId);
         });
         importedRankIdSet.add(rankId);
     }
