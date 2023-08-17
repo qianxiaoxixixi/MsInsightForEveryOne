@@ -15,6 +15,7 @@ import {
     STEP_STATISTIC_INFO_TABLE,
 } from '../common/sql_constant';
 import { CommunicationBandWidthEntity, CommunicationTimeInfoEntity, StepStatisticEntity } from '../query/entity';
+import { OperatorDetailsRequest } from '../query/communicationAnalysisData';
 
 const logger = getLoggerByName('ClusterDatabase', 'info');
 
@@ -382,7 +383,7 @@ export class ClusterDatabase {
         return this.executeSql(sql, [ iterationId, operatorName ]);
     };
 
-    async queryAllOperators(iterationId: string, rankId: string, pageSize: number, currentPage: number): Promise<any> {
+    async queryAllOperators(params: OperatorDetailsRequest): Promise<any> {
         const sql: string = `SELECT op_name,
                                     ROUND(elapse_time, 4) as elapse_time,
                                     ROUND(transit_time, 4) as transit_time,
@@ -391,11 +392,13 @@ export class ClusterDatabase {
                                     ROUND(idle_time, 4) as idle_time,
                                     ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
                                     ROUND(wait_time_ratio, 4) as wait_time_ratio
-                             FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                             FROM (SELECT * FROM ${COMMUNICATION_TIME_INFO_TABLE}  ${params.orderBy ? 'ORDER BY ' + params.orderBy + ' ' + params.order : ''})
                              WHERE iteration_id = ?
                                AND rank_id = ?
-                                 LIMIT ?, ?`;
-        return this.executeSql(sql, [ iterationId, rankId, (currentPage - 1) * pageSize, pageSize ]);
+                               AND op_name != 'Total Op Info'
+                               LIMIT ?, ?`;
+        return this.executeSql(sql, [ params.iterationId,
+            params.rankId, (params.currentPage - 1) * params.pageSize, params.pageSize ]);
     }
 
     async queryOperatorsCount(iterationId: string, rankId: string): Promise<any> {
