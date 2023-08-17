@@ -5,6 +5,8 @@
 #ifndef PROFILER_SERVER_TRACEDATABASE_H
 #define PROFILER_SERVER_TRACEDATABASE_H
 
+#include <ProtocolRequest.h>
+#include <ProtocolResponse.h>
 #include "Database.h"
 #include "GlobalDefs.h"
 
@@ -32,6 +34,13 @@ public:
 
     // search
     std::vector<int64_t> GetTrackIdList();
+
+    // query thread traces data
+    bool QueryThreadTraces(Protocol::UnitThreadTracesRequest &request, Protocol::UnitThreadTracesResponse &response,
+        int64_t minTimestamp, int64_t traceId);
+    // query threads data
+    bool QueryThreads(Protocol::UnitThreadsRequest &request, Protocol::UnitThreadsResponse &response,
+        int64_t minTimestamp, int64_t traceId);
 
 private:
     const std::string sliceTable = "slice";
@@ -61,6 +70,12 @@ private:
     // depth, idList
     void CalcDepth(const std::vector<SliceTimeData> &sliceData, std::map<int, std::vector<int64_t>> &depthMap);
     void UpdateDepthByID(const std::vector<int64_t> &idList, int depth);
+
+    bool QueryExtremumTimeOfFirstDepth(int64_t trackId, int64_t startTime, int64_t endTime,  Protocol::ExtremumTimestamp &extremumTimestamp);
+    void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &simpleSliceVec, std::map<std::string, int64_t> &selfTimeKeyValue, int64_t startTime, int64_t endTime);
+    void AddData(std::map<std::string, int64_t> &selfTimeKeyValue, std::string name, int64_t tmpSelfTime);
+    std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(std::vector<Protocol::SimpleSlice> &simpleSliceVec, int64_t startTime, int64_t endTime);
+    void ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsResponse &threadsRes);
 };
 } // end of namespace Core
 } // end of namespace Scene
