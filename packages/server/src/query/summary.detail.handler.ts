@@ -2,12 +2,17 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-import { CommunicationDetailResponse, ComputeDetail, ComputeDetailResponse, SummaryDetailRequest } from './data';
+import {
+    CommunicationDetailRequest,
+    CommunicationDetailResponse,
+    ComputeDetail, ComputeDetailRequest,
+    ComputeDetailResponse,
+} from './data';
 import { tableMap } from '../database/tableManager';
 import { Table } from '../database/table';
 import { Client } from '../types';
 
-export const computeDetailInfoHandler = async (request: SummaryDetailRequest, client: Client): Promise<ComputeDetailResponse> => {
+export const computeDetailInfoHandler = async (request: ComputeDetailRequest, client: Client): Promise<ComputeDetailResponse> => {
     const timeFlag = request.timeFlag;
     const currentPage = request.currentPage;
     const pageSize = request.pageSize;
@@ -19,9 +24,9 @@ export const computeDetailInfoHandler = async (request: SummaryDetailRequest, cl
     return response;
 };
 
-async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackId: number, trackId: number, client: Client, timeFlag: string): Promise<CommunicationDetailResponse> {
+async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackId: number, trackId: number, client: Client): Promise<CommunicationDetailResponse> {
     const response: CommunicationDetailResponse = { totalNum: 0, communicationDetail: [] };
-    const res = await table.queryCommunicationTotalNum(trackId, timeFlag);
+    const res = await table.queryCommunicationTotalNum(trackId);
     response.totalNum = res[0].nums;
     for (const row of rows) {
         let totalTime = 0;
@@ -42,15 +47,14 @@ async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackI
     return response;
 }
 
-export const communicationDetailInfoHandler = async (request: SummaryDetailRequest, client: Client): Promise<CommunicationDetailResponse> => {
-    const timeFlag = request.timeFlag;
+export const communicationDetailInfoHandler = async (request: CommunicationDetailRequest, client: Client): Promise<CommunicationDetailResponse> => {
     const currentPage = request.currentPage;
     const pageSize = request.pageSize;
     const table = tableMap.get(request.rankId) as Table;
-    const threadName = 'Communication OP';
-    const notOverlap = 'communication_not_overlapped';
+    const threadName = 'Group 0 Communication';
+    const notOverlap = 'Communication(Not Overlapped)';
     const opTrackId = await table.queryTrackId(threadName);
     const notOverlapTrackId = await table.queryTrackId(notOverlap);
-    const rows = await table.queryCommunicationDetailInfo(timeFlag, currentPage, pageSize, client, opTrackId.track_id);
-    return queryNotOverlapByTime(table, rows, notOverlapTrackId.track_id, opTrackId.track_id, client, timeFlag);
+    const rows = await table.queryCommunicationDetailInfo(currentPage, pageSize, client, opTrackId.track_id);
+    return queryNotOverlapByTime(table, rows, notOverlapTrackId.track_id, opTrackId.track_id, client);
 };
