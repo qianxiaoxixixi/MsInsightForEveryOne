@@ -66,11 +66,12 @@ export type DurationListRequest = {
 };
 
 export type OperatorDetailsRequest = {
-    dbIndex: string;
     iterationId: string;
     rankId: string;
     pageSize: number;
     currentPage: number;
+    orderBy: string;
+    order: string;
 };
 
 export type BandwidthDataRequest = {

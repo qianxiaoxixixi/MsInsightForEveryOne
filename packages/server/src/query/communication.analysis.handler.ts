@@ -58,14 +58,26 @@ export const operatorDetailsHandler = async (request: OperatorDetailsRequest): P
     if (operatorNumber.length !== 1) {
         logger.error('select operator counts error');
     }
+    const orderByName = [ '', 'elapse_time', 'transit_time', 'synchronization_time',
+        'wait_time', 'synchronization_time_ratio', 'wait_time_ratio', 'idle_time' ];
+    if (!orderByName.includes(request.orderBy)) {
+        logger.error('select operator counts error');
+    }
+    const params: OperatorDetailsRequest = {
+        iterationId: request.iterationId,
+        rankId: request.rankId,
+        pageSize: request.pageSize,
+        currentPage: request.currentPage,
+        orderBy: request.orderBy,
+        order: request.order === 'ascend' ? 'ASC' : 'DESC',
+    };
     const response: AllOperatorsResponse = {
         count: operatorNumber[0].nums,
         pageSize: request.pageSize,
         currentPage: request.currentPage,
         allOperators: [],
     };
-    response.allOperators = await CLUSTER_DATABASE.queryAllOperators(request.iterationId,
-        request.rankId, request.pageSize, request.currentPage);
+    response.allOperators = await CLUSTER_DATABASE.queryAllOperators(params);
     return response;
 };
 
