@@ -159,9 +159,15 @@ export type ExtremumTimestamp = {
     maxTimestamp: number;
 };
 
-export type SummaryDetailRequest = {
+export type ComputeDetailRequest = {
     rankId: string;
     timeFlag: string;
+    currentPage: number;
+    pageSize: number;
+};
+
+export type CommunicationDetailRequest = {
+    rankId: string;
     currentPage: number;
     pageSize: number;
 };

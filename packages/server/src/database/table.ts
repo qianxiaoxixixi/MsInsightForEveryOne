@@ -560,17 +560,14 @@ export class Table {
         });
     }
 
-    async queryCommunicationDetailInfo(timeFlag: String, currentPage: number, pageSize: number, client: Client, trackId: number): Promise<any> {
+    async queryCommunicationDetailInfo(currentPage: number, pageSize: number, client: Client, trackId: number): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT name, timestamp -
                                         ${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
                                  FROM ${this.sliceTable}
                                  WHERE
                                      track_id = ?
-                                   and
-                                     ARGS like '%transport type%'
-                                   and ARGS like '%${timeFlag}%'
-                                     LIMIT ?
+                                   LIMIT ?
                                  offset ?`;
             this.db.all(sql, [ trackId, pageSize, (currentPage - 1) * pageSize ], (err, rows) => {
                 if (err !== undefined && err !== null) {
@@ -630,15 +627,12 @@ export class Table {
         });
     }
 
-    async queryCommunicationTotalNum(trackId: number, timeFlag: string): Promise<any> {
+    async queryCommunicationTotalNum(trackId: number): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT count(*) as nums
                                  FROM ${this.sliceTable}
                                  WHERE
-                                     track_id = ?
-                                   and
-                                     ARGS like '%transport type%'
-                                   and ARGS like '%${timeFlag}%'`;
+                                     track_id = ?`;
             this.db.all(sql, [trackId], (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
