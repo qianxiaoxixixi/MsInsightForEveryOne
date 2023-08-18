@@ -125,7 +125,7 @@ const baseOption: any = {
             yAxisIndex: 1,
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + '%';
+                    return value;
                 },
             },
             data: [ ],
@@ -136,7 +136,7 @@ const baseOption: any = {
             yAxisIndex: 1,
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + '%';
+                    return value;
                 },
             },
             data: [ ],
