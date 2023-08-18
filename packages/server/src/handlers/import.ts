@@ -93,30 +93,34 @@ async function findJsons(path: string): Promise<string[]> {
 
 const filterJsonPaths = (traceJsonPaths: string[]): void => {
     const resultFolders = new Set();
-    const msprofFiles = [];
     traceJsonPaths.forEach(filePath => {
-        const match = filePath.match(Matchs.ascend_pt);
-        if (match) {
-            const resultFolder = match[0];
-            if (filePath.endsWith(Matchs.trace_view)) {
-                resultFolders.add(resultFolder);
-            } else if (filePath.match(Matchs.msprof)) {
-                msprofFiles.push({ filePath, resultFolder });
-            }
+        const ascendOutputFolder = getMatchedPathSegment(filePath, Matchs.ascend_output);
+        if (ascendOutputFolder !== null) {
+            resultFolders.add(path.dirname(ascendOutputFolder));
         }
     });
 
     for (let i = traceJsonPaths.length - 1; i >= 0; i--) {
         const filePath = traceJsonPaths[i];
         if (filePath.match(Matchs.msprof)) {
-            const match = filePath.match(Matchs.ascend_pt);
-            if (match) {
-                if (resultFolders.has(match[0])) {
-                    traceJsonPaths.splice(i, 1);
-                }
+            const ProfFolder = getMatchedPathSegment(filePath, Matchs.PROF);
+            if (ProfFolder !== null && resultFolders.has(path.dirname(ProfFolder))) {
+                traceJsonPaths.splice(i, 1);
             }
         }
     }
+};
+
+const getMatchedPathSegment = (filePath: string, regex: RegExp): string | null => {
+    const pathSegments = filePath.split(path.sep);
+    let matchedPath = '';
+    for (let i = 0; i < pathSegments.length; i++) {
+        matchedPath = path.join(matchedPath, pathSegments[i]);
+        if (regex.test(pathSegments[i])) {
+            return matchedPath;
+        }
+    }
+    return null;
 };
 
 type CardInfo = {
