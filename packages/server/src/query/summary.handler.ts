@@ -16,7 +16,7 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
         'communicationOverLappedTime', 'freeTime' ].includes(request.orderBy)) {
         request.orderBy = 'computingTime';
     }
-    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData(request.orderBy, request.rankIdList, request.stepIdList);
+    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData(request.orderBy, request.stepIdList, request.rankIdList);
     const extremumTimestamp = await client.shadowSession.extremumTimestamp;
     const baseInfo = await CLUSTER_DATABASE.queryBaseInfo();
     const result = {
@@ -24,8 +24,8 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
         rankList: [],
         dataSize: 0,
         filePath: '',
-        collectStartTime: extremumTimestamp.minTimestamp,
-        collectDuration: extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp,
+        collectStartTime: new Date().getTime(),
+        collectDuration: extremumTimestamp.maxTimestamp,
         stepNum: 0,
         stepList: [],
         summaryList: rows,
@@ -35,6 +35,7 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
             result.rankList = JSON.parse(baseInfo[0].ranks);
         }
         result.dataSize = baseInfo[0].dataSize / (1024 * 1024);
+        result.collectStartTime = baseInfo[0].collectStartTime;
         result.filePath = baseInfo[0].filePath;
         if (isJsonStr(baseInfo[0].steps)) {
             result.stepList = JSON.parse(baseInfo[0].steps);

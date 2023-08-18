@@ -41,7 +41,7 @@ export function mapperToKernelDetail(arr: any[], map: Map<string, number>): Kern
     const nameIndex = map.get('Name');
     const typeIndex = map.get('Type');
     const acceleratorIndex = map.get('Accelerator Core');
-    const startTimeIndex = map.get('Start Time');
+    const startTimeIndex = map.get('Start Time(us)');
     const durationIndex = map.get('Duration(us)');
     const waitTimeIndex = map.get('Wait Time(us)');
     const blockDimIndex = map.get('Block Dim');
