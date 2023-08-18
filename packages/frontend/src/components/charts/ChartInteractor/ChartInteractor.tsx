@@ -24,6 +24,7 @@ import {
     keyDownAction,
     MouseDownActionResult,
 } from './actions';
+import { Scale } from '../../../entity/chart';
 
 registerCrossUnitRenderer({
     action: (ctx, session, xScale) => {
@@ -114,10 +115,10 @@ const Interactor = (props: ChartInteractorProps, ref: Ref<ChartInteractorHandles
     const [ rect, canvas ] = useWatchDomResize<HTMLCanvasElement>();
     // pos -> time
     const xScale = React.useMemo(() => {
-        return d3.scaleLinear().range([ domainStart, domainEnd ]).domain([ 0, rect?.width ?? INTERACTOR_WIDTH ]);
+        return d3.scaleLinear().range([ domainStart, domainEnd ]).domain([ 0, rect?.width ?? INTERACTOR_WIDTH ]) as Scale;
     }, [ rect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
     const xReverseScale = React.useMemo(() => {
-        return d3.scaleLinear().range([ 0, rect?.width ?? INTERACTOR_WIDTH ]).domain([ domainStart, domainEnd ]);
+        return d3.scaleLinear().range([ 0, rect?.width ?? INTERACTOR_WIDTH ]).domain([ domainStart, domainEnd ]) as Scale;
     }, [ rect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
     const interactorParams: InteractorParams = { canvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
     useEffect(() => {

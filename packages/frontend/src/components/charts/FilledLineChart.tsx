@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef, useState } from 'react';
-import { ChartProps } from '../../entity/chart';
+import { ChartProps, Scale } from '../../entity/chart';
 import { Readable } from '../../utils/humanReadable';
 import { Canvas, CanvasContainer, LegendArea, search, zipTimeSeriesData } from './common';
 import { useBatchedRender, useData, useHoverPosX, useRangeAndDomain } from './hooks';
@@ -27,7 +27,7 @@ const findHeights = (datas: number[][]): [number, number] => {
     return [ minHeight, maxHeight * 1.2 ];
 };
 
-const drawAuxiliaryLine = (context: CanvasRenderingContext2D, yScale: d3.ScaleLinear<number, number, never>,
+const drawAuxiliaryLine = (context: CanvasRenderingContext2D, yScale: Scale,
     auxiliaryValue: number, width: number): void => {
     context.beginPath();
     context.setLineDash([ 10, 10 ]);
@@ -71,8 +71,8 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: number[][], width: nu
     let maxHeight = 0;
     [ minHeight, maxHeight ] = valueRange ?? findHeights(drawDatas);
     maxHeight = maxHeight === 0 ? 1 : maxHeight * 1.3;
-    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
-    const yScale = d3.scaleLinear().range([ height, 0 ]).domain([ minHeight, maxHeight ]);
+    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false) as Scale;
+    const yScale = d3.scaleLinear().range([ height, 0 ]).domain([ minHeight, maxHeight ]) as Scale;
     if (auxiliaryValue !== undefined) { drawAuxiliaryLine(ctx, yScale, auxiliaryValue, width); }
     // draw line and area
     drawArea(ctx, drawDatas, minHeight, maxHeight, xScale, yScale, palette, width);
@@ -83,7 +83,7 @@ const findDataByX = (mousePosX: number | undefined, datasState: number[][],
     if (rangeAndDomain.length === 0 || datasState.length === 0 || mousePosX === undefined) {
         return undefined;
     }
-    const reverseXScale = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false);
+    const reverseXScale = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false) as Scale;
     const mouseTimestamp = reverseXScale(mousePosX);
     // 如果鼠标位置在所有关键点范围之外，不显示tooltip
     if (datasState[0][0] > mouseTimestamp || datasState[datasState.length - 1][0] < mouseTimestamp) {

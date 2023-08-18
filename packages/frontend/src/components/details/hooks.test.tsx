@@ -11,28 +11,28 @@ describe('hooks test', () => {
         expandable: false,
         isExpanded: false,
         type: 'basic',
-        phase: 'download'
+        phase: 'download',
     };
     const expectedTablestate = {
         data: [],
         columns: [
             {
-                title: "name2",
-                key: "name2",
+                title: 'name2',
+                key: 'name2',
                 colSpan: 1,
                 ellipsis: {
-                    showTitle: false
+                    showTitle: false,
                 },
-                width: "max-content",
+                width: 'max-content',
                 fixed: undefined,
-                render: () => { }
-            }
+                render: () => { },
+            },
         ],
         rowKey: undefined,
         onExpand: undefined,
         isLoading: false,
     };
-    const col: ColumnDef<Record<string, unknown>> = ['name2', () => 'render2', 'max-content'];
+    const col: ColumnDef<Record<string, unknown>> = [ 'name2', () => 'render2', 'max-content' ];
 
     it('useDetailUpdater test', async () => {
         let detail: DetailDescriptor<unknown> = {
@@ -41,24 +41,24 @@ describe('hooks test', () => {
             ],
             fetchData: jest.fn().mockResolvedValue([]),
         };
-        let tabState: TabState | undefined = new TabState({
+        const tabState: TabState | undefined = new TabState({
             filter: {
                 type: FilterType.INPUT_FILTER,
                 field: 'name2',
                 filterKeys: ['name2'],
-                options: [{ label: 'name', value: '' }]
-            }
+                options: [{ label: 'name', value: '' }],
+            },
         });
-        let dep: unknown = [tabState];
-        let onDataLoaded = jest.fn();
+        const dep: unknown = [tabState];
+        const onDataLoaded = jest.fn();
         const { result, rerender, waitForNextUpdate } = renderHook(
             ({ session, detail, tabState, dep, onDataLoaded }) => useDetailUpdater(session, detail, tabState, dep, onDataLoaded),
-            { initialProps: { session, detail, tabState, dep, onDataLoaded } }
-        )
+            { initialProps: { session, detail, tabState, dep, onDataLoaded } },
+        );
         expect(JSON.stringify(result.current)).toEqual(JSON.stringify(expectedTablestate));
 
         session.selectedUnits = [unit];
-        session.selectedRange = [2, 3];
+        session.selectedRange = [ 2, 3 ];
         session.phase = 'download';
         await act(async () => {
             rerender({ session, detail, tabState: tabState as TabState, dep, onDataLoaded });
@@ -71,7 +71,7 @@ describe('hooks test', () => {
                 col,
             ],
             fetchData: jest.fn().mockResolvedValue([]),
-        }
+        };
         await act(async () => {
             rerender({ session, detail, tabState: {} as TabState, dep, onDataLoaded });
             await waitForNextUpdate();
@@ -81,39 +81,39 @@ describe('hooks test', () => {
         detail = {
             columns: [],
             fetchData: jest.fn().mockRejectedValue('error'),
-        }
+        };
         await act(async () => {
             rerender({ session, detail, tabState: tabState as TabState, dep, onDataLoaded });
             await waitForNextUpdate();
         });
         expect(detail.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
-    })
+    });
 
     it('useMoreUpdater test', async () => {
         const more: MoreDescriptor = {
             field: 'name',
             columns: [
                 col,
-            ]
-        }
+            ],
+        };
         const { result, rerender } = renderHook(
             ({ session, more }) => useMoreUpdater(session, more),
-            { initialProps: { session, more } }
-        )
+            { initialProps: { session, more } },
+        );
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
 
         session.selectedDetails = [{ name: [{}] }];
         session.selectedDetailKeys = [''];
         rerender({ session, more });
         expect(JSON.stringify(result.current)).toEqual(JSON.stringify({ ...expectedTablestate, data: [{}] }));
-    })
+    });
 
     it('useSelectedParamsDetailUpdater test', async () => {
         let detail: DetailDescriptor<unknown> | undefined;
         const { result, rerender, waitForNextUpdate } = renderHook(
             ({ session, detail }) => useSelectedParamsDetailUpdater(session, detail),
-            { initialProps: { session, detail } }
+            { initialProps: { session, detail } },
         );
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
 
@@ -122,7 +122,7 @@ describe('hooks test', () => {
                 col,
             ],
             fetchData: jest.fn().mockResolvedValue([]),
-        }
+        };
         session.phase = 'download';
         session.selectedParams = { baseRawId: 1, curRawId: 1 };
         await act(async () => {
@@ -135,20 +135,20 @@ describe('hooks test', () => {
         detail = {
             columns: [],
             fetchData: jest.fn().mockRejectedValue('error'),
-        }
+        };
         await act(async () => {
             rerender({ session, detail });
             await waitForNextUpdate();
         });
         expect(detail.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
-    })
+    });
 
     it('useExtraDataUpdater test', async () => {
         let detail: DetailDescriptor<unknown> | undefined;
         const { result, rerender, waitForNextUpdate } = renderHook(
             ({ session, detail }) => useExtraDataUpdater(session, detail),
-            { initialProps: { session, detail } }
+            { initialProps: { session, detail } },
         );
         expect(result.current).toStrictEqual({});
 
@@ -156,7 +156,7 @@ describe('hooks test', () => {
             columns: [],
             fetchData: jest.fn(),
             fetchExtraData: jest.fn().mockResolvedValue('res'),
-        }
+        };
         session.phase = 'download';
         await act(async () => {
             rerender({ session, detail });
@@ -169,25 +169,25 @@ describe('hooks test', () => {
             columns: [],
             fetchData: jest.fn(),
             fetchExtraData: jest.fn().mockRejectedValue('error'),
-        }
+        };
         await act(async () => {
             rerender({ session, detail });
             await waitForNextUpdate();
         });
         expect(detail.fetchExtraData).toBeCalled();
         expect(result.current).toStrictEqual({});
-    })
+    });
 
     it('useSelectedDataDetailUpdater test', async () => {
         let detail: SingleDataDesc<Record<string, unknown>, unknown> = {
             fetchData: jest.fn().mockResolvedValue({ result: '' }),
-            renderFields: []
+            renderFields: [],
         };
         let selectedData: Record<string, string> | undefined;
         session.phase = 'download';
         const { result, rerender, waitForNextUpdate } = renderHook(
             ({ session, detail, selectedData }) => useSelectedDataDetailUpdater(session, detail, selectedData),
-            { initialProps: { session, detail, selectedData } }
+            { initialProps: { session, detail, selectedData } },
         );
         expect(result.current).toStrictEqual({ renderFields: undefined, data: {} });
 
@@ -200,21 +200,21 @@ describe('hooks test', () => {
         expect(detail.fetchData).toBeCalled();
         expect(result.current).toStrictEqual({
             renderFields: [],
-            data: { result: '' }
+            data: { result: '' },
         });
 
         const ExpectedRes = {
             renderFields: [
-                ['Name', 'Name']
+                [ 'Name', 'Name' ],
             ],
-            data: { result: '' }
+            data: { result: '' },
         };
         const render = jest.fn().mockReturnValue('Name');
         detail = {
             fetchData: jest.fn().mockResolvedValue({ result: '' }),
             renderFields: [
-                ['Name', render],
-            ]
+                [ 'Name', render ],
+            ],
         };
         await act(async () => {
             rerender({ session, detail, selectedData });
@@ -228,8 +228,8 @@ describe('hooks test', () => {
         detail = {
             fetchData: jest.fn().mockResolvedValue({ result: '' }),
             renderFields: [
-                ['Name', render, hidden],
-            ]
+                [ 'Name', render, hidden ],
+            ],
         };
         await act(async () => {
             rerender({ session, detail, selectedData });
@@ -241,7 +241,7 @@ describe('hooks test', () => {
 
         detail = {
             fetchData: jest.fn().mockRejectedValue('error'),
-            renderFields: []
+            renderFields: [],
         };
         await act(async () => {
             rerender({ session, detail, selectedData });
@@ -249,5 +249,5 @@ describe('hooks test', () => {
         });
         expect(detail.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(ExpectedRes);
-    })
-})
+    });
+});

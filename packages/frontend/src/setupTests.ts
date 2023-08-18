@@ -8,7 +8,7 @@ declare global {
 }
 
 beforeEach(() => {
-    let device: Device = {
+    const device: Device = {
         deviceKey: 'device',
         status: 'Online',
         connectType: 'connect',
@@ -19,16 +19,16 @@ beforeEach(() => {
         productModel: 'model',
         deviceType: 'type',
         softwareVersion: 'version',
-        productBrand: 'brand'
+        productBrand: 'brand',
     };
-    let process: Process = {
+    const process: Process = {
         pid: 1,
         uid: '1',
         tid: 1001,
         name: 'process',
         status: 'Alive',
-        debuggable: true
-    }
+        debuggable: true,
+    };
     global.session = new Session({
         id: '1',
         name: 'test',

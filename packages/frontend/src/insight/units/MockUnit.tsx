@@ -199,7 +199,7 @@ export const MockStackStatus = unit<number>({
                 name: `${index}-idx`,
                 color: colorPalette[index],
                 depth: index,
-                metadata: metadata,
+                metadata,
             })));
             return mockData;
         },
