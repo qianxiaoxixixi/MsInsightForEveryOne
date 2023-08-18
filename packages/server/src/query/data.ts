@@ -205,7 +205,6 @@ export type ComputeDetail = {
 
 export type SummaryItemVO = {
     rankId: String;
-    stepIdList: string[];
     totalTime: number;
     computingTime: number;
     communicationOverLappedTime: number;
