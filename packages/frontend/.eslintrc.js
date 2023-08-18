@@ -46,6 +46,7 @@ module.exports = {
       'error',
       4,
     ],
+    'react/no-deprecated': 'off',
     quotes: 'off',
     '@typescript-eslint/quotes': [
       'error',

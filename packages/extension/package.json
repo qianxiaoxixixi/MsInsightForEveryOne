@@ -2,7 +2,7 @@
     "name": "ascend-insight-extension",
     "displayName": "ascend-insight-extension",
     "description": "",
-    "version": "0.0.1",
+    "version": "6.0.3",
     "engines": {
         "vscode": "^1.63.0"
     },
@@ -35,7 +35,7 @@
         "compile": "webpack",
         "watch": "webpack --watch",
         "package": "webpack --mode production --devtool hidden-source-map",
-        "vsce:package": "vsce package 0.0.1",
+        "vsce:package": "vsce package",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
@@ -51,7 +51,6 @@
         "@types/vscode": "^1.63.0",
         "@typescript-eslint/eslint-plugin": "^5.1.0",
         "@typescript-eslint/parser": "^5.1.0",
-        "@vscode/test-electron": "^1.6.2",
         "copy-webpack-plugin": "^11.0.0",
         "eslint": "^8.1.0",
         "glob": "^7.1.7",

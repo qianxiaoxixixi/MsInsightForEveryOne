@@ -71,7 +71,7 @@ const findDataByX = (mousePosX: number | undefined, data: StatusData[],
         return undefined;
     }
     // mouse point is 1px in width, which in fact does not represent a timestamp, but a time range
-    const pxToTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false);
+    const pxToTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false) as Scale;
     const mouseTimeStart = pxToTime(mousePosX);
     const mouseTimeEnd = pxToTime(mousePosX + 1);
     if (data[0].startTime > mouseTimeEnd || (data[data.length - 1].startTime + data[data.length - 1].duration < mouseTimeStart)) {
@@ -121,7 +121,7 @@ export const StatusChart = observer(({
             return;
         }
         const ctx = canvas.current.getContext('2d');
-        const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
+        const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false) as Scale;
         const yScale = (n: number): number => n * height;
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, datasState, xScale, yScale, theme);

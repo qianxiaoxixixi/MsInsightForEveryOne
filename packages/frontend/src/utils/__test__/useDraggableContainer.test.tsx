@@ -9,8 +9,8 @@ describe('DraggableContainer test', () => {
         mainContainer: React.createElement('div', null, 'Mock main Element'),
         draggableContainer: React.createElement('div', null, 'Mock draggable Element'),
         slot: React.createElement('div', null, 'Mock slot Element'),
-        id: 'Mock Draggable'
-    }
+        id: 'Mock Draggable',
+    };
     for (let i = 0; i < 4; i++) {
         it('should pass when view Rendering correctly', function () {
             const { result } = renderHook(() => useDraggableContainer({ dragDirection: i, draggableWH: 300, open: true }));
@@ -23,16 +23,16 @@ describe('DraggableContainer test', () => {
             expect(caretButton).toBeInTheDocument();
             expect(draggableContainer).toBeInTheDocument();
             if (draggableContainer) {
-                fireEvent.mouseDown(draggableContainer)
-                fireEvent.mouseMove(draggableContainer)
-                fireEvent.mouseUp(draggableContainer)
+                fireEvent.mouseDown(draggableContainer);
+                fireEvent.mouseMove(draggableContainer);
+                fireEvent.mouseUp(draggableContainer);
             }
             if (draggableButton) {
-                fireEvent.click(draggableButton)
+                fireEvent.click(draggableButton);
             }
             if (caretButton) {
-                fireEvent.click(caretButton)
+                fireEvent.click(caretButton);
             }
         });
     }
-})
+});
