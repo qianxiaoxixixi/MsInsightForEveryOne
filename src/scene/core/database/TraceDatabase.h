@@ -46,6 +46,8 @@ public:
        int64_t minTimestamp, int64_t trackId);
     // query flow detail
     bool QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody, int64_t minTimestamp, int64_t trackId);
+    // query flow name
+    bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody, int64_t minTimestamp, int64_t trackId);
 
 private:
     const std::string sliceTable = "slice";
@@ -83,6 +85,7 @@ private:
     void ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
     bool QueryDurationFromSliceByTimeRange(Protocol::ThreadDetailParams &requestParams, const std::vector<Protocol::SliceDto> &rows,
             std::vector<int64_t> &nextDepthResult, int64_t trackId);
+    bool QuerySliceFlowList(const std::string flowId, const std::string type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
 };
 } // end of namespace Core
 } // end of namespace Scene

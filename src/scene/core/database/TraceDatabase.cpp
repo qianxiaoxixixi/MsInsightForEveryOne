@@ -777,6 +777,78 @@ bool TraceDatabase::QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Pro
     sqlite3_finalize(stmt);
     return true;
 }
+
+bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody, int64_t minTimestamp, int64_t trackId) {
+    std::string sql = "SELECT name, flow_id as flowId, type FROM flow WHERE TIMESTAMP = ? AND TRACK_ID = ?";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_int64(stmt, index++, requestParams.startTime + minTimestamp);
+        sqlite3_bind_int64(stmt, index++, trackId);
+        std::vector<Protocol::SimpleFlowDto> simpleFlowVec;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int col = resultStartIndex;
+            Protocol::SimpleFlowDto simpleFlowDto {};
+            simpleFlowDto.name = sqlite3_column_string(stmt, col++);
+            simpleFlowDto.flowId = sqlite3_column_string(stmt, col++);
+            simpleFlowDto.type = sqlite3_column_string(stmt, col++);
+            simpleFlowVec.emplace_back(simpleFlowDto);
+        }
+        if (simpleFlowVec.empty()) {
+            ServerLog::Error("simpleFlowVec is empty!");
+            return false;
+        }
+        std::string type = simpleFlowVec[0].type;
+        for (const auto &row : simpleFlowVec) {
+            std::string flowId = row.flowId;
+            std::vector<Protocol::SliceFlowDetail> sliceFlowDetailVec;
+            QuerySliceFlowList(flowId, type, sliceFlowDetailVec);
+            Protocol::FlowName flowName {};
+            flowName.title = row.name;
+            flowName.tid = sliceFlowDetailVec[0].tid;
+            flowName.pid = sliceFlowDetailVec[0].pid;
+            flowName.timestamp = sliceFlowDetailVec[0].timestamp;
+            flowName.depth = sliceFlowDetailVec[0].depth;
+            flowName.flowId = row.flowId;
+            responseBody.flowDetail.push_back(flowName);
+        }
+    } else {
+        ServerLog::Error("QueryFlowDetail failed!");
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool TraceDatabase::QuerySliceFlowList(const std::string flowId, const std::string type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec) {
+    std::string sql = "SELECT sl.timestamp, th.pid, th.tid, sl.depth FROM slice sl LEFT JOIN thread th "
+                      "ON sl.TRACK_ID = th.TRACK_ID WHERE sl.TRACK_ID IN (SELECT TRACK_ID FROM flow WHERE FLOW_ID = ? "
+                      "AND TYPE <> ? ) AND TIMESTAMP IN ( SELECT TIMESTAMP FROM flow WHERE FLOW_ID = ? AND TYPE <> ? )";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_text(stmt, index++, flowId.c_str(), -1, nullptr);
+        sqlite3_bind_text(stmt, index++, type.c_str(), -1, nullptr);
+        sqlite3_bind_text(stmt, index++, flowId.c_str(), -1, nullptr);
+        sqlite3_bind_text(stmt, index++, type.c_str(), -1, nullptr);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            Protocol::SliceFlowDetail sliceFlowDetail {};
+            int col = resultStartIndex;
+            sliceFlowDetail.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            sliceFlowDetail.pid = sqlite3_column_string(stmt, col++);
+            sliceFlowDetail.tid = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            sliceFlowDetail.depth = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+            sliceFlowDetailVec.emplace_back(sliceFlowDetail);
+        }
+    } else {
+        ServerLog::Error("QuerySliceFlowList failed!");
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic
