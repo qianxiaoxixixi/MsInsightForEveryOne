@@ -248,6 +248,19 @@ struct FlowDetailDto {
     int64_t timestamp;
     std::string type;
 };
+
+struct SimpleFlowDto {
+    std::string name;
+    std::string flowId;
+    std::string type;
+};
+
+struct SliceFlowDetail {
+    uint64_t tid;
+    std::string pid;
+    uint64_t timestamp;
+    uint64_t depth;
+};
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic
