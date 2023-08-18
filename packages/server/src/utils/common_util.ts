@@ -4,8 +4,9 @@ import path from 'path';
 import crypto from 'crypto';
 
 export const Matchs = {
-    ascend_pt: /.*_ascend_pt/,
+    ascend_output: /ASCEND_PROFILER_OUTPUT/,
     msprof: /msprof.*\.json/,
+    PROF: /PROF_.*/,
     trace_view: 'trace_view.json',
 };
 
@@ -54,14 +55,11 @@ export function parseCardID(filePath: string): string {
 
 const getRankIdFromPath = (filePath: string): string => {
     console.log('try get disPlayName of filePath.');
-    const match = filePath.match(Matchs.ascend_pt);
-    if (match) {
-        if (filePath.endsWith(Matchs.trace_view)) {
-            return path.basename(match[0]);
-        } else if (filePath.match(Matchs.msprof)) {
-            const devicePath = path.dirname(path.dirname(filePath));
-            return path.basename(path.dirname(devicePath)) + path.basename(devicePath);
-        }
+    if (filePath.endsWith(Matchs.trace_view)) {
+        return path.basename(path.dirname(path.dirname(filePath)));
+    } else if (filePath.match(Matchs.msprof)) {
+        const devicePath = path.dirname(path.dirname(filePath));
+        return path.basename(path.dirname(devicePath)) + path.basename(devicePath);
     }
     return '';
 };
