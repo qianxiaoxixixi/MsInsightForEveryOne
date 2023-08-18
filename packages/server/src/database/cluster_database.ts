@@ -238,17 +238,15 @@ export class ClusterDatabase {
                 rankCondition = 'and rank_id in ('
                     .concat('?').concat((',?').repeat(rankIdList.length - 1)).concat(') ');
             }
-            param.push(orderBy);
             const sql: string = `SELECT
                                      rank_id as rankId,
-                                     GROUP_CONCAT(step_id) as stepIdList,
-                                     sum(compute_time) as computingTime,
-                                     sum(pure_communication_time) as communicationNotOverLappedTime,
-                                     sum(overlap_communication_time) as communicationOverLappedTime,
-                                     sum(free_time) as freeTime
+                                     sum(ROUND(compute_time,2)) as computingTime,
+                                     sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,
+                                     sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,
+                                     sum(ROUND(free_time,2)) as freeTime
                                  FROM ${STEP_STATISTIC_INFO_TABLE}
                                  WHERE rank_id !='' ${stepCondition}  ${rankCondition}
-                                 group by rank_id order by ?`;
+                                 group by rank_id order by ${orderBy}`;
             this.clusterDb.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
@@ -301,6 +299,7 @@ export class ClusterDatabase {
             this.clusterDb.all(`select file_path as filePath,
                                        ranks,
                                        steps,
+                                       collect_start_time as collectStartTime,
                                        data_size as dataSize
                                 from ${CLUSTER_BASE_INFO_TABLE}`,
             [], (err, rows) => {
