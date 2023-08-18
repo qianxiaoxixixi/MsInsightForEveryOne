@@ -1,24 +1,24 @@
-import { onExpandForChildren, parseColDef, selectRow, treeAttachInfo } from "./utils";
+import { onExpandForChildren, parseColDef, selectRow, treeAttachInfo } from './utils';
 
 describe('utils test', () => {
     it('parseColDef test', () => {
-        expect(() => parseColDef({ columns: [['name', () => 'render', 0]] }, session)).toThrow(new Error('columnsWidth at least one of the columns should have width "max-content" or "auto"'));
+        expect(() => parseColDef({ columns: [[ 'name', () => 'render', 0 ]] }, session)).toThrow(new Error('columnsWidth at least one of the columns should have width "max-content" or "auto"'));
         expect(JSON.stringify(parseColDef({
             columns: [
-                ['name2', () => 'render2', 'max-content', 'scroll']
-            ]
+                [ 'name2', () => 'render2', 'max-content', 'scroll' ],
+            ],
         }, session))).toEqual(JSON.stringify([
             {
-                title: "name2",
-                key: "name2",
+                title: 'name2',
+                key: 'name2',
                 colSpan: 1,
                 ellipsis: {
-                    showTitle: false
+                    showTitle: false,
                 },
-                render: () => { }
-            }
+                render: () => { },
+            },
         ]));
-    })
+    });
 
     it('selectRow test', () => {
         const row = {};
@@ -26,17 +26,17 @@ describe('utils test', () => {
             data: [],
             rowKey: (row: object) => 'testkey',
             columns: [],
-            isLoading: false
-        }
+            isLoading: false,
+        };
         selectRow(row, session, tableState);
 
         expect(session.selectedDetails).toStrictEqual([row]);
 
         expect(session.selectedDetailKeys).toStrictEqual(['testkey']);
-    })
+    });
 
     it('treeAttachInfo test', () => {
-        let root = undefined;
+        let root;
         expect(treeAttachInfo(root)).toStrictEqual(root);
         root = {};
         treeAttachInfo(root);
@@ -45,7 +45,7 @@ describe('utils test', () => {
         treeAttachInfo(root);
         expect(Object.getOwnPropertySymbols(root).length).toBe(2);
         expect(Object.getOwnPropertySymbols(root.children[0]).length).toBe(2);
-    })
+    });
 
     it('onExpandForChildren test', async () => {
         const setTableState = jest.fn();
@@ -70,5 +70,5 @@ describe('utils test', () => {
         expect(Object.getOwnPropertySymbols(node).length).toBe(1);
         expect(setTableState).toBeCalledTimes(1);
         expect(setTableState1).toBeCalledTimes(0);
-    })
-})
+    });
+});

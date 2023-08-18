@@ -3,7 +3,7 @@ import { useTheme } from '@emotion/react';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef } from 'react';
-import { ChartProps, EventData } from '../../entity/chart';
+import { ChartProps, EventData, Scale } from '../../entity/chart';
 import { Canvas, CanvasContainer } from './common';
 import { Pos, useBatchedRender, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, TooltipProps } from './TooltipComp';
@@ -16,7 +16,7 @@ const RECT_HEIGHT = 10; // Hover Rect宽度
 const borderWidth = 2;
 
 function drawData(context: CanvasRenderingContext2D, happenTime: number, endTime: number, rangeAndDomain: Array<[number, number]>, theme: Theme): void {
-    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true);
+    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true) as Scale;
     const [ domainStart, domainEnd ] = rangeAndDomain[1];
     if (happenTime === endTime) {
         if (happenTime >= domainStart && happenTime <= domainEnd) {
@@ -76,7 +76,7 @@ const drawRectByXY = (context: CanvasRenderingContext2D | null, dataState: Event
         return;
     }
     const [ domainStart, domainEnd ] = rangeAndDomain[1];
-    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true);
+    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true) as Scale;
     context.globalAlpha = 0.3;
     for (let i = 0; i < dataState.length; i++) {
         const happenTime = dataState[i].happenTime;
@@ -101,7 +101,7 @@ const drawRectByXY = (context: CanvasRenderingContext2D | null, dataState: Event
 const findDataByX = (mousePosX: number | undefined, dataState: EventData[],
     rangeAndDomain: Array<[number, number]>): (undefined | EventData) => {
     if (rangeAndDomain.length === 0 || dataState.length === 0 || mousePosX === undefined) { return undefined; }
-    const reverseXScale = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(true);
+    const reverseXScale = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(true) as Scale;
     const mouseTimestamp = reverseXScale(mousePosX);
     for (let i = 0; i < dataState.length; i++) {
         const happenTime = dataState[i].happenTime;

@@ -111,7 +111,7 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
     if (mousePos === undefined || datas.length === 0 || rangeAndDomain.length === 0) {
         return undefined;
     }
-    const mouseTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(mousePos.x);
+    const mouseTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(mousePos.x) as number;
     const depth = Math.floor(mousePos.y / depthHeight);
     const data = datas[depth];
     if (data === undefined || data.length === 0) {
@@ -162,7 +162,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
             return;
         }
         const ctx = canvas.current.getContext('2d');
-        const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
+        const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true) as Scale;
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, datasState, xScale, yScale, theme, session.endTimeAll ?? 0, textConfig);
         drawExt({
