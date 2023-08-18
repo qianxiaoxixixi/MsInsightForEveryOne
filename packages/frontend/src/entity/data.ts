@@ -668,7 +668,7 @@ export type MetaData = {
 export type InsightMetaData <T extends keyof MetaData> = {
     type: T;
     metadata: MetaData[T];
-    children?: InsightMetaData <keyof MetaData> [];
+    children?: Array<InsightMetaData <keyof MetaData>>;
 };
 
 export type ThreadMetaData = {

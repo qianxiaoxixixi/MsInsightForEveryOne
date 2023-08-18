@@ -8,6 +8,7 @@ import { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
 import { useAsyncEffect } from '../../utils/useEffectHooks';
 import styled from '@emotion/styled';
+import { Scale } from '../../entity/chart';
 
 export type ArcData = {
     startAngle: number;
@@ -114,7 +115,7 @@ const drawRight = (ctx: CanvasRenderingContext2D, {
     palette,
     canvasHeight,
 }: DrawRightParams): void => {
-    const xScale = d3.scaleLinear().range(range).domain([ 0, 10 ]);
+    const xScale = d3.scaleLinear().range(range).domain([ 0, 10 ]) as Scale;
     const ratio = 0.15;
     const yOffset = canvasHeight / datas.length;
     const rectSizePara = canvasHeight * ratio / 5;
