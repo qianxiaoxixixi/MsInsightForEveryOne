@@ -182,10 +182,10 @@ std::unique_ptr<Request> RequestManager::ToConfigSetRequest(const json_t &json, 
         ProtocolUtil::SetGlobalConfigStruct(json["params"]["config"]["global"], config);
         reqPtr->params.globalConfig = config;
     }
-    if (JsonUtil::IsJsonKeyValid(json["params"]["config"], "harmony")) {
-        HarmonyConfig config;
-        ProtocolUtil::SetHarmonyConfigStruct(json["params"]["config"]["harmony"], config);
-        reqPtr->params.harmonyConfig = config;
+    if (JsonUtil::IsJsonKeyValid(json["params"]["config"], "ascendConfig")) {
+        AscendConfig config;
+        ProtocolUtil::SetAscendConfigStruct(json["params"]["config"]["ascendConfig"], config);
+        reqPtr->params.ascendConfig = config;
     }
     return reqPtr;
 }

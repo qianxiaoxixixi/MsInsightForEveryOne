@@ -17,7 +17,7 @@ const std::string SCENE_DATABASE = "database";
 const std::string SCENE_TOOL = "tool";
 const std::string SCENE_LOG = "log";
 // mix scene
-const std::string SCENE_HARMONY = "harmony";
+const std::string SCENE_ASCEND = "ascend";
 #pragma endregion
 
 #pragma region << Base>>
@@ -30,7 +30,6 @@ const std::string EVENT_NAME = "event";
 const std::string EVENT_INITIALIZED = "initialized";
 // ascend
 const std::string EVENT_PARSE_SUCCESS = "parse/success";
-const std::string EVENT_DEVICE_CHANGED = "deviceChanged";
 #pragma endregion
 
 #pragma region << Request / Response Command>>

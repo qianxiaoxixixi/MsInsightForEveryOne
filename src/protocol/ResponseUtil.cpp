@@ -56,9 +56,9 @@ template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const Config
         json["body"]["config"]["global"] = json_t::object();
         ProtocolUtil::SetGlobalConfigJson(response.body.globalConfig.value(), json["body"]["config"]["global"]);
     }
-    if (response.body.harmonyConfig.has_value()) {
-        json["body"]["config"]["harmony"] = json_t::object();
-        ProtocolUtil::SetHarmonyConfigJson(response.body.harmonyConfig.value(), json["body"]["config"]["harmony"]);
+    if (response.body.ascendConfig.has_value()) {
+        json["body"]["config"]["ascendConfig"] = json_t::object();
+        ProtocolUtil::SetAscendConfigJson(response.body.ascendConfig.value(), json["body"]["config"]["ascendConfig"]);
     }
     return json;
 }

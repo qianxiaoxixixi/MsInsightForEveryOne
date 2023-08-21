@@ -27,36 +27,10 @@ const EnumStrMap<Protocol::SceneType> SCENE_TYPE_ES = { { Protocol::SceneType::G
                                                         { Protocol::SceneType::DATABASE, "database" },
                                                         { Protocol::SceneType::TOOL, "tool" },
                                                         { Protocol::SceneType::LOG, "log" },
-                                                        { Protocol::SceneType::HARMONY, "harmony" },
                                                         { Protocol::SceneType::ASCEND, "ascend" }};
 
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };
-
-const EnumStrMap<Protocol::DeviceStatus> DEVICE_STATUS_ES = { { Protocol::DeviceStatus::OFFLINE, "Offline" },
-                                                              { Protocol::DeviceStatus::ONLINE, "Online" } };
-
-const EnumStrMap<Protocol::ProcessStatus> PROCESS_STATUS_ES = { { Protocol::ProcessStatus::ALIVE, "Alive" },
-                                                                { Protocol::ProcessStatus::DEAD, "Dead" } };
-
-const EnumStrMap<Protocol::ApplicationStatus> APPLICATION_STATUS_ES = { { Protocol::ApplicationStatus::INSTALLED,
-                                                                          "Installed" },
-                                                                        { Protocol::ApplicationStatus::UN_INSTALLED,
-                                                                          "UnInstalled" },
-                                                                        { Protocol::ApplicationStatus::RUNNING,
-                                                                          "Running" } };
-
-const EnumStrMap<Protocol::ProcessType> PROCESS_TYPE_ES = { { Protocol::ProcessType::SYSTEM_PROCESS, "System Process" },
-                                                            { Protocol::ProcessType::MAIN_PROCESS, "Main Process" },
-                                                            { Protocol::ProcessType::EXTENSION_PROCESS,
-                                                              "Extension Process" },
-                                                            { Protocol::ProcessType::RENDER_PROCESS,
-                                                              "Render Process" } };
-
-const EnumStrMap<Protocol::DeviceConnectType> DEVICE_CONNECT_TYPE_ES = {
-    { Protocol::DeviceConnectType::USB, "USB" },
-    { Protocol::DeviceConnectType::TCP, "TCP" },
-};
 
 #pragma endregion
 
@@ -122,79 +96,6 @@ template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::LinkTy
 template <> inline const std::optional<Protocol::LinkType> STR_TO_ENUM<Protocol::LinkType>(const std::string &s)
 {
     return TryGetEnum<Protocol::LinkType>(LINK_TYPE_ES, s);
-}
-
-// Protocol::DeviceStatus
-template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::DeviceStatus>(const Protocol::DeviceStatus &e)
-{
-    if (DEVICE_STATUS_ES.count(e) == 0) {
-        return std::nullopt;
-    }
-    return DEVICE_STATUS_ES.at(e);
-}
-
-template <> inline const std::optional<Protocol::DeviceStatus> STR_TO_ENUM<Protocol::DeviceStatus>(const std::string &s)
-{
-    return TryGetEnum<Protocol::DeviceStatus>(DEVICE_STATUS_ES, s);
-}
-
-template <>
-inline const std::optional<std::string> ENUM_TO_STR<Protocol::ProcessStatus>(const Protocol::ProcessStatus &e)
-{
-    if (PROCESS_STATUS_ES.count(e) == 0) {
-        return std::nullopt;
-    }
-    return PROCESS_STATUS_ES.at(e);
-}
-
-template <>
-inline const std::optional<std::string> ENUM_TO_STR<Protocol::ApplicationStatus>(const Protocol::ApplicationStatus &e)
-{
-    if (APPLICATION_STATUS_ES.count(e) == 0) {
-        return std::nullopt;
-    }
-    return APPLICATION_STATUS_ES.at(e);
-}
-
-template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::ProcessType>(const Protocol::ProcessType &e)
-{
-    if (PROCESS_TYPE_ES.count(e) == 0) {
-        return std::nullopt;
-    }
-    return PROCESS_TYPE_ES.at(e);
-}
-
-template <>
-inline const std::optional<Protocol::ProcessStatus> STR_TO_ENUM<Protocol::ProcessStatus>(const std::string &s)
-{
-    return TryGetEnum<Protocol::ProcessStatus>(PROCESS_STATUS_ES, s);
-}
-
-// Protocol::DeviceConnectType
-template <>
-inline const std::optional<std::string> ENUM_TO_STR<Protocol::DeviceConnectType>(const Protocol::DeviceConnectType &e)
-{
-    if (DEVICE_CONNECT_TYPE_ES.count(e) == 0) {
-        return std::nullopt;
-    }
-    return DEVICE_CONNECT_TYPE_ES.at(e);
-}
-
-template <>
-inline const std::optional<Protocol::DeviceConnectType> STR_TO_ENUM<Protocol::DeviceConnectType>(const std::string &s)
-{
-    return TryGetEnum<Protocol::DeviceConnectType>(DEVICE_CONNECT_TYPE_ES, s);
-}
-
-template <>
-inline const std::optional<Protocol::ApplicationStatus> STR_TO_ENUM<Protocol::ApplicationStatus>(const std::string &s)
-{
-    return TryGetEnum<Protocol::ApplicationStatus>(APPLICATION_STATUS_ES, s);
-}
-
-template <> inline const std::optional<Protocol::ProcessType> STR_TO_ENUM<Protocol::ProcessType>(const std::string &s)
-{
-    return TryGetEnum<Protocol::ProcessType>(PROCESS_TYPE_ES, s);
 }
 #pragma endregion
 } // end of namespace Protocol
