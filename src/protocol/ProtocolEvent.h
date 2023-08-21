@@ -32,16 +32,6 @@ struct ParseSuccessEvent : public Event {
     ParseSuccessEventBody body;
 };
 
-// harmony
-struct DeviceChangedEventBody {
-    Device device;
-};
-
-struct DeviceChangedEvent : public Event {
-    DeviceChangedEvent() : Event(EVENT_DEVICE_CHANGED) {}
-    DeviceChangedEventBody body;
-};
-
 } // end of namespace Protocol
 } // end if namespace Dic
 

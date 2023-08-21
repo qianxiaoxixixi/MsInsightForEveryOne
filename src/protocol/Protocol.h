@@ -27,7 +27,7 @@ using namespace Dic::Scene;
 // scene map
 const std::map<SceneType, std::string> SCENE_MAP = {
     { SceneType::UNKNOWN, SCENE_UNKNOWN }, { SceneType::GLOBAL, SCENE_GLOBAL }, { SceneType::DATABASE, SCENE_DATABASE },
-    { SceneType::TOOL, SCENE_TOOL },       { SceneType::LOG, SCENE_LOG },       { SceneType::HARMONY, SCENE_HARMONY }
+    { SceneType::TOOL, SCENE_TOOL },       { SceneType::LOG, SCENE_LOG },       { SceneType::ASCEND, SCENE_ASCEND }
 };
 
 inline ErrorMessage MakeError(ErrorCode errorCode, const std::string &message)
