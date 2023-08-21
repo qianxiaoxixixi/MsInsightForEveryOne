@@ -224,7 +224,6 @@ std::string TraceFileParser::GetFileId(const std::string &filePath)
 
 std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
 {
-    // [{"rank_id":0},{"name": "proces
     std::ifstream file(filePath);
     if (!file.is_open()) {
         ServerLog::Error("Failed to open file.");

@@ -15,7 +15,6 @@ namespace Protocol {
 using namespace Dic::Protocol;
 template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event);
 
-template <> std::optional<json_t> ToEventJson<DeviceChangedEvent>(const DeviceChangedEvent &event);
 template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);
 } // end of namespace Protocol
 } // end of namespace Dic

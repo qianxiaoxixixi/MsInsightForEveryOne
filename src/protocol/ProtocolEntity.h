@@ -16,35 +16,6 @@
 
 namespace Dic {
 namespace Protocol {
-// harmony
-struct Device {
-    std::string deviceKey;
-    DeviceStatus status = DeviceStatus::OFFLINE;
-    DeviceConnectType connectType = DeviceConnectType::USB;
-    std::string cpuAbi;
-    int apiVersion = 0;
-    std::string productModel;
-    std::string deviceType;
-    std::string softwareVersion;
-    std::string productBrand;
-};
-
-struct Process {
-    int pid = 0;
-    int ppid = 0;
-    std::string processName;
-    std::optional<std::string> bundleName;
-    ProcessStatus status = ProcessStatus::ALIVE;
-    std::optional<std::string> uid;
-    ProcessType type = ProcessType::SYSTEM_PROCESS;
-    bool isDebug = false;
-};
-
-struct Application {
-    std::string bundleName;
-    ApplicationStatus status = ApplicationStatus::INSTALLED;
-};
-
 // global
 struct GlobalConfig {
     int maxSessionCount = 20;
@@ -52,28 +23,6 @@ struct GlobalConfig {
 // ascend
 struct AscendConfig {
     int maxSessionCount = 20;
-};
-// harmony
-struct HdcConfig {
-    bool enable = true;
-    std::string path;
-    std::string traceDir;
-    int hdcPort = 0;
-};
-
-struct DfxConfig {
-    bool enable = true;
-    std::string dbDir;
-};
-
-struct JsVmConfig {
-    bool enable = true;
-};
-
-struct HarmonyConfig {
-    HdcConfig hdc;
-    DfxConfig dfx;
-    JsVmConfig jsvm;
 };
 
 struct UnitMetaData {

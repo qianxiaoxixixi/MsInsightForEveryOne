@@ -61,7 +61,6 @@ struct ConfigGetRequest : public Request {
 // config.set
 struct ConfigSetParams {
     std::optional<GlobalConfig> globalConfig;
-    std::optional<HarmonyConfig> harmonyConfig;
     std::optional<AscendConfig> ascendConfig;
 };
 
@@ -72,7 +71,7 @@ struct ConfigSetRequest : public Request {
 
 #pragma endregion
 
-#pragma region << harmony>>
+#pragma region <<ascend>>
 
 struct ImportActionParams {
     std::string path;
