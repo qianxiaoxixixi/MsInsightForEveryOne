@@ -15,7 +15,6 @@ enum class SceneType : int {
     TOOL = 4,
     LOG = 8,
     ASCEND = 16,
-    HARMONY = 256,
 };
 
 enum class LinkType : int {
@@ -23,34 +22,6 @@ enum class LinkType : int {
     WEBSOCKET
 };
 
-// harmony
-enum class DeviceStatus : int {
-    OFFLINE = 0,
-    ONLINE
-};
-
-enum class ProcessStatus : int {
-    ALIVE = 0,
-    DEAD
-};
-
-enum class DeviceConnectType : int {
-    USB = 0,
-    TCP
-};
-
-enum class ApplicationStatus : int {
-    UN_INSTALLED = 0,
-    INSTALLED,
-    RUNNING
-};
-
-enum class ProcessType : int {
-    SYSTEM_PROCESS = 0,
-    MAIN_PROCESS,
-    EXTENSION_PROCESS,
-    RENDER_PROCESS
-};
 } // end of namespace Protocol
 } // end if namespace Dic
 

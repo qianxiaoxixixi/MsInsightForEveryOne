@@ -13,40 +13,19 @@ void ProtocolUtil::SetGlobalConfigJson(const GlobalConfig &config, json_t &jsonG
     jsonGlobalConfig["maxSessionCount"] = config.maxSessionCount;
 }
 
+void ProtocolUtil::SetAscendConfigJson(const AscendConfig &config, json_t &jsonAscendConfig)
+{
+    jsonAscendConfig["maxSessionCount"] = config.maxSessionCount;
+}
+
 void ProtocolUtil::SetGlobalConfigStruct(const json_t &jsonGlobalConfig, GlobalConfig &config)
 {
     JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonGlobalConfig, "maxSessionCount");
 }
 
-void ProtocolUtil::SetHarmonyConfigJson(const HarmonyConfig &config, json_t &jsonHarmonyConfig)
+void ProtocolUtil::SetAscendConfigStruct(const json_t &jsonAscendConfig, AscendConfig &config)
 {
-    // hdc
-    jsonHarmonyConfig["hdc"]["enable"] = config.hdc.enable;
-    jsonHarmonyConfig["hdc"]["path"] = config.hdc.path;
-    jsonHarmonyConfig["hdc"]["traceDir"] = config.hdc.traceDir;
-    jsonHarmonyConfig["hdc"]["hdcPort"] = config.hdc.hdcPort;
-    // dfx
-    jsonHarmonyConfig["dfx"]["enable"] = config.dfx.enable;
-    jsonHarmonyConfig["dfx"]["dbDir"] = config.dfx.dbDir;
-    // jsvm
-    jsonHarmonyConfig["jsvm"]["enable"] = config.jsvm.enable;
-}
-
-void ProtocolUtil::SetHarmonyConfigStruct(const json_t &jsonHarmonyConfig, HarmonyConfig &config)
-{
-    if (JsonUtil::IsJsonKeyValid(jsonHarmonyConfig, "hdc")) {
-        JsonUtil::SetByJsonKeyValue(config.hdc.enable, jsonHarmonyConfig["hdc"], "enable");
-        JsonUtil::SetByJsonKeyValue(config.hdc.path, jsonHarmonyConfig["hdc"], "path");
-        JsonUtil::SetByJsonKeyValue(config.hdc.traceDir, jsonHarmonyConfig["hdc"], "traceDir");
-        JsonUtil::SetByJsonKeyValue(config.hdc.hdcPort, jsonHarmonyConfig["hdc"], "hdcPort");
-    }
-    if (JsonUtil::IsJsonKeyValid(jsonHarmonyConfig, "dfx")) {
-        JsonUtil::SetByJsonKeyValue(config.dfx.enable, jsonHarmonyConfig["dfx"], "enable");
-        JsonUtil::SetByJsonKeyValue(config.dfx.dbDir, jsonHarmonyConfig["dfx"], "dbDir");
-    }
-    if (JsonUtil::IsJsonKeyValid(jsonHarmonyConfig, "jsvm")) {
-        JsonUtil::SetByJsonKeyValue(config.jsvm.enable, jsonHarmonyConfig["jsvm"], "enable");
-    }
+    JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonAscendConfig, "maxSessionCount");
 }
 
 void ProtocolUtil::SetRequestJsonBaseInfo(const Request &request, json_t &json)
