@@ -30,7 +30,12 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     ImportActionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     std::string path = request.params.path;
-    if (path.empty() || path == "browser") {
+    if (path.empty()) {
+        ServerLog::Warn("Import path is empty.");
+        SetResponseResult(response, false);
+        session.OnResponse(std::move(responsePtr));
+    }
+    if (path == "browser") {
         path = ExecUtil::SelectFolder();
     }
     auto traceFiles = FindTraceFile(path);
@@ -73,6 +78,10 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
 std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &path)
 {
     std::vector<std::string> traceFiles;
+    if (!FileUtil::IsFolder(path)) {
+        traceFiles.emplace_back(path);
+        return traceFiles;
+    }
     std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
         if (depth > 5) {
             return;
