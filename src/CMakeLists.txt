@@ -26,42 +26,40 @@ aux_source_directory(${SRC_HOME_DIR}/server DIC_SERVER_SRC)
 include_directories(${SRC_HOME_DIR}/protocol)
 aux_source_directory(${SRC_HOME_DIR}/protocol DIC_PROTOCOL_SRC)
 
-# src scene
-include_directories(${SRC_HOME_DIR}/scene)
-include_directories(${SRC_HOME_DIR}/scene/handler)
-include_directories(${SRC_HOME_DIR}/scene/handler/global)
-include_directories(${SRC_HOME_DIR}/scene/core)
-include_directories(${SRC_HOME_DIR}/scene/core/database)
-include_directories(${SRC_HOME_DIR}/scene/core/parser)
-include_directories(${SRC_HOME_DIR}/scene/core/parser/trace)
+# src module
+include_directories(${SRC_HOME_DIR}/module)
+include_directories(${SRC_HOME_DIR}/module/base)
+include_directories(${SRC_HOME_DIR}/module/global)
+include_directories(${SRC_HOME_DIR}/module/global/handler)
+include_directories(${SRC_HOME_DIR}/module/timeline)
+include_directories(${SRC_HOME_DIR}/module/timeline/core)
+include_directories(${SRC_HOME_DIR}/module/timeline/core/database)
+include_directories(${SRC_HOME_DIR}/module/timeline/core/parser)
+include_directories(${SRC_HOME_DIR}/module/timeline/handler)
+include_directories(${SRC_HOME_DIR}/module/timeline/protocol)
 
-include_directories(${SRC_HOME_DIR}/scene/core/hdc)
-include_directories(${SRC_HOME_DIR}/scene/core/hdc/common)
-include_directories(${SRC_HOME_DIR}/scene/handler/ascend)
+# module for server
+aux_source_directory(${SRC_HOME_DIR}/module DIC_MODULE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/base DIC_MODULE_BASE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/global DIC_MODULE_GLOBAL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/global/handler DIC_MODULE_GLOBAL_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/timeline  DIC_MODULE_TIMELINE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/timeline/core DIC_MODULE_TIMELINE_CORE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/timeline/core/database DIC_MODULE_TIMELINE_CORE_DATABASE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/timeline/core/parser DIC_MODULE_TIMELINE_CORE_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/timeline/handler DIC_MODULE_TIMELINE_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/module/timeline/protocol DIC_MODULE_TIMELINE_PROTOCOL_SRC)
 
-# scene for server
-aux_source_directory(${SRC_HOME_DIR}/scene DIC_SCENE_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/handler DIC_SCENE_HANDLER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/handler/global DIC_SCENE_HANDLER_GLOBAL_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/core DIC_SCENE_CORE_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/core/database DIC_SCENE_CORE_DATABASE_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/core/parser DIC_SCENE_CORE_PARSER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/core/parser/trace DIC_SCENE_CORE_PARSER_TRACE_SRC)
-
-aux_source_directory(${SRC_HOME_DIR}/scene/core/hdc DIC_SCENE_CORE_HDC_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/core/hdc/common DIC_SCENE_CORE_HDC_COMMON_SRC)
-aux_source_directory(${SRC_HOME_DIR}/scene/handler/ascend DIC_SCENE_HANDLER_ASCEND_SRC)
-
-list(APPEND DIC_SCENE_SRC_LIST
-        ${DIC_SCENE_SRC}
-        ${DIC_SCENE_HANDLER_SRC}
-        ${DIC_SCENE_HANDLER_GLOBAL_SRC}
-        ${DIC_SCENE_CORE_SRC}
-        ${DIC_SCENE_CORE_DATABASE_SRC}
-        ${DIC_SCENE_CORE_PARSER_SRC}
-        ${DIC_SCENE_CORE_PARSER_TRACE_SRC}
-        ${DIC_SCENE_CORE_HDC_SRC}
-        ${DIC_SCENE_CORE_HDC_COMMON_SRC}
-        ${DIC_SCENE_HANDLER_ASCEND_SRC})
+list(APPEND DIC_MODULE_SRC_LIST
+        ${DIC_MODULE_SRC}
+        ${DIC_MODULE_BASE_SRC}
+        ${DIC_MODULE_GLOBAL_SRC}
+        ${DIC_MODULE_GLOBAL_HANDLER_SRC}
+        ${DIC_MODULE_TIMELINE_SRC}
+        ${DIC_MODULE_TIMELINE_CORE_SRC}
+        ${DIC_MODULE_TIMELINE_CORE_DATABASE_SRC}
+        ${DIC_MODULE_TIMELINE_CORE_PARSER_SRC}
+        ${DIC_MODULE_TIMELINE_HANDLER_SRC}
+        ${DIC_MODULE_TIMELINE_PROTOCOL_SRC})
 
 add_subdirectory(entry)
