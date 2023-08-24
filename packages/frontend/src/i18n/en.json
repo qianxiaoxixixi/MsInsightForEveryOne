@@ -93,7 +93,8 @@
     "Name": "Name",
     "Duration": "Duration",
     "abilityName": "Ability Name",
-    "abilityEvent": "Ability Event"
+    "abilityEvent": "Ability Event",
+    "reset": "Reset"
   },
   "snapshot": {
     "Tooltip": "User object reachable from window"
