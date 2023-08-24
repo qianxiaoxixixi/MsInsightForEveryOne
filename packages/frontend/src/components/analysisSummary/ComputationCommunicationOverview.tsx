@@ -9,7 +9,7 @@ import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import BaseInfo, { BaseInfoDataType, defaultBaseInfo } from './BaseInfo';
-import { addResizeEvent, formatDate } from '../Common';
+import { addResizeEvent, COLOR, formatDate } from '../Common';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
@@ -29,17 +29,21 @@ const baseOption: any = {
     tooltip: {
         trigger: 'axis',
         axisPointer: {
-            type: 'shadow',
+            type: 'cross',
+            crossStyle: {
+                color: COLOR.BrightBlue,
+                type: 'solid',
+            },
         },
     },
     legend: {
         data: [
-            { name: 'Computing', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Communication(Not Overlapped)', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Communication(Overlapped)', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Free', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Computing Ratio', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Communication Ratio', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Computing', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Communication(Overlapped)', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Free', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Computing Ratio', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Communication Ratio', textStyle: { color: COLOR.Grey50 } },
         ],
         tooltip: {
             show: true,
@@ -66,7 +70,7 @@ const baseOption: any = {
             nameGap: 15,
             nameTextStyle: { fontWeight: 'bold', fontSize: '1rem', padding: [ 0, 10, 0, 0 ] },
             axisLabel: {
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
         },
     ],
@@ -76,7 +80,7 @@ const baseOption: any = {
             name: 'Time(μs)',
             axisLabel: {
                 formatter: '{value}',
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
         },
         {
@@ -85,11 +89,11 @@ const baseOption: any = {
             min: 0,
             axisLabel: {
                 formatter: '{value}%',
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
             splitLine: {
                 lineStyle: {
-                    color: 'rgb(202,202,202)',
+                    color: COLOR.Grey20,
                     type: 'dashed',
                 },
             },
