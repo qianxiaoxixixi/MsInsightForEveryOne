@@ -9,7 +9,7 @@ import * as echarts from 'echarts';
 import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { Container, addResizeEvent } from '../Common';
+import { Container, addResizeEvent, COLOR } from '../Common';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [ data, setData ] = useState([]);
@@ -167,7 +167,8 @@ const bandwidthOption: echarts.EChartsOption = {
         axisPointer: {
             type: 'cross',
             crossStyle: {
-                color: '#999',
+                color: COLOR.BrightBlue,
+                type: 'solid',
             },
         },
     },
@@ -180,8 +181,8 @@ const bandwidthOption: echarts.EChartsOption = {
     },
     legend: {
         data: [
-            { name: 'Packet Number', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Bandwidth(GB/s)', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Packet Number', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Bandwidth(GB/s)', textStyle: { color: COLOR.Grey50 } },
         ],
         tooltip: {
             show: true,
@@ -203,7 +204,7 @@ const bandwidthOption: echarts.EChartsOption = {
             type: 'shadow',
         },
         axisLabel: {
-            color: 'rgb(152,152,152)',
+            color: COLOR.Grey40,
         },
     },
     yAxis: [
@@ -213,7 +214,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Packet Number',
             axisLabel: {
                 formatter: '{value}',
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
         },
         {
@@ -221,11 +222,11 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Bandwidth(GB/s)',
             axisLabel: {
                 formatter: '{value} GB/s',
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
             splitLine: {
                 lineStyle: {
-                    color: 'rgb(202,202,202)',
+                    color: COLOR.Grey20,
                     type: 'dashed',
                 },
             },
