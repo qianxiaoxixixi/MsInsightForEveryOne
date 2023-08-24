@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { addResizeEvent, Container } from '../Common';
+import { addResizeEvent, COLOR, Container } from '../Common';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -31,7 +31,8 @@ const baseOption: any = {
         axisPointer: {
             type: 'cross',
             crossStyle: {
-                color: '#999',
+                color: COLOR.BrightBlue,
+                type: 'solid',
             },
         },
     },
@@ -44,12 +45,12 @@ const baseOption: any = {
     },
     legend: {
         data: [
-            { name: 'Elapse Time', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Transit Time', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Synchronization Time', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Wait Time', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Synchronization Time Ratio', textStyle: { color: 'rgb(123,122,122)' } },
-            { name: 'Wait Time Ratio', textStyle: { color: 'rgb(123,122,122)' } } ],
+            { name: 'Elapse Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Transit Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Synchronization Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Wait Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Synchronization Time Ratio', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Wait Time Ratio', textStyle: { color: COLOR.Grey50 } } ],
         tooltip: {
             show: true,
             formatter: function () {
@@ -68,7 +69,7 @@ const baseOption: any = {
                 type: 'shadow',
             },
             axisLabel: {
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
         },
     ],
@@ -78,7 +79,7 @@ const baseOption: any = {
             name: 'Time(ms)',
             axisLabel: {
                 formatter: '{value}',
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
         },
         {
@@ -86,11 +87,11 @@ const baseOption: any = {
             name: 'Ratio',
             axisLabel: {
                 formatter: '{value}',
-                color: 'rgb(152,152,152)',
+                color: COLOR.Grey40,
             },
             splitLine: {
                 lineStyle: {
-                    color: 'rgb(202,202,202)',
+                    color: COLOR.Grey20,
                     type: 'dashed',
                 },
             },

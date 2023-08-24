@@ -180,3 +180,10 @@ export function addResizeEvent(echart: EChartsType): void {
         echart.resize();
     });
 }
+
+export const COLOR = {
+    BrightBlue: '#7df7ff',
+    Grey20: 'rgb(202,202,202)',
+    Grey40: 'rgb(152,152,152)',
+    Grey50: 'rgb(123,122,122)',
+};
