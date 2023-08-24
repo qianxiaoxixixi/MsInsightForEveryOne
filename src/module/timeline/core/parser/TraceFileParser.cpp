@@ -209,6 +209,7 @@ void TraceFileParser::Reset()
     }
     DataBaseManager::Instance().Clear();
     TraceTime::Instance().Reset();
+    FileParser::Reset();
 }
 
 std::string TraceFileParser::GetFileId(const std::string &filePath)

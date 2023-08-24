@@ -25,7 +25,6 @@ public:
     bool CheckSession(const std::string &token);
     void ClearSessions();
     void OnEventByMainSession(Protocol::Event &event);
-    void OnParseSuccessEvent(const std::string &token, Protocol::ParseSuccessEvent &event);
 
 private:
     WsSessionManager() = default;
