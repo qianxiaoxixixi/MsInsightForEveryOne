@@ -1,5 +1,33 @@
 # Server
 
+## 目录结构
+
+~~~
+|-- build							# 构建脚本
+|-- cmake							# 开源软件构建脚本
+|-- src								# 
+|	|-- channel						# 网络通讯
+|	|-- defs						# 全局定义
+|	|-- entry						# 编译模块
+|	|	|-- server					#
+|	|	|	|-- bin					# server模块
+|	|-- protocol					# 全局消息格式转换
+|	|-- module						# 
+|	|   |-- base					# module共用基类 
+|	|	|-- global					# 全局消息
+|	|	|-- timeline				# timeline消息处理
+|	|	|	|-- core				# 核心处理逻辑
+|	|	|	|-- handler				# 消息处理
+|	|	|	|-- protocol			# 消息格式转换
+|	|	|-- ...						#
+|	|-- server						# server服务
+|	|-- utils						# 工具类
+|-- third_party						# 开源软件
+	
+~~~
+
+
+
 ## 构建说明
 
 ### 构建工具
@@ -31,16 +59,4 @@ https://onebox.huawei.com/p/7606b4ccd02cec637bc5f518c156a184
 cd build
 python build.py build --release
 ```
-
-只构建中心server
-
-~~~
-python build.py build --release --project_type=CentricServer
-~~~
-
-只构建边缘server
-
-~~~
-python build.py build --release --project_type=EdgeServer
-~~~
 

@@ -63,6 +63,11 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId, bool result)
 {
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
     auto event = std::make_unique<ParseSuccessEvent>();
     uint64_t min, max;
     event->body.unit.type = "card";
@@ -72,7 +77,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->body.startTimeUpdated = true;
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
-    WsSessionManager::Instance().OnParseSuccessEvent(token, *event);
+    session->OnEvent(std::move(event));
 }
 
 std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &path)
