@@ -25,7 +25,6 @@ export class RegisterWebview extends Webview {
         let result = data.toString();
         const jsonObject = JSON.parse(result);
         this.nameList = jsonObject;
-        this.startServer();
     }
 
     newPanel() {
@@ -53,6 +52,7 @@ export class RegisterWebview extends Webview {
     }
 
     previewUIPage() {
+        this.startServer();
         this.active();
         this.panel?.webview.postMessage(this._extensionUri.toString);
         (this.panel as vscode.WebviewPanel).webview.html = this.html();

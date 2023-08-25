@@ -7,19 +7,18 @@
     "private": true,
     "dependencies": {
         "crypto-js": "^4.1.1",
-        "sqlite3": "^5.1.5",
-        "log4js": "6.7.1",
         "lodash": "4.17.21",
+        "log4js": "6.7.1",
         "threads": "^1.7.0",
         "ws": "^8.5.0"
     },
     "devDependencies": {
         "electron": "24.1.2",
-        "electron-packager": "^17.1.1"
+        "electron-builder": "23.0.4"
     },
     "scripts": {
-        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
-        "packLinux": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
+        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=x64 --electron-version=24.1.2 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinux": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.1.2 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
     },
     "build": {
         "appId": "ascend.insight.server",
@@ -28,6 +27,19 @@
         "directories": {
             "buildResources": "build",
             "output": "dist"
+        },
+        "electronDownload": {
+            "mirror": "https://npm.taobao.org/mirrors/electron/"
+        },
+        "electronVersion": "24.1.2",
+        "win": {
+            "target": "nsis"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "runAfterFinish": true
         }
     }
 }
