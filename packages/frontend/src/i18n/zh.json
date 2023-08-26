@@ -93,7 +93,8 @@
     "Name": "名称",
     "Duration": "持续时间",
     "abilityName": "Ability名",
-    "abilityEvent": "Ability事件"
+    "abilityEvent": "Ability事件",
+    "reset": "复原"
   },
   "snapshot": {
     "Tooltip": "可通过窗口访问的用户对象"
