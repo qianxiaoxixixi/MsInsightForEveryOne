@@ -15,7 +15,7 @@ namespace Module {
 using namespace Dic::Server;
 GlobalModule::GlobalModule() : BaseModule()
 {
-    sceneType = ModuleType::GLOBAL;
+    moduleType = ModuleType::GLOBAL;
 }
 
 GlobalModule::~GlobalModule()

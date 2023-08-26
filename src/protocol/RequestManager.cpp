@@ -162,7 +162,7 @@ std::unique_ptr<Request> RequestManager::ToConfigGetRequest(const json_t &json, 
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.sceneMask, json["params"], "sceneMask");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.moduleMask, json["params"], "moduleMask");
     return reqPtr;
 }
 

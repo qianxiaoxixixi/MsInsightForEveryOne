@@ -19,7 +19,7 @@ using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 TimelineModule::TimelineModule() : BaseModule()
 {
-    sceneType = ModuleType::TIMELINE;
+    moduleType = ModuleType::TIMELINE;
 }
 
 TimelineModule::~TimelineModule()
