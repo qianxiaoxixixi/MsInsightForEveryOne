@@ -50,7 +50,7 @@ struct TokenCheckRequest : public Request {
 
 // config.get
 struct ConfigGetParams {
-    int sceneMask = -1; // if -1, get all configs;
+    int moduleMask = -1; // if -1, get all configs;
 };
 
 struct ConfigGetRequest : public Request {

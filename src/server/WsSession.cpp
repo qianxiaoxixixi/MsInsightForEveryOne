@@ -73,7 +73,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
         if (msg->type == ProtocolMessage::Type::REQUEST) {
             Request *reqPtr = dynamic_cast<Request *>(msg.release());
             if (reqPtr != nullptr) {
-                ModuleManager::Instance().OnDispatchSceneRequest(std::unique_ptr<Request>(reqPtr));
+                ModuleManager::Instance().OnDispatchModuleRequest(std::unique_ptr<Request>(reqPtr));
             } else {
                 ServerLog::Info("Request is not supported, scene = ", static_cast<int>(msg->scene));
             }

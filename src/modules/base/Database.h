@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
 
-#ifndef DATA_INSIGHT_CORE_SCENE_CORE_DATABASE_BASE_H
-#define DATA_INSIGHT_CORE_SCENE_CORE_DATABASE_BASE_H
+#ifndef DATA_INSIGHT_CORE_MODULE_CORE_DATABASE_BASE_H
+#define DATA_INSIGHT_CORE_MODULE_CORE_DATABASE_BASE_H
 
 #include <vector>
 #include <string>
@@ -41,4 +41,4 @@ private:
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // DATA_INSIGHT_CORE_SCENE_CORE_DATABASE_BASE_H
+#endif // DATA_INSIGHT_CORE_MODULE_CORE_DATABASE_BASE_H
