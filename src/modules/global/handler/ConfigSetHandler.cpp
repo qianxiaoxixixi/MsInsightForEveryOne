@@ -29,7 +29,7 @@ void ConfigSetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
         ModuleManager::Instance().SetGlobalConfig(request.params.globalConfig.value());
     }
     if (request.params.ascendConfig.has_value()) {
-        ModuleManager::Instance().SetAscendConfig(request.params.ascendConfig.value());
+        ModuleManager::Instance().SetTimelineConfig(request.params.ascendConfig.value());
     }
     response.body.configSetTime = TimeUtil::Instance().NowUTC();
     SetResponseResult(response, true);

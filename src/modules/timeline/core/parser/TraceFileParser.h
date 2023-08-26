@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#ifndef DATA_INSIGHT_CORE_SCENE_CORE_TRACE_FILE_PARSER_H
-#define DATA_INSIGHT_CORE_SCENE_CORE_TRACE_FILE_PARSER_H
+#ifndef DATA_INSIGHT_CORE_MODULE_CORE_TRACE_FILE_PARSER_H
+#define DATA_INSIGHT_CORE_MODULE_CORE_TRACE_FILE_PARSER_H
 
 #include <vector>
 #include <map>
@@ -49,4 +49,4 @@ private:
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // DATA_INSIGHT_CORE_SCENE_CORE_TRACE_FILE_PARSER_H
+#endif // DATA_INSIGHT_CORE_MODULE_CORE_TRACE_FILE_PARSER_H

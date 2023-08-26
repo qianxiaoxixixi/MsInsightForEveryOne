@@ -149,7 +149,7 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const Uni
         flowJson["timestamp"] = flowName.timestamp;
         flowJson["depth"] = flowName.depth;
         flowJson["flowId"] = flowName.flowId;
-        json["body"]["data"].emplace_back(flowJson);
+        json["body"]["flowDetail"].emplace_back(flowJson);
     }
     return json;
 }
@@ -167,10 +167,10 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlo
     fromJson["depth"] = response.body.from.depth;
     json["body"]["from"] = fromJson;
     json_t toJson = json_t::object();
-    toJson["pid"] = response.body.from.pid;
-    toJson["tid"] = response.body.from.tid;
-    toJson["timestamp"] = response.body.from.timestamp;
-    toJson["depth"] = response.body.from.depth;
+    toJson["pid"] = response.body.to.pid;
+    toJson["tid"] = response.body.to.tid;
+    toJson["timestamp"] = response.body.to.timestamp;
+    toJson["depth"] = response.body.to.depth;
     json["body"]["to"] = toJson;
     return json;
 }

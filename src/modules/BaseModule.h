@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 
-#ifndef DATA_INSIGHT_CORE_SCENE_BASE_SCENE_H
-#define DATA_INSIGHT_CORE_SCENE_BASE_SCENE_H
+#ifndef DATA_INSIGHT_CORE_MODULE_BASE_MODULE_H
+#define DATA_INSIGHT_CORE_MODULE_BASE_MODULE_H
 
 #include <memory>
 #include "GlobalDefs.h"
@@ -22,10 +22,10 @@ public:
     virtual void OnRequest(std::unique_ptr<Protocol::Request> request);
 
 protected:
-    ModuleType sceneType = ModuleType::UNKNOWN;
+    ModuleType moduleType = ModuleType::UNKNOWN;
     std::map<std::string, std::unique_ptr<ModuleRequestHandler>> requestHandlerMap;
 };
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // DATA_INSIGHT_CORE_SCENE_BASE_SCENE_H
+#endif // DATA_INSIGHT_CORE_MODULE_BASE_MODULE_H

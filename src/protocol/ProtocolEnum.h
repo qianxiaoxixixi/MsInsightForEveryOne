@@ -8,6 +8,7 @@
 
 namespace Dic {
 namespace Protocol {
+// 每次左移一位
 enum class ModuleType : int {
     UNKNOWN = -1,
     GLOBAL = 1,

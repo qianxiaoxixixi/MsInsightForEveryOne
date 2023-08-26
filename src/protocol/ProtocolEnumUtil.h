@@ -68,7 +68,7 @@ template <> inline const std::optional<ProtocolMessage::Type> STR_TO_ENUM<Protoc
     return TryGetEnum<ProtocolMessage::Type>(PROTOCOL_MESSAGE_TYPE_ES, s);
 }
 
-// Protocol::SceneType
+// Protocol::ModuleType
 template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::ModuleType>(const Protocol::ModuleType &e)
 {
     if (MODULE_TYPE_ES.count(e) == 0) {

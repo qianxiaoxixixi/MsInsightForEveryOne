@@ -306,7 +306,7 @@ bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
         sqlite3_bind_text(stmt, idx++, event.flowId.c_str(), event.flowId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, event.trackId);
-        sqlite3_bind_int64(stmt, idx++, event.ts);
+        sqlite3_bind_double(stmt, idx++, event.ts);
         if (event.cat.has_value()) {
             sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), event.cat.value().length(), SQLITE_TRANSIENT);
         } else {
@@ -368,7 +368,7 @@ std::vector<int64_t> TraceDatabase::GetTrackIdList()
         return {};
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        trackIdList.push_back(sqlite3_column_int64(stmt, resultStartIndex));
+        trackIdList.emplace_back(sqlite3_column_int64(stmt, resultStartIndex));
     }
     sqlite3_finalize(stmt);
     return trackIdList;
@@ -401,7 +401,7 @@ bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeDa
         int64_t id = sqlite3_column_int64(stmt, 0);
         int64_t ts = sqlite3_column_int64(stmt, 1);
         int64_t dur = sqlite3_column_int64(stmt, 2);
-        sliceTimeList.push_back({id, ts, dur});
+        sliceTimeList.emplace_back(SliceTimeData{id, ts, dur});
     }
     sqlite3_finalize(stmt);
     return true;
@@ -421,7 +421,7 @@ void TraceDatabase::CalcDepth(const std::vector<SliceTimeData> &sliceData, std::
         }
         if (depth < 0) {
             depth = depthCache.size();
-            depthCache.push_back(slice.time + slice.dur);
+            depthCache.emplace_back(slice.time + slice.dur);
         }
         depthMap[depth].emplace_back(slice.id);
     }
@@ -843,7 +843,7 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
             flowName.timestamp = sliceFlowDetailVec[0].timestamp;
             flowName.depth = sliceFlowDetailVec[0].depth;
             flowName.flowId = row.flowId;
-            responseBody.flowDetail.push_back(flowName);
+            responseBody.flowDetail.emplace_back(flowName);
         }
     } else {
         ServerLog::Error("QueryFlowDetail failed!");
