@@ -3,8 +3,8 @@
  * Description: Scene request handler declaration
  */
 
-#ifndef DATA_INSIGHT_CORE_SCENE_REQUEST_HANDLER_H
-#define DATA_INSIGHT_CORE_SCENE_REQUEST_HANDLER_H
+#ifndef DATA_INSIGHT_CORE_MODULE_REQUEST_HANDLER_H
+#define DATA_INSIGHT_CORE_MODULE_REQUEST_HANDLER_H
 
 #include "Protocol.h"
 
@@ -25,9 +25,9 @@ protected:
 
     std::string command;
     std::string error;
-    ModuleType sceneType = ModuleType::UNKNOWN;
+    ModuleType moduleType = ModuleType::UNKNOWN;
 };
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // DATA_INSIGHT_CORE_SCENE_REQUEST_HANDLER_H
+#endif // DATA_INSIGHT_CORE_MODULE_REQUEST_HANDLER_H

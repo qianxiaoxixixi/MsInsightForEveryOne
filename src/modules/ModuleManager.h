@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 
-#ifndef DATA_INSIGHT_CORE_SCENE_MANAGER_H
-#define DATA_INSIGHT_CORE_SCENE_MANAGER_H
+#ifndef DATA_INSIGHT_CORE_MODULE_MANAGER_H
+#define DATA_INSIGHT_CORE_MODULE_MANAGER_H
 
 #include <memory>
 #include <mutex>
@@ -16,10 +16,10 @@ class ModuleManager {
 public:
     static ModuleManager &Instance();
     bool SetGlobalConfig(const GlobalConfig &config);
-    bool SetAscendConfig(const TimelineConfig &config);
+    bool SetTimelineConfig(const TimelineConfig &config);
     const std::optional<GlobalConfig> GetGlobalConfig();
-    const std::optional<TimelineConfig> GetAscendConfig();
-    void OnDispatchSceneRequest(std::unique_ptr<Request> request);
+    const std::optional<TimelineConfig> GetTimelineConfig();
+    void OnDispatchModuleRequest(std::unique_ptr<Request> request);
 
 private:
     ModuleManager();
@@ -29,9 +29,9 @@ private:
     void UnRegister();
 
     std::mutex mutex;
-    std::map<Dic::Protocol::ModuleType, std::unique_ptr<BaseModule>> sceneMap;
+    std::map<Dic::Protocol::ModuleType, std::unique_ptr<BaseModule>> moduleMap;
 };
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // DATA_INSIGHT_CORE_SCENE_MANAGER_H
+#endif // DATA_INSIGHT_CORE_MODULE_MANAGER_H
