@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_TRACEDATABASE_H
-#define PROFILER_SERVER_TRACEDATABASE_H
+#ifndef PROFILER_SERVER_TRACE_DATABASE_H
+#define PROFILER_SERVER_TRACE_DATABASE_H
 
 #include "ProtocolRequest.h"
 #include "ProtocolResponse.h"
@@ -39,16 +39,18 @@ public:
 
     // search
     std::vector<int64_t> GetTrackIdList();
-    bool QueryThreadTraces(Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody,
-        int64_t minTimestamp, int64_t traceId);
-    bool QueryThreads(Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
-        int64_t minTimestamp, int64_t traceId);
-    bool QueryThreadDetail(Protocol::ThreadDetailParams &requestParams, Protocol::UnitThreadDetailBody &responseBody,
-       int64_t minTimestamp, int64_t trackId);
-    bool QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody, int64_t minTimestamp);
+    bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
+                           Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId);
+    bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
+                      uint64_t minTimestamp, int64_t traceId);
+    bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
+                           Protocol::UnitThreadDetailBody &responseBody,uint64_t minTimestamp, int64_t trackId);
+    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
+                         uint64_t minTimestamp);
     bool QueryUnitsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max);
-    bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody, int64_t minTimestamp, int64_t trackId);
+    bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
+                       uint64_t minTimestamp, int64_t trackId);
 
 private:
     const std::string sliceTable = "slice";
@@ -72,8 +74,8 @@ private:
 
     struct SliceTimeData {
         int64_t id;
-        int64_t time;
-        int64_t dur;
+        uint64_t time;
+        uint64_t dur;
     };
 
     sqlite3_stmt *GetSliceStmt(uint64_t paramLen);
@@ -84,17 +86,24 @@ private:
     void CalcDepth(const std::vector<SliceTimeData> &sliceData, std::map<int, std::vector<int64_t>> &depthMap);
     void UpdateDepthByID(const std::vector<int64_t> &idList, int depth);
 
-    bool QueryExtremumTimeOfFirstDepth(int64_t trackId, int64_t startTime, int64_t endTime,  Protocol::ExtremumTimestamp &extremumTimestamp);
-    void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &simpleSliceVec, std::map<std::string, int64_t> &selfTimeKeyValue, int64_t startTime, int64_t endTime);
-    void AddData(std::map<std::string, int64_t> &selfTimeKeyValue, std::string name, int64_t tmpSelfTime);
-    std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(std::vector<Protocol::SimpleSlice> &simpleSliceVec, int64_t startTime, int64_t endTime);
-    void ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
-    bool QueryDurationFromSliceByTimeRange(Protocol::ThreadDetailParams &requestParams, const std::vector<Protocol::SliceDto> &rows,
-            std::vector<int64_t> &nextDepthResult, int64_t trackId);
-    bool QuerySliceFlowList(const std::string &flowId, const std::string &type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
+    bool QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
+                                       Protocol::ExtremumTimestamp &extremumTimestamp);
+    void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
+                           std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime);
+    void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name, uint64_t tmpSelfTime);
+    std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(const std::vector<Protocol::SimpleSlice> &simpleSliceVec,
+                                                         uint64_t startTime, uint64_t endTime);
+    void ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
+                      const std::map<std::string, uint64_t> &selfTimeKeyValue,
+                      Protocol::UnitThreadsBody &responseBody);
+    bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
+                                           const std::vector<Protocol::SliceDto> &rows,
+                                           std::vector<uint64_t> &nextDepthResult, int64_t trackId);
+    bool QuerySliceFlowList(const std::string &flowId, const std::string &type,
+                            std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
 };
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // PROFILER_SERVER_TRACEDATABASE_H
+#endif // PROFILER_SERVER_TRACE_DATABASE_H
