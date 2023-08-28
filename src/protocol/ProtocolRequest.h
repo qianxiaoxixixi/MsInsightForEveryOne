@@ -84,9 +84,9 @@ struct ImportActionRequest : public Request {
 struct UnitThreadTracesParams {
     std::string cardId;
     std::string processId;
-    uint32_t threadId = 0;
-    uint64_t startTime;
-    uint64_t endTime;
+    int32_t threadId = 0;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
 };
 
 struct UnitThreadTracesRequest : public Request {
@@ -98,8 +98,8 @@ struct UnitThreadsParams {
     std::string rankId;
     uint32_t tid = 0;
     std::string pid;
-    uint64_t startTime;
-    uint64_t endTime;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
 };
 
 struct UnitThreadsRequest : public Request {
@@ -111,7 +111,7 @@ struct ThreadDetailParams {
     std::string rankId;
     std::string pid;
     uint32_t tid = 0;
-    uint64_t startTime;
+    uint64_t startTime = 0;
     uint32_t depth = 0;
 };
 
@@ -124,7 +124,7 @@ struct UnitFlowNameParams {
     std::string rankId;
     int64_t tid = 0;
     std::string pid;
-    uint64_t startTime;
+    uint64_t startTime = 0;
 };
 
 struct UnitFlowNameRequest : public Request {
