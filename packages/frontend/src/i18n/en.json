@@ -94,7 +94,9 @@
     "Duration": "Duration",
     "abilityName": "Ability Name",
     "abilityEvent": "Ability Event",
-    "reset": "Reset"
+    "reset": "Reset",
+    "clean": "Clean",
+    "filter": "Filter"
   },
   "snapshot": {
     "Tooltip": "User object reachable from window"
@@ -108,6 +110,8 @@
     "unselected": "No Marker Selected",
     "guide": "Click the timeline to add a marker.",
     "marker": "Marker",
+    "markerList": "Marker List",
+    "markerDiff": "Time difference between HoverMarker and SelectMarker",
     "time": "Time",
     "operation": "Operation",
     "clear": "Clear",
