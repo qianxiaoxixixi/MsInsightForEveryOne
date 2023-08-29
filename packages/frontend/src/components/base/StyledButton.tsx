@@ -10,7 +10,7 @@ interface CustomButtonProps {
     isEmphasize?: boolean;
     isDisabled?: boolean;
     isSuspend?: boolean;
-    tooltip?: string;
+    tooltip?: string | null;
     icon: FunctionComponent<SVGProps<SVGSVGElement> & { title?: string }>;
 }
 
