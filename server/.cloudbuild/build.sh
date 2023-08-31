@@ -59,6 +59,4 @@ cp json/single_include/nlohmann/json.hpp json_modern_c++/include
 
 
 cd $WORKSPACE/code/build
-python3 build.py grpc --build
-python3 build.py grpc --proto
-python3 build.py build --release --project_type=server --project_subtype=bin
+python build.py build --release
