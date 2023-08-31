@@ -39,13 +39,13 @@ const HomePage = observer(function ({ session }: { session: Session }) {
             tab: <div>Analysis Summary {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'AnalysisSummary',
             content: <AnalysisSummary session={session} active={activeTab === 'AnalysisSummary'}/>,
-            display: session.units.length > 0,
+            display: session.units.length > 1,
         },
         {
             tab: <div>Communication Analysis {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'CommunicationAnalysis',
             content: <CommunicationAnalysis session={session} active={activeTab === 'CommunicationAnalysis'}/>,
-            display: session.units.length > 0,
+            display: session.units.length > 1,
         },
     ];
     const displayItems = items.filter(item => item.display !== false);
