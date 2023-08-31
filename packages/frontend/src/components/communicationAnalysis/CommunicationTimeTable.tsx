@@ -3,7 +3,7 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { Table, Button } from 'antd';
+import { Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -15,6 +15,7 @@ import {
 import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
+import ResizeTable from '../resize/ResizeTable';
 
 export interface DataType {
     'Rank ID': string ;
@@ -98,7 +99,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
         }),
     ];
     return <div>
-        <Table columns={columns} dataSource={dataSource} size="small"
+        <ResizeTable columns={columns} dataSource={dataSource} size="small"
             pagination={GetPageConfigWhithPageData(page, setPage)}
             onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
                 if (extra.action === 'sort') {
@@ -160,7 +161,7 @@ const CommunicationTimeTable = observer(function (props:
         <Container
             title={'Data Analysis of Communication Time'}
             style={{ margin: '1rem 0' }}
-            content={<Table
+            content={<ResizeTable
                 dataSource={dataSource}
                 columns={columns}
                 expandable={{

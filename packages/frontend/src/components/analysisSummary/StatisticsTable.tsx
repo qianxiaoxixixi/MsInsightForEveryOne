@@ -1,12 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Button, Table } from 'antd';
+import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
 import { notNull, GetPageConfigWhithPageData } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
+import ResizeTable from '../resize/ResizeTable';
 
 const computingStatisticsColumns = [
     {
@@ -225,13 +226,13 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
     };
 
     return <div>
-        <Table
+        <ResizeTable
             dataSource={dataSource}
             columns={columns}
             rowKey={rowKey}
             size="small"
             pagination={GetPageConfigWhithPageData(page, setPage)}
-            onChange={(pagination, filters, sorter: any, extra) => {
+            onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
                 if (extra.action === 'sort') {
                     setSorter(sorter);
                 }
@@ -272,11 +273,11 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         setDataSource(data);
     };
 
-    return <Table
+    return <ResizeTable
         dataSource={ dataSource}
         columns={columns}
         expandable={{
-            expandedRowRender: record => <DtetailTable record={record}
+            expandedRowRender: (record: any) => <DtetailTable record={record}
                 name={timeFlag + 'Detail' } rankId={ rankId}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
@@ -302,11 +303,11 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         setDataSource(res.result ?? [ ]);
     };
 
-    return <Table
+    return <ResizeTable
         dataSource={ dataSource}
         columns={columns}
         expandable={{
-            expandedRowRender: record => <DtetailTable record={record}
+            expandedRowRender: (record: any) => <DtetailTable record={record}
                 name={record.overlapType + 'Detail' } rankId={ rankId}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
