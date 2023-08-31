@@ -18,12 +18,12 @@ const options: optionDataType[] = [
         label: 'Transit Size(MB)',
     },
     {
-        value: 'Transit Time(ms)',
-        label: 'Transit Time(ms)',
-    },
-    {
         value: 'Transport Type',
         label: 'Transport Type',
+    },
+    {
+        value: 'Transit Time(ms)',
+        label: 'Transit Time(ms)',
     },
 ];
 
@@ -59,6 +59,7 @@ const baseOption: any = {
     },
     xAxis: {
         type: 'category',
+        name: 'Dst Rank Id',
         data: [ ],
         splitArea: {
             show: true,
@@ -66,6 +67,7 @@ const baseOption: any = {
     },
     yAxis: {
         type: 'category',
+        name: 'Src Rank Id',
         data: [ ],
         splitArea: {
             show: true,
@@ -82,8 +84,12 @@ const baseOption: any = {
     },
     series: [
         {
-            name: 'Punch Card',
             type: 'heatmap',
+            tooltip: {
+                valueFormatter: function (value: any) {
+                    return value;
+                },
+            },
             data: [],
             label: {
                 show: true,
