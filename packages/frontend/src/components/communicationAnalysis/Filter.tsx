@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
-import { Label, MultiSelectWithAll, notNullObj } from '../Common';
+import { Label, notNullObj } from '../Common';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryOperators, queryRanks } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
@@ -134,16 +134,6 @@ const FilterCom = ({ conditions, handleChange, options = {} }: any): JSX.Element
                 style={{ width: 120 }}
                 onChange={val => handleChange('stageId', val)}
                 options={options.stageOptions}
-            />
-            )}/>
-        <FormItem
-            name="Rank ID"
-            content={(<MultiSelectWithAll
-                value={conditions.rankIds}
-                onChange={(val: any) => handleChange('rankIds', val)}
-                options={options.rankIdOptions}
-                maxTagCount={2}
-                style={{ width: 200 }}
             />
             )}/>
         <FormItem

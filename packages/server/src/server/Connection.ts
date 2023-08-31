@@ -31,6 +31,7 @@ export class Connection implements Client {
             const handler = this._reqHandlerMap[req.method];
             if (handler === undefined) {
                 this.error(req.id, 0, `handler for ${req.method} is not registered`);
+                return;
             }
             if (this._unresolvedRequests.has(req.id)) {
                 this.error(req.id, 1, 'duplicate request id');
