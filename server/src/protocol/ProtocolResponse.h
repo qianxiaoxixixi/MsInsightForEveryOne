@@ -55,7 +55,6 @@ struct TokenCheckResponse : public Response {
 // config.get
 struct ConfigGetResBody {
     std::optional<GlobalConfig> globalConfig;
-    std::optional<TimelineConfig> timelineConfig;
 };
 
 struct ConfigGetResponse : public Response {
@@ -95,11 +94,11 @@ struct ImportActionResponse : public Response {
 
 struct ThreadTraces {
     std::string name;
-    uint32_t duration = 0;
-    uint64_t startTime;
-    uint64_t endTime;
-    uint32_t depth = 0;
-    uint32_t threadId = 0;
+    uint64_t duration = 0;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+    int32_t depth = 0;
+    int32_t threadId = 0;
 };
 
 struct UnitThreadTracesBody {
@@ -113,10 +112,10 @@ struct UnitThreadTracesResponse : public Response {
 
 struct Threads {
     std::string title;
-    uint64_t wallDuration;
-    uint64_t occurrences;
-    uint64_t avgWallDuration;
-    uint64_t selfTime;
+    uint64_t wallDuration = 0;
+    uint64_t occurrences = 0;
+    uint64_t avgWallDuration = 0;
+    uint64_t selfTime = 0;
 };
 
 struct UnitThreadsBody {
@@ -130,10 +129,10 @@ struct UnitThreadsResponse : public Response {
 };
 
 struct ThreadDetail {
-    uint64_t selfTime;
+    uint64_t selfTime = 0;
+    uint64_t duration = 0;
     std::string args;
     std::string title;
-    uint64_t duration;
     std::string cat;
 };
 
@@ -148,11 +147,11 @@ struct UnitThreadDetailResponse : public Response {
 };
 
 struct FlowName {
+    int32_t depth = 0;
+    int32_t tid = 0;
+    uint64_t timestamp = 0;
     std::string title;
-    uint32_t tid = 0;
     std::string pid;
-    uint64_t timestamp;
-    uint32_t depth = 0;
     std::string flowId;
 };
 
@@ -165,19 +164,19 @@ struct UnitFlowNameResponse : public Response {
     UnitFlowNameBody body;
 };
 
-struct FromTo {
+struct FlowLocation {
+    int32_t tid = 0;
+    int32_t depth = 0;
+    uint64_t timestamp = 0;
     std::string pid;
-    uint32_t tid = 0;
-    uint64_t timestamp;
-    uint32_t depth = 0;
 };
 
 struct UnitFlowBody {
     std::string title;
     std::string cat;
     std::string id;
-    FromTo from;
-    FromTo to;
+    FlowLocation from;
+    FlowLocation to;
 };
 
 struct UnitFlowResponse : public Response {
@@ -205,34 +204,34 @@ struct UnitChartResponse : public Response {
 
 // struct
 struct RowThreadTrace {
-    int64_t id;
-    int64_t start_time;
-    int64_t duration;
+    int64_t id = 0;
+    uint64_t start_time = 0;
+    uint64_t duration = 0;
+    int32_t depth = 0;
+    int64_t trace_id = 0;
     std::string name;
-    int64_t depth;
-    int64_t trace_id;
 };
 
 struct ExtremumTimestamp {
-    int64_t minTimestamp;
-    int64_t maxTimestamp;
+    uint64_t minTimestamp = 0;
+    uint64_t maxTimestamp = 0;
 };
 
 struct SimpleSlice {
-    int64_t timestamp;
-    int64_t duration;
-    int64_t endTime;
+    uint64_t timestamp = 0;
+    uint64_t duration = 0;
+    uint64_t endTime = 0;
+    int32_t depth = 0;
     std::string name;
-    int64_t depth;
 };
 
-struct SliceDto{
-    int64_t id;
-    int64_t timestamp;
-    int64_t duration;
+struct SliceDto {
+    uint64_t id = 0;
+    uint64_t timestamp = 0;
+    uint64_t duration = 0;
+    int32_t depth = 0;
+    int64_t track_id = 0;
     std::string name;
-    int64_t depth;
-    int64_t track_id;
     std::string args;
     std::string cat;
 };
@@ -242,9 +241,9 @@ struct FlowDetailDto {
     std::string cat;
     std::string flowId;
     std::string pid;
-    int64_t tid;
-    int64_t depth;
-    int64_t timestamp;
+    int32_t tid = 0;
+    int32_t depth = 0;
+    uint64_t timestamp = 0;
     std::string type;
 };
 
@@ -255,10 +254,10 @@ struct SimpleFlowDto {
 };
 
 struct SliceFlowDetail {
-    uint64_t tid;
+    int32_t tid = 0;
+    int32_t depth = 0;
+    uint64_t timestamp = 0;
     std::string pid;
-    uint64_t timestamp;
-    uint64_t depth;
 };
 #pragma endregion
 } // end of namespace Protocol
