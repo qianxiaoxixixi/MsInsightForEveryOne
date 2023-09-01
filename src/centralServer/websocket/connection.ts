@@ -7,7 +7,8 @@ import type {
     Request,
     ResponseHandler,
 } from './defs';
-import { NOTIFICATION_METHOD_MAP } from '@/centralServer/websocket/messageManager';
+import type { DataRequest, ModuleName, Notification, Response, Request, ResponseHandler } from './defs';
+import { NOTIFICATION_METHOD_MAP } from '@/centralServer/server';
 
 const createRequestHead = function (
     id: number,
@@ -26,18 +27,20 @@ const createRequestHead = function (
 
 export class Connection {
     private _ws: WebSocket | undefined;
+    private _remote: string;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _token: string;
     private _fetchFlag: boolean = true;
 
-    constructor(url: string) {
+    constructor(remote: string) {
         console.log('[connector]', 'init');
         if (this._ws !== undefined) {
             // wedge: close and release the old websocket
         }
         this._msgId = 0;
-        this._ws = new WebSocket(url);
+        this._ws = new WebSocket('ws://' + remote);
+        this._remote = remote;
     }
 
     async reset(): Promise<void> {
@@ -131,12 +134,14 @@ export class Connection {
 
         // handle notifications
         if (!isResponse(msg)) {
-            const handler = NOTIFICATION_METHOD_MAP.get(msg.moduleName);
-            if (handler === undefined) {
-                console.warn(`handler for method ${msg.moduleName} not found`);
-                return;
-            }
-            handler(msg);
+            msg.remote = this._remote;
+            const iframe = document.querySelector('iframe') as HTMLIFrameElement;
+            iframe.contentWindow?.postMessage(
+                {
+                    msg,
+                },
+                '*',
+            );
             return;
         }
 

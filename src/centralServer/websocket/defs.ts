@@ -28,6 +28,7 @@ export type Response<T = Record<string, unknown>> = {
 };
 
 export type Notification<T = Record<string, unknown>> = {
+    remote?: string;
     moduleName: ModuleName;
     event: string;
     body: T;
@@ -37,7 +38,10 @@ export type NotificationRegistration = { moduleName: ModuleName; callBack: Funct
 
 export type ModuleName = string;
 
-export type Remote = string;
+export type Remote = {
+    remote: string;
+    dataPath: string[];
+};
 
 export type ResponseHandler = (res: Response) => void;
 
