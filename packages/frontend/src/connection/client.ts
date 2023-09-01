@@ -81,11 +81,19 @@ export class InsightConnection {
         }
         return new Promise((resolve, reject) => {
             const id = this._msgId++;
-            this.request({
-                id,
-                params,
-                method,
-            });
+            if (params.isBinary === true) {
+                this.requestBinary({
+                    id,
+                    params,
+                    method,
+                });
+            } else {
+                this.request({
+                    id,
+                    params,
+                    method,
+                });
+            }
             const reqCallback = (res: Response): void => {
                 console.log('【Request】', method, params);
                 console.log('[connector]', 'received:', res);
@@ -106,10 +114,14 @@ export class InsightConnection {
     }
 
     private async request(msg: Request): Promise<void> {
-        const msgStr = JSON.stringify(msg);
         if (this._ws === undefined) {
             throw new Error('');
         }
+        if (msg.params.isBinary === true) {
+            const data: any = msg.params.data;
+            this._ws.send(data);
+        }
+        const msgStr = JSON.stringify(msg);
         this._ws.send(`${CONTENT_LENGTH_PREFIX}:${msgStr.length}\r\n\r\n`);
         this._ws.send(msgStr);
     }
@@ -117,5 +129,18 @@ export class InsightConnection {
     async findServerPort(): Promise<number> {
         // wedge: implement the true logic
         return Promise.resolve(PORT);
+    }
+
+    private async requestBinary(msg: Request): Promise<void> {
+        if (this._ws === undefined) {
+            throw new Error('');
+        }
+        const { id, method, params } = msg;
+        const paramsStr = JSON.stringify({ id, method, params: params.params }).padEnd(1000, ' ');
+        const buffer: any = params.buffer;
+        const blob = new Blob([ paramsStr, buffer ]);
+        console.log(blob);
+        this._ws.send(`${CONTENT_LENGTH_PREFIX}:${blob.length}\r\n\r\n`);
+        this._ws.send(blob);
     }
 }
