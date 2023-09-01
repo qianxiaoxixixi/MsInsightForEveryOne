@@ -4,15 +4,15 @@ import { VsCodePlatform } from './VsCodePlatform';
 
 declare function acquireVsCodeApi(): any;
 
-export let messageSender: IMessageSender = new Browser();
+export let MESSAGE_SENDER: IMessageSender = new Browser();
 
 if (typeof acquireVsCodeApi === 'function') {
-    messageSender = new VsCodePlatform();
-    messageSender.sendMessage = acquireVsCodeApi().postMessage;
+    MESSAGE_SENDER = new VsCodePlatform();
+    MESSAGE_SENDER.sendMessage = acquireVsCodeApi().postMessage;
 }
 
 if (typeof window.cefQuery === 'function') {
-    messageSender = new IntellijPlatform();
+    MESSAGE_SENDER = new IntellijPlatform();
 }
 
 export interface IMessageSender {
