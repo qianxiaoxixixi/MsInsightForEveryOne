@@ -19,7 +19,7 @@ export default defineConfig({
       '@plugins': fileURLToPath(new URL('./plugins', import.meta.url)),
       '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
       '@router': fileURLToPath(new URL('./src/router/index.ts', import.meta.url)),
-      '@centralServer': fileURLToPath(new URL('./src/centralServer/server.ts', import.meta.url))
+      '@centralServer': fileURLToPath(new URL('./src/centralServer/server.ts', import.meta.url)),
       '@assets': fileURLToPath(new URL('./src/assets', import.meta.url))
     }
   },
