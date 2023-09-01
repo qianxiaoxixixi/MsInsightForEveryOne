@@ -3,7 +3,7 @@
  */
 import React, { useEffect } from 'react';
 import { FolderFilled } from '@ant-design/icons';
-import { notification } from 'antd';
+import { notification, Progress } from 'antd';
 export const DragFileInit = (id: string): void => {
     const dropZone = document.getElementById(id);
     if (dropZone) {
@@ -43,28 +43,40 @@ interface UploadFileDataType{
     file: any;// 二进制流
     name: string;// 文件名
     path: string;// 文件路径
+    progress?: number;// 上传进度
+    status?: 'normal' | 'exception' | 'active' | 'success' | undefined;// 上传状态
 }
 
 function readFile(fileInfo: any): void {
+    const { file, name, path } = fileInfo;
     const reader = new FileReader();
     // 二进制流
-    reader.readAsArrayBuffer(fileInfo.file);
+    reader.readAsArrayBuffer(file);
     reader.onload = event => {
-        const buffer = event.target?.result;
-        notification.success({
-            message: 'Start Reading:',
-            description: '【File】' + fileInfo.path,
-            duration: null,
-        });
-        window.request('towingImport', { ...fileInfo, file: buffer }).catch(error => {
-            notification.error({
-                message: 'Read File Failed:',
-                description: <div>
-                    <div>{error.message}</div>
-                    <div>{'【File】' + fileInfo.path}</div></div>,
+        const buffer: any = event.target?.result;
+        if (buffer !== null && buffer !== undefined) {
+            notification.success({
+                message: 'Start Reading:',
+                description: '【File】' + fileInfo.path,
                 duration: null,
             });
-        });
+            window.request('towingImport/action',
+                { isBinary: true, buffer, params: { name, path } }).then(res => {
+                notification.success({
+                    message: 'Read File Succeed:',
+                    description: '【File】' + fileInfo.path,
+                    duration: null,
+                });
+            }).catch(error => {
+                notification.error({
+                    message: 'Read File Failed:',
+                    description: <div>
+                        <div>{error.message}</div>
+                        <div>{'【File】' + fileInfo.path}</div></div>,
+                    duration: null,
+                });
+            });
+        }
     };
 }
 
@@ -120,6 +132,20 @@ const DragFile: React.FC = () => {
         <div className={'drag-zone'} onClick={() => openSelect()} id={id}>
             <FolderFilled className={'drag-zone-icon'}/>
             <div>点击或拖拽文件到此</div>
+        </div>
+    );
+};
+
+export const FileUploadList: React.FC<{fileList: UploadFileDataType[]}> = ({ fileList }) => {
+    return (
+        <div >
+            {
+                fileList.map((file: UploadFileDataType, index: number) => (
+                    <div key={index}>
+                        <span>{file.name}</span><Progress percent={file.progress} status={file.status}/>
+                    </div>
+                ))
+            }
         </div>
     );
 };

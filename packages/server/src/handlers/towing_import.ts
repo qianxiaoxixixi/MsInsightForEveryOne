@@ -13,6 +13,7 @@ export type ImportRequest = {
     file: any;
     name: string;
     path: string;
+    buffer: any;
 };
 
 export type ImportResponse = {
@@ -31,32 +32,10 @@ async function saveFileFromBytes(fileContent: any, filePath: string): Promise<vo
 
 export const towingImportHandler = async (request: ImportRequest, client: Client): Promise<ImportResponse> => {
     logger.info('接收请求，开始下载文件');
-    const fileContent = request.file;
-    const arrayBuffer = objectToArrayBuffer(fileContent);
-    const buffer = toBuffer(arrayBuffer);
-    const fileName = request.name;
+    const { buffer, name } = request;
+    let data = Buffer.alloc(0);
+    data = Buffer.concat([ data, buffer ], data.length + buffer.length);
+    await saveFileFromBytes(data, name);
     const response: ImportResponse = { status: '', data: '' };
-    await saveFileFromBytes(buffer, fileName);
     return response;
 };
-
-function objectToArrayBuffer(obj: any): ArrayBuffer {
-    const str = JSON.stringify(obj);
-    const buffer = new ArrayBuffer(str.length * 2);
-    const view = new Uint16Array(buffer);
-
-    for (let i = 0; i < str.length; i++) {
-        view[i] = str.charCodeAt(i);
-    }
-
-    return buffer;
-}
-
-function toBuffer(arrayBuffer: ArrayBuffer): Buffer {
-    const buffer = Buffer.alloc(arrayBuffer.byteLength);
-    const view = new Uint8Array(arrayBuffer);
-    for (let i = 0; i < buffer.length; ++i) {
-        buffer[i] = view[i];
-    }
-    return buffer;
-}
