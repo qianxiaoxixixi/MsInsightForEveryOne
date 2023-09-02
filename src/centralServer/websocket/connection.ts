@@ -1,14 +1,5 @@
 import { CONTENT_LENGTH_PREFIX, isResponse, PORT } from './defs';
-import type {
-    DataRequest,
-    ModuleName,
-    Notification,
-    Response,
-    Request,
-    ResponseHandler,
-} from './defs';
 import type { DataRequest, ModuleName, Notification, Response, Request, ResponseHandler } from './defs';
-import { NOTIFICATION_METHOD_MAP } from '@/centralServer/server';
 
 const createRequestHead = function (
     id: number,
