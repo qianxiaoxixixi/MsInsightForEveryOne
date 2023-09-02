@@ -17,17 +17,23 @@ export class Connection implements Client {
         this._shadowSession = new ShadowSession();
         this._ws = ws;
         this._ws.on('error', console.error);
-        this._ws.on('message', (data, isBinary) => {
-            if (isBinary) {
-                console.warn('unsupported binary message');
-                return;
-            }
+        this._ws.on('message', async (data, isBinary) => {
             if (data.toString().startsWith(CONTENT_LENGTH_PREFIX)) {
                 // ignore?
                 return;
             }
+            let req: Request;
+            if (isBinary) {
+                const reqBlob: any = data.slice(0, 1000);
+                const reqStr = reqBlob.toString();
+                req = JSON.parse(reqStr);
+                const buffer = data.slice(1000);
+                req.params.buffer = buffer;
+                console.log('binary message');
+            } else {
+                req = JSON.parse(data.toString());
+            }
             // wedge: what if json parsing error
-            const req: Request = JSON.parse(data.toString());
             const handler = this._reqHandlerMap[req.method];
             if (handler === undefined) {
                 this.error(req.id, 0, `handler for ${req.method} is not registered`);
