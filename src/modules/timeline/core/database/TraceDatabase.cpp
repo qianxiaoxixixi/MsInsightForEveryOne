@@ -965,13 +965,13 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         ServerLog::Error("QueryUnitsMetadata failed!. ", sqlite3_errmsg(db));
         return false;
     }
-    std::string curPid;
+    std::optional<std::string> curPid;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string pid = sqlite3_column_string(stmt, col++);
         std::string processName = sqlite3_column_string(stmt, col++);
         std::string label = sqlite3_column_string(stmt, col++);
-        if (pid != curPid) {
+        if ((!curPid.has_value()) || pid != curPid) {
             std::unique_ptr<Protocol::UnitTrack> process = std::make_unique<Protocol::UnitTrack>();
             process->type = "process";
             process->metaData.processName = processName;
