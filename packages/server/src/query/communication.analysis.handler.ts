@@ -44,20 +44,22 @@ export const ranksHandler = async (request: RanksRequest): Promise<IterationsOrR
 export const operatorNamesHandler = async (request: OperatorNamesRequest): Promise<OperatorsResponse> => {
     const response: OperatorsResponse = { operators: [] };
     response.operators = await CLUSTER_DATABASE.selectOperators(request.iterationId,
-        request.rankList) as OperatorsObject[];
+        request.rankList, request.stage) as OperatorsObject[];
     return response;
 };
 
 export const durationListHandler = async (request: DurationListRequest): Promise<DurationResponse> => {
     const response: DurationResponse = { duration: [] };
     response.duration = await CLUSTER_DATABASE.queryDurationList(request.iterationId,
-        request.rankList, request.operatorName) as Durations[];
+        request.rankList, request.operatorName, request.stage) as Durations[];
     return response;
 };
 
 export const operatorDetailsHandler = async (request: OperatorDetailsRequest): Promise<AllOperatorsResponse> => {
-    const operatorNumber = await CLUSTER_DATABASE.queryOperatorsCount(request.iterationId, request.rankId);
-    const totalOpInfoNumber = await CLUSTER_DATABASE.queryTotalOpInfoCount(request.iterationId, request.rankId);
+    const operatorNumber = await CLUSTER_DATABASE.queryOperatorsCount(request.iterationId,
+        request.rankId, request.stage);
+    const totalOpInfoNumber = await CLUSTER_DATABASE.queryTotalOpInfoCount(request.iterationId,
+        request.rankId, request.stage);
     if (operatorNumber.length !== 1 || totalOpInfoNumber.length !== 1) {
         logger.error('select operator counts error.');
     }
@@ -73,6 +75,7 @@ export const operatorDetailsHandler = async (request: OperatorDetailsRequest): P
         currentPage: request.currentPage,
         orderBy: request.orderBy,
         order: request.order === 'ascend' ? 'ASC' : 'DESC',
+        stage: request.stage,
     };
     const response: AllOperatorsResponse = {
         count: operatorNumber[0].nums - totalOpInfoNumber[0].nums,
@@ -87,7 +90,7 @@ export const operatorDetailsHandler = async (request: OperatorDetailsRequest): P
 export const bandwidthHandler = async (request: BandwidthDataRequest): Promise<BandwidthDataResponse> => {
     const response: BandwidthDataResponse = { bandwidthData: [] };
     response.bandwidthData = await CLUSTER_DATABASE.queryBandwidthData(request.iterationId, request.rankId,
-        request.operatorName);
+        request.operatorName, request.stage);
     if (response.bandwidthData.length !== 4) {
         logger.error('select bandwidth data error. Four types of communication data, ' +
             'such as HCCS, PCIe, SDMA, and RDMA, should be returned.');
@@ -98,18 +101,18 @@ export const bandwidthHandler = async (request: BandwidthDataRequest): Promise<B
 export const distributionHandler = async (request: DistributionDataRequest): Promise<DistributionResponse> => {
     const response: DistributionResponse = { distributionData: '' };
     response.distributionData = await CLUSTER_DATABASE.queryDistributionData(request.iterationId,
-        request.rankId, request.operatorName, request.transportType) as string;
+        request.rankId, request.operatorName, request.transportType, request.stage) as string;
     return response;
 };
 
 export const matrixListHandler = async (request: MatrixRequest): Promise<MatrixResponse> => {
     const response: MatrixResponse = { matrixList: [] };
-    response.matrixList = await CLUSTER_DATABASE.queryMatrixList(request.iterationId, request.operatorName, request.groupId);
+    response.matrixList = await CLUSTER_DATABASE.queryMatrixList(request.iterationId, request.operatorName, request.stage);
     return response;
 };
 
-export const groupHandler = async (): Promise<{data: string[]}> => {
-    const response: [] = await CLUSTER_DATABASE.getGroups();
+export const groupHandler = async (request: { iterationId: string }): Promise<{data: string[]}> => {
+    const response: [] = await CLUSTER_DATABASE.getGroups(request.iterationId);
     const result = response.map((item: any) => item.groupId);
     return { data: result };
 };

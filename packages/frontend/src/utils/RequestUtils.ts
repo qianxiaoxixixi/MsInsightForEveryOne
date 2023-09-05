@@ -155,7 +155,7 @@ export const queryTopSummary = async (param:
  * @param {string} operatorName 算子名
  * @return {[]} 返回数组
  */
-export const queryCommunicationMatrix = async(param: { step: string ; groupId: string ; operatorName: string}):
+export const queryCommunicationMatrix = async(param: { iterationId: string ; groupId: string ; operatorName: string}):
 Promise<any> => {
     if (isNull(window.request)) {
         return communicationMatrixData;

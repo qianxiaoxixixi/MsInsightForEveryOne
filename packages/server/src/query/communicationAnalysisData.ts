@@ -56,6 +56,7 @@ export type OperatorNamesRequest = {
     dbIndex: string;
     iterationId: string;
     rankList: string[];
+    stage: string;
 };
 
 export type DurationListRequest = {
@@ -63,6 +64,7 @@ export type DurationListRequest = {
     iterationId: string;
     rankList: string[];
     operatorName: string;
+    stage: string;
 };
 
 export type OperatorDetailsRequest = {
@@ -72,6 +74,7 @@ export type OperatorDetailsRequest = {
     currentPage: number;
     orderBy: string;
     order: string;
+    stage: string;
 };
 
 export type BandwidthDataRequest = {
@@ -79,6 +82,7 @@ export type BandwidthDataRequest = {
     iterationId: string;
     rankId: string;
     operatorName: string;
+    stage: string;
 };
 
 export type DistributionDataRequest = {
@@ -87,6 +91,7 @@ export type DistributionDataRequest = {
     rankId: string;
     operatorName: string;
     transportType: string;
+    stage: string;
 };
 
 export type IterationsOrRanksResponse = {
@@ -123,7 +128,7 @@ export type MatrixResponse = {
 };
 
 export type MatrixRequest = {
-    groupId: string;
+    stage: string;
     operatorName: string;
     iterationId: string;
 };

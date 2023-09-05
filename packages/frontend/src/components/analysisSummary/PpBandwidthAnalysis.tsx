@@ -18,7 +18,7 @@ const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }
     return (
         <Layout>
             <Container
-                content={ <Filter handleFilterChange={(value: any) => {
+                content={ <Filter session={session} handleFilterChange={(value: any) => {
                     setConditions(value);
                 }}/>}
             />
@@ -86,11 +86,12 @@ async function wrapBandwidthDataInStage(domId: string, stepId: string): Promise<
 
 async function wrapBandwidthDataInRank(domId: string, stepId: string, stageId: string): Promise<echarts.EChartsOption | null> {
     const datas: RankDataType[] = await getRankAndBubbleTimeData(stepId, stageId);
-    const rankData: number[] = [];
+    datas.sort((a, b) => Number(a.rankId) - Number(b.rankId));
+    const rankData: string[] = [];
     const stageTimeData: number[] = [];
     const bubbleTimeData: number[] = [];
     for (const item of datas) {
-        rankData.push(Number(item.rankId));
+        rankData.push(item.rankId);
         stageTimeData.push(item.stageTime);
         bubbleTimeData.push(item.bubbleTime);
     }
@@ -157,23 +158,23 @@ const bandwidthOption: echarts.EChartsOption = {
     toolbox: {
         feature: {
             dataView: { show: true, readOnly: false },
-            magicType: { show: true, type: [ 'line', 'bar' ] },
             restore: { show: true },
-            saveAsImage: { show: true },
         },
     },
     legend: {
         data: [ 'Stage Time', 'Bubble Time' ],
     },
-    xAxis: [
+    xAxis:
         {
             type: 'category',
             data: [],
             axisPointer: {
                 type: 'shadow',
             },
+            axisLabel: {
+                color: COLOR.Grey40,
+            },
         },
-    ],
     yAxis: [
         {
             type: 'value',
