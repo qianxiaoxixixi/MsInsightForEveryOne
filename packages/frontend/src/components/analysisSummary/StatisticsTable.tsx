@@ -131,6 +131,7 @@ const communicationOverlappedDetailColumns = [
         title: 'Overlapped Durations(μs)',
         dataIndex: 'overlapDuration',
         key: 'overlapDuration',
+        sorter: true,
     },
 ];
 
@@ -140,6 +141,7 @@ const communicationNotOverlappedDetailColumns = [
         title: 'Not Overlapped Durations(μs)',
         dataIndex: 'notOverlapDuration',
         key: 'notOverlapDuration',
+        sorter: true,
     },
 ];
 
