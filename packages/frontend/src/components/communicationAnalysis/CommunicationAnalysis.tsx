@@ -16,7 +16,7 @@ import BandwidthAnalysis from './BandwidthAnalysis';
 import { Space, Tan } from '../Common';
 import { queryCommunication } from '../../utils/RequestUtils';
 
-const Operators = ({ returnHome, rankId, operatorName, iterationId }: any): JSX.Element => {
+const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
     return (
         <div className={'fullbox'} style={{ padding: '0 20px', overflow: 'auto' }}>
             <Breadcrumb>
@@ -25,7 +25,7 @@ const Operators = ({ returnHome, rankId, operatorName, iterationId }: any): JSX.
                 </Breadcrumb.Item>
                 <Breadcrumb.Item>{operatorName}(RankId {rankId})</Breadcrumb.Item>
             </Breadcrumb>
-            <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName}/>
+            <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage}/>
         </div>
     );
 };
@@ -113,8 +113,9 @@ const CommunicationAnalysisCom = (props: {isShow:
             {/* 通信矩阵 */}
             <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions}/>
             {/* 带宽分析 */}
-            { rankId !== '' && <Operators iterationId={conditions.iterationId}
-                rankId={rankId} session={session} returnHome={returnHome} operatorName={conditions.operatorName} /> }
+            { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
+                session={session} returnHome={returnHome}
+                operatorName={conditions.operatorName} stage={conditions.stage} /> }
         </div>
     );
 };
