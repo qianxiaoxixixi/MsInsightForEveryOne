@@ -453,22 +453,23 @@ export class ClusterDatabase {
         return this.executeSql(sql, [iterationId]);
     }
 
-    async selectOperators(iterationId: string, rankIdList: string[]): Promise<any> {
+    async selectOperators(iterationId: string, rankIdList: string[], stage: string): Promise<any> {
         let sql: string = '';
         if (rankIdList.length === 0) {
             sql = `SELECT DISTINCT op_name FROM (
                                                     SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                                    WHERE iteration_id = ? ORDER BY op_name)`;
+                                                    WHERE iteration_id = ? AND stage_id = ? ORDER BY op_name)`;
         } else {
             sql = `SELECT DISTINCT op_name FROM (
                                                     SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
                                                     WHERE iteration_id = ?
+                                                      AND stage_id = ?
                                                       AND rank_id IN (${rankIdList.join(',')}) ORDER BY op_name)`;
         }
-        return this.executeSql(sql, [iterationId]);
+        return this.executeSql(sql, [ iterationId, stage ]);
     }
 
-    async queryDurationList(iterationId: string, rankIdList: string[], operatorName: string): Promise<any> {
+    async queryDurationList(iterationId: string, rankIdList: string[], operatorName: string, stage: string): Promise<any> {
         let sql: string = '';
         if (rankIdList.length === 0) {
             sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
@@ -480,6 +481,7 @@ export class ClusterDatabase {
                           ROUND(wait_time_ratio, 4) as wait_time_ratio
                    FROM ${COMMUNICATION_TIME_INFO_TABLE}
                    WHERE iteration_id = ?
+                      AND stage_id = ?
                      AND op_name = ?`;
         } else {
             sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
@@ -491,10 +493,11 @@ export class ClusterDatabase {
                           ROUND(wait_time_ratio, 4) as wait_time_ratio
                    FROM ${COMMUNICATION_TIME_INFO_TABLE}
                    WHERE iteration_id = ?
+                     AND stage_id = ?
                      AND rank_id IN (${rankIdList.join(',')})
                      AND op_name = ?`;
         }
-        return this.executeSql(sql, [ iterationId, operatorName ]);
+        return this.executeSql(sql, [ iterationId, stage, operatorName ]);
     };
 
     async queryAllOperators(params: OperatorDetailsRequest): Promise<any> {
@@ -509,28 +512,31 @@ export class ClusterDatabase {
                              FROM (SELECT * FROM ${COMMUNICATION_TIME_INFO_TABLE}  ${params.orderBy ? 'ORDER BY ' + params.orderBy + ' ' + params.order : ''})
                              WHERE iteration_id = ?
                                AND rank_id = ?
+                               AND stage_id = ?
                                AND op_name != 'Total Op Info'
                                LIMIT ?, ?`;
         return this.executeSql(sql, [ params.iterationId,
-            params.rankId, (params.currentPage - 1) * params.pageSize, params.pageSize ]);
+            params.rankId, params.stage, (params.currentPage - 1) * params.pageSize, params.pageSize ]);
     }
 
-    async queryOperatorsCount(iterationId: string, rankId: string): Promise<any> {
-        const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                             WHERE iteration_id = ?
-                               AND rank_id = ?`;
-        return this.executeSql(sql, [ iterationId, rankId ]);
-    }
-
-    async queryTotalOpInfoCount(iterationId: string, rankId: string): Promise<any> {
+    async queryOperatorsCount(iterationId: string, rankId: string, stageId: string): Promise<any> {
         const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
                              WHERE iteration_id = ?
                                AND rank_id = ?
-                               AND op_name = 'Total Op Info'`;
-        return this.executeSql(sql, [ iterationId, rankId ]);
+                               AND stage_id = ?`;
+        return this.executeSql(sql, [ iterationId, rankId, stageId ]);
     }
 
-    async queryBandwidthData(iterationId: string, rankId: string, operatorName: string): Promise<any> {
+    async queryTotalOpInfoCount(iterationId: string, rankId: string, stageId: string): Promise<any> {
+        const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                             WHERE iteration_id = ?
+                               AND rank_id = ?
+                               AND stage_id = ?
+                               AND op_name = 'Total Op Info'`;
+        return this.executeSql(sql, [ iterationId, rankId, stageId ]);
+    }
+
+    async queryBandwidthData(iterationId: string, rankId: string, operatorName: string, stage: string): Promise<any> {
         const sql: string = `SELECT transport_type,
                                     ROUND(transit_size, 4) as transit_size,
                                     ROUND(transit_time, 4) as transit_time,
@@ -539,17 +545,20 @@ export class ClusterDatabase {
                              FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
                              WHERE iteration_id = ?
                                AND rank_id = ?
+                               AND stage_id = ?
                                AND op_name = ?`;
-        return this.executeSql(sql, [ iterationId, rankId, operatorName ]);
+        return this.executeSql(sql, [ iterationId, rankId, stage, operatorName ]);
     }
 
-    async queryDistributionData(iterationId: string, rankId: string, operatorName: string, transportType: string): Promise<any> {
+    async queryDistributionData(iterationId: string, rankId: string, operatorName: string,
+        transportType: string, stageId: string): Promise<any> {
         const sql: string = `SELECT size_distribution FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
                              WHERE iteration_id = ?
+                               AND stage_id = ?
                                AND rank_id = ?
                                AND op_name = ?
                                AND transport_type = ?`;
-        return this.executeSql(sql, [ iterationId, rankId, operatorName, transportType ]);
+        return this.executeSql(sql, [ iterationId, stageId, rankId, operatorName, transportType ]);
     }
 
     async queryMatrixList(iterationId: string, operatorName: string, groupId: string): Promise<any> {
@@ -578,9 +587,11 @@ export class ClusterDatabase {
         }
     }
 
-    async getGroups(): Promise<any> {
+    async getGroups(iterationId: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.clusterDb.all(`SELECT DISTINCT group_id as groupId FROM ${COMMUNICATION_MATRIX}`, [], (err, rows) => {
+            this.clusterDb.all(`SELECT DISTINCT group_id as groupId
+            FROM ${COMMUNICATION_MATRIX} WHERE iteration_id = ?`,
+            [iterationId], (err, rows) => {
                 if (err) {
                     logger.error('get group error:', err);
                     reject(err);

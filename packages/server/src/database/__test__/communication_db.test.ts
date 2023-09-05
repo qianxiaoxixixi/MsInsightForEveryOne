@@ -39,25 +39,27 @@ it('query rank ids with no data', async function () {
 
 it('query all operator names', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators('step2', []) as OperatorsObject[];
+    response.operators = await globalDatabase.selectOperators('step', [], '(4,)') as OperatorsObject[];
     expect(response).toEqual({ operators: [ { op_name: 'send' }, { op_name: 'send1' }, { op_name: 'allReduce' }, { op_name: 'all2' } ] });
 });
 
 it('query all operator names with rank list', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators('1', ['0']) as OperatorsObject[];
+    response.operators = await globalDatabase.selectOperators('step', ['0'], '(4,)') as OperatorsObject[];
     expect(response).toEqual({ operators: [ { op_name: 'send' }, { op_name: 'send1' }, { op_name: 'allReduce' } ] });
 });
 
 it('query all operator names with no data', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators('2', ['0']) as OperatorsObject[];
+    response.operators = await globalDatabase.selectOperators('step',
+        ['0'], '(4,)') as OperatorsObject[];
     expect(response).toEqual({ operators: [] });
 });
 
 it('query duration data', async function () {
     const response: DurationResponse = { duration: [] };
-    response.duration = await globalDatabase.queryDurationList('2', [], 'Total Op Info') as Durations[];
+    response.duration = await globalDatabase.queryDurationList('step', [],
+        'Total Op Info', '(0, 1, 2, 3, 4, 5, 6, 7)') as Durations[];
     expect(response).toEqual({
         duration: [
             {
@@ -75,7 +77,8 @@ it('query duration data', async function () {
 
 it('query duration data with rank list', async function () {
     const response: DurationResponse = { duration: [] };
-    response.duration = await globalDatabase.queryDurationList('1', ['0'], 'allReduce') as Durations[];
+    response.duration = await globalDatabase.queryDurationList('step', ['0'],
+        'allReduce', '(0, 1, 2, 3, 4, 5, 6, 7)') as Durations[];
     expect(response).toEqual({
         duration: [
             {
@@ -91,8 +94,8 @@ it('query duration data with rank list', async function () {
 });
 
 it('query all Operator details with fenye', async function () {
-    const operatorNumber = await globalDatabase.queryOperatorsCount('16', '0');
-    const totalOpInfoNumber = await CLUSTER_DATABASE.queryTotalOpInfoCount('16', '0');
+    const operatorNumber = await globalDatabase.queryOperatorsCount('step', '1', '(1,)');
+    const totalOpInfoNumber = await CLUSTER_DATABASE.queryTotalOpInfoCount('step', '1', '(1,)');
     console.log(operatorNumber.length);
     console.log(totalOpInfoNumber.length);
     const response: AllOperatorsResponse = {
@@ -102,12 +105,13 @@ it('query all Operator details with fenye', async function () {
         allOperators: [],
     };
     const param: OperatorDetailsRequest = {
-        iterationId: '16',
-        rankId: '0',
+        iterationId: 'step',
+        rankId: '1',
         pageSize: 10,
-        currentPage: 1,
+        currentPage: 2,
         orderBy: 'elapse_time',
         order: 'DESC',
+        stage: '(1,)',
     };
     response.allOperators = await globalDatabase.queryAllOperators(param);
     expect(response).toEqual({
@@ -130,8 +134,8 @@ it('query all Operator details with fenye', async function () {
 
 it('query bandwidth data', async function () {
     const response: BandwidthDataResponse = { bandwidthData: [] };
-    response.bandwidthData = await globalDatabase.queryBandwidthData('1', '0',
-        'send');
+    response.bandwidthData = await globalDatabase.queryBandwidthData('step', '1',
+        'Total Op Info', '(1,)');
     console.log(response.bandwidthData.length);
     expect(response).toEqual({
         bandwidthData: [
@@ -172,8 +176,8 @@ it('query bandwidth data', async function () {
 
 it('query distribute data', async function () {
     const response: DistributionResponse = { distributionData: '' };
-    response.distributionData = await globalDatabase.queryDistributionData('1',
-        '0', 'send', 'HCCS');
+    response.distributionData = await globalDatabase.queryDistributionData('step',
+        '1', 'Total Op Info', 'HCCS', '(1,)');
     const obj = JSON.parse('{ "12": [1, 0.55], "17": [7, 0.35], "22": [10, 0.33] }');
     console.log(obj);
     expect(response).toEqual({
@@ -188,8 +192,8 @@ it('query distribute data', async function () {
 
 it('query distribute data with SDMA', async function () {
     const response: DistributionResponse = { distributionData: '' };
-    response.distributionData = await globalDatabase.queryDistributionData('1',
-        '0', 'send', 'SDMA') as string;
+    response.distributionData = await globalDatabase.queryDistributionData('step',
+        '1', 'Total Op Info', 'HCCS', '(1,)') as string;
     expect(response).toEqual({
         distributionData: [{
             size_distribution: '',
@@ -215,7 +219,7 @@ it('query matrix data', async function () {
 });
 
 it('query group data', async function () {
-    const response: [] = await globalDatabase.getGroups();
+    const response: [] = await globalDatabase.getGroups('step');
     const result = response.map((item: any) => item.groupId);
     console.log(response.map((item: any) => item.groupId));
     expect(result).toEqual(
