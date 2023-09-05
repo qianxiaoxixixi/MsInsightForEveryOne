@@ -18,7 +18,7 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
     }, []);
 
     const updateData = async(): Promise<void> => {
-        const result = await getTableData(props.iterationId, props.rankId, props.operatorName);
+        const result = await getTableData(props.iterationId, props.rankId, props.operatorName, props.stage);
         const data = wrapData(result);
         setData(data);
     };
@@ -48,11 +48,12 @@ function wrapData(data: any): any {
     return [ { ...sdma, children: hp }, rdma ];
 }
 
-const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
+const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string;
+    stage: string; }> = (props: any) => {
     useEffect(() => {
-        InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName);
-        InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName);
-        InitPacketAndBandwidthCharts('RDMA', props.iterationId, props.rankId, props.operatorName);
+        InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName, props.stage);
+        InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName, props.stage);
+        InitPacketAndBandwidthCharts('RDMA', props.iterationId, props.rankId, props.operatorName, props.stage);
     }, []);
     return (
         <div className={'bandwidthChart'}>
@@ -81,7 +82,7 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
 };
 
 const BandwidthAnalysis = observer(function (props:
-{ iterationId: string; rankId: number; operatorName: string }) {
+{ iterationId: string; rankId: number; operatorName: string; stage: string }) {
     return (
         <Layout>
             <Container
@@ -96,23 +97,24 @@ const BandwidthAnalysis = observer(function (props:
     );
 });
 
-async function getTableData (iterationId: number, rankId: number, operatorName: string): Promise<any> {
+async function getTableData (iterationId: number, rankId: number, operatorName: string, stage: string): Promise<any> {
     const bandwidthDetails = await window.request('communication/duration/bandwidth',
-        { iterationId, rankId, operatorName });
+        { iterationId, rankId, operatorName, stage });
     return bandwidthDetails.bandwidthData;
 }
 
-async function getChartData (domId: string, iterationId: number, rankId: number, operatorName: string): Promise<any> {
+async function getChartData (domId: string, iterationId: number, rankId: number,
+    operatorName: string, stage: string): Promise<any> {
     const distributions = await window.request('communication/duration/distribution',
-        { iterationId, rankId, operatorName, transportType: domId });
+        { iterationId, rankId, operatorName, transportType: domId, stage });
     return distributions.distributionData[0].size_distribution;
 }
 
 async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
-    rankId: number, operatorName: string): Promise<void> {
+    rankId: number, operatorName: string, stage: string): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
-        const res = await wrapBandwidthData(domId, iterationId, rankId, operatorName);
+        const res = await wrapBandwidthData(domId, iterationId, rankId, operatorName, stage);
         if (res === null) {
             ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
@@ -124,8 +126,8 @@ async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
 }
 
 async function wrapBandwidthData(domId: string, iterationId: number,
-    rankId: number, operatorName: string): Promise<echarts.EChartsOption | null> {
-    const distributionData = await getChartData(domId, iterationId, rankId, operatorName);
+    rankId: number, operatorName: string, stage: string): Promise<echarts.EChartsOption | null> {
+    const distributionData = await getChartData(domId, iterationId, rankId, operatorName, stage);
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];
