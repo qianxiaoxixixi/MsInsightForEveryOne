@@ -47,7 +47,6 @@ protected:
     std::map<std::string, ResponseToJsonFunc> resToJsonFactory;
     using EventToJsonFunc = std::function<std::optional<json_t>(const Event &)>;
     std::map<std::string, EventToJsonFunc> eventToJsonFactory;
-
 private:
     virtual void RegisterJsonToRequestFuncs() = 0;
     virtual void RegisterResponseToJsonFuncs() = 0;

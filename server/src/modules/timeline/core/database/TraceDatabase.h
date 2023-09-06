@@ -8,6 +8,8 @@
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
 #include "TimelineProtocolEvent.h"
+#include "SummaryProtocolRequest.h"
+#include "SummaryProtocolResponse.h"
 #include "Database.h"
 #include "GlobalDefs.h"
 #include "EventDef.h"
@@ -51,6 +53,12 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max);
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
                        uint64_t minTimestamp, int64_t trackId);
+
+    bool QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
+                                    Protocol::SummaryStatisticsBody &responseBody);
+    bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
+                                          Protocol::SummaryStatisticsBody &responseBody);
+    bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
 
 private:
     const std::string sliceTable = "slice";
