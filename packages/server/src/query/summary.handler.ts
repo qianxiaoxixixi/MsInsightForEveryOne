@@ -24,8 +24,8 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
         rankList: [],
         dataSize: 0,
         filePath: '',
-        collectStartTime: new Date().getTime(),
-        collectDuration: extremumTimestamp.maxTimestamp,
+        collectStartTime: extremumTimestamp.minTimestamp / 1000000,
+        collectDuration: extremumTimestamp.maxTimestamp / 1000,
         stepNum: 0,
         stepList: [],
         summaryList: rows,
@@ -35,7 +35,6 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
             result.rankList = JSON.parse(baseInfo[0].ranks);
         }
         result.dataSize = baseInfo[0].dataSize / (1024 * 1024);
-        result.collectStartTime = baseInfo[0].collectStartTime;
         result.filePath = baseInfo[0].filePath;
         if (isJsonStr(baseInfo[0].steps)) {
             result.stepList = JSON.parse(baseInfo[0].steps);
@@ -89,8 +88,8 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
         communicationStatistics?.forEach((row: any) => {
             row.overlapType === 'Communication' ? communicationTime = row.duration : overlapTime = row.duration;
         });
-        rows.push({ overlapType: 'Communication(Overlapped)', acceleratorCore: '', duration: overlapTime, utilization: 0 });
-        rows.push({ overlapType: 'Communication(Not Overlapped)', acceleratorCore: '', duration: communicationTime - overlapTime, utilization: 0 });
+        rows.push({ overlapType: 'Communication(Overlapped)', acceleratorCore: '', duration: overlapTime / 1000, utilization: 0 });
+        rows.push({ overlapType: 'Communication(Not Overlapped)', acceleratorCore: '', duration: (communicationTime - overlapTime) / 1000, utilization: 0 });
     }
     logger.info('end request to summaryStatisticHandler, rows:', rows);
     return { result: rows };
