@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_IMPORT_ACTION_HANDLER_H
 
 #include <set>
+#include <regex>
 #include "TimelineRequestHandler.h"
 
 namespace Dic {

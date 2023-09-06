@@ -50,4 +50,4 @@ private:
     std::mutex mutex;
 };
 
-#endif // THREADPOOL_SAFEQUEUE_H
+#endif //THREADPOOL_SAFEQUEUE_H
