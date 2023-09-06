@@ -195,6 +195,7 @@ struct SliceFlowDetail {
     uint64_t timestamp = 0;
     std::string pid;
 };
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

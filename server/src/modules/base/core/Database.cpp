@@ -3,8 +3,8 @@
  */
 
 #include <thread>
-#include "Database.h"
 #include "ServerLog.h"
+#include "Database.h"
 
 namespace Dic {
 namespace Module {

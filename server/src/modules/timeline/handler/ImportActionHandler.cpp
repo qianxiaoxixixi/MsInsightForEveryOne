@@ -6,16 +6,19 @@
 #include "ServerLog.h"
 #include "ExecUtil.h"
 #include "FileUtil.h"
+#include "RegexUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
+#include "ClusterFileParser.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic;
 using namespace Dic::Server;
+
 void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
@@ -47,40 +50,54 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return;
     }
+    // 按rankId 拆分文件
+    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(traceFiles);
     SetParseCallBack(token);
-    for (const auto &file : traceFiles) {
-        std::string fileId = TraceFileParser::Instance().GetFileId(file);
-        if (DataBaseManager::Instance().HasFileId(fileId)) {
+    for (const auto &rankEntry : rankListMap) {
+        std::string rankId = rankEntry.first;
+        if (DataBaseManager::Instance().HasFileId(rankId)) {
             continue;
         }
-        Action action{fileId, fileId, true};
-        action.result = TraceFileParser::Instance().Parse(file, fileId);
-        response.body.result.emplace_back(action);
+        response.body.result.emplace_back(Action{rankId, rankId, true});
+        SetResponseResult(response, true);
+        // add response to response queue in session
+        session.OnResponse(std::move(responsePtr));
     }
-
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    // 先回复消息，再解析，小文件解析可能比回复消息还快
+    for (const auto &rankEntry: rankListMap) {
+        TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
+    }
+    if (rankListMap.size() > 1) {
+        ClusterFileParser clusterFileParser;
+        clusterFileParser.ParseClusterFiles(path);
+    }
 }
 
-void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId, bool result)
+void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
+                                           bool result)
 {
-    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId,
+                    ", result:", result);
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
         return;
     }
     auto event = std::make_unique<ParseSuccessEvent>();
-    uint64_t min, max;
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
     event->result = result;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
+    uint64_t min = UINT64_MAX;
+    uint64_t max = 0;
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
-    TraceTime::Instance().UpdateTime(min, max);
-    event->body.startTimeUpdated = true;
+    if (min == max && max == 0) {
+        event->body.startTimeUpdated = false;
+    } else {
+        event->body.startTimeUpdated = true;
+        TraceTime::Instance().UpdateTime(min, max);
+    }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
@@ -93,16 +110,21 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
         traceFiles.emplace_back(path);
         return traceFiles;
     }
-    std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
+    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](
+            const std::string &path, int depth) {
         if (depth > 5) {
             return;
         }
         auto folders = FileUtil::FindFolders(path);
-        for (const auto &folder : folders) {
+        if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
+            FindAscendFolder(path, traceFiles);
+            return;
+        }
+        for (const auto &folder: folders) {
             std::string tmpPath = FileUtil::SplicePath(path, folder);
             if (FileUtil::IsFolder(tmpPath)) {
                 find(tmpPath, depth + 1);
-            } else if (folder == traceFileName) {
+            } else if (IsJsonValid(folder)) {
                 traceFiles.push_back(tmpPath);
             }
         }
@@ -111,18 +133,66 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
     return traceFiles;
 }
 
+bool ImportActionHandler::IsJsonValid(const std::string &fileName)
+{
+    static std::string reg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
+    auto result = RegexUtil::RegexMatch(fileName, reg);
+    return result.has_value();
+}
+
+void ImportActionHandler::FindAscendFolder(const std::string &path,
+                                           std::vector<std::string> &traceFiles)
+{
+    std::string traceFilePath = FileUtil::SplicePath(path, "ASCEND_PROFILER_OUTPUT");
+    traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
+    ServerLog::Info("FindAscendFolder. ", traceFilePath);
+    if (FileUtil::CheckDirectoryExist(traceFilePath)) {
+        traceFiles.emplace_back(traceFilePath);
+        ServerLog::Info("FindAscendFolder2. ");
+        return;
+    }
+    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](
+            const std::string &path, int depth) {
+        if (depth > 5) {
+            return;
+        }
+        auto folders = FileUtil::FindFolders(path);
+        for (const auto &folder: folders) {
+            std::string tmpPath = FileUtil::SplicePath(path, folder);
+            if (FileUtil::IsFolder(tmpPath)) {
+                find(tmpPath, depth + 1);
+            } else if (IsJsonValid(folder)) {
+                traceFiles.push_back(tmpPath);
+            }
+        }
+    };
+    auto folders = FileUtil::FindFolders(path);
+    static std::string reg = R"(PROF_.*)";
+    for (const auto &folder: folders) {
+        if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
+            continue;
+        }
+        std::string tmpPath = FileUtil::SplicePath(path, folder);
+        if (FileUtil::IsFolder(tmpPath)) {
+            find(tmpPath, 0);
+        }
+        break;
+    }
+}
+
 void ImportActionHandler::SetParseCallBack(const std::string &token)
 {
     static bool flag = false;
     if (!flag) {
         flag = true;
         std::function<void(const std::string, bool)> func =
-            std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
+                std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
         TraceFileParser::Instance().SetParseEndCallBack(func);
     }
 }
 
-void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)
+void ImportActionHandler::SearchMetaData(const std::string &fileId,
+                                         std::vector<std::unique_ptr<UnitTrack>> &metaData)
 {
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryUnitsMetadata(fileId, metaData);
 }

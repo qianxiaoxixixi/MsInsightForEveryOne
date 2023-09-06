@@ -11,6 +11,7 @@ import { getLoggerByName } from '../logger/loggger_configure';
 type communicator = {
     name: string;
     ranks: number[];
+    value: string;
 };
 
 const logger = getLoggerByName('parseCommunicationGroupHandler', 'info');
@@ -25,13 +26,13 @@ export async function parseCommunicationGroupHandler(req: { path: string }, clie
             return result;
         }
         const sortFunc = (a: number[], b: number[]): number => a.length !== b.length ? a.length - b.length : a[0] - b[0];
+        result.defaultPPSize = p2p.length;
         p2p.sort(sortFunc).forEach((value, key) => {
             _.pull(collective, _.find(collective, data => numberArrayEqual(data, value)));
-            result.defaultPPSize = value.length;
-            return result.ppGroups.push({ name: 'stage' + key.toString(), ranks: value });
+            return result.ppGroups.push({ name: 'stage' + key.toString(), ranks: value, value: `(${value.join(', ')}` + (value.length > 1 ? ')' : ',)') });
         });
         collective.sort(sortFunc).forEach((value, key) => {
-            return result.tpOrDpGroups.push({ name: 'tpOrDp' + key.toString(), ranks: value });
+            return result.tpOrDpGroups.push({ name: 'tpOrDp' + key.toString(), ranks: value, value: `(${value.join(', ')}` + (value.length > 1 ? ')' : ',)') });
         });
     } else {
         logger.error('The file does not exist.');

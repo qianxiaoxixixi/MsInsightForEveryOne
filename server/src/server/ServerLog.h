@@ -35,6 +35,14 @@ public:
 #endif
     }
 
+    template <typename... ARGS> static inline void Debug(const ARGS... args)
+    {
+        Instance().Record(LogLevel::L_DEBUG, args...);
+#ifndef NDEBUG
+        Instance().Print(LogLevel::L_DEBUG, args...);
+#endif
+    }
+
     template <typename... ARGS> static inline void Warn(const ARGS... args)
     {
         Instance().Record(LogLevel::L_WARN, args...);

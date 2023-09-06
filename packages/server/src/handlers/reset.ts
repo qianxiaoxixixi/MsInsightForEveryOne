@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { Client } from '../types';
 import { terminateParse } from '../parse/main';
 import { getLoggerByName } from '../logger/loggger_configure';
+import { join } from 'path';
 
 const logger = getLoggerByName('reset', 'info');
 export let tableMapClearFlag = false;
@@ -25,6 +26,8 @@ export const resetHandler = async (req: any, client: Client): Promise<Record<str
     });
     tableMap.clear();
     tableMapClearFlag = false;
+    const towingFilePath = join(__dirname, 'downLoad');
+    rmDownloadFile(towingFilePath);
     logger.info('reset completed.');
     return { };
 };
@@ -42,4 +45,10 @@ export async function waitResetComplete(): Promise<void> {
             }
         });
     });
+}
+
+function rmDownloadFile(towingFilePath: string): void {
+    if (fs.existsSync(towingFilePath)) {
+        fs.rmSync(towingFilePath, { recursive: true, force: true });
+    }
 }

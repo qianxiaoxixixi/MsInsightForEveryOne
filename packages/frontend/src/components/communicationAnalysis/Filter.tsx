@@ -28,16 +28,17 @@ const getiterationOptions = async(): Promise<optionDataType[]> => {
     return options;
 };
 
-const getStageOptions = async (step: string): Promise<optionDataType[]> => {
-    const res: {data: string[] } = await queryStages({ step });
+const getStageOptions = async (iterationId: string): Promise<optionDataType[]> => {
+    const res: {data: string[] } = await queryStages({ iterationId });
     const list = res.data;
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
 
-const getOperatorOptions = async ({ iterationId, rankIds }: {iterationId: string; rankIds: string[]}):
+const getOperatorOptions = async ({ iterationId, rankIds, stage }: {iterationId: string;
+    rankIds: string[]; stage: string;}):
 Promise<optionDataType[]> => {
-    const res: {operators: Array<{op_name: string } > } = await queryOperators({ iterationId, rankIds }); ;
+    const res: {operators: Array<{op_name: string } > } = await queryOperators({ iterationId, rankIds, stage }); ;
     const list = res.operators.map((item: any) => item.op_name);
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
@@ -50,20 +51,20 @@ export const getRankIdOptions = async (iterationId: string): Promise<optionDataT
     return options;
 };
 
-const getOptions = async(): Promise<any> => {
+const getOptions = async(initObj: ConditionDataType): Promise<any> => {
     // step
     const iterationOptions: optionDataType[] = await getiterationOptions();
-    const firstIterationId = iterationOptions[0]?.value as string;
+    const iterationId = initObj.iterationId || iterationOptions[0]?.value as string;
     // stage
-    const stageOptions: optionDataType[] = await getStageOptions(firstIterationId);
+    const stageOptions: optionDataType[] = await getStageOptions(iterationId);
+    const stage = initObj.stage || stageOptions[0]?.value as string;
     // Operator Name
     const operatorOptions: optionDataType[] =
-        await getOperatorOptions({ iterationId: firstIterationId, rankIds: [] });
-
+        await getOperatorOptions({ iterationId, rankIds: [], stage });
+    const operatorName = initObj.operatorName || totalOperator;
     return {
-        iterationOptions,
-        operatorOptions,
-        stageOptions,
+        optionMap: { iterationOptions, operatorOptions, stageOptions },
+        conditions: { iterationId, stage, operatorName },
     };
 };
 
@@ -85,11 +86,18 @@ const defaultOptionMap = {
 const Filter = observer((props: {session: Session;handleFilterChange: VoidFunction}) => {
     const [ conditions, setConditions ] = useState<ConditionDataType>(defaultCondition);
     const [ optionMap, setOptionMap ] = useState<optionMapDataType>(defaultOptionMap);
-
+    const activeCommunicator = props.session.activeCommunicator?.value;
     // 初始化
     useEffect(() => {
-        init();
+        init({ stage: activeCommunicator } as ConditionDataType);
     }, [props.session.allRankIds]);
+    useEffect(() => {
+        setTimeout(() => {
+            if (activeCommunicator !== undefined && activeCommunicator !== conditions.stage) {
+                init({ ...conditions, stage: activeCommunicator });
+            }
+        });
+    }, [activeCommunicator]);
 
     // Iteration ID联动Stage
     useEffect(() => {
@@ -102,36 +110,33 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
 
     // 筛选条件变化
     useEffect(() => {
-        const list = [ 'stage', 'operatorName', 'type' ];
+        const list = [ 'operatorName', 'type' ];
         if (notNullObj(conditions, list)) {
             props.handleFilterChange(conditions);
         }
     }, [conditions]);
 
-    const init = async(): Promise<void> => {
-        const newOptionsMap: optionMapDataType = await getOptions();
+    const init = async(initObj: ConditionDataType): Promise<void> => {
+        const res: {optionMap: optionMapDataType;conditions: ConditionDataType} = await getOptions(initObj);
         // 初始可选项
-        setOptionMap({ ...optionMap, ...newOptionsMap });
+        setOptionMap({ ...optionMap, ...res.optionMap });
         // 初始查询条件
-        const iterationId = newOptionsMap.iterationOptions[0]?.value as string;
-        const stage = newOptionsMap.stageOptions[0]?.value as string;
-        setConditions({ ...conditions, iterationId, stage, operatorName: totalOperator });
+        setConditions({ ...conditions, ...res.conditions });
     };
 
     // 联动的条件
     const handleRelatedChange = async (source: string, value: string): Promise<void> => {
         if (source === 'iterationId') {
             const stageOptions: optionDataType[] = await getStageOptions(value);
-            const stage = stageOptions[0]?.value as string;
+            const stage = conditions.stage || stageOptions[0]?.value as string;
             setOptionMap({ ...optionMap, stageOptions });
             setConditions({ ...conditions, stage });
-        } else if (source === 'stage') {
-            const operatorOptions: optionDataType[] =
-                await getOperatorOptions({ iterationId: conditions.iterationId, rankIds: [] });
-            setOptionMap({ ...optionMap, operatorOptions });
-            if (!operatorOptions.map(item => item.value).includes(conditions.operatorName)) {
-                setConditions({ ...conditions, operatorName: totalOperator });
-            }
+        }
+        const operatorOptions: optionDataType[] = await getOperatorOptions(
+            { iterationId: conditions.iterationId, rankIds: [], stage: conditions.stage });
+        setOptionMap({ ...optionMap, operatorOptions });
+        if (!operatorOptions.map(item => item.value).includes(conditions.operatorName)) {
+            setConditions({ ...conditions, operatorName: totalOperator });
         }
     };
 
@@ -154,7 +159,7 @@ const FilterCom = ({ conditions, handleChange, optionMap = {} }: any): JSX.Eleme
             />
             )}/>
         <FormItem
-            name="Stage"
+            name="Communication Group"
             content={(<Select
                 value={conditions.stage}
                 style={{ width: 200 }}

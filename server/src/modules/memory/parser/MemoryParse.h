@@ -23,7 +23,8 @@ public:
     MemoryParse();
 
     ~MemoryParse() override;
-    bool Parse(const std::string &filePath, const std::string &fileId) override;
+    bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
+               const std::string &selectedFolder) override;
     void Reset() override;
     bool OperatorParse(const std::string &filePath, const std::string &fileId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);

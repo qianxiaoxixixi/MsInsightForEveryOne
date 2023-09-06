@@ -20,30 +20,34 @@ MemoryParse &MemoryParse::Instance()
     return instance;
 }
 
-bool MemoryParse::Parse(const std::string &filePath, const std::string &fileId)
+bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
+                        const std::string &selectedFolder)
 {
     start = std::chrono::system_clock::now();
     ServerLog::Info("start parse.");
 
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::string dbPath = GetDbPath(filePath, fileId);
-    if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
+    std::string dbPath = GetDbPath(filePaths[0], fileId);
+    if (!(database->OpenDb(dbPath, false) && database->CreateTable() &&
+    database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
     }
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
 
-    auto future = threadPool->AddTask([futures, fileId, &filePath, this]() {
-        ServerLog::Info("Wait parse completed. ID:", fileId);
-        for (const auto &future : *futures) {
-            future.wait();
-        }
-        ServerLog::Info("Parse completed. ID:", fileId);
-        OperatorParse(filePath, fileId);
-        RecordToParse(filePath, fileId);
-        ServerLog::Info("Update depth completed. ID:", fileId);
-    });
-    futureMap.emplace(fileId, std::move(future));
+    for (const auto &filePath: filePaths) {
+        auto future = threadPool->AddTask([futures, fileId, &filePath, this]() {
+            ServerLog::Info("Wait parse completed. ID:", fileId);
+            for (const auto &future: *futures) {
+                future.wait();
+            }
+            ServerLog::Info("Parse completed. ID:", fileId);
+            OperatorParse(filePath, fileId);
+            RecordToParse(filePath, fileId);
+            ServerLog::Info("Update depth completed. ID:", fileId);
+        });
+        futureMap.emplace(fileId, std::move(future));
+    }
     if (paserEndCallback != nullptr) {
         std::thread thread{[this, fileId]() {
             WaitParseEnd(fileId);
@@ -92,10 +96,10 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
             continue;
         }
         Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
-        // 读取每一行数据
+        // 读取每一行数据并插入到operator内
         database->insertOperatorDetail(opePtr);
     }
-    // 读取剩下的数据
+    // 读取剩下的数据并插入到operator内
     database->SaveOperatorDetail();
     return true;
 }
@@ -166,10 +170,10 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
             continue;
         }
         Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
-        // 读取每一行数据
+        // 读取每一行数据并插入到record内
         database->insertRecordDetail(recordPtr);
     }
-    // 读取剩下的数据
+    // 读取剩下的数据并插入到record内
     database->SaveRecordDetail();
     return true;
 }

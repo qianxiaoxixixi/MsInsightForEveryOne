@@ -13,7 +13,7 @@ namespace Memory {
 using namespace Server;
 MemoryDataBase::~MemoryDataBase()
 {
-    if (initStmt) {
+    if (hasInitStmt) {
         ReleaseStmt();
     }
     CloseDb();
@@ -36,38 +36,38 @@ bool MemoryDataBase::CreateTable()
     }
     std::string sql =
             "CREATE TABLE " + operatorTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, " +
-            "allocationTime INTEGER, releaseTime INTEGER, size INTEGER, duration INTEGER);" +
+            "allocation_time INTEGER, release_time INTEGER, size INTEGER, duration INTEGER);" +
             "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
-            "totalAllocated INTEGER, totalReserve INTEGER, deviceType TEXT, timestamp INTEGER);";
+            "total_allocated INTEGER, total_reserve INTEGER, device_type TEXT, timestamp INTEGER);";
     return ExecSql(sql);
 }
 
 bool MemoryDataBase::InitStmt()
 {
-    if (initStmt) {
+    if (hasInitStmt) {
         return true;
     }
-    std::string sql = "INSERT INTO " + operatorTable + " (name, allocationTime, releaseTime, size, duration)" +
+    std::string sql = "INSERT INTO " + operatorTable + " (name, allocation_time, release_time, size, duration)" +
           " VALUES (?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertOperatorStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insertOperator statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare insert Operator statement. error:", sqlite3_errmsg(db));
         return false;
     }
 
-    sql = "INSERT INTO " + recordTable + " (component, totalAllocated, totalReserve, deviceType, timestamp)" +
+    sql = "INSERT INTO " + recordTable + " (component, total_allocated, total_reserve, device_type, timestamp)" +
           " VALUES (?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertRecordStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insertRecord statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare insert Record statement. error:", sqlite3_errmsg(db));
         return false;
     }
 
-    initStmt = true;
+    hasInitStmt = true;
     return true;
 }
 
@@ -157,8 +157,8 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
                                          std::vector<Protocol::MemoryOperator> &responseBody)
 {
     std::string sql =
-            "SELECT id, allocationTime, releaseTime, size, duration FROM operator "
-            "WHERE allocationTime <= ? AND allocationTime >= ?";
+            "SELECT id, allocation_time, release_time, size, duration FROM operator "
+            "WHERE allocation_time <= ? AND allocation_time >= ?";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
@@ -188,7 +188,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                      Protocol::OperatorMemory &operatorBody)
 {
-    std::string sql = "SELECT component, timesTamp, totalAllocated, totalReserved FROM record";
+    std::string sql = "SELECT component, timestamp, total_allocated, total_reserve FROM record";
     double startTime = Timeline::TraceTime::Instance().GetStartTime();
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -296,7 +296,7 @@ sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)
         stmt = insertOperatorStmt;
         sqlite3_reset(stmt);
     } else {
-        std::string sql = "INSERT INTO " + operatorTable + " (name, allocationTime, releaseTime, size, duration)" +
+        std::string sql = "INSERT INTO " + operatorTable + " (name, allocation_time, release_time, size, duration)" +
                           " VALUES (?,?,?,?,?)";
         for (int i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?)");
@@ -317,7 +317,7 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + recordTable +
-                " (component, totalAllocated, totalReserve, deviceType, timestamp) VALUES (?,?,?,?,?)";
+                " (component, total_allocated, total_reserve, device_type, timestamp) VALUES (?,?,?,?,?)";
         for (int i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?)");
         }

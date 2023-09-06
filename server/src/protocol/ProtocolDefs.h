@@ -45,6 +45,16 @@ const std::string REQ_RES_UNIT_FLOW = "unit/flow";
 const std::string REQ_RES_RESET_WINDOW = "reset/window";
 const std::string REQ_RES_UNIT_CHART = "unit/chart";
 
+// communication
+const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/duration/operatorDetails";
+const std::string REQ_RES_COMMUNICATION_BANDWIDTH = "communication/duration/bandwidth";
+const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/duration/distribution";
+
+// summary
+const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";
+const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
+
+
 // memory
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
