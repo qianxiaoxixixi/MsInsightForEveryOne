@@ -6,7 +6,7 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-
+    using namespace Dic::Server;
 DataBaseManager &DataBaseManager::Instance()
 {
     static DataBaseManager instance;
@@ -51,6 +51,15 @@ void DataBaseManager::Clear()
     std::unique_lock<std::mutex> lock(mutex);
     traceDatabaseMap.clear();
 }
+
+    ClusterDatabase *DataBaseManager::GetClusterDatabase()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (clusterDatabaseMap.count("cluster") == 0) {
+            clusterDatabaseMap.emplace("cluster", std::make_unique<ClusterDatabase>());
+        }
+        return clusterDatabaseMap["cluster"].get();
+    }
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

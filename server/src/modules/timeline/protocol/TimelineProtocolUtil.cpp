@@ -32,7 +32,8 @@ template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const Imp
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response) {
+template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["data"] = json_t::array();
@@ -53,7 +54,8 @@ template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response) {
+template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["emptyFlag"] = response.body.emptyFlag;
@@ -70,7 +72,8 @@ template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const Unit
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response) {
+template <> std::optional<json_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["emptyFlag"] = response.body.emptyFlag;
@@ -82,7 +85,8 @@ template <> std::optional<json_t> ToResponseJson<UnitThreadDetailResponse>(const
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response) {
+template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["flowDetail"] = json_t::array();
@@ -99,7 +103,8 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const Uni
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response) {
+template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["title"] = response.body.title;
@@ -120,13 +125,15 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlo
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response) {
+template <> std::optional<json_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response) {
+template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response)
+{
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["data"] = json_t::array();
@@ -146,7 +153,8 @@ template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event)
     return std::nullopt;
 }
 
-json_t UnitTrackToJson(const UnitTrack &unitTrack) {
+json_t UnitTrackToJson(const UnitTrack &unitTrack)
+{
     json_t json;
     json["type"] = unitTrack.type;
     json["metadata"]["cardId"] = unitTrack.metaData.cardId;
