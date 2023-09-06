@@ -33,45 +33,48 @@ TraceFileParser::~TraceFileParser()
     threadPool->ShutDown();
 }
 
-bool TraceFileParser::Parse(const std::string &filePath, const std::string &fileId)
+bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
+                            const std::string &selectedFolder)
 {
-    start = std::chrono::system_clock::now();
-    ServerLog::Info("start parse.");
-    auto splitFile = TraceFileParser::SplitFile(filePath);
-    if (splitFile.empty()) {
-        ServerLog::Error("Failed to split file.");
-        return false;
-    }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string dbPath = GetDbPath(filePath, fileId);
-    if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
+    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
+    std::string dbPath = GetDbPath(selectedFolder, rankId);
+    if (!(database->OpenDb(dbPath, true) && database->CreateTable() &&
+    database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
     }
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
-    for (const auto &pos : splitFile) {
-        auto future = threadPool->AddTask([filePath, dbPath, pos, fileId]() {
-            EventParser eventParser(filePath, dbPath, fileId);
-            eventParser.Parse(pos.first, pos.second);
-        });
-        futures->emplace_back(std::move(future));
+    for (const auto &filePath: filePathArr) {
+        start = std::chrono::system_clock::now();
+        ServerLog::Info("start parse.");
+        auto splitFileVector = TraceFileParser::SplitFile(filePath);
+        if (splitFileVector.empty()) {
+            ServerLog::Error("Failed to split file: ", filePath);
+            continue;
+        }
+        for (const auto &pos: splitFileVector) {
+            auto future = threadPool->AddTask([filePath, dbPath, pos, rankId]() {
+                EventParser eventParser(filePath, dbPath, rankId);
+                eventParser.Parse(pos.first, pos.second);
+            });
+            futures->emplace_back(std::move(future));
+        }
     }
-    auto future = threadPool->AddTask([futures, fileId]() {
-        ServerLog::Info("Wait parse completed. ID:", fileId);
+    auto future = threadPool->AddTask([futures, rankId]() {
+        ServerLog::Info("Wait parse completed. ID:", rankId);
         for (const auto &future : *futures) {
             future.wait();
         }
-        ServerLog::Info("Parse completed. ID:", fileId);
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        ServerLog::Info("Parse completed. ID:", rankId);
+        auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
         database->CreateIndex();
         database->UpdateDepth();
-        ServerLog::Info("Update depth completed. ID:", fileId);
+        ServerLog::Info("Update depth completed. ID:", rankId);
     });
-    futureMap.emplace(fileId, std::move(future));
+    std::string kernelDetailFile = FileUtil::GetKernelDetailFile(filePathArr[0]);
+    futureMap.emplace(rankId, std::move(future));
     if (paserEndCallback != nullptr) {
-        std::thread thread{[this, fileId]() {
-            WaitParseEnd(fileId);
-        }};
+        std::thread thread { [this, rankId]() { WaitParseEnd(rankId); } };
         thread.detach();
     }
     return true;
@@ -171,11 +174,9 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     return true;
 }
 
-std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::string &fileId)
+std::string TraceFileParser::GetDbPath(const std::string &selectedFolder, const std::string &rankId)
 {
-    std::string fileName = Dic::FileUtil::GetFileName(filePath);
-    auto pos = fileName.find_last_of('.');
-    std::string dbPath = fileName.substr(0, pos) + "_" + fileId + ".db";
+    std::string dbPath = selectedFolder + "/" + rankId + ".db";
     return Dic::FileUtil::GetRealPath(dbPath);
 }
 
@@ -234,7 +235,8 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
         return "";
     }
     std::string str(buffer.get(), bufferLength);
-    std::string rankId = str.substr(str.find_first_of('{'), str.find_first_of('}') - str.find_first_of('{') + 1);
+    std::string rankId =
+            str.substr(str.find_first_of('{'), str.find_first_of('}') - str.find_first_of('{') + 1);
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);
     if (!json.has_value()) {

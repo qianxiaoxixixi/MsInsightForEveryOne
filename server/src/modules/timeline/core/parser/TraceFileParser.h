@@ -18,7 +18,8 @@ namespace Timeline {
 class TraceFileParser : public FileParser {
 public:
     static TraceFileParser &Instance();
-    bool Parse(const std::string &filePath, const std::string &fileId) override;
+    bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
+               const std::string &selectedFolder) override;
     void Reset() override;
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);

@@ -14,7 +14,8 @@ class FileParser {
 public:
     FileParser() = default;
     virtual ~FileParser() = default;
-    virtual bool Parse(const std::string &filePath, const std::string &fileId) = 0;
+    virtual bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
+                       const std::string &selectedFolder) = 0;
     virtual void SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback); // fileId, result
     virtual std::string GetError();
     virtual void Reset();
