@@ -38,7 +38,7 @@ private:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
 
-    bool initStmt = false;
+    bool hasInitStmt = false;
     const int cacheSize = 100;
     std::vector<Operator> operatorCache;
     std::vector<Record> recordCache;

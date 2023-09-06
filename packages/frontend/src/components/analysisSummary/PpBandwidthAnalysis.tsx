@@ -4,12 +4,13 @@
 
 import { observer } from 'mobx-react-lite';
 import { Session } from '../../entity/session';
-import { Col, Layout, Row, Select } from 'antd';
+import { Col, Empty, Layout, Row } from 'antd';
 import { addResizeEvent, COLOR, Container, isNull, notNullObj } from '../Common';
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import Filter, { ConditionDataType } from './PpBandwidthFilter';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
+import ReactDOM from 'react-dom';
 
 const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }) {
     const [ conditions, setConditions ] = useState<ConditionDataType>(
@@ -18,7 +19,7 @@ const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }
     return (
         <Layout>
             <Container
-                content={ <Filter handleFilterChange={(value: any) => {
+                content={ <Filter session={session} handleFilterChange={(value: any) => {
                     setConditions(value);
                 }}/>}
             />
@@ -62,6 +63,13 @@ async function InitCharts(domId: string, stepId: string, stageId: string): Promi
         return;
     }
     const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId) : await wrapBandwidthDataInRank(domId, stepId, stageId);
+    if (res === null) {
+        ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+    } else {
+        const myChart = echarts.init(chartDom);
+        myChart.setOption(res);
+        addResizeEvent(myChart);
+    }
     const myChart = echarts.init(chartDom);
     myChart.setOption(bandwidthOption);
     addResizeEvent(myChart);
@@ -86,11 +94,12 @@ async function wrapBandwidthDataInStage(domId: string, stepId: string): Promise<
 
 async function wrapBandwidthDataInRank(domId: string, stepId: string, stageId: string): Promise<echarts.EChartsOption | null> {
     const datas: RankDataType[] = await getRankAndBubbleTimeData(stepId, stageId);
-    const rankData: number[] = [];
+    datas.sort((a, b) => Number(a.rankId) - Number(b.rankId));
+    const rankData: string[] = [];
     const stageTimeData: number[] = [];
     const bubbleTimeData: number[] = [];
     for (const item of datas) {
-        rankData.push(Number(item.rankId));
+        rankData.push(item.rankId);
         stageTimeData.push(item.stageTime);
         bubbleTimeData.push(item.bubbleTime);
     }
@@ -150,30 +159,34 @@ const bandwidthOption: echarts.EChartsOption = {
         axisPointer: {
             type: 'cross',
             crossStyle: {
-                color: '#999',
+                color: COLOR.BrightBlue,
+                type: 'solid',
             },
         },
     },
     toolbox: {
         feature: {
             dataView: { show: true, readOnly: false },
-            magicType: { show: true, type: [ 'line', 'bar' ] },
             restore: { show: true },
-            saveAsImage: { show: true },
         },
     },
     legend: {
-        data: [ 'Stage Time', 'Bubble Time' ],
+        data: [
+            { name: 'Stage Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Bubble Time', textStyle: { color: COLOR.Grey50 } },
+        ],
     },
-    xAxis: [
+    xAxis:
         {
             type: 'category',
             data: [],
             axisPointer: {
                 type: 'shadow',
             },
+            axisLabel: {
+                color: COLOR.Grey40,
+            },
         },
-    ],
     yAxis: [
         {
             type: 'value',

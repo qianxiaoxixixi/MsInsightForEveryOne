@@ -4,9 +4,9 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
+#include "GlobalProtocolUtil.h"
 #include "GlobalProtocolRequest.h"
 #include "GlobalProtocolResponse.h"
-#include "GlobalProtocolUtil.h"
 #include "GlobalProtocol.h"
 
 namespace Dic {
@@ -27,7 +27,6 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
 
 void GlobalProtocol::RegisterEventToJsonFuncs()
 {
-
 }
 
 #pragma region <<Json To Request>>
