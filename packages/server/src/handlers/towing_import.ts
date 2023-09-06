@@ -7,6 +7,7 @@ import { getLoggerByName } from '../logger/loggger_configure';
 import fs from 'fs';
 import { join } from 'path';
 import { parseFile } from './import';
+import os from 'os';
 
 const logger = getLoggerByName('import', 'info');
 
@@ -25,19 +26,31 @@ export type ImportRequest = {
     };
 };
 
+function splitPathByOs(isInFolder: boolean, rootName: string, path: string): string {
+    if (isInFolder && os.platform() === 'win32') {
+        rootName = path.split('/')[0].toString();
+    }
+    if (isInFolder && os.platform() === 'linux') {
+        rootName = path.split('\\')[0].toString();
+    }
+    return rootName;
+}
+
 export const towingImportHandler = async (request: ImportRequest, client: Client): Promise<Record<string, unknown>> => {
     logger.info('接收请求，开始下载文件');
     const { buffer, isLast, name, path, isInFolder } = request;
     const realPath = path.split(name)[0].toString();
+    let rootName = '';
+    rootName = splitPathByOs(isInFolder, rootName, path);
     let data = Buffer.alloc(0);
     data = Buffer.concat([ data, buffer ], data.length + buffer.length);
     const parentFilePath = join(__dirname, 'download', realPath);
-    const downLoadPath = isInFolder ? join(__dirname, 'download') : parentFilePath;
+    const downLoadPath = isInFolder ? join(__dirname, 'download', rootName) : parentFilePath;
     mkdirByFilePath(parentFilePath);
     // 需要接收一个flag 来识别是否为切片文件
     const isSliced: boolean = request.slice.isSliced;
     const sliceIndex: number = request.slice.index;
-    const filePath = join(downLoadPath, path);
+    const filePath = join(__dirname, 'download', path);
     if (isSliced && sliceIndex === 1 && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         logger.info('delete repeat file');
