@@ -10,6 +10,7 @@
 #include <mutex>
 #include "TraceDatabase.h"
 #include "../../../base/core/ClusterDatabase.h"
+#include "MemoryDataBase.h"
 
 namespace Dic {
 namespace Module {
@@ -23,11 +24,14 @@ public:
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
     TraceDatabase *GetTraceDatabase(const std::string &fileId);
+    Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
     std::vector<TraceDatabase *> GetAllTraceDatabase();
     void Clear();
     void ReleaseTraceDatabase(const std::string &fileId);
     bool HasFileId(const std::string &fileId);
     ClusterDatabase *GetClusterDatabase();
+
+    std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();
 
 private:
     DataBaseManager() = default;
@@ -36,6 +40,9 @@ private:
     std::mutex mutex;
     std::map<std::string, std::unique_ptr<TraceDatabase>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<ClusterDatabase>> clusterDatabaseMap;
+    std::map<std::string, std::unique_ptr<Memory::MemoryDataBase>> memoryDatabaseMap;
+
+    bool MemoryHasFileId(const std::string &fileId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

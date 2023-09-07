@@ -14,6 +14,7 @@ enum class ModuleType : int {
     GLOBAL = 1,
     TIMELINE = 2,
     SUMMARY = 3,
+    MEMORY = 4,
 };
 
 enum class LinkType : int {
