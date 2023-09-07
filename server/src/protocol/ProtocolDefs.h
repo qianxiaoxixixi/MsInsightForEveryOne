@@ -14,6 +14,7 @@ namespace Protocol {
 const std::string MODULE_UNKNOWN = "unknown";
 const std::string MODULE_GLOBAL = "global";
 const std::string MODULE_TIMELINE = "timeline";
+const std::string MODULE_MEMORY = "memory";
 #pragma endregion
 
 #pragma region << Base>>
@@ -53,6 +54,10 @@ const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/duration/d
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";
 const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
 
+
+// memory
+const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
+const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
 #pragma endregion
 } // end of namespace
 }
