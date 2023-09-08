@@ -124,7 +124,6 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset),
                 dataSource: threadMetaData.dataSource,
             };
-            console.log('fetch', requestParam);
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
                 const request = await session.simpleCache.tryFetchFromCache('unit/threadTraces', requestKey, requestParam);

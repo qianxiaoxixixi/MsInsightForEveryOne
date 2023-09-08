@@ -9,7 +9,6 @@ export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Ar
     if (metaDataList === undefined || parentUnit === undefined) {
         return;
     }
-    console.log(metaDataList);
     for (const metaData of metaDataList) {
         if (parentUnit.children !== undefined) {
             const existingUnit = parentUnit.children.find(unit => checkMetaData(unit.metadata, metaData));
@@ -31,7 +30,6 @@ export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Ar
             }
         }
     }
-    console.log(paramsTree);
 }
 
 export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
