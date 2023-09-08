@@ -42,7 +42,6 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
 };
 
 export const parseFailHandler: NotificationHandler = (data): void => {
-    console.log('Parse fail. ', data);
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     runInAction(() => {
@@ -78,15 +77,14 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
 };
 
 export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> => {
-    const typedDataSource = JSON.parse(dataSource);
     const session = store.sessionStore.activeSession as Session;
     const removeUnits = session.units.filter((unit) => {
         const metadata = unit.metadata as any;
-        return metadata.dataSource.remote === typedDataSource.remote;
+        return metadata.dataSource.remote === dataSource.remote;
     });
     session.units = session?.units.filter((unit) => {
         const metadata = unit.metadata as any;
-        return metadata.dataSource.remote !== typedDataSource.remote;
+        return metadata.dataSource.remote !== dataSource.remote;
     });
     for (const unit of removeUnits) {
         const metadata = unit.metadata as any;
