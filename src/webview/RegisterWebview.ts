@@ -10,7 +10,7 @@ export class RegisterWebview extends Webview {
 
     private readonly _extensionUri: vscode.Uri;
 
-    private readonly nameList: any;
+    private htmlStr: string;
     private server?: ChildProcess;
     private serverCheckSchedule?: NodeJS.Timeout;
     private tryRestartTime = 0;
@@ -20,27 +20,13 @@ export class RegisterWebview extends Webview {
     constructor(viewType: string, title: string, context: vscode.ExtensionContext,  manager: WebviewManager) {
         super(viewType, title, context, manager);
         this._extensionUri = context.extensionUri;
-        let data = readFileSync(join(__dirname, './profiler/manifest.json'));
-        let result = data.toString();
-        const jsonObject = JSON.parse(result);
-        this.nameList = jsonObject;
+        const filePath = join(__dirname, './profiler/index.html');
+        this.htmlStr = readFileSync(filePath, 'utf8');
         this.startServer();
     }
 
     newPanel() {
         super.newPanel();
-    }
-
-    entry() {
-        // const entryPath = vscode.Uri.joinPath(this._extensionUri, 'vue-dist', 'index.js');
-        const entryPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', this.nameList?.['index.html']?.['file']);
-        return this.panel?.webview.asWebviewUri(entryPath);
-    }
-
-    style() {
-        // const entryPath = vscode.Uri.joinPath(this._extensionUri, 'vue-dist', 'index.css');
-        const entryPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', this.nameList?.['index.html']?.['css']?.[0]);
-        return this.panel?.webview.asWebviewUri(entryPath);
     }
 
     previewUIPage() {
@@ -89,7 +75,6 @@ export class RegisterWebview extends Webview {
                         return;
                     } 
                     clearInterval(this.serverCheckSchedule);
-
                 }
             });
         }, 3000);
@@ -103,21 +88,6 @@ export class RegisterWebview extends Webview {
     }
 
     html() {
-        return `<!DOCTYPE html>
-                    <html lang="en">
-                      <head>
-                        <meta charset="UTF-8">
-                        <link rel="icon" href="/favicon.ico">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Vite App</title>
-                        <link rel="stylesheet" href="${this.style()}">
-                        <script defer="defer" src="${this.entry()}"></script>
-                      </head>
-                      <body>
-                        <div id="app"></div>
-
-                      </body>
-                    </html>
-        `;
+        return this.htmlStr;
     }
 }
