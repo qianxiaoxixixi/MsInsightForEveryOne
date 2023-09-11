@@ -43,7 +43,7 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string dbPath = GetDbPath(filePath, fileId);
+    std::string dbPath = GetDbPath(filePath);
     if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
@@ -171,12 +171,12 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     return true;
 }
 
-std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::string &fileId)
+std::string TraceFileParser::GetDbPath(const std::string &filePath)
 {
-    std::string fileName = Dic::FileUtil::GetFileName(filePath);
-    auto pos = fileName.find_last_of('.');
-    std::string dbPath = fileName.substr(0, pos) + "_" + fileId + ".db";
-    return Dic::FileUtil::GetRealPath(dbPath);
+    std::string path = FileUtil::GetRealPath(filePath);
+    auto pos = path.find_last_of('.');
+    path.replace(pos, path.size() - pos, ".db");
+    return path;
 }
 
 int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
@@ -238,7 +238,7 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);
     if (!json.has_value()) {
-        ServerLog::Error("Failed to parse json.", error, " string:", rankId);
+        ServerLog::Warn("Failed to parse json.", error, " string:", rankId);
         return "";
     }
     if (json.value().contains("rank_id")) {
