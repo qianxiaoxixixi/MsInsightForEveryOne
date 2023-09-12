@@ -93,8 +93,6 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
     private static Project project = null;
 
-    private static boolean isCloseIDE = false;
-
     private static JBCefBrowser webView;
 
     static {
@@ -122,7 +120,6 @@ public class InsightWindowFactory implements ToolWindowFactory {
             CefMessageRouterProxy.getInstance().removeRouter(webView.getCefBrowser());
             // 移除webView注册的相关内容
             cefBrowser.getClient().removeMessageRouter(router);
-            isCloseIDE = true;
             webView.getJBCefClient().removeRequestHandler(insightRequestHandler, cefBrowser);
             webView.getJBCefClient().removeLifeSpanHandler(lifeSpanHandler, cefBrowser);
             webView.getComponent().removePropertyChangeListener("foreground", propertyChangeListener);
