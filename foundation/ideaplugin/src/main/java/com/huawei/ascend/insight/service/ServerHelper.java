@@ -48,7 +48,7 @@ public class ServerHelper {
         ThreadUtil.runInUIThread(() -> {
             executeStartServerCommand();
             startServerHook = AppExecutorUtil.getAppScheduledExecutorService()
-                .scheduleWithFixedDelay(ServerHelper::serverCheckAndRestart, 10, 3, TimeUnit.SECONDS);
+                .scheduleWithFixedDelay(ServerHelper::serverCheckAndRestart, 5, 3, TimeUnit.SECONDS);
         });
     }
 
