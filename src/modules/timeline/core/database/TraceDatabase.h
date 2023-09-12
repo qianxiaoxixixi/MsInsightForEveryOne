@@ -52,7 +52,8 @@ public:
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
                        uint64_t minTimestamp, int64_t trackId);
     int SearchSliceNameCount(const std::string &name);
-    bool SearchSliceName(const std::string &name, int index, Protocol::SearchSliceBody &responseBody);
+    bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+                         Protocol::SearchSliceBody &responseBody);
 
 private:
     const std::string sliceTable = "slice";
