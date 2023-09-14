@@ -474,10 +474,8 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
                                       uint64_t minTimestamp, int64_t traceId)
 {
     std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id "
-                      " FROM " + sliceTable +
-                      " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
-                      " GROUP BY depth, id"
-                      " ORDER BY start_time;";
+                      " FROM " + sliceTable + " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
+                      " GROUP BY depth, id ORDER BY start_time;";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
