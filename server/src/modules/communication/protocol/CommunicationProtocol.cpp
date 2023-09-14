@@ -17,6 +17,10 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, ToDistributionRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, ToBandwidthDataRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATOR_PARSE, ToCommunicatorParserRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksRequest);
 }
 
 void CommunicationProtocol::RegisterResponseToJsonFuncs()
@@ -25,6 +29,10 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, ToDistributionResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, ToBandwidthDataResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATOR_PARSE, ToCommunicatorParserResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksResponse);
 }
 
 void CommunicationProtocol::RegisterEventToJsonFuncs()
@@ -93,6 +101,56 @@ std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorParserRequest(cons
     return reqPtr;
 }
 
+std::unique_ptr<Request> CommunicationProtocol::ToIterationsRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<IterationsRequest> reqPtr = std::make_unique<IterationsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<DurationListRequest> reqPtr = std::make_unique<DurationListRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
+    JsonUtil::SetByJsonKeyArrayValue(reqPtr->params.rankList, json["params"], "rankList");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> CommunicationProtocol::ToRanksRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<RanksRequest> reqPtr = std::make_unique<RanksRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<OperatorNamesRequest> reqPtr = std::make_unique<OperatorNamesRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
+    JsonUtil::SetByJsonKeyArrayValue(reqPtr->params.rankList, json["params"], "rankList");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -117,6 +175,25 @@ std::optional<json_t> CommunicationProtocol::ToCommunicatorParserResponse(const 
     return ToResponseJson<CommunicatorGroupResponse>(dynamic_cast<const CommunicatorGroupResponse &>(response));
 }
 
+std::optional<json_t> CommunicationProtocol::ToIterationsResponse(const Response &response)
+{
+    return ToResponseJson<IterationsOrRanksResponse>(dynamic_cast<const IterationsOrRanksResponse &>(response));
+}
+
+std::optional<json_t> CommunicationProtocol::ToOperatorNamesResponse(const Response &response)
+{
+    return ToResponseJson<OperatorNamesResponse>(dynamic_cast<const OperatorNamesResponse &>(response));
+}
+
+std::optional<json_t> CommunicationProtocol::ToDurationResponse(const Response &response)
+{
+    return ToResponseJson<DurationResponse>(dynamic_cast<const DurationResponse &>(response));
+}
+
+std::optional<json_t> CommunicationProtocol::ToRanksResponse(const Response &response)
+{
+    return ToResponseJson<RanksResponse>(dynamic_cast<const RanksResponse &>(response));
+}
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

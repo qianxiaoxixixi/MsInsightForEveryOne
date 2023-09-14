@@ -15,6 +15,7 @@ namespace Protocol {
 template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE &response);
 template <> std::optional<json_t> ToResponseJson<SummaryTopRankResponse>(const SummaryTopRankResponse &response);
 template <> std::optional<json_t> ToResponseJson<SummaryStatisticsResponse>(const SummaryStatisticsResponse &response);
+template <> std::optional<json_t> ToResponseJson<ComputeDetailResponse>(const ComputeDetailResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

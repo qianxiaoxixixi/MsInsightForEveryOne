@@ -65,6 +65,31 @@ template <> std::optional<json_t> ToResponseJson<SummaryStatisticsResponse>(cons
     return json;
 }
 
+template <> std::optional<json_t> ToResponseJson<ComputeDetailResponse>(const ComputeDetailResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["computeDetails"] = json_t::array();
+    json["body"]["totalNum"] = response.totalNum;
+    for (const ComputeDetail &action : response.computeDetails) {
+        json_t itemJson = json_t::object();
+        itemJson["name"] = action.name;
+        itemJson["type"] = action.type;
+        itemJson["startTime"] = action.startTime;
+        itemJson["duration"] = action.duration;
+        itemJson["waitTime"] = action.waitTime;
+        itemJson["blockDim"] = action.blockDim;
+        itemJson["inputShapes"] = action.inputShapes;
+        itemJson["inputDataTypes"] = action.inputDataTypes;
+        itemJson["inputFormats"] = action.inputFormats;
+        itemJson["outputShapes"] = action.outputShapes;
+        itemJson["outputDataTypes"] = action.outputDataTypes;
+        itemJson["outputFormats"] = action.outputFormats;
+        json["body"]["computeDetails"].emplace_back(itemJson);
+    }
+    return json;
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

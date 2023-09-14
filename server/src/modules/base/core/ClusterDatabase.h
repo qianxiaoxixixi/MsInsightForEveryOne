@@ -39,6 +39,15 @@ public:
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody);
     bool QueryDistributionData(Protocol::DistributionDataParam &param, Protocol::DistributionResBody &resBody);
     void SaveLastData();
+
+    bool QueryRanksHandler(Protocol::RanksParams &requestParam,
+                           std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+    bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
+                            std::vector<Protocol::OperatorNamesObject> &responseBody);
+    bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+    bool QueryDurationList(Protocol::DurationListParams &requestParams,
+                           std::vector<Protocol::Duration> &responseBody);
+
 private:
     const std::string timeInfoTable = "communication_time_info";
     const std::string bandwidthTable = "communication_bandwidth_info";
@@ -56,6 +65,7 @@ private:
 
     bool BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
                                sqlite3_stmt *stmt, int index);
+    std::string GetRanksSql(std::vector<std::string> rankList);
 };
 } // end of namespace Module
 } // end of namespace Dic

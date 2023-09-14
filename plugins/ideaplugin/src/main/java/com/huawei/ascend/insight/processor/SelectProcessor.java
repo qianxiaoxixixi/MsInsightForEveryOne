@@ -48,7 +48,7 @@ public class SelectProcessor {
     }
 
     /**
-     * open Folder Chooser And Get Path
+     * open Folder Chooser And GetResponseData Path
      *
      * @param project project
      * @param isChooseFiles isChooseFiles

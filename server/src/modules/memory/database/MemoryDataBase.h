@@ -52,6 +52,10 @@ private:
     void GetOperatorLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap);
     void GetAppLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap);
     void GetComponentMap(Protocol::ComponentDto item, Protocol::ComponentMemory &componentMap);
+
+    std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
+
+    std::string GetPeakMemory(const Protocol::MemoryPeak &peak);
 };
 
 } // end of namespace Memory

@@ -22,6 +22,7 @@ template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const Imp
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["result"] = json_t::array();
+    json["body"]["hasMemory"] = response.body.hasMemory;
     for (const Action& action : response.body.result) {
         json_t actionJson = json_t::object();
         actionJson["cardName"] = action.cardName;
@@ -211,6 +212,25 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     return json;
 }
 
+
+template<>
+std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["communicationDetail"] = json_t::array();
+    json["body"]["totalNum"] = response.totalNum;
+    for (const CommunicationDetail &action: response.communication) {
+        json_t itemJson = json_t::object();
+        itemJson["communicationKernel"] = action.communicationKernel;
+        itemJson["startTime"] = action.startTime;
+        itemJson["totalDuration"] = action.totalDuration;
+        itemJson["overlapDuration"] = action.overlapDuration;
+        itemJson["notOverlapDuration"] = action.notOverlapDuration;
+        json["body"]["communicationDetail"].emplace_back(itemJson);
+    }
+    return json;
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

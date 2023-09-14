@@ -76,20 +76,6 @@ struct ComputeDetailResponse : public Response {
     std::vector<ComputeDetail> computeDetails;
     int32_t totalNum;
 };
-
-struct CommunicationDetail {
-    std::string communicationKernel;
-    double startTime;
-    double totalDuration;
-    double overlapDuration;
-    double notOverlapDuration;
-};
-
-struct CommunicationDetailResponse : public Response {
-    CommunicationDetailResponse() : Response(REQ_RES_COMMUNICATION_DETAIL) {}
-    std::vector<CommunicationDetail> communication;
-    int32_t totalNum;
-};
 } // end of namespace Protocol
 } // end of namespace Dic
 

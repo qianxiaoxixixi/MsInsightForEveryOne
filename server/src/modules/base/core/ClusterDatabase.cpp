@@ -548,5 +548,155 @@ bool ClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &par
     sqlite3_finalize(stmt);
     return true;
 }
+
+bool ClusterDatabase::QueryRanksHandler(Protocol::RanksParams &requestParam,
+                                        std::vector<Protocol::IterationsOrRanksObject> &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string sql = "SELECT DISTINCT rank_id FROM " + timeInfoTable + " WHERE iteration_id = ? ORDER BY rank_id";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryRanksHandler statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, requestParam.iterationId.c_str(), -1, SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::IterationsOrRanksObject object;
+        object.iterationOrRankId = sqlite3_column_string(stmt, col++);
+        responseBody.emplace_back(object);
+    }
+    return true;
+}
+
+std::string ClusterDatabase::GetRanksSql(std::vector<std::string> rankList)
+{
+    std::string ranks = "(";
+    if (rankList.empty()) {
+        return "";
+    } else {
+        for (int i = 0; i < rankList.size(); i++) {
+            if (i == rankList.size() - 1) {
+                ranks += rankList[i];
+            } else {
+                ranks += rankList[i];
+                ranks += ", ";
+            }
+        }
+    }
+    ranks += ")";
+    return ranks;
+}
+
+bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
+                                         std::vector<Protocol::OperatorNamesObject> &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::vector<std::string> rankList = requestParams.rankList;
+    std::string iterationId = requestParams.iterationId;
+    std::string stage = requestParams.stage;
+    std::string sql = "";
+    if (rankList.size() == 0) {
+        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + timeInfoTable +
+                " WHERE iteration_id = ?" +
+                " AND stage_id = ?" +
+                " ORDER BY op_name)";
+    } else {
+        std::string ranks = GetRanksSql(rankList);
+        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + timeInfoTable +
+                " WHERE iteration_id = ?" +
+                " AND stage_id = ?" +
+                " AND rank_id IN " + ranks + " ORDER BY op_name)";
+    }
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryOperatorNames statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::OperatorNamesObject object;
+        object.operatorName = sqlite3_column_string(stmt, col++);
+        responseBody.emplace_back(object);
+    }
+    return true;
+}
+
+bool ClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string sql = "SELECT DISTINCT iteration_id FROM " + timeInfoTable + " ORDER BY iteration_id";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryIterations statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::IterationsOrRanksObject object;
+        object.iterationOrRankId = sqlite3_column_string(stmt, col++);
+        responseBody.emplace_back(object);
+    }
+    if (responseBody.size() == 0) {
+        ServerLog::Error("Failed to obtain the number of iteration ids. At least one id must be contained. "
+                     "Check whether communication data files exist in the directory.");
+    }
+    return true;
+}
+
+bool ClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
+                                        std::vector<Protocol::Duration> &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::vector<std::string> rankList = requestParams.rankList;
+    std::string iterationId = requestParams.iterationId;
+    std::string stage = requestParams.stage;
+    std::string operatorName = requestParams.operatorName;
+    std::string sql = "";
+    if (rankList.size() == 0) {
+        sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+              "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
+              "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
+              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + timeInfoTable +
+              " WHERE iteration_id = ? AND stage_id = ? AND op_name = ?";
+    } else {
+        std::string ranks = GetRanksSql(rankList);
+        sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+              "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
+              "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
+              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + timeInfoTable +
+              " WHERE iteration_id = ? AND stage_id = ?"
+              " AND rank_id IN " + ranks +
+              " AND op_name = ?";
+    }
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::Duration object;
+        object.rankId = sqlite3_column_string(stmt, col++);
+        object.elapseTime = sqlite3_column_double(stmt, col++);
+        object.transitTime = sqlite3_column_double(stmt, col++);
+        object.synchronizationTime = sqlite3_column_double(stmt, col++);
+        object.waitTime = sqlite3_column_double(stmt, col++);
+        object.idleTime = sqlite3_column_double(stmt, col++);
+        object.synchronizationTimeRatio = sqlite3_column_double(stmt, col++);
+        object.waitTimeRatio = sqlite3_column_double(stmt, col++);
+        responseBody.emplace_back(object);
+    }
+    return true;
+}
 } // end of namespace Module
 } // end of namespace Dic

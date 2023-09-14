@@ -14,10 +14,10 @@ namespace Dic {
 namespace Protocol {
 struct MemoryOperator {
     std::string name;
-    double size = 0;
-    double allocationTime = 0;
-    double releaseTime = 0;
-    double duration = 0;
+    double size;
+    double allocationTime;
+    double releaseTime;
+    double duration;
 };
 
 struct ComponentMemory {
@@ -53,6 +53,14 @@ struct ComponentDto {
     double totalReserved;
     double totalAllocated;
     double timesTamp;
+};
+
+struct MemoryPeak {
+    bool hasPtaGe = false;
+    bool hasApp = false;
+    double ptaGeAllocated = 0;
+    double ptaGeReserved = 0;
+    double appAllocated = 0;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

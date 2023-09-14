@@ -63,6 +63,12 @@ public:
                                           Protocol::SummaryStatisticsBody &responseBody);
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
 
+    int64_t GetTrackIdList(const std::string& name);
+    std::vector<double> QueryNotOverlapTime(const int64_t& notOverlapTrackId, const double& timeStamp,
+                                            const double& duration);
+    int32_t QueryCommunicationTotalNum(const std::string& name);
+    bool GetCommunicationDetails(const int64_t& opTrackId, std::vector<Protocol::CommunicationDetail> &details);
+
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";

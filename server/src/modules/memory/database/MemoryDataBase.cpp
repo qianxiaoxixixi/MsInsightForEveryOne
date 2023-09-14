@@ -4,6 +4,7 @@
 
 #include "MemoryDataBase.h"
 #include <vector>
+#include <cmath>
 #include "ServerLog.h"
 #include "TraceTime.h"
 
@@ -129,8 +130,8 @@ bool MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
         sqlite3_bind_text(stmt, idx++, event.component.c_str(), event.component.length(), SQLITE_TRANSIENT);
         sqlite3_bind_double(stmt, idx++, event.totalAllocated);
         sqlite3_bind_double(stmt, idx++, event.totalReserved);
-        sqlite3_bind_double(stmt, idx++, event.timesTamp);
         sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_double(stmt, idx++, event.timesTamp);
     }
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
@@ -153,12 +154,24 @@ bool MemoryDataBase::insertRecordDetail(const Record &event)
     return true;
 }
 
+std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
+{
+    std::string sql = "SELECT name, ROUND(allocation_time / 1000, 2) as allocation_time, "
+                      "ROUND(release_time / 1000, 2) as release_time, size, "
+                      "ROUND(duration / 1000, 2) as duration FROM " + operatorTable;
+    if (requestParams.startTime == -1 and requestParams.endTime == -1) {
+        return sql;
+    } else {
+        std::string scope = "(" + std::to_string(requestParams.startTime) + ","
+                        + std::to_string(requestParams.endTime) + ")";
+        return sql + " WHERE allocation_time in " + scope;
+    }
+}
+
 bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                          std::vector<Protocol::MemoryOperator> &responseBody)
 {
-    std::string sql =
-            "SELECT name, allocation_time, release_time, size, duration FROM " + operatorTable +
-             "where allocation_time <= ? AND allocation_time >= ?";
+    std::string sql = GetOperatorSql(requestParams);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -173,6 +186,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
         operatorDto.name = sqlite3_column_string(stmt, col++);
+        // 1ms = 1000us
         operatorDto.allocationTime = static_cast<double>(sqlite3_column_double(stmt, col++));
         operatorDto.releaseTime = static_cast<double>(sqlite3_column_double(stmt, col++));
         operatorDto.size = static_cast<double>(sqlite3_column_double(stmt, col++));
@@ -188,51 +202,77 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                      Protocol::OperatorMemory &operatorBody)
 {
-    std::string sql = "SELECT component, timestamp, total_allocated, total_reserve FROM " + recordTable;
-    double startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::string sql = "SELECT component, ROUND(timestamp, 2) as timestamp, "
+                      "ROUND(total_allocated, 2) as total_allocated, "
+                      "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable;
+    // 1ms = 1000 * 1000 ns
+    double startTime = static_cast<double>(Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000));
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryOperatorDetail. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("QueryMemoryView. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     int index = bindStartIndex;
+    std::string peakMemory;
     std::vector<Protocol::ComponentDto> componentDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::ComponentDto componentDto{};
         componentDto.component = sqlite3_column_string(stmt, col++);
         // 减去timeline开始的时间作为时间戳
-        componentDto.timesTamp = static_cast<double>(sqlite3_column_double(stmt, col++)) - startTime;
+        // 1ms = 1000us
+        componentDto.timesTamp = static_cast<double>(sqlite3_column_double(stmt, col++)) / 1000 - startTime;
         componentDto.totalAllocated = static_cast<double>(sqlite3_column_double(stmt, col++));
         componentDto.totalReserved = static_cast<double>(sqlite3_column_double(stmt, col++));
         componentDtoVec.emplace_back(componentDto);
     }
     Protocol::ComponentMemory componentMap;
     Protocol::OperatorMemory operatorMap;
+    Protocol::MemoryPeak peak;
     for (auto &item: componentDtoVec) {
-        std::vector<double> recordLine;
-        recordLine[0] = item.timesTamp;
         if (item.component == "PTA+GE") {
+            peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
+            peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
             GetOperatorLine(item, operatorMap);
+            peak.hasPtaGe = true;
         } else if (item.component == "APP") {
+            peak.appAllocated = std::max(peak.appAllocated, item.totalAllocated);
             GetAppLine(item, operatorMap);
+            peak.hasApp = true;
         }
     }
     operatorBody = operatorMap;
+    operatorBody.peakMemoryUsage = GetPeakMemory(peak);
 
     sqlite3_finalize(stmt);
     return true;
 }
 
+std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
+{
+    std::string peakMemory = "Peak Memory Usage: ";
+    if (peak.hasPtaGe) {
+        double ptaGeAllo = (double)((int)(peak.ptaGeAllocated * 100) / 100);
+        peakMemory.append("Operator Allocated - ").append(std::to_string(ptaGeAllo)).append("MB");
+        double ptaGeRe = (double)((int)(peak.ptaGeReserved * 100) / 100);
+        peakMemory.append(" | Operator Allocated - ").append(std::to_string(ptaGeRe)).append("MB");
+    }
+    if (peak.hasApp) {
+        double appAllo = (double)((int)(peak.appAllocated * 100) / 100);
+        peakMemory.append(" | APP Reserved - ").append(std::to_string(appAllo)).append("MB");
+    }
+    return peakMemory;
+}
+
 void MemoryDataBase::GetOperatorLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap)
 {
     std::vector<double> AllocatesLine;
-    AllocatesLine[1] = item.totalAllocated;
-    AllocatesLine[0] = item.timesTamp;
+    AllocatesLine.emplace_back(item.timesTamp);
+    AllocatesLine.emplace_back(item.totalAllocated);
     std::vector<double> ReservedLine;
-    ReservedLine[1] = item.totalReserved;
-    ReservedLine[0] = item.timesTamp;
+    ReservedLine.emplace_back(item.timesTamp);
+    ReservedLine.emplace_back(item.totalReserved);
 
     operatorMap.reservedLine.emplace_back(ReservedLine);
     operatorMap.allocatesLine.emplace_back(AllocatesLine);
@@ -279,14 +319,13 @@ bool MemoryDataBase::SaveRecordDetail()
 void MemoryDataBase::GetAppLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap)
 {
     std::vector<double> AllocatesLine;
-    AllocatesLine[1] = item.totalAllocated;
-    AllocatesLine[0] = item.timesTamp;
+    AllocatesLine.emplace_back(item.totalAllocated);
+    AllocatesLine.emplace_back(item.timesTamp);
     std::vector<double> ReservedLine;
-    ReservedLine[1] = item.totalReserved;
-    ReservedLine[0] = item.timesTamp;
+    ReservedLine.emplace_back(item.timesTamp);
+    ReservedLine.emplace_back(item.totalReserved);
 
-    operatorMap.reservedLine.emplace_back(ReservedLine);
-    operatorMap.allocatesLine.emplace_back(AllocatesLine);
+    operatorMap.appLine.emplace_back(ReservedLine);
 }
 
 sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)

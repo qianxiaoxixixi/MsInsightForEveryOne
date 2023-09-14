@@ -54,6 +54,10 @@ const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operat
 const std::string REQ_RES_COMMUNICATION_BANDWIDTH = "communication/bandwidth";
 const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/distribution";
 const std::string REQ_RES_COMMUNICATOR_PARSE = "communicator/parse";
+const std::string REQ_RES_COMMUNICATION_ITERATIONS = "communication/duration/iterations";
+const std::string REQ_RES_COMMUNICATION_RANKS = "communication/duration/ranks";
+const std::string REQ_RES_COMMUNICATION_OPERATORNAMES = "communication/duration/operatorNames";
+const std::string REQ_RES_COMMUNICATION_LIST = "communication/duration/list";
 
 // summary
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";

@@ -13,6 +13,7 @@
 #include "TraceFileParser.h"
 #include "ClusterFileParser.h"
 #include "MemoryParse.h"
+#include "FileUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -41,13 +42,15 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
     std::string selectedFolder = request.params.path[0];
-    auto traceFiles = FindAllTraceFile(request.params.path, selectedFolder);
+    auto traceFiles = FileUtil::FindAllFileByName(request.params.path, selectedFolder, traceViewFile, traceViewReg);
     if (traceFiles.empty()) {
         ServerLog::Error("Failed to find trace file.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
+    response.body.hasMemory = HasMemoryFile(request.params.path, selectedFolder);
+
     // 按rankId 拆分文件
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(traceFiles);
     SetParseCallBack(token);
@@ -68,6 +71,18 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         ClusterFileParser clusterFileParser;
         clusterFileParser.ParseClusterFiles(selectedFolder);
     }
+}
+
+bool ImportActionHandler::HasMemoryFile(const std::vector<std::string>& paths, std::string folder)
+{
+    auto operatorFiles = FileUtil::FindAllFileByName(paths, folder,
+                                                     memoryRecordFile, memoryOperatorReg);
+    auto recordFiles = FileUtil::FindAllFileByName(paths, folder,
+                                                   memoryRecordFile, memoryRecordReg);
+    if (!operatorFiles.empty() or !recordFiles.empty()) {
+        return true;
+    }
+    return false;
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
@@ -98,102 +113,6 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
-}
-
-std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList,
-                                                               std::string &selectedFolder)
-{
-    std::vector<std::string> traceFiles;
-    if (std::strcmp(selectedFolder.c_str(), "browser") == 0) {
-        selectedFolder = ExecUtil::SelectFolder();
-        return FindTraceFile(selectedFolder);
-    }
-    for (const auto &path : pathList) {
-        auto files = FindTraceFile(path);
-        if (files.empty()) {
-            ServerLog::Warn("Can't find trace file in path:", path);
-            continue;
-        }
-        traceFiles.insert(traceFiles.end(), files.begin(), files.end());
-    }
-    return traceFiles;
-}
-
-std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &path)
-{
-    std::vector<std::string> traceFiles;
-    if (!FileUtil::IsFolder(path)) {
-        traceFiles.emplace_back(path);
-        return traceFiles;
-    }
-    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](
-            const std::string &path, int depth) {
-        if (depth > 5) {
-            return;
-        }
-        auto folders = FileUtil::FindFolders(path);
-        if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
-            FindAscendFolder(path, traceFiles);
-            return;
-        }
-        for (const auto &folder: folders) {
-            std::string tmpPath = FileUtil::SplicePath(path, folder);
-            if (FileUtil::IsFolder(tmpPath)) {
-                find(tmpPath, depth + 1);
-            } else if (IsJsonValid(folder)) {
-                traceFiles.push_back(tmpPath);
-            }
-        }
-    };
-    find(path, 0);
-    return traceFiles;
-}
-
-bool ImportActionHandler::IsJsonValid(const std::string &fileName)
-{
-    static std::string reg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
-    auto result = RegexUtil::RegexMatch(fileName, reg);
-    return result.has_value();
-}
-
-void ImportActionHandler::FindAscendFolder(const std::string &path,
-                                           std::vector<std::string> &traceFiles)
-{
-    std::string traceFilePath = FileUtil::SplicePath(path, "ASCEND_PROFILER_OUTPUT");
-    traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
-    ServerLog::Info("FindAscendFolder. ", traceFilePath);
-    if (FileUtil::CheckDirectoryExist(traceFilePath)) {
-        traceFiles.emplace_back(traceFilePath);
-        ServerLog::Info("FindAscendFolder2. ");
-        return;
-    }
-    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](
-            const std::string &path, int depth) {
-        if (depth > 5) {
-            return;
-        }
-        auto folders = FileUtil::FindFolders(path);
-        for (const auto &folder: folders) {
-            std::string tmpPath = FileUtil::SplicePath(path, folder);
-            if (FileUtil::IsFolder(tmpPath)) {
-                find(tmpPath, depth + 1);
-            } else if (IsJsonValid(folder)) {
-                traceFiles.push_back(tmpPath);
-            }
-        }
-    };
-    auto folders = FileUtil::FindFolders(path);
-    static std::string reg = R"(PROF_.*)";
-    for (const auto &folder: folders) {
-        if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
-            continue;
-        }
-        std::string tmpPath = FileUtil::SplicePath(path, folder);
-        if (FileUtil::IsFolder(tmpPath)) {
-            find(tmpPath, 0);
-        }
-        break;
-    }
 }
 
 void ImportActionHandler::SetParseCallBack(const std::string &token)

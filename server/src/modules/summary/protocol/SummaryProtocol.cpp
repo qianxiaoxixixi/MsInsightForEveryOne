@@ -15,12 +15,14 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
 {
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, ToTopNRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_STATISTIC, ToStatisticsRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMPUTE_DETAIL, ToComputeDetailRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
 {
     resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, ToTopNResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_STATISTIC, ToStatisticsResponse);
+    resToJsonFactory.emplace(REQ_RES_COMPUTE_DETAIL, ToComputeDetailResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -56,6 +58,22 @@ std::unique_ptr<Request> SummaryProtocol::ToStatisticsRequest(const json_t &json
     return reqPtr;
 }
 
+std::unique_ptr<Request> SummaryProtocol::ToComputeDetailRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ComputeDetailRequest> reqPtr = std::make_unique<ComputeDetailRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.timeFlag, json["params"], "timeFlag");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -68,6 +86,11 @@ std::optional<json_t> SummaryProtocol::ToTopNResponse(const Response &response)
 std::optional<json_t> SummaryProtocol::ToStatisticsResponse(const Response &response)
 {
     return ToResponseJson<SummaryStatisticsResponse>(dynamic_cast<const SummaryStatisticsResponse &>(response));
+}
+
+std::optional<json_t> SummaryProtocol::ToComputeDetailResponse(const Response &response)
+{
+    return ToResponseJson<ComputeDetailResponse>(dynamic_cast<const ComputeDetailResponse &>(response));
 }
 
 #pragma endregion

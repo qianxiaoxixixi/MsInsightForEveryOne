@@ -121,6 +121,19 @@ struct SearchSliceRequest : public Request {
     SearchSliceRequest() : Request(REQ_RES_SEARCH_SLICE) {};
     SearchSliceParams params;
 };
+
+struct CommunicationDetailParams {
+    std::string rankId;
+    double currentPage = 0;
+    double pageSize = 0;
+    std::string orderBy;
+    std::string order;
+};
+
+struct CommunicationDetailRequest : public Request {
+    CommunicationDetailRequest() : Request(REQ_RES_COMMUNICATION_DETAIL) {};
+    CommunicationDetailParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

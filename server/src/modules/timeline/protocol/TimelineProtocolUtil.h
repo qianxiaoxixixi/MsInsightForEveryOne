@@ -24,6 +24,8 @@ template <> std::optional<json_t> ToResponseJson<ResetWindowResponse>(const Rese
 template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response);
 template <> std::optional<json_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response);
 template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response);
+template<>
+std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response);
 // event
 template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event);
 template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);

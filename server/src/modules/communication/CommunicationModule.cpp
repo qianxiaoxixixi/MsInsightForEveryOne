@@ -7,6 +7,10 @@
 #include "CommunicatorGroupParserHandler.h"
 #include "BandwidthHandler.h"
 #include "DistributionHandler.h"
+#include "IterationsHandler.h"
+#include "DurationListHandler.h"
+#include "OperatorNamesHandler.h"
+#include "RanksHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -29,6 +33,11 @@ void CommunicationModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, std::make_unique<BandwidthHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, std::make_unique<DistributionHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATOR_PARSE, std::make_unique<CommunicatorGroupParserHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_ITERATIONS,
+                              std::make_unique<IterationsHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_RANKS, std::make_unique<RanksHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, std::make_unique<OperatorNamesHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_LIST, std::make_unique<DurationListHandler>());
 }
 
 void CommunicationModule::OnRequest(std::unique_ptr<Protocol::Request> request)
