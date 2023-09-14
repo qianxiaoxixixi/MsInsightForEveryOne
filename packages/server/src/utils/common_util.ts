@@ -100,7 +100,6 @@ export function findJsonFiles(dir: string, matchedFilePaths: string[], depth: nu
         const stats = fs.statSync(filePath);
         if (stats.isDirectory()) {
             findJsonFiles(filePath, matchedFilePaths, depth + 1, fileFormatter);
-            // } else if (file === 'trace_view.json') {
         } else if (fileFormatter.test(file)) {
             matchedFilePaths.push(filePath);
         }

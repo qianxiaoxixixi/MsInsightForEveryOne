@@ -32,10 +32,8 @@ export class TimeSeriesCache<E = TimeSeriesData> implements Cache {
 
     // wedge T extends DataKey; session: ValidSession; params: DataParam<T>
     fetch = (throttle(async <T extends any>(session: ValidSession, params: any): Promise<void> => {
-        // const getRange = defaultTimeStrategy[this.key];
         const [ , end ] = getRange(session);
         const getActualRange = (): [ number, number ] => [ this.endTime, end ];
-        // const dataFunc = dataFuncMap[this.key];
         try {
             const newData = (await dataFunc(session, getActualRange, params))[this.key] as unknown as E[];
             if (newData.length > 0) {
@@ -62,7 +60,6 @@ export class TimeSeriesCache<E = TimeSeriesData> implements Cache {
 
     // T extends DataKey; session: ValidSession; DataParam<T>; Promise<Partial<DataType<DataKey>>>;
     async getData<T extends any>(session: ValidSession, params: any): Promise<Partial<any>> {
-        // const getRange = defaultTimeStrategy[this.key];
         const [ start, end ] = getRange(session);
         if (end > this.endTime) {
             // params: DataParam<DataKey>

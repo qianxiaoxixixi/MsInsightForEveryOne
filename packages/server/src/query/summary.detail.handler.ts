@@ -88,45 +88,31 @@ function genComputeSql(request: ComputeDetailRequest): string {
 }
 
 function sortByRequest(communicationDetail: CommunicationDetail[], orderBy: string, ascend: string): void {
+    const isAsc = ascend === 'ascend';
     switch (orderBy) {
         case 'startTime': {
-            if (ascend === 'ascend') {
-                communicationDetail.sort((a, b) => a.startTime - b.startTime);
-            } else {
-                communicationDetail.sort((a, b) => b.startTime - a.startTime);
-            }
+            communicationDetail.sort((a, b) =>
+                isAsc ? a.startTime - b.startTime : b.startTime - a.startTime);
             break;
         }
         case 'totalDuration': {
-            if (ascend === 'ascend') {
-                communicationDetail.sort((a, b) => a.totalDuration - b.totalDuration);
-            } else {
-                communicationDetail.sort((a, b) => b.totalDuration - a.totalDuration);
-            }
+            communicationDetail.sort((a, b) =>
+                isAsc ? a.totalDuration - b.totalDuration : b.totalDuration - a.totalDuration);
             break;
         }
         case 'overlapDuration': {
-            if (ascend === 'ascend') {
-                communicationDetail.sort((a, b) => a.overlapDuration - b.overlapDuration);
-            } else {
-                communicationDetail.sort((a, b) => b.overlapDuration - a.overlapDuration);
-            }
+            communicationDetail.sort((a, b) =>
+                isAsc ? a.overlapDuration - b.overlapDuration : b.overlapDuration - a.overlapDuration);
             break;
         }
         case 'notOverlapDuration': {
-            if (ascend === 'ascend') {
-                communicationDetail.sort((a, b) => a.notOverlapDuration - b.notOverlapDuration);
-            } else {
-                communicationDetail.sort((a, b) => b.notOverlapDuration - a.notOverlapDuration);
-            }
+            communicationDetail.sort((a, b) =>
+                isAsc ? a.notOverlapDuration - b.notOverlapDuration : b.notOverlapDuration - a.notOverlapDuration);
             break;
         }
         default: {
-            if (ascend === 'ascend') {
-                communicationDetail.sort((a, b) => a.communicationKernel.localeCompare(b.communicationKernel));
-            } else {
-                communicationDetail.sort((a, b) => b.communicationKernel.localeCompare(a.communicationKernel));
-            }
+            communicationDetail.sort((a, b) =>
+                isAsc ? a.communicationKernel.localeCompare(b.communicationKernel) : b.communicationKernel.localeCompare(a.communicationKernel));
             break;
         }
     }
