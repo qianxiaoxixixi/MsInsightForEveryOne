@@ -63,6 +63,49 @@ struct CommunicatorGroupRequest : public Request {
     CommunicatorGroupRequest() : Request(REQ_RES_COMMUNICATOR_PARSE) {};
     CommunicatorGroupParam params;
 };
+
+struct RanksParams {
+    std::string dbIndex;
+    std::string iterationId;
+};
+
+struct RanksRequest  : public Request {
+    RanksRequest() : Request(REQ_RES_COMMUNICATION_RANKS) {};
+    RanksParams params;
+};
+
+struct IterationsParams {
+};
+
+struct IterationsRequest  : public Request {
+    IterationsRequest() : Request(REQ_RES_COMMUNICATION_ITERATIONS) {};
+    IterationsParams params;
+};
+
+struct OperatorNamesParams {
+    std::string dbIndex;
+    std::string iterationId;
+    std::vector<std::string> rankList = {};
+    std::string stage;
+};
+
+struct OperatorNamesRequest  : public Request {
+    OperatorNamesRequest() : Request(REQ_RES_COMMUNICATION_OPERATORNAMES) {};
+    OperatorNamesParams params;
+};
+
+struct DurationListParams {
+    std::string dbIndex;
+    std::string iterationId;
+    std::vector<std::string> rankList = {};
+    std::string operatorName;
+    std::string stage;
+};
+
+struct DurationListRequest  : public Request {
+    DurationListRequest() : Request(REQ_RES_COMMUNICATION_LIST) {};
+    DurationListParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

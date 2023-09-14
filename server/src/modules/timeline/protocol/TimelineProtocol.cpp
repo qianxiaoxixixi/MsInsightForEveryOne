@@ -23,6 +23,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationDetailRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -37,6 +38,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationDetailResponse);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -177,6 +179,22 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchSliceRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.index, json["params"], "index");
     return reqPtr;
 }
+
+
+std::unique_ptr<Request> TimelineProtocol::ToCommunicationDetailRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<CommunicationDetailRequest> reqPtr = std::make_unique<CommunicationDetailRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -229,6 +247,11 @@ std::optional<json_t> TimelineProtocol::ToSearchCountResponseJson(const Response
 std::optional<json_t> TimelineProtocol::ToSearchSliceResponseJson(const Response &response)
 {
     return ToResponseJson<SearchSliceResponse>(dynamic_cast<const SearchSliceResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToCommunicationDetailResponse(const Response &response)
+{
+    return ToResponseJson<CommunicationDetailResponse>(dynamic_cast<const CommunicationDetailResponse &>(response));
 }
 #pragma endregion
 

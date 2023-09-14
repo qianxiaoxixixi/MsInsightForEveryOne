@@ -15,8 +15,8 @@ namespace Protocol {
 
 struct MemoryOperatorParams {
     std::string rankId;
-    double startTime = 0;
-    double endTime = 0;
+    double startTime;
+    double endTime;
 };
 
 struct MemoryOperatorRequest : public Request {

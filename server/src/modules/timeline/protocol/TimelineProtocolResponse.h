@@ -17,11 +17,11 @@ struct Action {
     std::string cardName;
     std::string rankId;
     bool result = true;
-    bool hasMemory = false;
 };
 
 struct ImportActionResBody {
     std::vector<Action> result;
+    bool hasMemory = false;
 };
 
 struct ImportActionResponse : public Response {
@@ -226,6 +226,19 @@ struct SearchSliceResponse : public Response {
     SearchSliceBody body;
 };
 
+struct CommunicationDetail {
+    std::string communicationKernel;
+    double startTime;
+    double totalDuration;
+    double overlapDuration;
+    double notOverlapDuration;
+};
+
+struct CommunicationDetailResponse : public Response {
+    CommunicationDetailResponse() : Response(REQ_RES_COMMUNICATION_DETAIL) {}
+    std::vector<CommunicationDetail> communication;
+    int32_t totalNum;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

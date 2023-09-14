@@ -16,6 +16,11 @@ template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE
 template <> std::optional<json_t> ToResponseJson<OperatorDetailsResponse>(const OperatorDetailsResponse &response);
 template <> std::optional<json_t> ToResponseJson<DistributionResponse>(const DistributionResponse &response);
 template <> std::optional<json_t> ToResponseJson<BandwidthDataResponse>(const BandwidthDataResponse &response);
+template <> std::optional<json_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response);
+template <> std::optional<json_t> ToResponseJson<OperatorNamesResponse>(const OperatorNamesResponse &response);
+template <> std::optional<json_t> ToResponseJson<DurationResponse>(const DurationResponse &response);
+template <> std::optional<json_t> ToResponseJson<RanksResponse>(const RanksResponse &response);
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

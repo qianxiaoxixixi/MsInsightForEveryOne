@@ -5,6 +5,7 @@
 #include "SummaryModule.h"
 #include "SummaryTopRankHandler.h"
 #include "SummaryStatisticsHandler.h"
+#include "QueryComputeDetailInfoHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -24,6 +25,7 @@ void SummaryModule::RegisterRequestHandlers()
     requestHandlerMap.clear();
     requestHandlerMap.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, std::make_unique<SummaryTopRankHandler>());
     requestHandlerMap.emplace(REQ_RES_SUMMARY_STATISTIC, std::make_unique<SummaryStatisticsHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMPUTE_DETAIL, std::make_unique<QueryComputeDetailInfoHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

@@ -9,6 +9,7 @@
 #include "FileUtil.h"
 #include "TraceFileParser.h"
 #include "DataBaseManager.h"
+#include "FileDef.h"
 
 namespace Dic {
 namespace Module {
@@ -42,8 +43,12 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::st
             }
             ServerLog::Info("Parse completed. ID:", fileId);
             std::string parentDir = FileUtil::GetParentPath(filePath);
-            OperatorParse(parentDir, fileId);
-            RecordToParse(parentDir, fileId);
+            if (!OperatorParse(parentDir, fileId)) {
+                ServerLog::Error("Failed to parse operator.");
+            }
+            if (!RecordToParse(parentDir, fileId)) {
+                ServerLog::Error("Failed to parse record.");
+            }
             ServerLog::Info("Update depth completed. ID:", fileId);
         });
         futureMap.emplace(fileId, std::move(future));
@@ -76,9 +81,12 @@ bool MemoryParse::WaitParseEnd(const std::string &fileId)
 
 bool MemoryParse::OperatorParse(const std::string &parentDir, const std::string &fileId)
 {
-    ServerLog::Info("start parse.");
+    ServerLog::Info("start parse Operator.");
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::string operatorFile = FileUtil::GetDetailFile(parentDir, memoryOperatorFile);
+    if (operatorFile.empty()) {
+        return false;
+    }
     std::ifstream file(operatorFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
@@ -94,6 +102,7 @@ bool MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
             for (int i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
+            GetMapVaild(OPERATOR_CSV, dataMap);
             continue;
         }
         Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
@@ -105,6 +114,15 @@ bool MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
     return true;
 }
 
+void MemoryParse::GetMapVaild(const std::vector<std::string>& vec, std::map<std::string, std::int16_t> dataMap)
+{
+    for (const std::string& col : vec) {
+        if (dataMap.find(col) == dataMap.end()) {
+            ServerLog::Error("The file lacks a parameter column : ", col);
+        }
+    }
+}
+
 MemoryParse::MemoryParse()
 {
     threadPool = std::make_unique<ThreadPool>(MemoryParse::maxThreadNum);
@@ -112,11 +130,11 @@ MemoryParse::MemoryParse()
 
 Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string> row)
 {
-    std::int16_t nameIndex = dataMap["Name"];
-    std::int16_t allocationTimeIndex = dataMap["Allocation Time(us)"];
-    std::int16_t releaseTimeIndex = dataMap["Release Time(us)"];
-    std::int16_t sizeIndex = dataMap["Size(KB)"];
-    std::int16_t durationIndex = dataMap["Duration(us)"];
+    std::int16_t nameIndex = dataMap[NAME];
+    std::int16_t allocationTimeIndex = dataMap[ALLOCATION_TIME];
+    std::int16_t releaseTimeIndex = dataMap[RELEASE_TIME];
+    std::int16_t sizeIndex = dataMap[SIZE];
+    std::int16_t durationIndex = dataMap[DURATION];
     Operator anOperator {};
     anOperator.name = row[nameIndex];
     anOperator.size = atof(row[sizeIndex].c_str());
@@ -128,11 +146,11 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, std::int16_t>
 
 Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string> row)
 {
-    std::int16_t nameIndex = dataMap["Component"];
-    std::int16_t timeStampIndex = dataMap["Timestamp(us)"];
-    std::int16_t totalAllocatedIndex = dataMap["Total Allocated(MB)"];
-    std::int16_t totalReservedIndex = dataMap["Total Reserved(MB)"];
-    std::int16_t deviceTypeIndex = dataMap["Device Type"];
+    std::int16_t nameIndex = dataMap[COMPONENT];
+    std::int16_t timeStampIndex = dataMap[TIMESTAMP];
+    std::int16_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED];
+    std::int16_t totalReservedIndex = dataMap[TOTAL_RESERVED];
+    std::int16_t deviceTypeIndex = dataMap[DEVICE];
     Record record {};
     record.component = row[nameIndex];
     record.timesTamp = atof(row[timeStampIndex].c_str());
@@ -142,17 +160,14 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dat
     return record;
 }
 
-std::string MemoryParse::GetDbPath(const std::string &selectedFolder, const std::string &rankId)
-{
-    std::string dbPath = selectedFolder + "/" + rankId + ".db";
-    return Dic::FileUtil::GetRealPath(dbPath);
-}
-
 bool MemoryParse::RecordToParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse Record.");
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::string recordFile = FileUtil::GetDetailFile(parentDir, memoryRecordFile);
+    if (recordFile.empty()) {
+        return false;
+    }
     std::ifstream file(recordFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
@@ -167,6 +182,7 @@ bool MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
             for (int i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
+            GetMapVaild(RECORD_CSV, dataMap);
             continue;
         }
         Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);

@@ -29,6 +29,7 @@ bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &fileP
     DWORD end = GetTickCount();
     ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", end - start);
     ifs.close();
+    return true;
 }
 
 void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &filePathList)

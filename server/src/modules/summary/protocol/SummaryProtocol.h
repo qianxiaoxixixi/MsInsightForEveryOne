@@ -22,9 +22,11 @@ private:
     // json to request
     static std::unique_ptr<Request> ToTopNRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToStatisticsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToComputeDetailRequest(const json_t &json, std::string &error);
 
     static std::optional<json_t> ToTopNResponse(const Response &response);
     static std::optional<json_t> ToStatisticsResponse(const Response &response);
+    static std::optional<json_t> ToComputeDetailResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

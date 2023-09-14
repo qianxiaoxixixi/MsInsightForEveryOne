@@ -7,7 +7,12 @@
 
 #include <string>
 #include <dirent.h>
+#include <sys/stat.h>
 #include "regex"
+#include "RegexUtil.h"
+#include "ServerLog.h"
+#include "ExecUtil.h"
+#include "FileDef.h"
 #include <fstream>
 
 #if defined(_WIN32)
@@ -252,6 +257,111 @@ public:
         std::string dbName = fileId + ".db";
         std::string dbPath = SplicePath(filePath, dbName);
         return Dic::FileUtil::GetRealPath(dbPath);
+    }
+
+    static std::vector<std::string> FindAllFileByName(const std::vector<std::string> &pathList,
+                                                      std::string &selectedFolder,
+                                                      const std::string &fileName, const std::string &fileReg)
+    {
+        std::vector<std::string> findfiles;
+        if (std::strcmp(selectedFolder.c_str(), "browser") == 0) {
+            selectedFolder = ExecUtil::SelectFolder();
+            return FindFileByName(selectedFolder, fileName, fileReg);
+        }
+        for (const auto &path : pathList) {
+            auto files = FindFileByName(path, fileName, fileReg);
+            if (files.empty()) {
+                Server::ServerLog::Warn("Can't find " + fileName + " in path:", path);
+                continue;
+            }
+            for (auto file: files) {
+                struct stat info;
+                stat(file.c_str(), &info);
+                if (info.st_size >= MAX_FILE_SIZE_2G) {
+                    Server::ServerLog::Warn("The size of " + fileName + " is too large in path:", path);
+                    continue;
+                }
+            }
+            findfiles.insert(findfiles.end(), files.begin(), files.end());
+        }
+        return findfiles;
+    }
+
+    static std::vector<std::string> FindFileByName(const std::string &path,
+                                                   const std::string &fileName, const std::string &fileReg)
+    {
+        std::vector<std::string> files;
+        if (!FileUtil::IsFolder(path)) {
+            files.emplace_back(path);
+            return files;
+        }
+        std::function<void(const std::string &, int)> find = [&find, &files, fileReg, fileName](
+                const std::string &path, int depth) {
+            if (depth > 5) {
+                return;
+            }
+            auto folders = FileUtil::FindFolders(path);
+            if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
+                FindAscendFolder(path, files, fileName, fileReg);
+                return;
+            }
+            for (const auto &folder: folders) {
+                std::string tmpPath = FileUtil::SplicePath(path, folder);
+                if (FileUtil::IsFolder(tmpPath)) {
+                    find(tmpPath, depth + 1);
+                } else if (IsFileValid(folder, fileReg)) {
+                    files.push_back(tmpPath);
+                }
+            }
+        };
+        find(path, 0);
+        return files;
+    }
+
+    static bool IsFileValid(const std::string &fileName, const std::string &fileReg)
+    {
+        auto result = RegexUtil::RegexMatch(fileName, fileReg);
+        return result.has_value();
+    }
+
+    static void FindAscendFolder(const std::string &path, std::vector<std::string> &ascendFiles,
+                                 const std::string &fileName, const std::string &fileReg)
+    {
+        std::string splicePath = FileUtil::SplicePath(path, "ASCEND_PROFILER_OUTPUT");
+        splicePath = FileUtil::SplicePath(splicePath, fileName);
+        Server::ServerLog::Info("FindAscendFolder. ", splicePath);
+        if (FileUtil::CheckDirectoryExist(splicePath)) {
+            ascendFiles.emplace_back(splicePath);
+            Server::ServerLog::Info("FindAscendFolder2. ");
+            return;
+        }
+        std::function<void(const std::string &, int)> find = [&find, &ascendFiles, fileReg](
+                const std::string &path, int depth) {
+            if (depth > 5) {
+                return;
+            }
+            auto folders = FileUtil::FindFolders(path);
+            for (const auto &folder: folders) {
+                std::string tmpPath = FileUtil::SplicePath(path, folder);
+                if (FileUtil::IsFolder(tmpPath)) {
+                    find(tmpPath, depth + 1);
+                } else if (IsFileValid(folder, fileReg)) {
+                    ascendFiles.push_back(tmpPath);
+                }
+            }
+        };
+        auto folders = FileUtil::FindFolders(path);
+        static std::string reg = R"(PROF_.*)";
+        for (const auto &folder: folders) {
+            if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
+                continue;
+            }
+            std::string tmpPath = FileUtil::SplicePath(path, folder);
+            if (FileUtil::IsFolder(tmpPath)) {
+                find(tmpPath, 0);
+            }
+            break;
+        }
     }
 };
 } // end of namespace Dic

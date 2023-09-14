@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include "ServerLog.h"
+#include "TraceTime.h"
 #include "TraceDatabase.h"
 
 namespace Dic {
@@ -1168,6 +1169,97 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
         sqlite3_finalize(stmt);
         return true;
     }
+
+bool TraceDatabase::GetCommunicationDetails(const int64_t& opTrackId,
+                                            std::vector<Protocol::CommunicationDetail> &details)
+{
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT name, timestamp, duration FROM " + sliceTable;
+
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::CommunicationDetail communicationDetail{};
+        communicationDetail.communicationKernel = sqlite3_column_string(stmt, col++);
+        double startTime = sqlite3_column_double(stmt, col++) -
+                static_cast<double>(Timeline::TraceTime::Instance().GetStartTime()) / 1000;
+        double duration = sqlite3_column_double(stmt, col++);
+        communicationDetail.startTime = startTime;
+        communicationDetail.totalDuration = duration;
+        details.emplace_back(communicationDetail);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+int64_t TraceDatabase::GetTrackIdList(const std::string& name)
+{
+    int64_t trackId = 0;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT track_id FROM " + threadTable + " WHERE thread_name = ?";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
+    } else {
+        ServerLog::Error("Failed to prepare sql.");
+        return trackId;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        trackId = sqlite3_column_int64(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return trackId;
+}
+
+std::vector<double> TraceDatabase::QueryNotOverlapTime(const int64_t& notOverlapTrackId, const double& timeStamp,
+                                                       const double& duration)
+{
+    std::vector<double> trackId = {};
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT duration FROM " + sliceTable +
+            " WHERE track_id = ? AND timestamp >= ? AND timeStamp + duration <= ?";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_int64(stmt, index++, notOverlapTrackId);
+        sqlite3_bind_double(stmt, index++, timeStamp);
+        sqlite3_bind_double(stmt, index++, duration + timeStamp);
+    } else {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return trackId;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        double id = sqlite3_column_double(stmt, resultStartIndex);
+        trackId.push_back(id);
+    }
+    sqlite3_finalize(stmt);
+    return trackId;
+}
+
+int32_t TraceDatabase::QueryCommunicationTotalNum(const std::string& name)
+{
+    int32_t totalNum = 0;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT count(*) as nums FROM " + sliceTable + " WHERE track_id = ?";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
+    } else {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return totalNum;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return totalNum;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

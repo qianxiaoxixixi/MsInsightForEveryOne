@@ -24,11 +24,19 @@ private:
     static std::unique_ptr<Request> ToBandwidthDataRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDistributionRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToCommunicatorParserRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToIterationsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToDurationRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToRanksRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToOperatorNamesRequest(const json_t &json, std::string &error);
 
     static std::optional<json_t> ToOperatorDetailsResponse(const Response &response);
     static std::optional<json_t> ToBandwidthDataResponse(const Response &response);
     static std::optional<json_t> ToDistributionResponse(const Response &response);
     static std::optional<json_t> ToCommunicatorParserResponse(const Response &response);
+    static std::optional<json_t> ToIterationsResponse(const Response &response);
+    static std::optional<json_t> ToOperatorNamesResponse(const Response &response);
+    static std::optional<json_t> ToDurationResponse(const Response &response);
+    static std::optional<json_t> ToRanksResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

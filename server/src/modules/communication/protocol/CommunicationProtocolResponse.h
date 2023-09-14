@@ -79,6 +79,45 @@ struct DistributionResponse : public Response {
     DistributionResBody body;
 };
 
+
+struct IterationsOrRanksObject {
+    std::string iterationOrRankId;
+};
+
+struct IterationsOrRanksResponse : public Response {
+    IterationsOrRanksResponse() : Response(REQ_RES_COMMUNICATION_ITERATIONS) {}
+    std::vector<IterationsOrRanksObject> body;
+};
+
+struct RanksResponse : public Response {
+    RanksResponse() : Response(REQ_RES_COMMUNICATION_RANKS) {}
+    std::vector<IterationsOrRanksObject> body;
+};
+
+struct OperatorNamesObject {
+    std::string operatorName;
+};
+
+struct OperatorNamesResponse : public Response {
+    OperatorNamesResponse() : Response(REQ_RES_COMMUNICATION_OPERATORNAMES) {}
+    std::vector<OperatorNamesObject> body;
+};
+
+struct Duration {
+    std::string rankId;
+    double elapseTime;
+    double transitTime;
+    double synchronizationTime;
+    double waitTime;
+    double idleTime;
+    double synchronizationTimeRatio;
+    double waitTimeRatio;
+};
+
+struct DurationResponse : public Response {
+    DurationResponse() : Response(REQ_RES_COMMUNICATION_LIST) {}
+    std::vector<Duration> body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

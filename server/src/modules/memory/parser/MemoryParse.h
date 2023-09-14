@@ -44,7 +44,7 @@ private:
     Record mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
     Operator mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
 
-    std::string GetDbPath(const std::string &selectedFolder, const std::string &rankId);
+    void GetMapVaild(const std::vector<std::string> &vec, std::map<std::string, int16_t> dataMap);
 };
 } // end of namespace Memory
 } // end of namespace Module

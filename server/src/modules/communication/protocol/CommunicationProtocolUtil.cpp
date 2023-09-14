@@ -89,6 +89,57 @@ template <> std::optional<json_t> ToResponseJson<CommunicatorGroupResponse>(cons
     return json;
 }
 
+template <> std::optional<json_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["iterationOrRankId"] = json_t::array();
+    for (const IterationsOrRanksObject& ranksObject : response.body) {
+        json["body"]["iterationOrRankId"].emplace_back(ranksObject.iterationOrRankId);
+    }
+    return json;
+}
+template <> std::optional<json_t> ToResponseJson<OperatorNamesResponse>(const OperatorNamesResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["operatorName"] = json_t::array();
+    for (const OperatorNamesObject& object : response.body) {
+        json["body"]["operatorName"].emplace_back(object.operatorName);
+    }
+    return json;
+}
+template <> std::optional<json_t> ToResponseJson<DurationResponse>(const DurationResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["items"] = json_t::array();
+    for (const Duration& duration : response.body) {
+        json_t itemJson = json_t::object();
+        itemJson["rankId"] = duration.rankId;
+        itemJson["elapseTime"] = duration.elapseTime;
+        itemJson["transitTime"] = duration.transitTime;
+        itemJson["synchronizationTime"] = duration.synchronizationTime;
+        itemJson["waitTime"] = duration.waitTime;
+        itemJson["idleTime"] = duration.idleTime;
+        itemJson["synchronizationTimeRatio"] = duration.synchronizationTimeRatio;
+        itemJson["waitTimeRatio"] = duration.waitTimeRatio;
+        json["body"]["items"].emplace_back(itemJson);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<RanksResponse>(const RanksResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["iterationOrRankId"] = json_t::array();
+    for (const IterationsOrRanksObject& object : response.body) {
+        json["body"]["iterationOrRankId"].emplace_back(object.iterationOrRankId);
+    }
+    return json;
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

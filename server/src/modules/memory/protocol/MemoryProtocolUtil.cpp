@@ -16,7 +16,11 @@ template <> std::optional<json_t> ToResponseJson<MemoryOperatorResponse>(const M
     json["body"]["operatorDetail"] = json_t::array();
     for (const MemoryOperator& anOperator : response.operatorDetails) {
         json_t basicJson = json_t::object();
-        basicJson["name"] = anOperator.name;
+        if (anOperator.name.empty()) {
+            basicJson["name"] = "Unknown";
+        } else {
+            basicJson["name"] = anOperator.name;
+        }
         basicJson["size"] = anOperator.size;
         basicJson["allocationTime"] = anOperator.allocationTime;
         basicJson["releaseTime"] = anOperator.releaseTime;

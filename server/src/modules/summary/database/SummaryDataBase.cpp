@@ -4,6 +4,9 @@
 
 #include "SummaryDataBase.h"
 #include "ServerLog.h"
+#include "SummaryProtocolRequest.h"
+#include "SummaryProtocolResponse.h"
+#include "TraceTime.h"
 
 namespace Dic {
 namespace Module {
@@ -138,6 +141,93 @@ sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
         }
     }
     return stmt;
+}
+
+bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
+                                                std::vector<Protocol::ComputeDetail> &computeDetails,
+                                                int32_t &totalNum)
+{
+    std::string sql = GenComputeSql(params);
+    std::string timeFlag = params.timeFlag;
+    double startTime = 0;
+    double offset = (params.currentPage - 1) * params.pageSize;
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorDetail failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
+    sqlite3_bind_double(stmt, index++, params.pageSize);
+    sqlite3_bind_double(stmt, index++, offset);
+    std::vector<Protocol::ComputeDetail> computeVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::ComputeDetail computeDetail{};
+        computeDetail.name = sqlite3_column_string(stmt, col++);
+        computeDetail.type = sqlite3_column_string(stmt, col++);
+        computeDetail.startTime = static_cast<double>(sqlite3_column_double(stmt, col++));
+        computeDetail.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
+        computeDetail.waitTime = static_cast<double>(sqlite3_column_double(stmt, col++));
+        computeDetail.blockDim = static_cast<double>(sqlite3_column_double(stmt, col++));
+        computeDetail.inputShapes = sqlite3_column_string(stmt, col++);
+        computeDetail.inputDataTypes = sqlite3_column_string(stmt, col++);
+        computeDetail.inputFormats = sqlite3_column_string(stmt, col++);
+        computeDetail.outputShapes = sqlite3_column_string(stmt, col++);
+        computeDetail.outputDataTypes = sqlite3_column_string(stmt, col++);
+        computeDetail.outputFormats = sqlite3_column_string(stmt, col++);
+        computeVec.emplace_back(computeDetail);
+    }
+    computeDetails = computeVec;
+
+    totalNum = queryComputeTotalNum(params.timeFlag);
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
+{
+    std::string orderList = request.orderBy;
+    double offset = (request.currentPage - 1) * request.pageSize;
+    std::string ascend;
+    if (request.order == "ascend") {
+        ascend = "ASC";
+    } else {
+        ascend = "DESC";
+    }
+    std::string sql = "";
+    if (orderList.size() == 0) {
+        sql = "SELECT name, type, start_time as startTime, duration, wait_time, block_dim, input_shapes, "
+              "input_data_types, input_formats, output_shapes, output_data_types, output_formats FROM " + kernelTable +
+              " WHERE accelerator_core = ?  LIMIT ? offset ?";
+    } else {
+        sql = "SELECT name, type, start_time as startTime, duration, wait_time, block_dim, input_shapes, "
+              "input_data_types, input_formats, output_shapes, output_data_types, output_formats FROM " + kernelTable +
+              " WHERE accelerator_core = ?  ORDER BY " + orderList + " " + ascend + " LIMIT ? offset ?";
+    }
+    return sql;
+}
+
+int64_t SummaryDataBase::queryComputeTotalNum(std::string name)
+{
+    int64_t totalNum = 0;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT count(*) as nums FROM " + kernelTable + " WHERE accelerator_core = ?";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        int index = bindStartIndex;
+        sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
+    } else {
+        ServerLog::Error("QueryComputeTotalNum failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        return {};
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int64(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return totalNum;
 }
 
 } // end of namespace Summary

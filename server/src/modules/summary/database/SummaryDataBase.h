@@ -8,6 +8,8 @@
 #include "Database.h"
 #include "Protocol.h"
 #include "SummaryDef.h"
+#include "SummaryProtocolRequest.h"
+#include "SummaryProtocolResponse.h"
 
 namespace Dic {
 namespace Module {
@@ -26,6 +28,9 @@ public:
     void InsertKernelDetail(Kernel kernel);
     void SaveKernelDetail();
 
+    bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
+                                   std::vector<Protocol::ComputeDetail> &computeDetails, int32_t &totalNum);
+
 private:
     const std::string kernelTable = "kernel_detail";
     bool hasInitStmt = false;
@@ -34,6 +39,9 @@ private:
     std::vector<Kernel> kernelCache;
 
     sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
+    std::string GenComputeSql(Protocol::ComputeDetailParams request);
+
+    int64_t queryComputeTotalNum(std::string name);
 };
 
 } // end of namespace Summary
