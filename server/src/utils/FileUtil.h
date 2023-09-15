@@ -275,9 +275,8 @@ public:
                 continue;
             }
             for (auto file: files) {
-                struct stat info;
-                stat(file.c_str(), &info);
-                if (info.st_size >= MAX_FILE_SIZE_2G) {
+                long long size = getFileSize(file.c_str());
+                if (size >= MAX_FILE_SIZE_2G) {
                     Server::ServerLog::Warn("The size of " + fileName + " is too large in path:", path);
                     continue;
                 }

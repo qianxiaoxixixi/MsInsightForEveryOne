@@ -17,11 +17,11 @@ struct Action {
     std::string cardName;
     std::string rankId;
     bool result = true;
+    bool hasMemory = false;
 };
 
 struct ImportActionResBody {
     std::vector<Action> result;
-    bool hasMemory = false;
 };
 
 struct ImportActionResponse : public Response {
