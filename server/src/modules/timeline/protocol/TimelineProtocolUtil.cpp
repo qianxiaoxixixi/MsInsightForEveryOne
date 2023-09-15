@@ -22,12 +22,12 @@ template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const Imp
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["result"] = json_t::array();
-    json["body"]["hasMemory"] = response.body.hasMemory;
     for (const Action& action : response.body.result) {
         json_t actionJson = json_t::object();
         actionJson["cardName"] = action.cardName;
         actionJson["rankId"] = action.rankId;
         actionJson["result"] = action.result;
+        actionJson["hasMemory"] = action.hasMemory;
         json["body"]["result"].emplace_back(actionJson);
     }
     return json;

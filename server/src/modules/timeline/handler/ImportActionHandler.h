@@ -25,13 +25,16 @@ private:
     static void SetParseCallBack(const std::string &token);
     static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
-    bool HasMemoryFile(const std::vector<std::string>& paths, std::string folder);
+    bool HasMemoryFile(const std::string& path);
     const std::string traceViewFile = "trace_view.json";
     const std::string memoryOperatorFile = "operator_memory.csv";
     const std::string memoryRecordFile = "memory_record.csv";
     const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
     const std::string memoryOperatorReg = R"((operator_memory|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     const std::string memoryRecordReg = R"((memory_record|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
+
+    void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
+                                 ImportActionResponse &response, const std::string &path);
 };
 } // end of namespace Timeline
 } // end of namespace Module

@@ -49,18 +49,10 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    response.body.hasMemory = HasMemoryFile(request.params.path, selectedFolder);
-
     // 按rankId 拆分文件
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(traceFiles);
     SetParseCallBack(token);
-    for (const auto &rankEntry : rankListMap) {
-        std::string rankId = rankEntry.first;
-        if (DataBaseManager::Instance().HasFileId(rankId)) {
-            continue;
-        }
-        response.body.result.emplace_back(Action{rankId, rankId, true});
-    }
+    SetBaseActionOfResponse(rankListMap, response, selectedFolder);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
@@ -73,12 +65,29 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 }
 
-bool ImportActionHandler::HasMemoryFile(const std::vector<std::string>& paths, std::string folder)
+void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,
+                                                  ImportActionResponse &response, const std::string &path)
 {
-    auto operatorFiles = FileUtil::FindAllFileByName(paths, folder,
-                                                     memoryRecordFile, memoryOperatorReg);
-    auto recordFiles = FileUtil::FindAllFileByName(paths, folder,
-                                                   memoryRecordFile, memoryRecordReg);
+    for (const auto &rankEntry : rankListMap) {
+        std::string rankId = rankEntry.first;
+        Action action;
+        if (DataBaseManager::Instance().HasFileId(rankId)) {
+            continue;
+        }
+        action.cardName = rankId;
+        action.rankId = rankId;
+        action.result = true;
+        if (HasMemoryFile(path)) {
+            action.hasMemory = true;
+        }
+        response.body.result.emplace_back(action);
+    }
+}
+
+bool ImportActionHandler::HasMemoryFile(const std::string& path)
+{
+    auto operatorFiles = FileUtil::FindFileByName(path, memoryOperatorFile, memoryOperatorReg);
+    auto recordFiles = FileUtil::FindFileByName(path, memoryRecordFile, memoryRecordReg);
     if (!operatorFiles.empty() or !recordFiles.empty()) {
         return true;
     }
