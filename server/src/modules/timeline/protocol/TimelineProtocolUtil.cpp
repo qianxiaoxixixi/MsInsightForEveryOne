@@ -212,6 +212,13 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     return json;
 }
 
+template <> std::optional<json_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event)
+{
+    json_t json;
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["parseResult"] = event.body.parseResult;
+    return json;
+}
 
 template<>
 std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response)

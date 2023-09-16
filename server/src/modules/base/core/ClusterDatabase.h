@@ -63,8 +63,7 @@ private:
     sqlite3_stmt *GetTimeInfoStmtSql(int len);
     sqlite3_stmt *GetBandwidthStmtSql(int len);
 
-    bool BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
-                               sqlite3_stmt *stmt, int index);
+    sqlite3_stmt *BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetRanksSql(std::vector<std::string> rankList);
 };
 } // end of namespace Module

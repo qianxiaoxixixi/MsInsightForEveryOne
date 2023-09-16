@@ -59,10 +59,17 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     for (const auto &rankEntry : rankListMap) {
         TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
     }
+    std::string parseClusterResult = "none";
     if (rankListMap.size() > 1) {
         ClusterFileParser clusterFileParser;
-        clusterFileParser.ParseClusterFiles(selectedFolder);
+        if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
+            parseClusterResult = "ok";
+        } else {
+            parseClusterResult = "fail";
+        }
     }
+    // send event
+    ParseClusterEndProcess(token, parseClusterResult);
 }
 
 void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,
@@ -92,6 +99,21 @@ bool ImportActionHandler::HasMemoryFile(const std::string& path)
         return true;
     }
     return false;
+}
+
+void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::string result)
+{
+    ServerLog::Info("Parse Cluster File end, send event");
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session token ");
+        return;
+    }
+    auto event = std::make_unique<ParseClusterCompletedEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    session->OnEvent(std::move(event));
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
