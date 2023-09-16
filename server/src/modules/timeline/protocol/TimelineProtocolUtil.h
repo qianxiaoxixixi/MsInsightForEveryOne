@@ -29,6 +29,7 @@ std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const Communic
 // event
 template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event);
 template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);
+template <> std::optional<json_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event);
 } // end of namespace Protocol
 } // end of namespace Dic
 

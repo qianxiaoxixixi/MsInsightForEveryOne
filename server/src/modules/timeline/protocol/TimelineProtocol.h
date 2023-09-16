@@ -45,6 +45,7 @@ private:
     static std::optional<json_t> ToCommunicationDetailResponse(const Response &response);
     // event to json
     static std::optional<json_t> ToParseSuccessEventJson(const Event &event);
+    static std::optional<json_t> ToParseClusterCompletedEventJson(const Event &event);
 };
 } // namespace Protocol
 } // namespace Dic

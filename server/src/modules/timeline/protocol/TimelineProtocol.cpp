@@ -260,6 +260,11 @@ std::optional<json_t> TimelineProtocol::ToParseSuccessEventJson(const Event &eve
 {
     return ToEventJson<ParseSuccessEvent>(dynamic_cast<const ParseSuccessEvent &>(event));
 }
+
+std::optional<json_t> TimelineProtocol::ToParseClusterCompletedEventJson(const Event &event)
+{
+    return ToEventJson<ParseClusterCompletedEvent>(dynamic_cast<const ParseClusterCompletedEvent &>(event));
+}
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic
