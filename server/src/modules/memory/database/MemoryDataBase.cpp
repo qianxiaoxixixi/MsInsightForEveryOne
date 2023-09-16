@@ -253,14 +253,20 @@ std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
 {
     std::string peakMemory = "Peak Memory Usage: ";
     if (peak.hasPtaGe) {
-        double ptaGeAllo = (double)((int)(peak.ptaGeAllocated * 100) / 100);
-        peakMemory.append("Operator Allocated - ").append(std::to_string(ptaGeAllo)).append("MB");
-        double ptaGeRe = (double)((int)(peak.ptaGeReserved * 100) / 100);
-        peakMemory.append(" | Operator Allocated - ").append(std::to_string(ptaGeRe)).append("MB");
+        std::string ptaGeAllo = std::to_string(peak.ptaGeAllocated);
+        // double转换成string默认生成六位小数，删除后4位小数
+        ptaGeAllo = ptaGeAllo.substr(0, ptaGeAllo.length() - 4);
+        peakMemory.append("Operator Allocated： ").append(ptaGeAllo).append("MB");
+        std::string ptaGeRe = std::to_string(peak.ptaGeReserved);
+        // double转换成string默认生成六位小数，删除后4位小数
+        ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - 4);
+        peakMemory.append(" | Operator Allocated： ").append(ptaGeRe).append("MB");
     }
     if (peak.hasApp) {
-        double appAllo = (double)((int)(peak.appAllocated * 100) / 100);
-        peakMemory.append(" | APP Reserved - ").append(std::to_string(appAllo)).append("MB");
+        std::string appAllo = std::to_string(peak.appAllocated);
+        // double转换成string默认生成六位小数，删除后4位小数
+        appAllo = appAllo.substr(0, appAllo.length() - 4);
+        peakMemory.append(" | APP Reserved： ").append(appAllo).append("MB");
     }
     return peakMemory;
 }
