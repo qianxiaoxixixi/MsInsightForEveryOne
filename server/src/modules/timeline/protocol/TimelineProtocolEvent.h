@@ -50,6 +50,15 @@ struct ParseSuccessEvent : public Event {
     ParseSuccessEventBody body;
 };
 
+struct ParseClusterCompletedEventBody {
+    std::string parseResult;
+};
+
+struct ParseClusterCompletedEvent : public Event {
+    ParseClusterCompletedEvent() : Event(EVENT_PARSE_CLUSTER_COMPLETED) {}
+    ParseClusterCompletedEventBody body;
+};
+
 } // end of namespace Protocol
 } // end if namespace Dic
 
