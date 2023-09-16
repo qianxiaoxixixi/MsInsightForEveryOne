@@ -309,9 +309,8 @@ bool ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
 bool ClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                                        Protocol::SummaryTopRankResBody &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
-    if (!BuildCondition(requestParams, stmt, index)) {
+    sqlite3_stmt *stmt = BuildCondition(requestParams);
+    if (stmt == nullptr) {
         return false;
     }
     std::vector<Protocol::SummaryDto> summaryDtoList;
@@ -361,9 +360,10 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
     return true;
 }
 
-bool ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
-                                     sqlite3_stmt *stmt, int index)
+sqlite3_stmt *ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
 {
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
     std::string stepCondition;
     std::string rankCondition;
     if (!requestParams.stepIdList.empty()) {
@@ -388,8 +388,8 @@ bool ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &reque
                       + "group by rank_id order by " + requestParams.orderBy + " desc";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryThreads. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
+        ServerLog::Error("BuildCondition. Failed to prepare sql.", sqlite3_errmsg(db));
+        return stmt;
     }
     for (const auto &item: requestParams.stepIdList) {
         sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
@@ -397,7 +397,7 @@ bool ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &reque
     for (const auto &item: requestParams.rankIdList) {
         sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
     }
-    return true;
+    return stmt;
 }
 
 bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
