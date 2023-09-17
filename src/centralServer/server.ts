@@ -1,5 +1,6 @@
 import type { DataRequest, ModuleName, NotificationRegistration, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
+import connector from '@/connection';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -45,12 +46,26 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
 
 export const addDataPath = function(dataSource: DataSource): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
-    connection?.addDataPath(dataSource.dataPath);
+    if (connection) {
+        connection.addDataPath(dataSource.dataPath);
+        connector.send({
+            event: 'remote/import',
+            dataSource,
+            body: '',
+        });
+    }
 }
 
 export const deleteDataPath = function(dataSource: DataSource): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
-    connection?.deleteDataPath(dataSource.dataPath);
+    if (connection) {
+        connection.deleteDataPath(dataSource.dataPath);
+        connector.send({
+            event: 'remote/remove',
+            dataSource,
+            body: '',
+        });
+    }
 }
 
 export const request = function (
