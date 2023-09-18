@@ -50,8 +50,7 @@ export const addDataPath = function(dataSource: DataSource): void {
         connection.addDataPath(dataSource.dataPath);
         connector.send({
             event: 'remote/import',
-            dataSource,
-            body: '',
+            body: { dataSource },
         });
     }
 }
@@ -62,8 +61,7 @@ export const deleteDataPath = function(dataSource: DataSource): void {
         connection.deleteDataPath(dataSource.dataPath);
         connector.send({
             event: 'remote/remove',
-            dataSource,
-            body: '',
+            body: { dataSource },
         });
     }
 }

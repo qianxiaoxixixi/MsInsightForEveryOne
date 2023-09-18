@@ -1,18 +1,15 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
-import IconContainer from '@/components/IconContainer.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ModalView from '@/components/ModalView.vue';
 import FormComp from '@/components/FormComp.vue';
 import { useDataSources } from '@/stores/dataSource';
 import connector from '@/connection';
-const width = 1.3;
-const boxShadow = '1px 1px 1px 1px var(--color-background-soft) inset, -1px -1px 1px 1px var(--color-background-soft) inset';
 const isDarkTheme = ref(true);
 
 watch(isDarkTheme, () => {
-    connector.send({ event: 'setTheme', isDark: isDarkTheme.value });
+    connector.send({ event: 'setTheme', body: { isDark: isDarkTheme.value } });
 });
 
 const showModal = ref(false);
@@ -35,9 +32,9 @@ function reset() {
 
 <template>
     <header class="header">
-        <IconContainer :width="width" :boxShadow="boxShadow" @click="addRemote">
-            <AddIcon />
-        </IconContainer>
+        <el-icon class="icon-button" :size="20" @click="addRemote">
+            <AddIcon/>
+        </el-icon>
         <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
         <ModalView v-if="showModal" :close="reset" :confirm="confirm" title="Add your remote">
             <FormComp />
@@ -51,12 +48,14 @@ function reset() {
 <style scoped>
 header {
     display: flex;
-    flex-direction: column;
-    justify-content: start;
+    justify-content: end;
+    gap: 7px;
+    flex-direction: row;
+    height: var(--header-height);
     align-items: center;
     min-width: 80px;
-    background-color: #2C2C2C;
-    border-right: var(--border-style);
+    padding: 0 15px;
+    background-color: var(--header-background-color);
 }
 .theme-toggle {
     --el-switch-off-color: rgb(141, 141, 141);
@@ -67,15 +66,16 @@ header {
     background-color: #252526;
 }
 
-.header .icon-container  {
-    margin-right: 0.5rem;
+.icon-button {
+    border-radius: var(--border-radius);
 }
 
-@media (min-width: 1024px) {
-    header {
-        flex-direction: row;
-        height: var(--header-height);
-        border-right: unset;
-    }
+.icon-button:hover {
+    border: var(--border-style-hover);
+    background-color: var(--color-background-soft);
+}
+
+.header .icon-container  {
+    margin-right: 0.5rem;
 }
 </style>
