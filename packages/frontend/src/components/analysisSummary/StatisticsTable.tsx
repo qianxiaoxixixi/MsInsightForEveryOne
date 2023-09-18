@@ -51,7 +51,7 @@ const computingDetailColumns = [
     },
     {
         title: 'Wait Time(μs)',
-        dataIndex: 'wait_time',
+        dataIndex: 'waitTime',
         sorter: true,
     },
     {
@@ -201,7 +201,7 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
             ...item,
             startTime: Number(item.startTime.toFixed(4)),
             duration: Number(item.duration.toFixed(4)),
-            wait_time: Number(item.wait_time.toFixed(4)),
+            waitTime: Number(item.wait_time.toFixed(4)),
         }));
         total = res.totalNum;
     } else {
