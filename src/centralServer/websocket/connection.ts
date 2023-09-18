@@ -146,7 +146,7 @@ export class Connection {
 
         // handle notifications
         if (!isResponse(msg)) {
-            msg.dataSource = this._dataSource;
+            msg.body.dataSource = this._dataSource;
             connector.send(msg);
             return;
         }
