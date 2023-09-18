@@ -78,8 +78,7 @@ export const useDataSources = defineStore('dataSources', () => {
         const isSuccess = await connectRemote(dataSource);
         isSuccess && connector.send({
             event: 'remote/import',
-            dataSource,
-            body: '',
+            body: { dataSource },
         });
         return isSuccess;
     }
@@ -101,8 +100,7 @@ export const useDataSources = defineStore('dataSources', () => {
         menuTree.value.splice(index, 1);
         connector.send({
             event: 'remote/remove',
-            dataSource: dataSources.value[index],
-            body: ''
+            body: { dataSource: dataSources.value[index] },
         });
         for (const module of modulesConfig) {
             await request(dataSources.value[index], module.requestName, { command: 'remote/reset', params: {} });
