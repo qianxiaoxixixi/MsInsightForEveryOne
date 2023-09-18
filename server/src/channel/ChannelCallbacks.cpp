@@ -26,7 +26,7 @@ void ChannelCallbacks::ConnectCbSocket(uv_connect_t *req, int status)
         return;
     }
     UvReqConnect *connReq = reinterpret_cast<UvReqConnect *>(req);
-    Channel *channel = reinterpret_cast<Channel *>(connReq->arg);
+    Channel *channel = static_cast<Channel *>(connReq->arg);
     if (status < 0) {
         channel->OnError(status, "Channel - tcp client: Connect status error.");
         channel->Close();
@@ -46,7 +46,7 @@ void ChannelCallbacks::ReadCbSocket(uv_stream_t *client, ssize_t readSize, const
         return;
     }
     UvTcp *tcp = reinterpret_cast<UvTcp *>(client);
-    Channel *channel = reinterpret_cast<Channel *>(tcp->arg);
+    Channel *channel = static_cast<Channel *>(tcp->arg);
     if (readSize > 0) {
         channel->OnData(std::string(buf->base, readSize));
     } else if (readSize < 0) {
