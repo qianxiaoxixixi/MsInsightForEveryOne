@@ -3,6 +3,10 @@
     "displayName": "ascend-insight-extension",
     "description": "",
     "version": "6.0.3",
+    "extensionKind": [
+        "ui",
+        "workspace"
+    ],
     "engines": {
         "vscode": "^1.63.0"
     },

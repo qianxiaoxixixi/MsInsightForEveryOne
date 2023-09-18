@@ -12,8 +12,12 @@ export const resetHandler = async (req: any, client: Client): Promise<Record<str
     client.shadowSession.importedRankIdSet.clear();
     client.shadowSession.extremumTimestamp = { minTimestamp: Number.MAX_VALUE, maxTimestamp: -Number.MAX_VALUE };
     await terminateParse();
-    tableMap.forEach(async table => {
-        await table.close();
+    const tables: any[] = [];
+    for (const [ , table ] of tableMap) {
+        tables.push(table.close());
+    }
+    await Promise.all(tables);
+    for (const [ , table ] of tableMap) {
         const path = `${table.dbPath}.tmp`;
         fs.renameSync(table.dbPath, path);
         fs.unlink(path, (err) => {
@@ -23,7 +27,7 @@ export const resetHandler = async (req: any, client: Client): Promise<Record<str
             }
             logger.info('File deleted successfully');
         });
-    });
+    }
     tableMap.clear();
     tableMapClearFlag = false;
     const towingFilePath = join(__dirname, 'downLoad');
