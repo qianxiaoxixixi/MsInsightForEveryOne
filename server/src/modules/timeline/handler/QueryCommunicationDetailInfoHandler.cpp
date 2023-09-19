@@ -18,12 +18,12 @@ std::vector<double> QueryCommunicationDetailInfoHandler::res;
 bool QueryCommunicationDetailInfoHandler::GetResponseData(const Protocol::CommunicationDetailParams& params,
                                                           CommunicationDetailResponse &response)
 {
-    std::string threadName = "Group 0 Communication";
+    std::string threadName = "Group %";
     std::string notOverlap = "Communication(Not Overlapped)";
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
-    int64_t opTrackId = database->GetTrackIdList(threadName);
-    int64_t notOverlapTrackId = database->GetTrackIdList(notOverlap);
-    response.totalNum = database->QueryCommunicationTotalNum(std::to_string(opTrackId));
+    std::vector<std::string> opTrackId = database->GetTrackIdList(threadName);
+    std::vector<std::string> notOverlapTrackId = database->GetTrackIdList(notOverlap);
+    response.totalNum = database->QueryCommunicationTotalNum(opTrackId);
 
     if (!database->GetCommunicationDetails(opTrackId, response.communication)) {
         ServerLog::Error("Failed to get communication detail.");
