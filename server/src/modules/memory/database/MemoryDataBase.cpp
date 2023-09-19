@@ -156,10 +156,16 @@ bool MemoryDataBase::insertRecordDetail(const Record &event)
 
 std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
+    std::string ascend;
+    if (requestParams.order == "ascend") {
+        ascend = "ASC";
+    } else {
+        ascend = "DESC";
+    }
     std::string sql = "SELECT name, ROUND(allocation_time / 1000, 2) as allocation_time, "
                       "ROUND(release_time / 1000, 2) as release_time, size, "
                       "ROUND(duration / 1000, 2) as duration FROM " + operatorTable +
-                      " ORDER BY ? LIMIT ? offset ?";
+                      " ORDER BY " + requestParams.orderBy + " " + ascend + " LIMIT ? offset ?";
     if (requestParams.startTime == -1 and requestParams.endTime == -1) {
         return sql;
     } else {
@@ -181,7 +187,6 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_text(stmt, index++, requestParams.orderBy.c_str(), requestParams.orderBy.length(), nullptr);
     sqlite3_bind_double(stmt, index++, requestParams.pageSize);
     sqlite3_bind_double(stmt, index++, offset);
     std::vector<Protocol::MemoryOperator> operatorDtoVec;

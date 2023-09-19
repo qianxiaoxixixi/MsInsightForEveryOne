@@ -1180,19 +1180,17 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
         return true;
     }
 
-bool TraceDatabase::GetCommunicationDetails(const int64_t& opTrackId,
+bool TraceDatabase::GetCommunicationDetails(const std::vector<std::string>& opTrackId,
                                             std::vector<Protocol::CommunicationDetail> &details)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT name, timestamp, duration FROM " + sliceTable + " WHERE track_id = ?";
-
+    std::string trackIds = GetTracksSql(opTrackId);
+    std::string sql = "SELECT name, timestamp, duration FROM " + sliceTable + " WHERE track_id IN " + trackIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, opTrackId);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::CommunicationDetail communicationDetail{};
@@ -1208,11 +1206,11 @@ bool TraceDatabase::GetCommunicationDetails(const int64_t& opTrackId,
     return true;
 }
 
-int64_t TraceDatabase::GetTrackIdList(const std::string& name)
+std::vector<std::string> TraceDatabase::GetTrackIdList(const std::string& name)
 {
-    int64_t trackId = 0;
+    std::vector<std::string> trackId = {};
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT track_id FROM " + threadTable + " WHERE thread_name = ?";
+    std::string sql = "SELECT track_id FROM " + threadTable + " WHERE thread_name LIKE ?";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
         int index = bindStartIndex;
@@ -1222,23 +1220,25 @@ int64_t TraceDatabase::GetTrackIdList(const std::string& name)
         return trackId;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        trackId = sqlite3_column_int64(stmt, resultStartIndex);
+        trackId.emplace_back(sqlite3_column_string(stmt, resultStartIndex));
     }
     sqlite3_finalize(stmt);
     return trackId;
 }
 
-std::vector<double> TraceDatabase::QueryNotOverlapTime(const int64_t& notOverlapTrackId, const double& timeStamp,
+std::vector<double> TraceDatabase::QueryNotOverlapTime(const std::vector<std::string>& notOverlapTrackId,
+                                                       const double& timeStamp,
                                                        const double& duration)
 {
     std::vector<double> trackId = {};
     sqlite3_stmt *stmt = nullptr;
+    std::string trackIds = GetTracksSql(notOverlapTrackId);
     std::string sql = "SELECT duration FROM " + sliceTable +
-            " WHERE track_id = ? AND timestamp >= ? AND timeStamp + duration <= ?";
+            " WHERE track_id IN " + trackIds + " AND timestamp >= ? AND timeStamp + duration <= ?";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
         int index = bindStartIndex;
-        sqlite3_bind_int64(stmt, index++, notOverlapTrackId);
+        sqlite3_bind_text(stmt, index++, trackIds.c_str(), trackIds.length(), nullptr);
         sqlite3_bind_double(stmt, index++, timeStamp);
         sqlite3_bind_double(stmt, index++, duration + timeStamp);
     } else {
@@ -1253,16 +1253,34 @@ std::vector<double> TraceDatabase::QueryNotOverlapTime(const int64_t& notOverlap
     return trackId;
 }
 
-int32_t TraceDatabase::QueryCommunicationTotalNum(const std::string& name)
+std::string TraceDatabase::GetTracksSql(const std::vector<std::string>& rankList)
+{
+    std::string ranks = "(";
+    if (rankList.empty()) {
+        return "";
+    } else {
+        for (int i = 0; i < rankList.size(); i++) {
+            if (i == rankList.size() - 1) {
+                ranks += rankList[i];
+            } else {
+                ranks += rankList[i];
+                ranks += ", ";
+            }
+        }
+    }
+    ranks += ")";
+    return ranks;
+}
+
+int32_t TraceDatabase::QueryCommunicationTotalNum(const std::vector<std::string>& name)
 {
     int32_t totalNum = 0;
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT count(*) as nums FROM " + sliceTable + " WHERE track_id = ?";
+
+    std::string trackIds = GetTracksSql(name);
+    std::string sql = "SELECT count(*) as nums FROM " + sliceTable + " WHERE track_id IN " + trackIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
-        int index = bindStartIndex;
-        sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
-    } else {
+    if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
         return totalNum;
     }

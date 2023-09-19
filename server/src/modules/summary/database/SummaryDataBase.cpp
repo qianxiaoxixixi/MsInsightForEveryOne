@@ -197,12 +197,16 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     }
     std::string sql = "";
     if (orderList.size() == 0) {
-        sql = "SELECT name, type, start_time as startTime, duration, wait_time, block_dim, input_shapes, "
-              "input_data_types, input_formats, output_shapes, output_data_types, output_formats FROM " + kernelTable +
+        sql = "SELECT name, type, start_time as startTime, duration, wait_time as waitTime, block_dim as blockDim, "
+              "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
+              "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
+              "FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, type, start_time as startTime, duration, wait_time, block_dim, input_shapes, "
-              "input_data_types, input_formats, output_shapes, output_data_types, output_formats FROM " + kernelTable +
+        sql = "SELECT name, type, start_time as startTime, duration, wait_time as waitTime, block_dim as blockDim, "
+              "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
+              "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
+              "FROM " + kernelTable +
               " WHERE accelerator_core = ?  ORDER BY " + orderList + " " + ascend + " LIMIT ? offset ?";
     }
     return sql;
