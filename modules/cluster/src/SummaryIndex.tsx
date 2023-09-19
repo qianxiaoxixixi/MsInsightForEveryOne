@@ -1,0 +1,44 @@
+import React, { useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
+import { RootStoreContext, useRootStore } from './context/context';
+import i18n from './i18n';
+import './index.css';
+import { store } from './store';
+import connector from './connection';
+import { observer } from 'mobx-react';
+import { getSearchParams } from './utils/localUrl';
+import { platform } from './platforms';
+import { themeInstance, ThemeItem } from './theme/theme';
+import AnalysisSummary from './pages/AnalysisSummary';
+
+export const App = observer(() => {
+    const { insightStore, sessionStore } = useRootStore();
+    let session = sessionStore.activeSession;
+    const lang = getSearchParams('language');
+    useEffect(() => {
+        insightStore.loadTemplates().then(() => {
+            session = sessionStore.activeSession;
+        });
+        i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
+        platform.initTheme().then((res: ThemeItem) => {
+            themeInstance.setCurrentTheme(res);
+            window.setTheme(res === 'dark');
+        });
+    }, []);
+    return (<>{session !== undefined ? <AnalysisSummary session={session} /> : <div>loading</div>}</>);
+});
+
+window.dataSource = { remote: '127.0.0.1', port: 9000, dataPath: [] };
+window.requestData = async (command, params, module) => {
+    const data = await connector.fetch({ remote: window.dataSource, args: { command, params } },
+        module !== undefined ? module : command?.split('/')[0]?.toLowerCase());
+    return (data as any).body;
+};
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+root.render(
+    (<React.StrictMode>
+        <RootStoreContext.Provider value={store}>
+            <App />
+        </RootStoreContext.Provider>
+    </React.StrictMode>));
