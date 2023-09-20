@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { addResizeEvent, COLOR, Container } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, Container } from '../Common';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -175,14 +175,15 @@ export interface dataType{
     [name: string]: any;
 }
 
-const CommunicationTimeChart = observer(function (props: {dataSource: dataType;active: boolean}) {
+const CommunicationTimeChart = observer(function ({ dataSource }: {dataSource: dataType;active: boolean}) {
+    chartVisbilityListener('main', () => {
+        InitCharts(dataSource);
+    });
     useEffect(() => {
         setTimeout(() => {
-            if (props.active) {
-                InitCharts(props.dataSource);
-            }
+            InitCharts(dataSource);
         });
-    }, [ props.dataSource, props.active ]);
+    }, [dataSource]);
     return (
         <Container
             title={'Visualized Communication Time'}
