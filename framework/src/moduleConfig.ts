@@ -30,5 +30,12 @@ export const modulesConfig: ModuleConfig[] = [
             src: 'http://localhost:3000/communication.html'
         }
     },
+    {
+        name: 'Memory',
+        requestName: 'memory',
+        attributes: {
+            src: './plugins/Memory/index.html'
+        },
+        isDefault: true
+    }
 ];
-
