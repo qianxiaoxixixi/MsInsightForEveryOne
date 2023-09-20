@@ -30,7 +30,7 @@ public:
     bool RecordToParse(const std::string &parentDir, const std::string &fileId);
 
 private:
-    const int maxThreadNum = 1;
+    const int maxThreadNum = 4;
 
     std::unique_ptr<MemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;
