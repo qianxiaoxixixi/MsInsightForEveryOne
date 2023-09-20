@@ -20,6 +20,7 @@ struct MemoryOperatorParams {
     double currentPage = 0;
     double pageSize = 0;
     std::string orderBy;
+    std::string order;
 };
 
 struct MemoryOperatorRequest : public Request {
