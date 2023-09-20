@@ -210,3 +210,64 @@ export const isParing = (session: Session): boolean => {
     });
     return parsing;
 };
+
+interface AnyFunction {
+    (...rest: any[]): any;
+}
+
+const ListenerMap: {[props: string]: any} = {};
+
+class DomVisibilityListener {
+    private _visible: boolean = false;
+    private readonly _target: HTMLElement | null;
+
+    private _listener: any;
+
+    private readonly _onVisibleChange: AnyFunction | undefined;
+    constructor(dom: string, onVisibleChange?: AnyFunction) {
+        if (ListenerMap[dom] !== undefined && ListenerMap[dom] !== null) {
+            ListenerMap[dom].clear();
+            ListenerMap[dom] = null;
+        }
+        ListenerMap[dom] = this;
+        this._target = document.getElementById(dom);
+        this.visible = this._target?.offsetParent !== null;
+        this._onVisibleChange = onVisibleChange;
+        this.add();
+    }
+
+    add(): void {
+        this._listener = setTimeout(() => {
+            const newStatus = this._target?.offsetParent !== null;
+            if (newStatus !== this.visible && this._onVisibleChange !== undefined) {
+                if (this._onVisibleChange !== undefined) {
+                    this._onVisibleChange(newStatus);
+                }
+            }
+            this.visible = newStatus;
+            this.add();
+        }, 100);
+    }
+
+    clear(): void {
+        if (this._listener !== null) {
+            clearTimeout(this._listener);
+        }
+    }
+
+    get visible(): boolean {
+        return this._visible;
+    }
+
+    set visible(value: boolean) {
+        this._visible = value;
+    }
+}
+
+export const chartVisbilityListener = (dom: string, onVisibleChange?: AnyFunction): DomVisibilityListener => {
+    return new DomVisibilityListener(dom, (status: boolean) => {
+        if (status && onVisibleChange !== undefined) {
+            onVisibleChange();
+        }
+    });
+};

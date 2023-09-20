@@ -5,7 +5,14 @@
 import { observer } from 'mobx-react-lite';
 import { Session } from '../../entity/session';
 import { Col, Empty, Layout, Row } from 'antd';
-import { addResizeEvent, COLOR, Container, isNull, notNullObj } from '../Common';
+import {
+    addResizeEvent,
+    chartVisbilityListener,
+    COLOR,
+    Container,
+    isNull,
+    notNullObj,
+} from '../Common';
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import Filter, { ConditionDataType } from './PpBandwidthFilter';
@@ -31,6 +38,10 @@ const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }
 });
 
 const PPBandwidthChart: React.FC<any> = ({ conditions }: any) => {
+    chartVisbilityListener('STAGE', () => {
+        InitCharts('STAGE', conditions.step, conditions.stage);
+        InitCharts('RANK', conditions.step, conditions.stage);
+    });
     useEffect(() => {
         setTimeout(() => {
             if (notNullObj(conditions)) {
