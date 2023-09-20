@@ -43,6 +43,9 @@ export abstract class Webview {
                 canSelectFolders: canSelectFolders,
                 canSelectFiles: canSelectFiles,
                 openLabel: '确定选择',
+                filters: {
+                    'JSON files': ['json']
+                }
             };
             const result = await vscode.window.showOpenDialog(options);
             if (result && result.length > 0) {

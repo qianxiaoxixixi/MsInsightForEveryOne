@@ -4,6 +4,7 @@
     <name>Ascend Insight</name>
     <vendor email="harmonysupport@huawei.com" url="https://developer.harmonyos.com/">Huawei</vendor>
     <description><![CDATA[Ascend Insight is a performance optimization tool.<br>]]></description>
+    <idea-version since-build="221"/>
 
     <!--依赖的插件-->
     <depends>com.intellij.modules.platform</depends>

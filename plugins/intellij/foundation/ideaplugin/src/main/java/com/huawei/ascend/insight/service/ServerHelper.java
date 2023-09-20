@@ -93,7 +93,7 @@ public class ServerHelper {
 
     private static void executeStartServerCommand() {
         destroy();
-        String lineSeparator = StringUtil.LINE_SEPARATOR;
+        String lineSeparator = StringUtil.FILE_SEPARATOR;
         String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
         if (SystemInfo.isWindows) {
