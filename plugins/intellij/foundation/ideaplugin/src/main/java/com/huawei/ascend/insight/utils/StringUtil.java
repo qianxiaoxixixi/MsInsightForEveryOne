@@ -15,7 +15,7 @@ public class StringUtil {
     /**
      * lineSeparator
      */
-    public static final String LINE_SEPARATOR = SystemInfo.isWindows ? "\\" : "/";
+    public static final String FILE_SEPARATOR = SystemInfo.isWindows ? "\\" : "/";
 
     /**
      * Anonymous String

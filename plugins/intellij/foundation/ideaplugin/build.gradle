@@ -9,7 +9,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:1.3.1"
+        classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:1.13.1"
     }
 }
 
@@ -74,7 +74,6 @@ allprojects {
         testImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.9'
         testImplementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.12.8'
         compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
-        compileOnly group: 'com.huawei.deveco', name: 'common-utils', version: LIBRARY_VERSION
         annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
     }
 }
@@ -93,7 +92,7 @@ dependencies {
 }
 
 task copyFrontendBuild(type: Copy) {
-    from "../../frontend/build"
+    from "../../../../packages/frontend/build"
     into "src/main/resources/frontend"
 }
 
@@ -152,15 +151,12 @@ task copyZipToRootBuild{
 clean {
     delete += "./src/main/resources/profiler"
     delete += "./src/main/resources/server"
-//    delete += "src/main/resources/frontend"
-//    delete += "src/main/resources/Log.properties"
-//    delete += "../../frontend/src/dic"
 }
 
 task copyExeToSandbox() {
     doLast {
         copy {
-            from "${rootDir}/profiler/server"
+            from "${rootDir}/../serverBuild/server"
             into "${project.buildDir}/idea-sandbox/plugins/ascend-insight/tools/"
         }
     }
@@ -168,6 +164,7 @@ task copyExeToSandbox() {
 
 prepareSandbox.finalizedBy copyExeToSandbox
 compileJava.dependsOn(setLogProperties)
+processResources.dependsOn(setLogProperties)
 buildPlugin.finalizedBy(copyZipToRootBuild)
 runIde.dependsOn(buildPlugin)
 

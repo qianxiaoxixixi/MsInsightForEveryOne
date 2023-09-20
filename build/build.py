@@ -49,7 +49,7 @@ def build_vscode(vscode_version, os_name):
         exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
     elif os_name.endswith('aarch64'):
         exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
-    src = os.path.join(SCRIPT_PATH, 'packages/extension')
+    src = os.path.join(SCRIPT_PATH, 'plugins', 'vscode')
     # copy vscode plugin
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
     for file in os.listdir(src):
@@ -63,7 +63,7 @@ def build_vscode(vscode_version, os_name):
 
 def build_intellij(idea_version, os_name):
     url = os.getenv('GRADLE_URL')
-    plugins_path = os.path.join(SCRIPT_PATH, 'plugins')
+    plugins_path = os.path.join(SCRIPT_PATH, 'plugins', 'intellij')
     is_linux = os_name.startswith('linux')
     gradle_exec = 'gradle' if is_linux else 'gradle.bat'
     if url is None:
@@ -77,7 +77,7 @@ def build_intellij(idea_version, os_name):
     exec_command([gradlew, 'clean'], plugins_path)
     exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path)
     exec_command([gradlew, 'buildPlugin'], plugins_path)
-    src = os.path.join(SCRIPT_PATH, 'plugins', 'build', 'distributions')
+    src = os.path.join(SCRIPT_PATH, 'plugins', 'intellij', 'build', 'distributions')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip')
     for file in os.listdir(src):
         if file.endswith('.zip'):
