@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { makeStyles } from '@material-ui/core/styles';
 import { Table } from 'antd';
 import * as React from 'react';
 import { MemoryTable, MemoryTableColumn } from '../utils/interface';
@@ -16,12 +15,6 @@ interface IProps {
     onPageSizeChange: (record: number) => void;
     total: number;
 }
-
-const useStyles = makeStyles((theme) => ({
-    row: {
-        wordBreak: 'break-word',
-    },
-}));
 
 const getTableColumns = function (
     columns: MemoryTableColumn[],
@@ -45,7 +38,6 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         tableData, sortColumn, onRowSelected, current, pageSize,
         onCurrentChange, onPageSizeChange, total,
     } = props;
-    const classes = useStyles(props);
 
     const columns = React.useMemo(
         () => getTableColumns(tableData.columns, sortColumn),
@@ -88,7 +80,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                 onChange,
                 total,
             }}
-            rowClassName={classes.row}
+            rowClassName="memory-ant-table-row"
             key={key}
             onRow={onRow}
         />

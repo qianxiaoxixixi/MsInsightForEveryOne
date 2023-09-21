@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import debounce from '@material-ui/core/utils/debounce';
+import { debounce } from 'lodash';
 
 /**
  * 界面尺寸改变
