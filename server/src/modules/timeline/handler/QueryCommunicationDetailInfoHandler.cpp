@@ -81,6 +81,15 @@ bool CompareByNotOverlapped(CommunicationDetail detail1, CommunicationDetail det
     }
 }
 
+bool CompareByDuration(CommunicationDetail detail1, CommunicationDetail detail2)
+{
+    if (detail1.totalDuration != detail2.totalDuration) {
+        return detail1.totalDuration < detail2.totalDuration;
+    } else {
+        return detail1.communicationKernel < detail2.communicationKernel;
+    }
+}
+
 void QueryCommunicationDetailInfoHandler::OrderBy(const Protocol::CommunicationDetailParams& params,
                                                   std::vector<Protocol::CommunicationDetail> &details)
 {
@@ -89,9 +98,11 @@ void QueryCommunicationDetailInfoHandler::OrderBy(const Protocol::CommunicationD
     } else if (params.orderBy == "startTime") {
         std::sort(details.begin(), details.end(), CompareByStart);
     } else if (params.orderBy == "totalDuration") {
-        std::sort(details.begin(), details.end(), CompareByOverlapped);
+        std::sort(details.begin(), details.end(), CompareByDuration);
     } else if (params.orderBy == "notOverlapDuration") {
         std::sort(details.begin(), details.end(), CompareByNotOverlapped);
+    } else if (params.orderBy == "overlapDuration") {
+        std::sort(details.begin(), details.end(), CompareByOverlapped);
     }
     if (params.order != "ascend") {
         std::reverse(details.begin(), details.end());
