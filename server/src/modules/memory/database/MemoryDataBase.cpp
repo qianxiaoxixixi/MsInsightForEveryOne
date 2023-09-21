@@ -396,20 +396,36 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
     return stmt;
 }
 
-bool MemoryDataBase::QueryOperatorsTotalNum(int64_t &totalNum)
+bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
-        sqlite3_stmt *stmt = nullptr;
-        std::string sql = "SELECT count(*) as nums FROM " + operatorTable;
-        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-        if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
-            return false;
-        }
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            totalNum = sqlite3_column_int(stmt, resultStartIndex);
-        }
-        sqlite3_finalize(stmt);
-        return true;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
+
+    if (requestParams.startTime != -1) {
+        sql += " AND allocation_time >= " + std::to_string(requestParams.startTime);
+    }
+    if (requestParams.endTime != -1) {
+        sql += " AND allocation_time <= " + std::to_string(requestParams.endTime);
+    }
+    if (requestParams.minSize != -1) {
+        sql += " AND size >= " + std::to_string(requestParams.minSize);
+    }
+    if (requestParams.maxSize != -1) {
+        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+    }
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string orderName = requestParams.orderName + "%";
+    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return true;
 }
 
 bool MemoryDataBase::QueryOperatorSize(double &min, double &max)

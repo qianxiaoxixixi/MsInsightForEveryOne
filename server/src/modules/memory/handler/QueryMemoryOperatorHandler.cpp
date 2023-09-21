@@ -28,7 +28,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorDetail(request.params, response.operatorDetails) or
-        !database->QueryOperatorsTotalNum(response.totalNum)) {
+        !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
