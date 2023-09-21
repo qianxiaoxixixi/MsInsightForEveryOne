@@ -6,6 +6,7 @@ import ModalView from '@/components/ModalView.vue';
 import FormComp from '@/components/FormComp.vue';
 import { useDataSources } from '@/stores/dataSource';
 import connector from '@/connection';
+import ProjectMode from "@/components/ProjectMode.vue";
 const isDarkTheme = ref(true);
 
 watch(isDarkTheme, () => {
@@ -32,7 +33,8 @@ function reset() {
 
 <template>
     <header class="header">
-        <el-icon class="icon-button" :size="20" @click="addRemote">
+        <ProjectMode/>
+        <el-icon class="icon-button" :size="16" @click="addRemote">
             <AddIcon/>
         </el-icon>
         <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
@@ -54,7 +56,7 @@ header {
     height: var(--header-height);
     align-items: center;
     min-width: 80px;
-    padding: 0 15px;
+    padding: 0 15px 0 5px;
     background-color: var(--header-background-color);
 }
 .theme-toggle {
