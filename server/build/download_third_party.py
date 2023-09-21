@@ -45,6 +45,11 @@ OPEN_SOURCE = [
         'uWebSockets',
         'v20.10.0',
         'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/uNetworking/uWebSockets.git'
+    ],
+    [
+        'rapidjson',
+        '012be8528783cdbf4b7a9e64f78bd8f056b97e24',
+        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/Tencent/rapidjson.git'
     ]
 ]
 
