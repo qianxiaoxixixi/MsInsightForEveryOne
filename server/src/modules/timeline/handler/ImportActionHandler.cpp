@@ -51,7 +51,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     // 按rankId 拆分文件
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
     SetParseCallBack(token);
-    SetBaseActionOfResponse(rankListMap, response, selectedFolder);
+    SetBaseActionOfResponse(rankListMap, response);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
@@ -72,7 +72,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 }
 
 void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,
-                                                  ImportActionResponse &response, const std::string &path)
+                                                  ImportActionResponse &response)
 {
     for (const auto &rankEntry : rankListMap) {
         std::string rankId = rankEntry.first;
@@ -83,6 +83,7 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
         action.cardName = rankId;
         action.rankId = rankId;
         action.result = true;
+        std::string path = FileUtil::GetParentPath(rankEntry.second[0]);
         if (HasMemoryFile(path)) {
             action.hasMemory = true;
         }

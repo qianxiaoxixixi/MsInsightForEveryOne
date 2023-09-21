@@ -44,7 +44,7 @@ private:
     const std::string memoryOperatorReg = R"((operator_memory|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     const std::string memoryRecordReg = R"((memory_record|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
-                                 ImportActionResponse &response, const std::string &path);
+                                 ImportActionResponse &response);
 };
 } // end of namespace Timeline
 } // end of namespace Module
