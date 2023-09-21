@@ -97,6 +97,11 @@ def build_bin(args):
 
     build_cmds = ['cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
                   '-D_PROJECT_TYPE=' + args.project_type]
+
+    if args.cross_compile:
+        toolchain = os.path.join(HOME_DIR, 'toolchain.cmake')
+        build_cmds.append('-DCMAKE_TOOLCHAIN_FILE=' + toolchain)
+
     if args.project_type == 'true':
         build_cmds.append('-DWASM_MJS_ENABLE=ON')
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
@@ -158,9 +163,7 @@ def build_test(args):
 
     build_cmds = ['cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
                   '-D_PROJECT_TYPE=' + args.project_type]
-    if args.cross_compile:
-        toolchain = os.path.join(HOME_DIR, 'toolchain.cmake')
-        build_cmds.append('-D_SYSTEM_NAME=Windows', '-DCMAKE_TOOLCHAIN_FILE=' + toolchain)
+
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
     log_output(output)
 
@@ -192,8 +195,7 @@ def main():
                               help='project type. CentricServer or EdgeServer')
 
     parser_build.add_argument('--cross_compile',
-                              action='store_false',
-                              dest='cross_compile',
+                              action='store_true',
                               help='cross compile')
 
     parser_clean = subparsers.add_parser('clean', help='clean build')
