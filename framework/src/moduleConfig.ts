@@ -17,7 +17,7 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
     },
     {
-        name: 'summary',
+        name: 'Analysis Summary',
         requestName: 'summary',
         attributes: {
             src: './plugins/Cluster/summary.html'
@@ -25,7 +25,7 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
     },
     {
-        name: 'communication',
+        name: 'Communication Analysis',
         requestName: 'communication',
         attributes: {
             src: './plugins/Cluster/communication.html'

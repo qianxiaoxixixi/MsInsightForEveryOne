@@ -47,6 +47,21 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     }
 };
 
+export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            session.clusterStatus = false;
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};
+
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
@@ -60,5 +75,15 @@ export const parseClusterSuccessHandler: NotificationHandler = (data): void => {
         }
         session.clusterStatus = true;
         window.dataSource = data.dataSource as DataSource;
+    });
+};
+
+export const wakeupHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+
+        }
     });
 };
