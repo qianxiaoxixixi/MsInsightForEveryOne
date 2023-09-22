@@ -147,6 +147,10 @@ export class Session {
                 }
             },
         );
+
+        window.closeWaiting = () => {
+            this.clusterStatus = true;
+        };
     }
 
     set endTimeAll(endTimeAll: TimeStamp | undefined) {
