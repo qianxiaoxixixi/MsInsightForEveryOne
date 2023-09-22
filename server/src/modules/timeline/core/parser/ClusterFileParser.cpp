@@ -93,6 +93,8 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 
 bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 {
+    // 导入前清空cluster db
+    DataBaseManager::Instance().ClearClusterDb();
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     if (!(database->OpenDb(selectedPath + "/cluster.db", true) && database->CreateTable() &&
           database->SetConfig() && database->InitStmt())) {

@@ -131,8 +131,8 @@ class FileManager:
         output_path = os.path.join(collection_path, Constant.CLUSTER_ANALYSIS_OUTPUT)
         if os.path.isdir(output_path):
             cls.check_file_or_directory_path(output_path, isdir=True)
+            shutil.rmtree(output_path)
             try:
-                shutil.rmtree(output_path)
                 os.makedirs(output_path, mode=Constant.DIR_AUTHORITY)
             except Exception:
                 raise RuntimeError(f"Can't delete the directory: {output_path}")
