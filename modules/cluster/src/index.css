@@ -191,7 +191,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     font-size: 1.5rem;
     margin-bottom: 10px;
 }
-
+.container-box{
+    background: var(--grey0);
+}
 .container-header{
     font-weight: bold;
     background: rgb(250, 250, 250);
@@ -219,11 +221,14 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 
 .theme_dark .fullbox{
-    background: var(--grey85);
+    background: var(--grey95);
 }
 
 .theme_dark .tan-box>div>.bottomC,.tan-box>div {
     background:none;
+}
+.theme_dark .container-box{
+    background: var(--grey95);
 }
 .theme_dark .container-header{
     background: var(--grey70);

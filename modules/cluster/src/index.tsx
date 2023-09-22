@@ -81,7 +81,11 @@ export const App = (): JSX.Element => {
 
 window.dataSource = { remote: '127.0.0.1', port: 9000, dataPath: [] };
 window.requestData = async (command, params, module) => {
-    const data = await connector.fetch({ remote: window.dataSource, args: { command, params } }, module);
+    const data = await connector.fetch({
+        remote: window.dataSource,
+        args: { command, params },
+        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+    });
     return (data as any).body;
 };
 
@@ -117,5 +121,7 @@ declare global {
     interface Window {
         requestData: (method: string, params: any, module?: string) => Promise<any>;
         dataSource: DataSource;
+
+        closeWaiting: () => void;
     }
 };
