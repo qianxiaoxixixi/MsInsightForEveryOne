@@ -199,7 +199,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         return false;
     }
     int index = bindStartIndex;
-    std::string orderName = requestParams.orderName + "%";
+    std::string orderName = "%" + requestParams.orderName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
@@ -419,7 +419,7 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
         return false;
     }
     int index = bindStartIndex;
-    std::string orderName = requestParams.orderName + "%";
+    std::string orderName = "%" + requestParams.orderName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int(stmt, resultStartIndex);
