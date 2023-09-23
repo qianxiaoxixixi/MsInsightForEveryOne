@@ -438,7 +438,7 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
             json_t json = json_t::parse(steps);
             responseBody.stepList = json.get<std::vector<std::string>>();
         }
-        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++);
+        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / mbSize;
         responseBody.stepNum = responseBody.stepList.size();
         responseBody.rankCount = responseBody.rankList.size();
     }
