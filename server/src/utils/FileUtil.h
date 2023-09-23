@@ -275,11 +275,13 @@ public:
         }
         auto folders = FileUtil::FindFolders(path);
         for (std::string& file: folders) {
-            if (FileUtil::IsFolder(file)) {
-                CalculateDirSize(file, size, depth + 1);
-            } else if (FileUtil::CheckDirectoryExist(file)) {
-                if (!(depth == 0 && file.find_last_of(".db") > 0)) {
-                    size +=  getFileSize(file.c_str());
+            std::string spliceFile = SplicePath(path, file);
+            if (FileUtil::IsFolder(spliceFile)) {
+                CalculateDirSize(spliceFile, size, depth + 1);
+            } else {
+                if (file.find_last_of("trace_view.db") != std::string::npos &&
+                    file.find_last_of("cluster.db") != std::string::npos) {
+                    size +=  getFileSize(spliceFile.c_str());
                 }
             }
         }

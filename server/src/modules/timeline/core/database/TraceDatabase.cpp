@@ -1083,7 +1083,8 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
             stepCondition.append(" and step_id =? ");
         }
         std::string sql = "SELECT sum(duration) as duration,accelerator_core as acceleratorCore FROM kernel_detail"
-                          " WHERE accelerator_core in ('AI_CPU','AI_CORE') "
+                          " WHERE accelerator_core in ('AI_CPU','AI_CORE',"
+                          " 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
                           + stepCondition +
                           " GROUP BY accelerator_core";
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);

@@ -26,7 +26,7 @@ struct SummaryTopRankResBody {
     int rankCount;
     std::vector<std::string> rankList;
     double dataSize;
-    long collectStartTime;
+    int64_t collectStartTime;
     std::string filePath;
     double collectDuration;
     int stepNum;

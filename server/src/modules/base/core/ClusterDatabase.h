@@ -70,6 +70,7 @@ private:
     sqlite3_stmt *matrixStmt = nullptr;
     bool isInitStmt = false;
     const int cacheSize = 100;
+    const int mbSize = 1024 * 1024;
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
     std::vector<CommunicationMatrixInfo> matrixCache;
