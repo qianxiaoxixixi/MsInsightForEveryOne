@@ -156,6 +156,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setLineChartData(undefined);
             setMemoryCurveData(undefined);
             setMemoryTableData([]);
+            setTotal(0);
+            setCurrent(1);
+            setPageSize(10);
             return;
         }
 
