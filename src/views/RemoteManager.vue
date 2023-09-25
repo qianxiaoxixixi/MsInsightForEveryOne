@@ -82,8 +82,7 @@ header {
 }
 
 .icon-button:hover {
-    border: var(--border-style-hover);
-    background-color: var(--color-background-soft);
+    cursor: pointer;
 }
 
 .header .icon-container {

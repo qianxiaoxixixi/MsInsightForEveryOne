@@ -36,5 +36,5 @@
 }
 
 .icon {
-  fill: var(--SvgFillColor);
+  fill: var(--SvgFillColor) !important;
 }
