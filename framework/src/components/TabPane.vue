@@ -71,7 +71,7 @@ function toggleTab(index: number): void {
             <template v-for="(moduleConfig, index) in modulesConfig" 
                     :key="`${index}-${moduleConfig.name}`">
                 <iframe
-                    v-if="moduleConfig.isDefault || session.isCluster"
+                    v-if="moduleConfig.isDefault || (session.isCluster && session.parseCompleted)"
                     v-bind={...moduleConfig.attributes}
                     v-show="activeModule === index"
                     ref="moduleRefs"

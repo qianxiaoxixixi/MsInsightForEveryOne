@@ -10,6 +10,7 @@ export class Session {
     endTimeAll: Timestamp = -1; 
     isCluster: boolean = false;
     isReset: boolean = false;
+    parseCompleted: boolean = false;
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
@@ -34,6 +35,7 @@ export class Session {
         this.isCluster = false;
         this.isReset = false;
         this._sharedState = {};
+        this.parseCompleted=false;
     }
 };
 
