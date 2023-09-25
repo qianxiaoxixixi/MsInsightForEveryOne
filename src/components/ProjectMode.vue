@@ -7,7 +7,7 @@ import ProjectIcon from '@/components/icons/project_icon.vue';
     <el-icon class="projectModeIcon" :size="16">
       <ProjectIcon/>
     </el-icon>
-    <span class="modeName">Remote Manager</span>
+    <span class="modeName">Data Manager</span>
   </div>
 </template>
 
