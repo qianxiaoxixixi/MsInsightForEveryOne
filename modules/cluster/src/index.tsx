@@ -123,5 +123,7 @@ declare global {
         dataSource: DataSource;
 
         closeWaiting: () => void;
+
+        sendToModule: (...rest: any[]) => void;
     }
 };
