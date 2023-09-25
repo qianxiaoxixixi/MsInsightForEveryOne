@@ -31,7 +31,7 @@ const handleDeleteAll = () => {
         </template>
     </el-popconfirm>
     <Delete v-if="isDeleteAll" @click="dialogVisible = true" />
-    <el-dialog v-model="dialogVisible" title="Delete All" width="30%" :show-close="false">
+    <el-dialog v-model="dialogVisible" title="Delete All" width="20%" :show-close="false" align-center="true">
         <span>Are you sure to delete All</span>
         <template #footer>
             <span class="dialog-footer">

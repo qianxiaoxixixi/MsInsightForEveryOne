@@ -5,19 +5,16 @@
         viewBox="0 0 16 16"
         version="1.1"
         xmlns="http://www.w3.org/2000/svg"
+        class="icon"
     >
         <g
             id="icons/dark/normal/log/toolwindows/toolWindowFavorities"
             stroke="none"
             stroke-width="1"
-            fill="none"
-            fill-rule="evenodd"
         >
             <g
                 id="编组"
                 transform="translate(1.000000, 1.000000)"
-                fill="#D1D1D1"
-                fill-rule="nonzero"
             >
                 <path
                     d="M13.5,0 C13.7761424,0 14,0.223857625 14,0.5 L14,13.5 C14,13.7761424 13.7761424,14 13.5,14 L0.5,14 C0.223857625,14 0,13.7761424 0,13.5 L0,0.5 C0,0.223857625 0.223857625,0 0.5,0 L13.5,0 Z M13,1 L1,1 L1,13 L13,13 L13,1 Z"
