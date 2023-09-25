@@ -17,7 +17,6 @@ struct Action {
     std::string cardName;
     std::string rankId;
     bool result = true;
-    bool hasMemory = false;
 };
 
 struct ImportActionResBody {

@@ -29,7 +29,6 @@ template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const Imp
         actionJson["cardName"] = action.cardName;
         actionJson["rankId"] = action.rankId;
         actionJson["result"] = action.result;
-        actionJson["hasMemory"] = action.hasMemory;
         json["body"]["result"].emplace_back(actionJson);
     }
     return json;
@@ -219,6 +218,20 @@ template <> std::optional<json_t> ToEventJson<ParseClusterCompletedEvent>(const 
     json_t json;
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json["body"]["parseResult"] = event.body.parseResult;
+    return json;
+}
+
+template <> std::optional<json_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event)
+{
+    json_t json;
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["memoryResult"] = json_t::array();
+    for (const MemorySuccess &memory: event.memoryResult) {
+        json_t chartJson = json_t::object();
+        chartJson["rankId"] = memory.rankId;
+        chartJson["hasMemory"] = memory.hasMemory;
+        json["body"]["memoryResult"].emplace_back(chartJson);
+    }
     return json;
 }
 

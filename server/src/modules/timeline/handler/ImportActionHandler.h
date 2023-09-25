@@ -45,6 +45,11 @@ private:
     const std::string memoryRecordReg = R"((memory_record|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response);
+
+    std::vector<MemorySuccess> hasMemory = {};
+
+    void ParseMemoryEndProcess(const std::string token);
+
 };
 } // end of namespace Timeline
 } // end of namespace Module
