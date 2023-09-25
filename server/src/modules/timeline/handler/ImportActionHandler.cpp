@@ -52,6 +52,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
     SetParseCallBack(token);
     SetBaseActionOfResponse(rankListMap, response);
+    ParseMemoryEndProcess(token);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
@@ -84,9 +85,12 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
         action.rankId = rankId;
         action.result = true;
         std::string path = FileUtil::GetParentPath(rankEntry.second[0]);
+        MemorySuccess memory;
+        memory.rankId = rankId;
         if (HasMemoryFile(path)) {
-            action.hasMemory = true;
+            memory.hasMemory = true;
         }
+        hasMemory.emplace_back(memory);
         response.body.result.emplace_back(action);
     }
 }
@@ -115,6 +119,22 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
     event->result = true;
     event->body.parseResult = std::move(result);
     session->OnEvent(std::move(event));
+}
+
+void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session token ");
+        return;
+    }
+    auto event = std::make_unique<ParseMemoryCompletedEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->memoryResult = std::move(hasMemory);
+    session->OnEvent(std::move(event));
+    hasMemory.clear();
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,

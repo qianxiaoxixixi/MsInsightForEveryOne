@@ -50,6 +50,11 @@ struct ParseSuccessEvent : public Event {
     ParseSuccessEventBody body;
 };
 
+struct MemorySuccess {
+    std::string rankId;
+    bool hasMemory = false;
+};
+
 struct ParseClusterCompletedEventBody {
     std::string parseResult;
 };
@@ -57,6 +62,11 @@ struct ParseClusterCompletedEventBody {
 struct ParseClusterCompletedEvent : public Event {
     ParseClusterCompletedEvent() : Event(EVENT_PARSE_CLUSTER_COMPLETED) {}
     ParseClusterCompletedEventBody body;
+};
+
+struct ParseMemoryCompletedEvent : public Event {
+    ParseMemoryCompletedEvent() : Event(EVENT_PARSE_MEMORY_COMPLETED) {}
+    std::vector<MemorySuccess> memoryResult;
 };
 
 } // end of namespace Protocol
