@@ -106,10 +106,9 @@ function toggleTab(index: number): void {
 .el-menu-item {
     margin-right: 1px;
     text-align: center;
-    width: 150px;
     font-size: 14px;
     font-weight: bold;
-    color: #F4F6FA !important;
+    color: var(--treeContent-color) !important;
     line-height: 30px;
     user-select: none;
 }
