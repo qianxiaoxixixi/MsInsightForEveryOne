@@ -21,14 +21,25 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
     return {
         title: {
             text: graphTitle,
-            textStyle: {
-                fontSize: 16,
-            },
+            textStyle: { fontSize: 16 },
         },
         tooltip: {
             trigger: 'axis',
-            textStyle: {
-                align: 'left',
+            formatter: function (params: any) {
+                let res = `${params[0].name} <br/>`;
+                for (const item of params) {
+                    if (typeof item.value[item.encode.y[0]] === 'number') {
+                        res += `<span style="background: ${item.color}; 
+                        height:10px; 
+                        width: 10px; 
+                        border-radius: 50%;
+                        display: inline-block;
+                        margin-right:10px;">
+                        </span> 
+                        ${item.seriesName}: ${item.value[item.encode.y[0]]}<br/>`;
+                    }
+                }
+                return res;
             },
         },
         legend: {
@@ -58,11 +69,9 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
 };
 
 const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.EChartsOption => {
-    const allocatedTitle = [ graph.columns[0], graph.columns[1] ];
-    const reservedTitle = [ graph.columns[0], graph.columns[2] ];
     const lineSerie: echarts.SeriesOption = {
         type: 'line',
-        name: 'Operator Allocated',
+        connectNulls: true,
         emphasis: {
             itemStyle: {
                 borderWidth: 5,
@@ -78,31 +87,29 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         },
         datasetIndex: 0,
     };
-    option = {
-        ...option,
-        dataset: [
-            {
-                source: [ allocatedTitle, ...graph.rows.allocated ],
-            },
-            {
-                source: [ reservedTitle, ...graph.rows.reserved ],
-            },
-        ],
-        series: [
-            lineSerie,
-            { ...lineSerie, name: 'Operator Reserved', datasetIndex: 1 },
-        ],
-    };
+    const allocatedRows = graph.rows.allocated.map(item => {
+        return [ parseFloat(item[0].toFixed(2)), item[1] ];
+    });
+    const reservedRows = graph.rows.reserved.map(item => {
+        return [ parseFloat(item[0].toFixed(2)), null, item[1] ];
+    });
+    let finalRows = allocatedRows.concat(reservedRows as number[][]);
     if (graph.columns.length === 4) {
-        const appTitle = [ graph.columns[0], graph.columns[3] ];
-        (option.dataset as echarts.DatasetComponentOption[]).push({
-            source: [ appTitle, ...graph.rows.app ],
+        const appRows = graph.rows.app.map(item => {
+            return [ parseFloat(item[0].toFixed(2)), null, null, item[1] ];
         });
-        (option.series as echarts.SeriesOption[]).push({
-            ...lineSerie, name: 'APP Reserved', datasetIndex: 2,
+        finalRows = finalRows.concat(appRows as number[][]).sort((a, b) => {
+            return a[0] - b[0];
         });
     }
-
+    option = {
+        ...option,
+        dataset:
+        {
+            source: [ graph.columns, ...finalRows ],
+        },
+        series: Array(graph.columns.length - 1).fill(lineSerie),
+    };
     return option;
 };
 
@@ -208,7 +215,7 @@ export const LineChart: React.FC<IProps> = (props) => {
 
         setChartObj(myChart);
         return () => {
-            myChart.clear();
+            myChart.dispose();
         };
     }, [ graph, resizeEventDependency, isDark ]);
 
