@@ -56,37 +56,37 @@ const computingDetailColumns = [
     },
     {
         title: 'Block Dim',
-        dataIndex: 'block_dim',
+        dataIndex: 'blockDim',
         sorter: true,
     },
     {
         title: 'Input Shapes',
-        dataIndex: 'input_shapes',
+        dataIndex: 'inputShapes',
         sorter: true,
     },
     {
         title: 'Input Data Types',
-        dataIndex: 'input_data_types',
+        dataIndex: 'inputDataTypes',
         sorter: true,
     },
     {
         title: 'Input Formats',
-        dataIndex: 'input_formats',
+        dataIndex: 'inputFormats',
         sorter: true,
     },
     {
         title: 'Output Shapes',
-        dataIndex: 'output_shapes',
+        dataIndex: 'outputShapes',
         sorter: true,
     },
     {
         title: 'Output Data Types',
-        dataIndex: 'output_data_types',
+        dataIndex: 'outputDataTypes',
         sorter: true,
     },
     {
         title: 'Output Formats',
-        dataIndex: 'output_formats',
+        dataIndex: 'outputFormats',
         sorter: true,
     },
 ];

@@ -32,7 +32,7 @@ export const App = observer(() => {
         });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
-        {session !== undefined && session.clusterStatus === true ? <AnalysisSummary session={session} /> : Loading}
+        { session !== undefined ? <AnalysisSummary session={session} /> : Loading}
     </ThemeProvider>);
 });
 
@@ -44,6 +44,13 @@ window.requestData = async (command, params, module) => {
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
     });
     return (data as any).body;
+};
+window.sendToModule = (body): void => {
+    connector.send({
+        event: 'moduleMessage',
+        body,
+        to: 2,
+    });
 };
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
