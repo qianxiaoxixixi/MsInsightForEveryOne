@@ -174,6 +174,15 @@ template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const Sear
     json["body"]["depth"] = response.body.depth;
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["startTimeUpdated"] = response.body.startTimeUpdated;
+    json["body"]["maxTimeStamp"] = response.body.maxTimeStamp;
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>
@@ -205,7 +214,6 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json["body"]["maxTimeStamp"] = event.body.maxTimeStamp;
     json["body"]["startTimeUpdated"] = event.body.startTimeUpdated;
-    json["body"]["executingRankCount"] = event.body.executingRankCount;
     json["body"]["unit"]["type"] = event.body.unit.type;
     json["body"]["unit"]["metadata"]["cardId"] = event.body.unit.metadata.cardId;
     for (const auto &track : event.body.unit.children) {
@@ -214,12 +222,19 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     return json;
 }
 
+template <> std::optional<json_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event)
+{
+    json_t json;
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["rankId"] = event.body.rankId;
+    return json;
+}
+
 template <> std::optional<json_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event)
 {
     json_t json;
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json["body"]["parseResult"] = event.body.parseResult;
-    json["body"]["executingRankCount"] = event.body.executingRankCount;
     return json;
 }
 

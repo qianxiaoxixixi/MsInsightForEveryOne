@@ -43,12 +43,20 @@ struct ParseSuccessEventBody {
     Unit unit;
     bool startTimeUpdated = false;
     uint64_t maxTimeStamp = 0;
-    int executingRankCount = 0;
 };
 
 struct ParseSuccessEvent : public Event {
     ParseSuccessEvent() : Event(EVENT_PARSE_SUCCESS) {}
     ParseSuccessEventBody body;
+};
+
+struct ParseFailEventBody {
+    std::string rankId;
+};
+
+struct ParseFailEvent : public Event {
+    ParseFailEvent() : Event(EVENT_PARSE_FAIL) {}
+    ParseFailEventBody body;
 };
 
 struct MemorySuccess {
@@ -58,7 +66,6 @@ struct MemorySuccess {
 
 struct ParseClusterCompletedEventBody {
     std::string parseResult;
-    int executingRankCount = 0;
 };
 
 struct ParseClusterCompletedEvent : public Event {
