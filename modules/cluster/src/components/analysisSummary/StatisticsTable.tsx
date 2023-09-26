@@ -56,37 +56,37 @@ const computingDetailColumns = [
     },
     {
         title: 'Block Dim',
-        dataIndex: 'block_dim',
+        dataIndex: 'blockDim',
         sorter: true,
     },
     {
         title: 'Input Shapes',
-        dataIndex: 'input_shapes',
+        dataIndex: 'inputShapes',
         sorter: true,
     },
     {
         title: 'Input Data Types',
-        dataIndex: 'input_data_types',
+        dataIndex: 'inputDataTypes',
         sorter: true,
     },
     {
         title: 'Input Formats',
-        dataIndex: 'input_formats',
+        dataIndex: 'inputFormats',
         sorter: true,
     },
     {
         title: 'Output Shapes',
-        dataIndex: 'output_shapes',
+        dataIndex: 'outputShapes',
         sorter: true,
     },
     {
         title: 'Output Data Types',
-        dataIndex: 'output_data_types',
+        dataIndex: 'outputDataTypes',
         sorter: true,
     },
     {
         title: 'Output Formats',
-        dataIndex: 'output_formats',
+        dataIndex: 'outputFormats',
         sorter: true,
     },
 ];
@@ -112,7 +112,7 @@ const communicationDetailColumns = [
         sorter: true,
     },
     {
-        title: 'Start Time',
+        title: 'Start Time(ms)',
         dataIndex: 'startTime',
         key: 'startTime',
         sorter: true,
@@ -200,14 +200,21 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
         data = res.computeDetails;
         data = data.map((item: any) => ({
             ...item,
-            startTime: Number(item.startTime.toFixed(4)),
-            duration: Number(item.duration.toFixed(4)),
-            waitTime: Number(item.wait_time.toFixed(4)),
+            startTime: Number(item.startTime?.toFixed(4)),
+            duration: Number(item.duration?.toFixed(4)),
+            waitTime: Number(item.waitTime?.toFixed(4)),
         }));
         total = res.totalNum;
     } else {
         const res = await queryCommunicationDetail(param);
         data = res.communicationDetail;
+        data = data.map((item: any) => ({
+            ...item,
+            startTime: Number((item.startTime / 1000000).toFixed(4)),
+            totalDuration: Number((item.totalDuration / 1000).toFixed(4)),
+            overlapDuration: Number((item.overlapDuration / 1000).toFixed(4)),
+            notOverlapDuration: Number((item.notOverlapDuration / 1000)?.toFixed(4)),
+        }));
         total = res.totalNum;
     }
     return { data, total };
@@ -324,21 +331,23 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
 
 const StatisticsTable = (props: any): JSX.Element => {
     const { rankId = '', step = '' } = props;
-    return (
-        <div style={{ display: notNull(rankId) ? 'block' : 'none' }}>
-            <div style={{ marginBottom: '20px' }}>
-                <div className={'common-title-h2'}>
-                    {getTitle('compute')} ( Rank {rankId} )
+    return notNull(rankId)
+        ? (
+            <div>
+                <div style={{ marginBottom: '20px' }}>
+                    <div className={'common-title-h2'}>
+                        {getTitle('compute')} ( Rank {rankId} )
+                    </div>
+                    <ComputeStatisticsTable rankId={rankId} step={step}/>
                 </div>
-                <ComputeStatisticsTable rankId={rankId} step={step}/>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-                <div className={'common-title-h2'}>
-                    {'Communication Detail'} ( Rank {rankId} )
+                <div style={{ marginBottom: '20px' }}>
+                    <div className={'common-title-h2'}>
+                        {'Communication Detail'} ( Rank {rankId} )
+                    </div>
+                    <CommunicationStatisticsTable rankId={rankId} step={step}/>
                 </div>
-                <CommunicationStatisticsTable rankId={rankId} step={step}/>
-            </div>
-        </div>)
+            </div>)
+        : <></>
     ;
 };
 export default StatisticsTable;

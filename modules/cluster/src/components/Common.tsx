@@ -192,9 +192,9 @@ export const checkDomDisplay = (dom: HTMLElement): boolean => {
 
 export const COLOR = {
     BrightBlue: '#7df7ff',
-    Grey20: 'rgb(202,202,202)',
-    Grey40: 'rgb(152,152,152)',
-    Grey50: 'rgb(123,122,122)',
+    Grey20: '#cacaca',
+    Grey40: '#989898',
+    Grey50: '#7b7a7a',
     Band0: '#f82d18',
     Band1: '#eac299',
     Band2: '#c7eef5',
@@ -209,4 +209,74 @@ export const isParing = (session: Session): boolean => {
         }
     });
     return parsing;
+};
+
+interface AnyFunction {
+    (...rest: any[]): any;
+}
+
+const ListenerMap: {[props: string]: any} = {};
+
+class DomVisibilityListener {
+    private _visible: boolean = false;
+    private readonly _target: HTMLElement | null;
+
+    private _listener: any;
+
+    private readonly _onVisibleChange: AnyFunction | undefined;
+    constructor(dom: string, onVisibleChange?: AnyFunction) {
+        if (ListenerMap[dom] !== undefined && ListenerMap[dom] !== null) {
+            ListenerMap[dom].clear();
+            ListenerMap[dom] = null;
+        }
+        ListenerMap[dom] = this;
+        this._target = document.getElementById(dom);
+        this.visible = this._target?.offsetParent !== null;
+        this._onVisibleChange = onVisibleChange;
+        this.add();
+    }
+
+    add(): void {
+        this._listener = setTimeout(() => {
+            const newStatus = this._target?.offsetParent !== null;
+            if (newStatus !== this.visible && this._onVisibleChange !== undefined) {
+                if (this._onVisibleChange !== undefined) {
+                    this._onVisibleChange(newStatus);
+                }
+            }
+            this.visible = newStatus;
+            this.add();
+        }, 100);
+    }
+
+    clear(): void {
+        if (this._listener !== null) {
+            clearTimeout(this._listener);
+        }
+    }
+
+    get visible(): boolean {
+        return this._visible;
+    }
+
+    set visible(value: boolean) {
+        this._visible = value;
+    }
+}
+
+export const chartVisbilityListener = (dom: string, onVisibleChange?: AnyFunction): DomVisibilityListener => {
+    return new DomVisibilityListener(dom, (status: boolean) => {
+        if (status && onVisibleChange !== undefined) {
+            onVisibleChange();
+        }
+    });
+};
+
+export const getDecimalCount = (num: number): number => {
+    const numStr = num.toString();
+    const arr = numStr.split('.');
+    if (arr[1]?.length) {
+        return arr[1].length;
+    }
+    return 0;
 };

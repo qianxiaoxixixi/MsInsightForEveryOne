@@ -10,6 +10,7 @@ export class Session {
     endTimeAll: Timestamp = -1; 
     isCluster: boolean = false;
     isReset: boolean = false;
+    parseCompleted: boolean = false;
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
@@ -19,7 +20,8 @@ export class Session {
     set sharedState(newState: Record<string, unknown>) {
         this._sharedState = newState;
         connector.send({
-            body: { event: 'updateSharedState', body: this._sharedState }
+            event: 'updateSharedState',
+            body: this._sharedState,
         });
     }
     
@@ -33,6 +35,7 @@ export class Session {
         this.isCluster = false;
         this.isReset = false;
         this._sharedState = {};
+        this.parseCompleted=false;
     }
 };
 

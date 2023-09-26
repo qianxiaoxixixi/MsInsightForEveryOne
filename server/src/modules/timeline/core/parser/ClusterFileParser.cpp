@@ -4,7 +4,6 @@
  *
  */
 
-#include <sysinfoapi.h>
 #include <fstream>
 #include "json.hpp"
 #include "ServerLog.h"
@@ -22,13 +21,13 @@ using namespace Dic::Server;
 bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    DWORD start = GetTickCount();
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start save communication data into db ,file:", filePath);
     std::ifstream ifs(filePath);
     CommunicationSaxHandler handler;
     nlohmann::json::sax_parse(ifs, &handler);
-    DWORD end = GetTickCount();
-    ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", end - start);
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", (end - start).count());
     ifs.close();
     return true;
 }
@@ -36,7 +35,7 @@ bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &fileP
 void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    DWORD start = GetTickCount();
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start save communication matrix data into db ,file:", filePath);
     bool checkFilePath = FileUtil::CheckFilePath(filePath);
     if (!checkFilePath) {
@@ -45,15 +44,15 @@ void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> 
     std::ifstream ifs(filePath);
     CommunicationMatrixHandler handler;
     nlohmann::json::sax_parse(ifs, &handler);
-    DWORD end = GetTickCount();
-    ServerLog::Info("end parse communication matrix data into db ,file:", filePath, "cost time:", end - start);
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse communication matrix data into db ,file:", filePath, "cost time:", (end - start).count());
     ifs.close();
 }
 
 void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    DWORD start = GetTickCount();
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parseStepStatisticsFile data into db ,file:", filePath);
     std::ifstream stepTraceFileCsv(filePath);
     std::string line;
@@ -70,9 +69,9 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
             database->InsertStepStatisticsInfo(statistic);
         }
     }
-    DWORD end = GetTickCount();
+    auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("end parseStepStatisticsFile data into db ,file:", filePath, "cost time:",
-                    end - start);
+                    (end - start).count());
     stepTraceFileCsv.close();
 }
 
@@ -94,6 +93,8 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 
 bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 {
+    // 导入前清空cluster db
+    DataBaseManager::Instance().ClearClusterDb();
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     if (!(database->OpenDb(selectedPath + "/cluster.db", true) && database->CreateTable() &&
           database->SetConfig() && database->InitStmt())) {
@@ -106,13 +107,17 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     // cluster analysis
     if (communicationFileList.empty()) {
         ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
-        std::string command = "cluster_analysis.exe -d " + selectedPath;
-        int result = std::system(command.c_str());
-        if (result == 1) {
-            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file");
-            return false;
+        std::vector<std::string> exePathVector = FileUtil::FindFilesByRegex(
+                FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
+        if (!exePathVector.empty()) {
+            std::string command = "\"" + exePathVector[0] +  "\" -d " + selectedPath;
+            int result = std::system(command.c_str());
+            if (result != 0) {
+                ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command:", command);
+                return false;
+            }
+            ServerLog::Info("Execute cluster analysis success, command:", command);
         }
-        ServerLog::Info("Execute cluster analysis success");
     }
     communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);

@@ -122,6 +122,15 @@ struct SearchSliceRequest : public Request {
     SearchSliceParams params;
 };
 
+struct RemoteDeleteParams {
+    std::vector<std::string> rankId;
+};
+
+struct RemoteDeleteRequest : public Request {
+    RemoteDeleteRequest() : Request(REQ_RES_REMOTE_DELETE) {};
+    RemoteDeleteParams params;
+};
+
 struct CommunicationDetailParams {
     std::string rankId;
     int32_t currentPage = 0;

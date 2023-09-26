@@ -1,5 +1,4 @@
-# Copyright (c) 2023, Huawei Technologies Co., Ltd.
-# All rights reserved.
+#  Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0  (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,7 +58,7 @@ class BaseCommAnalysis:
             step_id = single_op.get(Constant.STEP_ID, 'N/A')
             op_name = single_op.get(Constant.COMM_OP_NAME, 'N/A')
             op_info = single_op.get(Constant.COMM_OP_INFO)
-            self.comm_ops_struct.setdefault(rank_tup, {}).setdefault(step_id, {}).\
+            self.comm_ops_struct.setdefault(rank_tup, {}).setdefault(step_id, {}). \
                 setdefault(op_name, {}).setdefault(rank_id, op_info)
 
     def combine_ops_total_info(self):
@@ -90,9 +89,9 @@ class CommunicationAnalysis(BaseCommAnalysis):
         if not comm_ops:
             return
         total_rank_dict = defaultdict(lambda: {
-                Constant.COMMUNICATION_TIME_INFO: defaultdict(float),
-                Constant.COMMUNICATION_BANDWIDTH_INFO: {}
-            })
+            Constant.COMMUNICATION_TIME_INFO: defaultdict(float),
+            Constant.COMMUNICATION_BANDWIDTH_INFO: {}
+        })
         for communication_op, rank_dict in comm_ops.items():
             for rank_id, communication_op_info in rank_dict.items():
                 for com_info, com_info_dict in communication_op_info.items():
@@ -253,4 +252,4 @@ class CommMatrixAnalysis(BaseCommAnalysis):
             link_dict[Constant.BANDWIDTH_GB_S] = \
                 self.compute_ratio(link_dict.get(Constant.TRANSIT_SIZE_MB, 0),
                                    link_dict.get(Constant.TRANSIT_TIME_MS, 0))
-
+        step_dict[Constant.TOTAL_OP_INFO] = total_op_info

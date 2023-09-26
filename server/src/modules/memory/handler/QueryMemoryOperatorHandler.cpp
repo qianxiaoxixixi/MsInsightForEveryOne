@@ -17,7 +17,6 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
 {
     MemoryOperatorRequest &request = dynamic_cast<MemoryOperatorRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Memory Operator, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);
@@ -29,7 +28,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorDetail(request.params, response.operatorDetails) or
-        !database->QueryOperatorsTotalNum(response.totalNum)) {
+        !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

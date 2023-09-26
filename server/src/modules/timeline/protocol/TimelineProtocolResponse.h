@@ -17,7 +17,6 @@ struct Action {
     std::string cardName;
     std::string rankId;
     bool result = true;
-    bool hasMemory = false;
 };
 
 struct ImportActionResBody {
@@ -228,12 +227,23 @@ struct SearchSliceResponse : public Response {
     SearchSliceBody body;
 };
 
+struct RemoteDeleteBody {
+    bool startTimeUpdated = false;
+    uint64_t maxTimeStamp = 0;
+};
+
+struct RemoteDeleteResponse : public Response {
+    RemoteDeleteResponse() : Response(REQ_RES_REMOTE_DELETE) {}
+    RemoteDeleteBody body;
+};
+
 struct CommunicationDetail {
     std::string communicationKernel;
-    double startTime;
-    double totalDuration;
-    double overlapDuration;
-    double notOverlapDuration;
+    std::string id;
+    uint64_t startTime;
+    uint64_t totalDuration;
+    uint64_t overlapDuration;
+    uint64_t notOverlapDuration;
 };
 
 struct CommunicationDetailResponse : public Response {

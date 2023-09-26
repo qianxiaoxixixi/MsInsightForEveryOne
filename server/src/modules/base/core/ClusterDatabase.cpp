@@ -438,7 +438,7 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
             json_t json = json_t::parse(steps);
             responseBody.stepList = json.get<std::vector<std::string>>();
         }
-        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++);
+        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / mbSize;
         responseBody.stepNum = responseBody.stepList.size();
         responseBody.rankCount = responseBody.rankList.size();
     }
@@ -489,10 +489,10 @@ bool ClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string sql = "SELECT stage_id as stageId, "
-                      "ROUND(stage_time, 4) as stageTime, "
-                      "ROUND(bubble_time, 4) as bubbleTime "
-                      "FROM " + stepTraceTable + " WHERE stage_id != '' AND step_id = ?";
+    std::string sql = "SELECT '" + param.stageId + "' as stageId, "
+                      "max(ROUND(stage_time, 4)) as stageTime, "
+                      "max(ROUND(bubble_time, 4)) as bubbleTime "
+                      "FROM " + stepTraceTable + " WHERE rank_id IN" + param.stageId + " AND step_id = ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
         return false;
@@ -696,11 +696,11 @@ bool ClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     if (!param.stage.empty()) {
         sql.append(" AND stage_id = ? ");
     }
+    sql.append(" group by op_name");
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryOperatorsCount statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sql.append(" group by op_name");
     if (!param.iterationId.empty()) {
         sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
     }

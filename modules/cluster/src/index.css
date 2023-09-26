@@ -191,7 +191,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     font-size: 1.5rem;
     margin-bottom: 10px;
 }
-
+.container-box{
+    background: var(--grey0);
+}
 .container-header{
     font-weight: bold;
     background: rgb(250, 250, 250);
@@ -219,11 +221,14 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 
 .theme_dark .fullbox{
-    background: var(--grey85);
+    background: var(--grey95);
 }
 
 .theme_dark .tan-box>div>.bottomC,.tan-box>div {
     background:none;
+}
+.theme_dark .container-box{
+    background: var(--grey95);
 }
 .theme_dark .container-header{
     background: var(--grey70);
@@ -292,7 +297,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     background: var(--grey80);
 }
 .theme_dark .bandwidthChart>div {
-    background: var(--grey80);
+    background: var(--grey95);
 }
 .theme_dark .ant-layout {
     background: var(--grey80);
@@ -320,7 +325,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 
 .theme_dark .chartDiv {
-    background: var(--grey80);
+    background: var(--grey95);
 }
 
 .baseinfo {
@@ -470,6 +475,10 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     border-color:var(--grey15);
 }
 
+.container-body{
+    background: var(--grey0);
+}
+
 .theme_dark .ant-tabs.ant-tabs-top{
     background: var(--grey85);
 }
@@ -477,7 +486,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     background: var(--grey85);
 }
 .theme_dark .container-header {
-    background: var(--grey85);
     color: var(--whiteblue);
 }
 .theme_dark .container-body{

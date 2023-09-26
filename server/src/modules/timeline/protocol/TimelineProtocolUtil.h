@@ -24,12 +24,15 @@ template <> std::optional<json_t> ToResponseJson<ResetWindowResponse>(const Rese
 template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response);
 template <> std::optional<json_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response);
 template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response);
+template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response);
 template<>
 std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response);
 // event
 template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event);
 template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);
+template <> std::optional<json_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event);
 template <> std::optional<json_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event);
+template <> std::optional<json_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event);
 } // end of namespace Protocol
 } // end of namespace Dic
 

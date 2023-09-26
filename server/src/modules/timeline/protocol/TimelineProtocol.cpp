@@ -23,6 +23,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
+    jsonToReqFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationDetailRequest);
 }
 
@@ -38,13 +39,16 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
+    resToJsonFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteResponseJson);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationDetailResponse);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
 {
     eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_FAIL, ToParseFailEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToParseClusterCompletedEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_MEMORY_COMPLETED, ToParseMemoryCompletedEventJson);
 }
 
 #pragma region <<Json To Request>>
@@ -181,6 +185,20 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchSliceRequest(const json_t &js
     return reqPtr;
 }
 
+std::unique_ptr<Request> TimelineProtocol::ToRemoteDeleteRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<RemoteDeleteRequest> reqPtr = std::make_unique<RemoteDeleteRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (json.contains("rankId") && json["rankId"].is_array()) {
+        for (const auto &id : json["rankId"]) {
+            reqPtr->params.rankId.emplace_back(id);
+        }
+    }
+    return reqPtr;
+}
 
 std::unique_ptr<Request> TimelineProtocol::ToCommunicationDetailRequest(const json_t &json, std::string &error)
 {
@@ -250,6 +268,11 @@ std::optional<json_t> TimelineProtocol::ToSearchSliceResponseJson(const Response
     return ToResponseJson<SearchSliceResponse>(dynamic_cast<const SearchSliceResponse &>(response));
 }
 
+std::optional<json_t> TimelineProtocol::ToRemoteDeleteResponseJson(const Response &response)
+{
+    return ToResponseJson<RemoteDeleteResponse>(dynamic_cast<const RemoteDeleteResponse &>(response));
+}
+
 std::optional<json_t> TimelineProtocol::ToCommunicationDetailResponse(const Response &response)
 {
     return ToResponseJson<CommunicationDetailResponse>(dynamic_cast<const CommunicationDetailResponse &>(response));
@@ -262,9 +285,18 @@ std::optional<json_t> TimelineProtocol::ToParseSuccessEventJson(const Event &eve
     return ToEventJson<ParseSuccessEvent>(dynamic_cast<const ParseSuccessEvent &>(event));
 }
 
+std::optional<json_t> TimelineProtocol::ToParseFailEventJson(const Event &event)
+{
+    return ToEventJson<ParseFailEvent>(dynamic_cast<const ParseFailEvent &>(event));
+}
+
 std::optional<json_t> TimelineProtocol::ToParseClusterCompletedEventJson(const Event &event)
 {
     return ToEventJson<ParseClusterCompletedEvent>(dynamic_cast<const ParseClusterCompletedEvent &>(event));
+}
+std::optional<json_t> TimelineProtocol::ToParseMemoryCompletedEventJson(const Event &event)
+{
+    return ToEventJson<ParseMemoryCompletedEvent>(dynamic_cast<const ParseMemoryCompletedEvent &>(event));
 }
 #pragma endregion
 } // namespace Protocol

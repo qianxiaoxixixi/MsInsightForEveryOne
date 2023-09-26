@@ -35,13 +35,12 @@ declare global {
 };
 
 function getInitData(): any {
-    const initData = { dataPath: 'D:\\data\\0818_analyzed', module: 'communication', command: 'communication/duration/operatorNames', rucan: '{"rankId":"0","iterationId":"0","rankList":["1"],"stage":"(0, 1, 2, 3, 4, 5, 6, 7)"}' };
-
-    let x = sessionStorage.getItem('dataPath');
-    if (x !== null && x !== '') {
-        initData.dataPath = x;
-    }
-    x = sessionStorage.getItem('module');
+    const initData = {
+        module: 'communication',
+        command: 'communication/duration/operatorNames',
+        rucan: '{"rankId":"0","iterationId":"0","rankList":["1"],"stage":"(0, 1, 2, 3, 4, 5, 6, 7)"}',
+    };
+    let x = sessionStorage.getItem('module');
     if (x !== null && x !== '') {
         initData.module = x;
     }
@@ -55,15 +54,14 @@ function getInitData(): any {
     }
     return initData;
 }
-const App = (): JSX.Element => {
+export const App = (): JSX.Element => {
     const initData = getInitData();
     const [ data, setData ] = useState('');
     const [ param, setParam ] = useState(initData);
     const sendTo = async(): Promise<any> => {
         setData('');
         const { module, command, rucan } = param;
-        // eslint-disable-next-line no-eval
-        const res = await window.requestData(command, eval(`( ${rucan} )`), module);
+        const res = await window.requestData(command, JSON.parse(rucan), module);
         if (res !== undefined) {
             const text = JSON.stringify(res, null, 2).slice(0, 1000);
             setData(text);
@@ -83,7 +81,11 @@ const App = (): JSX.Element => {
 
 window.dataSource = { remote: '127.0.0.1', port: 9000, dataPath: [] };
 window.requestData = async (command, params, module) => {
-    const data = await connector.fetch({ remote: window.dataSource, args: { command, params } }, module);
+    const data = await connector.fetch({
+        remote: window.dataSource,
+        args: { command, params },
+        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+    });
     return (data as any).body;
 };
 
@@ -91,10 +93,7 @@ const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
     (
         <RootStoreContext.Provider value={store}>
-            <div>
-                <App />
-            </div>
-
+            <div>Hello</div>
         </RootStoreContext.Provider>
     ));
 
@@ -122,5 +121,9 @@ declare global {
     interface Window {
         requestData: (method: string, params: any, module?: string) => Promise<any>;
         dataSource: DataSource;
+
+        closeWaiting: () => void;
+
+        sendToModule: (...rest: any[]) => void;
     }
 };
