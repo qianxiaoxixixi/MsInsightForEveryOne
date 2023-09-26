@@ -174,6 +174,15 @@ template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const Sear
     json["body"]["depth"] = response.body.depth;
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["startTimeUpdated"] = response.body.startTimeUpdated;
+    json["body"]["maxTimeStamp"] = response.body.maxTimeStamp;
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>
@@ -210,6 +219,14 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     for (const auto &track : event.body.unit.children) {
         json["body"]["unit"]["children"].emplace_back(UnitTrackToJson(*track));
     }
+    return json;
+}
+
+template <> std::optional<json_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event)
+{
+    json_t json;
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["rankId"] = event.body.rankId;
     return json;
 }
 

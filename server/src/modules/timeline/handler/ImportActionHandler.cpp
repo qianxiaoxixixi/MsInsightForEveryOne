@@ -7,6 +7,7 @@
 #include "ServerLog.h"
 #include "ExecUtil.h"
 #include "FileUtil.h"
+#include "RegexUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
@@ -122,6 +123,16 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
     session->OnEvent(std::move(event));
 }
 
+void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result)
+{
+    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    if (result) {
+        SendParseSuccessEvent(token, fileId);
+    } else {
+        SendParseFailEvent(token, fileId);
+    }
+}
+
 void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
 {
     WsSession *session = WsSessionManager::Instance().GetSession(token);
@@ -138,11 +149,8 @@ void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
     hasMemory.clear();
 }
 
-void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
-                                           bool result)
+void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
 {
-    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId,
-                    ", result:", result);
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
@@ -151,7 +159,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
-    event->result = result;
+    event->result = true;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
     uint64_t min = UINT64_MAX;
@@ -166,7 +174,21 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
-    ParseMemoryEndProcess(token);
+}
+
+void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
+    auto event = std::make_unique<ParseFailEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.rankId = fileId;
+    session->OnEvent(std::move(event));
 }
 
 std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList)
