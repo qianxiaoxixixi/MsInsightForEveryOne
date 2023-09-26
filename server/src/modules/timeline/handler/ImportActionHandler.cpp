@@ -7,15 +7,13 @@
 #include "ServerLog.h"
 #include "ExecUtil.h"
 #include "FileUtil.h"
-#include "NumberUtil.h"
-#include "ClusterDef.h"
+#include "RegexUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 #include "ClusterFileParser.h"
 #include "MemoryParse.h"
-#include "ParseCounter.h"
 
 namespace Dic {
 namespace Module {
@@ -54,8 +52,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
     // 按rankId 拆分文件
-    std::map<std::string, std::vector<std::string>, decltype(&NumberUtil::RankIdCompare)> rankListMap =
-            FileUtil::SplitToRankList(files);
+    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
     SetBaseActionOfResponse(rankListMap, response);
     SetParseCallBack(token);
     SetResponseResult(response, true);
@@ -77,8 +74,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     ParseClusterEndProcess(token, parseClusterResult);
 }
 
-void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>,
-                                                  decltype(&NumberUtil::RankIdCompare)> &rankListMap,
+void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,
                                                   ImportActionResponse &response)
 {
     for (const auto &rankEntry : rankListMap) {
@@ -97,7 +93,6 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
             memory.hasMemory = true;
         }
         hasMemory.emplace_back(memory);
-        ParseCounter::Instance().addCount();
         response.body.result.emplace_back(action);
     }
 }
@@ -125,8 +120,17 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
     event->token = token;
     event->result = true;
     event->body.parseResult = std::move(result);
-    event->body.executingRankCount = ParseCounter::Instance().getCount();
     session->OnEvent(std::move(event));
+}
+
+void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result)
+{
+    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    if (result) {
+        SendParseSuccessEvent(token, fileId);
+    } else {
+        SendParseFailEvent(token, fileId);
+    }
 }
 
 void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
@@ -145,11 +149,8 @@ void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
     hasMemory.clear();
 }
 
-void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
-                                           bool result, int executingRankCount)
+void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
 {
-    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId,
-                    ", result:", result);
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
@@ -158,8 +159,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
-    event->result = result;
-    event->body.executingRankCount = executingRankCount;
+    event->result = true;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
     uint64_t min = UINT64_MAX;
@@ -174,7 +174,21 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
-    ParseMemoryEndProcess(token);
+}
+
+void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
+    auto event = std::make_unique<ParseFailEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.rankId = fileId;
+    session->OnEvent(std::move(event));
 }
 
 std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList)
@@ -272,9 +286,8 @@ void ImportActionHandler::SetParseCallBack(const std::string &token)
     static bool flag = false;
     if (!flag) {
         flag = true;
-        std::function<void(const std::string, bool, int)> func =
-                std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2,
-                          std::placeholders::_3);
+        std::function<void(const std::string, bool)> func =
+                std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
         TraceFileParser::Instance().SetParseEndCallBack(func);
     }
 }

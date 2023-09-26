@@ -21,6 +21,7 @@ public:
     bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
                const std::string &selectedFolder) override;
     void Reset() override;
+    void DeleteParseFile(const std::string &fileId);
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);
     std::string GetFileId(const std::string &filePath);
@@ -31,7 +32,6 @@ private:
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
 
-    bool WaitParseEnd(const std::string &fileId);
     std::string GetFileIdFromFile(const std::string &filePath);
     std::string GetFileIdFromPath(const std::string &filePath);
     static const int64_t blockSize = 1024 * 1024 * 50; // 50MB
@@ -40,12 +40,17 @@ private:
     static bool SeekCharPosition(std::ifstream &file, char c);
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
+    static void PreParseTask(const std::string &filePath, const std::string &fileId);
+    static void ParseTask(const std::string &filePath, const std::string &fileId, const std::string &dbPath,
+                          std::pair<int64_t, int64_t> pos);
+    static void EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures);
+    static void ParseEndCallBack(const std::string &fileId, bool result);
+    static void DeleteParseFileFromDisk(const std::string &fileId);
 
     bool InitDatabase(const std::string& dbPath, const std::string& rankId);
     std::mutex trackMutex;
     std::map<std::string, std::map<std::string, int64_t>> trackIdMap;
     int64_t trackId = 0;
-    std::chrono::system_clock::time_point start;
 };
 } // end of namespace Timeline
 } // end of namespace Module
