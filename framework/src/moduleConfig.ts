@@ -17,6 +17,14 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
     },
     {
+        name: 'Memory',
+        requestName: 'memory',
+        attributes: {
+            src: './plugins/Memory/index.html'
+        },
+        isDefault: true
+    },
+    {
         name: 'Summary',
         requestName: 'summary',
         attributes: {
@@ -30,12 +38,4 @@ export const modulesConfig: ModuleConfig[] = [
             src: './plugins/Cluster/communication.html'
         },
     },
-    {
-        name: 'Memory',
-        requestName: 'memory',
-        attributes: {
-            src: './plugins/Memory/index.html'
-        },
-        isDefault: true
-    }
 ];

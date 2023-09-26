@@ -56,6 +56,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [ orderBy, setOrderBy ] = useState<string | undefined>(undefined);
     const [ order, setOrder ] = useState<string | undefined>(undefined);
     const [ isBtnDisabled, setIsBtnDisabled ] = useState<boolean>(true);
+    // 监听窗口唤醒状态以重绘echarts
+    const [ isWakeup, setIsWakeup ] = useState<boolean>(false);
 
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
         setSearchEventOperatorName(event.target.value as string);
@@ -184,8 +186,14 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         setRankIdList(session.memoryRankIds);
-        session.memoryRankIds.length === 0 && setRankId(undefined);
-    }, [session.memoryRankIds]);
+        session.memoryRankIds.length === 0
+            ? setRankId(undefined)
+            : (rankId === undefined && setRankId(session.memoryRankIds[0]));
+    }, [session.memoryRankIds.length]);
+
+    useEffect(() => {
+        setIsWakeup(session.isWakeup);
+    }, [session.isWakeup]);
 
     return (
         <div className="memory-analysis-wrapper">
@@ -218,6 +226,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                     onSelectionChanged={onSelectedRangeChanged}
                                     record={selectedRecord}
                                     isDark={isDark}
+                                    isWakeup={isWakeup}
                                 />
                                 : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 160 }} />
                             }
