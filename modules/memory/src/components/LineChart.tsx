@@ -14,6 +14,7 @@ interface IProps {
     onSelectionChanged?: (start: number, end: number) => void;
     record?: any;
     isDark: boolean;
+    isWakeup: boolean;
 }
 
 type T = string | undefined;
@@ -64,7 +65,7 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
                 restore: {},
             },
         },
-        backgroundColor: isDark ? '#252526' : '#ffffff',
+        backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
     };
 };
 
@@ -197,7 +198,7 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps, sel
 };
 
 export const LineChart: React.FC<IProps> = (props) => {
-    const { graph, record, isDark } = props;
+    const { graph, record, isDark, isWakeup } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [ chartObj, setChartObj ] = React.useState<echarts.ECharts | undefined>();
@@ -217,7 +218,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         return () => {
             myChart.dispose();
         };
-    }, [ graph, resizeEventDependency, isDark ]);
+    }, [ graph, resizeEventDependency, isDark, isWakeup ]);
 
     React.useEffect(() => {
         _handleEvents(chartObj, props, selectedPoints);

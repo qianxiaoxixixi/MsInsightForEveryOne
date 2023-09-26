@@ -515,5 +515,5 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     overflow-y: auto;
 }
 .theme_dark .memory-analysis-wrapper{
-    background-color: #252526;
+    background-color: var(--grey95);
 }
