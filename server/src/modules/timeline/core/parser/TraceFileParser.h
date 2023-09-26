@@ -40,14 +40,14 @@ private:
     static bool SeekCharPosition(std::ifstream &file, char c);
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
-    static void PreParseTask(const std::string &filePath, const std::string &fileId);
+    static void PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId);
     static void ParseTask(const std::string &filePath, const std::string &fileId, const std::string &dbPath,
                           std::pair<int64_t, int64_t> pos);
     static void EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures);
     static void ParseEndCallBack(const std::string &fileId, bool result);
     static void DeleteParseFileFromDisk(const std::string &fileId);
 
-    bool InitDatabase(const std::string& dbPath, const std::string& rankId);
+    static bool InitDatabase(const std::string& dbPath, const std::string& rankId);
     std::mutex trackMutex;
     std::map<std::string, std::map<std::string, int64_t>> trackIdMap;
     int64_t trackId = 0;
