@@ -9,7 +9,7 @@ export interface ModuleConfig {
 
 export const modulesConfig: ModuleConfig[] = [
     {
-        name: 'Timeline',
+        name: 'Timeline View',
         requestName: 'timeline',
         attributes: {
             src: './plugins/Timeline/index.html'
@@ -17,18 +17,25 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
     },
     {
-        name: 'summary',
-        requestName: 'summary',
+        name: 'Memory',
+        requestName: 'memory',
         attributes: {
-            src: 'http://localhost:3000/summary.html'
-        }
+            src: './plugins/Memory/index.html'
+        },
+        isDefault: true
     },
     {
-        name: 'communication',
+        name: 'Summary',
+        requestName: 'summary',
+        attributes: {
+            src: './plugins/Cluster/summary.html'
+        },
+    },
+    {
+        name: 'Communication',
         requestName: 'communication',
         attributes: {
-            src: 'http://localhost:3000/communication.html'
-        }
+            src: './plugins/Cluster/communication.html'
+        },
     },
 ];
-

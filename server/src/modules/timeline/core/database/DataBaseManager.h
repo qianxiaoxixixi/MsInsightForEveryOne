@@ -30,6 +30,7 @@ public:
     std::vector<TraceDatabase *> GetAllTraceDatabase();
     std::vector<std::string> GetAllFileId();
     void Clear();
+    void ClearClusterDb();
     void ReleaseTraceDatabase(const std::string &fileId);
     bool HasFileId(const std::string &fileId);
     ClusterDatabase *GetClusterDatabase();

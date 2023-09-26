@@ -13,6 +13,7 @@
 #include "ImportActionHandler.h"
 #include "SearchCountHandler.h"
 #include "SearchSliceHandler.h"
+#include "RemoteDeleteHandler.h"
 #include "QueryCommunicationDetailInfoHandler.h"
 
 namespace Dic {
@@ -41,6 +42,7 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_COUNT, std::make_unique<SearchCountHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_SLICE, std::make_unique<SearchSliceHandler>());
+    requestHandlerMap.emplace(REQ_RES_REMOTE_DELETE, std::make_unique<RemoteDeleteHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_DETAIL, std::make_unique<QueryCommunicationDetailInfoHandler>());
 }
 

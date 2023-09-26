@@ -43,7 +43,7 @@ export type LinkData = {
 };
 
 export class Session {
-    clusterStatus: any = false;
+    clusterStatus: boolean = false;
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     private _name: string | null;
@@ -56,6 +56,7 @@ export class Session {
     icon: JSX.Element | undefined;
     caches: Caches | null = null;
     simpleCache: SimpleCache;
+    rankCount: number = 0;
 
     // Frontend start time of recording.
     startRecordTime: TimeStamp;
@@ -147,6 +148,10 @@ export class Session {
                 }
             },
         );
+
+        window.closeWaiting = () => {
+            this.clusterStatus = true;
+        };
     }
 
     set endTimeAll(endTimeAll: TimeStamp | undefined) {

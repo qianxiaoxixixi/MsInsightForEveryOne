@@ -8,6 +8,7 @@
 #include <string>
 #include <dirent.h>
 #include <vector>
+#include "StringUtil.h"
 #include <sys/stat.h>
 #include "regex"
 #include "RegexUtil.h"
@@ -21,6 +22,7 @@
 #include <windows.h>
 #include <shlwapi.h>
 #include <io.h>
+#include <tchar.h>
 
 #else
 #include <sys/stat.h>
@@ -55,7 +57,7 @@ public:
         }
         std::string res(path);
 #ifdef _WIN32
-        if (path[path.size() - 1] != '/' || path[path.size() - 1] != '\\') {
+        if (path[path.size() - 1] != '/' && path[path.size() - 1] != '\\') {
             res.append("\\");
         }
 #else
@@ -120,7 +122,13 @@ public:
         }
         DIR *pDir = nullptr;
         struct dirent *pDirent = nullptr;
-        pDir = opendir(path.c_str());
+        std::string tmpPath(path);
+#ifdef _WIN32
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+#endif
+        pDir = opendir(tmpPath.c_str());
         if (pDir == nullptr) {
             return {};
         }
@@ -129,7 +137,11 @@ public:
             if (std::string(pDirent->d_name) == ".." || std::string(pDirent->d_name) == ".") {
                 continue;
             }
+#ifdef _WIN32
+            folders.emplace_back(StringUtil::GbkToUtf8(pDirent->d_name));
+#else
             folders.emplace_back(pDirent->d_name);
+#endif
         }
         closedir(pDir);
         return folders;
@@ -138,7 +150,11 @@ public:
     static inline bool IsFolder(const std::string &path)
     {
 #ifdef _WIN32
-        return PathIsDirectory(path.c_str());
+        std::string tmpPath(path);
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+        return PathIsDirectory(tmpPath.c_str());
 #else
         struct stat st;
         if (stat(path.c_str(), &st) == -1) {
@@ -150,7 +166,13 @@ public:
 
     static inline bool RemoveFile(const std::string &path)
     {
-        return std::remove(path.c_str()) == 0;
+        std::string tmpPath(path);
+#ifdef _WIN32
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+#endif
+        return std::remove(tmpPath.c_str()) == 0;
     }
 
     static inline std::vector<std::string> GetDiskInfo()
@@ -179,8 +201,12 @@ public:
             return false;
         }
 #ifdef _WIN32
-        auto attribute = GetFileAttributes(path.data());
-        return (attribute & FILE_ATTRIBUTE_HIDDEN) != 0 ;
+        std::string tmpPath(path);
+        if (StringUtil::IsUtf8String(path.data())) {
+            tmpPath = StringUtil::Utf8ToGbk(path.data());
+        }
+        auto attribute = GetFileAttributes(tmpPath.data());
+        return attribute == INVALID_FILE_ATTRIBUTES || (attribute & FILE_ATTRIBUTE_HIDDEN) != 0;
 #else
         return path[0] == '.';
 #endif
@@ -250,11 +276,13 @@ public:
         }
         auto folders = FileUtil::FindFolders(path);
         for (std::string& file: folders) {
-            if (FileUtil::IsFolder(file)) {
-                CalculateDirSize(file, size, depth + 1);
-            } else if (FileUtil::CheckDirectoryExist(file)) {
-                if (!(depth == 0 && file.find_last_of(".db") > 0)) {
-                    size +=  getFileSize(file.c_str());
+            std::string spliceFile = SplicePath(path, file);
+            if (FileUtil::IsFolder(spliceFile)) {
+                CalculateDirSize(spliceFile, size, depth + 1);
+            } else {
+                if (file.find_last_of("trace_view.db") != std::string::npos &&
+                    file.find_last_of("cluster.db") != std::string::npos) {
+                    size +=  getFileSize(spliceFile.c_str());
                 }
             }
         }
@@ -417,6 +445,20 @@ public:
             return false;
         }
         return true;
+    }
+
+    static std::string GetCurrPath()
+    {
+        char currPath[1024];
+    #ifdef _WIN32
+            ::GetModuleFileName(NULL, currPath, MAX_PATH);
+            (_tcsrchr(currPath, '\\'))[1] = 0;
+    #else
+            getcwd(currPath, 1024);
+      sprintf(currPath, "%s/", currPath);
+    #endif
+        std::string strCurrPath = currPath;
+        return strCurrPath;
     }
 };
 } // end of namespace Dic

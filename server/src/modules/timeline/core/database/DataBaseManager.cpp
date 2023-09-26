@@ -98,6 +98,15 @@ void DataBaseManager::Clear()
     summaryDatabaseMap.clear();
 }
 
+void DataBaseManager::ClearClusterDb()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (clusterDatabaseMap.count("cluster") != 0) {
+        clusterDatabaseMap["cluster"].get()->CloseDb();
+        clusterDatabaseMap.clear();
+    }
+}
+
 ClusterDatabase *DataBaseManager::GetClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);

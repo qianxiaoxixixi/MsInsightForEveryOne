@@ -33,16 +33,21 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetResponseResult(response, true);
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    if (request.params.rankId.empty()) {
+        SetResponseResult(response, false, "rank Id is empty");
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (!request.params.timeFlag.empty() && request.params.timeFlag.find("compute") != std::string::npos) {
         if (!database->QueryComputeStatisticsData(request.params, response.body)) {
-            SetResponseResult(response, false);
+            SetResponseResult(response, false, "QueryComputeStatisticsData failed");
             session.OnResponse(std::move(responsePtr));
             return;
         }
     } else {
         if (!database->QueryCommunicationStatisticsData(request.params, response.body)) {
-            SetResponseResult(response, false);
+            SetResponseResult(response, false, "QueryCommunicationStatisticsData failed");
             session.OnResponse(std::move(responsePtr));
             return;
         }

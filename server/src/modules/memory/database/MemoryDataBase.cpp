@@ -162,16 +162,16 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, ROUND(allocation_time / 1000, 2) as allocation_time, "
-                      "ROUND(release_time / 1000, 2) as release_time, size, "
+    std::string sql = "SELECT name, ROUND(allocation_time / 1000 - ?, 2) as allocationTime, "
+                      "ROUND(release_time / 1000 - ?, 2) as releaseTime, size, "
                       "ROUND(duration / 1000, 2) as duration FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
     if (requestParams.startTime != -1) {
-        sql += " AND allocation_time >= " + std::to_string(requestParams.startTime);
+        sql += " AND allocationTime >= " + std::to_string(requestParams.startTime);
     }
     if (requestParams.endTime != -1) {
-        sql += " AND allocation_time <= " + std::to_string(requestParams.endTime);
+        sql += " AND allocationTime <= " + std::to_string(requestParams.endTime);
     }
 
     if (requestParams.minSize != -1) {
@@ -199,20 +199,24 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         return false;
     }
     int index = bindStartIndex;
-    std::string orderName = requestParams.orderName + "%";
+    std::string orderName = "%" + requestParams.orderName + "%";
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
+    // 1ms = 1000 * 1000 ns
     std::vector<Protocol::MemoryOperator> operatorDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
         operatorDto.name = sqlite3_column_string(stmt, col++);
         // 1ms = 1000us
-        operatorDto.allocationTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-        operatorDto.releaseTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-        operatorDto.size = static_cast<double>(sqlite3_column_double(stmt, col++));
-        operatorDto.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
+        operatorDto.allocationTime = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseTime = sqlite3_column_double(stmt, col++);
+        operatorDto.size = sqlite3_column_double(stmt, col++);
+        operatorDto.duration = sqlite3_column_double(stmt, col++);
         operatorDtoVec.emplace_back(operatorDto);
     }
     responseBody = operatorDtoVec;
@@ -228,7 +232,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
                       "ROUND(total_allocated, 2) as total_allocated, "
                       "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable;
     // 1ms = 1000 * 1000 ns
-    double startTime = static_cast<double>(Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000));
+    double startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -259,7 +263,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
             GetOperatorLine(item, operatorMap);
             peak.hasPtaGe = true;
         } else if (item.component == "APP") {
-            peak.appAllocated = std::max(peak.appAllocated, item.totalAllocated);
+            peak.appAllocated = std::max(peak.appAllocated, item.totalReserved);
             GetAppLine(item, operatorMap);
             peak.hasApp = true;
         }
@@ -396,21 +400,56 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
     return stmt;
 }
 
-bool MemoryDataBase::QueryOperatorsTotalNum(int64_t &totalNum)
+bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
-        sqlite3_stmt *stmt = nullptr;
-        std::string sql = "SELECT count(*) as nums FROM " + operatorTable;
-        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-        if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
-            return false;
-        }
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            totalNum = sqlite3_column_int(stmt, resultStartIndex);
-        }
-        sqlite3_finalize(stmt);
-        return true;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
+
+    if (requestParams.startTime != -1) {
+        sql += " AND allocation_time >= " + std::to_string(requestParams.startTime);
     }
+    if (requestParams.endTime != -1) {
+        sql += " AND allocation_time <= " + std::to_string(requestParams.endTime);
+    }
+    if (requestParams.minSize != -1) {
+        sql += " AND size >= " + std::to_string(requestParams.minSize);
+    }
+    if (requestParams.maxSize != -1) {
+        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+    }
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string orderName = "%" + requestParams.orderName + "%";
+    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool MemoryDataBase::QueryOperatorSize(double &min, double &max)
+{
+    std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM " + operatorTable;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorSize failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_double(stmt, col++);
+        max = sqlite3_column_double(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

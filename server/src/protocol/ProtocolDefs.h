@@ -29,7 +29,9 @@ const std::string EVENT_NAME = "event";
 const std::string EVENT_INITIALIZED = "initialized";
 // timeline
 const std::string EVENT_PARSE_SUCCESS = "parse/success";
+const std::string EVENT_PARSE_FAIL = "parse/fail";
 const std::string EVENT_PARSE_CLUSTER_COMPLETED = "parse/clusterCompleted";
+const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
 #pragma endregion
 
 #pragma region << Request / Response Command>>
@@ -50,6 +52,7 @@ const std::string REQ_RES_RESET_WINDOW = "remote/reset";
 const std::string REQ_RES_UNIT_CHART = "unit/chart";
 const std::string REQ_RES_SEARCH_COUNT = "search/count";
 const std::string REQ_RES_SEARCH_SLICE = "search/slice";
+const std::string REQ_RES_REMOTE_DELETE = "remote/delete";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";
@@ -80,6 +83,7 @@ const std::string REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH = "communication/matrix
 // memory
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
+const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operator/size";
 #pragma endregion
 } // end of namespace
 }

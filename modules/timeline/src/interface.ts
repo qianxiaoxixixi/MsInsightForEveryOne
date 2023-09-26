@@ -1,5 +1,5 @@
 import { NotificationHandler } from './connection/defs';
-import { parseSuccessHandler, parseFailHandler, importRemoteHandler, removeRemoteHandler, setTheme } from './connection/handler';
+import { parseSuccessHandler, parseFailHandler, importRemoteHandler, removeRemoteHandler, setTheme, clusterCompletedHandler } from './connection/handler';
 
 type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
     request: Request;
@@ -13,7 +13,9 @@ export type InterfaceDefs = {
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'remote/import': importRemoteHandler,
     'remote/remove': removeRemoteHandler,
+    'remote/reset': removeRemoteHandler,
     'parse/success': parseSuccessHandler,
     'parse/fail': parseFailHandler,
     setTheme,
+    'parse/clusterCompleted': clusterCompletedHandler,
 };

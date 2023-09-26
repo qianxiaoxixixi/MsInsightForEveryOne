@@ -29,7 +29,7 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
                 expandable={{ defaultExpandedRowKeys: ['SDMA'] }}
                 columns={columns}
                 dataSource={data}
-                rowKey={'transport_type'}
+                rowKey={'transportType'}
             />
         </>
     );
@@ -42,7 +42,7 @@ function wrapData(data: any): any {
         }
     });
     const sdma = data.find((item: any) => item.transportType === 'SDMA');
-    sdma.large_package_ratio = '/';
+    sdma.largePacketRatio = '/';
     const hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE');
     const rdma = data.find((item: any) => item.transportType === 'RDMA');
     return [ { ...sdma, children: hp }, rdma ];

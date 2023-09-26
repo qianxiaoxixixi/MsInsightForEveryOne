@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
 import i18n from './i18n';
 import './index.css';
@@ -30,14 +31,26 @@ export const App = observer(() => {
             window.setTheme(res === 'dark');
         });
     }, []);
-    return (<>{session !== undefined && session.clusterStatus === true ? <AnalysisSummary session={session} /> : Loading}</>);
+    return (<ThemeProvider theme={themeInstance.getThemeType()}>
+        { session !== undefined ? <AnalysisSummary session={session} /> : Loading}
+    </ThemeProvider>);
 });
 
 window.dataSource = { remote: '127.0.0.1', port: 9000, dataPath: [] };
 window.requestData = async (command, params, module) => {
-    const data = await connector.fetch({ remote: window.dataSource, args: { command, params } },
-        module !== undefined ? module : command?.split('/')[0]?.toLowerCase());
+    const data = await connector.fetch({
+        remote: window.dataSource,
+        args: { command, params },
+        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+    });
     return (data as any).body;
+};
+window.sendToModule = (body): void => {
+    connector.send({
+        event: 'moduleMessage',
+        body,
+        to: 2,
+    });
 };
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
