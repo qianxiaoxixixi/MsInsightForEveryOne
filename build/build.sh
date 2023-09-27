@@ -64,7 +64,7 @@ function buildServer() {
 
 function buildVscode() {
   rm -fr cd "${root}"/plugins/vscode/dist
-  cd "${root}"/plugins/vscode && npm install && npm run vsce:package
+  cd "${root}"/plugins/vscode && npm install --force && npm run vsce:package
   cp "${root}"/plugins/vscode/ascend-insight-extension-* "${root}"/out/ascend-insight-extension_"${vscode_version}"_"${os_name}".vsix
   # 打包中间件，方便构建轻量化exe
   cd "${root}"/plugins/vscode/dist

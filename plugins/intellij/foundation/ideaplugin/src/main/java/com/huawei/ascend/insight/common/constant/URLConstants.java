@@ -35,7 +35,7 @@ public final class URLConstants {
     /**
      * RESOURCE_DIR
      */
-    public static final String RESOURCE_DIR = "frontend";
+    public static final String RESOURCE_DIR = "profiler";
 
     /**
      * HOME_PAGE
