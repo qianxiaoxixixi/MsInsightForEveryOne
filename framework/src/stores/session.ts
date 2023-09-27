@@ -37,6 +37,7 @@ export class Session {
         this.isReset = false;
         this._sharedState = {};
         this.parseCompleted=false;
+        this.clusterCompleted=false;
     }
 };
 
