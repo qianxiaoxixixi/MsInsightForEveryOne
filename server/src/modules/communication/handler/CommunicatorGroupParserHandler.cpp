@@ -29,10 +29,10 @@ void CommunicatorGroupParserHandler::HandleRequest(std::unique_ptr<Dic::Protocol
             std::make_unique<Protocol::CommunicatorGroupResponse>();
     CommunicatorGroupResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    SetResponseResult(response, true);
+    SetResponseResult(response, CommunicatorGroupParserHandler::ParseCommunicatorGroup(
+        request.params.filePath, response.body));
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
-    CommunicatorGroupParserHandler::ParseCommunicatorGroup(request.params.filePath, response.body);
     session.OnResponse(std::move(responsePtr));
 }
 
@@ -41,6 +41,7 @@ bool CommunicatorGroupParserHandler::ParseCommunicatorGroup(const std::string &f
 {
     std::string path = FileUtil::SplicePath(filePath, "cluster_analysis_output");
     path = FileUtil::SplicePath(path, "communication_group.json");
+    path = FileUtil::PathPreprocess(path);
     std::ifstream file(path);
     if (file.good()) {
         nlohmann::json fileContent = nlohmann::json::object();
@@ -67,8 +68,9 @@ bool CommunicatorGroupParserHandler::ParseCommunicatorGroup(const std::string &f
             auto value = "(" + StringUtil::join<int>(ranks, ", ") + (ranks.size() > 1 ? ")" : ",)");
             resBody.tpOrDpGroups.push_back(GroupItem("tpOrDp" + std::to_string(i), ranks, value));
         }
+        return true;
     }
-    return true;
+    return false;
 }
 } // end of namespace Communication
 } // end of namespace Module

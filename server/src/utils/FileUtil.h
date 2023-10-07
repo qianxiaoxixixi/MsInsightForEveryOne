@@ -280,9 +280,20 @@ public:
         return "";
     }
 
+    static inline std::string PathPreprocess(const std::string filePath)
+    {
+        std::string path(filePath);
+#ifdef _WIN32
+        if (StringUtil::IsUtf8String(filePath)) {
+            path = StringUtil::Utf8ToGbk(filePath.c_str());
+        }
+#endif
+        return path;
+    }
+
     static inline std::string GetDetailFile(std::string parentDir, std::string detailName)
     {
-        std::string path = SplicePath(parentDir, detailName);
+        std::string path = PathPreprocess(SplicePath(parentDir, detailName));
         std::ifstream file(path);
         if (file.good()) {
             return path;
@@ -323,7 +334,7 @@ public:
     {
         std::vector<std::string> matchedFiles;
         if (!FileUtil::IsFolder(path)) {
-            matchedFiles.emplace_back(path);
+            matchedFiles.emplace_back(PathPreprocess(path));
             return matchedFiles;
         }
         std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex](
@@ -337,7 +348,7 @@ public:
                 if (FileUtil::IsFolder(tmpPath)) {
                     find(tmpPath, depth + 1);
                 } else if (std::regex_match(folder, fileRegex)) {
-                    matchedFiles.push_back(tmpPath);
+                    matchedFiles.push_back(PathPreprocess(tmpPath));
                 }
             }
         };
