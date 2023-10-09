@@ -7,7 +7,7 @@ script=$(readlink -f "$0")
 route=$(dirname "$script")
 root="${route}"/..
 
-modules=(cluster Memory Timeline)
+modules=(Cluster Memory Timeline)
 vscode_version=6.0.3
 idea_version=6.0.RC3
 build_type=$1
@@ -19,10 +19,13 @@ function init() {
   os=$(uname -s)
   # 优先读取交叉编译设置
   if [ "${build_type}" == 'cross_compile' ]; then
+    pythonExe=python3
     os_name=win
   elif [ "${os:0:5}" == 'MINGW' ]; then
+    pythonExe=python
     os_name=win
   elif [ "${os:0:5}" == 'Linux' ]; then
+    pythonExe=python3
     os_name=linux-"$(arch)"
   else
     echo "${os:0:5}"':os system is not support' && exit 1
@@ -37,24 +40,24 @@ function buildFramework() {
 }
 
 function buildModules() {
-  mkdir -p "${root}"/modules/plugins && rm -rf "${root}"/modules/plugins/*
+  mkdir -p "${root}"/framework/plugins && rm -rf "${root}"/framework/plugins/*
   cd "${root}"/modules
   for module in ${modules[*]}; do
     path="${root}"/modules/"${module,,}"
     cd "${path}" && rm -rf build && npm install --force && npm run build
-    cp -rf "${path}"/build "${root}"/modules/plugins/"${module}"
+    cp -rf "${path}"/build "${root}"/framework/plugins/"${module}"
   done
-  cp -rf "${root}"/modules/plugins "${root}"/plugins/vscode/profiler/
+  cp -rf "${root}"/framework/plugins "${root}"/plugins/vscode/profiler/
 }
 
 function buildServer() {
   cd "${root}"/server/build
-  python3 download_third_party.py
-  python3 build.py clean
+  ${pythonExe} download_third_party.py
+  ${pythonExe} build.py clean
   if [ "${build_type}" == 'cross_compile' ]; then
-    python3 build.py build --release --cross_compile
+    ${pythonExe} build.py build --release --cross_compile
   else
-    python3 build.py build --release
+    ${pythonExe} build.py build --release
   fi
   cp -fr "${root}"/server/output/"${os_name}"*/bin "${root}"/serverBuild/server
 }
