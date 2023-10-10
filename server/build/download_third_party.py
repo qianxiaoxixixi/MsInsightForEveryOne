@@ -98,6 +98,7 @@ def download_3rd_party():
 
 
 def download_sqlite_cache():
+    log('start to download sqlite cache')
     if not os.path.exists(os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_DIR)):
         tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
         urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
@@ -105,6 +106,7 @@ def download_sqlite_cache():
         tar.extractall(path=os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_DIR))
         tar.close()
         os.remove(tar_path)
+    log('finish to download sqlite cache')
 
 
 def reorganize_3rd_party():
@@ -122,8 +124,16 @@ def reorganize_3rd_party():
     log('finish to reorganize third party')
 
 
+def download_pip_package():
+    log('start to install pip package')
+    os.system(f'python3 -m pip install ninja==1.11.1 pyinstaller==5.13.2 -i '
+              f'https://mirrors.tools.huawei.com/pypi/simple/ --trusted-host mirrors.tools.huawei.com')
+    log('finish to install pip package')
+
+
 if __name__ == '__main__':
     LOG = init_log('root')
+    download_pip_package()
     download_sqlite_cache()
     reorganize_3rd_party()
 
