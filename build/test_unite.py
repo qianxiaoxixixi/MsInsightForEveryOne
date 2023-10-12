@@ -16,7 +16,9 @@ from bs4 import BeautifulSoup
 
 class Constant:
     MODULES_LIST = [
-        r"packages/frontend"
+        r"modules/memory",
+        r"modules/timeline",
+        r"modules/cluster"
     ]
     SCRIPT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     FINAL_REPORT_PATH = os.path.join(SCRIPT_PATH, "llt_cov")
@@ -131,6 +133,8 @@ def write_total_coverage(results):
 
 
 def cal_coverage(cov, total):
+    if total == 0:
+        return 0
     return cov * 1.0 / total
 
 

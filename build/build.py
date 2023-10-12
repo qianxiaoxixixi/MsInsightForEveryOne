@@ -11,6 +11,8 @@ import shutil
 import subprocess
 import logging
 
+from pathlib import Path
+
 SCRIPT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
@@ -32,9 +34,15 @@ def clean():
     ascend_insight = os.path.join(SCRIPT_PATH, 'product')
     if os.path.exists(ascend_insight):
         shutil.rmtree(ascend_insight)
-    build = os.path.join(SCRIPT_PATH, 'packages', 'frontend', 'build')
-    if os.path.exists(build):
-        shutil.rmtree(build)
+    framework_dist = os.path.join(SCRIPT_PATH, 'framework', 'dist')
+    if os.path.exists(framework_dist):
+        shutil.rmtree(framework_dist)
+    modules = ['cluster', 'memory', 'timeline']
+    for module in modules:
+        build_dir = os.path.join(SCRIPT_PATH, 'modules', module, 'build')
+        if os.path.exists(build_dir):
+            shutil.rmtree(build_dir)
+    
 
 
 def build_vscode(vscode_version, os_name):
@@ -45,10 +53,8 @@ def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     if os_name == 'win':
         exec_command(['npm.cmd', 'run', 'buildWin'], SCRIPT_PATH)
-    elif os_name.endswith('x86_64'):
-        exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
-    elif os_name.endswith('aarch64'):
-        exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
+    elif os_name.startswith('linux'):
+        exec_command(['npm', 'run', 'buildLinux'], SCRIPT_PATH)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'vscode')
     # copy vscode plugin
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
@@ -76,12 +82,36 @@ def build_intellij(idea_version, os_name):
         gradlew = os.path.join(plugins_path, 'gradlew')
     exec_command([gradlew, 'clean'], plugins_path)
     exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path)
+    exec_command([gradlew, 'ascend-insight:copyServerBuild'], plugins_path)
     exec_command([gradlew, 'buildPlugin'], plugins_path)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'intellij', 'build', 'distributions')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip')
     for file in os.listdir(src):
         if file.endswith('.zip'):
             shutil.copy(os.path.join(src, file), dst_file)
+
+
+def build_light_package(version, os_name):
+    package_path = os.path.join(SCRIPT_PATH, 'opensource', 'package')
+    if not os.path.exists(package_path):
+        logging.error('light package code is not existed')
+        return
+    profiler_path = os.path.join(package_path, 'resources', 'profiler')
+    if os.path.exists(profiler_path):
+        shutil.rmtree(profiler_path)
+    os.mkdir(profiler_path)
+    shutil.copytree(os.path.join(SCRIPT_PATH, 'framework', 'dist'),
+                    os.path.join(profiler_path, 'frontend'))
+    shutil.copytree(os.path.join(SCRIPT_PATH, 'serverBuild', 'server'),
+                    os.path.join(profiler_path, 'server'))
+    cargo_path = os.path.join(Path.home(), '.cargo', 'bin', 'cargo.exe' if os_name == 'win' else 'cargo')
+    if not os.path.exists(cargo_path):
+        logging.error('cargo is not installed')
+        return
+    exec_command([cargo_path, 'make', 'insight'], package_path)
+    for tmp in os.listdir(os.path.join(package_path, 'preview')):
+        if tmp.startswith('Ascend-Insight_'):
+            shutil.copyfile(os.path.join(package_path, 'preview', tmp), os.path.join(SCRIPT_PATH, 'out', tmp))
 
 
 def exec_command(command, path):
@@ -100,6 +130,7 @@ def main():
     os_name = 'win' if os_info.find('Windows') > -1 else 'linux-' + framework
     build_vscode(vscode_version, os_name)
     build_intellij(idea_version, os_name)
+    build_light_package(idea_version, os_name)
 
 
 if __name__ == "__main__":

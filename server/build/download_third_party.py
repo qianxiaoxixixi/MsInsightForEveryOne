@@ -24,32 +24,32 @@ OPEN_SOURCE = [
     [
         'googletest',
         'release-1.12.1',
-        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/google/googletest.git'
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/google/googletest.git'
     ],
     [
         'libuv',
         'v1.44.2',
-        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/libuv/libuv.git'
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/libuv/libuv.git'
     ],
     [
         'json',
         'v3.10.1',
-        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/nlohmann/json.git'
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/nlohmann/json.git'
     ],
     [
         'uSockets',
         'v0.8.1',
-        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/uNetworking/uSockets.git'
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uSockets.git'
     ],
     [
         'uWebSockets',
         'v20.10.0',
-        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/uNetworking/uWebSockets.git'
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uWebSockets.git'
     ],
     [
         'rapidjson',
         '012be8528783cdbf4b7a9e64f78bd8f056b97e24',
-        'ssh://git@szv-open.codehub.huawei.com:2222/OpenSourceCenter/Tencent/rapidjson.git'
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/Tencent/rapidjson.git'
     ]
 ]
 
@@ -94,6 +94,11 @@ def download_3rd_party():
         output = subprocess.Popen(download_cmd, cwd=THIRD_PARTY_DIR, stdout=subprocess.PIPE)
         log_output(output)
 
+    log('finish to download third party')
+
+
+def download_sqlite_cache():
+    log('start to download sqlite cache')
     if not os.path.exists(os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_DIR)):
         tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
         urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
@@ -101,6 +106,7 @@ def download_3rd_party():
         tar.extractall(path=os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_DIR))
         tar.close()
         os.remove(tar_path)
+    log('finish to download sqlite cache')
 
 
 def reorganize_3rd_party():
@@ -118,8 +124,16 @@ def reorganize_3rd_party():
     log('finish to reorganize third party')
 
 
+def download_pip_package():
+    log('start to install pip package')
+    os.system(f'python3 -m pip install ninja==1.11.1 pyinstaller==5.13.2 -i '
+              f'https://mirrors.tools.huawei.com/pypi/simple/ --trusted-host mirrors.tools.huawei.com')
+    log('finish to install pip package')
+
+
 if __name__ == '__main__':
     LOG = init_log('root')
-    download_3rd_party()
+    download_pip_package()
+    download_sqlite_cache()
     reorganize_3rd_party()
-    log('finish to download third party')
+
