@@ -94,12 +94,14 @@ dependencies {
 task copyFrontendBuild(type: Copy) {
     copy {
         from "../../../../framework/dist"
-        into "src/main/resources/frontend"
+        into "src/main/resources/profiler"
     }
+}
 
+task copyServerBuild(type: Copy) {
     copy {
-        from "../../../../modules/plugins/"
-        into "src/main/resources/frontend/plugins/"
+        from "../../../../serverBuild"
+        into "src/main/resources/profiler"
     }
 }
 
