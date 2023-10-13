@@ -13,7 +13,7 @@
         "buildServerLinux": "export PATH=$HOME/.local/bin:$PATH && cd ./server/build && python3 download_third_party.py && python3 build.py build --release",
         "copyServerWin": "xcopy .\\server\\output\\win_mingw64\\bin .\\serverBuild\\server\\ /E /I /Y",
         "copyServerLinux": "mkdir -p serverBuild && cp -rf ./server/output/linux-*/bin/ ./serverBuild/server",
-        "copyServerLinuxArm": "mkdir -p serverBuild/server",
+        "copyServerLinuxArm": "mkdir -p serverBuild/server && touch serverBuild/server/profiler_server",
         "buildModulesWin": "cd .\\modules && npm run buildModuleWin",
         "buildModulesLinux": "cd ./modules && npm run buildModuleLinux",
         "buildFrameWorkWin": "cd framework && npm install --force && npm run build && npm run copyWin",
