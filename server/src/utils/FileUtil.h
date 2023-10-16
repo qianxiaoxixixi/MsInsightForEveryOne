@@ -262,7 +262,11 @@ public:
     {
         std::string parent = GetParentPath(timeLineFile);
         std::string parentSec = GetParentPath(parent);
-        auto folders = FileUtil::FindFolders(parentSec);
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(parentSec, folders, files)) {
+            return timeLineFile;
+        }
         // 从profiler_info_文件获取
         for (const auto &folder: folders) {
             std::regex rankIdFileRegex("profiler_info_[0-9]{1,5}.json");
@@ -343,7 +347,11 @@ public:
         if (!FileUtil::IsFolder(path)) {
             return;
         }
-        auto folders = FileUtil::FindFolders(path);
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(path, folders, files)) {
+            return;
+        }
         for (std::string& file: folders) {
             std::string spliceFile = SplicePath(path, file);
             if (FileUtil::IsFolder(spliceFile)) {
@@ -369,7 +377,11 @@ public:
             if (depth > 5) {
                 return;
             }
-            auto folders = FileUtil::FindFolders(path);
+            std::vector<std::string> folders;
+            std::vector<std::string> files;
+            if (!FileUtil::FindFolders(path, folders, files)) {
+                return;
+            }
             for (const auto &folder: folders) {
                 std::string tmpPath = FileUtil::SplicePath(path, folder);
                 if (FileUtil::IsFolder(tmpPath)) {
@@ -430,7 +442,11 @@ public:
             if (depth > 5) {
                 return;
             }
-            auto folders = FileUtil::FindFolders(path);
+            std::vector<std::string> folders;
+            std::vector<std::string> fileList;
+            if (!FileUtil::FindFolders(path, folders, fileList)) {
+                return;
+            }
             if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
                 FindAscendFolder(path, files, fileName, fileReg);
                 return;
@@ -470,7 +486,11 @@ public:
             if (depth > 5) {
                 return;
             }
-            auto folders = FileUtil::FindFolders(path);
+            std::vector<std::string> folders;
+            std::vector<std::string> files;
+            if (!FileUtil::FindFolders(path, folders, files)) {
+                return;
+            }
             for (const auto &folder: folders) {
                 std::string tmpPath = FileUtil::SplicePath(path, folder);
                 if (FileUtil::IsFolder(tmpPath)) {
@@ -480,7 +500,11 @@ public:
                 }
             }
         };
-        auto folders = FileUtil::FindFolders(path);
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (FileUtil::FindFolders(path, folders, files)) {
+            return;
+        }
         static std::string reg = R"(PROF_.*)";
         for (const auto &folder: folders) {
             if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
