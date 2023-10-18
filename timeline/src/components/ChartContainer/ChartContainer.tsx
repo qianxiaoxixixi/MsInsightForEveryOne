@@ -20,6 +20,8 @@ import { Pos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
+import { RenderManagerContext } from '../../context/context';
+import { renderManager } from '../../renderManager';
 
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;
 const LANE_INFO_WIDTH_PX = 250;
@@ -123,13 +125,15 @@ export const ChartContainer = observer((props: Props) => {
         }}
         tabIndex={0}
     >
-        <ChartHeader
-            session={session}
-            laneInfoWidth={LANE_INFO_WIDTH_PX}
-            timelineHeight={TIME_LINE_AXIS_HEIGHT_PX}
-            showRecommendation={!props.interactive}
-        />
-        <ChartBody session={session} interactive={props.interactive} interactorMouseState={interactorMouseState} chartInteractorRef={chartInteractorRef}/>
+        <RenderManagerContext.Provider value={renderManager}>
+            <ChartHeader
+                session={session}
+                laneInfoWidth={LANE_INFO_WIDTH_PX}
+                timelineHeight={TIME_LINE_AXIS_HEIGHT_PX}
+                showRecommendation={!props.interactive}
+            />
+            <ChartBody session={session} interactive={props.interactive} interactorMouseState={interactorMouseState} chartInteractorRef={chartInteractorRef}/>
+        </RenderManagerContext.Provider>
         <HorizontalScroller
             session={session}
             leftLaneInfoWidth={LANE_INFO_WIDTH_PX}

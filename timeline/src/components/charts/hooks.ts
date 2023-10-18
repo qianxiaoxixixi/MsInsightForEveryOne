@@ -3,6 +3,7 @@ import { ChartData, ChartType, MapFunc } from '../../entity/chart';
 import { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
+import { useRenderManager } from '../../context/context';
 
 export type Pos = {
     x: number;
@@ -60,8 +61,9 @@ export const useRangeAndDomain = (session: Session, width: number, margin: numbe
  * @param deps the dependencies that triggers re-render
  */
 export const useBatchedRender = (renderer: () => void, deps: React.DependencyList): void => {
+    const renderManager = useRenderManager();
     useEffect(() => {
-        renderer();
+        renderManager.addTask(renderer);
     }, deps);
 };
 
