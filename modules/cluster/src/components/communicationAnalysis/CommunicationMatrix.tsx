@@ -184,7 +184,7 @@ const transportTypeOption = {
 };
 
 const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow: boolean;conditions: ConditionDataType}) {
-    const [ dataSource, setDataSource ] = useState<any>({});
+    const [ dataSource, setDataSource ] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
     const [ switchCondition, setSwitchCondition ] = useState({ type: 'bandwidth', showInner: false });
     useEffect(() => {
         if (isShow) {
@@ -194,12 +194,14 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
     useEffect(() => {
         if (isShow) {
             let data: any = dataSource.data.map((item: any) => {
-                return [ item.srcRank, item.dstRank,
+                return [ String(item.srcRank), String(item.dstRank),
                     item[switchCondition.type] !== undefined ? item[switchCondition.type] : null ];
             });
             if (!switchCondition.showInner) {
                 data = data.filter((item: any[]) => item[0] !== item[1]);
             }
+            data = data.filter((item: any[]) =>
+                dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
             InitCharts({ ...dataSource, data, type: switchCondition.type });
         }
     }, [ dataSource, switchCondition ]);
@@ -209,7 +211,7 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         const data = res.matrixList ?? [];
         const rankRes: {iterationOrRankId: string[] } =
             await queryRanks({ iterationId: conditions.iterationId });
-        const rankIds = rankRes.iterationOrRankId;
+        const rankIds = rankRes.iterationOrRankId.map(item => String(item));
         rankIds.sort((a, b) => Number(a) - Number(b));
         setDataSource({ data, rankIds });
     };
