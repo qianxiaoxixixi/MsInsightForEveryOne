@@ -452,7 +452,8 @@ void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int dept
     uint64_t start = 0;
     while (start < idList.size()) {
         std::string updateSql = sql;
-        uint64_t end = std::min(start + maxParams, idList.size());
+        uint64_t idListSize = idList.size();
+        uint64_t end = std::min(start + maxParams, idListSize);
         updateSql.append("(");
         for (auto i = start; i < end - 1; ++i) {
             updateSql.append(std::to_string(idList[i]) + ",");
