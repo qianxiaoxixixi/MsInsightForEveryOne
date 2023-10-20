@@ -21,6 +21,7 @@ from logging.handlers import TimedRotatingFileHandler
 IS_WINDOWS = platform.system() == 'Windows'
 IS_LINUX = platform.system() == 'Linux'
 IS_DARWIN = platform.system() == 'Darwin'
+FRAMEWORK = 'x86_64' if platform.platform().find('x86_64') > -1 else 'aarch64'
 MAKE_JOBS = multiprocessing.cpu_count() + 2
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,7 +81,7 @@ def get_gxx_type():
     elif IS_DARWIN:
         gxx_type = 'darwin'
     else:
-        gxx_type = 'linux-x86_64'
+        gxx_type = 'linux-' + FRAMEWORK
     return gxx_type
 
 

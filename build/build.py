@@ -53,6 +53,8 @@ def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     if os_name == 'win':
         exec_command(['npm.cmd', 'run', 'buildWin'], SCRIPT_PATH)
+    elif os_name == 'darwin':
+        exec_command(['npm', 'run', 'buildLinuxDarwin'], SCRIPT_PATH)
     elif os_name.endswith('x86_64'):
         exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
     elif os_name.endswith('aarch64'):
@@ -128,7 +130,11 @@ def main():
     init()
     os_info = platform.platform()
     framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
-    os_name = 'win' if os_info.find('Windows') > -1 else 'linux-' + framework
+    os_name = 'linux-' + framework
+    if os_info.find('Windows') > -1:
+        os_name = 'win'
+    elif os_info.find('mac') > -1:
+        os_name = 'darwin'
     build_vscode(vscode_version, os_name)
     build_intellij(idea_version, os_name)
     build_light_package(idea_version, os_name)
