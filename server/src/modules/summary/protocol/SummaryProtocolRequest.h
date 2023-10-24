@@ -87,6 +87,19 @@ struct ComputeDetailRequest : public Request {
     ComputeDetailParams params;
 };
 
+struct CommunicationDetailParams {
+    std::string rankId;
+    std::string timeFlag = "HCCL";
+    double currentPage = 0;
+    double pageSize = 0;
+    std::string orderBy;
+    std::string order;
+};
+
+struct CommunicationDetailRequest : public Request {
+    CommunicationDetailRequest() : Request(REQ_RES_COMMUNICATION_DETAIL) {};
+    CommunicationDetailParams params;
+};
 
 } // end of namespace Protocol
 } // end of namespace Dic

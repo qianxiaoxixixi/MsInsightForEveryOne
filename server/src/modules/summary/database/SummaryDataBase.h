@@ -30,7 +30,10 @@ public:
 
     bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                    std::vector<Protocol::ComputeDetail> &computeDetails);
-    bool QueryComputeTotalNum(std::string name, int64_t &totalNum);
+    bool QueryGetTotalNum(std::string name, int64_t &totalNum);
+
+    bool QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
+                                std::vector<Protocol::CommunicationDetail> &computeDetails);
 
 private:
     const std::string kernelTable = "kernel_detail";
@@ -41,6 +44,7 @@ private:
 
     sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);
+    std::string GetCommSql(Protocol::CommunicationDetailParams request);
 };
 
 } // end of namespace Summary

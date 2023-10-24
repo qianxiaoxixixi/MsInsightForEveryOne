@@ -20,6 +20,8 @@ template <> std::optional<json_t> ToResponseJson<PipelineStepResponse>(const Pip
 template <> std::optional<json_t> ToResponseJson<PipelineStageResponse>(const PipelineStageResponse &response);
 template <> std::optional<json_t> ToResponseJson<PipelineStageTimeResponse>(const PipelineStageTimeResponse &response);
 template <> std::optional<json_t> ToResponseJson<PipelineRankTimeResponse>(const PipelineRankTimeResponse &response);
+template <>
+std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -141,6 +141,23 @@ template <> std::optional<json_t> ToResponseJson<PipelineRankTimeResponse>(const
     }
     return json;
 }
+template <>
+std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["communicationDetails"] = json_t::array();
+    for (const CommunicationDetail &detail : response.commDetails) {
+        json_t itemJson = json_t::object();
+        itemJson["name"] = detail.name;
+        itemJson["type"] = detail.type;
+        itemJson["startTime"] = detail.startTime;
+        itemJson["duration"] = detail.duration;
+        itemJson["waitTime"] = detail.waitTime;
+        json["body"]["communicationDetails"].emplace_back(itemJson);
+    }
+    return json;
+}
 
 #pragma endregion
 } // end of namespace Protocol
