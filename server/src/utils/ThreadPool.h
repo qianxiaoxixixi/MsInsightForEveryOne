@@ -9,6 +9,7 @@
 #include <functional>
 #include <future>
 #include <thread>
+#include <vector>
 #include <mutex>
 #include <condition_variable>
 #include "SafeQueue.h"
