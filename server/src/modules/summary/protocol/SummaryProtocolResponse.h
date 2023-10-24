@@ -119,6 +119,20 @@ struct ComputeDetailResponse : public Response {
     std::vector<ComputeDetail> computeDetails;
     int64_t totalNum;
 };
+
+struct CommunicationDetail {
+    std::string name;
+    std::string type;
+    double startTime;
+    double duration;
+    double waitTime;
+};
+
+struct CommunicationDetailResponse : public Response {
+    CommunicationDetailResponse() : Response(REQ_RES_COMMUNICATION_DETAIL) {}
+    std::vector<CommunicationDetail> commDetails;
+    int64_t totalNum;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

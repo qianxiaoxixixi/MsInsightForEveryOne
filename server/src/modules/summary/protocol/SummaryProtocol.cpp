@@ -20,6 +20,7 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, ToStagesRequest);
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeRequest);
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -31,6 +32,7 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, ToStagesResponse);
     resToJsonFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeResponse);
     resToJsonFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -126,7 +128,21 @@ std::unique_ptr<Request> SummaryProtocol::ToRankTimeRequest(const json_t &json, 
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
     return reqPtr;
 }
-
+std::unique_ptr<Request> SummaryProtocol::ToCommunicationRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<CommunicationDetailRequest> reqPtr = std::make_unique<CommunicationDetailRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.timeFlag, json["params"], "timeFlag");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -164,6 +180,11 @@ std::optional<json_t> SummaryProtocol::ToStageTimeResponse(const Response &respo
 std::optional<json_t> SummaryProtocol::ToRankTimeResponse(const Response &response)
 {
     return ToResponseJson<PipelineRankTimeResponse>(dynamic_cast<const PipelineRankTimeResponse &>(response));
+}
+
+std::optional<json_t> SummaryProtocol::ToCommunicationResponse(const Response &response)
+{
+    return ToResponseJson<CommunicationDetailResponse>(dynamic_cast<const CommunicationDetailResponse &>(response));
 }
 
 #pragma endregion

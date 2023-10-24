@@ -213,7 +213,7 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     return sql;
 }
 
-bool SummaryDataBase::QueryComputeTotalNum(std::string name, int64_t &totalNum)
+bool SummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + kernelTable + " WHERE accelerator_core = ?";
@@ -222,12 +222,68 @@ bool SummaryDataBase::QueryComputeTotalNum(std::string name, int64_t &totalNum)
         int index = bindStartIndex;
         sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
     } else {
-        ServerLog::Error("QueryComputeTotalNum failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Get total num failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int64(stmt, resultStartIndex);
     }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+std::string SummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
+{
+    std::string order = request.orderBy;
+    std::string ascend;
+    if (request.order == "ascend") {
+        ascend = "ASC";
+    } else {
+        ascend = "DESC";
+    }
+    std::string sql = "";
+    if (order.size() == 0) {
+        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
+              "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
+              " WHERE accelerator_core = ?  LIMIT ? offset ?";
+    } else {
+        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
+              "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
+              " WHERE accelerator_core = ?  ORDER BY " + order + " " + ascend + " LIMIT ? offset ?";
+    }
+    return sql;
+}
+
+bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
+                                             std::vector<Protocol::CommunicationDetail> &commDetails)
+{
+    std::string sql = GetCommSql(params);
+    std::string timeFlag = params.timeFlag;
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    double offset = (params.currentPage - 1) * params.pageSize;
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
+    sqlite3_bind_double(stmt, index++, params.pageSize);
+    sqlite3_bind_double(stmt, index++, offset);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::CommunicationDetail computeDetail{};
+        computeDetail.name = sqlite3_column_string(stmt, col++);
+        computeDetail.type = sqlite3_column_string(stmt, col++);
+        computeDetail.startTime = sqlite3_column_double(stmt, col++);
+        computeDetail.duration = sqlite3_column_double(stmt, col++);
+        computeDetail.waitTime = sqlite3_column_double(stmt, col++);
+        commDetails.emplace_back(computeDetail);
+    }
+
     sqlite3_finalize(stmt);
     return true;
 }

@@ -43,7 +43,6 @@ private:
     static std::optional<json_t> ToSearchCountResponseJson(const Response &response);
     static std::optional<json_t> ToSearchSliceResponseJson(const Response &response);
     static std::optional<json_t> ToRemoteDeleteResponseJson(const Response &response);
-    static std::optional<json_t> ToCommunicationDetailResponse(const Response &response);
     // event to json
     static std::optional<json_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<json_t> ToParseFailEventJson(const Event &event);

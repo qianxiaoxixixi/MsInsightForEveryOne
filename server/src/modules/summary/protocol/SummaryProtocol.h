@@ -27,6 +27,7 @@ private:
     static std::unique_ptr<Request> ToStagesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToStageTimeRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToRankTimeRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToCommunicationRequest(const json_t &json, std::string &error);
 
     static std::optional<json_t> ToTopNResponse(const Response &response);
     static std::optional<json_t> ToStatisticsResponse(const Response &response);
@@ -35,6 +36,7 @@ private:
     static std::optional<json_t> ToStagesResponse(const Response &response);
     static std::optional<json_t> ToStageTimeResponse(const Response &response);
     static std::optional<json_t> ToRankTimeResponse(const Response &response);
+    static std::optional<json_t> ToCommunicationResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

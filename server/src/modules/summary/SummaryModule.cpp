@@ -10,6 +10,7 @@
 #include "StageHandler.h"
 #include "StageAndBubbleTimeHandler.h"
 #include "RankAndBubbleTimeHandler.h"
+#include "QueryCommunicationDetailHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -34,6 +35,7 @@ void SummaryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, std::make_unique<StageHandler>());
     requestHandlerMap.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, std::make_unique<StageAndBubbleTimeHandler>());
     requestHandlerMap.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, std::make_unique<RankAndBubbleTimeHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_DETAIL, std::make_unique<QueryCommunicationDetailHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)
