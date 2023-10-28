@@ -253,7 +253,8 @@ void WsSession::SendResponse(const Protocol::Response &response)
         ServerLog::Error(error);
         return;
     }
-    std::string responseStr = json->dump();
+    std::string responseStr = json->dump(-1, ' ', false,
+                                         nlohmann::detail::error_handler_t::replace);
     std::string responseHeader = GetMessageHeader(responseStr.length());
     // send header + response
     loop->defer([this, responseHeader, responseStr]() {
@@ -272,7 +273,8 @@ void WsSession::SendEvent(Protocol::Event &event)
         ServerLog::Info(error);
         return;
     }
-    std::string eventStr = json->dump();
+    std::string eventStr = json->dump(-1, ' ', false,
+                                      nlohmann::detail::error_handler_t::replace);
     std::string eventHeader = GetMessageHeader(eventStr.length());
     // send header + response
     loop->defer([this, eventStr, eventHeader]() {
