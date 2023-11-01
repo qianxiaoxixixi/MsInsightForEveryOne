@@ -5,7 +5,6 @@ import { Session } from '../entity/session';
 import { TimeMakerButton } from './TimeMakerButton';
 import { UnitsFilter } from './UnitsFilter';
 import { CategorySearch } from './CategorySearch';
-import { FilterLinkLine } from './FilterLinkLine';
 
 const Container = styled.div`
     display: flex;
@@ -24,7 +23,6 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
         <TimeMakerButton session={session} />
         <UnitsFilter session={session} />
         <CategorySearch session={session} />
-        <FilterLinkLine session={session} />
         {session.buttons.map((_Button, index) => <_Button session={session} key={`${session.id}-${index}`} />)}
         {unit?.buttons?.map((_Button, index) => <_Button session={session} key={`${unit.name}-${index}`} />)}
     </Container>);
