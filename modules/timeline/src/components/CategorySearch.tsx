@@ -12,6 +12,7 @@ import { StyledInput } from './base/StyledInput';
 import { SvgType } from './base/rc-table/types';
 import { runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
+import i18n from 'i18next';
 
 const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
