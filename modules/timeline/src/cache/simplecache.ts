@@ -1,5 +1,6 @@
 import { ThreadTraceRequest, ThreadTrace, CounterData, CounterMetaData, CounterRequest } from '../entity/data';
 import { binarySearchFirstBig, binarySearchLastSmall } from './strategies/utils';
+import { store } from '../store';
 
 type Method = 'unit/threadTraces' | 'unit/counter'; // store methodKey
 type Handler = (params: Record<string, unknown>, metaData?: unknown) => Promise<ThreadTrace[][] | number[][]>;
