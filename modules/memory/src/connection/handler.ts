@@ -31,7 +31,6 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                     item.hasMemory && session.memoryRankIds.push(item.rankId);
                 });
             }
-            session.isCluster = isCluster;
         });
     } catch (err) {
         console.error(err);
@@ -80,6 +79,10 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
         runInAction(() => {
             if (!session) {
                 return;
+            }
+            if (typeof data.isCluster === 'boolean' && (data.isCluster || session.isCluster)) {
+                session.memoryRankIds = [];
+                session.isCluster = data.isCluster;
             }
             if (data.isReset !== undefined) {
                 session.rankIdsTotal = data.unitcount as number;
