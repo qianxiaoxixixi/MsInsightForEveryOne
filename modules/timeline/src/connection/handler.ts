@@ -195,10 +195,9 @@ export const setTheme: NotificationHandler = (data): void => {
 };
 
 export const clusterCompletedHandler: NotificationHandler = (data): void => {
-    if (data.parseResult === 'ok') {
-        connector.send({
-            event: 'updateSession',
-            body: { isCluster: true, clusterCompleted: true },
-        });
-    }
+    const clusterRes = data?.parseResult === 'ok';
+    connector.send({
+        event: 'updateSession',
+        body: { isCluster: clusterRes, clusterCompleted: clusterRes },
+    });
 };
