@@ -23,7 +23,7 @@ namespace Module {
 namespace Timeline {
 class TraceDatabase : public Database {
 public:
-    TraceDatabase() = default;
+    explicit TraceDatabase(std::mutex &sqlMutex);
     ~TraceDatabase() override;
 
     bool SetConfig();
@@ -76,6 +76,7 @@ public:
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
 
 private:
+    std::mutex &mutex;
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
     const std::string processTable = "process";
