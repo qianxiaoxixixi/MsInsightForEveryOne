@@ -130,8 +130,8 @@ def exec_command(command, path):
 
 
 def main():
-    vscode_version = '6.0.3'
-    idea_version = '6.0.RC3'
+    vscode_version = '6.0.8'
+    idea_version = '6.0.T800'
     init()
     os_info = platform.platform()
     framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
