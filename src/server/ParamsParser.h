@@ -15,6 +15,7 @@ using namespace std;
 struct ParamsOption {
     int wsPort = -1;
     int logSize = 32 * 1024 * 1024;
+    int scanPort = -1;
     string host = "0.0.0.0";
     string sid;
     string logLevel = "INFO";
@@ -39,12 +40,14 @@ private:
     bool ParseLogSize(const std::string &logSize);
     bool ParseLogLevel(const std::string &logLevel);
     bool ParseSid(const std::string &sid);
+    bool ParseScan(const std::string &scan);
 
     const string symbolWsPort = "--wsPort=";
     const string symbolLogPath = "--logPath=";
     const string symbolLogSize = "--logSize=";
     const string symbolLogLevel = "--logLevel=";
     const string symbolSid = "--sid=";
+    const string symbolScan = "--scan=";
     const int minPortNum = 9000;
     const int maxPortNum = 9100;
 
