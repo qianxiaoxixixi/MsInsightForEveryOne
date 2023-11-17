@@ -62,6 +62,10 @@ bool ParamsParser::ParseField(const std::string &data)
     if (pos != std::string::npos) {
         return ParseSid(data.substr(pos + symbolSid.length()));
     }
+    pos = data.find(symbolScan);
+    if (pos != std::string::npos) {
+        return ParseScan(data.substr(pos + symbolScan.length()));
+    }
     error = "ERROR: " + data + " has not been supported.";
     return false;
 }
@@ -130,6 +134,14 @@ bool ParamsParser::ParseSid(const std::string &sid)
 {
     if (!sid.empty()) {
         option.sid = sid;
+    }
+    return true;
+}
+
+bool ParamsParser::ParseScan(const std::string &scan)
+{
+    if (!scan.empty()) {
+        option.scanPort = TryParseInt(scan);
     }
     return true;
 }
