@@ -55,6 +55,12 @@ include_directories(${SRC_HOME_DIR}/modules/memory/protocol)
 include_directories(${SRC_HOME_DIR}/modules/communication)
 include_directories(${SRC_HOME_DIR}/modules/communication/protocol)
 include_directories(${SRC_HOME_DIR}/modules/communication/handler)
+# Operator
+include_directories(${SRC_HOME_DIR}/modules/operator)
+include_directories(${SRC_HOME_DIR}/modules/operator/database)
+include_directories(${SRC_HOME_DIR}/modules/operator/handler)
+include_directories(${SRC_HOME_DIR}/modules/operator/parser)
+include_directories(${SRC_HOME_DIR}/modules/operator/protocol)
 
 # modules for server
 aux_source_directory(${SRC_HOME_DIR}/modules DIC_MODULES_SRC)
@@ -85,6 +91,12 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memory/protocol DIC_MODULES_MEMORY_
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/protocol DIC_MODULES_COMMUNICATION_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/handler DIC_MODULES_COMMUNICATION_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication DIC_MODULES_COMMUNICATION_SRC)
+# Operator
+aux_source_directory(${SRC_HOME_DIR}/modules/operator  DIC_MODULES_OPERATOR_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/operator/database DIC_MODULES_OPERATOR_DATABASE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/operator/handler DIC_MODULES_OPERATOR_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/operator/parser DIC_MODULES_OPERATOR_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/operator/protocol DIC_MODULES_OPERATOR_PROTOCOL_SRC)
 
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
@@ -116,7 +128,12 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SUMMARY_PROTOCOL_SRC}
         ${DIC_MODULES_COMMUNICATION_SRC}
         ${DIC_MODULES_COMMUNICATION_HANDLER_SRC}
-        ${DIC_MODULES_COMMUNICATION_PROTOCOL_SRC})
+        ${DIC_MODULES_COMMUNICATION_PROTOCOL_SRC}
+        ${DIC_MODULES_OPERATOR_SRC}
+        ${DIC_MODULES_OPERATOR_DATABASE_SRC}
+        ${DIC_MODULES_OPERATOR_PARSER_SRC}
+        ${DIC_MODULES_OPERATOR_HANDLER_SRC}
+        ${DIC_MODULES_OPERATOR_PROTOCOL_SRC})
 
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test")
