@@ -17,6 +17,7 @@ const std::string MODULE_TIMELINE = "timeline";
 const std::string MODULE_SUMMARY = "summary";
 const std::string MODULE_COMMUNICATION = "communication";
 const std::string MODULE_MEMORY = "memory";
+const std::string MODULE_OPERATOR = "operator";
 #pragma endregion
 
 #pragma region << Base>>
@@ -87,6 +88,17 @@ const std::string REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH = "communication/matrix
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
 const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operator/size";
+
+// Operator Request
+const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";
+const std::string REQ_RES_OPERATOR_COMPUTE_UNIT_INFO = "operator/compute_unit";
+const std::string REQ_RES_OPERATOR_STATISTIC_INFO = "operator/statistic";
+const std::string REQ_RES_OPERATOR_DETAIL_INFO = "operator/details";
+const std::string REQ_RES_OPERATOR_MORE_INFO  = "operator/more_info";
+
+// Operator Event
+const std::string EVENT_PARSE_OPERATOR_STATUS = "parse/operator";
+
 #pragma endregion
 } // end of namespace
 }

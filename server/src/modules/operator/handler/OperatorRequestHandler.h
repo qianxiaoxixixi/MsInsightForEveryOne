@@ -1,0 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_OPERATORREQUESTHANDLER_H
+#define PROFILER_SERVER_OPERATORREQUESTHANDLER_H
+
+#include "ModuleRequestHandler.h"
+
+namespace Dic::Module::Operator {
+    class OperatorRequestHandler : public ModuleRequestHandler {
+    public:
+        OperatorRequestHandler()
+        {
+            moduleName = Protocol::ModuleType::OPERATOR;
+        }
+
+        ~OperatorRequestHandler() override = default;
+
+        void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    };
+}
+#endif // PROFILER_SERVER_OPERATORREQUESTHANDLER_H
