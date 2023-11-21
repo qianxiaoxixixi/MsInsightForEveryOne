@@ -11,12 +11,12 @@ namespace Dic::Protocol {
     {
         json_t json;
         ProtocolUtil::SetResponseJsonBaseInfo(res, json);
-        json["body"]["datas"] = json_t::array();
+        json["body"]["data"] = json_t::array();
         for (const OperatorDurationRes& ele : res.datas) {
             json_t dataJson = json_t::object();
             dataJson["name"] = ele.name;
             dataJson["duration"] = ele.duration;
-            json["body"]["datas"].emplace_back(dataJson);
+            json["body"]["data"].emplace_back(dataJson);
         }
         return json;
     }
@@ -26,12 +26,12 @@ namespace Dic::Protocol {
     {
         json_t json;
         ProtocolUtil::SetResponseJsonBaseInfo(res, json);
-        json["body"]["datas"] = json_t::array();
+        json["body"]["data"] = json_t::array();
         for (const OperatorDurationRes& ele : res.datas) {
             json_t dataJson = json_t::object();
             dataJson["name"] = ele.name;
             dataJson["duration"] = ele.duration;
-            json["body"]["datas"].emplace_back(dataJson);
+            json["body"]["data"].emplace_back(dataJson);
         }
         return json;
     }
@@ -42,7 +42,7 @@ namespace Dic::Protocol {
         json_t json;
         ProtocolUtil::SetResponseJsonBaseInfo(res, json);
         json["body"]["total"] = res.total;
-        json["body"]["datas"] = json_t::array();
+        json["body"]["data"] = json_t::array();
         for (const OperatorStatisticInfoRes& ele : res.datas) {
             json_t dataJson = json_t::object();
             dataJson["opType"] = ele.opType;
@@ -53,7 +53,7 @@ namespace Dic::Protocol {
             dataJson["avgTime"] = ele.avgTime;
             dataJson["maxTime"] = ele.maxTime;
             dataJson["minTime"] = ele.minTime;
-            json["body"]["datas"].emplace_back(dataJson);
+            json["body"]["data"].emplace_back(dataJson);
         }
         return json;
     }
@@ -65,7 +65,7 @@ namespace Dic::Protocol {
         ProtocolUtil::SetResponseJsonBaseInfo(res, json);
         json["body"]["total"] = res.total;
         json["body"]["level"] = res.level;
-        json["body"]["datas"] = json_t::array();
+        json["body"]["data"] = json_t::array();
         for (const OperatorDetailInfoRes& ele : res.datas) {
             json_t dataJson = json_t::object();
             dataJson["name"] = ele.name;
@@ -81,7 +81,7 @@ namespace Dic::Protocol {
             dataJson["outputShape"] = ele.outputShape;
             dataJson["outputType"] = ele.outputType;
             dataJson["outputFormat"] = ele.outputFormat;
-            json["body"]["datas"].emplace_back(dataJson);
+            json["body"]["data"].emplace_back(dataJson);
         }
         return json;
     }
@@ -93,7 +93,7 @@ namespace Dic::Protocol {
         ProtocolUtil::SetResponseJsonBaseInfo(res, json);
         json["body"]["total"] = res.total;
         json["body"]["level"] = res.level;
-        json["body"]["datas"] = json_t::array();
+        json["body"]["data"] = json_t::array();
         for (const OperatorDetailInfoRes& ele : res.datas) {
             json_t dataJson = json_t::object();
             dataJson["name"] = ele.name;
@@ -109,7 +109,7 @@ namespace Dic::Protocol {
             dataJson["outputShape"] = ele.outputShape;
             dataJson["outputType"] = ele.outputType;
             dataJson["outputFormat"] = ele.outputFormat;
-            json["body"]["datas"].emplace_back(dataJson);
+            json["body"]["data"].emplace_back(dataJson);
         }
         return json;
     }
@@ -119,13 +119,13 @@ namespace Dic::Protocol {
     {
         json_t json;
         ProtocolUtil::SetEventJsonBaseInfo(event, json);
-        json["body"]["datas"] = json_t::array();
+        json["body"]["data"] = json_t::array();
         for (const OperatorRank& rank : event.datas) {
             json_t dataJson = json_t::object();
             dataJson["rankId"] = rank.rankId;
             dataJson["status"] = rank.status;
             dataJson["error"] = rank.error;
-            json["body"]["datas"].emplace_back(dataJson);
+            json["body"]["data"].emplace_back(dataJson);
         }
 
         return json;
