@@ -12,7 +12,7 @@ import { Session } from '../../../entity/session';
 import { getAutoKey } from '../../../utils/dataAutoKey';
 import { traceSingle } from '../../../utils/traceLogger';
 import { Chart } from '../../charts';
-import { isPinned } from '../unitPin';
+import { isPinned, isSonPinned } from '../unitPin';
 import { useSelectUnit } from './hooks/useSelectUnit';
 import { KeyedInsightUnit } from './types';
 import { UnitInfo } from './UnitInfo';
@@ -83,6 +83,7 @@ interface UnitProps {
     laneInfoWidth: number;
     hasExpandIcon: boolean;
     isPinned: boolean;
+    isSonPinned: boolean;
 }
 
 export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps): JSX.Element => {
@@ -191,6 +192,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
                 hasExpandIcon={true}
                 isVisible={true}
                 isPinned={isPinned(unit)}
+                isSonPinned={isSonPinned(unit)}
             />)}
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: tailOffset }} />
     </div>;
