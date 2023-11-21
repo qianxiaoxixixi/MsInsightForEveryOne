@@ -16,6 +16,7 @@ enum class ModuleType : int {
     SUMMARY = 3,
     MEMORY = 4,
     COMMUNICATION = 5,
+    OPERATOR = 6,
 };
 
 enum class LinkType : int {
