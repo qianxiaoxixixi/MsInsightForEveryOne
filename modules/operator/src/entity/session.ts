@@ -7,6 +7,7 @@ export class Session {
     renderId: number = 0;
     total: number = 0;
     isDark: boolean = true;
+    parseCompleted: boolean = false;
     constructor() {
         makeAutoObservable(this);
     }

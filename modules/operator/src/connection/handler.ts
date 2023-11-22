@@ -10,8 +10,7 @@ export const setTheme: NotificationHandler = (data): void => {
 };
 
 export const updateSessionHandler: NotificationHandler = (data): void => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
+    const session = store.sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
@@ -34,7 +33,8 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        session.allRankIds.push(String(data.rankId));
+        const ids = [ ...session.allRankIds, String(data.rankId) ].sort((a, b) => Number(a) - Number(b));
+        session.allRankIds = ids;
     });
 };
 

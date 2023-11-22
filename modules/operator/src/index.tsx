@@ -35,10 +35,8 @@ declare global {
         dataPath: string[];
     }
 };
-window.dataSource = { remote: '127.0.0.1', port: 9000, dataPath: [] };
 window.requestData = async (command, params, module) => {
     const data = await connector.fetch({
-        remote: window.dataSource,
         args: { command, params },
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
     });
