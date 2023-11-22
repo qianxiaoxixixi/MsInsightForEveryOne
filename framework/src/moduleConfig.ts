@@ -25,6 +25,14 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true
     },
     {
+        name: 'Operator',
+        requestName: 'operator',
+        attributes: {
+            src: './plugins/Operator/index.html'
+        },
+        isDefault: true
+    },
+    {
         name: 'Summary',
         requestName: 'summary',
         attributes: {

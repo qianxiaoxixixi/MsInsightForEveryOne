@@ -81,10 +81,16 @@ const baseOption: echarts.EChartsOption = {
     ],
 };
 
+// eslint-disable-next-line max-lines-per-function
 const DetailChart = observer(function ({ condition, session }: {condition: ConditionType;session: Session}) {
     const [ opTypeData, setOpTypeData ] = useState([]);
     const [ computeData, setComputeData ] = useState([]);
     const updateData = (): void => {
+        if (condition.rankId === '') {
+            setOpTypeData([]);
+            setComputeData([]);
+            return;
+        }
         // 算子类型耗时占比：饼图
         updateOpTypeData();
         // 计算单元占比：饼图
@@ -112,9 +118,7 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     }
     // 避免echarts渲染空白
     chartVisbilityListener('opTypeChart', () => {
-        if (document.getElementById('opTypeChart')?.innerHTML === '') {
-            renderChart();
-        }
+        renderChart();
     });
     useEffect(() => {
         updateData();
