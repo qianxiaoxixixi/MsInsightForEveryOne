@@ -18,22 +18,26 @@ const opl0Columns = [
         title: 'Name',
         dataIndex: 'name',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Type',
         dataIndex: 'type',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Accelerator Core',
         dataIndex: 'accCore',
         key: 'accCore',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Start Time(ms)',
         dataIndex: 'startTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Duration(μs)',
@@ -44,6 +48,7 @@ const opl0Columns = [
         title: 'Wait Time(μs)',
         dataIndex: 'waitTime',
         sorter: true,
+        ellipsis: true,
     },
 ];
 const opl2Columns = [
@@ -52,36 +57,43 @@ const opl2Columns = [
         title: 'Block Dim',
         dataIndex: 'blockDim',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Input Shapes',
         dataIndex: 'inputShape',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Input Data Types',
         dataIndex: 'inputType',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Input Formats',
         dataIndex: 'inputFormat',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Output Shapes',
         dataIndex: 'outputShape',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Output Data Types',
         dataIndex: 'outputType',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Output Formats',
         dataIndex: 'outputFormat',
         sorter: true,
+        ellipsis: true,
     },
 ];
 const opStaticColumns = [
@@ -89,65 +101,77 @@ const opStaticColumns = [
         title: 'Type',
         dataIndex: 'opType',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Accelerator Core',
         dataIndex: 'accCore',
         key: 'accCore',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Count',
         dataIndex: 'count',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Total Time(μs)',
         dataIndex: 'totalTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Avg Time(μs)',
         dataIndex: 'avgTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Max Time(μs)',
         dataIndex: 'maxTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Min Time(μs)',
         dataIndex: 'minTime',
         sorter: true,
+        ellipsis: true,
     },
 ];
 const opShapeStaticColumns = [
     {
-        title: 'Type',
-        dataIndex: 'opType',
+        title: 'Name',
+        dataIndex: 'opName',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Shape',
         dataIndex: 'inputShape',
         key: 'Shape',
+        ellipsis: true,
     },
     {
         title: 'Accelerator Core',
         dataIndex: 'accCore',
         key: 'accCore',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Count',
         dataIndex: 'count',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Total Time(μs)',
         dataIndex: 'totalTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Avg Time(μs)',
@@ -158,11 +182,13 @@ const opShapeStaticColumns = [
         title: 'Max Time(μs)',
         dataIndex: 'maxTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Min Time(μs)',
         dataIndex: 'minTime',
         sorter: true,
+        ellipsis: true,
     },
 ];
 const colMap: any = {
@@ -175,11 +201,12 @@ const colMap: any = {
     'Input Shape': opShapeStaticColumns,
 };
 
-const OperatorTable = ({ condition, opType, inputShape, session }:
-{condition: ConditionType;opType?: string;inputShape?: string;session: Session}): JSX.Element => {
+const OperatorTable = ({ condition, opType, opName, inputShape, session }:
+{condition: ConditionType;opType?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
     return <BaseTable
-        condition={{ ...condition, group: OPERATOR }}
+        condition={condition}
         opType={opType}
+        opName={opName}
         inputShape={inputShape}
         session={session}
     />;
@@ -188,8 +215,8 @@ const OperatorTable = ({ condition, opType, inputShape, session }:
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: '' };
 // eslint-disable-next-line max-lines-per-function
-const BaseTable = ({ condition, opType, inputShape, session }:
-{condition: ConditionType;opType?: string;inputShape?: string;session: Session}): JSX.Element => {
+const BaseTable = ({ condition, opType, opName, inputShape, session }:
+{condition: ConditionType;opType?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
     const [ cols, setCols ] = useState<any[]>(opl0Columns);
     const [ page, setPage ] = useState(defaultPage);
     const [ sorter, setSorter ] = useState(defaultSorter);
@@ -224,9 +251,9 @@ const BaseTable = ({ condition, opType, inputShape, session }:
     const updateData = async(page: any, sorter: any): Promise<void> => {
         let res;
         // 展开算子
-        if (opType !== undefined && inputShape !== undefined) {
+        if (opType !== undefined || opName !== undefined) {
             res = await queryOperatorsInStatic(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field, opType, shape: inputShape },
+                { ...condition, ...page, order: sorter.order, orderBy: sorter.field, opType, opName, shape: inputShape },
             );
         } else if (condition.group === OPERATOR) {
             res = await queryOperators(
@@ -245,7 +272,7 @@ const BaseTable = ({ condition, opType, inputShape, session }:
 
         setData(data);
         setPage({ ...page, total });
-        const columns = getCols({ group: condition.group, level });
+        const columns = getCols({ group: opType !== undefined ? OPERATOR : condition.group, level });
         setCols(columns);
         runInAction(() => {
             session.total = total;
@@ -253,6 +280,15 @@ const BaseTable = ({ condition, opType, inputShape, session }:
     };
 
     useEffect(() => {
+        if (condition.rankId === '') {
+            setData([]);
+            setPage(defaultPage);
+            runInAction(() => {
+                session.total = 0;
+            });
+            return;
+        }
+
         updateData(page, sorter);
         setExpandedKeys([]);
     }, [ page.current, page.pageSize, sorter.field, sorter.order, condition ]);
@@ -273,6 +309,7 @@ const BaseTable = ({ condition, opType, inputShape, session }:
             ? {
                 expandedRowRender: (record: any) => <OperatorTable
                     condition={condition}
+                    opName={record.opName}
                     opType={record.opType}
                     inputShape={record.inputShape}
                     session={session}
@@ -287,7 +324,7 @@ const BaseTable = ({ condition, opType, inputShape, session }:
 const DetailTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
     return <Container
         style={{ height: 'auto' }}
-        title={'Detail'}
+        title={'Operator Detail'}
         content={<BaseTable condition={condition} session={session}/>}
     />;
 };

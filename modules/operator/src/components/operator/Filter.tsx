@@ -13,13 +13,14 @@ export interface ConditionType {
     rankId: string ;
     group: string;
     topK: number;
-    custom?: number;
+    custom: number;
 }
 
 export const defaultCondition = {
     rankId: '',
     group: 'Operator',
     topK: 15,
+    custom: 0,
 };
 const defaultOptionMap = {
     rankIdOptions: [],
@@ -35,44 +36,25 @@ const defaultOptionMap = {
 const condition: ConditionType = observable(defaultCondition);
 const optionMap: optionMapType = observable(defaultOptionMap);
 
-const setOptions = async(initOptionMap?: optionMapType): Promise<void> => {
-    // rankId
-    const rankIdOptions = initOptionMap?.rankIdOptions ?? defaultOptionMap.rankIdOptions;
-    // group
-    const groupOptions = initOptionMap?.groupOptions ?? defaultOptionMap.groupOptions;
-    // topK
-    const topKOptions = initOptionMap?.topKOptions ?? defaultOptionMap.topKOptions;
+const setOptions = async(initOptionMap: optionMapType = {}): Promise<void> => {
     runInAction(() => {
-        optionMap.rankIdOptions = rankIdOptions;
-        optionMap.groupOptions = groupOptions;
-        optionMap.topKOptions = topKOptions;
+        const keys = Object.keys(initOptionMap);
+        keys.forEach(key => {
+            optionMap[key] = initOptionMap[key] ?? [];
+        });
     });
 };
 
-const setCondition = (initCondition?: ConditionType): void => {
-    const rankId = getValue(
-        [ initCondition?.rankId, condition.rankId, optionMap.rankIdOptions[0]?.value, defaultCondition.rankId ]);
-    const group = getValue(
-        [ initCondition?.group, condition.group, optionMap.groupOptions[0]?.value, defaultCondition.group ]);
-    const topK = getValue(
-        [ initCondition?.topK, condition.topK, optionMap.topKOptions[0]?.value, defaultCondition.topK ]);
+const setCondition = (initCondition: ConditionType = {} as ConditionType): void => {
     runInAction(() => {
-        condition.group = group as string;
-        condition.rankId = rankId as string;
-        condition.topK = topK as number;
-    });
-};
-
-function getValue<T>(list: T[]): T | undefined {
-    if (list.length === 0) {
-        return;
-    }
-    for (let i = 0; i < list.length; i++) {
-        if (list[i] !== undefined && list[i] !== null && list[i] !== '') {
-            return list[i];
+        const keys = Object.keys(initCondition);
+        keys.forEach(key => {
+            (condition as any)[key] = (initCondition as any)[key];
+        });
+        if (condition.rankId === '') {
+            condition.rankId = optionMap.rankIdOptions[0]?.value as string ?? '';
         }
-    }
-    return list[list.length - 1];
+    });
 };
 
 function handleChange<T>(key: keyof ConditionType, val: T): void {
@@ -90,12 +72,14 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         observe(optionMap, () => {
             setCondition();
         });
-        setOptions();
     }, [ ]);
 
     useEffect(() => {
-        const rankIdOptions = session.allRankIds.map((item, index) => ({ label: item, value: index }));
+        const rankIdOptions = session.allRankIds.map((item, index) => ({ label: item, value: item }));
         setOptions({ rankIdOptions });
+        if (session.allRankIds.length === 0) {
+            setCondition(defaultCondition);
+        }
     }, [session.allRankIds]);
 
     useEffect(() => {
