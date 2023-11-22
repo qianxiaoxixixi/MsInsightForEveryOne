@@ -136,6 +136,7 @@ std::vector<std::string> DataBaseManager::GetAllFileId()
     }
     return traceFileId;
 }
+
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic
