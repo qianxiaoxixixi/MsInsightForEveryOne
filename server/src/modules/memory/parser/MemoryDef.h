@@ -13,18 +13,18 @@ namespace Memory {
 
 struct Record {
     std::string component;
-    double timesTamp;
-    double totalAllocated;
-    double totalReserved;
+    int64_t timesTamp;
+    int64_t totalAllocated;
+    int64_t totalReserved;
     std::string deviceType;
 };
 
 struct Operator {
     std::string name;
-    double size;
-    double allocationTime;
-    double releaseTime;
-    double duration;
+    int64_t size;
+    int64_t allocationTime;
+    int64_t releaseTime;
+    int64_t duration;
     std::string deviceType;
 };
 

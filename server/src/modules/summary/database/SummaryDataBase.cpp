@@ -83,10 +83,10 @@ void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.acceleratorCore.c_str(), event.acceleratorCore.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_double(stmt, idx++, event.startTime);
-        sqlite3_bind_double(stmt, idx++, event.duration);
-        sqlite3_bind_double(stmt, idx++, event.waitTime);
-        sqlite3_bind_double(stmt, idx++, event.blockDim);
+        sqlite3_bind_int64(stmt, idx++, event.startTime);
+        sqlite3_bind_int64(stmt, idx++, event.duration);
+        sqlite3_bind_int64(stmt, idx++, event.waitTime);
+        sqlite3_bind_int64(stmt, idx++, event.blockDim);
         sqlite3_bind_text(stmt, idx++, event.inputShapes.c_str(), event.inputShapes.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.inputDataTypes.c_str(), event.inputDataTypes.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.inputFormats.c_str(), event.inputFormats.length(), SQLITE_TRANSIENT);
@@ -147,7 +147,7 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
-    double startTime = 0;
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     double offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -157,6 +157,7 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
         ServerLog::Error("QueryOperatorDetail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
     sqlite3_bind_double(stmt, index++, params.pageSize);
     sqlite3_bind_double(stmt, index++, offset);
@@ -166,11 +167,10 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
         Protocol::ComputeDetail computeDetail{};
         computeDetail.name = sqlite3_column_string(stmt, col++);
         computeDetail.type = sqlite3_column_string(stmt, col++);
-        computeDetail.startTime = (static_cast<double>(sqlite3_column_double(stmt, col++))
-                                  - Timeline::TraceTime::Instance().GetStartTime() / 1000) / 1000;
-        computeDetail.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
-        computeDetail.waitTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-        computeDetail.blockDim = static_cast<double>(sqlite3_column_double(stmt, col++));
+        computeDetail.startTime = sqlite3_column_int64(stmt, col++);
+        computeDetail.duration = sqlite3_column_int64(stmt, col++);
+        computeDetail.waitTime = sqlite3_column_int64(stmt, col++);
+        computeDetail.blockDim = sqlite3_column_int64(stmt, col++);
         computeDetail.inputShapes = sqlite3_column_string(stmt, col++);
         computeDetail.inputDataTypes = sqlite3_column_string(stmt, col++);
         computeDetail.inputFormats = sqlite3_column_string(stmt, col++);
@@ -197,13 +197,15 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     }
     std::string sql = "";
     if (orderList.size() == 0) {
-        sql = "SELECT name, type, start_time as startTime, duration, wait_time as waitTime, block_dim as blockDim, "
+        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
+              "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, type, start_time as startTime, duration, wait_time as waitTime, block_dim as blockDim, "
+        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, duration, "
+              "wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
@@ -277,9 +279,9 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         Protocol::CommunicationDetail computeDetail{};
         computeDetail.name = sqlite3_column_string(stmt, col++);
         computeDetail.type = sqlite3_column_string(stmt, col++);
-        computeDetail.startTime = sqlite3_column_double(stmt, col++);
-        computeDetail.duration = sqlite3_column_double(stmt, col++);
-        computeDetail.waitTime = sqlite3_column_double(stmt, col++);
+        computeDetail.startTime = sqlite3_column_int64(stmt, col++);
+        computeDetail.duration = sqlite3_column_int64(stmt, col++);
+        computeDetail.waitTime = sqlite3_column_int64(stmt, col++);
         commDetails.emplace_back(computeDetail);
     }
 

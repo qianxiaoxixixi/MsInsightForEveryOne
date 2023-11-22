@@ -92,10 +92,10 @@ void MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &event
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_double(stmt, idx++, event.allocationTime);
-        sqlite3_bind_double(stmt, idx++, event.releaseTime);
-        sqlite3_bind_double(stmt, idx++, event.size);
-        sqlite3_bind_double(stmt, idx++, event.duration);
+        sqlite3_bind_int64(stmt, idx++, event.allocationTime);
+        sqlite3_bind_int64(stmt, idx++, event.releaseTime);
+        sqlite3_bind_int64(stmt, idx++, event.size);
+        sqlite3_bind_int64(stmt, idx++, event.duration);
     }
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
@@ -125,10 +125,10 @@ void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
         sqlite3_bind_text(stmt, idx++, event.component.c_str(), event.component.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_double(stmt, idx++, event.totalAllocated);
-        sqlite3_bind_double(stmt, idx++, event.totalReserved);
+        sqlite3_bind_int64(stmt, idx++, event.totalAllocated);
+        sqlite3_bind_int64(stmt, idx++, event.totalReserved);
         sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_double(stmt, idx++, event.timesTamp);
+        sqlite3_bind_int64(stmt, idx++, event.timesTamp);
     }
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {

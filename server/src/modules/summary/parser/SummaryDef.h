@@ -16,10 +16,10 @@ struct Kernel {
     std::string name;
     std::string type;
     std::string acceleratorCore;
-    double startTime;
-    double duration;
-    double waitTime;
-    double blockDim;
+    int64_t startTime;
+    int64_t duration;
+    int64_t waitTime;
+    int64_t blockDim;
     std::string inputShapes;
     std::string inputDataTypes;
     std::string inputFormats;
