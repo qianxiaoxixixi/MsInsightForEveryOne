@@ -7,6 +7,7 @@
 #include "OperatorProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "ServerLog.h"
+#include "OperatorProtocol.h"
 #include "QueryOpMoreInfoHandler.h"
 
 namespace Dic::Module::Operator {
@@ -24,6 +25,12 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorMoreInfoResponse> responsePtr = std::make_unique<OperatorMoreInfoResponse>();
         OperatorMoreInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
+        if (!CheckRequestParam(request.params)) {
+            ServerLog::Error("[Operator]Failed to check request parameter in QueryOpMoreInfoHandler.");
+            SetResponseResult(response, false);
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
         std::string rankId = request.params.rankId;
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         if (!database->QueryOperatorMoreInfo(request.params, response)) {
@@ -34,6 +41,27 @@ namespace Dic::Module::Operator {
         }
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
+    }
+
+    bool QueryOpMoreInfoHandler::CheckRequestParam(OperatorMoreInfoReqParams& params)
+    {
+        if (params.rankId.empty()) {
+            ServerLog::Error("[Operator]Failed to check rankId in QueryOpMoreInfoHandler.");
+            return false;
+        }
+        if (params.opName.empty() && params.opType.empty() && params.shape.empty()) {
+            ServerLog::Error("[Operator]Failed to check parameter in QueryOpMoreInfoHandler.");
+            return false;
+        }
+        if (!params.orderBy.empty()) {
+            if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
+                ServerLog::Error("[Operator]Failed to check orderBy in QueryOpMoreInfoHandler.");
+                return false;
+            }
+            params.orderBy = OperatorProtocol::GetDetailColumName(params.orderBy);
+        }
+
+        return true;
     }
 
 }

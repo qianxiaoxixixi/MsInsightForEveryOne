@@ -8,10 +8,17 @@
 #include "ProtocolUtil.h"
 
 namespace Dic::Protocol {
+
+    const std::string OP_TYPE_GROUP = "Operator Type";
+    const std::string INPUT_SHAPE_GROUP = "Input Shape";
+    const std::string OPERATOR_GROUP = "Operator";
+
     class OperatorProtocol : public ProtocolUtil {
     public:
         OperatorProtocol() = default;
         ~OperatorProtocol() override = default;
+        static std::string GetStatisticColumName(const std::string& originName);
+        static std::string GetDetailColumName(const std::string& originName);
 
     private:
         void RegisterJsonToRequestFuncs() override;

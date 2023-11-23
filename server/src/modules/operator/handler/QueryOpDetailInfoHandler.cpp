@@ -7,6 +7,7 @@
 #include "OperatorProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "ServerLog.h"
+#include "OperatorProtocol.h"
 #include "QueryOpDetailInfoHandler.h"
 
 namespace Dic::Module::Operator {
@@ -24,6 +25,12 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
+        if (!CheckRequestParam(request.params)) {
+            ServerLog::Error("[Operator]Failed to check request parameter in QueryOpDetailInfoHandler.");
+            SetResponseResult(response, false);
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
         std::string rankId = request.params.rankId;
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         if (!database->QueryOperatorDetailInfo(request.params, response)) {
@@ -34,5 +41,22 @@ namespace Dic::Module::Operator {
         }
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
+    }
+
+    bool QueryOpDetailInfoHandler::CheckRequestParam(OperatorStatisticReqParams& params)
+    {
+        if (params.rankId.empty()) {
+            ServerLog::Error("[Operator]Failed to check rankId in QueryOpDetailInfoHandler.");
+            return false;
+        }
+        if (!params.orderBy.empty()) {
+            if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
+                ServerLog::Error("[Operator]Failed to check orderBy in QueryOpDetailInfoHandler.");
+                return false;
+            }
+            params.orderBy = OperatorProtocol::GetDetailColumName(params.orderBy);
+        }
+
+        return true;
     }
 }
