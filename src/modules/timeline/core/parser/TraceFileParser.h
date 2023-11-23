@@ -39,7 +39,6 @@ private:
     static std::vector<std::pair<int64_t, int64_t>> GetSplitPosition(std::ifstream &file);
     static bool SeekCharPosition(std::ifstream &file, char c);
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
-    static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
     static bool InitParser(const std::string &filePath, const std::string &fileId);
     static void PreParseTask(const std::string &filePath, const std::string &fileId);
     static void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);

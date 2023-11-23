@@ -56,19 +56,13 @@ bool TraceFileParser::InitParser(const std::string &filePath, const std::string 
         ServerLog::Info("Pre task skip this file.");
         return true;
     }
-    std::string dbPath = GetDbPath(filePath, fileId);
-    if (!DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath)) {
-        ServerLog::Error("Failed to creat connection pool.");
-        return false;
-    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
     }
-
     if (!(database->DropAllTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open database. path:", dbPath);
+        ServerLog::Error("Failed to open database. fileId:", fileId);
         return false;
     }
     auto splitFile = TraceFileParser::SplitFile(filePath);
@@ -228,23 +222,6 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     }
     file.seekg(result.value().position(), std::ifstream::cur);
     return true;
-}
-
-std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::string &fileId)
-{
-    std::string path = FileUtil::GetRealPath(filePath);
-    std::string suffix = ".db";
-    auto pos = fileId.find_last_of('_');
-    if (pos != std::string::npos) {
-        suffix = fileId.substr(pos) + suffix;
-    }
-    pos = path.find_last_of('.');
-    if (pos != std::string::npos) {
-        path.replace(pos, path.size() - pos, suffix);
-    } else {
-        path.append(suffix);
-    }
-    return path;
 }
 
 int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
