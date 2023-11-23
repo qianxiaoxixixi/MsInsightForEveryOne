@@ -32,6 +32,7 @@ const defaultOptionMap = {
     ],
     topKOptions: [
         { label: '15', value: 15 },
+        { label: 'All', value: -1 },
     ],
 };
 const condition: ConditionType = observable(defaultCondition);
@@ -61,7 +62,7 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
 function handleChange<T>(key: keyof ConditionType, val: T): void {
     runInAction(() => {
         condition[key] = val as never;
-        if (key === 'topK' && val === -1) {
+        if (key === 'topK' && val === 0) {
             condition.custom = 15;
         }
     });
@@ -71,7 +72,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     // 初始化
     useEffect(() => {
         observe(condition, () => {
-            handleFilterChange({ ...condition, topK: condition.topK !== -1 ? condition.topK : condition.custom });
+            handleFilterChange({ ...condition, topK: condition.topK !== 0 ? condition.topK : condition.custom });
         });
         observe(optionMap, () => {
             setCondition();
@@ -94,8 +95,8 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         }
         const topKOptions = [
             { label: '15', value: 15 },
-            { label: `${total}(All)`, value: total },
-            { label: 'Custom', value: -1 },
+            { label: 'All', value: -1 },
+            { label: 'Custom', value: 0 },
         ];
         setOptions({ topKOptions });
     }, [session.total]);
@@ -140,7 +141,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 onChange={val => handleChange('custom', val)}
                 controls={false}
                 precision={0}
-                style={{ marginLeft: '10px', width: '80px', display: condition.topK === -1 ? 'inline-block' : 'none' }} />
+                style={{ marginLeft: '10px', width: '80px', display: condition.topK === 0 ? 'inline-block' : 'none' }} />
             </>
             )}/>
     </div>);
