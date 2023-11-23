@@ -153,6 +153,7 @@ const opShapeStaticColumns = [
         title: 'Shape',
         dataIndex: 'inputShape',
         key: 'Shape',
+        sorter: true,
         ellipsis: true,
     },
     {
