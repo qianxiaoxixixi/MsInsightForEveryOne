@@ -38,7 +38,14 @@ const getOption = ({ isDark, title }: { isDark: boolean;title: string }): echart
     };
     baseOption.legend = {
         ...baseOption.legend ?? {},
-        textStyle: isDark ? { color: '#dcdcdc' } : {},
+        textStyle: {
+            width: 180,
+            overflow: 'truncate',
+            color: isDark ? '#dcdcdc' : '#333',
+        },
+        pageTextStyle: isDark ? { color: '#dcdcdc' } : {},
+        pageIconColor: isDark ? '#aaa' : '#414141',
+        pageIconInactiveColor: isDark ? '#414141' : '#aaa',
     };
     return baseOption;
 };
@@ -55,6 +62,7 @@ const baseOption: echarts.EChartsOption = {
         orient: 'vertical',
         left: 'right',
         top: 'middle',
+        type: 'scroll',
     },
     series: [
         {
@@ -102,6 +110,9 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
             return;
         }
         const data = res.data.map((item: any) => ({ name: item.name, value: item.duration }));
+        if (JSON.stringify(opTypeData) === JSON.stringify(data)) {
+            return;
+        }
         setOpTypeData(data);
     };
     const updateComputeData = async (): Promise<void> => {
@@ -110,6 +121,9 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
             return;
         }
         const data = res.data.map((item: any) => ({ name: item.name, value: item.duration }));
+        if (JSON.stringify(computeData) === JSON.stringify(data)) {
+            return;
+        }
         setComputeData(data);
     };
     function renderChart(): void {
