@@ -7,6 +7,7 @@
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
 #include "TraceTime.h"
+#include "OperatorProtocol.h"
 
 namespace Dic {
 namespace Module {
@@ -37,7 +38,7 @@ bool SummaryDataBase::CreateTable()
     }
     std::string sql =
         "CREATE TABLE " + kernelTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, " +
-        "name TEXT, type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time INTEGER, " +
+        "name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time INTEGER, " +
         "block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, " +
         "output_data_types TEXT, output_formats TEXT);" +
         "CREATE INDEX rank_index ON " + kernelTable + " (rank_id);";
@@ -50,8 +51,8 @@ bool SummaryDataBase::InitStmt()
         return true;
     }
     std::string sql =
-            "INSERT INTO " + kernelTable + " (rank_id, step_id, name, type, accelerator_core, start_time, duration, " +
-            "wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
+            "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
+            "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
             "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -132,7 +133,7 @@ sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql =
-                "INSERT INTO " + kernelTable + " (rank_id, step_id, name, type, accelerator_core, start_time, " +
+                "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
                 "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
                 "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         for (int i = 0; i < paramLen - 1; ++i) {
@@ -201,14 +202,14 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     }
     std::string sql = "";
     if (orderList.size() == 0) {
-        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
+        sql = "SELECT name, op_type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
               "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, duration, "
+        sql = "SELECT name, op_type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, duration, "
               "wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
@@ -248,11 +249,11 @@ std::string SummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams requ
     }
     std::string sql = "";
     if (order.size() == 0) {
-        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
+        sql = "SELECT name, op_type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
+        sql = "SELECT name, op_type, ROUND((start_time - (? / 1000.0)) / 1000, 4) as startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
               " WHERE accelerator_core = ?  ORDER BY " + order + " " + ascend + " LIMIT ? offset ?";
     }
@@ -297,9 +298,9 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     std::string SummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         std::string group;
-        if (reqParams.group == "Operator Type") {
-            group = "type";
-        } else if (reqParams.group == "Operator") {
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            group = "op_type";
+        } else if (reqParams.group == Protocol::OPERATOR_GROUP) {
             group = "name";
         } else {
             group = R"(name || '[' || input_shapes || ']')";
@@ -316,9 +317,9 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     std::string SummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         std::string group;
-        if (reqParams.group == "Operator Type") {
-            group = "type";
-        } else if (reqParams.group == "Operator") {
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            group = "op_type";
+        } else if (reqParams.group == Protocol::OPERATOR_GROUP) {
             group = "name";
         } else {
             group = R"(name || '[' || input_shapes || ']')";
@@ -377,7 +378,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     SELECT *"
                 "     FROM " + kernelTable +
                 "     WHERE rank_id = " + reqParams.rankId +
-                "     GROUP by " + (reqParams.group == "Operator Type" ? "type" : R"(name || input_shapes)") +
+                "     GROUP by " + (reqParams.group == "Operator Type" ? "op_type" : R"(name || input_shapes)") +
                 "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
         ServerLog::Info("[Operator]Query Statistic Total Num sql: ", sql);
@@ -397,8 +398,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     {
         std::string group;
         std::string name;
-        if (reqParams.group == "Operator Type") {
-            group = "type";
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            group = "op_type";
             name = "''";
         } else {
             group = R"(name || input_shapes)";
@@ -406,17 +407,22 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         }
         std::string sql =
                 " SELECT * FROM ("
-                " SELECT type, " + name + ", input_shapes, accelerator_core,"
-                " ROUND(SUM(duration), 2) as duration, COUNT(0) as cnt,"
-                " ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
-                " ROUND(max(duration), 2) as max_time,"
-                " ROUND(min(duration), 2) as min_time"
-                " FROM " + kernelTable +
-                " WHERE rank_id = " + reqParams.rankId +
-                " GROUP BY " + group +
-                " ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
-                " ) subquery"
-                " LIMIT " + std::to_string(reqParams.pageSize) +
+                "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
+                "     ROUND(SUM(duration), 2) as duration, COUNT(0) as cnt,"
+                "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
+                "     ROUND(max(duration), 2) as max_time,"
+                "     ROUND(min(duration), 2) as min_time"
+                "     FROM " + kernelTable +
+                "     WHERE rank_id = " + reqParams.rankId +
+                "     GROUP by " + group +
+                "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
+                " ) subquery ";
+
+        if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+            sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
+        }
+
+        sql += " LIMIT " + std::to_string(reqParams.pageSize) +
                 " OFFSET " + std::to_string(reqParams.pageSize * (reqParams.current - 1));
         return sql;
     }
@@ -424,7 +430,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
         Protocol::OperatorStatisticInfoResponse &response)
     {
-        if (reqParams.group != "Operator Type" && reqParams.group != "Input Shape") {
+        if (reqParams.group != Protocol::OP_TYPE_GROUP && reqParams.group != Protocol::INPUT_SHAPE_GROUP) {
             ServerLog::Error("[Operator]Wrong group type of Statistic Info. Group: ", reqParams.group);
             return false;
         }
@@ -491,14 +497,14 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     std::string SummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
         std::string sql =
-                " SELECT rank_id, step_id, name, type, accelerator_core, start_time, duration, wait_time, block_dim,"
+                " SELECT rank_id, step_id, name, op_type, accelerator_core, start_time, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
                 "     ORDER by duration DESC LIMIT " +  std::to_string(reqParams.topK) +
-                " ) subquery";
+                " ) subquery ";
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
-            sql += " ORDER by " + reqParams.orderBy + " " + reqParams.order == "ascend" ? "ASC" : "DESC";
+            sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
         sql += " LIMIT " + std::to_string(reqParams.pageSize) +
                 " OFFSET " + std::to_string((reqParams.current - 1) * reqParams.pageSize);
@@ -551,9 +557,9 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
-        std::string condition = (reqParams.group == "Operator Type") ?
-                                " type = " + reqParams.opType :
-                                " name = " + reqParams.opName + " AND input_shape = " + reqParams.shape;
+        std::string condition = (reqParams.group == Protocol::OP_TYPE_GROUP) ?
+                                " op_type = '" + reqParams.opType + "'":
+                                " name = '" + reqParams.opName + "' AND input_shapes = '" + reqParams.shape + "'";
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
@@ -578,19 +584,20 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     std::string SummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
     {
         std::string sql =
-                " SELECT rank_id, step_id, name, type, accelerator_core, start_time, duration, wait_time, block_dim,"
+                " SELECT rank_id, step_id, name, op_type, accelerator_core, start_time, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
+                "     WHERE rank_id = " + reqParams.rankId +
                 "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
-                " ) subquery";
-        if (reqParams.group == "Op Type") {
-            sql += " WHERE type = " + reqParams.opType;
+                " ) subquery ";
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            sql += " WHERE op_type = '" + reqParams.opType + "'";
         } else {
-            sql += " WHERE name = " + reqParams.opName + " AND input_shape = " + reqParams.shape;
+            sql += " WHERE name = '" + reqParams.opName + "' AND input_shapes = '" + reqParams.shape + "'";
         }
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
-            sql += " ORDER by " + reqParams.orderBy + " " + reqParams.order == "ascend" ? "ASC" : "DESC";
+            sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
 
         sql += " LIMIT " + std::to_string(reqParams.pageSize) +
@@ -601,7 +608,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
         Protocol::OperatorMoreInfoResponse& response)
     {
-        if (reqParams.group != "Operator Type" && reqParams.group != "Input Shape") {
+        if (reqParams.group != Protocol::OP_TYPE_GROUP && reqParams.group != Protocol::INPUT_SHAPE_GROUP) {
             ServerLog::Error("[Operator]Wrong group type of More Info. Group: ", reqParams.group);
             return false;
         }

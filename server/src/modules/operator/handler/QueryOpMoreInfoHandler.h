@@ -7,6 +7,7 @@
 
 #include "ModuleRequestHandler.h"
 #include "OperatorRequestHandler.h"
+#include "OperatorProtocolRequest.h"
 
 namespace Dic::Module::Operator {
     class QueryOpMoreInfoHandler : public OperatorRequestHandler {
@@ -19,6 +20,8 @@ namespace Dic::Module::Operator {
         ~QueryOpMoreInfoHandler() override = default;
 
         void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+
+        bool CheckRequestParam(OperatorMoreInfoReqParams& params);
     };
 }
 

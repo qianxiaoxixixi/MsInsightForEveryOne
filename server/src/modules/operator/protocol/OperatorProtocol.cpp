@@ -145,4 +145,48 @@ namespace Dic::Protocol {
     {
         return ToEventJson<OperatorParseStatusEvent>(dynamic_cast<const OperatorParseStatusEvent &>(event));
     }
+
+    std::string OperatorProtocol::GetStatisticColumName(const std::string& originName)
+    {
+        std::map<std::string, std::string> relation {
+                {"opType", "op_type"},
+                {"opName", "name"},
+                {"inputShape", "input_shapes"},
+                {"accCore", "accelerator_core"},
+                {"totalTime", "total_time"},
+                {"count", "cnt"},
+                {"avgTime", "avg_time"},
+                {"maxTime", "max_time"},
+                {"minTime", "min_time"}
+        };
+        if (originName.empty() || relation.count(originName) == 0) {
+            return "";
+        }
+        return relation[originName];
+    }
+
+    std::string OperatorProtocol::GetDetailColumName(const std::string& originName)
+    {
+        std::map<std::string, std::string> relation {
+                {"rank", "rank_id"},
+                {"step", "step_id"},
+                {"name", "name"},
+                {"type", "op_type"},
+                {"accCore", "accelerator_core"},
+                {"startTime", "start_time"},
+                {"duration", "duration"},
+                {"waitTime", "wait_time"},
+                {"blockDim", "block_dim"},
+                {"inputShape", "input_shapes"},
+                {"inputType", "input_data_types"},
+                {"inputFormat", "input_formats"},
+                {"outputShape", "output_shapes"},
+                {"outputType", "output_data_types"},
+                {"outputFormat", "output_formats"}
+        };
+        if (originName.empty() || relation.count(originName) == 0) {
+            return "";
+        }
+        return relation[originName];
+    }
 }
