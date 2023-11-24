@@ -26,6 +26,11 @@ void QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     if (!database->QueryKernelDetailData(request.params, response.body,
                                          TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
