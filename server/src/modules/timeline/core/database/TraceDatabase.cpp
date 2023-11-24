@@ -104,7 +104,7 @@ void TraceDatabase::ReleaseStmt()
 bool TraceDatabase::SetConfig()
 {
     if (!isOpen) {
-        ServerLog::Error("Failed to set config. Database is not open.");
+        ServerLog::Error("[Trace Database]Failed to set config. Database is not open.");
         return false;
     }
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
@@ -113,7 +113,7 @@ bool TraceDatabase::SetConfig()
 bool TraceDatabase::CreateTable()
 {
     if (!isOpen) {
-        ServerLog::Error("Failed to set config. Database is not open.");
+        ServerLog::Error("[Trace Database]Failed to set config. Database is not open.");
         return false;
     }
     std::string dropIndexSql =
@@ -142,7 +142,7 @@ bool TraceDatabase::CreateIndex()
 {
     auto start = std::chrono::system_clock::now();
     if (!isOpen) {
-        ServerLog::Error("Failed to creat index. Database is not open.");
+        ServerLog::Error("[Trace Database]Failed to creat index. Database is not open.");
         return false;
     }
     std::string sql = "CREATE INDEX " + idIndex + " ON " + sliceTable + " (id);" +
