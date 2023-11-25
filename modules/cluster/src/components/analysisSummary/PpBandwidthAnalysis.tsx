@@ -31,7 +31,7 @@ const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }
                 content={ <Filter session={session} setAllStageIds={setAllStageIds} conditions={conditions} setConditions={setConditions}/>}
             />
             <Container
-                style={{ minWidth: '600px' }}
+                style={{ minWidth: '630px' }}
                 content={ <PPBandwidthChart conditions={conditions} allStageIds={allStageIds} session={session}/>}
             />
         </Layout>
@@ -107,7 +107,6 @@ async function wrapBandwidthDataInStage(domId: string, stepId: string, stageIds:
         }
         xAxis.data = xAxis.data?.concat(stageData);
         series[0].data = (series[0].data as number[]).concat(stageTimeData);
-        (series[0].data as any)[0] = 20000000000;
         series[1].data = (series[1].data as number[]).concat(bubbleTimeData);
     }
     return result;
