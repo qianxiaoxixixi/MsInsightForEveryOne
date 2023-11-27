@@ -3,6 +3,7 @@
  */
 
 #include <iostream>
+#include "StringUtil.h"
 #include "ParamsParser.h"
 
 namespace Dic {
@@ -78,7 +79,12 @@ const bool ParamsParser::Parse(const vector<string> &args)
         return false;
     }
     for (uint32_t i = 1; i < args.size(); i++) {
-        if (!this->ParseField(args.at(i))) {
+        std::string data = args.at(i);
+        if (!StringUtil::Contains(args.at(i), EQUAL) && i < args.size() - 1
+            && !StringUtil::StartWith(args.at(i + 1), SYMBOL_PREFIX)) {
+            data.append(EQUAL).append(args.at(++i));
+        }
+        if (!this->ParseField(data)) {
             return false;
         }
     }

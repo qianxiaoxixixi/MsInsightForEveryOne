@@ -51,6 +51,9 @@ private:
     const int minPortNum = 9000;
     const int maxPortNum = 9100;
 
+    const string EQUAL = "=";
+    const string SYMBOL_PREFIX = "--";
+
     ParamsOption option;
     std::string error;
 };
