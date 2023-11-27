@@ -146,6 +146,18 @@ public:
         }
         return ss.str();
     }
+
+    static bool StartWith(const std::string& str, const std::string& start)
+    {
+        int srcLen = str.size();
+        int startLen = start.size();
+        return srcLen >= startLen && str.substr(0, startLen) == start;
+    }
+
+    static bool Contains(const std::string& str, const std::string& subStr)
+    {
+        return str.find(subStr) != std::string::npos;
+    }
 };
 }
 
