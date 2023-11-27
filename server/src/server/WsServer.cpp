@@ -111,14 +111,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
         ws->end(URL_NULL_CODE, "url is null");
         return;
     }
-    std::vector<std::string> urlInfo = StringUtil::Split(url, " ");
-    std::string urlInfoSid = urlInfo.at(0);
-    if (urlInfoSid.empty() || sid != urlInfoSid.substr(1)) {
-        ServerLog::Info("Accept new session failed, channel = ", ws, " sid ",
-            urlInfoSid.empty() ? "" : urlInfoSid.substr(1), " is not correct");
-        ws->end(SID_UN_CORRECT_CODE, "sid " + (urlInfoSid.empty() ? "" : urlInfoSid.substr(1)) + " is not correct");
-        return;
-    }
+
     std::unique_ptr<WsSession> session = std::make_unique<WsSession>(ws);
     std::string tokenString = session->GetTokenString();
     WsSessionManager::Instance().AddSession(tokenString, std::move(session));
