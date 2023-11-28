@@ -42,10 +42,12 @@ public:
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
     void UpdateDepth();
+    void CreateDepthTempTable();
+    void DropDepthTempTable();
+    void UpdateSliceDepth();
     void DeleteInvalidFlowData();
 
     // search
-    std::vector<int64_t> GetTrackIdList();
     bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
                            Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId);
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
@@ -76,7 +78,7 @@ private:
     const std::string counterTable = "counter";
     const std::string idIndex = "id_index";
     const std::string trackIdTimeIndex = "track_id_time_index";
-    const std::string flowIndex = "flow_cat_time_index";
+    const std::string flowIndex = "flow_id_time_index";
 
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
@@ -97,11 +99,6 @@ private:
     std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetFlowStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetCounterStmt(uint64_t paramLen);
-    void UpdateOneTrackDepth(int64_t trackId);
-    bool SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList);
-    // depth, idList
-    void CalcDepth(const std::vector<SliceTimeData> &sliceData, std::map<int, std::vector<int64_t>> &depthMap);
-    void UpdateDepthByID(const std::vector<int64_t> &idList, int depth);
 
     bool QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
                                        Protocol::ExtremumTimestamp &extremumTimestamp);
