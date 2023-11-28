@@ -146,7 +146,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
     ParseOperatorEndProcess(token, fileId, result);
 }
 
-void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
+void ImportActionHandler::ParseMemoryEndProcess(const std::string &token)
 {
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
@@ -162,7 +162,7 @@ void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
     session->OnEvent(std::move(event));
 }
 
-    void ImportActionHandler::ParseOperatorEndProcess(const std::string token, const std::string &fileId, bool result)
+    void ImportActionHandler::ParseOperatorEndProcess(const std::string &token, const std::string &fileId, bool result)
     {
         WsSession *session = WsSessionManager::Instance().GetSession(token);
         if (session == nullptr) {

@@ -78,15 +78,8 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
             auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, pos);
             futures->emplace_back(std::move(future));
         }
-
-        std::string parentDir = FileUtil::GetParentPath(filePath);
-        if (!parentDir.empty()) {
-            Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
-            Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
-            Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
-        }
     }
-    instance.threadPool->AddTask(EndParseTask, fileId, futures);
+    instance.threadPool->AddTask(EndParseTask, fileId, filePathArr, futures);
     return true;
 }
 
@@ -100,7 +93,8 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
     eventParser.Parse(pos.first, pos.second);
 }
 
-void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
+void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
+                                   std::shared_ptr<std::vector<std::future<void>>> futures)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
         DeleteParseFileFromDisk(fileId);
@@ -120,6 +114,15 @@ void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<st
     database->CreateIndex();
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
+
+    for (const auto &filePath: filePathArr) {
+        std::string parentDir = FileUtil::GetParentPath(filePath);
+        if (!parentDir.empty()) {
+            Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
+            Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
+            Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
+        }
+    }
     ParseEndCallBack(fileId, true);
 }
 
