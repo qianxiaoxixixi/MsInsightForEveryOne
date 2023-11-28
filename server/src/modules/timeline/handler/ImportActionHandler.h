@@ -50,8 +50,8 @@ private:
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response);
     static std::vector<MemorySuccess> hasMemory;
-    static void ParseMemoryEndProcess(const std::string token);
-    static void ParseOperatorEndProcess(const std::string token, const std::string &fileId, bool result);
+    static void ParseMemoryEndProcess(const std::string &token);
+    static void ParseOperatorEndProcess(const std::string &token, const std::string &fileId, bool result);
 };
 } // end of namespace Timeline
 } // end of namespace Module
