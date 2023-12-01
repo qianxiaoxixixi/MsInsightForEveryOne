@@ -186,7 +186,7 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
 };
 
 export const LineChart: React.FC<IProps> = (props) => {
-    const { graph, record, isDark, isWakeup } = props;
+    const { graph, record, isDark, isWakeup, onSelectionChanged } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [ chartObj, setChartObj ] = React.useState<echarts.ECharts | undefined>();
@@ -200,6 +200,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         element.oncontextmenu = () => { return false; };
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed');
+        onSelectionChanged?.(0, -1);
         _showGraph(myChart, selectedPoints, props, isDark);
 
         setChartObj(myChart);
