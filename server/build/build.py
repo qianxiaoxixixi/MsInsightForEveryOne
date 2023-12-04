@@ -125,9 +125,8 @@ def build_bin(args):
         'pyinstaller', '--collect-submodules', 'cluster_analyse', '--path=' + CLUSTER_ANALYSE_DIR,
         '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
     ]
-    if IS_WINDOWS:
-        output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
-        log_output(output)
+    output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
+    log_output(output)
 
     build_log('end build.\n')
 
