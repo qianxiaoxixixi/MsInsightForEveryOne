@@ -20,6 +20,10 @@ namespace Dic::Protocol {
         OperatorParseStatusEvent() : Event(EVENT_PARSE_OPERATOR_STATUS) {}
         OperatorRank data;
     };
+
+    struct OperatorParseClearEvent : public Event {
+        OperatorParseClearEvent() : Event(EVENT_PARSE_OPERATOR_CLEAR) {}
+    };
 }
 
 #endif // PROFILER_SERVER_OPERATORPROTOCOLEVENT_H

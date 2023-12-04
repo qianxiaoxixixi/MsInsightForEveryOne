@@ -31,6 +31,7 @@ namespace Dic::Protocol {
     void OperatorProtocol::RegisterEventToJsonFuncs()
     {
         eventToJsonFactory.emplace(EVENT_PARSE_OPERATOR_STATUS, ToOperatorParseStatusEvent);
+        eventToJsonFactory.emplace(EVENT_PARSE_OPERATOR_CLEAR, ToOperatorParseClearEvent);
     }
 
     std::unique_ptr<Request> OperatorProtocol::ToOperatorCategoryInfoRequest(const json_t &json, std::string &error)
@@ -144,6 +145,11 @@ namespace Dic::Protocol {
     std::optional<json_t> OperatorProtocol::ToOperatorParseStatusEvent(const Event &event)
     {
         return ToEventJson<OperatorParseStatusEvent>(dynamic_cast<const OperatorParseStatusEvent &>(event));
+    }
+
+    std::optional<json_t> OperatorProtocol::ToOperatorParseClearEvent(const Event &event)
+    {
+        return ToEventJson<OperatorParseClearEvent>(dynamic_cast<const OperatorParseClearEvent &>(event));
     }
 
     std::string OperatorProtocol::GetStatisticColumName(const std::string& originName)

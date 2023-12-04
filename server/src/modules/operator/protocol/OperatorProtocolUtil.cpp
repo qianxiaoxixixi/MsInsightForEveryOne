@@ -126,4 +126,12 @@ namespace Dic::Protocol {
 
         return json;
     }
+
+    template<>
+    std::optional<json_t> ToEventJson<OperatorParseClearEvent>(const OperatorParseClearEvent &event)
+    {
+        json_t json;
+        ProtocolUtil::SetEventJsonBaseInfo(event, json);
+        return json;
+    }
 }

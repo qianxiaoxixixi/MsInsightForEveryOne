@@ -414,6 +414,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         curIsCluster = isCluster;
         if (reset) {
             TraceFileParser::Instance().Reset();
+            Summary::KernelParse::Instance().Reset();
             body.reset = reset;
         }
         body.isCluster = isCluster;

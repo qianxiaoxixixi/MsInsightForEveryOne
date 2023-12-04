@@ -33,6 +33,9 @@ namespace Dic::Protocol {
 
     template<>
     std::optional<json_t> ToEventJson<OperatorParseStatusEvent>(const OperatorParseStatusEvent &event);
+
+    template<>
+    std::optional<json_t> ToEventJson<OperatorParseClearEvent>(const OperatorParseClearEvent &event);
 }
 
 #endif // PROFILER_SERVER_OPERATORPROTOCOLUTIL_H
