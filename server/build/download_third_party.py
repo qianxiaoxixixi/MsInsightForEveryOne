@@ -3,11 +3,13 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 
 import os
+import platform
 import shutil
+import stat
 import subprocess
 import tarfile
 import urllib.request
-from pip._internal import main as pip
+
 from build import init_log, log_output
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +17,7 @@ HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 
 SQLITE_DIR = 'sqlite'
-SQLITE_SRC_DIR = 'sqlite_src'
+SQLITE3_SRC_DIR = 'sqlite3_src'
 SQLITE_SRC_TAR = 'sqlite_src.tar.gz'
 
 BUILD_TITLE = '[Download Third Party]'
@@ -56,22 +58,27 @@ OPEN_SOURCE = [
 CHECK_FILE_LIST = [
     [
         os.path.join(SQLITE_DIR, 'include', 'sqlite3.h'),
-        os.path.join(SQLITE_SRC_DIR, 'sqlite-autoconf-3400100', 'sqlite3.h')
+        os.path.join(SQLITE3_SRC_DIR, 'sqlite3.h'),
+        os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3.h')
     ],
     [
         os.path.join(SQLITE_DIR, 'include', 'sqlite3ext.h'),
-        os.path.join(SQLITE_SRC_DIR, 'sqlite-autoconf-3400100', 'sqlite3ext.h')
+        os.path.join(SQLITE3_SRC_DIR, 'sqlite3ext.h'),
+        os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3ext.h')
     ],
     [
         os.path.join(SQLITE_DIR, 'src', 'shell.c'),
-        os.path.join(SQLITE_SRC_DIR, 'sqlite-autoconf-3400100', 'shell.c')
+        os.path.join(SQLITE3_SRC_DIR, 'shell.c'),
+        os.path.join(SQLITE3_SRC_DIR, 'build', 'shell.c')
     ],
     [
         os.path.join(SQLITE_DIR, 'src', 'sqlite3.c'),
-        os.path.join(SQLITE_SRC_DIR, 'sqlite-autoconf-3400100', 'sqlite3.c')
+        os.path.join(SQLITE3_SRC_DIR, 'sqlite3.c'),
+        os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3.c')
     ],
     [
         os.path.join('json_modern_c++', 'include', 'json.hpp'),
+        os.path.join('json', 'single_include', 'nlohmann', 'json.hpp'),
         os.path.join('json', 'single_include', 'nlohmann', 'json.hpp')
     ]
 ]
@@ -97,16 +104,31 @@ def download_3rd_party():
     log('finish to download third party')
 
 
-def download_sqlite_cache():
-    log('start to download sqlite cache')
-    if not os.path.exists(os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_DIR)):
+def prepare_sqlite_src():
+    log('start to prepare sqlite src')
+    sqlite3_src = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR)
+    if platform.system() == "Windows":
+        if os.path.exists(sqlite3_src):
+            shutil.rmtree(sqlite3_src)
         tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
         urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
         tar = tarfile.open(tar_path)
-        tar.extractall(path=os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_DIR))
+        tar.extractall(THIRD_PARTY_DIR)
         tar.close()
         os.remove(tar_path)
-    log('finish to download sqlite cache')
+        os.rename(os.path.join(THIRD_PARTY_DIR, "sqlite-autoconf-3400100"), sqlite3_src)
+    else:
+        build_path = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR, 'build')
+        if os.path.exists(build_path):
+            shutil.rmtree(build_path)
+        os.mkdir(build_path)
+        config_cmd = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR, 'configure')
+        os.chmod(config_cmd, stat.S_IXUSR | stat.S_IRUSR)
+        ret = os.system("cd " + build_path + " && ../configure && make sqlite3.c")
+        if ret != 0:
+            LOG.error('Failed to make sqlite3.c ')
+
+    log('finish to prepare sqlite3 src')
 
 
 def reorganize_3rd_party():
@@ -114,27 +136,16 @@ def reorganize_3rd_party():
     for file in CHECK_FILE_LIST:
         dst_file = os.path.join(THIRD_PARTY_DIR, file[0])
         if not os.path.exists(dst_file):
-            src_file = os.path.join(THIRD_PARTY_DIR, file[1])
+            src_file = os.path.join(THIRD_PARTY_DIR, file[1] if platform.system() == "Windows" else file[2])
             if os.path.exists(src_file):
-                shutil.copyfile(os.path.join(
-                    THIRD_PARTY_DIR, file[1]), dst_file)
+                shutil.copyfile(src_file, dst_file)
             else:
                 LOG.error('%s The file is not exist: %s', BUILD_TITLE, src_file)
+
     log('finish to reorganize third party')
-
-
-def download_pip_package():
-    log('start to install pip package')
-    return_code = pip(['install', 'ninja==1.11.1', 'pyinstaller==5.13.2', '-i',
-                       'https://mirrors.tools.huawei.com/pypi/simple/', '--trusted-host',
-                       'mirrors.tools.huawei.com'])
-    if return_code != 0:
-        LOG.error('install pip package failed')
-    log('finish to install pip package')
 
 
 if __name__ == '__main__':
     LOG = init_log('root')
-    download_pip_package()
-    download_sqlite_cache()
+    prepare_sqlite_src()
     reorganize_3rd_party()
