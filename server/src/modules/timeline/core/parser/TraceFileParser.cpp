@@ -67,6 +67,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     auto &instance = TraceFileParser::Instance();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &filePath: filePathArr) {
+        ServerLog::Info("start parse. file id:", fileId, ". path:", filePath);
         auto splitFile = TraceFileParser::SplitFile(filePath);
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
