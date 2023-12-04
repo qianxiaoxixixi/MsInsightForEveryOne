@@ -31,7 +31,7 @@ abstract class BaseConnector {
             if (typeof event.data === 'string') {
                 res.data = JSON.parse(event.data);
             } else {
-                res.data = event.data
+                res.data = event.data;
             }
             const listener = this._listeners.get(res.data.event);
             if (res.data.event === 'request') {

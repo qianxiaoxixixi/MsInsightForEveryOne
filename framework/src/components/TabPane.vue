@@ -85,19 +85,6 @@ onMounted(async () => {
   }
 });
 
-connector.addListener('updateHtml', (e) => {
-  const { modules }: {modules: string[]} = e.data;
-  modulesConfig.forEach((config, index) => {
-    config.attributes.src = window.URL.createObjectURL(
-        new Blob(
-            [modules[index]],
-            { type: "text/html" }
-        )
-    );
-  })
-  session.isVscode = false;
-});
-
 function toggleTab(index: number): void {
     activeModule.value = index;
     connector.send({
