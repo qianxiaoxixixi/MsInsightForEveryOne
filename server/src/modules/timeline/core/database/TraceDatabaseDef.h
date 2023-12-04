@@ -64,6 +64,11 @@ struct OneKernelData {
     uint64_t threadId;
     std::string pid;
 };
+
+struct LayerStatData {
+    uint64_t total = 0;
+    double allOperatorTime = 0.1;
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

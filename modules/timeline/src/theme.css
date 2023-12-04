@@ -558,3 +558,7 @@ tr.ant-table-row:hover{
 .theme_dark .systemViewRank{
     color: #eeeeee;
 }
+
+.theme_dark .rc-virtual-list-scrollbar-thumb{
+    background-color:var(--grey60)!important;
+}
