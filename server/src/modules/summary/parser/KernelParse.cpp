@@ -38,11 +38,13 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parse kernel detail.");
-    std::string kernelFile = FileUtil::GetDetailFile(parentDir, kernelDetailFile);
-    if (kernelDetailFile.empty()) {
+    std::vector<std::string> kernelFileVec = FileUtil::FindFilesByRegex(parentDir, std::regex(kernelDetailReg));
+    if (kernelFileVec.empty()) {
         ServerLog::Warn("There is no kernel_details.csv for rank " + fileId);
         return;
     }
+
+    std::string kernelFile = kernelFileVec[0];
     std::ifstream file(kernelFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
@@ -52,7 +54,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
         std::vector<std::string> row;
         std::string cell;
         StringSplit(ss, row);
-        if (row[0] == "Step Id" or row[0] == "Model ID") {
+        if (row[0] == "Step Id" or row[0] == "Model ID" or row[0] == "Device_id") {
             for (int i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
@@ -76,36 +78,48 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
 Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
     std::vector<std::string> row, const std::string &fileId)
 {
-    std::int16_t stepIndex = dataMap["Step Id"];
-    std::int16_t nameIndex = dataMap["Name"];
-    std::int16_t typeIndex = dataMap["Type"];
-    std::int16_t acceleratorIndex = dataMap["Accelerator Core"];
-    std::int16_t startTimeIndex = dataMap["Start Time(us)"];
-    std::int16_t durationIndex = dataMap["Duration(us)"];
-    std::int16_t waitTimeIndex = dataMap["Wait Time(us)"];
-    std::int16_t blockDimIndex = dataMap["Block Dim"];
-    std::int16_t inputShapesIndex = dataMap["Input Shapes"];
-    std::int16_t inputDataIndex = dataMap["Input Data Types"];
-    std::int16_t inputFormatsIndex = dataMap["Input Formats"];
-    std::int16_t outputIndex = dataMap["Output Shapes"];
-    std::int16_t outputDataIndex = dataMap["Output Data Types"];
-    std::int16_t outputFormatsIndex = dataMap["Output Formats"];
+    std::int16_t deviceIndex = 0;
+    std::int16_t stepIndex = 0;
+    std::int16_t nameIndex;
+    std::int16_t typeIndex;
+    std::int16_t acceleratorIndex;
+    std::int16_t startTimeIndex;
+    std::int16_t durationIndex;
+    std::int16_t waitTimeIndex;
+    if (dataMap.find("Step Id") != dataMap.end()) {
+        stepIndex = dataMap["Step Id"];
+        nameIndex = dataMap["Name"];
+        typeIndex = dataMap["Type"];
+        acceleratorIndex = dataMap["Accelerator Core"];
+        startTimeIndex = dataMap["Start Time(us)"];
+        durationIndex = dataMap["Duration(us)"];
+        waitTimeIndex = dataMap["Wait Time(us)"];
+    } else {
+        deviceIndex = dataMap["Device_id"];
+        nameIndex = dataMap["Op Name"];
+        typeIndex = dataMap["OP Type"];
+        acceleratorIndex = dataMap["Task Type"];
+        startTimeIndex = dataMap["Task Start Time(us)"];
+        durationIndex = dataMap["Task Duration(us)"];
+        waitTimeIndex = dataMap["Task Wait Time(us)"];
+    }
+
     Kernel oper {};
     oper.rankId = fileId;
     oper.name = row[nameIndex];
-    oper.stepId = row[stepIndex];
+    oper.stepId = dataMap.count("Step Id") != 0 ? row[stepIndex] : "";
     oper.type = row[typeIndex];
     oper.acceleratorCore = row[acceleratorIndex];
     oper.startTime = atof(row[startTimeIndex].c_str());
     oper.duration = atof(row[durationIndex].c_str());
     oper.waitTime = atof(row[waitTimeIndex].c_str());
-    oper.blockDim = atof(row[blockDimIndex].c_str());
-    oper.inputDataTypes = row[inputDataIndex];
-    oper.inputShapes = row[inputShapesIndex];
-    oper.inputFormats = row[inputFormatsIndex];
-    oper.outputDataTypes = row[outputDataIndex];
-    oper.outputShapes = row[outputIndex];
-    oper.outputFormats = row[outputFormatsIndex];
+    oper.blockDim = atof(row[dataMap["Block Dim"]].c_str());
+    oper.inputDataTypes = row[dataMap["Input Data Types"]];
+    oper.inputShapes = row[dataMap["Input Data Types"]];
+    oper.inputFormats = row[dataMap["Input Formats"]];
+    oper.outputDataTypes = row[dataMap["Output Data Types"]];
+    oper.outputShapes = row[dataMap["Output Shapes"]];
+    oper.outputFormats = row[dataMap["Output Formats"]];
     return oper;
 }
 

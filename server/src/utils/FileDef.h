@@ -23,6 +23,9 @@ const std::string TOTAL_ALLOCATED = "Total Allocated(MB)";
 const std::string TOTAL_RESERVED = "Total Reserved(MB)";
 const std::vector<std::string> RECORD_CSV = {COMPONENT, TIMESTAMP, DEVICE, TOTAL_ALLOCATED, TOTAL_RESERVED};
 
+const std::string ASCEND_PROFILER_OUTPUT = "ASCEND_PROFILER_OUTPUT";
+const std::string MINDSTUDIO_PROFILER_OUTPUT = "mindstudio_profiler_output";
+
 const long long MAX_FILE_SIZE_2G = (long long)(1024 * 1024 * 1024) * 2;
 const long long MAX_FILE_SIZE_10G = (long long)(1024 * 1024 * 1024) * 10;
 }
