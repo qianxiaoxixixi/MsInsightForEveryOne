@@ -110,11 +110,13 @@ def build_bin(args):
     if args.project_type == 'true':
         build_cmds.append('-DWASM_MJS_ENABLE=ON')
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
 
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
 
     att_dir = os.path.join(OUTPUT_DIR, gxx_type)
     att_bin_dir = os.path.join(att_dir, 'bin')
@@ -184,11 +186,13 @@ def build_test(args):
     ]
 
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
 
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
     build_log('end test build.\n')
 
 
