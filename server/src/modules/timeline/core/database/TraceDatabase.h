@@ -77,12 +77,11 @@ public:
                                           Protocol::SummaryStatisticsBody &responseBody);
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
     bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams, Protocol::SystemViewBody &responseBody);
-    uint64_t QueryTotalNum(const std::string& sql);
-    double QueryLayerOperatorTime(const std::string &layer);
+    LayerStatData QueryLayerData(const std::string &layer);
     std::vector<std::string> QueryCoreType();
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                               Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp);
-    int64_t QueryTotalKernel(const std::string &coreType);
+    uint64_t QueryTotalKernel(const std::string &coreType);
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                                   Protocol::OneKernelBody &responseBody, uint64_t minTimestamp);
     OneKernelData QueryKernelTid(const uint64_t trackId);

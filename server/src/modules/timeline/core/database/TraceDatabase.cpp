@@ -1192,7 +1192,8 @@ bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64
 bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
                                         Protocol::SystemViewBody &responseBody)
 {
-    double layerOperatorTime = QueryLayerOperatorTime(requestParams.layer);
+    const LayerStatData &data = QueryLayerData(requestParams.layer);
+    double layerOperatorTime = data.allOperatorTime;
     std::string orderBy;
     if (requestParams.order == "descend") {
         orderBy = " order by " + requestParams.orderBy + " DESC";
@@ -1203,9 +1204,9 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
                       +  std::to_string(layerOperatorTime) + ", 2) as "
                       "time, sum(duration) as totalTime, count(1) as numberCalls, ROUND(avg(duration), 4) as avg, "
                       "min(duration) as min, max(duration) as max "
-                      "FROM slice JOIN ( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
-                      "WHERE process_name = '" + requestParams.layer + "' ) AS thread "
-                      "ON thread.track_id = slice.track_id "
+                      "FROM slice WHERE slice.track_id IN ( SELECT track_id "
+                      "FROM process JOIN thread t ON process.pid = t.pid "
+                      "WHERE process_name = '" + requestParams.layer + "' ) "
                       "GROUP BY name" + orderBy + " limit " + std::to_string(requestParams.pageSize)
                       + " offset " + std::to_string((requestParams.current - 1) * requestParams.pageSize);
     auto stmt = CreatPreparedStatement(sql);
@@ -1226,50 +1227,29 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
         systemViewDetail.max =  resultSet->GetUint64(col++);
         responseBody.systemViewDetail.emplace_back(systemViewDetail);
     }
-    if (requestParams.isQueryTotal) {
-        sql = "select count(distinct name) from slice join"
-              " (select track_id from process join thread t on process.pid = t.pid "
-              "where process_name= '"+ requestParams.layer +"' ) "
-              "as thread on thread.track_id = slice.track_id";
-        responseBody.total = QueryTotalNum(sql);
-    }
+    responseBody.total = data.total;
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
     return true;
 }
 
-uint64_t TraceDatabase::QueryTotalNum(const std::string &sql)
+LayerStatData TraceDatabase::QueryLayerData(const std::string &layer)
 {
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryTotalNum, fail to prepare sql.");
-        return 0;
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    uint64_t total = 0;
-    if (resultSet->Next()) {
-        total = resultSet->GetUint64(0);
-    }
-    return total;
-}
-
-double TraceDatabase::QueryLayerOperatorTime(const std::string &layer)
-{
-    double allOperatorTime = 0.1;
-    std::string sql = "SELECT sum(duration) AS totalTime FROM slice JOIN "
+    LayerStatData layerStatData;
+    std::string sql = "SELECT sum(duration) AS totalTime, count(distinct name) FROM slice WHERE slice.track_id IN "
                       "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
-                      "WHERE process_name = '" + layer + "' ) "
-                      "AS thread ON thread.track_id = slice.track_id";
+                      "WHERE process_name = '" + layer + "' ) ";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryLayerOperatorTime, fail to prepare sql.");
-        return allOperatorTime;
+        return layerStatData;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet->Next()) {
-        allOperatorTime = resultSet->GetDouble(0);
+        layerStatData.allOperatorTime = resultSet->GetDouble("totalTime");
+        layerStatData.total = resultSet->GetUint64("count(distinct name)");
     }
-    return allOperatorTime;
+    return layerStatData;
 }
 
 std::vector<std::string> TraceDatabase::QueryCoreType()
@@ -1283,13 +1263,13 @@ std::vector<std::string> TraceDatabase::QueryCoreType()
     }
     auto resultSet = stmt->ExecuteQuery();
     while (resultSet->Next()) {
-        std::string res = resultSet->GetString(0);
+        std::string res = resultSet->GetString("accelerator_core");
         acceleratorCoreList.emplace_back(res);
     }
     return acceleratorCoreList;
 }
 
-int64_t TraceDatabase::QueryTotalKernel(const std::string &coreType)
+uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType)
 {
     std::string sql = "SELECT count(*) FROM kernel_detail where 1=1";
     if (!coreType.empty()) {
@@ -1304,9 +1284,9 @@ int64_t TraceDatabase::QueryTotalKernel(const std::string &coreType)
         stmt->BindParams(coreType);
     }
     auto resultSet = stmt->ExecuteQuery();
-    int64_t total = 0;
+    uint64_t total = 0;
     if (resultSet->Next()) {
-        total = resultSet->GetInt64(0);
+        total = resultSet->GetUint64("count(*)");
     }
     return total;
 }
@@ -1405,8 +1385,8 @@ OneKernelData TraceDatabase::QueryKernelTid(const uint64_t trackId)
     auto resultSet = stmt->ExecuteQuery(trackId);
     uint64_t tid = 0;
     if (resultSet->Next()) {
-        oneKernel.threadId = resultSet->GetUint64(0);
-        oneKernel.pid = resultSet->GetString(1);
+        oneKernel.threadId = resultSet->GetUint64("tid");
+        oneKernel.pid = resultSet->GetString("pid");
     }
     return oneKernel;
 }
