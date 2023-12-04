@@ -15,6 +15,7 @@ export class Session {
     unitcount: number = 0;
     isVscode: boolean = document.location.origin.startsWith('vscode');
     private _sharedState: Record<string, unknown> = {};
+    isVscode: boolean = document.location.origin.startsWith('vscode');
 
     get sharedState(): Record<string, unknown> {
         return this._sharedState;
