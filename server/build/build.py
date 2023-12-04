@@ -98,8 +98,10 @@ def build_bin(args):
     else:
         build_type = 'debug'
 
-    build_cmds = ['cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
-                  '-D_PROJECT_TYPE=' + args.project_type]
+    build_cmds = [
+        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
+        '-D_PROJECT_TYPE=' + args.project_type
+    ]
 
     if args.cross_compile:
         toolchain = os.path.join(HOME_DIR, 'toolchain.cmake')
@@ -176,8 +178,10 @@ def build_test(args):
         os.makedirs(build_dir)
     build_type = 'release'
 
-    build_cmds = ['cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
-                  '-D_PROJECT_TYPE=' + args.project_type]
+    build_cmds = [
+        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
+        '-D_PROJECT_TYPE=' + args.project_type
+    ]
 
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
     log_output(output)

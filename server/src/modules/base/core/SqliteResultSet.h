@@ -32,7 +32,7 @@ public:
         return lastErrorCode == SQLITE_ROW;
     }
 
-    inline std::string GetString(int index)
+    inline std::string GetString(int index) const
     {
         const unsigned char *data = sqlite3_column_text(stmt, index);
         if (data == nullptr) {
@@ -45,27 +45,27 @@ public:
         return std::string(reinterpret_cast<const char *>(data), len);
     }
 
-    inline int32_t GetInt32(const int index)
+    inline int32_t GetInt32(const int index) const
     {
         return sqlite3_column_int(stmt, index);
     }
 
-    inline int64_t GetInt64(const int index)
+    inline int64_t GetInt64(const int index) const
     {
         return sqlite3_column_int64(stmt, index);
     }
 
-    inline uint32_t GetUint32(const int index)
+    inline uint32_t GetUint32(const int index) const
     {
         return sqlite3_column_int(stmt, index);
     }
 
-    inline uint64_t GetUint64(const int index)
+    inline uint64_t GetUint64(const int index) const
     {
         return sqlite3_column_int64(stmt, index);
     }
 
-    inline double GetDouble(const int index)
+    inline double GetDouble(const int index) const
     {
         return sqlite3_column_double(stmt, index);
     }
