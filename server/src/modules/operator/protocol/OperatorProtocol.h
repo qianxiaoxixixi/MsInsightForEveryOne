@@ -38,6 +38,7 @@ namespace Dic::Protocol {
         static std::optional<json_t> ToOperatorMoreInfoResponse(const Response &response);
 
         static std::optional<json_t> ToOperatorParseStatusEvent(const Event &event);
+        static std::optional<json_t> ToOperatorParseClearEvent(const Event &event);
     };
 }
 

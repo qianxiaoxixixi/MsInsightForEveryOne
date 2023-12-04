@@ -140,10 +140,10 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
 {
     start = std::chrono::system_clock::now();
     ServerLog::Info("start parse file for summary.");
-    auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
+    auto db = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
     std::string dbPath = FileUtil::GetDbPath(selectedFolder, fileId);
-    if (!(database->OpenDb(dbPath, false) && database->CreateTable() &&
-          database->SetConfig() && database->InitStmt())) {
+    if (!(db->OpenDb(dbPath, false) && db->CreateTable() &&
+          db->SetConfig() && db->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
     }
@@ -193,14 +193,10 @@ void KernelParse::Reset()
     threadPool->Reset();
     ServerLog::Info("Task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();
-    for (auto &database: databaseList) {
-        std::string path = database->GetDbPath();
-        database->ReleaseStmt();
-        database->CloseDb();
-        database->ClearParseKernelFile();
-        if (!FileUtil::RemoveFile(path)) {
-            ServerLog::Error("Failed to remove file. ", path);
-        }
+    for (auto &db: databaseList) {
+        db->ReleaseStmt();
+        db->CloseDb();
+        db->ClearParseKernelFile();
     }
     Timeline::DataBaseManager::Instance().Clear();
 }
