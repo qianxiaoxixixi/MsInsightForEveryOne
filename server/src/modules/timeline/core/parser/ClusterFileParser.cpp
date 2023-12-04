@@ -152,8 +152,8 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
 {
     ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
-    std::vector<std::string> exePathVector = FileUtil::FindFilesByRegex(
-            FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
+    std::vector<std::string> exePathVector =
+            FileUtil::FindFilesByRegex(FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
     if (!exePathVector.empty()) {
         std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
         int result = std::system(command.c_str());
