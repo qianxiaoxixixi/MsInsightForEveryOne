@@ -115,7 +115,7 @@ void MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
     memoryDatabase->SaveOperatorDetail();
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("end parse Operator, cost time:",
-                    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 }
 
 void MemoryParse::GetMapVaild(const std::vector<std::string>& vec, std::map<std::string, std::int16_t> dataMap)
@@ -203,7 +203,7 @@ void MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
     database->SaveRecordDetail();
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("end parse Record, cost time:",
-                    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 }
 
 MemoryParse::~MemoryParse()

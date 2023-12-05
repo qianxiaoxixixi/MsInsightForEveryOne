@@ -23,6 +23,7 @@ public:
 
 private:
     static bool curIsCluster;
+    std::string curScene;
 
     static void SetParseCallBack(const std::string &token);
     static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result);

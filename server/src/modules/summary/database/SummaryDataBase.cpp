@@ -69,7 +69,7 @@ bool SummaryDataBase::InitStmt()
 void SummaryDataBase::ReleaseStmt()
 {
     if (insertKernelStmt != nullptr) {
-        sqlite3_finalize(insertKernelStmt);
+        insertKernelStmt = nullptr;
     }
 }
 
