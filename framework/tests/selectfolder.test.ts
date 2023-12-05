@@ -1,14 +1,8 @@
 import { test } from '@playwright/test';
 import {selectFolder} from './baseOperation';
-const path= require('path');
-
-test('select folder', async ({ page, baseURL }) => {
-    await page.goto(baseURL);
-    await selectFolder({ page, baseURL });
-});
 test('test interface', async ({ page, baseURL }) => {
         await page.goto(baseURL);
-        await selectFolder({ page, baseURL });
+        await selectFolder({ page });
         const res = await page.evaluate(async() => {
             // 从0开始
             const res = await (window[2] as any).requestData(
