@@ -267,12 +267,14 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
             return;
         }
         if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
+            curScene = "train";
             FindAscendFolder(path, traceFiles);
             return;
         }
         if (std::find(folders.begin(), folders.end(), "mindstudio_profiler_output") != folders.end()) {
             std::string tmpPath = FileUtil::SplicePath(path, "mindstudio_profiler_output");
             if (FileUtil::IsFolder(tmpPath)) {
+                curScene = "infer";
                 find(tmpPath, depth + 1);
                 return;
             }
@@ -408,7 +410,8 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
     auto traceFiles = FindAllTraceFile(pathList);
     hasMemory.clear();
     if (pathList.size() == 1) {
-        bool isCluster = traceFiles.size() > 1 || CheckIsCluster(pathList[0]);
+        bool isCluster = (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0)
+                || CheckIsCluster(pathList[0]);
         bool reset = isCluster || curIsCluster;
         ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
         curIsCluster = isCluster;

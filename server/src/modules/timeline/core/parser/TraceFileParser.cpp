@@ -98,7 +98,6 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
                                    std::shared_ptr<std::vector<std::future<void>>> futures)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
-        DeleteParseFileFromDisk(fileId);
         ServerLog::Info("End parse task skip this file. ID:", fileId);
         return;
     }
@@ -130,7 +129,6 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
 {
     if (!(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
-        DeleteParseFileFromDisk(fileId);
         result = false;
     }
     auto &instance = TraceFileParser::Instance();
@@ -255,6 +253,7 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
 void TraceFileParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
+    ParserStatusManager::Instance().SetAllTerminateStatus();
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::TERMINATE);
     threadPool->Reset();
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
@@ -273,6 +272,7 @@ void TraceFileParser::Reset()
     TraceTime::Instance().Reset();
     FileParser::Reset();
     ParserStatusManager::Instance().ClearAllParserStatus();
+    ServerLog::Info("End Reset trace Parser");
 }
 
 std::string TraceFileParser::GetFileId(const std::string &filePath)

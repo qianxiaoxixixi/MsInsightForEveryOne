@@ -84,6 +84,13 @@ ParserStatus ParserStatusManager::SetTerminateStatus(const std::string &fileId)
     return oldStatus;
 }
 
+void ParserStatusManager::SetAllTerminateStatus()
+{
+    for (auto &statu: statusMap) {
+        statu.second = ParserStatus::TERMINATE;
+    }
+}
+
 void ParserStatusManager::SetClusterParseStatus(ParserStatus parserStatus)
 {
     std::unique_lock<std::mutex> lock(mutex);

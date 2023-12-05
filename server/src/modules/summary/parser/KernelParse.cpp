@@ -79,7 +79,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     db->SaveKernelDetail();
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("end parse kernel detail, cost time:",
-                    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 }
 
 Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,

@@ -16,6 +16,7 @@ MemoryDataBase::~MemoryDataBase()
 {
     if (hasInitStmt) {
         ReleaseStmt();
+        hasInitStmt = false;
     }
     CloseDb();
 }
@@ -75,10 +76,10 @@ bool MemoryDataBase::InitStmt()
 void MemoryDataBase::ReleaseStmt()
 {
     if (insertOperatorStmt != nullptr) {
-        sqlite3_finalize(insertOperatorStmt);
+        insertOperatorStmt = nullptr;
     }
     if (insertRecordStmt != nullptr) {
-        sqlite3_finalize(insertRecordStmt);
+        insertRecordStmt = nullptr;
     }
 }
 
@@ -332,6 +333,9 @@ sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == cacheSize) {
+        if (!hasInitStmt) {
+            InitStmt();
+        }
         stmt = insertOperatorStmt;
         sqlite3_reset(stmt);
     } else {

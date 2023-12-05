@@ -35,6 +35,7 @@ public:
     ParserStatus GetClusterParserStatus();
     bool SetRunningStatus(const std::string &fileId);
     bool SetFinishStatus(const std::string &fileId);
+    void SetAllTerminateStatus();
     // return old status
     ParserStatus SetTerminateStatus(const std::string &fileId);
     void SetClusterParseStatus(ParserStatus parserStatus);
