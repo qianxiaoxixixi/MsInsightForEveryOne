@@ -15,9 +15,9 @@ WsSessionManager &WsSessionManager::Instance()
 void WsSessionManager::AddSession(const std::string &token, std::unique_ptr<WsSession> session)
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
+    session->Start();
+    session->WaitForBindToken();
     sessionMap.emplace(token, std::move(session));
-    sessionMap.at(token)->Start();
-    sessionMap.at(token)->WaitForBindToken();
 }
 
 void WsSessionManager::RemoveSession(const std::string &token)

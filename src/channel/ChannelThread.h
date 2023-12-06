@@ -16,7 +16,7 @@ public:
     ~ChannelThread();
 
     bool Start();
-    bool Stop();
+    void Stop();
     bool IsStart() const;
 
     const int ThreadId() const;
