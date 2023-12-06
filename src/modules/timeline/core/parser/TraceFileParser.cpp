@@ -71,7 +71,7 @@ bool TraceFileParser::InitParser(const std::string &filePath, const std::string 
         return false;
     }
     auto &instance = TraceFileParser::Instance();
-    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
+    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &pos : splitFile) {
         auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, pos);
         futures->emplace_back(std::move(future));

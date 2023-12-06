@@ -23,8 +23,8 @@ public:
     static inline const std::string IntToString(int number, int length)
     {
         std::string s = std::to_string(number);
-        while (s.length() < length) {
-            s = '0' + s;
+        if (length > s.size()) {
+            s.insert(0, length - s.size(), '0');
         }
         return s;
     }
@@ -60,8 +60,8 @@ public:
     {
         std::uint32_t byteNum = 0;
         std::uint8_t byte;
-        for (int i = 0; str[i] != '\0'; i++) {
-            byte = static_cast<std::uint8_t>(str[i]);
+        for (char c : str) {
+            byte = static_cast<std::uint8_t>(c);
             // ASCII
             if ((byteNum == 0) && ((byte & 0x80) == 0)) {
                 continue;
@@ -84,11 +84,12 @@ public:
 
     static inline std::string AnonymousString(const std::string &str)
     {
-        if (str.length() < 3) {
+        static const size_t MIN_LEN = 3;
+        if (str.length() < MIN_LEN) {
             return str;
         }
         std::string res(str);
-        int pos = res.length() / 3;
+        int pos = res.length() / MIN_LEN;
         res.replace(pos, pos, pos, '*');
         return res;
     }

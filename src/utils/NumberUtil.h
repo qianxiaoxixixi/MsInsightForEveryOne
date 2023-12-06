@@ -7,6 +7,8 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
+
 namespace Dic {
 const int INVALID_NUMBER = 0xffffffff;
 // 16进制
