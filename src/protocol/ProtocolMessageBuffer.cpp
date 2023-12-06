@@ -12,23 +12,17 @@
 namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
-ProtocolMessageBuffer::ProtocolMessageBuffer() {}
 
-ProtocolMessageBuffer::~ProtocolMessageBuffer()
-{
-    Clear();
-}
-
-int ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, const uint64_t &headLength) const
+uint64_t ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, const uint64_t &headLength) const
 {
     std::string lenStr = buffer.substr(headPosition, headLength);
     std::optional<std::smatch> matchRes = RegexUtil::RegexMatch(lenStr, "Content-Length:\\s*(\\d+)");
-    if (!matchRes.has_value() || matchRes.value().size() < MATCH_MIN_NUM) {
+    if (!matchRes.has_value() || matchRes.value().size() < matchMinNum) {
         return -1;
     }
-    int res;
+    uint64_t res;
     try {
-        res = std::stoi(matchRes.value()[1].str());
+        res = std::stoull(matchRes.value()[1].str());
     } catch (std::invalid_argument &) {
         res = -1;
     } catch (std::out_of_range &) {
@@ -61,7 +55,7 @@ ProtocolMessage::Type ProtocolMessageBuffer::GetMessageType(const std::string &b
     }
 }
 
-ProtocolMessageBuffer &ProtocolMessageBuffer::operator >> (const std::string &data)
+ProtocolMessageBuffer &ProtocolMessageBuffer::operator << (const std::string &data)
 {
     std::unique_lock<std::mutex> lock(mutex);
     buffer.append(data);
