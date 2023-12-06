@@ -33,25 +33,27 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
 std::shared_ptr<TraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) == 0) {
+    auto it = traceDatabaseMap.find(fileId);
+    if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
     }
-    return traceDatabaseMap[fileId]->GetConnection();
+    return it->second->GetConnection();
 }
 
 void DataBaseManager::ReleaseTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) >= 0) {
-        traceDatabaseMap.erase(fileId);
+    auto it = traceDatabaseMap.find(fileId);
+    if (it != traceDatabaseMap.end()) {
+        traceDatabaseMap.erase(it);
     }
 }
 
 bool DataBaseManager::HasFileId(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    return traceDatabaseMap.count(fileId) != 0;
+    return traceDatabaseMap.find(fileId) != traceDatabaseMap.end();
 }
 
 std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
@@ -83,10 +85,11 @@ std::vector<std::string> DataBaseManager::GetAllFileId()
 std::string DataBaseManager::GetDbPath(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) == 0) {
+    auto it = traceDatabaseMap.find(fileId);
+    if (it == traceDatabaseMap.end()) {
         return "";
     }
-    return traceDatabaseMap[fileId]->GetDbPath();
+    return it->second->GetDbPath();
 }
 } // end of namespace Timeline
 } // end of namespace Module

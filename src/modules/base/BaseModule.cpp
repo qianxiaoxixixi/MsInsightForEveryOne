@@ -9,6 +9,7 @@
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
+using namespace Dic::Protocol;
 ThreadPool BaseModule::threadPool(SystemUtil::GetCpuCoreCount());
 void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {

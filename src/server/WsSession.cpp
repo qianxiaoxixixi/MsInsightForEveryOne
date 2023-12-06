@@ -13,19 +13,20 @@ namespace Dic {
 namespace Server {
 using namespace Dic::Protocol;
 using namespace Dic::Module;
-WsSession::WsSession(WsChannel *channel) : channel(channel)
+WsSession::WsSession(WsChannel *channel) : channel(channel), status(Status::INIT)
 {
     loop = uWS::Loop::get();
     tokenString = TokenBuilder::Instance().Build();
     createTime = TimeUtil::Instance().NowUTC();
     msgBuffer = std::make_unique<ProtocolMessageBuffer>();
-    if (useResponseQueue) {
-        responseQueue = std::make_unique<ResponseQueue>();
-    }
-    status = Status::INIT;
 }
 
-WsSession::~WsSession() {}
+WsSession::~WsSession()
+{
+    if (waitForTokenThread != nullptr && waitForTokenThread->joinable()) {
+        waitForTokenThread->join();
+    }
+}
 
 bool WsSession::CheckMessage(ProtocolMessage &msg)
 {
@@ -89,15 +90,15 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
 void WsSession::OnHandleResponseQueue(WsSession &session)
 {
     ServerLog::Info("Handle response queue thread start.");
-    const int INTERVAL = 50;
     while (session.useResponseQueue) {
         if (session.status == Status::CLOSED) {
-            session.responseQueue->Clear();
+            session.responseQueue.Clear();
             break;
         }
-        std::unique_ptr<Response> responsePtr = session.responseQueue->Pop();
-        if (responsePtr == nullptr) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL));
+        std::unique_ptr<Response> responsePtr = nullptr;
+        if (session.responseQueue.Pop(responsePtr) && responsePtr == nullptr) {
+            std::unique_lock<std::mutex> lock(session.responseQueueMutex);
+            session.responseQueueCv.wait(lock);
             continue;
         }
         session.SendResponse(*responsePtr.get());
@@ -119,10 +120,10 @@ void WsSession::WaitForExit(int milliSeconds)
 
 const std::string WsSession::GetMessageHeader(int length) const
 {
-    const std::string DELIMITER = "\r\n\r\n";
+    const std::string delimiter = "\r\n\r\n";
     std::string result = "Content-Length:";
     result.append(std::to_string(length));
-    result.append(DELIMITER);
+    result.append(delimiter);
     return result;
 }
 
@@ -206,7 +207,7 @@ void WsSession::OnRequestMessage(const std::string &data)
     if (data.empty()) {
         return;
     }
-    (*msgBuffer.get()) >> data;
+    (*msgBuffer.get()) << data;
 }
 
 void PrintResponseInfo(const Protocol::Response &response)
@@ -219,7 +220,8 @@ void WsSession::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
 {
     if (responsePtr != nullptr) {
         if (useResponseQueue) {
-            (*responseQueue.get()) >> std::move(responsePtr);
+            responseQueue << std::move(responsePtr);
+            responseQueueCv.notify_one();
         } else {
             SendResponse(*responsePtr.get());
             PrintResponseInfo(*responsePtr);
@@ -242,6 +244,8 @@ void WsSession::Send(const std::string &message)
     }
     if (channel != nullptr) {
         channel->send(message, uWS::OpCode::TEXT, false);
+    } else {
+        ServerLog::Error("Channel is null, so that message can not be sent.");
     }
 }
 
@@ -300,11 +304,10 @@ void WsSession::Start()
 
 void WsSession::Stop()
 {
-    if (status != Status::CLOSED) {
-        status = Status::CLOSED;
-        if (channel != nullptr) {
-            channel->close();
-        }
+    status = Status::CLOSED;
+    if (channel != nullptr) {
+        channel->close();
+        channel = nullptr;
     }
     stopTime = TimeUtil::Instance().NowUTC();
 }
@@ -333,7 +336,6 @@ void WsSession::WaitForBindToken(int timeoutSeconds)
             }
         },
         timeoutSeconds);
-    waitForTokenThread->detach();
 }
 
 std::string WsSession::GetDeviceKey()

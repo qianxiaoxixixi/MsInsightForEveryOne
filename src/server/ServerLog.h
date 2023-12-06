@@ -10,7 +10,6 @@
 
 namespace Dic {
 namespace Server {
-using namespace Dic;
 class ServerLog {
 public:
     static inline void Initialize(const std::string &logPath, const int &logSize, const std::string &logLevelStr)
@@ -91,9 +90,9 @@ private:
         std::lock_guard<std::mutex> lock(recordInstanceMutex);
         if (recordInstance == nullptr) {
             std::string logPath = "./profiler_server.log";
-            const int LOG_SIZE = 32 * 1024 * 1024;
+            const int logSize = 32 * 1024 * 1024;
             recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logPath);
-            recordInstance->SetLogLevel(level).SetMaxSize(LOG_SIZE);
+            recordInstance->SetLogLevel(level).SetMaxSize(logSize);
         }
         std::string head = GetLogHead(level);
         recordInstance->LogT(level, head, args..., "\n");

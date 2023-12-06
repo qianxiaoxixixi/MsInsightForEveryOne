@@ -48,17 +48,16 @@ bool ChannelThread::Start()
     return this->isStart;
 }
 
-bool ChannelThread::Stop()
+void ChannelThread::Stop()
 {
     if (!this->isStart) {
-        return true;
+        return;
     }
     this->isStart = false;
     if (this->channelPtr != nullptr) {
         this->channelPtr->Close();
     }
     UvLoopMgr::Instance().LoopStop(this->id);
-    return true;
 }
 
 bool ChannelThread::IsStart() const
