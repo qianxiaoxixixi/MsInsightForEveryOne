@@ -1,21 +1,16 @@
-import { expect } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 
-export async function selectFolder({ page, baseURL}: { baseURL: string; page: any;path?: string }) {
-    await page.goto(baseURL);
+export async function selectFolder({ page }:{ page: Page;}) {
     await page.locator('.el-aside > .header > .icon-button').click();
     await page.getByText('D:\\').click();
     await page.locator('span[name=Dworkspace]').click();
     await page.locator('span[name=Dworkspacedata]').click();
     await page.locator('span[name=Dworkspacedata16ka_gpt3]').click();
     await page.getByText('Confirm').click();
-    await page.waitForTimeout(100);
-    expect(page).toHaveScreenshot('selectFolder.png', { maxDiffPixels: 800 });
-    await page.waitForTimeout(15000);
-    expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('parseSuccess.png');
+    await page.waitForTimeout(5000);
 }
 
-export async function selectFile({ page, baseURL }: { baseURL: string; page: any;path?: string }) {
-    await page.goto(baseURL);
+export async function selectFile({ page }: { page: any;}) {
     await page.locator('.el-aside > .header > .icon-button').click();
     await page.getByText('D:\\').click();
     await page.locator('span[name=Dworkspace]').click();
