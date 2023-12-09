@@ -57,6 +57,7 @@ const baseOption: echarts.EChartsOption = {
     },
     tooltip: {
         trigger: 'item',
+        confine: true,
     },
     legend: {
         orient: 'vertical',
@@ -127,8 +128,8 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
         setComputeData(data);
     };
     function renderChart(): void {
-        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark: session.isDark, title: `Total Time(us) Group by ${condition.group}` });
-        InitCharts({ data: computeData, domId: 'computeChart', isDark: session.isDark, title: 'Total Time(us) Group by Accelerator Core' });
+        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark: session.isDark, title: `Total Time(μs) Group by ${condition.group}` });
+        InitCharts({ data: computeData, domId: 'computeChart', isDark: session.isDark, title: 'Total Time(μs) Group by Accelerator Core' });
     }
     // 避免echarts渲染空白
     chartVisbilityListener('opTypeChart', () => {
