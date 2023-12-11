@@ -423,14 +423,14 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         std::string sql =
                 " SELECT * FROM ("
                 "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
-                "     ROUND(SUM(duration), 2) as duration, COUNT(0) as cnt,"
+                "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
                 "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + kernelTable +
                 "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
                 "     GROUP by " + group +
-                "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
+                "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
 
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
