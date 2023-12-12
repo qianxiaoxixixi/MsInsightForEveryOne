@@ -57,6 +57,7 @@ private:
     bool hasInitStmt = false;
     sqlite3_stmt *insertKernelStmt = nullptr;
     const int cacheSize = 1000;
+    const int maxCategorySize = 50;
     std::vector<Kernel> kernelCache;
     std::vector<std::string> kernelFiles = {};
 

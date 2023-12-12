@@ -376,7 +376,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             int col = 0;
             one.name = sqlite3_column_string(stmt, col++);
             one.duration = sqlite3_column_double(stmt, col++);
-            res.emplace_back(one);
+            // 限制能够显示的最大数目为50
+            if (res.size() >= maxCategorySize) {
+                res[maxCategorySize -1].name = "Others";
+                res[maxCategorySize -1].duration += one.duration;
+            } else {
+                res.emplace_back(one);
+            }
         }
         datas = res;
 
