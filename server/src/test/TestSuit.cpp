@@ -4,12 +4,14 @@
 
 #include <gtest/gtest.h>
 #include "TraceFileParser.h"
-#include "clusterFileParser.h"
+#include "ClusterFileParser.h"
 #include "FileUtil.h"
 #include "DataBaseManager.h"
 #include "ServerLog.h"
+#include "ParserStatusManager.h"
 #include "TimelineProtocolRequest.h"
 
+using namespace Dic::Module::Timeline;
 class TestSuit : public ::testing::Test {
 protected:
     static const int sleepSeconds = 5;
@@ -28,7 +30,14 @@ protected:
             {currPath + R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "1", "");
         Dic::Module::Timeline::ClusterFileParser clusterFileParser;
         clusterFileParser.ParseClusterFiles(currPath + R"(/src/test/test_data)");
-        std::this_thread::sleep_for(std::chrono::seconds(sleepSeconds));
+        while (true) {
+            ParserStatus status0 = ParserStatusManager::Instance().GetParserStatus("0");
+            ParserStatus status1 = ParserStatusManager::Instance().GetParserStatus("1");
+            if (status0 == ParserStatus::FINISH && status1 == ParserStatus::FINISH) {
+                Dic::Server::ServerLog::Info("parse end");
+                return;
+            }
+        }
     }
 
     static void TearDownTestCase()

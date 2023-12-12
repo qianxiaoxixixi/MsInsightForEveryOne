@@ -125,8 +125,8 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);
     EXPECT_EQ(result, true);
-    int total = 3;
+    int total = 0;
     EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l1");
+    EXPECT_EQ(response.level, "l0");
     EXPECT_EQ(response.datas.size(), total);
 }

@@ -4,6 +4,7 @@ project(insight_server_test VERSION 0.1.0)
 set(SRC_HOME_DIR ${HOME_DIR}/src)
 set(TEST_HOME_DIR ${HOME_DIR}/src/test)
 
+aux_source_directory(${TEST_HOME_DIR} TEST)
 aux_source_directory(${TEST_HOME_DIR}/utils TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication/handler TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/memory TEST)
