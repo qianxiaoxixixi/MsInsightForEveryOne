@@ -5,7 +5,7 @@ test.describe('comminucation', () => {
     let page: Page;
     test.beforeAll('Open Page', async ({ browser, baseURL }) => {
         page = await browser.newPage({ viewport: { width: 1700, height: 1100 } });
-        await page.goto(baseURL);
+        await page.goto(`${baseURL}?port=9002`);
     });
 
     test.afterAll(async () => {
@@ -20,7 +20,7 @@ test.describe('comminucation', () => {
     // 2.导入集群数据
     test('testCommunicationTabWithData', async () => {
         await selectFolder({ page });
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
         await page.getByText('Communication')?.click();
         await page.waitForTimeout(1500);
         await expect(page).toHaveScreenshot('communication.png', { maxDiffPixels: 800 });
