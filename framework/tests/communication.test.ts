@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {clickSelect, selectFolder} from './baseOperation';
+
+const DATA_PATH = 'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3_2'
 test.describe('comminucation', () => {
     test.describe.configure({ mode: 'serial' });
     let page: Page;
@@ -19,10 +21,10 @@ test.describe('comminucation', () => {
 
     // 2.导入集群数据
     test('testCommunicationTabWithData', async () => {
-        await selectFolder({ page });
+        await selectFolder({ page, path: DATA_PATH });
         await page.waitForTimeout(5000);
         await page.getByText('Communication')?.click();
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(3000);
         await expect(page).toHaveScreenshot('communication.png', { maxDiffPixels: 800 });
     });
 
@@ -93,13 +95,17 @@ test.describe('comminucation', () => {
     test('testMatrixFilterChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         // 修改筛选条件 Communication Group
-        await clickSelect({ locator: frame, cur: '(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)', target: '(0, 1, 2, 3, 4, 5, 6, 7)' });
+        await frame.locator('.ant-select-selector')?.getByText('(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)', { exact: true }).click();
+        await frame.locator('.ant-select-item.ant-select-item-option')?.getByText('p2p', { exact: true })?.hover();
+        // 滑动到选项可见才能点击
+        page.mouse.wheel(0, 400);
+        await frame.locator('.ant-select-item.ant-select-item-option')?.getByText('(0, 1, 2, 3, 4, 5, 6, 7)', { exact: true })?.click();
         await frame.waitForTimeout(1000);
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('matrixFilterChangeCommunicationGroup.png');
 
         // 修改筛选条件 Operator Name
         await clickSelect({ locator: frame, cur: 'Total Op Info', target: 'hcom_allGather__483_11' });
-        await frame.waitForTimeout(1000);
+        await frame.waitForTimeout(2000);
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('matrixFilterChangeOperatorName.png');
     });
 

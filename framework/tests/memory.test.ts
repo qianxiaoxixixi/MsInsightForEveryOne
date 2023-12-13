@@ -6,6 +6,7 @@ interface MemoryRankInfo {
   rankId: string;
 }
 const MEMORY_COUNT = 16;
+const DATA_PATH = 'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3_3'
 test.describe('memory', () => {
   test.describe.configure({ mode: 'serial' });
   let page: Page;
@@ -43,7 +44,7 @@ test.describe('memory', () => {
   test('testMainPageWithData', async () => {
     const frame = page.frame({ url: /.Memory.*/ });
     expect(Boolean(frame)).toBe(true);
-    await selectFolder({ page, path: 'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3' });
+    await selectFolder({ page, path: DATA_PATH });
     const waitTimes = 120;
     // 通过定时器监听memoryData变化
     const interId: number = await new Promise((resolve) => {
@@ -173,6 +174,7 @@ test.describe('memory', () => {
       // 每页显示20条
       await clickSelect({ locator: frame, cur: '10 / page', target: '20 / page' });
       await page.mouse.wheel(0, 400);
+      await page.waitForTimeout(1000);
       await expect(page).toHaveScreenshot('memoryTablePageSize20.png', { fullPage: true });
       // 重置初始状态
       await clickSelect({ locator: frame, cur: '20 / page', target: '10 / page' });

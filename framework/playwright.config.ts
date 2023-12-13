@@ -12,7 +12,7 @@ import { devices } from '@playwright/test'
 const config: PlaywrightTestConfig = {
   testDir: './tests',
   /* Maximum time one test can run for. */
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
   expect: {
     /**
      * Maximum time expect() should wait for the condition to be met.
@@ -28,7 +28,7 @@ const config: PlaywrightTestConfig = {
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'],
+    ['html', { open: 'never' }],
     ['.\\tests\\customReporter.ts']
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -42,7 +42,7 @@ const config: PlaywrightTestConfig = {
     trace: 'on-first-retry',
 
     /* Only on CI systems run the tests headless */
-    headless: !!process.env.CI,
+    headless: true,
     launchOptions: {
       // 浏览器地址，可以自行配置
       executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
@@ -63,16 +63,12 @@ const config: PlaywrightTestConfig = {
 
   /* Run your local dev server before starting the tests */
   webServer: [
-    {
-      // 需要先将server编译出来放到指定位置
-      command: "..\\serverBuild\\profiler_server.exe --wsPort=9000",
-      reuseExistingServer: !process.env.CI
-    },
-    {
-      // 需要先将server编译出来放到指定位置
-      command: "..\\serverBuild\\profiler_server.exe --wsPort=9003",
-      reuseExistingServer: !process.env.CI
-    },
+    ...([9000, 9001, 9002, 9003, 9004].map(port => (
+      {
+        command: `..\\serverBuild\\profiler_server.exe --wsPort=${port}`,
+        reuseExistingServer: !process.env.CI
+      }
+    ))),
     {
       /**
        * Use the dev server by default for faster feedback loop.
