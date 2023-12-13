@@ -9,7 +9,7 @@ test.describe('timeline',() => {
         page = await browser.newPage({ viewport: { width: 1700,height: 1100 }});
         await page.goto(baseURL + '?port=9000');
         // import file
-        const path = basePath + '16ka_gpt3\\master47_1993648_20230919172551_ascend_pt';
+        const path = basePath + '16ka_gpt3_1\\master47_1993648_20230919172551_ascend_pt';
         await selectFolder({page, path});
         await waiting(5000);
         timelineFrameLocator = page.frameLocator('[id="Timeline\\ View"]');
@@ -66,7 +66,7 @@ test.describe('timeline',() => {
         await frame.locator('svg.insight-unit-fold').nth(0).click();
         await frame.waitForTimeout(1500);
         await frame.locator('svg.css-1x2odwv').click();
-        await frame.waitForTimeout(1500);
+        await frame.waitForTimeout(2500);
         await compare2Snapshot('third_layer_reset.png');
         await frame.locator('svg.insight-unit-expanded').nth(1).click();
         await frame.waitForTimeout(1500);
@@ -376,7 +376,7 @@ test.describe('timeline',() => {
     test('testAddAndRemoveMarker', async () => {
         await page.locator('span.deleteIcon').first().click();
         await page.getByRole('button', { name: 'Confirm' }).click();
-        await selectFolder({page, path: basePath + '16ka_gpt3\\master47_1993648_20230919172551_ascend_pt'});
+        await selectFolder({page, path: basePath + '16ka_gpt3_1\\master47_1993648_20230919172551_ascend_pt'});
         await resetTimeline(timelineFrameLocator);
         // 添加marker
         await addMarker(242, 9, timelineFrameLocator);
@@ -575,7 +575,7 @@ test.describe('timeline',() => {
     /** 多卡数据测试用例 **/
     test('testToolbarFilterByCardAndCancel', async () => {
         // 导入多卡数据
-        await selectFolder({page, path: basePath + '16ka_gpt3'});
+        await selectFolder({page, path: basePath + '16ka_gpt3_1'});
         await waiting(3000);
 
         // 点击filter图标

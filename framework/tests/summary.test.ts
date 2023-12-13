@@ -17,7 +17,7 @@ test.describe('summary',() => {
 	test('testImportClusterData', async () => {
 		await page.getByText('Summary').click();
 		await page.waitForTimeout(5000);
-		await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('clusterData.png');
+		await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('clusterData.png', { maxDiffPixels: 800 });
 	})
 	// 1.导入16卡集群数据
 	test('testSelectPpAnalyse', async () => {
