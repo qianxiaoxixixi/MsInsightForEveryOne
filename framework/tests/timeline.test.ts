@@ -28,7 +28,7 @@ test.describe('timeline',() => {
         await expect(await frame.getByText('Python (1993648)')).toBeVisible();
         // 复原
         await frame.locator('svg.insight-unit-expanded').first().click();
-        await expect(await page.screenshot({fullPage: true})).toMatchSnapshot('resetting.png');
+        await compare2Snapshot('resetting.png');
     });
 
     // 测试收藏泳道功能
@@ -67,7 +67,7 @@ test.describe('timeline',() => {
         await frame.waitForTimeout(1500);
         await frame.locator('svg.css-1x2odwv').click();
         await frame.waitForTimeout(1500);
-        await expect(await page.screenshot({fullPage: true})).toMatchSnapshot('third_layer_reset.png');
+        await compare2Snapshot('third_layer_reset.png');
         await frame.locator('svg.insight-unit-expanded').nth(1).click();
         await frame.waitForTimeout(1500);
         await frame.locator('svg.insight-unit-expanded').first().click();
