@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ResourceComp from '@/components/ResourceComp.vue';
@@ -9,7 +9,14 @@ import ProjectMode from "@/components/ProjectMode.vue";
 const isDarkTheme = ref(true);
 
 const resourceComp = ref();
-
+onMounted(() => {
+    connector.addListener('getParseStatus', () => {
+      connector.send({
+        event: 'setTheme',
+        body: { isDark: isDarkTheme.value },
+      });
+    });
+})
 watch(isDarkTheme, () => {
     connector.send({
         event: 'setTheme',
