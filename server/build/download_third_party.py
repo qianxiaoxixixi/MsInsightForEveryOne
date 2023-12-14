@@ -2,7 +2,7 @@
 # coding=utf-8
 # Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 #
-# 下载除sqlite外的其他三方依赖
+# 下载三方依赖
 
 import os
 import subprocess
@@ -46,6 +46,11 @@ OPEN_SOURCE = [
         'rapidjson',
         '012be8528783cdbf4b7a9e64f78bd8f056b97e24',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/Tencent/rapidjson.git'
+    ],
+    [
+        'sqlite3_src',
+        '3.40.1',
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/www.sqlite.org/sqlite.git'
     ]
 ]
 
