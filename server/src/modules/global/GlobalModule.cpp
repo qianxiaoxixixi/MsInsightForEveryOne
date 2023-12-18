@@ -6,6 +6,7 @@
 #include "TokenCreateHandler.h"
 #include "TokenDestroyHandler.h"
 #include "TokenCheckHandler.h"
+#include "TokenHeartCheckHandler.h"
 #include "FilesGetHandler.h"
 #include "GlobalModule.h"
 
@@ -29,6 +30,7 @@ void GlobalModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_TOKEN_CREATE, std::make_unique<TokenCreateHandler>());
     requestHandlerMap.emplace(REQ_RES_TOKEN_DESTROY, std::make_unique<TokenDestroyHandler>());
     requestHandlerMap.emplace(REQ_RES_TOKEN_CHECK, std::make_unique<TokenCheckHandler>());
+    requestHandlerMap.emplace(REQ_RES_TOKEN_HEART_CHECK, std::make_unique<TokenHeartCheckHandler>());
     requestHandlerMap.emplace(REQ_RES_FILES_GET, std::make_unique<FilesGetHandler>());
 }
 

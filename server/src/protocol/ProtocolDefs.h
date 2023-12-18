@@ -40,6 +40,7 @@ const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
 const std::string REQ_RES_TOKEN_CREATE = "token.create";
 const std::string REQ_RES_TOKEN_DESTROY = "token.destroy";
 const std::string REQ_RES_TOKEN_CHECK = "token.check";
+const std::string REQ_RES_TOKEN_HEART_CHECK = "token.heartCheck";
 const std::string REQ_RES_FILES_GET = "files/get";
 
 // timeline

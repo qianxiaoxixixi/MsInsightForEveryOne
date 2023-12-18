@@ -26,6 +26,7 @@ export class Connection {
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _token?: string;
     private _fetchFlag: boolean = true;
+    private _heartCheckTimer:any;
 
     constructor(dataSource: DataSource) {
         console.info('[connector]', 'init');
@@ -86,6 +87,7 @@ export class Connection {
                         reject(new Error('create token failure'));
                     }
                 }
+                this.clearHeartCheckTimer();
             };
 
             this._ws.onerror = (ev: Event): void => {
@@ -141,6 +143,7 @@ export class Connection {
     }
 
     fetchDataOnMessage = (ev: MessageEvent<string>): void => {
+        this.clearHeartCheckTimer();
         if (ev.data.startsWith(CONTENT_LENGTH_PREFIX)) {
             // ignore this message
             return;
@@ -178,6 +181,7 @@ export class Connection {
         }
         this._ws.send(`${CONTENT_LENGTH_PREFIX}:${new TextEncoder().encode(msgStr).length}\r\n\r\n`);
         this._ws.send(msgStr);
+        this.setHeartCheck();
     }
 
     get isConnected(): boolean {
@@ -187,5 +191,21 @@ export class Connection {
     async findServerPort(): Promise<number> {
         // wedge: implement the true logic
         return Promise.resolve(PORT);
+    }
+    private setHeartCheck(){
+        this.clearHeartCheckTimer();
+        this._heartCheckTimer = setTimeout(()=>{
+            this.sendHeartCheck();
+        },60*1000)
+    }
+    private clearHeartCheckTimer(){
+        if(this._heartCheckTimer){
+            clearTimeout(this._heartCheckTimer);
+            this._heartCheckTimer = undefined;
+        }
+    }
+    private sendHeartCheck(){
+        const msg: Request = createRequestHead(this._msgId++, 'global', 'token.heartCheck', { token: this._token });
+        this.request(msg);
     }
 }
