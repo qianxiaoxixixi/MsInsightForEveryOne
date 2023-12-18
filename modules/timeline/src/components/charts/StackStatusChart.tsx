@@ -130,7 +130,7 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
         const elem = data[mid];
         if (mouseTime < elem.startTime) {
             hi = mid;
-        } else if ((elem.duration > 0 && mouseTime > elem.startTime + elem.duration)) {
+        } else if ((elem.duration >= 0 && mouseTime > elem.startTime + elem.duration)) {
             lo = mid + 1;
         } else {
             return elem;
