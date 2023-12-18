@@ -362,11 +362,10 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             sql = GenerateQueryComputeUnitDurationSql(reqParams);
         }
 
-        ServerLog::Info("[Operator]Query Operator Duration Info SQL: ", sql);
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of DurationInfo. ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
 
@@ -402,10 +401,10 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     GROUP by " + (reqParams.group == "Operator Type" ? "op_type" : R"(name || input_shapes)") +
                 "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
-        ServerLog::Info("[Operator]Query Statistic Total Num sql: ", sql);
+
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of StatisticTotalNum.", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -462,11 +461,10 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         }
 
         std::string sql = GenerateQueryStatisticSql(reqParams);
-        ServerLog::Info("[Operator]Query Operator Statistic Info SQL. ", sql);
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of StatisticInfo.", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Statistic Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::vector<Protocol::OperatorStatisticInfoRes> res;
@@ -502,10 +500,9 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
 
-        ServerLog::Info("[Operator]Query Detail Total Num sql: ", sql);
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of Detail Total Num.", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -542,11 +539,10 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             return false;
         }
         std::string sql = GenerateQueryDetailSql(reqParams);
-        ServerLog::Info("[Operator]Generate Query Detail Sql SQL.", sql);
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of DetailInfo. ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
             return false;
         }
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -590,12 +586,12 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " FROM ("
                 "     SELECT *"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND" + condition +
+                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL' AND" + condition +
                 " ) subquery";
-        ServerLog::Info("[Operator]Query More Total Num sql: ", sql);
+
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of More Total Num.", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -613,7 +609,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "'"
+                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
                 "     ORDER by duration DESC"
                 " ) subquery ";
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
@@ -643,11 +639,10 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         }
 
         std::string sql = GenerateQueryMoreInfoSql(reqParams);
-        ServerLog::Info("[Operator]QueryOperatorMoreInfo SQL.", sql);
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("[Operator]Failed to prepare sql of QueryOperatorMoreInfo.", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();

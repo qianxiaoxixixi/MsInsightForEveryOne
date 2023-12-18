@@ -47,6 +47,13 @@ template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const Token
     return json;
 }
 
+template <> std::optional<json_t> ToResponseJson<TokenHeartCheckResponse>(const TokenHeartCheckResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    return json;
+}
+
 json_t FolderToJson(const std::unique_ptr<Folder> &folder)
 {
     json_t json;

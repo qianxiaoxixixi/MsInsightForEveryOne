@@ -17,6 +17,7 @@ const getDefaultColumData = (key: string): {} => {
     return {
         sorter: true,
         showSorterTooltip: false,
+        ellipsis: true,
     };
 };
 
