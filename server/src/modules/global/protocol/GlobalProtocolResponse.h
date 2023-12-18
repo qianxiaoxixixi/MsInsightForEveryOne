@@ -49,6 +49,11 @@ struct TokenCheckResponse : public Response {
     TokenCheckResBody body;
 };
 
+// token.heartCheck
+struct TokenHeartCheckResponse : public Response {
+    TokenHeartCheckResponse() : Response(REQ_RES_TOKEN_HEART_CHECK) {};
+};
+
 struct File {
     File() = default;
     ~File() = default;

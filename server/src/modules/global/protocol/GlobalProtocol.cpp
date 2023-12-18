@@ -16,6 +16,7 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateRequest);
     jsonToReqFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyRequest);
     jsonToReqFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckRequest);
+    jsonToReqFactory.emplace(REQ_RES_TOKEN_HEART_CHECK, ToTokenHeartCheckRequest);
     jsonToReqFactory.emplace(REQ_RES_FILES_GET, ToFilesGetRequest);
 }
 
@@ -24,6 +25,7 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
+    resToJsonFactory.emplace(REQ_RES_TOKEN_HEART_CHECK, ToTokenCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_FILES_GET, ToFilesGetResponseJson);
 }
 
@@ -68,6 +70,15 @@ std::unique_ptr<Request> GlobalProtocol::ToTokenCheckRequest(const json_t &json,
     return reqPtr;
 }
 
+std::unique_ptr<Request> GlobalProtocol::ToTokenHeartCheckRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<TokenHeartCheckRequest> reqPtr = std::make_unique<TokenHeartCheckRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+}
+
 std::unique_ptr<Request> GlobalProtocol::ToFilesGetRequest(const json_t &json, std::string &error)
 {
     std::unique_ptr<FilesGetRequest> reqPtr = std::make_unique<FilesGetRequest>();
@@ -94,6 +105,11 @@ std::optional<json_t> GlobalProtocol::ToTokenDestroyResponseJson(const Response 
 std::optional<json_t> GlobalProtocol::ToTokenCheckResponseJson(const Response &response)
 {
     return ToResponseJson<TokenCheckResponse>(dynamic_cast<const TokenCheckResponse &>(response));
+}
+
+std::optional<json_t> GlobalProtocol::ToTokenHeartCheckResponseJson(const Response &response)
+{
+    return ToResponseJson<TokenHeartCheckResponse>(dynamic_cast<const TokenHeartCheckResponse &>(response));
 }
 
 std::optional<json_t> GlobalProtocol::ToFilesGetResponseJson(const Response &response)

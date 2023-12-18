@@ -45,6 +45,11 @@ struct TokenCheckRequest : public Request {
     TokenCheckParams params;
 };
 
+// token.heartCheck
+struct TokenHeartCheckRequest : public Request {
+    TokenHeartCheckRequest() : Request(REQ_RES_TOKEN_HEART_CHECK) {}
+};
+
 struct FilesGetParams {
     std::string path;
 };
