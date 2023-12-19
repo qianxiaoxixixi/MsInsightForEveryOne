@@ -45,7 +45,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: rgba(127, 127, 127, .5);
+    background-color: rgba(127, 127, 127, .7);
     z-index: 100;
     border-radius: 5px;
     transition: .3s background-color;
@@ -259,7 +259,7 @@ tr.ant-table-row:hover{
     background-color: var(--grey80);
 }
 .theme_dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled){
-    background-color: var(--grey70);
+    background-color: var(--grey80);
 }
 .theme_dark .ant-table-column-sorter-up.active svg,.theme_dark .ant-table-column-sorter-down.active svg {
     color: #1890ff;
