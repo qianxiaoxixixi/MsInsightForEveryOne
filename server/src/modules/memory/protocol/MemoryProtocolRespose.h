@@ -15,8 +15,8 @@ namespace Protocol {
 struct MemoryOperator {
     std::string name;
     double size;
-    double allocationTime;
-    double releaseTime;
+    std::string allocationTime;
+    std::string releaseTime;
     double duration;
 };
 
