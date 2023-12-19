@@ -56,11 +56,31 @@ const nsToMs = (ns: number): number => {
     return ns / 1000000;
 };
 
+const nsToNs = (ns: number): string => {
+    const ms = Math.floor(ns / 1000000);
+    const us = Math.floor((ns - ms * 1000000) / 1000);
+    const nsRemainder = ns - ms * 1000000 - us * 1000;
+    if (ms === 0 && us === 0) {
+        return `${nsRemainder}ns`;
+    }
+    if (ms === 0) {
+        return `${us}us${nsRemainder}ns`;
+    }
+    return `${ms}ms${us}us${nsRemainder}ns`;
+};
+
 export const getSliceTimeDisplay = (startTime: number | undefined): string => {
     if (startTime === undefined) {
         return '';
     }
-    return `${nsToMs(startTime).toFixed(3).toString() + ' ms'}`;
+    return `${nsToMs(startTime).toFixed(6).toString() + ' ms'}`;
+};
+
+export const getDetailTimeDisplay = (startTime: number | undefined): string => {
+    if (startTime === undefined) {
+        return '';
+    }
+    return nsToNs(startTime);
 };
 
 const singleSliceDetail = singleData({
@@ -68,8 +88,8 @@ const singleSliceDetail = singleData({
     renderFields: [
         [ 'Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle ],
         [ 'Start', data => getTimestamp(data.startTime ?? 0, { precision: 'ns' }), isHiddenStartTime ],
-        [ 'Wall Duration', data => getSliceTimeDisplay(data.duration), isHiddenDuration ],
-        [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), isHiddenSelfTime ],
+        [ 'Wall Duration', data => getDetailTimeDisplay(data.duration), isHiddenDuration ],
+        [ 'Self Time', data => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime ],
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
