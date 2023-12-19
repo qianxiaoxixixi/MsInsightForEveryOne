@@ -14,7 +14,7 @@ class TokenHeartCheckHandler : public GlobalHandler {
 public:
     TokenHeartCheckHandler()
     {
-        command = REQ_RES_TOKEN_DESTROY;
+        command = REQ_RES_TOKEN_HEART_CHECK;
     }
     ~TokenHeartCheckHandler() override = default;
 

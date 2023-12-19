@@ -234,7 +234,6 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
         data = res.computeDetails;
         data = data.map((item: any) => ({
             ...item,
-            startTime: Number(item.startTime?.toFixed(4)),
             duration: Number(item.duration?.toFixed(4)),
             waitTime: Number(item.waitTime?.toFixed(4)),
         }));
