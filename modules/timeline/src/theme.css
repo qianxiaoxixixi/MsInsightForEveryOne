@@ -569,3 +569,24 @@ tr.ant-table-row:hover{
 .ant-select.circle-border:not(.ant-select-customize-input) .ant-select-selector {
     border-radius: 20px!important;
 }
+
+.icon_pin_to_top{
+    background: no-repeat center url('./assets/images/pin_to_top_light.svg');
+    height: 30px;
+    width: 20px;
+}
+.theme_dark .icon_pin_to_top{
+    background: no-repeat center url('./assets/images/pin_to_top_dark.svg');
+    height: 30px;
+    width: 20px;
+}
+.icon_un_pin{
+    background: no-repeat center url('./assets/images/un_pin_light.svg');
+    height: 30px;
+    width: 20px;
+}
+.theme_dark .icon_un_pin{
+    background: no-repeat center url('./assets/images/un_pin_dark.svg');
+    height: 30px;
+    width: 20px;
+}

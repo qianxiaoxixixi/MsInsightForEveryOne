@@ -264,6 +264,7 @@ const KernelDetails = observer((props: any) => {
             title: 'Click To Timeline',
             dataIndex: 'click',
             key: 'click',
+            ellipsis: true,
             render: (_: any, record: any) => (<Button type="link"
                 onClick={() => {
                     setRowData(record as any);

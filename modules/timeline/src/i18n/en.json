@@ -87,8 +87,8 @@
     "SnapshotDescribe": "ArkTS heap snapshot interval",
     "TakeHeapSnapshot": "Take heap Snapshot",
     "CollectGarbage": "Collect garbage",
-    "PinButton": "Pinned unit" ,
-    "UnpinButton": "Unpinned unit"
+    "PinButton": "Pin to top" ,
+    "UnpinButton": "Unpin"
   },
   "tooltip": {
     "Name": "Name",
