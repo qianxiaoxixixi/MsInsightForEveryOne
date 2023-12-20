@@ -187,7 +187,7 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
         Protocol::ComputeDetail computeDetail{};
         computeDetail.name = sqlite3_column_string(stmt, col++);
         computeDetail.type = sqlite3_column_string(stmt, col++);
-        computeDetail.startTime = sqlite3_column_double(stmt, col++);
+        computeDetail.startTime = sqlite3_column_string(stmt, col++);
         computeDetail.duration = sqlite3_column_double(stmt, col++);
         computeDetail.waitTime = sqlite3_column_double(stmt, col++);
         computeDetail.blockDim = sqlite3_column_int64(stmt, col++);
@@ -217,15 +217,17 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     }
     std::string sql = "";
     if (orderList.size() == 0) {
-        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type as type, "
+              "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, duration, "
-              "wait_time as waitTime, block_dim as blockDim, "
+        sql = "SELECT name, op_type as type, "
+              "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
+              "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
@@ -264,11 +266,13 @@ std::string SummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams requ
     }
     std::string sql = "";
     if (order.size() == 0) {
-        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
+              "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
+              "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
               " WHERE accelerator_core = ?  ORDER BY " + order + " " + ascend + " LIMIT ? offset ?";
     }
@@ -299,7 +303,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         Protocol::CommunicationDetail computeDetail{};
         computeDetail.name = sqlite3_column_string(stmt, col++);
         computeDetail.type = sqlite3_column_string(stmt, col++);
-        computeDetail.startTime = sqlite3_column_double(stmt, col++);
+        computeDetail.startTime = sqlite3_column_string(stmt, col++);
         computeDetail.duration = sqlite3_column_double(stmt, col++);
         computeDetail.waitTime = sqlite3_column_double(stmt, col++);
         commDetails.emplace_back(computeDetail);
@@ -516,7 +520,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     {
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
-                " ROUND((start_time - ?) / (1000.0 * 1000.0), 2) as start_time, duration, wait_time, block_dim,"
+                " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
+                " END AS startTime, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
@@ -557,7 +562,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             one.name = sqlite3_column_string(stmt, col++);
             one.type = sqlite3_column_string(stmt, col++);
             one.accCore = sqlite3_column_string(stmt, col++);
-            one.startTime = sqlite3_column_double(stmt, col++);
+            one.startTime = sqlite3_column_string(stmt, col++);
             one.duration = sqlite3_column_double(stmt, col++);
             one.waitTime = sqlite3_column_double(stmt, col++);
             one.blockDim = sqlite3_column_int64(stmt, col++);
@@ -605,7 +610,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     {
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
-                " ROUND((start_time - ?) / (1000.0 * 1000.0), 2) as start_time, duration, wait_time, block_dim,"
+                " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
+                " END AS startTime, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
@@ -658,7 +664,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             one.name = sqlite3_column_string(stmt, col++);
             one.type = sqlite3_column_string(stmt, col++);
             one.accCore = sqlite3_column_string(stmt, col++);
-            one.startTime = sqlite3_column_double(stmt, col++);
+            one.startTime = sqlite3_column_string(stmt, col++);
             one.duration = sqlite3_column_double(stmt, col++);
             one.waitTime = sqlite3_column_double(stmt, col++);
             one.blockDim = sqlite3_column_int64(stmt, col++);

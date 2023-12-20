@@ -25,7 +25,7 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
-    resToJsonFactory.emplace(REQ_RES_TOKEN_HEART_CHECK, ToTokenCheckResponseJson);
+    resToJsonFactory.emplace(REQ_RES_TOKEN_HEART_CHECK, ToTokenHeartCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_FILES_GET, ToFilesGetResponseJson);
 }
 

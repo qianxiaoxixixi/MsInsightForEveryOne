@@ -102,7 +102,7 @@ struct SummaryStatisticsResponse : public Response {
 struct ComputeDetail {
     std::string name;
     std::string type;
-    double startTime;
+    std::string startTime;
     double duration;
     double waitTime;
     int64_t blockDim;
@@ -123,7 +123,7 @@ struct ComputeDetailResponse : public Response {
 struct CommunicationDetail {
     std::string name;
     std::string type;
-    double startTime;
+    std::string startTime;
     double duration;
     double waitTime;
 };

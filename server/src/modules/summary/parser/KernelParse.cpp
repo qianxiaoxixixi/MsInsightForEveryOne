@@ -107,12 +107,20 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
     std::int16_t startTimeIndex;
     std::int16_t durationIndex;
     std::int16_t waitTimeIndex;
+    if (dataMap.count("Start Time(us)") != 0) {
+        startTimeIndex = dataMap["Start Time(us)"];
+    } else if (dataMap.count("Task Start Time(us)") != 0) {
+        startTimeIndex = dataMap["Task Start Time(us)"];
+    } else {
+        ServerLog::Error("The file header does not contain 'Start Time(us)' or 'Task Start Time(us)'.");
+        return false;
+    }
+
     if (dataMap.find("Step Id") != dataMap.end()) {
         stepIndex = dataMap["Step Id"];
         nameIndex = dataMap["Name"];
         typeIndex = dataMap["Type"];
         acceleratorIndex = dataMap["Accelerator Core"];
-        startTimeIndex = dataMap["Start Time(us)"];
         durationIndex = dataMap["Duration(us)"];
         waitTimeIndex = dataMap["Wait Time(us)"];
     } else if (dataMap.find("Device_id") != dataMap.end()) {
@@ -120,7 +128,6 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
         nameIndex = dataMap["Op Name"];
         typeIndex = dataMap["OP Type"];
         acceleratorIndex = dataMap["Task Type"];
-        startTimeIndex = dataMap["Task Start Time(us)"];
         durationIndex = dataMap["Task Duration(us)"];
         waitTimeIndex = dataMap["Task Wait Time(us)"];
     } else {
