@@ -125,7 +125,7 @@ void MemoryParse::GetMapValid(const std::vector<std::string>& vec, std::map<std:
 {
     for (const std::string& col : vec) {
         if (dataMap.find(col) == dataMap.end()) {
-            ServerLog::Error("The file lacks a parameter column : ", col);
+            ServerLog::Warn("The file lacks a parameter column : ", col);
         }
     }
 }

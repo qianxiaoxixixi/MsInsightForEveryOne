@@ -37,7 +37,7 @@ namespace Dic::Protocol {
         std::string name;
         std::string type;
         std::string accCore;
-        double startTime;
+        std::string startTime;
         double duration;
         double waitTime;
         int64_t blockDim;

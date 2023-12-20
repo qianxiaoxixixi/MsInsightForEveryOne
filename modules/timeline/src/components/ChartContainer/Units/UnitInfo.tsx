@@ -123,7 +123,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
             ? <StyledTooltip title={i18n.t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
                 <StyledButton
                     style={style}
-                    icon={<StickyIcon fill={isPinned ? 'rgb(240, 165, 59)' : 'grey'} />}
+                    icon={isPinned ? <div className={'icon_un_pin'}/> : <div className={'icon_pin_to_top'}/>}
                     onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         e.preventDefault();

@@ -157,8 +157,10 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) as allocationTime, "
-                      "ROUND((release_time - ?) / (1000.0 * 1000.0), 2) as releaseTime, size, "
+    std::string sql = "SELECT name, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
+                      "ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) END AS allocationTime, "
+                      "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - ?) / (1000.0 * 1000.0), 2) "
+                      "END AS releaseTime, size, "
                       "ROUND(duration / 1000.0, 2) as duration FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
@@ -208,8 +210,8 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         Protocol::MemoryOperator operatorDto{};
         operatorDto.name = sqlite3_column_string(stmt, col++);
         // 1ms = 1000us
-        operatorDto.allocationTime = sqlite3_column_double(stmt, col++);
-        operatorDto.releaseTime = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
+        operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
         operatorDto.size = sqlite3_column_double(stmt, col++);
         operatorDto.duration = sqlite3_column_double(stmt, col++);
         operatorDtoVec.emplace_back(operatorDto);
