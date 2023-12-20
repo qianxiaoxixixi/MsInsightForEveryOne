@@ -163,6 +163,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     const [ selection, setSelection ] = useState<string[]>([]);
     useEffect(() => {
         setSelection([]);
+        handleChange([]);
     }, [completeOptions]);
 
     return (
