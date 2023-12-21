@@ -1,0 +1,163 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
+#include <gtest/gtest.h>
+#include "../TestSuit.cpp"
+#include "JsonUtil.h"
+
+using namespace Dic;
+
+TEST(JsonUtil, IsJsonKeyValid) {
+    json_t json;
+    json = json_t::parse("{\n"
+                         "        \"ph\": \"X\",\n"
+                         "        \"name\": \"contiguous_d_Reshape\",\n"
+                         "        \"args\": {}\n"
+                         "}");
+    bool ph = JsonUtil::IsJsonKeyValid(json, "ph");
+    EXPECT_EQ(ph, true);
+
+    bool name = JsonUtil::IsJsonKeyValid(json, "name");
+    EXPECT_EQ(name, true);
+
+    bool nofound = JsonUtil::IsJsonKeyValid(json, "nofound");
+    EXPECT_EQ(nofound, false);
+}
+
+TEST(JsonUtil, SetByJsonKeyValue) {
+    json_t json;
+    json = json_t::parse("{\n"
+                         "        \"name\": \"X\",\n"
+                         "        \"age\": 18,\n"
+                         "        \"args\": {}\n"
+                         "}");
+    std::string name;
+    JsonUtil::SetByJsonKeyValue(name, json, "name");
+    EXPECT_EQ(name, "X");
+
+    int age;
+    JsonUtil::SetByJsonKeyValue(age, json, "age");
+    EXPECT_EQ(age, 18);
+}
+
+TEST(JsonUtil, SetByJsonKeyArrayValue) {
+    json_t json;
+    json = json_t::parse(R"({"args": ["a","b"]})");
+    std::vector<std::string> args;
+    JsonUtil::SetByJsonKeyArrayValue(args, json, "args");
+    EXPECT_EQ(args[0], "a");
+    EXPECT_EQ(args[1], "b");
+}
+
+TEST(JsonUtil, TryParse) {
+    std::string jsonStr;
+    std::string errMessage;
+    jsonStr = "{\n"
+              "        \"name\": \"X\",\n"
+              "        \"age\": 18,\n"
+              "        \"args\": {}\n"
+              "}";
+
+    const std::optional<json_t> &json = JsonUtil::TryParse(jsonStr, errMessage);
+    EXPECT_EQ(json.has_value(), true);
+
+    jsonStr = "{\"key\":value,}";
+    JsonUtil::TryParse(jsonStr, errMessage);
+    EXPECT_EQ(errMessage, "Failed to parse json string.");
+}
+
+TEST(JsonUtil, IsJsonArray) {
+    json_t json;
+    json = json_t::parse(R"({"args": ["a","b"],"key":"value"})");
+    std::vector<std::string> args;
+    EXPECT_EQ(JsonUtil::IsJsonArray(json, "args"), true);
+    EXPECT_EQ(JsonUtil::IsJsonArray(json, "key"), false);
+    EXPECT_EQ(JsonUtil::IsJsonArray(json, "key_null"), false);
+}
+
+TEST(JsonUtil, JsonDump) {
+    rapidjson::Document d;
+    d.Parse("{\n"
+            "        \"ph\": \"X\",\n"
+            "        \"name\": \"contiguous_d_Reshape\",\n"
+            "        \"args\": {}\n"
+            "}");
+    const std::string &string = JsonUtil::JsonDump(d);
+    std::cout << string << std::endl;
+    EXPECT_EQ(string, "{\"ph\":\"X\",\"name\":\"contiguous_d_Reshape\",\"args\":{}}");
+}
+
+TEST(TestUtil, GetDouble) {
+
+    rapidjson::Document d;
+    d.Parse("{\n"
+            "        \"ph\": \"X\",\n"
+            "        \"ts\": \"1699579270364817.47\",\n"
+            "        \"dur\": \"169.33\",\n"
+            "        \"args\": {}\n"
+            "}");
+    double ts = JsonUtil::GetDouble(d, "ts");
+    double dur = JsonUtil::GetDouble(d, "dur");
+    EXPECT_EQ(ts, 1699579270364817.47);
+    EXPECT_EQ(dur, 169.33);
+}
+
+TEST(TestUtil, GetInteger) {
+    rapidjson::Document d;
+    d.Parse("{\n"
+            "        \"ph\": \"X\",\n"
+            "        \"name\": \"contiguous_d_Reshape\",\n"
+            "        \"pid\": 768209,\n"
+            "        \"tid\": 768209,\n"
+            "        \"args\": {}\n"
+            "}");
+    int64_t pid = JsonUtil::GetInteger(d, "pid");
+    int64_t tid = JsonUtil::GetInteger(d, "tid");
+    EXPECT_EQ(pid, 768209);
+    EXPECT_EQ(tid, 768209);
+}
+
+TEST(TestUtil, GetString) {
+    rapidjson::Document d;
+    d.Parse("{\n"
+            "        \"ph\": \"X\",\n"
+            "        \"name\": \"contiguous_d_Reshape\",\n"
+            "        \"cat\": \"cpu_op\",\n"
+            "        \"args\": {}\n"
+            "}");
+    std::string name = JsonUtil::GetString(d, "name");
+    std::string cat = JsonUtil::GetString(d, "cat");
+    EXPECT_EQ(name, "contiguous_d_Reshape");
+    EXPECT_EQ(cat, "cpu_op");
+}
+
+TEST(TestUtil, GetOptionalString) {
+    rapidjson::Document d;
+    d.Parse("{\n"
+            "        \"ph\": \"X\",\n"
+            "        \"name\": \"contiguous_d_Reshape\",\n"
+            "        \"cat\": \"cpu_op\",\n"
+            "        \"args\": {}\n"
+            "}");
+    std::optional<std::string> name = JsonUtil::GetOptionalString(d, "name");
+    std::optional<std::string> cat = JsonUtil::GetOptionalString(d, "cat");
+    std::optional<std::string> dog = JsonUtil::GetOptionalString(d, "dog");
+    EXPECT_EQ(name.value(), "contiguous_d_Reshape");
+    EXPECT_EQ(cat.value(), "cpu_op");
+    EXPECT_EQ(dog.has_value(), false);
+}
+
+TEST(TestUtil, GetDumpString) {
+    rapidjson::Document d;
+    d.Parse("{\n"
+            "        \"ph\": \"X\",\n"
+            "        \"name\": \"contiguous_d_Reshape\",\n"
+            "        \"cat\": \"cpu_op\",\n"
+            "        \"args\": {}\n"
+            "}");
+    std::string name = JsonUtil::GetDumpString(d, "name");
+    std::string cat = JsonUtil::GetDumpString(d, "cat");
+    EXPECT_EQ(name, "contiguous_d_Reshape");
+    EXPECT_EQ(cat, "cpu_op");
+}
