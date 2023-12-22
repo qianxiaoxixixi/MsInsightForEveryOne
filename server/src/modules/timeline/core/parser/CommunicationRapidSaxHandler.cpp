@@ -93,6 +93,9 @@ bool CommunicationRapidSaxHandler::StartObject()
 {
     currentDepth++;
     Server::ServerLog::Debug("start_object elements:", " depth=", currentDepth, " key=", currentKey);
+    if (currentDepth == infoDepthSeven) {
+        sizeDistribution = rapidjson::Value(rapidjson::kObjectType);
+    }
     return true;
 }
 
@@ -151,7 +154,6 @@ bool CommunicationRapidSaxHandler::EndArray(rapidjson::SizeType elementCount)
 {
     Server::ServerLog::Debug("end array depth", currentDepth, " key=", currentKey);
     if (currentDepth == sizeDistributionDepth) {
-        sizeDistribution = rapidjson::Value(rapidjson::kObjectType);
         rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
         rapidjson::Value array(rapidjson::kArrayType);
         rapidjson::Value tempIntVal(tempInt);
