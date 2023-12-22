@@ -12,6 +12,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/summary TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/timeline TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/operator TEST)
+aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
 
 list(APPEND DIC_TEST_LIST
         ${TEST}
@@ -22,7 +23,17 @@ list(APPEND DIC_TEST_LIST
         ${DIC_SERVER_SRC}
         ${DIC_CHANNEL_SRC})
 
+list(APPEND DIC_PERFORMANCE_TEST_LIST
+        ${PERFORMANCE_TEST}
+        ${U_SOCKETS_SRC_LIST}
+        ${DIC_UTILS_SRC}
+        ${DIC_PROTOCOL_SRC}
+        ${DIC_MODULES_SRC_LIST}
+        ${DIC_SERVER_SRC}
+        ${DIC_CHANNEL_SRC})
+
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp)
+add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
@@ -35,6 +46,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
             shlwapi
             sqlite
             -lssp)
+    target_link_libraries(insight_performance gtest_main gmock_main uv_a userenv ws2_32 iphlpapi shlwapi sqlite -lssp)
 else()
     target_link_libraries(insight_test
             gtest_main
@@ -43,4 +55,5 @@ else()
             pthread
             dl
             sqlite)
+    target_link_libraries(insight_performance gtest_main gmock_main uv_a pthread dl sqlite)
 endif()
