@@ -61,6 +61,7 @@ TEST(StringUtil, Trim) {
     EXPECT_EQ(StringUtil::Trim(str4), "");
 }
 
+#ifdef _WIN32
 TEST(StringUtil, GbkToUtf8) {
     EXPECT_EQ(StringUtil::GbkToUtf8(nullptr), "");
     EXPECT_EQ(StringUtil::GbkToUtf8("nullptr"), "nullptr");
@@ -74,6 +75,8 @@ TEST(StringUtil, Utf8ToGbk) {
     EXPECT_EQ(StringUtil::Utf8ToGbk("中国"), "\xD6\xD0\xB9\xFA");
     EXPECT_EQ(StringUtil::Utf8ToGbk("中"), "\xD6\xD0");
 }
+
+#endif
 
 TEST(StringUtil, join) {
     std::vector<std::string> list1 = {"a", "b", "c"};
