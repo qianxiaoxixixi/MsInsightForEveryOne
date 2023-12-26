@@ -8,8 +8,8 @@
 #include "FileUtil.h"
 #include "DataBaseManager.h"
 #include "ServerLog.h"
+#include "ParamsParser.h"
 #include "ParserStatusManager.h"
-#include "TimelineProtocolRequest.h"
 
 using namespace Dic::Module::Timeline;
 class TestSuit : public ::testing::Test {
@@ -17,6 +17,8 @@ protected:
     static void SetUpTestCase()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
+        const ParamsOption &option = ParamsParser::Instance().GetOption();
+        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         Dic::Module::Timeline::DataBaseManager::Instance()
