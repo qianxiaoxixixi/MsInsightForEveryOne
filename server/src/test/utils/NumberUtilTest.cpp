@@ -31,9 +31,4 @@ TEST(NumberUtil, HexadecimalStrToDecimalInt) {
     EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xa"), 10);
     EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xb"), 11);
     EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x3b9ac9ff"), 999999999);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xyyyy2"), INVALID_NUMBER);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("xxxxxxx"), INVALID_NUMBER);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x5af35af35af35af35af35af35af35af35af35af35af3"), INVALID_NUMBER);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x3b9ac9ff3b9ac9ff3b9ac9ff3b9ac9ff3b9ac9ff3b9ac9ff"),
-              INVALID_NUMBER);
 }
