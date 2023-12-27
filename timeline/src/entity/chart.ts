@@ -141,6 +141,7 @@ export type StackBarConfig = {
 };
 
 export type StatusConfig = {
+    rowHeight: UnitHeight;
 };
 
 export type StackStatusConfig = {
