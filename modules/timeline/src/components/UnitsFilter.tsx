@@ -196,14 +196,12 @@ const startFilter = (session: Session, inputValue: string[], selectValue: string
     if (inputValue.length === 0) {
         return;
     }
-    const flattenUnits = computed(() => preOrderFlatten(session.units, 0,
-        { when: unit => unit.isExpanded, bypass: unit => unit.type === 'transparent', exclude: unit => unit.pinType === 'move' && isPinned(unit) })).get();
     switch (selectValue) {
         case 'Card Filter':
-            doCardFilter(flattenUnits, inputValue);
+            doCardFilter(session.units, inputValue);
             break;
         case 'Units Filter':
-            doUnitsFilter(flattenUnits, inputValue);
+            doUnitsFilter(session.units, inputValue);
             break;
     }
 };
