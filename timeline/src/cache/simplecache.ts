@@ -1,13 +1,16 @@
-import { ThreadTraceRequest, ThreadTrace, CounterData, CounterMetaData, CounterRequest } from '../entity/data';
+import { ThreadTraceRequest, ThreadTrace, CounterData, CounterMetaData, CounterRequest, ProcessData, ProcessRequest } from '../entity/data';
 import { binarySearchFirstBig, binarySearchLastSmall } from './strategies/utils';
 import { store } from '../store';
 
-type Method = 'unit/threadTraces' | 'unit/counter'; // store methodKey
-type Handler = (params: Record<string, unknown>, metaData?: unknown) => Promise<ThreadTrace[][] | number[][]>;
+type Method = 'unit/threadTraces' | 'unit/counter' | 'unit/threadTracesSummary'; // store methodKey
+type Handler = (params: Record<string, unknown>, metaData?: unknown) => Promise<ThreadTrace[][] | number[][] | ProcessData[] | undefined>;
 const processorMap = new Map<Method, Function>();
 const handlerMap = new Map<Method, Handler>();
 handlerMap.set('unit/threadTraces', requestThreadTraces);
 handlerMap.set('unit/counter', requestCounterData);
+handlerMap.set('unit/threadTracesSummary', requestProcessData);
+
+processorMap.set('unit/threadTracesSummary', processArr);
 processorMap.set('unit/threadTraces', sliceArr);
 processorMap.set('unit/counter', counterArr);
 
@@ -18,6 +21,7 @@ export class SimpleCache {
         this.data = new Map();
         this.data.set('unit/threadTraces', new Map<string, Record<string, unknown>>());
         this.data.set('unit/counter', new Map<string, Record<string, unknown>>());
+        this.data.set('unit/threadTracesSummary', new Map<string, Record<string, unknown>>());
     }
 
     async tryFetchFromCache(method: Method, requestKey: string, params: Record<string, unknown>, metaData?: unknown): Promise<Record<string, unknown> | undefined> {
@@ -26,6 +30,9 @@ export class SimpleCache {
                 const result = await handlerMap.get(method)?.(params, metaData);
                 if (result !== undefined && result.length !== 0) {
                     this.data.get(method).set(requestKey, result);
+                }
+                if (result !== undefined && result.length === 0) {
+                    this.data.get(method).set(requestKey, []);
                 }
             } catch (e) {
                 console.warn('Failed to try fetch from cache', method, requestKey, e);
@@ -45,6 +52,21 @@ export class SimpleCache {
         this.data.forEach((key) => {
             this.data.get(key).clear();
         });
+    }
+}
+
+async function requestProcessData(requestParam: Record<string, unknown>): Promise<ProcessData[] | undefined> {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        const param: Record<string, unknown> = Object.assign({}, requestParam);
+        param.startTime = 0;
+        param.endTime = session?.endTimeAll ?? 0;
+        const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTracesSummary', params: param });
+        return request.data as ProcessData[];
+    } catch (e) {
+        console.warn('request threadTrace info failed', e);
+        return undefined;
     }
 }
 
@@ -96,6 +118,20 @@ async function requestCounterData(requestParam: Record<string, unknown>, metadat
         console.warn('request threadTrace info failed', e);
         return [];
     }
+}
+
+function processArr(params: Record<string, unknown>, data: Map<string, unknown>, paramsKey: string): unknown {
+    const requestParams = params as ProcessRequest;
+    const start = requestParams.startTime;
+    const end = requestParams.endTime;
+
+    const result = (data.get('unit/threadTracesSummary') as Map<string, number[][]>).get(paramsKey);
+    if (result === undefined) {
+        return [[]];
+    }
+    const startIndex = binarySearchLastSmall(result, (data: number[]) => data[0], start);
+    const endIndex = binarySearchFirstBig(result, (data: number[]) => data[0], end);
+    return result.slice(startIndex === 0 ? startIndex : startIndex - 1, endIndex + 2);
 }
 
 function sliceArr(params: Record<string, unknown>, data: Map<string, any>, paramsKey: string): any {

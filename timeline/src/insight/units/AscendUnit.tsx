@@ -15,11 +15,12 @@ import {
     AscendSliceDetail,
     CardMetaData,
     CounterMetaData,
+    ProcessData,
     ProcessMetaData,
     ThreadMetaData,
     ThreadTrace,
 } from '../../entity/data';
-import { createCounterParam, createStackStatusParam } from './unitFunc';
+import { createCounterParam, createStackStatusParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
 import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
@@ -36,7 +37,7 @@ import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
-import { ChartType, StackStatusData } from '../../entity/chart';
+import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -127,7 +128,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
     },
     chart: chart({
         type: 'stackStatus',
-        height: UnitHeight.UPPER,
+        height: UnitHeight.COLL,
         mapFunc: async (session: Session, metaData: unknown) => {
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
@@ -236,7 +237,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         const config = (unit.chart as ChartDesc<ChartType>).config;
         runInAction(() => {
             (config as any).isCollapse = !((config as any).isCollapse as boolean);
-            const collapseHeight = UnitHeight.UPPER;
+            const collapseHeight = UnitHeight.COLL;
             const expandedHeight = (config as any).maxDepth * (config as any).rowHeight;
             chart.height = ((config as any).isCollapse as boolean) ? collapseHeight : expandedHeight;
         });
@@ -250,7 +251,37 @@ export const ProcessUnit = unit<ProcessMetaData>({
     chart: chart({
         type: 'status',
         mapFunc: async (session: Session, metaData: unknown) => {
-            return [];
+            const processMetaData = metaData as ProcessMetaData;
+            const requestParam = {
+                cardId: processMetaData.cardId,
+                processId: processMetaData.processId,
+                startTime: session.domainRange.domainStart,
+                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
+                dataSource: processMetaData.dataSource,
+            };
+            const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
+            try {
+                const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
+                if (request === undefined) {
+                    return [];
+                }
+                const threadTraceList = request.data as ProcessData[];
+                const res: StatusData[] = [];
+                // 泳道chart返回数据减去时间偏移
+                threadTraceList.forEach((data) => {
+                    res.push({
+                        startTime: data.startTime,
+                        duration: data.duration,
+                        name: '',
+                        type: '',
+                        color: '#7d7d7d',
+                    });
+                });
+                return res;
+            } catch (e) {
+                console.warn('request process data failed', e);
+                return [];
+            }
         },
         config: {
             rowHeight: UnitHeight.STANDARD,

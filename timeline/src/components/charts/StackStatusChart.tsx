@@ -189,7 +189,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     const handleMouseMoveUp = ([ downX, upX ]: number[]): void => { mouseMoveUpFunc([ downX, upX ], datasState, rangeAndDomain, session); };
     useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
-    const yScale = isCollapse ? d3.scaleLinear().range([ 0, height ]).domain([ 1, maxDepth as number ]) : (depth: number): number => depth * rowHeight;
+    const yScale = isCollapse ? d3.scaleLinear().range([ 0, height ]).domain([ 0, maxDepth as number ]) : (depth: number): number => depth * rowHeight;
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||
             canvas.current.width === 0 || canvas.current.height === 0) {
