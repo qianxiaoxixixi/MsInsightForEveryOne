@@ -179,6 +179,7 @@ export enum UnitHeight {
     SUPER_UPPER = 120,
     HIGHTER_UPPER = 105,
     UPPER = 40,
+    COLL = 25,
     STANDARD = 20,
     LOWER = 10,
     SUPER_LOWER = 6,
