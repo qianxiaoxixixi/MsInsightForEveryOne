@@ -220,7 +220,7 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
         });
         unit.collapseAction?.(unit);
     }, [session]);
-    if (unit.children !== undefined || unit.collapsible) {
+    if (unit.children !== undefined || (unit.collapsible && unit.collapseAction)) {
         return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}
             onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => onExpand(unit)}>
             <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
