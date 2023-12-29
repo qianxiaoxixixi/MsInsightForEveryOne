@@ -112,7 +112,6 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 style={{ width: 250 }}
                 onChange={val => handleChange('group', val)}
                 options={optionMap.groupOptions}
-                showSearch={true}
             />
             )}/>
         <FormItem
@@ -132,7 +131,6 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 style={{ width: 100 }}
                 onChange={val => handleChange('topK', val)}
                 options={optionMap.topKOptions}
-                showSearch={true}
             />
             <InputNumber
                 min={0}
