@@ -138,7 +138,7 @@ def main():
     framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
     os_name = 'linux-' + framework
     if os_info.find('Windows') > -1:
-        os_name = 'win-' + framework
+        os_name = 'win'
     elif os_info.find('mac') > -1:
         os_name = 'darwin-' + framework
     build_vscode(vscode_version, os_name)
