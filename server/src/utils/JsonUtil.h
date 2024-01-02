@@ -8,6 +8,7 @@
 
 #include <string>
 #include <optional>
+#include <vector>
 #include "GlobalDefs.h"
 
 namespace Dic {
@@ -138,6 +139,22 @@ public:
         } else {
             return JsonDump(json[key.data()]);
         }
+    }
+
+    static std::vector<std::string> jsonToVector(const std::string& jsonStr)
+    {
+        rapidjson::Document document;
+        document.Parse(jsonStr.c_str());
+        if (!document.IsArray()) {
+            return {};
+        }
+        std::vector<std::string> result;
+        for (rapidjson::SizeType i = 0; i < document.Size(); i++) {
+            if (document[i].IsString()) {
+                result.emplace_back(document[i].GetString());
+            }
+        }
+        return result;
     }
 
 private:

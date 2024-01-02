@@ -14,7 +14,7 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-class CommunicationSaxHandler : public json_t::json_sax_t {
+class CommunicationSaxHandler : public nlohmann::json::json_sax_t {
 public:
     CommunicationSaxHandler();
 
