@@ -8,6 +8,7 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
+
 DataBaseManager &DataBaseManager::Instance()
 {
     static DataBaseManager instance;
@@ -33,11 +34,12 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
 std::shared_ptr<TraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) == 0) {
+    auto it = traceDatabaseMap.find(fileId);
+    if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
     }
-    return traceDatabaseMap[fileId]->GetConnection();
+    return it->second->GetConnection();
 }
 
 Summary::SummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &fileId)
@@ -63,8 +65,9 @@ Memory::MemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &fi
 void DataBaseManager::ReleaseTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) >= 0) {
-        traceDatabaseMap.erase(fileId);
+    auto it = traceDatabaseMap.find(fileId);
+    if (it != traceDatabaseMap.end()) {
+        traceDatabaseMap.erase(it);
     }
 }
 
@@ -172,10 +175,11 @@ std::vector<std::string> DataBaseManager::GetAllFileId()
 std::string DataBaseManager::GetDbPath(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) == 0) {
+    auto it = traceDatabaseMap.find(fileId);
+    if (it == traceDatabaseMap.end()) {
         return "";
     }
-    return traceDatabaseMap[fileId]->GetDbPath();
+    return it->second->GetDbPath();
 }
 
 std::mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
