@@ -9,9 +9,9 @@
 #include <mutex>
 #include <condition_variable>
 #include "ServerDefs.h"
+#include "SafeQueue.h"
 #include "Protocol.h"
 #include "ProtocolMessageBuffer.h"
-#include "ResponseQueue.h"
 
 namespace Dic {
 namespace Server {
@@ -78,9 +78,10 @@ protected:
     std::condition_variable onExitCv;
     // response queue
     const bool useResponseQueue = false; // do not use response queue
-    std::unique_ptr<ResponseQueue> responseQueue = nullptr;
+    SafeQueue<std::unique_ptr<Protocol::Response>> responseQueue;;
     std::unique_ptr<std::thread> onHandleResponseThread = nullptr;
-    std::condition_variable reqAndResCv;
+    std::mutex responseQueueMutex;
+    std::condition_variable responseQueueCv;
     std::string deviceKey;
     std::string bundleName;
 };

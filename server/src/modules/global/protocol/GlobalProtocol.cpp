@@ -92,27 +92,27 @@ std::unique_ptr<Request> GlobalProtocol::ToFilesGetRequest(const json_t &json, s
 #pragma endregion
 
 #pragma region <<Response To Json>>
-std::optional<json_t> GlobalProtocol::ToTokenCreateResponseJson(const Response &response)
+std::optional<document_t> GlobalProtocol::ToTokenCreateResponseJson(const Response &response)
 {
     return ToResponseJson<TokenCreateResponse>(dynamic_cast<const TokenCreateResponse &>(response));
 }
 
-std::optional<json_t> GlobalProtocol::ToTokenDestroyResponseJson(const Response &response)
+std::optional<document_t> GlobalProtocol::ToTokenDestroyResponseJson(const Response &response)
 {
     return ToResponseJson<TokenDestroyResponse>(dynamic_cast<const TokenDestroyResponse &>(response));
 }
 
-std::optional<json_t> GlobalProtocol::ToTokenCheckResponseJson(const Response &response)
+std::optional<document_t> GlobalProtocol::ToTokenCheckResponseJson(const Response &response)
 {
     return ToResponseJson<TokenCheckResponse>(dynamic_cast<const TokenCheckResponse &>(response));
 }
 
-std::optional<json_t> GlobalProtocol::ToTokenHeartCheckResponseJson(const Response &response)
+std::optional<document_t> GlobalProtocol::ToTokenHeartCheckResponseJson(const Response &response)
 {
     return ToResponseJson<TokenHeartCheckResponse>(dynamic_cast<const TokenHeartCheckResponse &>(response));
 }
 
-std::optional<json_t> GlobalProtocol::ToFilesGetResponseJson(const Response &response)
+std::optional<document_t> GlobalProtocol::ToFilesGetResponseJson(const Response &response)
 {
     return ToResponseJson<FilesGetResponse>(dynamic_cast<const FilesGetResponse &>(response));
 }

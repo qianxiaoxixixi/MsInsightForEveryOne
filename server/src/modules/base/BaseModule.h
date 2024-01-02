@@ -13,7 +13,6 @@
 
 namespace Dic {
 namespace Module {
-using namespace Dic::Protocol;
 class BaseModule {
 public:
     BaseModule() = default;

@@ -21,7 +21,7 @@ private:
     ~IdBuilder() = default;
 
     const int maxId = 0x7dffffff;
-    int id;
+    int id = 0;
     std::mutex idMutex;
 };
 } // end of namespace Dic

@@ -7,28 +7,23 @@
 #include "ProtocolDefs.h"
 #include "ProtocolManager.h"
 #include "RegexUtil.h"
+#include "JsonUtil.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
-ProtocolMessageBuffer::ProtocolMessageBuffer() {}
 
-ProtocolMessageBuffer::~ProtocolMessageBuffer()
-{
-    Clear();
-}
-
-int ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, const uint64_t &headLength) const
+uint64_t ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, const uint64_t &headLength) const
 {
     std::string lenStr = buffer.substr(headPosition, headLength);
     std::optional<std::smatch> matchRes = RegexUtil::RegexMatch(lenStr, "Content-Length:\\s*(\\d+)");
     if (!matchRes.has_value() || matchRes.value().size() < matchMinNum) {
         return -1;
     }
-    int res;
+    uint64_t res;
     try {
-        res = std::stoi(matchRes.value()[1].str());
+        res = std::stoull(matchRes.value()[1].str());
     } catch (std::invalid_argument &) {
         res = -1;
     } catch (std::out_of_range &) {
@@ -41,27 +36,27 @@ int ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, const uin
 
 ProtocolMessage::Type ProtocolMessageBuffer::GetMessageType(const std::string &body) const
 {
-    json_t json;
-    try {
-        json = json_t::parse(body);
-    } catch (json_t::parse_error &) {
+    std::string err;
+    auto json = JsonUtil::TryParse(body, err);
+    if (!json.has_value()) {
         return ProtocolMessage::Type::NONE;
     }
-    if (!json.contains("type")) {
+    if (!json.value().HasMember("type")) {
         return ProtocolMessage::Type::NONE;
     }
-    if (json["type"] == REQUEST_NAME) {
+    std::string type = json.value()["type"].GetString();
+    if (type == REQUEST_NAME) {
         return ProtocolMessage::Type::REQUEST;
-    } else if (json["type"] == RESPONSE_NAME) {
+    } else if (type == RESPONSE_NAME) {
         return ProtocolMessage::Type::RESPONSE;
-    } else if (json["type"] == EVENT_NAME) {
+    } else if (type == EVENT_NAME) {
         return ProtocolMessage::Type::EVENT;
     } else {
         return ProtocolMessage::Type::NONE;
     }
 }
 
-ProtocolMessageBuffer &ProtocolMessageBuffer::operator >> (const std::string &data)
+ProtocolMessageBuffer &ProtocolMessageBuffer::operator << (const std::string &data)
 {
     std::unique_lock<std::mutex> lock(mutex);
     buffer.append(data);

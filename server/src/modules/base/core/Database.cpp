@@ -51,6 +51,7 @@ bool Database::AttachDb(const std::string &dbPath)
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (result == SQLITE_OK) {
         isOpen = true;
+        path = dbPath;
         return true;
     }
     ServerLog::Error("open db fail. path:", dbPath);

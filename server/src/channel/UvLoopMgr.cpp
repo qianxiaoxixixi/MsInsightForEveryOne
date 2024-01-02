@@ -60,21 +60,17 @@ void UvLoopMgr::LoopStart(const int &id)
 void UvLoopMgr::LoopStop(const int &id)
 {
     std::lock_guard<std::mutex> lock(loopMutex);
-    if (loopMap.count(id) == 0) {
-        return;
+    auto it = loopMap.find(id);
+    if (it != loopMap.end()) {
+        uv_stop(it->second);
     }
-    uv_loop_t *loop = loopMap.at(id);
-    if (loop == nullptr) {
-        return;
-    }
-    uv_stop(loop);
 }
 
 bool UvLoopMgr::AllLoopStop()
 {
     std::lock_guard<std::mutex> lock(loopMutex);
-    for (auto loopKv : loopMap) {
-        uv_loop_t *loop = loopMap.at(loopKv.first);
+    for (auto &loopKv : loopMap) {
+        uv_loop_t *loop = loopKv.second;
         if (loop == nullptr) {
             continue;
         }

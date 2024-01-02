@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#ifndef THREADPOOL_SAFEQUEUE_H
-#define THREADPOOL_SAFEQUEUE_H
+#ifndef THREADPOOL_SAFE_QUEUE_H
+#define THREADPOOL_SAFE_QUEUE_H
 #include <deque>
 #include <mutex>
 
@@ -14,7 +14,7 @@ public:
     void Push(T &t)
     {
         std::unique_lock<std::mutex> lock(mutex);
-        deque.emplace_back(t);
+        deque.emplace_back(std::forward<T>(t));
     }
 
     bool Pop(T &t)
@@ -46,10 +46,19 @@ public:
         deque.clear();
     }
 
+    SafeQueue &operator << (T t)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (t != nullptr) {
+            deque.emplace_back(std::move(t));
+        }
+        return *this;
+    }
+
 private:
     std::deque<T> deque;
     std::mutex mutex;
 };
 }
 
-#endif // THREADPOOL_SAFEQUEUE_H
+#endif // THREADPOOL_SAFE_QUEUE_H

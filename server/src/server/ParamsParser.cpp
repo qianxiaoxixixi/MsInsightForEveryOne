@@ -3,6 +3,7 @@
  */
 
 #include <iostream>
+#include "NumberUtil.h"
 #include "StringUtil.h"
 #include "ParamsParser.h"
 
@@ -14,21 +15,6 @@ ParamsParser &ParamsParser::Instance()
 {
     static ParamsParser instance;
     return instance;
-}
-
-int TryParseInt(const std::string &intStr)
-{
-    int ret;
-    try {
-        ret = std::stoi(intStr);
-    } catch (std::invalid_argument &) {
-        // no conversion
-        return INVALID_NUMBER;
-    } catch (std::out_of_range &) {
-        // out of range
-        return INVALID_NUMBER;
-    }
-    return ret;
 }
 
 const ParamsOption &ParamsParser::GetOption() const
@@ -93,7 +79,7 @@ const bool ParamsParser::Parse(const vector<string> &args)
 
 int ParamsParser::TryGetPort(const std::string &portStr) const
 {
-    int port = TryParseInt(portStr);
+    int port = NumberUtil::TryParseInt(portStr);
     if ((port < minPortNum) || (port > maxPortNum)) {
         return -1;
     }
@@ -122,7 +108,7 @@ bool ParamsParser::ParseLogPath(const std::string &logPath)
 
 bool ParamsParser::ParseLogSize(const std::string &logSize)
 {
-    int size = TryParseInt(logSize);
+    int size = NumberUtil::TryParseInt(logSize);
     if (size != INVALID_NUMBER) {
         option.logSize = size;
     }
@@ -148,7 +134,7 @@ bool ParamsParser::ParseSid(const std::string &sid)
 void ParamsParser::ParseScan(const std::string &scan)
 {
     if (!scan.empty()) {
-        option.scanPort = TryParseInt(scan);
+        option.scanPort = NumberUtil::TryParseInt(scan);
     }
 }
 } // end of namespace Server

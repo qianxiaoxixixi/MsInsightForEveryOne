@@ -65,7 +65,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         return false;
     }
     auto &instance = TraceFileParser::Instance();
-    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
+    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath: filePathArr) {
         ServerLog::Info("start parse. file id:", fileId, ". path:", filePath);
         auto splitFile = TraceFileParser::SplitFile(filePath);
@@ -331,8 +331,8 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
         ServerLog::Warn("Failed to parse json.", error, " string:", rankId);
         return "";
     }
-    if (json.value().contains("rank_id")) {
-        return nlohmann::to_string(json.value()["rank_id"]);
+    if (json.value().HasMember("rank_id")) {
+        return JsonUtil::GetDumpString(json.value(), "rank_id");
     }
     return "";
 }

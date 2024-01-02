@@ -47,9 +47,7 @@ https://clouddragon.huawei.com/cloudbuild/project/g05eddbe2f77d400ba43b805e8bca7
 
 ### 开源代码
 
-群空间下载开源代码， 解压覆盖到thirdparty目录
-
-https://onebox.huawei.com/p/7606b4ccd02cec637bc5f518c156a184
+根据.codecheck/check.yml中的内容下载开源代码并放到指定目录
 
 
 
