@@ -12,7 +12,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Timeline View',
         requestName: 'timeline',
         attributes: {
-            src: 'http://localhost:3000/'
+            src: './plugins/Timeline/index.html'
         },
         isDefault: true,
     },
