@@ -61,19 +61,11 @@ public:
     bool QueryCommunicationGroup(Document &responseBody);
 
 private:
-    const std::string timeInfoTable = "communication_time_info";
-    const std::string bandwidthTable = "communication_bandwidth_info";
-    const std::string stepTraceTable = "step_statistic_info";
-    const std::string baseInfoTable = "cluster_base_info";
-    const std::string communicationMatrixTable = "communication_matrix";
-    const std::string groupIdTable = "group_id";
     sqlite3_stmt *insertTimeInfoStmt = nullptr;
     sqlite3_stmt *insertBandwidthStmt = nullptr;
     sqlite3_stmt *stepStmt = nullptr;
     sqlite3_stmt *matrixStmt = nullptr;
     bool isInitStmt = false;
-    const int cacheSize = 1000;
-    const int mbSize = 1024 * 1024;
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
     std::vector<CommunicationMatrixInfo> matrixCache;
