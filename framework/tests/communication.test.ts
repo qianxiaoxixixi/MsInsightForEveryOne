@@ -34,7 +34,7 @@ test.describe('comminucation', () => {
         await expect(Boolean(frame)).toBe(true);
         if (frame !== null) {
             // 修改筛选条件 Communication Group
-            await clickSelect({ locator: frame, cur: 'p2p', target: '(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)' });
+            await clickSelect({ locator: frame, cur: '(0, 1, 2, 3, 4, 5, 6, 7)', target: '(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)' });
             await frame.waitForTimeout(1500);
             await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('filterChangeCommunicationGroup.png');
             // 修改筛选条件 Operator Name
@@ -96,9 +96,6 @@ test.describe('comminucation', () => {
         const frame = page.frame({ url: /.communication.*/ });
         // 修改筛选条件 Communication Group
         await frame.locator('.ant-select-selector')?.getByText('(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)', { exact: true }).click();
-        await frame.locator('.ant-select-item.ant-select-item-option')?.getByText('p2p', { exact: true })?.hover();
-        // 滑动到选项可见才能点击
-        page.mouse.wheel(0, 400);
         await frame.locator('.ant-select-item.ant-select-item-option')?.getByText('(0, 1, 2, 3, 4, 5, 6, 7)', { exact: true })?.click();
         await frame.waitForTimeout(1000);
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('matrixFilterChangeCommunicationGroup.png');
