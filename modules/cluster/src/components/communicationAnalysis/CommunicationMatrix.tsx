@@ -7,6 +7,7 @@ import { addResizeEvent, Container, Label, COLOR, getDecimalCount } from '../Com
 import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
+import _ from 'lodash';
 
 const options: optionDataType[] = [
     {
@@ -211,7 +212,12 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         const data = res.matrixList ?? [];
         const rankRes: {iterationOrRankId: string[] } =
             await queryRanks({ iterationId: conditions.iterationId });
-        const rankIds = rankRes.iterationOrRankId.map(item => String(item));
+        const stageRanks = _.map(_.split(_.replace(conditions.stage, /[(),]/, ''), ' '),
+            value => Number.parseInt(value)).filter(value => !Number.isNaN(value));
+        let rankIds = rankRes.iterationOrRankId.map(item => String(item));
+        if (stageRanks.length > 0) {
+            rankIds = _.filter(rankIds, value => Number(value) >= stageRanks[0] && Number(value) <= stageRanks[stageRanks.length - 1]);
+        }
         rankIds.sort((a, b) => Number(a) - Number(b));
         setDataSource({ data, rankIds });
     };
