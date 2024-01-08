@@ -5,6 +5,8 @@
 #include "ClusterDatabase.h"
 #include "ServerLog.h"
 #include "SummaryProtocolResponse.h"
+#include "TableDefs.h"
+#include "NumDefs.h"
 
 namespace Dic {
 namespace Module {
@@ -33,32 +35,32 @@ bool ClusterDatabase::CreateTable()
         return false;
     }
     std::string sql =
-            "CREATE TABLE " + timeInfoTable +
+            "CREATE TABLE " + TABLE_TIME_INFO +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, iteration_id VARCHAR(50),"
             " stage_id VARCHAR(200), rank_id VARCHAR(50), op_name VARCHAR(100),"
             " op_suffix VARCHAR(100), elapse_time double, synchronization_time_ratio double, "
             "synchronization_time double, transit_time double, wait_time_ratio double, "
             "wait_time double, idle_time double);"
-            "CREATE TABLE " + bandwidthTable +
+            "CREATE TABLE " + TABLE_BANDWIDTH +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, iteration_id VARCHAR(50), "
             "stage_id VARCHAR(200), rank_id VARCHAR(50), op_name VARCHAR(100), "
             "op_suffix VARCHAR(100), transport_type VARCHAR(20), bandwidth_size double,"
             " bandwidth_utilization double, large_package_ratio double, size_distribution json,"
             " transit_size double, transit_time double);" +
-            "CREATE TABLE " + baseInfoTable +
+            "CREATE TABLE " + TABLE_BASE_INFO +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path VARCHAR(500), ranks json,"
             " steps json, collect_start_time DATETIME, collect_duration double, data_size double, stages json,"
             " pp_stages json); "
-            "CREATE TABLE " + stepTraceTable +
+            "CREATE TABLE " + TABLE_STEP_TRACE +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
             " stage_id VARCHAR(50), compute_time double, pure_communication_time double, "
             "overlap_communication_time double, communication_time double, free_time double, "
             "stage_time double, bubble_time double, pure_communication_exclude_receive_time double);" +
-            "CREATE TABLE " + communicationMatrixTable +
+            "CREATE TABLE " + TABLE_COMMUNICATION_MATRIX +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100), iteration_id VARCHAR(50), "
             "op_name VARCHAR(100), group_name VARCHAR(100), src_rank VARCHAR(50), dst_rank VARCHAR(50), "
             "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);" +
-            "CREATE TABLE " + groupIdTable +
+            "CREATE TABLE " + TABLE_GROUP_ID +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100));";
     return ExecSql(sql);
 }
@@ -80,21 +82,21 @@ bool ClusterDatabase::InitStmt()
     if (isInitStmt) {
         return true;
     }
-    insertTimeInfoStmt = GetTimeInfoStmtSql(cacheSize);
-    insertBandwidthStmt = GetBandwidthStmtSql(cacheSize);
-    matrixStmt = GetMatrixStmtSql(cacheSize);
+    insertTimeInfoStmt = GetTimeInfoStmtSql(TABLE_CACHE_SIZE);
+    insertBandwidthStmt = GetBandwidthStmtSql(TABLE_CACHE_SIZE);
+    matrixStmt = GetMatrixStmtSql(TABLE_CACHE_SIZE);
     isInitStmt = true;
     return true;
 }
 
 sqlite3_stmt *ClusterDatabase::GetTimeInfoStmtSql(int len)
 {
-    if (len == cacheSize && isInitStmt) {
+    if (len == TABLE_CACHE_SIZE && isInitStmt) {
         sqlite3_reset(insertTimeInfoStmt);
         return insertTimeInfoStmt;
     }
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "INSERT INTO " + timeInfoTable +
+    std::string sql = "INSERT INTO " + TABLE_TIME_INFO +
                       " (iteration_id, stage_id, rank_id, op_name, op_suffix, elapse_time,"
                       " synchronization_time_ratio,"
                       "synchronization_time, transit_time, wait_time_ratio, wait_time, idle_time )"
@@ -110,12 +112,12 @@ sqlite3_stmt *ClusterDatabase::GetTimeInfoStmtSql(int len)
 
 sqlite3_stmt *ClusterDatabase::GetBandwidthStmtSql(int len)
 {
-    if (len == cacheSize && isInitStmt) {
+    if (len == TABLE_CACHE_SIZE && isInitStmt) {
         sqlite3_reset(insertBandwidthStmt);
         return insertBandwidthStmt;
     }
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "INSERT INTO " + bandwidthTable +
+    std::string sql = "INSERT INTO " + TABLE_BANDWIDTH +
                       " (iteration_id, stage_id, rank_id, op_name, op_suffix, transport_type,"
                       " bandwidth_size, bandwidth_utilization,large_package_ratio, size_distribution,"
                       " transit_size, transit_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -161,7 +163,7 @@ void ClusterDatabase::SaveLastData()
 void ClusterDatabase::InsertTimeInfo(CommunicationTimeInfo &timeInfo)
 {
     timeInfoCache.emplace_back(timeInfo);
-    if (timeInfoCache.size() == cacheSize) {
+    if (timeInfoCache.size() == TABLE_CACHE_SIZE) {
         InsertTimeInfoList(timeInfoCache);
         timeInfoCache.clear();
     }
@@ -196,7 +198,7 @@ void ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &tim
         sqlite3_bind_double(stmt, idx++, timeInfo.idleTime);
     }
     auto result = sqlite3_step(stmt);
-    if (timeInfoList.size() != cacheSize) {
+    if (timeInfoList.size() != TABLE_CACHE_SIZE) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -207,7 +209,7 @@ void ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &tim
 void ClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
 {
     bandwidthCache.emplace_back(bandWidth);
-    if (bandwidthCache.size() == cacheSize) {
+    if (bandwidthCache.size() == TABLE_CACHE_SIZE) {
         InsertBandwidthList(bandwidthCache);
         bandwidthCache.clear();
     }
@@ -216,7 +218,7 @@ void ClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
 void ClusterDatabase::InsertGroupId(std::set<std::string> &groupIds)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "INSERT INTO " + groupIdTable +
+    std::string sql = "INSERT INTO " + TABLE_GROUP_ID +
                       " (group_id) VALUES (?)";
     for (int i = 0; i < groupIds.size() - 1; i++) {
         sql.append(",(?)");
@@ -270,7 +272,7 @@ void ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &b
         sqlite3_bind_double(stmt, idx++, bandwidth.transitTime);
     }
     auto result = sqlite3_step(stmt);
-    if (bandWidthList.size() != cacheSize) {
+    if (bandWidthList.size() != TABLE_CACHE_SIZE) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -281,7 +283,7 @@ void ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &b
 void ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
 {
     if (stepStmt == nullptr) {
-        std::string sql = "INSERT INTO " + stepTraceTable +
+        std::string sql = "INSERT INTO " + TABLE_STEP_TRACE +
                           "(rank_id, step_id, stage_id, compute_time,pure_communication_time,"
                           " overlap_communication_time,communication_time, free_time, stage_time,"
                           " bubble_time,pure_communication_exclude_receive_time) "
@@ -311,7 +313,7 @@ void ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
     sqlite3_bind_double(stepStmt, idx++, stepStatistic.freeTime);
     sqlite3_bind_double(stepStmt, idx++, stepStatistic.stageTime);
     sqlite3_bind_double(stepStmt, idx++, stepStatistic.bubbleTime);
-    sqlite3_bind_double(stepStmt, idx++, stepStatistic.pureCommunicationExcludeReceiveTime);
+    sqlite3_bind_double(stepStmt, idx, stepStatistic.pureCommunicationExcludeReceiveTime);
     auto result = sqlite3_step(stepStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert bandwidth data fail. ", sqlite3_errmsg(db));
@@ -321,7 +323,7 @@ void ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
 void ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
 {
     sqlite3_stmt *stmt;
-    std::string sql = "INSERT INTO " + baseInfoTable +
+    std::string sql = "INSERT INTO " + TABLE_BASE_INFO +
                       "(file_path, ranks, steps, collect_start_time,collect_duration,data_size,stages,pp_stages)"
                       " VALUES (?, (select json_group_array(rank_id) from "
                       "(select DISTINCT rank_id from step_statistic_info where rank_id !='')), "
@@ -343,7 +345,7 @@ void ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
     sqlite3_bind_double(stmt, idx++, clusterBaseInfo.collectDuration);
     sqlite3_bind_double(stmt, idx++, clusterBaseInfo.dataSize);
     sqlite3_bind_text(stmt, idx++, clusterBaseInfo.stages.c_str(), clusterBaseInfo.stages.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, idx++, clusterBaseInfo.ppStages.c_str(),
+    sqlite3_bind_text(stmt, idx, clusterBaseInfo.ppStages.c_str(),
                       clusterBaseInfo.ppStages.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
@@ -355,7 +357,7 @@ void ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
 void ClusterDatabase::InsertCommunicationMatrix(Dic::Module::CommunicationMatrixInfo &communicationMatrix)
 {
     matrixCache.emplace_back(communicationMatrix);
-    if (matrixCache.size() == cacheSize) {
+    if (matrixCache.size() == TABLE_CACHE_SIZE) {
         InsertCommunicationMatrixInfo(matrixCache);
         matrixCache.clear();
     }
@@ -390,7 +392,7 @@ void ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMat
         sqlite3_bind_double(stmt, idx++, communicationMatrix.bandwidth);
     }
     auto result = sqlite3_step(stmt);
-    if (communicationMatrixInfo.size() != cacheSize) {
+    if (communicationMatrixInfo.size() != TABLE_CACHE_SIZE) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -401,12 +403,12 @@ void ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMat
 
 sqlite3_stmt *ClusterDatabase::GetMatrixStmtSql(int len)
 {
-    if (len == cacheSize && isInitStmt) {
+    if (len == TABLE_CACHE_SIZE && isInitStmt) {
         sqlite3_reset(matrixStmt);
         return matrixStmt;
     }
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "INSERT INTO " + communicationMatrixTable +
+    std::string sql = "INSERT INTO " + TABLE_COMMUNICATION_MATRIX +
                       " (group_id, iteration_id, op_name, group_name, src_rank, "
                       "dst_rank, transport_type, transit_size, transit_time, bandwidth) "
                       "VALUES (?,?,?,?,?,?,?,?,?,?)";
@@ -446,7 +448,7 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;
     std::string baseInfoSql =
-            "select file_path as filePath,ranks,steps,data_size as dataSize from " + baseInfoTable;
+            "select file_path as filePath,ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
         ServerLog::Error("Query base info Failed to prepare sql.", sqlite3_errmsg(db));
@@ -465,7 +467,7 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
             json_t json = json_t::parse(steps);
             responseBody.stepList = json.get<std::vector<std::string>>();
         }
-        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / mbSize;
+        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
         responseBody.stepNum = responseBody.stepList.size();
         responseBody.rankCount = responseBody.rankList.size();
     }
@@ -477,7 +479,7 @@ bool ClusterDatabase::QueryCommunicationGroup(Document &responseBody)
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;
     std::string baseInfoSql =
-            "select stages, pp_stages from " + baseInfoTable;
+            "select stages, pp_stages from " + TABLE_BASE_INFO;
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
         ServerLog::Error("Query CommunicationGroup info Failed to prepare sql.", sqlite3_errmsg(db));
@@ -505,7 +507,7 @@ bool ClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &response
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "select distinct step_id as stepId "
-                      "FROM " + stepTraceTable +
+                      "FROM " + TABLE_STEP_TRACE +
                       " ORDER BY step_id";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetStepIdList statement. error:", sqlite3_errmsg(db));
@@ -526,12 +528,12 @@ bool ClusterDatabase::GetStages(Protocol::PipelineStageParam param,
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string sql = "SELECT DISTINCT stage_id as stageId "
-                      "FROM " + stepTraceTable + " WHERE stage_id != '' AND step_id = ?";
+                      "FROM " + TABLE_STEP_TRACE + " WHERE stage_id != '' AND step_id = ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetStages statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string res = sqlite3_column_string(stmt, col++);
@@ -549,12 +551,12 @@ bool ClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
     std::string sql = "SELECT '" + param.stageId + "' as stageId, "
                       "max(ROUND(stage_time, 4)) as stageTime, "
                       "max(ROUND(bubble_time, 4)) as bubbleTime "
-                      "FROM " + stepTraceTable + " WHERE rank_id IN" + param.stageId + " AND step_id = ?";
+                      "FROM " + TABLE_STEP_TRACE + " WHERE rank_id IN" + param.stageId + " AND step_id = ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::BubbleDetail bubbleDetail;
@@ -575,13 +577,13 @@ bool ClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
     std::string sql = "SELECT rank_id as rankId, "
                       "ROUND(stage_time, 4) as stageTime, "
                       "ROUND(bubble_time, 4) as bubbleTime "
-                      " FROM " + stepTraceTable +
+                      " FROM " + TABLE_STEP_TRACE +
                       " WHERE step_id = ? AND rank_id IN" + param.stageId + " ";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetRankAndBubble statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::BubbleDetail bubbleDetail;
@@ -600,12 +602,12 @@ bool ClusterDatabase::GetGroups(Protocol::MatrixGroupParam param,
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string sql = "SELECT DISTINCT group_id as groupId "
-                      "FROM " + groupIdTable;
+                      "FROM " + TABLE_GROUP_ID;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetGroups statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string res = sqlite3_column_string(stmt, col++);
@@ -625,7 +627,7 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "ROUND(transit_size, 4) as transitSize, "
                       "ROUND(transit_time, 4) as transitTime, "
                       "ROUND(bandwidth, 4) as bandwidth "
-                      "FROM " + communicationMatrixTable +
+                      "FROM " + TABLE_COMMUNICATION_MATRIX +
                       " WHERE group_id = ? AND iteration_id = ? AND op_name = ? ";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryMatrixList statement. error:", sqlite3_errmsg(db));
@@ -633,7 +635,7 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
     }
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), param.operatorName.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, param.operatorName.c_str(), param.operatorName.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MatrixList matrixList;
@@ -672,7 +674,7 @@ sqlite3_stmt *ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPara
     std::string sql = "SELECT rank_id as rankId, sum(ROUND(compute_time,2)) as computingTime,"
                       "sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,"
                       "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
-                      "sum(ROUND(free_time,2)) as freeTime FROM " + stepTraceTable +
+                      "sum(ROUND(free_time,2)) as freeTime FROM " + TABLE_STEP_TRACE +
                       " WHERE rank_id !='' " + stepCondition + rankCondition
                       + "group by rank_id order by " + requestParams.orderBy + " desc";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -712,7 +714,7 @@ bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
                       " ROUND(idle_time, 4) as idleTime,"
                       " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
                       " ROUND(wait_time_ratio, 4) as waitTimeRatio "
-                      "FROM " + timeInfoTable +
+                      "FROM " + TABLE_TIME_INFO +
                       " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
                       " AND op_name != 'Total Op Info' " + orderBy + " " + order + " LIMIT ?, ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -746,7 +748,7 @@ bool ClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string sql = "SELECT op_name, count(*) AS nums  from " + timeInfoTable + " where 1=1 ";
+    std::string sql = "SELECT op_name, count(*) AS nums  from " + TABLE_TIME_INFO + " where 1=1 ";
     if (!param.iterationId.empty()) {
         sql.append("and iteration_id = ? ");
     }
@@ -791,7 +793,7 @@ bool ClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param, Pr
                       "ROUND(transit_time, 4) as transit_time,"
                       "ROUND(bandwidth_size, 4) as bandwidth_size,"
                       "ROUND(large_package_ratio, 4)  as large_package_ratio from "
-                      + bandwidthTable +
+                      + TABLE_BANDWIDTH +
                       " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name = ? ";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryBandwidthData statement. error:", sqlite3_errmsg(db));
@@ -800,7 +802,7 @@ bool ClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param, Pr
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::BandwidthDataItem bandwidth;
@@ -821,7 +823,7 @@ bool ClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &par
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string sql = "SELECT size_distribution FROM "
-                      + bandwidthTable +
+                      + TABLE_BANDWIDTH +
                       " WHERE iteration_id = ? "
                       "AND rank_id = ? "
                       "AND stage_id = ? "
@@ -835,7 +837,7 @@ bool ClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &par
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, param.transportType.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index, param.transportType.c_str(), -1, SQLITE_STATIC);
     resBody.distributionData = "";
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -848,7 +850,7 @@ bool ClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &par
 bool ClusterDatabase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT ranks FROM " + baseInfoTable;
+    std::string sql = "SELECT ranks FROM " + TABLE_BASE_INFO;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryRanksHandler statement. error:", sqlite3_errmsg(db));
@@ -905,15 +907,15 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
     std::vector<std::string> rankList = requestParams.rankList;
     std::string iterationId = requestParams.iterationId;
     std::string stage = requestParams.stage;
-    std::string sql = "";
+    std::string sql;
     if (rankList.empty()) {
-        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + timeInfoTable +
+        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO +
                 " WHERE iteration_id = ?" +
                 " AND stage_id = ?" +
                 " ORDER BY op_name)";
     } else {
         std::string ranks = GetRanksSql(rankList);
-        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + timeInfoTable +
+        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO +
                 " WHERE iteration_id = ?" +
                 " AND stage_id = ?" +
                 " AND rank_id IN " + ranks + " ORDER BY op_name)";
@@ -924,7 +926,7 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
         return false;
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::OperatorNamesObject object;
@@ -938,7 +940,7 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
 bool ClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT steps FROM " + baseInfoTable;
+    std::string sql = "SELECT steps FROM " + TABLE_BASE_INFO;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryIterations statement. error:", sqlite3_errmsg(db));
@@ -966,19 +968,19 @@ bool ClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestPar
     std::string iterationId = requestParams.iterationId;
     std::string stage = requestParams.stage;
     std::string operatorName = requestParams.operatorName;
-    std::string sql = "";
+    std::string sql;
     if (rankList.empty()) {
         sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
               "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
               "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + timeInfoTable +
+              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
               " WHERE iteration_id = ? AND stage_id = ? AND op_name = ?";
     } else {
         std::string ranks = GetRanksSql(rankList);
         sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
               "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
               "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + timeInfoTable +
+              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
               " WHERE iteration_id = ? AND stage_id = ?"
               " AND rank_id IN " + ranks +
               " AND op_name = ?";
@@ -990,7 +992,7 @@ bool ClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestPar
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::Duration object;
