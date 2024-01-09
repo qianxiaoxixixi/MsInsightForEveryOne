@@ -149,8 +149,8 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
-    if (json["params"].HasMember("rankList") && json["params"]["rankIdList"].IsArray()) {
-        for (const auto &rankId : json["params"]["rankIdList"].GetArray()) {
+    if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
+        for (const auto &rankId : json["params"]["rankList"].GetArray()) {
             reqPtr->params.rankList.emplace_back(rankId.GetString());
         }
     }
@@ -179,8 +179,8 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
-    if (json["params"].HasMember("rankList") && json["params"]["rankIdList"].IsArray()) {
-        for (const auto &rankId : json["params"]["rankIdList"].GetArray()) {
+    if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
+        for (const auto &rankId : json["params"]["rankList"].GetArray()) {
             reqPtr->params.rankList.emplace_back(rankId.GetString());
         }
     }

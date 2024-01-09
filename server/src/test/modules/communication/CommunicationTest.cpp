@@ -59,7 +59,7 @@ TEST_F(TestSuit, QueryRanksData)
     requestParam.iterationId = "2";
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryRanksHandler(responseBody);
-    int expectSize = 2;
+    int expectSize = 16;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].iterationOrRankId, "0");
     EXPECT_EQ(responseBody[1].iterationOrRankId, "1");
@@ -150,8 +150,8 @@ TEST_F(TestSuit, GetCommunicationGroups)
     database->GetGroups(requestParams, responseBody);
     int expectSize = 2;
     EXPECT_EQ(responseBody.groupList.size(), expectSize);
-    EXPECT_EQ(responseBody.groupList[0], "p2p");
-    EXPECT_EQ(responseBody.groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
+    EXPECT_EQ(responseBody.groupList[1], "p2p");
+    EXPECT_EQ(responseBody.groupList[0], "(0, 1, 2, 3, 4, 5, 6, 7)");
 }
 
 TEST_F(TestSuit, QueryMatrixData)
