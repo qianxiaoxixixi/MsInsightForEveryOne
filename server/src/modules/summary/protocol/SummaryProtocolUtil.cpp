@@ -84,7 +84,6 @@ template <> std::optional<document_t> ToResponseJson<ComputeDetailResponse>(cons
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    JsonUtil::AddMember(body, "totalNum", body, allocator);
     json_t computeDetails(kArrayType);
     for (const ComputeDetail &action : response.computeDetails) {
         json_t itemJson(kObjectType);
@@ -103,6 +102,7 @@ template <> std::optional<document_t> ToResponseJson<ComputeDetailResponse>(cons
         computeDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "computeDetails", computeDetails, allocator);
+    JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
@@ -181,7 +181,6 @@ std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const Comm
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     json_t communicationDetails(kArrayType);
     for (const CommunicationDetail &detail : response.commDetails) {
         json_t itemJson(kObjectType);
@@ -193,6 +192,7 @@ std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const Comm
         communicationDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "communicationDetails", communicationDetails, allocator);
+    JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

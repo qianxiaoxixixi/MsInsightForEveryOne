@@ -39,7 +39,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
 
 template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response)
 {
-    document_t json;
+    document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     json_t body(kObjectType);
@@ -51,7 +51,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const M
         }
         linesList.PushBack(lineArr, allocator);
     }
-    JsonUtil::AddMember(body, "linesList", linesList, allocator);
+    JsonUtil::AddMember(body, "lines", linesList, allocator);
     JsonUtil::AddMember(body, "hasApp", response.map.hasApp, allocator);
     JsonUtil::AddMember(body, "peakMemoryUsage", response.map.peakMemoryUsage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
@@ -60,12 +60,13 @@ template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const M
 
 template<>std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response)
 {
-    document_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    body.AddMember("minSize", response.size.minSize, json.GetAllocator());
-    body.AddMember("maxSize", response.size.maxSize, json.GetAllocator());
-    json.AddMember("body", body, json.GetAllocator());
+    JsonUtil::AddMember(body, "minSize", response.size.minSize, allocator);
+    JsonUtil::AddMember(body, "maxSize", response.size.maxSize, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
 #pragma endregion
