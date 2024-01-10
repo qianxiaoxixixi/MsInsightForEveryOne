@@ -1200,26 +1200,25 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
     double layerOperatorTime = data.allOperatorTime;
     std::string orderBy;
     if (requestParams.order == "descend") {
-        orderBy = " order by " + requestParams.orderBy + " DESC";
+        orderBy = " order by " + requestParams.orderBy + " DESC ";
     } else {
-        orderBy = " order by " + requestParams.orderBy + " ASC";
+        orderBy = " order by " + requestParams.orderBy + " ASC ";
     }
-    std::string sql = "SELECT name, ROUND(cast(sum(duration) as double) * 100 / "
-                      +  std::to_string(layerOperatorTime) + ", 2) as "
+    std::string sql = "SELECT name, ROUND(cast(sum(duration) as double) * 100 / ?, 2) as "
                       "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
                       "ROUND(avg(duration) / 1000.0, 4) as avg, "
                       "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
                       "FROM slice WHERE slice.track_id IN ( SELECT track_id "
                       "FROM process JOIN thread t ON process.pid = t.pid "
-                      "WHERE process_name = '" + requestParams.layer + "' ) "
-                      "GROUP BY name" + orderBy + " limit " + std::to_string(requestParams.pageSize)
-                      + " offset " + std::to_string((requestParams.current - 1) * requestParams.pageSize);
+                      "WHERE process_name = ? ) "
+                      "GROUP BY name " + orderBy + " limit ? offset ?";
+    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryPythonViewData, fail to prepare sql.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery();
+    auto resultSet = stmt->ExecuteQuery(layerOperatorTime, requestParams.layer, requestParams.pageSize, offset);
     while (resultSet->Next()) {
         Protocol::SystemViewDetail systemViewDetail;
         int col = resultStartIndex;
@@ -1243,13 +1242,13 @@ LayerStatData TraceDatabase::QueryLayerData(const std::string &layer)
     LayerStatData layerStatData;
     std::string sql = "SELECT sum(duration) AS totalTime, count(distinct name) FROM slice WHERE slice.track_id IN "
                       "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
-                      "WHERE process_name = '" + layer + "' ) ";
+                      "WHERE process_name = ? ) ";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryLayerOperatorTime, fail to prepare sql.");
         return layerStatData;
     }
-    auto resultSet = stmt->ExecuteQuery();
+    auto resultSet = stmt->ExecuteQuery(layer);
     if (resultSet->Next()) {
         layerStatData.allOperatorTime = resultSet->GetDouble("totalTime");
         layerStatData.total = resultSet->GetUint64("count(distinct name)");
@@ -1309,13 +1308,13 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
     if (!requestParams.coreType.empty()) {
         coreTypes = " AND accelerator_core = ? ";
     }
+    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     std::string sql = "SELECT name, op_type as type, accelerator_core AS acceleratorCore, start_time AS startTime, "
                       "duration, wait_time as waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
                       "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
                       "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
                       "output_formats AS outputFormats FROM kernel_detail "
-                      "where 1=1 " + coreTypes + orderBy +  " limit "  + std::to_string(requestParams.pageSize)
-                      + " offset " + std::to_string((requestParams.current - 1) * requestParams.pageSize);
+                      "where 1=1 " + coreTypes + orderBy + " limit ? offset ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
@@ -1324,7 +1323,7 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
     }
-    auto resultSet = stmt->ExecuteQuery();
+    auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;

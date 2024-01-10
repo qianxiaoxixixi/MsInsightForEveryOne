@@ -386,16 +386,16 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
 
     if (requestParams.startTime != -1) {
-        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) >= " + std::to_string(requestParams.startTime);
+        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) >= ? ";
     }
     if (requestParams.endTime != -1) {
-        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) <= " + std::to_string(requestParams.endTime);
+        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) <= ? ";
     }
     if (requestParams.minSize != -1) {
-        sql += " AND size >= " + std::to_string(requestParams.minSize);
+        sql += " AND size >= ? ";
     }
     if (requestParams.maxSize != -1) {
-        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+        sql += " AND size <= ? ";
     }
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -405,6 +405,18 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.orderName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    if (requestParams.startTime != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.startTime);
+    }
+    if (requestParams.endTime != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.endTime);
+    }
+    if (requestParams.minSize != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.minSize);
+    }
+    if (requestParams.maxSize != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.maxSize);
+    }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (requestParams.startTime != -1) {
         sqlite3_bind_int64(stmt, index++, startTime);
