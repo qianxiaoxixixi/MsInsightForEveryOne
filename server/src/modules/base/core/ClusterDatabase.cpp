@@ -462,11 +462,11 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
         responseBody.filePath = sqlite3_column_string(stmtBaseInfo, coll++);
         std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!ranks.empty()) {
-            responseBody.rankList = JsonUtil::jsonToVector(ranks);
+            responseBody.rankList = JsonUtil::JsonToVector(ranks);
         }
         std::string steps = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!steps.empty()) {
-            responseBody.stepList = JsonUtil::jsonToVector(steps);
+            responseBody.stepList = JsonUtil::JsonToVector(steps);
         }
         responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
         responseBody.stepNum = responseBody.stepList.size();

@@ -77,13 +77,15 @@ bool DataBaseManager::HasFileId(DatabaseType type, const std::string &fileId)
     bool result = false;
     switch (type) {
         case DatabaseType::TRACE:
-            result = traceDatabaseMap.count(fileId) != 0;
+            result = traceDatabaseMap.find(fileId) != traceDatabaseMap.end();
             break;
         case DatabaseType::SUMMARY:
-            result = summaryDatabaseMap.count(fileId) != 0;
+            result = summaryDatabaseMap.find(fileId) != summaryDatabaseMap.end();
             break;
         case DatabaseType::MEMORY:
-            result = memoryDatabaseMap.count(fileId) != 0;
+            result = memoryDatabaseMap.find(fileId) != memoryDatabaseMap.end();
+            break;
+        default:
             break;
     }
     return result;
@@ -141,6 +143,8 @@ void DataBaseManager::Clear(DatabaseType type)
         case DatabaseType::MEMORY:
             memoryDatabaseMap.clear();
             break;
+        default:
+            break;
     }
 }
 
@@ -177,6 +181,7 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
     std::unique_lock<std::mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
     if (it == traceDatabaseMap.end()) {
+        ServerLog::Error("Can't find db path for rank ", fileId);
         return "";
     }
     return it->second->GetDbPath();

@@ -136,7 +136,7 @@ public:
         }
     }
 
-    static std::vector<std::string> jsonToVector(const std::string& jsonStr)
+    static std::vector<std::string> JsonToVector(const std::string& jsonStr)
     {
         rapidjson::Document document;
         document.Parse(jsonStr.c_str());
