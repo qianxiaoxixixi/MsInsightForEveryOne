@@ -326,7 +326,7 @@ public:
 #else
         struct stat st;
         long long size = 0;
-        if (stat("filename", &st) == 0) {
+        if (stat(fileName, &st) == 0) {
             size = st.st_size;
         }
         return size;
