@@ -158,6 +158,29 @@ public:
     {
         return str.find(subStr) != std::string::npos;
     }
+
+    /**
+     * 校验命令行路径参数
+     * @param path 路径
+     * @return true / false
+     */
+    static bool ValidateCommandFilePathParam(const std::string& path)
+    {
+        if (path.empty()) {
+            return false;
+        }
+#ifdef _WIN32
+        char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};
+#else
+        char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n'};
+#endif
+        for (const auto &ch: path) {
+            if (std::find(std::begin(injectList), std::end(injectList), ch) != std::end(injectList)) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 }
 
