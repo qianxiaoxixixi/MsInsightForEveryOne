@@ -106,14 +106,13 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 {
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::RUNNING);
-    // 导入前清空cluster db
-    DataBaseManager::Instance().ClearClusterDb();
-    auto database = DataBaseManager::Instance().GetClusterDatabase();
-    if (!(database->OpenDb(selectedPath + "/cluster.db", true) && database->CreateTable() &&
-          database->SetConfig() && database->InitStmt())) {
-        ServerLog::Error("Failed to open database. path:", selectedPath);
-        return false;
+    std::string dbPath = selectedPath + "/cluster.db";
+    std::ifstream file(dbPath);
+    if (InitClusterDatabase(selectedPath, file.good()) && file.good()) {
+        ServerLog::Info("cluster db file is already exist, skip parse ");
+        return true;
     }
+    auto database = DataBaseManager::Instance().GetClusterDatabase();
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
@@ -156,6 +155,38 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     return true;
 }
 
+bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist)
+{
+    // 导入前清空cluster database
+    DataBaseManager::Instance().ClearClusterDb();
+    auto database = DataBaseManager::Instance().GetClusterDatabase();
+    std::string dbPath = selectedPath + "/cluster.db";
+    if (!dbIsAlreadyExist) {
+        if (!(database->OpenDb(dbPath, true) && database->CreateTable() &&
+              database->SetConfig() && database->InitStmt())) {
+            ServerLog::Error("Failed to open database. path:", selectedPath);
+            return false;
+        }
+    } else {
+        if (!(database->OpenDb(dbPath, false))) {
+            ServerLog::Error("Failed to open database. path:", selectedPath);
+            return false;
+        }
+        // 判断数据库版本是否变更，若变更不能跳过解析
+        auto isChange = database->IsDatabaseVersionChange();
+        if (isChange && !(database->DropAllTable() && database->CreateTable())) {
+            ServerLog::Error("Failed to dropAllTable. path:", selectedPath);
+            return false;
+        }
+        if (!(database->SetConfig() && database->InitStmt())) {
+            ServerLog::Error("Failed to init database. path:", selectedPath);
+            return false;
+        }
+        return !isChange;
+    }
+    return true;
+}
+
 void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo)
 {
     std::vector<std::string> communicationGroupList =
@@ -178,10 +209,13 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
             }
             return a.Size() > b.Size();
         };
-        std::sort(p2p.begin(), p2p.end(), orderByLenDesAndNumAsc);
-        std::sort(collective.begin(), collective.end(), orderByLenDesAndNumAsc);
+        std::sort(p2p.Begin(), p2p.End(), orderByLenDesAndNumAsc);
+        std::sort(collective.Begin(), collective.End(), orderByLenDesAndNumAsc);
         for (int i = 0; i < p2p.Size(); i++) {
-            collective.Erase(std::find(collective.begin(), collective.end(), p2p[i]));
+            auto pos = std::find(collective.begin(), collective.end(), p2p[i]);
+            if (pos >= collective.Begin() && pos < collective.End()) {
+                collective.Erase(pos);
+            }
         }
         baseInfo.ppStages = JsonUtil::JsonDump(p2p);
         baseInfo.stages = JsonUtil::JsonDump(collective);

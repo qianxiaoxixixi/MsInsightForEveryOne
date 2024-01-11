@@ -121,12 +121,13 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
         }
         session.units = session?.units.filter((unit) => {
             const metadata = unit.metadata as any;
-            return metadata.dataSource.remote !== dataSource.remote;
+            return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
         });
         session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
             const metadata = unit.metadata as any;
-            return metadata.dataSource.remote !== dataSource.remote;
+            return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
         });
+        session.simpleCache.clear();
         let remoteMaxTimeStamps = 0;
         session.remoteAttrs.forEach((attrs) => {
             remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
