@@ -103,8 +103,12 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    double startTime;
+    JsonUtil::SetByJsonKeyValue(startTime, json["params"], "startTime");
+    reqPtr->params.startTime = (uint64_t) startTime;
+    double endTime;
+    JsonUtil::SetByJsonKeyValue(endTime, json["params"], "endTime");
+    reqPtr->params.endTime = (uint64_t) endTime;
     return reqPtr;
 }
 
