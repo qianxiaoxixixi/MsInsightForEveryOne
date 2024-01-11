@@ -227,6 +227,10 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
 bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
 {
     ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
+    if (!StringUtil::ValidateCommandFilePathParam(selectedPath)) {
+        ServerLog::Warn("validate string select path failed! select path", selectedPath);
+        return false;
+    }
     std::string regex;
 #ifdef _WIN32
     regex = "cluster_analysis.exe";
@@ -237,6 +241,7 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
             FileUtil::FindFilesByRegex(FileUtil::GetCurrPath(), std::regex(regex));
     if (!exePathVector.empty()) {
         std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
+        ServerLog::Info("start execute command:", command);
         int result = std::system(command.c_str());
         if (result != 0) {
             ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command:", command);
