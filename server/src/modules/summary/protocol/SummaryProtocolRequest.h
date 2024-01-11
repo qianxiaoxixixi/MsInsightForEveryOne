@@ -76,8 +76,8 @@ struct PipelineRankTimeRequest : public Request {
 struct ComputeDetailParams {
     std::string rankId;
     std::string timeFlag;
-    double currentPage = 0;
-    double pageSize = 0;
+    int64_t currentPage = 0;
+    int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
 };
@@ -90,8 +90,8 @@ struct ComputeDetailRequest : public Request {
 struct CommunicationDetailParams {
     std::string rankId;
     std::string timeFlag = "HCCL";
-    double currentPage = 0;
-    double pageSize = 0;
+    int64_t currentPage = 0;
+    int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
 };

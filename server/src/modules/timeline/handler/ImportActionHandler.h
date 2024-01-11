@@ -17,6 +17,7 @@ public:
     ImportActionHandler()
     {
         command = Protocol::REQ_RES_IMPORT_ACTION;
+        async = false;
     };
     ~ImportActionHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

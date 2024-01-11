@@ -9,8 +9,8 @@
 using namespace Dic;
 
 TEST(JsonUtil, IsJsonKeyValid) {
-    json_t json;
-    json = json_t::parse("{\n"
+    document_t json;
+    json.Parse("{\n"
                          "        \"ph\": \"X\",\n"
                          "        \"name\": \"contiguous_d_Reshape\",\n"
                          "        \"args\": {}\n"
@@ -26,8 +26,8 @@ TEST(JsonUtil, IsJsonKeyValid) {
 }
 
 TEST(JsonUtil, SetByJsonKeyValue) {
-    json_t json;
-    json = json_t::parse("{\n"
+    document_t json;
+    json.Parse("{\n"
                          "        \"name\": \"X\",\n"
                          "        \"age\": 18,\n"
                          "        \"args\": {}\n"
@@ -42,8 +42,8 @@ TEST(JsonUtil, SetByJsonKeyValue) {
 }
 
 TEST(JsonUtil, SetByJsonKeyArrayValue) {
-    json_t json;
-    json = json_t::parse(R"({"args": ["a","b"]})");
+    document_t json;
+    json.Parse(R"({"args": ["a","b"]})");
     std::vector<std::string> args;
     JsonUtil::SetByJsonKeyArrayValue(args, json, "args");
     EXPECT_EQ(args[0], "a");
@@ -59,17 +59,17 @@ TEST(JsonUtil, TryParse) {
               "        \"args\": {}\n"
               "}";
 
-    const std::optional<json_t> &json = JsonUtil::TryParse(jsonStr, errMessage);
+    const std::optional<document_t> &json = JsonUtil::TryParse(jsonStr, errMessage);
     EXPECT_EQ(json.has_value(), true);
 
-    jsonStr = "{\"key\":value,}";
+    jsonStr = "{\"key\":\"value\",}";
     JsonUtil::TryParse(jsonStr, errMessage);
-    EXPECT_EQ(errMessage, "Failed to parse json string.");
+    EXPECT_EQ(errMessage.substr(0, 13), "Error code:4.");
 }
 
 TEST(JsonUtil, IsJsonArray) {
-    json_t json;
-    json = json_t::parse(R"({"args": ["a","b"],"key":"value"})");
+    document_t json;
+    json.Parse(R"({"args": ["a","b"],"key":"value"})");
     std::vector<std::string> args;
     EXPECT_EQ(JsonUtil::IsJsonArray(json, "args"), true);
     EXPECT_EQ(JsonUtil::IsJsonArray(json, "key"), false);
