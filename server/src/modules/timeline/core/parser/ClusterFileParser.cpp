@@ -209,10 +209,13 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
             }
             return a.Size() > b.Size();
         };
-        std::sort(p2p.begin(), p2p.end(), orderByLenDesAndNumAsc);
-        std::sort(collective.begin(), collective.end(), orderByLenDesAndNumAsc);
+        std::sort(p2p.Begin(), p2p.End(), orderByLenDesAndNumAsc);
+        std::sort(collective.Begin(), collective.End(), orderByLenDesAndNumAsc);
         for (int i = 0; i < p2p.Size(); i++) {
-            collective.Erase(std::find(collective.begin(), collective.end(), p2p[i]));
+            auto pos = std::find(collective.begin(), collective.end(), p2p[i]);
+            if (pos >= collective.Begin() && pos < collective.End()) {
+                collective.Erase(pos);
+            }
         }
         baseInfo.ppStages = JsonUtil::JsonDump(p2p);
         baseInfo.stages = JsonUtil::JsonDump(collective);
