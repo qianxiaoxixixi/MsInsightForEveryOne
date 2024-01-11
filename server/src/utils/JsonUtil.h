@@ -8,58 +8,55 @@
 
 #include <string>
 #include <optional>
+#include <vector>
 #include "GlobalDefs.h"
 
 namespace Dic {
 class JsonUtil {
 public:
-    static inline bool IsJsonKeyValid(const json_t &json, const std::string &key)
+    static inline bool IsJsonKeyValid(const json_t &json, std::string_view key)
     {
-        return json.contains(key) && !json[key].is_null();
+        return json.HasMember(key.data()) && !json[key.data()].IsNull();
     }
 
-    template <typename T> static inline void SetByJsonKeyValue(T &src, const json_t &json, const std::string &key)
+    template <typename T> static inline void SetByJsonKeyValue(T &src, const json_t &json, std::string_view key)
     {
-        if (json.contains(key) && !json[key].is_null()) {
-            src = json[key];
+        SetByJsonKeyValueHelper(src, json, key);
+    }
+
+    template <typename T> static inline void AddMember(json_t &json, std::string_view key, T &&value,
+        RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        AddMemberHelper(json, key, std::forward<T>(value), allocator);
+    }
+
+    template <typename T> static inline void AddMember(json_t &json, std::string_view key, T &value,
+                                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        AddMemberHelper(json, key, value, allocator);
+    }
+
+    static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
+    {
+        document_t doc;
+        doc.Parse(jsonStr.c_str(), jsonStr.length());
+        if (doc.HasParseError()) {
+            const size_t printErrorSize = 100;
+            auto offset = doc.GetErrorOffset();
+            auto start = offset >= printErrorSize ? offset - printErrorSize : 0;
+            error = "Error code:" + std::to_string(doc.GetParseError()) +
+                ". str:" + jsonStr.substr(start, offset - start);
+            return std::nullopt;
         }
+        return std::make_optional(std::move(doc));
     }
 
-    template <typename T> static inline void SetByJsonKeyArrayValue(T &src, const json_t &json, const std::string &key)
+    static inline bool IsJsonArray(const json_t &json, std::string_view key)
     {
-        if (json.contains(key) && !json[key].is_null()) {
-            src =  json[key].get<std::vector<std::string>>();
-        }
+        return (json.HasMember(key.data()) && json[key.data()].IsArray());
     }
 
-    template <typename T> static inline void SetByOptionalValue(const T &src, json_t &json, const std::string &key)
-    {
-        if (src.has_value()) {
-            json[key] = src.value();
-        }
-    }
-
-    static inline std::optional<json_t> TryParse(const std::string &jsonStr, std::string &error)
-    {
-        try {
-            return json_t::parse(jsonStr);
-        } catch (json_t::parse_error &) {
-            error = "Failed to parse json string.";
-        } catch (json_t::type_error &) {
-            error = "Failed to parse json type.";
-        } catch (...) {
-            error = "Unknown parse error.";
-        }
-        return std::nullopt;
-    }
-
-    static inline bool IsJsonArray(const json_t &json, const std::string &key)
-    {
-        return (json.contains(key) && json.at(key).is_array());
-    }
-
-    // rapidjson
-    static inline std::string JsonDump(const rapidjson::Value &json)
+    static inline std::string JsonDump(const json_t &json)
     {
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -67,7 +64,8 @@ public:
         return buffer.GetString();
     }
 
-    static inline double GetDouble(const rapidjson::Value &json, std::string_view key)
+    // for timeline file parse
+    static inline double GetDouble(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {
             return 0;
@@ -85,7 +83,7 @@ public:
         return 0;
     }
 
-    static inline int64_t GetInteger(const rapidjson::Value &json, std::string_view key)
+    static inline int64_t GetInteger(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {
             return 0;
@@ -106,7 +104,7 @@ public:
         return 0;
     }
 
-    static inline std::string GetString(const rapidjson::Value &json, std::string_view key)
+    static inline std::string GetString(const json_t &json, std::string_view key)
     {
         if (json.HasMember(key.data()) && json[key.data()].IsString()) {
             return json[key.data()].GetString();
@@ -114,7 +112,7 @@ public:
         return "";
     }
 
-    static inline std::optional<std::string> GetOptionalString(const rapidjson::Value &json, std::string_view key)
+    static inline std::optional<std::string> GetOptionalString(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {
             return std::nullopt;
@@ -126,7 +124,7 @@ public:
         }
     }
 
-    static inline std::string GetDumpString(const rapidjson::Value &json, std::string_view key)
+    static inline std::string GetDumpString(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {
             return "";
@@ -136,6 +134,83 @@ public:
         } else {
             return JsonDump(json[key.data()]);
         }
+    }
+
+    static std::vector<std::string> JsonToVector(const std::string& jsonStr)
+    {
+        rapidjson::Document document;
+        document.Parse(jsonStr.c_str());
+        if (!document.IsArray()) {
+            return {};
+        }
+        std::vector<std::string> result;
+        for (rapidjson::SizeType i = 0; i < document.Size(); i++) {
+            if (document[i].IsString()) {
+                result.emplace_back(document[i].GetString());
+            }
+        }
+        return result;
+    }
+
+private:
+    template <typename T> static inline void SetByJsonKeyValueHelper(std::optional<T> &src, const json_t &json,
+        std::string_view key)
+    {
+        SetByJsonKeyValueHelper(*src, json, key);
+    }
+
+    template <typename T> static inline void SetByJsonKeyValueHelper(T &src, const json_t &json, std::string_view key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].Is<T>()) {
+            src = json[key.data()].Get<T>();
+        }
+    }
+
+    static inline void SetByJsonKeyValueHelper(std::string &src, const json_t &json, std::string_view key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].IsString()) {
+            src = json[key.data()].GetString();
+        }
+    }
+
+    template <typename T> static inline void AddMemberHelper(json_t &json, std::string_view key, T &&value,
+        RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json.AddMember(rapidjson::StringRef(key.data(), key.length()), std::forward<T>(value), allocator);
+    }
+
+    static inline void AddMemberHelper(json_t &json, std::string_view key, std::string &&value,
+                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json.AddMember(rapidjson::StringRef(key.data(), key.length()),
+                       json_t().SetString(value.data(), value.length(), allocator), allocator);
+    }
+
+    static inline void AddMemberHelper(json_t &json, std::string_view key, const std::string &&value,
+                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json.AddMember(rapidjson::StringRef(key.data(), key.length()),
+                       json_t().SetString(value.c_str(), value.length(), allocator), allocator);
+    }
+
+    template <typename T> static inline void AddMemberHelper(json_t &json, std::string_view key, T &value,
+        RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json.AddMember(rapidjson::StringRef(key.data(), key.length()), value, allocator);
+    }
+
+    static inline void AddMemberHelper(json_t &json, std::string_view key, std::string &value,
+                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json.AddMember(rapidjson::StringRef(key.data(), key.length()),
+                       json_t().SetString(value.data(), value.length(), allocator), allocator);
+    }
+
+    static inline void AddMemberHelper(json_t &json, std::string_view key, const std::string &value,
+                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json.AddMember(rapidjson::StringRef(key.data(), key.length()),
+                       json_t().SetString(value.c_str(), value.length(), allocator), allocator);
     }
 };
 } // end of namespace Dic

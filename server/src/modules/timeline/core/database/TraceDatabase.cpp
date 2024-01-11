@@ -631,7 +631,6 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
     auto resultSet = stmt->ExecuteQuery(requestParams.depth, trackId, requestParams.startTime + minTimestamp);
     std::vector<SliceDto> sliceDtoVec;
     while (resultSet->Next()) {
-        int col = resultStartIndex;
         SliceDto sliceDto {};
         sliceDto.id = resultSet->GetUint64("id");
         sliceDto.timestamp = resultSet->GetUint64("timestamp");

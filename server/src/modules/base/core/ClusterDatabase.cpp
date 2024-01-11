@@ -4,6 +4,7 @@
 
 #include "ClusterDatabase.h"
 #include "ServerLog.h"
+#include "JsonUtil.h"
 #include "SummaryProtocolResponse.h"
 #include "TableDefs.h"
 #include "NumDefs.h"
@@ -459,15 +460,13 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
     while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
         int coll = resultStartIndex;
         responseBody.filePath = sqlite3_column_string(stmtBaseInfo, coll++);
-        std::string  ranks = sqlite3_column_string(stmtBaseInfo, coll++);
+        std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!ranks.empty()) {
-            json_t json = json_t::parse(ranks);
-            responseBody.rankList = json.get<std::vector<std::string>>();
+            responseBody.rankList = JsonUtil::JsonToVector(ranks);
         }
         std::string steps = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!steps.empty()) {
-            json_t json = json_t::parse(steps);
-            responseBody.stepList = json.get<std::vector<std::string>>();
+            responseBody.stepList = JsonUtil::JsonToVector(steps);
         }
         responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
         responseBody.stepNum = responseBody.stepList.size();

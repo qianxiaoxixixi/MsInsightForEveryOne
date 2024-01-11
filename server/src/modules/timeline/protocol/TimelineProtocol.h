@@ -38,28 +38,28 @@ private:
     static std::unique_ptr<Request> ToKernelDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToOneKernelRequest(const json_t &json, std::string &error);
     // response to json
-    static std::optional<json_t> ToImportActionResponseJson(const Response &response);
-    static std::optional<json_t> ToUnitThreadTracesResponseJson(const Response &response);
-    static std::optional<json_t> ToUnitThreadsResponseJson(const Response &response);
-    static std::optional<json_t> ToThreadDetailResponseJson(const Response &response);
-    static std::optional<json_t> ToUnitFlowNameResponseJson(const Response &response);
-    static std::optional<json_t> ToUnitFlowResponseJson(const Response &response);
-    static std::optional<json_t> ToResetWindowResponseJson(const Response &response);
-    static std::optional<json_t> ToUnitChartResponseJson(const Response &response);
-    static std::optional<json_t> ToSearchCountResponseJson(const Response &response);
-    static std::optional<json_t> ToSearchSliceResponseJson(const Response &response);
-    static std::optional<json_t> ToRemoteDeleteResponseJson(const Response &response);
-    static std::optional<json_t> ToFlowCategoryListResponse(const Response &response);
-    static std::optional<json_t> ToFlowCategoryEventsResponse(const Response &response);
-    static std::optional<json_t> ToUnitCounterResponse(const Response &response);
-    static std::optional<json_t> ToSystemViewResponseJson(const Response &response);
-    static std::optional<json_t> ToKernelDetailResponseJson(const Response &response);
-    static std::optional<json_t> ToOneKernelResponseJson(const Response &response);
+    static std::optional<document_t> ToImportActionResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitThreadTracesResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitThreadsResponseJson(const Response &response);
+    static std::optional<document_t> ToThreadDetailResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitFlowNameResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitFlowResponseJson(const Response &response);
+    static std::optional<document_t> ToResetWindowResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitChartResponseJson(const Response &response);
+    static std::optional<document_t> ToSearchCountResponseJson(const Response &response);
+    static std::optional<document_t> ToSearchSliceResponseJson(const Response &response);
+    static std::optional<document_t> ToRemoteDeleteResponseJson(const Response &response);
+    static std::optional<document_t> ToFlowCategoryListResponse(const Response &response);
+    static std::optional<document_t> ToFlowCategoryEventsResponse(const Response &response);
+    static std::optional<document_t> ToUnitCounterResponse(const Response &response);
+    static std::optional<document_t> ToSystemViewResponseJson(const Response &response);
+    static std::optional<document_t> ToKernelDetailResponseJson(const Response &response);
+    static std::optional<document_t> ToOneKernelResponseJson(const Response &response);
     // event to json
-    static std::optional<json_t> ToParseSuccessEventJson(const Event &event);
-    static std::optional<json_t> ToParseFailEventJson(const Event &event);
-    static std::optional<json_t> ToParseClusterCompletedEventJson(const Event &event);
-    static std::optional<json_t> ToParseMemoryCompletedEventJson(const Event &event);
+    static std::optional<document_t> ToParseSuccessEventJson(const Event &event);
+    static std::optional<document_t> ToParseFailEventJson(const Event &event);
+    static std::optional<document_t> ToParseClusterCompletedEventJson(const Event &event);
+    static std::optional<document_t> ToParseMemoryCompletedEventJson(const Event &event);
 };
 } // namespace Protocol
 } // namespace Dic

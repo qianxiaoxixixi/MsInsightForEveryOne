@@ -4,6 +4,7 @@
 
 #include "ServerLog.h"
 #include "Protocol.h"
+#include "JsonUtil.h"
 #include "TokenBuilder.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
@@ -13,19 +14,20 @@ namespace Dic {
 namespace Server {
 using namespace Dic::Protocol;
 using namespace Dic::Module;
-WsSession::WsSession(WsChannel *channel) : channel(channel), tokenString(), status()
+WsSession::WsSession(WsChannel *channel) : channel(channel), tokenString(), status(Status::INIT)
 {
     loop = uWS::Loop::get();
     tokenString = TokenBuilder::Instance().Build();
     createTime = TimeUtil::Instance().NowUTC();
     msgBuffer = std::make_unique<ProtocolMessageBuffer>();
-    if (useResponseQueue) {
-        responseQueue = std::make_unique<ResponseQueue>();
-    }
-    status = Status::INIT;
 }
 
-WsSession::~WsSession() {}
+WsSession::~WsSession()
+{
+    if (waitForTokenThread != nullptr && waitForTokenThread->joinable()) {
+        waitForTokenThread->join();
+    }
+}
 
 bool WsSession::CheckMessage(ProtocolMessage &msg)
 {
@@ -95,15 +97,15 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
 void WsSession::OnHandleResponseQueue(WsSession &session)
 {
     ServerLog::Info("Handle response queue thread start.");
-    const int interval = 50;
     while (session.useResponseQueue) {
         if (session.status == Status::CLOSED) {
-            session.responseQueue->Clear();
+            session.responseQueue.Clear();
             break;
         }
-        std::unique_ptr<Response> responsePtr = session.responseQueue->Pop();
-        if (responsePtr == nullptr) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+        std::unique_ptr<Response> responsePtr = nullptr;
+        if (session.responseQueue.Pop(responsePtr) && responsePtr == nullptr) {
+            std::unique_lock<std::mutex> lock(session.responseQueueMutex);
+            session.responseQueueCv.wait(lock);
             continue;
         }
         session.SendResponse(*responsePtr.get());
@@ -212,7 +214,7 @@ void WsSession::OnRequestMessage(const std::string &data)
     if (data.empty()) {
         return;
     }
-    (*msgBuffer.get()) >> data;
+    (*msgBuffer.get()) << data;
 }
 
 void PrintResponseInfo(const Protocol::Response &response)
@@ -225,7 +227,8 @@ void WsSession::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
 {
     if (responsePtr != nullptr) {
         if (useResponseQueue) {
-            (*responseQueue.get()) >> std::move(responsePtr);
+            responseQueue << std::move(responsePtr);
+            responseQueueCv.notify_one();
         } else {
             SendResponse(*responsePtr.get());
             PrintResponseInfo(*responsePtr);
@@ -248,19 +251,20 @@ void WsSession::Send(const std::string &message)
     }
     if (channel != nullptr) {
         channel->send(message, uWS::OpCode::TEXT, false);
+    } else {
+        ServerLog::Error("Channel is null, so that message can not be sent.");
     }
 }
 
 void WsSession::SendResponse(const Protocol::Response &response)
 {
     std::string error;
-    std::optional<json_t> json = ProtocolManager::Instance().ToJson(response, error);
+    std::optional<document_t> json = ProtocolManager::Instance().ToJson(response, error);
     if (!json.has_value()) {
         ServerLog::Error(error);
         return;
     }
-    std::string responseStr = json->dump(-1, ' ', false,
-                                         nlohmann::detail::error_handler_t::replace);
+    std::string responseStr = JsonUtil::JsonDump(json.value());
     std::string responseHeader = GetMessageHeader(responseStr.length());
     // send header + response
     loop->defer([this, responseHeader, responseStr]() {
@@ -274,13 +278,12 @@ void WsSession::SendEvent(Protocol::Event &event)
     std::string error;
     // set event token
     event.token = tokenString;
-    std::optional<json_t> json = ProtocolManager::Instance().ToJson(event, error);
+    std::optional<document_t> json = ProtocolManager::Instance().ToJson(event, error);
     if (!json.has_value()) {
         ServerLog::Info(error);
         return;
     }
-    std::string eventStr = json->dump(-1, ' ', false,
-                                      nlohmann::detail::error_handler_t::replace);
+    std::string eventStr = JsonUtil::JsonDump(json.value());
     std::string eventHeader = GetMessageHeader(eventStr.length());
     // send header + response
     loop->defer([this, eventStr, eventHeader]() {
@@ -308,11 +311,10 @@ void WsSession::Start()
 
 void WsSession::Stop()
 {
-    if (status != Status::CLOSED) {
-        status = Status::CLOSED;
-        if (channel != nullptr) {
-            channel->close();
-        }
+    status = Status::CLOSED;
+    if (channel != nullptr) {
+        channel->close();
+        channel = nullptr;
     }
     stopTime = TimeUtil::Instance().NowUTC();
 }
@@ -341,7 +343,6 @@ void WsSession::WaitForBindToken(int timeoutSeconds)
             }
         },
         timeoutSeconds);
-    waitForTokenThread->detach();
 }
 
 std::string WsSession::GetDeviceKey()
