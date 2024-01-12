@@ -41,7 +41,7 @@ TraceFileParser::~TraceFileParser()
 bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const std::string &fileId,
                             const std::string &selectedFolder)
 {
-    ServerLog::Info("start parse.");
+    ServerLog::Info("start parse. file id:", fileId);
     ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::INIT);
     threadPool->AddTask(PreParseTask, filePathArr, fileId);
     return true;
@@ -50,7 +50,7 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
 void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId)
 {
     if (!InitParser(filePathArr, fileId)) {
-        ParseEndCallBack(fileId, false);
+        ParseEndCallBack(fileId, false, "Failed to init trace file parser.");
     }
 }
 
@@ -71,7 +71,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         auto splitFile = TraceFileParser::SplitFile(filePath);
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
-            ParseEndCallBack(fileId, false);
+            ParseEndCallBack(fileId, false, "");
             continue;
         }
 
@@ -91,7 +91,12 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
         return;
     }
     EventParser eventParser(filePath, fileId);
-    eventParser.Parse(pos.first, pos.second);
+    if (!eventParser.Parse(pos.first, pos.second)) {
+        if (ParserStatusManager::Instance().SetTerminateStatus(fileId) == ParserStatus::RUNNING) {
+            // 只发送一次解析失败事件
+            ParseEndCallBack(fileId, false, eventParser.GetError());
+        }
+    }
 }
 
 void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
@@ -114,7 +119,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     database->CreateIndex();
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
-    ParseEndCallBack(fileId, true);
+    ParseEndCallBack(fileId, true, "");
     std::string parentDir = FileUtil::GetParentPath(filePathArr[0]);
     if (parentDir.empty()) {
         return;
@@ -123,19 +128,20 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     std::set<std::string> devices = {};
     Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId, devices);
     if (devices.size() == 1 && devices.count(fileId) == 1) {
-        ParseEndCallBack(SUMMARY_PREFIX + fileId, true);
+        ParseEndCallBack(SUMMARY_PREFIX + fileId, true, "");
     } else {
-        for (std::string device : devices) {
-            ParseEndCallBack(SUMMARY_PREFIX + Summary::MSPROF_PREFIX + fileId + Summary::MSPROF_CONNECT + device, true);
+        for (const std::string& device : devices) {
+            std::string tempId = SUMMARY_PREFIX + Summary::MSPROF_PREFIX + fileId + Summary::MSPROF_CONNECT + device;
+            ParseEndCallBack(tempId, true, "");
         }
     }
     Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
     Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
-    ParseEndCallBack(MEMORY_PREFIX + fileId, true);
+    ParseEndCallBack(MEMORY_PREFIX + fileId, true, "");
     ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::FINISH_ALL);
 }
 
-void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
+void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
     DatabaseType type;
     if (RegexUtil::RegexMatch(fileId, MEMORY_PREFIX_PATTEN)) {
@@ -150,7 +156,7 @@ void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
     }
     auto &instance = TraceFileParser::Instance();
     if (instance.paserEndCallback != nullptr) {
-        instance.paserEndCallback(fileId, result);
+        instance.paserEndCallback(fileId, result, message);
     }
 }
 
@@ -297,10 +303,10 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
     std::string path = DataBaseManager::Instance().GetDbPath(fileId);
+    DataBaseManager::Instance().ReleaseTraceDatabase(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFile(path);
     }
-    DataBaseManager::Instance().ReleaseTraceDatabase(fileId);
 }
 
 void TraceFileParser::DeleteParseFile(const std::string &fileId)
@@ -327,14 +333,14 @@ bool TraceFileParser::InitDatabase(const std::string& rankId)
     auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
     if (!(summaryDatabase->OpenDb(database->GetDbPath(), false) && summaryDatabase->CreateTable() &&
           summaryDatabase->SetConfig() && summaryDatabase->InitStmt())) {
-        ParseEndCallBack(rankId, false);
+        ParseEndCallBack(rankId, false, "");
         ServerLog::Error("Failed to open summaryDatabase. rankId:", rankId);
         return false;
     }
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(rankId);
     if (!(memoryDatabase->OpenDb(database->GetDbPath(), false) && memoryDatabase->CreateTable() &&
             memoryDatabase->SetConfig() && memoryDatabase->InitStmt())) {
-        ParseEndCallBack(rankId, false);
+        ParseEndCallBack(rankId, false, "");
         ServerLog::Error("Failed to open memoryDatabase. rankId:", rankId);
         return false;
     }

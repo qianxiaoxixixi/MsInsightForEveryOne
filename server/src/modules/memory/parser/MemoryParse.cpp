@@ -70,7 +70,7 @@ bool MemoryParse::WaitParseEnd(const std::string &fileId)
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("end parse. ID:", fileId, ". time:", dur.count());
     if (paserEndCallback != nullptr) {
-        paserEndCallback(fileId, true);
+        paserEndCallback(fileId, true, "");
     }
     return true;
 }

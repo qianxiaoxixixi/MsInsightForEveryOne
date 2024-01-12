@@ -41,11 +41,11 @@ public:
         document_t doc;
         doc.Parse(jsonStr.c_str(), jsonStr.length());
         if (doc.HasParseError()) {
-            const size_t printErrorSize = 100;
+            static const size_t PRINT_ERROR_SIZE = 10;
             auto offset = doc.GetErrorOffset();
-            auto start = offset >= printErrorSize ? offset - printErrorSize : 0;
+            auto start = offset >= PRINT_ERROR_SIZE ? offset - PRINT_ERROR_SIZE : 0;
             error = "Error code:" + std::to_string(doc.GetParseError()) +
-                ". str:" + jsonStr.substr(start, offset - start);
+                ". str:" + jsonStr.substr(start, offset - start + PRINT_ERROR_SIZE);
             return std::nullopt;
         }
         return std::make_optional(std::move(doc));

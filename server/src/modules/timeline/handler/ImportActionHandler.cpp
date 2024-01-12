@@ -3,7 +3,6 @@
  */
 
 #include "ImportActionHandler.h"
-
 #include "ServerLog.h"
 #include "ExecUtil.h"
 #include "FileUtil.h"
@@ -133,7 +132,8 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
     session->OnEvent(std::move(event));
 }
 
-void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result)
+void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
+                                           const std::string &message)
 {
     std::string id;
     std::string scene;
@@ -160,7 +160,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
             if (result) {
                 SendParseSuccessEvent(token, id);
             } else {
-                SendParseFailEvent(token, id);
+                SendParseFailEvent(token, id, message);
             }
             break;
         case DatabaseType::SUMMARY:
@@ -244,7 +244,8 @@ void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const 
     session->OnEvent(std::move(event));
 }
 
-void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId)
+void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId,
+                                             const std::string &message)
 {
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
@@ -256,6 +257,7 @@ void ImportActionHandler::SendParseFailEvent(const std::string &token, const std
     event->token = token;
     event->result = true;
     event->body.rankId = fileId;
+    event->body.error = message;
     session->OnEvent(std::move(event));
 }
 
@@ -373,8 +375,8 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
 
 void ImportActionHandler::SetParseCallBack(const std::string &token)
 {
-    std::function<void(const std::string, bool)> func =
-            std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
+    std::function<void(const std::string, bool, const std::string)> func =
+        std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     TraceFileParser::Instance().SetParseEndCallBack(func);
 }
 

@@ -48,7 +48,7 @@ private:
     static void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);
     static void EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
                              std::shared_ptr<std::vector<std::future<void>>> futures);
-    static void ParseEndCallBack(const std::string &fileId, bool result);
+    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void DeleteParseFileFromDisk(const std::string &fileId);
 
     static bool InitDatabase(const std::string& rankId);

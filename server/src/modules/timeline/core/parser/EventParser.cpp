@@ -31,37 +31,41 @@ void EventParser::InitEventHandle()
     eventHandleMap.emplace("f", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
 }
 
-void EventParser::Parse(int64_t startPosition, int64_t endPosition)
+bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
-    database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", fileId);
-        return;
+    std::shared_ptr<TraceDatabase> databasePtr = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (databasePtr == nullptr) {
+        error = "Failed to get connection. fileId:" + fileId;
+        ServerLog::Error(error);
+        return false;
     }
-    database->InitStmt();
+    databasePtr->InitStmt();
     std::string buffer = ReadBuffer(startPosition, endPosition);
     if (buffer.empty()) {
-        ServerLog::Error("EventParser. Failed to read buffer.");
-        return;
+        error = "Failed to read file.";
+        ServerLog::Error("EventParser. Failed to read buffer. fileId:", fileId);
+        return false;
     }
-    rapidjson::Document d;
-    try {
-        d.Parse(buffer.c_str(), buffer.length());
-    } catch (std::exception &e) {
-        ServerLog::Error("EventParser. Failed to parse json. ", e.what());
-        return;
+    auto data = JsonUtil::TryParse(buffer, error);
+    if (!data.has_value()) {
+        error = "File is not valid json. " + error;
+        ServerLog::Error("EventParser. fileId:", fileId, ". ", error);
+        return false;
     }
-    if (!d.IsArray()) {
-        ServerLog::Error("EventParser. json is not an array.");
-        return;
+    if (!data.value().IsArray()) {
+        error = "json is not an array.";
+        ServerLog::Error("EventParser. json is not an array. fileId:", fileId);
+        return false;
     }
-    for (auto &event : d.GetArray()) {
+    database = databasePtr;
+    for (auto &event : data.value().GetArray()) {
         EventHandle(event);
     }
     database->CommitData();
     database.reset(); // return connection pool
-    ServerLog::Info("EventParser. Parse ", startPosition, " to ", endPosition,
+    ServerLog::Info("EventParser. fileId:", fileId, " Parse ", startPosition, " to ", endPosition,
                     ". Count:", parseCount, ", ignore Count:", ignoreCount);
+    return true;
 }
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
@@ -173,6 +177,11 @@ int64_t EventParser::GetTrackId(const std::string &pid, int64_t tid)
     int64_t id = TraceFileParser::Instance().GetTrackId(fileId, pid, tid);
     trackIdMap.emplace(str, id);
     return id;
+}
+
+std::string EventParser::GetError()
+{
+    return error;
 }
 } // end of namespace Timeline
 } // end of namespace Module

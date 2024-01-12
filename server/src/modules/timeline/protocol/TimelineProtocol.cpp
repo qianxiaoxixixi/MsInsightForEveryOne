@@ -15,6 +15,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
 {
     jsonToReqFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, ToUnitThreadTracesSummaryRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameRequest);
@@ -36,6 +37,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
 {
     resToJsonFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, ToUnitThreadTracesSummaryResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameResponseJson);
@@ -88,6 +90,21 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesRequest(const json_
     JsonUtil::SetByJsonKeyValue(reqPtr->params.cardId, json["params"], "cardId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, json["params"], "threadId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.timePerPx, json["params"], "timePerPx");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesSummaryRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitThreadTracesSummaryRequest> reqPtr = std::make_unique<UnitThreadTracesSummaryRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.cardId, json["params"], "cardId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
@@ -236,6 +253,7 @@ std::unique_ptr<Request> TimelineProtocol::ToFlowCategoryEventsRequest(const jso
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.category, json["params"], "category");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.timePerPx, json["params"], "timePerPx");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
@@ -316,6 +334,12 @@ std::optional<document_t> TimelineProtocol::ToImportActionResponseJson(const Res
 std::optional<document_t> TimelineProtocol::ToUnitThreadTracesResponseJson(const Response &response)
 {
     return ToResponseJson<UnitThreadTracesResponse>(dynamic_cast<const UnitThreadTracesResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToUnitThreadTracesSummaryResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitThreadTracesSummaryResponse>(
+        dynamic_cast<const UnitThreadTracesSummaryResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToUnitThreadsResponseJson(const Response &response)

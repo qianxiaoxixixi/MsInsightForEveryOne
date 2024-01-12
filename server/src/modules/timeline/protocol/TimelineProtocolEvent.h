@@ -53,6 +53,7 @@ struct ParseSuccessEvent : public Event {
 
 struct ParseFailEventBody {
     std::string rankId;
+    std::string error;
 };
 
 struct ParseFailEvent : public Event {

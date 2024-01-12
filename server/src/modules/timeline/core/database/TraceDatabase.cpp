@@ -385,20 +385,26 @@ void TraceDatabase::UpdateSliceDepth()
 }
 
 bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-                                      Protocol::UnitThreadTracesBody &responseBody,
-                                      uint64_t minTimestamp, int64_t traceId)
+    Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
-    std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id "
+    if (requestParams.timePerPx == 0) {
+        ServerLog::Error("QueryThreadTraces. timePerPx is zero.");
+        return false;
+    }
+    // rank = round(time / (totalTime / pixel))
+    std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id,"
+                      " ROUND(timestamp / ? ) as rank "
                       " FROM " + sliceTable +
-                      " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
-                      " GROUP BY depth, id"
-                      " ORDER BY start_time;";
+                      " WHERE track_id = ? AND start_time + duration >= ? AND start_time < ?"
+                      " GROUP BY depth, rank HAVING max(timestamp)"
+                      " ORDER BY depth, start_time;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, traceId, requestParams.startTime, requestParams.endTime);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, requestParams.timePerPx, traceId,
+                                        requestParams.startTime, requestParams.endTime);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -423,14 +429,41 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
         threadTraces.endTime = item.startTime + item.duration;
         threadTraces.depth = item.depth;
         threadTraces.threadId = requestParams.threadId;
-        threadTracesMap[item.depth].emplace_back(threadTraces);
+        while (responseBody.data.size() <= item.depth) {
+            responseBody.data.emplace_back();
+        }
+        responseBody.data[item.depth].emplace_back(threadTraces);
     }
-    for (int i = 0; i < threadTracesMap.size(); i++) {
-        if (threadTracesMap.find(i) != threadTracesMap.end()) {
-            responseBody.data.emplace_back(threadTracesMap.at(i));
-        } else {
-            std::vector<Protocol::ThreadTraces> threadTracesVec;
-            responseBody.data.emplace_back(threadTracesVec);
+    return true;
+}
+
+bool TraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
+    Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
+{
+    std::string sql = "SELECT timestamp - ? as start_time, duration, timestamp + duration - ? as end_time "
+                      "FROM " + sliceTable + " LEFT JOIN " + threadTable + " USING (track_id) "
+                      "WHERE pid = ? AND start_time >= ? AND start_time <= ? AND depth = 0 "
+                      "ORDER BY timestamp;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp, requestParams.processId,
+                                        requestParams.startTime, requestParams.endTime);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    uint64_t maxTime = 0;
+    while (resultSet->Next()) {
+        ThreadTracesSummary summary;
+        uint64_t endTime = resultSet->GetUint64("end_time");
+        if (endTime > maxTime) {
+            summary.startTime = resultSet->GetUint64("start_time");
+            summary.duration = resultSet->GetUint64("duration");
+            responseBody.data.emplace_back(summary);
+            maxTime = endTime;
         }
     }
     return true;
@@ -994,24 +1027,37 @@ void TraceDatabase::DeleteInvalidFlowData()
 bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
                                             std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
 {
+    if (params.timePerPx == 0) {
+        ServerLog::Error("QueryFlowCategoryEvents. timePerPx is zero.");
+        return false;
+    }
     std::string sql = "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.depth, flow.timestamp - ?"
+                      "FROM " + flowTable + " " +
+                      "LEFT JOIN " + sliceTable + " USING (track_id, timestamp) " +
+                      "JOIN " + threadTable + " USING (track_id) "
+                      "WHERE flow_id IN "
+                      "(SELECT flow_id "
+                      "from "
+                      "(SELECT flow_id, ROUND(flow.timestamp / ?) as rank "
                       "FROM flow "
-                      "LEFT JOIN slice USING (track_id, timestamp) "
-                      "JOIN thread USING (track_id) "
                       "WHERE flow_id IN "
                       "(SELECT flow_id FROM flow "
-                      "WHERE (timestamp >= ? AND (type = 'f' OR type = 't')) "
-                      "OR (timestamp <= ? AND (type = 's' OR type = 't')) "
-                      "GROUP BY flow_id HAVING COUNT(flow_id) >= 2"
-                      ") "
-                      "AND flow.cat = ? ORDER BY flow.flow_id, timestamp;";
+                      "WHERE cat = ? "
+                      "AND ((timestamp >= ? AND (type = 'f' OR type = 't')) "
+                      "OR (timestamp <= ? AND (type = 's' OR type = 't'))"
+                      ")"
+                      "GROUP BY flow_id HAVING COUNT(flow_id) >= 2) "
+                      "GROUP BY track_id, type, rank HAVING max(timestamp)"
+                      ")"
+                      ")"
+                      "ORDER BY flow.flow_id, timestamp;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryFlowCategoryEvents failed!.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.startTime + minTimestamp, params.endTime + minTimestamp,
-                                        params.category);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.timePerPx, params.category,
+                                        params.startTime + minTimestamp, params.endTime + minTimestamp);
     std::vector<FlowCategoryEventsDto> flowEventsVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;

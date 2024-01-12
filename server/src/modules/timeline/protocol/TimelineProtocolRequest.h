@@ -29,11 +29,24 @@ struct UnitThreadTracesParams {
     int32_t threadId = 0;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
+    double timePerPx = 0; // totalTime / pixel
 };
 
 struct UnitThreadTracesRequest : public Request {
     UnitThreadTracesRequest() : Request(REQ_RES_UNIT_THREAD_TRACES) {};
     UnitThreadTracesParams params;
+};
+
+struct UnitThreadTracesSummaryParams {
+    std::string cardId;
+    std::string processId;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+};
+
+struct UnitThreadTracesSummaryRequest : public Request {
+    UnitThreadTracesSummaryRequest() : Request(REQ_RES_UNIT_THREAD_TRACES_SUMMARY) {};
+    UnitThreadTracesSummaryParams params;
 };
 
 struct UnitThreadsParams {
@@ -147,6 +160,7 @@ struct FlowCategoryEventsParams {
     std::string category;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
+    double timePerPx = 0;
 };
 
 struct FlowCategoryEventsRequest : public Request {

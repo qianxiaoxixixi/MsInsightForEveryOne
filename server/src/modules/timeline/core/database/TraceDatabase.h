@@ -52,6 +52,8 @@ public:
     // search
     bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
                            Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId);
+    bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
+                                  Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp);
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                       uint64_t minTimestamp, int64_t traceId);
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
