@@ -45,7 +45,7 @@ std::shared_ptr<TraceDatabase> ConnectionPool::GetConnection()
     return connPtr;
 }
 
-/*
+/**
  * Set max active connections.
  *
  * @param count max active connections.
@@ -55,7 +55,7 @@ void ConnectionPool::SetMaxActiveCount(int count)
     maxActiveConnections = count;
 }
 
-/*
+/**
  * Set max retry attempts when create connection failed.
  * Default value is 3.
  *
@@ -66,7 +66,7 @@ void ConnectionPool::SetMaxRetryCount(int count)
     maxRetryAttempts = count;
 }
 
-/*
+/**
  * Set max wait time when no connection available.
  * Default value is 2 seconds.
  *

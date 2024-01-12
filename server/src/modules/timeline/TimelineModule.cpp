@@ -18,6 +18,7 @@
 #include "QueryFlowCategoryListHandler.h"
 #include "QueryFlowCategoryEventsHandler.h"
 #include "QueryUnitCounterHandler.h"
+#include "QueryThreadTracesSummaryHandler.h"
 #include "QueryKernelDetailHandler.h"
 #include "QueryOneKernelHandler.h"
 
@@ -38,6 +39,7 @@ void TimelineModule::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES, std::make_unique<QueryThreadTracesHandler>());
+    requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, std::make_unique<QueryThreadTracesSummaryHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREADS, std::make_unique<QueryThreadsHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_DETAIL, std::make_unique<QueryThreadDetailHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOW_NAME, std::make_unique<QueryFlowNameHandler>());

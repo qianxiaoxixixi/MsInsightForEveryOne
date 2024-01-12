@@ -22,6 +22,7 @@ private:
     // json to request
     static std::unique_ptr<Request> ToImportActionRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadTracesRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitThreadTracesSummaryRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToThreadDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitFlowNameRequest(const json_t &json, std::string &error);
@@ -40,6 +41,7 @@ private:
     // response to json
     static std::optional<document_t> ToImportActionResponseJson(const Response &response);
     static std::optional<document_t> ToUnitThreadTracesResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitThreadTracesSummaryResponseJson(const Response &response);
     static std::optional<document_t> ToUnitThreadsResponseJson(const Response &response);
     static std::optional<document_t> ToThreadDetailResponseJson(const Response &response);
     static std::optional<document_t> ToUnitFlowNameResponseJson(const Response &response);

@@ -27,7 +27,8 @@ private:
     std::string curScene;
 
     static void SetParseCallBack(const std::string &token);
-    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result);
+    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
+                                 const std::string &message);
     static void ParseClusterEndProcess(const std::string token, std::string result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static std::string GetFileId(const std::string &filePath);
@@ -41,7 +42,7 @@ private:
     std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
                                                                    ImportActionResBody &body);
     static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
-    static void SendParseFailEvent(const std::string &token, const std::string &fileId);
+    static void SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message);
 
     bool HasMemoryFile(const std::string& path);
     const std::string traceViewFile = "trace_view.json";

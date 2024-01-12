@@ -49,6 +49,20 @@ struct UnitThreadTracesResponse : public Response {
     UnitThreadTracesBody body;
 };
 
+struct ThreadTracesSummary {
+    uint64_t startTime = 0;
+    uint64_t duration = 0;
+};
+
+struct UnitThreadTracesSummaryBody {
+    std::vector<ThreadTracesSummary> data;
+};
+
+struct UnitThreadTracesSummaryResponse : public Response {
+    UnitThreadTracesSummaryResponse() : Response(REQ_RES_UNIT_THREAD_TRACES) {}
+    UnitThreadTracesSummaryBody body;
+};
+
 struct Threads {
     std::string title;
     uint64_t wallDuration = 0;

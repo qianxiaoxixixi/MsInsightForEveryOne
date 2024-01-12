@@ -10,7 +10,7 @@ std::string FileParser::GetError()
     return error;
 }
 
-void FileParser::SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback)
+void FileParser::SetParseEndCallBack(std::function<void(const std::string, bool result, const std::string)> &callback)
 {
     paserEndCallback = callback;
 }

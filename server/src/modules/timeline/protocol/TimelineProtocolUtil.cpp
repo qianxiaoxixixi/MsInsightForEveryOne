@@ -65,6 +65,25 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResponse>(
+    const UnitThreadTracesSummaryResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t data(kArrayType);
+    for (const auto &summary : response.body.data) {
+        json_t jsonSummary(kObjectType);
+        JsonUtil::AddMember(jsonSummary, "startTime", summary.startTime, allocator);
+        JsonUtil::AddMember(jsonSummary, "duration", summary.duration, allocator);
+        data.PushBack(jsonSummary, allocator);
+    }
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response)
 {
     document_t json(kObjectType);
@@ -431,6 +450,7 @@ template <> std::optional<document_t> ToEventJson<ParseFailEvent>(const ParseFai
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "rankId", event.body.rankId, allocator);
+    JsonUtil::AddMember(body, "error", event.body.error, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

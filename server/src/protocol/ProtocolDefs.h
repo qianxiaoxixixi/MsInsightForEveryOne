@@ -46,6 +46,7 @@ const std::string REQ_RES_FILES_GET = "files/get";
 // timeline
 const std::string REQ_RES_IMPORT_ACTION = "import/action";
 const std::string REQ_RES_UNIT_THREAD_TRACES = "unit/threadTraces";
+const std::string REQ_RES_UNIT_THREAD_TRACES_SUMMARY = "unit/threadTracesSummary";
 const std::string REQ_RES_UNIT_THREADS = "unit/threads";
 const std::string REQ_RES_UNIT_THREAD_DETAIL = "unit/threadDetail";
 const std::string REQ_RES_UNIT_FLOW_NAME = "unit/flowName";
