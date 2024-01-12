@@ -75,6 +75,9 @@ const queryDataCount = async (session: Session, searchContent: string): Promise<
     let totalCnt = 0;
     remoteCntArray = [];
     for (const unit of session.units) {
+        if (!unit.isDisplay) {
+            continue;
+        }
         const metadata = unit.metadata as any;
         const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent } });
         if (res.totalCount === 0) {
