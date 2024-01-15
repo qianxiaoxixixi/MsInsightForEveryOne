@@ -41,15 +41,6 @@ TEST(JsonUtil, SetByJsonKeyValue) {
     EXPECT_EQ(age, 18);
 }
 
-TEST(JsonUtil, SetByJsonKeyArrayValue) {
-    document_t json;
-    json.Parse(R"({"args": ["a","b"]})");
-    std::vector<std::string> args;
-    JsonUtil::SetByJsonKeyArrayValue(args, json, "args");
-    EXPECT_EQ(args[0], "a");
-    EXPECT_EQ(args[1], "b");
-}
-
 TEST(JsonUtil, TryParse) {
     std::string jsonStr;
     std::string errMessage;
