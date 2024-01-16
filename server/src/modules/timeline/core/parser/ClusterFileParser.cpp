@@ -11,6 +11,7 @@
 #include "CommunicationRapidSaxHandler.h"
 #include "FileUtil.h"
 #include "ExecUtil.h"
+#include "ConstantDefs.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
 #include "JsonUtil.h"
@@ -150,6 +151,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         ServerLog::Warn("Parser Cluster Status Is Terminal");
         return false;
     }
+    database->UpdateClusterParseStatus(FINISH_STATUS);
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     return true;
 }
@@ -173,15 +175,17 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, boo
         }
         // 判断数据库版本是否变更，若变更不能跳过解析
         auto isChange = database->IsDatabaseVersionChange();
-        if (isChange && !(database->DropAllTable() && database->CreateTable())) {
-            ServerLog::Error("Failed to dropAllTable. path:", selectedPath);
+        std::string status = database->QueryParseClusterStatus();
+        bool needClearDb = isChange || status.empty() || strcmp(status.c_str(), FINISH_STATUS.c_str()) != 0;
+        if (needClearDb && !(database->DropAllTable() && database->CreateTable())) {
+            ServerLog::Error("Failed to dropAllTable. path:", selectedPath, "isChange:", isChange);
             return false;
         }
         if (!(database->SetConfig() && database->InitStmt())) {
             ServerLog::Error("Failed to init database. path:", selectedPath);
             return false;
         }
-        return !isChange;
+        return !needClearDb;
     }
     return true;
 }
@@ -242,7 +246,8 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
     std::vector<std::string> exePathVector =
             FileUtil::FindFilesByRegex(FileUtil::GetCurrPath(), std::regex(regex));
     if (!exePathVector.empty()) {
-        std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
+        std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath) +
+                "\" && \"" + exePathVector[0] + "\" -d .";
         ServerLog::Info("start execute command:", command);
         int result = std::system(command.c_str());
         if (result != 0) {
