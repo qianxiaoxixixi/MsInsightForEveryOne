@@ -38,6 +38,8 @@ public:
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody);
     bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody);
+    std::string QueryParseClusterStatus();
+    void UpdateClusterParseStatus(std::string status);
     bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody);
     bool GetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody);
     bool GetStageAndBubble(Protocol::PipelineStageTimeParam param,

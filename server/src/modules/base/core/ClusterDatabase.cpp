@@ -53,7 +53,7 @@ bool ClusterDatabase::CreateTable()
             "CREATE TABLE " + TABLE_BASE_INFO +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path VARCHAR(500), ranks json,"
             " steps json, collect_start_time DATETIME, collect_duration double, data_size double, stages json,"
-            " pp_stages json); "
+            " pp_stages json, parse_status VARCHAR(10)); "
             "CREATE TABLE " + TABLE_STEP_TRACE +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
             " stage_id VARCHAR(50), compute_time double, pure_communication_time double, "
@@ -502,6 +502,48 @@ bool ClusterDatabase::QueryCommunicationGroup(Document &responseBody)
     }
     sqlite3_finalize(stmtBaseInfo);
     return true;
+}
+
+std::string ClusterDatabase::QueryParseClusterStatus()
+{
+    sqlite3_stmt *stmtBaseInfo = nullptr;
+    std::string baseInfoSql =
+            "select parse_status from " + TABLE_BASE_INFO;
+    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
+    if (baseInfoResult != SQLITE_OK) {
+        ServerLog::Error("Query parse status statement failed to prepare sql.", sqlite3_errmsg(db));
+        return "";
+    }
+    std::string parseStatus;
+    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
+        int coll = resultStartIndex;
+        parseStatus = sqlite3_column_string(stmtBaseInfo, coll++);
+    }
+    sqlite3_finalize(stmtBaseInfo);
+    return parseStatus;
+}
+
+void ClusterDatabase::UpdateClusterParseStatus(std::string status)
+{
+    sqlite3_stmt *stmtBaseInfo = nullptr;
+    int index = bindStartIndex;
+    std::string baseInfoSql =
+            "update " + TABLE_BASE_INFO + " set parse_status=?";
+    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
+    sqlite3_bind_text(stmtBaseInfo, index, status.c_str(), status.length(), SQLITE_TRANSIENT);
+    if (baseInfoResult != SQLITE_OK) {
+        ServerLog::Error("Update cluster parse_status statement failed to prepare sql.", sqlite3_errmsg(db));
+        return ;
+    }
+    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
+        int coll = resultStartIndex;
+        std::string filePath = sqlite3_column_string(stmtBaseInfo, coll++);
+    }
+    auto result = sqlite3_step(stmtBaseInfo);
+    sqlite3_finalize(stmtBaseInfo);
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("UpdateClusterParseStatus fail. ", sqlite3_errmsg(db));
+    }
 }
 
 bool ClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
