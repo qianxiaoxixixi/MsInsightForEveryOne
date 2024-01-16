@@ -217,6 +217,7 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
             if (unit.isExpanded) {
                 platform.trace(`unfold${unit.name.replace(/\s*/g, '')}`, {});
             }
+            session.renderTrigger = !session.renderTrigger;
         });
         unit.collapseAction?.(unit);
     }, [session]);

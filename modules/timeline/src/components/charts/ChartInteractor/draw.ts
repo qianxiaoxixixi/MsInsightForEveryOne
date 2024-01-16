@@ -287,14 +287,22 @@ export const drawOnMove = ({
 };
 
 const heightMap = new Map();
+// 是否是缩略图
+const threadIsCol: Map<string, boolean> = new Map();
 const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
     const height = pinnedAreaHeight;
 
     const computeUnitHeight = (units: InsightUnit[], height: number): number => {
         for (const unit of units) {
+            if (!unit.isDisplay) {
+                continue;
+            }
             const metadata = unit.metadata as ThreadMetaData;
             if (metadata.threadId !== undefined && metadata.processId !== undefined) {
                 heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, height);
+                if (unit.collapsible && !unit.isExpanded) {
+                    threadIsCol.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, true);
+                }
             }
             height += unit.height() + 1;
             if (unit.children && unit.isExpanded) {
@@ -319,6 +327,7 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
     drawSelectedRange(ctx, selectedRange, xReverseScale);
 
     heightMap.clear();
+    threadIsCol.clear();
     const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
     const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
@@ -329,7 +338,12 @@ const UNDRAW_HEIGHT = 45;
 const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
-    if (unitHeight !== undefined) {
+    const isCol = threadIsCol.get(`${cardId}-${data.pid}-${data.tid}`);
+    if (unitHeight !== undefined && isCol) {
+        // 缩略泳道连线位置
+        height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (0.5 * UnitHeight.COLL);
+    } else {
+        // 展开泳道连线位置
         height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (data.depth + 0.5) * UnitHeight.STANDARD;
     }
     return height;
