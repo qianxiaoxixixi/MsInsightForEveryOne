@@ -405,10 +405,13 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.orderName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (requestParams.startTime != -1) {
+        sqlite3_bind_int64(stmt, index++, startTime);
         sqlite3_bind_double(stmt, index++, requestParams.startTime);
     }
     if (requestParams.endTime != -1) {
+        sqlite3_bind_int64(stmt, index++, startTime);
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
     }
     if (requestParams.minSize != -1) {
@@ -416,13 +419,6 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     }
     if (requestParams.maxSize != -1) {
         sqlite3_bind_double(stmt, index++, requestParams.maxSize);
-    }
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    if (requestParams.startTime != -1) {
-        sqlite3_bind_int64(stmt, index++, startTime);
-    }
-    if (requestParams.endTime != -1) {
-        sqlite3_bind_int64(stmt, index++, startTime);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int(stmt, resultStartIndex);
