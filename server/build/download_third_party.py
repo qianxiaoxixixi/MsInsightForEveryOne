@@ -28,11 +28,6 @@ OPEN_SOURCE = [
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/libuv/libuv.git'
     ],
     [
-        'json',
-        'v3.10.1',
-        'https://szv-open.codehub.huawei.com/OpenSourceCenter/nlohmann/json.git'
-    ],
-    [
         'uSockets',
         'v0.8.1',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uSockets.git'
