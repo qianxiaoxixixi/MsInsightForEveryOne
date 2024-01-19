@@ -51,7 +51,7 @@ const Splitter = styled.div`
 
 const Join = (props: { joiner: React.FC; children: JSX.Element[] }): JSX.Element => (
     <>
-        {props.children.slice(1).reduce((prev, cur, index) => [ ...prev, <props.joiner key={`joiner/${index}`}/>, cur ], [props.children[0]])}
+        {props.children.slice(1).reduce((prev, cur, index) => [...prev, <props.joiner key={`joiner/${index}`}/>, cur], [props.children[0]])}
     </>
 );
 
@@ -88,11 +88,11 @@ interface UnitProps {
 
 export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps): JSX.Element => {
     const isSelected = (session.selectedUnitKeys as string[]).includes(getAutoKey(unit));
-    const [ chartWidth, ref ] = useWatchResize<HTMLDivElement>('width');
+    const [chartWidth, ref] = useWatchResize<HTMLDivElement>('width');
     const height = unit.height() + 1; // to support modifying height from outside during runtime, don't useMemo
     const placeholder = React.useMemo(() => {
         return <div className="chart-invisible" style={{ width: chartWidth, height }}/>;
-    }, [ chartWidth, height ]);
+    }, [chartWidth, height]);
     // to support auto redraw when unit height is modified, don't useMemo
     const chart = <ChartView unit={unit} session={session} width={chartWidth} height={height} />;
     const selectUnit = useSelectUnit(session);
@@ -128,7 +128,7 @@ export const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: nu
         yOffset += units[i].height() + 1;
         end++;
     }
-    return [ start, end + 1 ];
+    return [start, end + 1];
 };
 
 type FlattenUnitsProps = {
@@ -140,7 +140,7 @@ type FlattenUnitsProps = {
 };
 
 const orderOptions = {
-    preOrderFlatten: preOrderFlatten,
+    preOrderFlatten,
     options: {
         when: (unit: TreeNode<InsightUnit>) => unit.isExpanded,
         bypass: (unit: TreeNode<InsightUnit>) => unit.type === 'transparent',
@@ -149,27 +149,27 @@ const orderOptions = {
 };
 
 const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, eventType }: FlattenUnitsProps): JSX.Element => {
-    const [ scrollTop, setScrollTop ] = React.useState(0);
+    const [scrollTop, setScrollTop] = React.useState(0);
     // 监听滚动事件，计算虚拟滚动的泳道
     useEventBus(eventType, (value) => setScrollTop(value as number));
     const flattenUnits = computed(() => orderOptions.preOrderFlatten(session.units, 0, orderOptions.options)).get();
-    const [ first, last ] = React.useMemo(
+    const [first, last] = React.useMemo(
         () => computeVisibleUnitRange(flattenUnits, height, scrollTop),
-        [ session.pinnedUnits, flattenUnits, height, scrollTop ],
+        [session.pinnedUnits, flattenUnits, height, scrollTop],
     );
     const headOffset = React.useMemo(
         () => flattenUnits.filter((_, i) => i < first).reduce((prev, cur) => prev + cur.height() + 1, 0),
-        [ flattenUnits, first ],
+        [flattenUnits, first],
     );
     const visibleUnitsHeight = React.useMemo(
         () => flattenUnits.filter((_, i) => first <= i && i < last).reduce((prev, cur) => prev + cur.height() + 1, 0),
-        [ flattenUnits, first, last ],
+        [flattenUnits, first, last],
     );
     const tailOffset = React.useMemo(
         () => flattenUnits.filter((_, i) => i >= last).reduce((prev, cur) => prev + cur.height() + 1, 0),
-        [ flattenUnits, last ],
+        [flattenUnits, last],
     );
-    const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [ headOffset, visibleUnitsHeight, tailOffset ]);
+    const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
     runInAction(() => { session.totalHeight = totalHeight; });
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {

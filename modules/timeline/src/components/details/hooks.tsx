@@ -11,7 +11,7 @@ import { EMPTY_TABLE_STATE, TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
 
 const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigger: any[], depsList: unknown[]): boolean => {
-    const [ triggerHook, setTriggerHook ] = React.useState(false);
+    const [triggerHook, setTriggerHook] = React.useState(false);
     const selectedDetailKeysRef = React.useRef(selectedDetailKeys);
     const triggerRef = React.useRef(trigger);
     const depsListRef = React.useRef(depsList);
@@ -38,7 +38,7 @@ const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigge
 };
 
 export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unknown> | undefined, tabState: TabState | undefined, dep: unknown = [], onDataLoaded?: (data: unknown[]) => void): TableState => {
-    const [ state, setState ] = React.useState<TableState>(EMPTY_TABLE_STATE);
+    const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedRange, selectedDetailKeys } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
     const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
@@ -46,9 +46,9 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
     const depsList = Array.isArray(dep) ? dep : [dep];
     const hookTrigger = useFilterDeps(selectedDetailKeys, trigger, depsList);
 
-    const onDataFetched = React.useMemo(() => ([ selectedUnits, selectedRange ].filter(_.isEmpty).length === 0
+    const onDataFetched = React.useMemo(() => ([selectedUnits, selectedRange].filter(_.isEmpty).length === 0
         ? fetchData?.(session, selectedUnit?.metadata)
-        : undefined), [ selectedUnits, selectedRange, hookTrigger, detail ]);
+        : undefined), [selectedUnits, selectedRange, hookTrigger, detail]);
 
     const recentUnits = React.useRef(selectedUnits);
     const recentRange = React.useRef(selectedRange);
@@ -77,7 +77,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
         }
     };
 
-    React.useEffect(loadData, [ selectedUnits, selectedRange, detail, ...trigger, ...depsList ]);
+    React.useEffect(loadData, [selectedUnits, selectedRange, detail, ...trigger, ...depsList]);
     // 需要进行多选过滤的才会执行下面的代码
     React.useEffect(() =>
         autorun(() => {
@@ -94,7 +94,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
 };
 
 export const useMoreUpdater = (session: Session, more: MoreDescriptor | undefined): TableState => {
-    const [ state, setState ] = React.useState<TableState>(EMPTY_TABLE_STATE);
+    const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedDetailKeys, selectedDetails } = session;
 
     React.useEffect(() => {
@@ -111,13 +111,13 @@ export const useMoreUpdater = (session: Session, more: MoreDescriptor | undefine
         } else {
             setState(EMPTY_TABLE_STATE);
         }
-    }, [ selectedUnits, selectedDetailKeys, more ]);
+    }, [selectedUnits, selectedDetailKeys, more]);
     return state;
 };
 
 export const useSelectedParamsDetailUpdater = (session: Session, detail: DetailDescriptor<unknown> | undefined):
 TableState => {
-    const [ state, setState ] = React.useState<TableState>(EMPTY_TABLE_STATE);
+    const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
     const { selectedUnits } = session;
     const dependenciesKeys = Object.keys(session.selectedParams) as unknown as Array<keyof SelectedParams>;
     const hasDependencies = _.isEmpty(dependenciesKeys.filter((dependenciesKey) => session.selectedParams[dependenciesKey] === undefined));
@@ -146,12 +146,12 @@ TableState => {
             setState(EMPTY_TABLE_STATE);
         }
     };
-    React.useEffect(loadData, [ ...dependencies, detail ]);
+    React.useEffect(loadData, [...dependencies, detail]);
     return state;
 };
 
 export const useExtraDataUpdater = <T extends DetailDescriptor<unknown>>(session: Session, detail: T | undefined): T['fetchExtraData'] | {} => {
-    const [ state, setState ] = React.useState({});
+    const [state, setState] = React.useState({});
     const { selectedUnits, endTimeAll } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
     const loadData = (): void => {
@@ -170,20 +170,20 @@ export const useExtraDataUpdater = <T extends DetailDescriptor<unknown>>(session
             setState({});
         }
     };
-    React.useEffect(loadData, [ endTimeAll, detail ]);
+    React.useEffect(loadData, [endTimeAll, detail]);
     return { ...state };
 };
 
 export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDataDesc<Record<string, unknown>, unknown>, selectedData: unknown):
 { renderFields: Array<[string, string | JSX.Element]> | undefined; data: Record<string, unknown> } => {
-    const [ renderFields, setRenderFields ] = React.useState<Array<[string, string | JSX.Element]>>();
-    const [ state, setState ] = React.useState<Record<string, unknown>>({});
+    const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
+    const [state, setState] = React.useState<Record<string, unknown>>({});
     const { selectedUnits } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
     const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
-    const onDataFetched = React.useMemo(() => ([ selectedUnits, selectedData ].filter(_.isEmpty).length === 0
+    const onDataFetched = React.useMemo(() => ([selectedUnits, selectedData].filter(_.isEmpty).length === 0
         ? fetchData?.(session, selectedUnit?.metadata)
-        : undefined), [ selectedUnits, selectedData, detail ]);
+        : undefined), [selectedUnits, selectedData, detail]);
 
     const recentUnits = React.useRef(selectedUnits);
     const recentData = React.useRef(selectedData);
@@ -202,10 +202,10 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
                     if (item[2] !== undefined) {
                         const isHiden = item[2];
                         if (!isHiden(result)) {
-                            renderField.push([ item[0], render(result, session) ]);
+                            renderField.push([item[0], render(result, session)]);
                         }
                     } else {
-                        renderField.push([ item[0], render(result, session) ]);
+                        renderField.push([item[0], render(result, session)]);
                     }
                 });
                 setRenderFields(renderField);
@@ -215,6 +215,6 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
         }
     };
 
-    React.useEffect(loadData, [ selectedUnits, selectedData, detail ]);
+    React.useEffect(loadData, [selectedUnits, selectedData, detail]);
     return { renderFields, data: state };
 };

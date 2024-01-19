@@ -108,10 +108,10 @@ const CustomDiv = styled.div`
 
 const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdownRenderr: () => JSX.Element, isOpen: boolean,
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleChange: Function ] => {
-    const [ selectValue, setSelectValue ] = useState<string>('Filter');
-    const [ isOpen, setIsOpen ] = useState<boolean>(false);
+    const [selectValue, setSelectValue] = useState<string>('Filter');
+    const [isOpen, setIsOpen] = useState<boolean>(false);
     const { cardNames, unitNames } = useUnitsNameSet(session);
-    const [ completeOptions, setCompleteOptions ] = useState<Array<{value: string}>>([]);
+    const [completeOptions, setCompleteOptions] = useState<Array<{value: string}>>([]);
 
     useEffect(() => {
         handleSearch('');
@@ -152,13 +152,13 @@ const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdo
     const handleChange = (value: string[]): void => {
         startFilter(session, value, selectValue);
     };
-    return [ selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange ];
+    return [selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange];
 };
 
 const CategorySearchContent = (session: Session): JSX.Element => {
     const theme = useTheme();
-    const [ selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange ] = useAutoCompleteHandles(session);
-    const [ selection, setSelection ] = useState<string[]>([]);
+    const [selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange] = useAutoCompleteHandles(session);
+    const [selection, setSelection] = useState<string[]>([]);
     useEffect(() => {
         setSelection([]);
         handleChange([]);
@@ -303,7 +303,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
 
 export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Element | null => {
     const theme = useTheme();
-    const [ customButtonProps, updateCustomButtonProps ] = useState({
+    const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
         icon: FilterIcon,
@@ -328,7 +328,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             onVisibleChange={onTooltipVisibleChange}
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
-            overlayClassName={'insight-category-search-overlay'} align={{ offset: [ -8, 3 ] }}>
+            overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
             <CustomButton tooltip={i18n.t('tooltip:filter')} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );

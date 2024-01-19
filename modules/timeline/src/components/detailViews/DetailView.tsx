@@ -21,7 +21,7 @@ const ViewSelect = observer((props: any) => {
 });
 
 const ViewContainer = observer((props: any) => {
-    const [ view, setView ] = useState(0);
+    const [view, setView] = useState(0);
     useEventBus('setView', (data) => setView(data as number));
     const View = useMemo(() => ViewList[view], [view]);
     return (<View session={props.session}/>);

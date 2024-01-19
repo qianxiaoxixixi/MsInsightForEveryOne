@@ -20,5 +20,5 @@ export const registerCrossUnitRenderer = (effect: CustomRenderEffect): void => {
 export const useCustomRenderers = (session: Session): [ CustomCrossRenderer[], unknown[] ] => {
     const customRenderers = React.useMemo(() => customRenderEffects.map(it => it.action), [session]);
     const customRenderTriggers = customRenderEffects.flatMap(it => it.triggers(session));
-    return [ customRenderers, customRenderTriggers ];
+    return [customRenderers, customRenderTriggers];
 };

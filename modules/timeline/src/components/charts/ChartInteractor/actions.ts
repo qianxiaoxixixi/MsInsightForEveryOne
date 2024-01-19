@@ -31,7 +31,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     });
 
     if (Math.abs(lastPos.x - clickPos.x) >= MIN_BRUSH_SIZE) {
-        const mouseRange: [ number, number ] = [ xScale(clickPos.x), xScale(lastPos.x) ];
+        const mouseRange: [number, number] = [xScale(clickPos.x), xScale(lastPos.x)];
         const newSelected = mouseRange.sort((a, b) => a - b);
 
         if (newSelected[0] < session.endTimeAll && session.endTimeAll < newSelected[1]) { newSelected[1] = session.endTimeAll; }
@@ -87,7 +87,7 @@ export const mouseLeaveAction = (interactorParams: InteractorParams, interactorM
     if (clickPos && lastPos) {
         // mouse leave when mouse down
         const x = lastPos.x < 0 ? 0 : lastPos.x;
-        const mouseRange: [ number, number ] = [ xScale(clickPos.x), xScale(x) ];
+        const mouseRange: [number, number] = [xScale(clickPos.x), xScale(x)];
         const newSelected = mouseRange.sort((a, b) => a - b);
 
         if (newSelected[0] < session.endTimeAll && session.endTimeAll < newSelected[1]) {
@@ -120,7 +120,7 @@ const isInSplitLineY = (offsetY: number, splitLineRef: React.RefObject<HTMLDivEl
     if (splitLineRef?.current) {
         const splitLinePosTop = getOffsetTop(splitLineRef.current as HTMLElement);
         const splitLineHeight = splitLineRef.current.clientHeight ?? 0;
-        const splitLinePosY = [ splitLinePosTop, splitLinePosTop + splitLineHeight ];
+        const splitLinePosY = [splitLinePosTop, splitLinePosTop + splitLineHeight];
         if (offsetY >= splitLinePosY[0] && offsetY <= splitLinePosY[1]) {
             return true;
         }

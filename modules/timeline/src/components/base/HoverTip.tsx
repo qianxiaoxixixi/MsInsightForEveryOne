@@ -44,9 +44,9 @@ interface HoverTipProps {
 }
 
 export const HoverTip: React.FC<HoverTipProps> = (props) => {
-    const [ circleWidth, setCircleWidth ] = React.useState(props.height);
-    const [ position, setPosition ] = React.useState({ left: 0, top: 0 });
-    const [ rect, ref ] = useWatchDomResize<HTMLDivElement>();
+    const [circleWidth, setCircleWidth] = React.useState(props.height);
+    const [position, setPosition] = React.useState({ left: 0, top: 0 });
+    const [rect, ref] = useWatchDomResize<HTMLDivElement>();
     const isDragRef = React.useRef(false);
     const DefaultBoundary = 100;
     return (

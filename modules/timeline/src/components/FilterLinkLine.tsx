@@ -114,7 +114,7 @@ const useFetchLinkLines = (displayCategories: string[]): UseFetchLinkLines => Re
 ), [displayCategories]);
 
 const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
-    const [ categories, setCategories ] = React.useState<string[]>([]);
+    const [categories, setCategories] = React.useState<string[]>([]);
     const unitsRef = React.useRef<string>();
     React.useEffect(() => {
         const cardUnits = getCardUnits(session.units);
@@ -147,7 +147,7 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
 const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
     const displayCategories = useGetCategories(session, isSuspend);
     const fetchLinkLinesMap = useFetchLinkLines(displayCategories);
-    const [ checkedCategories, setCheckedCategories ] = React.useState<string[]>([]);
+    const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
 
     const isEmptyData = displayCategories.length === 0;
 
@@ -164,7 +164,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         });
     }, [checkedCategories]);
 
-    React.useEffect(() => { updateLinkLines(); }, [ session.domainRange.domainStart, session.domainRange.domainEnd, checkedCategories ]);
+    React.useEffect(() => { updateLinkLines(); }, [session.domainRange.domainStart, session.domainRange.domainEnd, checkedCategories]);
     return (
         <FilterContainer>
             <FilterList>
@@ -186,7 +186,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
 
 export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.Element | null => {
     const theme = useTheme();
-    const [ customButtonProps, updateCustomButtonProps ] = useState({
+    const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
         icon: FilterIcon,
@@ -204,7 +204,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             onVisibleChange={onTooltipVisibleChange}
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
-            overlayClassName={'insight-category-search-overlay'} align={{ offset: [ -8, 3 ] }}>
+            overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
             <CustomButton tooltip={i18n.t('tooltip:linker')} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );

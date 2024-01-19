@@ -30,9 +30,9 @@ const calcTextWidth = (container: HTMLDivElement, contentWidth: number,
 export const Abbreviature = ({ content, availableWidth, fontSize, placement }: AbbreviatureType): JSX.Element => {
     const parent = React.useRef<HTMLDivElement | null>(null);
     const theme = useTheme();
-    const [ isOverstep, setIsOverstep ] = React.useState<boolean>(false);
-    const [ windowWidth, setWindowWidth ] = React.useState<number>(window.innerWidth);
-    const [ contentWidth, setContentWidth ] = React.useState<number>(0);
+    const [isOverstep, setIsOverstep] = React.useState<boolean>(false);
+    const [windowWidth, setWindowWidth] = React.useState<number>(window.innerWidth);
+    const [contentWidth, setContentWidth] = React.useState<number>(0);
 
     if (fontSize === undefined) fontSize = DFT_FONT_SIZE;
 
@@ -52,7 +52,7 @@ export const Abbreviature = ({ content, availableWidth, fontSize, placement }: A
             contentWidth !== 0 && parentWidth !== 0) {
             setIsOverstep(parentWidth <= contentWidth);
         }
-    }, [ parent.current, windowWidth, availableWidth, contentWidth ]);
+    }, [parent.current, windowWidth, availableWidth, contentWidth]);
 
     return <>
         {isOverstep

@@ -104,7 +104,7 @@ export const renderRadiusBorder = (topLeft: number, topRight: number, bottomRigh
     if (radius < 1) {
         ctx.strokeRect(beginX, beginY, bottomRight, Math.floor(bottomLeft - halfLine - 1));
     } else {
-        drawRoundedRect([ Math.floor(beginX), Math.floor(beginY), Math.floor(bottomRight), Math.floor(bottomLeft - halfLine - 1) ], ctx, radius);
+        drawRoundedRect([Math.floor(beginX), Math.floor(beginY), Math.floor(bottomRight), Math.floor(bottomLeft - halfLine - 1)], ctx, radius);
         ctx.stroke();
     }
 };

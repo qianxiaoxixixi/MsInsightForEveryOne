@@ -87,10 +87,10 @@ export const getDetailTimeDisplay = (startTime: number | undefined): string => {
 const singleSliceDetail = singleData({
     name: 'SingleSlice',
     renderFields: [
-        [ 'Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle ],
-        [ 'Start', data => getTimestamp(data.startTime ?? 0, { precision: 'ns' }), isHiddenStartTime ],
-        [ 'Wall Duration', data => getDetailTimeDisplay(data.duration), isHiddenDuration ],
-        [ 'Self Time', data => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime ],
+        ['Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
+        ['Start', data => getTimestamp(data.startTime ?? 0, { precision: 'ns' }), isHiddenStartTime],
+        ['Wall Duration', data => getDetailTimeDisplay(data.duration), isHiddenDuration],
+        ['Self Time', data => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime],
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
@@ -215,7 +215,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             });
         },
         renderTooltip: (data) => new Map([
-            [ 'Name', data.name ],
+            ['Name', data.name],
         ]),
         config: {
             rowHeight: UnitHeight.STANDARD,
@@ -361,14 +361,14 @@ const getFlowName = (res: any): string | undefined => {
 };
 
 const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
-    const [ renderFields, setRenderFields ] = React.useState<Array<[string, string | JSX.Element]>>();
+    const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
     const { selectedUnits } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
     const detail = (session.linkDetail as LinkDataDesc<Record<string, unknown>>) ?? originDetail;
     const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
-    const onDataFetched = React.useMemo(() => ([ selectedUnits, linkFlow ].filter(_.isEmpty).length === 0
+    const onDataFetched = React.useMemo(() => ([selectedUnits, linkFlow].filter(_.isEmpty).length === 0
         ? fetchData?.(session, selectedUnit?.metadata as MetaData)
-        : undefined), [ selectedUnits, linkFlow, detail, session.linkDetail ]);
+        : undefined), [selectedUnits, linkFlow, detail, session.linkDetail]);
 
     const recentUnits = React.useRef(selectedUnits);
     const recentData = React.useRef(linkFlow);
@@ -386,9 +386,9 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
                         const render = templateField[1];
                         if (templateField[2] !== undefined) {
                             const isHiden = templateField[2];
-                            isHiden(res) && state.push([ templateField[0], render(res, session, metadata) ]);
+                            isHiden(res) && state.push([templateField[0], render(res, session, metadata)]);
                         } else {
-                            state.push([ getFlowName(res) ?? templateField[0], render(res, session, metadata) ]);
+                            state.push([getFlowName(res) ?? templateField[0], render(res, session, metadata)]);
                         }
                     });
                 } else {
@@ -396,9 +396,9 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
                         const render = renderField[1];
                         if (renderField[2] !== undefined) {
                             const isHiden = renderField[2];
-                            isHiden(result) && state.push([ renderField[0], render(result, session, metadata) ]);
+                            isHiden(result) && state.push([renderField[0], render(result, session, metadata)]);
                         } else {
-                            state.push([ renderField[0], render(result, session, metadata) ]);
+                            state.push([renderField[0], render(result, session, metadata)]);
                         }
                     });
                 }
@@ -407,7 +407,7 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
         }
     };
 
-    React.useEffect(loadData, [ selectedUnits, linkFlow, detail, session.linkDetail ]);
+    React.useEffect(loadData, [selectedUnits, linkFlow, detail, session.linkDetail]);
     return renderFields;
 };
 

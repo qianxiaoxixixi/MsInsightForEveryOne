@@ -12,7 +12,7 @@ import { TooltipComponent, TooltipProps } from './TooltipComp';
 type StatusChartProps = ChartProps<'status'>;
 
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D): [ string, number ] => {
-    if (ctx.measureText(text).width <= maxWidth) { return [ text, ctx.measureText(text).width ]; }
+    if (ctx.measureText(text).width <= maxWidth) { return [text, ctx.measureText(text).width]; }
     let left = 0;
     let right = text.length;
     let mid = 0;
@@ -25,7 +25,7 @@ const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2
             left = mid;
         }
     }
-    return [ text.slice(0, mid) + '...', ctx.measureText(text.slice(0, mid) + '...').width ];
+    return [text.slice(0, mid) + '...', ctx.measureText(text.slice(0, mid) + '...').width];
 };
 
 const draw = (ctx: CanvasRenderingContext2D | null, datas: StatusData[], xScale: Scale, yScale: Scale, theme: Theme): void => {
@@ -42,7 +42,7 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: StatusData[], xScale:
         if (radius < 1) {
             ctx.fillRect(Math.floor(xScale(data.startTime)), 1, width, height - 2);
         } else {
-            drawRoundedRect([ Math.floor(xScale(data.startTime)), 1, width, height - 2 ], ctx, radius);
+            drawRoundedRect([Math.floor(xScale(data.startTime)), 1, width, height - 2], ctx, radius);
             ctx.fill();
         }
         if (width < minTextWidth) { return; }
@@ -51,15 +51,15 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: StatusData[], xScale:
             return xScale(data.startTime) + (xScale(data.startTime + data.duration) - xScale(data.startTime) - textWidth) / 2;
         };
         if (data.subName !== undefined) {
-            const [ subNameText, subNameWidth ] = getMaxText(data.subName, width - 8, ctx);
+            const [subNameText, subNameWidth] = getMaxText(data.subName, width - 8, ctx);
             ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
             ctx.fillText(subNameText, xOffset(subNameWidth), height / 2);
             ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
-            const [ nameText, nameWidth ] = getMaxText(data.name, width - 8, ctx);
+            const [nameText, nameWidth] = getMaxText(data.name, width - 8, ctx);
             ctx.fillText(nameText, xOffset(nameWidth), (height - 12) / 4);
         } else {
             ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
-            const [ nameText, nameWidth ] = getMaxText(data.name, width - 8, ctx);
+            const [nameText, nameWidth] = getMaxText(data.name, width - 8, ctx);
             ctx.fillText(nameText, xOffset(nameWidth), (height - 12) / 2);
         }
     });
@@ -105,7 +105,7 @@ export const StatusChart = observer(({
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const mousePosX = useHoverPosX(canvasContainer);
-    const hoveredData = useMemo(() => findDataByX(mousePosX, datasState, rangeAndDomain), [ mousePosX, datasState, rangeAndDomain ]);
+    const hoveredData = useMemo(() => findDataByX(mousePosX, datasState, rangeAndDomain), [mousePosX, datasState, rangeAndDomain]);
     const handleMouseUp = (e: MouseEvent): void => {
         const clickedData = findDataByX(e.offsetX, datasState, rangeAndDomain);
         runInAction(() => {
@@ -113,7 +113,7 @@ export const StatusChart = observer(({
             onClick?.(clickedData, session, metadata);
         });
     };
-    useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
+    useEffect(() => onHover?.(hoveredData, session, metadata), [hoveredData, metadata]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp);
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
@@ -130,7 +130,7 @@ export const StatusChart = observer(({
             draw: (data, xScale, yScale) => draw(ctx, data, xScale, yScale, theme),
             findAll: (condition) => datasState.filter(condition),
         }, xScale, yScale, theme);
-    }, [ datasState, rangeAndDomain, ...triggers, theme ]);
+    }, [datasState, rangeAndDomain, ...triggers, theme]);
 
     const tooltipProp: TooltipProps<StatusData, StatusData[]> = {
         data: hoveredData,

@@ -290,6 +290,7 @@ std::unique_ptr<Request> TimelineProtocol::ToSystemViewRequest(const Dic::json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isQueryTotal, json["params"], "isQueryTotal");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.layer, json["params"], "layer");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     return reqPtr;
 }
 
@@ -306,6 +307,7 @@ std::unique_ptr<Request> TimelineProtocol::ToKernelDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.coreType, json["params"], "coreType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     return reqPtr;
 }
 

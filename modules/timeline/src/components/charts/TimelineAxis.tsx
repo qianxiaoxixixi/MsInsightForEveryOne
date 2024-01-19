@@ -15,7 +15,7 @@ export const BASE_TICKS_SPACE_PX = 50;
 export const BASE_DOMAIN_STEP = 1;
 
 const DEFAULT_DRAW_TIMELINE_AXIS_OPTIONS = {
-    domain: [ 0, 2e4 ] as Domain,
+    domain: [0, 2e4] as Domain,
     spaceX: 30,
     spaceY: 25,
     ticksLength: -11,
@@ -145,7 +145,7 @@ interface RenderNode {
     };
 };
 
-const getAdaptableTickSpaceAndNum = ([ start, end ]: Domain, timePerPx: number): { timeStep: number; tickSpace: number; tickNum: number } => {
+const getAdaptableTickSpaceAndNum = ([start, end]: Domain, timePerPx: number): { timeStep: number; tickSpace: number; tickNum: number } => {
     const duration = end - start;
     /**
      * if duration's first digit over 5, timeStep is 5 * (duration.length - 1)
@@ -306,7 +306,7 @@ type TimelineAxisProps = {
 
 type TextParser = (time: number, domain: Domain) => string;
 export const getTextParser = (isNsMode: boolean): TextParser => {
-    return (time: number, [ start, end ]: Domain): string => {
+    return (time: number, [start, end]: Domain): string => {
         const precision: TimeUnit = isNsMode ? 'ns' : 'ms';
         const duration = end - start;
         /**
@@ -328,7 +328,7 @@ export const getTextParser = (isNsMode: boolean): TextParser => {
 
 const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxisProps): JSX.Element => {
     const canvas = React.useRef<HTMLCanvasElement>(null);
-    const [ width, ref ] = useWatchResize<HTMLDivElement>('width');
+    const [width, ref] = useWatchResize<HTMLDivElement>('width');
     const theme = useTheme();
     const draw = React.useMemo(() => () => {
         if (canvas.current && ref.current?.clientWidth !== 0) {
@@ -343,7 +343,7 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
                 session.domain.chartViewWidth = ref.current?.clientWidth ?? 0;
             });
             drawTimelineAxis(canvas.current, {
-                domain: [ session.domainRange.domainStart, session.domainRange.domainEnd ],
+                domain: [session.domainRange.domainStart, session.domainRange.domainEnd],
                 spaceX: margin,
                 fontColor: theme.fontColor,
                 lineColor: theme.timelineAxisColor,

@@ -594,3 +594,8 @@ tr.ant-table-row:hover{
 .theme_dark .ant-select-selection-search-input{
     color: rgb(177, 177, 177);
 }
+
+.theme_dark .ant-table-filter-dropdown{
+    background-color: var(--grey90);
+    border: 1px solid rgb(177, 177, 177);
+}

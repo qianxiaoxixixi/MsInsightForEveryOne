@@ -11,7 +11,7 @@ import { TableState, EMPTY_TABLE_STATE } from '../types';
  * but its params are from the selected detail row.
  */
 const useMoreUpdater = function<T extends Record<string, unknown>>(session: Session, fetchData: FetchDataMoreProps<T>['fetchData'], def: TableDataAdapter<T>): TableState {
-    const [ state, setState ] = React.useState<TableState>(EMPTY_TABLE_STATE);
+    const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedDetailKeys, selectedDetails, selectedRange } = session;
     const recentUnits = React.useRef(selectedUnits);
     const recentRange = React.useRef(selectedRange);
@@ -37,7 +37,7 @@ const useMoreUpdater = function<T extends Record<string, unknown>>(session: Sess
         } else {
             setState({ ...EMPTY_TABLE_STATE, isLoading: false });
         }
-    }, [ selectedUnits, selectedDetailKeys ]);
+    }, [selectedUnits, selectedDetailKeys]);
     return state;
 };
 

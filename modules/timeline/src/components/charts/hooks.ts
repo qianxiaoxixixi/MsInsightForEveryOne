@@ -24,7 +24,7 @@ export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: num
 export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<T>, unit: InsightUnit, metadata: unknown, width: number, processor?: DataProcessor<T>): ChartData<T> => {
     const { domainStart, domainEnd } = session.domainRange;
     const { endTimeAll } = session;
-    const [ datasState, setDatasState ] = useState<ChartData<T>>([]);
+    const [datasState, setDatasState] = useState<ChartData<T>>([]);
     const requestedWidth = useRef(0);
     useEffect(() => {
         if (width === 0) {
@@ -44,15 +44,15 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
         }).finally(() => {
             runInAction(() => { unit.phase = 'download'; });
         });
-    }, [ session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset ]);
+    }, [session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset]);
     return datasState;
 };
 
 export const useRangeAndDomain = (session: Session, width: number, margin: number): Array<[number, number]> => {
     const { domainStart, domainEnd } = session.domainRange;
     return useMemo<Array<[number, number]>>(
-        () => [ [ margin, width - 2 * margin ], [ domainStart, domainEnd ] ],
-        [ domainStart, domainEnd, width, margin ],
+        () => [[margin, width - 2 * margin], [domainStart, domainEnd]],
+        [domainStart, domainEnd, width, margin],
     );
 };
 
@@ -73,7 +73,7 @@ export const useHoverPosX = (ref: React.RefObject<HTMLElement>): number | undefi
 };
 
 export const useHoverPos = (ref: React.RefObject<HTMLElement>): Pos | undefined => {
-    const [ mousePos, setMousePos ] = useState<Pos>();
+    const [mousePos, setMousePos] = useState<Pos>();
     const onMouseMove = (e: MouseEvent): void => {
         if ((e.target as HTMLElement).className === 'clickable') {
             setMousePos(undefined);
@@ -118,7 +118,7 @@ export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLEle
                     session.selectedData = undefined;
                 });
                 if (mouseMoved && mousedownX !== null) {
-                    handleMouseMoveUp?.([ mousedownX, e.offsetX ]);
+                    handleMouseMoveUp?.([mousedownX, e.offsetX]);
                 }
                 return;
             }
@@ -135,5 +135,5 @@ export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLEle
             canvasContainer.current?.removeEventListener('mouseup', onMouseUpListener);
             canvasContainer.current?.removeEventListener('mousemove', onMouseMoveListener);
         };
-    }, [ datasState, rangeAndDomain, session, metadata ]);
+    }, [datasState, rangeAndDomain, session, metadata]);
 };

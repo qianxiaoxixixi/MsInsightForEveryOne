@@ -157,7 +157,7 @@ interface BottomPanelReactNodes {
 }
 
 const useTriggerEvent = (session: Session): TriggerEvent => {
-    const [ event, setEvent ] = React.useState<TriggerEvent>('SELECTED_RANGE');
+    const [event, setEvent] = React.useState<TriggerEvent>('SELECTED_RANGE');
     React.useEffect(() => {
         if (event !== 'SELECTED_RANGE') {
             setEvent('SELECTED_RANGE');
@@ -176,7 +176,7 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
     const triggerEvent = useTriggerEvent(session);
     const bottomPanelComponents = React.useMemo(() => {
         return sessionUnit?.bottomPanelRender?.(session, triggerEvent, sessionUnit?.metadata);
-    }, [ session, selectedUnitKeys, triggerEvent, session.units.length ]);
+    }, [session, selectedUnitKeys, triggerEvent, session.units.length]);
     const contentHeight = bottomPanelComponents?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
         : (height - DETAIL_HEADER_HEIGHT_PX);
@@ -191,7 +191,7 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
             more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponents),
             toolbar: getFilterContent(session, bottomPanelComponents),
         };
-    }, [ bottomPanelComponents, height ]);
+    }, [bottomPanelComponents, height]);
 };
 
 /* decide what to put in Detail container */
@@ -276,8 +276,8 @@ const DataCard = observer(({ session, height }: DataCardType) => {
 
 export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     const { session } = props;
-    const [ bottomHeight, setBottomHeight ] = useState(BOTTOM_HEIGHT);
-    const [ item, setItem ] = useState< string >('DataCard');
+    const [bottomHeight, setBottomHeight] = useState(BOTTOM_HEIGHT);
+    const [item, setItem] = useState< string >('DataCard');
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const bottomResize = (): void => setBottomHeight(ref.current?.clientHeight ?? BOTTOM_HEIGHT);
@@ -290,7 +290,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     }, [setBottomHeight]);
     useEffect(() => {
         setItem('DataCard');
-    }, [ session.selectedData, session.selectedRange ]);
+    }, [session.selectedData, session.selectedRange]);
 
     const items = [
         getDataCardItem(bottomHeight, session),
@@ -311,7 +311,7 @@ function getDataCardItem(bottomHeight: number, session: Session): any {
 }
 
 const DataCardTitle = (): JSX.Element => {
-    const [ detailTitle, setDetailTitle ] = useState<JSX.Element | undefined>(undefined);
+    const [detailTitle, setDetailTitle] = useState<JSX.Element | undefined>(undefined);
     useEventBus('setDetailTitle', (data) => setDetailTitle(data as JSX.Element));
     return (<div className={'title'}>{detailTitle !== undefined ? detailTitle : <span>Details</span>}</div>);
 };

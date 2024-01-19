@@ -122,7 +122,7 @@ const doJumpSlice = (session: Session, slice: SliceData): void => {
                 return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
             },
             onSuccess: (unit) => {
-                const [ rangeStart, rangeEnd ] = calculateDomainRange(session, slice.startTime, slice.duration);
+                const [rangeStart, rangeEnd] = calculateDomainRange(session, slice.startTime, slice.duration);
                 session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 session.selectedData = { startTime: slice.startTime, duration: slice.duration, depth: slice.depth, threadId: slice.tid };
             },
@@ -134,7 +134,7 @@ const calculateDomainRange = (session: Session, startTime: number, duration: num
     let rangeStart = startTime - duration * 9;
     rangeStart = rangeStart > 0 ? rangeStart : 0;
     const rangeEnd = Math.min(startTime + duration * 10, session.endTimeAll ?? Number.MAX_SAFE_INTEGER);
-    return [ rangeStart, rangeEnd ];
+    return [rangeStart, rangeEnd];
 };
 
 const ImgWithFallback = ({ className = '' }): JSX.Element => {
@@ -154,12 +154,12 @@ const ImgWithFallback = ({ className = '' }): JSX.Element => {
 };
 
 const CategorySearchContent = (session: Session): JSX.Element => {
-    const [ messageApi, contextHolder ] = message.useMessage();
+    const [messageApi, contextHolder] = message.useMessage();
     const theme = useTheme();
-    const [ paginationData, updatePaginationData ] = useState({ current: 0, total: 0 });
-    const [ searchIconVisible, setSearchIconVisible ] = useState(true);
-    const [ searchContent, setSearchContent ] = useState('');
-    const [ searchingStatus, setSearchingStatus ] = useState(false);
+    const [paginationData, updatePaginationData] = useState({ current: 0, total: 0 });
+    const [searchIconVisible, setSearchIconVisible] = useState(true);
+    const [searchContent, setSearchContent] = useState('');
+    const [searchingStatus, setSearchingStatus] = useState(false);
 
     useEffect(action(() => {
         setSearchIconVisible(true); setSearchContent('');
@@ -208,7 +208,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
 
 export const CategorySearch = observer(({ session }: { session: Session}): JSX.Element | null => {
     const theme = useTheme();
-    const [ customButtonProps, updateCustomButtonProps ] = useState({
+    const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isDisabled: false,
         isSuspend: false,
@@ -234,7 +234,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'}
-            align={{ offset: [ -8, 3 ] }}>
+            align={{ offset: [-8, 3] }}>
             <CustomButton tooltip={i18n.t('tooltip:search')} { ...customButtonProps }/>
         </Tooltip>
     );

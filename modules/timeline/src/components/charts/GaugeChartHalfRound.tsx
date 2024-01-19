@@ -119,7 +119,7 @@ export const GaugeChartHalfRound = observer(({ session, splits, mapFunc, type, g
         // draw text
         drawText(type, theme, context, width, datas, getDisplayNumber);
     };
-    useAsyncEffect(draw, [ session.endTimeAll, theme ]);
+    useAsyncEffect(draw, [session.endTimeAll, theme]);
     return <CanvasChart ref={canvas} width={400} height={canvasHeight} />;
 });
 

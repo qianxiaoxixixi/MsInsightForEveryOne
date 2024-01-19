@@ -56,7 +56,7 @@ const useWatchDomainChange = (scrollerRef: React.RefObject<HTMLDivElement>, isMa
         if (scrollerRef.current && !isManulHandleRef.current) {
             scrollerRef.current.scrollLeft = ((domainStart - bias) / totalTime) * scrollerRef.current.scrollWidth;
         }
-    }, [ session.endTimeAll, domainStart, domainEnd ]);
+    }, [session.endTimeAll, domainStart, domainEnd]);
 };
 
 const useWatchScrollEvent = (containerDom: HTMLElement | undefined,
@@ -113,7 +113,7 @@ const HorizontalScroller = observer((props: ScrollBarProps) => {
         }
         prevPaddingWidthRef.current = width;
         return width;
-    }, [ totalTime, domainStart, domainEnd ]);
+    }, [totalTime, domainStart, domainEnd]);
     const isManulHandleRef = React.useRef(false);
 
     useWatchDomainChange(scrollerRef, isManulHandleRef, session, domainStart, domainEnd, totalTime);

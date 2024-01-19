@@ -79,7 +79,7 @@ const UnitListContent = (session: Session): JSX.Element => {
 
 export const SetUnits = observer(({ session }: { session: Session }): JSX.Element | null => {
     const theme = useTheme();
-    const [ isSuspend, updateIsSuspend ] = useState(false);
+    const [isSuspend, updateIsSuspend] = useState(false);
     const onToolTipVisibleChange = (open: boolean): void => {
         updateIsSuspend(open);
     };
@@ -91,7 +91,7 @@ export const SetUnits = observer(({ session }: { session: Session }): JSX.Elemen
             overlayInnerStyle={{ color: theme.tooltipFontColor }}
             onVisibleChange={onToolTipVisibleChange}
             placement="bottomLeft"
-            align={{ offset: [ 0, 3 ] }}>
+            align={{ offset: [0, 3] }}>
             <CustomButton icon={funnelIcon} isDisabled={session.phase !== 'configuring'} isSuspend={isSuspend} disabled={session.phase !== 'configuring'} />
         </Tooltip>
     );
