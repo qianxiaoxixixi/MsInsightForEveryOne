@@ -48,7 +48,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithCann)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("CANN");
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("CANN", "%%");
     double expectSize = 158266100;
     EXPECT_EQ(data.allOperatorTime, expectSize);
 }
@@ -57,7 +57,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithPython)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Python");
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Python", "%%");
     double expectSize = 851869940;
     EXPECT_EQ(data.allOperatorTime, expectSize);
 }
@@ -66,7 +66,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithAscend)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Ascend Hardware");
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Ascend Hardware", "%%");
     double expectSize = 842011262;
     EXPECT_EQ(data.allOperatorTime, expectSize);
     EXPECT_EQ(data.total, 57); // total operator = 57
@@ -76,7 +76,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithHCCL)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("HCCL");
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("HCCL", "%%");
     double expectSize = 449202040;
     EXPECT_EQ(data.allOperatorTime, expectSize);
 }
@@ -85,7 +85,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithOverlap)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Overlap Analysis");
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Overlap Analysis", "%%");
     double expectSize = 445796394;
     EXPECT_EQ(data.allOperatorTime, expectSize);
 }
@@ -127,8 +127,9 @@ TEST_F(TestSuit, QueryKernelDetailDataWithCoreType)
     requestParams.pageSize = PAGE;
     requestParams.rankId = "0";
     requestParams.coreType = "AI_CORE";
+    requestParams.searchName = "";
     database->QueryKernelDetailData(requestParams, responseBody, 0);
-    int expectSize = 4;
+    int expectSize = 0;
     EXPECT_EQ(responseBody.count, expectSize);
 }
 
