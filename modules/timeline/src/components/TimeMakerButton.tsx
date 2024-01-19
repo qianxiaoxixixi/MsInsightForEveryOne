@@ -18,7 +18,7 @@ const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
 const FlagIcon = AntdFlagIcon as SvgType;
 
 export const TimeMakerButton = observer(({ session }: { session: Session }): JSX.Element | null => {
-    const [ isSuspend, updateIsSuspend ] = useState(false);
+    const [isSuspend, updateIsSuspend] = useState(false);
     const onToolTipVisibleChange = (open: boolean): void => {
         updateIsSuspend(open);
     };
@@ -39,10 +39,10 @@ type RangeMarkerButtonProps = {
 };
 
 export const RangeMarkerButtonCanvas = observer(({ session, timelineHeight }: RangeMarkerButtonProps): JSX.Element => {
-    const range = useRef<[ number, number ]>([ 0, 0 ]);
+    const range = useRef<[ number, number ]>([0, 0]);
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const { domainStart, domainEnd } = session.domainRange;
-    const [ width, ref ] = useWatchResize<HTMLDivElement>('width');
+    const [width, ref] = useWatchResize<HTMLDivElement>('width');
     React.useEffect(() => {
         if (!canvas.current) {
             return;
@@ -51,12 +51,12 @@ export const RangeMarkerButtonCanvas = observer(({ session, timelineHeight }: Ra
         if (session.name !== i18n.t('Realtime Monitor')) {
             addEventListener('click', singleClickListener);
         }
-        drawPlaceRangeButton(session, canvas.current, [ domainStart, domainEnd ]);
-        range.current = [ 0, canvas.current.clientWidth ];
+        drawPlaceRangeButton(session, canvas.current, [domainStart, domainEnd]);
+        range.current = [0, canvas.current.clientWidth];
         return () => {
             removeEventListener('click', singleClickListener);
         };
-    }, [ width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange ]);
+    }, [width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
     return <CanvasContainer ref={ref}>
         <canvas
             id={ 'rangeButtonCanvas' }
@@ -98,7 +98,7 @@ const handleSingleClick = (e: MouseEvent, session: Session, range: React.Mutable
     if (!rangeButtonCanvas || session.selectedRange === undefined) {
         return;
     }
-    const xOffset = linearScaleFactory([ domainStart, domainEnd ], range.current);
+    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
     const buttonWith = 20;
     const rangeStartTimestamp = session.selectedRange[0] < session.selectedRange[1] ? session.selectedRange[0] : session.selectedRange[1];
     const rangeStartTimeDisplay = getTimestamp(rangeStartTimestamp, { precision: session.isNsMode ? 'ns' : 'ms' });

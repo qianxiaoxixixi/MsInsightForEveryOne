@@ -84,10 +84,10 @@ interface ChartBodyProps {
 const ChartBody = observer((props: ChartBodyProps) => {
     const { session, interactive, interactorMouseState, chartInteractorRef } = props;
     const { domainStart, domainEnd } = session.domainRange;
-    const [ height, ref ] = useWatchResize<HTMLDivElement>('height');
-    const [ pinnedHeight, pinnedRef ] = useWatchResize<HTMLDivElement>('height');
+    const [height, ref] = useWatchResize<HTMLDivElement>('height');
+    const [pinnedHeight, pinnedRef] = useWatchResize<HTMLDivElement>('height');
     const splitLineRef = React.useRef<HTMLDivElement>(null);
-    const [ view, handleSwitchOpen ] = useDraggableContainerEx({ draggableWH: 100, dragDirection: DragDirection.top, splitLineRef, open: session.pinnedUnits.length > 0 });
+    const [view, handleSwitchOpen] = useDraggableContainerEx({ draggableWH: 100, dragDirection: DragDirection.top, splitLineRef, open: session.pinnedUnits.length > 0 });
 
     useEffect(() => {
         if (session.pinnedUnits.length > 0) {
@@ -134,7 +134,7 @@ const addKeyEvent = (keyHoldAction: { beginLoop: Function; clearLoop: Function }
 
 export const ChartContainer = observer((props: Props) => {
     const { session } = props;
-    const [ containerDom, setContainerDom ] = React.useState<HTMLDivElement | undefined>(undefined);
+    const [containerDom, setContainerDom] = React.useState<HTMLDivElement | undefined>(undefined);
     const chartInteractorRef = useRef<ChartInteractorHandles>(null);
     const scrollerRef = React.useRef<HTMLDivElement>(null);
     const { onMouseUp, onKeyDown, interactorMouseState, ...otherInteractors } =
@@ -191,7 +191,7 @@ const isMouseOnScrollbar = (e: React.MouseEvent, horizontalScroller: HTMLElement
 const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartInteractorHandles>, scrollerRef: React.RefObject<HTMLDivElement>,
     session: Session, interactive?: boolean): InteractorMouseHandlers => {
     const clickPos = useRef<undefined | Pos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
-    const [ interactorMouseState, setInteractorMouseState ] = React.useState<InteractorMouseState>({ clickPos, lastPos });
+    const [interactorMouseState, setInteractorMouseState] = React.useState<InteractorMouseState>({ clickPos, lastPos });
     const onMouseMove = (e: React.MouseEvent): void => {
         if (!chartInteractorRef.current) {
             return;

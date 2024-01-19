@@ -87,7 +87,7 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
-    const displayText = getTextParser(isNsMode)(Math.floor(xScale(mousePosNow.x)), [ domainRange.domainStart, domainRange.domainEnd ]);
+    const displayText = getTextParser(isNsMode)(Math.floor(xScale(mousePosNow.x)), [domainRange.domainStart, domainRange.domainEnd]);
     const textLength = ctx.measureText(displayText).width;
     const roundRectWidth = textLength + 10;
     const roundRectHeight = 16;
@@ -97,7 +97,7 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
         return;
     }
     if (mousePosNow.x <= roundRectWidth / 2) {
-        drawRoundedRect([ 0, 0, roundRectWidth, roundRectHeight ], ctx, rouned);
+        drawRoundedRect([0, 0, roundRectWidth, roundRectHeight], ctx, rouned);
         ctx.fill();
         ctx.fillStyle = 'white';
         ctx.fillText(displayText, roundRectWidth / 2, 3);
@@ -105,13 +105,13 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
     }
 
     if (mousePosNow.x >= width - roundRectWidth / 2 && mousePosNow.x <= ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
-        drawRoundedRect([ width - roundRectWidth, 0, roundRectWidth, roundRectHeight ], ctx, rouned);
+        drawRoundedRect([width - roundRectWidth, 0, roundRectWidth, roundRectHeight], ctx, rouned);
         ctx.fill();
         ctx.fillStyle = 'white';
         ctx.fillText(displayText, width - roundRectWidth / 2, 3);
         return;
     }
-    drawRoundedRect([ mousePosNow.x - roundRectWidth / 2, 0, roundRectWidth, roundRectHeight ], ctx, rouned);
+    drawRoundedRect([mousePosNow.x - roundRectWidth / 2, 0, roundRectWidth, roundRectHeight], ctx, rouned);
     ctx.fill();
     ctx.fillStyle = 'white';
     ctx.fillText(displayText, mousePosNow.x, 3);
@@ -168,7 +168,7 @@ const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: 
     if (ctx !== null && selectedRange !== undefined) {
         ctx.beginPath();
         ctx.moveTo(xScale(selectedRange[0]), 0);
-        ctx.setLineDash([ 4, 2 ]);
+        ctx.setLineDash([4, 2]);
         ctx.strokeStyle = '#5291FF';
         ctx.lineTo(xScale(selectedRange[0]), 9999);
         ctx.stroke();
@@ -176,7 +176,7 @@ const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: 
 
         ctx.beginPath();
         ctx.moveTo(xScale(selectedRange[1]), 0);
-        ctx.setLineDash([ 4, 2 ]);
+        ctx.setLineDash([4, 2]);
         ctx.strokeStyle = '#5291FF';
         ctx.lineTo(xScale(selectedRange[1]), 9999);
         ctx.stroke();
@@ -206,11 +206,11 @@ const drawMaskRange = ({
     if (clickPos !== undefined && mousePosNow !== undefined) {
         // 1st priority
         // is brushing
-        maskRange = [ clickPos.x, mousePosNow.x ];
+        maskRange = [clickPos.x, mousePosNow.x];
     } else if (selectedRange !== undefined) {
         // 2nd priority
         // not brushing now but has selected range
-        maskRange = [ xReverseScale(selectedRange[0]), xReverseScale(selectedRange[1]) ];
+        maskRange = [xReverseScale(selectedRange[0]), xReverseScale(selectedRange[1])];
     }
     const elements = document.getElementsByClassName('chart-selected');
     if (maskRange !== undefined) {
@@ -366,14 +366,14 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
                 const sourceX = xScale(from.timestamp);
                 const sourceY = getHeight(session, from, cardId);
                 if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
-                const targetPos: Array<[x: number, y: number]> = [[ targetX, targetY ]];
+                const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
                 ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
                 ctx.moveTo(sourceX, sourceY);
                 ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
                 ctx.stroke();
                 if (targetY >= UNDRAW_HEIGHT) {
                     const len = targetPos.length;
-                    let [ fromX, fromY ] = targetPos.reduce(([ prevX, prevY ], [ x, y ]) => [ prevX + x + offset, prevY + y ], [ 0, 0 ]);
+                    let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
                     fromX = fromX / len; fromY = fromY / len;
                     drawArrow(ctx, { toX: targetX, toY: targetY, fromX: targetX - offset, fromY: targetY + (fromY - targetY) * Math.sqrt(Math.abs(fromY - targetY)) / (Math.abs(fromX - targetX) + Math.abs(fromY - targetY)), length: 10, angle: 30, color: theme.selectedChartColor });
                 }

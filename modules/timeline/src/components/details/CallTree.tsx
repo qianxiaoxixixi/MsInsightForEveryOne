@@ -56,7 +56,7 @@ export const CallTree = observer(function CallTree <T extends CommonStateProto>(
     }, [clickCallback]);
     detail = useMemo(() => {
         return { ...detail, onExpand: expandWithUpdate, clickCallback: clickCallbackWithUpdate };
-    }, [ detail, expandWithUpdate, clickCallbackWithUpdate ]);
+    }, [detail, expandWithUpdate, clickCallbackWithUpdate]);
     const onDataLoaded = (data: unknown[]): void => {
         if (ref.current === null || data.length === 0) {
             return;
@@ -93,7 +93,7 @@ const computeStack = <T extends Record<string, unknown>>(compare: Comparator<T>)
 };
 
 const useStackUpdater = <T extends Record<string, unknown>>(session: Session, compare: Comparator<T>, adapter: TableDataAdapter<T>): TableState => {
-    const [ state, setState ] = useState(EMPTY_TABLE_STATE);
+    const [state, setState] = useState(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedDetailKeys, selectedDetails } = session;
     const compute = computeStack(compare);
     useEffect(() => {
@@ -108,7 +108,7 @@ const useStackUpdater = <T extends Record<string, unknown>>(session: Session, co
         } else {
             setState(EMPTY_TABLE_STATE);
         }
-    }, [ selectedUnits, selectedDetailKeys ]);
+    }, [selectedUnits, selectedDetailKeys]);
     return state;
 };
 

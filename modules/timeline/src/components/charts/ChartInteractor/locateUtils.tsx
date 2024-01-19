@@ -5,7 +5,7 @@ import { isPinned } from '../../ChartContainer/unitPin';
 export const getAllNormalUnits = (units: InsightUnit[]): InsightUnit[] => {
     return units.flatMap((unit) => {
         if (unit.isExpanded && unit.children) {
-            return [ unit, ...getAllNormalUnits(unit.children) ];
+            return [unit, ...getAllNormalUnits(unit.children)];
         }
         return unit;
     });
@@ -57,5 +57,5 @@ export function calculateClipTopAndPinedHeight<T, U>(pinnedUnits: InsightUnit[],
     const matchers = [target.matcher].concat(sources.map(source => source.matcher));
     const hasPined = pinnedUnits.some(unit => matchers.some(matcher => matcher(unit)));
     if (!hasPined) clipTop += pinnedHeight;
-    return [ clipTop, pinnedHeight ];
+    return [clipTop, pinnedHeight];
 }

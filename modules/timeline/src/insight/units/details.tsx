@@ -13,11 +13,11 @@ import { hashToNumber } from '../../utils/colorUtils';
 export const slicesListDetail = detail({
     name: 'Slices List',
     columns: [
-        [ 'Name', data => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll' ],
-        [ 'Wall Duration', data => getSliceTimeDisplay(data.wallDuration), 180 ],
-        [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), 180 ],
-        [ 'Average Wall Duration', data => getSliceTimeDisplay(data.avgWallDuration), 180 ],
-        [ 'Occurrences', data => `${data.occurrences ?? 0}`, 180 ],
+        ['Name', data => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
+        ['Wall Duration', data => getSliceTimeDisplay(data.wallDuration), 180],
+        ['Self Time', data => getSliceTimeDisplay(data.selfTime), 180],
+        ['Average Wall Duration', data => getSliceTimeDisplay(data.avgWallDuration), 180],
+        ['Occurrences', data => `${data.occurrences ?? 0}`, 180],
     ],
     actions: [
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.title?.localeCompare(b?.title ?? '') ?? 0 },

@@ -32,7 +32,7 @@ const calcEffectiveNum = (num: number, fractionDigits: number = 2): number => {
 export type AutoAdjustedTableProps = { height: number } & TableState & Omit<TableProps<any>, 'scroll'>;
 
 const useEmptyViewMargin = (height: number): number => {
-    const [ emptyViewMargin, setEmptyViewMargin ] = React.useState(calcEffectiveNum((height - EMPTY_VIEW_HEIGHT) / 2));
+    const [emptyViewMargin, setEmptyViewMargin] = React.useState(calcEffectiveNum((height - EMPTY_VIEW_HEIGHT) / 2));
 
     React.useEffect(() => {
         const marginHeight = calcEffectiveNum((height - EMPTY_VIEW_HEIGHT) / 2);

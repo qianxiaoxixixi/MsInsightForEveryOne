@@ -40,7 +40,7 @@ export const Chart = observer(<T extends ChartType>(props: {
         return <ChartErrorBoundary height={desc.height} width={width} phase={phase}>
             <div className="chart-offline" style={{ width, height: desc.height }}/>
         </ChartErrorBoundary>;
-    }, [ width, desc.height, phase ]);
+    }, [width, desc.height, phase]);
     if (session.phase !== 'download' && desc.offline === true) {
         return <Mask unitPhase={phase} isShowMask={isShowMask(session, phase)}>{offlinePlaceholder}</Mask>;
     }

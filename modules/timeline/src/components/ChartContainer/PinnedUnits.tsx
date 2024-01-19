@@ -39,27 +39,27 @@ const orderOptions = {
 
 const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
 { session: Session; laneInfoWidth: number; height: number; eventType: string }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
-    const [ scrollTop, setScrollTop ] = React.useState(0);
+    const [scrollTop, setScrollTop] = React.useState(0);
     useEventBus(eventType, (value) => setScrollTop(value as number));
     const flattenUnits = computed(() => preOrderPinnedFlatten(session.pinnedUnits, 0, orderOptions.options)).get();
 
-    const [ first, last ] = React.useMemo(
+    const [first, last] = React.useMemo(
         () => computeVisibleUnitRange(flattenUnits, height, scrollTop),
-        [ session.pinnedUnits, flattenUnits, height, scrollTop ],
+        [session.pinnedUnits, flattenUnits, height, scrollTop],
     );
     const headOffset = React.useMemo(
         () => flattenUnits.filter((_, i) => i < first).reduce((prev, cur) => prev + cur.height(), 0),
-        [ flattenUnits, first ],
+        [flattenUnits, first],
     );
     const visibleUnitsHeight = React.useMemo(
         () => flattenUnits.filter((_, i) => first <= i && i < last).reduce((prev, cur) => prev + cur.height(), 0),
-        [ flattenUnits, first, last ],
+        [flattenUnits, first, last],
     );
     const tailOffset = React.useMemo(
         () => flattenUnits.filter((_, i) => i >= last).reduce((prev, cur) => prev + cur.height(), 0),
-        [ flattenUnits, last ],
+        [flattenUnits, last],
     );
-    const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [ headOffset, visibleUnitsHeight, tailOffset ]);
+    const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
 
     const wrapRef = useRef<HTMLDivElement>(null);
     useEffect(() => {

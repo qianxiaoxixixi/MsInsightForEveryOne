@@ -1241,7 +1241,8 @@ bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64
 bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
                                         Protocol::SystemViewBody &responseBody)
 {
-    const LayerStatData &data = QueryLayerData(requestParams.layer);
+    std::string searchName = "%" + requestParams.searchName + "%";
+    const LayerStatData &data = QueryLayerData(requestParams.layer, searchName);
     double layerOperatorTime = data.allOperatorTime;
     std::string orderBy;
     if (requestParams.order == "descend") {
@@ -1253,7 +1254,7 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
                       "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
                       "ROUND(avg(duration) / 1000.0, 4) as avg, "
                       "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
-                      "FROM slice WHERE slice.track_id IN ( SELECT track_id "
+                      "FROM slice WHERE name LIKE ? AND slice.track_id IN ( SELECT track_id "
                       "FROM process JOIN thread t ON process.pid = t.pid "
                       "WHERE process_name = ? ) "
                       "GROUP BY name " + orderBy + " limit ? offset ?";
@@ -1263,7 +1264,8 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
         ServerLog::Error("QueryPythonViewData, fail to prepare sql.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(layerOperatorTime, requestParams.layer, requestParams.pageSize, offset);
+    auto resultSet = stmt->ExecuteQuery(layerOperatorTime, searchName,
+                                        requestParams.layer, requestParams.pageSize, offset);
     while (resultSet->Next()) {
         Protocol::SystemViewDetail systemViewDetail;
         int col = resultStartIndex;
@@ -1282,10 +1284,11 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
     return true;
 }
 
-LayerStatData TraceDatabase::QueryLayerData(const std::string &layer)
+LayerStatData TraceDatabase::QueryLayerData(const std::string &layer, const std::string &name)
 {
     LayerStatData layerStatData;
-    std::string sql = "SELECT sum(duration) AS totalTime, count(distinct name) FROM slice WHERE slice.track_id IN "
+    std::string sql = "SELECT sum(duration) AS totalTime, count(distinct name) FROM slice "
+                      "WHERE name LIKE ? and slice.track_id IN "
                       "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
                       "WHERE process_name = ? ) ";
     auto stmt = CreatPreparedStatement(sql);
@@ -1293,7 +1296,7 @@ LayerStatData TraceDatabase::QueryLayerData(const std::string &layer)
         ServerLog::Error("QueryLayerOperatorTime, fail to prepare sql.");
         return layerStatData;
     }
-    auto resultSet = stmt->ExecuteQuery(layer);
+    auto resultSet = stmt->ExecuteQuery(name, layer);
     if (resultSet->Next()) {
         layerStatData.allOperatorTime = resultSet->GetDouble("totalTime");
         layerStatData.total = resultSet->GetUint64("count(distinct name)");
@@ -1318,9 +1321,9 @@ std::vector<std::string> TraceDatabase::QueryCoreType()
     return acceleratorCoreList;
 }
 
-uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType)
+uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType, const std::string &name)
 {
-    std::string sql = "SELECT count(*) FROM kernel_detail where 1=1";
+    std::string sql = "SELECT count(*) FROM kernel_detail where name LIKE ?";
     if (!coreType.empty()) {
         sql += " AND accelerator_core = ? ";
     }
@@ -1332,7 +1335,7 @@ uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType)
     if (!coreType.empty()) {
         stmt->BindParams(coreType);
     }
-    auto resultSet = stmt->ExecuteQuery();
+    auto resultSet = stmt->ExecuteQuery(name);
     uint64_t total = 0;
     if (resultSet->Next()) {
         total = resultSet->GetUint64("count(*)");
@@ -1359,7 +1362,7 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
                       "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
                       "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
                       "output_formats AS outputFormats FROM kernel_detail "
-                      "where 1=1 " + coreTypes + orderBy + " limit ? offset ?";
+                      "where 1=1 and name LIKE ? " + coreTypes + orderBy + " limit ? offset ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
@@ -1368,13 +1371,14 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
+    std::string searchName = "%" + requestParams.searchName + "%";
+    auto resultSet = stmt->ExecuteQuery(searchName, requestParams.pageSize, offset);
     SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
     const std::vector<std::string> cores = QueryCoreType();
     responseBody.acceleratorCoreList = cores;
-    responseBody.count = QueryTotalKernel(requestParams.coreType);
+    responseBody.count = QueryTotalKernel(requestParams.coreType, searchName);
     return true;
 }
 

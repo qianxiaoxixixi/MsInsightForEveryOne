@@ -31,7 +31,7 @@ registerCrossUnitRenderer({
         if (ctx !== null && selectedRange !== undefined) {
             ctx.beginPath();
             ctx.moveTo(xScale(selectedRange[0]), 0);
-            ctx.setLineDash([ 4, 2 ]);
+            ctx.setLineDash([4, 2]);
             ctx.strokeStyle = '#5291FF';
             ctx.lineTo(xScale(selectedRange[0]), 9999);
             ctx.stroke();
@@ -39,7 +39,7 @@ registerCrossUnitRenderer({
 
             ctx.beginPath();
             ctx.moveTo(xScale(selectedRange[1]), 0);
-            ctx.setLineDash([ 4, 2 ]);
+            ctx.setLineDash([4, 2]);
             ctx.strokeStyle = '#5291FF';
             ctx.lineTo(xScale(selectedRange[1]), 9999);
             ctx.stroke();
@@ -113,25 +113,25 @@ const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMou
     // if using state when mousemoving lastPos will keep updating causing component reload
     const accumulativeZoomRef = React.useRef(0);
     // time -> pos
-    const [ customRenderers, customRenderTriggers ] = useCustomRenderers(session);
-    const [ normalRect, normalCanvas ] = useWatchDomResize<HTMLCanvasElement>();
-    const [ hoverRect, hoverCanvas ] = useWatchDomResize<HTMLCanvasElement>();
+    const [customRenderers, customRenderTriggers] = useCustomRenderers(session);
+    const [normalRect, normalCanvas] = useWatchDomResize<HTMLCanvasElement>();
+    const [hoverRect, hoverCanvas] = useWatchDomResize<HTMLCanvasElement>();
     // pos -> time
-    const xScale = React.useMemo(() => d3.scaleLinear().range([ domainStart, domainEnd ]).domain([ 0, normalRect?.width ?? INTERACTOR_WIDTH ])
-        , [ normalRect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
-    const xReverseScale = React.useMemo(() => d3.scaleLinear().range([ 0, normalRect?.width ?? INTERACTOR_WIDTH ]).domain([ domainStart, domainEnd ])
-        , [ normalRect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
+    const xScale = React.useMemo(() => d3.scaleLinear().range([domainStart, domainEnd]).domain([0, normalRect?.width ?? INTERACTOR_WIDTH])
+        , [normalRect?.width, session.domain.timePerPx, domainStart, domainEnd]);
+    const xReverseScale = React.useMemo(() => d3.scaleLinear().range([0, normalRect?.width ?? INTERACTOR_WIDTH]).domain([domainStart, domainEnd])
+        , [normalRect?.width, session.domain.timePerPx, domainStart, domainEnd]);
     const xReverseScaleRef = React.useRef(xReverseScale);
     xReverseScaleRef.current = xReverseScale;
     const interactorParams: InteractorParams = { normalCanvas, hoverCanvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
-    useEffect(() => { resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect); }, [ normalRect, hoverRect ]);
+    useEffect(() => { resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect); }, [normalRect, hoverRect]);
     useEffect(() => {
         if (!normalCanvas.current) { return; }
         draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
-        const traceAction: string[] = [ 'selectBrushScope', 'dragLane', 'zoomProportion' ];
+        const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
-    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData,
-        session.scrollTop, session.renderTrigger, ...customRenderTriggers ]);
+    }, [domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData,
+        session.scrollTop, session.renderTrigger, ...customRenderTriggers]);
     const point = interactorMouseState.lastPos?.current?.x !== undefined
         ? xScale(interactorMouseState.lastPos?.current?.x)
         : undefined;

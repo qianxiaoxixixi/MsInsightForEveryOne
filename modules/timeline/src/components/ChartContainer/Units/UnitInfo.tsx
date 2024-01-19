@@ -252,7 +252,7 @@ interface UnitInfoProps {
 }
 
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, ...props }: UnitInfoProps): JSX.Element => {
-    const [ isHovered, setIsHovered ] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
     const selectUnit = useSelectUnit(session);
     return <UnitInfoContainer
         className="unit-info"

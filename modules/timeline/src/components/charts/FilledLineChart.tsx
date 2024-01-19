@@ -12,7 +12,7 @@ import { TooltipComponent, TooltipProps } from './TooltipComp';
 type FilledLineChartProps = ChartProps<'filledLine'>;
 
 const findHeights = (datas: number[][]): [number, number] => {
-    if (datas.length === 0) { return [ 0, 0 ]; }
+    if (datas.length === 0) { return [0, 0]; }
     let minHeight = 0;
     let maxHeight = 0;
     datas.forEach(data => {
@@ -24,13 +24,13 @@ const findHeights = (datas: number[][]): [number, number] => {
         minHeight = Math.min(minHeight, height);
         maxHeight = Math.max(maxHeight, height);
     });
-    return [ minHeight, maxHeight * 1.2 ];
+    return [minHeight, maxHeight * 1.2];
 };
 
 const drawAuxiliaryLine = (context: CanvasRenderingContext2D, yScale: Scale,
     auxiliaryValue: number, width: number): void => {
     context.beginPath();
-    context.setLineDash([ 10, 10 ]);
+    context.setLineDash([10, 10]);
     context.moveTo(0, yScale(auxiliaryValue));
     context.lineTo(width, yScale(auxiliaryValue));
     context.strokeStyle = 'white';
@@ -43,7 +43,7 @@ const drawArea = (context: CanvasRenderingContext2D, datas: number[][], minHeigh
     palette: string[], width: number): (undefined | number[]) => {
     if (datas.length === 0) { return; }
 
-    const x = [ ...datas.map(it => xScale(it[0])), 1 + xScale(datas[datas.length - 1][0]) ];
+    const x = [...datas.map(it => xScale(it[0])), 1 + xScale(datas[datas.length - 1][0])];
     const y0 = yScale(minHeight);
     for (let i = 1; i < datas[0].length; i++) {
         context.beginPath();
@@ -66,13 +66,13 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: number[][], width: nu
     if (!ctx) { return; }
     if (datas.length === 0 || datas[0].length > palette.length + 1) { return; }
     let drawDatas: number[][];
-    [ drawDatas, palette ] = removeHideLayerDatas(datas, palette, hideLayer);
+    [drawDatas, palette] = removeHideLayerDatas(datas, palette, hideLayer);
     let minHeight = 0;
     let maxHeight = 0;
-    [ minHeight, maxHeight ] = valueRange ?? findHeights(drawDatas);
+    [minHeight, maxHeight] = valueRange ?? findHeights(drawDatas);
     maxHeight = maxHeight === 0 ? 1 : maxHeight;
     const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
-    const yScale = d3.scaleLinear().range([ height, 0 ]).domain([ minHeight, maxHeight ]);
+    const yScale = d3.scaleLinear().range([height, 0]).domain([minHeight, maxHeight]);
     if (auxiliaryValue !== undefined) { drawAuxiliaryLine(ctx, yScale, auxiliaryValue, width); }
     // draw line and area
     drawArea(ctx, drawDatas, minHeight, maxHeight, xScale, yScale, palette, width);
@@ -149,7 +149,7 @@ const LegendJSX = ({ legend, palette, hideLayer, setHideLayer }: LegendProps): J
 };
 
 const removeHideLayerDatas = (datas: number[][], palette: string[], hideLayer: number[]): [number[][], string[]] => {
-    if (hideLayer.length === 0 || datas.length === 0) { return [ datas, palette ]; }
+    if (hideLayer.length === 0 || datas.length === 0) { return [datas, palette]; }
     const ret: number[][] = [];
     let newPalette: string[] = [];
     datas.forEach(row => {
@@ -161,7 +161,7 @@ const removeHideLayerDatas = (datas: number[][], palette: string[], hideLayer: n
     // the 1st column is timestamp
     ret.forEach((row, index, array) => { array[index] = row.filter((elem, index) => !hideLayer.includes(index - 1)); });
     newPalette = palette.filter((elem, index) => !hideLayer.includes(index));
-    return [ ret, newPalette ];
+    return [ret, newPalette];
 };
 
 // eslint-disable-next-line max-lines-per-function
@@ -175,10 +175,10 @@ export const FilledLineChart = observer(({
     const dataState = useData(session, mapFunc, unit, metadata, width, zipTimeSeriesData);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
-    const [ hideLayer, setHideLayer ] = useState<number[]>([]);
+    const [hideLayer, setHideLayer] = useState<number[]>([]);
     const mousePosX = useHoverPosX(canvasContainer);
-    const hoveredData = useMemo(() => findDataByX(mousePosX, dataState, rangeAndDomain), [ mousePosX, dataState, rangeAndDomain ]);
-    const colorPalette = useMemo(() => palette.map(d => theme.colorPalette[d]), [ palette, theme ]);
+    const hoveredData = useMemo(() => findDataByX(mousePosX, dataState, rangeAndDomain), [mousePosX, dataState, rangeAndDomain]);
+    const colorPalette = useMemo(() => palette.map(d => theme.colorPalette[d]), [palette, theme]);
 
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || dataState.length === 0 || rangeAndDomain.length === 0 ||
@@ -188,7 +188,7 @@ export const FilledLineChart = observer(({
         const ctx = canvas.current.getContext('2d');
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, dataState, width, height, colorPalette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat);
-    }, [ dataState, rangeAndDomain, theme, valueRange, hideLayer, colorPalette ]);
+    }, [dataState, rangeAndDomain, theme, valueRange, hideLayer, colorPalette]);
 
     const tooltipProp: TooltipProps<number[], number[][]> = {
         data: hoveredData,

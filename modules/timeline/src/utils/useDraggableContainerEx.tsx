@@ -386,10 +386,10 @@ const pxConvert = (px: number, container: number[], dragDirection: DragDirection
 };
 
 const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
-    [ DragDirection.top, ContainerTop ],
-    [ DragDirection.bottom, ContainerBottom ],
-    [ DragDirection.left, ContainerLeft ],
-    [ DragDirection.right, ContainerRight ],
+    [DragDirection.top, ContainerTop],
+    [DragDirection.bottom, ContainerBottom],
+    [DragDirection.left, ContainerLeft],
+    [DragDirection.right, ContainerRight],
 ]);
 
 const getOffsetTop = (ele: HTMLElement): number => {
@@ -437,22 +437,22 @@ const switchOpen = (dragDirection: DragDirection, containerWH: number[], isOpen:
  */
 export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen: boolean) => void) ] => {
     const { draggableWH, dragDirection, splitLineRef, open = true } = props;
-    const [ containerHeight, container ] = useWatchResize<HTMLDivElement>('height');
+    const [containerHeight, container] = useWatchResize<HTMLDivElement>('height');
     const draggable = useRef<HTMLDivElement>(null);
-    const [ dragWh, setDragWh ] = useState(String(draggableWH));
-    const [ containerWH, setContainerWH ] = useState([ 0, 0 ]);
-    const [ containerOffsetTop, setContainerOffsetTop ] = useState(0);
-    useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [ draggableWH, containerWH, dragDirection ]);
+    const [dragWh, setDragWh] = useState(String(draggableWH));
+    const [containerWH, setContainerWH] = useState([0, 0]);
+    const [containerOffsetTop, setContainerOffsetTop] = useState(0);
+    useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [draggableWH, containerWH, dragDirection]);
     const MIN_DRAG_WH = useMemo(() => dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH, [dragDirection]);
-    const [ dragTranslate, setDragTranslate ] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
+    const [dragTranslate, setDragTranslate] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
     const isOpen = useRef(open);
 
     useEffect(() => {
         const dom = container.current;
         if (dom) {
-            setContainerWH([ dom.clientWidth, dom.clientHeight ]);
+            setContainerWH([dom.clientWidth, dom.clientHeight]);
         }
-    }, [ setContainerWH, containerHeight ]);
+    }, [setContainerWH, containerHeight]);
     useEffect(() => {
         const dom = container.current;
         if (dom) {
@@ -480,5 +480,5 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
             {props.slot}
         </Container>;
     };
-    return [ view, handleSwitchOpen ];
+    return [view, handleSwitchOpen];
 };

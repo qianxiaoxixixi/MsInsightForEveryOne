@@ -4,7 +4,7 @@ export function useWatchDomResize<T extends Element>(): [
     DOMRectReadOnly | null,
     React.RefObject<T>,
 ] {
-    const [ rect, setRect ] = React.useState<DOMRectReadOnly | null>(null);
+    const [rect, setRect] = React.useState<DOMRectReadOnly | null>(null);
     const ref = React.useRef<T>(null);
     React.useEffect(() => {
         const observer = new ResizeObserver(([entry]) => {
@@ -17,16 +17,16 @@ export function useWatchDomResize<T extends Element>(): [
             observer.disconnect();
         };
     }, []);
-    return [ rect, ref ];
+    return [rect, ref];
 };
 
 export function useWatchResize<T extends Element>(param: 'height' | 'width'): [ number, React.RefObject<T> ] {
-    const [ rect, ref ] = useWatchDomResize<T>();
-    const [ size, setSize ] = React.useState(0);
+    const [rect, ref] = useWatchDomResize<T>();
+    const [size, setSize] = React.useState(0);
     React.useEffect(() => {
         if (rect?.[param] !== undefined) {
             setSize(rect[param]);
         }
     }, [rect]);
-    return [ size, ref ];
+    return [size, ref];
 };

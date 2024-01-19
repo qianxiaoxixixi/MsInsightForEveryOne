@@ -30,7 +30,7 @@ const StyledSliceArgsDiv = styled.div`
 
 const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element => {
     const argsJson = data.args;
-    const [ isHiddenArgs, setHidden ] = useState(false);
+    const [isHiddenArgs, setHidden] = useState(false);
     if (argsJson === undefined) {
         return <></>;
     }

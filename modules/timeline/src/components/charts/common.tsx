@@ -3,11 +3,11 @@ import styled from '@emotion/styled';
 // rect: [x, y, width, height]
 export const drawRoundedRect = (rect: number[], context: CanvasRenderingContext2D, bottomRouned: number, topRounded?: number): void => {
     const points = [
-        [ rect[0] + (topRounded ?? bottomRouned), rect[1] ],
-        [ rect[0] + rect[2], rect[1] ],
-        [ rect[0] + rect[2], rect[1] + rect[3] ],
-        [ rect[0], rect[1] + rect[3] ],
-        [ rect[0], rect[1] ],
+        [rect[0] + (topRounded ?? bottomRouned), rect[1]],
+        [rect[0] + rect[2], rect[1]],
+        [rect[0] + rect[2], rect[1] + rect[3]],
+        [rect[0], rect[1] + rect[3]],
+        [rect[0], rect[1]],
     ];
     context.beginPath();
     context.moveTo(points[0][0], points[0][1]);
@@ -27,18 +27,18 @@ export const drawMultiBgRoundedRect = (rect: number[], context: CanvasRenderingC
     if (order === 0) {
         // 左边圆弧，右边直角，初始点右上角
         points = [
-            [ rect[0] + rect[2], rect[1] ],
-            [ rect[0], rect[1] ],
-            [ rect[0], rect[1] + rect[3] ],
-            [ rect[0] + rect[2], rect[1] + rect[3] ],
+            [rect[0] + rect[2], rect[1]],
+            [rect[0], rect[1]],
+            [rect[0], rect[1] + rect[3]],
+            [rect[0] + rect[2], rect[1] + rect[3]],
         ];
     } else {
         // 右边圆弧，左边直角，初始点左上角
         points = [
-            [ rect[0], rect[1] ],
-            [ rect[0] + rect[2], rect[1] ],
-            [ rect[0] + rect[2], rect[1] + rect[3] ],
-            [ rect[0], rect[1] + rect[3] ],
+            [rect[0], rect[1]],
+            [rect[0] + rect[2], rect[1]],
+            [rect[0] + rect[2], rect[1] + rect[3]],
+            [rect[0], rect[1] + rect[3]],
         ];
     }
     context.beginPath();
@@ -141,7 +141,7 @@ export const zipTimeSeriesData = (dataset: number[][], width: number, start: num
         // no new data in this pixel, copy the last occured data values
         if (getTimestamp(dataset[dataIndex]) > rangeEnd) {
             if (isNewDataOccurred) {
-                result.push([ rangeStart, ...lastData.slice(1) ]);
+                result.push([rangeStart, ...lastData.slice(1)]);
             }
             isNewDataOccurred = false;
             // prepare for next loop
@@ -159,7 +159,7 @@ export const zipTimeSeriesData = (dataset: number[][], width: number, start: num
             });
             dataIndex++;
         } while (dataIndex < dataset.length && getTimestamp(dataset[dataIndex]) <= rangeEnd);
-        result.push([ rangeStart, ...max ]);
+        result.push([rangeStart, ...max]);
         isNewDataOccurred = true;
         // prepare for next loop
         rangeStart = rangeEnd;
@@ -172,8 +172,8 @@ export const zipTimeSeriesData = (dataset: number[][], width: number, start: num
 };
 
 // find the last data that has key <= target
-export const search = <T extends number | object>(data: T[], target: number, getKey: (elem: T) => number, range: [number, number] = [ 0, data.length ]): number => {
-    let [ lo, hi ] = range;
+export const search = <T extends number | object>(data: T[], target: number, getKey: (elem: T) => number, range: [number, number] = [0, data.length]): number => {
+    let [lo, hi] = range;
     while (lo < hi - 1) {
         const mid = Math.floor((lo + hi) / 2);
         const key = getKey(data[mid]);

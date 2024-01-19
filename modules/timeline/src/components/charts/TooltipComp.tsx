@@ -49,8 +49,8 @@ const Tooltip = styled.div<{ needReverse?: boolean }>(props => ({
 
 const TooltipComp = (tooltipArg: TooltipArg): JSX.Element => {
     const tooltipDiv = useRef<HTMLDivElement>(null);
-    const [ table, setTable ] = useState<JSX.Element[]>([]);
-    const [ needReverse, setReverse ] = useState<boolean>(false);
+    const [table, setTable] = useState<JSX.Element[]>([]);
+    const [needReverse, setReverse] = useState<boolean>(false);
     useEffect(() => {
         if (!tooltipDiv?.current?.parentElement) { return; }
         const nowX = tooltipArg.x;
@@ -98,10 +98,10 @@ export interface TooltipProps<F, T>{
 
 export function TooltipComponent<F, T>({ data, session, x, calcHeight, mouseX, dataset, dom, renderContent }: TooltipProps<F, T>): JSX.Element | null {
     const { domainStart, domainEnd } = session.domainRange;
-    const [ scrollTop, setScrollTop ] = useState(0);
+    const [scrollTop, setScrollTop] = useState(0);
     // 监听scroll事件
     useEventBus(EventType.UNITWRAPPERSCROLL, (value) => setScrollTop(value as number));
-    const [ left, top ] = useMemo(() => {
+    const [left, top] = useMemo(() => {
         if (data === undefined || mouseX === null) {
             return [null];
         }
@@ -109,8 +109,8 @@ export function TooltipComponent<F, T>({ data, session, x, calcHeight, mouseX, d
         const top = calcHeight(data);
         const rect = dom.current?.getBoundingClientRect();
 
-        return [ left, (rect?.top ?? 0) + top ];
-    }, [ domainStart, domainEnd, mouseX, dataset, scrollTop ]);
+        return [left, (rect?.top ?? 0) + top];
+    }, [domainStart, domainEnd, mouseX, dataset, scrollTop]);
 
     const content = data !== undefined ? renderContent(data) : undefined;
     if (!content || left === null) { return null; }

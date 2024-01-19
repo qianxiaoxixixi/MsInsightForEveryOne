@@ -8,6 +8,8 @@ import { Divider, Space } from 'antd/lib/index';
 import styled from '@emotion/styled';
 import { Button, Select } from 'antd';
 import {
+    getColumnSearchProps,
+    getDefaultColumData,
     GetPageData,
     kernelDetails,
     Label,
@@ -54,9 +56,9 @@ const SelectContainer = styled.div`
 `;
 
 export const SystemView = observer((props: any) => {
-    const [ key, setKey ] = useState(0);
+    const [key, setKey] = useState(0);
     const SelectContent = useMemo(() => ContentList[key], [key]);
-    const [ conditions, setConditions ] = useState<{ rankId: string }>({ rankId: '' });
+    const [conditions, setConditions] = useState<{ rankId: string }>({ rankId: '' });
     const handleChange = (rankId: string): void => {
         setConditions({ rankId });
     };
@@ -81,8 +83,8 @@ const ViewSelect = observer(() => {
 });
 
 const RankFilter = observer((props: any): JSX.Element => {
-    const [ rankId, setRankId ] = useState<string | undefined>(undefined);
-    const [ rankIdList, setRankIdList ] = useState<string[]>([]);
+    const [rankId, setRankId] = useState<string | undefined>(undefined);
+    const [rankIdList, setRankIdList] = useState<string[]>([]);
     useEffect(() => {
         const rankList: any[] = [];
         for (const unit of props.session.units) {
@@ -115,7 +117,7 @@ const RankFilter = observer((props: any): JSX.Element => {
 });
 
 const SelectList = observer((props: any) => {
-    const [ selectedKey, setSelectedKey ] = useState('0');
+    const [selectedKey, setSelectedKey] = useState('0');
     const handleClick = (key: string): void => {
         props.setKey(key);
         setSelectedKey(key);
@@ -136,15 +138,18 @@ const SelectList = observer((props: any) => {
     );
 });
 
+// eslint-disable-next-line max-lines-per-function
 const BaseSummary = observer((props: any) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = { field: 'totalTime', order: 'descend' };
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const [ page, setPage ] = useState(defaultPage);
-    const [ sorter, setSorter ] = useState(defaultSorter);
-    const [ isLoading, setLoading ] = useState(false);
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
+    const [isLoading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [searchedColumn, setSearchedColumn] = useState('');
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
-    const updateData = async(page: any, sorter: {field: string;order: string}, props: any): Promise<void> => {
+    const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
         if (props.rankId === undefined || props.rankId === '') {
             setDataSource([]);
             setPage(defaultPage);
@@ -153,25 +158,36 @@ const BaseSummary = observer((props: any) => {
         setLoading(true);
         const res = await querySystemViewDetails({
             isQueryTotal: true,
-            rankId: props.rankId,
-            pageSize: page.pageSize,
-            current: page.current,
-            orderBy: sorter.field ?? defaultSorter.field,
-            order: sorter.order ?? defaultSorter.order,
-            layer: props.layerType,
+            rankId: prop.rankId,
+            pageSize: pages.pageSize,
+            current: pages.current,
+            orderBy: sorters.field ?? defaultSorter.field,
+            order: sorters.order ?? defaultSorter.order,
+            layer: prop.layerType,
+            searchName,
         });
         setLoading(false);
         setDataSource(res.systemViewDetails);
         setPage({ ...page, total: res.count });
     };
     useEffect(() => {
-        updateData(page, sorter, props);
-    }, [ sorter, props.rankId ]);
+        updateData(searchText, page, sorter, props);
+    }, [sorter, props.rankId]);
     useEffect(() => {
         if (status === 'download') {
-            updateData(page, sorter, props);
+            updateData(searchText, page, sorter, props);
         }
     }, [status]);
+
+    const colums = [
+        {
+            title: 'Name',
+            dataIndex: 'name',
+            ...getDefaultColumData('name'),
+            ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
+        },
+        ...pythonApiSummaryColumns,
+    ];
     return (
         (status === 'download' || props.rankId === undefined)
             ? <ResizeTable
@@ -180,7 +196,7 @@ const BaseSummary = observer((props: any) => {
                 }}
                 pagination={GetPageData(page, setPage)}
                 dataSource={dataSource}
-                columns={pythonApiSummaryColumns}
+                columns={colums}
                 size="small"
                 loading = {isLoading}/>
             : <Loading style={{ marginTop: '10px' }}/>
@@ -211,21 +227,23 @@ const HCCLSummary = observer((props: any) => {
 const KernelDetails = observer((props: any) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = { field: 'duration', order: 'descend' };
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const [ page, setPage ] = useState(defaultPage);
-    const [ sorter, setSorter ] = useState(defaultSorter);
-    const [ rowData, setRowData ] = useState<any>({});
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
+    const [rowData, setRowData] = useState<any>({});
+    const [searchText, setSearchText] = useState('');
+    const [searchedColumn, setSearchedColumn] = useState('');
 
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
     useEffect(() => {
-        updateData(page, sorter);
-    }, [ sorter, props.rankId ]);
+        updateData(searchText, page, sorter);
+    }, [sorter, props.rankId]);
     useEffect(() => {
         if (status === 'download') {
-            updateData(page, sorter);
+            updateData(searchText, page, sorter);
         }
     }, [status]);
-    const updateData = async(page: any, sorter: {field: string;order: string}): Promise<void> => {
+    const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}): Promise<void> => {
         if (props.rankId === undefined) {
             setDataSource([]);
             setPage(defaultPage);
@@ -233,11 +251,12 @@ const KernelDetails = observer((props: any) => {
         }
         const res = await queryKernelDetails({
             rankId: props.rankId,
-            pageSize: page.pageSize,
-            current: page.current,
-            orderBy: sorter.field ?? defaultSorter.field,
-            order: sorter.order ?? defaultSorter.order,
+            pageSize: pages.pageSize,
+            current: pages.current,
+            orderBy: sorters.field ?? defaultSorter.field,
+            order: sorters.order ?? defaultSorter.order,
             coreType: '',
+            searchName,
         });
         setDataSource(res.kernelDetails);
         setPage({ ...page, total: res.count });
@@ -269,6 +288,12 @@ const KernelDetails = observer((props: any) => {
     };
 
     const colums = [
+        {
+            title: 'Name',
+            dataIndex: 'name',
+            ...getDefaultColumData('name'),
+            ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
+        },
         ...kernelDetails,
         {
             title: 'Click To Timeline',
@@ -302,5 +327,5 @@ const KernelDetails = observer((props: any) => {
     );
 });
 
-const ContentList = [ PythonApiSummary, CannApiSummary,
-    AscendHardWareTask, HCCLSummary, OverlapAnalysis, KernelDetails ];
+const ContentList = [PythonApiSummary, CannApiSummary,
+    AscendHardWareTask, HCCLSummary, OverlapAnalysis, KernelDetails];

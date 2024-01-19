@@ -98,7 +98,7 @@ const TemplatesIcons = ({ left, recommendedTemplates, createSession, templates, 
     const filterTemplates = templates.filter((template) => recommendedTemplates.includes(template.id));
 
     // fold/unfold thumb entrance icons container state
-    const [ entranceWidth, setEntranceWidth ] = React.useState(ICON_SIZE);
+    const [entranceWidth, setEntranceWidth] = React.useState(ICON_SIZE);
     const onFocusThumbEntrance = (): void => { setEntranceWidth(entranceWidth === ICON_SIZE ? ICON_SIZE * (filterTemplates.length + 1) : ICON_SIZE); };
 
     return (<ThumbTipContainer
@@ -115,7 +115,7 @@ const TemplatesIcons = ({ left, recommendedTemplates, createSession, templates, 
                 overlayInnerStyle={{ borderRadius: 18, padding: '6px 19px', whiteSpace: 'nowrap', textAlign: 'center' }}
                 overlayStyle={{ maxWidth: 500, display: entranceWidth < 1.5 * ICON_SIZE ? 'none' : '' }}
                 color={theme.toolTipBackgroundColor}
-                align={{ offset: [ 0, -5 ] }}
+                align={{ offset: [0, -5] }}
                 autoAdjustOverflow
                 placement="bottom"
             ><Icon className="barIcons" onClick={() => createSession(template)}>{template.icon}</Icon></Tooltip>
@@ -199,7 +199,7 @@ const Recommendations = observer(({ session }: { session: Session }): JSX.Elemen
     const fetch = async (session: Session): Promise<RecommendedTemplateData[]> => [];
 
     // useState to manage data, watch domain, endTimeAll change to update RecommendedTemplate
-    const [ recommandedTemplateData, setRecommandedTemplateData ] = React.useState<RecommendedTemplateData[]>([]);
+    const [recommandedTemplateData, setRecommandedTemplateData] = React.useState<RecommendedTemplateData[]>([]);
     const updateData = async (): Promise<void> => {
         setRecommandedTemplateData(await fetch(session).catch(() => {
             Logger('Recommendations', 'fetch data error', 'warn');
@@ -208,7 +208,7 @@ const Recommendations = observer(({ session }: { session: Session }): JSX.Elemen
     };
     React.useEffect(() => {
         updateData();
-    }, [ domainStart, domainEnd, endTimeAll ]);
+    }, [domainStart, domainEnd, endTimeAll]);
 
     return <ThumbEntrance {...session.domainRange} {...initialValue} recommendedTemplates={recommandedTemplateData} />;
 });

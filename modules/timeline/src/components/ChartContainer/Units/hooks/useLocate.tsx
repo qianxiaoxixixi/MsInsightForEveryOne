@@ -80,5 +80,5 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
                 session.locateUnit = undefined;
             });
         },
-    ), [ session, dom, unitsArea ]);
+    ), [session, dom, unitsArea]);
 };

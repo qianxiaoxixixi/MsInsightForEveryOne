@@ -188,11 +188,11 @@ const generateDefaultNumber = (session: Session): number => {
     return maxNumber;
 };
 
-const tableElementId = [ 'timeMakerList', 'singleFlagEdit', 'colorEditor', 'deleteALLConfirm' ];
+const tableElementId = ['timeMakerList', 'singleFlagEdit', 'colorEditor', 'deleteALLConfirm'];
 export const handleSingleClick = (e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>,
     domainStart: number, domainEnd: number, current: HTMLCanvasElement | null): void => {
     if (session.phase === 'waiting' || session.phase === 'recording' || session.phase === 'analyzing' || session.selectedRange !== undefined) { return; }
-    const xScale = linearScaleFactory(range.current, [ domainStart, domainEnd ]);
+    const xScale = linearScaleFactory(range.current, [domainStart, domainEnd]);
     const timeStamp = Math.floor(xScale(e.offsetX));
     const timeDisplay = getTimestamp(timeStamp, { precision: session.isNsMode ? 'ns' : 'ms' });
     if (current === null || session.endTimeAll === undefined || timeStamp > session.endTimeAll) { return; }
@@ -214,7 +214,7 @@ export const handleSingleClick = (e: MouseEvent, session: Session, range: React.
         return;
     }
     // 已放置标记,选中标记
-    const xOffset = linearScaleFactory([ domainStart, domainEnd ], range.current);
+    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
     for (let index = 0; index < session.timelineMaker.timelineFlagList.length; index++) {
         const flagXOffset = xOffset(session.timelineMaker.timelineFlagList[index].timeStamp);
         const anotherMakerTimeStamp = session.timelineMaker.timelineFlagList[index].anotherTimeStamp;
@@ -319,7 +319,7 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
         return <></>;
     }
     const timelineAxisFlag = session.timelineMaker.timelineFlagList[index];
-    const [ theme, setTheme ] = useState(useTheme());
+    const [theme, setTheme] = useState(useTheme());
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
@@ -492,7 +492,7 @@ export const handleDoubleClick = (e: MouseEvent, session: Session, range: React.
     if (!canvasNow) {
         return;
     }
-    const xOffset = linearScaleFactory([ domainStart, domainEnd ], range.current);
+    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
     for (let index = 0; index < session.timelineMaker.timelineFlagList.length; index++) {
         const flagXOffset = Math.floor(xOffset(session.timelineMaker.timelineFlagList[index].timeStamp));
         const anotherMarkerTimestamp = session.timelineMaker.timelineFlagList[index].anotherTimeStamp;
@@ -529,8 +529,8 @@ const setSelectFlag = (session: Session, index: number, mouseXOffset: number, xO
             if (isInFlagXOffsetRange(mouseXOffset, flagXOffset) || isInFlagXOffsetRange(mouseXOffset, anotherMarkerXOffset)) {
                 const rangeStart = flagItem.timeStamp < flagItem.anotherTimeStamp ? flagItem.timeStamp : flagItem.anotherTimeStamp;
                 const rangeEnd = flagItem.timeStamp > flagItem.anotherTimeStamp ? flagItem.timeStamp : flagItem.anotherTimeStamp;
-                session.timelineMaker.oldMarkedRange = [ rangeStart, rangeEnd ];
-                session.selectedRange = [ rangeStart, rangeEnd ];
+                session.timelineMaker.oldMarkedRange = [rangeStart, rangeEnd];
+                session.selectedRange = [rangeStart, rangeEnd];
             }
         } else {
             if (isInFlagXOffsetRange(mouseXOffset, flagXOffset)) {
@@ -560,7 +560,7 @@ registerCrossUnitRenderer({
         if (ctx !== null && selectedFlag !== undefined) {
             ctx.beginPath();
             ctx.moveTo(xScale(selectedFlag.timeStamp), 40);
-            ctx.setLineDash([ 4, 2 ]);
+            ctx.setLineDash([4, 2]);
             ctx.strokeStyle = '#5291FF';
             ctx.lineTo(xScale(selectedFlag.timeStamp), 9999);
             ctx.stroke();
@@ -604,10 +604,10 @@ const CanvasContainer = styled.div`
 `;
 
 export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps): JSX.Element => {
-    const range = useRef<[ number, number ]>([ 0, 0 ]);
+    const range = useRef<[ number, number ]>([0, 0]);
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const { domainStart, domainEnd } = session.domainRange;
-    const [ width, ref ] = useWatchResize<HTMLDivElement>('width');
+    const [width, ref] = useWatchResize<HTMLDivElement>('width');
     React.useEffect(() => {
         if (!canvas.current) {
             return;
@@ -618,13 +618,13 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
             addEventListener('click', singleClickListener);
             addEventListener('dblclick', doubleClickListener);
         }
-        drawTimelineFlags(session, [ domainStart, domainEnd ], canvas.current, range);
-        range.current = [ 0, canvas.current.clientWidth ];
+        drawTimelineFlags(session, [domainStart, domainEnd], canvas.current, range);
+        range.current = [0, canvas.current.clientWidth];
         return () => {
             removeEventListener('click', singleClickListener);
             removeEventListener('dblclick', doubleClickListener);
         };
-    }, [ width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange ]);
+    }, [width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
     return <CanvasContainer ref={ref}>
         <canvas
             id={ 'timelineFlagCnvas' }
@@ -664,7 +664,7 @@ export const ColorEditor = observer((props: TimeLineMakerProps): JSX.Element => 
     const session = props.session;
     const colorBoxClickListener = (event: React.MouseEvent<HTMLDivElement, MouseEvent>): void => handleColorBoxClick(theme, event, timelineAxisFlag);
     const diyColorListener = (): void => handleColorSelect(theme, session, timelineAxisFlag);
-    const [ theme, setTheme ] = useState(useTheme());
+    const [theme, setTheme] = useState(useTheme());
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
@@ -708,7 +708,7 @@ export const changeRangeMarkerTimestamp = (session: Session, newRange: [TimeStam
                 item.timeStamp = rangeStart;
                 item.timeDisplay = getTimestamp(rangeStart, { precision: session.isNsMode ? 'ns' : 'ms' });
                 item.anotherTimeStamp = rangeEnd;
-                session.timelineMaker.oldMarkedRange = [ rangeStart, rangeEnd ];
+                session.timelineMaker.oldMarkedRange = [rangeStart, rangeEnd];
                 // 通知时间轴进行标记绘图更新
                 session.timelineMaker.refreshTrigger = (++session.timelineMaker.refreshTrigger) % 10;
             });

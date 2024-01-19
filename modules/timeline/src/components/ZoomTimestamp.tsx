@@ -44,7 +44,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         isLowerBound: session.domain.isLowerBound,
         isUpperBound: session.domain.isUpperBound,
         shouldResetDisable: session.endTimeAll === undefined,
-    }), [ session.domain.duration, session.endTimeAll ]);
+    }), [session.domain.duration, session.endTimeAll]);
     return <Container>
         <Container>
             <StyledTooltip title={i18n.t('tooltip:reset')}><StyledReset

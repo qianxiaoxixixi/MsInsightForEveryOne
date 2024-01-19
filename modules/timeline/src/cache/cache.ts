@@ -41,7 +41,7 @@ export default class DicCachedEngine {
         let jsonData: Partial<any> = {};
         for (const key in params) {
             const requestKey = key as keyof any;
-            const currCache = null // sessionCaches[requestKey];
+            const currCache = null; // sessionCaches[requestKey];
             if (dataFunc === undefined) {
                 continue;
             }
@@ -50,7 +50,7 @@ export default class DicCachedEngine {
                 if (currCache === null) {
                     data = [];
                 } else {
-                    data = []
+                    data = [];
                 }
             } catch (e) {
                 // wedge ErrorRes

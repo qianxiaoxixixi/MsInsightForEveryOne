@@ -114,7 +114,7 @@ const drawRight = (ctx: CanvasRenderingContext2D, {
     palette,
     canvasHeight,
 }: DrawRightParams): void => {
-    const xScale = d3.scaleLinear().range(range).domain([ 0, 10 ]);
+    const xScale = d3.scaleLinear().range(range).domain([0, 10]);
     const ratio = 0.15;
     const yOffset = canvasHeight / datas.length;
     const rectSizePara = canvasHeight * ratio / 5;
@@ -142,7 +142,7 @@ export const GaugeChart = observer(({ session, dataFormat, mapFunc, totalFormat,
     const canvas = useRef<HTMLCanvasElement>(null);
     const theme = useTheme();
     const topHeight = 11;
-    const colorPalette = useMemo(() => palette.map(d => theme.colorPalette[d]), [ palette, theme ]);
+    const colorPalette = useMemo(() => palette.map(d => theme.colorPalette[d]), [palette, theme]);
     const draw = async (isCanceled: () => boolean): Promise<void> => {
         let datas: Array<[number, string]> = [];
         try {
@@ -153,7 +153,7 @@ export const GaugeChart = observer(({ session, dataFormat, mapFunc, totalFormat,
         if (isCanceled() || !canvas.current) { return; }
         const height = canvas.current.clientHeight;
         const width = canvas.current.clientWidth;
-        const rangeRight: [ number, number ] = [ 160, 350 ];
+        const rangeRight: [ number, number ] = [160, 350];
         canvas.current.width = width;
         canvas.current.height = height;
         const ctx = canvas.current.getContext('2d');
@@ -161,10 +161,10 @@ export const GaugeChart = observer(({ session, dataFormat, mapFunc, totalFormat,
         drawLeft(ctx, { datas, canvasHeight: height - topHeight, palette: colorPalette });
         drawRight(ctx, { range: rangeRight, datas, dataFormat, theme, palette: colorPalette, canvasHeight: 90 });
         if (totalFormat !== undefined) {
-            const format: [ string, string | undefined ] = [ (await totalFormat[0]()).toString(), totalFormat[1] ];
+            const format: [ string, string | undefined ] = [(await totalFormat[0]()).toString(), totalFormat[1]];
             drawTotalText(ctx, height - topHeight, format, theme);
         }
     };
-    useAsyncEffect(draw, [ session.endTimeAll, theme ]);
+    useAsyncEffect(draw, [session.endTimeAll, theme]);
     return <CanvasChart ref={canvas} width={400} height={90} />;
 });

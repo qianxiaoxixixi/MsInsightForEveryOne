@@ -109,9 +109,9 @@ const InputSpan = styled.span`
 const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
     const cardId = (metaData as ThreadTraceRequest).cardId;
     const defaultOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0;
-    const [ offset, setOffset ] = useState(String(defaultOffset));
-    const [ visible, setVisible ] = useState(false);
-    const [ title, setTitle ] = useState('Please enter a proper value');
+    const [offset, setOffset] = useState(String(defaultOffset));
+    const [visible, setVisible] = useState(false);
+    const [title, setTitle] = useState('Please enter a proper value');
     return <StyledSelect
         width={100}
         height={18}

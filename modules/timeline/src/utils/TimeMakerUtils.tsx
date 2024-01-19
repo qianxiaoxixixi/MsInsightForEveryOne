@@ -122,8 +122,8 @@ const handleSelected = (item: TimelineAxisFlag, props: TimeLineMakerProps, theme
     runInAction(() => {
         props.session.timelineMaker.selectedFlag = item;
         if (item.anotherTimeStamp !== undefined) {
-            props.session.selectedRange = [ item.timeStamp, item.anotherTimeStamp ];
-            props.session.timelineMaker.oldMarkedRange = [ item.timeStamp, item.anotherTimeStamp ];
+            props.session.selectedRange = [item.timeStamp, item.anotherTimeStamp];
+            props.session.timelineMaker.oldMarkedRange = [item.timeStamp, item.anotherTimeStamp];
         }
     });
     const flagTableElements = document.getElementById('flagTable')?.children;
@@ -166,7 +166,7 @@ const mouseMoveListener = (event: MouseEvent, props: TimeLineMakerProps, theme: 
             currentRow.style.backgroundColor = theme.flagListHoverColor;
         }
     }
-    const timeStampRange = [ selectedTimeStamp, hoverTimeStamp ];
+    const timeStampRange = [selectedTimeStamp, hoverTimeStamp];
     timeStampRange.sort((a, b) => a - b);
     const timeDifference = getTimeDifference(Math.floor(timeStampRange[0]), Math.floor(timeStampRange[1]), props.session.isNsMode);
     setTimeDiff(timeDifference);
@@ -365,25 +365,25 @@ const handleJump = (item: TimelineAxisFlag, session: Session): void => {
                 return;
             }
             session.domainRange = { domainStart, domainEnd };
-            session.selectedRange = [ item.timeStamp, item.anotherTimeStamp ];
-            session.timelineMaker.oldMarkedRange = [ item.timeStamp, item.anotherTimeStamp ];
+            session.selectedRange = [item.timeStamp, item.anotherTimeStamp];
+            session.timelineMaker.oldMarkedRange = [item.timeStamp, item.anotherTimeStamp];
         });
     }
 };
 
 const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element => {
     const [list] = useState(props.session.timelineMaker.timelineFlagList);
-    const [ selectedFlag, setSelectFlag ] = useState(props.session.timelineMaker.selectedFlag);
-    const [ timeDiff, setTimeDiff ] = useState(selectedFlag ? getTimeDifference(0, 0, props.session.isNsMode) : i18n.t('timelineMarker:unselected') as string);
-    const [ flagColor, setFlagColor ] = useState('');
-    const [ deleteSignal, setDeleteSignal ] = useState(0);
-    const [ theme, setTheme ] = useState(useTheme());
-    const [ shouldShowDescToolTip, setShouldShowDescToolTip ] = useState(false);
+    const [selectedFlag, setSelectFlag] = useState(props.session.timelineMaker.selectedFlag);
+    const [timeDiff, setTimeDiff] = useState(selectedFlag ? getTimeDifference(0, 0, props.session.isNsMode) : i18n.t('timelineMarker:unselected') as string);
+    const [flagColor, setFlagColor] = useState('');
+    const [deleteSignal, setDeleteSignal] = useState(0);
+    const [theme, setTheme] = useState(useTheme());
+    const [shouldShowDescToolTip, setShouldShowDescToolTip] = useState(false);
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
         }
-    }, [ selectedFlag, list, timeDiff, flagColor, deleteSignal, themeInstance.getThemeType() ]);
+    }, [selectedFlag, list, timeDiff, flagColor, deleteSignal, themeInstance.getThemeType()]);
 
     return <MarkerListBody id="timeMakerList" style={{ backgroundColor: theme.tooltipBGColor, width: '400px', height: '263px' }}>
         <MarkerListText style={{ display: 'flex', fontSize: '14px' }}>
@@ -412,7 +412,7 @@ const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element =
 
 const DeleteALLConfirm = observer((props: TimeLineMakerProps): JSX.Element => {
     const list = props.session.timelineMaker.timelineFlagList;
-    const [ theme, setTheme ] = useState(useTheme());
+    const [theme, setTheme] = useState(useTheme());
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());

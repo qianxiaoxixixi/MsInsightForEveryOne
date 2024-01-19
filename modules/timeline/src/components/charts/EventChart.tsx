@@ -17,7 +17,7 @@ const borderWidth = 2;
 
 function drawData(context: CanvasRenderingContext2D, happenTime: number, endTime: number, rangeAndDomain: Array<[number, number]>, theme: Theme): void {
     const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true);
-    const [ domainStart, domainEnd ] = rangeAndDomain[1];
+    const [domainStart, domainEnd] = rangeAndDomain[1];
     if (happenTime === endTime) {
         if (happenTime >= domainStart && happenTime <= domainEnd) {
             drawCircle(theme, context, xScale(happenTime));
@@ -75,7 +75,7 @@ const drawRectByXY = (context: CanvasRenderingContext2D | null, dataState: Event
         mousePos === undefined || mousePos.y < 8 || mousePos.y > 20) {
         return;
     }
-    const [ domainStart, domainEnd ] = rangeAndDomain[1];
+    const [domainStart, domainEnd] = rangeAndDomain[1];
     const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true);
     context.globalAlpha = 0.3;
     for (let i = 0; i < dataState.length; i++) {
@@ -125,7 +125,7 @@ export const EventChart = observer(({ margin, session, mapFunc, metadata, height
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const mousePos = useHoverPos(canvasContainer);
-    const hoveredData = useMemo(() => findDataByX(mousePos?.x, dataState, rangeAndDomain), [ mousePos, dataState, rangeAndDomain ]);
+    const hoveredData = useMemo(() => findDataByX(mousePos?.x, dataState, rangeAndDomain), [mousePos, dataState, rangeAndDomain]);
 
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || dataState.length === 0 || rangeAndDomain.length === 0 ||
@@ -136,7 +136,7 @@ export const EventChart = observer(({ margin, session, mapFunc, metadata, height
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, dataState, rangeAndDomain, theme);
         drawRectByXY(ctx, dataState, rangeAndDomain, mousePos, theme);
-    }, [ dataState, rangeAndDomain, theme, mousePos ]);
+    }, [dataState, rangeAndDomain, theme, mousePos]);
 
     const tooltipProp: TooltipProps<EventData, EventData[]> = {
         data: hoveredData,

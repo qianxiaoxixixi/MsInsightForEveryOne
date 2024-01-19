@@ -62,8 +62,8 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
         ctx.fillRect(startTime, yScale(data.depth) + 1, width, height - 2);
     } else {
         order === undefined
-            ? drawRoundedRect([ startTime, yScale(data.depth) + 1, width, height - 2 ], ctx, radius)
-            : drawMultiBgRoundedRect([ startTime, yScale(data.depth) + 1, width, height - 2 ], ctx, radius, order);
+            ? drawRoundedRect([startTime, yScale(data.depth) + 1, width, height - 2], ctx, radius)
+            : drawMultiBgRoundedRect([startTime, yScale(data.depth) + 1, width, height - 2], ctx, radius, order);
         ctx.fill();
     }
 };
@@ -139,7 +139,7 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
     return undefined;
 };
 
-const findDataByXXRange = ([ downX, upX ]: number[], datas: StackStatusData[][],
+const findDataByXXRange = ([downX, upX]: number[], datas: StackStatusData[][],
     rangeAndDomain: Array<[number, number]>): StackStatusData[] | undefined => {
     if (downX === undefined || upX === undefined || datas.length === 0 || rangeAndDomain.length === 0) {
         return undefined;
@@ -169,8 +169,8 @@ const mouseUpFunc = (e: MouseEvent, datasState: StackStatusData[][], rangeAndDom
     });
 };
 
-const mouseMoveUpFunc = ([ downX, upX ]: number[], datasState: StackStatusData[][], rangeAndDomain: Array<[number, number]>, session: Session): void => {
-    const selectedRangeData = findDataByXXRange([ downX, upX ], datasState, rangeAndDomain);
+const mouseMoveUpFunc = ([downX, upX]: number[], datasState: StackStatusData[][], rangeAndDomain: Array<[number, number]>, session: Session): void => {
+    const selectedRangeData = findDataByXXRange([downX, upX], datasState, rangeAndDomain);
     runInAction(() => {
         session.selectedRangeData = selectedRangeData;
     });
@@ -184,12 +184,12 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     const datasState = useData(session, mapFunc, unit, metadata, width, (data, width, start, end) =>
         data.map(row => zipStatusData(row, width, start, end)));
     const rangeAndDomain = useRangeAndDomain(session, width, margin); const mousePos = useHoverPos(canvasContainer);
-    const hoveredData = useMemo(() => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0), [ mousePos, datasState, rangeAndDomain ]);
+    const hoveredData = useMemo(() => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0), [mousePos, datasState, rangeAndDomain]);
     const handleMouseUp = (e: MouseEvent): void => { mouseUpFunc(e, datasState, rangeAndDomain, rowHeight, session, metadata, onClick); };
-    const handleMouseMoveUp = ([ downX, upX ]: number[]): void => { mouseMoveUpFunc([ downX, upX ], datasState, rangeAndDomain, session); };
-    useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
+    const handleMouseMoveUp = ([downX, upX]: number[]): void => { mouseMoveUpFunc([downX, upX], datasState, rangeAndDomain, session); };
+    useEffect(() => onHover?.(hoveredData, session, metadata), [hoveredData, metadata]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
-    const yScale = isCollapse ? d3.scaleLinear().range([ 0, height ]).domain([ 0, maxDepth as number ]) : (depth: number): number => depth * rowHeight;
+    const yScale = isCollapse ? d3.scaleLinear().range([0, height]).domain([0, maxDepth as number]) : (depth: number): number => depth * rowHeight;
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||
             canvas.current.width === 0 || canvas.current.height === 0) {
@@ -204,7 +204,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
             draw: (data, xScale, yScale) => draw(ctx, data, xScale, yScale, theme, session.endTimeAll ?? 0, textConfig),
             findAll: (condition) => datasState.map(it => it.filter(condition)),
         }, xScale, yScale, theme);
-    }, [ datasState, rangeAndDomain, ...triggers, theme, isCollapse ]);
+    }, [datasState, rangeAndDomain, ...triggers, theme, isCollapse]);
 
     const tooltipProp: TooltipProps<StackStatusData, StackStatusData[][]> = {
         data: hoveredData,

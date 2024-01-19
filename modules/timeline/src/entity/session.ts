@@ -259,7 +259,7 @@ export class Session {
     }
 
     printSessionInfo(): string {
-        return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
+        return `${JSON.stringify({ ...omit(this, ['caches', 'sharedState', '_units']) })}`;
     }
 
     sortUnits(): void {

@@ -73,18 +73,18 @@ const getHandleFuncs = (session: Session, selectedParams: Array<keyof SelectedPa
 
 const getDisplayValue = (session: Session, comparisonInfos: unknown[], callbackFunc: CallbackFunc['processDisplayValue']): [ string | undefined, string | undefined, number | undefined, number | undefined ] => {
     if (!Array.isArray(comparisonInfos)) {
-        return [ undefined, undefined, undefined, undefined ];
+        return [undefined, undefined, undefined, undefined];
     }
-    const [ baseValue, baseId ] = callbackFunc(session, comparisonInfos, true);
-    const [ curValue, curId ] = callbackFunc(session, comparisonInfos, false);
+    const [baseValue, baseId] = callbackFunc(session, comparisonInfos, true);
+    const [curValue, curId] = callbackFunc(session, comparisonInfos, false);
 
-    return [ baseValue, curValue, baseId, curId ];
+    return [baseValue, curValue, baseId, curId];
 };
 
 const useFilterListValues = (comparisonInfos: unknown[], callbackFunc: CallbackFunc['filterListValues'], baseId?: number, curId?: number): [ unknown[], unknown[] ] => {
-    const baseListValues = React.useMemo(callbackFunc(comparisonInfos, baseId), [ comparisonInfos, baseId ]);
-    const curListValues = React.useMemo(callbackFunc(comparisonInfos, curId), [ comparisonInfos, curId ]);
-    return [ baseListValues, curListValues ];
+    const baseListValues = React.useMemo(callbackFunc(comparisonInfos, baseId), [comparisonInfos, baseId]);
+    const curListValues = React.useMemo(callbackFunc(comparisonInfos, curId), [comparisonInfos, curId]);
+    return [baseListValues, curListValues];
 };
 
 type CallbackFunc = {
@@ -97,9 +97,9 @@ type ComparisonDetailProps<T extends CommonStateProto> = TableViewProps<DetailTa
 
 export const ComparisonDetail = observer(function<T extends CommonStateProto>({ session, height, detail, processDisplayValue, filterListValues, createSelectOption }: ComparisonDetailProps<T>): JSX.Element {
     const state = useComparisonUpdater(session, detail);
-    const [ handleBase, handleCur ] = getHandleFuncs(session, Object.keys(session.selectedParams) as unknown as Array<keyof SelectedParams>);
-    const [ baseValue, curValue, baseId, curId ] = getDisplayValue(session, state.extraData.result as unknown[], processDisplayValue);
-    const [ baseListValues, curListValues ] = useFilterListValues(state.extraData.result as unknown[], filterListValues, baseId, curId);
+    const [handleBase, handleCur] = getHandleFuncs(session, Object.keys(session.selectedParams) as unknown as Array<keyof SelectedParams>);
+    const [baseValue, curValue, baseId, curId] = getDisplayValue(session, state.extraData.result as unknown[], processDisplayValue);
+    const [baseListValues, curListValues] = useFilterListValues(state.extraData.result as unknown[], filterListValues, baseId, curId);
     return (
         <>
             <ControllerBar gutter={7} align="middle">
@@ -111,7 +111,7 @@ export const ComparisonDetail = observer(function<T extends CommonStateProto>({ 
                     value={baseValue}
                 >
                     {baseListValues?.map((item) => {
-                        const [ rawId, selectStr ] = createSelectOption(item);
+                        const [rawId, selectStr] = createSelectOption(item);
                         return <Select.Option key={rawId}>{selectStr}</Select.Option>;
                     })}
                 </StyledSelect></Col>
@@ -124,7 +124,7 @@ export const ComparisonDetail = observer(function<T extends CommonStateProto>({ 
                     value={curValue}
                 >
                     {curListValues?.map((item) => {
-                        const [ rawId, selectStr ] = createSelectOption(item);
+                        const [rawId, selectStr] = createSelectOption(item);
                         return <Select.Option key={rawId}>{selectStr}</Select.Option>;
                     })}
                 </StyledSelect></Col>

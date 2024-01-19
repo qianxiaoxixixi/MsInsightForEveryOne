@@ -190,6 +190,7 @@ struct SystemViewParams {
     uint64_t endTime;
     bool isQueryTotal = false;
     std::string layer;
+    std::string searchName;
 };
 
 struct SystemViewRequest : public Request {
@@ -204,6 +205,7 @@ struct KernelDetailsParams {
     uint64_t pageSize;
     std::string rankId;
     std::string coreType;
+    std::string searchName;
 };
 
 struct KernelDetailsRequest : public Request {
