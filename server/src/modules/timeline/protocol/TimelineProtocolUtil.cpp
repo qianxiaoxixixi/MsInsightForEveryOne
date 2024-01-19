@@ -298,9 +298,10 @@ template <> std::optional<document_t> ToResponseJson<UnitCounterResponse>(const 
     for (const auto &counterData : response.body.data) {
         json_t tmp(kObjectType);
         JsonUtil::AddMember(tmp, "timestamp", counterData.timestamp, allocator);
-        auto value = JsonUtil::TryParse(counterData.valueJsonStr, error);
-        if (value.has_value()) {
-            JsonUtil::AddMember(tmp, "value", value.value(), allocator);
+        auto tryParse = JsonUtil::TryParse(counterData.valueJsonStr, error);
+        if (tryParse.has_value()) {
+            Value value(tryParse.value(), allocator);
+            JsonUtil::AddMember(tmp, "value", value, allocator);
         } else {
             ServerLog::Warn("Failed to parse unit counter value. ", error);
         }
