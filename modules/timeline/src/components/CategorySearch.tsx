@@ -33,7 +33,18 @@ const CustomDiv = styled.div`
     }
 `;
 
-const StylePagination = styled((props: PaginationProps) => <Pagination {...props} />)`
+const StylePagination = styled(({ current, total, ...props }: PaginationProps) => {
+    useEffect(() => {
+        if (current === undefined || total === undefined) { return; }
+        const parent = document.querySelector('.ant-pagination-simple-pager');
+        const input = parent?.querySelector('input');
+        setTimeout(() => {
+            input && (input.value = (current - 1).toString());
+            parent?.childNodes[2] && (parent.childNodes[2].textContent = `${total - 1}`);
+        });
+    }, [current, total]);
+    return <Pagination current={current} total={total} {...props} />;
+})`
     .ant-pagination-item-link {
         color: ${(props) => props.theme.fontColor};
         display: inline-block;
@@ -94,21 +105,24 @@ const jumpSlice = async (session: Session, searchContent: string, index: number)
     let finalDataSource;
     let finalRankId;
     let flag = false;
+    // 当 index 等于 1 时，界面显示为 0，表示展示全部的搜索结果，因为 Pagination 组件不支持 0，所以 index 为 1 时实际展示为 0
+    // 这里 -1 是为了修正对后端调用的影响
+    let fixedIndex = index - 1;
     for (const remoteCount of remoteCntArray) {
         if (flag) {
             break;
         }
         for (const rankCount of remoteCount.countList) {
-            if (index <= rankCount.count) {
+            if (fixedIndex <= rankCount.count) {
                 finalRankId = rankCount.rankId;
                 finalDataSource = remoteCount.dataSource;
                 flag = true;
                 break;
             }
-            index -= rankCount.count;
+            fixedIndex -= rankCount.count;
         }
     }
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index } });
+    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, fixedIndex } });
     doJumpSlice(session, slice);
 };
 
