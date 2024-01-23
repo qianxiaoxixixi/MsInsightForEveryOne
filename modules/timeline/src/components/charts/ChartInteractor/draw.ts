@@ -320,7 +320,6 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
     if (ctx === null) { return; }
     // clear all
     ctx.clearRect(0, 0, width, height);
-
     drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScale, xScale, selectedRange, session, isNsMode, theme });
 
     // should filter on data type
@@ -361,9 +360,12 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
         .forEach(datas => {
             datas?.forEach((data) => {
                 const { category, from, to, cardId } = data as unknown as FlowEvent;
-                const targetX = xScale(to.timestamp);
+                const timestampOffset = cardId !== undefined
+                    ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
+                    : 0;
+                const targetX = xScale(to.timestamp - timestampOffset);
                 const targetY = getHeight(session, to, cardId);
-                const sourceX = xScale(from.timestamp);
+                const sourceX = xScale(from.timestamp - timestampOffset);
                 const sourceY = getHeight(session, from, cardId);
                 if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
                 const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
