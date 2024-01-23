@@ -82,6 +82,7 @@ const onPressEnter = (session: Session, setValue: React.Dispatch<React.SetStateA
     runInAction(() => {
         const input = (e.target as HTMLInputElement);
         checkValue(input, session, setValue, setVisible, metaData);
+        session.renderTrigger = !session.renderTrigger;
     });
 };
 
