@@ -21,6 +21,18 @@ TEST_F(TestSuit, QueryComputeStatisticsData)
     EXPECT_EQ(responseBody.summaryStatisticsItemList.size(), expectSize);
 }
 
+TEST_F(TestSuit, QueryComputeStatisticsDataWithEmptyParamReturnExpectSize)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    Dic::Protocol::SummaryStatisticParams requestParams;
+    requestParams.stepId = "";
+    Dic::Protocol::SummaryStatisticsBody responseBody;
+    auto res = database->QueryComputeStatisticsData(requestParams, responseBody);
+    EXPECT_EQ(res, true);
+    const int expectSize = 5;
+    EXPECT_EQ(responseBody.summaryStatisticsItemList.size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryComputeStatisticsData2)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");

@@ -128,6 +128,20 @@ TEST_F(TestSuit, QueryBandwidthData)
     EXPECT_EQ(responseBody.items[0].largePacketRatio, 0.0);
 }
 
+TEST_F(TestSuit, QueryBandwidthDataWithErrorParamReturnExpectSize0)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::BandwidthDataParam requestParams;
+    Dic::Protocol::BandwidthDataResBody responseBody;
+    requestParams.iterationId = "100";
+    requestParams.stage = "p2p";
+    requestParams.operatorName = "Total Op Info";
+    requestParams.rankId = "1";
+    database->QueryBandwidthData(requestParams, responseBody);
+    const int expectSize = 0;
+    EXPECT_EQ(responseBody.items.size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryOperatorsCount)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
@@ -137,8 +151,14 @@ TEST_F(TestSuit, QueryOperatorsCount)
     requestParams.stage = "p2p";
     requestParams.rankId = "1";
     database->QueryOperatorsCount(requestParams, responseBody);
-    int expectSize = 1;
+    const int expectSize = 1;
     EXPECT_EQ(responseBody.count, expectSize);
+    requestParams.iterationId = "2";
+    requestParams.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    requestParams.rankId = "1";
+    database->QueryOperatorsCount(requestParams, responseBody);
+    const int stageExpectSize = 2;
+    EXPECT_EQ(responseBody.count, stageExpectSize);
 }
 
 TEST_F(TestSuit, GetCommunicationGroups)
