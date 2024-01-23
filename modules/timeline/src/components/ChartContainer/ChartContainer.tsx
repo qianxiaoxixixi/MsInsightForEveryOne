@@ -95,6 +95,9 @@ const ChartBody = observer((props: ChartBodyProps) => {
         } else {
             handleSwitchOpen(false);
         }
+        runInAction(() => {
+            session.renderTrigger = !session.renderTrigger;
+        });
     }, [session.pinnedUnits]);
     return (<>
         {
