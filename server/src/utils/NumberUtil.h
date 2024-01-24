@@ -8,11 +8,15 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "cmath"
 
 namespace Dic {
 const int INVALID_NUMBER = 0xffffffff;
 // 16进制
 const int HEXADECIMAL = 16;
+const std::string THOUSAND_SUFFIX = "000";
+const int THOUSAND = 1000;
+const int64_t MAX = pow(10, 12);
 class NumberUtil {
 public:
     static inline int TryParseInt(const std::string &intStr)
@@ -49,6 +53,21 @@ public:
             // out of range
             return INVALID_NUMBER;
         }
+    }
+
+    static inline int64_t TimestampUsToNs(long double us)
+    {
+        // 当数字非常大时使用乘法，部分数字会损失精度，故改为字符串操作
+        if (us < MAX) {
+            return llroundl(us * THOUSAND);
+        }
+        auto str = std::to_string(us).append(THOUSAND_SUFFIX);
+        auto index = str.find('.');
+        if (index != std::string::npos) {
+            str.replace(index, 1, "");
+            str.insert(index + THOUSAND_SUFFIX.length(), ".");
+        }
+        return llroundl(std::stold(str));
     }
 };
 } // end of namespace Dic
