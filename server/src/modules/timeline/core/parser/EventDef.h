@@ -20,8 +20,8 @@ struct Event {
 struct Slice : public Event {
     int64_t trackId = 0;
     int64_t tid = 0;
-    double ts = 0;
-    double dur = 0;
+    int64_t ts = 0;
+    int64_t dur = 0;
     std::string pid;
     std::string name;
     std::optional<std::string> cat;
@@ -45,7 +45,7 @@ struct MetaData : public Event {
 struct Flow : public Event {
     int64_t trackId = 0;
     int64_t tid = 0;
-    double ts = 0;
+    int64_t ts = 0;
     std::string pid;
     std::string flowId;
     std::string name;
@@ -55,7 +55,7 @@ struct Flow : public Event {
 struct Counter : public Event {
     std::string name;
     std::string pid;
-    double ts = 0;
+    int64_t ts = 0;
     std::optional<std::string> cat;
     std::string args;
 };

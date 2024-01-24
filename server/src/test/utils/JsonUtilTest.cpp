@@ -79,7 +79,7 @@ TEST(JsonUtil, JsonDump) {
     EXPECT_EQ(string, "{\"ph\":\"X\",\"name\":\"contiguous_d_Reshape\",\"args\":{}}");
 }
 
-TEST(TestUtil, GetDouble) {
+TEST(TestUtil, GetDoubleAndGetLongDouble) {
 
     rapidjson::Document d;
     d.Parse("{\n"
@@ -88,9 +88,9 @@ TEST(TestUtil, GetDouble) {
             "        \"dur\": \"169.33\",\n"
             "        \"args\": {}\n"
             "}");
-    double ts = JsonUtil::GetDouble(d, "ts");
+    long double ts = JsonUtil::GetLongDouble(d, "ts");
     double dur = JsonUtil::GetDouble(d, "dur");
-    EXPECT_EQ(ts, 1699579270364817.47);
+    EXPECT_EQ(ts, stold("1699579270364817.47"));
     EXPECT_EQ(dur, 169.33);
 }
 

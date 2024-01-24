@@ -34,21 +34,21 @@ bool TraceDatabase::InitSliceFlowCounterStmt()
 {
     std::string sql = "INSERT INTO " + sliceTable +
                       " (timestamp, duration, name, track_id, cat, args) VALUES"
-                      " (round(? * 1000),round(? * 1000),?,?,?,?)";
+                      " (?,?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?)");
     }
     insertSliceStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
-          " VALUES (?,?,?,round(? * 1000),?,?)";
+          " VALUES (?,?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,round(? * 1000),?,?)");
+        sql.append(",(?,?,?,?,?,?)");
     }
     insertFlowStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
-          " VALUES (?,?,round(? * 1000),?,?)";
+          " VALUES (?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,round(? * 1000),?,?)");
+        sql.append(",(?,?,?,?,?)");
     }
     insertCounterStmt = CreatPreparedStatement(sql);
     if (insertSliceStmt == nullptr || insertFlowStmt == nullptr || insertCounterStmt == nullptr) {
@@ -190,9 +190,9 @@ std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetSliceStmt(uint64_t pa
 {
     std::string sql = "INSERT INTO " + sliceTable +
                       " (timestamp, duration, name, track_id, cat, args) VALUES "
-                      " (round(? * 1000),round(? * 1000),?,?,?,?)";
+                      " (?,?,?,?,?,?)";
     for (int i = 0; i < paramLen - 1; ++i) {
-        sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
 }
@@ -289,9 +289,9 @@ bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
 std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetFlowStmt(uint64_t paramLen)
 {
     std::string sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
-                      " VALUES (?,?,?,round(? * 1000),?,?)";
+                      " VALUES (?,?,?,?,?,?)";
     for (int i = 0; i < paramLen - 1; ++i) {
-        sql.append(",(?,?,?,round(? * 1000),?,?)");
+        sql.append(",(?,?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
 }
@@ -333,9 +333,9 @@ bool TraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventLi
 std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetCounterStmt(uint64_t paramLen)
 {
     std::string sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
-                           " VALUES (?,?,round(? * 1000),?,?)";
+                           " VALUES (?,?,?,?,?)";
     for (int i = 0; i < paramLen - 1; ++i) {
-        sql.append(",(?,?,round(? * 1000),?,?)");
+        sql.append(",(?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
 }
