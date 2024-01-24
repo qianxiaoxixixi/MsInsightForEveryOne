@@ -51,10 +51,14 @@ const handleConfirm = () => {
 <template>
     <header class="header">
         <ProjectMode />
-        <el-icon class="icon-button" :size="16" @click="addRemote">
+        <el-tooltip content="Import Data" :effect="isDarkTheme ? 'light' : 'dark'">
+          <el-icon class="icon-button" :size="16" @click="addRemote">
             <AddIcon />
-        </el-icon>
-        <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
+          </el-icon>
+        </el-tooltip>
+        <el-tooltip content="Switch Theme" :effect="isDarkTheme ? 'light' : 'dark'">
+          <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
+        </el-tooltip>
         <el-dialog v-model="showModal" title="File Explorer" width="30%" :close-on-click-modal="false">
             <ResourceComp ref="resourceComp" :changeConfirmButtonState = "changeConfirmButtonState" />
             <template #footer>
