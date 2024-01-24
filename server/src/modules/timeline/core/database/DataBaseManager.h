@@ -30,8 +30,6 @@ public:
     DataBaseManager(DataBaseManager &&) = delete;
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
-    Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
-    Summary::SummaryDataBase *GetSummaryDatabase(const std::string &fileId);
     bool CreatConnectionPool(const std::string &fileId, const std::string &dbPath);
     std::shared_ptr<TraceDatabase> GetTraceDatabase(const std::string &fileId);
     std::vector<ConnectionPool *> GetAllTraceDatabase();
@@ -43,9 +41,12 @@ public:
     bool HasFileId(DatabaseType type, const std::string &fileId);
     ClusterDatabase *GetClusterDatabase();
 
+    Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
     std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();
 
+    Summary::SummaryDataBase *GetSummaryDatabase(const std::string &fileId);
     std::vector<Summary::SummaryDataBase *> GetAllSummaryDatabase();
+
     std::string GetDbPath(const std::string &fileId);
 
 private:

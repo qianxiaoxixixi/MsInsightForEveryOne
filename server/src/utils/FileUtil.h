@@ -8,6 +8,7 @@
 #include <string>
 #include <dirent.h>
 #include <vector>
+#include <algorithm>
 #include "StringUtil.h"
 #include <sys/stat.h>
 #include "regex"
@@ -85,24 +86,6 @@ public:
         return std::string(resolvedPath);
     }
 
-    static inline uint64_t GetDiskFreeSize(const std::string &path)
-    {
-#ifdef _WIN32
-        std::string tmpPath(path);
-        if (StringUtil::IsUtf8String(path)) {
-            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
-        }
-        ULARGE_INTEGER freeBytes;
-        if (GetDiskFreeSpaceEx(tmpPath.c_str(), &freeBytes, nullptr, nullptr)) {
-            return freeBytes.QuadPart;
-        }
-#endif
-#ifdef __APPLE__
-        return std::filesystem::space(path).available;
-#endif
-        return 0;
-    }
-
     static inline std::string GetFileName(const std::string &path)
     {
         if (path.empty()) {
@@ -124,8 +107,7 @@ public:
 
 #ifdef _WIN32
     static inline bool FindFolders(const std::string &path,
-                                   std::vector<std::string> &folders,
-                                   std::vector<std::string> &files)
+        std::vector<std::string> &folders, std::vector<std::string> &files)
     {
         long hFile = 0;
         struct _finddata_t fileInfo{};
@@ -235,8 +217,7 @@ public:
     {
         std::map<std::string, std::vector<std::string>> rankListMap;
         for (const auto &item: fileList) {
-            std::string rankId = item.second;
-            rankListMap[rankId].push_back(item.first);
+            rankListMap[item.second].push_back(item.first);
         }
         return rankListMap;
     }
@@ -285,9 +266,84 @@ public:
         return list.at(list.size() - fileIdPosition);
     }
 
+    static std::string GetProfilerFileId(const std::string &filePath)
+    {
+        std::string fileId = FileUtil::GetFileName(filePath);
+        std::string grandparentPath = FileUtil::GetParentPath(FileUtil::GetParentPath(filePath));
+        if (fileId.empty() || grandparentPath.empty()) {
+            return fileId;
+        }
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(grandparentPath, folders, files)) {
+            return fileId;
+        }
+        if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
+            // 如果是ASCEND_PROFILER_OUTPUT，则优先匹配profiler_info_x.json，否则取_ascend_pt
+            for (const auto& file : files) {
+                if (std::regex_match(file, std::regex(PROFILER_INFO_FILE_REG))) {
+                    return file.substr(PROFILER_INFO_FILE_PREFIX.length(),
+                        file.length() - PROFILER_INFO_FILE_PREFIX.length() - JSON_FILE_SUFFIX.length());
+                }
+            }
+            fileId = FileUtil::GetFileName(grandparentPath);
+        } else if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
+            // 如果是mindstudio_profiler_output目录，则取Prof_xxx
+            fileId = FileUtil::GetFileName(grandparentPath);
+        } else if (std::regex_match(FileUtil::GetFileName(grandparentPath), std::regex(DEVICE_DIR_REG))) {
+            // 如果是device_x目录，则fileId为x
+            fileId = FileUtil::GetFileName(grandparentPath).substr(DEVICE_DIR_PREFIX.length());
+        }
+
+        return fileId;
+    }
+
+    static std::string GetDbPath(const std::string &filePath)
+    {
+        std::string grandparentPath = FileUtil::GetParentPath(FileUtil::GetParentPath(filePath));
+        if (grandparentPath.empty()) {
+            return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
+        }
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(grandparentPath, folders, files)) {
+            return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
+        }
+        if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
+            // 如果是ASCEND_PROFILER_OUTPUT，则放在ASCEND_PROFILER_OUTPUT下
+            auto directory = FileUtil::SplicePath(grandparentPath, ASCEND_PROFILER_OUTPUT);
+            return FileUtil::SplicePath(directory, DATABASE_FILE_NAME);
+        } else if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
+            // 如果是mindstudio_profiler_output目录，则放在mindstudio_profiler_output
+            auto directory = FileUtil::SplicePath(grandparentPath, MINDSTUDIO_PROFILER_OUTPUT);
+            return FileUtil::SplicePath(directory, DATABASE_FILE_NAME);
+        } else if (std::regex_match(FileUtil::GetFileName(grandparentPath), std::regex(DEVICE_DIR_REG))) {
+            // 如果是device_x目录，则放在device_x的上层目录
+            return FileUtil::SplicePath(grandparentPath, DATABASE_FILE_NAME);
+        }
+
+        return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
+    }
+
+    static std::string GetDbPath(const std::string &filePath, const std::string &fileId)
+    {
+        std::string dbPath = GetDbPath(filePath);
+        std::string tmpFileId = GetProfilerFileId(filePath);
+        if (tmpFileId.length() < fileId.length() && fileId.find(tmpFileId) == 0) {
+            // 修改db文件名为ascend_insight_data_xxx.db
+            dbPath = dbPath.substr(0, dbPath.length() - DB_FILE_SUFFIX.length()) +
+                     fileId.substr(tmpFileId.length()) + DB_FILE_SUFFIX;
+        }
+        return dbPath;
+    }
+
     static inline std::string GetParentPath(const std::string filePath)
     {
+#ifdef _WIN32
+        size_t pos = filePath.find_last_of("\\");
+#else
         size_t pos = filePath.find_last_of("\\/");
+#endif
         if (pos != std::string::npos) {
             return filePath.substr(0, pos);
         }
@@ -303,16 +359,6 @@ public:
         }
 #endif
         return path;
-    }
-
-    static inline std::string GetDetailFile(std::string parentDir, std::string detailName)
-    {
-        std::string path = PathPreprocess(SplicePath(parentDir, detailName));
-        std::ifstream file(path);
-        if (file.good()) {
-            return path;
-        }
-        return "";
     }
 
     static long long getFileSize(const char* fileName)
@@ -356,7 +402,7 @@ public:
 #endif
         for (std::string& file: files) {
             std::string spliceFile = SplicePath(gbkPath, file);
-            if (std::strcmp("trace_view.db", file.c_str()) != 0 &&
+            if (std::strcmp("ascend_insight_data.db", file.c_str()) != 0 &&
                     std::strcmp("cluster.db", file.c_str()) != 0) {
                 size +=  getFileSize(spliceFile.c_str());
             }
@@ -367,7 +413,9 @@ public:
     {
         std::vector<std::string> matchedFiles;
         if (!FileUtil::IsFolder(path)) {
-            matchedFiles.emplace_back(PathPreprocess(path));
+            if (std::regex_match(path, fileRegex)) {
+                matchedFiles.emplace_back(PathPreprocess(path));
+            }
             return matchedFiles;
         }
         std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex](
@@ -395,68 +443,17 @@ public:
         return matchedFiles;
     }
 
-    static std::string GetDbPath(const std::string &filePath, const std::string &fileId)
+    // 遍历目录，最大不超过5层，优先遍历ASCEND_PROFILER_OUTPUT/mindstudio_profiler_output目录，其存在则跳过其他文件夹
+    static inline std::vector<std::string> FindFilesWithFilter(const std::string &path, const std::regex &fileRegex)
     {
-        std::string dbName = fileId + ".db";
-        std::string dbPath = SplicePath(filePath, dbName);
-        return Dic::FileUtil::GetRealPath(dbPath);
-    }
-
-    static std::vector<std::string> FindFileByName(const std::string &path,
-                                                   const std::string &fileName, const std::string &fileReg)
-    {
-        std::vector<std::string> files;
+        std::vector<std::string> matchedFiles = {};
         if (!FileUtil::IsFolder(path)) {
-            files.emplace_back(path);
-            return files;
+            if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
+                matchedFiles.emplace_back(path);
+            }
+            return matchedFiles;
         }
-        std::function<void(const std::string &, int)> find = [&find, &files, fileReg, fileName](
-                const std::string &path, int depth) {
-            if (depth > 5) {
-                return;
-            }
-            std::vector<std::string> folders;
-            std::vector<std::string> fileList;
-            if (!FileUtil::FindFolders(path, folders, fileList)) {
-                return;
-            }
-            if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
-                FindAscendFolder(path, files, fileName, fileReg);
-                return;
-            }
-            for (const auto &folder: folders) {
-                std::string tmpPath = FileUtil::SplicePath(path, folder);
-                find(tmpPath, depth + 1);
-            }
-            for (const auto &file: fileList) {
-                std::string tmpPath = FileUtil::SplicePath(path, file);
-                if (IsFileValid(file, fileReg)) {
-                    files.push_back(tmpPath);
-                }
-            }
-        };
-        find(path, 0);
-        return files;
-    }
-
-    static bool IsFileValid(const std::string &fileName, const std::string &fileReg)
-    {
-        auto result = RegexUtil::RegexMatch(fileName, fileReg);
-        return result.has_value();
-    }
-
-    static void FindAscendFolder(const std::string &path, std::vector<std::string> &ascendFiles,
-                                 const std::string &fileName, const std::string &fileReg)
-    {
-        std::string splicePath = FileUtil::SplicePath(path, "ASCEND_PROFILER_OUTPUT");
-        splicePath = FileUtil::SplicePath(splicePath, fileName);
-        Server::ServerLog::Info("FindAscendFolder. ", splicePath);
-        if (FileUtil::CheckDirectoryExist(splicePath)) {
-            ascendFiles.emplace_back(splicePath);
-            Server::ServerLog::Info("FindAscendFolder2. ");
-            return;
-        }
-        std::function<void(const std::string &, int)> find = [&find, &ascendFiles, fileReg](
+        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex](
                 const std::string &path, int depth) {
             if (depth > 5) {
                 return;
@@ -466,44 +463,47 @@ public:
             if (!FileUtil::FindFolders(path, folders, files)) {
                 return;
             }
-            for (const auto &folder: folders) {
-                find(FileUtil::SplicePath(path, folder), depth + 1);
+
+            std::string ascendDir = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
+            if (FileUtil::IsFolder(ascendDir)) {
+                find(ascendDir, depth + 1);
+                return;
             }
+            std::string mindstudioDir = FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT);
+            if (FileUtil::IsFolder(mindstudioDir)) {
+                find(mindstudioDir, depth + 1);
+                return;
+            }
+
+            for (const auto &folder: folders) {
+                std::string tmpPath = FileUtil::SplicePath(path, folder);
+                find(tmpPath, depth + 1);
+            }
+            sort(files.begin(), files.end(), std::greater<std::string>());
             for (const auto &file: files) {
-                if (IsFileValid(file, fileReg)) {
-                    ascendFiles.push_back(FileUtil::SplicePath(path, file));
+                std::string tmpPath = FileUtil::SplicePath(path, file);
+                if (std::regex_match(file, fileRegex)) {
+                    matchedFiles.push_back(tmpPath);
+                    // 为避免文件重复，同一个目录下，找到一个即可
+                    break;
                 }
             }
         };
-        std::vector<std::string> folders;
-        std::vector<std::string> files;
-        if (!FileUtil::FindFolders(path, folders, files)) {
-            return;
-        }
-        static std::string reg = R"(PROF_.*)";
-        for (const auto &folder: folders) {
-            if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
-                continue;
-            }
-            find(FileUtil::SplicePath(path, folder), 0);
-            break;
-        }
+        find(path, 0);
+        return matchedFiles;
     }
 
     static bool CheckFilePath(std::string filePath)
     {
-        // reading
         if (access(filePath.c_str(), R_OK) == -1) {
             Server::ServerLog::Error("Cannot read" + filePath +": ", filePath);
             return false;
         }
-        // isOk
         std::ifstream file(filePath);
         if (!file.good()) {
             Server::ServerLog::Error("Cannot get" + filePath +": ", filePath);
             return false;
         }
-        // size checked
         long long size = getFileSize(filePath.c_str());
         if (size >= MAX_FILE_SIZE_10G) {
             Server::ServerLog::Error("The size of " + filePath + " is too large in path:", filePath);

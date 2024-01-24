@@ -35,6 +35,20 @@ const std::vector<std::string> RECORD_CSV_MSPROF = {
 
 const std::string ASCEND_PROFILER_OUTPUT = "ASCEND_PROFILER_OUTPUT";
 const std::string MINDSTUDIO_PROFILER_OUTPUT = "mindstudio_profiler_output";
+const std::string CLUSTER_ANALYSIS_OUTPUT = "cluster_analysis_output";
+
+const std::string DEVICE_DIR_PREFIX = "device_";
+const std::string DEVICE_DIR_REG = R"(^device_\d+$)";
+
+const std::string PROFILER_INFO_FILE_PREFIX = "profiler_info_";
+const std::string PROFILER_INFO_FILE_REG = R"(^profiler_info_\d+\.json$)";
+
+const std::string MSPROF_SLICE_FILE_REG = R"(^msprof_slice_[0-9_]+\.json$)";
+
+const std::string JSON_FILE_SUFFIX = ".json";
+const std::string DB_FILE_SUFFIX = ".db";
+
+const std::string DATABASE_FILE_NAME = "ascend_insight_data.db";
 
 const long long MAX_FILE_SIZE_2G = (long long)(1024 * 1024 * 1024) * 2;
 const long long MAX_FILE_SIZE_10G = (long long)(1024 * 1024 * 1024) * 10;

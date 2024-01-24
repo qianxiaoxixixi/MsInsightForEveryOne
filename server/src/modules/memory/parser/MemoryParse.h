@@ -17,6 +17,8 @@
 namespace Dic {
 namespace Module {
 namespace Memory {
+const std::string MEMORY_PREFIX = "[Memory]";
+
 class MemoryParse : public FileParser {
 public:
     static MemoryParse &Instance();
@@ -25,9 +27,10 @@ public:
     ~MemoryParse() override;
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
+    bool Parse(const std::vector<std::string>& pathList, const std::string& token);
     void Reset() override;
-    void OperatorParse(const std::string &parentDir, const std::string &fileId);
-    void RecordToParse(const std::string &parentDir, const std::string &fileId);
+    bool OperatorParse(const std::string &filePath, const std::string &fileId);
+    bool RecordToParse(const std::string &filePath, const std::string &fileId);
 
     const std::string memoryOperatorReg = R"((operator_memory|operator_memory_[0-9]{1,14})\.csv$)";
     const std::string memoryRecordReg = R"((memory_record|memory_record_[0-9]{1,14})\.csv$)";
@@ -36,20 +39,26 @@ private:
     const int maxThreadNum = 4;
     const int operatorTableNum = 5;
     const int recordTableNum = 5;
+    std::map<std::string, Protocol::MemorySuccess> ranks;
+    bool isCluster;
 
-    std::unique_ptr<MemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
-    std::chrono::system_clock::time_point start;
-    const std::string memoryOperatorFile = "operator_memory.csv";
-    const std::string memoryRecordFile = "memory_record.csv";
 
-    bool WaitParseEnd(const std::string &fileId);
+    Record mapperToRecordDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
+    Operator mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
 
-    Record mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
-    Operator mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
+    void GetMapValid(const std::vector<std::string> &vec, std::map<std::string, size_t> dataMap);
 
-    void GetMapValid(const std::vector<std::string> &vec, std::map<std::string, std::int16_t> dataMap);
+    std::vector<std::pair<std::string, MemoryFilePair>> GetMemoryFiles(
+            const std::vector<std::string>& paths);
+    static void SetParseCallBack(const std::string& token);
+    static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &message);
+    static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
+
+    static void PreParseTask(const MemoryFilePair& filePair, const std::string& fileId);
+    static bool ParseTask(const MemoryFilePair& filePair, const std::string& fileId);
+    static bool InitParser(const MemoryFilePair& filePair, const std::string& fileId);
 };
 } // end of namespace Memory
 } // end of namespace Module

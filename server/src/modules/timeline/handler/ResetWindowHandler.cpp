@@ -5,8 +5,9 @@
 #include "ResetWindowHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
-#include "DataBaseManager.h"
 #include "TraceFileParser.h"
+#include "KernelParse.h"
+#include "MemoryParse.h"
 
 namespace Dic {
 namespace Module {
@@ -27,6 +28,8 @@ void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     TraceFileParser::Instance().Reset();
+    Summary::KernelParse::Instance().Reset();
+    Memory::MemoryParse::Instance().Reset();
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

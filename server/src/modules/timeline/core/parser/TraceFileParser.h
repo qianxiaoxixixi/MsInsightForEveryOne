@@ -16,10 +16,6 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-const std::string MEMORY_PREFIX = "MemoryParse_";
-const std::string SUMMARY_PREFIX = "SummaryParse_";
-const std::string MEMORY_PREFIX_PATTEN = "^MemoryParse_.*";
-const std::string SUMMARY_PREFIX_PATTEN = "^SummaryParse_.*";
 
 class TraceFileParser : public FileParser {
 public:
@@ -51,7 +47,6 @@ private:
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void DeleteParseFileFromDisk(const std::string &fileId);
 
-    static bool InitDatabase(const std::string& rankId);
     std::mutex trackMutex;
     std::unordered_map<std::string, std::map<std::pair<std::string, int64_t>, int64_t>> trackIdMap;
     int64_t trackId = 0;

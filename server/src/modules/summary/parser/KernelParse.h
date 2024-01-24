@@ -42,6 +42,8 @@ const std::string FIELD_TASK_START_TIME = "Task Start Time(us)";
 const std::string FIELD_TASK_DURATION = "Task Duration(us)";
 const std::string FIELD_TASK_WAIT_TIME = "Task Wait Time(us)";
 
+const std::string KERNEL_PREFIX = "[Kernel]";
+
 class KernelParse : public FileParser {
 public:
     static KernelParse &Instance();
@@ -51,21 +53,27 @@ public:
 
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
-    void KernelFileParse(const std::string &parentDir, const std::string &fileId, std::set<std::string> &devices);
-private:
-    std::unique_ptr<SummaryDataBase> database;
-    const int maxThreadNum = 4;
-    const int kernelTableNum = 15;
-    std::unique_ptr<ThreadPool> threadPool;
-    std::chrono::system_clock::time_point start;
-    std::map<std::string, std::future<void>> futureMap;
-    const std::string kernelDetailFile = "kernel_details.csv";
-    const std::string kernelDetailReg = R"((kernel_details|op_summary_[0-9]{1,14})\.csv$)";
+    bool Parse(const std::vector<std::string>& pathList, const std::string& token);
 
-    bool mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
+private:
+    const int maxThreadNum = 4;
+    static const int kernelTableNum = 15;
+    std::unique_ptr<ThreadPool> threadPool;
+    std::map<std::string, std::future<void>> futureMap;
+    const std::string kernelDetailReg = R"((kernel_details|op_summary[_\d]*)\.csv$)";
+
+    static bool mapperToKernelDetail(std::map<std::string, size_t> dataMap,
                               std::vector<std::string> row, const std::string &fileId, Kernel &kernel);
 
-    bool WaitParseEnd(const std::string &fileId);
+    std::vector<std::pair<std::string, std::string>> GetKernelFiles(const std::vector<std::string>& paths);
+
+    static void SetParseCallBack(const std::string& token);
+    static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
+    static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
+
+    static void PreParseTask(const std::string &filePath, const std::string &fileId);
+    static bool ParseTask(const std::string &filePath, const std::string &fileId);
+    static bool InitParser(const std::string &filePath, const std::string &fileId);
 };
 
 } // end of namespace Summary

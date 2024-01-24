@@ -44,14 +44,10 @@ private:
     static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
     static void SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message);
 
-    bool HasMemoryFile(const std::string& path);
     const std::string traceViewFile = "trace_view.json";
     const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response);
-    static std::vector<MemorySuccess> hasMemory;
-    static void ParseMemoryEndProcess(const std::string &token);
-    static void ParseOperatorEndProcess(const std::string &token, const std::string &fileId, bool result);
 };
 } // end of namespace Timeline
 } // end of namespace Module
