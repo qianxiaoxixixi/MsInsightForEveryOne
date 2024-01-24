@@ -26,9 +26,16 @@ const props = defineProps<{
                             </span>
                         </el-tooltip>
                     </span>
-                    <span class="deleteIcon">
-                        <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1" />
-                    </span>
+                    <el-tooltip v-if="node.level === 1" content="Delete All" :effect="isDarkTheme ? 'light' : 'dark'">
+                            <span class="deleteIcon">
+                              <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1"/>
+                            </span>
+                    </el-tooltip>
+                    <el-tooltip v-if="node.level === 2" content="Delete Item" :effect="isDarkTheme ? 'light' : 'dark'">
+                            <span class="deleteIcon">
+                              <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1"/>
+                            </span>
+                    </el-tooltip>
 
                 </div>
             </template>
