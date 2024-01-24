@@ -28,6 +28,7 @@ public:
 
     bool SetConfig();
     bool CreateTable();
+    bool DropTable();
     bool CreateIndex();
     bool InitStmt();
     void ReleaseStmt();

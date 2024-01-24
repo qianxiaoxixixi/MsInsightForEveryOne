@@ -136,6 +136,13 @@ bool TraceDatabase::CreateTable()
     return ExecSql(sql);
 }
 
+bool TraceDatabase::DropTable()
+{
+    std::vector<std::string> tables = {sliceTable, threadTable, processTable, flowTable, counterTable};
+    std::unique_lock<std::mutex> lock(mutex);
+    return DropSomeTables(tables);
+}
+
 bool TraceDatabase::CreateIndex()
 {
     auto start = std::chrono::system_clock::now();

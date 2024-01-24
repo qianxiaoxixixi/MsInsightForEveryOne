@@ -49,6 +49,13 @@ bool SummaryDataBase::CreateTable()
     return ExecSql(sql);
 }
 
+bool SummaryDataBase::DropTable()
+{
+    std::vector<std::string> tables = {kernelTable};
+    std::unique_lock<std::mutex> lock(mutex);
+    return DropSomeTables(tables);
+}
+
 bool SummaryDataBase::InitStmt()
 {
     if (hasInitStmt) {

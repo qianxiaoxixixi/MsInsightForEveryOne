@@ -10,6 +10,8 @@
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "FileDef.h"
+#include "WsSession.h"
+#include "WsSessionManager.h"
 
 namespace Dic {
 namespace Module {
@@ -21,76 +23,34 @@ MemoryParse &MemoryParse::Instance()
     return instance;
 }
 
+MemoryParse::MemoryParse()
+{
+    threadPool = std::make_unique<ThreadPool>(MemoryParse::maxThreadNum);
+    ranks = {};
+}
+
+MemoryParse::~MemoryParse()
+{
+    threadPool->ShutDown();
+}
+
 bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                         const std::string &selectedFolder)
 {
-    start = std::chrono::system_clock::now();
-    ServerLog::Info("start parse.");
-
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::string dbPath = FileUtil::GetDbPath(selectedFolder, fileId);
-    if (!(database->OpenDb(dbPath, false) && database->CreateTable() &&
-    database->SetConfig() && database->InitStmt())) {
-        ServerLog::Error("Failed to open database. path:", dbPath);
-        return false;
-    }
-    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
-    for (std::string filePath: filePaths) {
-        auto future = threadPool->AddTask([futures, fileId, &filePath, this]() {
-            ServerLog::Info("Wait parse completed. ID:", fileId);
-            for (const auto &future: *futures) {
-                future.wait();
-            }
-            ServerLog::Info("Parse completed. ID:", fileId);
-            std::string parentDir = FileUtil::GetParentPath(filePath);
-            OperatorParse(parentDir, fileId);
-            RecordToParse(parentDir, fileId);
-            ServerLog::Info("Update depth completed. ID:", fileId);
-        });
-        futureMap.emplace(fileId, std::move(future));
-    }
-    if (paserEndCallback != nullptr) {
-        std::thread thread{[this, fileId]() {
-            WaitParseEnd(fileId);
-        }};
-        thread.detach();
-    }
-    return true;
+    // 待废弃
+    return false;
 }
 
-bool MemoryParse::WaitParseEnd(const std::string &fileId)
-{
-    if (futureMap.count(fileId) == 0) {
-        return false;
-    }
-    ServerLog::Info("Wait memory parse completed. ID:", fileId);
-    auto &future = futureMap.at(fileId);
-    future.wait();
-    futureMap.erase(fileId);
-    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
-    ServerLog::Info("end parse. ID:", fileId, ". time:", dur.count());
-    if (paserEndCallback != nullptr) {
-        paserEndCallback(fileId, true, "");
-    }
-    return true;
-}
-
-void MemoryParse::OperatorParse(const std::string &parentDir, const std::string &fileId)
+bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("start parse Operator.");
-    std::vector<std::string> memoryFileVec = FileUtil::FindFilesByRegex(parentDir, std::regex(memoryOperatorReg));
-    if (memoryFileVec.empty()) {
-        ServerLog::Warn("There is no operator_memory.csv for rank " + fileId);
-        return;
-    }
-    std::string operatorFile = memoryFileVec[0];
+    ServerLog::Info("Start parse Operator Memory:", filePath);
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::ifstream file(operatorFile);
+    std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
-    std::map<std::string, std::int16_t> dataMap;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
-    Timeline::ParserStatus::FINISH && getline(file, line)) {
+    std::map<std::string, size_t> dataMap;
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
+            Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
         std::vector<std::string> row;
         std::string cell;
@@ -99,16 +59,20 @@ void MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
             row.push_back(cell);
         }
         if (row[0] == Dic::NAME || row[0] == Dic::DEVICE_ID) {
-            for (int i = 0; i < row.size(); i++) {
+            for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
+            }
+            if (dataMap.size() < operatorTableNum) {
+                ServerLog::Error("The header of the file is incorrect or incomplete. The file path is: " + filePath);
+                return false;
             }
             GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
             memoryDatabase->SetInferenceType(row[0] == Dic::DEVICE_ID);
             continue;
         }
-        if (dataMap.size() < operatorTableNum) {
-            ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + operatorFile);
-            return;
+        // 如果某一行数据个数与表头不一致，则跳过
+        if (dataMap.size() != row.size()) {
+            continue;
         }
         Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
         // 读取每一行数据并插入到operator内
@@ -117,11 +81,12 @@ void MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
     // 读取剩下的数据并插入到operator内
     memoryDatabase->SaveOperatorDetail();
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end parse Operator, cost time:",
+    ServerLog::Info("End parse Operator Memory: ", filePath, ", cost time: ",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    return true;
 }
 
-void MemoryParse::GetMapValid(const std::vector<std::string>& vec, std::map<std::string, std::int16_t> dataMap)
+void MemoryParse::GetMapValid(const std::vector<std::string>& vec, std::map<std::string, size_t> dataMap)
 {
     for (const std::string& col : vec) {
         if (dataMap.find(col) == dataMap.end()) {
@@ -130,25 +95,20 @@ void MemoryParse::GetMapValid(const std::vector<std::string>& vec, std::map<std:
     }
 }
 
-MemoryParse::MemoryParse()
-{
-    threadPool = std::make_unique<ThreadPool>(MemoryParse::maxThreadNum);
-}
-
-Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string> row)
+Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string> row)
 {
     Operator anOperator {};
-    std::int16_t nameIndex = dataMap[NAME];
-    std::int16_t allocationTimeIndex = dataMap[ALLOCATION_TIME];
-    std::int16_t sizeIndex = dataMap[SIZE];
-    std::int16_t durationIndex = dataMap[DURATION];
+    size_t nameIndex = dataMap[NAME];
+    size_t allocationTimeIndex = dataMap[ALLOCATION_TIME];
+    size_t sizeIndex = dataMap[SIZE];
+    size_t durationIndex = dataMap[DURATION];
     anOperator.name = row[nameIndex];
     anOperator.size = atof(row[sizeIndex].c_str());
     anOperator.allocationTime = atof(row[allocationTimeIndex].c_str());
     anOperator.duration = atof(row[durationIndex].c_str());
 
     if (dataMap.count(RELEASE_TIME)) {
-        std::int16_t releaseTimeIndex = dataMap[RELEASE_TIME];
+        size_t releaseTimeIndex = dataMap[RELEASE_TIME];
         anOperator.releaseTime = atof(row[releaseTimeIndex].c_str());
     } else {
         anOperator.releaseTime = anOperator.allocationTime + anOperator.duration;
@@ -157,25 +117,25 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, std::int16_t>
     return anOperator;
 }
 
-Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string> row)
+Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, std::vector<std::string> row)
 {
     Record record {};
-    std::int16_t nameIndex = dataMap[COMPONENT];
-    std::int16_t timeStampIndex = dataMap[TIMESTAMP];
+    size_t nameIndex = dataMap[COMPONENT];
+    size_t timeStampIndex = dataMap[TIMESTAMP];
     record.component = row[nameIndex];
     record.timesTamp = atof(row[timeStampIndex].c_str());
     // msprof场景
     if (dataMap.count(Dic::DEVICE_ID)) {
-        std::int16_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_KB];
-        std::int16_t totalReservedIndex = dataMap[TOTAL_RESERVED_KB];
-        std::int16_t deviceTypeIndex = dataMap[DEVICE];
+        size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_KB];
+        size_t totalReservedIndex = dataMap[TOTAL_RESERVED_KB];
+        size_t deviceTypeIndex = dataMap[DEVICE];
         record.totalAllocated = atof(row[totalAllocatedIndex].c_str()) / KB_TO_MB;
         record.totalReserved = atof(row[totalReservedIndex].c_str()) / KB_TO_MB;
         record.deviceType = row[deviceTypeIndex];
     } else {
-        std::int16_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_MB];
-        std::int16_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
-        std::int16_t deviceTypeIndex = dataMap[DEVICETYPE];
+        size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_MB];
+        size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
+        size_t deviceTypeIndex = dataMap[DEVICETYPE];
         record.totalAllocated = atof(row[totalAllocatedIndex].c_str());
         record.totalReserved = atof(row[totalReservedIndex].c_str());
         record.deviceType = row[deviceTypeIndex];
@@ -183,22 +143,16 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dat
     return record;
 }
 
-void MemoryParse::RecordToParse(const std::string &parentDir, const std::string &fileId)
+bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("start parse Record.");
-    std::vector<std::string> memoryFileVec = FileUtil::FindFilesByRegex(parentDir, std::regex(memoryRecordReg));
-    if (memoryFileVec.empty()) {
-        ServerLog::Warn("There is no memory_record.csv for rank " + fileId);
-        return;
-    }
-    std::string recordFile = memoryFileVec[0];
+    ServerLog::Info("Start parse Memory Record: ", filePath);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::ifstream file(recordFile);
+    std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
-    std::map<std::string, std::int16_t> dataMap;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
-    Timeline::ParserStatus::FINISH && getline(file, line)) {
+    std::map<std::string, size_t> dataMap;
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
+           Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
         std::vector<std::string> row;
         std::string cell;
@@ -206,15 +160,18 @@ void MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
             row.push_back(cell);
         }
         if (row[0] == Dic::COMPONENT || row[0] == Dic::DEVICE_ID) {
-            for (int i = 0; i < row.size(); i++) {
+            for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
+            }
+            if (dataMap.size() < recordTableNum) {
+                ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + filePath);
+                return false;
             }
             GetMapValid((row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF), dataMap);
             continue;
         }
-        if (dataMap.size() < recordTableNum) {
-            ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + recordFile);
-            return;
+        if (row.size() != dataMap.size()) {
+            continue;
         }
         Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
         // 读取每一行数据并插入到record内
@@ -223,30 +180,184 @@ void MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
     // 读取剩下的数据并插入到record内
     database->SaveRecordDetail();
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end parse Record, cost time:",
+    ServerLog::Info("End parse Memory Record: ", filePath, ", cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-}
-
-MemoryParse::~MemoryParse()
-{
-    threadPool->ShutDown();
+    return true;
 }
 
 void MemoryParse::Reset()
 {
-    ServerLog::Info("Reset. wait task completed.");
+    ServerLog::Info("Memory reset. Wait task completed.");
     threadPool->Reset();
-    ServerLog::Info("Task completed.");
+    ranks.clear();
+    ServerLog::Info("Memory task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemoryDatabase();
     for (auto &db: databaseList) {
-        std::string path = db->GetDbPath();
         db->ReleaseStmt();
         db->CloseDb();
-        if (!FileUtil::RemoveFile(path)) {
-            ServerLog::Error("Failed to remove file. ", path);
-        }
     }
-    Timeline::DataBaseManager::Instance().Clear();
+
+    Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
+}
+
+std::vector<std::pair<std::string, MemoryFilePair>> MemoryParse::GetMemoryFiles(const std::vector<std::string>& paths)
+{
+    std::vector<std::string> fileList = {};
+    for (const std::string& path : paths) {
+        auto files = FileUtil::FindFilesWithFilter(path, std::regex(memoryOperatorReg));
+        fileList.insert(fileList.end(), files.begin(), files.end());
+    }
+    if (fileList.empty()) {
+        ServerLog::Warn("There is no memory operator file.");
+        return {};
+    }
+
+    std::vector<std::pair<std::string, MemoryFilePair>> results = {};
+    for (const auto& operatorFile : fileList) {
+        // 寻找同级目录下的memory_record文件
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(FileUtil::GetParentPath(operatorFile), folders, files)) {
+            ServerLog::Warn("There is no file under ", FileUtil::GetParentPath(operatorFile));
+            continue;
+        }
+        std::string recordFile;
+        for (const auto& one : files) {
+            if (RegexUtil::RegexMatch(one, memoryRecordReg)) {
+                recordFile = FileUtil::SplicePath(FileUtil::GetParentPath(operatorFile), one);
+                break;
+            }
+        }
+        if (recordFile.empty()) {
+            ServerLog::Warn("There is no memory record file paired with ", operatorFile);
+            continue;
+        }
+        std::string fileId = FileUtil::GetProfilerFileId(operatorFile);
+        int i = 1;
+        std::string tempId = fileId;
+        while (Timeline::DataBaseManager::Instance().HasFileId(Timeline::DatabaseType::MEMORY, tempId)) {
+            tempId = fileId + "_" + std::to_string(++i);
+        }
+        ServerLog::Info("Operator memory file: ", operatorFile, ", memory record file: ", recordFile, ", Id: ", tempId);
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(tempId);
+        MemoryFilePair filePair = {operatorFile, recordFile};
+        results.emplace_back(tempId, filePair);
+        Protocol::MemorySuccess one = {tempId, false, true};
+        ranks.emplace(tempId, one);
+    }
+
+    isCluster = (results.size() > 1);
+    return results;
+}
+
+bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::string &token)
+{
+    auto memoryFiles = GetMemoryFiles(pathList);
+    if (memoryFiles.empty()) {
+        ServerLog::Warn("Memory file is empty.");
+        return false;
+    }
+    SetParseCallBack(token);
+    for (const auto& memoryFile : memoryFiles) {
+        threadPool->AddTask(PreParseTask, memoryFile.second, memoryFile.first);
+    }
+    return true;
+}
+
+void MemoryParse::PreParseTask(const MemoryFilePair& filePair, const std::string& fileId)
+{
+    if (!InitParser(filePair, fileId)) {
+        ServerLog::Warn("Failed to parse memory files for fileId:", fileId);
+    }
+}
+
+bool MemoryParse::ParseTask(const MemoryFilePair& filePair, const std::string& fileId)
+{
+    Timeline::ParserStatusManager::Instance().SetRunningStatus(MEMORY_PREFIX + fileId);
+    std::string operatorFile = filePair.operatorFile;
+    std::string recordFile = filePair.recordFile;
+    if (!MemoryParse::Instance().OperatorParse(operatorFile, fileId)) {
+        ParseEndCallBack(fileId, false, "Failed to parse operator memory file: " + operatorFile);
+        ServerLog::Error("Failed to parse operator memory file, path = ", operatorFile);
+        return false;
+    }
+
+    if (!MemoryParse::Instance().RecordToParse(recordFile, fileId)) {
+        ParseEndCallBack(fileId, false, "Failed to parse memory record file: " + recordFile);
+        ServerLog::Error("Failed to parse operator record file, path = ", recordFile);
+        return false;
+    }
+
+    ParseEndCallBack(fileId, true, "");
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
+    return true;
+}
+
+bool MemoryParse::InitParser(const MemoryFilePair& filePair, const std::string& fileId)
+{
+    Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, Timeline::ParserStatus::INIT);
+    std::string dbPath = FileUtil::GetDbPath(filePair.operatorFile, fileId);
+    auto db = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    if (!(db->OpenDb(dbPath, false) && db->DropTable() &&
+            db->CreateTable() && db->SetConfig() && db->InitStmt())) {
+        ServerLog::Error("Failed to init memory database. Path:", dbPath);
+        ParseEndCallBack(fileId, false, "Failed to init memory database for rank " + fileId);
+        return false;
+    }
+
+    if (!ParseTask(filePair, fileId)) {
+        ServerLog::Error("Failed to parse memory file. Path:", dbPath);
+        return false;
+    }
+
+    return true;
+}
+
+void MemoryParse::SetParseCallBack(const std::string &token)
+{
+    std::function<void(const std::string, bool, const std::string)> func =
+            std::bind(ParseCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    MemoryParse::Instance().SetParseEndCallBack(func);
+}
+
+void MemoryParse::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+{
+    // 错误处理逻辑后续增加
+    if (!result) {
+        return;
+    }
+    if (MemoryParse::Instance().ranks.count(fileId) == 0) {
+        return;
+    } else {
+        MemoryParse::Instance().ranks[fileId].parseSuccess = true;
+    }
+
+    auto &instance = MemoryParse::Instance();
+    if (instance.paserEndCallback != nullptr) {
+        instance.paserEndCallback(fileId, result, message);
+    }
+}
+
+void MemoryParse::ParseCallBack(const std::string &token, const std::string &fileId, bool result,
+    const std::string &msg)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Error("[Memory]Failed to get session token");
+        return;
+    }
+
+    auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
+    event->moduleName = Protocol::ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->isCluster = MemoryParse::Instance().isCluster;
+    std::vector<Protocol::MemorySuccess> memoryResult;
+    for (const auto& [rank, info] : MemoryParse::Instance().ranks) {
+        memoryResult.push_back(info);
+    }
+    event->memoryResult = memoryResult;
+    session->OnEvent(std::move(event));
 }
 
 } // end of namespace Memory

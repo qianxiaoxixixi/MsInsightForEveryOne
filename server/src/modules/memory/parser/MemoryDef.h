@@ -11,6 +11,11 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 
+struct MemoryFilePair {
+    std::string operatorFile;
+    std::string recordFile;
+};
+
 struct Record {
     std::string component;
     double timesTamp;

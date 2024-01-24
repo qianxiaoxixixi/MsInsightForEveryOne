@@ -5,6 +5,7 @@
 #include "ImportActionHandler.h"
 #include "ServerLog.h"
 #include "ExecUtil.h"
+#include "FileDef.h"
 #include "FileUtil.h"
 #include "RegexUtil.h"
 #include "WsSessionManager.h"
@@ -16,6 +17,7 @@
 #include "ClusterFileParser.h"
 #include "MemoryParse.h"
 #include "OperatorProtocolEvent.h"
+#include "KernelParse.h"
 
 namespace Dic {
 namespace Module {
@@ -23,7 +25,6 @@ namespace Timeline {
 using namespace Dic;
 using namespace Dic::Server;
 
-std::vector<MemorySuccess> ImportActionHandler::hasMemory = {};
 bool ImportActionHandler::curIsCluster = false;
 
 void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
@@ -64,6 +65,15 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
             TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
         }
     }
+
+    if (!Summary::KernelParse::Instance().Parse(request.params.path, token)) {
+        ServerLog::Warn("Failed to parse kernel files.");
+    }
+
+    if (!Memory::MemoryParse::Instance().Parse(request.params.path, token)) {
+        ServerLog::Warn("Failed to parse memory files.");
+    }
+
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, selectedFolder);
 }
 
@@ -94,28 +104,10 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
         action.rankId = rankId;
         action.result = true;
         std::string path = FileUtil::GetParentPath(rankEntry.second[0]);
-        // 将文件所在路径的三级目录名称作为rank的tooltip信息
+                // 将文件所在路径的三级目录名称作为rank的tooltip信息
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        MemorySuccess memory;
-        memory.rankId = rankId;
-        if (HasMemoryFile(path)) {
-            memory.hasFile = true;
-        }
-        hasMemory.emplace_back(memory);
         response.body.result.emplace_back(action);
     }
-}
-
-bool ImportActionHandler::HasMemoryFile(const std::string& path)
-{
-    auto operatorFiles = FileUtil::FindFilesByRegex(path,
-                                                    std::regex(Memory::MemoryParse::Instance().memoryOperatorReg));
-    auto recordFiles = FileUtil::FindFilesByRegex(path,
-                                                  std::regex(Memory::MemoryParse::Instance().memoryRecordReg));
-    if (!operatorFiles.empty() or !recordFiles.empty()) {
-        return true;
-    }
-    return false;
 }
 
 void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::string result)
@@ -137,82 +129,13 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
 void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
                                            const std::string &message)
 {
-    std::string id;
-    std::string scene;
-    DatabaseType type;
-    // 解析未分离前，使用特点前缀进行区分
-    if (RegexUtil::RegexMatch(fileId, MEMORY_PREFIX_PATTEN)) {
-        type = DatabaseType::MEMORY;
-        id = fileId.substr(MEMORY_PREFIX.length());
-        scene = "Memory";
-    } else if (RegexUtil::RegexMatch(fileId, SUMMARY_PREFIX_PATTEN)) {
-        type = DatabaseType::SUMMARY;
-        id = fileId.substr(SUMMARY_PREFIX.length());
-        scene = "Summary";
+    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    if (result) {
+        SendParseSuccessEvent(token, fileId);
     } else {
-        type = DatabaseType::TRACE;
-        id = fileId;
-        scene = "Trace";
-    }
-    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token),
-                    ", scene:", scene, " fileId:", id, ", result:", result);
-
-    switch (type) {
-        case DatabaseType::TRACE:
-            if (result) {
-                SendParseSuccessEvent(token, id);
-            } else {
-                SendParseFailEvent(token, id, message);
-            }
-            break;
-        case DatabaseType::SUMMARY:
-            ParseOperatorEndProcess(token, id, result);
-            break;
-        case DatabaseType::MEMORY:
-            for (auto &memory : hasMemory) {
-                if (memory.rankId == id) {
-                    memory.parseSuccess = result;
-                }
-            }
-            ParseMemoryEndProcess(token);
-            break;
-        default:
-            break;
+        SendParseFailEvent(token, fileId, message);
     }
 }
-
-void ImportActionHandler::ParseMemoryEndProcess(const std::string &token)
-{
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
-    if (session == nullptr) {
-        ServerLog::Warn("Failed to get session token ");
-        return;
-    }
-    auto event = std::make_unique<ParseMemoryCompletedEvent>();
-    event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
-    event->result = true;
-    event->isCluster = curIsCluster;
-    event->memoryResult = hasMemory;
-    session->OnEvent(std::move(event));
-}
-
-    void ImportActionHandler::ParseOperatorEndProcess(const std::string &token, const std::string &fileId, bool result)
-    {
-        WsSession *session = WsSessionManager::Instance().GetSession(token);
-        if (session == nullptr) {
-            ServerLog::Warn("[Operator]Failed to get session token");
-            return;
-        }
-        auto event = std::make_unique<OperatorParseStatusEvent>();
-        event->moduleName = ModuleType::OPERATOR;
-        event->token = token;
-        event->result = true;
-        event->data.rankId = fileId;
-        event->data.status = result;
-        event->data.error = "";
-        session->OnEvent(std::move(event));
-    }
 
 void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
 {
@@ -296,13 +219,13 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
         if (!FileUtil::FindFolders(path, folders, files)) {
             return;
         }
-        if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
+        if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
             curScene = "train";
             FindAscendFolder(path, traceFiles);
             return;
         }
-        if (std::find(folders.begin(), folders.end(), "mindstudio_profiler_output") != folders.end()) {
-            std::string tmpPath = FileUtil::SplicePath(path, "mindstudio_profiler_output");
+        if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
+            std::string tmpPath = FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT);
             if (FileUtil::IsFolder(tmpPath)) {
                 curScene = "infer";
                 find(tmpPath, depth + 1);
@@ -333,7 +256,7 @@ bool ImportActionHandler::IsJsonValid(const std::string &fileName)
 
 void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles)
 {
-    std::string traceFilePath = FileUtil::SplicePath(path, "ASCEND_PROFILER_OUTPUT");
+    std::string traceFilePath = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
     traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
     ServerLog::Info("FindAscendFolder. ", traceFilePath);
     if (FileUtil::CheckDirectoryExist(traceFilePath)) {
@@ -402,12 +325,12 @@ std::string ImportActionHandler::GetFileId(const std::string &filePath)
     std::string name = FileUtil::GetFileName(filePath);
     while (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, result)) {
         std::string dir = FileUtil::GetParentPath(DataBaseManager::Instance().GetTraceDatabase(result)->GetDbPath());
-        if (RegexUtil::RegexMatch(name, R"(^msprof_slice_[0-9_]+\.json$)") && parentDir == dir) {
+        if (RegexUtil::RegexMatch(name, MSPROF_SLICE_FILE_REG) && parentDir == dir) {
             return result;
         }
         result = fileId + "_" + std::to_string(++i);
     }
-    std::string dbPath = GetDbPath(filePath, i);
+    std::string dbPath = FileUtil::GetDbPath(filePath, result);
     if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", result, ". path:", dbPath);
         return "";
@@ -419,7 +342,7 @@ bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
 {
     std::vector<std::string> folders;
     std::vector<std::string> files;
-    if (filePath.find("cluster_analysis_output") != std::string::npos) {
+    if (filePath.find(CLUSTER_ANALYSIS_OUTPUT) != std::string::npos) {
         ServerLog::Info("this folder is cluster_analysis_output,CheckIsCluster is true");
         return true;
     }
@@ -428,14 +351,13 @@ bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
         return false;
     }
     return std::any_of(folders.begin(), folders.end(),
-                       [](std::string &folder) {return folder == "cluster_analysis_output";});
+                       [](std::string &folder) {return folder == CLUSTER_ANALYSIS_OUTPUT;});
 }
 
 std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFiles(
     const std::vector<std::string> &pathList, ImportActionResBody &body)
 {
     auto traceFiles = FindAllTraceFile(pathList);
-    hasMemory.clear();
     if (pathList.size() == 1) {
         bool isCluster = (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0)
                 || CheckIsCluster(pathList[0]);
@@ -470,7 +392,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
 std::string ImportActionHandler::GetDbPath(const std::string &filePath, const int index)
 {
     std::string path(filePath);
-    std::string suffix = ".db";
+    std::string suffix = DB_FILE_SUFFIX;
     if (index != 1) {
         suffix = "_" + std::to_string(index) + suffix;
     }

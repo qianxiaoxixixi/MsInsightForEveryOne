@@ -26,6 +26,7 @@ public:
     virtual std::string GetDbPath();
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
+    bool DropSomeTables(const std::vector<std::string>& tableNames);
     bool DropAllTable();
     bool IsDatabaseVersionChange();
 

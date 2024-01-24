@@ -12,8 +12,6 @@
 #include "EventParser.h"
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
-#include "MemoryParse.h"
-#include "KernelParse.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "TraceFileParser.h"
 
@@ -60,10 +58,17 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ServerLog::Info("Pre task skip this file.");
         return true;
     }
-    if (!InitDatabase(fileId)) {
-        ServerLog::Error("Failed to Initial database.");
+    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection.");
         return false;
     }
+
+    if (!(database->DropTable() && database->CreateTable())) {
+        ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
+        return false;
+    }
+
     auto &instance = TraceFileParser::Instance();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath: filePathArr) {
@@ -71,7 +76,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         auto splitFile = TraceFileParser::SplitFile(filePath);
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
-            ParseEndCallBack(fileId, false, "");
+            ParseEndCallBack(fileId, false, "Failed to split file: " + filePath);
             continue;
         }
 
@@ -120,38 +125,11 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
-    std::string parentDir = FileUtil::GetParentPath(filePathArr[0]);
-    if (parentDir.empty()) {
-        return;
-    }
-    // 解析未分离前，使用特点前缀进行区分
-    std::set<std::string> devices = {};
-    Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId, devices);
-    if (devices.size() == 1 && devices.count(fileId) == 1) {
-        ParseEndCallBack(SUMMARY_PREFIX + fileId, true, "");
-    } else {
-        for (const std::string& device : devices) {
-            std::string tempId = SUMMARY_PREFIX + Summary::MSPROF_PREFIX + fileId + Summary::MSPROF_CONNECT + device;
-            ParseEndCallBack(tempId, true, "");
-        }
-    }
-    Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
-    Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
-    ParseEndCallBack(MEMORY_PREFIX + fileId, true, "");
-    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::FINISH_ALL);
 }
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
-    DatabaseType type;
-    if (RegexUtil::RegexMatch(fileId, MEMORY_PREFIX_PATTEN)) {
-        type = DatabaseType::MEMORY;
-    } else if (RegexUtil::RegexMatch(fileId, SUMMARY_PREFIX_PATTEN)) {
-        type = DatabaseType::SUMMARY;
-    } else {
-        type = DatabaseType::TRACE;
-    }
-    if (type == DatabaseType::TRACE && !(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
+    if (!(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
         result = false;
     }
     auto &instance = TraceFileParser::Instance();
@@ -318,34 +296,6 @@ void TraceFileParser::DeleteParseFile(const std::string &fileId)
     }
 }
 
-bool TraceFileParser::InitDatabase(const std::string& rankId)
-{
-    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection.");
-        return false;
-    }
-
-    if (!(database->DropAllTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open traceDatabase. rankId:", rankId);
-        return false;
-    }
-    auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
-    if (!(summaryDatabase->OpenDb(database->GetDbPath(), false) && summaryDatabase->CreateTable() &&
-          summaryDatabase->SetConfig() && summaryDatabase->InitStmt())) {
-        ParseEndCallBack(rankId, false, "");
-        ServerLog::Error("Failed to open summaryDatabase. rankId:", rankId);
-        return false;
-    }
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(rankId);
-    if (!(memoryDatabase->OpenDb(database->GetDbPath(), false) && memoryDatabase->CreateTable() &&
-            memoryDatabase->SetConfig() && memoryDatabase->InitStmt())) {
-        ParseEndCallBack(rankId, false, "");
-        ServerLog::Error("Failed to open memoryDatabase. rankId:", rankId);
-        return false;
-    }
-    return true;
-}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

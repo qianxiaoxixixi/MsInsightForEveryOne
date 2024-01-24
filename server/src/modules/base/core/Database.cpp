@@ -176,7 +176,7 @@ std::string Database::GetDataBaseVersion()
 bool Database::GetTableList(std::vector<std::string> &tableList) const
 {
     if (!isOpen) {
-        ServerLog::Error("The db file is not opened.");
+        ServerLog::Error("The db file is not opened when get table list.");
         return false;
     }
     static const std::string SQL = "select name from sqlite_master where type='table'";
@@ -202,7 +202,7 @@ bool Database::GetTableList(std::vector<std::string> &tableList) const
 bool Database::DropAllTable()
 {
     if (!isOpen) {
-        ServerLog::Error("The db file is not opened.");
+        ServerLog::Error("The db file is not opened when drop all table.");
         return false;
     }
     static const std::string SQL = "DROP TABLE IF EXISTS ";
@@ -220,10 +220,34 @@ bool Database::DropAllTable()
     return ExecSql(dropSql);
 }
 
+bool Database::DropSomeTables(const std::vector<std::string> &tableNames)
+{
+    if (!isOpen) {
+        ServerLog::Error("The db file is not opened when drop specific tables.");
+        return false;
+    }
+
+    std::vector<std::string> tableList;
+    if (!GetTableList(tableList)) {
+        return false;
+    }
+    if (tableList.empty()) {
+        return true;
+    }
+    static const std::string SQL = "DROP TABLE IF EXISTS ";
+    std::string dropSql;
+    for (const auto &table : tableNames) {
+        if (std::find(tableList.begin(), tableList.end(), table) != tableList.end()) {
+            dropSql.append(SQL).append(table).append(";");
+        }
+    }
+    return ExecSql(dropSql);
+}
+
 std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement(const std::string &sql)
 {
     if ((!isOpen) || sql.empty()) {
-        ServerLog::Error("Failed prepare sql. Database is closed Or sql is empty.");
+        ServerLog::Error("Failed prepare sql. Database is closed or sql is empty.");
         return nullptr;
     }
     auto stmt = std::make_unique<SqlitePreparedStatement>(db);

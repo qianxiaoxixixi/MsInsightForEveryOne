@@ -48,6 +48,13 @@ bool MemoryDataBase::CreateTable()
     return ExecSql(sql);
 }
 
+bool MemoryDataBase::DropTable()
+{
+    std::vector<std::string> tables = {operatorTable, recordTable};
+    std::unique_lock<std::mutex> lock(mutex);
+    return DropSomeTables(tables);
+}
+
 bool MemoryDataBase::InitStmt()
 {
     if (hasInitStmt) {

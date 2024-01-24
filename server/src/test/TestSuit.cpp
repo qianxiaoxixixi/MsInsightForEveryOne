@@ -10,8 +10,15 @@
 #include "ServerLog.h"
 #include "ParamsParser.h"
 #include "ParserStatusManager.h"
+#include "KernelParse.h"
+#include "MemoryParse.h"
+
 
 using namespace Dic::Module::Timeline;
+using namespace Dic::Module::Summary;
+using namespace Dic::Module::Memory;
+
+
 class TestSuit : public ::testing::Test {
 protected:
     static void SetUpTestCase()
@@ -21,33 +28,45 @@ protected:
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
-        Dic::Module::Timeline::DataBaseManager::Instance()
-        .CreatConnectionPool("0", currPath + R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.db)");
-        Dic::Module::Timeline::DataBaseManager::Instance()
-        .CreatConnectionPool("1", currPath + R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.db)");
-        Dic::Module::Timeline::TraceFileParser::Instance().Parse(
-            {currPath + R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "0", "");
-        Dic::Module::Timeline::TraceFileParser::Instance().Parse(
-            {currPath + R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "1", "");
-        Dic::Module::Timeline::ClusterFileParser clusterFileParser;
-        clusterFileParser.ParseClusterFiles(currPath + R"(/src/test/test_data)");
+        std::string refPath0 = R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
+        std::string refPath1 = R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
+        DataBaseManager::Instance().CreatConnectionPool("0", currPath + refPath0 + "ascend_insight_data.db");
+        DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPath1 + "ascend_insight_data.db");
+        TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "");
+        TraceFileParser::Instance().Parse({currPath + refPath1 + "trace_view.json"}, "1", "");
+        std::string testDataPath = currPath + R"(/src/test/test_data)";
+        KernelParse::Instance().Parse({testDataPath}, "");
+        MemoryParse::Instance().Parse({testDataPath}, "");
+
+        ClusterFileParser clusterFileParser;
+        clusterFileParser.ParseClusterFiles(testDataPath);
         int interval = 2000;
         while (true) {
-            ParserStatus status0 = ParserStatusManager::Instance().GetParserStatus("0");
-            ParserStatus status1 = ParserStatusManager::Instance().GetParserStatus("1");
-            if (status0 == ParserStatus::FINISH_ALL && status1 == ParserStatus::FINISH_ALL) {
+            std::vector<std::string> statusList = {
+                    "0", "1", KERNEL_PREFIX + "0", KERNEL_PREFIX + "1", MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"};
+            int i = 0;
+            for (const auto& tmp : statusList) {
+                if (ParserStatusManager::Instance().GetParserStatus(tmp) != ParserStatus::FINISH) {
+                    break;
+                } else {
+                    i++;
+                }
+            }
+            if (i < statusList.size()) {
+                continue;
+            } else {
                 Dic::Server::ServerLog::Info("parse end");
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                break;
+                return;
             }
         }
     }
 
     static void TearDownTestCase()
     {
-        Dic::Module::Timeline::TraceFileParser::Instance().DeleteParseFile("0");
-        Dic::Module::Timeline::TraceFileParser::Instance().DeleteParseFile("1");
-        Dic::Module::Timeline::DataBaseManager::Instance().ClearClusterDb();
+        TraceFileParser::Instance().DeleteParseFile("0");
+        TraceFileParser::Instance().DeleteParseFile("1");
+        DataBaseManager::Instance().ClearClusterDb();
         std::string tempPath = Dic::FileUtil::GetCurrPath();
         int index = tempPath.find_last_of("server");
         tempPath = tempPath.substr(0, index + 1);

@@ -25,6 +25,7 @@ public:
 
     bool SetConfig();
     bool CreateTable();
+    bool DropTable();
     bool InitStmt();
     void ReleaseStmt();
 
