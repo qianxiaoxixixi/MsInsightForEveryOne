@@ -83,6 +83,24 @@ public:
         return 0;
     }
 
+    static inline long double GetLongDouble(const json_t &json, std::string_view key)
+    {
+        if (!json.HasMember(key.data())) {
+            return 0;
+        }
+        if (json[key.data()].IsNumber()) {
+            return json[key.data()].GetDouble();
+        }
+        if (json[key.data()].IsString()) {
+            try {
+                return std::stold(json[key.data()].GetString());
+            } catch (std::exception &e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
     static inline int64_t GetInteger(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {

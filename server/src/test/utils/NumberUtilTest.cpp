@@ -32,3 +32,10 @@ TEST(NumberUtil, HexadecimalStrToDecimalInt) {
     EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xb"), 11);
     EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x3b9ac9ff"), 999999999);
 }
+
+TEST(NumberUtil, TimestampUsToNs) {
+    double a = stod("1695297849996490.053");
+    EXPECT_EQ(1695297849996489984, llround(a * 1000));
+    EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNs(stold("1695297849996490.053011100000")));
+    EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs(1695297849996490));
+}
