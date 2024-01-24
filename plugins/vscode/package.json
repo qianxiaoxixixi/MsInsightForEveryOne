@@ -2,7 +2,7 @@
     "name": "ascend-insight-extension",
     "displayName": "ascend-insight-extension",
     "description": "",
-    "version": "6.0.3",
+    "version": "7.0.1",
     "extensionKind": [
         "ui",
         "workspace"
