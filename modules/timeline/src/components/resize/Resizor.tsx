@@ -67,8 +67,9 @@ const Resizor = (props: {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
         const parentNode = divRef?.current?.parentNode as HTMLElement;
-        if (parentNode !== null) {
-            parentNode.style.pointerEvents = 'null';
+        if (parentNode !== null && parentNode !== undefined) {
+            // @ts-expect-error:可用格式
+            parentNode.style.pointerEvents = null;
         }
         // 如果当前在iframe中
         if (self !== top) {

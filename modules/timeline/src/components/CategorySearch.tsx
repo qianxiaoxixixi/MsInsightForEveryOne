@@ -1,7 +1,6 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Pagination, Tooltip, message } from 'antd';
-import { PaginationProps } from 'antd/lib/pagination';
+import { Tooltip, message, Button, InputNumber } from 'antd';
 import { observer } from 'mobx-react';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
@@ -13,6 +12,7 @@ import { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
 import i18n from 'i18next';
+import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 
 const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
@@ -25,35 +25,29 @@ const CustomDiv = styled.div`
     padding: 1px 7px 1px 10px;
     min-width: 600px;
     height: 32px;
-    background: ${props => props.theme.tooltipBGColor};
+    background: ${(props): string => props.theme.tooltipBGColor};
     .searchResult {
-        color: ${(props) => props.theme.svgBackgroundColor};
+        color: ${(props): string => props.theme.svgBackgroundColor};
         font-size: 12px;
         white-space: nowrap;
     }
-`;
-
-const StylePagination = styled(({ current, total, ...props }: PaginationProps) => {
-    useEffect(() => {
-        if (current === undefined || total === undefined) { return; }
-        const parent = document.querySelector('.ant-pagination-simple-pager');
-        const input = parent?.querySelector('input');
-        setTimeout(() => {
-            input && (input.value = ((current ?? 0) - 1).toString());
-            parent?.childNodes[2] && (parent.childNodes[2].textContent = `${(total ?? 0) - 1}`);
-        });
-    });
-    return <Pagination current={current} total={total} {...props} />;
-})`
-    .ant-pagination-item-link {
-        color: ${(props) => props.theme.fontColor};
-        display: inline-block;
+    button.ant-btn.ant-btn-default.ant-btn-icon-only {
+        border: none;
+        background-color: ${(props): string => props.theme.tooltipBGColor};
+        color: ${(props): string => props.theme.svgBackgroundColor};
     }
-    .ant-pagination-simple-pager {
-        color: ${(props) => props.theme.fontColor};
-        input {
-            color: rgba(0, 0, 0, 0.9);
-        }
+    button.ant-btn.ant-btn-default.ant-btn-icon-only:hover {
+        color: #007aff;
+    }
+    div.ant-input-number {
+        width: 30px;
+    }
+    div.ant-input-number-input-wrap {
+        width: 30px;
+    }
+    input.ant-input-number-input {
+        width: 30px;
+        font-size: 12px;
     }
 `;
 
@@ -105,28 +99,26 @@ const jumpSlice = async (session: Session, searchContent: string, index: number)
     let finalDataSource;
     let finalRankId;
     let flag = false;
-    // 当 index 等于 1 时，界面显示为 0，表示展示全部的搜索结果，因为 Pagination 组件不支持 0，所以 index 为 1 时实际展示为 0
-    // 这里 -1 是为了修正对后端调用的影响
-    let fixedIndex = index - 1;
+    let currentIndex = index;
     for (const remoteCount of remoteCntArray) {
         if (flag) {
             break;
         }
         for (const rankCount of remoteCount.countList) {
-            if (fixedIndex <= rankCount.count) {
+            if (currentIndex <= rankCount.count) {
                 finalRankId = rankCount.rankId;
                 finalDataSource = remoteCount.dataSource;
                 flag = true;
                 break;
             }
-            fixedIndex -= rankCount.count;
+            currentIndex -= rankCount.count;
         }
     }
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: fixedIndex } });
-    doJumpSlice(session, slice);
+    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex) } });
+    doJumpSlice(session, slice, currentIndex === 0);
 };
 
-const doJumpSlice = (session: Session, slice: SliceData): void => {
+const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): void => {
     if (slice === undefined) {
         console.error('slice is undefined.');
     }
@@ -136,9 +128,14 @@ const doJumpSlice = (session: Session, slice: SliceData): void => {
                 return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
             },
             onSuccess: (unit) => {
-                const [rangeStart, rangeEnd] = calculateDomainRange(session, slice.startTime, slice.duration);
-                session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                session.selectedData = { startTime: slice.startTime, duration: slice.duration, depth: slice.depth, threadId: slice.tid };
+                if (isGlobal) {
+                    session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+                    session.selectedData = undefined;
+                } else {
+                    const [rangeStart, rangeEnd] = calculateDomainRange(session, slice.startTime, slice.duration);
+                    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                    session.selectedData = { startTime: slice.startTime, duration: slice.duration, depth: slice.depth, threadId: slice.tid };
+                }
             },
         };
     });
@@ -179,13 +176,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         setSearchIconVisible(true); setSearchContent('');
         updatePaginationData({ current: 0, total: 0 }); session.searchData = undefined;
     }), [session]);
-    const onPageChange = (current: number, pageSize: number): void => {
+    const onPageChange = (current: number): void => {
         updatePaginationData(prevState => ({ current, total: prevState.total }));
-        if (current === 1) {
-            session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
-            session.selectedData = undefined;
-            return;
-        }
         jumpSlice(session, searchContent, current);
     };
     const onInputPressEnter = async (): Promise<void> => {
@@ -193,7 +185,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         setSearchingStatus(true);
         const totalCnt = await queryDataCount(session, searchContent);
         if (totalCnt > 0) {
-            updatePaginationData({ current: 1, total: totalCnt + 1 });
+            updatePaginationData({ current: 0, total: totalCnt });
+            jumpSlice(session, searchContent, 0);
             setSearchIconVisible(false);
         } else { messageApi.warning(i18n.t('notify:SearchEmpty')); }
         setSearchingStatus(false);
@@ -214,7 +207,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 ? <ImgWithFallback className={'loading'} />
                 : searchIconVisible
                     ? <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
-                    : <StylePagination pageSize={1} {...paginationData} onChange={onPageChange} simple/> }
+                    : <StylePagination {...paginationData} onChange={onPageChange} /> }
             </div>
         </CustomDiv>
     );
@@ -253,3 +246,33 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
         </Tooltip>
     );
 });
+
+interface Props {
+    onChange: (current: number) => void;
+    current: number;
+    total: number;
+}
+const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
+    const [searchNumber, setSearchNumber] = useState(0);
+    const [currentValue, setCurrentValue] = useState(current);
+    const handleSearch = (inputNumber: number): void => {
+        setCurrentValue(inputNumber);
+        onChange(inputNumber);
+    };
+    useEffect(() => {
+        setCurrentValue(current);
+    }, [current]);
+    return (<div className={'StylePaginationClass'}>
+        <Button size="middle" disabled={current === 0} icon={<LeftOutlined />} onClick={(): void => onChange(current - 1) }/>
+        <span><InputNumber
+            min={0}
+            max={total}
+            size="small"
+            value={currentValue}
+            controls={false}
+            onChange={(inputNumber: number): void => setSearchNumber((inputNumber === null || inputNumber === undefined) ? 1 : inputNumber)}
+            onPressEnter={(): void => handleSearch(searchNumber)}
+        /></span> / <span>{total}</span>
+        <Button size="middle" disabled={current === total} icon={<RightOutlined />} onClick={(): void => onChange(current + 1) }/>
+    </div>);
+};
