@@ -11,6 +11,7 @@
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "FileDef.h"
+#include "NumberUtil.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
 
@@ -108,14 +109,15 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
     size_t durationIndex = dataMap[DURATION];
     anOperator.name = row[nameIndex];
     anOperator.size = atof(row[sizeIndex].c_str());
-    anOperator.allocationTime = atof(row[allocationTimeIndex].c_str());
+    anOperator.allocationTime = NumberUtil::TimestampUsToNs(std::stold(row[allocationTimeIndex].c_str()));
     anOperator.duration = atof(row[durationIndex].c_str());
 
     if (dataMap.count(RELEASE_TIME)) {
         size_t releaseTimeIndex = dataMap[RELEASE_TIME];
-        anOperator.releaseTime = atof(row[releaseTimeIndex].c_str());
+        anOperator.releaseTime = NumberUtil::TimestampUsToNs(std::stold(row[releaseTimeIndex].c_str()));
     } else {
-        anOperator.releaseTime = anOperator.allocationTime + anOperator.duration;
+        anOperator.releaseTime = NumberUtil::TimestampUsToNs(
+            std::stold(row[allocationTimeIndex].c_str()) + anOperator.duration);
     }
 
     return anOperator;
@@ -127,7 +129,7 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
     size_t nameIndex = dataMap[COMPONENT];
     size_t timeStampIndex = dataMap[TIMESTAMP];
     record.component = row[nameIndex];
-    record.timesTamp = atof(row[timeStampIndex].c_str());
+    record.timesTamp = NumberUtil::TimestampUsToNs(std::stold(row[timeStampIndex].c_str()));
     // msprof场景
     if (dataMap.count(Dic::DEVICE_ID)) {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_KB];
