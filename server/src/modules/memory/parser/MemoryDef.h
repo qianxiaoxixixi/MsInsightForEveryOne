@@ -18,7 +18,7 @@ struct MemoryFilePair {
 
 struct Record {
     std::string component;
-    double timesTamp;
+    int64_t timesTamp;
     double totalAllocated;
     double totalReserved;
     std::string deviceType;
@@ -27,8 +27,8 @@ struct Record {
 struct Operator {
     std::string name;
     double size;
-    double allocationTime;
-    double releaseTime;
+    int64_t allocationTime;
+    int64_t releaseTime;
     double duration;
     std::string deviceType;
 };

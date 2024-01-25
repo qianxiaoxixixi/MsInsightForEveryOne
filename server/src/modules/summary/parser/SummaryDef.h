@@ -17,7 +17,7 @@ struct Kernel {
     std::string name;
     std::string type;
     std::string acceleratorCore;
-    double startTime;
+    int64_t startTime;
     double duration;
     double waitTime;
     int64_t blockDim;

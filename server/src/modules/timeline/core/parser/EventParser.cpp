@@ -46,7 +46,7 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         ServerLog::Error("EventParser. Failed to read buffer. fileId:", fileId);
         return false;
     }
-    auto data = JsonUtil::TryParse(buffer, error);
+    auto data = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(buffer, error);
     if (!data.has_value()) {
         error = "File is not valid json. " + error;
         ServerLog::Error("EventParser. fileId:", fileId, ". ", error);
