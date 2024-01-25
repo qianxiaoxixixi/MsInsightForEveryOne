@@ -64,9 +64,9 @@ bool SummaryDataBase::InitStmt()
     std::string sql =
             "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
             "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
-            "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,round(? * 1000),?,?,?,?,?,?,?,?,?)";
+            "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?,round(? * 1000),?,?,?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertKernelStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert kernel detail statement. error:", sqlite3_errmsg(db));
@@ -98,7 +98,7 @@ void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.acceleratorCore.c_str(), event.acceleratorCore.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_double(stmt, idx++, event.startTime);
+        sqlite3_bind_int64(stmt, idx++, event.startTime);
         sqlite3_bind_double(stmt, idx++, event.duration);
         sqlite3_bind_double(stmt, idx++, event.waitTime);
         sqlite3_bind_int64(stmt, idx++, event.blockDim);
@@ -147,9 +147,9 @@ sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
         std::string sql =
                 "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
                 "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
-                "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,round(? * 1000),?,?,?,?,?,?,?,?,?)";
+                "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?,round(? * 1000),?,?,?,?,?,?,?,?,?)");
+            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insert Kernel stat. error:", sqlite3_errmsg(db));

@@ -9,6 +9,7 @@
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
 #include "ServerLog.h"
+#include "NumberUtil.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
@@ -244,7 +245,7 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, size_t> dataMap,
     kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[dataMap[STEP_ID]] : "";
     kernel.type = row[typeIndex];
     kernel.acceleratorCore = row[acceleratorIndex];
-    kernel.startTime = atof(row[startTimeIndex].c_str());
+    kernel.startTime = NumberUtil::TimestampUsToNs(std::stold(row[startTimeIndex].c_str()));
     kernel.duration = atof(row[durationIndex].c_str());
     kernel.waitTime = atof(row[waitTimeIndex].c_str());
     kernel.blockDim = atof(row[dataMap[FIELD_BLOCK_DIM]].c_str());
