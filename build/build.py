@@ -59,10 +59,13 @@ def build_vscode(vscode_version, os_name):
         exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
     elif os_name.endswith('aarch64'):
         exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
+    # Linux和MacOS下，设置NO_BUILD_VSCODE时不编译VSCode插件
     if not os_name.startswith('win'):
-        if os.getenv('BUILD_VSCODE') is None:
+        if os.getenv('NO_BUILD_VSCODE') is None:
+            exec_command(['npm', 'run', 'buildExtensionLinux'], SCRIPT_PATH)
+        else:
+            logging.info('The VSCode plugin is not compiled because NO_BUILD_VSCODE is set.')
             return
-        exec_command(['npm', 'run', 'buildExtensionLinux'], SCRIPT_PATH)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'vscode')
     # copy vscode plugin
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
