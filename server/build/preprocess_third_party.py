@@ -58,12 +58,13 @@ def log(info):
 def prepare_sqlite_src():
     log('start to prepare sqlite src')
     if platform.system() == "Windows":
-        tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
-        urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
-        tar = tarfile.open(tar_path)
-        tar.extractall(THIRD_PARTY_DIR)
-        tar.close()
-        os.remove(tar_path)
+        if not os.path.exists(os.path.join(THIRD_PARTY_DIR, SQLITE3_AUTOCONF_DIR)):
+            tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
+            urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
+            tar = tarfile.open(tar_path)
+            tar.extractall(THIRD_PARTY_DIR)
+            tar.close()
+            os.remove(tar_path)
     else:
         build_path = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR, 'build')
         if os.path.exists(build_path):
