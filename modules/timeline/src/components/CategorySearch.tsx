@@ -1,6 +1,6 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, message, Button, InputNumber } from 'antd';
+import { Tooltip, message, Button, Input } from 'antd';
 import { observer } from 'mobx-react';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
@@ -39,14 +39,10 @@ const CustomDiv = styled.div`
     button.ant-btn.ant-btn-default.ant-btn-icon-only:hover {
         color: #007aff;
     }
-    div.ant-input-number {
-        width: 30px;
-    }
-    div.ant-input-number-input-wrap {
-        width: 30px;
-    }
-    input.ant-input-number-input {
-        width: 30px;
+    input.ant-input.ant-input-sm {
+        width: 50px;
+        border-radius: 5px;
+        height: 22px;
         font-size: 12px;
     }
 `;
@@ -254,7 +250,7 @@ interface Props {
 }
 const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
     const [searchNumber, setSearchNumber] = useState(0);
-    const [currentValue, setCurrentValue] = useState(current);
+    const [currentValue, setCurrentValue] = useState<string | number>(current);
     const handleSearch = (inputNumber: number): void => {
         setCurrentValue(inputNumber);
         onChange(inputNumber);
@@ -264,13 +260,22 @@ const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
     }, [current]);
     return (<div className={'StylePaginationClass'}>
         <Button size="middle" disabled={current === 0} icon={<LeftOutlined />} onClick={(): void => onChange(current - 1) }/>
-        <span><InputNumber
-            min={0}
-            max={total}
+        <span><Input
             size="small"
             value={currentValue}
-            controls={false}
-            onChange={(inputNumber: number): void => setSearchNumber((inputNumber === null || inputNumber === undefined) ? 1 : inputNumber)}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+                const val = event.target.value.replace(/\D/g, '');
+                if (val === '') {
+                    setCurrentValue(val);
+                    setSearchNumber(1);
+                    return;
+                }
+                if (Number(val) > total || Number(val) < 0) {
+                    return;
+                }
+                setCurrentValue(Number(val));
+                setSearchNumber(Number(val));
+            }}
             onPressEnter={(): void => handleSearch(searchNumber)}
         /></span> / <span>{total}</span>
         <Button size="middle" disabled={current === total} icon={<RightOutlined />} onClick={(): void => onChange(current + 1) }/>
