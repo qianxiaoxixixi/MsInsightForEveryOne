@@ -100,6 +100,9 @@ private:
     const std::string trackIdTimeIndex = "track_id_time_index";
     const std::string flowIndex = "flow_id_time_index";
     const std::string kernelDetail = "kernel_detail";
+    const std::string lineStart = "s";
+    const std::string lineEnd = "f";
+    const std::string lineEndOptional = "t";
 
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;

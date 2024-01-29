@@ -1092,13 +1092,14 @@ void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto
     for (const auto &flow : flowEventsVec) {
         std::string type = flow.type;
         std::string flowId = flow.flowId;
-        if (type == "s" || flowId != curFlowId) {
+        if (type == lineStart || flowId != curFlowId) {
             location.pid = flow.pid;
             location.tid = flow.tid;
             location.depth = flow.depth;
             location.timestamp = flow.timestamp;
+            location.type = type;
             locationPtr = &location;
-        } else if ((type == "f" || type == "t") && flowId == curFlowId) {
+        } else if ((type == lineEnd || type == lineEndOptional) && flowId == curFlowId) {
             auto flowEvent = std::make_unique<FlowEvent>();
             flowEvent->category = category;
             flowEvent->from = *locationPtr;
@@ -1107,7 +1108,9 @@ void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
             locationPtr = &(flowEvent->to);
-            flowDetailList.emplace_back(std::move(flowEvent));
+            if (flowEvent->from.type == lineStart) {
+                flowDetailList.emplace_back(std::move(flowEvent));
+            }
         }
         curFlowId = flowId;
     }
