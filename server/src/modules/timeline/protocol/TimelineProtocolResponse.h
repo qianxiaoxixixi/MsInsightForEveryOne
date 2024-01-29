@@ -233,6 +233,7 @@ struct FlowEventLocation {
     int32_t depth = 0;
     uint64_t timestamp = 0;
     std::string pid;
+    std::string type;
 };
 
 struct FlowEvent {
