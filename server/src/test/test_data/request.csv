@@ -102,3 +102,9 @@
 {"id":293,"moduleName":"timeline","type":"request","command":"unit/kernelDetails","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","pageSize":10,"current":1,"orderBy":"duration","order":"descend","coreType":"","searchName":""}}
 {"id":294,"moduleName":"timeline","type":"request","command":"unit/kernelDetails","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","pageSize":10,"current":1,"orderBy":"duration","order":"descend","coreType":"","searchName":""}}
 {"id":295,"moduleName":"timeline","type":"request","command":"unit/threadTraces","params":{"token":"Rd``OTxPVKtcJPt]","cardId":"1","processId":"14083671701","threadId":0,"startTime":0,"endTime":1000000000,"dataSource":{"remote":"127.0.0.1","port":9000,"dataPath":[""]},"timePerPx":230.5098493626883}}
+{"id":296,"moduleName":"memory","type":"request","command":"Memory/view/memoryUsage","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
+{"id":297,"moduleName":"memory","type":"request","command":"Memory/view/operator","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","currentPage":1,"pageSize":10,"orderName":"","minSize":0,"maxSize":1000000}}
+{"id":299,"moduleName":"global","type":"request","command":"token.check","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":300,"moduleName":"global","type":"request","command":"token.heartCheck","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":301,"moduleName":"global","type":"request","command":"token.destroy","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":302,"moduleName":"global","type":"request","command":"token.create","params":{"token":"","deadTime":-1}}
