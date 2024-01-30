@@ -40,10 +40,10 @@ bool MemoryDataBase::CreateTable()
         return false;
     }
     std::string sql =
-            "CREATE TABLE " + operatorTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, " +
-            "allocation_time INTEGER, release_time INTEGER, size INTEGER, duration INTEGER);" +
-            "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
-            "total_allocated INTEGER, total_reserve INTEGER, device_type TEXT, timestamp INTEGER);";
+        "CREATE TABLE " + operatorTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, " +
+        "allocation_time INTEGER, release_time INTEGER, size INTEGER, duration INTEGER);" +
+        "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
+        "total_allocated INTEGER, total_reserve INTEGER, total_active INTEGER, device_type TEXT, timestamp INTEGER);";
     std::unique_lock<std::mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -70,10 +70,11 @@ bool MemoryDataBase::InitStmt()
         return false;
     }
 
-    sql = "INSERT INTO " + recordTable + " (component, total_allocated, total_reserve, device_type, timestamp)" +
-          " VALUES (?,?,?,?,?)";
+    sql = "INSERT INTO " + recordTable +
+            " (component, total_allocated, total_reserve, total_active, device_type, timestamp)" +
+            " VALUES (?,?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertRecordStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert Record statement. error:", sqlite3_errmsg(db));
@@ -140,6 +141,7 @@ void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
         sqlite3_bind_text(stmt, idx++, event.component.c_str(), event.component.length(), SQLITE_TRANSIENT);
         sqlite3_bind_double(stmt, idx++, event.totalAllocated);
         sqlite3_bind_double(stmt, idx++, event.totalReserved);
+        sqlite3_bind_double(stmt, idx++, event.totalActivated);
         sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, event.timesTamp);
     }
@@ -216,13 +218,11 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
-    // 1ms = 1000 * 1000 ns
     std::vector<Protocol::MemoryOperator> operatorDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
         operatorDto.name = sqlite3_column_string(stmt, col++);
-        // 1ms = 1000us
         operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
         operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
         operatorDto.size = sqlite3_column_double(stmt, col++);
@@ -236,7 +236,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
 }
 
 /*
- * 将多个单条线的数据组装成[x,y,y,y]的格式，对于x点上不存在的y补为NULL。
+ * 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
  */
 void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLines &lines, Protocol::MemoryPeak &peak)
 {
@@ -245,10 +245,13 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLi
         if (item.component == COMPONENT_PTA_AND_GE || (isInference && item.component == COMPONENT_GE)) {
             peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
             peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
+            peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);
             std::string time = std::to_string(item.timesTamp);
             points.emplace_back(time.substr(0, time.length() - exLength));
             std::string allocated = std::to_string(item.totalAllocated);
             points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+            std::string activated = std::to_string(item.totalActivated);
+            points.emplace_back(activated.substr(0, activated.length() - exLength));
             std::string reserved = std::to_string(item.totalReserved);
             points.emplace_back(reserved.substr(0, reserved.length() - exLength));
             points.emplace_back("NULL");
@@ -258,6 +261,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLi
             peak.appReserved = std::max(peak.appReserved, item.totalReserved);
             std::string time = std::to_string(item.timesTamp);
             points.emplace_back(time.substr(0, time.length() - exLength));
+            points.emplace_back("NULL");
             points.emplace_back("NULL");
             points.emplace_back("NULL");
             std::string reserved = std::to_string(item.totalReserved);
@@ -273,7 +277,9 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
 {
     std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
                       "ROUND(total_allocated, 2) as total_allocated, "
-                      "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable + " ORDER BY timestamp ASC";
+                      "ROUND(total_reserve, 2) as total_reserve, "
+                      "ROUND(total_active, 2) as total_active "
+                      "FROM " + recordTable + " ORDER BY timestamp ASC";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -291,10 +297,10 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
         Protocol::ComponentDto componentDto{};
         componentDto.component = sqlite3_column_string(stmt, col++);
         // 减去timeline开始的时间作为时间戳
-        // 1ms = 1000us
         componentDto.timesTamp = sqlite3_column_double(stmt, col++);
         componentDto.totalAllocated = sqlite3_column_double(stmt, col++);
         componentDto.totalReserved = sqlite3_column_double(stmt, col++);
+        componentDto.totalActivated = sqlite3_column_double(stmt, col++);
         componentDtoVec.emplace_back(componentDto);
     }
     Protocol::MemoryPeak peak;
@@ -309,20 +315,22 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
 std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
 {
     std::string peakMemory = "Peak Memory Usage: ";
+    const size_t decimalPlacesNum = 4;
     if (peak.hasPtaGe) {
         std::string ptaGeAllo = std::to_string(peak.ptaGeAllocated);
         // double转换成string默认生成六位小数，删除后4位小数
-        ptaGeAllo = ptaGeAllo.substr(0, ptaGeAllo.length() - 4);
+        ptaGeAllo = ptaGeAllo.substr(0, ptaGeAllo.length() - decimalPlacesNum);
         peakMemory.append("Operator Allocated： ").append(ptaGeAllo).append("MB");
+        std::string ptaGeActive = std::to_string(peak.ptaGeActivated);
+        ptaGeActive = ptaGeActive.substr(0, ptaGeActive.length() - decimalPlacesNum);
+        peakMemory.append(" | Operator Activated： ").append(ptaGeActive).append("MB");
         std::string ptaGeRe = std::to_string(peak.ptaGeReserved);
-        // double转换成string默认生成六位小数，删除后4位小数
-        ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - 4);
+        ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - decimalPlacesNum);
         peakMemory.append(" | Operator Reserved： ").append(ptaGeRe).append("MB");
     }
     if (peak.hasApp) {
         std::string appAllo = std::to_string(peak.appReserved);
-        // double转换成string默认生成六位小数，删除后4位小数
-        appAllo = appAllo.substr(0, appAllo.length() - 4);
+        appAllo = appAllo.substr(0, appAllo.length() - decimalPlacesNum);
         peakMemory.append(" | APP Reserved： ").append(appAllo).append("MB");
     }
     return peakMemory;
@@ -375,9 +383,10 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + recordTable +
-                " (component, total_allocated, total_reserve, device_type, timestamp) VALUES (?,?,?,?,?)";
+                " (component, total_allocated, total_reserve, total_active, device_type, timestamp)"
+                " VALUES (?,?,?,?,?,?)";
         for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?)");
+            sql.append(",(?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));

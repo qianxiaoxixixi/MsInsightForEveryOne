@@ -18,13 +18,13 @@ const ResizableTitle = (
         return th;
     }
     return cloneElement(th, {},
-        [ ...th.props.children,
-            <Resizor key={th.props.children.length} onResize={onResize}/> ]);
+        [...th.props.children,
+            <Resizor key={th.props.children.length} onResize={onResize}/>]);
 };
 
 const ResizeTable = (props: any): JSX.Element => {
     const { columns: propColumns, ...restProps } = props;
-    const [ columns, setColumns ] = useState<any[]>([]);
+    const [columns, setColumns] = useState<any[]>([]);
 
     useEffect(() => {
         if (props.columns.length !== columns.length) {

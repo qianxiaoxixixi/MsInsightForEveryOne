@@ -94,7 +94,7 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         ...option,
         dataset:
         {
-            source: [ graph.columns, ...graph.rows ],
+            source: [graph.columns, ...graph.rows],
         },
         series: Array(graph.columns.length - 1).fill(lineSerie),
     };
@@ -189,7 +189,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const { graph, record, isDark, isWakeup, onSelectionChanged } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
-    const [ chartObj, setChartObj ] = React.useState<echarts.ECharts | undefined>();
+    const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
     const selectedPoints = React.useRef<number[]>([]);
 
     React.useLayoutEffect(() => {
@@ -207,11 +207,11 @@ export const LineChart: React.FC<IProps> = (props) => {
         return () => {
             myChart.dispose();
         };
-    }, [ graph, resizeEventDependency, isDark, isWakeup ]);
+    }, [graph, resizeEventDependency, isDark, isWakeup]);
 
     React.useEffect(() => {
         _handleEvents(chartObj, props, selectedPoints, graph);
-    }, [ graph, record, chartObj ]);
+    }, [graph, record, chartObj]);
 
     return (
         <div ref={graphRef} style={{ height: '400px' }}></div>
