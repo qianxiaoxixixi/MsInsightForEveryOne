@@ -11,14 +11,14 @@ import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../
 import { runInAction } from 'mobx';
 import { Session } from '../../entity/session';
 
-type FullConditionType = {
-    rankId?: string ;
-    group?: string;
-    topK?: number;
-    current?: number;
-    pageSize?: number;
-    field?: string;
-    order?: string;
+interface FullConditionType {
+    rankId: string ;
+    group: string;
+    topK: number;
+    current: number;
+    pageSize: number;
+    field: string;
+    order: string;
 };
 const OPERATOR = 'Operator';
 const OPERATOR_TYPE = 'Operator Type';
@@ -268,19 +268,19 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
             return [...colMap[group] ?? [], btnCol];
         }
     };
-    const updateData = async(page: any, sorter: any): Promise<void> => {
+    const updateData = async(): Promise<void> => {
         let res;
         // 展开算子
         if (opType !== undefined || opName !== undefined) {
             res = await queryOperatorsInStatic(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field, opType, opName, shape: inputShape },
+                { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '' },
             );
         } else if (condition.group === OPERATOR) {
             res = await queryOperators(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field });
+                { ...fullCondition, orderBy: fullCondition.field });
         } else {
             res = await queryOperatorStatic(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field });
+                { ...fullCondition, orderBy: fullCondition.field });
         }
         if (res === null || res === undefined) {
             return;
@@ -298,10 +298,10 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
         });
     };
 
-    const updateTable = async (page: any, sorter: any): Promise<void> => {
+    const updateTable = async (): Promise<void> => {
         setLoading(true);
         try {
-            await updateData(page, sorter);
+            await updateData();
         } finally {
             setExpandedKeys([]);
             setLoading(false);
@@ -309,38 +309,39 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
     };
 
     const updateFullCondition = (obj: FullConditionType): void => {
-        const newFullCondition = { ...fullCondition };
-        const keys = ['group', 'rankId', 'topK', 'current', 'pageSize', 'field', 'order'];
-        Object.keys(obj).forEach(key => {
-            if (keys.includes(key)) {
-                Object.assign(newFullCondition, { [key]: obj[key as keyof FullConditionType] });
-            }
+        setTimeout(() => {
+            const newFullCondition = { ...fullCondition };
+            const keys = ['group', 'rankId', 'topK', 'current', 'pageSize', 'field', 'order'];
+            Object.keys(obj).forEach(key => {
+                if (keys.includes(key)) {
+                    Object.assign(newFullCondition, { [key]: obj[key as keyof FullConditionType] });
+                }
+            });
+            setFullCondition(newFullCondition);
         });
-        setFullCondition(newFullCondition);
     };
 
     useEffect(() => {
         if (condition.rankId === '') {
             setData([]);
-            setSorter(defaultSorter);
-            setPage(defaultPage);
             runInAction(() => {
                 session.total = 0;
             });
             return;
         }
-        updateTable(page, sorter);
+        updateTable();
+        console.log('44444', fullCondition);
     }, [JSON.stringify(fullCondition)]);
 
     useEffect(() => {
         setSorter(defaultSorter);
         setPage(defaultPage);
         updateFullCondition({ ...defaultSorter, ...defaultPage, ...condition });
-    }, [condition.group, condition.rankId, condition.topK]);
+    }, [condition.group]);
 
     useEffect(() => {
-        updateFullCondition({ ...sorter, ...page });
-    }, [page.current, page.pageSize, sorter.field, sorter.order]);
+        updateFullCondition({ ...sorter, ...page, ...condition });
+    }, [page.current, page.pageSize, sorter.field, sorter.order, condition.rankId, condition.topK]);
     return <ResizeTable
         size="small"
         minThWidth={50}
