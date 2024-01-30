@@ -70,7 +70,7 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
 
 const draw = (ctx: CanvasRenderingContext2D | null, datas: StackStatusData[][], xScale: Scale, yScale: Scale, theme: Theme, right: number, textConfig?: TextConfig): void => {
     if (!ctx) return;
-    const { overflow, textMarginLeft: marginLeft, textAlign } = textConfig ?? { overflow: 'ellipsis', textMarginLeft: DFT_PADDING, textAlign: 'start' };
+    const { overflow, textAlign } = textConfig ?? { overflow: 'ellipsis', textAlign: 'start' };
     ctx.font = `${FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`;
     ctx.textAlign = textAlign;
     ctx.textBaseline = 'top';
@@ -103,7 +103,8 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: StackStatusData[][], 
     if (height > UnitHeight.STANDARD - 1) {
         textToDraw.forEach(data => {
             const text = getMaxText(data.type, data.width - DFT_PADDING, ctx, overflow);
-            ctx.fillText(text, xScale(data.startTime) + (typeof marginLeft === 'number' ? marginLeft : marginLeft(data.width)), yScale(data.depth) + (height - FONT_SIZE) / 2 + 1);
+            ctx.textAlign = 'center';
+            ctx.fillText(text, xScale(data.startTime) + (data.width / 2), yScale(data.depth) + ((height - FONT_SIZE) / 2) + 1);
         });
     }
 };
