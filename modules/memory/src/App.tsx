@@ -61,7 +61,7 @@ const StatePopover = observer(() => {
 
 export const App = observer(() => {
     const { insightStore, sessionStore } = useRootStore();
-    const [ themeDark, setThemeDark ] = useState<boolean>(true);
+    const [themeDark, setThemeDark] = useState<boolean>(true);
     const hasListenerRef = useRef<boolean>(false);
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');

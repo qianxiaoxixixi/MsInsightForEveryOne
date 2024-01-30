@@ -139,6 +139,8 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
         size_t deviceTypeIndex = dataMap[DEVICE];
         record.totalAllocated = atof(row[totalAllocatedIndex].c_str()) / KB_TO_MB;
         record.totalReserved = atof(row[totalReservedIndex].c_str()) / KB_TO_MB;
+        record.totalActivated = dataMap.count(TOTAL_ACTIVE_KB) == 0 ?
+                0 : atof(row[dataMap[TOTAL_ACTIVE_KB]].c_str()) / KB_TO_MB;
         record.deviceType = row[deviceTypeIndex];
     } else {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_MB];
@@ -146,6 +148,8 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
         size_t deviceTypeIndex = dataMap[DEVICETYPE];
         record.totalAllocated = atof(row[totalAllocatedIndex].c_str());
         record.totalReserved = atof(row[totalReservedIndex].c_str());
+        record.totalActivated = dataMap.count(TOTAL_ACTIVE_MB) == 0 ?
+                0 : atof(row[dataMap[TOTAL_ACTIVE_MB]].c_str());
         record.deviceType = row[deviceTypeIndex];
     }
     return record;

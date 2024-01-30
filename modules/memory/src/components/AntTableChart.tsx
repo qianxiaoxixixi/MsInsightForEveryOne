@@ -60,7 +60,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
 
     const columns = React.useMemo(
         () => getTableColumns(tableData.columns, sortColumn),
-        [ tableData.columns, sortColumn ],
+        [tableData.columns, sortColumn],
     );
 
     // key is used to reset the Table state (page and sort) if the columns change
@@ -103,7 +103,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             pagination={{
                 current,
                 pageSize,
-                pageSizeOptions: [ '10', '20', '30', '50', '100' ],
+                pageSizeOptions: ['10', '20', '30', '50', '100'],
                 onChange,
                 total,
                 showTotal: total => `Total ${total} items`,

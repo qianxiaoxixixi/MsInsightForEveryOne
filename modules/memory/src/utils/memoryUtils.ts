@@ -9,7 +9,7 @@ import { debounce } from 'lodash';
  * @returns {readonly [number]}
  */
 export function useResizeEventDependency(): readonly [number] {
-    const [ version, setVersion ] = useState(0);
+    const [version, setVersion] = useState(0);
 
     const increaseSize = useCallback(
         debounce(() => {

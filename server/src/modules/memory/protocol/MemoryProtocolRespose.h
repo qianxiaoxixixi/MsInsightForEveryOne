@@ -62,6 +62,7 @@ struct ComponentDto {
     std::string component;
     double totalReserved;
     double totalAllocated;
+    double totalActivated;
     double timesTamp;
 };
 
@@ -70,6 +71,7 @@ struct MemoryPeak {
     bool hasApp = false;
     double ptaGeAllocated = 0;
     double ptaGeReserved = 0;
+    double ptaGeActivated = 0;
     double appReserved = 0;
 };
 } // end of namespace Protocol

@@ -26,44 +26,44 @@ const MemoryWrapper = styled.div`
       height: 100%;
     `;
 
-const lineColumn = [ 'Time (ms)', 'Operators Allocated', 'Operators Reserved' ];
-const tableColumn: MemoryTableColumn[] = [ { name: 'Name', type: 'string', key: 'name' },
+const lineColumn = ['Time (ms)', 'Operators Allocated', 'Operators Activated', 'Operators Reserved'];
+const tableColumn: MemoryTableColumn[] = [{ name: 'Name', type: 'string', key: 'name' },
     { name: 'Size(KB)', type: 'number', key: 'size' },
     { name: 'Allocation Time(ms)', type: 'number', key: 'allocationTime' },
     { name: 'Release Time(ms)', type: 'number', key: 'releaseTime' },
-    { name: 'Duration(ms)', type: 'number', key: 'duration' } ];
+    { name: 'Duration(ms)', type: 'number', key: 'duration' }];
 
 // eslint-disable-next-line max-lines-per-function
 const MemoryAnalysis = observer(function({ session, isDark }: { session: Session; isDark: boolean }) {
     // 算子表格内存信息
-    const [ memoryTableData, setMemoryTableData ] = useState<OperatorDetail[]>([]);
+    const [memoryTableData, setMemoryTableData] = useState<OperatorDetail[]>([]);
     // 内存曲线数据源
-    const [ memoryCurveData, setMemoryCurveData ] = useState<MemoryCurve | undefined>(undefined);
+    const [memoryCurveData, setMemoryCurveData] = useState<MemoryCurve | undefined>(undefined);
     // 内存曲线绘制数据
-    const [ lineChartData, setLineChartData ] = useState<Graph | undefined>(undefined);
-    const [ selectedRange, setSelectedRange ] = useState<SelectedRange | undefined>();
-    const [ searchEventOperatorName, setSearchEventOperatorName ] = useState<string>('');
-    const [ minSize, setMinSize ] = useState<number>(0);
+    const [lineChartData, setLineChartData] = useState<Graph | undefined>(undefined);
+    const [selectedRange, setSelectedRange] = useState<SelectedRange | undefined>();
+    const [searchEventOperatorName, setSearchEventOperatorName] = useState<string>('');
+    const [minSize, setMinSize] = useState<number>(0);
     // 最大内存范围，默认1000000KB
-    const [ maxSize, setMaxSize ] = useState<number>(1000000);
-    const [ curveSpin, setCurveSpin ] = useState<boolean>(false);
-    const [ tableSpin, setTableSpin ] = useState<boolean>(false);
-    const [ rankId, setRankId ] = useState<string | undefined>(undefined);
-    const [ rankIdList, setRankIdList ] = useState<string[]>([]);
-    const [ current, setCurrent ] = useState<number>(1);
-    const [ pageSize, setPageSize ] = useState<number>(10);
-    const [ total, setTotal ] = useState<number>(0);
-    const [ orderBy, setOrderBy ] = useState<string | undefined>(undefined);
-    const [ order, setOrder ] = useState<string | undefined>(undefined);
-    const [ isBtnDisabled, setBtnDisabled ] = useState<boolean>(true);
+    const [maxSize, setMaxSize] = useState<number>(1000000);
+    const [curveSpin, setCurveSpin] = useState<boolean>(false);
+    const [tableSpin, setTableSpin] = useState<boolean>(false);
+    const [rankId, setRankId] = useState<string | undefined>(undefined);
+    const [rankIdList, setRankIdList] = useState<string[]>([]);
+    const [current, setCurrent] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(10);
+    const [total, setTotal] = useState<number>(0);
+    const [orderBy, setOrderBy] = useState<string | undefined>(undefined);
+    const [order, setOrder] = useState<string | undefined>(undefined);
+    const [isBtnDisabled, setBtnDisabled] = useState<boolean>(true);
     // 监听窗口唤醒状态以重绘echarts
-    const [ isWakeup, setIsWakeup ] = useState<boolean>(false);
+    const [isWakeup, setIsWakeup] = useState<boolean>(false);
 
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
         setSearchEventOperatorName(event.target.value as string);
     };
 
-    const [ selectedRecord, setSelectedRecord ] = useState<OperatorDetail | undefined>();
+    const [selectedRecord, setSelectedRecord] = useState<OperatorDetail | undefined>();
     const onRowSelected = (record?: OperatorDetail, rowIndex?: number): void => {
         setSelectedRecord(record);
     };
@@ -153,7 +153,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         onSearch(searchEventOperatorName, minSize, maxSize);
-    }, [ selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch ]);
+    }, [selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
         if (rankId === undefined) {
@@ -173,7 +173,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setMemoryCurveData(resp);
             setLineChartData({
                 title: resp.peakMemoryUsage,
-                columns: resp.hasApp ? [ ...lineColumn, 'APP Reserved' ] : lineColumn,
+                columns: resp.hasApp ? [...lineColumn, 'APP Reserved'] : lineColumn,
                 rows: resp.lines,
             });
         }).catch(err => {
@@ -181,7 +181,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [ rankId, session.isClusterMemoryCompletedSwitch ]);
+    }, [rankId, session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
