@@ -37,6 +37,41 @@ const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: T
     };
 };
 
+/**
+ * 绘制跟随鼠标移动的旗子
+ * @param ctx 画布
+ * @param beginX 起始位置
+ * @param svg svg图
+ */
+const drawTimeLineFlagForMouseMove = (ctx: CanvasRenderingContext2D | null, beginX: number, svg: SVGSVGElement): void => {
+    if (ctx === null || svg === null) {
+        return;
+    }
+    svg.style.fill = '#3778ED';
+    svg.style.stroke = 'none';
+    const svgString = new XMLSerializer().serializeToString(svg);
+    const svgData = `data:image/svg+xml;base64,${btoa(svgString)}`;
+    const icon = new Image();
+    icon.src = svgData;
+    ctx.drawImage(icon, beginX - 3, 0);
+};
+
+/**
+ * 绘制竖线（在旗子下方）
+ *
+ * @param ctx 画布内容对象
+ * @param beginX 竖线绘制坐标
+ * @param color 颜色
+ */
+const drawVerticalLineUnderFlag = (ctx: CanvasRenderingContext2D, beginX: number, color: string): void => {
+    ctx.beginPath();
+    ctx.moveTo(beginX + 1, 0);
+    ctx.setLineDash([4, 2]);
+    ctx.strokeStyle = color;
+    ctx.lineTo(beginX, 9999);
+    ctx.stroke();
+};
+
 const drawRangeFlag = (ctx: CanvasRenderingContext2D, rangStartX: number, rangeEndX: number, color: string,
     session: Session, rangStartSvg: SVGSVGElement, rangEndSvg: SVGSVGElement): void => {
     rangStartSvg.style.fill = color;
@@ -57,11 +92,17 @@ const drawRangeFlag = (ctx: CanvasRenderingContext2D, rangStartX: number, rangeE
     };
 };
 
-export const drawTimelineFlags = (session: Session, domain: number[], current: HTMLCanvasElement, range: React.MutableRefObject<[number, number]>): void => {
+export const drawTimelineFlags = (session: Session, domain: number[], current: HTMLCanvasElement,
+    range: React.MutableRefObject<[number, number]>, vertical: HTMLCanvasElement): void => {
     // draw timeline flag
     const ctx = current.getContext('2d');
-    if (!ctx || session.name === i18n.t('Realtime Monitor')) { return; }
+    const verticalCtx = vertical.getContext('2d');
+    if (!ctx || !verticalCtx || session.name === i18n.t('Realtime Monitor')) {
+        return;
+    }
+    // 清空画布
     ctx.clearRect(0, 0, current.width, current.height);
+    verticalCtx.clearRect(0, 0, vertical.width, vertical.height);
     const canvasWidth = ctx.canvas.width;
     const flagList = session.timelineMaker.timelineFlagList;
     let pointSvg: SVGSVGElement | undefined;
@@ -86,6 +127,8 @@ export const drawTimelineFlags = (session: Session, domain: number[], current: H
             case 'point':
                 if (!(item.timeStamp >= domain[0] && item.timeStamp <= domain[1])) { return; }
                 drawTimelineFlag(ctx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth), item, session, pointSvg);
+                // 在旗子下方绘制线条
+                drawVerticalLineUnderFlag(verticalCtx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth), item.color);
                 break;
             case 'range':
                 if (item.anotherTimeStamp === undefined) {
@@ -96,6 +139,9 @@ export const drawTimelineFlags = (session: Session, domain: number[], current: H
                 drawRangeFlag(ctx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth),
                     transformTimeToLeft(domain[0], domain[1], item.anotherTimeStamp, canvasWidth),
                     item.color, session, rangeStartSvg, rangeEndSvg);
+                // 在范围边界的两个旗子下绘制竖线
+                drawVerticalLineUnderFlag(verticalCtx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth), item.color);
+                drawVerticalLineUnderFlag(verticalCtx, transformTimeToLeft(domain[0], domain[1], item.anotherTimeStamp, canvasWidth), item.color);
                 break;
             default:
         }
@@ -189,6 +235,60 @@ const generateDefaultNumber = (session: Session): number => {
 };
 
 const tableElementId = ['timeMakerList', 'singleFlagEdit', 'colorEditor', 'deleteALLConfirm'];
+
+/**
+ * 获取鼠标位置
+ * @param e 鼠标事件
+ * @param current 画布元素
+ */
+export const getMouse = (e: MouseEvent, current: HTMLCanvasElement): { x: number; y: number } | null => {
+    const mouse = { x: 0, y: 0 };
+    const rect = current.getBoundingClientRect();
+    // 校验鼠标是否在画布中
+    const isWidthIllegal = e.clientX > rect.right || e.clientX < rect.left;
+    const isHeightIllegal = e.clientY < rect.top || e.clientY > rect.bottom;
+    if (isWidthIllegal || isHeightIllegal) {
+        return null;
+    }
+    // 计算鼠标在画布中的相对位置
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+    return mouse;
+};
+
+/**
+ * 鼠标移动动作处理器
+ *
+ * @param e 鼠标事件
+ * @param session session
+ * @param current canvas画布元素dom节点
+ */
+export const handleMouseMove = (e: MouseEvent, session: Session, current: HTMLCanvasElement | null): void => {
+    const ctx = current?.getContext('2d');
+    // 获取旗子svg图
+    let svg: SVGSVGElement | undefined;
+    document.querySelectorAll('svg').forEach(svgItem => {
+        if (svgItem.id === 'ic_flag_svg') {
+            svg = svgItem;
+        }
+    });
+
+    if (!current || !ctx || !svg) {
+        return;
+    }
+    const mouse = getMouse(e, current);
+
+    // 清空画布
+    ctx.clearRect(0, 0, current.width, current.height);
+
+    // 判断鼠标位置是否为空，如果鼠标不在画布中，则直接返回
+    if (!mouse) {
+        return;
+    }
+
+    drawTimeLineFlagForMouseMove(ctx, mouse.x, svg);
+};
+
 export const handleSingleClick = (e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>,
     domainStart: number, domainEnd: number, current: HTMLCanvasElement | null): void => {
     if (session.phase === 'waiting' || session.phase === 'recording' || session.phase === 'analyzing' || session.selectedRange !== undefined) { return; }
@@ -608,8 +708,15 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const { domainStart, domainEnd } = session.domainRange;
     const [width, ref] = useWatchResize<HTMLDivElement>('width');
+    // 竖线画板高度，根据DOM树的laneView节点高度动态调整
+    const height = session.totalHeight;
+    const vertical = React.useRef<HTMLCanvasElement>(null);
+    const flagCursor = React.useRef<HTMLCanvasElement>(null);
+    const mouseMoveListener = (e: MouseEvent): void => handleMouseMove(e, session, flagCursor.current);
+    addEventListener('mousemove', mouseMoveListener);
+
     React.useEffect(() => {
-        if (!canvas.current) {
+        if (!canvas.current || !vertical.current) {
             return;
         }
         const singleClickListener = (e: MouseEvent): void => handleSingleClick(e, session, range, domainStart, domainEnd, canvas.current);
@@ -618,13 +725,13 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
             addEventListener('click', singleClickListener);
             addEventListener('dblclick', doubleClickListener);
         }
-        drawTimelineFlags(session, [domainStart, domainEnd], canvas.current, range);
+        drawTimelineFlags(session, [domainStart, domainEnd], canvas.current, range, vertical.current);
         range.current = [0, canvas.current.clientWidth];
         return () => {
             removeEventListener('click', singleClickListener);
             removeEventListener('dblclick', doubleClickListener);
         };
-    }, [width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
+    }, [width, session.totalHeight, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
     return <CanvasContainer ref={ref}>
         <canvas
             id={ 'timelineFlagCnvas' }
@@ -636,6 +743,8 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
         <RangeEndFlagSvg style={{ display: 'none' }}/>
         <RangeStartFlagSvg style={{ display: 'none' }}/>
         <GCIcon style={{ display: 'none' }} id = "gc_icon" fill = {themeInstance.getThemeType().buttonFontColor}/>
+        <canvas ref={flagCursor} width={width} height={TIME_MARKER_AXIS_HEIGHT} style={{ width, height: TIME_MARKER_AXIS_HEIGHT, position: 'absolute', top: 0, left: 0 }} />
+        <canvas ref={vertical} width={width} height={height} style={{ width, height, position: 'absolute', top: 15, left: 0 }} />
     </CanvasContainer>;
 });
 
