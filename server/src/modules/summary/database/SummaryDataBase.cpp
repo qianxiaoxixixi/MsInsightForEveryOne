@@ -314,11 +314,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     {
         std::string group;
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
-            group = "op_type";
+            group = "op_type || accelerator_core";
         } else if (reqParams.group == Protocol::OPERATOR_GROUP) {
-            group = "name";
+            group = "name || accelerator_core";
         } else {
-            group = R"(name || '[' || input_shapes || ']')";
+            group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
         }
 
         std::string sql =
@@ -335,11 +335,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     {
         std::string group;
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
-            group = "op_type";
+            group = "op_type || accelerator_core";
         } else if (reqParams.group == Protocol::OPERATOR_GROUP) {
-            group = "name";
+            group = "name || accelerator_core";
         } else {
-            group = R"(name || '[' || input_shapes || ']')";
+            group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
         }
 
         std::string sql =
@@ -402,7 +402,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
-        std::string group = reqParams.group == Protocol::OP_TYPE_GROUP ? "op_type" : R"(name || input_shapes)";
+        std::string group = reqParams.group == Protocol::OP_TYPE_GROUP ?
+                "op_type || accelerator_core" : R"(name || input_shapes || accelerator_core)";
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
@@ -434,10 +435,10 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         std::string group;
         std::string name;
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
-            group = "op_type";
+            group = "op_type || accelerator_core";
             name = "''";
         } else {
-            group = R"(name || input_shapes)";
+            group = R"(name || input_shapes || accelerator_core)";
             name = "name";
         }
 
@@ -611,7 +612,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL' AND" + condition +
+                "     WHERE rank_id = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -622,6 +623,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         int index = bindStartIndex;
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
         } else {
@@ -645,7 +647,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core = ?"
                 "     ORDER by duration DESC"
                 " ) subquery ";
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
@@ -681,6 +683,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, startTime);
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
         } else {

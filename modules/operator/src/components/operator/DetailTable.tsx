@@ -213,11 +213,12 @@ const colMap: any = {
     'Input Shape': opShapeStaticColumns,
 };
 
-const OperatorTable = ({ condition, opType, opName, inputShape, session }:
-{condition: ConditionType;opType?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
+const OperatorTable = ({ condition, opType, accCore, opName, inputShape, session }:
+{condition: ConditionType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
     return <BaseTable
         condition={condition}
         opType={opType}
+        accCore={accCore}
         opName={opName}
         inputShape={inputShape}
         session={session}
@@ -232,8 +233,8 @@ const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: '' };
 
 // eslint-disable-next-line max-lines-per-function
-const BaseTable = ({ condition, opType, opName, inputShape, session }:
-{condition: ConditionType;opType?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
+const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
+{condition: ConditionType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
     const [cols, setCols] = useState<any[]>(opl0Columns);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
@@ -271,9 +272,9 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
     const updateData = async(): Promise<void> => {
         let res;
         // 展开算子
-        if (opType !== undefined || opName !== undefined) {
+        if (opType !== undefined || opName !== undefined || accCore !== undefined) {
             res = await queryOperatorsInStatic(
-                { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '' },
+                { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '', accCore: accCore ?? '' },
             );
         } else if (condition.group === OPERATOR) {
             res = await queryOperators(
@@ -362,6 +363,7 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
                     opName={record.opName}
                     opType={record.opType}
                     inputShape={record.inputShape}
+                    accCore={record.accCore}
                     session={session}
                 />,
                 expandedRowKeys,
