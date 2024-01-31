@@ -161,8 +161,34 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
 }
 
 
+function expandPath(defaultSelectedDir: string) {
+  let paths = defaultSelectedDir.split('/');
+
+  treeRef.value.getNode('/').expand(() => {
+    treeRef.value.getNode('/' + paths[1]).expand(() => {
+      treeRef.value.getNode('/' + paths[1] + '/' + paths[2]).expand(() => {
+        let currentNode = treeRef.value.getNode(defaultSelectedDir);
+        currentNode.expand();
+
+        treeRef.value.setCurrentKey(defaultSelectedDir);
+        state.inputPath = defaultSelectedDir;
+      });
+    });
+  });
+}
+
 onMounted(() => {
     loadFiles(resourceState.currentPath);
+  if (!window.location.pathname.includes('\/proxy\/')) {
+    loadFiles(resourceState.currentPath);
+  } else {
+    // 云指定路径
+    let defaultSelectedDir = '/home/ma-user/work';
+
+    loadFiles(resourceState.currentPath).then(() => {
+      expandPath(defaultSelectedDir);
+    })
+  }
 })
 
 const doSetCurrentPath = () => {
