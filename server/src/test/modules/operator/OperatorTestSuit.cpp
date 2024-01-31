@@ -23,12 +23,12 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
-    int size = 7;
+    int size = 8;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
     result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
     EXPECT_EQ(result, true);
-    int unitSize = 5;
+    int unitSize = 6;
     EXPECT_EQ(datas.size(), unitSize);
 }
 
@@ -71,7 +71,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
-    int total = 7;
+    int total = 8;
     EXPECT_EQ(response.total, total);
     EXPECT_EQ(response.datas.size(), total);
 }
@@ -106,11 +106,12 @@ TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Dic::Protocol::OperatorMoreInfoReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", 0, 10, "", ""};
+    Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
+        "0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 0, 10, "", ""};
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);
     EXPECT_EQ(result, true);
-    int64_t total = 3;
+    int64_t total = 1;
     EXPECT_EQ(response.total, total);
     EXPECT_EQ(response.level, "l1");
     EXPECT_EQ(response.datas.size(), total);
@@ -120,7 +121,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", 0, 10, "", ""
+        "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 0, 10, "", ""
     };
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);

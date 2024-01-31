@@ -42,6 +42,7 @@ namespace Dic::Protocol {
         std::string opType;
         std::string opName;
         std::string shape;
+        std::string accCore;
         int64_t current;
         int64_t pageSize;
         std::string orderBy;

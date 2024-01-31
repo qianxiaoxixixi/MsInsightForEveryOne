@@ -18,6 +18,7 @@ export type DetailParam = StaticParam & {
     opType: string;
     shape: string;
     opName?: string;
+    accCore?: string;
 };
 /**
  * 查询算子类型耗时占比

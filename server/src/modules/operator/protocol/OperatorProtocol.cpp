@@ -107,6 +107,7 @@ namespace Dic::Protocol {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.opType, json["params"], "opType");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.opName, json["params"], "opName");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.shape, json["params"], "shape");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.accCore, json["params"], "accCore");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
