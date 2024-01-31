@@ -34,7 +34,19 @@ export class Connection {
             // wedge: close and release the old websocket
         }
         this._msgId = 0;
-        this._ws = new WebSocket(`ws://${dataSource.remote}:${dataSource.port}`);
+
+        let protocol = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//`;
+        if (!window.location.pathname.includes('\/proxy\/')) {
+            this._ws = new WebSocket(`${protocol}${window.location.hostname}:${dataSource.port}`);
+        } else {
+            const {location} = window;
+            const {host} = location;
+            let path = `${window.location.pathname}`.replace(/proxy\/\d{4}/, `proxy/${dataSource.port}`);
+            const {search} = location;
+            let uri = protocol + host + path + search;
+
+            this._ws = new WebSocket(uri);
+        }
         this._dataSource = dataSource;
     }
 

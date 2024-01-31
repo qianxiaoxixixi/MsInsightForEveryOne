@@ -222,6 +222,31 @@ def exec_command(command, path):
         raise ExecError()
 
 
+def build_huaweicloud_package(version, os_name):
+    if os_name != "linux-aarch64" and os_name != "linux-x86_64":
+        logging.warning('Only build http package for arm and x86_64!')
+        return
+
+    tmp = os.path.join(PROJECT_PATH, 'tmp_http')
+    os.makedirs(tmp, exist_ok=True)
+
+    frontend_path = os.path.join(PROJECT_PATH, 'framework', 'dist')
+    backend_path = os.path.join(PROJECT_PATH, 'server', 'output', 'build')
+    shutil.copytree(frontend_path, os.path.join(tmp, "frontend"))
+    shutil.copytree(backend_path, os.path.join(tmp, "backend"))
+
+    script_path = os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py")
+    shutil.copy(script_path, tmp)
+
+    exec_command(
+        ["pyinstaller", "--name", "ascend_insight", "--add-data", "frontend:./server/frontend", "--add-data",
+         "backend:./server/backend", "-F", "./huaweicloud_start_script.py"], tmp)
+
+    dist_dir = os.path.join(tmp, "dist")
+    out_zip = os.path.join(PROJECT_PATH, "out", f"ascend_insight_huaweicloud_{version}_{os_name}")
+    shutil.make_archive(out_zip, 'zip', dist_dir)
+
+
 def main():
     vscode_version = '7.0.1'
     idea_version = '7.0.RC1'
@@ -238,6 +263,8 @@ def main():
     build_vscode(vscode_version, os_name)
     build_intellij(idea_version, os_name)
     build_light_package(idea_version, os_name)
+
+    build_huaweicloud_package(vscode_version, os_name)
 
 
 if __name__ == "__main__":
