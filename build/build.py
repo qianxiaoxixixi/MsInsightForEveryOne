@@ -231,7 +231,7 @@ def build_huaweicloud_package(version, os_name):
     os.makedirs(tmp, exist_ok=True)
 
     frontend_path = os.path.join(PROJECT_PATH, 'framework', 'dist')
-    backend_path = os.path.join(PROJECT_PATH, 'server', 'output', 'build')
+    backend_path = os.path.join(PROJECT_PATH, 'server', 'output', 'build', 'server')
     shutil.copytree(frontend_path, os.path.join(tmp, "frontend"))
     shutil.copytree(backend_path, os.path.join(tmp, "backend"))
 
