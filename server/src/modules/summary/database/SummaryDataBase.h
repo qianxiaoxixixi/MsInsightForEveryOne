@@ -85,6 +85,8 @@ private:
     bool QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total);
 
     bool QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total);
+
+    void BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams);
 };
 
 } // end of namespace Summary
