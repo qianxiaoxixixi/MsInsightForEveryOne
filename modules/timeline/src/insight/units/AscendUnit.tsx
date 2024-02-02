@@ -256,11 +256,15 @@ export const ProcessUnit = unit<ProcessMetaData>({
         type: 'status',
         mapFunc: async (session: Session, metaData: unknown) => {
             const processMetaData = metaData as ProcessMetaData;
+            // 查询泳道chart参数加上时间偏移
+            const timestampOffset = processMetaData.cardId !== undefined
+                ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[processMetaData.cardId] ?? 0
+                : 0;
             const requestParam = {
                 cardId: processMetaData.cardId,
                 processId: processMetaData.processId,
-                startTime: session.domainRange.domainStart,
-                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
+                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
+                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
                 dataSource: processMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
             };
@@ -275,7 +279,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
                 // 泳道chart返回数据减去时间偏移
                 threadTraceList.forEach((data) => {
                     res.push({
-                        startTime: data.startTime,
+                        startTime: data.startTime - timestampOffset,
                         duration: data.duration,
                         name: '',
                         type: '',
