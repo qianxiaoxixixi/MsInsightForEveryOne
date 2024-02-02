@@ -15,7 +15,7 @@ namespace Protocol {
 
 struct MemoryOperatorParams {
     std::string rankId;
-    std::string orderName;
+    std::string searchName;
     int64_t minSize;
     int64_t maxSize;
     double startTime;

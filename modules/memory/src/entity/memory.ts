@@ -204,5 +204,5 @@ export interface OperatorMemoryCondition {
     /**
      * 算子名称筛选条件
      */
-    orderName?: string;
+    searchName?: string;
 }

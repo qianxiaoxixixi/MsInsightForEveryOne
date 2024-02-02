@@ -12,12 +12,23 @@
 
 namespace Dic {
 namespace Protocol {
+// 待与MemoryDef.h中的Operator合并
 struct MemoryOperator {
     std::string name;
     double size;
     std::string allocationTime;
     std::string releaseTime;
     double duration;
+    std::string activeReleaseTime;
+    double activeDuration;
+    double allocationAllocated;
+    double allocationReserved;
+    double allocationActive;
+    double releaseAllocated;
+    double releaseReserved;
+    double releaseActive;
+    std::string streamId;
+    std::string deviceType;
 };
 
 struct ComponentMemory {
@@ -35,6 +46,18 @@ struct OperatorMemory {
     std::string peakMemoryUsage;
     // [timesTamp, memoryUsage]
     std::vector<std::vector<std::string>> lines;
+};
+
+struct MemoryViewDatas {
+    std::string title;
+    std::vector<std::string> legends;
+    std::vector<std::vector<std::string >> lines;
+};
+
+struct MemoryTableColumnAttr {
+    std::string name;
+    std::string type;
+    std::string key;
 };
 
 struct MemoryOperatorResponse : public Response {
