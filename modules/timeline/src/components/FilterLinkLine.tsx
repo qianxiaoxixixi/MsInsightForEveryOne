@@ -175,6 +175,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         runInAction(() => {
             session.linkLines = newLines;
             session.renderTrigger = !session.renderTrigger;
+            session.linkLineCategories = checkedCategories;
         });
     }, [checkedCategories]);
 

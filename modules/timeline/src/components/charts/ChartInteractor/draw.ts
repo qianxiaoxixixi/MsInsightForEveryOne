@@ -348,37 +348,69 @@ const getHeight = (session: Session, data: DataBlock, cardId: string): number | 
     return height;
 };
 
+function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: string, session: Session, ctx: CanvasRenderingContext2D, theme: Theme): void {
+    const { category, from, to, cardId } = data as unknown as FlowEvent;
+    if (category !== checkedCategory) {
+        return;
+    }
+    const timestampOffset = cardId !== undefined
+        ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
+        : 0;
+    const li = d3.scaleLinear().range([0, ctx.canvas.width])
+        .domain([session.domainRange.domainStart + timestampOffset, session.domainRange.domainEnd + timestampOffset]);
+    const targetX = li(to.timestamp);
+    const targetY = getHeight(session, to, cardId);
+    const sourceX = li(from.timestamp);
+    const sourceY = getHeight(session, from, cardId);
+    if ((sourceY === undefined || targetY === undefined)) {
+        return;
+    }
+    if (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) {
+        return;
+    }
+    const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
+
+    const offset = ((targetX - sourceX) / 2);
+    ctx.moveTo(sourceX, sourceY);
+    ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
+    ctx.stroke();
+    if (targetY >= UNDRAW_HEIGHT && sourceY >= UNDRAW_HEIGHT) {
+        const len = targetPos.length;
+        let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
+        fromX = fromX / len;
+        fromY = fromY / len;
+        const yLen = Math.abs(fromY - targetY);
+        const xLen = Math.abs(fromX - targetX);
+        drawArrow(ctx, {
+            toX: targetX,
+            toY: targetY,
+            fromX: targetX - offset,
+            fromY: targetY + (((fromY - targetY) * Math.sqrt(yLen) / xLen) + Math.abs(fromY - targetY)),
+            length: 10,
+            angle: 30,
+            color: theme.selectedChartColor,
+        });
+    }
+}
+
 const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
     ctx.save();
     ctx.beginPath();
+    const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
+    ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
+    ctx.clip();
     ctx.beginPath();
-    Object.values(session.linkLines)
-        .forEach(datas => {
-            datas?.forEach((data) => {
-                const { category, from, to, cardId } = data as unknown as FlowEvent;
-                const timestampOffset = cardId !== undefined
-                    ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
-                    : 0;
-                const li = d3.scaleLinear().range([0, ctx.canvas.width])
-                    .domain([session.domainRange.domainStart + timestampOffset, session.domainRange.domainEnd + timestampOffset]);
-                const targetX = li(to.timestamp);
-                const targetY = getHeight(session, to, cardId);
-                const sourceX = li(from.timestamp);
-                const sourceY = getHeight(session, from, cardId);
-                if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
-                const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
-                ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
-                const offset = ((targetX - sourceX) / 2);
-                ctx.moveTo(sourceX, sourceY);
-                ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
-                ctx.stroke();
-                if (targetY >= UNDRAW_HEIGHT && sourceY >= UNDRAW_HEIGHT) {
-                    const len = targetPos.length;
-                    let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
-                    fromX = fromX / len; fromY = fromY / len;
-                    drawArrow(ctx, { toX: targetX, toY: targetY, fromX: targetX - offset, fromY: targetY + (fromY - targetY) * Math.sqrt(Math.abs(fromY - targetY)) / (Math.abs(fromX - targetX) + Math.abs(fromY - targetY)), length: 10, angle: 30, color: theme.selectedChartColor });
-                }
+    const checkedCategories = session.linkLineCategories;
+    for (const checkedCategory of checkedCategories) {
+        ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(checkedCategory, colorPalette.length)]];
+        Object.values(session.linkLines)
+            .forEach(datas => {
+                datas?.forEach((data) => {
+                    drawSingleLinkLine(data, checkedCategory, session, ctx, theme);
+                });
             });
-        });
+    }
+    ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber('category', colorPalette.length)]];
+
     ctx.restore();
 };

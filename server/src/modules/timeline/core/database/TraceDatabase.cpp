@@ -410,7 +410,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, requestParams.timePerPx, traceId,
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, requestParams.timePerPx * middleImage, traceId,
                                         requestParams.startTime, requestParams.endTime);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
@@ -1064,7 +1064,7 @@ bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, ui
         ServerLog::Error("QueryFlowCategoryEvents failed!.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.timePerPx, params.category,
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.timePerPx * lowImage, params.category,
                                         params.startTime + minTimestamp, params.endTime + minTimestamp);
     std::vector<FlowCategoryEventsDto> flowEventsVec;
     while (resultSet->Next()) {
