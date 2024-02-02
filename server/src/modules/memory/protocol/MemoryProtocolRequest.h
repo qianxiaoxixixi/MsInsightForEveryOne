@@ -15,6 +15,7 @@ namespace Protocol {
 
 struct MemoryOperatorParams {
     std::string rankId;
+    std::string type;
     std::string searchName;
     int64_t minSize;
     int64_t maxSize;
@@ -31,13 +32,12 @@ struct MemoryOperatorRequest : public Request {
     MemoryOperatorParams params;
 };
 
+const std::string MEMORY_OVERALL_GROUP = "Overall";
+const std::string MEMORY_STREAM_GROUP = "Stream";
+
 struct MemoryComponentParams {
     std::string rankId;
-};
-
-struct MemoryComponentRequest : public Request {
-    MemoryComponentRequest() : Request(REQ_RES_MEMORY_VIEW) {};
-    MemoryComponentParams params;
+    std::string type; // Overall, Stream
 };
 
 struct MemoryViewRequest : public Request {

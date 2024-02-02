@@ -216,7 +216,7 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
 }
 
 bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                                         std::vector<Protocol::MemoryOperator> &responseBody)
+    std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql = GetOperatorSql(requestParams);
     int64_t offset = (requestParams.currentPage - 1) * requestParams.pageSize;
@@ -245,7 +245,8 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         operatorDto.duration = sqlite3_column_double(stmt, col++);
         operatorDtoVec.emplace_back(operatorDto);
     }
-    responseBody = operatorDtoVec;
+    opDetails = operatorDtoVec;
+    columnAttr = tableColumnAttr;
 
     sqlite3_finalize(stmt);
     return true;
@@ -254,8 +255,10 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
 /*
  * 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
  */
-void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLines &lines, Protocol::MemoryPeak &peak)
+void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+    std::vector<std::string> &legends, Protocol::MemoryPeak &peak)
 {
+    legends.insert(legends.end(), baseLegends.begin(), baseLegends.end());
     for (auto &item: componentDtoVec) {
         std::vector<std::string> points = {};
         if (item.component == COMPONENT_PTA_AND_GE || (isInference && item.component == COMPONENT_GE)) {
@@ -286,10 +289,13 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLi
             lines.emplace_back(points);
         }
     }
+    if (peak.hasApp) {
+        legends.emplace_back(appLegend);
+    }
 }
 
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
-                                     Protocol::OperatorMemory &operatorBody)
+                                     Protocol::MemoryViewData &operatorBody)
 {
     std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
                       "ROUND(total_allocated, 2) as total_allocated, "
@@ -320,9 +326,8 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
         componentDtoVec.emplace_back(componentDto);
     }
     Protocol::MemoryPeak peak;
-    GetLines(componentDtoVec, operatorBody.lines, peak);
-    operatorBody.peakMemoryUsage = GetPeakMemory(peak);
-    operatorBody.hasApp = peak.hasApp;
+    GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak);
+    operatorBody.title = GetPeakMemory(peak);
 
     sqlite3_finalize(stmt);
     return true;

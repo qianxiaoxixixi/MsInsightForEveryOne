@@ -26,7 +26,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     MemoryOperatorResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
-    if (!database->QueryOperatorDetail(request.params, response.operatorDetails) or
+    if (!database->QueryOperatorDetail(request.params, response.columnAttr, response.operatorDetails) or
         !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query memory operator data.");

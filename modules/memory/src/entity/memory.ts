@@ -31,7 +31,13 @@ export interface MemoryCurve {
      * @type {string}
      * @memberof MemoryCurve
      */
-    peakMemoryUsage: string;
+    title: string;
+    /**
+     *
+     * @type {string[]}
+     * @memberOf MemoryCurve
+     */
+    legends: string[];
     /**
      *
      * @type {Array<Array<number | string>>}
@@ -44,12 +50,6 @@ export interface MemoryCurve {
      * @memberof MemoryCurve
      */
     token?: string;
-    /**
-     *
-     * @type {boolean}
-     * @memberof MemoryCurve
-     */
-    hasApp: boolean;
 }
 
 /**
@@ -165,6 +165,10 @@ export interface OperatorMemoryCondition {
      * rankId
      */
     rankId: string;
+    /**
+     * type
+     */
+    type: string;
     /**
      * 开始时间
      */

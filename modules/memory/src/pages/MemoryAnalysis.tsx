@@ -25,8 +25,6 @@ const MemoryWrapper = styled.div`
       width: 100%;
       height: 100%;
     `;
-
-const lineColumn = ['Time (ms)', 'Operators Allocated', 'Operators Activated', 'Operators Reserved'];
 const tableColumn: MemoryTableColumn[] = [{ name: 'Name', type: 'string', key: 'name' },
     { name: 'Size(KB)', type: 'number', key: 'size' },
     { name: 'Allocation Time(ms)', type: 'number', key: 'allocationTime' },
@@ -86,6 +84,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }
         let param: OperatorMemoryCondition = {
             rankId,
+            type: 'Overall',
             token: session.token,
             currentPage: current,
             pageSize,
@@ -167,13 +166,13 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             return;
         }
         setCurveSpin(true);
-        memoryCurveGet({ rankId, token: session.token }).then((resp) => {
+        memoryCurveGet({ rankId, type: 'Overall', token: session.token }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryCurveData(resp);
             setLineChartData({
-                title: resp.peakMemoryUsage,
-                columns: resp.hasApp ? [...lineColumn, 'APP Reserved'] : lineColumn,
+                title: resp.title,
+                columns: resp.legends,
                 rows: resp.lines,
             });
         }).catch(err => {

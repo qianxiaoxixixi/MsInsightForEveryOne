@@ -17,6 +17,14 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     json_t body(kObjectType);
+    json_t columnAttr(kArrayType);
+    for (const auto &attr : response.columnAttr) {
+        json_t attrJson = json_t(kObjectType);
+        JsonUtil::AddMember(attrJson, "name", attr.name, allocator);
+        JsonUtil::AddMember(attrJson, "type", attr.type, allocator);
+        JsonUtil::AddMember(attrJson, "key", attr.key, allocator);
+        columnAttr.PushBack(attrJson, allocator);
+    }
     json_t operatorDetail(kArrayType);
     for (const MemoryOperator& anOperator : response.operatorDetails) {
         json_t basicJson = json_t(kObjectType);
@@ -33,6 +41,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     JsonUtil::AddMember(body, "operatorDetail", operatorDetail, allocator);
+    JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
@@ -43,17 +52,21 @@ template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const M
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     json_t body(kObjectType);
+    json_t legends(kArrayType);
+    for (const auto& legend : response.data.legends) {
+        legends.PushBack(json_t().SetString(legend.c_str(), allocator), allocator);
+    }
     json_t linesList(kArrayType);
-    for (const auto &lines: response.map.lines) {
+    for (const auto &lines: response.data.lines) {
         json_t lineArr(kArrayType);
         for (const auto &line: lines) {
             lineArr.PushBack(json_t().SetString(line.c_str(), allocator), allocator);
         }
         linesList.PushBack(lineArr, allocator);
     }
+    JsonUtil::AddMember(body, "legends", legends, allocator);
     JsonUtil::AddMember(body, "lines", linesList, allocator);
-    JsonUtil::AddMember(body, "hasApp", response.map.hasApp, allocator);
-    JsonUtil::AddMember(body, "peakMemoryUsage", response.map.peakMemoryUsage, allocator);
+    JsonUtil::AddMember(body, "title", response.data.title, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

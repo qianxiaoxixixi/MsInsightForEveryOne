@@ -13,7 +13,6 @@
 namespace Dic {
 namespace Module {
 namespace Memory {
-using memoryLines = std::vector<std::vector<std::string>>;
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
 class MemoryDataBase : public Database {
 public:
@@ -32,8 +31,8 @@ public:
     void insertRecordDetail(const Record &event);
 
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
-                             std::vector<Protocol::MemoryOperator> &responseBody);
-    bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::OperatorMemory &operatorBody);
+        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails);
+    bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody);
 
     void SaveRecordDetail();
     void SaveOperatorDetail();
@@ -50,6 +49,18 @@ private:
     const std::string recordTable = "record";
     const int exLength = 4;
 
+    const std::vector<std::string> baseLegends = {
+        "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
+    };
+    const std::string appLegend = "App Reserved";
+    const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
+        {"Name", "string", "name"},
+        {"Size(KB)", "number", "size"},
+        {"Allocation Time(ms)", "number", "allocationTime"},
+        {"Release Time(ms)", "number", "releaseTime"},
+        {"Duration(ms)", "number", "duration"}
+    };
+
     bool hasInitStmt = false;
     const int cacheSize = 100;
     std::vector<Operator> operatorCache;
@@ -64,8 +75,8 @@ private:
     std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
 
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak);
-    void GetLines(const componentDtoVector componentDtoVec,
-                  memoryLines &lines, Protocol::MemoryPeak &peak);
+    void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";
     const std::string COMPONENT_PTA = "PTA";
@@ -73,7 +84,7 @@ private:
     bool isInference = false;
 };
 
-} // end of namespace Memory
+}; // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_MEMORY_DATABASE_H
