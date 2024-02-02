@@ -25,16 +25,15 @@ const MemoryWrapper = styled.div`
       width: 100%;
       height: 100%;
     `;
-const tableColumn: MemoryTableColumn[] = [{ name: 'Name', type: 'string', key: 'name' },
-    { name: 'Size(KB)', type: 'number', key: 'size' },
-    { name: 'Allocation Time(ms)', type: 'number', key: 'allocationTime' },
-    { name: 'Release Time(ms)', type: 'number', key: 'releaseTime' },
-    { name: 'Duration(ms)', type: 'number', key: 'duration' }];
+
+const groupBy = ['Overall', 'Stream'];
 
 // eslint-disable-next-line max-lines-per-function
 const MemoryAnalysis = observer(function({ session, isDark }: { session: Session; isDark: boolean }) {
     // 算子表格内存信息
     const [memoryTableData, setMemoryTableData] = useState<OperatorDetail[]>([]);
+    // 算子表格表头信息
+    const [memoryTableHead, setMemoryTableHead] = useState<MemoryTableColumn[]>([]);
     // 内存曲线数据源
     const [memoryCurveData, setMemoryCurveData] = useState<MemoryCurve | undefined>(undefined);
     // 内存曲线绘制数据
@@ -47,6 +46,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
     const [tableSpin, setTableSpin] = useState<boolean>(false);
     const [rankId, setRankId] = useState<string | undefined>(undefined);
+    const [groupId, setGroupId] = useState<string>('Overall');
     const [rankIdList, setRankIdList] = useState<string[]>([]);
     const [current, setCurrent] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
@@ -84,7 +84,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }
         let param: OperatorMemoryCondition = {
             rankId,
-            type: 'Overall',
+            type: groupId,
             token: session.token,
             currentPage: current,
             pageSize,
@@ -106,6 +106,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             const operatorDetails = resp.operatorDetail;
             setTotal(resp.totalNum);
             setMemoryTableData(operatorDetails);
+            setMemoryTableHead(resp.columnAttr);
             setBtnDisabled(false);
         }).catch(err => {
             message.error(err);
@@ -152,7 +153,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         onSearch(searchEventOperatorName, minSize, maxSize);
-    }, [selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch]);
+    }, [selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId]);
 
     useEffect(() => {
         if (rankId === undefined) {
@@ -166,7 +167,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             return;
         }
         setCurveSpin(true);
-        memoryCurveGet({ rankId, type: 'Overall', token: session.token }).then((resp) => {
+        memoryCurveGet({ rankId, type: groupId, token: session.token }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryCurveData(resp);
@@ -180,7 +181,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankId, session.isClusterMemoryCompletedSwitch]);
+    }, [rankId, session.isClusterMemoryCompletedSwitch, groupId]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
@@ -200,7 +201,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         <div className="memory-analysis-wrapper">
             <MemoryWrapper>
                 <Row style={{ height: 60, alignContent: 'center' }}>
-                    <Col span={24}>
+                    <Col span={6}>
                         <Label name="RankId" />
                         <Select
                             value={rankId}
@@ -210,6 +211,20 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                 return {
                                     value: rankId,
                                     label: rankId,
+                                };
+                            })}
+                        />
+                    </Col>
+                    <Col span={6}>
+                        <Label name="GroupBy" />
+                        <Select
+                            value={groupId}
+                            style={{ width: 200 }}
+                            onChange={(value: string): void => setGroupId(value)}
+                            options={groupBy.map((type) => {
+                                return {
+                                    value: type,
+                                    label: type,
                                 };
                             })}
                         />
@@ -291,7 +306,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         <Spin spinning={tableSpin} tip="loading...">
                             <AntTableChart
                                 tableData={{
-                                    columns: tableColumn,
+                                    columns: memoryTableHead,
                                     rows: memoryTableData,
                                 }}
                                 onRowSelected={onRowSelected}
