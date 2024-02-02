@@ -67,6 +67,7 @@ private:
 
     std::vector<std::pair<std::string, std::string>> GetKernelFiles(const std::vector<std::string>& paths);
 
+    static bool IsFileValid(const std::string &filePath, const std::string &fileId, const std::string statusId);
     static void SetParseCallBack(const std::string& token);
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
     static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);

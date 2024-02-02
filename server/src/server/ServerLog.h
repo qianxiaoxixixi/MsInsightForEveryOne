@@ -14,18 +14,18 @@ using namespace Dic;
 class ServerLog {
 public:
     static inline void Initialize(const std::string &logPath, const int &logSize, const std::string &logLevelStr,
-                                  std::string wsPort)
+                                  std::string wsPortStr)
     {
         ServerLog &serverLog = Instance();
-        serverLog.wsPort = wsPort;
+        serverLog.wsPort = wsPortStr;
         if (serverLog.printInstance == nullptr) {
-            serverLog.printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "", wsPort);
+            serverLog.printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "", wsPortStr);
         }
         if (serverLog.recordInstance == nullptr) {
             std::string logFileName = logPath + "/profiler_server.log";
-            serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName, wsPort);
+            serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName, wsPortStr);
             LogLevel logLevel = LogUtil::GetLogLevel(logLevelStr);
-            serverLog.recordInstance->SetLogLevel(logLevel).SetWsPort(wsPort).SetMaxSize(logSize);
+            serverLog.recordInstance->SetLogLevel(logLevel).SetWsPort(wsPortStr).SetMaxSize(logSize);
         }
     }
 

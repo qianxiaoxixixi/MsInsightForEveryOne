@@ -682,20 +682,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
-        uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        int index = bindStartIndex;
-        sqlite3_bind_int64(stmt, index++, startTime);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
-        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
-            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
-        } else {
-            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
-            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
-        }
-        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
-        sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+        BindSqliteParam(stmt, reqParams);
 
         std::vector<Protocol::OperatorDetailInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -722,6 +709,24 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         response.datas = res;
         sqlite3_finalize(stmt);
         return true;
+    }
+
+    void SummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
+    {
+        uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        int index = bindStartIndex;
+        sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
+        } else {
+            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
+        }
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+        sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
     }
 
     std::string SummaryDataBase::GetFileIdFromCombinationId(const std::string str)

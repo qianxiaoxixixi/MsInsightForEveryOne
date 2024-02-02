@@ -111,13 +111,7 @@ bool KernelParse::InitParser(const std::string& filePath, const std::string& fil
 bool KernelParse::ParseTask(const std::string &filePath, const std::string &fileId)
 {
     std::string statusId = KERNEL_PREFIX + fileId;
-    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(statusId)) {
-        ParseEndCallBack(fileId, false, "Failed to set run summary status for file " + filePath);
-        ServerLog::Error("Failed to set run summary status for file ", filePath);
-        return false;
-    }
-    if (!ValidateUtil::CheckCsvFile(filePath)) {
-        ParseEndCallBack(fileId, false, "Check file Failed: " + filePath);
+    if (!IsFileValid(filePath, fileId, statusId)) {
         return false;
     }
     auto start = std::chrono::high_resolution_clock::now();
@@ -164,6 +158,24 @@ bool KernelParse::ParseTask(const std::string &filePath, const std::string &file
     }
 
     Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + fileId);
+    return true;
+}
+
+bool KernelParse::IsFileValid(const std::string &filePath, const std::string &fileId, const std::string statusId)
+{
+    // 检查并设置文件状态为RUNNING
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(statusId)) {
+        ParseEndCallBack(fileId, false, "Failed to set run summary status for file " + filePath);
+        ServerLog::Error("Failed to set run summary status for file ", filePath);
+        // 如果文件解析信息不存在或状态不为INIT则返回false
+        return false;
+    }
+    // csv文件有效性校验
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        ParseEndCallBack(fileId, false, "Check file Failed: " + filePath);
+        // 如果文件流不正常、文件不可读、文件大小超过2G则返回false
+        return false;
+    }
     return true;
 }
 
