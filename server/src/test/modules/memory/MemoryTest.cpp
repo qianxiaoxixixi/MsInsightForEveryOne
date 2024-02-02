@@ -66,7 +66,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNum)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
-    requestParams.orderName = "cann::Graph_";
+    requestParams.searchName = "cann::Graph_";
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
     requestParams.startTime = -1;
@@ -82,7 +82,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithSize)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
-    requestParams.orderName = "cann::Graph_";
+    requestParams.searchName = "cann::Graph_";
     requestParams.minSize = 10; // min size = 10
     requestParams.maxSize = 1000; // max size = 1000
     requestParams.startTime = -1;
@@ -98,7 +98,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
-    requestParams.orderName = "cann::Graph_";
+    requestParams.searchName = "cann::Graph_";
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
     requestParams.startTime = 0;

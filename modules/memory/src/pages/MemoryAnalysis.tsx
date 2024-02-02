@@ -76,11 +76,11 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setMaxSize(value as number);
     };
 
-    const onSearch = (orderName: string, minSize: number, maxSize: number): void => {
+    const onSearch = (searchName: string, minimumSize: number, maximumSize: number): void => {
         if (rankId === undefined) {
             return;
         }
-        if (maxSize < minSize) {
+        if (maximumSize < minimumSize) {
             message.warning(i18n.t('Invalid Size Warning'));
             return;
         }
@@ -89,9 +89,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             token: session.token,
             currentPage: current,
             pageSize,
-            orderName,
-            minSize,
-            maxSize,
+            searchName,
+            minSize: minimumSize,
+            maxSize: maximumSize,
         };
         if (selectedRange) {
             param.startTime = selectedRange.startTs;
