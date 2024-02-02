@@ -103,6 +103,10 @@ private:
     const std::string lineStart = "s";
     const std::string lineEnd = "f";
     const std::string lineEndOptional = "t";
+    // 3G size limit 2024.02.01
+    const double middleImage = 1.5;
+    // 5G size limit 2024.02.01
+    const double lowImage = 5.0;
 
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;

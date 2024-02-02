@@ -17,7 +17,8 @@ export const resetCanvasSize = (canvas: React.RefObject<HTMLCanvasElement>, rect
     canvas.current.width = rect?.width ?? 0;
     canvas.current.height = rect?.height ?? 0;
 };
-
+let lastTime = 0;
+const FRAME_TIME = 16;
 export const mouseUpAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
     const { normalCanvas: canvas, session, xReverseScale, xScale, isNsMode, customRenderers, theme } = interactorParams;
     const clickPos = interactorMouseState.clickPos.current;
@@ -51,7 +52,13 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     }
 
     interactorMouseState.clickPos.current = undefined;
+    const now = new Date().valueOf();
+    // 如果距离上次渲染的时间小于一帧的时间就不渲染
+    if (now - lastTime < FRAME_TIME) {
+        return;
+    }
     draw(canvas.current.getContext('2d'), canvas.current.clientWidth, canvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
+    lastTime = now;
 };
 
 type GetDrawOnMoveArgs = {

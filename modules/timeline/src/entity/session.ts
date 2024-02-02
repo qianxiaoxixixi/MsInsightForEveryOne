@@ -45,6 +45,7 @@ export class Session {
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     singleLinkLine: LinkLines = {};
+    linkLineCategories: string[] = [];
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];
