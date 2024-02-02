@@ -31,27 +31,10 @@ struct MemoryOperator {
     std::string deviceType;
 };
 
-struct ComponentMemory {
-    std::string title;
-    // [timesTamp, memoryUsage]
-    std::vector<std::vector<double>> ptaAllocatesLine;
-    std::vector<std::vector<double>> ptaReservedLine;
-    std::vector<std::vector<double>> geAllocatesLine;
-    std::vector<std::vector<double>> geReservedLine;
-    std::vector<std::vector<double>> appLine;
-};
-
-struct OperatorMemory {
-    bool hasApp = false;
-    std::string peakMemoryUsage;
-    // [timesTamp, memoryUsage]
-    std::vector<std::vector<std::string>> lines;
-};
-
-struct MemoryViewDatas {
+struct MemoryViewData {
     std::string title;
     std::vector<std::string> legends;
-    std::vector<std::vector<std::string >> lines;
+    std::vector<std::vector<std::string>> lines;
 };
 
 struct MemoryTableColumnAttr {
@@ -62,13 +45,14 @@ struct MemoryTableColumnAttr {
 
 struct MemoryOperatorResponse : public Response {
     MemoryOperatorResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
+    std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<MemoryOperator> operatorDetails;
     int64_t totalNum = 0;
 };
 
 struct MemoryViewResponse : public Response {
     MemoryViewResponse() : Response(REQ_RES_MEMORY_VIEW) {}
-    OperatorMemory map;
+    MemoryViewData data;
 };
 
 struct OperatorSize {

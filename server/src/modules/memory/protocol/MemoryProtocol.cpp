@@ -35,6 +35,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     if (json["params"].HasMember("startTime")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     } else {
@@ -71,6 +72,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryViewRequest(const json_t &json,
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     return reqPtr;
 }
 
@@ -82,6 +84,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorSizeRequest(const json_
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     return reqPtr;
 }
 

@@ -21,10 +21,13 @@ TEST_F(TestSuit, QueryMemoryOperatorData)
     requestParams.endTime = -1;
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, responseBody);
+    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
+    int expectColumnSize = 5;
     EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(TestSuit, QueryMemoryOperatorWithTime)
@@ -38,10 +41,13 @@ TEST_F(TestSuit, QueryMemoryOperatorWithTime)
     requestParams.endTime = 1695120000000; // end time = 1695120000000
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, responseBody);
+    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 28;
+    int expectColumnSize = 5;
     EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(TestSuit, QueryMemoryOperatorWithSize)
@@ -55,10 +61,13 @@ TEST_F(TestSuit, QueryMemoryOperatorWithSize)
     requestParams.endTime = -1;
     requestParams.minSize = 10; // min size = 10
     requestParams.maxSize = 100; // min size = 100
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, responseBody);
+    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
+    int expectColumnSize = 5;
     EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(TestSuit, QueryOperatorsTotalNum)
@@ -114,7 +123,7 @@ TEST_F(TestSuit, QueryMemoryViewData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryComponentParams requestParams;
     requestParams.rankId = "0";
-    Dic::Protocol::OperatorMemory responseBody;
+    Dic::Protocol::MemoryViewData responseBody;
     database->QueryMemoryView(requestParams, responseBody);
     int expectSize = 5;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
