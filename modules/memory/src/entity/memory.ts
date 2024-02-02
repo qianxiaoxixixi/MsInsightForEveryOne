@@ -57,6 +57,7 @@ export interface MemoryCurve {
  * @interface OperatorMemory
  */
 export interface OperatorMemory {
+    columnAttr: MemoryTableColumn[];
     /**
      *
      * @type {OperatorDetail[]}
@@ -118,6 +119,60 @@ export interface OperatorDetail {
      * @memberof OperatorDetail
      */
     duration: number;
+    /**
+     *
+     * @type {string}
+     * @memberof activeReleaseTime
+     */
+    activeReleaseTime?: string;
+    /**
+     *
+     * @type {number}
+     * @memberof activeDuration
+     */
+    activeDuration?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof allocationAllocated
+     */
+    allocationAllocated?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof allocationReserved
+     */
+    allocationReserved?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof allocationActive
+     */
+    allocationActive?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof releaseAllocated
+     */
+    releaseAllocated?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof releaseReserved
+     */
+    releaseReserved?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof releaseActive
+     */
+    releaseActive?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof streamId
+     */
+    streamId?: string;
 }
 
 /**
@@ -166,10 +221,6 @@ export interface OperatorMemoryCondition {
      */
     rankId: string;
     /**
-     * type
-     */
-    type: string;
-    /**
      * 开始时间
      */
     startTime?: number;
@@ -209,4 +260,8 @@ export interface OperatorMemoryCondition {
      * 算子名称筛选条件
      */
     searchName?: string;
+    /**
+     * 查询的类型：Overall、Stream
+     */
+    type: string;
 }
