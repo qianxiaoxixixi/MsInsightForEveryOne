@@ -205,9 +205,12 @@ std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector
 
 std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &path)
 {
-    std::vector<std::string> traceFiles;
+    std::vector<std::string> traceFiles = {};
     if (!FileUtil::IsFolder(path)) {
-        traceFiles.emplace_back(path);
+        size_t length = JSON_FILE_SUFFIX.size();
+        if (path.size() > length && path.substr(path.size() - length) == JSON_FILE_SUFFIX) {
+            traceFiles.emplace_back(path);
+        }
         return traceFiles;
     }
     std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
