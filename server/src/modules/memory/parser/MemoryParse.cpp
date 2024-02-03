@@ -241,7 +241,12 @@ std::vector<std::pair<std::string, MemoryFilePair>> MemoryParse::GetMemoryFiles(
 {
     std::vector<std::string> fileList = {};
     for (const std::string& path : paths) {
-        auto files = FileUtil::FindFilesWithFilter(path, std::regex(memoryOperatorReg));
+        std::vector<std::string> files = {};
+        if (FileUtil::IsFolder(path)) {
+            files = FileUtil::FindFilesWithFilter(path, std::regex(memoryOperatorReg));
+        } else {
+            files = FileUtil::FindFilesWithFilter(FileUtil::GetParentPath(path), std::regex(memoryOperatorReg));
+        }
         fileList.insert(fileList.end(), files.begin(), files.end());
     }
     if (fileList.empty()) {
