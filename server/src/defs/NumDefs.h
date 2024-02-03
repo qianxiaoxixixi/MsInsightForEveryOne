@@ -12,6 +12,8 @@ namespace Dic {
     const static int TABLE_CACHE_SIZE = 1000;
 
     const static int MB_SIZE = 1024 * 1024;
+
+    const static int INT_TWO = 2;
 } // end of namespace Dic
 
 
