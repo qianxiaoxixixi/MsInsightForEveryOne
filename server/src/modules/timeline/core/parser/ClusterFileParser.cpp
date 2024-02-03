@@ -16,6 +16,7 @@
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
 #include "JsonUtil.h"
+#include "NumDefs.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -241,16 +242,22 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
         return false;
     }
     std::string regex;
+    std::string currPath = FileUtil::GetCurrPath();
+    std::string switchCommand = "";
 #ifdef _WIN32
     regex = "cluster_analysis.exe";
+    // windows 下数据和安装目录不在一个磁盘需要切换磁盘
+    if (std::strcmp(currPath.substr(0, 1).c_str(), selectedPath.substr(0, 1).c_str()) != 0) {
+        switchCommand = " && " + selectedPath.substr(0, INT_TWO);
+    }
 #else
     regex = "cluster_analysis";
 #endif
     std::vector<std::string> exePathVector =
-            FileUtil::FindFilesByRegex(FileUtil::GetCurrPath(), std::regex(regex));
+            FileUtil::FindFilesByRegex(currPath, std::regex(regex));
     if (!exePathVector.empty()) {
         std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath) +
-                "\" && \"" + exePathVector[0] + "\" -d .";
+                "\"" + switchCommand + " && \"" + exePathVector[0] + "\" -d .";
         ServerLog::Info("start execute command:", command);
         int result = std::system(command.c_str());
         if (result != 0) {
