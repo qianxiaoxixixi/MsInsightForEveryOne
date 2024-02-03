@@ -19,18 +19,19 @@ namespace Dic {
     public:
         static bool CheckCsvFile(const std::string& fileName)
         {
-            std::ifstream file(fileName);
+            std::string filePath = FileUtil::PathPreprocess(fileName);
+            std::ifstream file(filePath);
             if (!file.good()) {
                 Server::ServerLog::Error("Cannot get file:", fileName);
                 return false;
             }
-            if (access(fileName.c_str(), R_OK) == -1) {
-                Server::ServerLog::Error("Cannot read file", fileName);
+            if (access(filePath.c_str(), R_OK) == -1) {
+                Server::ServerLog::Error("Cannot read file", filePath);
                 return false;
             }
-            long long size = FileUtil::GetFileSize(fileName.c_str());
+            long long size = FileUtil::GetFileSize(filePath.c_str());
             if (size > MAX_FILE_SIZE_2G) {
-                Server::ServerLog::Error("file is too big, csv file max is 2G, file:", fileName);
+                Server::ServerLog::Error("file is too big, csv file max is 2G, file:", filePath);
                 return false;
             }
             return true;
