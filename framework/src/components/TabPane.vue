@@ -79,7 +79,7 @@ onMounted(async () => {
             config.attributes.src = window.URL.createObjectURL(
                 new Blob(
                     [modules[index]],
-                    {type: "text/html"}
+                    {type: 'text/html'}
                 )
             );
         })
