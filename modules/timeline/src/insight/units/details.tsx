@@ -120,12 +120,12 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                             session.selectedData= generateFlowData(data.from);
                             session.linkDetail = generateLinkDetail('Outgoing flow');
                             session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.from.timestamp, data.from.pid, data.from.tid);
-                        })}>{`Slice at ${getTimestamp(data.from.timestamp ?? 0, { precision: 'ns' })}`}</Link> ],
+                        })}>{`Slice ${data.from.name} at ${getTimestamp(data.from.timestamp ?? 0, { precision: 'ns' })}`}</Link>],
                         [ 'to', (data: any, session, metadata) => <Link onClick={action(() => {
                             session.selectedData= generateFlowData(data.to);
                             session.linkDetail = generateLinkDetail('Incoming flow');
                             session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.to.timestamp, data.to.pid, data.to.tid);
-                        })}>{`Slice at ${getTimestamp(data.to.timestamp ?? 0, { precision: 'ns' })}`}</Link> ],
+                        })}>{`Slice ${data.to.name} at ${getTimestamp(data.to.timestamp ?? 0, { precision: 'ns' })}`}</Link>],
                     ],
                     fetchData: async (session: Session, metadata) => {
                         const startTime = session.selectedData?.startTime;
