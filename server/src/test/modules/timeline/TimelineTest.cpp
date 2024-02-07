@@ -432,12 +432,11 @@ TEST_F(TestSuit, QueryFlowName)
 
     // expected data
     int size = 2;
-    Dic::Protocol::FlowName name("HostToDevice25769803775", "25769803775", "f");
+    Dic::Protocol::FlowName name("torch_to_npu", "1695115378713661.0", "f");
 
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::UnitFlowNameBody response;
     database->QueryFlowName(request, response, MIN_TIMESTAMP, trackId);
-
     EXPECT_EQ(response.flowDetail.size(), size);
     EXPECT_EQ(response.flowDetail[0].flowId, name.flowId);
     EXPECT_EQ(response.flowDetail[0].type, name.type);

@@ -447,16 +447,17 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
 bool TraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "SELECT timestamp - ? as start_time, duration, timestamp + duration - ? as end_time "
+    std::string sql = "SELECT timestamp - ? as start_time, duration, timestamp + duration - ? as end_time, "
+                      "ROUND(timestamp / ? ) as rank "
                       "FROM " + sliceTable + " LEFT JOIN " + threadTable + " USING (track_id) "
-                      "WHERE pid = ? AND start_time >= ? AND start_time <= ? AND depth = 0 "
+                      "WHERE pid = ? AND start_time >= ? AND start_time <= ? "
                       "ORDER BY timestamp;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp, requestParams.processId,
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp, summaryPerpix, requestParams.processId,
                                         requestParams.startTime, requestParams.endTime);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
@@ -804,7 +805,7 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
                                   Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, int64_t trackId)
 {
     std::string sql = "SELECT name, flow_id as flowId, type"
-                      " FROM " + flowTable + " WHERE timestamp = ? AND track_id = ?";
+                      " FROM " + flowTable + " WHERE timestamp = ? AND track_id = ? GROUP BY flowId";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryFlowName. Failed to prepare sql.");
@@ -812,15 +813,14 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
     }
     auto resultSet = stmt->ExecuteQuery(requestParams.startTime + minTimestamp, trackId);
     while (resultSet->Next()) {
-        int col = resultStartIndex;
         std::string name = resultSet->GetString("name");
         std::string flowId = resultSet->GetString("flowId");
         std::string type = resultSet->GetString("type");
-        if (type == "s" || type == "f") {
+        if (type == lineStart || type == lineEnd) {
             responseBody.flowDetail.emplace_back(name, flowId, type);
-        } else if (type == "t") {
-            responseBody.flowDetail.emplace_back(name, flowId, "f");
-            responseBody.flowDetail.emplace_back(name, flowId, "s");
+        } else if (type == lineEndOptional) {
+            responseBody.flowDetail.emplace_back(name, flowId, lineStart);
+            responseBody.flowDetail.emplace_back(name, flowId, lineEnd);
         } else {
             ServerLog::Warn("Unknown flow type. type:", type);
         }

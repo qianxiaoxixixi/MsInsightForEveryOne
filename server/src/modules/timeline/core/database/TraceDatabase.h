@@ -103,6 +103,7 @@ private:
     const std::string lineStart = "s";
     const std::string lineEnd = "f";
     const std::string lineEndOptional = "t";
+    const int summaryPerpix = 10;
     // 3G size limit 2024.02.01
     const double middleImage = 1.5;
     // 5G size limit 2024.02.01
