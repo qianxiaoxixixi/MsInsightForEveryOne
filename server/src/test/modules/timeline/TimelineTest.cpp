@@ -240,7 +240,7 @@ TEST_F(TestSuit, QueryThreadTraces)
     uint64_t minTimestamp = 0;
     int64_t traceId = 70;
 
-    int expectSize = 74;
+    int expectSize = 75;
     std::string expectName = "AscendCL@aclDestroyTensorDesc";
     uint64_t expectDuration = 1900;
     uint64_t expectStartTime = 1695115378713851200;
