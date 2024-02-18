@@ -59,7 +59,7 @@ export class Domain {
         this._DEFAULT_DURATION = isNsMode ? 2e10 : 2e4;
         // one screen represent 5min at most
         // one screen represent 10[us] or 625[ms] at least
-        this._LOWER_BOUND = isNsMode ? 1e3 : 625;
+        this._LOWER_BOUND = isNsMode ? 1 : 625;
         this._endTimeAll = endTimeAll ?? this._DEFAULT_DURATION;
         this._domainStart = 0;
         this.maxDuration = endTimeAll === undefined ? this._DEFAULT_DURATION : Math.min(this._UPPER_BOUND, endTimeAll * this.BOUNDARY_ZOOM_RATE);

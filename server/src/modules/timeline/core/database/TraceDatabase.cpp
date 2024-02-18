@@ -402,7 +402,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
     std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id,"
                       " ROUND(timestamp / ? ) as rank "
                       " FROM " + sliceTable +
-                      " WHERE track_id = ? AND start_time + duration >= ? AND start_time < ?"
+                      " WHERE track_id = ? AND start_time + duration >= ? AND start_time <= ?"
                       " GROUP BY depth, rank HAVING max(timestamp)"
                       " ORDER BY depth, start_time;";
     auto stmt = CreatPreparedStatement(sql);
@@ -427,6 +427,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
         rowThreadTrace.traceId = resultSet->GetInt64("track_id");
         rowThreadTraceVec.emplace_back(rowThreadTrace);
     }
+    ServerLog::Info("Data size is: ", rowThreadTraceVec.size());
     std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
     for (auto &item : rowThreadTraceVec) {
         Protocol::ThreadTraces threadTraces {};
