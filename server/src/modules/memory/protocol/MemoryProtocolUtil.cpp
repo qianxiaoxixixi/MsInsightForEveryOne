@@ -18,12 +18,16 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
     auto &allocator = json.GetAllocator();
     json_t body(kObjectType);
     json_t columnAttr(kArrayType);
+    bool hasStream;
     for (const auto &attr : response.columnAttr) {
         json_t attrJson = json_t(kObjectType);
         JsonUtil::AddMember(attrJson, "name", attr.name, allocator);
         JsonUtil::AddMember(attrJson, "type", attr.type, allocator);
         JsonUtil::AddMember(attrJson, "key", attr.key, allocator);
         columnAttr.PushBack(attrJson, allocator);
+        if (attr.name == "Stream") {
+            hasStream = true;
+        }
     }
     json_t operatorDetail(kArrayType);
     for (const MemoryOperator& anOperator : response.operatorDetails) {
@@ -37,7 +41,17 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
         JsonUtil::AddMember(basicJson, "allocationTime", anOperator.allocationTime, allocator);
         JsonUtil::AddMember(basicJson, "releaseTime", anOperator.releaseTime, allocator);
         JsonUtil::AddMember(basicJson, "duration", anOperator.duration, allocator);
-        JsonUtil::AddMember(basicJson, "streamId", anOperator.streamId, allocator);
+        JsonUtil::AddMember(basicJson, "allocationAllocated", anOperator.allocationAllocated, allocator);
+        JsonUtil::AddMember(basicJson, "allocationReserved", anOperator.allocationReserved, allocator);
+        JsonUtil::AddMember(basicJson, "releaseAllocated", anOperator.releaseAllocated, allocator);
+        JsonUtil::AddMember(basicJson, "releaseReserved", anOperator.releaseReserved, allocator);
+        if (hasStream) {
+            JsonUtil::AddMember(basicJson, "activeReleaseTime", anOperator.activeReleaseTime, allocator);
+            JsonUtil::AddMember(basicJson, "activeDuration", anOperator.activeDuration, allocator);
+            JsonUtil::AddMember(basicJson, "allocationActive", anOperator.allocationActive, allocator);
+            JsonUtil::AddMember(basicJson, "releaseActive", anOperator.releaseActive, allocator);
+            JsonUtil::AddMember(basicJson, "streamId", anOperator.streamId, allocator);
+        }
         operatorDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);

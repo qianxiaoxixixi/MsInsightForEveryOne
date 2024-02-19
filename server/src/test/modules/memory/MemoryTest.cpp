@@ -26,7 +26,7 @@ TEST_F(TestSuit, QueryMemoryOperatorData)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
-    int expectColumnSize = 6;
+    int expectColumnSize = 9;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -47,7 +47,7 @@ TEST_F(TestSuit, QueryMemoryOperatorWithTime)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 28;
-    int expectColumnSize = 6;
+    int expectColumnSize = 9;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -68,7 +68,7 @@ TEST_F(TestSuit, QueryMemoryOperatorWithSize)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
-    int expectColumnSize = 6;
+    int expectColumnSize = 9;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -89,7 +89,7 @@ TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptZero)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 0;
-    int expectColumnSize = 6;
+    int expectColumnSize = 9;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -110,7 +110,7 @@ TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptSeveral)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 21;
-    int expectColumnSize = 6;
+    int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }

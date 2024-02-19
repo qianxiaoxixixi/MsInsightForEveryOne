@@ -60,7 +60,23 @@ private:
         {"Allocation Time(ms)", "number", "allocationTime"},
         {"Release Time(ms)", "number", "releaseTime"},
         {"Duration(ms)", "number", "duration"},
+        {"Active Release Time(ms)", "number", "activeReleaseTime"},
+        {"Active Duration(ms)", "number", "activeDuration"},
+        {"Allocation Total Allocated(MB)", "number", "allocationAllocated"},
+        {"Allocation Total Reserved(MB)", "number", "allocationReserved"},
+        {"Allocation Total Active(MB)", "number", "allocationActive"},
+        {"Release Total Allocated(MB)", "number", "releaseAllocated"},
+        {"Release Total Reserved(MB)", "number", "releaseReserved"},
+        {"Release Total Active(MB)", "number", "releaseActive"},
         {"Stream", "string", "streamId"}
+    };
+
+    const std::vector<std::string> activeRelatedColumn = {
+        "Active Release Time(ms)",
+        "Active Duration(ms)",
+        "Allocation Total Active(MB)",
+        "Release Total Active(MB)",
+        "Stream"
     };
 
     bool hasInitStmt = false;
