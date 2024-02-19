@@ -1,15 +1,17 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
- */
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
 import React, { cloneElement, useState, useEffect } from 'react';
 import { Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import Resizor from './Resizor';
-
+interface ExtendsColumnType {minWidth?: number};
 const ResizableTitle = (
-    props: React.HTMLAttributes<any> & {
+    props: React.HTMLAttributes<HTMLDivElement> & {
         index?: number;
         className: string;
         resizable: boolean;
+        onResize: (deltaX: number, width: number, nextWidth?: number) => void;
     },
 ): JSX.Element => {
     const { onResize, resizable, index, ...restProps } = props;
@@ -22,46 +24,48 @@ const ResizableTitle = (
             <Resizor key={th.props.children.length} onResize={onResize}/>]);
 };
 
-const ResizeTable = (props: any): JSX.Element => {
-    const { columns: propColumns, ...restProps } = props;
-    const [columns, setColumns] = useState<any[]>([]);
-
+// eslint-disable-next-line max-lines-per-function
+const ResizeTable = <T extends object>(props: {
+    [prop: string]: object | number | string | boolean | undefined | object[];
+    id?: string;
+    columns: ColumnsType<T> ;
+    variableTotalWidth?: boolean;
+    minThWidth?: number;
+    style?: object;
+}): JSX.Element => {
+    const { columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, ...restProps } = props;
+    const [columns, setColumns] = useState < ColumnsType<T>>(propColumns ?? []);
     useEffect(() => {
-        if (props.columns.length !== columns.length) {
-            const newColumns = [...props.columns].map((item: any, index: number) => ({
-                dataIndex: item.dataIndex,
-                sorter: item.sorter,
-                title: item.title,
-                render: item.render,
-            }));
-            setColumns(newColumns);
-        }
-    }, [props.columns]);
+        setColumns(propColumns ?? []);
+    }, [JSON.stringify(propColumns)]);
 
-    const mergeColumns = columns.map((col, index) => ({
+    const mergeColumns: any = columns.map((col, index) => ({
         ...col,
         onHeaderCell: () => ({
             onResize: (deltaX: number, width: number, nextWidth?: number): void => {
                 const newColumns = [...columns];
                 newColumns[index] = {
                     ...newColumns[index],
-                    width,
+                    width: Math.max(width, minThWidth, (columns[index] as ExtendsColumnType).minWidth ?? 0),
                 };
-                if (nextWidth !== null && nextWidth !== undefined) {
+                if (nextWidth !== null && nextWidth !== undefined && !variableTotalWidth) {
                     newColumns[index + 1] = {
                         ...newColumns[index + 1],
-                        width: nextWidth,
+                        width: Math.max(nextWidth, minThWidth, (columns[index + 1] as ExtendsColumnType).minWidth ?? 0),
                     };
                 }
                 setColumns(newColumns);
             },
-            resizable: index !== props.columns.length - 1,
+            resizable: variableTotalWidth || index !== props.columns.length - 1,
         }),
     }));
 
     return (
-        <div style={{ width: '100%', overflow: 'auto' }}>
-            <Table { ...restProps } columns={mergeColumns} style={{ width: 'calc(100% - 15px)' }}
+        <div id={id} style={{ ...props.style ?? {} }}>
+            <Table
+                { ...restProps }
+                className={!variableTotalWidth ? '' : 'variableTotalWidth'}
+                columns={mergeColumns}
                 components={{
                     header: {
                         cell: ResizableTitle,
