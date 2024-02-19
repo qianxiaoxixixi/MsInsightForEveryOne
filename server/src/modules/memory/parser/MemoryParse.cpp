@@ -126,11 +126,7 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
         anOperator.activeDuration = atof(row[dataMap[ACTIVE_DURATION]].c_str());
         anOperator.activeReleaseTime = NumberUtil::TimestampUsToNs(
             NumberUtil::StringToLongDouble(row[dataMap[ACTIVE_RELEASE_TIME]]));
-        anOperator.allocationAllocated = atof(row[dataMap[ALLOCATION_ALLOCATED_MB]].c_str());
-        anOperator.allocationReserved = atof(row[dataMap[ALLOCATION_RESERVED_MB]].c_str());
         anOperator.allocationActive = atof(row[dataMap[ALLOCATION_ACTIVE_MB]].c_str());
-        anOperator.releaseAllocated = atof(row[dataMap[RELEASE_ALLOCATED_MB]].c_str());
-        anOperator.releaseReserved = atof(row[dataMap[RELEASE_RESERVED_MB]].c_str());
         anOperator.releaseActive = atof(row[dataMap[RELEASE_ACTIVE_MB]].c_str());
         anOperator.streamId = row[dataMap[STREAM_PTR]];
     }
@@ -139,6 +135,11 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
         anOperator.allocationReserved = atof(row[dataMap[ALLOCATION_RESERVED_KB]].c_str()) / KB_TO_MB;
         anOperator.releaseAllocated = atof(row[dataMap[RELEASE_ALLOCATED_KB]].c_str()) / KB_TO_MB;
         anOperator.releaseReserved = atof(row[dataMap[RELEASE_RESERVED_KB]].c_str()) / KB_TO_MB;
+    } else {
+        anOperator.allocationAllocated = atof(row[dataMap[ALLOCATION_ALLOCATED_MB]].c_str());
+        anOperator.allocationReserved = atof(row[dataMap[ALLOCATION_RESERVED_MB]].c_str());
+        anOperator.releaseAllocated = atof(row[dataMap[RELEASE_ALLOCATED_MB]].c_str());
+        anOperator.releaseReserved = atof(row[dataMap[RELEASE_RESERVED_MB]].c_str());
     }
 
     return anOperator;

@@ -188,12 +188,16 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-                      "ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) END AS allocationTime, "
-                      "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - ?) / (1000.0 * 1000.0), 2) "
-                      "END AS releaseTime, "
-                      "ROUND(duration / 1000.0, 2) as duration, stream FROM " + operatorTable +
-                      " WHERE name LIKE ?";
+    std::string sql =
+        "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
+        "ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) END AS allocationTime, "
+        "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - ?) / (1000.0 * 1000.0), 2) "
+        "END AS releaseTime, ROUND(duration / 1000.0, 2) as duration, "
+        "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - ?) / (1000.0 * 1000.0), 2) "
+        "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 2) as active_duration, "
+        "allocation_allocated, allocation_reserve, allocation_active, release_allocated, release_reserve, "
+        "release_active, stream FROM " + operatorTable +
+        " WHERE name LIKE ?";
 
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " AND stream <> ''";
@@ -234,6 +238,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
@@ -246,13 +251,27 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
         operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
         operatorDto.duration = sqlite3_column_double(stmt, col++);
+        operatorDto.activeReleaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.activeDuration = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationAllocated = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationReserved = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationActive = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseAllocated = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseReserved = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseActive = sqlite3_column_double(stmt, col++);
         operatorDto.streamId = sqlite3_column_string(stmt, col++);
         operatorDtoVec.emplace_back(operatorDto);
     }
-    opDetails = operatorDtoVec;
-    columnAttr = tableColumnAttr;
-
     sqlite3_finalize(stmt);
+    opDetails = operatorDtoVec;
+    std::vector<std::string> streams = GetStreamLists();
+    std::vector<std::string> columns = activeRelatedColumn;
+    for (const auto& column : tableColumnAttr) {
+        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
+            continue;
+        }
+        columnAttr.emplace_back(column);
+    }
     return true;
 }
 
