@@ -9,7 +9,7 @@ import {LOCAL_HOST, PORT, setPort} from '@/centralServer/websocket/defs';
 import {useDataSources} from '@/stores/dataSource';
 import {Console} from '@/utils/console';
 import HelpIcon from '@/components/icons/help_icon.vue';
-import VersionInfo from '@/version_info.txt';
+import VersionInfo from '@/version_info.json';
 
 type SceneType = 'Default' | 'Cluster' | 'Compute';
 const scene = ref<SceneType>('Default');
@@ -22,6 +22,8 @@ const showHelpModal = ref(false);
 const version = ref('UNKNOWN');
 // Ascend-Insight最近修改事件
 const modifyTime = ref('UNKNOWN');
+// 获取当前时间的年份数字
+const fullYear = ref(new Date().getFullYear());
 
 /**
  * 问号图标鼠标点击事件处理函数
@@ -30,38 +32,14 @@ const modifyTime = ref('UNKNOWN');
  */
 function questionIconClickHandler(e: MouseEvent) {
   // 读取文件内容
-  fetch(VersionInfo)
-      .then(response => response.text())
-      .then(text => parseVersionInfo(text));
+  version.value = VersionInfo.version;
+  modifyTime.value = VersionInfo.modifyTime;
+
   e.stopPropagation();
   // 显示“帮助”弹框，展示版本信息内容
   showHelpModal.value = true;
 }
 
-
-/**
- * 解析版本信息
- *
- * @param text 文本内容
- */
-function parseVersionInfo(text: string) {
-  // 按分行符切割文本，获取行数据列表，每一行数据格式为：“version:XXXXX”，由于不同系统的文件换行符不同，此处使用正则表达式进行切分
-  const lines = text.split(/[\r\n]+/);
-  for (const line of lines) {
-    // 对行内容按等号分割，得到等式两边的数据
-    const kv = line.split('=');
-    if (kv.length !== 2) {
-      continue;
-    }
-    // 判断是否为版本信息或修改事件信息，如果是，把相关信息内容存到ref对象中
-    if (kv[0].trim() === 'version') {
-      version.value = kv[1].trim();
-    }
-    if (kv[0].trim() === 'modifyTime') {
-      modifyTime.value = kv[1].trim();
-    }
-  }
-}
 
 onMounted(async () => {
     connector.resigsterAwaitFetch(async (e) => {
@@ -239,7 +217,7 @@ function toggleTab(index: number): void {
               Licensed to Huawei Technologies CO.LTD
             </li>
             <li>
-              Copyright © 2010-2024 Ascend Insight s.r.0
+              Copyright © 2010-{{ fullYear.valueOf() }} Ascend Insight s.r.0
             </li>
           </ul>
         </el-dialog>

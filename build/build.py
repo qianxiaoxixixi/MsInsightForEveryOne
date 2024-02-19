@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import stat
 from datetime import datetime, timezone
+import json
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -282,14 +283,14 @@ def load_version_info(default_version):
     return version
 
 
-# 创建、修改版本信息文件，文件目录在framework/src/下，文件名为version_info.txt
+# 创建、修改版本信息文件，文件目录在framework/src/下，文件名为version_info.json
 def create_version_info_file(version, modify_time):
-    output_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.txt')
+    output_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.json')
     flags = os.O_WRONLY
     mode = stat.S_IWUSR
     with os.fdopen(os.open(output_path, flags, mode), "w") as f:
-        lines = ['version=' + version, os.linesep, 'modifyTime=' + modify_time]
-        f.writelines(lines)
+        data = {'version': version, 'modifyTime': modify_time}
+        f.write(json.dumps(data))
 
 
 def main():
