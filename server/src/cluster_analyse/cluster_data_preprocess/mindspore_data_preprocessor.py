@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# coding=utf-8
 # Copyright (c) 2023, Huawei Technologies Co., Ltd.
 # All rights reserved.
 #
@@ -21,7 +19,7 @@ from common_func.file_manager import FileManager
 from common_func.path_manager import PathManager
 
 
-class PytorchDataPreprocessor:
+class MindsporeDataPreprocessor:
     PROFILER_INFO_HEAD = 'profiler_info_'
     PROFILER_INFO_EXTENSION = '.json'
 
@@ -33,7 +31,6 @@ class PytorchDataPreprocessor:
         for dir_name in self.path_list:
             rank_id = self.get_rank_id(dir_name)
             if rank_id < 0:
-                print('[Error]fail to get rankid or rankid invalid.')
                 continue
             rank_id_map[rank_id].append(dir_name)
 
