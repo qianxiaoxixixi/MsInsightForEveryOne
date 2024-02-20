@@ -13,7 +13,7 @@ import CodeViewer from '../codeViewer/CodeViewer';
 import ResizeTable from '../resize/ResizeTable';
 import Bar from '../Bar';
 import { HeaderFixedContainer, LeftRightContainer, syncScroller, isViewable } from '../Common';
-import type { InstrsColumnType, CodeLineType, JsonFileLineType, JsonInstructionType } from './defs';
+import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 
@@ -25,7 +25,7 @@ interface ConditionType {
     onlyRelated?: boolean;
 };
 
-const codeColumns: ColumnsType<CodeLineType> = [
+const codeColumns: ColumnsType<Ilinetable> = [
     {
         title: 'Instructions Executed',
         dataIndex: 'Instructions Executed',
@@ -92,8 +92,8 @@ const Index = observer(({ session }: { session: Session }) => {
     const DomId = 'hotMethod';
     const [condition, setCondition] = useState<ConditionType>({ core: '', source: '', onlyRelated: false });
     const [code, setCode] = useState('');
-    const [codeLines, setCodeLines] = useState<CodeLineType[]>([]);
-    const [loggedCodeLines, setLoggedCodeLines] = useState<CodeLineType[]>([]);
+    const [codeLines, setCodeLines] = useState<Ilinetable[]>([]);
+    const [loggedCodeLines, setLoggedCodeLines] = useState<Ilinetable[]>([]);
     const [instrsData, setInstrsData] = useState<InstrsColumnType[]>([]);
     const [selectedline, setSelectedline] = useState<number>(-1);
     const [tableHeight, setTableHeight] = useState<number>(1000);
@@ -108,7 +108,7 @@ const Index = observer(({ session }: { session: Session }) => {
     };
 
     const handleInstrsClick = (instr: InstrsColumnType): void => {
-        const data = loggedCodeLines.find((codeline: CodeLineType) => isRelated(codeline, instr));
+        const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(codeline, instr));
         setSelectedline(data?.Line ?? -1);
     };
 
@@ -122,7 +122,7 @@ const Index = observer(({ session }: { session: Session }) => {
         }
         return false;
     };
-    const isRelated = (codeline: CodeLineType, instr: InstrsColumnType): boolean => {
+    const isRelated = (codeline: Ilinetable, instr: InstrsColumnType): boolean => {
         // 指令地址是否在代码行地址范围内
         return Boolean(codeline?.['Address Range']?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
     };
@@ -194,14 +194,15 @@ const Index = observer(({ session }: { session: Session }) => {
         if (session.Instructions.length === 0) {
             const res = await queryApiInstr();
             runInAction(() => {
-                session.Instructions = JSON.parse(res.instructions);
+                session.Instructions = JSON.parse(res.instructions).Instructions;
             });
         }
         const records = session.Instructions;
+        const coreIndex = session.coreList.findIndex(item => item === core);
         const list = records.map((item: JsonInstructionType, index: number) => ({
             ...item,
-            Cycles: item.Cycles[Number(core)],
-            'Instructions Executed': item['Instructions Executed'][Number(core)],
+            Cycles: item.Cycles[coreIndex],
+            'Instructions Executed': item['Instructions Executed'][coreIndex],
             index: index + 1,
             maxCycles: 0,
         }));
@@ -214,16 +215,16 @@ const Index = observer(({ session }: { session: Session }) => {
         });
         return list;
     };
-    async function getLines(source: string, core: string): Promise<CodeLineType[]> {
+    async function getLines(source: string, core: string): Promise<Ilinetable[]> {
         if (source === '' || core === '') {
             return [];
         }
         const res = await queryApiLine({ sourceName: source, coreName: core });
-        const records: JsonFileLineType[] = res.lines ?? [];
-        const list = records.map((item: JsonFileLineType, index: number) => ({
+        const records: Iline[] = res.lines ?? [];
+        const list = records.map((item: Iline, index: number) => ({
             ...item,
-            Cycles: item.Cycles[Number(core)],
-            'Instructions Executed': item['Instructions Executed'][Number(core)],
+            Cycles: item.Cycle,
+            'Instructions Executed': item['Instruction Executed'],
         }));
         return list.reverse();
     };
@@ -243,23 +244,26 @@ const Index = observer(({ session }: { session: Session }) => {
         reset();
         updateData();
         async function updateData(): Promise<void> {
-            // 文件源码
-            const newCode: string = await getCode(condition.source);
-            // 指令记录
-            const newInstrlist = await getInstrs(condition.core);
-            // 代码行
-            const newLoggedCodeLines = await getLines(condition.source, condition.core);
-            // 全部代码行
-            const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
-            const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
-                const Line = index + 1;
-                const lineInfo = newLoggedCodeLines.find((item: CodeLineType) => item.Line === Line) ?? {};
-                return { Line, ...lineInfo };
+            Promise.all([
+                getCode(condition.source),
+                getInstrs(condition.core),
+                getLines(condition.source, condition.core),
+            ]).then(([newCode, newInstrlist, newLoggedCodeLines]) => {
+                // 文件源码
+                setCode(newCode);
+                // 指令记录
+                setInstrsData(newInstrlist);
+                // 代码行记录
+                setLoggedCodeLines(newLoggedCodeLines);
+                // 全部代码行
+                const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
+                const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
+                    const Line = index + 1;
+                    const lineInfo = newLoggedCodeLines.find((item: Ilinetable) => item.Line === Line) ?? {};
+                    return { Line, ...lineInfo };
+                });
+                setCodeLines(sourceCodeLines);
             });
-            setCode(newCode);
-            setCodeLines(sourceCodeLines);
-            setLoggedCodeLines(newLoggedCodeLines);
-            setInstrsData(newInstrlist);
         }
     }, [condition.core, condition.source, session.renderStatus]);
 
@@ -332,8 +336,8 @@ const Index = observer(({ session }: { session: Session }) => {
                                     pagination={false}
                                     columns={codeColumns}
                                     dataSource={codeLines}
-                                    rowClassName={(record: CodeLineType, index: number) => (selectedline === index + 1 ? 'selected' : '')}
-                                    onRow={ (record: CodeLineType) => {
+                                    rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
+                                    onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
                                         return {
                                             onClick: (event: React.MouseEvent<HTMLElement>) => {
                                                 setSelectedline(record.Line);
