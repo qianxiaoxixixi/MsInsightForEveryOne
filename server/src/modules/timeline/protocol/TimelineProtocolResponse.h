@@ -201,7 +201,7 @@ struct SearchCountResponse : public Response {
 struct SearchSliceBody {
     std::string rankId;
     std::string pid;
-    int32_t tid = 0;
+    std::string tid;
     uint64_t startTime = 0;
     uint64_t duration = 0;
     int32_t depth = 0;
@@ -232,7 +232,7 @@ struct FlowCategoryListResponse : public Response {
 };
 
 struct FlowEventLocation {
-    int32_t tid = 0;
+    std::string tid;
     int32_t depth = 0;
     uint64_t timestamp = 0;
     std::string pid;
@@ -322,7 +322,7 @@ struct KernelDetailsResponse  : public Response {
 
 struct OneKernelBody {
     uint64_t depth;
-    uint64_t threadId;
+    std::string threadId;
     std::string pid;
 };
 
