@@ -1036,7 +1036,7 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
     }
     int col = resultStartIndex;
     responseBody.pid = resultSet->GetString("pid");
-    responseBody.tid = resultSet->GetInt32("tid");
+    responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
     responseBody.depth = resultSet->GetInt32("depth");
@@ -1110,7 +1110,7 @@ bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, ui
         flowCategoryEventsDto.type = resultSet->GetString(col++);
         flowCategoryEventsDto.flowId = resultSet->GetString(col++);
         flowCategoryEventsDto.pid = resultSet->GetString(col++);
-        flowCategoryEventsDto.tid = resultSet->GetInt32(col++);
+        flowCategoryEventsDto.tid = resultSet->GetString(col++);
         flowCategoryEventsDto.depth = resultSet->GetInt32(col++);
         flowCategoryEventsDto.timestamp = resultSet->GetUint64(col++);
         flowEventsVec.emplace_back(flowCategoryEventsDto);
@@ -1485,7 +1485,7 @@ OneKernelData TraceDatabase::QueryKernelTid(const uint64_t trackId)
     auto resultSet = stmt->ExecuteQuery(trackId);
     uint64_t tid = 0;
     if (resultSet->Next()) {
-        oneKernel.threadId = resultSet->GetUint64("tid");
+        oneKernel.threadId = resultSet->GetString("tid");
         oneKernel.pid = resultSet->GetString("pid");
     }
     return oneKernel;
