@@ -59,7 +59,7 @@ const Filter = observer(({ session, handleFilterChange }:
     }, []);
 
     useEffect(() => {
-        const coreOptions = session.coreList.map((item, index) => ({ label: item, value: index }));
+        const coreOptions = session.coreList.map((item, index) => ({ label: item, value: item }));
         const sourceOptions = session.sourceList.map(item => ({ label: item, value: item }));
         setOptions({} as ConditionType, { coreOptions, sourceOptions });
     }, [session.coreList, session.sourceList]);

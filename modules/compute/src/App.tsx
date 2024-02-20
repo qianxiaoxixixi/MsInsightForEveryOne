@@ -5,6 +5,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect } from 'react';
 import { useRootStore } from './context/context';
 import HotMethod from './components/hotMethod/HotMethod';
+import connector from './connection';
 
 const App = observer(() => {
     const { sessionStore } = useRootStore();
@@ -12,6 +13,7 @@ const App = observer(() => {
     useEffect(() => {
         session = sessionStore.activeSession;
     }, []);
+    connector.send({ event: 'getParseStatus', body: { } });
     return session !== undefined ? <HotMethod session={session} /> : <></>;
 });
 
