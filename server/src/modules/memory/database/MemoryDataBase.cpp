@@ -331,7 +331,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vec
             peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
             peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);
             std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength));
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
             std::string allocated = std::to_string(item.totalAllocated);
             points.emplace_back(allocated.substr(0, allocated.length() - exLength));
             if (!streams.empty()) { // 实现数据兼容
@@ -346,7 +346,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vec
         } else if (item.component == COMPONENT_APP) {
             peak.appReserved = std::max(peak.appReserved, item.totalReserved);
             std::string time = std::to_string(item.timesTamp);
-            points.emplace_back(time.substr(0, time.length() - exLength));
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
             points.emplace_back("NULL");
             if (!streams.empty()) { // 实现数据兼容
                 points.emplace_back("NULL");
