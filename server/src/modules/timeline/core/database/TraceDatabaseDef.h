@@ -38,7 +38,7 @@ struct FlowCategoryEventsDto {
     std::string type;
     std::string flowId;
     std::string pid;
-    int32_t tid = 0;
+    std::string tid;
     int32_t depth = 0;
     uint64_t timestamp = 0;
 };
@@ -61,7 +61,7 @@ struct SliceTimeData {
 };
 
 struct OneKernelData {
-    uint64_t threadId;
+    std::string threadId;
     std::string pid;
 };
 

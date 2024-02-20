@@ -158,7 +158,7 @@ TEST_F(TestSuit, QueryKernelDepthAndThread)
     uint64_t minTime = TIMESTAMP;
     database->QueryKernelDepthAndThread(requestParams, responseBody, minTime);
     uint64_t depth = 0;
-    uint64_t tid = 17;
+    std::string tid = "17";
     std::string pid = "300";
     EXPECT_EQ(responseBody.depth, depth);
     EXPECT_EQ(responseBody.threadId, tid);
@@ -202,7 +202,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     requestParams.timePerPx = 1;
     requestParams.category = "HostToDevice";
     database->QueryFlowCategoryEvents(requestParams, 0, flowDetailList);
-    uint64_t EXPECT_FROM_TID = 1408366;
+    std::string EXPECT_FROM_TID = "1408366";
     EXPECT_EQ(flowDetailList.size(), 5); // flowDetailList size = 5
     EXPECT_EQ(flowDetailList[0]->category, "HostToDevice");
     EXPECT_EQ(flowDetailList[0]->from.timestamp, 1695115378722143800); // timestamp = 1695115378722143800
@@ -212,7 +212,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     EXPECT_EQ(flowDetailList[0]->to.timestamp, 1695115378722392500); // to.timestamp = 1695115378722392500
     EXPECT_EQ(flowDetailList[0]->to.pid, "14083661400");
     EXPECT_EQ(flowDetailList[0]->to.depth, 0);
-    EXPECT_EQ(flowDetailList[0]->to.tid, 0); // to.tid = 0
+    EXPECT_EQ(flowDetailList[0]->to.tid, "0"); // to.tid = 0
 }
 
 TEST_F(TestSuit, QueryFlowCategoryList)
@@ -408,7 +408,7 @@ TEST_F(TestSuit, SearchSliceName)
     Dic::Protocol::SearchSliceBody body;
 
     std::string expectPid = "1408366";
-    int32_t expectTid = 1408366;
+    std::string expectTid = "1408366";
     uint64_t expectStartTime = 1695115378713520800;
     int32_t expectDepth = 3;
     uint64_t expectDuration = 18250;
