@@ -57,6 +57,8 @@ public:
     bool QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
                             std::vector<Protocol::OperatorNamesObject> &responseBody);
+    bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
+                            std::vector<Protocol::OperatorNamesObject> &responseBody);
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody);

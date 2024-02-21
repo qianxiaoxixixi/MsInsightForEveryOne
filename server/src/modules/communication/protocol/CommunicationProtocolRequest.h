@@ -89,6 +89,11 @@ struct OperatorNamesRequest  : public Request {
     OperatorNamesParams params;
 };
 
+struct MatrixSortOpNamesRequest  : public Request {
+    MatrixSortOpNamesRequest() : Request(REQ_RES_COMMUNICATION_SORT_OP) {};
+    OperatorNamesParams params;
+};
+
 struct DurationListParams {
     std::string dbIndex;
     std::string iterationId;

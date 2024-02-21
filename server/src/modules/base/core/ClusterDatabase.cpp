@@ -983,6 +983,34 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
     return true;
 }
 
+bool ClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
+                                             std::vector<Protocol::OperatorNamesObject> &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string iterationId = requestParams.iterationId;
+    std::string stage = requestParams.stage;
+    std::string sql = "SELECT DISTINCT op_sort FROM (SELECT op_sort FROM " + TABLE_COMMUNICATION_MATRIX +
+            " WHERE iteration_id = ?" +
+            " AND group_id = ?" +
+            " ORDER BY op_sort)";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryMatrixSortOpNames statement. error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::OperatorNamesObject object;
+        object.operatorName = sqlite3_column_string(stmt, col++);
+        responseBody.emplace_back(object);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool ClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;

@@ -73,6 +73,7 @@ const std::string REQ_RES_COMMUNICATION_COMMUNICATOR = "communication/communicat
 const std::string REQ_RES_COMMUNICATION_ITERATIONS = "communication/duration/iterations";
 const std::string REQ_RES_COMMUNICATION_RANKS = "communication/duration/ranks";
 const std::string REQ_RES_COMMUNICATION_OPERATORNAMES = "communication/duration/operatorNames";
+const std::string REQ_RES_COMMUNICATION_SORT_OP = "communication/matrix/sortOpNames";
 const std::string REQ_RES_COMMUNICATION_LIST = "communication/duration/list";
 
 // summary

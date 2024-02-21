@@ -19,6 +19,7 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_COMMUNICATOR, ToCommunicatorRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupRequest);
@@ -33,6 +34,7 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_COMMUNICATOR, ToCommunicatorResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupResponse);
@@ -185,6 +187,24 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
     }
     return reqPtr;
 }
+
+std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<MatrixSortOpNamesRequest> reqPtr = std::make_unique<MatrixSortOpNamesRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
+    if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
+        for (const auto &rankId : json["params"]["rankList"].GetArray()) {
+            reqPtr->params.rankList.emplace_back(rankId.GetString());
+        }
+    }
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -217,6 +237,11 @@ std::optional<document_t> CommunicationProtocol::ToIterationsResponse(const Resp
 std::optional<document_t> CommunicationProtocol::ToOperatorNamesResponse(const Response &response)
 {
     return ToResponseJson<OperatorNamesResponse>(dynamic_cast<const OperatorNamesResponse &>(response));
+}
+
+std::optional<document_t> CommunicationProtocol::ToMatrixOpNamesResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<MatrixSortOpNamesResponse>(dynamic_cast<const MatrixSortOpNamesResponse &>(response));
 }
 
 std::optional<document_t> CommunicationProtocol::ToDurationResponse(const Response &response)
