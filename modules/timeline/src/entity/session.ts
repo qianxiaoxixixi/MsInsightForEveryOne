@@ -46,6 +46,8 @@ export class Session {
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     singleLinkLine: LinkLines = {};
     linkLineCategories: string[] = [];
+    // 是否是算子仿真图
+    isSimulation: boolean = false;
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];

@@ -8,6 +8,7 @@
 #include <set>
 #include <regex>
 #include "TimelineRequestHandler.h"
+#include "FileParser.h"
 
 namespace Dic {
 namespace Module {
@@ -26,7 +27,7 @@ private:
     static bool curIsCluster;
     std::string curScene;
 
-    static void SetParseCallBack(const std::string &token);
+    static void SetParseCallBack(const std::string &token, FileParser &fileParser);
     static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
                                  const std::string &message);
     static void ParseClusterEndProcess(const std::string token, std::string result);
@@ -42,6 +43,8 @@ private:
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
                                                                    ImportActionResBody &body);
+    std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,
+                                                                   ImportActionResBody &body);
     static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
     static void SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message);
 
@@ -50,7 +53,7 @@ private:
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response);
 
-    void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder) const;
+    void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder);
 };
 } // end of namespace Timeline
 } // end of namespace Module

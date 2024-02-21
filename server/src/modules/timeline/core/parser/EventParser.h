@@ -20,6 +20,7 @@ public:
     ~EventParser() = default;
     bool Parse(int64_t startPosition, int64_t endPosition);
     std::string GetError();
+    void SetSimulationStatus(const bool &isSimulation);
 
 private:
     std::string filePath;
@@ -27,6 +28,7 @@ private:
     std::string error;
     int parseCount = 0;
     int ignoreCount = 0;
+    bool m_isSimulation = false;
     std::shared_ptr<TraceDatabase> database;
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
@@ -35,10 +37,15 @@ private:
     void InitEventHandle();
     void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr);
     void FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     std::map<std::string, int64_t> trackIdMap;
     int64_t GetTrackId(const std::string &pid, const std::string &tid);
+    std::map<std::string, int64_t> simulationProcessMap;
+    std::map<std::string, int64_t> simulationThreadMap;
+    int64_t GetPid(const std::string &processName);
+    int64_t GetTid(const std::string &processName, const std::string &threadName);
 };
 } // end of namespace Timeline
 } // end of namespace Module

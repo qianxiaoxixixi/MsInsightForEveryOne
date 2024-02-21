@@ -35,7 +35,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     ServerLog::Info("Import action request handler start");
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+            ", command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
@@ -54,6 +54,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     if (Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
         ServerLog::Info("Import files is binary.Start parse source binary file.");
         HandleCompute(response, selectedFolder);
+        SetParseCallBack(token, Source::SourceFileParser::Instance());
         session.OnResponse(std::move(responsePtr));
         return;
     }
@@ -68,7 +69,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         // 按rankId 拆分文件
         std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
         SetBaseActionOfResponse(rankListMap, response);
-        SetParseCallBack(token);
+        SetParseCallBack(token, TraceFileParser::Instance());
         SetResponseResult(response, true);
         // add response to response queue in session
         session.OnResponse(std::move(responsePtr));
@@ -88,16 +89,22 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, selectedFolder);
 }
 
-void ImportActionHandler::HandleCompute(ImportActionResponse &response, const std::string &selectedFolder) const
+void ImportActionHandler::HandleCompute(ImportActionResponse &response, const std::string &selectedFolder)
 {
+    ServerLog::Info("start source parser");
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
-    sourceFileParser.Parse(std::vector<std::string>(), "", selectedFolder);
+    sourceFileParser.Reset();
+    std::vector<std::string> empty;
+    auto files = GetSimulationTraceFiles(selectedFolder, response.body);
+    response.body.isSimulation = true;
+    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
+    sourceFileParser.Parse(empty, files.front().second, selectedFolder);
     sourceFileParser.ConvertToData();
-
+    SetBaseActionOfResponse(rankListMap, response);
     SetResponseResult(response, true);
-    response.body.isBinary= true;
-    response.body.coreList= sourceFileParser.GetCoreList();
-    response.body.sourceList= sourceFileParser.GetSourceList();
+    response.body.isBinary = true;
+    response.body.coreList = sourceFileParser.GetCoreList();
+    response.body.sourceList = sourceFileParser.GetSourceList();
 }
 
 void ImportActionHandler::ClusterProcess(const std::string &token, const std::string &selectedFolder)
@@ -147,7 +154,7 @@ void ImportActionHandler::ClusterProcessAsyncStep(const std::string &token, cons
 }
 
 void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,
-                                                  ImportActionResponse &response)
+    ImportActionResponse &response)
 {
     for (const auto &rankEntry : rankListMap) {
         std::string rankId = rankEntry.first;
@@ -156,7 +163,7 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
         action.rankId = rankId;
         action.result = true;
         std::string path = FileUtil::GetParentPath(rankEntry.second[0]);
-                // 将文件所在路径的三级目录名称作为rank的tooltip信息
+        // 将文件所在路径的三级目录名称作为rank的tooltip信息
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(rankEntry.second[0]);
         response.body.result.emplace_back(action);
     }
@@ -179,7 +186,7 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
-                                           const std::string &message)
+    const std::string &message)
 {
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
     if (result) {
@@ -222,7 +229,7 @@ void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const 
 }
 
 void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId,
-                                             const std::string &message)
+    const std::string &message)
 {
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
@@ -265,7 +272,8 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
         }
         return traceFiles;
     }
-    std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
+    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](const std::string &path,
+        int depth) {
         if (depth > 5) {
             return;
         }
@@ -318,7 +326,8 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
         traceFiles.emplace_back(traceFilePath);
         return;
     }
-    std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
+    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](const std::string &path,
+        int depth) {
         if (depth > 5) {
             return;
         }
@@ -353,15 +362,14 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
     }
 }
 
-void ImportActionHandler::SetParseCallBack(const std::string &token)
+void ImportActionHandler::SetParseCallBack(const std::string &token, FileParser &fileParser)
 {
     std::function<void(const std::string, bool, const std::string)> func =
         std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    TraceFileParser::Instance().SetParseEndCallBack(func);
+    fileParser.SetParseEndCallBack(func);
 }
 
-void ImportActionHandler::SearchMetaData(const std::string &fileId,
-                                         std::vector<std::unique_ptr<UnitTrack>> &metaData)
+void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)
 {
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (database == nullptr) {
@@ -406,7 +414,7 @@ bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
         return false;
     }
     return std::any_of(folders.begin(), folders.end(),
-                       [](std::string &folder) {return folder == CLUSTER_ANALYSIS_OUTPUT;});
+        [](std::string &folder) { return folder == CLUSTER_ANALYSIS_OUTPUT; });
 }
 
 std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFiles(
@@ -414,8 +422,8 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
 {
     auto traceFiles = FindAllTraceFile(pathList);
     if (pathList.size() == 1) {
-        bool isCluster = (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0)
-                || CheckIsCluster(pathList[0]);
+        bool isCluster =
+            (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(pathList[0]);
         bool reset = isCluster || curIsCluster;
         ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
         curIsCluster = isCluster;
@@ -441,6 +449,20 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         }
         files.emplace_back(file, fileId);
     }
+    return files;
+}
+
+std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetSimulationTraceFiles(
+    const std::string &selectFilePath, ImportActionResBody &body)
+{
+    body.isCluster = false;
+    std::vector<std::pair<std::string, std::string>> files;
+    std::string fileId = GetFileId(selectFilePath);
+    if (fileId.empty()) {
+        ServerLog::Error("File id is empty. file:", selectFilePath);
+        return files;
+    }
+    files.emplace_back(selectFilePath, fileId);
     return files;
 }
 

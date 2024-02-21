@@ -119,6 +119,8 @@ export type StackStatusData = {
     color: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
     depth: number;
     [x: string]: unknown;
+    cname: string;
+    cColor: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
 };
 
 export type FilledLineConfig = {
