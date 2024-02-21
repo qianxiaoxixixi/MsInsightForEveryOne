@@ -97,6 +97,11 @@ struct OperatorNamesResponse : public Response {
     std::vector<OperatorNamesObject> body;
 };
 
+struct MatrixSortOpNamesResponse : public Response {
+    MatrixSortOpNamesResponse() : Response(REQ_RES_COMMUNICATION_SORT_OP) {}
+    std::vector<OperatorNamesObject> body;
+};
+
 struct Duration {
     std::string rankId;
     double elapseTime;

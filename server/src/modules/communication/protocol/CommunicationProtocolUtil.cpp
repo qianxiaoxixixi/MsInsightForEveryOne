@@ -119,6 +119,23 @@ template <> std::optional<document_t> ToResponseJson<OperatorNamesResponse>(cons
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
+template <>
+std::optional<document_t> ToResponseJson<MatrixSortOpNamesResponse>(const MatrixSortOpNamesResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t operatorName(kArrayType);
+    for (const OperatorNamesObject& object : response.body) {
+        operatorName.PushBack(json_t().SetString(object.operatorName.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "operatorName", operatorName, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToResponseJson<DurationResponse>(const DurationResponse &response)
 {
     document_t json(kObjectType);

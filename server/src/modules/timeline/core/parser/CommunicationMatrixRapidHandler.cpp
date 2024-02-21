@@ -143,7 +143,7 @@ CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const r
     matrixInfo.transitTime = JsonUtil::GetDouble(json, "Transit Time(ms)");
     matrixInfo.transitSize = JsonUtil::GetDouble(json, "Transit Size(MB)");
     matrixInfo.bandwidth = JsonUtil::GetDouble(json, "Bandwidth(GB/s)");
-    matrixInfo.opName = JsonUtil::GetString(json, "op_name");
+    matrixInfo.opName = JsonUtil::GetString(json, "Op Name");
     return matrixInfo;
 }
 

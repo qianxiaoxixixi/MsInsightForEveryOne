@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_MATRIXSORTOPNAMESHANDLER_H
+#define PROFILER_SERVER_MATRIXSORTOPNAMESHANDLER_H
+
+#include <set>
+#include <regex>
+#include "ProtocolMessage.h"
+#include "ProtocolDefs.h"
+#include "CommunicationRequestHandler.h"
+
+namespace Dic {
+namespace Module {
+namespace Communication {
+class MatrixSortOpNamesHandler : public CommunicationRequestHandler {
+public:
+    MatrixSortOpNamesHandler()
+    {
+        command = Protocol::REQ_RES_COMMUNICATION_SORT_OP;
+    }
+    ~MatrixSortOpNamesHandler() override = default;
+    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+};
+} // end of namespace Communication
+} // end of namespace Module
+} // end of namespace Dic
+
+#endif // PROFILER_SERVER_MATRIXSORTOPNAMESHANDLER_H
