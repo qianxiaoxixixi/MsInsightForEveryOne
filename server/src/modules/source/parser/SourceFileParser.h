@@ -10,11 +10,11 @@
 #include "rapidjson.h"
 #include "document.h"
 #include "FileParser.h"
+#include "ThreadPool.h"
 
 namespace Dic {
 namespace Module {
 namespace Source {
-
 struct SourceFileLine {
     int line;
     std::vector<float> cycles;
@@ -41,15 +41,24 @@ public:
     ~SourceFileParser() override;
 
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-               const std::string &selectedFile) override;
+        const std::string &selectedFile) override;
     void Reset() override;
     bool CheckOperatorBinary(const std::string &selectedFilePath);
+    static void PreParseTask(const std::string &fileId);
+    static bool InitParser(const std::string &fileId);
+    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
+    static void ParseTask(const std::string &fileId, std::pair<int64_t, int64_t> pos);
+    static void EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures);
+    static std::pair<int64_t, int64_t> AdjustPosition(std::ifstream &file, int64_t start, int64_t end);
     std::vector<std::string> GetCoreList();
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(std::string core, std::string sourceName);
     std::string GetInstr();
     std::string GetSourceByName(std::string sourceName);
     void ConvertToData();
+    int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
+    int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
+
 private:
     std::string filePath;
     std::map<int, std::vector<std::pair<int64_t, int64_t>>> dataBlockMap;
@@ -62,6 +71,18 @@ private:
 
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
+    std::unique_ptr<ThreadPool> threadPool;
+    const int maxThreadNum = 1;
+
+    std::mutex trackMutex;
+    std::mutex processMutex;
+    std::mutex threadMutex;
+    std::unordered_map<std::string, std::map<std::pair<std::string, int64_t>, int64_t>> trackIdMap;
+    std::unordered_map<std::string, std::map<std::string, int64_t>> simulationPidMap;
+    std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, int64_t>> simulationTidMap;
+    int64_t trackId = 0;
+    int64_t pid = 0;
+    int64_t tid = 0;
 };
 } // end of namespace Summary
 } // end of namespace Module

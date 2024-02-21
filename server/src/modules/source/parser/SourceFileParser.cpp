@@ -7,6 +7,10 @@
 #include "rapidjson.h"
 #include "document.h"
 #include "JsonUtil.h"
+#include "ParserStatusManager.h"
+#include "DataBaseManager.h"
+#include "EventParser.h"
+#include "TraceTime.h"
 #include "FileUtil.h"
 #include "SourceFileParser.h"
 
@@ -21,10 +25,18 @@ SourceFileParser &SourceFileParser::Instance()
     static SourceFileParser instance;
     return instance;
 }
+SourceFileParser::SourceFileParser()
+{
+    threadPool = std::make_unique<ThreadPool>(SourceFileParser::maxThreadNum);
+}
 
-bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
-                             const std::string &fileId,
-                             const std::string &selectedFile)
+SourceFileParser::~SourceFileParser()
+{
+    threadPool->ShutDown();
+}
+
+bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
+    const std::string &selectedFile)
 {
     std::ifstream file(FileUtil::PathPreprocess(selectedFile), std::ios::binary);
     if (!file) {
@@ -33,9 +45,9 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
     }
 
     const int dataSizeLen = 8; // 数据类型字段距离数据大小字段的偏移
-    const int dataTypeLen = 1;  // 填充长度字段距离数据类型字段的偏移
+    const int dataTypeLen = 1; // 填充长度字段距离数据类型字段的偏移
     const int paddingLen = 1;  // 填充长度字段距离数据类型字段的偏移
-    const int reserveLen = 2;     // 实际数据距离填充长度字段的偏移
+    const int reserveLen = 2;  // 实际数据距离填充长度字段的偏移
     const int filePathLen = 4096;
 
     while (!file.eof()) {
@@ -66,13 +78,152 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths,
         file.seekg(dataSize, std::ios::cur);
     }
     file.close();
+    ServerLog::Info("start parse. file id:", fileId);
+    Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, fileId);
 
     return true;
 }
 
+void SourceFileParser::PreParseTask(const std::string &fileId)
+{
+    if (!InitParser(fileId)) {
+        ParseEndCallBack(fileId, false, "Failed to init trace file parser.");
+    }
+}
+
+bool SourceFileParser::InitParser(const std::string &fileId)
+{
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(fileId)) {
+        ServerLog::Info("Pre task skip this file.");
+        return true;
+    }
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection.");
+        return false;
+    }
+
+    if (!(database->DropTable() && database->CreateTable())) {
+        ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
+        return false;
+    }
+    auto &instance = SourceFileParser::Instance();
+    std::vector<std::pair<int64_t, int64_t>> &traceFilePos =
+        instance.dataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
+    std::ifstream file(instance.filePath, std::ios::in | std::ios::binary);
+    std::vector<std::pair<int64_t, int64_t>> adjustTraceFilePos;
+    for (const auto &pos : traceFilePos) {
+        adjustTraceFilePos.emplace_back(AdjustPosition(file, pos.first, pos.second));
+    }
+    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
+    for (const auto &pos : adjustTraceFilePos) {
+        auto future = instance.threadPool->AddTask(ParseTask, fileId, pos);
+        futures->emplace_back(std::move(future));
+    }
+    instance.threadPool->AddTask(EndParseTask, fileId, futures);
+    return true;
+}
+
+void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
+{
+    if (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) != Timeline::ParserStatus::RUNNING) {
+        ServerLog::Info("End parse task skip this file. ID:", fileId);
+        return;
+    }
+    ServerLog::Info("Wait parse completed. ID:", fileId);
+    for (const auto &future : *futures) {
+        future.wait();
+    }
+    ServerLog::Info("Parse completed. ID:", fileId);
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    database->CreateIndex();
+    database->UpdateSimulationDepth();
+    ServerLog::Info("Update depth completed. ID:", fileId);
+    ParseEndCallBack(fileId, true, "");
+}
+
+void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, int64_t> pos)
+{
+    if (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) != Timeline::ParserStatus::RUNNING) {
+        ServerLog::Info("Parse task skip this file. ID:", fileId);
+        return;
+    }
+    ServerLog::Info("Ptart parse:", fileId);
+    auto &instance = SourceFileParser::Instance();
+    Timeline::EventParser eventParser(instance.filePath, fileId);
+    eventParser.SetSimulationStatus(true);
+    if (!eventParser.Parse(pos.first, pos.second)) {
+        if (Timeline::ParserStatusManager::Instance().SetTerminateStatus(fileId) == Timeline::ParserStatus::RUNNING) {
+            // 只发送一次解析失败事件
+            ParseEndCallBack(fileId, false, eventParser.GetError());
+        }
+    }
+}
+std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file, int64_t start, int64_t end)
+{
+    file.seekg(start, std::ios::beg);
+    std::string startLine;
+    int64_t contentStart = 0;
+    int64_t contentEnd = 0;
+    while (file.tellg() < end) {
+        std::getline(file, startLine);
+        for (int64_t i = 0; i < startLine.size(); i++) {
+            if (startLine[i] == '[') {
+                int64_t pos = file.tellg();
+                int64_t lineSize = startLine.size();
+                contentStart = pos - lineSize + i;
+                break;
+            }
+        }
+    }
+    const int contentTailLenth = 4;
+    contentEnd = end - contentTailLenth;
+    return std::make_pair(contentStart, contentEnd);
+}
+
+void SourceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+{
+    if (!(result && Timeline::ParserStatusManager::Instance().SetFinishStatus(fileId))) {
+        result = false;
+    }
+    auto &instance = SourceFileParser::Instance();
+    if (instance.paserEndCallback != nullptr) {
+        instance.paserEndCallback(fileId, result, message);
+    }
+}
+
 void SourceFileParser::Reset()
 {
+    ServerLog::Info("Reset. wait task completed.");
+    Timeline::ParserStatusManager::Instance().SetAllTerminateStatus();
+    Timeline::ParserStatusManager::Instance().SetClusterParseStatus(Timeline::ParserStatus::TERMINATE);
+    threadPool->Reset();
+    ServerLog::Info("Task completed.");
+    auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
+    for (auto &conn : connList) {
+        std::string path = conn->GetDbPath();
+        conn->Stop();
+        if (!FileUtil::RemoveFile(path)) {
+            ServerLog::Error("Failed to remove file. ", path);
+        }
+    }
+    trackIdMap.clear();
+    simulationPidMap.clear();
+    simulationTidMap.clear();
+    trackId = 0;
+    tid = 0;
+    pid = 0;
+    dataBlockMap[static_cast<int>(DataTypeEnum::TRACE)].clear();
+    Timeline::DataBaseManager::Instance().Clear();
+    Timeline::TraceTime::Instance().Reset();
     FileParser::Reset();
+    Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
+    ServerLog::Info("End Reset trace Parser");
 }
 
 bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
@@ -89,7 +240,7 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
     file.read(reinterpret_cast<char *>(&contentLength), sizeof(contentLength));
     file.seekg(reversePadding, std::ios::beg);
     file.read(reinterpret_cast<char *>(&reverse), sizeof(reverse));
-    
+
     bool isBinary = (contentLength != 0) && (reverse == SourceFileParser::reverseConst);
     file.close();
 
@@ -108,7 +259,7 @@ std::vector<std::string> SourceFileParser::GetCoreList()
 std::vector<std::string> SourceFileParser::GetSourceList()
 {
     std::vector<std::string> sourceList;
-    for (const auto &entry: apiFiles) {
+    for (const auto &entry : apiFiles) {
         sourceList.push_back(entry.first);
     }
     return sourceList;
@@ -130,13 +281,13 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
         return result;
     }
     std::vector<SourceFileLine> &vector = apiFiles[sourceName];
-    for (auto line: vector) {
+    for (auto line : vector) {
         if (line.cycles.size() < index + 1 || line.instructionsExecuted.size() < index + 1) {
             continue;
         }
 
         SourceFileLine output;
-        for (const auto &pair: line.addressRange) {
+        for (const auto &pair : line.addressRange) {
             output.addressRange.emplace_back(std::make_pair(pair.first, pair.second));
         }
         output.cycles.emplace_back(line.cycles[index]);
@@ -203,7 +354,7 @@ void SourceFileParser::ConvertToData()
     }
 
     std::vector<std::pair<int64_t, int64_t>> &sourceFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::SOURCE)];
-    for (auto pos :sourceFilePos) {
+    for (auto pos : sourceFilePos) {
         int64_t start = pos.first;
         int64_t end = pos.second;
 
@@ -232,7 +383,7 @@ void SourceFileParser::ConvertToData()
         d.Parse(jsonStr.c_str());
         if (JsonUtil::IsJsonArray(d, "Cores")) {
             rapidjson::Value &cores = d["Cores"];
-            for (auto &core: cores.GetArray()) {
+            for (auto &core : cores.GetArray()) {
                 apiCores.emplace_back(core.GetString());
             }
         }
@@ -247,12 +398,39 @@ void SourceFileParser::ConvertToData()
     }
     file.close();
 }
+int64_t SourceFileParser::GetSimulationPid(const std::string &fileId, const std::string &processName)
+{
+    std::unique_lock<std::mutex> lock(processMutex);
+    if (simulationPidMap[fileId].count(processName) > 0) {
+        return simulationPidMap[fileId].at(processName);
+    }
+    if (pid == INT64_MAX) {
+        pid = 0;
+    }
+    simulationPidMap[fileId].emplace(processName, ++pid);
+    return pid;
+}
+
+int64_t SourceFileParser::GetSimulationTid(const std::string &fileId, const std::string &processName,
+    const std::string &threadName)
+{
+    std::unique_lock<std::mutex> lock(threadMutex);
+    auto item = std::make_pair(processName, threadName);
+    if (simulationTidMap[fileId].count(item) > 0) {
+        return simulationTidMap[fileId].at(item);
+    }
+    if (tid == INT64_MAX) {
+        tid = 0;
+    }
+    simulationTidMap[fileId].emplace(item, ++tid);
+    return tid;
+}
 
 std::map<std::string, std::vector<SourceFileLine>> SourceFileParser::ConvertToFileMap(Value &fileArray)
 {
     std::map<std::string, std::vector<SourceFileLine>> sourceLinesMap;
 
-    for (auto &file: fileArray.GetArray()) {
+    for (auto &file : fileArray.GetArray()) {
         if (!file.IsObject()) {
             continue;
         }
@@ -279,7 +457,7 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
 {
     std::vector<SourceFileLine> sourceFileLines;
 
-    for (auto &line: lineArray.GetArray()) {
+    for (auto &line : lineArray.GetArray()) {
         if (!line.IsObject()) {
             continue;
         }
@@ -291,7 +469,7 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
             continue;
         }
         Value &addressRangeArray = line["Address Range"];
-        for (auto &addressRange: addressRangeArray.GetArray()) {
+        for (auto &addressRange : addressRangeArray.GetArray()) {
             if (!addressRange.IsArray() || addressRange.Size() != addressRangeSize) {
                 continue;
             }
@@ -310,7 +488,7 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
             continue;
         }
         Value &cycleArray = line["Cycles"];
-        for (auto &cycle: cycleArray.GetArray()) {
+        for (auto &cycle : cycleArray.GetArray()) {
             sourceFileLine.cycles.emplace_back(cycle.GetFloat());
         }
 
@@ -319,7 +497,7 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
             continue;
         }
         Value &instrExecutedArray = line["Instructions Executed"];
-        for (auto &instrExecuted: instrExecutedArray.GetArray()) {
+        for (auto &instrExecuted : instrExecutedArray.GetArray()) {
             sourceFileLine.instructionsExecuted.emplace_back(instrExecuted.GetInt());
         }
 
@@ -335,15 +513,6 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
     }
     return sourceFileLines;
 }
-
-SourceFileParser::SourceFileParser()
-{
-}
-
-SourceFileParser::~SourceFileParser()
-{
-}
-
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

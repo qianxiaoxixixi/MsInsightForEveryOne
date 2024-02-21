@@ -8,6 +8,7 @@
 #include "EventUtil.h"
 #include "DataBaseManager.h"
 #include "TraceFileParser.h"
+#include "SourceFileParser.h"
 #include "ParserStatusManager.h"
 #include "EventParser.h"
 
@@ -30,6 +31,7 @@ void EventParser::InitEventHandle()
     eventHandleMap.emplace("s", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("t", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("f", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("SX", std::bind(&EventParser::SimulationEventHandle, this, std::placeholders::_1));
 }
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
@@ -71,6 +73,10 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
                     ". Count:", parseCount, ", ignore Count:", ignoreCount);
     return true;
 }
+    void EventParser::SetSimulationStatus(const bool &isSimulation)
+    {
+        m_isSimulation = isSimulation;
+    }
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
@@ -109,13 +115,16 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 void EventParser::EventHandle(const json_t &json)
 {
     std::string type = EventUtil::Type(json);
+    if (m_isSimulation) {
+        type = "SX";
+    }
     if (type.empty()) {
         ServerLog::Error("EventHandle. event type is empty. ", JsonUtil::JsonDump(json));
         return;
     }
     if (eventHandleMap.count(type) > 0) {
         parseCount++;
-        eventHandleMap.at(type)(EventUtil::Instance().FromJson(json));
+        eventHandleMap.at(type)(EventUtil::Instance().FromJson(json, type));
     } else {
         ignoreCount++;
     }
@@ -156,6 +165,22 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     database->InsertSlice(event);
 }
 
+    void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+    {
+        if (eventPtr == nullptr) {
+            return;
+        }
+        auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
+        if (event.processName.empty() || event.threadName.empty()) {
+            ServerLog::Info("processName and threadName is empty");
+            return;
+        }
+        event.pid = std::to_string(GetPid(event.processName));
+        event.tid = GetTid(event.processName, event.threadName);
+        event.trackId = GetTrackId(event.pid, event.tid);
+        database->InsertSimulationSlice(event);
+    }
+
 void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
 {
     if (eventPtr == nullptr) {
@@ -186,6 +211,27 @@ int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
     trackIdMap.emplace(str, id);
     return id;
 }
+
+    int64_t EventParser::GetPid(const std::string &processName)
+    {
+        if (simulationProcessMap.count(processName) > 0) {
+            return simulationProcessMap.at(processName);
+        }
+        int64_t id = Source::SourceFileParser::Instance().GetSimulationPid(fileId, processName);
+        simulationProcessMap.emplace(processName, id);
+        return id;
+    }
+
+    int64_t EventParser::GetTid(const std::string &processName, const std::string &threadName)
+    {
+        std::string str = processName + threadName;
+        if (simulationThreadMap.count(threadName) > 0) {
+            return simulationThreadMap.at(threadName);
+        }
+        int64_t id = Source::SourceFileParser::Instance().GetSimulationTid(fileId, processName, threadName);
+        simulationThreadMap.emplace(str, id);
+        return id;
+    }
 
 std::string EventParser::GetError()
 {

@@ -28,6 +28,7 @@ struct ImportActionResBody {
     bool isBinary = false;
     bool isCluster = false;
     bool reset = false;
+    bool isSimulation = false;
 };
 
 struct ImportActionResponse : public Response {
@@ -42,6 +43,7 @@ struct ThreadTraces {
     uint64_t endTime = 0;
     int32_t depth = 0;
     std::string threadId;
+    std::string cname;
 };
 
 struct UnitThreadTracesBody {
@@ -168,6 +170,7 @@ struct RowThreadTrace {
     int32_t depth = 0;
     int64_t traceId = 0;
     std::string name;
+    std::string cname;
 };
 
 struct ExtremumTimestamp {

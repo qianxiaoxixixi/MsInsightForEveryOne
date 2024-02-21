@@ -26,7 +26,7 @@ public:
     }
     using json_t = rapidjson::Value;
     static std::string Type(const json_t &json) ;
-    std::unique_ptr<Event> FromJson(const json_t &json);
+    std::unique_ptr<Event> FromJson(const json_t &json, const std::string &type);
 
 private:
     EventUtil();
@@ -39,6 +39,7 @@ private:
     std::map<std::string, JsonToEventFunc> jsonToEventFactory;
     std::optional<JsonToEventFunc> GetJsonToEventFunc(const std::string &type);
     static std::unique_ptr<Event> ToSliceEvent(const json_t &json);
+    static std::unique_ptr<Event> ToSimulationSliceEvent(const json_t &json);
     static std::unique_ptr<Event> ToMetaDataEvent(const json_t &json);
     static std::unique_ptr<Event> ToFlowEvent(const json_t &json);
     static std::unique_ptr<Event> ToCounterEvent(const json_t &json);

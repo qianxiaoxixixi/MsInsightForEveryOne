@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 #include <set>
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
@@ -34,6 +35,7 @@ public:
     bool InitStmt();
     void ReleaseStmt();
     bool InsertSlice(const Trace::Slice &event);
+    bool InsertSimulationSlice(const Trace::Slice &event);
     bool AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo);
     bool InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList);
     bool UpdateProcessName(const Trace::MetaData &event);
@@ -49,6 +51,8 @@ public:
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
     void UpdateDepth();
+    void UpdateSimulationDepth();
+    void UpdateSimulationDepthByCode();
     void CreateDepthTempTable();
     void DropDepthTempTable();
     void UpdateSliceDepth();
@@ -123,9 +127,12 @@ private:
     std::unique_ptr<SqlitePreparedStatement> updateThreadSortIndexStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateSliceStmt = nullptr;
     const int cacheSize = 1000;
     const int unit = 1000;
     std::vector<Trace::Slice> sliceCache;
+    std::list<Protocol::RowThreadTrace> sliceDepthHelper;
+    std::string updateSliceDepthSql = "update slice set depth = case id ";
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
     std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
@@ -162,6 +169,18 @@ private:
                       uint64_t endTime, uint64_t index);
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                          Protocol::KernelDetailsBody &responseBody) const;
+
+    bool AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace> &sliceLinkedList);
+
+    std::vector<int32_t> QueryAllTrackId();
+
+    std::vector<Protocol::RowThreadTrace> QueryAllSliceByTrackId(const int32_t &trackId);
+
+    void ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec);
+
+    std::vector<Protocol::RowThreadTrace>
+    QuerySliceByCondition(const Protocol::UnitThreadTracesParams &requestParams, uint64_t minTimestamp,
+                          int64_t traceId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

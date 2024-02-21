@@ -168,6 +168,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                         depth: data.depth,
                         threadId: data.threadId,
                         cardId: threadMetaData.cardId,
+                        cname: data.cname,
+                        cColor: colorPalette[hashToNumber(data.cname, colorPalette.length)],
                     } as StackStatusData;
                 }));
             } catch (e) {

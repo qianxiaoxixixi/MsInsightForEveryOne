@@ -35,7 +35,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 }
             });
             session.startRecordTime = 0;
-            const defaultEndTimeAll = typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000;
+            const defaultEndTimeAll = (typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000) * 2;
             if (session.endTimeAll === undefined) {
                 session.endTimeAll = defaultEndTimeAll;
             } else {
@@ -57,6 +57,9 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                     body: { parseCompleted: !(session.units.find(item => item.phase === 'analyzing')) },
                 });
             }
+            runInAction(() => {
+                session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+            });
         });
     } catch (error) {
         console.error(error);
@@ -87,7 +90,8 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             }
             (result.reset as boolean) && (session.units = []);
             session.phase = 'download';
-            session.endTimeAll = 1000000000;
+            session.endTimeAll = undefined;
+            session.isSimulation = result.isSimulation;
             result.result.forEach((item: CardInfo) => {
                 const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
                 if (item.result as boolean) {

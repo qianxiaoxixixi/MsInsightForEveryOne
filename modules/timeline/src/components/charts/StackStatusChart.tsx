@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { ChartProps, Scale, StackStatusData, TextConfig, ChartReaction } from '../../entity/chart';
+import type { ChartProps, ChartReaction, Scale, StackStatusData, TextConfig } from '../../entity/chart';
 import { UnitHeight } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { Canvas, CanvasContainer, drawMultiBgRoundedRect, drawRoundedRect, zipStatusData } from './common';
@@ -39,15 +39,15 @@ const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2
 };
 
 // 计算当前节点宽度及圆角半径大小，同时将需要写的文字提前放入数组保存
-const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusData; textToDraw: DrawTextType },
-    config: { height: number; right: number; xScale: Scale; yScale: Scale; overflow: OverflowType; minTextWidth: number; order?: number }): void => {
+const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusData; textToDraw: DrawTextType},
+    config: { height: number; right: number; xScale: Scale; yScale: Scale; overflow: OverflowType; minTextWidth: number; order?: number },
+    isSimulation: boolean): void => {
     const { data, textToDraw } = dataObj;
     const { height, right, xScale, yScale, overflow, minTextWidth, order } = config;
     let startTime = xScale(data.startTime);
     let width = Math.max(1, xScale(data.duration < 0 ? right : (data.startTime + data.duration)) - startTime);
     const radius = width >= MIN_WIDTH ? MAX_RADIUS : width / 2;
     const minWidth = overflow === 'ellipsis' ? minTextWidth : ctx.measureText(data.type).width + DFT_PADDING;
-
     if (width >= minWidth) {
         textToDraw.push({ ...data, width });
     }
@@ -56,7 +56,11 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
         width = order === 0 ? Math.abs(xScale(data.color[0][0]) - startTime) + 0.5 : Math.abs(xScale(data.color[1][0]) - xScale(data.color[0][0]));
         startTime = order === 0 ? startTime : xScale(data.color[0][0]) + 0.5;
     }
-
+    // 算子仿真图的缩略图体现并行度
+    if (isSimulation && height < UnitHeight.STANDARD - 1) {
+        ctx.fillRect(startTime, 1, width, UnitHeight.COLL - 2);
+        return;
+    }
     // leave 1px space in both top and bottom
     if (radius < 1) {
         ctx.fillRect(startTime, yScale(data.depth) + 1, width, height - 2);
@@ -68,7 +72,11 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
     }
 };
 
-const draw = (ctx: CanvasRenderingContext2D | null, datas: StackStatusData[][], xScale: Scale, yScale: Scale, theme: Theme, right: number, textConfig?: TextConfig): void => {
+const draw = (ctx: CanvasRenderingContext2D | null,
+    datas: StackStatusData[][],
+    xScale: Scale,
+    yScale: Scale,
+    theme: Theme, right: number, isSimulation: boolean, textConfig?: TextConfig): void => {
     if (!ctx) return;
     const { overflow, textAlign } = textConfig ?? { overflow: 'ellipsis', textAlign: 'start' };
     ctx.font = `${FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`;
@@ -89,13 +97,25 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: StackStatusData[][], 
     // 绘制一个背景的节点
     dataColor.forEach((arr, key) => {
         ctx.fillStyle = theme.colorPalette[key];
-        arr.forEach(data => { drawRect(ctx, { data, textToDraw }, { height, right, xScale, yScale, overflow, minTextWidth }); });
+        arr.forEach(data => {
+            drawRect(ctx, { data, textToDraw }, { height, right, xScale, yScale, overflow, minTextWidth }, isSimulation);
+        });
     });
     // 绘制有多个背景色的节点
     if (dataMultiColor.length > 0) {
         for (let i = 0; i < 2; i++) {
             ctx.fillStyle = theme.colorPalette[dataMultiColor[0].color[i][1] as keyof Theme['colorPalette']];
-            dataMultiColor.forEach(data => { drawRect(ctx, { data, textToDraw }, { height, right, xScale, yScale, overflow, minTextWidth, order: i }); });
+            dataMultiColor.forEach(data => {
+                drawRect(ctx, { data, textToDraw }, {
+                    height,
+                    right,
+                    xScale,
+                    yScale,
+                    overflow,
+                    minTextWidth,
+                    order: i,
+                }, isSimulation);
+            });
         }
     }
     // 绘制节点上的文字
@@ -199,10 +219,10 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
         const ctx = canvas.current.getContext('2d');
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
         ctx?.clearRect(0, 0, width, height);
-        draw(ctx, datasState, xScale, yScale, theme, session.endTimeAll ?? 0, textConfig);
+        draw(ctx, datasState, xScale, yScale, theme, session.endTimeAll ?? 0, session.isSimulation, textConfig);
         drawExt({
             context: ctx,
-            draw: (data, xScale, yScale) => draw(ctx, data, xScale, yScale, theme, session.endTimeAll ?? 0, textConfig),
+            draw: (data, xScaleExt, yScaleExt) => draw(ctx, data, xScaleExt, yScaleExt, theme, session.endTimeAll ?? 0, session.isSimulation, textConfig),
             findAll: (condition) => datasState.map(it => it.filter(condition)),
         }, xScale, yScale, theme);
     }, [datasState, rangeAndDomain, ...triggers, theme, isCollapse]);

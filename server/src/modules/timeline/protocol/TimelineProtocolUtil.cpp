@@ -26,6 +26,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
     JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
+    JsonUtil::AddMember(body, "isSimulation", response.body.isSimulation, allocator);
     JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
 
     json_t coreList(kArrayType);
@@ -71,6 +72,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
             JsonUtil::AddMember(threadJson, "endTime", threadTraces.endTime, allocator);
             JsonUtil::AddMember(threadJson, "depth", threadTraces.depth, allocator);
             JsonUtil::AddMember(threadJson, "threadId", threadTraces.threadId, allocator);
+            JsonUtil::AddMember(threadJson, "cname", threadTraces.cname, allocator);
             threadTracesArray.PushBack(threadJson, allocator);
         }
         data.PushBack(threadTracesArray, allocator);

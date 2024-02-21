@@ -714,6 +714,7 @@ export type ThreadTrace = {
     depth: number;
     threadId: string;
     [x: string]: unknown;
+    cname: string;
 };
 
 export type ProcessData = {
