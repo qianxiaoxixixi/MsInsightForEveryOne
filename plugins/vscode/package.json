@@ -4,8 +4,8 @@
     "description": "",
     "version": "7.0.1",
     "extensionKind": [
-        "ui",
-        "workspace"
+        "workspace",
+        "ui"
     ],
     "engines": {
         "vscode": "^1.63.0"
