@@ -107,7 +107,7 @@ def build_frontend():
 
 def build_vscode(vscode_version, os_name):
     # Linux和MacOS上默认不编译vscode插件
-    if platform.system() != Const.WINDOWS_OS and os.getenv('NO_BUILD_VSCODE') is not None:
+    if platform.system() != Const.WINDOWS_OS and os.getenv('NO_BUILD_VSCODE'):
         logging.info('The VSCode plugin is not compiled because NO_BUILD_VSCODE is set.')
         return
 
