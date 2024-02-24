@@ -23,7 +23,7 @@ void StepHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     PipelineStepResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetStepIdList(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get step response data.");

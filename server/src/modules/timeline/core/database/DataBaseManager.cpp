@@ -160,19 +160,31 @@ void DataBaseManager::Clear(DatabaseType type)
 void DataBaseManager::ClearClusterDb()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (clusterDatabaseMap.count("cluster") != 0) {
-        clusterDatabaseMap["cluster"].get()->CloseDb();
-        clusterDatabaseMap.clear();
+    if (clusterDatabaseMap.count("cluster_w") != 0) {
+        clusterDatabaseMap["cluster_w"].get()->CloseDb();
     }
+    if (clusterDatabaseMap.count("cluster_r") != 0) {
+        clusterDatabaseMap["cluster_r"].get()->CloseDb();
+    }
+    clusterDatabaseMap.clear();
 }
 
-ClusterDatabase *DataBaseManager::GetClusterDatabase()
+ClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (clusterDatabaseMap.count("cluster") == 0) {
-        clusterDatabaseMap.emplace("cluster", std::make_unique<ClusterDatabase>());
+    if (clusterDatabaseMap.count("cluster_w") == 0) {
+        clusterDatabaseMap.emplace("cluster_w", std::make_unique<ClusterDatabase>());
     }
-    return clusterDatabaseMap["cluster"].get();
+    return clusterDatabaseMap["cluster_w"].get();
+}
+
+ClusterDatabase *DataBaseManager::GetReadClusterDatabase()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (clusterDatabaseMap.count("cluster_r") == 0) {
+        clusterDatabaseMap.emplace("cluster_r", std::make_unique<ClusterDatabase>());
+    }
+    return clusterDatabaseMap["cluster_r"].get();
 }
 
 std::vector<std::string> DataBaseManager::GetAllFileId()

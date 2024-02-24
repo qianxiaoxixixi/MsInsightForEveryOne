@@ -23,7 +23,7 @@ void RankAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     PipelineRankTimeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetRankAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get time response data.");

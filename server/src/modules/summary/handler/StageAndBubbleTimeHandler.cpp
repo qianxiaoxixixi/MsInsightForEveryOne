@@ -23,7 +23,7 @@ void StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     PipelineStageTimeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetStageAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get time response data.");

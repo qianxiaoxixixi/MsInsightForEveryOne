@@ -23,7 +23,7 @@ void StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     PipelineStageResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetStages(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get stage response data.");
