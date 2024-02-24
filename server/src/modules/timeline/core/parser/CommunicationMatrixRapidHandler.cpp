@@ -92,7 +92,7 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
-    auto database = DataBaseManager::Instance().GetClusterDatabase();
+    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
     currentDepth--;
     if (currentDepth == ranksDepth) {
         CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);

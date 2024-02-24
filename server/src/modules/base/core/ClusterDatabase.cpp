@@ -75,9 +75,18 @@ bool ClusterDatabase::CreateIndex()
         ServerLog::Error("Failed to set config. Cluster Database is not open.");
         return false;
     }
+    std::string sql = "CREATE INDEX IF NOT EXISTS idx3 on communication_matrix(group_id, op_sort);";
+    return ExecSql(sql);
+}
+
+bool ClusterDatabase::CreateTimeIndex()
+{
+    if (!isOpen) {
+        ServerLog::Error("Failed to set config. Cluster Database is not open.");
+        return false;
+    }
     std::string sql = "CREATE INDEX IF NOT EXISTS idx1 on communication_time_info(stage_id);"
-                      "CREATE INDEX IF NOT EXISTS idx2 on communication_bandwidth_info(op_name);"
-                      "CREATE INDEX IF NOT EXISTS idx3 on communication_matrix(op_sort);";
+                      "CREATE INDEX IF NOT EXISTS idx2 on communication_bandwidth_info(op_name);";
     return ExecSql(sql);
 }
 
@@ -86,20 +95,27 @@ bool ClusterDatabase::InitStmt()
     if (isInitStmt) {
         return true;
     }
-    insertTimeInfoStmt = GetTimeInfoStmtSql(TABLE_CACHE_SIZE);
-    insertBandwidthStmt = GetBandwidthStmtSql(TABLE_CACHE_SIZE);
-    matrixStmt = GetMatrixStmtSql(TABLE_CACHE_SIZE);
+    std::string timeInfoSql = GetTimeInfoStmtSql(TABLE_CACHE_SIZE);
+    if (sqlite3_prepare_v2(db, timeInfoSql.c_str(), -1, &insertTimeInfoStmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetTimeInfoStmtSql statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    std::string bandSql = GetBandwidthStmtSql(TABLE_CACHE_SIZE);
+    if (sqlite3_prepare_v2(db, bandSql.c_str(), -1, &insertBandwidthStmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare InsertBandwidth statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    std::string matrixSql = GetMatrixStmtSql(TABLE_CACHE_SIZE);
+    if (sqlite3_prepare_v2(db, matrixSql.c_str(), -1, &matrixStmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetMatrixStmtSql statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
     isInitStmt = true;
     return true;
 }
 
-sqlite3_stmt *ClusterDatabase::GetTimeInfoStmtSql(int len)
+std::string ClusterDatabase::GetTimeInfoStmtSql(int len)
 {
-    if (len == TABLE_CACHE_SIZE && isInitStmt) {
-        sqlite3_reset(insertTimeInfoStmt);
-        return insertTimeInfoStmt;
-    }
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_TIME_INFO +
                       " (iteration_id, stage_id, rank_id, op_name, op_suffix, elapse_time,"
                       " synchronization_time_ratio,"
@@ -108,19 +124,11 @@ sqlite3_stmt *ClusterDatabase::GetTimeInfoStmtSql(int len)
     for (int i = 0; i < len - 1; i++) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?)");
     }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare timeInfoTable statement. error:", sqlite3_errmsg(db));
-    }
-    return stmt;
+    return sql;
 }
 
-sqlite3_stmt *ClusterDatabase::GetBandwidthStmtSql(int len)
+std::string ClusterDatabase::GetBandwidthStmtSql(int len)
 {
-    if (len == TABLE_CACHE_SIZE && isInitStmt) {
-        sqlite3_reset(insertBandwidthStmt);
-        return insertBandwidthStmt;
-    }
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_BANDWIDTH +
                       " (iteration_id, stage_id, rank_id, op_name, op_suffix, transport_type,"
                       " bandwidth_size, bandwidth_utilization,large_package_ratio, size_distribution,"
@@ -128,10 +136,7 @@ sqlite3_stmt *ClusterDatabase::GetBandwidthStmtSql(int len)
     for (int i = 0; i < len - 1; i++) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?)");
     }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare InsertBandwidth statement. error:", sqlite3_errmsg(db));
-    }
-    return stmt;
+    return sql;
 }
 
 void ClusterDatabase::ReleaseStmt()
@@ -178,7 +183,17 @@ void ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &tim
     if (timeInfoList.empty()) {
         return;
     }
-    sqlite3_stmt *stmt = GetTimeInfoStmtSql(timeInfoList.size());
+    sqlite3_stmt* stmt = nullptr;
+    if (timeInfoList.size() == TABLE_CACHE_SIZE && isInitStmt) {
+        sqlite3_reset(insertTimeInfoStmt);
+        stmt = insertTimeInfoStmt;
+    } else {
+        std::string sql = GetTimeInfoStmtSql(timeInfoList.size());
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare InsertTimeInfoList statement. error:", sqlite3_errmsg(db));
+            return;
+        }
+    }
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get timeInfo insert stmt.");
         return;
@@ -201,6 +216,7 @@ void ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &tim
         sqlite3_bind_double(stmt, idx++, timeInfo.waitTime);
         sqlite3_bind_double(stmt, idx++, timeInfo.idleTime);
     }
+
     auto result = sqlite3_step(stmt);
     if (timeInfoList.size() != TABLE_CACHE_SIZE) {
         sqlite3_finalize(stmt);
@@ -248,7 +264,17 @@ void ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &b
     if (bandWidthList.empty()) {
         return;
     }
-    sqlite3_stmt *stmt = GetBandwidthStmtSql(bandWidthList.size());
+    sqlite3_stmt* stmt = nullptr;
+    if (bandWidthList.size() == TABLE_CACHE_SIZE && isInitStmt) {
+        sqlite3_reset(insertBandwidthStmt);
+        stmt = insertBandwidthStmt;
+    } else {
+        std::string sql = GetBandwidthStmtSql(bandWidthList.size());
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare InsertBandwidth statement. error:", sqlite3_errmsg(db));
+            return;
+        }
+    }
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get timeInfo stmt.");
         return;
@@ -372,7 +398,17 @@ void ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMat
     if (communicationMatrixInfo.empty()) {
         return;
     }
-    sqlite3_stmt *stmt = GetMatrixStmtSql(communicationMatrixInfo.size());
+    sqlite3_stmt *stmt = nullptr;
+    if (communicationMatrixInfo.size() == TABLE_CACHE_SIZE && isInitStmt) {
+        sqlite3_reset(matrixStmt);
+        stmt = matrixStmt;
+    } else {
+        std::string sql = GetMatrixStmtSql(communicationMatrixInfo.size());
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare matrix table statement. error:", sqlite3_errmsg(db));
+            return;
+        }
+    }
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get matrix stmt.");
         return;
@@ -407,12 +443,8 @@ void ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMat
     }
 }
 
-sqlite3_stmt *ClusterDatabase::GetMatrixStmtSql(int len)
+std::string ClusterDatabase::GetMatrixStmtSql(int len)
 {
-    if (len == TABLE_CACHE_SIZE && isInitStmt) {
-        sqlite3_reset(matrixStmt);
-        return matrixStmt;
-    }
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_COMMUNICATION_MATRIX +
                       " (group_id, iteration_id, op_name, op_sort, group_name, src_rank, "
@@ -424,17 +456,25 @@ sqlite3_stmt *ClusterDatabase::GetMatrixStmtSql(int len)
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare matrix table statement. error:", sqlite3_errmsg(db));
     }
-    return stmt;
+    return sql;
 }
 
 bool ClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                                        Protocol::SummaryTopRankResBody &responseBody)
 {
-    sqlite3_stmt *stmt = BuildCondition(requestParams);
-    if (stmt == nullptr) {
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string sql = BuildCondition(requestParams);
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("BuildCondition. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    std::vector<Protocol::SummaryDto> summaryDtoList;
+    for (const auto &item: requestParams.stepIdList) {
+        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    for (const auto &item: requestParams.rankIdList) {
+        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
+    }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::SummaryDto summaryDto;
@@ -443,9 +483,8 @@ bool ClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &req
         summaryDto.communicationNotOverLappedTime = sqlite3_column_double(stmt, col++);
         summaryDto.communicationOverLappedTime = sqlite3_column_double(stmt, col++);
         summaryDto.freeTime = sqlite3_column_double(stmt, col++);
-        summaryDtoList.emplace_back(summaryDto);
+        responseBody.summaryList.emplace_back(summaryDto);
     }
-    responseBody.summaryList  = summaryDtoList;
     sqlite3_finalize(stmt);
     return true;
 }
@@ -528,6 +567,7 @@ std::string ClusterDatabase::QueryParseClusterStatus()
 
 void ClusterDatabase::UpdateClusterParseStatus(std::string status)
 {
+    ServerLog::Info("UpdateClusterParseStatus status: ", status);
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int index = bindStartIndex;
     std::string baseInfoSql =
@@ -537,10 +577,6 @@ void ClusterDatabase::UpdateClusterParseStatus(std::string status)
     if (baseInfoResult != SQLITE_OK) {
         ServerLog::Error("Update cluster parse_status statement failed to prepare sql.", sqlite3_errmsg(db));
         return ;
-    }
-    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
-        int coll = resultStartIndex;
-        std::string filePath = sqlite3_column_string(stmtBaseInfo, coll++);
     }
     auto result = sqlite3_step(stmtBaseInfo);
     sqlite3_finalize(stmtBaseInfo);
@@ -699,10 +735,8 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
     return true;
 }
 
-sqlite3_stmt *ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
+std::string ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string stepCondition;
     std::string rankCondition;
     if (!requestParams.stepIdList.empty()) {
@@ -725,18 +759,7 @@ sqlite3_stmt *ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPara
                       "sum(ROUND(free_time,2)) as freeTime FROM " + TABLE_STEP_TRACE +
                       " WHERE rank_id !='' " + stepCondition + rankCondition
                       + "group by rank_id order by " + requestParams.orderBy + " desc";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("BuildCondition. Failed to prepare sql.", sqlite3_errmsg(db));
-        return stmt;
-    }
-    for (const auto &item: requestParams.stepIdList) {
-        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    for (const auto &item: requestParams.rankIdList) {
-        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    return stmt;
+    return sql;
 }
 
 bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
@@ -992,10 +1015,10 @@ bool ClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requ
     int index = bindStartIndex;
     std::string iterationId = requestParams.iterationId;
     std::string stage = requestParams.stage;
-    std::string sql = "SELECT DISTINCT op_sort FROM (SELECT op_sort FROM " + TABLE_COMMUNICATION_MATRIX +
+    std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMMUNICATION_MATRIX +
             " WHERE iteration_id = ?" +
             " AND group_id = ?" +
-            " ORDER BY op_sort)";
+            " ORDER BY op_sort";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryMatrixSortOpNames statement. error: ", sqlite3_errmsg(db));

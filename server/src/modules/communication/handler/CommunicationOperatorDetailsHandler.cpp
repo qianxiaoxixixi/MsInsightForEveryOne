@@ -33,7 +33,7 @@ void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     // query data
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {
         SetResponseResult(response, false);

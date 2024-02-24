@@ -33,7 +33,7 @@ void BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
 
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryBandwidthData(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication bandwidth data.");
