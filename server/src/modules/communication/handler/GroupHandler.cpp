@@ -30,7 +30,7 @@ void GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
     // query data
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetGroups(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get group response data.");

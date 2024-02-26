@@ -26,7 +26,7 @@ void RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         std::unique_ptr<RanksResponse> responsePtr = std::make_unique<RanksResponse>();
         RanksResponse &response = *responsePtr.get();
         SetBaseResponse(request, response);
-        auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+        auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
         if (!database->QueryRanksHandler(response.body)) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to get ranks response data.");

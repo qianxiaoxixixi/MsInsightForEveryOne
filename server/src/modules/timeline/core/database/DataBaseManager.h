@@ -10,7 +10,7 @@
 #include <mutex>
 #include "ConnectionPool.h"
 #include "TraceDatabase.h"
-#include "../../../base/core/ClusterDatabase.h"
+#include "ClusterDatabase.h"
 #include "MemoryDataBase.h"
 #include "KernelParse.h"
 
@@ -39,7 +39,8 @@ public:
     void ClearClusterDb();
     void ReleaseDatabase(const std::string &fileId);
     bool HasFileId(DatabaseType type, const std::string &fileId);
-    ClusterDatabase *GetClusterDatabase();
+    ClusterDatabase *GetWriteClusterDatabase();
+    ClusterDatabase *GetReadClusterDatabase();
 
     Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
     std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();

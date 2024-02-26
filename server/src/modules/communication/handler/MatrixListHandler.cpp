@@ -30,7 +30,7 @@ void MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
     // query data
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryMatrixList(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix response data.");

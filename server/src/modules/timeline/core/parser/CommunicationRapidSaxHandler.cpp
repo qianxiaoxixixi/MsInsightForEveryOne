@@ -108,7 +108,7 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
-    auto database = DataBaseManager::Instance().GetClusterDatabase();
+    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
         CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);

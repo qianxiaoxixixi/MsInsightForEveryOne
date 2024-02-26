@@ -27,7 +27,7 @@ void OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     std::unique_ptr<OperatorNamesResponse> responsePtr = std::make_unique<OperatorNamesResponse>();
     OperatorNamesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryOperatorNames(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get operator names response data.");
