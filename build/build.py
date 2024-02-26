@@ -163,24 +163,20 @@ def build_intellij(idea_version, os_name):
 
 
 def build_light_package(version, os_name):
-    # MR门禁不跑
-    package_path = os.path.join(PROJECT_PATH, 'opensource', 'package')
-    if not os.path.exists(package_path):
-        return
-
-    # Linux环境CI尚未打通二进制包，若要编译二进制包，需要设置BUILD_BIN_PACKAGE环境变量
+    # MR门禁不跑，同时Linux环境CI尚未打通二进制包，若要编译二进制包，需要设置BUILD_BIN_PACKAGE环境变量
     if platform.system() == Const.LINUX_OS and os.getenv('BUILD_BIN_PACKAGE') is None:
         return
 
+    platform_path = os.path.join(PROJECT_PATH, 'platform')
     os.putenv('RUSTUP_UPDATE_ROOT', 'http://rust.inhuawei.com/rustup-static/rustup')
     os.putenv('RUSTUP_DIST_SERVER', 'http://rust.inhuawei.com/rustup-static')
     os.putenv('CARGO_REGISTRY', 'https://mirrors.tools.huawei.com/rust/crates.io-index/')
 
     # 清理构建缓存
     resource_dir = 'resources'
-    preview_path = os.path.join(package_path, 'preview')
-    profiler_path = os.path.join(package_path, resource_dir, 'profiler')
-    target_path = os.path.join(package_path, 'target')
+    preview_path = os.path.join(platform_path, 'preview')
+    profiler_path = os.path.join(platform_path, resource_dir, 'profiler')
+    target_path = os.path.join(platform_path, 'target')
     build_cache_paths = [profiler_path, preview_path, target_path]
     for tmp_path in build_cache_paths:
         if os.path.exists(tmp_path):
@@ -191,25 +187,22 @@ def build_light_package(version, os_name):
     shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'), os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(profiler_path, 'server'))
-    shutil.copytree(os.path.join(package_path, resource_dir), os.path.join(preview_path, resource_dir))
+    shutil.copytree(os.path.join(platform_path, resource_dir), os.path.join(preview_path, resource_dir))
 
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
     bin_file = 'ascend_insight.exe' if platform.system() == Const.WINDOWS_OS else 'ascend_insight'
-    exec_command([cargo_cmd, 'build', '--release'], package_path)
+    exec_command([cargo_cmd, 'build', '--release'], platform_path)
     shutil.copyfile(os.path.join(target_path, 'release', bin_file), os.path.join(preview_path, bin_file))
 
     # 打包
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, package_name)
     if platform.system() == Const.WINDOWS_OS:
-        bundle_path = os.path.join(package_path, 'bundle')
-        dependencies_dir = os.path.join(package_path, 'dependencies')
-        for file in os.listdir(dependencies_dir):
-            shutil.copyfile(os.path.join(dependencies_dir, file), os.path.join(preview_path, file))
+        bundle_path = os.path.join(platform_path, 'bundle')
         shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'), os.path.join(preview_path, 'installer.nsi'))
-        nsis_cmd = os.path.join(bundle_path, 'nsis', 'bin', 'makensis.exe')
-        exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], package_path)
+        nsis_cmd = os.path.join('C:\\Program Files (x86)\\NSIS', 'bin', 'makensis.exe')
+        exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], platform_path)
         for tmp in os.listdir(preview_path):
             if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX):
                 continue
@@ -236,6 +229,8 @@ def build_huaweicloud_package(version, os_name):
         return
 
     tmp = os.path.join(PROJECT_PATH, 'tmp_http')
+    if os.path.exists(tmp):
+        shutil.rmtree(tmp)
     os.makedirs(tmp, exist_ok=True)
 
     frontend_path = os.path.join(PROJECT_PATH, 'framework', 'dist')
