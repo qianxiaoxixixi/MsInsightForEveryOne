@@ -27,7 +27,7 @@ void CommunicatorGroupQueryHandler::HandleRequest(std::unique_ptr<Dic::Protocol:
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     SetResponseResult(response, true);
-    auto database = Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryCommunicationGroup(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Communication CommunicationGroupQueryHandler Failed");

@@ -26,7 +26,7 @@ void IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     std::unique_ptr<IterationsOrRanksResponse> responsePtr = std::make_unique<IterationsOrRanksResponse>();
     IterationsOrRanksResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryIterations(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get iterations response data.");

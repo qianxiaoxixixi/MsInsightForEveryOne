@@ -39,7 +39,7 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     response.body.collectStartTime =
             Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
     response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QuerySummaryData(request.params, response.body) ||
         !database->QueryBaseInfo(response.body)) {
         ServerLog::Warn("QuerySummaryData or QueryBaseInfo is failed");

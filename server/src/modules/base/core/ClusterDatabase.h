@@ -24,6 +24,7 @@ public:
     bool SetConfig();
     bool CreateTable();
     bool CreateIndex();
+    bool CreateTimeIndex();
     bool InitStmt();
     void ReleaseStmt();
     void InsertTimeInfo(CommunicationTimeInfo &timeInfo);
@@ -73,11 +74,11 @@ private:
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
     std::vector<CommunicationMatrixInfo> matrixCache;
-    sqlite3_stmt *GetTimeInfoStmtSql(int len);
-    sqlite3_stmt *GetBandwidthStmtSql(int len);
-    sqlite3_stmt *GetMatrixStmtSql(int len);
+    std::string GetTimeInfoStmtSql(int len);
+    std::string GetBandwidthStmtSql(int len);
+    std::string GetMatrixStmtSql(int len);
 
-    sqlite3_stmt *BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
+    std::string BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetRanksSql(std::vector<std::string> rankList);
     void GetStepsOrRanksObject(const std::string& jsonStr,
                                std::vector<Protocol::IterationsOrRanksObject> &responseBody);
