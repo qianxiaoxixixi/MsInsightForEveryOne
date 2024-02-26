@@ -97,10 +97,6 @@ Section "ascend_insight" Secascend_insight
   File /r "ascend_insight.exe"
   SetOutPath $INSTDIR\resources
   File /r "resources\*"
-  SetOutPath $INSTDIR
-  File /r "vcruntime140.dll"
-  SetOutPath $INSTDIR
-  File /r "vcruntime140_1.dll"
  
   SetOutPath $INSTDIR
   
