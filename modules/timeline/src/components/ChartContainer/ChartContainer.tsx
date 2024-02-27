@@ -115,8 +115,11 @@ const ChartBody = observer((props: ChartBodyProps) => {
                     }
                 });
             }}/> </>
-            <ChartInteractor ref={chartInteractorRef} splitLineRef={splitLineRef} domainStart={domainStart} domainEnd={domainEnd} endTimeAll={session.endTimeAll}
-                interactorMouseState={interactorMouseState} isNsMode={session.isNsMode} session={session}/>
+            <ChartInteractor ref={chartInteractorRef} splitLineRef={splitLineRef} domainStart={domainStart}
+                domainEnd={domainEnd} endTimeAll={session.endTimeAll}
+                interactorMouseState={interactorMouseState} isNsMode={session.isNsMode} session={session}
+                renderTrigger={session.renderTrigger} scrollTop={session.scrollTop} selectedRange={session.selectedRange}
+            />
         </Overlay>
     </>);
 });

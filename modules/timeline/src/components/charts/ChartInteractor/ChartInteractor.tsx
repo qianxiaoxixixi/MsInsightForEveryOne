@@ -23,7 +23,7 @@ import {
     keyDownAction,
     MouseDownActionResult,
 } from './actions';
-
+import type { TimeStamp } from '../../../entity/common';
 registerCrossUnitRenderer({
     action: (ctx, session, xScale) => {
         const selectedRange = session.selectedRange; // should filter on data type
@@ -65,7 +65,7 @@ interface TimeStampCallbackFunc {
     (time: number): void;
 }
 
-type ChartInteractorProps = {
+export interface ChartInteractorProps {
     domainStart: number;
     domainEnd: number;
     endTimeAll: number | undefined;
@@ -76,7 +76,10 @@ type ChartInteractorProps = {
     // These events are tracked for interacting with the underlying lanes.
     isNsMode: boolean;
     splitLineRef: React.RefObject<HTMLDivElement>;
-};
+    renderTrigger: boolean;
+    scrollTop: number;
+    selectedRange?: [ TimeStamp, TimeStamp ];
+}
 
 export interface ChartInteractorHandles {
     mouseMoveAction: (interactorMouseState: InteractorMouseState) => void;
@@ -105,17 +108,53 @@ export type InteractorParams = {
 };
 
 const INTERACTOR_WIDTH = 1153;
-const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMouseState, isNsMode, splitLineRef }: ChartInteractorProps,
-    ref: Ref<ChartInteractorHandles>): JSX.Element => {
+
+const handleInteractorEvent = (interactorParams: InteractorParams,
+    session: Session,
+    xReverseScale: d3.ScaleLinear<number, number>,
+    splitLineRef: React.RefObject<HTMLDivElement>,
+    accumulativeZoomRef: React.MutableRefObject<number>,
+    point?: number): any => {
+    return () => ({
+        mouseMoveAction: (interactorMouseState: InteractorMouseState): void => {
+            mouseMoveAction(interactorParams, interactorMouseState);
+        },
+        mouseDownAction: (interactorMouseState: InteractorMouseState) => mouseDownAction(session, xReverseScale, interactorMouseState, splitLineRef),
+        mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
+            mouseUpAction(interactorParams, interactorMouseState, e);
+        },
+        mouseWheelAction: (interactorMouseState: InteractorMouseState): void => {
+            if (interactorMouseState.wheelEvent) {
+                mouseWheelAction(session, accumulativeZoomRef, point, interactorMouseState.wheelEvent);
+            }
+        },
+        mouseLeaveAction: (interactorMouseState: InteractorMouseState): void => {
+            mouseLeaveAction(interactorParams, interactorMouseState);
+        },
+        keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState): void => {
+            keyDownAction(e.key, session, point);
+        },
+    });
+};
+
+const Interactor = ({
+    domainStart,
+    domainEnd,
+    endTimeAll,
+    session,
+    interactorMouseState,
+    isNsMode,
+    splitLineRef,
+    renderTrigger,
+    scrollTop,
+    selectedRange,
+}: ChartInteractorProps,
+ref: Ref<ChartInteractorHandles>): JSX.Element => {
     const theme = useTheme();
-    // use ref instead of state
-    // if using state when mousemoving lastPos will keep updating causing component reload
     const accumulativeZoomRef = React.useRef(0);
-    // time -> pos
     const [customRenderers, customRenderTriggers] = useCustomRenderers(session);
     const [normalRect, normalCanvas] = useWatchDomResize<HTMLCanvasElement>();
     const [hoverRect, hoverCanvas] = useWatchDomResize<HTMLCanvasElement>();
-    // pos -> time
     const xScale = React.useMemo(() => d3.scaleLinear().range([domainStart, domainEnd]).domain([0, normalRect?.width ?? INTERACTOR_WIDTH])
         , [normalRect?.width, session.domain.timePerPx, domainStart, domainEnd]);
     const xReverseScale = React.useMemo(() => d3.scaleLinear().range([0, normalRect?.width ?? INTERACTOR_WIDTH]).domain([domainStart, domainEnd])
@@ -129,31 +168,12 @@ const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMou
         draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
-    }, [domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData,
-        session.scrollTop, session.renderTrigger, ...customRenderTriggers]);
+    }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, normalRect,
+        scrollTop, renderTrigger, ...customRenderTriggers]);
     const point = interactorMouseState.lastPos?.current?.x !== undefined
         ? xScale(interactorMouseState.lastPos?.current?.x)
         : undefined;
-    useImperativeHandle(ref, () => ({
-        mouseMoveAction: (interactorMouseState: InteractorMouseState) => {
-            mouseMoveAction(interactorParams, interactorMouseState);
-        },
-        mouseDownAction: (interactorMouseState: InteractorMouseState) => mouseDownAction(session, xReverseScale, interactorMouseState, splitLineRef),
-        mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent) => {
-            mouseUpAction(interactorParams, interactorMouseState, e);
-        },
-        mouseWheelAction: (interactorMouseState: InteractorMouseState) => {
-            if (interactorMouseState.wheelEvent) {
-                mouseWheelAction(session, accumulativeZoomRef, point, interactorMouseState.wheelEvent);
-            }
-        },
-        mouseLeaveAction: (interactorMouseState: InteractorMouseState) => {
-            mouseLeaveAction(interactorParams, interactorMouseState);
-        },
-        keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState) => {
-            keyDownAction(e.key, session, point);
-        },
-    }));
+    useImperativeHandle(ref, handleInteractorEvent(interactorParams, session, xReverseScale, splitLineRef, accumulativeZoomRef, point));
     return <>
         <Overlay ref={normalCanvas} />
         <Overlay ref={hoverCanvas} />
