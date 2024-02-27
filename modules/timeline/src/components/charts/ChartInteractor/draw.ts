@@ -313,10 +313,18 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
     };
     computeUnitHeight(session.units, height);
 };
+let lastTime = 0;
+const FRAME_TIME = 16;
 export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height: number,
     xReverseScale: (ts: number) => number, xScale: (posX: number) => number,
     interactorMouseState: InteractorMouseState, selectedRange: undefined | [number, number], isNsMode: boolean,
     session: Session, customRenderers: CustomCrossRenderer[], theme: Theme): void => {
+    const now = new Date().valueOf();
+    // 如果距离上次渲染的时间小于一帧的时间就不渲染
+    if (now - lastTime < FRAME_TIME) {
+        return;
+    }
+    lastTime = now;
     if (ctx === null) { return; }
     // clear all
     ctx.clearRect(0, 0, width, height);
