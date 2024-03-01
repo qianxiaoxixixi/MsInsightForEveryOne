@@ -24,7 +24,7 @@ cd ../output/linux-x86_64/bin
 
 cd ${BUILD_DIR}
 echo ${BUILD_DIR}
-test_dir=`find ${BUILD_DIR} -name "insight_test.dir"`
+test_dir=$(find ${BUILD_DIR} -name 'insight_test.dir')
 echo ${test_dir}
 echo "********************** Generate insight_test Coverage Start.************************"
 lcov -c -d ${test_dir} -o ${COV_DIR}/lcov_insight_test.info --rc lcov_branch_coverage=1

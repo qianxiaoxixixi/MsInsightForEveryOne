@@ -27,6 +27,14 @@ MODULES_MAP = {
 }
 
 
+def clean():
+    modules = list(MODULES_MAP.keys())
+    for module in modules:
+        plugin_dir = os.path.join(PLUGIN_DIR, MODULES_MAP.get(module))
+        if os.path.exists(plugin_dir):
+            shutil.rmtree(plugin_dir)
+
+
 def execute_cmd(module, module_dir, cmd):
     proc = subprocess.Popen(cmd, cwd=module_dir, stdout=subprocess.PIPE)
     for line in iter(proc.stdout.readline, b''):
@@ -94,6 +102,7 @@ def main():
     if platform.system() != 'Windows':
         multiprocessing.set_start_method('fork')
 
+    clean()
     os.putenv('npm_config_build_from_source', 'true')
     os.putenv('npm_config_audit', 'false')
     os.putenv('npm_config_strict_ssl', 'false')
