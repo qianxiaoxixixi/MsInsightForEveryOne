@@ -408,9 +408,9 @@ void JsonTraceDatabase::UpdateDepth()
 
 void JsonTraceDatabase::UpdateSimulationDepth()
 {
-    ServerLog::Info("UpdateSimulationSliceDepth.");
+    sqlite3_exec(db, "begin;", 0, 0, 0);
     UpdateSimulationDepthByCode();
-    ServerLog::Info("UpdateSimulationSliceDepth end.");
+    sqlite3_exec(db, "commit;", 0, 0, 0);
 }
 
 void JsonTraceDatabase::UpdateSimulationDepthByCode()
@@ -426,16 +426,11 @@ void JsonTraceDatabase::UpdateSimulationDepthByCode()
         if (std::empty(rowThreadTraceVec)) {
             continue;
         }
-        ComputeSliceSql(rowThreadTraceVec);
+        UpdateAllSimulationSliceDepth(rowThreadTraceVec);
     }
-    updateSliceDepthSql.append("end; ");
-    if (!ExecSql(updateSliceDepthSql)) {
-        ServerLog::Error("updateSliceDepthSql fail. ", sqlite3_errmsg(db));
-    }
-    ServerLog::Info("UpdateSimulationSliceDepth end.");
 }
 
-void JsonTraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
+void JsonTraceDatabase::UpdateAllSimulationSliceDepth(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
 {
     sliceDepthHelper.clear();
     for (auto &rowThreadTrace : rowThreadTraceVec) {
@@ -467,7 +462,7 @@ void JsonTraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &r
             }
         }
     }
-    AppendUpdateSliceDepthSql(sliceDepthHelper);
+    UpdateSimulationSliceDepth(sliceDepthHelper);
 }
 
 std::vector<Protocol::RowThreadTrace> JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
@@ -516,14 +511,15 @@ std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
     return trackIdList;
 }
 
-bool JsonTraceDatabase::AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
+bool JsonTraceDatabase::UpdateSimulationSliceDepth(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
 {
+    Timer timer("JsonTraceDatabase::UpdateSimulationSliceDepth");
+    std::string updateSql = "Update slice set depth = ? where id = ? ;";
     for (const auto &singleSlice : sliceLinkedList) {
-        updateSliceDepthSql.append("when ");
-        updateSliceDepthSql.append(std::to_string(singleSlice.id));
-        updateSliceDepthSql.append(" then ");
-        updateSliceDepthSql.append(std::to_string(singleSlice.depth));
-        updateSliceDepthSql.append(" ");
+        std::unique_ptr<SqlitePreparedStatement> updateStmt = CreatPreparedStatement(updateSql);
+        if (!updateStmt->Execute(singleSlice.depth, singleSlice.id)) {
+            ServerLog::Error("updateSliceDepthSql fail. ", sqlite3_errmsg(db));
+        }
     }
 }
 
@@ -677,10 +673,10 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
         return false;
     }
     std::string sql = "SELECT timestamp, duration, timestamp + duration AS endTime, name, depth"
-                      " FROM " +
-                      sliceTable +
-                      " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
-                      " ORDER BY depth ASC, timestamp ASC;";
+        " FROM " +
+        sliceTable +
+        " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
+        " ORDER BY depth ASC, timestamp ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreads. Failed to prepare sql.");
@@ -883,12 +879,19 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
             selfTime -= item;
         }
     }
+    const KernelShapesDataDto &shapesDataDto = QueryKernelShapes(sliceDtoVec);
     responseBody.emptyFlag = false;
     responseBody.data.selfTime = selfTime;
     responseBody.data.args = sliceDtoVec[0].args;
     responseBody.data.title = sliceDtoVec[0].name;
     responseBody.data.duration = sliceDtoVec[0].duration;
     responseBody.data.cat = sliceDtoVec[0].cat;
+    responseBody.data.inputShapes = shapesDataDto.inputShapes;
+    responseBody.data.inputDataTypes = shapesDataDto.inputDataTypes;
+    responseBody.data.inputFormats = shapesDataDto.inputFormats;
+    responseBody.data.outputShapes = shapesDataDto.outputShapes;
+    responseBody.data.outputDataTypes = shapesDataDto.outputDataTypes;
+    responseBody.data.outputFormats = shapesDataDto.outputFormats;
     return true;
 }
 
@@ -912,6 +915,35 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
         nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
     }
     return true;
+}
+
+KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<SliceDto> &param)
+{
+    KernelShapesDataDto kernelShapesDataDto;
+    if (param.empty()) {
+        ServerLog::Error("sliceDto array is empty!");
+        return kernelShapesDataDto;
+    }
+    std::string sql = "SELECT input_shapes AS inputShapes, input_data_types AS inputDataTypes, "
+                      "input_formats AS inputFormats, output_shapes AS outputShapes, "
+                      "output_data_types AS outputDataTypes, output_formats AS outputFormats "
+                      "FROM " + kernelDetail +
+                      " WHERE name = ? AND start_time = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryKernelShapes. Failed to prepare sql.", sqlite3_errmsg(db));
+        return kernelShapesDataDto;
+    }
+    auto resultSet = stmt->ExecuteQuery(param[0].name, param[0].timestamp);
+    while (resultSet->Next()) {
+        kernelShapesDataDto.inputShapes = resultSet->GetString("inputShapes");
+        kernelShapesDataDto.inputDataTypes = resultSet->GetString("inputDataTypes");
+        kernelShapesDataDto.inputFormats = resultSet->GetString("inputFormats");
+        kernelShapesDataDto.outputShapes = resultSet->GetString("outputShapes");
+        kernelShapesDataDto.outputDataTypes = resultSet->GetString("outputDataTypes");
+        kernelShapesDataDto.outputFormats = resultSet->GetString("outputFormats");
+    }
+    return kernelShapesDataDto;
 }
 
 bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
@@ -1652,5 +1684,5 @@ OneKernelData JsonTraceDatabase::QueryKernelTid(const uint64_t trackId)
     return oneKernel;
 }
 } // end of namespace Timeline
-// end of namespace Module
-// end of namespace Dic
+  // end of namespace Module
+  // end of namespace Dic
