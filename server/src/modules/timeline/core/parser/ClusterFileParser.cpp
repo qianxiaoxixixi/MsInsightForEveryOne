@@ -110,11 +110,13 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 {
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::RUNNING);
-    std::string dbPath = selectedPath + "/cluster.db";
-    std::ifstream file(dbPath);
-    if (InitClusterDatabase(selectedPath, file.good()) && file.good()) {
-        ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+    if (!InitClusterDatabase(selectedPath)) {
+        ServerLog::Error("Init cluster database occur an err");
+        return false;
+    }
+    if (!needClearDb) {
         ServerLog::Info("cluster db file is already exist, skip parse ");
+        ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
         return true;
     }
     auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
@@ -183,31 +185,32 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
     return true;
 }
 
-bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist)
+bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
 {
     // 导入前清空cluster databaseWrite
     DataBaseManager::Instance().ClearClusterDb();
+    clusterDbPath = selectedPath + "/cluster.db";
+    std::ifstream file(FileUtil::PathPreprocess(clusterDbPath));
     auto databaseWrite = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    std::string dbPath = selectedPath + "/cluster.db";
     // 查询单独一个连接
     auto databaseRead = dynamic_cast<JsonClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
-    databaseRead->OpenDb(dbPath, false);
+    databaseRead->OpenDb(clusterDbPath, false);
     databaseRead->SetConfig();
-    if (!dbIsAlreadyExist) {
-        if (!(databaseWrite->OpenDb(dbPath, true) && databaseWrite->CreateTable() &&
+    if (!file.good()) {
+        if (!(databaseWrite->OpenDb(clusterDbPath, true) && databaseWrite->CreateTable() &&
               databaseWrite->SetConfig() && databaseWrite->SetDbVersion() && databaseWrite->InitStmt())) {
             ServerLog::Error("Failed to open databaseWrite. path:", selectedPath);
             return false;
         }
     } else {
-        if (!(databaseWrite->OpenDb(dbPath, false))) {
+        if (!(databaseWrite->OpenDb(clusterDbPath, false))) {
             ServerLog::Error("Failed to open databaseWrite. path:", selectedPath);
             return false;
         }
         // 判断数据库版本是否变更，若变更不能跳过解析
         auto isChange = databaseWrite->IsDatabaseVersionChange();
         std::string status = databaseWrite->QueryParseClusterStatus();
-        bool needClearDb = isChange || status.empty() || strcmp(status.c_str(), FINISH_STATUS.c_str()) != 0;
+        needClearDb = isChange || status.empty() || strcmp(status.c_str(), FINISH_STATUS.c_str()) != 0;
         if (needClearDb && !(databaseWrite->DropAllTable() && databaseWrite->CreateTable())) {
             ServerLog::Error("Failed to dropAllTable. path:", selectedPath, "isChange:", isChange);
             return false;
@@ -216,7 +219,6 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, boo
             ServerLog::Error("Failed to init databaseWrite. path:", selectedPath);
             return false;
         }
-        return !needClearDb;
     }
     return true;
 }
