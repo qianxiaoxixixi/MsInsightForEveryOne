@@ -1709,7 +1709,7 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
-        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++);
+        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
