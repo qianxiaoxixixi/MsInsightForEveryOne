@@ -289,9 +289,6 @@ void TraceFileParser::Reset()
     for (auto &conn : connList) {
         std::string path = conn->GetDbPath();
         conn->Stop();
-        if (!FileUtil::RemoveFile(path)) {
-            ServerLog::Error("Failed to remove file. ", path);
-        }
     }
     trackIdMap.clear();
     trackId = 0;
