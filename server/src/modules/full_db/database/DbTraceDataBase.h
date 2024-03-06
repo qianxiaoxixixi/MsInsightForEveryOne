@@ -16,7 +16,7 @@ struct TASK_INFO {
     int64_t start = 0;
     int64_t end = 0;
     int64_t depth = 0;
-    int64_t correlationId = 0;
+    int64_t globalTaskId = 0;
 };
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
@@ -66,6 +66,7 @@ public:
     OneKernelData QueryKernelTid(uint64_t trackId) override;
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
+    bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();
 
@@ -73,6 +74,7 @@ public:
 
     void UpdateStartTime();
     void UpdateAllTaskDepth();
+    void UpdateAllApiDepth();
     void InitStringsCache();
 
 private:
@@ -80,19 +82,27 @@ private:
     bool initStmt = false;
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateApiDepthStmt = nullptr;
 
     std::vector<TASK_INFO> taskDepthCache;
 
     bool SetConfig();
     bool InitStmt();
 
-    void UpdateTaskDepth(const TASK_INFO &taskInfo);
-    bool UpdateTaskDepthList();
+    void UpdateTaskDepth(const TASK_INFO &taskInfo, std::unique_ptr<SqlitePreparedStatement> &stmt);
+    bool UpdateTaskDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
     bool QueryAscendHardwareMetadata(const std::string &fileId,
                                      std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool QueryHcclMetadata(const std::string &fileId,
+                           std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool QueryCounterMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool GenerateCounterMetadata(const std::string &fileId,
+                                 std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                          Protocol::KernelDetailsBody &responseBody) const;
     std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams);
+    static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
+        const std::string &cardId, const std::string &processId, const std::string &processName);
 };
 }
 

@@ -19,12 +19,11 @@ bool DbSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams 
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() - Timeline::TraceTime::Instance().GetBaseTime();
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     double offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
 
-    ServerLog::Error(sql);
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("QueryOperatorDetail failed! Failed to prepare sql.", sqlite3_errmsg(db));
@@ -69,8 +68,8 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
     }
     std::string sql = "SELECT NAME.value AS name, "
                       "OP_TYPE.value as type, "
-                      "CASE WHEN start == 0 THEN 0 ELSE ROUND((start - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
-                      "ROUND(end - start, 2) as duration, "
+                      "CASE WHEN startNs == 0 THEN 0 ELSE ROUND((startNs - ?) /(1000.0 * 1000.0), 4) END AS startTime, "
+                      "ROUND((endNs - startNs)/1000.0, 2) as duration, "
                       "'' as waitTime, "
                       "block_dim as blockDim, "
                       "INPUTSHAPES.value as inputShape, "
@@ -80,7 +79,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "OUTPUTDATATYPES.value as outputDataType, "
                       "OUTPUTFORMATS.value as outputFormat "
                       "FROM " + TABLE_COMPUTE_TASK_INFO +
-                      " JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+                      "JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
                       "JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name "
                       "JOIN STRING_IDS AS OP_TYPE ON OP_TYPE.id = COMPUTE_TASK_INFO.opType "
                       "JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes "
@@ -213,16 +212,16 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     NAME.value AS name,  "
             "     INPUTSHAPES.value AS input_shapes, "
             "     TASKTYPE.value AS accelerator_core, "
-            "     ROUND(SUM(TASK.end - TASK.start), 2) as total_time, COUNT(0) as cnt,"
-            "     ROUND(SUM(end - start) / COUNT(0), 2) as avg_time,"
-            "     ROUND(max(end - start), 2) as max_time,"
-            "     ROUND(min(end - start), 2) as min_time"
+            "     ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
+            "     ROUND(SUM(endNs - startNs) / 1000.0 / COUNT(0), 2) as avg_time,"
+            "     ROUND(max(endNs - startNs) / 1000.0, 2) as max_time,"
+            "     ROUND(min(endNs - startNs) / 1000.0, 2) as min_time"
             "     FROM  COMPUTE_TASK_INFO "
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     WHERE deviceId = ? AND accelerator_core <> 'HCCL'"
             "     GROUP BY " + group +
             "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
@@ -245,17 +244,17 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             " FROM ( "
             "     SELECT "
             "     deviceId,"
-            "     start, "
-            "     end, "
+            "     startNs, "
+            "     endNs, "
             "     TASKTYPE.value AS taskTypes, "
             "     OPTYPE.value AS opTypes"
             "     FROM COMPUTE_TASK_INFO"
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     WHERE deviceId = ? AND taskTypes <> 'HCCL' "
             "     GROUP by " + group +
-            "     ORDER by (end - start) DESC LIMIT ?"
+            "     ORDER by (endNs - startNs) DESC LIMIT ?"
             " ) subquery";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -285,7 +284,7 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
         ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
         return false;
     }
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() - Timeline::TraceTime::Instance().GetBaseTime();
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -336,7 +335,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
             "     TASKTYPE.value AS task_type, "
             "     OPTYPE.value AS op_type"
             "     FROM " + TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId"
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId"
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
@@ -377,12 +376,12 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
             " FROM ("
             "     SELECT block_dim, deviceId as rank_id, streamId as step_id, "
             "     NAME.value AS name,  OPTYPE.value AS op_type,"
-            "     TASKTYPE.value as accelerator_core, start as start_time, end - start as duration, 0 as wait_time,"
-            "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
+            "  TASKTYPE.value as accelerator_core,startNs as start_time,ROUND((endNs - startNs)/1000.0, 3) as duration,"
+            "     0 as wait_time, INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
             "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
             "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
             "     FROM " + TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
@@ -452,7 +451,7 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
 
 void DbSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
 {
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() - Timeline::TraceTime::Instance().GetBaseTime();
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -473,7 +472,7 @@ bool DbSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPara
 {
     std::string sql = GetCommSql(params);
     std::string timeFlag = params.timeFlag;
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() - Timeline::TraceTime::Instance().GetBaseTime();
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     double offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -515,15 +514,15 @@ std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& reque
                       "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
                       "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM ( "
                       " SELECT NAME.value AS name, OPTYPE.value AS op_type, "
-                      " start as start_time, end - start as duration, "
+                      " startNs as start_time, ROUND((endNs - startNs)/1000.0, 3) as duration, "
                       " TASKTYPE.value AS taskTypes, 0 as wait_time FROM "
                       + TABLE_COMPUTE_TASK_INFO +
                       "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
                       "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
                       "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-                      "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+                      "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
                       "     WHERE task_type = ?"
-                      "     GROUP BY TASK.correlationId"
+                      "     GROUP BY TASK.globalTaskId"
                       " ) subquery ";
     if (!order.empty()) {
         sql += " ORDER BY " + order + " " + ascend;
@@ -550,10 +549,10 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::Operat
     std::string sql =
             " SELECT name, duration From ("
             " SELECT " + name + " as name," + (reqParams.group == Protocol::OPERATOR_GROUP ?
-            " ROUND(end - start, 2) as duration" : " ROUND(sum(end - start), 2) as duration") + ","
-            " TASKTYPE.value as task_type, OPTYPE.value as op_type, INPUTSHAPES.value as input_shapes"
+            " ROUND((endNs - startNs)/1000.0, 2) as duration" : " ROUND(sum(endNs - startNs)/1000.0, 2) as duration") +
+            " ,TASKTYPE.value as task_type, OPTYPE.value as op_type, INPUTSHAPES.value as input_shapes"
             " FROM " + TABLE_COMPUTE_TASK_INFO +
-            " JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
@@ -580,9 +579,9 @@ std::string DbSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::Ope
             " SELECT taskTypes as name, ROUND(SUM(duration), 2) as duration"
             " FROM ("
             "     SELECT " + group + ", TASKTYPE.value as taskTypes, " + (reqParams.group == Protocol::OPERATOR_GROUP ?
-            " ROUND(end - start, 2) as duration" : " ROUND(sum(end - start), 2) as duration") +
+            " ROUND((endNs - startNs)/1000.0, 2) as duration" : " ROUND(sum(endNs - startNs)/1000.0, 2) as duration") +
             "     FROM " + TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
@@ -602,9 +601,9 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     std::string sql =
             " SELECT COUNT(*) as nums"
             " FROM ("
-            "     SELECT deviceId, TASKTYPE.value as taskTypes, end - start as duration "
+            "     SELECT deviceId, TASKTYPE.value as taskTypes, ROUND((endNs - startNs)/1000.0, 3) as duration "
             "     FROM "+ TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     WHERE deviceId = ? AND taskTypes <> 'HCCL'"
             "     ORDER BY duration DESC LIMIT ?"
@@ -630,19 +629,19 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
 {
     std::string sql =
             " SELECT rank_id, step_id, name, op_type, accelerator_core,"
-            " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
+            " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
             " END AS startTime, duration, wait_time, block_dim,"
             " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
             " FROM ("
             "     SELECT block_dim, deviceId as rank_id, streamId as step_id, "
             "     NAME.value AS name,  OPTYPE.value AS op_type,"
-            "     TASKTYPE.value as accelerator_core, start as start_time, "
-            "     end - start as duration, 0 as wait_time, "
+            "     TASKTYPE.value as accelerator_core, startNs as start_time, "
+            "     ROUND((endNs - startNs)/1000.0, 3) as duration, 0 as wait_time, "
             "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
             "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
             "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
             " FROM " + TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"

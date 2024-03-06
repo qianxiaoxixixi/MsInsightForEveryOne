@@ -7,7 +7,7 @@ import {
     CounterRequest,
 } from '../../entity/data';
 import { ChartDesc, InsightUnit, UnitHeight } from '../../entity/insight';
-import { CounterUnit, ProcessUnit, ThreadUnit } from './AscendUnit';
+import { CounterUnit, ProcessUnit, ThreadUnit, LabelUnit } from './AscendUnit';
 
 const paramsTree = new Map();
 
@@ -45,32 +45,35 @@ export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMe
         processMetadata.dataSource = dataSource;
         insightMetaData.metadata.dataSource = dataSource;
         paramsTree.set(processMetadata, insightMetaData.metadata);
-        processInfo.children?.forEach(threadInfo => {
-            paramsTree.set((threadInfo.metadata as ThreadMetaData), processMetadata);
-        });
+        handleChildren(processInfo);
     });
 }
 
+function handleChildren<T extends keyof MetaData>(processInfo: InsightMetaData<T>): void {
+    processInfo.children?.forEach(threadInfo => {
+        paramsTree.set(threadInfo.metadata, processInfo.metadata);
+        if (threadInfo.children && threadInfo.children.length > 0) {
+            handleChildren(threadInfo);
+        }
+    });
+};
+
 function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): InsightUnit | undefined {
     switch (insightMetaData.type) {
+        case 'label': {
+            const meta = generateMetaData(paramsTree.get(insightMetaData.metadata).cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '', paramsTree.get(insightMetaData.metadata).dataSource);
+            return new LabelUnit(meta);
+        }
         case 'process': {
-            return new ProcessUnit({
-                cardId: paramsTree.get(insightMetaData.metadata).cardId,
-                processId: insightMetaData.metadata.processId,
-                processName: insightMetaData.metadata.processName,
-                label: insightMetaData.metadata.label,
-                dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
-            });
+            const meta = generateMetaData(paramsTree.get(insightMetaData.metadata).cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '', paramsTree.get(insightMetaData.metadata).dataSource);
+            meta.label = insightMetaData.metadata.label;
+            return new ProcessUnit(meta);
         }
         case 'thread': {
-            const threadUnit = new ThreadUnit({
-                cardId: paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId,
-                processId: (parentMetaData as ProcessMetaData).processId,
-                processName: (parentMetaData as ProcessMetaData).processName,
-                threadId: insightMetaData.metadata.threadId,
-                threadName: insightMetaData.metadata.threadName,
-                dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
-            });
+            const meta = generateMetaData(paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId, (parentMetaData as ProcessMetaData).processId,
+                (parentMetaData as ProcessMetaData).processName, insightMetaData.metadata.threadId, insightMetaData.metadata.threadName,
+                paramsTree.get(insightMetaData.metadata).dataSource);
+            const threadUnit = new ThreadUnit(meta);
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
             if (insightMetaData.metadata.maxDepth === 1) {
                 chart.height = UnitHeight.STANDARD;
@@ -81,26 +84,35 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
             return threadUnit;
         }
         case 'counter': {
-            return new CounterUnit({
-                cardId: paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId,
-                processId: (parentMetaData as ProcessMetaData).processId,
-                threadName: insightMetaData.metadata.threadName,
-                dataType: insightMetaData.metadata.dataType,
-                dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
-            });
+            const meta = generateMetaData(paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId, (parentMetaData as ProcessMetaData).processId,
+                insightMetaData.metadata.processName, '', insightMetaData.metadata.threadName, paramsTree.get(insightMetaData.metadata).dataSource);
+            meta.dataType = insightMetaData.metadata.dataType;
+            return new CounterUnit(meta);
         }
         default:
             return undefined;
     }
 }
 
+function generateMetaData(cardId: string, processId: string, processName: string, threadId: string, threadName: string, dataSource: DataSource): any {
+    return {
+        cardId,
+        processId,
+        processName,
+        threadId,
+        threadName,
+        dataSource,
+    };
+};
+
 function checkMetaData<T extends keyof MetaData>(unitMetaData: any, paramMetaData: InsightMetaData<T>): boolean {
     if (paramMetaData.type === 'thread' && (unitMetaData as ThreadMetaData).threadId === (paramMetaData.metadata as ThreadMetaData).threadId) {
         return true;
-    } else if (paramMetaData.type === 'process' && (unitMetaData as ProcessMetaData).processId === (paramMetaData.metadata as ProcessMetaData).processId) {
+    } else if (unitMetaData.type === 'process' && paramMetaData.type === 'process' && (unitMetaData as ProcessMetaData).processId === (paramMetaData.metadata as ProcessMetaData).processId) {
         return true;
+    } else {
+        return false;
     }
-    return false;
 }
 
 export function createStatusParam(method: string, params: Record<string, unknown>): string {

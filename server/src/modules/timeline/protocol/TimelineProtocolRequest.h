@@ -172,6 +172,7 @@ struct UnitCounterParams {
     std::string rankId;
     std::string pid;
     std::string threadName;
+    std::string processName;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
 };

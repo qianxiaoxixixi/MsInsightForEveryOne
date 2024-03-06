@@ -286,7 +286,8 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
     const visitUnit = (unit: InsightUnit): void => {
         if (unit.name === 'Card') {
             cardNames.add((unit.metadata as CardMetaData).cardName ?? '');
-        } else if (unit.name === 'Process') {
+        }
+        if (unit.name === 'Process' || unit.name === 'Label') {
             unitNames.add((unit.metadata as ProcessMetaData).processName);
         }
         if (unit.children) {

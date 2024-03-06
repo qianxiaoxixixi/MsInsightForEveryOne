@@ -420,7 +420,7 @@ public:
                                                                       const std::regex &fileRegex, bool needFolder)
     {
         std::vector<std::string> matchedFiles;
-        if (!FileUtil::IsFolder(path)) {
+        if (needFolder || !FileUtil::IsFolder(path)) {
             if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
                 matchedFiles.emplace_back(PathPreprocess(path));
             }

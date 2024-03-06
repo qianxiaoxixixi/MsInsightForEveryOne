@@ -5,13 +5,10 @@
 #include "ParserDb.h"
 #include "FileUtil.h"
 #include "TimelineRequestHandler.h"
-#include "WsSession.h"
-#include "WsSessionManager.h"
 #include "ModuleRequestHandler.h"
 #include "FullDbParser.h"
 #include "DataBaseManager.h"
 #include "CommonDefs.h"
-#include "TraceTime.h"
 #include "ClusterFileParser.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "ParserStatusManager.h"
@@ -39,6 +36,7 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     std::map<std::string, std::string> devicePaths;
     FullDb::FullDbParser::FindDevicePaths(selectedFolder, devicePaths);
     auto rankList = GetReportFiles(path, response.body);
+    SetBaseActionOfResponse(response, "Host", devicePaths);
     for (const auto &rank: rankList) {
         SetBaseActionOfResponse(response, rank, devicePaths);
     }

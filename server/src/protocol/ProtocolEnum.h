@@ -25,6 +25,19 @@ enum class LinkType : int {
     WEBSOCKET
 };
 
+enum class PROCESS_TYPE {
+    ASCEND_HARDWARE,
+    HCCL,
+    HOST,
+    HBM,
+    LLC,
+    DDR,
+    ACC_PMU,
+    STARS_SOC,
+    NPU_MEM,
+    NONE,
+};
+
 } // end of namespace Protocol
 } // end if namespace Dic
 

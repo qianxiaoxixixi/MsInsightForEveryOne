@@ -76,6 +76,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::string &ra
         return;
     }
     database->UpdateAllTaskDepth();
+    database->UpdateAllApiDepth();
     database->InitStringsCache();
     database->UpdateStartTime();
 
@@ -100,6 +101,31 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::string &ra
         ParserCallBack(id, true);
         Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::FINISH_ALL);
     }
+    SendHostEvent(token);
+}
+
+void FullDbParser::SendHostEvent(const std::string &token)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
+    auto event = std::make_unique<ParseSuccessEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.unit.type = "card";
+    event->body.unit.metadata.cardId = "Host";
+    auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase("Host"));
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:Host");
+        return;
+    }
+    event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
+    database->QueryHostMetadata(event->body.unit.children);
+    session->OnEvent(std::move(event));
 }
 
 void FullDbParser::ParserCallBack(std::string fileId, bool result)
