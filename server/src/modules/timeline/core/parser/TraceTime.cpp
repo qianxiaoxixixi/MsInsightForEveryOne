@@ -36,19 +36,7 @@ void TraceTime::UpdateTime(uint64_t min, uint64_t max)
 uint64_t TraceTime::GetStartTime()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    return minTimestamp - baseTimestamp;
-}
-
-uint64_t TraceTime::GetBaseTime()
-{
-    std::unique_lock<std::mutex> lock(mutex);
-    return baseTimestamp;
-}
-
-void TraceTime::SetBaseTime(uint64_t base)
-{
-    std::unique_lock<std::mutex> lock(mutex);
-    baseTimestamp = base;
+    return minTimestamp;
 }
 
 uint64_t TraceTime::GetDuration()

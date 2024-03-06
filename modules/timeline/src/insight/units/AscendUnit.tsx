@@ -195,7 +195,6 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     } as StackStatusData;
                 }));
             } catch (e) {
-                console.warn('request threadTrace info failed', e);
                 return [];
             }
         },
@@ -274,57 +273,67 @@ export const ThreadUnit = unit<ThreadMetaData>({
     },
 });
 
-export const ProcessUnit = unit<ProcessMetaData>({
-    name: 'Process',
-    tag: (_, metadata: { label?: string }) => `${metadata.label}`,
-    pinType: 'copied',
-    chart: chart({
-        type: 'status',
-        mapFunc: async (session: Session, metaData: unknown) => {
-            const processMetaData = metaData as ProcessMetaData;
-            // 查询泳道chart参数加上时间偏移
-            const timestampOffset = processMetaData.cardId !== undefined
-                ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[processMetaData.cardId] ?? 0
-                : 0;
-            const requestParam = {
-                cardId: processMetaData.cardId,
-                processId: processMetaData.processId,
-                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
-                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
-                dataSource: processMetaData.dataSource,
-                timePerPx: session.domain.timePerPx,
-            };
-            const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
-            try {
-                const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
-                if (request === undefined) {
-                    return [];
-                }
-                const threadTraceList = request.data as ProcessData[];
-                const res: StatusData[] = [];
-                // 泳道chart返回数据减去时间偏移
-                threadTraceList.forEach((data) => {
-                    res.push({
-                        startTime: data.startTime - timestampOffset,
-                        duration: data.duration,
-                        name: '',
-                        type: '',
-                        color: '#7d7d7d',
-                    });
-                });
-                return res;
-            } catch (e) {
-                console.warn('request process data failed', e);
+const SummaryChart = chart({
+    type: 'status',
+    mapFunc: async (session: Session, metaData: unknown) => {
+        const processMetaData = metaData as ProcessMetaData;
+        // 查询泳道chart参数加上时间偏移
+        const timestampOffset = processMetaData.cardId !== undefined
+            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[processMetaData.cardId] ?? 0
+            : 0;
+        const requestParam = {
+            cardId: processMetaData.cardId,
+            processId: processMetaData.processId,
+            startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
+            endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
+            dataSource: processMetaData.dataSource,
+            timePerPx: session.domain.timePerPx,
+        };
+        const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
+        try {
+            const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
+            if (request === undefined) {
                 return [];
             }
-        },
-        config: {
-            rowHeight: UnitHeight.STANDARD,
-        },
-        height: UnitHeight.UPPER,
-    }),
+            const threadTraceList = request.data as ProcessData[];
+            const res: StatusData[] = [];
+            // 泳道chart返回数据减去时间偏移
+            threadTraceList.forEach((data) => {
+                res.push({
+                    startTime: data.startTime - timestampOffset,
+                    duration: data.duration,
+                    name: '',
+                    type: '',
+                    color: '#7d7d7d',
+                });
+            });
+            return res;
+        } catch (e) {
+            return [];
+        }
+    },
+    config: {
+        rowHeight: UnitHeight.STANDARD,
+    },
+    height: UnitHeight.UPPER,
+});
+
+export const ProcessUnit = unit<ProcessMetaData>({
+    name: 'Process',
+    tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
+    pinType: 'copied',
+    chart: SummaryChart,
     renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
         return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName} (${metadata.processId})`;
+    },
+});
+
+export const LabelUnit = unit<ProcessMetaData>({
+    name: 'Label',
+    tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
+    pinType: 'copied',
+    renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
+        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName}`;
     },
 });
 
@@ -353,6 +362,7 @@ export const CounterUnit = unit<CounterMetaData>({
                 rankId: countMetaData.cardId,
                 pid: countMetaData.processId,
                 threadName: countMetaData.threadName,
+                processName: countMetaData.processName,
                 startTime: session.domainRange.domainStart,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
                 dataSource: countMetaData.dataSource,

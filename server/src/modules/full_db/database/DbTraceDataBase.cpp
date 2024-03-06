@@ -7,8 +7,8 @@
 #include "ServerLog.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
-#include "set"
 #include "TraceDatabaseHelper.h"
+#include "CommonDefs.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -37,8 +37,8 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
     while (resultSet->Next()) {
         Protocol::RowThreadTrace rowThreadTrace {};
         rowThreadTrace.id = resultSet->GetInt64("id");
-        rowThreadTrace.startTime = resultSet->GetUint64("start_time");
-        rowThreadTrace.duration = resultSet->GetUint64("duration");
+        rowThreadTrace.startTime = resultSet->GetInt64("start_time");
+        rowThreadTrace.duration = resultSet->GetInt64("duration");
         rowThreadTrace.name = stringsCache.at(resultSet->GetInt64("name"));
         rowThreadTrace.depth = resultSet->GetInt32("depth");
         rowThreadTraceVec.emplace_back(std::move(rowThreadTrace));
@@ -72,10 +72,10 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
         while (resultSet->Next()) {
             int col = resultStartIndex;
             Protocol::SimpleSlice simpleSlice {};
-            simpleSlice.timestamp = resultSet->GetUint64(col++);
-            simpleSlice.duration = resultSet->GetUint64(col++);
-            simpleSlice.endTime = resultSet->GetUint64(col++);
-            simpleSlice.name = resultSet->GetString(col++);
+            simpleSlice.timestamp = resultSet->GetInt64(col++);
+            simpleSlice.duration = resultSet->GetInt64(col++);
+            simpleSlice.endTime = resultSet->GetInt64(col++);
+            simpleSlice.name = stringsCache.at(resultSet->GetInt64(col++));
             simpleSlice.depth = resultSet->GetInt32(col++);
             simpleSliceVec.emplace_back(simpleSlice);
         }
@@ -115,9 +115,9 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     while (resultSet->Next()) {
         int col = resultStartIndex;
         SliceDto sliceDto {};
-        sliceDto.id = resultSet->GetUint64(col++);
-        sliceDto.timestamp = resultSet->GetUint64(col++);
-        sliceDto.duration = resultSet->GetUint64(col++);
+        sliceDto.id = resultSet->GetInt64(col++);
+        sliceDto.timestamp = resultSet->GetInt64(col++);
+        sliceDto.duration = resultSet->GetInt64(col++);
         sliceDto.depth = resultSet->GetInt32(col++);
         sliceDto.name = stringsCache.at(resultSet->GetInt64(col++));
         sliceDtoVec.emplace_back(sliceDto);
@@ -147,6 +147,9 @@ bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
                                          std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     QueryAscendHardwareMetadata(fileId, metaData);
+    QueryHcclMetadata(fileId, metaData);
+    QueryCounterMetadata(fileId, metaData);
+    GenerateCounterMetadata(fileId, metaData);
     return false;
 }
 
@@ -187,7 +190,21 @@ bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams
 bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                                        std::vector<Protocol::UnitCounterData> &dataList)
 {
-    return false;
+    auto stmt = CreatPreparedStatement();
+    std::unique_ptr<SqliteResultSet> resultSet;
+    try {
+        resultSet = TraceDatabaseHelper::QueryUnitCounter(stmt, params, minTimestamp);
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryUnitCounter Fail, ", e.What());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::UnitCounterData unitCounterData;
+        unitCounterData.timestamp = resultSet->GetInt64("startTime");
+        unitCounterData.valueJsonStr = resultSet->GetString("args");
+        dataList.emplace_back(unitCounterData);
+    }
+    return true;
 }
 
 bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
@@ -199,9 +216,9 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
     if (!requestParams.stepId.empty() && requestParams.stepId != "ALL") {
         stepCondition.append(" and streamId =? ");
     }
-    std::string sql = "SELECT sum(end - start) as duration, TASKTYPE.value as accelerator_core "
+    std::string sql = "SELECT sum(endNs - startNs) as duration, TASKTYPE.value as acceleratorCore "
                       "  FROM COMPUTE_TASK_INFO"
-                      "     JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+                      "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
                       "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
                       " WHERE accelerator_core in ('AI_CPU','AI_CORE',"
                       " 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
@@ -293,13 +310,13 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
                       "output_formats AS outputFormats "
                       " FROM ("
                       " SELECT  NAME.value AS name,  OPTYPE.value AS op_type,"
-                      "     TASKTYPE.value as accelerator_core, start as start_time, end - start as duration,"
+                      "     TASKTYPE.value as accelerator_core, startNs as start_time, endNs - startNs as duration,"
                       "     block_dim, 0 as wait_time,"
                       "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
                       "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
                       "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
                       "   FROM " + TABLE_COMPUTE_TASK_INFO +
-                      "   JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+                      "   JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
                       "   JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
                       "   JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
                       "   JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
@@ -322,10 +339,10 @@ void DbTraceDataBase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet
         detail.name = resultSet->GetString("name");
         detail.type = resultSet->GetString("type");
         detail.acceleratorCore = resultSet->GetString("acceleratorCore");
-        detail.startTime = resultSet->GetUint64("startTime") - minTimestamp;
+        detail.startTime = resultSet->GetInt64("startTime") - minTimestamp;
         detail.duration = resultSet->GetDouble("duration");
         detail.waitTime = resultSet->GetDouble("waitTime");
-        detail.blockDim = resultSet->GetUint64("blockDim");
+        detail.blockDim = resultSet->GetInt64("blockDim");
         detail.inputShapes = resultSet->GetString("inputShapes");
         detail.inputDataTypes = resultSet->GetString("inputDataTypes");
         detail.inputFormats = resultSet->GetString("inputFormats");
@@ -353,7 +370,7 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const st
     auto resultSet = stmt->ExecuteQuery(name);
     uint64_t total = 0;
     if (resultSet->Next()) {
-        total = resultSet->GetUint64("count(*)");
+        total = resultSet->GetInt64("count(1)");
     }
     return total;
 }
@@ -412,10 +429,10 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
     uint64_t maxTime = 0;
     while (resultSet->Next()) {
         Protocol::ThreadTracesSummary summary;
-        uint64_t endTime = resultSet->GetUint64("end_time");
+        uint64_t endTime = resultSet->GetInt64("end_time");
         if (endTime > maxTime) {
-            summary.startTime = resultSet->GetUint64("start_time");
-            summary.duration = resultSet->GetUint64("duration");
+            summary.startTime = resultSet->GetInt64("start_time");
+            summary.duration = resultSet->GetInt64("duration");
             responseBody.data.emplace_back(summary);
             maxTime = endTime;
         }
@@ -425,7 +442,7 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
 void DbTraceDataBase::UpdateStartTime()
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT startTimeNs, endTimeNs, baseTimeNs FROM TARGET_INFO_SESSION_TIME";
+    std::string sql = "SELECT startTimeNs, endTimeNs FROM " + TABLE_SESSION_TIME_INFO;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to Update Start Time. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
@@ -436,9 +453,7 @@ void DbTraceDataBase::UpdateStartTime()
         int col = resultStartIndex;
         int64_t startTime = sqlite3_column_int64(stmt, col++);
         int64_t endTime = sqlite3_column_int64(stmt, col++);
-        int64_t baseTime = sqlite3_column_int64(stmt, col++);
         TraceTime::Instance().UpdateTime(startTime, endTime);
-        TraceTime::Instance().SetBaseTime(baseTime);
     }
     Server::ServerLog::Info("Update start and end time. ");
     sqlite3_finalize(stmt);
@@ -447,7 +462,7 @@ void DbTraceDataBase::UpdateStartTime()
 std::vector<std::string> DbTraceDataBase::QueryRankId()
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT id FROM TARGET_INFO_NPU";
+    std::string sql = "SELECT id FROM " + TABLE_NPU_INFO;
     std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -483,8 +498,8 @@ bool DbTraceDataBase::CheckTableDataInvalid(std::string tableName)
 
 void DbTraceDataBase::UpdateAllTaskDepth()
 {
-    std::string sql = "select deviceId, streamId, correlationId, start, end from TASK "
-                      "order by deviceId, streamId, start, correlationId;";
+    std::string sql = "select deviceId, streamId, globalTaskId, startNs, endNs from TASK "
+                      "order by deviceId, streamId, startNs, globalTaskId;";
     auto stmt = CreatPreparedStatement(sql);
     auto resultSet = stmt->ExecuteQuery();
     std::map<std::string, std::vector<TASK_INFO>> data;
@@ -496,34 +511,67 @@ void DbTraceDataBase::UpdateAllTaskDepth()
             data[key] = std::vector<TASK_INFO>();
         }
         TASK_INFO task;
-        task.start = resultSet->GetInt64("start");
-        task.end = resultSet->GetInt64("end");
-        task.correlationId = resultSet->GetInt64("correlationId");
+        task.start = resultSet->GetInt64("startNs");
+        task.end = resultSet->GetInt64("endNs");
+        task.globalTaskId = resultSet->GetInt64("globalTaskId");
         data[key].push_back(task);
     }
-    std::multiset<int64_t> endList;
+    std::vector<int64_t> endList;
     for (auto &deviceData: data) {
         for (auto &task: deviceData.second) {
-            endList.insert(task.end);
-            task.depth = std::distance(endList.upper_bound(task.start), endList.end());
+            endList.emplace_back(task.end);
+            endList.erase(std::remove_if(endList.begin(), endList.end(),
+                [task](int64_t end) {return task.start > end;}), endList.end());
+            task.depth = endList.size();
             if (task.depth > 0) task.depth--;
-            UpdateTaskDepth(task);
+            UpdateTaskDepth(task, updateTaskDepthStmt);
         }
         endList.clear();
     }
-    UpdateTaskDepthList();
+    UpdateTaskDepthList(updateTaskDepthStmt);
 }
 
-void DbTraceDataBase::UpdateTaskDepth(const TASK_INFO &taskInfo)
+void DbTraceDataBase::UpdateAllApiDepth()
+{
+    std::string sql = "select type, startNs, endNs, connectionId from API order by type, startNs;";
+    auto stmt = CreatPreparedStatement(sql);
+    auto resultSet = stmt->ExecuteQuery();
+    std::map<std::string, std::vector<TASK_INFO>> data;
+    while (resultSet->Next()) {
+        auto key = resultSet->GetString("type");
+        if (data.find(key) == data.end()) {
+            data[key] = std::vector<TASK_INFO>();
+        }
+        TASK_INFO task;
+        task.start = resultSet->GetInt64("startNs");
+        task.end = resultSet->GetInt64("endNs");
+        task.globalTaskId = resultSet->GetInt64("connectionId");
+        data[key].push_back(task);
+    }
+    std::vector<int64_t> endList;
+    for (auto &deviceData: data) {
+        for (auto &task: deviceData.second) {
+            endList.emplace_back(task.end);
+            endList.erase(std::remove_if(endList.begin(), endList.end(),
+                [task](int64_t end) {return task.start > end;}), endList.end());
+            task.depth = endList.size();
+            if (task.depth > 0) task.depth--;
+            UpdateTaskDepth(task, updateApiDepthStmt);
+        }
+        endList.clear();
+    }
+    UpdateTaskDepthList(updateApiDepthStmt);
+}
+
+void DbTraceDataBase::UpdateTaskDepth(const TASK_INFO &taskInfo, std::unique_ptr<SqlitePreparedStatement> &stmt)
 {
     taskDepthCache.emplace_back(taskInfo);
     if (taskDepthCache.size() == cacheSize) {
-        UpdateTaskDepthList();
-        taskDepthCache.clear();
+        UpdateTaskDepthList(stmt);
     }
 }
 
-bool DbTraceDataBase::UpdateTaskDepthList()
+bool DbTraceDataBase::UpdateTaskDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt)
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (!StartTransaction()) {
@@ -532,9 +580,9 @@ bool DbTraceDataBase::UpdateTaskDepthList()
     }
     bool result = true;
     for (const auto &item: taskDepthCache) {
-        updateTaskDepthStmt->Reset();
-        updateTaskDepthStmt->BindParams(item.depth, item.correlationId);
-        if (!updateTaskDepthStmt->Execute()) {
+        stmt->Reset();
+        stmt->BindParams(item.depth, item.globalTaskId);
+        if (!stmt->Execute()) {
             ServerLog::Error("Failed to updateDepth");
             result = false;
             break;
@@ -572,9 +620,11 @@ bool DbTraceDataBase::InitStmt()
         return true;
     }
     initStmt = true;
-    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where correlationId = ?";
+    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where globalTaskId = ?";
     updateTaskDepthStmt = CreatPreparedStatement(sql);
-    if (updateTaskDepthStmt == nullptr) {
+    sql = "UPDATE " + TABLE_API + " set depth = ? where connectionId = ?";
+    updateApiDepthStmt = CreatPreparedStatement(sql);
+    if (updateTaskDepthStmt == nullptr || updateApiDepthStmt == nullptr) {
         ServerLog::Error("Failed to prepare update statement.");
         return false;
     }
@@ -590,40 +640,209 @@ bool DbTraceDataBase::SetConfig()
     std::unique_lock<std::mutex> lock(mutex);
     std::string dbVersion = GetDataBaseVersion();
     ExecSql("alter table TASK add depth integer;");
+    ExecSql("alter table API add depth integer;");
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " +
                    dbVersion + ";");
+}
+
+bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+{
+    std::string sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from API a join ENUM_API_TYPE EAL "
+                      " on a.type = EAL.id group by type, globalTid";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryHostMetadata failed!.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    std::map<std::string, std::vector<MetaDataDto>> threadMap;
+    while (resultSet->Next()) {
+        MetaDataDto metadata;
+        metadata.pid = resultSet->GetString("globalTid");
+        metadata.processName = "process";
+        metadata.threadId = resultSet->GetString("type");
+        metadata.threadName = resultSet->GetString("name");
+        metadata.maxDepth = resultSet->GetInt32("maxDepth") + 1;
+        threadMap[metadata.pid].emplace_back(metadata);
+    }
+    auto process = GenerateBaseUnitTrack("label", "Host", "Host", "process");
+    for (auto &thread: threadMap) {
+        auto threadUnit = GenerateBaseUnitTrack("process", "Host", thread.first, "Thread " + thread.first);
+        auto cannApiUnit = GenerateBaseUnitTrack("process", "Host", thread.first, "CANN");
+        for (const auto &item: thread.second) {
+            auto level = GenerateBaseUnitTrack("thread", threadUnit->metaData.cardId, thread.first, "");
+            level->metaData.threadId = item.threadId;
+            level->metaData.threadName = item.threadName;
+            level->metaData.maxDepth = item.maxDepth;
+            auto a = std::find(CANN_APIS.begin(), CANN_APIS.end(), item.threadName);
+            if (std::find(CANN_APIS.begin(), CANN_APIS.end(), item.threadName) != CANN_APIS.end()) {
+                cannApiUnit->children.emplace_back(std::move(level));
+            } else {
+                threadUnit->children.emplace_back(std::move(level));
+            }
+        }
+        if (!cannApiUnit->children.empty()) {
+            threadUnit->children.emplace_back(std::move(cannApiUnit));
+        }
+        process->children.emplace_back(std::move(threadUnit));
+    }
+    metaData.emplace_back(std::move(process));
+    return true;
+}
+
+std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(const std::string &type,
+    const std::string &cardId, const std::string &processId, const std::string &processName)
+{
+    std::unique_ptr<Protocol::UnitTrack> unitTrack = std::make_unique<Protocol::UnitTrack>();
+    unitTrack->type = type;
+    unitTrack->metaData.cardId = cardId;
+    unitTrack->metaData.processId = processId;
+    unitTrack->metaData.processName = processName;
+    return unitTrack;
 }
 
 bool DbTraceDataBase::QueryAscendHardwareMetadata(const std::string &fileId,
                                                   std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::unique_ptr<Protocol::UnitTrack> ascendHardware = std::make_unique<Protocol::UnitTrack>();
-
-    ascendHardware->type = "process";
-    ascendHardware->metaData.processName = "Ascend Hardware";
-    ascendHardware->metaData.label = "NPU";
-    ascendHardware->metaData.cardId = fileId;
-
     std::string sql = "select globalPid, streamId, max(depth) as maxDepth from " + TABLE_TASK +
                       " where deviceId = ? group by globalPid, streamId";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryPidByDeviceId failed!.");
+        ServerLog::Error("QueryAscendHardwareMetadata failed!.");
         return "";
     }
     auto resultSet = stmt->ExecuteQuery(fileId);
-    ascendHardware->metaData.processId = std::to_string(static_cast<int8_t>(PROCESS_TYPE::ASCEND_HARDWARE));
+    auto ascendHardware = GenerateBaseUnitTrack("process", fileId,
+        std::to_string(static_cast<int8_t>(PROCESS_TYPE::ASCEND_HARDWARE)), "Ascend Hardware");
+    ascendHardware->metaData.label = "NPU";
     while (resultSet->Next()) {
-        std::unique_ptr<Protocol::UnitTrack> thread = std::make_unique<Protocol::UnitTrack>();
-        thread->type =  "thread";
-        thread->metaData.cardId = fileId;
-        thread->metaData.processId = ascendHardware->metaData.processId;
-        thread->metaData.threadId = resultSet->GetInt64("streamId");
+        auto thread = GenerateBaseUnitTrack("thread", fileId,
+                                            ascendHardware->metaData.processId, "");
+        thread->metaData.threadId = resultSet->GetString("streamId");
         thread->metaData.threadName = "Stream " + thread->metaData.threadId;
         thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
         ascendHardware->children.emplace_back(std::move(thread));
     }
     metaData.emplace_back(std::move(ascendHardware));
+    return true;
+}
+
+bool DbTraceDataBase::QueryHcclMetadata(const std::string &fileId,
+                                        std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+{
+    std::string sql = "with main as (select planeId, groupName from " + TABLE_COMMUNICATION_TASK_INFO +
+            " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId where deviceId = ?)\n"
+            " select 'Plane ' || planeId as name, planeId as id  from main group by planeId\n"
+            " union select 'Group ' || row_number() over () || ' Communication' as name, groupName as id from main"
+            " group by groupName";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryHcclMetadata failed!.");
+        return "";
+    }
+    auto resultSet = stmt->ExecuteQuery(fileId);
+    auto hccl = GenerateBaseUnitTrack("process", fileId,
+        std::to_string(static_cast<int8_t>(PROCESS_TYPE::HCCL)), "HCCL");
+    hccl->metaData.label = "NPU";
+    while (resultSet->Next()) {
+        auto thread = GenerateBaseUnitTrack("thread", fileId,
+                                            hccl->metaData.processId, "");
+        thread->metaData.threadId = resultSet->GetString("id");
+        thread->metaData.threadName = resultSet->GetString("name");
+        thread->metaData.maxDepth = 1;
+        hccl->children.emplace_back(std::move(thread));
+    }
+    metaData.emplace_back(std::move(hccl));
+    return true;
+}
+
+bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
+                                           std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+{
+    PROCESS_TYPE types[] = {PROCESS_TYPE::HBM, PROCESS_TYPE::LLC};
+    for (const auto &type: types) {
+        auto typeName = ENUM_TO_STR(type).value_or("");
+        if (!CheckTableExist(typeName)) {
+            ServerLog::Info("QueryCounterMetadata failed, table ", typeName, " Not Exist.");
+            continue;
+        }
+        auto counter = GenerateBaseUnitTrack("label", fileId, typeName, typeName);
+
+        std::string sql;
+        switch (type) {
+            case PROCESS_TYPE::HBM:
+                sql = "select case when type=1 then 'Read(MB/s)' else 'Write(MB/s)' end as typeName,\n"
+                      "    hbmId || '/' || case when type=1 then 'Read' else 'Write' end as name\n"
+                      "FROM HBM WHERE device_id = ? GROUP BY hbmId, type";
+                break;
+            case PROCESS_TYPE::LLC:
+                sql = "with main as (select llcId, mode from LLC where deviceId = ? group by llcId, mode)"
+                      " select 'Throughput(MB/s)' as typeName, llcId || ' ' || case when mode=1 then 'Read' else"
+                      " 'Write' end || '/Throughput' as name  from main "
+                      " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when mode=1 then 'Read' else"
+                      " 'Write' end || '/Hit Rate' as name  from main ";
+                break;
+        }
+        auto stmt = CreatPreparedStatement(sql);
+        if (stmt == nullptr) {
+            ServerLog::Error("QueryCounterMetadata failed!.");
+            return "";
+        }
+        auto resultSet = stmt->ExecuteQuery(fileId);
+        while (resultSet->Next()) {
+            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName,
+                                                resultSet->GetString("name"));
+            thread->metaData.threadName = typeName + " " + thread->metaData.processName;
+            thread->metaData.dataType = StringUtil::Split(resultSet->GetString("typeName"), ",");
+            counter->children.emplace_back(std::move(thread));
+        }
+        metaData.emplace_back(std::move(counter));
+    }
+    return true;
+}
+
+bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
+                                              std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+{
+    PROCESS_TYPE types[] = {PROCESS_TYPE::ACC_PMU, PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC, PROCESS_TYPE::NPU_MEM};
+    for (const auto &type: types) {
+        auto typeName = ENUM_TO_STR(type).value_or("");
+        if (!CheckTableExist(typeName)) {
+            ServerLog::Info("GenerateCounterMetadata failed, table ", typeName, " Not Exist.");
+            continue;
+        }
+        auto counter = GenerateBaseUnitTrack("label", fileId, typeName, typeName);
+        std::vector<std::string> units;
+        std::vector<std::vector<std::string>> dataTypes;
+        switch (type) {
+            case PROCESS_TYPE::ACC_PMU:
+                units = {"read_bandwidth", "read_ost", "write_bandwidth", "write_ost"};
+                dataTypes = {{"value", "acc_id"}};
+                break;
+            case PROCESS_TYPE::DDR:
+                units = {"Read", "Write"};
+                dataTypes = {{"Read(MB/s)"}, {"Write(MB/s)"}};
+                break;
+            case PROCESS_TYPE::STARS_SOC:
+                counter->metaData.processName = "Stars Soc";
+                units = {"L2 Buffer Bw Level", "Mata Bw Level"};
+                dataTypes = {{"L2 Buffer Bw Level"}, {"Mata Bw Level"}};
+                break;
+            case PROCESS_TYPE::NPU_MEM:
+                units = {"APP/DDR", "APP/HBM", "APP/MEMORY", "Device/DDR", "Device/HBM", "Device/MEMORY"};
+                dataTypes = {{"KB"}};
+                break;
+        }
+        for (int index = 0; index < units.size(); index++) {
+            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName,
+                                                units.at(index));
+            thread->metaData.threadName = thread->metaData.processName;
+            auto dataType = dataTypes.size() == 1 ? dataTypes[0] : dataTypes[index];
+            thread->metaData.dataType.insert(thread->metaData.dataType.end(), dataType.begin(), dataType.end());
+            counter->children.emplace_back(std::move(thread));
+        }
+        metaData.emplace_back(std::move(counter));
+    }
     return true;
 }
 }

@@ -7,6 +7,7 @@
 
 #include "ParserFactory.h"
 #include "TimelineRequestHandler.h"
+#include "WsSessionManager.h"
 
 namespace Dic {
 namespace Module {

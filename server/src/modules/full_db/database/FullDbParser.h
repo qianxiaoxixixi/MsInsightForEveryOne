@@ -8,6 +8,7 @@
 #include "FileParser.h"
 #include "ThreadPool.h"
 #include "map"
+#include "WsSessionManager.h"
 
 namespace Dic::Module::FullDb {
 class FullDbParser : public FileParser {
@@ -31,6 +32,7 @@ private:
     static void InitSummery(std::vector<std::string> fileId, std::string path, std::string token);
 
     static void ParserCallBack(std::string fileId, bool result);
+    static void SendHostEvent(const std::string &token);
 };
 }
 

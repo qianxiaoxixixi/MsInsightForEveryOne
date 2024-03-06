@@ -36,6 +36,16 @@ const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };
 
+const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWARE, "ASCEND HARDWARE" },
+                                                   { PROCESS_TYPE::HCCL, "HCCL" },
+                                                   { PROCESS_TYPE::HOST, "HOST" },
+                                                   { PROCESS_TYPE::LLC, "LLC" },
+                                                   { PROCESS_TYPE::DDR, "DDR" },
+                                                   { PROCESS_TYPE::ACC_PMU, "ACC_PMU" },
+                                                   { PROCESS_TYPE::NPU_MEM, "NPU_MEM" },
+                                                   { PROCESS_TYPE::STARS_SOC, "SOC_BANDWIDTH_LEVEL" },
+                                                   { PROCESS_TYPE::HBM, "HBM" } };
+
 #pragma endregion
 
 #pragma region << EnumToStr Template Specialization>>
@@ -100,6 +110,19 @@ template <> inline std::optional<std::string> ENUM_TO_STR<Protocol::LinkType>(co
 template <> inline std::optional<Protocol::LinkType> STR_TO_ENUM<Protocol::LinkType>(const std::string &s)
 {
     return TryGetEnum<Protocol::LinkType>(LINK_TYPE_ES, s);
+}
+
+template <> inline std::optional<std::string> ENUM_TO_STR<PROCESS_TYPE>(const PROCESS_TYPE &e)
+{
+    if (PROCESS_TYPE_ES.count(e) == 0) {
+        return std::nullopt;
+    }
+    return PROCESS_TYPE_ES.at(e);
+}
+
+template <> inline std::optional<PROCESS_TYPE> STR_TO_ENUM<PROCESS_TYPE>(const std::string &s)
+{
+    return TryGetEnum<PROCESS_TYPE>(PROCESS_TYPE_ES, s);
 }
 #pragma endregion
 } // end of namespace Protocol
