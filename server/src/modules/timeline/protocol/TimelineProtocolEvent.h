@@ -43,6 +43,7 @@ struct Unit {
 struct ParseSuccessEventBody {
     Unit unit;
     bool startTimeUpdated = false;
+    bool isFullDb = false;
     uint64_t maxTimeStamp = 0;
 };
 

@@ -166,8 +166,37 @@ bool DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
     return false;
 }
 
-int DbTraceDataBase::SearchSliceNameCount(const std::string &name)
+int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
+    std::string sql;
+    if (strcmp(params.rankId.c_str(), "Host") == 0) {
+        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
+              "SELECT count(1),? as id FROM API join ids on id = API.name";
+    } else {
+        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), "
+              "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
+              "     com as (select opId, info.globalTaskId, name from COMMUNICATION_TASK_INFO info join tasks "
+              " on  info.globalTaskId = tasks.globalTaskId), "
+              "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
+              " on  info.globalTaskId = tasks.globalTaskId) "
+              "select count(1) from ( "
+              "    select coalesce(com.name, compute.name, main.taskType) as name from tasks main "
+              "         left join com on com.globalTaskId = main.globalTaskId "
+              "         left join compute on compute.globalTaskId = main.globalTaskId "
+              "    union ALL select name from com "
+              "    union ALL select opName as name from COMMUNICATION_OP op join (select opId from com group by opId) a"
+              " on op.opId = a.opId "
+              ") allNames join ids on id = allNames.name;";
+    }
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QuerySliceNameCount failed!.");
+        return 0;
+    }
+    auto resultSet = stmt->ExecuteQuery(params.searchContent, params.rankId);
+    if (resultSet->Next()) {
+        return resultSet->GetInt32(resultStartIndex);
+    }
     return 0;
 }
 
@@ -179,7 +208,46 @@ bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories
 bool DbTraceDataBase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
                                       Protocol::SearchSliceBody &responseBody)
 {
-    return false;
+    std::string sql;
+    if (strcmp(responseBody.rankId.c_str(), "Host") == 0) {
+        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
+              "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration,depth,? as id"
+              " FROM API join ids on id = API.name "
+              " ORDER BY startNs LIMIT 1 OFFSET ?";
+    } else {
+        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), minTime as (select ? as value),\n"
+          "tasks as (select globalTaskId, taskType, 0 as pid, streamId as tid, startNs - minTime.value as startTime,"
+          " endNs - startNs as duration,depth from TASK join minTime where deviceId = ? ORDER BY startTime),\n"
+          "com as (select opId, info.globalTaskId, 1 as pid, planeId as tid, startTime, duration, 0 as depth, name "
+          " from COMMUNICATION_TASK_INFO info join tasks on  info.globalTaskId=tasks.globalTaskId ORDER BY startTime), "
+          "compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks on "
+          " info.globalTaskId=tasks.globalTaskId) select * from (\n"
+          "    select coalesce(com.name, compute.name, main.taskType) as name, main.pid, main.tid, main.startTime,"
+          " main.duration, main.depth from tasks main\n"
+          "        left join com on com.globalTaskId = main.globalTaskId\n"
+          "        left join compute on compute.globalTaskId = main.globalTaskId\n"
+          "    union ALL select name, pid, tid, startTime, duration, depth from com\n"
+          "    union ALL select opName as name,1 as pid, groupName as tid, startNs - minTime.value as startTime,"
+          " endNs - startNs as duration, 0 as depth\n"
+          "        from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a "
+          " on op.opId = a.opId ORDER BY startTime\n"
+          ") allNames join ids on id = allNames.name LIMIT 1 OFFSET ?";
+    }
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QuerySliceName failed!.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(name, minTimestamp, responseBody.rankId, index);
+    if (!resultSet->Next()) {
+        return false;
+    }
+    responseBody.pid = resultSet->GetString("pid");
+    responseBody.tid = resultSet->GetString("tid");
+    responseBody.startTime = resultSet->GetUint64("startTime");
+    responseBody.duration = resultSet->GetUint64("duration");
+    responseBody.depth = resultSet->GetInt32("depth");
+    return true;
 }
 
 bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
@@ -526,11 +594,14 @@ void DbTraceDataBase::UpdateAllTaskDepth()
     std::vector<int64_t> endList;
     for (auto &deviceData: data) {
         for (auto &task: deviceData.second) {
-            endList.emplace_back(task.end);
-            endList.erase(std::remove_if(endList.begin(), endList.end(),
-                [task](int64_t end) {return task.start > end;}), endList.end());
-            task.depth = endList.size();
-            if (task.depth > 0) task.depth--;
+            for (task.depth = endList.size() - 1; task.depth >= 0 && endList[task.depth] <= task.start; task.depth--) {
+            }
+            task.depth++;
+            if (task.depth >= endList.size()) {
+                endList.emplace_back(task.end);
+            } else {
+                endList[task.depth] = task.end;
+            }
             UpdateTaskDepth(task, updateTaskDepthStmt);
         }
         endList.clear();
@@ -558,11 +629,14 @@ void DbTraceDataBase::UpdateAllApiDepth()
     std::vector<int64_t> endList;
     for (auto &deviceData: data) {
         for (auto &task: deviceData.second) {
-            endList.emplace_back(task.end);
-            endList.erase(std::remove_if(endList.begin(), endList.end(),
-                [task](int64_t end) {return task.start > end;}), endList.end());
-            task.depth = endList.size();
-            if (task.depth > 0) task.depth--;
+            for (task.depth = endList.size() - 1; task.depth >= 0 && endList[task.depth] <= task.start; task.depth--) {
+            }
+            task.depth++;
+            if (task.depth >= endList.size()) {
+                endList.emplace_back(task.end);
+            } else {
+                endList[task.depth] = task.end;
+            }
             UpdateTaskDepth(task, updateApiDepthStmt);
         }
         endList.clear();

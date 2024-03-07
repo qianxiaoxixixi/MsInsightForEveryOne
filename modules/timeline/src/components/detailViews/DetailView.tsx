@@ -9,11 +9,15 @@ import { useEventBus } from '../../utils/eventBus';
 import { ViewList } from './index';
 
 export function getDetailViewItem(session: Session): any {
-    return {
-        label: <ViewSelect/>,
-        key: 'SystemView',
-        children: <ViewContainer session={session}/>,
-    };
+    if (!session.isFullDb) {
+        return {
+            label: <ViewSelect/>,
+            key: 'SystemView',
+            children: <ViewContainer session={session}/>,
+        };
+    } else {
+        return {};
+    }
 }
 
 const ViewSelect = observer((props: any) => {

@@ -59,7 +59,7 @@ public:
                       " left join (select name, globalTaskId, planeId as tid from " + TABLE_COMMUNICATION_TASK_INFO +
                     "                 UNION select name, globalTaskId, null as tid from " + TABLE_COMPUTE_TASK_INFO +
                     " ) c on c.globalTaskId = main.globalTaskId"
-                    " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ? AND duration > 0"
+                    " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ?"
                     " ORDER BY depth ASC, startNs ASC;";
                 return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
                                     extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
@@ -70,12 +70,12 @@ public:
                       " where deviceId = ? and planeId = ?\n"
                       " UNION select startNs,endNs-startNs as duration,endNs,opInfo.opName from COMMUNICATION_OP opInfo"
                       " where groupName = ?) select * from sub where sub.endNs >= ? "
-                      " and sub.startNs <= ? AND duration > 0;";
+                      " and sub.startNs <= ?;";
                 return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid, requestParams.tid,
                                     requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
             case PROCESS_TYPE::HOST:
                 sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + TABLE_API + " main "
-                      " where type = ? and globalTid = ? and depth = 0 and endNs >= ? AND startNs <= ? AND duration > 0"
+                      " where type = ? and globalTid = ? and depth = 0 and endNs >= ? AND startNs <= ?"
                       " ORDER BY depth ASC, startNs ASC;";
                 return ExecuteQuery(stmt, sql, requestParams.tid, requestParams.pid,
                                     requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
@@ -122,8 +122,10 @@ public:
             case PROCESS_TYPE::ASCEND_HARDWARE:
                 sql = "SELECT main.globalTaskId as id, startNs, endNs - startNs as duration,"
                       " depth, coalesce(CTI.name, main.taskType) as name FROM " + TABLE_TASK + " main "
-                      " left join COMPUTE_TASK_INFO CTI on main.globalTaskId = CTI.globalTaskId"
-                      " WHERE depth = ? AND deviceId = ? AND streamId = ? AND startNs = ? AND duration > 0";
+                      " left join (select name, globalTaskId, planeId as tid from " + TABLE_COMMUNICATION_TASK_INFO +
+                      "                 UNION select name, globalTaskId, null as tid from " + TABLE_COMPUTE_TASK_INFO +
+                      " ) CTI on CTI.globalTaskId = main.globalTaskId"
+                      " WHERE depth = ? AND deviceId = ? AND streamId = ? AND startNs = ?";
                 return ExecuteQuery(stmt, sql, requestParams.depth, requestParams.rankId,
                                     requestParams.tid, requestParams.startTime + minTimestamp);
             case PROCESS_TYPE::HCCL:
@@ -134,7 +136,7 @@ public:
                       " endNs from " + TABLE_COMMUNICATION_OP + " where opId in (select opId from tmp group by opId)\n "
                       " UNION select globalTaskId as id, startNs, endNs-startNs as duration, name, planeId as tid,"
                       " endNs from tmp) select id, startNs, duration, 0 as depth, name from sub "
-                      " where tid = ? AND startNs = ? AND duration > 0";
+                      " where tid = ? AND startNs = ?";
                 return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
                                     requestParams.startTime + minTimestamp);
             case PROCESS_TYPE::HOST:
@@ -160,7 +162,7 @@ public:
                       " left join (select name, globalTaskId, planeId as tid from COMMUNICATION_TASK_INFO"
                       "     UNION select name, globalTaskId, null as tid from COMPUTE_TASK_INFO) c "
                       " on c.globalTaskId = main.globalTaskId where deviceId = ? and streamId = ?"
-                      " and start_time + duration >= ? AND start_time < ? AND duration > 0"
+                      " and start_time + duration >= ? AND start_time < ?"
                       " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
                 return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx, requestParams.cardId,
                                     requestParams.threadId, requestParams.startTime, requestParams.endTime);
@@ -172,14 +174,14 @@ public:
                   " select startNs,endNs-startNs as duration,name, planeId as tid, endNs, tmp.globalTaskId as id "
                   " from tmp) select id, startNs-? as start_time,duration, name, 0 as depth, "
                   " ROUND(startNs / ?) as rank from sub "
-                  " where tid = ? and start_time + duration >= ? AND start_time < ? AND duration > 0"
+                  " where tid = ? and start_time + duration >= ? AND start_time < ? "
                   " GROUP BY rank, duration HAVING max(start_time) ORDER BY start_time;";
                 return ExecuteQuery(stmt, sql, requestParams.cardId, minTimestamp, requestParams.timePerPx,
                                     requestParams.threadId, requestParams.startTime, requestParams.endTime);
             case PROCESS_TYPE::HOST:
                 sql = "select name, connectionId as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
                       " ROUND(startNs / ?) as rank from API a where type = ? and globalTid = ?"
-                      " and start_time + duration >= ? AND start_time < ? AND duration > 0"
+                      " and start_time + duration >= ? AND start_time < ? "
                       " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
                 return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx, requestParams.threadId,
                                     requestParams.processId, requestParams.startTime, requestParams.endTime);
@@ -198,22 +200,20 @@ public:
             case PROCESS_TYPE::ASCEND_HARDWARE:
                 sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
                       "FROM " + TABLE_TASK + " WHERE deviceId = ? AND start_time >= ? "
-                      "AND start_time <= ? AND depth = 0 AND duration > 0 ORDER BY startNs;";
+                      "AND start_time <= ? AND depth = 0 ORDER BY startNs;";
                 return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.cardId,
                                     requestParams.startTime, requestParams.endTime);
             case PROCESS_TYPE::HCCL:
                 sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
                       "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
                       " on main.globalTaskId = info.globalTaskId"
-                      " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? "
-                      " AND duration > 0 ORDER BY startNs;";
+                      " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
                 return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.cardId,
                                     requestParams.startTime, requestParams.endTime);
             case PROCESS_TYPE::HOST:
                 sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
                       "FROM " + TABLE_API + " main "
-                      " WHERE globalTid = ? AND depth = 0 AND start_time >= ? AND start_time <= ? "
-                      " AND duration > 0 ORDER BY startNs;";
+                      " WHERE globalTid = ? AND depth = 0 AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
                 return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
                                     requestParams.startTime, requestParams.endTime);
             default:

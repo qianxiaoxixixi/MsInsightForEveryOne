@@ -33,7 +33,7 @@ private:
     static void InitSummery(std::vector<std::string> fileId, std::string path, std::string token);
 
     static void ParserCallBack(std::string fileId, bool result);
-    static void SendHostEvent(const std::string &token);
+    static void SendHostEvent(const std::string &token, const std::string &fileId);
 };
 }
 

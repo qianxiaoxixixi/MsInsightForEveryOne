@@ -409,10 +409,11 @@ TEST_F(TestSuit, QueryExtremumTimestamp)
 TEST_F(TestSuit, SearchSliceNameCount)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    std::string sliceName = "AscendCL@";
     int expectCount = 9523;
+    SearchCountParams params;
+    params.searchContent = "AscendCL@";
 
-    int count = database->SearchSliceNameCount(sliceName);
+    int count = database->SearchSliceNameCount(params);
     EXPECT_EQ(count, expectCount);
 }
 

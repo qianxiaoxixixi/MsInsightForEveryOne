@@ -51,6 +51,7 @@ export class Session {
     // 页面可视范围的Card的CardId
     viewedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';
+    isFullDb: boolean = false;
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];

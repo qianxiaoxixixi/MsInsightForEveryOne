@@ -498,6 +498,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "maxTimeStamp", event.body.maxTimeStamp, allocator);
     JsonUtil::AddMember(body, "startTimeUpdated", event.body.startTimeUpdated, allocator);
+    JsonUtil::AddMember(body, "isFullDb", event.body.isFullDb, allocator);
     json_t unit(kObjectType);
     JsonUtil::AddMember(unit, "type", event.body.unit.type, allocator);
     json_t metadata(kObjectType);

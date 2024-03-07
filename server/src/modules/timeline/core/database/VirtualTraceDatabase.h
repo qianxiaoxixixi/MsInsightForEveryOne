@@ -44,7 +44,7 @@ public:
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
     virtual bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
         Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, int64_t trackId) = 0;
-    virtual int SearchSliceNameCount(const std::string &name) = 0;
+    virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params) = 0;
     virtual bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody) = 0;
     virtual bool QueryFlowCategoryList(std::vector<std::string> &categories) = 0;
