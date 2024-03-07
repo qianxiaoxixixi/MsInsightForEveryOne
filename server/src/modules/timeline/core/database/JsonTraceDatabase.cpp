@@ -739,53 +739,42 @@ bool JsonTraceDatabase::DealLastData(std::vector<Protocol::SimpleSlice> &rows,
 void JsonTraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime)
 {
-    int32_t i = 0;
-    int32_t j = 0;
-    if (rows.empty()) {
-        ServerLog::Error("simpleSlice array size is zero!");
-        return;
-    }
-    uint64_t tmpSelfTime = rows.at(0).duration;
-    while (i < rows.size()) {
-        // j滑完直接滑完所有i
-        if (j == rows.size()) {
-            // 处理当前tmpSelfTime
-            AddData(selfTimeKeyValue, rows.at(i).name, tmpSelfTime);
-            // 处理剩余元素
-            DealLastData(rows, selfTimeKeyValue, startTime, endTime, i);
-            break;
-        }
-        Protocol::SimpleSlice rowI = rows.at(i);
-        Protocol::SimpleSlice rowJ = rows.at(j);
-        // 层数相等 or 同一元素, j右移
-        if (rowI.depth == rowJ.depth || i >= j) {
-            j++;
-            continue;
-        }
-        // rows[i]不属于框选范围内，跳过
-        if (rows.at(i).timestamp > endTime || rows.at(i).endTime < startTime) {
-            if (i + 1 == rows.size()) { // i滑完结束
+    int length = rows.size();
+    // offset变量用来优化性能
+    int offset = 0;
+    for (int i = 0; i < length; i++) {
+        int32_t curDepth = rows[i].depth;
+        int64_t selfTime = rows[i].duration;
+        int64_t curSliceStartTime = rows[i].timestamp;
+        int64_t curSliceEndTime = rows[i].endTime;
+        int64_t tempStartTime = 0;
+        int64_t tempEndTime = 0;
+        for (int j = offset; j < length; ++j) {
+            Protocol::SimpleSlice item = rows[j];
+            if (item.timestamp < curSliceStartTime) {
+                continue;
+            }
+            if (item.depth < curDepth + 1) {
+                continue;
+            }
+            if (item.depth > curDepth + 1) {
                 break;
             }
-            i++;
-            tmpSelfTime = rows.at(i).duration;
-            continue;
-        }
-        // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
-        if (rowJ.endTime > rowI.endTime || rowI.depth + 1 < rowJ.depth) {
-            AddData(selfTimeKeyValue, rowI.name, tmpSelfTime);
-            if (i + 1 == rows.size()) { // i滑完结束
+            if (item.endTime > curSliceEndTime) {
                 break;
             }
-            i++;
-            tmpSelfTime = rows.at(i).duration;
-            continue;
+            if (item.timestamp > tempEndTime) {
+                selfTime = selfTime - (tempEndTime - tempStartTime);
+                tempStartTime = item.timestamp;
+                tempEndTime = item.endTime;
+                offset = j;
+                continue;
+            }
+            tempEndTime = tempEndTime < item.endTime ? item.endTime : tempEndTime;
+            offset = j;
         }
-        // 符合要求的元素
-        if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime) {
-            tmpSelfTime -= rowJ.duration;
-        }
-        j++;
+        selfTime = selfTime - (tempEndTime - tempStartTime);
+        AddData(selfTimeKeyValue, rows[i].name, selfTime);
     }
 }
 
@@ -844,7 +833,7 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
 {
     std::string sql = "SELECT id, timestamp, duration, name, depth, track_id, cat, args"
         " FROM " +
-        sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ?";
+        sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ? Order by duration DESC";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadDetail. Failed to prepare sql.");
@@ -864,21 +853,11 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
         sliceDto.args = resultSet->GetString("args");
         sliceDtoVec.emplace_back(sliceDto);
     }
-
-    if (sliceDtoVec.size() != 1) {
+    if (sliceDtoVec.size() < 1) {
         ServerLog::Error("select slice error!");
         return false;
     }
-    uint64_t selfTime = sliceDtoVec.at(0).duration;
-    std::vector<uint64_t> nextDepthResult;
-    QueryDurationFromSliceByTimeRange(requestParams, sliceDtoVec, nextDepthResult, trackId);
-    if (nextDepthResult.empty()) {
-        selfTime = 0;
-    } else {
-        for (const auto &item : nextDepthResult) {
-            selfTime -= item;
-        }
-    }
+    uint64_t selfTime = ComputeSingleSliceSelfTime(requestParams, trackId, sliceDtoVec);
     const KernelShapesDataDto &shapesDataDto = QueryKernelShapes(sliceDtoVec);
     responseBody.emptyFlag = false;
     responseBody.data.selfTime = selfTime;
@@ -895,15 +874,40 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
     return true;
 }
 
+int64_t JsonTraceDatabase::ComputeSingleSliceSelfTime(const ThreadDetailParams &requestParams, int64_t trackId,
+    std::vector<SliceDto> &sliceDtoVec)
+{
+    int64_t selfTime = sliceDtoVec.at(0).duration;
+    std::vector<std::pair<uint64_t, uint64_t>> nextDepthResult;
+    QueryDurationFromSliceByTimeRange(requestParams, sliceDtoVec, nextDepthResult, trackId);
+    if (nextDepthResult.empty()) {
+        return 0;
+    }
+    int64_t tempStartTime = 0;
+    int64_t tempEndTime = 0;
+    // 兼容算子重叠的情况
+    for (const auto &item : nextDepthResult) {
+        if (item.first > tempEndTime) {
+            selfTime = selfTime - (tempEndTime - tempStartTime);
+            tempStartTime = item.first;
+            tempEndTime = item.first + item.second;
+            continue;
+        }
+        tempEndTime = tempEndTime < (item.first + item.second) ? (item.first + item.second) : tempEndTime;
+    }
+    selfTime = selfTime - (tempEndTime - tempStartTime);
+    return selfTime;
+}
+
 bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
-    const std::vector<SliceDto> &rows, std::vector<uint64_t> &nextDepthResult, int64_t trackId)
+    const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult, int64_t trackId)
 {
     if (rows.empty()) {
         ServerLog::Error("sliceDto array is empty!");
         return false;
     }
-    std::string sql = "SELECT duration FROM " + sliceTable +
-        " WHERE depth = ? AND timestamp + duration <= ? AND timestamp >= ? AND track_id = ?";
+    std::string sql = "SELECT timestamp, duration FROM " + sliceTable +
+        " WHERE depth = ? AND timestamp + duration <= ? AND timestamp >= ? AND track_id = ? Order by timestamp";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
@@ -912,7 +916,9 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
     auto resultSet =
         stmt->ExecuteQuery(requestParams.depth + 1, rows[0].timestamp + rows[0].duration, rows[0].timestamp, trackId);
     while (resultSet->Next()) {
-        nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
+        uint64_t startTime = resultSet->GetUint64("timestamp");
+        uint64_t duration = resultSet->GetUint64("duration");
+        nextDepthResult.emplace_back(std::make_pair(startTime, duration));
     }
     return true;
 }
@@ -925,10 +931,10 @@ KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<Slice
         return kernelShapesDataDto;
     }
     std::string sql = "SELECT input_shapes AS inputShapes, input_data_types AS inputDataTypes, "
-                      "input_formats AS inputFormats, output_shapes AS outputShapes, "
-                      "output_data_types AS outputDataTypes, output_formats AS outputFormats "
-                      "FROM " + kernelDetail +
-                      " WHERE name = ? AND start_time = ?";
+        "input_formats AS inputFormats, output_shapes AS outputShapes, "
+        "output_data_types AS outputDataTypes, output_formats AS outputFormats "
+        "FROM " +
+        kernelDetail + " WHERE name = ? AND start_time = ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelShapes. Failed to prepare sql.", sqlite3_errmsg(db));
@@ -1696,16 +1702,16 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
     }
     std::string sql = "SELECT timestamp, duration FROM " + sliceTable +
-                      " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ? "
-                      + orderBy + " limit ? offset ?";
+        " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ? " + orderBy +
+        " limit ? offset ?";
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadSameOperatorsDetails. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.name, traceId, endTime, startTime,
-                                        requestParams.pageSize, offset);
+    auto resultSet =
+        stmt->ExecuteQuery(requestParams.name, traceId, endTime, startTime, requestParams.pageSize, offset);
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
@@ -1719,11 +1725,11 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     return true;
 }
 
-uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t &trackId,
-                                               uint64_t &startTime, uint64_t &endTime)
+uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime,
+    uint64_t &endTime)
 {
-    std::string sql = "SELECT count(*) FROM "+ sliceTable +
-                      " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ?;";
+    std::string sql = "SELECT count(*) FROM " + sliceTable +
+        " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for SameOperatorsCount.", sqlite3_errmsg(db));

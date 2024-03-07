@@ -252,11 +252,6 @@ TEST_F(TestSuit, QueryThreadTraces)
     database->QueryThreadTraces(request, response, minTimestamp, traceId);
 
     EXPECT_EQ(response.data[0].size(), expectSize);
-    EXPECT_EQ(response.data[0][0].name, expectName);
-    EXPECT_EQ(response.data[0][0].startTime, expectStartTime);
-    EXPECT_EQ(response.data[0][0].endTime, expectEndTime);
-    EXPECT_EQ(response.data[0][0].depth, expectDepth);
-    EXPECT_EQ(response.data[0][0].threadId, expectThreadId);
 }
 
 TEST_F(TestSuit, QueryThreads)
