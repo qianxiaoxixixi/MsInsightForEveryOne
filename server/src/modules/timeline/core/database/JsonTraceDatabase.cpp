@@ -1201,7 +1201,7 @@ void JsonTraceDatabase::CommitData()
     }
 }
 
-int JsonTraceDatabase::SearchSliceNameCount(const std::string &name)
+int JsonTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
     std::string sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like '%'||?||'%'";
     auto stmt = CreatPreparedStatement(sql);
@@ -1209,7 +1209,7 @@ int JsonTraceDatabase::SearchSliceNameCount(const std::string &name)
         ServerLog::Error("QuerySliceNameCount failed!.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(name);
+    auto resultSet = stmt->ExecuteQuery(params.searchContent);
     if (resultSet->Next()) {
         return resultSet->GetInt32(resultStartIndex);
     }

@@ -34,11 +34,13 @@ list(APPEND DIC_PERFORMANCE_TEST_LIST
         ${DIC_SERVER_SRC}
         ${DIC_CHANNEL_SRC})
 
-add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp)
+add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
+        FullDbTestSuit.cpp)
 add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
+            -static
             gtest_main
             gmock_main
             uv_a

@@ -28,6 +28,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             if (!session) {
                 return;
             }
+            session.isFullDb = unitData.isFullDb;
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
                     handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
@@ -125,6 +126,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const session = store.sessionStore.activeSession as Session;
+        session.isFullDb = false;
         const removeUnits = session.pinnedUnits.concat(session.units).filter((unit) => {
             const metadata = unit.metadata as any;
             const isSameDataPath = dataSource.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;

@@ -55,6 +55,9 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 {
     std::unique_lock<std::mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
+    if (std::strcmp(fileId.c_str(), "Host") == 0) {
+        it = traceDatabaseMap.begin();
+    }
     if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;

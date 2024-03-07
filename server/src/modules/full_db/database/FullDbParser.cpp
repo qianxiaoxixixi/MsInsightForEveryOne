@@ -107,12 +107,14 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
 
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
-        Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::FINISH_ALL);
     }
-    SendHostEvent(token);
+    for (auto rankId: rankIds) {
+        Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
+    }
+    SendHostEvent(token, rankIds[0]);
 }
 
-void FullDbParser::SendHostEvent(const std::string &token)
+void FullDbParser::SendHostEvent(const std::string &token, const std::string &fileId)
 {
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
@@ -125,8 +127,9 @@ void FullDbParser::SendHostEvent(const std::string &token)
     event->result = true;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = "Host";
+    event->body.isFullDb = true;
     auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase("Host"));
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:Host");
         return;

@@ -232,12 +232,8 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             let hasMatchUnit = false;
             unit.children.forEach(processUnit => {
                 const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName);
-                hasMatchUnit = hasMatchUnit || isProcessUnitMatch;
-                if (!isProcessUnitMatch) {
-                    processUnit.isDisplay = false;
-                } else {
-                    processUnit.isDisplay = true;
-                }
+                processUnit.isDisplay = isProcessUnitMatch || findMatchUnit(processUnit, selectValues);
+                hasMatchUnit = hasMatchUnit || processUnit.isDisplay;
             });
             if (!hasMatchUnit) {
                 unit.isDisplay = false;
@@ -261,6 +257,16 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             }
         });
     });
+};
+
+const findMatchUnit = (unit: InsightUnit, selectValues: string[]): boolean => {
+    let hasMatchUnit = false;
+    unit.children?.forEach(processUnit => {
+        const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName);
+        processUnit.isDisplay = isProcessUnitMatch || findMatchUnit(processUnit, selectValues);
+        hasMatchUnit = hasMatchUnit || processUnit.isDisplay;
+    });
+    return hasMatchUnit;
 };
 
 const setAllUnitsDisplay = (session: Session): void => {
