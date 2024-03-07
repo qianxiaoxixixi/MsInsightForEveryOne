@@ -65,22 +65,12 @@ export const zipStatusData = <T extends { startTime: number; duration: number; t
         return data;
     }
     const result: T[] = [];
-
-    // when data size is relatively small, filter out redundant data that may be drawn into the same pixel
     if (data.length <= width) {
-        const timeToPx = (ts: number): number => Math.floor(width / (end - start) * (ts - start));
-        let lastPx: number | undefined;
         let lastData: T | undefined;
         for (const elem of data) {
-            const px = timeToPx(elem.startTime);
-            if (px === lastPx) {
-                lastData = elem;
-                continue;
-            }
             if (lastData !== undefined) {
                 result.push(lastData);
             }
-            lastPx = px;
             lastData = elem;
         }
         if (lastData !== undefined) {

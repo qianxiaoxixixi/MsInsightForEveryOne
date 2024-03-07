@@ -24,7 +24,6 @@ import { createCounterParam, createStackStatusParam, createStatusParam } from '.
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
-import { getTimestamp } from '../../utils/humanReadable';
 import { generateFlowParam, generateLinkDetail, slicesListDetail } from './details';
 import { colorPalette } from './utils';
 import React, { useEffect, useState, useMemo } from 'react';
@@ -99,7 +98,7 @@ const singleSliceDetail = singleData({
     name: 'SingleSlice',
     renderFields: [
         ['Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
-        ['Start', data => getTimestamp(data.startTime ?? 0, { precision: 'ns' }), isHiddenStartTime],
+        ['Start', (data: AscendSliceDetail): string => getDetailTimeDisplay(data.startTime ?? 0), isHiddenStartTime],
         ['Wall Duration', data => getDetailTimeDisplay(data.duration), isHiddenDuration],
         ['Self Time', data => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime],
         ['Input Shapes', (data: AscendSliceDetail): string => getDisplay(data.inputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputShapes)],
