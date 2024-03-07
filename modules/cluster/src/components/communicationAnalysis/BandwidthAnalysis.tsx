@@ -43,7 +43,11 @@ function wrapData(data: any): any {
     });
     const sdma = data.find((item: any) => item.transportType === 'SDMA');
     sdma.largePacketRatio = '/';
-    const hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE');
+    const sio = data.find((item: any) => item.transportType === 'SIO');
+    let hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE');
+    if (sio !== undefined) {
+        hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE' || item.transportType === 'SIO');
+    }
     const rdma = data.find((item: any) => item.transportType === 'RDMA');
     return [{ ...sdma, children: hp }, rdma];
 }
@@ -54,6 +58,7 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
         InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName, props.stage);
         InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName, props.stage);
         InitPacketAndBandwidthCharts('RDMA', props.iterationId, props.rankId, props.operatorName, props.stage);
+        InitPacketAndBandwidthCharts('SIO', props.iterationId, props.rankId, props.operatorName, props.stage);
     }, []);
     return (
         <div className={'bandwidthChart'}>
@@ -74,6 +79,12 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
                     <div className={'chartDiv'}>
                         <div style={{ margin: '20px', fontSize: ' 2rem' }}>RDMA</div>
                         <div id={'RDMA'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
+                    </div>
+                </Col>
+                <Col span={8}>
+                    <div className={'chartDiv'}>
+                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>SIO</div>
+                        <div id={'SIO'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
                     </div>
                 </Col>
             </Row>
@@ -136,8 +147,17 @@ async function wrapBandwidthData(domId: string, iterationId: number,
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];
+    // 如果返回内容为空字符串，说明数据库中不存在数据，此时，对应的带宽图做隐藏处理
+    if (distributionData === '') {
+        const chartDom = document.getElementById(domId);
+        const chartParentDom = chartDom?.parentElement?.parentElement;
+        if (chartParentDom) {
+            (chartParentDom as HTMLElement).style.display = 'none';
+        }
+    }
+
     if (distributionData === '{}' || distributionData === null ||
-        distributionData === undefined || distributionData === 'null') {
+        distributionData === undefined || distributionData === 'null' || distributionData === '') {
         return null;
     }
     const distributionDataJson: Distribution = JSON.parse(distributionData);

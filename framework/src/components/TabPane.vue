@@ -229,7 +229,7 @@ function toggleTab(index: number): void {
               Licensed to Huawei Technologies CO.LTD
             </li>
             <li>
-              Copyright © 2010-{{ fullYear.valueOf() }} Ascend Insight s.r.0
+              Copyright © 2010-{{ fullYear.valueOf() }} Ascend Insight
             </li>
           </ul>
         </el-dialog>
