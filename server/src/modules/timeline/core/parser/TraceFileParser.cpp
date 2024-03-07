@@ -183,7 +183,7 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::
                 return result;
             }
             int64_t start = file.tellg();
-            file.seekg(0 - bufferLength, std::ifstream::end);
+            file.seekg(0 - endBufferLength, std::ifstream::end);
             if (SeekRegexPosition(file, R"(\}\s*\]\s*\})")) {
                 int64_t end = file.tellg();
                 result.emplace_back(start + 1, end); // 此处的1表示跳过R"(\[\s*\{)"中的"["
@@ -204,8 +204,8 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::
         int64_t start = file.tellg();
         std::string endRegex;
         if (start + blockSize >= fileSize) {
-            file.seekg(0 - bufferLength, std::ifstream::end);
-            endRegex = R"(\}\s*\])";
+            file.seekg(0 - endBufferLength, std::ifstream::end);
+            endRegex = R"(\}\s*\]|\}\s*,\s*\])";
             endFlag = true;
         } else {
             file.seekg(blockSize, std::ifstream::cur);
@@ -224,8 +224,8 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::
 bool TraceFileParser::SeekCharPosition(std::ifstream &file, char c)
 {
     auto cur = file.tellg();
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    file.read(buffer.get(), bufferLength);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(startBufferLength);
+    file.read(buffer.get(), startBufferLength);
     int64_t readCount = file.gcount();
     if (readCount <= 0) {
         ServerLog::Error("Seek char. Failed to read file.");
@@ -245,8 +245,8 @@ bool TraceFileParser::SeekCharPosition(std::ifstream &file, char c)
 bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &regex)
 {
     auto cur = file.tellg();
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    file.read(buffer.get(), bufferLength);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(endBufferLength);
+    file.read(buffer.get(), endBufferLength);
     int64_t readCount = file.gcount();
     if (readCount <= 0) {
         ServerLog::Error("Seek regex. Failed to read file.");
@@ -289,6 +289,9 @@ void TraceFileParser::Reset()
     for (auto &conn : connList) {
         std::string path = conn->GetDbPath();
         conn->Stop();
+        if (!FileUtil::RemoveFile(path)) {
+            ServerLog::Error("Failed to remove file. ", path);
+        }
     }
     trackIdMap.clear();
     trackId = 0;
