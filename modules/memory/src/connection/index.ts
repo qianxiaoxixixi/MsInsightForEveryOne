@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import { Console as console } from '../utils/Console';
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 type SendParams<T extends EventHanlder> = {

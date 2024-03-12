@@ -192,10 +192,9 @@ function toggleTab(index: number): void {
     <div class="tab-pane">
         <div class="tab-titles">
             <el-menu class="el-menu-title" mode="horizontal" background-color="var(--color-background)" router>
-                <template
-                    v-for="(moduleConfig, index) in modulesConfig"
-                    :key="`${index}-${moduleConfig.name}`">
+                <template v-for="(moduleConfig, index) in modulesConfig">
                     <el-menu-item
+                        :key="`title_${index}_${moduleConfig.name}`"
                         v-if="isShow(moduleConfig)"
                         @click="() => toggleTab(index)"
                         :class="index === activeModule && 'active'"
@@ -209,9 +208,9 @@ function toggleTab(index: number): void {
             </el-icon>
         </div>
         <div class="tab-body">
-            <template v-for="(moduleConfig, index) in modulesConfig"
-                      :key="`${index}-${moduleConfig.name}`">
+            <template v-for="(moduleConfig, index) in modulesConfig">
                 <iframe
+                    :key="`frame-${index}-${moduleConfig.name}`"
                     v-if="isShow(moduleConfig) && !session.isVscode"
                     v-bind={...moduleConfig.attributes}
                     :style="{display:activeModule === index?'block':'none'}"
