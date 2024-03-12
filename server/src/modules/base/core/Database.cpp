@@ -276,7 +276,7 @@ bool Database::CheckTableExist(const std::string& tableName)
     std::string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name=?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Failed prepare sql. ", stmt->GetErrorMessage());
+        ServerLog::Error("Failed prepare sql. ");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(tableName);
