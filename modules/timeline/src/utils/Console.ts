@@ -4,23 +4,25 @@
 
 type ConsoleType = 'log' | 'error' | 'warn' | 'info';
 class CustomConsole {
-    print(type: ConsoleType, msg: any): void {
-        // 本地调试： console[type](msg)
+    index: number = 0;
+    record: Record<number, unknown> = {};
+    print(type: ConsoleType, msg: unknown): void {
+        this.record[this.index++ % 1000] = msg;
     }
 
-    log(...message: any): void {
-       this.print('log', message);
+    log(message: any): void {
+        this.print('log', message);
     }
 
-    error(...message: any): void {
+    error(message: any): void {
         this.print('error', message);
     }
 
-    warn(...message: any): void {
+    warn(message: any): void {
         this.print('warn', message);
     }
 
-    info(...message: any): void {
+    info(message: any): void {
         this.print('info', message);
     }
 }

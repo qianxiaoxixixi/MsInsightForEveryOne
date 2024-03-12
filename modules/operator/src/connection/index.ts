@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import { Console as console } from '../utils/Console';
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 type SendParams<T extends EventHanlder> = {
@@ -35,8 +39,6 @@ abstract class BaseConnector {
                     this.awaitFetch(res);
                 } else if (listener) {
                     listener.forEach(cb => cb?.(res));
-                } else if (['mouseover'].includes(res.data.event)) {
-                    // 鼠标事件，无操作
                 } else {
                     console.log(this.printErrMsg('missed [event] in your message, please check your params, or maybe have an invalid send'));
                 }
