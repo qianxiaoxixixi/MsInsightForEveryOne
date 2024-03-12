@@ -88,7 +88,7 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
                 (session as any)[key] = data[key];
             }
         });
-        session.renderId++;
+        session.renderId = session.renderId++ % 1000;
     });
 };
 
