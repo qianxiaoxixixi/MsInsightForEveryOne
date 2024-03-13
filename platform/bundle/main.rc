@@ -23,5 +23,5 @@ BLOCK "VarFileInfo" {
 VALUE "Translation", 0x0, 0x04b0
 }
 }
-main_icon ICON "../resources/images/icons/main.ico"
+main_icon ICON "../resources/images/icons/mindstudio.ico"
 

@@ -15,9 +15,9 @@ Name "Ascend Insight"
 !define MUI_FINISHPAGE_RUN  "$INSTDIR\ascend_insight.exe"
 
 ; Modern UI settings
-!define MUI_ICON "resources\images\icons\main.ico"
+!define MUI_ICON "resources\images\icons\mindstudio.ico"
 ; Set the uninstaller icon
-!define MUI_UNICON "resources\images\icons\main.ico"
+!define MUI_UNICON "resources\images\icons\mindstudio.ico"
 
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\nsis.bmp"
