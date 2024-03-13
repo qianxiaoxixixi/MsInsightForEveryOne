@@ -66,7 +66,7 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
 
     let resource_path = root_path.to_path_buf();
     let window: wry::application::window::Window = WindowBuilder::new()
-        .with_title("Ascend Insight")
+        .with_title("Ascend Insight (powered by MindStudio)")
         .with_maximized(true)
         .build(&event_loop)
         .unwrap();
@@ -74,7 +74,7 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
     #[cfg(windows)]
     {
         use wry::application::platform::windows::IconExtWindows;
-        window.set_window_icon(Icon::from_path(resource_path.join("resources/images/icons/main.ico"), None).ok());
+        window.set_window_icon(Icon::from_path(resource_path.join("resources/images/icons/mindstudio.ico"), None).ok());
     }
 
     let _webview = WebViewBuilder::new(window)
