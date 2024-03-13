@@ -194,6 +194,7 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
+    event.end = event.ts + event.dur;
     std::tuple<int64_t, std::string, std::string> thread = {event.trackId, event.tid, event.pid};
     database->AddThreadCache(thread);
     database->InsertSlice(event);
@@ -212,6 +213,7 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
         event.pid = std::to_string(GetPid(event.processName));
         event.tid = std::to_string(GetTid(event.processName, event.threadName));
         event.trackId = GetTrackId(event.pid, event.tid);
+        event.end = event.ts + event.dur;
         database->InsertSimulationSlice(event);
     }
 

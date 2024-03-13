@@ -22,6 +22,7 @@ struct Slice : public Event {
     std::string tid;
     int64_t ts = 0;
     int64_t dur = 0;
+    int64_t end = 0;
     std::string pid;
     std::string name;
     std::string processName;
