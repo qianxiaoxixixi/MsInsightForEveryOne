@@ -11,6 +11,7 @@
 #include "TraceDatabaseHelper.h"
 #include "JsonTraceDatabase.h"
 
+
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
@@ -40,10 +41,10 @@ bool JsonTraceDatabase::InitStmt()
 bool JsonTraceDatabase::InitSliceFlowCounterStmt()
 {
     std::string sql = "INSERT INTO " + sliceTable +
-        " (timestamp, duration, name, track_id, cat, args, cname) VALUES"
-        " (?,?,?,?,?,?,?)";
+        " (timestamp, duration, name, track_id, cat, args, cname, end_time) VALUES"
+        " (?,?,?,?,?,?,?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?)");
     }
     insertSliceStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" + " VALUES (?,?,?,?,?,?)";
@@ -132,7 +133,7 @@ bool JsonTraceDatabase::CreateTable()
     std::string sql = "CREATE TABLE " + sliceTable +
         " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
         " overlapDuration INTEGER, notOverlapDuration INTEGER,"
-        " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT);" +
+        " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT, end_time INTEGER);" +
         "CREATE TABLE " + threadTable + " (track_id INTEGER PRIMARY KEY, tid TEXT, pid TEXT, thread_name TEXT," +
         " thread_sort_index INTEGER);" + "CREATE TABLE " + processTable +
         " (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT," + " process_sort_index INTEGER);" + "CREATE TABLE " +
@@ -157,12 +158,26 @@ bool JsonTraceDatabase::CreateIndex()
         ServerLog::Error("Failed to creat index. Database is not open.");
         return false;
     }
-    std::string sql = "CREATE INDEX " + idIndex + " ON " + sliceTable + " (id);" + "CREATE INDEX " + trackIdTimeIndex +
-        " ON " + sliceTable + " (track_id, timestamp);" + "CREATE INDEX " + flowIndex + " ON " + flowTable +
-        " (track_id, timestamp);";
+    std::string sql = "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp);" +
+        "CREATE INDEX " + flowIndex + " ON " + flowTable + " (track_id, timestamp);";
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateIndex end. time:", dur.count());
+    return true;
+}
+
+bool JsonTraceDatabase::CreateSimpleSliceIndex()
+{
+    auto start = std::chrono::system_clock::now();
+    if (!isOpen) {
+        ServerLog::Error("Failed to creat index. Database is not open.");
+        return false;
+    }
+    std::string sql =
+        "CREATE INDEX " + simpleSliceIndex + " ON " + sliceTable + " (track_id, depth, timestamp, end_time);";
+    ExecSql(sql);
+    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
+    ServerLog::Info("CreateSimpleSliceIndex end. time:", dur.count());
     return true;
 }
 
@@ -206,7 +221,8 @@ bool JsonTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventLi
         return false;
     }
     for (const auto &event : eventList) {
-        refStmt->BindParams(event.ts, event.dur, event.name, event.trackId, event.cat, event.args, event.cname);
+        refStmt->BindParams(event.ts, event.dur, event.name, event.trackId, event.cat, event.args, event.cname,
+            event.end);
     }
     std::unique_lock<std::mutex> lock(mutex);
     if (!refStmt->Execute()) {
@@ -219,10 +235,10 @@ bool JsonTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventLi
 std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetSliceStmt(uint64_t paramLen)
 {
     std::string sql = "INSERT INTO " + sliceTable +
-        " (timestamp, duration, name, track_id, cat, args, cname) VALUES "
-        " (?,?,?,?,?,?,?)";
+        " (timestamp, duration, name, track_id, cat, args, cname, end_time) VALUES "
+        " (?,?,?,?,?,?,?,?)";
     for (int i = 0; i < paramLen - 1; ++i) {
-        sql.append(",(?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
 }
@@ -564,16 +580,8 @@ void JsonTraceDatabase::UpdateSliceDepth()
 bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
     Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
-    if (requestParams.timePerPx == 0) {
-        ServerLog::Error("QueryThreadTraces. timePerPx is zero.");
-        return false;
-    }
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec =
         QuerySliceByCondition(requestParams, minTimestamp, traceId);
-    if (std::empty(rowThreadTraceVec)) {
-        return false;
-    }
-    std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
     for (auto &item : rowThreadTraceVec) {
         Protocol::ThreadTraces threadTraces{};
         threadTraces.name = item.name;
@@ -590,75 +598,177 @@ bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams
     }
     return true;
 }
-
 std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByCondition(const UnitThreadTracesParams &requestParams,
     uint64_t minTimestamp, int64_t traceId)
 {
-    std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id, cname,"
-        " ROUND(timestamp / ? ) as rank "
+    Timer timer("JsonTraceDatabase::QuerySliceByCondition");
+    constexpr int minCacheSizeLimit = 200000;
+    std::string sliceCacheKey =
+        requestParams.cardId + "_" + std::to_string(traceId) + "_JsonTraceDatabase::QuerySliceByCondition";
+    std::vector<CacheSlice> cacheSlices = CacheManager::Instance().Get(sliceCacheKey);
+    if (std::empty(cacheSlices)) {
+        QueryAllSliceInRangeByTrackId(traceId, cacheSlices);
+        if (cacheSlices.size() > minCacheSizeLimit) {
+            CacheManager::Instance().Put(sliceCacheKey, cacheSlices);
+        }
+    }
+    std::set<int64_t> ids = ComputeResultIds(requestParams, minTimestamp, cacheSlices);
+    std::vector<RowThreadTrace> ans = QuerySliceByIdList(minTimestamp, traceId, ids);
+    ServerLog::Info("Ans Size is: ", ans.size());
+    return ans;
+}
+
+std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
+    std::set<int64_t> &ids)
+{
+    Timer timer3("JsonTraceDatabase::QuerySliceByIdList");
+    std::string sliceSql = "SELECT id, timestamp, end_time, depth, name, cname from slice where id in ( ? ";
+    for (int i = 0; i < ids.size() - 1; ++i) {
+        sliceSql += ", ? ";
+    }
+    sliceSql += " , ? );";
+    auto sliceStem = CreatPreparedStatement(sliceSql);
+    for (const auto &item : ids) {
+        sliceStem->BindParams(item);
+    }
+    auto sliceResultSet = sliceStem->ExecuteQuery();
+    std::vector<RowThreadTrace> ans;
+    while (sliceResultSet->Next()) {
+        RowThreadTrace rowThreadTrace{};
+        rowThreadTrace.id = sliceResultSet->GetInt64("id");
+        rowThreadTrace.startTime = sliceResultSet->GetUint64("timestamp") - minTimestamp;
+        rowThreadTrace.duration = sliceResultSet->GetUint64("end_time") - rowThreadTrace.startTime - minTimestamp;
+        rowThreadTrace.depth = sliceResultSet->GetInt32("depth");
+        rowThreadTrace.name = sliceResultSet->GetString("name");
+        rowThreadTrace.traceId = traceId;
+        rowThreadTrace.cname = sliceResultSet->GetString("cname");
+        ans.emplace_back(rowThreadTrace);
+    }
+    return ans;
+}
+
+std::set<int64_t> JsonTraceDatabase::ComputeResultIds(const UnitThreadTracesParams &requestParams,
+    uint64_t minTimestamp, std::vector<CacheSlice> &cacheSlices)
+{
+    Timer timer("JsonTraceDatabase::ComputeResultIds");
+    const int maxDataCount = 1000;
+    uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
+    unitTime = unitTime <= 0 ? 1 : unitTime;
+    std::set<int64_t> ids;
+    int32_t curDepth = -1;
+    uint64_t curLimitTime = requestParams.startTime + unitTime + minTimestamp;
+    int64_t tempId = 0;
+    uint64_t tempDuration = 0;
+    for (const auto &item : cacheSlices) {
+        if (item.depth > curDepth) {
+            ids.emplace(tempId);
+            tempId = 0;
+            tempDuration = 0;
+            curLimitTime = requestParams.startTime + unitTime + minTimestamp;
+            curDepth = item.depth;
+        }
+        if (item.timestamp + item.duration < requestParams.startTime + minTimestamp) {
+            continue;
+        }
+        if (item.timestamp > requestParams.endTime + minTimestamp) {
+            continue;
+        }
+        while (item.timestamp > curLimitTime && curLimitTime <= requestParams.endTime + minTimestamp) {
+            ids.emplace(tempId);
+            tempId = 0;
+            tempDuration = 0;
+            curLimitTime += unitTime;
+        }
+        if (tempDuration <= item.duration) {
+            tempId = item.id;
+            tempDuration = item.duration;
+        }
+        while (item.timestamp + item.duration >= curLimitTime && curLimitTime <= requestParams.endTime + minTimestamp) {
+            ids.emplace(tempId);
+            tempId = 0;
+            tempDuration = 0;
+            curLimitTime += unitTime;
+        }
+    }
+    ids.emplace(tempId);
+    return ids;
+}
+
+void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vector<CacheSlice> &cacheSlices)
+{
+    Timer timer("JsonTraceDatabase::QueryAllSliceInRangeByTrackId");
+    // 此处sql需全部走索引且禁止触发回表
+    std::string sql = "SELECT id, timestamp, end_time, depth "
         " FROM " +
         sliceTable +
-        " WHERE track_id = ? AND start_time + duration >= ? AND start_time <= ?"
-        " GROUP BY depth, rank, duration HAVING max(timestamp)"
-        " ORDER BY depth, start_time;";
-    std::vector<RowThreadTrace> rowThreadTraceVec;
+        " WHERE track_id = ? "
+        " ORDER BY depth, timestamp;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
-        return rowThreadTraceVec;
+        return;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, requestParams.timePerPx * middleImage, traceId,
-        requestParams.startTime, requestParams.endTime);
+    auto resultSet = stmt->ExecuteQuery(traceId);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
-        return rowThreadTraceVec;
+        return;
     }
     while (resultSet->Next()) {
-        RowThreadTrace rowThreadTrace{};
-        rowThreadTrace.id = resultSet->GetInt64("id");
-        rowThreadTrace.startTime = resultSet->GetUint64("start_time");
-        rowThreadTrace.duration = resultSet->GetUint64("duration");
-        rowThreadTrace.name = resultSet->GetString("name");
-        rowThreadTrace.depth = resultSet->GetInt32("depth");
-        rowThreadTrace.traceId = resultSet->GetInt64("track_id");
-        rowThreadTrace.cname = resultSet->GetString("cname");
-        rowThreadTraceVec.emplace_back(rowThreadTrace);
+        CacheSlice cacheSlice{};
+        cacheSlice.id = resultSet->GetInt64("id");
+        cacheSlice.timestamp = resultSet->GetUint64("timestamp");
+        cacheSlice.duration = resultSet->GetUint64("end_time") - cacheSlice.timestamp;
+        cacheSlice.depth = resultSet->GetInt32("depth");
+        cacheSlices.emplace_back(cacheSlice);
     }
-    return rowThreadTraceVec;
 }
 
 bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "SELECT timestamp - ? as start_time, duration, timestamp + duration - ? as end_time, "
-        "ROUND(timestamp / ? ) as rank "
+    Timer timer("JsonTraceDatabase::QueryThreadTracesSummary");
+    const int64_t maxDataCount = 30000;
+    int64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
+    unitTime = unitTime <= 0 ? 1 : unitTime;
+    std::pair<int64_t, int64_t> trackIdPair = QueryExtremTrackIdPairByPid(requestParams.processId);
+    std::string sql = "SELECT timestamp , end_time "
         "FROM " +
-        sliceTable + " LEFT JOIN " + threadTable +
-        " USING (track_id) "
-        "WHERE pid = ? AND start_time >= ? AND start_time <= ? "
-        "ORDER BY timestamp;";
+        sliceTable +
+        " WHERE track_id <= ? AND track_id >= ? "
+        " ORDER BY timestamp;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp, summaryPerpix, requestParams.processId,
-        requestParams.startTime, requestParams.endTime);
+    auto resultSet = stmt->ExecuteQuery(trackIdPair.first, trackIdPair.second);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    uint64_t tempStartTime = 0;
+    uint64_t tempEndTime = 0;
     uint64_t maxTime = 0;
     while (resultSet->Next()) {
-        ThreadTracesSummary summary;
-        uint64_t endTime = resultSet->GetUint64("end_time");
-        if (endTime > maxTime) {
-            summary.startTime = resultSet->GetUint64("start_time");
-            summary.duration = resultSet->GetUint64("duration");
-            responseBody.data.emplace_back(summary);
-            maxTime = endTime;
+        uint64_t curStartTime = resultSet->GetUint64("timestamp");
+        uint64_t curEndTime = resultSet->GetUint64("end_time");
+        if (tempEndTime + unitTime >= curStartTime) {
+            tempEndTime = tempEndTime > curEndTime ? tempEndTime : curEndTime;
+            maxTime = tempEndTime;
+            continue;
         }
+        ThreadTracesSummary summary;
+        summary.startTime = tempStartTime - minTimestamp;
+        summary.duration = tempEndTime - tempStartTime;
+        tempStartTime = curStartTime;
+        tempEndTime = curEndTime;
+        responseBody.data.emplace_back(summary);
     }
+    ThreadTracesSummary summary;
+    summary.startTime = tempStartTime - minTimestamp;
+    summary.duration = tempEndTime - tempStartTime;
+    responseBody.data.emplace_back(summary);
+    ServerLog::Info("Summery Size is: ", responseBody.data.size());
     return true;
 }
 
@@ -1267,6 +1377,21 @@ void JsonTraceDatabase::DeleteInvalidFlowData()
     if (!ExecSql(sql)) {
         ServerLog::Error("DeleteInvalidFlowData failed!. ", sqlite3_errmsg(db));
     }
+}
+std::pair<int64_t, int64_t> JsonTraceDatabase::QueryExtremTrackIdPairByPid(std::string pid)
+{
+    std::string sql =
+        "Select max(track_id) As maxTrackId, min(track_id) AS minTrackId from " + threadTable + " where pid = ? ;";
+    auto stmt = CreatPreparedStatement(sql);
+    auto resultSet = stmt->ExecuteQuery(pid);
+    std::pair<int64_t, int64_t> result;
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        int64_t maxTrackId = resultSet->GetUint64(col++);
+        int64_t minTrackId = resultSet->GetUint64(col++);
+        result = std::make_pair(maxTrackId, minTrackId);
+    }
+    return result;
 }
 
 bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,

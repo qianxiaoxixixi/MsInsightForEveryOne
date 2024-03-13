@@ -20,7 +20,7 @@ import type {
     ThreadMetaData,
     ThreadTrace,
 } from '../../entity/data';
-import { createCounterParam, createStackStatusParam, createStatusParam } from './unitFunc';
+import { createCounterParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
@@ -172,9 +172,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 dataSource: threadMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
             };
-            const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
-                const request = await session.simpleCache.tryFetchFromCache('unit/threadTraces', requestKey, requestParam);
+                const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParam });
                 if (request === undefined) {
                     return [];
                 }

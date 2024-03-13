@@ -60,47 +60,7 @@ export const drawMultiBgRoundedRect = (rect: number[], context: CanvasRenderingC
  * @returns the data set that can all be actually rendered.
  */
 export const zipStatusData = <T extends { startTime: number; duration: number; type: string }>(originalData: T[], width: number, start: number, end: number): T[] => {
-    const data = originalData.filter(it => it.startTime < end && (it.duration < 0 || it.startTime + it.duration > start));
-    if (width < 0) {
-        return data;
-    }
-    const result: T[] = [];
-    if (data.length <= width) {
-        let lastData: T | undefined;
-        for (const elem of data) {
-            if (lastData !== undefined) {
-                result.push(lastData);
-            }
-            lastData = elem;
-        }
-        if (lastData !== undefined) {
-            result.push(lastData);
-        }
-        return result;
-    }
-
-    const pxToTime = (px: number): number => start + (end - start) / width * px;
-
-    let dataIndex = 0;
-    for (let pxIndex = 0; pxIndex < width; pxIndex++) {
-        if (dataIndex === data.length) {
-            // all data are processed, the remaining pixels are left as is
-            break;
-        }
-        const nextRange = pxToTime(pxIndex + 1);
-
-        // the next data point is still not coming yet
-        if (data[dataIndex].startTime > nextRange) {
-            continue;
-        }
-
-        // find the last data in range of this pixel
-        while (dataIndex < data.length && data[dataIndex].startTime <= nextRange) {
-            dataIndex++;
-        }
-        result.push(data[dataIndex - 1]);
-    }
-    return result;
+    return originalData;
 };
 
 export const zipTimeSeriesData = (dataset: number[][], width: number, start: number, end: number): number[][] => {

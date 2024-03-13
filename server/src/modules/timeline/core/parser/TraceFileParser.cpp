@@ -130,6 +130,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     }
     database->CreateIndex();
     database->UpdateDepth();
+    database->CreateSimpleSliceIndex();
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }
@@ -299,6 +300,7 @@ void TraceFileParser::Reset()
     TraceTime::Instance().Reset();
     FileParser::Reset();
     ParserStatusManager::Instance().ClearAllParserStatus();
+    CacheManager::Instance().Clear();
     ServerLog::Info("End Reset trace Parser");
 }
 

@@ -1,16 +1,17 @@
-import { ThreadTraceRequest, ThreadTrace, CounterData, CounterMetaData, CounterRequest, ProcessData, ProcessRequest } from '../entity/data';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import type { ThreadTrace, CounterData, CounterMetaData, CounterRequest, ProcessData, ProcessRequest } from '../entity/data';
 import { binarySearchFirstBig, binarySearchLastSmall } from './strategies/utils';
 
 type Method = 'unit/threadTraces' | 'unit/counter' | 'unit/threadTracesSummary'; // store methodKey
 type Handler = (params: Record<string, unknown>, metaData?: unknown) => Promise<ThreadTrace[][] | number[][] | ProcessData[] | undefined>;
 const processorMap = new Map<Method, Function>();
 const handlerMap = new Map<Method, Handler>();
-handlerMap.set('unit/threadTraces', requestThreadTraces);
 handlerMap.set('unit/counter', requestCounterData);
 handlerMap.set('unit/threadTracesSummary', requestProcessData);
 
 processorMap.set('unit/threadTracesSummary', processArr);
-processorMap.set('unit/threadTraces', sliceArr);
 processorMap.set('unit/counter', counterArr);
 
 export class SimpleCache {
@@ -19,12 +20,15 @@ export class SimpleCache {
 
     constructor() {
         this.data = new Map();
-        this.data.set('unit/threadTraces', new Map<string, Record<string, unknown>>());
         this.data.set('unit/counter', new Map<string, Record<string, unknown>>());
         this.data.set('unit/threadTracesSummary', new Map<string, Record<string, unknown>>());
     }
 
     tryFetchFromCache = async(method: Method, requestKey: string, params: Record<string, unknown> & { timePerPx: number }, metaData?: unknown): Promise<Record<string, unknown> | undefined> => {
+        const cacheData = this.data.get(method).get(requestKey);
+        if (method === 'unit/threadTracesSummary' && cacheData !== undefined) {
+            return { data: cacheData };
+        }
         if (this.data.get(method).get(requestKey) === undefined || this.timePerPx !== params.timePerPx) {
             try {
                 const result = await handlerMap.get(method)?.(params, metaData);
@@ -69,22 +73,6 @@ async function requestProcessData(requestParam: Record<string, unknown>): Promis
     } catch (e) {
         console.warn('request threadTrace info failed', e);
         return undefined;
-    }
-}
-
-async function requestThreadTraces(requestParam: Record<string, unknown>): Promise<ThreadTrace[][]> {
-    try {
-        const { store } = require('../store');
-        const { sessionStore } = store;
-        const session = sessionStore.activeSession;
-        const param: Record<string, unknown> = Object.assign({}, requestParam);
-        param.startTime = 0;
-        param.endTime = session?.endTimeAll ?? 0;
-        const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTraces', params: param });
-        return request.data as ThreadTrace[][];
-    } catch (e) {
-        console.warn('request threadTrace info failed', e);
-        return [];
     }
 }
 
@@ -136,22 +124,6 @@ function processArr(params: Record<string, unknown>, data: Map<string, unknown>,
     const startIndex = binarySearchLastSmall(result, (data: number[]) => data[0], start);
     const endIndex = binarySearchFirstBig(result, (data: number[]) => data[0], end);
     return result.slice(startIndex === 0 ? startIndex : startIndex - 1, endIndex + 2);
-}
-
-function sliceArr(params: Record<string, unknown>, data: Map<string, any>, paramsKey: string): any {
-    const requestParams = params as ThreadTraceRequest;
-    const start = requestParams.startTime;
-    const end = requestParams.endTime;
-
-    const result = data.get('unit/threadTraces').get(paramsKey);
-    return result.map((subArr: unknown[]) => {
-        if (subArr.length === 0) {
-            return [];
-        }
-        const startIndex = binarySearchLastSmall(subArr, (data: any) => data.startTime, start);
-        const endIndex = binarySearchFirstBig(subArr, (data: any) => data.startTime, end);
-        return subArr.slice(startIndex, endIndex + 1);
-    });
 }
 
 function counterArr(params: Record<string, unknown>, data: Map<string, unknown>, paramsKey: string): unknown {

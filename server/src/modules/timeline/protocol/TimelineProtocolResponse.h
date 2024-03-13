@@ -113,7 +113,7 @@ struct UnitThreadDetailResponse : public Response {
 
 struct FlowName {
     FlowName(std::string name, std::string id, std::string type)
-        : title(std::move(name)), flowId(std::move(id)), type(std::move(type)) {};
+        : title(std::move(name)), flowId(std::move(id)), type(std::move(type)){};
     std::string title;
     std::string flowId;
     std::string type; // s, f
@@ -191,7 +191,6 @@ struct SimpleSlice {
     int32_t depth = 0;
     std::string name;
 };
-
 struct SearchResult {
     std::string rankId;
     int count = 0;
@@ -295,7 +294,7 @@ struct SystemViewBody {
     uint64_t currentPage;
 };
 
-struct SystemViewResponse  : public Response {
+struct SystemViewResponse : public Response {
     SystemViewResponse() : Response(REQ_RES_UNIT_SYSTEM_VIEW) {}
     SystemViewBody body;
 };
@@ -324,7 +323,7 @@ struct KernelDetailsBody {
     uint64_t currentPage;
 };
 
-struct KernelDetailsResponse  : public Response {
+struct KernelDetailsResponse : public Response {
     KernelDetailsResponse() : Response(REQ_RES_UNIT_KERNEL_DETAILS) {}
     KernelDetailsBody body;
 };
@@ -335,7 +334,7 @@ struct OneKernelBody {
     std::string pid;
 };
 
-struct OneKernelResponse  : public Response {
+struct OneKernelResponse : public Response {
     OneKernelResponse() : Response(REQ_RES_ONE_KERNEL_DETAILS) {}
     OneKernelBody body;
 };
@@ -352,7 +351,7 @@ struct UnitThreadsOperatorsBody {
     uint64_t currentPage;
 };
 
-struct UnitThreadsOperatorsResponse  : public Response {
+struct UnitThreadsOperatorsResponse : public Response {
     UnitThreadsOperatorsResponse() : Response(REQ_RES_SAME_OPERATORS_DURATION) {}
     UnitThreadsOperatorsBody body;
 };

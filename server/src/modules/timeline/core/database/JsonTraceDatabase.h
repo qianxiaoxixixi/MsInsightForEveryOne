@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_JSON_TRACE_DATABASE_H
 
 #include "VirtualTraceDatabase.h"
+#include "CacheManager.h"
 
 namespace Dic {
 namespace Module {
@@ -22,6 +23,7 @@ public:
 
     bool CreateTable();
     bool CreateIndex();
+    bool CreateSimpleSliceIndex();
     bool DropTable();
     bool InitStmt();
     void ReleaseStmt();
@@ -48,6 +50,7 @@ public:
     void DropDepthTempTable();
     void UpdateSliceDepth();
     void DeleteInvalidFlowData();
+    std::pair<int64_t, int64_t> QueryExtremTrackIdPairByPid(std::string pid);
 
     // search
     bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
@@ -108,8 +111,8 @@ private:
     const std::string processTable = "process";
     const std::string flowTable = "flow";
     const std::string counterTable = "counter";
-    const std::string idIndex = "id_index";
-    const std::string trackIdTimeIndex = "track_id_time_index";
+    const std::string trackIdTimeIndex = "track_id_timestamp_end_time_index";
+    const std::string simpleSliceIndex = "track_id_depth_timestamp_end_time_index";
     const std::string flowIndex = "flow_id_time_index";
     const std::string kernelDetail = "kernel_detail";
     const int cacheSize = 1000;
@@ -186,6 +189,14 @@ private:
 
     int64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
         std::vector<SliceDto> &sliceDtoVec);
+
+    void QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vector<CacheSlice> &cacheSlices);
+
+    static std::set<int64_t> ComputeResultIds(const Protocol::UnitThreadTracesParams &requestParams,
+        uint64_t minTimestamp, std::vector<CacheSlice> &cacheSlices);
+
+    std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
+        std::set<int64_t> &ids);
 };
 } // end of namespace Timeline
 } // end of namespace Module
