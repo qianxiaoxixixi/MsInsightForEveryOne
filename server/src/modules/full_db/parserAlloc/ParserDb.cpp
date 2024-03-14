@@ -128,6 +128,7 @@ std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const s
             Timeline::DataBaseManager::Instance().GetTraceDatabase(file));
         if (database == nullptr) {
             ServerLog::Error("Failed to get connection.");
+            continue;
         }
         std::vector<std::string> rankIds = database->QueryRankId();
         for (auto rank : rankIds) {
