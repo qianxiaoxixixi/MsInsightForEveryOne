@@ -69,6 +69,7 @@ private:
     std::map<std::string, std::vector<SourceFileLine>> apiFiles;
     std::pair<int64_t, int64_t> apiInstrPos;
 
+    void ConvertApiFile(const std::string &jsonStr);
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
     std::unique_ptr<ThreadPool> threadPool;
