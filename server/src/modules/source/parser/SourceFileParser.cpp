@@ -227,7 +227,14 @@ void SourceFileParser::Reset()
     trackId = 0;
     tid = 0;
     pid = 0;
-    dataBlockMap[static_cast<int>(DataTypeEnum::TRACE)].clear();
+
+    dataBlockMap.clear();
+    sourceFiles.clear();
+    traceFiles.clear();
+    apiCores.clear();
+    apiFiles.clear();
+    apiInstrPos = std::make_pair(0, 0);
+
     Timeline::DataBaseManager::Instance().Clear();
     Timeline::TraceTime::Instance().Reset();
     FileParser::Reset();
@@ -326,6 +333,10 @@ std::string SourceFileParser::GetInstr()
         ServerLog::Error("Can't read file,please check file exist or not,file name :", filePath);
         return "";
     }
+    if (!StringUtil::IsUtf8String(content)) {
+        ServerLog::Error("Can't decode a text frame as utf-8,instr content is invalid.");
+        return "";
+    }
     return content;
 }
 
@@ -349,6 +360,10 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
     std::string content(dataSize, '\0');
     if (!file.read(&content[0], static_cast<std::streamsize>(dataSize))) {
         ServerLog::Error("Can't read file,please check file exist or not,file name :", filePath);
+        return "";
+    }
+    if (!StringUtil::IsUtf8String(content)) {
+        ServerLog::Error("Can't decode a text frame as utf-8,source name :", sourceName);
         return "";
     }
     return content;
@@ -388,18 +403,7 @@ void SourceFileParser::ConvertToData()
         jsonStr.resize(dataSize);
         file.read(&jsonStr[0], dataSize);
 
-        rapidjson::Document d;
-        d.Parse(jsonStr.c_str());
-        if (JsonUtil::IsJsonArray(d, "Cores")) {
-            rapidjson::Value &cores = d["Cores"];
-            for (auto &core : cores.GetArray()) {
-                apiCores.emplace_back(core.GetString());
-            }
-        }
-        if (JsonUtil::IsJsonArray(d, "Files")) {
-            rapidjson::Value &fileArray = d["Files"];
-            apiFiles = ConvertToFileMap(fileArray);
-        }
+        ConvertApiFile(jsonStr);
     }
     auto &apiInstrPosArray = dataBlockMap[static_cast<int>(DataTypeEnum::API_INSTR)];
     if (!apiInstrPosArray.empty()) {
@@ -433,6 +437,26 @@ int64_t SourceFileParser::GetSimulationTid(const std::string &fileId, const std:
     }
     simulationTidMap[fileId].emplace(item, ++tid);
     return tid;
+}
+
+void SourceFileParser::ConvertApiFile(const std::string &jsonStr)
+{
+    Document d;
+    try {
+        d.Parse(jsonStr.c_str());
+        if (JsonUtil::IsJsonArray(d, "Cores")) {
+            Value &cores = d["Cores"];
+            for (auto &core : cores.GetArray()) {
+                apiCores.emplace_back(core.GetString());
+            }
+        }
+        if (JsonUtil::IsJsonArray(d, "Files")) {
+            Value &fileArray = d["Files"];
+            apiFiles = ConvertToFileMap(fileArray);
+        }
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse api file,not json.Error is ", e.what());
+    }
 }
 
 std::map<std::string, std::vector<SourceFileLine>> SourceFileParser::ConvertToFileMap(Value &fileArray)

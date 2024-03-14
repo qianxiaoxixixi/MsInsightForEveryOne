@@ -98,6 +98,7 @@ const Index = observer(({ session }: { session: Session }) => {
     const [selectedline, setSelectedline] = useState<number>(-1);
     const [tableHeight, setTableHeight] = useState<number>(1000);
     const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
+    const [renderStatus, setRenderStatus] = useState(session.renderStatus);
 
     const reset = (): void => {
         // 重置选中行数，-1不选中任一行
@@ -191,11 +192,12 @@ const Index = observer(({ session }: { session: Session }) => {
         if (core === '') {
             return [];
         }
-        if (session.Instructions.length === 0) {
+        if (renderStatus !== session.renderStatus || session.Instructions.length === 0) {
             const res = await queryApiInstr();
             runInAction(() => {
                 session.Instructions = JSON.parse(res.instructions).Instructions;
             });
+            setRenderStatus(session.renderStatus);
         }
         const records = session.Instructions;
         const coreIndex = session.coreList.findIndex(item => item === core);
