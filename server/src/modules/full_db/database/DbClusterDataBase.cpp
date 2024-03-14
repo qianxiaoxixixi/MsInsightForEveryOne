@@ -5,6 +5,7 @@
 #include "DbClusterDataBase.h"
 #include "TableDefs.h"
 #include "FileUtil.h"
+#include "JsonUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -109,6 +110,7 @@ bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "hccl_op_name as opName "
                       "FROM " + TABLE_COMM_ANALYZER_MATRIX +
                       " WHERE rank_set = ? AND step = ? AND hccl_op_name = ? ";
+    param.iterationId = "step" + param.iterationId;
     return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
@@ -132,7 +134,9 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
 bool DbClusterDataBase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    std::string sql = "SELECT hccl_op_name, count(*) AS nums  from " + TABLE_COMM_ANALYZER_TIME + " where 1=1 ";
+    std::string sql = "SELECT op_name, count(*) AS nums from (select hccl_op_name as op_name, rank_id, step as "
+                      "iteration_id, rank_set as stage_id from " + TABLE_COMM_ANALYZER_TIME + ") where 1=1 ";
+    param.iterationId = "step" + param.iterationId;
     return ExecuteQueryOperatorsCount(param, resBody, sql);
 }
 
@@ -144,6 +148,7 @@ bool DbClusterDataBase::QueryBandwidthData(Protocol::BandwidthDataParam &param, 
                       "ROUND(large_packet_ratio, 4)  as large_packet_ratio from "
                       + TABLE_COMM_ANALYZER_BANDWIDTH +
                       " WHERE step = ? AND rank_id = ? AND rank_set = ? AND hccl_op_name = ? ";
+    param.iterationId = "step" + param.iterationId;
     return ExecuteQueryBandwidthData(param, resBody, sql);
 }
 
@@ -216,6 +221,7 @@ bool DbClusterDataBase::QueryOperatorNames(Protocol::OperatorNamesParams &reques
               " AND rank_set = ?" +
               " AND rank_id IN " + ranks + " ORDER BY hccl_op_name)";
     }
+    requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryOperatorNames(requestParams, responseBody, sql);
 }
 
@@ -248,15 +254,40 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
               " AND rank_id IN " + ranks +
               " AND hccl_op_name = ?";
     }
+    requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryDurationList(requestParams, responseBody, sql);
 }
 
 bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)
 {
-    std::string baseInfoSql =
-            "select (select rank_set from " + TABLE_COMM_GROUP + " where type == 'collection' ) as stages, "
-            " (select rank_set from " + TABLE_COMM_GROUP + " where type == 'p2p' ) as pp_stages";
-    return ExecuteQueryCommunicationGroup(responseBody, baseInfoSql);
+    std::string baseInfoSql = "select (select REPLACE(REPLACE(rank_set, '(', '['), ')', ']') as stage from " +
+        TABLE_COMM_GROUP +" where type == 'collective' ) as stages, "
+        " (select REPLACE(REPLACE(rank_set, '(', '['), ')', ']') as stage from " +
+        TABLE_COMM_GROUP + " where type == 'p2p' ) as pp_stages";
+    sqlite3_stmt *stmtBaseInfo = nullptr;
+    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
+    if (baseInfoResult != SQLITE_OK) {
+        Server::ServerLog::Error("Failed to Query CommunicationGroup info statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    responseBody.SetObject();
+    auto allocator = responseBody.GetAllocator();
+    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
+        int coll = resultStartIndex;
+        std::string stages(sqlite3_column_string(stmtBaseInfo, coll++));
+        if (!stages.empty()) {
+            std::string stage = "[" + stages + "]";
+            responseBody.AddMember("tpOrDpGroups", Document(kArrayType, &allocator).Parse(stage.c_str()), allocator);
+        }
+        std::string ppStages(sqlite3_column_string(stmtBaseInfo, coll++));
+        if (!ppStages.empty()) {
+            std::string ppStage = "[" + ppStages + "]";
+            responseBody.AddMember("ppGroups", Document(kArrayType, &allocator).Parse(ppStage.c_str()), allocator);
+            responseBody.AddMember("defaultPPSize", responseBody["ppGroups"].Size(), allocator);
+        }
+    }
+    sqlite3_finalize(stmtBaseInfo);
+    return true;
 }
 
 bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
@@ -266,6 +297,7 @@ bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &re
                       " WHERE step = ?" +
                       " AND rank_set = ?" +
                       " ORDER BY hccl_op_name";
+    requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
 }
 }
