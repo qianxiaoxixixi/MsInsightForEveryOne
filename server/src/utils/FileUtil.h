@@ -144,6 +144,7 @@ public:
         }
         DIR *pDir = nullptr;
         struct dirent *pDirent = nullptr;
+        struct stat pathStat;
         std::string tmpPath(path);
         pDir = opendir(tmpPath.c_str());
         if (pDir == nullptr) {
@@ -153,10 +154,17 @@ public:
             if (std::string(pDirent->d_name) == ".." || std::string(pDirent->d_name) == ".") {
                 continue;
             }
-            if (pDirent->d_type == DT_DIR) {
+            std::string fullPath = tmpPath + "/" + pDirent->d_name;
+            if (stat(fullPath.c_str(), &pathStat) != 0) {
+                continue;
+            }
+
+            if (S_ISDIR(pathStat.st_mode)) {
                 folders.emplace_back(pDirent->d_name);
-            } else if (pDirent->d_type == DT_REG) {
+            } else if (S_ISREG(pathStat.st_mode)) {
                 files.emplace_back(pDirent->d_name);
+            } else {
+                Server::ServerLog::Info("Other type : [", pathStat.st_mode, "] : [", pDirent->d_name);
             }
         }
         closedir(pDir);
