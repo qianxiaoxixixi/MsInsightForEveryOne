@@ -29,7 +29,7 @@ private:
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;
     std::string clusterDbPath;
-    bool needClearDb;
+    bool needClearDb = true;
     static bool AttAnalyze(const std::string& selectedPath, const std::string& model);
 };
 } // end of namespace Timeline
