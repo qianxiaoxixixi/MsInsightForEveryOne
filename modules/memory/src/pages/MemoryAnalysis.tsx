@@ -74,7 +74,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setMaxSize(value as number);
     };
 
-    const onSearch = (searchName: string, minimumSize: number, maximumSize: number): void => {
+    const onSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
         if (rankId === undefined) {
             return;
         }
@@ -82,11 +82,16 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             message.warning(i18n.t('Invalid Size Warning'));
             return;
         }
+        let tempCurrent = current;
+        if (resetCurrent) {
+            tempCurrent = 1;
+            setCurrent(1);
+        }
         let param: OperatorMemoryCondition = {
             rankId,
             type: groupId,
             token: session.token,
-            currentPage: current,
+            currentPage: tempCurrent,
             pageSize,
             searchName,
             minSize: minimumSize,
@@ -218,7 +223,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         />
                     </Col>
                     <Col span={4}>
-                        <Label name={<span>GroupBy{hit}</span>} />
+                        <Label name={<span>Group By{hit}</span>} />
                         <Select
                             value={groupId}
                             style={{ width: 180 }}
@@ -287,7 +292,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                     </Col>
                     <Col span={6}>
                         <Button
-                            onClick={() => onSearch(searchEventOperatorName, minSize, maxSize)}
+                            onClick={() => onSearch(searchEventOperatorName, minSize, maxSize, true)}
                             type="primary"
                             style={{ marginRight: 10, width: 100 }}
                             disabled={isBtnDisabled}
