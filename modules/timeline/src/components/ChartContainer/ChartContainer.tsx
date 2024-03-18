@@ -194,6 +194,14 @@ const isMouseOnScrollbar = (e: React.MouseEvent, horizontalScroller: HTMLElement
     return (e.clientX >= maxClientX - THUMB_WIDTH_PX) || (target === horizontalScroller);
 };
 
+function isTargetElement(event: React.MouseEvent): boolean {
+    let ele: HTMLElement | null = event.target as HTMLElement;
+    while (ele !== null && ele !== undefined && ele?.id !== 'root') {
+        ele = ele.parentElement;
+    }
+    return Boolean(ele);
+}
+// eslint-disable-next-line max-lines-per-function
 const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartInteractorHandles>, scrollerRef: React.RefObject<HTMLDivElement>,
     session: Session, interactive?: boolean): InteractorMouseHandlers => {
     const clickPos = useRef<undefined | Pos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
@@ -213,7 +221,9 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         interactorMouseState.lastPos.current = { x: offsetX, y: offsetY };
     };
     const onMouseDown = (e: React.MouseEvent): void => {
-        if (!chartInteractorRef.current || !interactive || session.phase !== 'download' || isMouseOnScrollbar(e, scrollerRef.current)) {
+        const disabled = !isTargetElement(e) || !chartInteractorRef.current || !interactive ||
+            session.phase !== 'download' || isMouseOnScrollbar(e, scrollerRef.current);
+        if (disabled) {
             interactorMouseState.lastPos.current = undefined;
             return;
         }
