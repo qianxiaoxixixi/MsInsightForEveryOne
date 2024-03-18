@@ -188,7 +188,6 @@ export const dragImportSuccessHandler: NotificationHandler = async (data): Promi
                 }
                 session.units.push(unit);
             });
-            session.sortUnits();
         });
         connector.send({
             event: 'updateSession',
