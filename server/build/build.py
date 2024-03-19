@@ -120,15 +120,18 @@ def build_bin(args):
 
     att_dir = os.path.join(OUTPUT_DIR, gxx_type)
     att_bin_dir = os.path.join(att_dir, 'bin')
-    att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
-    build_att = [
-        'pyinstaller', '--collect-submodules', 'cluster_analyse', '--path=' + CLUSTER_ANALYSE_DIR,
-        '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
-    ]
-    if not IS_WINDOWS:
-        build_att.append('-s')
-    output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
-    log_output(output)
+    if not IS_LINUX:
+        att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
+        build_att = [
+            'pyinstaller', '--collect-submodules', 'cluster_analyse', '--path=' + CLUSTER_ANALYSE_DIR,
+            '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
+        ]
+        if not IS_WINDOWS:
+            build_att.append('-s')
+        output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
+        log_output(output)
+    else:
+        shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(att_bin_dir, 'cluster_analyse'), copy_function=shutil.copy2)
 
     build_log('end build.\n')
 

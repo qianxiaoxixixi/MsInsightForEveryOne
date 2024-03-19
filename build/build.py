@@ -175,19 +175,21 @@ def build_light_package(version, os_name):
     # 清理构建缓存
     resource_dir = 'resources'
     preview_path = os.path.join(platform_path, 'preview')
-    profiler_path = os.path.join(platform_path, resource_dir, 'profiler')
     target_path = os.path.join(platform_path, 'target')
-    build_cache_paths = [profiler_path, preview_path, target_path]
+    build_cache_paths = [preview_path, target_path]
     for tmp_path in build_cache_paths:
         if os.path.exists(tmp_path):
             shutil.rmtree(tmp_path)
         os.mkdir(tmp_path)
 
     # 拷贝前后端文件
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'), os.path.join(profiler_path, 'frontend'))
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
-                    os.path.join(profiler_path, 'server'))
     shutil.copytree(os.path.join(platform_path, resource_dir), os.path.join(preview_path, resource_dir))
+    profiler_path = os.path.join(preview_path, resource_dir, 'profiler')
+    os.mkdir(profiler_path, 0o750)
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'),
+                    os.path.join(profiler_path, 'frontend'), copy_function=shutil.copy2)
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
+                    os.path.join(profiler_path, 'server'), copy_function=shutil.copy2)
 
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
@@ -209,10 +211,7 @@ def build_light_package(version, os_name):
             shutil.copyfile(os.path.join(preview_path, tmp), dst_file)
             break
     else:
-        os.chmod(os.path.join(preview_path, Const.ASCEND_INSIGHT), 0o550)
-        server_path = os.path.join(preview_path, resource_dir, 'profiler', 'server')
-        for file in os.listdir(server_path):
-            os.chmod(os.path.join(server_path, file), 0o550)
+        os.chmod(os.path.join(preview_path, Const.ASCEND_INSIGHT), 0o750)
         shutil.make_archive(dst_file[:-4], 'zip', preview_path)
 
 
