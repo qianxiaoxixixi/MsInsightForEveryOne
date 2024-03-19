@@ -53,8 +53,13 @@ void DbClusterDataBase::UpdateClusterParseStatus(std::string status)
 bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
     std::string filePath = responseBody.filePath;
-    responseBody.dataSize = FileUtil::GetFileSize(filePath.c_str());
-    return true;
+    double dataSize = FileUtil::GetFileSize(filePath.c_str());
+    std::string baseInfoSql = "select '" + filePath +
+        "' as filePath, (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
+        "ClusterStepTraceTime where \"index\" !='')) as rank , (select json_group_array(step) from ("
+        "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +
+        " where \"index\" !='')) as step, '" + std::to_string(dataSize) + "' as dataSize ";
+    return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
 }
 
 bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
