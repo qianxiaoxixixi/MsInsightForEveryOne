@@ -508,8 +508,6 @@ public:
                 std::string tmpPath = FileUtil::SplicePath(path, file);
                 if (std::regex_match(file, fileRegex)) {
                     matchedFiles.push_back(tmpPath);
-                    // 为避免文件重复，同一个目录下，找到一个即可
-                    break;
                 }
             }
         };

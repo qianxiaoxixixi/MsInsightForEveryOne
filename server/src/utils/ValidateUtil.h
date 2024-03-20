@@ -36,6 +36,16 @@ namespace Dic {
             }
             return true;
         }
+
+        static bool CheckCsvFileList(const std::vector<std::string>& fileNameList)
+        {
+            for (const auto &fileName: fileNameList) {
+                if (!CheckCsvFile(fileName)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_VALIDATEUTIL_H
