@@ -27,7 +27,6 @@ module.exports = {
     configure: (webpackConfig) => {
       // Because CEF has issues with loading source maps properly atm,
       // lets use the best we can get in line with `inline-source-map`
-      webpackConfig.devtool = 'inline-source-map';
       webpackConfig.plugins.push(...[ new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin() ]);
       return webpackConfig
     },
