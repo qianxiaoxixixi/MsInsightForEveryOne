@@ -66,6 +66,7 @@ void TimelineProtocol::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToParseClusterCompletedEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_STEP2_COMPLETED, ToParseClusterStep2CompletedEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_MEMORY_COMPLETED, ToParseMemoryCompletedEventJson);
+    eventToJsonFactory.emplace(EVENT_MODULE_RESET, ToModuleResetEventJson);
 }
 
 #pragma region <<Json To Request>>
@@ -501,6 +502,11 @@ std::optional<document_t> TimelineProtocol::ToParseClusterStep2CompletedEventJso
 std::optional<document_t> TimelineProtocol::ToParseMemoryCompletedEventJson(const Event &event)
 {
     return ToEventJson<ParseMemoryCompletedEvent>(dynamic_cast<const ParseMemoryCompletedEvent &>(event));
+}
+
+std::optional<document_t> TimelineProtocol::ToModuleResetEventJson(const Event &event)
+{
+    return ToEventJson<ModuleResetEvent>(dynamic_cast<const ModuleResetEvent &>(event));
 }
 #pragma endregion
 } // namespace Protocol

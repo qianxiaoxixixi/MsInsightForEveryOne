@@ -73,6 +73,10 @@ bool KernelParse::Parse(const std::vector<std::string>& pathList, const std::str
         return false;
     }
     SetParseCallBack(token);
+    if (kernelFiles.size() > 1) {
+        // 给前端发消息，清空原有数据
+        ParseEndCallBack("", true, "");
+    }
     for (const auto& kernelFile : kernelFiles) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + kernelFile.second,
                                                                   Timeline::ParserStatus::INIT);
@@ -205,14 +209,23 @@ void KernelParse::ParseCallBack(const std::string &token, const std::string &fil
         ServerLog::Error("Failed to get session token for summary callback.");
         return;
     }
-    auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
-    event->moduleName = Protocol::ModuleType::OPERATOR;
-    event->token = token;
-    event->result = true;
-    event->data.rankId = fileId;
-    event->data.status = result;
-    event->data.error = msg;
-    session->OnEvent(std::move(event));
+    if (fileId.empty()) {
+        auto event = std::make_unique<Protocol::ModuleResetEvent>();
+        event->moduleName = Protocol::ModuleType::OPERATOR;
+        event->token = token;
+        event->result = true;
+        event->reset = true;
+        session->OnEvent(std::move(event));
+    } else {
+        auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
+        event->moduleName = Protocol::ModuleType::OPERATOR;
+        event->token = token;
+        event->result = true;
+        event->data.rankId = fileId;
+        event->data.status = result;
+        event->data.error = msg;
+        session->OnEvent(std::move(event));
+    }
 }
 
 void KernelParse::SetParseCallBack(const std::string& token)

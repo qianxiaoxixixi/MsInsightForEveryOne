@@ -309,6 +309,9 @@ bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::str
         return false;
     }
     SetParseCallBack(token);
+    if (memoryFiles.size() > 1) {
+        ParseEndCallBack("", true, "");
+    }
     for (const auto& memoryFile : memoryFiles) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + memoryFile.first,
                                                                   Timeline::ParserStatus::INIT);
@@ -402,17 +405,27 @@ void MemoryParse::ParseCallBack(const std::string &token, const std::string &fil
         return;
     }
 
-    auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
-    event->moduleName = Protocol::ModuleType::TIMELINE;
-    event->token = token;
-    event->result = true;
-    event->isCluster = MemoryParse::Instance().isCluster;
-    std::vector<Protocol::MemorySuccess> memoryResult;
-    for (const auto& [rank, info] : MemoryParse::Instance().ranks) {
-        memoryResult.push_back(info);
+    // 如果输入fileId
+    if (fileId.empty()) {
+        auto event = std::make_unique<Protocol::ModuleResetEvent>();
+        event->moduleName = Protocol::ModuleType::MEMORY;
+        event->token = token;
+        event->result = true;
+        event->reset = true;
+        session->OnEvent(std::move(event));
+    } else {
+        auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
+        event->moduleName = Protocol::ModuleType::TIMELINE;
+        event->token = token;
+        event->result = true;
+        event->isCluster = MemoryParse::Instance().isCluster;
+        std::vector<Protocol::MemorySuccess> memoryResult;
+        for (const auto& [rank, info] : MemoryParse::Instance().ranks) {
+            memoryResult.push_back(info);
+        }
+        event->memoryResult = memoryResult;
+        session->OnEvent(std::move(event));
     }
-    event->memoryResult = memoryResult;
-    session->OnEvent(std::move(event));
 }
 
 } // end of namespace Memory
