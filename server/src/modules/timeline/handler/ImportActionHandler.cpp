@@ -63,7 +63,7 @@ std::pair<std::string, ParserType> ImportActionHandler::GetImportType(const std:
         result = std::make_pair(pathList[0], ParserType::DB);
     } else if (!traceFiles.empty() or !clusterPath.empty()) {
         result = std::make_pair(pathList[0], ParserType::JSON);
-    } else if (!FileUtil::IsFolder(pathList[0])) {
+    } else if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
         result = std::make_pair(pathList[0], ParserType::BIN);
     }
     return result;

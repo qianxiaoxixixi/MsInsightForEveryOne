@@ -20,6 +20,7 @@ namespace Dic {
     const std::string msprofDBReg = R"(report_[0-9]{1,16}\.db$)";
     const std::string pytorchDBReg = R"(ascend_pytorch\.db$)";
     const std::string clusterDBReg = R"(cluster_analysis\.db$)";
+    const std::string computeBinSuffix = ".bin";
 
     const static std::vector<std::string> CANN_APIS = {"acl", "runtime", "mode", "node"};
 }
