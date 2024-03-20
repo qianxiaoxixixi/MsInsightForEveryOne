@@ -568,6 +568,17 @@ template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(con
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const ModuleResetEvent &event)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "reset", event.reset, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -35,6 +35,7 @@ const std::string EVENT_PARSE_FAIL = "parse/fail";
 const std::string EVENT_PARSE_CLUSTER_COMPLETED = "parse/clusterCompleted";
 const std::string EVENT_PARSE_CLUSTER_STEP2_COMPLETED = "parse/clusterStep2Completed";
 const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
+const std::string EVENT_MODULE_RESET = "module.reset";
 #pragma endregion
 
 #pragma region << Request / Response Command>>

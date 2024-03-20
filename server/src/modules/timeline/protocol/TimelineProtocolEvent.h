@@ -88,6 +88,11 @@ struct ParseMemoryCompletedEvent : public Event {
     std::vector<MemorySuccess> memoryResult;
 };
 
+struct ModuleResetEvent : public Event {
+    ModuleResetEvent() : Event(REQ_RES_RESET_WINDOW) {}
+    bool reset = false;
+};
+
 } // end of namespace Protocol
 } // end if namespace Dic
 
