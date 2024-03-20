@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { CONTENT_LENGTH_PREFIX, isResponse, PORT } from './defs';
+import { CONTENT_LENGTH_PREFIX, isResponse, PORT, LOCAL_HOST } from './defs';
 import type { DataRequest, ModuleName, DataSource, Notification, Response, Request, ResponseHandler } from './defs';
 import connector from '@/connection';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -43,7 +43,8 @@ export class Connection {
 
         let protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (!window.location.pathname.includes('\/proxy\/')) {
-            this._ws = new WebSocket(`${protocol}${window.location.hostname}:${dataSource.port}`);
+            const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
+            this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}`);
         } else {
             const {location} = window;
             const {host} = location;
