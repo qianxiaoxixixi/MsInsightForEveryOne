@@ -56,7 +56,7 @@ bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseB
     double dataSize = FileUtil::GetFileSize(filePath.c_str());
     std::string baseInfoSql = "select '" + filePath +
         "' as filePath, (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
-        "ClusterStepTraceTime where \"index\" !='')) as rank , (select json_group_array(step) from ("
+        "ClusterStepTraceTime where \"index\" !='' AND type = 'rank')) as rank , (select json_group_array(step) from ("
         "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +
         " where \"index\" !='')) as step, '" + std::to_string(dataSize) + "' as dataSize ";
     return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
@@ -211,9 +211,9 @@ bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &p
 
 bool DbClusterDataBase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    std::string sql = "SELECT json_group_array (\"index\") FROM ( "
-                      "SELECT DISTINCT \"index\" FROM" + TABLE_STEP_TRACE_TIME +
-                      " WHERE \"index\" != '' )";
+    std::string sql = "SELECT json_group_array (ranks) FROM ( "
+                      "SELECT DISTINCT \"index\" as ranks FROM " + TABLE_STEP_TRACE_TIME +
+                      " WHERE ranks != '' AND type = 'rank')";
     return ExecuteQueryRanksHandler(responseBody, sql);
 }
 
@@ -252,7 +252,7 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
     double startTime = QueryMinStartTime();
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql = "SELECT rank_id, "
-            "ROUND((start_timestamp - ?) / 1000.0, 4) as start_time, "
+            "CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND(start_timestamp - ?, 4) END as start_time, "
             "ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
             "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
             "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "

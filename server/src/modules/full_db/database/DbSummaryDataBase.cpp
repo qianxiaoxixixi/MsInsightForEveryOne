@@ -79,16 +79,16 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "OUTPUTDATATYPES.value as outputDataType, "
                       "OUTPUTFORMATS.value as outputFormat "
                       "FROM " + TABLE_COMPUTE_TASK_INFO +
-                      "JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
-                      "JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name "
-                      "JOIN STRING_IDS AS OP_TYPE ON OP_TYPE.id = COMPUTE_TASK_INFO.opType "
-                      "JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes "
-                      "JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes "
-                      "JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats "
-                      "JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes "
-                      "JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes "
-                      "JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats "
-                      "JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
+                      " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+                      " JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name "
+                      " JOIN STRING_IDS AS OP_TYPE ON OP_TYPE.id = COMPUTE_TASK_INFO.opType "
+                      " JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes "
+                      " JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes "
+                      " JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats "
+                      " JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes "
+                      " JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes "
+                      " JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats "
+                      " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
                       " WHERE TASKTYPE.value = ? ";
     if (!orderList.empty()) {
         sql +=  " ORDER BY " + orderList + " " + ascend;

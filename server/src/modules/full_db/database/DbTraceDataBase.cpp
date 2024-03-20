@@ -384,10 +384,10 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
                       "  FROM COMPUTE_TASK_INFO"
                       "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
                       "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-                      " WHERE accelerator_core in ('AI_CPU','AI_CORE',"
+                      " WHERE acceleratorCore in ('AI_CPU','AI_CORE',"
                       " 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
                       + stepCondition +
-                      " GROUP BY accelerator_core";
+                      " GROUP BY acceleratorCore";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("QueryComputeStatisticsData failed!. ", sqlite3_errmsg(db));
