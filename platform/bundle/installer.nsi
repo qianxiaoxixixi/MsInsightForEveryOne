@@ -105,7 +105,7 @@ Section "ascend_insight" Secascend_insight
   CreateShortCut "$SMPROGRAMS\ascend_insight\ascend_insight.lnk" "$INSTDIR\ascend_insight.exe"
   
   ; Create Desktop shortcut
-  CreateShortCut "$DESKTOP\ascend_insight.lnk" "$INSTDIR\ascend_insight.exe"
+  CreateShortCut "$DESKTOP\Ascend Insight.lnk" "$INSTDIR\ascend_insight.exe"
 
   ; Add to control panel
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ascend_insight" "DisplayName" "ascend_insight"
@@ -149,7 +149,7 @@ Section "Uninstall"
   RMDir $SMPROGRAMS\ascend_insight
 
   ; Remove Desktop shortcut
-  Delete $DESKTOP\ascend_insight.lnk
+  Delete $DESKTOP\Ascend Insight.lnk
   
   ; Remove control panel entry
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ascend_insight"
