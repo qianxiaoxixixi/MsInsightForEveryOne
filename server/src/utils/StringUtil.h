@@ -155,6 +155,14 @@ public:
         return srcLen >= startLen && str.substr(0, startLen) == start;
     }
 
+    static bool EndWith(const std::string& str, const std::string& suffix)
+    {
+        if (str.length() < suffix.length()) {
+            return false;
+        }
+        return str.substr(str.length() - suffix.length()) == suffix;
+    }
+
     static bool Contains(const std::string& str, const std::string& subStr)
     {
         return str.find(subStr) != std::string::npos;
