@@ -26,6 +26,7 @@ public:
 
 private:
     static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
+    static void SendParseFailEvent(const std::string &token, const std::string &message);
 };
 } // end of namespace Timeline
 } // end of namespace Module
