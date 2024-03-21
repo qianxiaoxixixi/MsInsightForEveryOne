@@ -64,17 +64,21 @@ private:
     static bool mapperToKernelDetail(std::map<std::string, size_t> dataMap,
                               std::vector<std::string> row, const std::string &fileId, Kernel &kernel);
 
-    std::vector<std::pair<std::string, std::string>> GetKernelFiles(const std::vector<std::string>& paths);
+    std::map<std::string, std::vector<std::string>> GetKernelFiles(const std::vector<std::string>& paths);
 
-    static bool IsFileValid(const std::string &filePath, const std::string &fileId, const std::string& statusId,
-                            std::string &message);
+    static bool IsFileValid(const std::vector<std::string>& filePathList, const std::string &fileId,
+                            const std::string& statusId, std::string &message);
     static void SetParseCallBack(const std::string& token);
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
     static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
 
-    static void PreParseTask(const std::string &filePath, const std::string &fileId);
-    static bool ParseTask(const std::string &filePath, const std::string &fileId, std::string &message);
-    static bool InitParser(const std::string &filePath, const std::string &fileId, std::string &message);
+    static void PreParseTask(const std::vector<std::string>& filePathList, const std::string &fileId);
+    static bool ParseTask(const std::vector<std::string>& filePathList, const std::string &fileId,
+                          std::string &message);
+    static bool ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
+                        std::string &message, std::set<std::string>& devices);
+    static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
+                           std::string &message);
 };
 
 } // end of namespace Summary
