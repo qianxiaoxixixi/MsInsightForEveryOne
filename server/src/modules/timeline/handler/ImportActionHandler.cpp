@@ -40,16 +40,17 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
 
-    std::pair<std::string, ParserType> pathType = GetImportType(request.params.path);
-    if (pathType.first.empty()) {
-        ServerLog::Warn("Import files is empty.");
-        SetResponseResult(response, true);
+    std::pair<std::string, ParserType> parserType = GetImportType(request.params.path);
+    if (parserType.first.empty()) {
+        ServerLog::Warn("The import file is invalid.");
+        SetResponseResult(response, false, "The import file is invalid.", ErrorCode::REQUEST_NO_SUPPORT);
         session.OnResponse(std::move(responsePtr));
+        SendParseFailEvent(token, "The import file is invalid.");
         return;
     }
-    ParserType allocType = pathType.second;
+    ParserType allocType = parserType.second;
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
-    factory->Parser(pathType.first, request);
+    factory->Parser(parserType.first, request);
 }
 
 
@@ -67,6 +68,21 @@ std::pair<std::string, ParserType> ImportActionHandler::GetImportType(const std:
         result = std::make_pair(pathList[0], ParserType::BIN);
     }
     return result;
+}
+
+void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &message)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
+    auto event = std::make_unique<ParseFailEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = false;
+    event->body.error = message;
+    session->OnEvent(std::move(event));
 }
 
 } // Timeline
