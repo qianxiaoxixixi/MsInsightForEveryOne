@@ -87,9 +87,6 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
                     Object.assign(session, { key: data[key] });
                 }
             });
-            if (data.isReset === true) {
-                removeRemoteHandler(data);
-            }
         });
     } catch (error) {
         console.error(error);

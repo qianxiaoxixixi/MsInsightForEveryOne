@@ -14,6 +14,7 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/memoryCompleted': parseMemoryCompletedHandler,
     'remote/remove': removeRemoteHandler,
     'remote/reset': removeRemoteHandler,
+    'module.reset': removeRemoteHandler,
     updateSession: updateSessionHandler,
     wakeup: wakeUpHandler,
     setTheme,
