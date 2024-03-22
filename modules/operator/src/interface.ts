@@ -10,5 +10,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/operatorCompleted': parseSuccessHandler,
     'remote/remove': resetHandler,
     'remote/reset': resetHandler,
+    'module.reset': resetHandler,
     deleteRank: deleteRankHandler,
 };
