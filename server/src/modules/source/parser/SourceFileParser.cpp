@@ -275,7 +275,7 @@ std::vector<std::string> SourceFileParser::GetCoreList()
 std::vector<std::string> SourceFileParser::GetSourceList()
 {
     std::vector<std::string> sourceList;
-    for (const auto &entry : apiFiles) {
+    for (const auto &entry : sourceFiles) {
         sourceList.push_back(entry.first);
     }
     return sourceList;
