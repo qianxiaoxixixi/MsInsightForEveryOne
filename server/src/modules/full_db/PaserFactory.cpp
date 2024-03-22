@@ -213,6 +213,7 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
     if (reset) {
         TraceFileParser::Instance().Reset();
         Summary::KernelParse::Instance().Reset();
+        Memory::MemoryParse::Instance().Reset();
         body.reset = true;
     }
     body.isCluster = isCluster;

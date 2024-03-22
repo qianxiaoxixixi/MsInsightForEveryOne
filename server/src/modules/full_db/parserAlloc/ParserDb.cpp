@@ -59,6 +59,7 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
 
 void ParserDb::ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster)
 {
+    DataBaseManager::Instance().ClearClusterDb();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (isCluster) {
         ServerLog::Info("ParseClusterFiles is success");
