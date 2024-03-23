@@ -82,7 +82,9 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
         });
     });
     useEffect(() => {
-        search();
+        if (session.durationFileCompleted) {
+            search();
+        }
         async function search(): Promise<void> {
             if (showData.tableData.length === 0 && conditions.type === 'CommunicationDurationAnalysis') {
                 const res = await searchData(conditions);
@@ -127,7 +129,7 @@ const CommunicationAnalysisCom = (props: {isShow:
                 className={'communication'}
             />
             {/* 通信矩阵 */}
-            <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions}/>
+            <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions} session={session}/>
             {/* 带宽分析 */}
             { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
                 session={session} returnHome={returnHome}

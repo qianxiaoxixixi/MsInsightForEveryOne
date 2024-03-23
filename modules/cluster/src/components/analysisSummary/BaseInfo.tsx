@@ -103,6 +103,9 @@ const getDisplayItems = (session: Session): any[] => {
 const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
     const [data, setData] = useState<StringMap>({});
     useEffect(() => {
+        if (!session.clusterCompleted) {
+            return;
+        }
         setTimeout(() => {
             initBaseInfo(setData);
         });

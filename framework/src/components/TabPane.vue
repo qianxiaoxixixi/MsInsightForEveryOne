@@ -145,7 +145,7 @@ function updateScene() {
     setTimeout(()=>{
         scene.value = getScene();
         activeModule.value = getActive();
-    },300);
+    },500);
 }
 
 function getScene(): SceneType {
