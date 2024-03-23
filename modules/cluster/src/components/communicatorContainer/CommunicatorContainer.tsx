@@ -19,7 +19,17 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     const [activeTab, setActiveTab] = useState<string>('pp');
     const [unitCount, setUnitCount] = useState<number>(0);
     useEffect(() => {
-        setActiveTab('pp');
+        if (!session.clusterCompleted) {
+            return;
+        }
+        getDefaultCommunicatorData(setUnitCount).then(value => {
+            session.communicatorData = value;
+        });
+    }, [session.renderId]);
+    useEffect(() => {
+        if (!session.clusterCompleted) {
+            return;
+        }
         if (session.communicatorData.partitionModes.length === 0) {
             getDefaultCommunicatorData(setUnitCount).then(value => {
                 session.communicatorData = value;

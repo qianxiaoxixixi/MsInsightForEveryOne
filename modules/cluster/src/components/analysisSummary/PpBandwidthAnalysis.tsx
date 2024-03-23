@@ -38,18 +38,18 @@ const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }
     );
 });
 
-const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds }: any) => {
-    chartVisbilityListener('STAGE', () => {
-        if (notNullObj(conditions)) {
+const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds, session }: {conditions: ConditionDataType; allStageIds: string[];session: Session}) => {
+    function init(): void {
+        if (session.clusterCompleted && notNullObj(conditions)) {
             InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
             InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
         }
+    }
+    chartVisbilityListener('STAGE', () => {
+        init();
     });
     useEffect(() => {
-        if (notNullObj(conditions)) {
-            InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
-            InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
-        }
+        init();
     }, [conditions, allStageIds]);
     return (
         <div className={'bandwidthChart'}>
@@ -74,19 +74,26 @@ async function InitCharts(domId: string, stepId: string, stage: string, allStage
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    const stageIds = stage !== 'All' ? [stage] : allStageIds;
-    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageIds) : await wrapBandwidthDataInRank(domId, stepId, stageIds);
-    if (res === null) {
-        ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
-    } else {
-        const myChart: echarts.ECharts = echarts.getInstanceByDom(chartDom) ? echarts.getInstanceByDom(chartDom) as echarts.ECharts : echarts.init(chartDom);
-        myChart.setOption(res, true);
-        myChart.dispatchAction({
-            type: 'takeGlobalCursor',
-            key: 'dataZoomSelect',
-            dataZoomSelectActive: true,
-        });
-        addResizeEvent(myChart);
+    try {
+        const stageIds = stage !== 'All' ? [stage] : allStageIds;
+        const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageIds) : await wrapBandwidthDataInRank(domId, stepId, stageIds);
+        if (res === null) {
+            ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+        } else {
+            const myChart: echarts.ECharts = echarts.getInstanceByDom(chartDom)
+                ? echarts.getInstanceByDom(chartDom) as echarts.ECharts
+                : echarts.init(chartDom);
+            myChart.setOption(res, true);
+            myChart.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'dataZoomSelect',
+                dataZoomSelectActive: true,
+            });
+            addResizeEvent(myChart);
+        }
+    } catch (error) {
+        echarts.getInstanceByDom(chartDom)?.dispose();
+        ReactDOM.render((<></>), chartDom);
     }
 }
 

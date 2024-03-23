@@ -3,11 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { Select, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
-import { addResizeEvent, Container, Label, COLOR, getDecimalCount } from '../Common';
+import { addResizeEvent, Container, Label, COLOR, getDecimalCount, chartVisbilityListener } from '../Common';
 import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _ from 'lodash';
+import { type Session } from '../../entity/session';
 
 const options: optionDataType[] = [
     {
@@ -187,16 +188,12 @@ const transportTypeOption = {
     },
 };
 
-const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow: boolean;conditions: ConditionDataType}) {
+const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow: boolean;conditions: ConditionDataType;session: Session}) => {
     const [dataSource, setDataSource] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
     const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
-    useEffect(() => {
-        if (isShow) {
-            updateData(conditions);
-        }
-    }, [isShow, conditions]);
-    useEffect(() => {
-        if (isShow) {
+
+    const updateCharts = (): void => {
+        if (session.clusterCompleted && isShow) {
             let data: any = dataSource.data.map((item: any) => {
                 return [String(item.srcRank), String(item.dstRank),
                     item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
@@ -208,6 +205,18 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
                 dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
             InitCharts({ ...dataSource, data, type: switchCondition.type });
         }
+    };
+
+    chartVisbilityListener('matrixchart', () => {
+        updateCharts();
+    });
+    useEffect(() => {
+        if (session.clusterCompleted && isShow) {
+            updateData(conditions);
+        }
+    }, [isShow, conditions]);
+    useEffect(() => {
+        updateCharts();
     }, [dataSource, switchCondition]);
     const updateData = async(conditions: ConditionDataType): Promise<void> => {
         const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };

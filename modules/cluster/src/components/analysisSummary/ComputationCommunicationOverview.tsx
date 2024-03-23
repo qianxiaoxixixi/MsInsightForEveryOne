@@ -10,7 +10,7 @@ import { Session } from '../../entity/session';
 import { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { addResizeEvent, COLOR, notZero } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, notZero } from '../Common';
 import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import SummaryTable from './SummaryTable';
@@ -238,18 +238,23 @@ export const hit = (<Tooltip title={
     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
 </Tooltip>);
 
-const ComputationCommunicationOverview = observer(({ session, active = true }: { session: Session ;active?: boolean}): JSX.Element => {
+const ComputationCommunicationOverview = observer(({ session }: { session: Session }): JSX.Element => {
     const [dataSource, setDatasource] = useState<SummaryDataType[]>([]);
     const [allDataSource, setAllDatasource] = useState<SummaryDataType[]>([]);
     const [selected, setSelected] = useState({ rankId: '', step: '' });
+
+    chartVisbilityListener('overview-chart', () => {
+        initCharts(dataSource, handleClick);
+    });
     useEffect(() => {
         setTimeout(() => {
-            if (active) {
-                initCharts(dataSource, handleClick);
-            }
+            initCharts(dataSource, handleClick);
         });
-    }, [dataSource, active]);
+    }, [dataSource]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
+        if (!session.clusterCompleted) {
+            return;
+        }
         if (doQuery === false) {
             let data = [...allDataSource];
             data = data.slice(0, conditions.top);

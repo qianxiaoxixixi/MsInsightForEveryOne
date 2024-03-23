@@ -8,6 +8,7 @@ import { Label } from '../Common';
 import _ from 'lodash';
 import { communicator } from '../communicatorContainer/ContainerUtils';
 import { queryTopSummary } from '../../utils/RequestUtils';
+import { Session } from '../../entity/session';
 
 export interface ConditionDataType {
     step: string ;
@@ -57,13 +58,18 @@ const getStepOptions = async(): Promise<optionDataType[]> => {
     return options;
 };
 
+// eslint-disable-next-line max-lines-per-function
 const Filter = observer((props: any) => {
+    const session: Session = props.session;
     const [conditions, setConditions] = useState<ConditionDataType>(defaultConditions);
     const [options, setOptions] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
+        if (!session.clusterCompleted) {
+            return;
+        }
         initDefault();
-    }, [props.session.communicatorData]);
+    }, [session.communicatorData]);
     useEffect(() => {
         if (_.find(options.groupOptions, item => item.value === conditions.group) !== undefined) {
             conditions.rankIds = _.find(options.groupOptions, item => item.value === conditions.group)?.data as string[];
