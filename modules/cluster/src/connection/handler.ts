@@ -60,7 +60,8 @@ export const parseClusterSuccessHandler: NotificationHandler = (data): void => {
             return;
         }
         session.clusterStatus = true;
-        window.dataSource = data.dataSource as DataSource;
+        session.clusterCompleted = true;
+        session.renderId = ++session.renderId % 1000;
     });
 };
 
@@ -88,10 +89,7 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
                 (session as any)[key] = data[key];
             }
         });
-        if (data.isReset === true) {
-            resetStatus();
-        }
-        session.renderId = session.renderId++ % 1000;
+        session.renderId = ++session.renderId % 1000;
     });
 };
 
@@ -104,5 +102,6 @@ const resetStatus = (): void => {
         session.clusterCompleted = false;
         session.parseCompleted = false;
         session.unitcount = 0;
+        session.durationFileCompleted = false;
     });
 };

@@ -122,20 +122,28 @@ const handleRelatedChange = async (source: string, value: string): Promise<void>
 
 const Filter = observer(({ session, handleFilterChange }: {session: Session;handleFilterChange: VoidFunction}) => {
     const activeCommunicator = session.activeCommunicator?.value;
+    const Update = (initObj = {} as ConditionDataType): void => {
+        if (!session.clusterCompleted) {
+            return;
+        }
+        setOptions(initObj);
+    };
     // 初始化
     useEffect(() => {
-        setOptions();
         observe(conditions, (change) => {
             handleFilterChange(conditions);
         });
     }, []);
     useEffect(() => {
-        setOptions({ stage: activeCommunicator } as ConditionDataType);
+        Update();
+    }, [session.renderId]);
+    useEffect(() => {
+        Update({ stage: activeCommunicator } as ConditionDataType);
     }, [session.allRankIds]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== conditions.stage) {
-                setOptions({ ...conditions, stage: activeCommunicator });
+                Update({ ...conditions, stage: activeCommunicator });
             }
         });
     }, [activeCommunicator]);
