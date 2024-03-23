@@ -539,3 +539,18 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .communication .topC>div{
     min-width: 700px;
 }
+
+.fullmask{
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+.fullmask {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    background: rgba(0, 0, 0, 0.7);
+}

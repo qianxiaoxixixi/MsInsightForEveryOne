@@ -30,6 +30,9 @@ const Filter = observer((props: any) => {
     const [options, setOptions] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
+        if (props.session?.clusterCompleted !== true) {
+            return;
+        }
         initDefault();
         props.setAllStageIds(getAllPpStageIds(props.session.communicatorData));
     }, [props.session.communicatorData]);
