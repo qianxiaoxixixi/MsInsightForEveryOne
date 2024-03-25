@@ -728,7 +728,7 @@ bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
 {
     Timer timer("JsonTraceDatabase::QueryThreadTracesSummary");
     const int64_t maxDataCount = 30000;
-    int64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
+    uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
     unitTime = unitTime <= 0 ? 1 : unitTime;
     std::pair<int64_t, int64_t> trackIdPair = QueryExtremTrackIdPairByPid(requestParams.processId);
     std::string sql = "SELECT timestamp , end_time "
