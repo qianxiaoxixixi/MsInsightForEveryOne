@@ -238,7 +238,7 @@ TEST_F(TestSuit, QueryThreadTraces)
     request.timePerPx = 1;
     Dic::Protocol::UnitThreadTracesBody response;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 70;
+    int64_t traceId = 30;
 
     int expectSize = 27;
     std::string expectName = "AscendCL@aclDestroyTensorDesc";
@@ -264,7 +264,7 @@ TEST_F(TestSuit, QueryThreads)
     request.endTime = ENDTIME;
     Dic::Protocol::UnitThreadsBody response;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 70;
+    int64_t traceId = 30;
 
     // expected data
     int size = 2;
@@ -295,7 +295,7 @@ TEST_F(TestSuit, QueryThreadDetail)
     request.depth = DEPTH;
     request.startTime = STARTTIME;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 82;
+    int64_t traceId = 41;
 
     // expected data
     uint64_t selfTime = 0;
@@ -446,7 +446,7 @@ TEST_F(TestSuit, QueryFlowName)
     uint64_t START_TIME = 1695115378713661000;
     request.startTime = START_TIME;
     uint64_t MIN_TIMESTAMP = 0;
-    int64_t trackId = 47;
+    int64_t trackId = 7;
 
     // expected data
     int size = 2;
@@ -476,7 +476,7 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     requestParam.pageSize = PAGE_SIZE;
     Protocol::UnitThreadsOperatorsBody responseBody;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 82;
+    int64_t traceId = 41;
 
     // response data
     uint64_t TIMESTAMP1 = 1695115378714082800;

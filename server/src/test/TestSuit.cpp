@@ -36,8 +36,9 @@ public:
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + refPath0 + "ascend_insight_data.db");
         DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPath1 + "ascend_insight_data.db");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "");
+        WaitParseEnd({"0"});
         TraceFileParser::Instance().Parse({currPath + refPath1 + "trace_view.json"}, "1", "");
-        WaitParseEnd({"0", "1"});
+        WaitParseEnd({"1"});
         std::string testDataPath = currPath + R"(/src/test/test_data)";
         KernelParse::Instance().Parse({testDataPath}, "");
         WaitParseEnd({KERNEL_PREFIX + "0", KERNEL_PREFIX + "1"});
