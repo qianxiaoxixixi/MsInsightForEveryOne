@@ -10,6 +10,7 @@
 #include "SourceProtocolRequest.h"
 #include "WsSessionManager.h"
 #include "StringUtil.h"
+#include "ParserFactory.h"
 #include "../../TestSuit.cpp"
 
 class SourceTest : TestSuit {};
@@ -35,7 +36,8 @@ TEST_F(TestSuit, SourceFileParser)
 
     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
     EXPECT_EQ(true, parser.CheckOperatorBinary(selectedFolder));
-    parser.Parse(std::vector<std::string>(), "", selectedFolder);
+    DataBaseManager::Instance().CreatConnectionPool("testFileId", "testFileId.db");
+    parser.Parse(std::vector<std::string>(), "testFileId", selectedFolder);
     parser.ConvertToData();
 
     const vector<std::string> &coreList = parser.GetCoreList();
@@ -48,6 +50,15 @@ TEST_F(TestSuit, SourceFileParser)
     EXPECT_EQ(sourceList[NUM0], "/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
     EXPECT_EQ(sourceList[NUM3], "/home/lantianxiang/workspace/foreach/common/foreach/op_kernel/kernel_foreach_base.h");
     EXPECT_EQ(sourceList[NUM5], "/home/lantianxiang/workspace/foreach/foreach_sub_scalar_list.cpp");
+    const vector<Dic::Module::Source::SourceFileLine> &linesByCoreAndSource = parser.GetApiLinesByCoreAndSource(
+        "core0.veccore0", "/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
+    EXPECT_EQ(linesByCoreAndSource.size(), NUM7);
+    const string &instr = parser.GetInstr();
+    EXPECT_TRUE(!instr.empty());
+    const string &source =
+        parser.GetSourceByName("/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
+    EXPECT_TRUE(!source.empty());
+    parser.Reset();
 }
 
 TEST_F(TestSuit, QueryApiInstructions)
@@ -112,7 +123,7 @@ TEST_F(TestSuit, QueryCodeFile)
     parser.ConvertToData();
 
     string sourcefile =
-            parser.GetSourceByName("/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
+        parser.GetSourceByName("/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
     EXPECT_EQ(true, StringUtil::Contains(sourcefile, "__FOREACH_TILING_DEF_H__"));
     EXPECT_EQ(true, StringUtil::Contains(sourcefile, "ForeachCommonTilingData"));
     EXPECT_EQ(true, StringUtil::Contains(sourcefile, "InitForeachCommonTilingData"));
