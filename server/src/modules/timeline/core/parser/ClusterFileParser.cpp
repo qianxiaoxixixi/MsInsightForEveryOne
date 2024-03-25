@@ -41,7 +41,6 @@ void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> 
 void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHandlerType)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("start SaxParseJsonFile data into db ,file:", filePath);
     bool checkFilePath = FileUtil::CheckFilePath(filePath);
     if (!checkFilePath) {
         return;
@@ -70,7 +69,6 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
 {
     const std::string &filePath = filePathList[0];
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("start parseStepStatisticsFile data into db ,file:", filePath);
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return;
     }
@@ -107,7 +105,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     ParseCommunicationGroup(selectedPath, baseInfo);
     auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     database->InsertClusterBaseInfo(baseInfo);
-    ServerLog::Info("end saveClusterBaseInfo data into db ,path:", selectedPath, " collectStartTime=",
+    ServerLog::Info("end saveClusterBaseInfo data into db ,path: ", selectedPath, " collectStartTime= ",
                     baseInfo.collectStartTime);
 }
 
@@ -235,7 +233,6 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
     auto start = std::chrono::high_resolution_clock::now();
     std::ifstream communicationGroup(filePath, std::ios::binary);
     if (communicationGroup.good()) {
-        ServerLog::Info("start parseCommunicationGroupFile data into db ,file:", filePath);
         Document doc;
         std::string fileContent;
         std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
