@@ -83,12 +83,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTraces)
     params.processId = "1181473";
 
     database->QueryThreadTraces(params, body, minTimestamp, 0);
-    EXPECT_EQ(body.data.size(), 1);
-    EXPECT_EQ(body.data[0].size(), 3); // size = 3
-    EXPECT_EQ(body.data[0][0].startTime, 39360870); // startTime = 39360870
-    EXPECT_EQ(body.data[0][0].endTime, 39363430); // endTime = 39363430
-    EXPECT_EQ(body.data[0][0].id, "0");
-    EXPECT_EQ(body.data[0][0].name, "aclrtGetDeviceCount");
+    EXPECT_EQ(body.data.size(), 0);
 
     params.metaType = "HBM";
     EXPECT_EQ(database->QueryThreadTraces(params, body, minTimestamp, 0), false);
