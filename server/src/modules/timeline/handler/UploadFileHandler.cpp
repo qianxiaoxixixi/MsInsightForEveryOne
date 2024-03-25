@@ -40,7 +40,7 @@ void UploadFileHandler::ParseTask(UploadFileRequest request)
             singleFileData.stringArray.size());
         return;
     }
-    int textSize = request.params.text.size();
+    size_t textSize = request.params.text.size();
     if (textSize > MAX_STR_SIZE) {
         ServerLog::Error("Failed to parser upload file ", fileId, ",current content size is ", textSize, "max size is ",
             MAX_STR_SIZE);
