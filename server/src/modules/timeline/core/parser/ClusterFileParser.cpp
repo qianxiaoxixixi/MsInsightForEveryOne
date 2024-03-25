@@ -48,6 +48,9 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     }
     // 打开JSON文件
     FILE* fp = fopen(filePath.c_str(), "rb");
+    if (fp == nullptr) {
+        return;
+    }
     char readBuffer[65536];
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
     rapidjson::Reader reader;
