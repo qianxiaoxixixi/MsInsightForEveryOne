@@ -130,7 +130,7 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
 {
     double startTime = QueryMinStartTime();
     std::string sql = "SELECT hccl_op_name as operatorName, "
-                      " ROUND((start_timestamp - ?) / 1000.0, 4) as start_time,"
+                      " ROUND((start_timestamp - ?) / 1000.0, 4) as startTime,"
                       " ROUND(elapsed_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
