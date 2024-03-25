@@ -74,6 +74,7 @@ public:
 
     static void TearDownTestCase()
     {
+        KernelParse::Instance().Reset();
         TraceFileParser::Instance().DeleteParseFiles({"0", "1"});
         DataBaseManager::Instance().ClearClusterDb();
         std::string tempPath = Dic::FileUtil::GetCurrPath();

@@ -108,3 +108,13 @@
 {"id":300,"moduleName":"global","type":"request","command":"token.heartCheck","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":301,"moduleName":"global","type":"request","command":"token.destroy","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":302,"moduleName":"global","type":"request","command":"token.create","params":{"token":"","deadTime":-1}}
+{"id":303,"moduleName":"summary","type":"request","command":"summary/queryCommunicationDetail","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":304,"moduleName":"summary","type":"request","command":"summary/queryCommunicationDetail","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1","pageSize":"2","currentPage":"1"}}
+{"id":305,"moduleName":"summary","type":"request","command":"summary/queryCommunicationDetail","params":{"token":""}}
+{"id":306,"moduleName":"summary","type":"request","command":"summary/queryComputeDetail","params":{"token":""}}
+{"id":307,"moduleName":"summary","type":"request","command":"summary/queryComputeDetail","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":308,"moduleName":"summary","type":"request","command":"summary/queryComputeDetail","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1","timeFlag":"HCCL","currentPage":"1","pageSize":"2"}}
+{"id":309,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllStages","params":{"token":""}}
+{"id":310,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllStages","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":311,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"communication"}}
+{"id":312,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"compute","rankId":"0","stepId":"2"}}
