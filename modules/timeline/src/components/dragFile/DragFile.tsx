@@ -9,6 +9,7 @@ import { Logger } from '../../utils/Logger';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10G
 const DEFAULT_SLICE_SIZE = 1024 * 1024; // Byte
+const ALLOW_FILE_TYPES = ['application/json'];
 
 export interface FileDataType {
     data?: any;
@@ -194,15 +195,19 @@ class DragFileImport extends DragFile {
 
     checkFileFormat(file: FileDataType): Promise<boolean> {
         return new Promise((resolve, reject): void => {
-            const reader = new FileReader();
-            reader.readAsText(file.data.slice(0, 10 * 1024));
-            reader.onload = (event): void => {
-                const text: any = event.target?.result;
-                resolve(this.isTraceViewFormat(text));
-            };
-            reader.onerror = (): void => {
+            if (ALLOW_FILE_TYPES.includes(file.data.type)) {
+                const reader = new FileReader();
+                reader.readAsText(file.data.slice(0, 10 * 1024));
+                reader.onload = (event): void => {
+                    const text: any = event.target?.result;
+                    resolve(this.isTraceViewFormat(text));
+                };
+                reader.onerror = (): void => {
+                    resolve(false);
+                };
+            } else {
                 resolve(false);
-            };
+            }
         });
     }
 
