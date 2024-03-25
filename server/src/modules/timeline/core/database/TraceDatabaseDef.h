@@ -21,21 +21,6 @@ struct SliceDto {
     std::string cat;
 };
 
-struct ArgsDto {
-    std::string taskType;
-    int64_t planeId = 0;
-    std::string groupName;
-    int64_t notifyId = 0;
-    std::string rdmaType;
-    int64_t srcRank = 0;
-    int64_t dstRank = 0;
-    std::string transportType;
-    int64_t size = 0;
-    std::string dataType;
-    std::string linkType;
-    int64_t opId = 0;
-};
-
 struct FlowDetailDto {
     std::string name;
     std::string cat;
@@ -61,6 +46,7 @@ struct FlowCategoryEventsDto {
 struct MetaDataDto {
     std::string pid;
     std::string processName;
+    std::string metaType;
     std::string label;
     std::string threadId;
     std::string threadName;

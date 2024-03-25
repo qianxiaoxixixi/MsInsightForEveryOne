@@ -21,6 +21,7 @@ public:
     ~SqliteResultSet() = default;
     int GetErrorCode() const;
     std::string GetErrorMessage() const;
+    const std::unordered_map<std::string, int> GetColumns() const;
 
     /**
      * 将光标移动到下一行，如果没有下一行，返回false，需要先调用next()，再读数据
