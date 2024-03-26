@@ -80,7 +80,8 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     database->InitStringsCache();
     database->UpdateStartTime();
 
-    if (!database->CheckTableDataInvalid(TABLE_GE_MEMORY)) {
+    FileType type = DataBaseManager::Instance().GetFileType();
+    if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (auto rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
             FullDb::DbMemoryDataBase::ParseCallBack(token, rankId, false, "");

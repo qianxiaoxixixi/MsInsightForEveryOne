@@ -20,7 +20,7 @@ namespace Dic {
 
     // db table name
     const static std::string TABLE_TASK = "TASK";
-    const static std::string TABLE_API = "API";
+    const static std::string TABLE_API = "CANN_API";
     const static std::string TABLE_COMMUNICATION_TASK_INFO = "COMMUNICATION_TASK_INFO";
     const static std::string TABLE_COMMUNICATION_OP = "COMMUNICATION_OP";
     const static std::string TABLE_COMPUTE_TASK_INFO = "COMPUTE_TASK_INFO";

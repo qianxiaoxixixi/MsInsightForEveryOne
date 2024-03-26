@@ -24,12 +24,12 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
-        DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
         auto memoryDatabase =
                 dynamic_cast<DbMemoryDataBase *>(DataBaseManager::Instance().GetMemoryDatabase("0"));
-        memoryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
-        // minTime = 1710490360222620070, maxTime = 1710490361833931450
-        TraceTime::Instance().UpdateTime(1710490360222620070, 1710490361833931450);
+        memoryDatabase->OpenDb(currPath + dbPath3 + "ascend_pytorch_profiler.db", false);
+        // minTime = 1734230739709945000, maxTime = 1734230739709945000
+        TraceTime::Instance().UpdateTime(1734230739709945000, 1734230739709945000);
     }
 
     static void TearDownTestCase() {}
@@ -160,7 +160,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNum)
     int64_t totalNum;
     auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     EXPECT_EQ(result, true);
-    int expectSize = 247;
+    int expectSize = 359;
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -170,15 +170,15 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumWithSize)
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
-    requestParams.searchName = "Notify_Record";
-    requestParams.minSize = 65500; // min size = 65500
+    requestParams.searchName = "aten::empty_strided";
+    requestParams.minSize = 0; // min size = 0
     requestParams.maxSize = 600000000; // max size = 600000000
     requestParams.startTime = -1;
     requestParams.endTime = -1;
     int64_t totalNum;
     auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     EXPECT_EQ(result, true);
-    int expectSize = 126;
+    int expectSize = 18;
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -188,7 +188,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumWithTime)
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
-    requestParams.searchName = "Notify_Record";
+    requestParams.searchName = "aten::empty_strided";
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
     requestParams.startTime = 0;
@@ -196,7 +196,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumWithTime)
     int64_t totalNum;
     auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     EXPECT_EQ(result, true);
-    int expectSize = 126;
+    int expectSize = 18;
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -204,7 +204,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumByStreamExpectZero)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
-    requestParams.rankId = "1";
+    requestParams.searchName = "aten::empty_stridedss";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
@@ -230,7 +230,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumByStreamExpectSeveral)
     int64_t totalNum;
     auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     EXPECT_EQ(result, true);
-    int expectSize = 247;
+    int expectSize = 277;
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -243,20 +243,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewData)
     Dic::Protocol::MemoryViewData responseBody;
     auto result = database->QueryMemoryView(requestParams, responseBody);
     EXPECT_EQ(result, true);
-    int expectSize = 247;
-    EXPECT_EQ(responseBody.lines.size(), expectSize);
-}
-
-TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewDataByStreamExpectZero)
-{
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
-    Dic::Protocol::MemoryComponentParams requestParams;
-    requestParams.rankId = "1";
-    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
-    Dic::Protocol::MemoryViewData responseBody;
-    auto result = database->QueryMemoryView(requestParams, responseBody);
-    EXPECT_EQ(result, true);
-    int expectSize = 0;
+    int expectSize = 935;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
@@ -269,7 +256,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewDataByStreamExpectSeveral)
     Dic::Protocol::MemoryViewData responseBody;
     auto result = database->QueryMemoryView(requestParams, responseBody);
     EXPECT_EQ(result, true);
-    int expectSize = 1;
+    int expectSize = 935;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
@@ -280,6 +267,6 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorSizeData)
     double max;
     auto result = database->QueryOperatorSize(min, max, "0");
     EXPECT_EQ(result, true);
-    EXPECT_EQ(min, 65536); // minSize = 65536
-    EXPECT_EQ(max, 604045312); // maxSize = 604045312
+    EXPECT_EQ(min, 512); // minSize = 512
+    EXPECT_EQ(max, 33685504); // maxSize = 33685504
 }

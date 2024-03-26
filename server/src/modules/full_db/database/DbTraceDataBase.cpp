@@ -339,7 +339,7 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
     std::string sql;
     if (strcmp(params.rankId.c_str(), "Host") == 0) {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
-              "SELECT count(1),? as id FROM API join ids on id = API.name";
+              "SELECT count(1),? as id FROM CANN_API join ids on id = CANN_API.name";
     } else {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), "
               "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
@@ -381,7 +381,7 @@ bool DbTraceDataBase::SearchSliceName(const std::string &name, int index, uint64
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
               "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
               " depth, connectionId as id, 'HOST' as metaType ,? as rankId"
-              " FROM API join ids on id = API.name "
+              " FROM CANN_API join ids on id = CANN_API.name "
               " ORDER BY startNs LIMIT 1 OFFSET ?";
     } else {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), minTime as (select ? as value),\n"
@@ -757,7 +757,8 @@ bool DbTraceDataBase::CheckTableDataInvalid(std::string tableName)
     std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to get Memory Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        Server::ServerLog::Error("Failed to get " + tableName + " Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ",
+            result);
         return false;
     }
     int64_t count;
@@ -795,7 +796,7 @@ void DbTraceDataBase::UpdateAllDepth()
                       "                      order by deviceId, streamId, startNs, globalTaskId;";
     UpdateDepth(sql, updateTaskDepthStmt);
 
-    sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, connectionId as id from API "
+    sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, connectionId as id from CANN_API "
           " order by globalTid, type, startNs;";
     UpdateDepth(sql, updateApiDepthStmt);
 }
@@ -904,17 +905,18 @@ bool DbTraceDataBase::SetConfig()
         return false;
     }
     std::unique_lock<std::mutex> lock(mutex);
-    ExecSql("create INDEX connectionId on API(connectionId, startNs);");
+    ExecSql("create INDEX connectionId on CANN_API(connectionId, startNs);");
     ExecSql("create INDEX TASK_INDEX on TASK(globalTaskId, startNs);");
     ExecSql("alter table TASK add depth integer;");
-    ExecSql("alter table API add depth integer;");
+    ExecSql("alter table CANN_API add depth integer;");
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from API a join ENUM_API_TYPE EAL "
-                      " on a.type = EAL.id group by type, globalTid order by globalTid";
+    std::string sql =
+        " select EAL.name, globalTid, type, max(depth) as maxDepth from CANN_API a join ENUM_API_TYPE EAL "
+        " on a.type = EAL.id group by type, globalTid order by globalTid";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryHostMetadata failed!.");
