@@ -26,8 +26,8 @@ import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1M
-const MAX_FILE_SIZE_LABLE = '1MB';
+const MAX_FILE_SIZE = 1000000; // 100万
+const MAX_FILE_SIZE_LABLE = '1 million';
 const MAX_LINE_LENGTH = 10000; // 1万
 const MAX_LINE = 10000; // 1万
 const MAX_INSTRUCTION = 1000000; // 100万
@@ -216,7 +216,7 @@ const Index = observer(({ session }: { session: Session }) => {
         }
         if (str.length > MAX_FILE_SIZE) {
             str = str.slice(0, MAX_FILE_SIZE);
-            str += `${linebreak}----------【File exceed ${MAX_FILE_SIZE_LABLE} , Hide the rest content.】----------`;
+            str += `${linebreak}----------【Characters Exceed ${MAX_FILE_SIZE_LABLE} , Hide the rest content.】----------`;
         }
         if (str.length > 0) {
             let splitlines: string[] = str.split(BREAK_LINE_REGEXP);
