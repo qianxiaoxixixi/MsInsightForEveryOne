@@ -151,93 +151,8 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     responseBody.data.duration = sliceDtoVec[0].duration;
     responseBody.data.cat = sliceDtoVec[0].cat;
     uint64_t id = sliceDtoVec.at(0).id;
-    if (!QueryComputeTaskInfoById(id, responseBody) || !QueryCommunicationTaskInfoById(id, responseBody)) {
-        ServerLog::Error("QueryComputeTaskInfoById or QueryCommunicationTaskInfoById is error!");
-        return false;
-    }
+    TraceDatabaseHelper::QueryTaskInfoById(stmt, requestParams, responseBody, stringsCache.at(path));
     return true;
-}
-
-bool DbTraceDataBase::QueryComputeTaskInfoById(int64_t id, Protocol::UnitThreadDetailBody &responseBody)
-{
-    auto stmt = CreatPreparedStatement();
-    std::unique_ptr<SqliteResultSet> resultSet;
-    try {
-        resultSet = TraceDatabaseHelper::QueryComputeTaskInfoById(stmt, id);
-    } catch (DatabaseException &e) {
-        ServerLog::Error("QueryComputeTaskInfoById Fail, ", e.What());
-        return false;
-    }
-    while (resultSet->Next()) {
-        int col = resultStartIndex;
-        responseBody.data.inputShapes = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        responseBody.data.inputDataTypes = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        responseBody.data.inputFormats = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        responseBody.data.outputShapes = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        responseBody.data.outputDataTypes = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        responseBody.data.outputFormats = stringsCache.at(path).at(resultSet->GetInt64(col++));
-    }
-    return true;
-}
-
-bool DbTraceDataBase::QueryCommunicationTaskInfoById(int64_t id, Protocol::UnitThreadDetailBody &responseBody)
-{
-    auto stmt = CreatPreparedStatement();
-    std::unique_ptr<SqliteResultSet> resultSet;
-    try {
-        resultSet = TraceDatabaseHelper::QueryCommunicationTaskInfoById(stmt, id);
-    } catch (DatabaseException &e) {
-        ServerLog::Error("QueryCommunicationTaskInfoById Fail, ", e.What());
-        return false;
-    }
-    while (resultSet->Next()) {
-        int col = resultStartIndex;
-        ArgsDto argsDto;
-        argsDto.taskType = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        argsDto.planeId = resultSet->GetInt64(col++);
-        argsDto.groupName = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        argsDto.notifyId = resultSet->GetInt64(col++);
-        argsDto.rdmaType = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        argsDto.srcRank = resultSet->GetInt64(col++);
-        argsDto.dstRank = resultSet->GetInt64(col++);
-        argsDto.transportType = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        argsDto.size = resultSet->GetInt64(col++);
-        argsDto.dataType = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        argsDto.linkType = stringsCache.at(path).at(resultSet->GetInt64(col++));
-        argsDto.opId = resultSet->GetInt64(col++);
-        responseBody.data.args = ArgsDtoToJsonStr(argsDto);
-    }
-    return true;
-}
-
-std::string DbTraceDataBase::ArgsDtoToJsonStr(const ArgsDto& argsDto)
-{
-    std::string jsonStr;
-    jsonStr.append("{")
-    .append("\"planeId\":")
-    .append(std::to_string(argsDto.planeId))
-    .append(",\"groupName\":")
-    .append(argsDto.groupName)
-    .append(",\"notifyId\":")
-    .append(std::to_string(argsDto.notifyId))
-    .append(",\"rdmaType\":")
-    .append(argsDto.rdmaType)
-    .append(",\"srcRank\":")
-    .append(std::to_string(argsDto.srcRank))
-    .append(",\"dstRank\":")
-    .append(std::to_string(argsDto.dstRank))
-    .append(",\"transportType\":")
-    .append(argsDto.transportType)
-    .append(",\"size\":")
-    .append(std::to_string(argsDto.size))
-    .append(",\"dataType\":")
-    .append(argsDto.dataType)
-    .append(",\"linkType\":")
-    .append(argsDto.linkType)
-    .append(",\"opId\":")
-    .append(std::to_string(argsDto.opId))
-    .append("}");
-    return jsonStr;
 }
 
 bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
@@ -249,26 +164,21 @@ bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestPar
         auto processType = TraceDatabaseHelper::GetProcessType(requestParams.metaType);
         switch (processType) {
             case PROCESS_TYPE::ASCEND_HARDWARE:
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.from, PROCESS_TYPE::HOST,
-                                                     requestParams, stringsCache.at(path));
                 TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE,
                                                      requestParams, stringsCache.at(path));
                 responseBody.from.rankId = path;
                 break;
             case PROCESS_TYPE::HCCL:
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.from, PROCESS_TYPE::HOST,
-                                                     requestParams, stringsCache.at(path));
                 TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL,
                                                      requestParams, stringsCache.at(path));
                 responseBody.from.rankId = path;
                 break;
-            case PROCESS_TYPE::HOST:
+            case PROCESS_TYPE::CANN_API:
+            case PROCESS_TYPE::API:
                 {
                     UnitFlowParams params;
                     params.flowId = requestParams.id;
                     params.id = requestParams.flowId;
-                    TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.from, PROCESS_TYPE::HOST,
-                                                         params, stringsCache.at(path));
                     TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL,
                                                          params, stringsCache.at(path));
                     TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE,
@@ -294,8 +204,10 @@ bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestPar
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
                                          std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    QueryAscendHardwareMetadata(fileId, metaData);
-    QueryHcclMetadata(fileId, metaData);
+    if (CheckTableExist(TABLE_TASK)) {
+        QueryAscendHardwareMetadata(fileId, metaData);
+        QueryHcclMetadata(fileId, metaData);
+    }
     QueryCounterMetadata(fileId, metaData);
     GenerateCounterMetadata(fileId, metaData);
     return false;
@@ -331,7 +243,7 @@ bool DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
             ServerLog::Warn("Unknown flow type. type:", type);
         }
     }
-    return true;
+    return false;
 }
 
 int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
@@ -339,7 +251,11 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
     std::string sql;
     if (strcmp(params.rankId.c_str(), "Host") == 0) {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
-              "SELECT count(1),? as id FROM CANN_API join ids on id = CANN_API.name";
+              " SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API;
+        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
+            sql += " union select name from  " + TABLE_API;
+        }
+        sql += ") api join ids on id = api.name";
     } else {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), "
               "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
@@ -381,8 +297,11 @@ bool DbTraceDataBase::SearchSliceName(const std::string &name, int index, uint64
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
               "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
               " depth, connectionId as id, 'HOST' as metaType ,? as rankId"
-              " FROM CANN_API join ids on id = CANN_API.name "
-              " ORDER BY startNs LIMIT 1 OFFSET ?";
+              " FROM (select globalTid, type, startNs, endNs, depth, connectionId, name from " + TABLE_CANN_API;
+        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
+            sql += "  UNION select globalTid, type, startNs, endNs, depth, connectionId, name from " + TABLE_API;
+        }
+        sql += " ) api join ids on id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
     } else {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), minTime as (select ? as value),\n"
               " tasks as (select globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
@@ -428,7 +347,6 @@ bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams
     params.endTime += minTimestamp;
     TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::ASCEND_HARDWARE, to);
     TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::HCCL, to);
-    TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::HOST, from);
 
     for (const auto &item: from) {
         for (const auto &fromLocation: item.second) {
@@ -761,8 +679,7 @@ bool DbTraceDataBase::CheckTableDataInvalid(std::string tableName)
     std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to get " + tableName + " Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ",
-            result);
+        Server::ServerLog::Error("Failed to get Memory Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     int64_t count;
@@ -788,7 +705,8 @@ bool DbTraceDataBase::NeedUpdateDepth(const std::string &table)
 void DbTraceDataBase::UpdateAllDepth()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (!IsDatabaseVersionChange() && !NeedUpdateDepth(TABLE_TASK) && !NeedUpdateDepth(TABLE_API)) {
+    if (!IsDatabaseVersionChange() && !NeedUpdateDepth(TABLE_TASK) &&
+        !NeedUpdateDepth(TABLE_API) && !NeedUpdateDepth(TABLE_CANN_API)) {
         return;
     }
     if (!ExecSql("PRAGMA user_version = " + GetDataBaseVersion() + ";")) {
@@ -796,13 +714,23 @@ void DbTraceDataBase::UpdateAllDepth()
         return;
     }
 
-    std::string sql = "select format('%s-%s', deviceId, streamId) as key, globalTaskId as id,startNs, endNs from TASK "
+    std::string sql = "select format('%s-%s', deviceId, streamId) as key, ROWID as id,startNs, endNs from TASK "
                       "                      order by deviceId, streamId, startNs, globalTaskId;";
-    UpdateDepth(sql, updateTaskDepthStmt);
+    if (CheckTableExist(TABLE_TASK) && NeedUpdateDepth(TABLE_TASK)) {
+        UpdateDepth(sql, updateTaskDepthStmt);
+    }
 
-    sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, connectionId as id from CANN_API "
+    sql = "select format('%s-', globalTid) as key, startNs, endNs, ROWID as id from " + TABLE_API +
+          " order by globalTid, startNs;";
+    if (CheckTableExist(TABLE_API) && NeedUpdateDepth(TABLE_API)) {
+        UpdateDepth(sql, updateApiDepthStmt);
+    }
+
+    sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, ROWID as id from " + TABLE_CANN_API +
           " order by globalTid, type, startNs;";
-    UpdateDepth(sql, updateApiDepthStmt);
+    if (CheckTableExist(TABLE_CANN_API) && NeedUpdateDepth(TABLE_CANN_API)) {
+        UpdateDepth(sql, updateCannApiDepthStmt);
+    }
 }
 
 void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt)
@@ -850,7 +778,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
     bool result = true;
     for (const auto &item: taskDepthCache) {
         stmt->Reset();
-        stmt->BindParams(item.depth, item.id, item.start);
+        stmt->BindParams(item.depth, item.id);
         if (!stmt->Execute()) {
             ServerLog::Error("Failed to updateDepth");
             result = false;
@@ -891,11 +819,13 @@ bool DbTraceDataBase::InitStmt()
         return true;
     }
     initStmt = true;
-    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where globalTaskId = ? and startNs = ?";
+    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where ROWID = ?";
     updateTaskDepthStmt = CreatPreparedStatement(sql);
-    sql = "UPDATE " + TABLE_API + " set depth = ? where connectionId = ? and startNs = ?";
+    sql = "UPDATE " + TABLE_API + " set depth = ? where ROWID = ?";
     updateApiDepthStmt = CreatPreparedStatement(sql);
-    if (updateTaskDepthStmt == nullptr || updateApiDepthStmt == nullptr) {
+    sql = "UPDATE " + TABLE_CANN_API + " set depth = ? where ROWID = ?";
+    updateCannApiDepthStmt = CreatPreparedStatement(sql);
+    if (updateTaskDepthStmt == nullptr || updateApiDepthStmt == nullptr || updateCannApiDepthStmt == nullptr) {
         ServerLog::Error("Failed to prepare update statement.");
         return false;
     }
@@ -909,48 +839,81 @@ bool DbTraceDataBase::SetConfig()
         return false;
     }
     std::unique_lock<std::mutex> lock(mutex);
-    ExecSql("create INDEX connectionId on CANN_API(connectionId, startNs);");
-    ExecSql("create INDEX TASK_INDEX on TASK(globalTaskId, startNs);");
-    ExecSql("alter table TASK add depth integer;");
-    ExecSql("alter table CANN_API add depth integer;");
+
+    if (CheckTableExist(TABLE_TASK)) {
+        ExecSql("alter table TASK add depth integer;");
+    }
+    if (CheckTableExist(TABLE_API)) {
+        ExecSql("alter table PYTORCH_API add depth integer;");
+    }
+    if (CheckTableExist(TABLE_CANN_API)) {
+        ExecSql("alter table CANN_API add depth integer;");
+    }
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql =
-        " select EAL.name, globalTid, type, max(depth) as maxDepth from CANN_API a join ENUM_API_TYPE EAL "
-        " on a.type = EAL.id group by type, globalTid order by globalTid";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryHostMetadata failed!.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery();
+    PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API};
     std::map<std::string, std::vector<MetaDataDto>> threadMap;
-    while (resultSet->Next()) {
-        MetaDataDto metadata;
-        metadata.pid = resultSet->GetString("globalTid");
-        metadata.processName = "process";
-        metadata.threadId = resultSet->GetString("type");
-        metadata.threadName = resultSet->GetString("name");
-        metadata.maxDepth = resultSet->GetInt32("maxDepth") + 1;
-        threadMap[metadata.pid].emplace_back(metadata);
+    for (const auto &type: types) {
+        auto typeName = ENUM_TO_STR(type).value_or("");
+        if (!CheckTableExist(typeName)) {
+            ServerLog::Info("QueryHostMetadata failed, table ", typeName, " Not Exist.");
+            continue;
+        }
+        std::string sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from " + typeName +
+                          " a join ENUM_API_TYPE EAL on a.type = EAL.id group by type, globalTid order by globalTid";
+        switch (type) {
+            case PROCESS_TYPE::CANN_API:
+                sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from " + typeName +
+                      " a join ENUM_API_TYPE EAL on a.type = EAL.id group by type, globalTid order by globalTid";
+                break;
+            case PROCESS_TYPE::API:
+                sql = " select 'pytorch' as name, globalTid, 'pytorch' as type,"
+                      " max(depth) as maxDepth from " + typeName +
+                      " a group by globalTid order by globalTid";
+        }
+        auto stmt = CreatPreparedStatement(sql);
+        if (stmt == nullptr) {
+            ServerLog::Error("QueryHostMetadata failed!.");
+            return false;
+        }
+        auto resultSet = stmt->ExecuteQuery();
+        while (resultSet->Next()) {
+            MetaDataDto metadata;
+            metadata.pid = resultSet->GetString("globalTid");
+            metadata.metaType = typeName;
+            metadata.threadId = resultSet->GetString("type");
+            metadata.threadName = resultSet->GetString("name");
+            metadata.maxDepth = resultSet->GetInt32("maxDepth") + 1;
+            threadMap[metadata.pid].emplace_back(metadata);
+        }
     }
-    auto metaType = ENUM_TO_STR(PROCESS_TYPE::HOST).value_or("");
-    std::string curPid = threadMap.begin()->first.substr(0, 8); // 取globalTib的前8位做pid
+    DealHostMetadata(metaData, threadMap);
+    return true;
+}
+
+bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
+                                       std::map<std::string, std::vector<MetaDataDto>> &threadMap)
+{
+    auto len = threadMap.begin()->first.length() > 8 ? 8 : threadMap.begin()->first.length(); // 取globalTib的前8位做pid
+    std::string curPid = threadMap.begin()->first.substr(0, len);
     std::unique_ptr<UnitTrack> process = GenerateBaseUnitTrack("process", path, curPid, "process " + curPid, "label");
     for (auto &thread: threadMap) {
         if (!StringUtil::StartWith(thread.first, curPid)) {
             metaData.emplace_back(std::move(process));
-            curPid = thread.first.substr(0, 8); // 取globalTib的前8位做pid
-            process = GenerateBaseUnitTrack("label", path, curPid, "process " + curPid, "label");
+            len = thread.first.length() > 8 ? 8 : thread.first.length(); // 取globalTib的前8位做pid
+            curPid = thread.first.substr(0, len);
+            process = GenerateBaseUnitTrack("process", path, curPid, "process " + curPid, "label");
         }
         auto pid = thread.first.substr(thread.first.length() - 8, 8); // 取globalTib的后8位做tid
-        auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first, "Thread " + pid, metaType);
-        auto cannApiUnit = GenerateBaseUnitTrack("label", path, thread.first, "CANN", metaType);
+        auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first,
+                                                "Thread " + pid, ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+        auto cannApiUnit = GenerateBaseUnitTrack("label", path, thread.first,
+                                                 "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
         for (const auto &item: thread.second) {
-            auto level = GenerateBaseUnitTrack("thread", path, thread.first, "", metaType);
+            auto level = GenerateBaseUnitTrack("thread", path, thread.first, "", item.metaType);
             level->metaData.threadId = item.threadId;
             level->metaData.threadName = item.threadName;
             level->metaData.maxDepth = item.maxDepth;
@@ -966,7 +929,6 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
         process->children.emplace_back(std::move(threadUnit));
     }
     metaData.emplace_back(std::move(process));
-    return true;
 }
 
 std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(const std::string &type,

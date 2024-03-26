@@ -28,7 +28,8 @@ enum class LinkType : int {
 enum class PROCESS_TYPE {
     ASCEND_HARDWARE,
     HCCL,
-    HOST,
+    CANN_API,
+    API,
     HBM,
     LLC,
     DDR,
