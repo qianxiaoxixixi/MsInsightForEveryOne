@@ -11,31 +11,31 @@
 namespace Dic {
 
 // sql of timeline unit/counter
-const static std::string HBM_UNIT_COUNTER_SQL = "select timestampNs-? as startTime,hbmId||'/'|| case when name='read' "
-     " then 'Read' else 'Write' end as processName,  case when name='read' then '{\"Read(MB/s)\":' || bandwidth || '}' "
-     " else '{\"Write(MB/s)\":' || bandwidth || '}' end as args from HBM main join ENUM_MEMORY on type = id "
+const static std::string HBM_UNIT_COUNTER_SQL = "select timestampNs-? as startTime,hbmId||'/'|| case when value='read' "
+     " then 'Read' else 'Write' end as processName,  case when value='read' then '{\"Read(B/s)\":' || bandwidth || '}' "
+     " else '{\"Write(B/s)\":' || bandwidth || '}' end as args from HBM main join STRING_IDS on type = id "
      " where deviceId= ? and processName = ? AND startTime >= ? AND startTime <= ? ORDER BY timestampNs ASC";
 
 const static std::string LLC_UNIT_COUNTER_SQL = "with main as (select timestampNs - ? as startTime, "
-     " format('%s %s', llcId, case when name='read' then 'Read' else 'Write' end) as modeName,? as processName, "
-     " throughput,hitRate from LLC join ENUM_MEMORY on mode = id where deviceId = ?"
+     " format('%s %s', llcId, case when value='read' then 'Read' else 'Write' end) as modeName,? as processName, "
+     " throughput,hitRate from LLC join STRING_IDS on mode = id where deviceId = ?"
      " AND startTime >= ? AND startTime <= ? and glob(modeName||'*', processName)) select startTime, "
-     " case when glob('*Throughput', processName) then format('{\"Throughput(MB/s)\":%s}', throughput) "
+     " case when glob('*Throughput', processName) then format('{\"Throughput(B/s)\":%s}', throughput) "
      " else format('{\"Hit Rate(%%)\":%s}', hitRate) end as args from main ORDER BY startTime ASC";
 const static std::string DDR_UNIT_COUNTER_SQL = "select timestampNs-? as startTime, case when ? = 'Read' "
-     " then format('{\"Read(MB/s)\":%s}', read) else format('{\"Write(MB/s)\":%s}', write) end as args from DDR "
+     " then format('{\"Read(B/s)\":%s}', read) else format('{\"Write(B/s)\":%s}', write) end as args from DDR "
      " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC";
 const static std::string SOC_UNIT_COUNTER_SQL = "select timestampNs - ? as startTime, case when ? ='L2 Buffer Bw Level'"
      " then format('{\"L2 Buffer Bw Level\":%s}', l2BufferBwLevel) else "
      " format('{\"Mata Bw Level\":%s}', mataBwLevel) end as args from SOC_BANDWIDTH_LEVEL"
      " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string PMU_UNIT_COUNTER_SQL = "with pn as (select ? as value) select timestampNs - ? as startTime, "
-     " format('{\"value\":%s, \"acc_id\":%s}', case when pn.value='read_bandwidth' then readBandwidth "
-     " when pn.value = 'write_bandwidth' then writeBandwidth when pn.value = 'read_ost' then readOst "
-     " else writeOst end, accId) as args  from ACC_PMU join pn "
+     " format('{\"value\":%s, \"acc_id\":%s}', case when pn.value='readBwLevel' then readBwLevel "
+     " when pn.value = 'writeBwLevel' then writeBwLevel when pn.value = 'readOstLevel' then readOstLevel "
+     " else writeOstLevel end, accId) as args  from ACC_PMU join pn "
      " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string NPU_UNIT_COUNTER_SQL = "with pn as (select ? as value) select timestampNs - ? as startTime, "
-     " case type when 0 then 'APP*'  else 'Device*' end as typeName, format('{\"KB\":%s}',"
+     " case type when 0 then 'APP*'  else 'Device*' end as typeName, format('{\"B\":%s}',"
      " case when glob('*DDR', pn.value) then ddrUsage when glob('*HBM', pn.value) then "
      " hbmUsage else hbmUsage + ddrUsage end) as args from NPU_MEM join pn where deviceId = ? and "
      " glob(typeName, pn.value) and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
