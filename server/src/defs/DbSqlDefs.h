@@ -12,7 +12,7 @@ namespace Dic {
 
 // sql of timeline unit/counter
 const static std::string HBM_UNIT_COUNTER_SQL = "select timestampNs-? as startTime,hbmId||'/'|| case when value='read' "
-     " then 'Read' else 'Write' end as processName,  case when value='read' then '{\"Read(B/s)\":' || bandwidth || '}' "
+     " then 'Read' else 'Write' end as processName, case when value='read' then '{\"Read(B/s)\":' || bandwidth || '}' "
      " else '{\"Write(B/s)\":' || bandwidth || '}' end as args from HBM main join STRING_IDS on type = id "
      " where deviceId= ? and processName = ? AND startTime >= ? AND startTime <= ? ORDER BY timestampNs ASC";
 
@@ -47,36 +47,36 @@ const static std::string HOST_FLOW_NAME_SQL = " with tmp as (select * from TASK 
       " UNION select tmp.globalTaskId as flowId, info.name, 's' as type from COMMUNICATION_TASK_INFO info "
       " join tmp on info.globalTaskId = tmp.globalTaskId\n"
       " UNION select info.opId as flowId, info.opName as name, 's' as type from COMMUNICATION_OP info "
-      " where info.connectionId = ?;";
+      " where info.ROWID = ?;";
 
 const static std::string HCCL_FLOW_NAME_SQL = "SELECT main.connectionId as flowId, api.name,'f' as type FROM TASK main "
       " join COMMUNICATION_TASK_INFO CTI on CTI.globalTaskId = main.globalTaskId "
       " join api on api.connectionId = main.connectionId "
-      " WHERE main.globalTaskId = ? and CTI.planeId = ? and main.startNs = ? UNION "
-      " SELECT main.connectionId as flowId, api.name, 'f' as type  FROM COMMUNICATION_OP main join " + TABLE_API +
-      " api on api.connectionId= main.connectionId WHERE main.opId = ? "
+      " WHERE main.ROWID = ? and CTI.planeId = ? and main.startNs = ? UNION "
+      " SELECT main.connectionId as flowId, api.name, 'f' as type  FROM COMMUNICATION_OP main join " + TABLE_CANN_API +
+      " api on api.connectionId= main.connectionId WHERE main.ROWID = ? "
       " and main.groupName||'group' = ? and main.startNs = ?";
 
 const static std::string HARDWARE_FLOW_NAME_SQL = "select c.name, c.connectionId as flowId, 'f' as type"
       " from " + TABLE_TASK + " main "
-      " join " + TABLE_API + " c on c.connectionId = main.connectionId"
-      " where main.globalTaskId = ? and main.startNs = ?;";
+      " join " + TABLE_CANN_API + " c on c.connectionId = main.connectionId"
+      " where main.ROWID = ? and main.startNs = ?;";
 
 // sql of timeline unit/flowDetail
 const static std::string HOST_FLOW_DETAIL_SQL = " select name, type as tid, startNs as start, endNs - startNs as dur,"
-       " connectionId as id, depth, globalTid as pid from API where connectionId = ?;";
+       " connectionId as id, depth, globalTid as pid from " + TABLE_CANN_API + " where ROWID = ?;";
 
 const static std::string HCCL_FLOW_DETAIL_SQL = "select name, planeId as tid, startNs as start, endNs - startNs as dur,"
         " main.globalTaskId as id, depth, deviceId from TASK main join COMMUNICATION_TASK_INFO info "
-        " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.globalTaskId = ? "
+        " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.ROWID = ? "
         " UNION select opName as name, op.groupName||'group' as tid, op.startNs as start, op.endNs - op.startNs as dur,"
         " op.opId as id, 0 as depth, TASK.deviceId from COMMUNICATION_OP op join COMMUNICATION_TASK_INFO info "
         " on info.opId = op.opId join TASK on info.globalTaskId = TASK.globalTaskId\n"
-        " where op.connectionId = ? and op.opId = ? group by op.opId;";
+        " where op.connectionId = ? and op.ROWID = ? group by op.opId;";
 
 const static std::string HARDWARE_FLOW_DETAIL_SQL = "select name, streamId as tid, startNs as start,"
         " endNs - startNs as dur, main.globalTaskId as id, depth, deviceId from TASK main join COMPUTE_TASK_INFO info "
-        " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.globalTaskId = ?;";
+        " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.ROWID = ?;";
 };
 
 #endif // PROFILER_SERVER_DBSQLDEFS_H

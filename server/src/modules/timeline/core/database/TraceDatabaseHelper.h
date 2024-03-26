@@ -12,6 +12,9 @@
 #include "ProtocolEnumUtil.h"
 #include "CommonDefs.h"
 #include "DbSqlDefs.h"
+#include "JsonUtil.h"
+#include "ServerLog.h"
+#include "DataBaseManager.h"
 
 namespace Dic::Module::Timeline {
 using namespace Protocol;
@@ -46,11 +49,17 @@ public:
                       " and sub.startNs <= ?;";
                 return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid, requestParams.tid,
                                     requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
-            case PROCESS_TYPE::HOST:
-                sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + TABLE_API + " main "
-                      " where type = ? and globalTid = ? and endNs >= ? AND startNs <= ?"
+            case PROCESS_TYPE::CANN_API:
+                sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + requestParams.metaType +
+                      " main where type = ? and globalTid = ? and endNs >= ? AND startNs <= ?"
                       " ORDER BY depth ASC, startNs ASC;";
                 return ExecuteQuery(stmt, sql, requestParams.tid, requestParams.pid,
+                                    requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            case PROCESS_TYPE::API:
+                sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + requestParams.metaType +
+                      " main where globalTid = ? and endNs >= ? AND startNs <= ?"
+                      " ORDER BY depth ASC, startNs ASC;";
+                return ExecuteQuery(stmt, sql, requestParams.pid,
                                     requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
             default:
                 throw DatabaseException("unsupported type!");
@@ -71,7 +80,8 @@ public:
                 stmt->BindParams(requestParams.id, requestParams.tid, requestParams.startTime + minTimestamp);
                 return ExecuteQuery(stmt, HCCL_FLOW_NAME_SQL, requestParams.id, requestParams.tid,
                                     requestParams.startTime + minTimestamp);
-            case PROCESS_TYPE::HOST:
+            case PROCESS_TYPE::CANN_API:
+            case PROCESS_TYPE::API:
                 return ExecuteQuery(stmt, HOST_FLOW_NAME_SQL, requestParams.id, requestParams.id);
             default:
                 throw DatabaseException("unsupported type!");
@@ -93,7 +103,8 @@ public:
                 resultSet = ExecuteQuery(stmt, HCCL_FLOW_DETAIL_SQL, requestParams.flowId, requestParams.id,
                                          requestParams.flowId, requestParams.id);
                 break;
-            case PROCESS_TYPE::HOST:
+            case PROCESS_TYPE::CANN_API:
+            case PROCESS_TYPE::API:
                 resultSet = ExecuteQuery(stmt, HOST_FLOW_DETAIL_SQL, requestParams.flowId);
                 break;
             default:
@@ -109,7 +120,7 @@ public:
         flowBody.depth = resultSet->GetInt32("depth");
         flowBody.duration = resultSet->GetInt64("dur");
         flowBody.name = stringCache.at(resultSet->GetInt64("name"));
-        if (processType == PROCESS_TYPE::HOST) {
+        if (processType == PROCESS_TYPE::CANN_API) {
             flowBody.pid = resultSet->GetString("pid");
         } else {
             flowBody.pid = flowBody.metaType;
@@ -133,20 +144,21 @@ public:
                 break;
             case PROCESS_TYPE::HCCL:
                 sql = "with tasks as (select startNs as start, endNs - startNs as dur,\n"
-                      " globalTaskId as id, depth, deviceId, connectionId from TASK where startNs >= ? and endNs <= ? "
-                      " and deviceId = ?) "
+                      " ROWID as id, globalTaskId, depth, deviceId, connectionId from TASK "
+                      " where startNs >= ? and endNs <= ? and deviceId = ?) "
                       " select name, planeId as tid,  start, dur, connectionId, depth, deviceId from tasks main "
-                      " join COMMUNICATION_TASK_INFO info on main.id = info.globalTaskId UNION "
+                      " join COMMUNICATION_TASK_INFO info on main.globalTaskId = info.globalTaskId UNION "
                       " select opName as name, op.groupName||'group' as tid, op.startNs as start, "
                       " op.endNs - op.startNs as dur, tasks.connectionId, 0 as depth,deviceId from COMMUNICATION_OP op "
                       " join tasks on op.connectionId = tasks.connectionId group by op.opId;";
                 resultSet = ExecuteQuery(stmt, sql, params.startTime, params.endTime, params.rankId);
                 break;
-            case PROCESS_TYPE::HOST:
-                sql = " select name, type as tid, CANN_API.startNs as start, CANN_API.endNs - CANN_API.startNs as dur,"
-                      " CANN_API.connectionId, CANN_API.depth, globalTid as pid from CANN_API join TASK"
-                      " on TASK.connectionId = CANN_API.connectionId where TASK.startNs >= ? "
-                      " and TASK.endNs <= ? and deviceId = ? group by CANN_API.connectionId";
+            case PROCESS_TYPE::CANN_API:
+            case PROCESS_TYPE::API:
+                sql = " select name, type as tid, api.startNs as start, api.endNs - api.startNs as dur,"
+                      " api.connectionId, api.depth, globalTid as pid from " + TABLE_CANN_API + " api join TASK"
+                      " on TASK.connectionId = api.connectionId where TASK.startNs >= ? "
+                      " and TASK.endNs <= ? and deviceId = ? group by api.connectionId";
                 resultSet = ExecuteQuery(stmt, sql, params.startTime, params.endTime, params.rankId);
                 break;
             default:
@@ -157,7 +169,7 @@ public:
             location.tid = resultSet->GetString("tid");
             location.timestamp = resultSet->GetInt64("start");
             location.depth = resultSet->GetInt32("depth");
-            if (processType == PROCESS_TYPE::HOST) {
+            if (processType == PROCESS_TYPE::CANN_API) {
                 location.pid = resultSet->GetString("pid");
             } else {
                 location.pid = ENUM_TO_STR(processType).value_or("");
@@ -203,10 +215,10 @@ public:
         auto processType = GetProcessType(requestParams.metaType);
         switch (processType) {
             case PROCESS_TYPE::ASCEND_HARDWARE:
-                sql = "SELECT main.globalTaskId as id, startNs, endNs - startNs as duration,"
+                sql = "SELECT main.ROWID as id, startNs, endNs - startNs as duration,"
                       " depth, coalesce(CTI.name, main.taskType) as name FROM " + TABLE_TASK + " main "
                       " left join " + TABLE_COMPUTE_TASK_INFO + " CTI on CTI.globalTaskId = main.globalTaskId"
-                      " WHERE main.globalTaskId = ?";
+                      " WHERE main.ROWID = ?";
                 return ExecuteQuery(stmt, sql, requestParams.id);
             case PROCESS_TYPE::HCCL:
                 sql = " with tmp as (select main.globalTaskId, startNs, endNs, info.name, info.planeId,"
@@ -220,32 +232,25 @@ public:
                       " where tid = ? AND startNs = ?";
                 return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
                                     requestParams.startTime + minTimestamp);
-            case PROCESS_TYPE::HOST:
-                sql = "select connectionId as id, startNs, endNs-startNs as duration, depth, name from CANN_API"
-                      " where connectionId = ? and startNs = ?";
+            case PROCESS_TYPE::CANN_API:
+            case PROCESS_TYPE::API:
+                sql = "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
+                      " from " + requestParams.metaType + " where ROWID = ? and startNs = ?";
                 return ExecuteQuery(stmt, sql, requestParams.id, requestParams.startTime + minTimestamp);
             default:
                 throw DatabaseException("unsupported type!");
         }
     };
 
-static std::unique_ptr<SqliteResultSet> QueryComputeTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                          uint64_t id)
-{
-    std::string sql = "SELECT inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats"
-                      "  FROM " + TABLE_COMPUTE_TASK_INFO + " where globalTaskId = ?";
-    return ExecuteQuery(stmt, sql, id);
-}
+static void QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
+             const Protocol::ThreadDetailParams &requestParams,
+             Protocol::UnitThreadDetailBody &responseBody, const std::map<int64_t, std::string> &stringCache);
 
-static std::unique_ptr<SqliteResultSet> QueryCommunicationTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                          uint64_t id)
-{
-    std::string sql = "SELECT com.taskType,com.planeId, com.groupName,com.notifyId ,com.rdmaType,"
-                      "com.srcRank,com.dstRank,com.transportType,com.size,com.dataType, "
-                      "com.linkType ,com.opId "
-                      "  FROM " + TABLE_COMMUNICATION_TASK_INFO + " com where globalTaskId = ?";
-    return ExecuteQuery(stmt, sql, id);
-}
+static std::unique_ptr<SqliteResultSet> QueryTaskStrInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                const Protocol::ThreadDetailParams &requestParams);
+
+static std::unique_ptr<SqliteResultSet> QueryTaskCacheInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                    const Protocol::ThreadDetailParams &requestParams);
 
     static  std::unique_ptr<SqliteResultSet> QueryThreadTraces(
             std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesParams &requestParams,
@@ -255,7 +260,7 @@ static std::unique_ptr<SqliteResultSet> QueryCommunicationTaskInfoById(std::uniq
         auto processType = GetProcessType(requestParams.metaType);
         switch (processType) {
             case PROCESS_TYPE::ASCEND_HARDWARE:
-                sql = "SELECT main.globalTaskId as id, startNs - ? as start_time, endNs - startNs as duration,"
+                sql = "SELECT main.ROWID as id, startNs - ? as start_time, endNs - startNs as duration,"
                       " coalesce(c.name, main.taskType) as name, depth, ROUND(startNs / ?) as rank FROM TASK main "
                       " left join COMPUTE_TASK_INFO c "
                       " on c.globalTaskId = main.globalTaskId where deviceId = ? and streamId = ?"
@@ -264,23 +269,31 @@ static std::unique_ptr<SqliteResultSet> QueryCommunicationTaskInfoById(std::uniq
                 return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx, requestParams.cardId,
                                     requestParams.threadId, requestParams.startTime, requestParams.endTime);
             case PROCESS_TYPE::HCCL:
-                sql = "with tmp as (select * from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
+                sql = "with tmp as (select main.ROWID, * from " + TABLE_TASK +
+                  " main join " + TABLE_COMMUNICATION_TASK_INFO +
                   " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
                   " sub as (select startNs,endNs-startNs as duration,opName as name,groupName||'group' as tid,endNs,"
-                  " opId as id from " + TABLE_COMMUNICATION_OP + " where opId in (select opId from tmp group by opId) "
+                  " ROWID as id from " + TABLE_COMMUNICATION_OP + " where opId in (select opId from tmp group by opId) "
                   " UNION select startNs,endNs-startNs as duration,name, planeId||'' as tid, endNs, "
-                  " tmp.globalTaskId as id from tmp) select id, startNs-? as start_time,duration, name, 0 as depth, "
+                  " tmp.ROWID as id from tmp) select id, startNs-? as start_time,duration, name, 0 as depth, "
                   " ROUND(startNs / ?) as rank from sub "
                   " where tid = ? and start_time + duration >= ? AND start_time < ? "
                   " GROUP BY rank, duration HAVING max(start_time) ORDER BY start_time;";
                 return ExecuteQuery(stmt, sql, requestParams.cardId, minTimestamp, requestParams.timePerPx,
                                     requestParams.threadId, requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::HOST:
-                sql = "select name, connectionId as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
-                      " ROUND(startNs / ?) as rank from CANN_API a where type = ? and globalTid = ?"
-                      " and start_time + duration >= ? AND start_time < ? "
+            case PROCESS_TYPE::CANN_API:
+                sql = "select name, ROWID as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
+                      " ROUND(startNs / ?) as rank from " + requestParams.metaType + " a "
+                      " where type = ? and globalTid = ? and start_time + duration >= ? AND start_time < ? "
                       " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
                 return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx, requestParams.threadId,
+                                    requestParams.processId, requestParams.startTime, requestParams.endTime);
+            case PROCESS_TYPE::API:
+                sql = "select name, ROWID as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
+                      " ROUND(startNs / ?) as rank from " + requestParams.metaType + " a "
+                      " where globalTid = ? and start_time + duration >= ? AND start_time < ? "
+                      " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
+                return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx,
                                     requestParams.processId, requestParams.startTime, requestParams.endTime);
             default:
                 throw DatabaseException("unsupported type!");
@@ -307,10 +320,15 @@ static std::unique_ptr<SqliteResultSet> QueryCommunicationTaskInfoById(std::uniq
                       " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
                 return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.cardId,
                                     requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::HOST:
+            case PROCESS_TYPE::CANN_API:
+            case PROCESS_TYPE::API:
                 sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                      "FROM " + TABLE_API + " main "
-                      " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
+                      " FROM " + TABLE_CANN_API;
+                if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
+                    sql += " UNION SELECT startNs -? as start_time,endNs - startNs as duration,"
+                           " endNs - ? as end_time from " + TABLE_API;
+                }
+                sql += " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY start_time;";
                 return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
                                     requestParams.startTime, requestParams.endTime);
             default:
@@ -478,8 +496,6 @@ private:
                                          startTime, endTime);
                 break;
             case PROCESS_TYPE::HCCL:
-
-            case PROCESS_TYPE::HOST:
 
             default:
                 throw DatabaseException("unsupported type!");

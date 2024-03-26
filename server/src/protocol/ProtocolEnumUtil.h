@@ -38,7 +38,8 @@ const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBS
 
 const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWARE, "ASCEND HARDWARE" },
                                                    { PROCESS_TYPE::HCCL, "HCCL" },
-                                                   { PROCESS_TYPE::HOST, "HOST" },
+                                                   { PROCESS_TYPE::CANN_API, "CANN_API" },
+                                                   { PROCESS_TYPE::API, "PYTORCH_API" },
                                                    { PROCESS_TYPE::LLC, "LLC" },
                                                    { PROCESS_TYPE::DDR, "DDR" },
                                                    { PROCESS_TYPE::ACC_PMU, "ACC_PMU" },
