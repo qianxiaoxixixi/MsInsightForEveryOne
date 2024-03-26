@@ -8,6 +8,7 @@
 #include "TraceFileParser.h"
 #include "TraceTime.h"
 #include "ParserStatusManager.h"
+#include "UploadFileParser.h"
 #include "RemoteDeleteHandler.h"
 
 namespace Dic {
@@ -29,6 +30,7 @@ void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     RemoteDeleteResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     TraceFileParser::Instance().DeleteParseFiles(request.params.rankId);
+    UploadFileParser::Instance().ResetByFiles(request.params.rankId);
     GetUpdateTime(response.body);
     SetResponseResult(response, true);
     // add response to response queue in session
