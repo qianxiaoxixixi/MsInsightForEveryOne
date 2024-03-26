@@ -135,7 +135,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         });
     }, []);
     useEffect(() => {
-        Update();
+        Update(conditions);
     }, [session.renderId]);
     useEffect(() => {
         Update({ stage: activeCommunicator } as ConditionDataType);
