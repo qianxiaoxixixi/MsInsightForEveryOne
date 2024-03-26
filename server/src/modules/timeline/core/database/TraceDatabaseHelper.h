@@ -143,10 +143,10 @@ public:
                 resultSet = ExecuteQuery(stmt, sql, params.startTime, params.endTime, params.rankId);
                 break;
             case PROCESS_TYPE::HOST:
-                sql = " select name, type as tid, API.startNs as start, API.endNs - API.startNs as dur,"
-                      " API.connectionId, API.depth, globalTid as pid from API join TASK"
-                      " on TASK.connectionId = API.connectionId where TASK.startNs >= ? "
-                      " and TASK.endNs <= ? and deviceId = ? group by API.connectionId";
+                sql = " select name, type as tid, CANN_API.startNs as start, CANN_API.endNs - CANN_API.startNs as dur,"
+                      " CANN_API.connectionId, CANN_API.depth, globalTid as pid from CANN_API join TASK"
+                      " on TASK.connectionId = CANN_API.connectionId where TASK.startNs >= ? "
+                      " and TASK.endNs <= ? and deviceId = ? group by CANN_API.connectionId";
                 resultSet = ExecuteQuery(stmt, sql, params.startTime, params.endTime, params.rankId);
                 break;
             default:
@@ -221,7 +221,7 @@ public:
                 return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
                                     requestParams.startTime + minTimestamp);
             case PROCESS_TYPE::HOST:
-                sql = "select connectionId as id, startNs, endNs-startNs as duration, depth, name from API"
+                sql = "select connectionId as id, startNs, endNs-startNs as duration, depth, name from CANN_API"
                       " where connectionId = ? and startNs = ?";
                 return ExecuteQuery(stmt, sql, requestParams.id, requestParams.startTime + minTimestamp);
             default:
@@ -277,7 +277,7 @@ static std::unique_ptr<SqliteResultSet> QueryCommunicationTaskInfoById(std::uniq
                                     requestParams.threadId, requestParams.startTime, requestParams.endTime);
             case PROCESS_TYPE::HOST:
                 sql = "select name, connectionId as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
-                      " ROUND(startNs / ?) as rank from API a where type = ? and globalTid = ?"
+                      " ROUND(startNs / ?) as rank from CANN_API a where type = ? and globalTid = ?"
                       " and start_time + duration >= ? AND start_time < ? "
                       " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
                 return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx, requestParams.threadId,
