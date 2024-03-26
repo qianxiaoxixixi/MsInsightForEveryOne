@@ -733,7 +733,11 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
     if (type == FileType::MS_PROF) {
         sql = "SELECT id FROM " + TABLE_NPU_INFO;
     } else if (type == FileType::PYTORCH) {
-        sql = "SELECT rankId FROM " + TABLE_PYTORCH_INFO;
+        if (CheckTableDataInvalid(TABLE_PYTORCH_INFO)) {
+            sql = "SELECT DISTINCT rank_id FROM " + TABLE_PYTORCH_INFO;
+        } else {
+            sql = "SELECT DISTINCT id FROM " + TABLE_NPU_INFO;
+        }
     }
     std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
