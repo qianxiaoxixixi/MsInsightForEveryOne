@@ -115,6 +115,7 @@ private:
     const std::string simpleSliceIndex = "track_id_depth_timestamp_end_time_index";
     const std::string flowIndex = "flow_id_time_index";
     const std::string kernelDetail = "kernel_detail";
+    const std::string hcclType = "HCCL";
     const int cacheSize = 1000;
     const int unit = 1000;
 

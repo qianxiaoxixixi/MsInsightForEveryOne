@@ -1000,7 +1000,7 @@ KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<Slice
         ServerLog::Error("sliceDto array is empty!");
         return kernelShapesDataDto;
     }
-    std::string sql = "SELECT input_shapes AS inputShapes, input_data_types AS inputDataTypes, "
+    std::string sql = "SELECT accelerator_core, input_shapes AS inputShapes, input_data_types AS inputDataTypes, "
         "input_formats AS inputFormats, output_shapes AS outputShapes, "
         "output_data_types AS outputDataTypes, output_formats AS outputFormats "
         "FROM " +
@@ -1012,6 +1012,9 @@ KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<Slice
     }
     auto resultSet = stmt->ExecuteQuery(param[0].name, param[0].timestamp);
     while (resultSet->Next()) {
+        if (resultSet->GetString("accelerator_core") == hcclType) {
+            break;
+        }
         kernelShapesDataDto.inputShapes = resultSet->GetString("inputShapes");
         kernelShapesDataDto.inputDataTypes = resultSet->GetString("inputDataTypes");
         kernelShapesDataDto.inputFormats = resultSet->GetString("inputFormats");
