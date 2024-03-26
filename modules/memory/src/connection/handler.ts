@@ -22,7 +22,7 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                 });
             } else {
                 if (isCluster) {
-                    if (++session.curRankIdsCount === session.rankIdsTotal) {
+                    if (++session.curRankIdsCount === session.unitcount) {
                         session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
                     }
                 }
@@ -84,7 +84,7 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             const keys: string[] = ['isCluster', 'unitcount'];
             keys.forEach((key: string) => {
                 if (data[key] !== undefined) {
-                    Object.assign(session, { key: data[key] });
+                    Object.assign(session, { [key]: data[key] });
                 }
             });
         });
