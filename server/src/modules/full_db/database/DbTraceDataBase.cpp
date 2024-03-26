@@ -1005,8 +1005,9 @@ bool DbTraceDataBase::QueryAscendHardwareMetadata(const std::string &fileId,
 bool DbTraceDataBase::QueryHcclMetadata(const std::string &fileId,
                                         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql = "with main as (select planeId, groupName from " + TABLE_COMMUNICATION_TASK_INFO +
-            " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId where deviceId = ?)\n"
+    std::string sql = "with main as (select planeId, op.groupName from " + TABLE_COMMUNICATION_TASK_INFO +
+            " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
+            " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?)\n"
             " select 'Plane ' || planeId as name, planeId as id  from main group by planeId\n"
             " union select 'Group ' || row_number() over () || ' Communication' as name, groupName||'group' as id "
             " from main group by groupName";
@@ -1046,16 +1047,16 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
         std::string sql;
         switch (type) {
             case PROCESS_TYPE::HBM:
-                sql = "select case when name='read' then 'Read(MB/s)' else 'Write(MB/s)' end as typeName,\n"
-                      "    hbmId || '/' || case when name='read' then 'Read' else 'Write' end as name\n"
-                      "FROM HBM join ENUM_MEMORY on type = id WHERE deviceId = ? GROUP BY hbmId, type";
+                sql = "select case when value='read' then 'Read(B/s)' else 'Write(B/s)' end as typeName,\n"
+                      "    hbmId || '/' || case when value='read' then 'Read' else 'Write' end as name\n"
+                      "FROM HBM join STRING_IDS on type = id WHERE deviceId = ? GROUP BY hbmId, type";
                 break;
             case PROCESS_TYPE::LLC:
                 sql = "with main as (select llcId, mode from LLC where deviceId = ? group by llcId, mode)"
-                      " select 'Throughput(MB/s)' as typeName, llcId || ' ' || case when name='read' then 'Read' else"
-                      " 'Write' end || '/Throughput' as name  from main join ENUM_MEMORY on mode = id "
-                      " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when name='read' then 'Read' else"
-                      " 'Write' end || '/Hit Rate' as name  from main join ENUM_MEMORY on mode = id ";
+                      " select 'Throughput(B/s)' as typeName, llcId || ' ' || case when value='read' then 'Read' else"
+                      " 'Write' end || '/Throughput' as name  from main join STRING_IDS on mode = id "
+                      " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when value='read' then 'Read' else"
+                      " 'Write' end || '/Hit Rate' as name  from main join STRING_IDS on mode = id ";
                 break;
         }
         auto stmt = CreatPreparedStatement(sql);
@@ -1091,12 +1092,12 @@ bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
         std::vector<std::vector<std::string>> dataTypes;
         switch (type) {
             case PROCESS_TYPE::ACC_PMU:
-                units = {"read_bandwidth", "read_ost", "write_bandwidth", "write_ost"};
+                units = {"readBwLevel", "readOstLevel", "writeBwLevel", "writeOstLevel"};
                 dataTypes = {{"value", "acc_id"}};
                 break;
             case PROCESS_TYPE::DDR:
                 units = {"Read", "Write"};
-                dataTypes = {{"Read(MB/s)"}, {"Write(MB/s)"}};
+                dataTypes = {{"Read(B/s)"}, {"Write(B/s)"}};
                 break;
             case PROCESS_TYPE::STARS_SOC:
                 counter->metaData.processName = "Stars Soc";
@@ -1105,7 +1106,7 @@ bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
                 break;
             case PROCESS_TYPE::NPU_MEM:
                 units = {"APP/DDR", "APP/HBM", "APP/MEMORY", "Device/DDR", "Device/HBM", "Device/MEMORY"};
-                dataTypes = {{"KB"}};
+                dataTypes = {{"B"}};
                 break;
         }
         for (int index = 0; index < units.size(); index++) {
