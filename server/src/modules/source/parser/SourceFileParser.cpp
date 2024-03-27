@@ -217,7 +217,7 @@ void SourceFileParser::Reset()
     for (auto &conn : connList) {
         std::string path = conn->GetDbPath();
         conn->Stop();
-        if (!FileUtil::RemoveFile(path)) {
+        if (!FileUtil::RemoveFileExDb(path)) {
             ServerLog::Error("Failed to remove file. ", path);
         }
     }
