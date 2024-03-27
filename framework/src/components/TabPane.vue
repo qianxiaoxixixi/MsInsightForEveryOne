@@ -25,8 +25,8 @@ const showHelpModal = ref(false);
 const version = ref('UNKNOWN');
 // Ascend-Insight最近修改事件
 const modifyTime = ref('UNKNOWN');
-// 获取当前时间的年份数字
-const fullYear = ref(new Date().getFullYear());
+// 版权年份范围，默认2024年（软件首发年分）
+const copyrightYear = ref('2024');
 
 /**
  * 问号图标鼠标点击事件处理函数
@@ -37,6 +37,12 @@ function questionIconClickHandler(e: MouseEvent) {
   // 读取文件内容
   version.value = VersionInfo.version;
   modifyTime.value = VersionInfo.modifyTime;
+
+  // “软件最近修改年份”不是“首次发布年份时”，版权时间范围需要修改为“首年年份-最近修改年份”
+  const modifyYear = VersionInfo.modifyTime.split('/')[0];
+  if (modifyYear !== copyrightYear.value) {
+    copyrightYear.value = copyrightYear.value + '-' + modifyYear;
+  }
 
   e.stopPropagation();
   // 显示“帮助”弹框，展示版本信息内容
@@ -224,10 +230,7 @@ function toggleTab(index: number): void {
               Build {{ version.valueOf() }}, build on {{ modifyTime.valueOf() }}
             </li>
             <li>
-              Licensed to Huawei Technologies CO.LTD
-            </li>
-            <li>
-              Copyright © 2010-{{ fullYear.valueOf() }} Ascend Insight@MindStudio
+              Copyright © {{ copyrightYear.valueOf() }} Huawei Technologies Co, Ltd. All Rights Reserved.
             </li>
           </ul>
         </el-dialog>
