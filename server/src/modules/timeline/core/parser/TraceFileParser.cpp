@@ -292,7 +292,7 @@ void TraceFileParser::Reset()
     for (auto &conn : connList) {
         std::string path = conn->GetDbPath();
         conn->Stop();
-        if (!FileUtil::RemoveFile(path)) {
+        if (!FileUtil::RemoveFileExDb(path)) {
             ServerLog::Error("Failed to remove file. ", path);
         }
     }
@@ -312,8 +312,8 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
     ParserStatusManager::Instance().ClearParserStatus(fileId);
     std::string path = DataBaseManager::Instance().GetDbPath(fileId);
     DataBaseManager::Instance().ReleaseDatabase(fileId);
-    if (!path.empty() && fileId != "FullDb") {
-        FileUtil::RemoveFile(path);
+    if (!path.empty()) {
+        FileUtil::RemoveFileExDb(path);
     }
 }
 

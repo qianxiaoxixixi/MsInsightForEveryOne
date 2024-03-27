@@ -151,7 +151,7 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
             FullDb::DbSummaryDataBase::ParserEnd(token, id, true, "");
         } else {
             FullDb::DbSummaryDataBase::ParserEnd(token, id, false, "");
-            ServerLog::Error("Failed to connect or open SummeryDatabase. rankId:", "FullDb");
+            ServerLog::Error("Failed to connect or open SummeryDatabase. rankId:", id);
         }
     }
     ServerLog::Info("Init Summary finish");
@@ -170,7 +170,7 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
         } else {
             FullDb::DbMemoryDataBase::ParserEnd(id, false);
             FullDb::DbMemoryDataBase::ParseCallBack(token, id, false, "");
-            ServerLog::Error("Failed to connect or open memoryDatabase. rankId:", "FullDb");
+            ServerLog::Error("Failed to connect or open memoryDatabase. rankId:", id);
         }
     }
     ServerLog::Info("Init Memory finish");
