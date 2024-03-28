@@ -195,6 +195,16 @@ private:
 
     std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
         std::set<int64_t> &ids);
+
+    std::vector<Protocol::SimpleSlice>
+    QuerySimpleSliceByTimeRange(uint64_t startTime, uint64_t endTime, uint64_t minTimestamp,
+                                int64_t trackId);
+
+    std::vector<Protocol::SimpleSlice>
+    QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
+                                int64_t trackId);
+
+    std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
 };
 } // end of namespace Timeline
 } // end of namespace Module

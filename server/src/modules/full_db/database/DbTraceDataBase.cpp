@@ -222,27 +222,6 @@ bool DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
                                     Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp,
                                     int64_t trackId)
 {
-    auto stmt = CreatPreparedStatement();
-    std::unique_ptr<SqliteResultSet> resultSet;
-    try {
-        resultSet = TraceDatabaseHelper::QueryFlowName(stmt, requestParams, minTimestamp);
-    } catch (DatabaseException &e) {
-        ServerLog::Error("QueryFlowName Fail, ", e.What());
-        return false;
-    }
-    while (resultSet->Next()) {
-        std::string name = stringsCache.at(path).at(resultSet->GetInt64("name"));
-        std::string flowId = resultSet->GetString("flowId");
-        std::string type = resultSet->GetString("type");
-        if (type == lineStart || type == lineEnd) {
-            responseBody.flowDetail.emplace_back(name, flowId, type);
-        } else if (type == lineEndOptional) {
-            responseBody.flowDetail.emplace_back(name, flowId, lineStart);
-            responseBody.flowDetail.emplace_back(name, flowId, lineEnd);
-        } else {
-            ServerLog::Warn("Unknown flow type. type:", type);
-        }
-    }
     return false;
 }
 

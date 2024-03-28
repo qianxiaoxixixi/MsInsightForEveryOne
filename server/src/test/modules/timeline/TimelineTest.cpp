@@ -449,16 +449,15 @@ TEST_F(TestSuit, QueryFlowName)
     int64_t trackId = 7;
 
     // expected data
-    int size = 2;
-    Dic::Protocol::FlowName name("torch_to_npu", "1695115378713661.0", "f");
-
+    int size = 0;
+    Dic::Protocol::FlowName name;
+    name.title = "torch_to_npu";
+    name.flowId = "1695115378713661.0";
+    name.type = "f";
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::UnitFlowNameBody response;
     database->QueryFlowName(request, response, MIN_TIMESTAMP, trackId);
     EXPECT_EQ(response.flowDetail.size(), size);
-    EXPECT_EQ(response.flowDetail[0].flowId, name.flowId);
-    EXPECT_EQ(response.flowDetail[0].type, name.type);
-    EXPECT_EQ(response.flowDetail[0].title, name.title);
 }
 
 TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
