@@ -160,6 +160,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowNameRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
     return reqPtr;

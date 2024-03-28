@@ -113,11 +113,10 @@ struct UnitThreadDetailResponse : public Response {
 };
 
 struct FlowName {
-    FlowName(std::string name, std::string id, std::string type)
-        : title(std::move(name)), flowId(std::move(id)), type(std::move(type)){};
     std::string title;
     std::string flowId;
     std::string type; // s, f
+    uint64_t timestamp;
 };
 
 struct UnitFlowNameBody {

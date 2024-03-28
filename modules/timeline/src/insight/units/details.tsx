@@ -106,9 +106,7 @@ const Link = styled.span`
     }
     border-bottom: 2px solid rgb(140, 140, 140);
 `;
-
-export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string):
-{ rankId: string; tid: string; pid: string; metaType: string; id: string; startTime: number } {
+export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string): Record<string, unknown> {
     return {
         rankId: metadata.cardId ?? '',
         tid: data.tid ?? (metadata.threadId ?? ''),
@@ -116,6 +114,7 @@ export const generateFlowParam = function(metadata: ThreadMetaData, data: any, m
         id: data.id,
         metaType: metaType ?? metadata?.metaType ?? '',
         startTime: data.startTime ?? data.timestamp,
+        endTime: (data.startTime ?? data.timestamp) + data.duration,
     };
 };
 
@@ -203,6 +202,7 @@ const doJumpSlice = (session: Session, data: any, rankId: string): void => {
         return;
     }
     runInAction(() => {
+        session.renderTrigger = !session.renderTrigger;
         session.locateUnit = {
             target: (unit): boolean => {
                 return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(rankId))) &&

@@ -29,8 +29,10 @@ struct FlowDetailDto {
     std::string tid;
     int32_t depth = 0;
     uint64_t timestamp = 0;
+    uint64_t flowTimestamp = 0;
     uint64_t duration = 0;
     std::string type;
+    int64_t trackId = 0;
     std::string sliceName;
 };
 

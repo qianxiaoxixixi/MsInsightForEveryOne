@@ -87,6 +87,7 @@ struct UnitFlowNameParams {
     std::string id;
     std::string metaType;
     uint64_t startTime = 0;
+    uint64_t endTime = 0;
 };
 
 struct UnitFlowNameRequest : public Request {
