@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import type { InputRef } from 'antd';
 import { StyledInput } from '../../../components/base/StyledInput';
 import { StyledSelect } from '../../../components/base/StyledSelect';
-import React, { ChangeEvent, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { Session } from '../../../entity/session';
@@ -10,6 +15,11 @@ import i18n from '../../../i18n';
 import { useTheme } from '@emotion/react';
 import { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
 import { getTimeOffset } from '../utils';
+import { CustomButton } from '../../../components/base/StyledButton';
+import type { SvgType } from '../../../components/base/rc-table/types';
+import { ReactComponent as AlignStartIcon } from '../../../assets/images/timeline/ic_align_start.svg';
+import { message } from 'antd';
+const AlignIcon = AlignStartIcon as SvgType;
 
 const defaultOffset = '0';
 const minOffset = -Number.MAX_VALUE;
@@ -86,7 +96,7 @@ const onPressEnter = (session: Session, setValue: React.Dispatch<React.SetStateA
 };
 
 const InputContainer = styled.div`
-    width: 340px;
+    width: 380px;
     padding: 5px 10px 5px 10px;
     color: ${props => props.theme.fontColor}
 `;
@@ -106,12 +116,23 @@ const InputSpan = styled.span`
     width: 170px;
 `;
 
+function handleAlignStart(inputRef: InputRef, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>): void {
+    const alignStartTimestamp = session.selectedUnits[0]?.alignStartTimestamp;
+    if (alignStartTimestamp === undefined) {
+        message.warning('Please expand the card first');
+        return;
+    }
+    setValue(alignStartTimestamp.toString());
+    inputRef?.current?.focus();
+}
+
 const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
     const cardId = (metaData as ThreadTraceRequest).cardId;
     const defaultOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0;
     const [offset, setOffset] = useState(String(defaultOffset));
     const [visible, setVisible] = useState(false);
     const [title, setTitle] = useState('Please enter a proper value');
+    const inputRef = useRef<InputRef>(null);
     return <StyledSelect
         width={100}
         height={18}
@@ -120,11 +141,12 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
             <StyledTooltip title={title} visible={visible} overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
                 <InputDiv>
                     <InputSpan>Timestamp Offset(ns):</InputSpan>
-                    <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'}
+                    <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef}
                         onChange={(e) => onChange(e, session, setOffset, setVisible, setTitle)}
                         onBlur={(e) => onBlur(e, session, setOffset, setVisible, metaData)}
                         onFocus={onFocus}
                         onPressEnter={(e) => onPressEnter(session, setOffset, setVisible, e, metaData)}/>
+                    <CustomButton tooltip="Align to start" icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
                 </InputDiv>
             </StyledTooltip>
         </InputContainer>}>

@@ -173,6 +173,7 @@ export interface InsightUnitParams<MetaData, DetailType extends Record<string, u
     buttons?: Array<React.FC<{ session: Session }>>;
     collapseAction?: (unit: InsightUnit) => void;
     collapsible?: boolean;
+    alignStartTimestamp?: number;
 }
 
 export type InsightUnitClass = { new(metadata: never): InsightUnit };

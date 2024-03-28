@@ -294,8 +294,13 @@ const SummaryChart = chart({
             }
             const threadTraceList = request.data as ProcessData[];
             const res: StatusData[] = [];
+            let minAlignStartTimestamp: number | null = null;
             // 泳道chart返回数据减去时间偏移
             threadTraceList.forEach((data) => {
+                if (data.duration !== 0 && (minAlignStartTimestamp === null || data.startTime < minAlignStartTimestamp)) {
+                    minAlignStartTimestamp = data.startTime;
+                }
+
                 res.push({
                     startTime: data.startTime - timestampOffset,
                     duration: data.duration,
@@ -304,6 +309,12 @@ const SummaryChart = chart({
                     color: '#7d7d7d',
                 });
             });
+            const curUnit = session.units.find(item => (item.metadata as CardMetaData).cardId === processMetaData.cardId);
+            const shouldUpdateAlignStartTimestamp = curUnit && minAlignStartTimestamp !== null &&
+                (curUnit.alignStartTimestamp === undefined || minAlignStartTimestamp < curUnit.alignStartTimestamp);
+            if (shouldUpdateAlignStartTimestamp) {
+                curUnit.alignStartTimestamp = minAlignStartTimestamp as unknown as number;
+            }
             return res;
         } catch (e) {
             return [];
