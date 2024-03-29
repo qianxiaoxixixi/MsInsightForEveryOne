@@ -97,7 +97,9 @@ Section "ascend_insight" Secascend_insight
   File /r "ascend_insight.exe"
   SetOutPath $INSTDIR\resources
   File /r "resources\*"
- 
+  SetOutPath $INSTDIR\config
+  File /r "config\*"
+
   SetOutPath $INSTDIR
   
   ; Create Start Menu shortcut
