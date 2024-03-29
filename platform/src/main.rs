@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 #![windows_subsystem = "windows"]
 
 use std::{env, fs::read, process::{Command, Child}, sync::Mutex};
@@ -13,6 +17,10 @@ use wry::{
     http::{header::CONTENT_TYPE, Response},
     webview::WebViewBuilder,
 };
+#[cfg(windows)]
+mod webview2err;
+#[cfg(windows)]
+use webview2err::show_webview_err_message;
 
 const SERVER_RELATIVE_LIST: [&str; 4] = ["resources", "profiler", "server", "profiler_server"];
 const NO_WINDOW_FLAG: u32 = 0x08000000;
@@ -67,7 +75,7 @@ fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> O
         }
 }
 
-// run script 
+// run script
 fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> wry::Result<()> {
     let event_loop = EventLoop::new();
 
@@ -131,7 +139,7 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
                 let _ = server_process.lock().unwrap().kill();
                 ControlFlow::Exit
             },
-            
+
             _ => (),
         }
     });
@@ -174,6 +182,9 @@ fn main() {
     let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
 
     if wry::webview::webview_version().is_err() {
+        #[cfg(windows)] {
+            show_webview_err_message();
+        }
         return;
     }
     let mut port : String = String::new();

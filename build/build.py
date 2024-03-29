@@ -27,6 +27,7 @@ class Const:
     MODULES_DIR = 'modules'
     SERVER_DIR = 'server'
     BUILD_DIR = 'build'
+    PLATFORM_DIR = 'platform'
     SRC_DIR = 'src'
     MANIFEST_DIR = 'manifest'
     DEPENDENCY_DIR = 'dependency'
@@ -190,6 +191,8 @@ def build_light_package(version, os_name):
                     os.path.join(profiler_path, 'frontend'), copy_function=shutil.copy2)
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(profiler_path, 'server'), copy_function=shutil.copy2)
+    shutil.copytree(os.path.join(platform_path, 'config'), os.path.join(preview_path, 'config'),
+                    copy_function=shutil.copy2)
 
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
