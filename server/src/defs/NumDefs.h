@@ -13,6 +13,8 @@ namespace Dic {
 
     const static uint32_t MB_SIZE = 1024 * 1024;
 
+    const static uint32_t KB_SIZE = 1024;
+
     const static int INT_TWO = 2;
 } // end of namespace Dic
 

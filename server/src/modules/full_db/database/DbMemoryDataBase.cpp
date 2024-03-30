@@ -25,20 +25,29 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (type == FileType::PYTORCH) {
-        sql += "SELECT NAME.value AS name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
+        sql += "SELECT NAME.value AS name, ROUND(size / 1024.0, 2) as size, "
+               " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
             "ROUND((allocation_time - " + std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) END AS allocationTime, "
             "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
-            ") / (1000.0 * 1000.0), 2) END AS release_time, ROUND(duration / 1000.0, 2) as duration, "
+            ") / (1000.0 * 1000.0), 2) END AS release_time, ROUND(duration / (1000.0 * 1000.0), 2) as duration, "
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
             std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
-            "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 2) as active_duration, "
-            "allocation_total_allocated as allocation_allocated, allocation_total_reserved as allocation_reserve, "
-            "allocation_total_active as allocation_active, release_total_allocated as release_allocated, "
-            "release_total_reserved as release_reserve, "
-            "release_total_active as release_active, stream_ptr as stream FROM " +
+            "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 2) as active_duration, "
+            "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 11) as allocation_allocated, "
+            " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 11) as allocation_reserve, "
+            "ROUND(allocation_total_active / (1024.0 * 1024.0), 11) as allocation_active, "
+            " ROUND(release_total_allocated / (1024.0 * 1024.0), 11) as release_allocated, "
+            "ROUND(release_total_reserved / (1024.0 * 1024.0), 11) as release_reserve, "
+            "ROUND(release_total_active / (1024.0 * 1024.0), 11) as release_active, stream_ptr as stream FROM " +
             TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
             " WHERE name LIKE ? ";
+    }
+    if (requestParams.maxSize > 0) {
+        requestParams.maxSize *= KB_SIZE;
+    }
+    if (requestParams.minSize > 0) {
+        requestParams.minSize *= KB_SIZE;
     }
     AddOperatorSql(requestParams, sql);
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
@@ -54,8 +63,9 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
         sql += "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) as timestamp, "
-            "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserved, 2) as total_reserve, "
-            "ROUND(total_active, 2) as total_active, stream_ptr as stream FROM " +
+            "ROUND(total_allocated / (1024.0 * 1024.0), 11) as total_allocated, "
+            " ROUND(total_reserved / (1024.0 * 1024.0), 11) as total_reserve, "
+            "ROUND(total_active / (1024.0 * 1024.0), 11) as total_active, stream_ptr as stream FROM " +
             TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
     }
     return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
@@ -68,7 +78,8 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) as nums FROM "
             " ("
-            "   SELECT NAME.value as name, stream_ptr, allocation_time, size FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
+            "   SELECT NAME.value as name, stream_ptr, allocation_time,"
+            " ROUND(size / 1024.0, 2) as size FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
             ") "
             " WHERE name LIKE ? ";
@@ -97,7 +108,8 @@ bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string r
     FileType type = DataBaseManager::Instance().GetFileType();
     std::string sql = "";
     if (type == FileType::PYTORCH) {
-        sql += "SELECT min(size) as minSize, max(size) as maxSize FROM " + TABLE_OPERATOR_MEMORY;
+        sql += "SELECT ROUND(min(size)/ 1024.0, 2) as minSize, "
+               " ROUND(max(size)/ 1024.0, 2) as maxSize FROM " + TABLE_OPERATOR_MEMORY;
     }
     return ExecuteOperatorSize(min, max, sql);
 }
