@@ -459,8 +459,13 @@ public:
             sort(files.begin(), files.end(), std::greater<std::string>());
             for (const auto &file: files) {
                 std::string tmpPath = FileUtil::SplicePath(path, file);
-                if (std::regex_match(file, fileRegex)) {
-                    matchedFiles.push_back(tmpPath);
+                if (!std::regex_match(file, fileRegex)) {
+                    continue;
+                }
+                matchedFiles.push_back(tmpPath);
+                if (!RegexUtil::RegexSearch(file, SLICE_STR).has_value()) {
+                    // 对于分片文件，需要找到所有的带有slice的文件；其他文件，则只找最新的一个
+                    break;
                 }
             }
         };

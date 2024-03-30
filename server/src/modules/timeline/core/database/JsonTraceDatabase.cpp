@@ -119,8 +119,8 @@ bool JsonTraceDatabase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
-    std::unique_lock<std::mutex> lock(mutex);
     std::string dbVersion = GetDataBaseVersion();
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
@@ -160,6 +160,7 @@ bool JsonTraceDatabase::CreateIndex()
     }
     std::string sql = "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp);" +
         "CREATE INDEX " + flowIndex + " ON " + flowTable + " (track_id, timestamp);";
+    std::unique_lock<std::mutex> lock(mutex);
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateIndex end. time:", dur.count());
@@ -175,6 +176,7 @@ bool JsonTraceDatabase::CreateSimpleSliceIndex()
     }
     std::string sql =
         "CREATE INDEX " + simpleSliceIndex + " ON " + sliceTable + " (track_id, depth, timestamp, end_time);";
+    std::unique_lock<std::mutex> lock(mutex);
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateSimpleSliceIndex end. time:", dur.count());
@@ -586,6 +588,7 @@ void JsonTraceDatabase::CreateDepthTempTable()
         "AND S2.timestamp < S0.timestamp + S0.duration) "
         "OR (S2.track_id = S0.track_id AND S2.timestamp = S0.timestamp AND S2.id > S0.id);";
 
+    std::unique_lock<std::mutex> lock(mutex);
     if (!ExecSql(sql)) {
         ServerLog::Error("Creat temp table fail. ", GetLastError());
     }
@@ -595,6 +598,7 @@ void JsonTraceDatabase::DropDepthTempTable()
 {
     Timer timer("DropDepthTempTable");
     std::string sql = "DROP table temp.temps";
+    std::unique_lock<std::mutex> lock(mutex);
     if (!ExecSql(sql)) {
         ServerLog::Error("Drop temp table fail. ", GetLastError());
     }
@@ -609,6 +613,7 @@ void JsonTraceDatabase::UpdateSliceDepth()
         "FROM temps "
         "GROUP BY id) AS tmp "
         "ON tmp.id = S.id);";
+    std::unique_lock<std::mutex> lock(mutex);
     if (!ExecSql(sql)) {
         ServerLog::Error("Update slice depth fail. ", GetLastError());
     }
@@ -1473,6 +1478,7 @@ void JsonTraceDatabase::DeleteInvalidFlowData()
         " Where id IN"
         " (select id FROM " +
         flowTable + " GROUP BY flow_id HAVING count(flow_id) < 2)";
+    std::unique_lock<std::mutex> lock(mutex);
     if (!ExecSql(sql)) {
         ServerLog::Error("DeleteInvalidFlowData failed!. ", sqlite3_errmsg(db));
     }

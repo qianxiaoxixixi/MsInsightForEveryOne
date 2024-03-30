@@ -38,6 +38,8 @@ const std::string DB_FILE_SUFFIX = ".db";
 
 const std::string DATABASE_FILE_NAME = "ascend_insight_data.db";
 
+const std::string SLICE_STR = "_slice";
+
 const long long MAX_FILE_SIZE_2G = static_cast<long long>(1024 * 1024 * 1024) * 2;
 const long long MAX_FILE_SIZE_10G = static_cast<long long>(1024 * 1024 * 1024) * 10;
 const int KB_TO_MB = 1024;

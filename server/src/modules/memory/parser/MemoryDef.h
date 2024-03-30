@@ -6,13 +6,14 @@
 #define PROFILER_SERVER_MEMORYDEF_H
 
 #include <string>
+#include <set>
 #include "FileDef.h"
 
 namespace Dic::Module::Memory {
 
-struct MemoryFilePair {
-    std::string operatorFile;
-    std::string recordFile;
+struct MemoryFilePairs {
+    std::set<std::string> operatorFiles;
+    std::set<std::string> recordFiles;
 };
 
 struct Record {
