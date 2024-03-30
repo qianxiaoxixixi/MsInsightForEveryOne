@@ -91,7 +91,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorWithSize)
     requestParams.startTime = -1;
     requestParams.endTime = -1;
     requestParams.minSize = 10; // min size = 10
-    requestParams.maxSize = 65536; // min size = 65536
+    requestParams.maxSize = 64; // min size = 64
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
@@ -267,6 +267,6 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorSizeData)
     double max;
     auto result = database->QueryOperatorSize(min, max, "0");
     EXPECT_EQ(result, true);
-    EXPECT_EQ(min, 512); // minSize = 512
-    EXPECT_EQ(max, 33685504); // maxSize = 33685504
+    EXPECT_EQ(min, 0.5); // minSize = 0.5
+    EXPECT_EQ(max, 32896); // maxSize = 32896
 }
