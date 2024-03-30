@@ -259,7 +259,7 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     std::string str(buffer.get(), readCount);
     auto result = RegexUtil::RegexSearch(str, regex);
     if (!result.has_value()) {
-        ServerLog::Warn("Failed to find match regex:", regex);
+        ServerLog::Warn("Can't find match regex:", regex);
         return false;
     }
     file.seekg(result.value().position(), std::ifstream::cur);

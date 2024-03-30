@@ -34,6 +34,7 @@ public:
     virtual bool StartTransaction();
     virtual bool EndTransaction();
     virtual std::string GetDbPath();
+    virtual void SetDbPath(const std::string& dbPath);
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement();
@@ -53,7 +54,7 @@ protected:
     std::string path;
     const int bindStartIndex = 1;
     const int resultStartIndex = 0;
-    const int timeoutMs = 5000;
+    const int timeoutMs = 50000;
 };
 } // end of namespace Module
 } // end of namespace Dic

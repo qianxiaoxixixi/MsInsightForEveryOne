@@ -41,13 +41,6 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 
     std::pair<std::string, ParserType> parserType = GetImportType(request.params.path);
-    if (parserType.first.empty()) {
-        ServerLog::Warn("The import file is invalid.");
-        SetResponseResult(response, false, "The import file is invalid.", ErrorCode::REQUEST_NO_SUPPORT);
-        session.OnResponse(std::move(responsePtr));
-        SendParseFailEvent(token, "The import file is invalid.");
-        return;
-    }
     ParserType allocType = parserType.second;
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
     factory->Parser(parserType.first, request);
@@ -66,6 +59,8 @@ std::pair<std::string, ParserType> ImportActionHandler::GetImportType(const std:
         result = std::make_pair(pathList[0], ParserType::JSON);
     } else if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
         result = std::make_pair(pathList[0], ParserType::BIN);
+    } else {
+        result = std::make_pair(pathList[0], ParserType::JSON); // 默认情况下也按JSON方式解析
     }
     return result;
 }

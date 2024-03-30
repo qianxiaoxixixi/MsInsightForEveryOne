@@ -15,6 +15,7 @@
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
 #include "TraceTime.h"
+#include "RegexUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -55,20 +56,20 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
         std::string fileId = FileUtil::GetProfilerFileId(file);
         int i = 1;
         std::string tempId = fileId;
-        if (!hasResetFileIdMap[fileId].empty()) {
-            tempId = hasResetFileIdMap[fileId];
-        } else {
-            while (Timeline::DataBaseManager::Instance().HasFileId(Timeline::DatabaseType::SUMMARY, tempId)) {
-                tempId = fileId + "_" + std::to_string(++i);
+        std::string parentDir = FileUtil::GetParentPath(file);
+        std::string name = FileUtil::GetFileName(file);
+        while (Timeline::DataBaseManager::Instance().HasFileId(Timeline::DatabaseType::SUMMARY, tempId)) {
+            std::string dbPath = Timeline::DataBaseManager::Instance().GetSummaryDatabase(tempId)->GetDbPath();
+            std::string dbParentPath = FileUtil::GetParentPath(dbPath);
+            if (RegexUtil::RegexSearch(name, SLICE_STR).has_value() && parentDir == dbParentPath) {
+                break;
             }
-            if (std::strcmp(fileId.c_str(), tempId.c_str()) != 0) {
-                hasResetFileIdMap[fileId] = tempId;
-            }
+            tempId = fileId + "_" + std::to_string(++i);
         }
+
         ServerLog::Info("Kernel file: ", file, ", FileId: ", tempId);
-        if (results[tempId].empty()) {
-            Timeline::DataBaseManager::Instance().GetSummaryDatabase(tempId);
-        }
+        std::string dbPath = FileUtil::GetDbPath(file, tempId);
+        Timeline::DataBaseManager::Instance().GetSummaryDatabase(tempId)->SetDbPath(dbPath);
         results[fileId].push_back(file);
     }
     return results;

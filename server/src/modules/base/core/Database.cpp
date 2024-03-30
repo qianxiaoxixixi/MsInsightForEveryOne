@@ -141,6 +141,11 @@ std::string Database::GetDbPath()
     return path;
 }
 
+void Database::SetDbPath(const std::string& dbPath)
+{
+    path = dbPath;
+}
+
 bool Database::IsDatabaseVersionChange()
 {
     std::string version;
