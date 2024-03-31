@@ -586,8 +586,8 @@ std::string DbSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::Ope
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     WHERE deviceId = ? AND taskTypes <> 'HCCL'"
-            "     GROUP BY " + group +
+            "     WHERE deviceId = ?" + (reqParams.group == Protocol::OPERATOR_GROUP ? "" :
+            "     GROUP BY " + group) +
             "     ORDER BY duration DESC LIMIT ?"
             " ) subquery" +
             " GROUP by taskTypes"
