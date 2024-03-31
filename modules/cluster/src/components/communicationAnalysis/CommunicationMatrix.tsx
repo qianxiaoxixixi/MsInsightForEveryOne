@@ -39,6 +39,43 @@ function InitCharts(data: any): void {
     }
 }
 
+function handleRepeatData(repeatDataToolTip: {[key: string]: string}, data: any[][]): any[][] {
+    return data.reduce((prev: any[][], cur: any[]) => {
+        const repeatItem = prev.find((item) => {
+            return item[0] === cur[0] && item[1] === cur[1];
+        });
+        if (repeatItem) {
+            const repeadKey = `${cur[0]},${cur[1]}`;
+            if (repeadKey in repeatDataToolTip) {
+                repeatDataToolTip[repeadKey] = `${repeatDataToolTip[repeadKey]},${cur[2]}`;
+            } else {
+                repeatDataToolTip[repeadKey] = `${cur[2]}`;
+            }
+            repeatItem[2] = cur[2];
+            return prev;
+        } else {
+            return [...prev, cur];
+        }
+    }, []);
+}
+
+function handleTransportType(dataSource: any, option: any, type: any): void {
+    dataSource.forEach((item: any[]) => {
+        item[2] = allTransporType.indexOf(item[2]);
+    });
+    option.series[0].data = dataSource;
+    option.visualMap = transportTypeOption.visualMap;
+    option.series[0].label.formatter = (params: any): string => {
+        return allTransporType[params.value[2]];
+    };
+    option.series[0].tooltip.formatter = function (params: any): string {
+        const { data } = params;
+        return data[3].length === 0
+            ? `srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`
+            : `operatorName: ${data[3]} <br/> srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`;
+    };
+}
+
 const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL'];
 // eslint-disable-next-line max-lines-per-function
 function wrapData(dataSource: any): any {
@@ -49,20 +86,11 @@ function wrapData(dataSource: any): any {
     option.series[0].label.show = rankIds.length <= 16;
 
     if (type === 'transportType') {
-        data.forEach((item: any[]) => { item[2] = allTransporType.indexOf(item[2]); });
-        option.series[0].data = data;
-        option.visualMap = transportTypeOption.visualMap;
-        option.series[0].label.formatter = (params: any) => {
-            return allTransporType[params.value[2]];
-        };
-        option.series[0].tooltip.formatter = function (params: any) {
-            const { data } = params;
-            return data[3].length === 0
-                ? `srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`
-                : `operatorName: ${data[3]} <br/> srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`;
-        };
+        handleTransportType(data, option, type);
     } else {
-        option.series[0].data = data;
+        const repeatDataToolTip: {[key: string]: string} = {};
+        const mixData = handleRepeatData(repeatDataToolTip, data);
+        option.series[0].data = mixData;
         option.visualMap = {
             calculable: true,
             orient: 'horizontal',
@@ -84,6 +112,15 @@ function wrapData(dataSource: any): any {
             const maxDecimalCount = getDecimalCount(max);
             option.visualMap.precision = Math.max(minDecimalCount, maxDecimalCount);
         }
+        option.series[0].label.formatter = function (params: any): string {
+            const { data } = params;
+            const repeatedKey = `${data[0]},${data[1]}`;
+            if (repeatedKey in repeatDataToolTip && repeatDataToolTip[repeatedKey]) {
+                data[2] = `[${data[2]},${repeatDataToolTip[repeatedKey]}]`;
+                repeatDataToolTip[repeatedKey] = '';
+            }
+            return data[2];
+        };
         option.series[0].tooltip.formatter = function (params: any) {
             const { data } = params;
             return data[3].length === 0
