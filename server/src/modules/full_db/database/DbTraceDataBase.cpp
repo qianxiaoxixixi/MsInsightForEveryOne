@@ -380,7 +380,7 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
     if (!requestParams.stepId.empty() && requestParams.stepId != "ALL") {
         stepCondition.append(" and streamId =? ");
     }
-    std::string sql = "SELECT sum(endNs - startNs) as duration, TASKTYPE.value as acceleratorCore "
+    std::string sql = "SELECT round(sum(endNs - startNs) / 1000.0, 2) as duration, TASKTYPE.value as acceleratorCore "
                       "  FROM COMPUTE_TASK_INFO"
                       "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
                       "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
