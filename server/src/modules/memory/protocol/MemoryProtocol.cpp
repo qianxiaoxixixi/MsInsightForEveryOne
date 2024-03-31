@@ -43,12 +43,12 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     if (json["params"].HasMember("startTime")) {
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+        reqPtr->params.startTime = JsonUtil::GetDouble(json["params"], "startTime");
     } else {
         reqPtr->params.startTime = -1;
     }
     if (json["params"].HasMember("endTime")) {
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+        reqPtr->params.endTime = JsonUtil::GetDouble(json["params"], "endTime");
     } else {
         reqPtr->params.endTime = -1;
     }
