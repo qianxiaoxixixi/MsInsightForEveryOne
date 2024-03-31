@@ -79,6 +79,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     database->UpdateAllDepth();
     database->InitStringsCache();
     database->UpdateStartTime();
+    database->UpdateWaitTime();
 
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {

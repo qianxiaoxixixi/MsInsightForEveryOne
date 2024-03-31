@@ -70,7 +70,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "OP_TYPE.value as type, "
                       "CASE WHEN startNs == 0 THEN 0 ELSE ROUND((startNs - ?) /(1000.0 * 1000.0), 4) END AS startTime, "
                       "ROUND((endNs - startNs)/1000.0, 2) as duration, "
-                      "'' as waitTime, "
+                      "ROUND((waitNs)/1000.0, 3) as waitTime, "
                       "block_dim as blockDim, "
                       "INPUTSHAPES.value as inputShape, "
                       "INPUTDATATYPES.value as inputDataType, "
@@ -378,7 +378,8 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
             "     SELECT block_dim, deviceId as rank_id, streamId as step_id, "
             "     NAME.value AS name,  OPTYPE.value AS op_type,"
             "  TASKTYPE.value as accelerator_core,startNs as start_time,ROUND((endNs - startNs)/1000.0, 3) as duration,"
-            "     0 as wait_time, INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
+            "     ROUND((waitNs)/1000.0, 3) as wait_time, INPUTSHAPES.value as input_shapes, "
+            "     INPUTDATATYPES.value as input_data_types, "
             "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
             "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
             "     FROM " + TABLE_COMPUTE_TASK_INFO +

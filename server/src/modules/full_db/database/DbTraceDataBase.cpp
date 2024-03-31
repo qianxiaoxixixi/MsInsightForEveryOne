@@ -624,6 +624,71 @@ void DbTraceDataBase::UpdateStartTime()
     sqlite3_finalize(stmt);
 }
 
+void DbTraceDataBase::UpdateWaitTime()
+{
+    if (!CheckTableExist(TABLE_COMPUTE_TASK_INFO) || !CheckTableExist(TABLE_COMMUNICATION_OP) ||
+        !CheckTableDataInvalid(TABLE_TASK)) {
+        Server::ServerLog::Error("UpdateWaitTime:Table is not exist.");
+    }
+    // 查询数据
+    std::string sql = "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "
+                      "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
+                      "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
+                      "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("UpdateWaitTime, fail to prepare sql.");
+        return;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    std::string updateSql = "UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;";
+    auto updateStmt = CreatPreparedStatement(updateSql);
+    std::map<int32_t, int64_t> prevTime;
+    while (resultSet->Next()) {
+        std::string type = resultSet->GetString("type");
+        int64_t id = resultSet->GetInt64("id");
+        int64_t startNs = resultSet->GetInt64("startNs");
+        int64_t endNs = resultSet->GetInt64("endNs");
+        int64_t deviceId = resultSet->GetInt32("deviceId");
+        if (prevTime.find(deviceId) == prevTime.end()) {
+            prevTime[deviceId] = startNs;
+        }
+        int64_t waitNs = startNs > prevTime[deviceId] ? startNs - prevTime[deviceId] : 0;
+        prevTime[deviceId] = endNs;
+        if (type == "compute") {
+            WAIT_TIME task;
+            task.id = id;
+            task.waitTime = waitNs;
+            taskWaitTimeCache.push_back(task);
+        }
+        if (taskWaitTimeCache.size() == cacheSize) {
+            UpdateTaskInfoWaitTime(updateStmt);
+        }
+    }
+}
+
+bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt)
+{
+    if (!StartTransaction()) {
+        ServerLog::Error("Failed to start Transaction.");
+        return false;
+    }
+    for (const auto &item: taskWaitTimeCache) {
+        stmt->Reset();
+        stmt->BindParams(item.waitTime, item.id);
+        if (!stmt->Execute()) {
+            ServerLog::Error("Failed to UpdateTaskInfoWaitTime");
+            return false;
+        }
+    }
+    taskWaitTimeCache.clear();
+    if (!EndTransaction()) {
+        ServerLog::Error("Failed to end UpdateTaskInfoWaitTime.");
+        return false;
+    }
+    return true;
+}
+
 std::vector<std::string> DbTraceDataBase::QueryRankId()
 {
     sqlite3_stmt *stmt = nullptr;
@@ -829,6 +894,9 @@ bool DbTraceDataBase::SetConfig()
     }
     if (CheckTableExist(TABLE_CANN_API)) {
         ExecSql("alter table CANN_API add depth integer;");
+    }
+    if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
+        ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
     }
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }

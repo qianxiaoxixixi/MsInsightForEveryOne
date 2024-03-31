@@ -18,6 +18,11 @@ struct TASK_INFO {
     int64_t depth = 0;
     int64_t id = 0;
 };
+
+struct WAIT_TIME {
+    int64_t waitTime = 0;
+    int64_t id = 0;
+};
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
     explicit DbTraceDataBase(std::mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
@@ -78,6 +83,7 @@ public:
     void UpdateStartTime();
     void UpdateAllDepth();
     void InitStringsCache();
+    void UpdateWaitTime();
 
 private:
     const int cacheSize = 1000;
@@ -88,6 +94,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> updateCannApiDepthStmt = nullptr;
 
     std::vector<TASK_INFO> taskDepthCache;
+    std::vector<WAIT_TIME> taskWaitTimeCache;
 
     bool SetConfig();
     bool InitStmt();
@@ -110,6 +117,7 @@ private:
         const std::string &metaType);
     bool DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                           std::map<std::string, std::vector<MetaDataDto>> &threadMap);
+    bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt);
 };
 }
 
