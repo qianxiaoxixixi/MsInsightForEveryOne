@@ -21,10 +21,12 @@ import {
     systemViewItems,
 } from './Common';
 import ResizeTable from '../resize/ResizeTable';
-import { CardMetaData } from '../../entity/data';
+import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { calculateDomainRange } from '../CategorySearch';
+import { getTimeOffset } from '../../insight/units/utils';
+import type { InsightUnit } from '../../entity/insight';
 
 const Container = styled.div`
     width: 100%;
@@ -275,11 +277,12 @@ const KernelDetails = observer((props: any) => {
                 target: (unit: any) => {
                     return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
                 },
-                onSuccess: () => {
-                    const [rangeStart, rangeEnd] = calculateDomainRange(props.session, rowData.startTime, rowData.duration);
+                onSuccess: (unit: InsightUnit): void => {
+                    const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                    const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
                     props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     props.session.selectedData = {
-                        startTime: rowData.startTime,
+                        startTime,
                         name: rowData.name,
                         duration: Number((rowData.duration * 1000).toFixed(0)),
                         depth: res.depth,

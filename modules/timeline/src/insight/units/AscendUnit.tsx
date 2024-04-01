@@ -501,12 +501,13 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                 target: (iunit: InsightUnit): boolean => {
                     return (iunit.metadata as MetaData).threadId === res.threadId && (iunit.metadata as MetaData).processId === res.pid;
                 },
-                onSuccess: (): void => {
+                onSuccess: (iunit): void => {
                     const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);
-                    const [rangeStart, rangeEnd] = calculateDomainRange(session, record.timestamp, record.duration);
+                    const startTime = record.timestamp - getTimeOffset(session, (iunit.metadata as ThreadMetaData).cardId);
+                    const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     session.selectedData = {
-                        startTime: record.timestamp,
+                        startTime,
                         name: selectedMultiSlice.name,
                         duration: record.duration,
                         depth: res.depth,
