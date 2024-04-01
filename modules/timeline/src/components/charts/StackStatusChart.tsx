@@ -212,8 +212,9 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
     const yScale = isCollapse ? d3.scaleLinear().range([0, height]).domain([0, maxDepth as number]) : (depth: number): number => depth * rowHeight;
     useBatchedRender(() => {
-        if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||
-            canvas.current.width === 0 || canvas.current.height === 0) {
+        const noRender = canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
+            canvas.current.width === 0 || canvas.current.height === 0;
+        if (noRender) {
             return;
         }
         const ctx = canvas.current.getContext('2d');
