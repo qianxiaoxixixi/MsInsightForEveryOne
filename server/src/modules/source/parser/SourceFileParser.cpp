@@ -394,24 +394,20 @@ void SourceFileParser::ConvertToData()
     std::vector<std::pair<int64_t, int64_t>> &apiFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::API_FILE)];
     if (!apiFilePos.empty()) {
         std::pair<int64_t, int64_t> &pair = apiFilePos.at(0);
-        int64_t start = pair.first;
-        int64_t end = pair.second;
-        int64_t dataSize = end - start;
-
-        file.seekg(start, std::ios::beg);
-
-        std::string jsonStr;
-        jsonStr.resize(dataSize);
-        file.read(&jsonStr[0], dataSize);
-
+        std::string jsonStr = GetContentStr(file, pair);
         ConvertApiFile(jsonStr);
     }
     auto &apiInstrPosArray = dataBlockMap[static_cast<int>(DataTypeEnum::API_INSTR)];
     if (!apiInstrPosArray.empty()) {
         apiInstrPos = apiInstrPosArray.at(0);
+
+        std::pair<int64_t, int64_t> &pair = apiInstrPosArray.at(0);
+        std::string jsonStr = GetContentStr(file, pair);
+        ConvertApiInstr(jsonStr);
     }
     file.close();
 }
+
 int64_t SourceFileParser::GetSimulationPid(const std::string &fileId, const std::string &processName)
 {
     std::unique_lock<std::mutex> lock(processMutex);
@@ -440,7 +436,7 @@ int64_t SourceFileParser::GetSimulationTid(const std::string &fileId, const std:
     return tid;
 }
 
-void SourceFileParser::ConvertApiFile(const std::string &jsonStr)
+void SourceFileParser::ConvertApiInstr(const std::string &jsonStr)
 {
     Document d;
     try {
@@ -451,6 +447,16 @@ void SourceFileParser::ConvertApiFile(const std::string &jsonStr)
                 apiCores.emplace_back(core.GetString());
             }
         }
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
+    }
+}
+
+void SourceFileParser::ConvertApiFile(const std::string &jsonStr)
+{
+    Document d;
+    try {
+        d.Parse(jsonStr.c_str());
         if (JsonUtil::IsJsonArray(d, "Files")) {
             Value &fileArray = d["Files"];
             apiFiles = ConvertToFileMap(fileArray);
@@ -546,6 +552,20 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
         sourceFileLines.push_back(sourceFileLine);
     }
     return sourceFileLines;
+}
+
+std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const
+{
+    int64_t start = pair.first;
+    int64_t end = pair.second;
+    int64_t dataSize = end - start;
+
+    file.seekg(start, std::ios::beg);
+
+    std::string jsonStr;
+    jsonStr.resize(dataSize);
+    file.read(&jsonStr[0], dataSize);
+    return jsonStr;
 }
 } // end of namespace Memory
 } // end of namespace Module
