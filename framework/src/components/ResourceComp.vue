@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, nextTick } from 'vue';
+import {ref, reactive, onMounted, computed, watch} from 'vue';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import FolderIcon from '@/components/icons/folder_icon.vue';
 import FileIcon from '@/components/icons/file_icon.vue';
 import { useResource, type ResourceItem } from '@/stores/resourceComp';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
+
+const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void }>();
+const emit = defineEmits(['input-change']);
 
 const { confirm } = useDataSources();
 
@@ -24,6 +27,10 @@ let defalultExpandedKeysSet: Set<string> = new Set();
 const state = reactive({
     defalultExpandedKeys: [] as string[],
     inputPath: '',
+})
+
+watch(() => state.inputPath, () => {
+  emit('input-change', state.inputPath.length);
 })
 
 const updateData = async (path: string, node: Node) => {
@@ -86,7 +93,7 @@ const handleExpand = async (data: ResourceItem, node: Node) => {
 
 const hanldeCollapse = (data: ResourceItem, node: Node) => {
     state.inputPath = data.path;
-    defalultExpandedKeysSet.delete(data.path)
+    defalultExpandedKeysSet.delete(data.path);
     state.defalultExpandedKeys = [...defalultExpandedKeysSet];
 }
 
@@ -99,10 +106,12 @@ const handleClick = async (data: ResourceItem, node: Node) => {
     state.inputPath = data.path;
     updateData(data.path, node);
     props.changeConfirmButtonState(true);
+    errorAlert.value = false;
 }
 
 let findFile = false;
 let errorAlert = ref(false);
+const inputErrorText = computed(() => errorAlert.value ? 'File not found, check the file path' : 'Enter the file path and press enter to search');
 
 const searchPath = async () => {
   if (!state.inputPath) {
@@ -221,7 +230,6 @@ const doWhileOpenDialog = () => {
       updateData(node.path, node);
     }
 }
-const props = defineProps(['changeConfirmButtonState']);
 defineExpose({
     doSetCurrentPath,
     doWhileOpenDialog,
@@ -230,10 +238,8 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-text v-if="errorAlert.valueOf()" type="danger"> File not found, check the file path</el-text>
-        <el-text v-else type="primary"> Enter the file path and press enter to search</el-text>
-        <el-input v-if="errorAlert.valueOf()" class= "red-input" v-model="state.inputPath" maxlength="4096" show-word-limit @keyup.enter="searchPath" />
-        <el-input v-else class= "bule-input" v-model="state.inputPath" maxlength="4096" show-word-limit @keyup.enter="searchPath" />
+        <el-text :type="errorAlert ? 'danger' : 'primary'"> {{ inputErrorText }} </el-text>
+        <el-input :class= "errorAlert ? 'red-input' : 'blue-input'" v-model="state.inputPath" :maxlength="props.maxPathLen" show-word-limit @keyup.enter="searchPath" />
         <div class="data-tree">
             <el-tree ref="treeRef" :default-expanded-keys="state.defalultExpandedKeys" :data="resourceState.startResource" :props="defaultProps" :auto-expand-parent="false"
                 node-key="path" @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse" lazy
@@ -294,7 +300,7 @@ defineExpose({
     --el-input-focus-border-color: #F56C6C;
 }
 
-.bule-input {
+.blue-input {
   border-radius: 2px;
   border: 1px solid #409EFF;
   box-shadow: 0 0 0;

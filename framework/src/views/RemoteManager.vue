@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, reactive, ref, watch} from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ResourceComp from '@/components/ResourceComp.vue';
@@ -7,13 +7,21 @@ import { useDataSources } from '@/stores/dataSource';
 import connector from '@/connection';
 import ProjectMode from '@/components/ProjectMode.vue';
 import { ElMessage } from 'element-plus';
-const isDarkTheme = ref(true);
+import { isWindows } from '@/utils/is';
 
+const MAX_FILE_PATH_LENGTH_WINDOWS = 260;
+const MAX_FILE_PATH_LENGTH_LINUX = 4096;
+
+const isDarkTheme = ref(true);
 const resourceComp = ref();
 // 输入文件是否存在
 const fileIsExist = ref(false);
 // 按钮是否可点击
 const clickAble = ref(true);
+const maxPathLen = isWindows ? MAX_FILE_PATH_LENGTH_WINDOWS : MAX_FILE_PATH_LENGTH_LINUX;
+const inputLen = ref(0);
+
+const isDisabled = computed(() => !fileIsExist.value || !clickAble.value || inputLen.value > maxPathLen);
 onMounted(() => {
     connector.addListener('getParseStatus', () => {
       connector.send({
@@ -64,6 +72,10 @@ const handleConfirm = () => {
         }
     }, 100);
 };
+
+function onInputChange(val:number) {
+  inputLen.value = val;
+}
 </script>
 
 <template>
@@ -78,13 +90,13 @@ const handleConfirm = () => {
           <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
         </el-tooltip>
         <el-dialog v-model="showModal" title="File Explorer" width="30%" :close-on-click-modal="false">
-            <ResourceComp ref="resourceComp" :changeConfirmButtonState = "changeConfirmButtonState" />
+            <ResourceComp ref="resourceComp" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
             <template #footer>
                 <div class="foot-tip">
                     To refresh a directory, collapse and expand the directory.
                 </div>
                 <span>
-                    <el-button :disabled = "!fileIsExist.valueOf() || !clickAble.valueOf()" type="primary" @click="addClickProtect(handleConfirm)">Confirm</el-button>
+                    <el-button :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">Confirm</el-button>
                     <el-button @click="showModal = false">Cancel</el-button>
                 </span>
             </template>
