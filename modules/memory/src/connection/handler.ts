@@ -95,3 +95,21 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
         console.error(error);
     }
 };
+
+export const deleteRankHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            const deleteIds: string[] = data.rankId as string[];
+            if (deleteIds.length > 0) {
+                session.memoryRankIds = session.memoryRankIds.filter((item: string) => !deleteIds?.includes(item));
+            }
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};

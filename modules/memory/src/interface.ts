@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import { NotificationHandler } from './connection/defs';
-import { parseMemoryCompletedHandler, removeRemoteHandler, setTheme, wakeUpHandler, updateSessionHandler } from './connection/handler';
+import { parseMemoryCompletedHandler, removeRemoteHandler, setTheme, wakeUpHandler, updateSessionHandler, deleteRankHandler } from './connection/handler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/memoryCompleted': parseMemoryCompletedHandler,
@@ -12,4 +12,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     updateSession: updateSessionHandler,
     wakeup: wakeUpHandler,
     setTheme,
+    deleteRank: deleteRankHandler,
 };
