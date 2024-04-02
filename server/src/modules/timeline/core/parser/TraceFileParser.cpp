@@ -48,8 +48,7 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
 void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId)
 {
     if (!InitParser(filePathArr, fileId)) {
-        auto msg = "Failed to open db. Please delete dbFile and try again." +
-                (filePathArr.empty() ? "" : " dbFile is in " + FileUtil::GetParentPath(filePathArr[0]));
+        auto msg = "Failed to open db. Please delete dbFile and try again or see logs.";
         ParseEndCallBack(fileId, false, msg);
     }
 }

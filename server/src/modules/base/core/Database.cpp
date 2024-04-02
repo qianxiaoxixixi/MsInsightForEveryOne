@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "Database.h"
 #include "TableDefs.h"
+#include "FileUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -19,6 +20,10 @@ Database::~Database()
 
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
+    if (!FileUtil::CheckFilePathLength(dbPath)) {
+        ServerLog::Error("This db path is illegal : " + dbPath);
+        return false;
+    }
     if (isOpen) {
         ServerLog::Error("The db file has been opened. " + dbPath);
         return false;

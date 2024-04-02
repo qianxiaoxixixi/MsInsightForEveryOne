@@ -179,6 +179,9 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path)
 {
     std::vector<std::string> traceFiles = {};
     if (!FileUtil::IsFolder(path)) {
+        if (!FileUtil::CheckFilePathLength(path)) {
+            return traceFiles;
+        }
         size_t length = JSON_FILE_SUFFIX.size();
         if (path.size() > length && path.substr(path.size() - length) == JSON_FILE_SUFFIX) {
             traceFiles.emplace_back(path);
