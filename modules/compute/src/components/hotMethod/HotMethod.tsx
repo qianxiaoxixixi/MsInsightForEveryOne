@@ -237,9 +237,6 @@ const Index = observer(({ session }: { session: Session }) => {
     }
 
     async function getInstrs(core: string): Promise<InstrsColumnType[]> {
-        if (core === '') {
-            return [];
-        }
         if (renderStatus !== session.renderStatus || session.Instructions.length === 0) {
             const res = await queryApiInstr();
             if (res === undefined || res === null) {
