@@ -475,6 +475,7 @@ public:
     }
 
     static bool CheckFilePath(std::string filePath);
+    static bool CheckFilePathLength(std::string filePath);
 
     static std::string GetCurrPath();
 };

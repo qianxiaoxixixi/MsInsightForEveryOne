@@ -38,19 +38,20 @@ void ParserBin::Parser(const std::string &path, ImportActionRequest &request)
     std::string selectedFolder = request.params.path[0];
 
     // compute
-    if (Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
-        ServerLog::Info("Import files is binary.Start parse source binary file.");
+    if (FileUtil::CheckFilePathLength(selectedFolder) &&
+        Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
+        ServerLog::Info("Import file is binary.Start parse source binary file.");
         HandleCompute(response, selectedFolder);
         SetParseCallBack(token, Source::SourceFileParser::Instance());
         session.OnResponse(std::move(responsePtr));
     } else {
-        SendParseFailEvent(token, "", selectedFolder + " :content is incorrect");
+        SendParseFailEvent(token, "", "Import file is invalid,path :" + selectedFolder);
     }
 }
 
 void ParserBin::HandleCompute(ImportActionResponse &response, const std::string &selectedFolder)
 {
-    ServerLog::Info("start source parser");
+    ServerLog::Info("Start parser source binary.");
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
     sourceFileParser.Reset();
     std::vector<std::string> empty;
@@ -69,7 +70,7 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
 }
 
 std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFiles(const std::string &selectFilePath,
-                                                                                    ImportActionResBody &body)
+    ImportActionResBody &body)
 {
     body.isCluster = false;
     std::vector<std::pair<std::string, std::string>> files;

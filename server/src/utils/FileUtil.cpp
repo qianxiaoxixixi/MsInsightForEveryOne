@@ -48,6 +48,22 @@ bool FileUtil::CheckFilePath(std::string filePath)
     return true;
 }
 
+bool FileUtil::CheckFilePathLength(std::string filePath)
+{
+#ifdef _WIN32
+    if (filePath.size() >= MAX_PATH) {
+        Server::ServerLog::Error("The length of " + filePath + " is too long :", filePath.size());
+        return false;
+    }
+#else
+    if (filePath.size() >= PATH_MAX) {
+        Server::ServerLog::Error("The length of " + filePath + " is too long :", filePath.size());
+        return false;
+    }
+#endif
+    return true;
+}
+
 void FileUtil::CalculateDirSize(const std::string &path, long long int &size, int depth)
 {
     std::vector<std::string> matchedFiles;
