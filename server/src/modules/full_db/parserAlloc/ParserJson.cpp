@@ -64,8 +64,9 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
 
 void ParserJson::SendAllParseSuccess(const std::string &token)
 {
-    while (!ParserStatusManager::Instance().IsAllFinished()) {
-        ServerLog::Info("all parse not finished");
+    std::string notFinishTask = "";
+    while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
+        ServerLog::Info("Not finish task is: ", notFinishTask);
         const int sleepTime = 2000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     }
@@ -75,12 +76,10 @@ void ParserJson::SendAllParseSuccess(const std::string &token)
         ServerLog::Warn("Failed to get session token ");
         return;
     }
-    auto event = std::make_unique<ParseClusterCompletedEvent>();
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
-    event->moduleName = ModuleType::TIMELINE;
+    auto event = std::make_unique<AllSuccessEvent>();
+    event->moduleName = ModuleType::MEMORY;
     event->token = token;
     event->result = true;
-    event->body.parseResult = PARSE_RESULT_OK;
     event->body.isAllPageParsed = true;
     session->OnEvent(std::move(event));
 }
@@ -108,6 +107,7 @@ void ParserJson::ClusterProcess(const std::string &token, const std::string &sel
             parseClusterResult = PARSE_RESULT_FAIL;
         }
     }
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     // send event
     ParserAlloc::ParseClusterEndProcess(token, parseClusterResult);
 }

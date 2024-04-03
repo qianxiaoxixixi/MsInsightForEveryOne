@@ -81,15 +81,29 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             if (!session) {
                 return;
             }
-            if (data.isAllPageParsed as boolean) {
-                session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
-            }
             const keys: string[] = ['isCluster', 'unitcount'];
             keys.forEach((key: string) => {
                 if (data[key] !== undefined) {
                     Object.assign(session, { [key]: data[key] });
                 }
             });
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const allSuccessHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            if (data.isAllPageParsed as boolean) {
+                session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
+            }
         });
     } catch (error) {
         console.error(error);

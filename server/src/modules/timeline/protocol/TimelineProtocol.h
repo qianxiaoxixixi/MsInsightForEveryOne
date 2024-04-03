@@ -14,6 +14,7 @@ public:
     TimelineProtocol() = default;
     ~TimelineProtocol() override = default;
     static std::optional<document_t> ToModuleResetEventJson(const Event &event);
+    static std::optional<document_t> ToAllSuccessEventJson(const Event &event);
 
 private:
     void RegisterJsonToRequestFuncs() override;

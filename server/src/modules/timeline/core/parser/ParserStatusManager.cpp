@@ -5,6 +5,7 @@
 #include "ParserStatusManager.h"
 #include "ConstantDefs.h"
 #include "algorithm"
+#include "ServerLog.h"
 
 namespace Dic {
 namespace Module {
@@ -104,15 +105,17 @@ void ParserStatusManager::SetClusterParseStatus(ParserStatus parserStatus)
     clusterParseStatus = parserStatus;
 }
 
-bool ParserStatusManager::IsAllFinished()
+bool ParserStatusManager::IsAllFinished(std::string &notFinishTask)
 {
     std::unique_lock<std::mutex> lock(mutex);
     for (const auto &item : statusMap) {
-        if (item.second != ParserStatus::FINISH) {
+        if (item.second == ParserStatus::INIT || item.second == ParserStatus::RUNNING) {
+            notFinishTask = item.first;
             return false;
         }
     }
-    if (clusterParseStatus != ParserStatus::FINISH) {
+    if (clusterParseStatus == ParserStatus::INIT || clusterParseStatus == ParserStatus::RUNNING) {
+        notFinishTask = "clusterParseStatus";
         return false;
     }
     return true;
