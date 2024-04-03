@@ -45,6 +45,7 @@ template <typename EVENT> std::optional<document_t> ToEventJson(const EVENT &eve
 template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);
 template <> std::optional<document_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event);
 template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event);
+template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSuccessEvent &event);
 template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event);
 template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const ModuleResetEvent &event);
 } // end of namespace Protocol

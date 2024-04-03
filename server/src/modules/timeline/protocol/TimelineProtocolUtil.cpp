@@ -11,7 +11,7 @@ namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
 using namespace rapidjson;
-#pragma region <<Response to json>>
+#pragma region << Response to json>>
 template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response)
 {
     ServerLog::Warn("ToResponseJson is not implemented. command:", response.command);
@@ -30,19 +30,19 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
 
     json_t coreList(kArrayType);
-    for (const std::string core: response.body.coreList) {
+    for (const std::string core : response.body.coreList) {
         coreList.PushBack(json_t().SetString(core.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "coreList", coreList, allocator);
 
     json_t sourceList(kArrayType);
-    for (const std::string source: response.body.sourceList) {
+    for (const std::string source : response.body.sourceList) {
         sourceList.PushBack(json_t().SetString(source.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "sourceList", sourceList, allocator);
 
     json_t result(kArrayType);
-    for (const Action& action : response.body.result) {
+    for (const Action &action : response.body.result) {
         json_t actionJson(kObjectType);
         JsonUtil::AddMember(actionJson, "cardName", action.cardName, allocator);
         JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
@@ -62,9 +62,9 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t data(kArrayType);
-    for (const std::vector<ThreadTraces>& array : response.body.data) {
+    for (const std::vector<ThreadTraces> &array : response.body.data) {
         json_t threadTracesArray(kArrayType);
-        for (const ThreadTraces& threadTraces : array) {
+        for (const ThreadTraces &threadTraces : array) {
             json_t threadJson(kObjectType);
             JsonUtil::AddMember(threadJson, "name", threadTraces.name, allocator);
             JsonUtil::AddMember(threadJson, "duration", threadTraces.duration, allocator);
@@ -83,7 +83,8 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResponse>(
+template <>
+std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResponse>(
     const UnitThreadTracesSummaryResponse &response)
 {
     document_t json(kObjectType);
@@ -110,7 +111,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "emptyFlag", response.body.emptyFlag, allocator);
     json_t data(kArrayType);
-    for (const Threads& threads : response.body.data) {
+    for (const Threads &threads : response.body.data) {
         json_t threadsJson(kObjectType);
         JsonUtil::AddMember(threadsJson, "title", threads.title, allocator);
         JsonUtil::AddMember(threadsJson, "wallDuration", threads.wallDuration, allocator);
@@ -155,7 +156,7 @@ template <> std::optional<document_t> ToResponseJson<UnitFlowNameResponse>(const
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t flowDetail(kArrayType);
-    for (const FlowName& flowName : response.body.flowDetail) {
+    for (const FlowName &flowName : response.body.flowDetail) {
         json_t flowJson(kObjectType);
         JsonUtil::AddMember(flowJson, "title", flowName.title, allocator);
         JsonUtil::AddMember(flowJson, "flowId", flowName.flowId, allocator);
@@ -167,7 +168,7 @@ template <> std::optional<document_t> ToResponseJson<UnitFlowNameResponse>(const
     return std::move(json);
 }
 
-json_t FlowLocationToJson(const FlowLocation& flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+json_t FlowLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
     json_t json(kObjectType);
     JsonUtil::AddMember(json, "pid", flowLocation.pid, allocator);
@@ -269,7 +270,7 @@ template <> std::optional<document_t> ToResponseJson<FlowCategoryListResponse>(c
     return std::move(json);
 }
 
-json_t FlowEventLocationToJson(const FlowEventLocation& flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+json_t FlowEventLocationToJson(const FlowEventLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
     json_t json(kObjectType);
     JsonUtil::AddMember(json, "pid", flowLocation.pid, allocator);
@@ -332,7 +333,7 @@ template <> std::optional<document_t> ToResponseJson<SystemViewResponse>(const S
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t systemViewDetails(kArrayType);
-    for (const SystemViewDetail& systemView : response.body.systemViewDetail) {
+    for (const SystemViewDetail &systemView : response.body.systemViewDetail) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "name", systemView.name, allocator);
         JsonUtil::AddMember(itemJson, "time", systemView.time, allocator);
@@ -358,7 +359,7 @@ template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(cons
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t kernelDetails(kArrayType);
-    for (const KernelDetail& detail : response.body.kernelDetails) {
+    for (const KernelDetail &detail : response.body.kernelDetails) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "name", detail.name, allocator);
         JsonUtil::AddMember(itemJson, "type", detail.type, allocator);
@@ -377,7 +378,7 @@ template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(cons
     }
     JsonUtil::AddMember(body, "kernelDetails", kernelDetails, allocator);
     json_t acceleratorCoreList(kArrayType);
-    for (const auto &item: response.body.acceleratorCoreList) {
+    for (const auto &item : response.body.acceleratorCoreList) {
         acceleratorCoreList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "acceleratorCoreList", acceleratorCoreList, allocator);
@@ -401,15 +402,15 @@ template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const On
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const UnitThreadsOperatorsResponse
-        &response)
+template <>
+std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const UnitThreadsOperatorsResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t sameOperatorsDetails(kArrayType);
-    for (const SameOperatorsDetails& sameOperators : response.body.sameOperatorsDetails) {
+    for (const SameOperatorsDetails &sameOperators : response.body.sameOperatorsDetails) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "timestamp", sameOperators.timestamp, allocator);
         JsonUtil::AddMember(itemJson, "duration", sameOperators.duration, allocator);
@@ -446,7 +447,7 @@ template <> std::optional<document_t> ToResponseJson<UploadFileResponse>(const U
 }
 #pragma endregion
 
-#pragma region <<Event to json>>
+#pragma region << Event to json>>
 template <typename EVENT> std::optional<document_t> ToEventJson(const EVENT &event)
 {
     return std::nullopt;
@@ -527,8 +528,19 @@ template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(co
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToEventJson<ParseClusterStep2CompletedEvent>(const
-        ParseClusterStep2CompletedEvent &event)
+template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSuccessEvent &event)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+template <>
+std::optional<document_t> ToEventJson<ParseClusterStep2CompletedEvent>(const ParseClusterStep2CompletedEvent &event)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
@@ -547,7 +559,7 @@ template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(con
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
     json_t memoryResult(kArrayType);
-    for (const MemorySuccess &memory: event.memoryResult) {
+    for (const MemorySuccess &memory : event.memoryResult) {
         json_t chartJson(kObjectType);
         JsonUtil::AddMember(chartJson, "rankId", memory.rankId, allocator);
         JsonUtil::AddMember(chartJson, "hasMemory", memory.hasFile and memory.parseSuccess, allocator);

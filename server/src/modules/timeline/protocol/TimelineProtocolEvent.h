@@ -21,11 +21,11 @@ struct UnitTrackMetaData {
     std::string cardId;
     std::string processId;
     std::string processName; // type = process
-    std::string label; // type = process
-    std::string threadId; // type = thread
-    std::string threadName; // type = thread, counter
+    std::string label;       // type = process
+    std::string threadId;    // type = thread
+    std::string threadName;  // type = thread, counter
     std::string metaType;
-    int maxDepth = 0; // type = thread
+    int maxDepth = 0;                  // type = thread
     std::vector<std::string> dataType; // type = counter
 };
 
@@ -79,6 +79,15 @@ struct ParseClusterCompletedEvent : public Event {
     ParseClusterCompletedEventBody body;
 };
 
+struct AllSuccessEventEventBody {
+    bool isAllPageParsed = false;
+};
+
+struct AllSuccessEvent : public Event {
+    AllSuccessEvent() : Event(EVENT_ALL_SUCCESS) {}
+    AllSuccessEventEventBody body;
+};
+
 struct ParseClusterStep2CompletedEvent : public Event {
     ParseClusterStep2CompletedEvent() : Event(EVENT_PARSE_CLUSTER_STEP2_COMPLETED) {}
     ParseClusterCompletedEventBody body;
@@ -94,7 +103,6 @@ struct ModuleResetEvent : public Event {
     ModuleResetEvent() : Event(EVENT_MODULE_RESET) {}
     bool reset = false;
 };
-
 } // end of namespace Protocol
 } // end if namespace Dic
 

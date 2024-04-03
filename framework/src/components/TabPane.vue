@@ -86,7 +86,6 @@ onMounted(async () => {
                     body: {
                         parseCompleted: session.parseCompleted,
                         clusterCompleted: session.clusterCompleted,
-                        isAllPageParsed: session.isAllPageParsed,
                         unitcount: session.unitcount,
                         ...updateState
                     },

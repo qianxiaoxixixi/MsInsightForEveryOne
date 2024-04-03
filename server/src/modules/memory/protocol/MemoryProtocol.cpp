@@ -29,6 +29,7 @@ void MemoryProtocol::RegisterResponseToJsonFuncs()
 void MemoryProtocol::RegisterEventToJsonFuncs()
 {
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, TimelineProtocol::ToModuleResetEventJson);
+    eventToJsonFactory.emplace(EVENT_ALL_SUCCESS, TimelineProtocol::ToAllSuccessEventJson);
 }
 
 #pragma region <<Json To Request>>

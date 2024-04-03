@@ -62,12 +62,13 @@ void TimelineProtocol::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_FAIL, ToParseFailEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToParseClusterCompletedEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToAllSuccessEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_STEP2_COMPLETED, ToParseClusterStep2CompletedEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_MEMORY_COMPLETED, ToParseMemoryCompletedEventJson);
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, ToModuleResetEventJson);
 }
 
-#pragma region <<Json To Request>>
+#pragma region << Json To Request>>
 
 std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &json, std::string &error)
 {
@@ -372,7 +373,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
 }
 #pragma endregion
 
-#pragma region <<Response To Json>>
+#pragma region << Response To Json>>
 
 std::optional<document_t> TimelineProtocol::ToImportActionResponseJson(const Response &response)
 {
@@ -471,7 +472,7 @@ std::optional<document_t> TimelineProtocol::ToUploadFileResponseJson(const Respo
 }
 #pragma endregion
 
-#pragma region <<Event To Json>>
+#pragma region << Event To Json>>
 std::optional<document_t> TimelineProtocol::ToParseSuccessEventJson(const Event &event)
 {
     return ToEventJson<ParseSuccessEvent>(dynamic_cast<const ParseSuccessEvent &>(event));
@@ -485,6 +486,11 @@ std::optional<document_t> TimelineProtocol::ToParseFailEventJson(const Event &ev
 std::optional<document_t> TimelineProtocol::ToParseClusterCompletedEventJson(const Event &event)
 {
     return ToEventJson<ParseClusterCompletedEvent>(dynamic_cast<const ParseClusterCompletedEvent &>(event));
+}
+
+std::optional<document_t> TimelineProtocol::ToAllSuccessEventJson(const Event &event)
+{
+    return ToEventJson<AllSuccessEvent>(dynamic_cast<const AllSuccessEvent &>(event));
 }
 
 std::optional<document_t> TimelineProtocol::ToParseClusterStep2CompletedEventJson(const Event &event)
