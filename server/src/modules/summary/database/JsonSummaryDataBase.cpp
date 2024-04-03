@@ -175,6 +175,9 @@ uint64_t JsonSummaryDataBase::QueryMinStartTime()
         min = sqlite3_column_int64(stmt, col++);
     }
     sqlite3_finalize(stmt);
+    if (min == 0) {
+        min = UINT64_MAX;
+    }
     return min;
 }
 

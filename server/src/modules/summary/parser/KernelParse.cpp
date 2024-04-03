@@ -184,12 +184,12 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::string line;
     std::map<std::string, size_t> dataMap;
     auto db = dynamic_cast<JsonSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+    bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
         std::vector<std::string> rowVector = StringUtil::StringSplit(basicString);
-        if (!rowVector.empty() and rowVector[0] == STEP_ID or rowVector[0] == MODEL_ID
-                                   or rowVector[0] == DEVICE_ID) {
+        if (!rowVector.empty() and isHeader) {
             for (size_t i = 0; i < rowVector.size(); ++i) {
                 dataMap[rowVector[i]] = i;
             }
@@ -197,6 +197,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
                 message = "The header is incorrect or incomplete of " + filePath;
                 return false;
             }
+            isHeader = false;
             continue;
         }
         Kernel kernel {};
