@@ -309,7 +309,8 @@ const SummaryChart = chart({
                     color: '#7d7d7d',
                 });
             });
-            const curUnit = session.units.find(item => (item.metadata as CardMetaData).cardId === processMetaData.cardId);
+            const curUnit = session.units.find(item => (item.metadata as CardMetaData).cardId === processMetaData.cardId) ??
+                session.units.find(item => (item.metadata as CardMetaData).cardId === 'Host');
             const shouldUpdateAlignStartTimestamp = curUnit && minAlignStartTimestamp !== null &&
                 (curUnit.alignStartTimestamp === undefined || minAlignStartTimestamp < curUnit.alignStartTimestamp);
             if (shouldUpdateAlignStartTimestamp) {
