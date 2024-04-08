@@ -22,7 +22,7 @@ IS_WINDOWS = platform.system() == 'Windows'
 IS_LINUX = platform.system() == 'Linux'
 IS_DARWIN = platform.system() == 'Darwin'
 FRAMEWORK = 'x86_64' if platform.platform().find('x86_64') > -1 else 'aarch64'
-MAKE_JOBS = multiprocessing.cpu_count() + 2
+MAKE_JOBS = multiprocessing.cpu_count()
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 CMAKE_BUILD_DIR = os.path.join(BUILD_DIR, 'build')
