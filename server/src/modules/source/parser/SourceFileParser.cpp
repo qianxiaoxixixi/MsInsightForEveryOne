@@ -53,7 +53,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     const int filePathLen = 4096;
 
     while (!file.eof()) {
-        uint64_t dataSize;
+        int64_t dataSize;
         uint8_t dataType;
         uint8_t paddingLength;
 

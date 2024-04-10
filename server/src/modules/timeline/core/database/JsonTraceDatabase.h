@@ -185,7 +185,7 @@ private:
     std::vector<Protocol::RowThreadTrace> QuerySliceByCondition(const Protocol::UnitThreadTracesParams &requestParams,
         uint64_t minTimestamp, int64_t traceId);
 
-    int64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
+    uint64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
         std::vector<SliceDto> &sliceDtoVec);
 
     void QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vector<CacheSlice> &cacheSlices);
