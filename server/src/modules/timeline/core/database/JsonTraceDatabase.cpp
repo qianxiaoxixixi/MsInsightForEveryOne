@@ -901,11 +901,11 @@ void JsonTraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &ro
     int offset = 0;
     for (int i = 0; i < length; i++) {
         int32_t curDepth = rows[i].depth;
-        int64_t selfTime = rows[i].duration;
-        int64_t curSliceStartTime = rows[i].timestamp;
-        int64_t curSliceEndTime = rows[i].endTime;
-        int64_t tempStartTime = 0;
-        int64_t tempEndTime = 0;
+        uint64_t selfTime = rows[i].duration;
+        uint64_t curSliceStartTime = rows[i].timestamp;
+        uint64_t curSliceEndTime = rows[i].endTime;
+        uint64_t tempStartTime = 0;
+        uint64_t tempEndTime = 0;
         for (int j = offset; j < length; ++j) {
             Protocol::SimpleSlice item = rows[j];
             if (item.timestamp < curSliceStartTime) {
@@ -991,17 +991,17 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
     return true;
 }
 
-int64_t JsonTraceDatabase::ComputeSingleSliceSelfTime(const ThreadDetailParams &requestParams, int64_t trackId,
+uint64_t JsonTraceDatabase::ComputeSingleSliceSelfTime(const ThreadDetailParams &requestParams, int64_t trackId,
     std::vector<SliceDto> &sliceDtoVec)
 {
-    int64_t selfTime = sliceDtoVec.at(0).duration;
+    uint64_t selfTime = sliceDtoVec.at(0).duration;
     std::vector<std::pair<uint64_t, uint64_t>> nextDepthResult;
     QueryDurationFromSliceByTimeRange(requestParams, sliceDtoVec, nextDepthResult, trackId);
     if (nextDepthResult.empty()) {
         return 0;
     }
-    int64_t tempStartTime = 0;
-    int64_t tempEndTime = 0;
+    uint64_t tempStartTime = 0;
+    uint64_t tempEndTime = 0;
     // 兼容算子重叠的情况
     for (const auto &item : nextDepthResult) {
         if (item.first > tempEndTime) {
@@ -1093,7 +1093,7 @@ bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestP
         flowDetailDto.flowId = resultSet->GetString("flowId");
         flowDetailDto.flowTimestamp = resultSet->GetUint64("timestamp");
         flowDetailDto.type = resultSet->GetString("type");
-        flowDetailDto.trackId = resultSet->GetUint64("trackId");
+        flowDetailDto.trackId = resultSet->GetInt64("trackId");
         flowDetailVec.emplace_back(flowDetailDto);
     }
     ServerLog::Info("flowDetailVec size is: ", flowDetailVec.size());
@@ -1497,8 +1497,8 @@ std::pair<int64_t, int64_t> JsonTraceDatabase::QueryExtremTrackIdPairByPid(std::
     std::pair<int64_t, int64_t> result;
     while (resultSet->Next()) {
         int col = resultStartIndex;
-        int64_t maxTrackId = resultSet->GetUint64(col++);
-        int64_t minTrackId = resultSet->GetUint64(col++);
+        int64_t maxTrackId = resultSet->GetInt64(col++);
+        int64_t minTrackId = resultSet->GetInt64(col++);
         result = std::make_pair(maxTrackId, minTrackId);
     }
     return result;
