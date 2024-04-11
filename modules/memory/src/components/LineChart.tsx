@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Graph, OperatorDetail } from '../entity/memory';
 import { useResizeEventDependency, binarySearch } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
-import { chartCharacter } from './Common';
+import { chartCharacter, safeStr } from './Common';
 
 interface IProps {
     graph: Graph;
@@ -27,7 +27,7 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
         tooltip: {
             trigger: 'axis',
             formatter: function (params: any) {
-                let res = `${params?.[0]?.name} <br/>`;
+                let res = `${safeStr(params?.[0]?.name)} <br/>`;
                 for (const item of params) {
                     if (!isNaN(Number(item?.value?.[item?.encode?.y?.[0]]))) {
                         res += `<span style="background: ${item.color};
@@ -37,7 +37,7 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
                         display: inline-block;
                         margin-right:10px;">
                         </span>
-                        ${item.seriesName}: ${item?.value?.[item?.encode?.y?.[0]]}<br/>`;
+                        ${safeStr(item.seriesName)}: ${safeStr(item?.value?.[item?.encode?.y?.[0]])}<br/>`;
                     }
                 }
                 return res;
