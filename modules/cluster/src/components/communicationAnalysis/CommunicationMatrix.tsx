@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Select, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
-import { addResizeEvent, Container, Label, COLOR, getDecimalCount, chartVisbilityListener } from '../Common';
+import { addResizeEvent, Container, Label, COLOR, getDecimalCount, chartVisbilityListener, safeStr } from '../Common';
 import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
@@ -69,15 +69,24 @@ function handleTransportType(dataSource: any, option: any, type: any): void {
         return allTransporType[params.value[2]];
     };
     option.series[0].tooltip.formatter = function (params: any): string {
-        const { data } = params;
-        return data[3].length === 0
-            ? `srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`
-            : `operatorName: ${data[3]} <br/> srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`;
+        const data = params?.data;
+        const str = data?.[3]?.length === 0
+            ? `srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${type}: ${allTransporType[data?.[2]]}`
+            : `operatorName: ${data?.[3]} <br/> srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${type}: ${allTransporType[data?.[2]]}`;
+        return safeStr(str, '<br/>');
     };
 }
 
 const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL'];
-// eslint-disable-next-line max-lines-per-function
+const defaultVisualMap = {
+    calculable: true,
+    orient: 'horizontal',
+    left: 'center',
+    bottom: '15%',
+    inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
+    textStyle: { color: COLOR.Grey40 },
+    dimension: 2,
+};
 function wrapData(dataSource: any): any {
     const { data, rankIds, type } = dataSource;
     const option: any = baseOption;
@@ -91,15 +100,7 @@ function wrapData(dataSource: any): any {
         const repeatDataToolTip: {[key: string]: string} = {};
         const mixData = handleRepeatData(repeatDataToolTip, data);
         option.series[0].data = mixData;
-        option.visualMap = {
-            calculable: true,
-            orient: 'horizontal',
-            left: 'center',
-            bottom: '15%',
-            inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
-            textStyle: { color: COLOR.Grey40 },
-            dimension: 2,
-        };
+        option.visualMap = defaultVisualMap;
         if (data.length > 0) {
             const max = Math.max(...data.map((item: number[]) => item[2]));
             const min = Math.min(...data.map((item: number[]) => item[2]));
@@ -122,10 +123,11 @@ function wrapData(dataSource: any): any {
             return data[2];
         };
         option.series[0].tooltip.formatter = function (params: any) {
-            const { data } = params;
-            return data[3].length === 0
-                ? `srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${data[2]}`
-                : `operatorName: ${data[3]} <br/> srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${data[2]}`;
+            const datalist = params?.data;
+            const str = datalist?.[3]?.length === 0
+                ? `srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${type}: ${datalist?.[2]}`
+                : `operatorName: ${datalist?.[3]} <br/> srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${type}: ${datalist?.[2]}`;
+            return safeStr(str, '<br/>');
         };
     }
     return option;
