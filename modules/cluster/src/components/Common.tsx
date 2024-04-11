@@ -287,3 +287,15 @@ export const notZero = (num: number, replace = 1): number => {
     const replaceNum = replace === 0 ? 1 : replace;
     return num === 0 ? replaceNum : num;
 };
+
+export const safeStr = (str: string, ignore?: string): string => {
+    if (str === undefined || str === null) {
+        return str;
+    }
+    if (ignore !== undefined && ignore !== null && ignore !== '') {
+        const list = str.split(ignore);
+        const safelist = list.map(item => item.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+        return safelist.join(ignore);
+    }
+    return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
