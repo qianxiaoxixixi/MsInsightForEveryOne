@@ -157,6 +157,9 @@ void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std
     action.cardName = rankId;
     action.rankId = rankId;
     action.result = true;
+    if (devicePaths.find(rankId) == devicePaths.end()) {
+        return;
+    }
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
     action.cardPath = "Directory: " + devicePaths[rankId];
     response.body.result.emplace_back(action);

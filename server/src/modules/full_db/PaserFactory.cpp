@@ -57,7 +57,10 @@ void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response,
     action.cardName = rankId;
     action.rankId = rankId;
     action.result = true;
-    std::string path = FileUtil::GetParentPath(rankEntry.second[0]);
+    if (std::empty(rankEntry.second)) {
+        ServerLog::Warn("CardPath is empty, rankId is: ", rankId);
+        return;
+    }
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
     action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(rankEntry.second[0]);
     response.body.result.emplace_back(action);
