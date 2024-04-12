@@ -113,10 +113,15 @@ bool SourceFileParser::InitParser(const std::string &fileId)
     std::vector<std::pair<int64_t, int64_t>> &traceFilePos =
         instance.dataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
     std::ifstream file(instance.filePath, std::ios::in | std::ios::binary);
+    if (!file) {
+        ServerLog::Error("Failed to open file. filePath:", instance.filePath);
+        return false;
+    }
     std::vector<std::pair<int64_t, int64_t>> adjustTraceFilePos;
     for (const auto &pos : traceFilePos) {
         adjustTraceFilePos.emplace_back(AdjustPosition(file, pos.first, pos.second));
     }
+    file.close();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &pos : adjustTraceFilePos) {
         auto future = instance.threadPool->AddTask(ParseTask, fileId, pos);
@@ -178,6 +183,10 @@ std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file
     file.seekg(contentStart, std::ios::beg);
     char startTemp;
     while (file.get(startTemp)) {
+        if (!file) {
+            ServerLog::Error("Failed to read start pos.");
+            break;
+        }
         if (startTemp == '[') {
             contentStart++;
             break;
@@ -188,6 +197,10 @@ std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file
     char endTemp;
     const int offset = -2;
     while (file.get(endTemp)) {
+        if (!file) {
+            ServerLog::Error("Failed to read end pos.");
+            break;
+        }
         if (endTemp == ']') {
             contentEnd--;
             break;
@@ -259,6 +272,11 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
     file.read(reinterpret_cast<char *>(&contentLength), sizeof(contentLength));
     file.seekg(reversePadding, std::ios::beg);
     file.read(reinterpret_cast<char *>(&reverse), sizeof(reverse));
+
+    if (!file) {
+        ServerLog::Error("Can't read contentLength and reverse.");
+        return false;
+    }
 
     bool isBinary = (contentLength != 0) && (reverse == SourceFileParser::reverseConst);
     file.close();
@@ -334,12 +352,15 @@ std::string SourceFileParser::GetInstr()
     std::string content(dataSize, '\0');
     if (!file.read(&content[0], static_cast<std::streamsize>(dataSize))) {
         ServerLog::Error("Can't read file,please check file exist or not,file name :", filePath);
+        file.close();
         return "";
     }
     if (!StringUtil::IsUtf8String(content)) {
         ServerLog::Error("Can't decode a text frame as utf-8,instr content is invalid.");
+        file.close();
         return "";
     }
+    file.close();
     return content;
 }
 
@@ -368,8 +389,10 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
     }
     if (!StringUtil::IsUtf8String(content)) {
         ServerLog::Error("Can't decode a text frame as utf-8,source name :", sourceName);
+        file.close();
         return "";
     }
+    file.close();
     return content;
 }
 
@@ -390,6 +413,10 @@ void SourceFileParser::ConvertToData()
 
         std::vector<char> filePathBuffer(filePathLengthConst);
         file.read(filePathBuffer.data(), filePathBuffer.size());
+        if (!file) {
+            ServerLog::Error("Failed to read file path buffer.");
+            break;
+        }
         std::string filePath(filePathBuffer.data());
         sourceFiles[filePath] = std::make_pair(start + filePathLengthConst, end);
     }
@@ -568,6 +595,10 @@ std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair
     std::string jsonStr;
     jsonStr.resize(dataSize);
     file.read(&jsonStr[0], dataSize);
+    if (!file) {
+        ServerLog::Error("Failed to read content str.");
+        return "";
+    }
     return jsonStr;
 }
 } // end of namespace Memory
