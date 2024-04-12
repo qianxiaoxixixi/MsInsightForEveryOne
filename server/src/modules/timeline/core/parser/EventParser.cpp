@@ -10,6 +10,7 @@
 #include "TraceFileParser.h"
 #include "SourceFileParser.h"
 #include "ParserStatusManager.h"
+#include "Timer.h"
 #include "EventParser.h"
 
 namespace Dic {
@@ -77,13 +78,15 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
     database->CommitData();
     database.reset(); // return connection pool
     ServerLog::Info("EventParser. fileId:", fileId, " Parse ", startPosition, " to ", endPosition,
-                    ". Count:", parseCount, ", ignore Count:", ignoreCount);
+        ". Count:", parseCount, ", ignore Count:", ignoreCount);
     return true;
 }
-    void EventParser::SetSimulationStatus(const bool &isSimulation)
-    {
-        m_isSimulation = isSimulation;
-    }
+
+
+void EventParser::SetSimulationStatus(const bool &isSimulation)
+{
+    m_isSimulation = isSimulation;
+}
 
 /**
  * 解析文件内容存入DB
@@ -117,8 +120,7 @@ void EventParser::Parse(int sliceIndex, const std::string &fileContent)
     }
     database->CommitData();
     database.reset(); // return connection pool
-    ServerLog::Info("EventParser slice index is ", sliceIndex, ". Count:", parseCount,
-        ", ignore Count:", ignoreCount);
+    ServerLog::Info("EventParser slice index is ", sliceIndex, ". Count:", parseCount, ", ignore Count:", ignoreCount);
 }
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
@@ -141,7 +143,7 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
         return str;
     }
     file.seekg(startPosition, std::ios::beg);
-    int64_t suffixLen = 2; // [ ]
+    int64_t suffixLen = 2;                                     // [ ]
     int64_t len = endPosition - startPosition + 1 + suffixLen; // + [ ] + \0
     auto buffer = std::make_unique<char[]>(len);
     if (!file.read(buffer.get() + 1, len - suffixLen)) { // reserved '[' and ']'
@@ -152,7 +154,7 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
     file.close();
     buffer[0] = '[';
     buffer[len - 1] = ']';
-    return {buffer.get(), static_cast<uint64_t>(len)};
+    return { buffer.get(), static_cast<uint64_t>(len) };
 }
 
 void EventParser::EventHandle(const json_t &json)
@@ -204,27 +206,37 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
     event.end = event.ts + event.dur;
-    std::tuple<int64_t, std::string, std::string> thread = {event.trackId, event.tid, event.pid};
+    std::tuple<int64_t, std::string, std::string> thread = { event.trackId, event.tid, event.pid };
     database->AddThreadCache(thread);
     database->InsertSlice(event);
 }
 
-    void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
-    {
-        if (eventPtr == nullptr) {
-            return;
-        }
-        auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
-        if (event.processName.empty() || event.threadName.empty()) {
-            ServerLog::Error("processName and threadName is empty");
-            return;
-        }
-        event.pid = std::to_string(GetPid(event.processName));
-        event.tid = std::to_string(GetTid(event.processName, event.threadName));
-        event.trackId = GetTrackId(event.pid, event.tid);
-        event.end = event.ts + event.dur;
-        database->InsertSimulationSlice(event);
+void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+{
+    if (eventPtr == nullptr) {
+        return;
     }
+    auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
+    if (event.processName.empty() || event.threadName.empty()) {
+        ServerLog::Error("processName and threadName is empty");
+        return;
+    }
+    event.pid = std::to_string(GetPid(event.processName));
+    event.tid = std::to_string(GetTid(event.processName, event.threadName));
+    event.trackId = GetTrackId(event.pid, event.tid);
+    event.end = event.ts + event.dur;
+    ThreadEvent threadEvent;
+    threadEvent.trackId = event.trackId;
+    threadEvent.tid = event.tid;
+    threadEvent.pid = event.pid;
+    threadEvent.threadName = event.threadName;
+    ProcessEvent processEvent;
+    processEvent.pid = event.pid;
+    processEvent.processName = event.processName;
+    database->InsertSlice(event);
+    database->AddSimulationProcessCache(processEvent);
+    database->AddSimulationThreadCache(threadEvent);
+}
 
 void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
 {
@@ -233,7 +245,7 @@ void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
     auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
-    std::tuple<int64_t, std::string, std::string> thread = {event.trackId, event.tid, event.pid};
+    std::tuple<int64_t, std::string, std::string> thread = { event.trackId, event.tid, event.pid };
     database->AddThreadCache(thread);
     database->InsertFlow(event);
 }
@@ -257,26 +269,26 @@ int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
     return id;
 }
 
-    int64_t EventParser::GetPid(const std::string &processName)
-    {
-        if (simulationProcessMap.count(processName) > 0) {
-            return simulationProcessMap.at(processName);
-        }
-        int64_t id = Source::SourceFileParser::Instance().GetSimulationPid(fileId, processName);
-        simulationProcessMap.emplace(processName, id);
-        return id;
+int64_t EventParser::GetPid(const std::string &processName)
+{
+    if (simulationProcessMap.count(processName) > 0) {
+        return simulationProcessMap.at(processName);
     }
+    int64_t id = Source::SourceFileParser::Instance().GetSimulationPid(fileId, processName);
+    simulationProcessMap.emplace(processName, id);
+    return id;
+}
 
-    int64_t EventParser::GetTid(const std::string &processName, const std::string &threadName)
-    {
-        std::string str = processName + threadName;
-        if (simulationThreadMap.count(threadName) > 0) {
-            return simulationThreadMap.at(threadName);
-        }
-        int64_t id = Source::SourceFileParser::Instance().GetSimulationTid(fileId, processName, threadName);
-        simulationThreadMap.emplace(str, id);
-        return id;
+int64_t EventParser::GetTid(const std::string &processName, const std::string &threadName)
+{
+    std::string str = processName + threadName;
+    if (simulationThreadMap.count(threadName) > 0) {
+        return simulationThreadMap.at(threadName);
     }
+    int64_t id = Source::SourceFileParser::Instance().GetSimulationTid(fileId, processName, threadName);
+    simulationThreadMap.emplace(str, id);
+    return id;
+}
 
 std::string EventParser::GetError()
 {

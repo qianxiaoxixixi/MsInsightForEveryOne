@@ -46,6 +46,32 @@ struct MetaData : public Event {
     MetaDataArgs args;
 };
 
+struct ThreadEvent : public Event {
+    int64_t trackId = 0;
+    std::string tid;
+    std::string pid;
+    std::string threadName;
+    bool operator < (const ThreadEvent &right) const
+    {
+        if (trackId < right.trackId) {
+            return true;
+        }
+        return false;
+    }
+};
+
+struct ProcessEvent : public Event {
+    std::string pid;
+    std::string processName;
+    bool operator < (const ProcessEvent &right) const
+    {
+        if (pid < right.pid) {
+            return true;
+        }
+        return false;
+    }
+};
+
 struct Flow : public Event {
     int64_t trackId = 0;
     std::string tid;

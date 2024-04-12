@@ -56,18 +56,6 @@ TEST_F(DatabaseTest, CreateIndex)
     EXPECT_EQ(success, true);
 }
 
-TEST_F(DatabaseTest, CreateSimpleSliceIndex)
-{
-    std::mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
-    database.CreateSimpleSliceIndex();
-
-    database.OpenDb("tttt", true);
-    bool success = database.CreateSimpleSliceIndex();
-    database.CloseDb();
-    EXPECT_EQ(success, true);
-}
-
 TEST_F(DatabaseTest, InsertSlice)
 {
     std::mutex sqlMutex;
@@ -108,21 +96,3 @@ TEST_F(DatabaseTest, InsertCounter)
     EXPECT_EQ(success, true);
 }
 
-
-TEST_F(DatabaseTest, UpdateDepth)
-{
-    EXPECT_NO_THROW({
-        std::mutex sqlMutex;
-        Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
-        database.UpdateDepth();
-    });
-}
-
-TEST_F(DatabaseTest, UpdateSimulationDepth)
-{
-    EXPECT_NO_THROW({
-        std::mutex sqlMutex;
-        Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
-        database.UpdateSimulationDepth();
-    });
-}

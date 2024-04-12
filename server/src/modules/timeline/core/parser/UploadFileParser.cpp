@@ -134,7 +134,7 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
         return;
     }
     database->CreateIndex();
-    database->UpdateDepth();
+    database->UpdateSimulationDepthWithNoOverlap();
 
     // 根据是否重置发送解析完成消息
     bool reset = singleFileData.reset.load();

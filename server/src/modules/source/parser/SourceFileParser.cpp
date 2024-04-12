@@ -148,7 +148,7 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepth();
+    database->UpdateSimulationDepthWithNoOverlap();
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }

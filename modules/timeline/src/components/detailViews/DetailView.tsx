@@ -9,7 +9,7 @@ import { useEventBus } from '../../utils/eventBus';
 import { ViewList } from './index';
 
 export function getDetailViewItem(session: Session): any {
-    if (!session.isFullDb) {
+    if (!session.isFullDb && !session.isSimulation) {
         return {
             label: <ViewSelect/>,
             key: 'SystemView',

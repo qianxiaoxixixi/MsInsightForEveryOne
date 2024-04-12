@@ -10,6 +10,7 @@
 #include <functional>
 #include "GlobalDefs.h"
 #include "JsonTraceDatabase.h"
+#include "EventDef.h"
 
 namespace Dic {
 namespace Module {

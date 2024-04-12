@@ -6,6 +6,7 @@
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceFileParser.h"
+#include "TraceFileSimulationParser.h"
 #include "TraceTime.h"
 #include "ParserStatusManager.h"
 #include "UploadFileParser.h"
@@ -30,6 +31,7 @@ void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     RemoteDeleteResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     TraceFileParser::Instance().DeleteParseFiles(request.params.rankId);
+    TraceFileSimulationParser::Instance().DeleteParseFiles(request.params.rankId);
     UploadFileParser::Instance().ResetByFiles(request.params.rankId);
     GetUpdateTime(response.body);
     SetResponseResult(response, true);

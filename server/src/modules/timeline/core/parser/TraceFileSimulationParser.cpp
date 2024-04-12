@@ -6,37 +6,36 @@
 #include "ServerLog.h"
 #include "RegexUtil.h"
 #include "FileUtil.h"
-#include "StringUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
-#include "ClusterParseThreadPoolExecutor.h"
-#include "EventNotifyThreadPoolExecutor.h"
 #include "SliceDepthCacheManager.h"
-#include "TraceFileParser.h"
+#include "Timer.h"
+#include "TraceFileSimulationParser.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-TraceFileParser &TraceFileParser::Instance()
+
+TraceFileSimulationParser &TraceFileSimulationParser::Instance()
 {
-    static TraceFileParser instance;
+    static TraceFileSimulationParser instance;
     return instance;
 }
 
-TraceFileParser::TraceFileParser()
+TraceFileSimulationParser::TraceFileSimulationParser()
 {
-    threadPool = std::make_unique<ThreadPool>(TraceFileParser::maxThreadNum);
+    threadPool = std::make_unique<ThreadPool>(TraceFileSimulationParser::maxThreadNum);
 }
 
-TraceFileParser::~TraceFileParser()
+TraceFileSimulationParser::~TraceFileSimulationParser()
 {
     threadPool->ShutDown();
 }
 
-bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const std::string &fileId,
+bool TraceFileSimulationParser::Parse(const std::vector<std::string> &filePathArr, const std::string &fileId,
     const std::string &selectedFolder)
 {
     ServerLog::Info("start parse. file id:", fileId);
@@ -45,7 +44,7 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
     return true;
 }
 
-void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId)
+void TraceFileSimulationParser::PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId)
 {
     if (!InitParser(filePathArr, fileId)) {
         auto msg = "Failed to open db. Please delete dbFile and try again or see logs.";
@@ -53,7 +52,7 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
     }
 }
 
-bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId)
+bool TraceFileSimulationParser::InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId)
 {
     if (!ParserStatusManager::Instance().SetRunningStatus(fileId)) {
         ServerLog::Info("Pre task skip this file.");
@@ -61,21 +60,25 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     }
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
-        ServerLog::Error("Failed to get connection.");
+        ServerLog::Error("Failed to get connection. fileId: ", fileId);
         return false;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
-    if (database == nullptr || !(database->DropTable() && database->CreateTable())) {
+    std::shared_ptr<JsonTraceDatabase> database =
+        std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EventParser.");
+        return false;
+    }
+    if (!(database->DropTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
         return false;
     }
-
-    auto &instance = TraceFileParser::Instance();
+    auto &instance = TraceFileSimulationParser::Instance();
     auto start = std::chrono::high_resolution_clock::now();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath : filePathArr) {
         ServerLog::Info("Start parse. file id:", fileId, ". path:", filePath);
-        auto splitFile = TraceFileParser::SplitFile(filePath);
+        auto splitFile = TraceFileSimulationParser::SplitFile(filePath);
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
             ParseEndCallBack(fileId, false, "Failed to split file: " + filePath);
@@ -91,13 +94,15 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     return true;
 }
 
-void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
+void TraceFileSimulationParser::ParseTask(const std::string &filePath, const std::string &fileId,
+    std::pair<int64_t, int64_t> pos)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
         ServerLog::Info("Parse task skip this file. ID:", fileId);
         return;
     }
     EventParser eventParser(filePath, fileId);
+    eventParser.SetSimulationStatus(true);
     if (!eventParser.Parse(pos.first, pos.second)) {
         if (ParserStatusManager::Instance().SetTerminateStatus(fileId) == ParserStatus::RUNNING) {
             // 只发送一次解析失败事件
@@ -106,7 +111,7 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
     }
 }
 
-void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
+void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
     std::shared_ptr<std::vector<std::future<void>>> futures,
     std::chrono::time_point<std::chrono::high_resolution_clock> start)
 {
@@ -122,15 +127,11 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. ID:", fileId,
         " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    if (db == nullptr) {
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
+    if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         ParserStatusManager::Instance().SetFinishStatus(fileId);
-        return;
-    }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EndParseTask.");
         return;
     }
     database->CreateIndex();
@@ -139,17 +140,18 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     ParseEndCallBack(fileId, true, "");
 }
 
-void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+void TraceFileSimulationParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
     auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
     ParserStatusManager::Instance().SetFinishStatus(fileId);
-    auto &instance = TraceFileParser::Instance();
+    auto &instance = TraceFileSimulationParser::Instance();
     if (instance.paserEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
+        ServerLog::Info("TraceFileSimulationParser send Message");
         instance.paserEndCallback(fileId, result, message);
     }
 }
 
-int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid)
+int64_t TraceFileSimulationParser::GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     auto item = std::make_pair(pid, tid);
@@ -163,14 +165,11 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
     return trackId;
 }
 
-void TraceFileParser::Reset()
+void TraceFileSimulationParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
     ParserStatusManager::Instance().SetAllTerminateStatus();
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::TERMINATE);
     threadPool->Reset();
-    ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
-    EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     ServerLog::Info("Task completed.");
     auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {
@@ -191,7 +190,7 @@ void TraceFileParser::Reset()
     ServerLog::Info("End Reset trace Parser");
 }
 
-void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
+void TraceFileSimulationParser::DeleteParseFileFromDisk(const std::string &fileId)
 {
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
@@ -203,14 +202,11 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
 }
 
 
-void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
+void TraceFileSimulationParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
 {
     for (const auto &fileId : fileIds) {
         auto status = ParserStatusManager::Instance().SetTerminateStatus(fileId);
-        auto kernelStatus = ParserStatusManager::Instance().SetTerminateStatus(KERNEL_PREFIX + fileId);
-        auto memoryStatus = ParserStatusManager::Instance().SetTerminateStatus(MEMORY_PREFIX + fileId);
-        ServerLog::Info("Before delete file. id:", fileId, ", status:", static_cast<int>(status),
-            ", kernelStatus:", static_cast<int>(kernelStatus), ", memoryStatus:", static_cast<int>(memoryStatus));
+        ServerLog::Info("Before delete file. id:", fileId, ", status:", static_cast<int>(status));
     }
     ParserStatusManager::Instance().WaitAllFinished(fileIds);
     for (const auto &fileId : fileIds) {

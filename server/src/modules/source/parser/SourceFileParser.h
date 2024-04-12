@@ -76,7 +76,7 @@ private:
     std::string GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const;
 
     std::unique_ptr<ThreadPool> threadPool;
-    const int maxThreadNum = 1;
+    const int maxThreadNum = 4;
 
     std::mutex trackMutex;
     std::mutex processMutex;
