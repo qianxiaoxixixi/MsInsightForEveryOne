@@ -166,6 +166,16 @@ struct RowThreadTrace {
     int64_t traceId = 0;
     std::string name;
     std::string cname;
+    bool operator < (const RowThreadTrace& right) const
+    {
+        if (depth < right.depth) {
+            return true;
+        }
+        if (depth == right.depth && startTime < right.startTime) {
+            return true;
+        }
+        return false;
+    }
 };
 
 struct ExtremumTimestamp {
@@ -174,11 +184,33 @@ struct ExtremumTimestamp {
 };
 
 struct SimpleSlice {
+    uint64_t id = 0;
     uint64_t timestamp = 0;
     uint64_t duration = 0;
     uint64_t endTime = 0;
     int32_t depth = 0;
     std::string name;
+    bool operator < (const SimpleSlice& right) const
+    {
+        if (depth < right.depth) {
+            return true;
+        }
+        if (depth == right.depth && timestamp < right.timestamp) {
+            return true;
+        }
+        return false;
+    }
+
+    bool operator > (const SimpleSlice& right) const
+    {
+        if (depth > right.depth) {
+            return true;
+        }
+        if (depth == right.depth && timestamp > right.timestamp) {
+            return true;
+        }
+        return false;
+    }
 };
 struct SearchResult {
     std::string rankId;

@@ -11,7 +11,7 @@
 #include "WsSessionManager.h"
 #include "ModuleRequestHandler.h"
 #include "TraceFileParser.h"
-#include "ModuleRequestHandler.h"
+#include "TraceFileSimulationParser.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "ClusterFileParser.h"
 #include "DataBaseManager.h"
@@ -40,7 +40,24 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
     for (const auto &rankEntry : rankListMap) {
         SetBaseActionOfResponse(response, rankEntry);
     }
-    SetParseCallBack(token);
+    bool simulation = false;
+    if (!std::empty(rankListMap) && !std::empty(rankListMap.begin()->second)) {
+        std::string firstfilePath = rankListMap.begin()->second.front();
+        simulation = isSimulation(firstfilePath);
+    }
+    if (simulation) {
+        SetParseCallBack(token, Timeline::TraceFileSimulationParser::Instance());
+        ModuleRequestHandler::SetResponseResult(response, true);
+        response.command = Protocol::REQ_RES_IMPORT_ACTION;
+        response.moduleName = Protocol::ModuleType::TIMELINE;
+        response.body.isSimulation = simulation;
+        session.OnResponse(std::move(responsePtr));
+        for (const auto &rankEntry : rankListMap) {
+            Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
+        }
+        return;
+    }
+    SetParseCallBack(token, Timeline::TraceFileParser::Instance());
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
@@ -49,7 +66,6 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
     for (const auto &rankEntry : rankListMap) {
         Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
     }
-
     if (!Summary::KernelParse::Instance().Parse(request.params.path, token)) {
         ServerLog::Warn("Failed to parse kernel files.");
     }
@@ -61,6 +77,26 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path);
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
 }
+    bool ParserJson::isSimulation(std::string filePath)
+    {
+        std::ifstream file(FileUtil::PathPreprocess(filePath), std::ios::in);
+        std::string headerString;
+        int64_t contentStart = 0;
+        file.seekg(contentStart, std::ios::beg);
+        char startTemp;
+        while (file.get(startTemp)) {
+            headerString += startTemp;
+            if (startTemp == '[') {
+                break;
+            }
+            contentStart++;
+        }
+        ServerLog::Info("Import first file header is: ", headerString);
+        if (headerString.find("profilingType") != std::string::npos && headerString.find("op") != std::string::npos) {
+            return true;
+        }
+        return false;
+    }
 
 void ParserJson::SendAllParseSuccess(const std::string &token)
 {
@@ -84,11 +120,11 @@ void ParserJson::SendAllParseSuccess(const std::string &token)
     session->OnEvent(std::move(event));
 }
 
-void ParserJson::SetParseCallBack(std::string token)
+void ParserJson::SetParseCallBack(std::string token, FileParser &fileParser)
 {
     std::function<void(const std::string, bool, const std::string)> func =
         std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    TraceFileParser::Instance().SetParseEndCallBack(func);
+    fileParser.SetParseEndCallBack(func);
 }
 
 

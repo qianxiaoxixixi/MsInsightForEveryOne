@@ -228,8 +228,10 @@ export const ThreadUnit = unit<ThreadMetaData>({
             if (data === undefined) { return; }
             runInAction(() => {
                 session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId };
-                session.linkDetail = generateLinkDetail((metadata as ThreadMetaData).threadName.toLowerCase().includes('stream') ? 'Incoming flow' : 'Outgoing flow');
-                session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
+                if (!session.isSimulation) {
+                    session.linkDetail = generateLinkDetail((metadata as ThreadMetaData).threadName.toLowerCase().includes('stream') ? 'Incoming flow' : 'Outgoing flow');
+                    session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
+                }
             });
         },
         onHover: (data, session: Session): void => {

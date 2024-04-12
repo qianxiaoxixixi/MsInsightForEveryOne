@@ -10,12 +10,16 @@
 
 namespace Dic {
 namespace Module {
+enum class JsonFormat {
+    JSON_ARRAY_FORMAT = 0,
+    JSON_OBJECT_FORMAT
+};
 class FileParser {
 public:
     FileParser() = default;
     virtual ~FileParser() = default;
     virtual bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
-                       const std::string &selectedFolder) = 0;
+        const std::string &selectedFolder) = 0;
     virtual void SetParseEndCallBack(std::function<void(const std::string, bool result, const std::string)> &callback);
     virtual std::string GetError();
     virtual void Reset();

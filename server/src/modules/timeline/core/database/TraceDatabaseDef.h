@@ -52,15 +52,9 @@ struct MetaDataDto {
     std::string label;
     std::string threadId;
     std::string threadName;
-    int maxDepth = 0;
+    int32_t maxDepth = 0;
     std::string name; // ph = C, name
     std::string args; // ph = C, args
-};
-
-struct SliceTimeData {
-    int64_t id;
-    uint64_t time;
-    uint64_t dur;
 };
 
 struct OneKernelData {

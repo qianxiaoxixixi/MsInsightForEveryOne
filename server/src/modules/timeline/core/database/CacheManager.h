@@ -19,6 +19,16 @@ struct CacheSlice {
     uint64_t duration = 0;
     uint64_t endTime = 0;
     int32_t depth = 0;
+    bool operator < (const CacheSlice& right) const
+    {
+        if (depth < right.depth) {
+            return true;
+        }
+        if (depth == right.depth && timestamp < right.timestamp) {
+            return true;
+        }
+        return false;
+    }
 };
 class CacheManager {
 public:

@@ -292,6 +292,8 @@ TEST_F(TestSuit, QueryThreadDetail)
     uint64_t STARTTIME = 1695115378728277500;
     uint32_t DEPTH = 7;
     Dic::Protocol::ThreadDetailParams request;
+    uint64_t id = 18906;
+    request.id = std::to_string(id);
     request.depth = DEPTH;
     request.startTime = STARTTIME;
     uint64_t minTimestamp = 0;

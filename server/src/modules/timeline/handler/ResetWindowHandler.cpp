@@ -11,6 +11,7 @@
 #include "FullDbParser.h"
 #include "DataBaseManager.h"
 #include "UploadFileParser.h"
+#include "SourceFileParser.h"
 
 namespace Dic {
 namespace Module {
@@ -36,6 +37,7 @@ void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         Summary::KernelParse::Instance().Reset();
         Memory::MemoryParse::Instance().Reset();
         UploadFileParser::Instance().ResetAllFiles();
+        Source::SourceFileParser::Instance().Reset();
     } else {
         FullDb::FullDbParser::Instance().Reset();
     }

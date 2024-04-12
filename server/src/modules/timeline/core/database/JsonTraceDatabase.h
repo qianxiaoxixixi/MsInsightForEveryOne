@@ -23,14 +23,16 @@ public:
 
     bool CreateTable();
     bool CreateIndex();
-    bool CreateSimpleSliceIndex();
     bool DropTable();
     bool InitStmt();
     void ReleaseStmt();
     bool InsertSlice(const Trace::Slice &event);
-    bool InsertSimulationSlice(const Trace::Slice &event);
     bool AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo);
+    bool AddSimulationThreadCache(const Trace::ThreadEvent &event);
+    bool AddSimulationProcessCache(const Trace::ProcessEvent &event);
     bool InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList);
+    bool InsertSimulationThreadList();
+    bool InsertSimulationProcessList();
     bool UpdateProcessName(const Trace::MetaData &event);
     bool UpdateProcessLabel(const Trace::MetaData &event);
     bool UpdateProcessSortIndex(const Trace::MetaData &event);
@@ -43,13 +45,10 @@ public:
     bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
-    void UpdateDepth();
-    void UpdateSimulationDepth();
-    void UpdateSimulationDepthByCode();
-    void CreateDepthTempTable();
-    void DropDepthTempTable();
-    void UpdateSliceDepth();
-    void DeleteInvalidFlowData();
+    void UpdateSimulationDepthWithNoOverlap();
+    void UpdateSimulationDepthByCodeWithNoOverlap();
+    void UpdateAllSimulationSliceDepthWithNoOverlap(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
+        const uint64_t trackId);
     std::pair<int64_t, int64_t> QueryExtremTrackIdPairByPid(std::string pid);
 
     // search
@@ -118,10 +117,6 @@ private:
     const std::string hcclType = "HCCL";
     const int cacheSize = 1000;
     const int unit = 1000;
-
-    const int summaryPerpix = 10;
-    // 3G size limit 2024.02.01
-    const double middleImage = 1.5;
     // 5G size limit 2024.02.01
     const double lowImage = 5.0;
 
@@ -138,10 +133,12 @@ private:
     std::unique_ptr<SqlitePreparedStatement> updateSliceStmt = nullptr;
 
     std::vector<Trace::Slice> sliceCache;
-    std::list<Protocol::RowThreadTrace> sliceDepthHelper;
+    std::list<Protocol::SimpleSlice> sliceDepthHelper;
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
     std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
+    std::set<Trace::ThreadEvent> simulationThreadInfoCache;
+    std::set<Trace::ProcessEvent> simulationProcessInfoCache;
 
     bool SetConfig();
     bool InitSliceFlowCounterStmt();
@@ -155,10 +152,6 @@ private:
     void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
         std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime);
     void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name, uint64_t tmpSelfTime);
-    std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(const std::vector<Protocol::SimpleSlice> &simpleSliceVec,
-        uint64_t startTime, uint64_t endTime);
-    void ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
-        const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
     bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
         const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult,
         int64_t trackId);
@@ -169,18 +162,14 @@ private:
     void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);
-    bool DealLastData(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
-        std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime, uint64_t index);
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
         Protocol::KernelDetailsBody &responseBody) const;
 
-    bool UpdateSimulationSliceDepth(std::list<Protocol::RowThreadTrace> &sliceLinkedList);
+    bool UpdateSimulationSliceDepth(std::list<Protocol::SimpleSlice> &sliceLinkedList);
 
     std::vector<int32_t> QueryAllTrackId();
 
-    std::vector<Protocol::RowThreadTrace> QueryAllSliceByTrackId(const int32_t &trackId);
-
-    void UpdateAllSimulationSliceDepth(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec);
+    std::vector<Protocol::SimpleSlice> QueryAllSliceByTrackId(const int32_t &trackId);
 
     std::vector<Protocol::RowThreadTrace> QuerySliceByCondition(const Protocol::UnitThreadTracesParams &requestParams,
         uint64_t minTimestamp, int64_t traceId);
@@ -196,15 +185,15 @@ private:
     std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
         std::set<int64_t> &ids);
 
-    std::vector<Protocol::SimpleSlice>
-    QuerySimpleSliceByTimeRange(uint64_t startTime, uint64_t endTime, uint64_t minTimestamp,
-                                int64_t trackId);
+    std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimeRange(uint64_t startTime, uint64_t endTime,
+        uint64_t minTimestamp, int64_t trackId);
 
-    std::vector<Protocol::SimpleSlice>
-    QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
-                                int64_t trackId);
+    std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
+        int64_t trackId);
 
     std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
+
+    void ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec);
 };
 } // end of namespace Timeline
 } // end of namespace Module

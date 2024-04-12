@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
-
 #include <algorithm>
 #include "ServerLog.h"
 #include "TraceTime.h"
@@ -9,8 +8,8 @@
 #include "Timer.h"
 #include "TraceFileParser.h"
 #include "TraceDatabaseHelper.h"
+#include "SliceDepthCacheManager.h"
 #include "JsonTraceDatabase.h"
-
 
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
@@ -158,28 +157,12 @@ bool JsonTraceDatabase::CreateIndex()
         ServerLog::Error("Failed to creat index. Database is not open.");
         return false;
     }
-    std::string sql = "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp);" +
+    std::string sql = "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp, end_time);" +
         "CREATE INDEX " + flowIndex + " ON " + flowTable + " (track_id, timestamp);";
     std::unique_lock<std::mutex> lock(mutex);
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateIndex end. time:", dur.count());
-    return true;
-}
-
-bool JsonTraceDatabase::CreateSimpleSliceIndex()
-{
-    auto start = std::chrono::system_clock::now();
-    if (!isOpen) {
-        ServerLog::Error("Failed to creat index. Database is not open.");
-        return false;
-    }
-    std::string sql =
-        "CREATE INDEX " + simpleSliceIndex + " ON " + sliceTable + " (track_id, depth, timestamp, end_time);";
-    std::unique_lock<std::mutex> lock(mutex);
-    ExecSql(sql);
-    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
-    ServerLog::Info("CreateSimpleSliceIndex end. time:", dur.count());
     return true;
 }
 
@@ -193,29 +176,6 @@ bool JsonTraceDatabase::InsertSlice(const Trace::Slice &event)
     return true;
 }
 
-bool JsonTraceDatabase::InsertSimulationSlice(const Trace::Slice &event)
-{
-    InsertSlice(event);
-    if (updateProcessNameStmt == nullptr) {
-        ServerLog::Error("Update process name fail. ");
-        return false;
-    }
-    updateProcessNameStmt->Reset();
-    if (!updateProcessNameStmt->Execute(event.pid, event.processName)) {
-        ServerLog::Error("Update process name fail. ", updateProcessNameStmt->GetErrorMessage());
-        return false;
-    }
-    if (updateThreadNameStmt == nullptr) {
-        ServerLog::Error("Update thread name fail. ");
-        return false;
-    }
-    updateThreadNameStmt->Reset();
-    if (!updateThreadNameStmt->Execute(event.trackId, event.tid, event.pid, event.threadName)) {
-        ServerLog::Error("Update thread name fail. ", updateThreadNameStmt->GetErrorMessage());
-        return false;
-    }
-    return true;
-}
 
 bool JsonTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
 {
@@ -304,11 +264,57 @@ bool JsonTraceDatabase::AddThreadCache(const std::tuple<int64_t, std::string, st
     return true;
 }
 
+bool JsonTraceDatabase::AddSimulationThreadCache(const Trace::ThreadEvent &event)
+{
+    simulationThreadInfoCache.insert(event);
+    return true;
+}
+
+bool JsonTraceDatabase::AddSimulationProcessCache(const Trace::ProcessEvent &event)
+{
+    simulationProcessInfoCache.insert(event);
+    return true;
+}
+
 bool JsonTraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList)
 {
     for (const auto &item : threadList) {
         if (!UpdateThreadInfo(item)) {
             ServerLog::Error("Update thread name fail. pid: ", std::get<2>(item), " tid: ", std::get<1>(item)); // 第2个
+            return false;
+        }
+    }
+    return true;
+}
+
+bool JsonTraceDatabase::InsertSimulationThreadList()
+{
+    if (updateThreadNameStmt == nullptr) {
+        ServerLog::Error("Update thread info fail. ");
+        return false;
+    }
+    for (const auto &item : simulationThreadInfoCache) {
+        updateThreadNameStmt->Reset();
+        std::unique_lock<std::mutex> lock(mutex);
+        if (!updateThreadNameStmt->Execute(item.trackId, item.tid, item.pid, item.threadName)) {
+            ServerLog::Error("Update thread info fail. ", updateThreadNameStmt->GetErrorMessage());
+            return false;
+        }
+    }
+    return true;
+}
+
+bool JsonTraceDatabase::InsertSimulationProcessList()
+{
+    if (updateProcessNameStmt == nullptr) {
+        ServerLog::Error("Update process info fail. ");
+        return false;
+    }
+    for (const auto &item : simulationProcessInfoCache) {
+        updateProcessNameStmt->Reset();
+        std::unique_lock<std::mutex> lock(mutex);
+        if (!updateProcessNameStmt->Execute(item.pid, item.processName)) {
+            ServerLog::Error("Update process info fail. ", updateProcessNameStmt->GetErrorMessage());
             return false;
         }
     }
@@ -447,98 +453,105 @@ std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetCounterStmt(uint6
     return CreatPreparedStatement(sql);
 }
 
-void JsonTraceDatabase::UpdateDepth()
+void JsonTraceDatabase::UpdateSimulationDepthWithNoOverlap()
 {
-    ServerLog::Info("UpdateDepth.");
-    CreateDepthTempTable();
-    UpdateSliceDepth();
-    DropDepthTempTable();
-    ServerLog::Info("UpdateDepth end.");
+    UpdateSimulationDepthByCodeWithNoOverlap();
 }
 
-void JsonTraceDatabase::UpdateSimulationDepth()
+void JsonTraceDatabase::UpdateSimulationDepthByCodeWithNoOverlap()
 {
-    sqlite3_exec(db, "begin;", 0, 0, 0);
-    UpdateSimulationDepthByCode();
-    sqlite3_exec(db, "commit;", 0, 0, 0);
-}
-
-void JsonTraceDatabase::UpdateSimulationDepthByCode()
-{
-    Timer timer("UpdateSimulationDepthByCode");
+    Timer timer("UpdateSimulationDepthByCodeWithNoOverlap");
     std::vector<int32_t> trackIdList = QueryAllTrackId();
     if (std::empty(trackIdList)) {
         return;
     }
     ServerLog::Info("trackIdList size: ", trackIdList.size());
     for (const auto &item : trackIdList) {
-        std::vector<Protocol::RowThreadTrace> rowThreadTraceVec = QueryAllSliceByTrackId(item);
+        std::vector<Protocol::SimpleSlice> rowThreadTraceVec = QueryAllSliceByTrackId(item);
         if (std::empty(rowThreadTraceVec)) {
             continue;
         }
-        UpdateAllSimulationSliceDepth(rowThreadTraceVec);
+        UpdateAllSimulationSliceDepthWithNoOverlap(rowThreadTraceVec, item);
     }
 }
 
-void JsonTraceDatabase::UpdateAllSimulationSliceDepth(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
+void JsonTraceDatabase::UpdateAllSimulationSliceDepthWithNoOverlap(
+    std::vector<Protocol::SimpleSlice> &rowThreadTraceVec, const uint64_t trackId)
+{
+    ComputeSimulationSliceDepth(rowThreadTraceVec);
+    std::unordered_map<uint64_t, int32_t> sliceIdAndDepthMap;
+    for (const auto &item : sliceDepthHelper) {
+        sliceIdAndDepthMap[item.id] = item.depth;
+    }
+    SliceDepthCacheManager::Instance().PutSliceDepthCacheStructByFileIdAndTrackId(trackId, sliceIdAndDepthMap);
+}
+
+void JsonTraceDatabase::ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec)
 {
     sliceDepthHelper.clear();
     for (auto &rowThreadTrace : rowThreadTraceVec) {
-        int64_t index = 0;
         std::set<int32_t> depthSet;
-        if (sliceDepthHelper.empty()) {
-            rowThreadTrace.depth = depthSet.size();
-            sliceDepthHelper.push_back(rowThreadTrace);
-            continue;
-        }
+        uint64_t index = 0;
         auto iterator = sliceDepthHelper.begin();
         for (const auto &traceVec : sliceDepthHelper) {
-            if (rowThreadTrace.startTime + rowThreadTrace.duration > traceVec.startTime + traceVec.duration) {
-                rowThreadTrace.depth = depthSet.size();
-                std::advance(iterator, index);
-                sliceDepthHelper.insert(iterator, rowThreadTrace);
-                depthSet.clear();
-                index = 0;
-                break;
+            if (rowThreadTrace.timestamp <= traceVec.endTime) {
+                depthSet.emplace(traceVec.depth);
             }
-            depthSet.insert(traceVec.depth);
-            index++;
-            if (index > sliceDepthHelper.size() - 1) {
-                rowThreadTrace.depth = depthSet.size();
-                sliceDepthHelper.push_back(rowThreadTrace);
-                depthSet.clear();
-                index = 0;
+            if (rowThreadTrace.timestamp > traceVec.endTime) {
                 break;
             }
         }
+        for (const auto &traceVec : sliceDepthHelper) {
+            if (rowThreadTrace.endTime >= traceVec.endTime) {
+                break;
+            }
+            index++;
+        }
+        if (depthSet.empty()) {
+            rowThreadTrace.depth = 0;
+            std::advance(iterator, index);
+            sliceDepthHelper.insert(iterator, rowThreadTrace);
+            continue;
+        }
+        int32_t maxDepth = *(--depthSet.end());
+        bool isBlank = false;
+        for (int i = maxDepth; i >= 0; --i) {
+            if (depthSet.find(i) == depthSet.end()) {
+                isBlank = true;
+                rowThreadTrace.depth = i;
+            }
+        }
+        if (!isBlank) {
+            rowThreadTrace.depth = maxDepth + 1;
+        }
+        std::advance(iterator, index);
+        sliceDepthHelper.insert(iterator, rowThreadTrace);
     }
-    UpdateSimulationSliceDepth(sliceDepthHelper);
 }
 
-std::vector<Protocol::RowThreadTrace> JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
+std::vector<Protocol::SimpleSlice> JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
 {
-    std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
+    std::vector<Protocol::SimpleSlice> simpleSliceVec;
     std::string querySliceByTrackId =
-        "select id, timestamp, depth, duration from slice where track_id = ? order by timestamp, id;";
+        "select id, timestamp, end_time as endTime from slice where track_id = ? order by timestamp;";
     auto sliceStmt = CreatPreparedStatement(querySliceByTrackId);
     if (sliceStmt == nullptr) {
         ServerLog::Error("querySliceByTrackId. Failed to prepare sql.", GetLastError());
-        return rowThreadTraceVec;
+        return simpleSliceVec;
     }
     auto sliceResultSet = sliceStmt->ExecuteQuery(trackId);
     if (sliceResultSet == nullptr) {
         ServerLog::Error("querySliceByTrackId. Failed to get result set.", sliceStmt->GetErrorMessage());
-        return rowThreadTraceVec;
+        return simpleSliceVec;
     }
     while (sliceResultSet->Next()) {
-        RowThreadTrace rowThreadTrace{};
-        rowThreadTrace.id = sliceResultSet->GetInt64("id");
-        rowThreadTrace.startTime = sliceResultSet->GetUint64("timestamp");
-        rowThreadTrace.duration = sliceResultSet->GetUint64("duration");
-        rowThreadTrace.depth = sliceResultSet->GetInt32("depth");
-        rowThreadTraceVec.emplace_back(rowThreadTrace);
+        SimpleSlice simpleSlice;
+        simpleSlice.id = sliceResultSet->GetInt64("id");
+        simpleSlice.timestamp = sliceResultSet->GetUint64("timestamp");
+        simpleSlice.endTime = sliceResultSet->GetUint64("endTime");
+        simpleSliceVec.emplace_back(simpleSlice);
     }
-    return rowThreadTraceVec;
+    return simpleSliceVec;
 }
 
 std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
@@ -561,64 +574,6 @@ std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
     return trackIdList;
 }
 
-bool JsonTraceDatabase::UpdateSimulationSliceDepth(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
-{
-    Timer timer("JsonTraceDatabase::UpdateSimulationSliceDepth");
-    std::string updateSql = "Update slice set depth = ? where id = ? ;";
-    for (const auto &singleSlice : sliceLinkedList) {
-        std::unique_ptr<SqlitePreparedStatement> updateStmt = CreatPreparedStatement(updateSql);
-        if (updateStmt == nullptr) {
-            ServerLog::Error("Fail to UpdateSimulationSliceDepth.", sqlite3_errmsg(db));
-            return false;
-        }
-        if (!updateStmt->Execute(singleSlice.depth, singleSlice.id)) {
-            ServerLog::Error("updateSliceDepthSql fail. ", sqlite3_errmsg(db));
-        }
-    }
-    return true;
-}
-
-void JsonTraceDatabase::CreateDepthTempTable()
-{
-    Timer timer("CreateDepthTempTable");
-    std::string sql = "CREATE TEMPORARY TABLE temps AS "
-        "SELECT S2.id, S0.id AS parent_id "
-        "FROM slice AS S2 JOIN slice AS S0 "
-        "WHERE (S2.track_id = S0.track_id AND S2.timestamp > S0.timestamp "
-        "AND S2.timestamp < S0.timestamp + S0.duration) "
-        "OR (S2.track_id = S0.track_id AND S2.timestamp = S0.timestamp AND S2.id > S0.id);";
-
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!ExecSql(sql)) {
-        ServerLog::Error("Creat temp table fail. ", GetLastError());
-    }
-}
-
-void JsonTraceDatabase::DropDepthTempTable()
-{
-    Timer timer("DropDepthTempTable");
-    std::string sql = "DROP table temp.temps";
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!ExecSql(sql)) {
-        ServerLog::Error("Drop temp table fail. ", GetLastError());
-    }
-}
-
-void JsonTraceDatabase::UpdateSliceDepth()
-{
-    Timer timer("UpdateSliceDepth");
-    std::string sql = "UPDATE slice AS S SET depth = ("
-        "SELECT COALESCE(tmp.count, 0) FROM slice LEFT JOIN ("
-        "SELECT id, COUNT(*) as count "
-        "FROM temps "
-        "GROUP BY id) AS tmp "
-        "ON tmp.id = S.id);";
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!ExecSql(sql)) {
-        ServerLog::Error("Update slice depth fail. ", GetLastError());
-    }
-}
-
 bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
     Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
@@ -626,6 +581,7 @@ bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams
         QuerySliceByCondition(requestParams, minTimestamp, traceId);
     for (auto &item : rowThreadTraceVec) {
         Protocol::ThreadTraces threadTraces{};
+        threadTraces.id = std::to_string(item.id);
         threadTraces.name = item.name;
         threadTraces.duration = item.duration;
         threadTraces.startTime = item.startTime;
@@ -664,7 +620,7 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
     std::set<int64_t> &ids)
 {
     Timer timer3("JsonTraceDatabase::QuerySliceByIdList");
-    std::string sliceSql = "SELECT id, timestamp, end_time, depth, name, cname from slice where id in ( ? ";
+    std::string sliceSql = "SELECT id, timestamp, end_time, name, cname from slice where id in ( ? ";
     for (int i = 0; i < ids.size() - 1; ++i) {
         sliceSql += ", ? ";
     }
@@ -683,17 +639,20 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
         ServerLog::Error("QuerySliceByIdList. Failed to get result set.", sliceStem->GetErrorMessage());
         return ans;
     }
+    std::unordered_map<uint64_t, int32_t> depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(traceId).sliceIdAndDepthMap;
     while (sliceResultSet->Next()) {
         RowThreadTrace rowThreadTrace{};
         rowThreadTrace.id = sliceResultSet->GetInt64("id");
         rowThreadTrace.startTime = sliceResultSet->GetUint64("timestamp") - minTimestamp;
         rowThreadTrace.duration = sliceResultSet->GetUint64("end_time") - rowThreadTrace.startTime - minTimestamp;
-        rowThreadTrace.depth = sliceResultSet->GetInt32("depth");
         rowThreadTrace.name = sliceResultSet->GetString("name");
         rowThreadTrace.traceId = traceId;
         rowThreadTrace.cname = sliceResultSet->GetString("cname");
+        rowThreadTrace.depth = depthCache[rowThreadTrace.id];
         ans.emplace_back(rowThreadTrace);
     }
+    std::sort(ans.begin(), ans.end(), std::less<RowThreadTrace>());
     return ans;
 }
 
@@ -748,11 +707,9 @@ void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vec
 {
     Timer timer("JsonTraceDatabase::QueryAllSliceInRangeByTrackId");
     // 此处sql需全部走索引且禁止触发回表
-    std::string sql = "SELECT id, timestamp, end_time, depth "
+    std::string sql = "SELECT id, timestamp, end_time "
         " FROM " +
-        sliceTable +
-        " WHERE track_id = ? "
-        " ORDER BY depth, timestamp;";
+        sliceTable + " WHERE track_id = ? ";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
@@ -763,14 +720,17 @@ void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vec
         ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
+    std::unordered_map<uint64_t, int32_t> depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(traceId).sliceIdAndDepthMap;
     while (resultSet->Next()) {
         CacheSlice cacheSlice{};
         cacheSlice.id = resultSet->GetInt64("id");
         cacheSlice.timestamp = resultSet->GetUint64("timestamp");
         cacheSlice.duration = resultSet->GetUint64("end_time") - cacheSlice.timestamp;
-        cacheSlice.depth = resultSet->GetInt32("depth");
+        cacheSlice.depth = depthCache[cacheSlice.id];
         cacheSlices.emplace_back(cacheSlice);
     }
+    std::sort(cacheSlices.begin(), cacheSlices.end(), std::less<CacheSlice>());
 }
 
 bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
@@ -832,11 +792,9 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
     if (!isSuccessQueryExtremumTime) {
         return false;
     }
-    std::string sql = "SELECT timestamp, duration, timestamp + duration AS endTime, name, depth"
+    std::string sql = "SELECT id, timestamp, duration, end_time AS endTime, name"
         " FROM " +
-        sliceTable +
-        " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
-        " ORDER BY depth ASC, timestamp ASC;";
+        sliceTable + " WHERE track_id = ? AND timestamp <= ? AND endTime >= ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreads. Failed to prepare sql.");
@@ -848,17 +806,21 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
         ServerLog::Error("QueryThreads. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(traceId).sliceIdAndDepthMap;
     std::vector<Protocol::SimpleSlice> simpleSliceVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SimpleSlice simpleSlice{};
+        uint64_t id = resultSet->GetUint64(col++);
         simpleSlice.timestamp = resultSet->GetUint64(col++);
         simpleSlice.duration = resultSet->GetUint64(col++);
         simpleSlice.endTime = resultSet->GetUint64(col++);
         simpleSlice.name = resultSet->GetString(col++);
-        simpleSlice.depth = resultSet->GetInt32(col++);
+        simpleSlice.depth = depthCache[id];
         simpleSliceVec.emplace_back(simpleSlice);
     }
+    std::sort(simpleSliceVec.begin(), simpleSliceVec.end(), std::less<Protocol::SimpleSlice>());
     // process data
     if (simpleSliceVec.empty()) {
         responseBody.emptyFlag = true;
@@ -874,9 +836,9 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
 bool JsonTraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
     Protocol::ExtremumTimestamp &extremumTimestamp)
 {
-    std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp + duration) AS maxTimestamp"
+    std::string sql = "SELECT min(timestamp) as minTimestamp, max(end_time) AS maxTimestamp"
         " FROM " +
-        sliceTable + " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ? AND depth = 0;";
+        sliceTable + " WHERE track_id = ? AND timestamp <= ? AND end_time >= ? ;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryExtremumTimeOfFirstDepth. Failed to prepare sql.");
@@ -894,15 +856,6 @@ bool JsonTraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t 
     return true;
 }
 
-bool JsonTraceDatabase::DealLastData(std::vector<Protocol::SimpleSlice> &rows,
-    std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime, uint64_t index)
-{
-    while (++index < rows.size()) {
-        if (rows.at(index).timestamp <= endTime && rows.at(index).endTime >= startTime) {
-            AddData(selfTimeKeyValue, rows.at(index).name, rows.at(index).duration);
-        }
-    }
-}
 
 void JsonTraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime)
@@ -959,19 +912,21 @@ void JsonTraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValu
 bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
     Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId)
 {
-    std::string sql = "SELECT id, timestamp, duration, name, depth, track_id, cat, args"
+    std::string sql = "SELECT id, timestamp, duration, name, track_id, cat, args"
         " FROM " +
-        sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ? Order by duration DESC";
+        sliceTable + " WHERE id = ? AND track_id = ? AND timestamp = ? Order by duration DESC";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadDetail. Failed to prepare sql.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.depth, trackId, requestParams.startTime + minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(requestParams.id, trackId, requestParams.startTime + minTimestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadDetail. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, int32_t> depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
     std::vector<SliceDto> sliceDtoVec;
     while (resultSet->Next()) {
         SliceDto sliceDto{};
@@ -979,13 +934,13 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
         sliceDto.timestamp = resultSet->GetUint64("timestamp");
         sliceDto.duration = resultSet->GetUint64("duration");
         sliceDto.name = resultSet->GetString("name");
-        sliceDto.depth = resultSet->GetInt32("depth");
         sliceDto.trackId = resultSet->GetInt64("track_id");
         sliceDto.cat = resultSet->GetString("cat");
         sliceDto.args = resultSet->GetString("args");
+        sliceDto.depth = depthCache[sliceDto.id];
         sliceDtoVec.emplace_back(sliceDto);
     }
-    if (sliceDtoVec.size() < 1) {
+    if (sliceDtoVec.empty()) {
         ServerLog::Error("select slice error!");
         return false;
     }
@@ -1038,23 +993,28 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
         ServerLog::Error("sliceDto array is empty!");
         return false;
     }
-    std::string sql = "SELECT timestamp, duration FROM " + sliceTable +
-        " WHERE depth = ? AND timestamp + duration <= ? AND timestamp >= ? AND track_id = ? Order by timestamp";
+    std::string sql = "SELECT id, timestamp, duration FROM " + sliceTable +
+        " WHERE end_time <= ? AND timestamp >= ? AND track_id = ? Order by timestamp";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    auto resultSet =
-        stmt->ExecuteQuery(requestParams.depth + 1, rows[0].timestamp + rows[0].duration, rows[0].timestamp, trackId);
+    auto resultSet = stmt->ExecuteQuery(rows[0].timestamp + rows[0].duration, rows[0].timestamp, trackId);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, int32_t> depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
     while (resultSet->Next()) {
+        uint64_t id = resultSet->GetUint64("id");
         uint64_t startTime = resultSet->GetUint64("timestamp");
         uint64_t duration = resultSet->GetUint64("duration");
-        nextDepthResult.emplace_back(std::make_pair(startTime, duration));
+        int32_t depth = depthCache[id];
+        if (depth == requestParams.depth + 1) {
+            nextDepthResult.emplace_back(startTime, duration);
+        }
     }
     return true;
 }
@@ -1280,9 +1240,9 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimeRange(uint64_t
 std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
     int64_t trackId)
 {
-    std::string sliceSql = "SELECT timestamp, end_time as endTime, depth, name"
+    std::string sliceSql = "SELECT id, timestamp, end_time as endTime, name"
         " FROM " +
-        sliceTable + " WHERE timestamp <= ? AND endTime >= ? AND track_id = ? order by depth DESC;";
+        sliceTable + " WHERE timestamp <= ? AND endTime >= ? AND track_id = ?;";
     auto sliceStmt = CreatPreparedStatement(sliceSql);
     std::vector<SimpleSlice> simpleSliceVec;
     if (sliceStmt == nullptr) {
@@ -1294,14 +1254,18 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t
         ServerLog::Error("QuerySimpleSliceByTimePoint. Failed to get result set.", sliceStmt->GetErrorMessage());
         return simpleSliceVec;
     }
+    std::unordered_map<uint64_t, int32_t> depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
     while (sliceSet->Next()) {
         SimpleSlice simpleSlice;
+        uint64_t id = sliceSet->GetUint64("id");
         simpleSlice.timestamp = sliceSet->GetUint64("timestamp");
         simpleSlice.endTime = sliceSet->GetUint64("endTime");
-        simpleSlice.depth = sliceSet->GetInt32("depth");
         simpleSlice.name = sliceSet->GetString("name");
+        simpleSlice.depth = depthCache[id];
         simpleSliceVec.emplace_back(simpleSlice);
     }
+    std::sort(simpleSliceVec.begin(), simpleSliceVec.end(), std::greater<SimpleSlice>());
     ServerLog::Info("simpleSliceVec size is: ", simpleSliceVec.size());
     return simpleSliceVec;
 }
@@ -1309,27 +1273,21 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t
 bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql = "SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName,"
-        " s.maxDepth, pt.name, pt.args"
-        " FROM ("
-        " SELECT p.pid,"
-        " CASE WHEN p.process_name IS NULL THEN 'Process ' || p.pid ELSE p.process_name END AS process_name, "
-        " p.label, p.process_sort_index, t.tid, t.thread_name,"
-        " t.track_id, t.thread_sort_index, c.name, c.args"
+    std::string sql = " SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName, "
+        "pt.name, pt.args, pt.track_id as trackId "
+        " FROM (SELECT p.pid, CASE WHEN p.process_name IS NULL THEN 'Process ' || p.pid ELSE p.process_name END AS "
+        " process_name,p.label,p.process_sort_index,t.tid,t.thread_name,t.track_id,t.thread_sort_index,c.name,c.args "
         " FROM " +
-        processTable + " p LEFT JOIN " + threadTable + " t ON p.pid = t.pid" +
-        " LEFT JOIN (SELECT pid, name, args FROM " + counterTable +
-        " GROUP BY name, pid) c "
-        " ON c.pid = p.pid) AS pt "
-        " LEFT JOIN ("
-        " SELECT max( depth ) + 1 AS maxDepth, track_id"
-        " FROM " +
-        sliceTable +
-        " INNER JOIN thread USING (track_id) GROUP BY track_id"
-        " ) AS s ON s.track_id = pt.track_id"
-        " WHERE pt.process_name is not null AND (maxDepth is not null OR pt.tid is null"
-        " OR pt.name == pt.process_name OR pt.name == pt.thread_name)"
-        " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC, pt.name ASC;";
+        processTable + " p LEFT JOIN  " + threadTable + " t ON p.pid = t.pid LEFT JOIN ( SELECT pid, name, args FROM " +
+        counterTable +
+        " GROUP BY "
+        " name, pid ) c ON c.pid = p.pid ) AS pt WHERE pt.process_name IS NOT NULL "
+        " ORDER BY "
+        " pt.process_sort_index ASC, "
+        " pt.thread_sort_index ASC, "
+        " pt.name ASC,"
+        " pt.process_name ASC,"
+        " pt.thread_name ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryUnitsMetadata failed!.");
@@ -1349,9 +1307,10 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         metaDataDto.label = resultSet->GetString("label");
         metaDataDto.threadId = resultSet->GetString("tid");
         metaDataDto.threadName = resultSet->GetString("threadName");
-        metaDataDto.maxDepth = resultSet->GetInt32("maxDepth");
         metaDataDto.name = resultSet->GetString("name");
         metaDataDto.args = resultSet->GetString("args");
+        uint64_t trackId = resultSet->GetUint64("trackId");
+        metaDataDto.maxDepth = SliceDepthCacheManager::Instance().QueryMaxDepthByTrackId(trackId) + 1;
         metaDataVec.emplace_back(metaDataDto);
     }
     ServerLog::Info("Query units meta data. size:", metaDataVec.size());
@@ -1461,6 +1420,14 @@ void JsonTraceDatabase::CommitData()
         InsertThreadList(threadInfoCache);
         threadInfoCache.clear();
     }
+    if (!simulationThreadInfoCache.empty()) {
+        InsertSimulationThreadList();
+        simulationThreadInfoCache.clear();
+    }
+    if (!simulationProcessInfoCache.empty()) {
+        InsertSimulationProcessList();
+        simulationProcessInfoCache.clear();
+    }
 }
 
 int JsonTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
@@ -1485,7 +1452,7 @@ int JsonTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
 bool JsonTraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
     Protocol::SearchSliceBody &responseBody)
 {
-    std::string sql = "SELECT pid, tid, timestamp - ? as startTime, duration, depth"
+    std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
         " FROM " +
         sliceTable + " JOIN " + threadTable +
         " USING (track_id)"
@@ -1505,11 +1472,15 @@ bool JsonTraceDatabase::SearchSliceName(const std::string &name, int index, uint
         return false;
     }
     int col = resultStartIndex;
+    uint64_t id = resultSet->GetUint64("id");
     responseBody.pid = resultSet->GetString("pid");
     responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
-    responseBody.depth = resultSet->GetInt32("depth");
+    uint64_t trackId = resultSet->GetInt32("trackId");
+    std::unordered_map<uint64_t, int32_t> depthCache =
+        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+    responseBody.depth = depthCache[id];
     return true;
 }
 
@@ -1532,17 +1503,6 @@ bool JsonTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categori
     return true;
 }
 
-void JsonTraceDatabase::DeleteInvalidFlowData()
-{
-    std::string sql = "DELETE from " + flowTable +
-        " Where id IN"
-        " (select id FROM " +
-        flowTable + " GROUP BY flow_id HAVING count(flow_id) < 2)";
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!ExecSql(sql)) {
-        ServerLog::Error("DeleteInvalidFlowData failed!. ", sqlite3_errmsg(db));
-    }
-}
 std::pair<int64_t, int64_t> JsonTraceDatabase::QueryExtremTrackIdPairByPid(std::string pid)
 {
     std::pair<int64_t, int64_t> result;
@@ -1574,20 +1534,16 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
         ServerLog::Error("QueryFlowCategoryEvents. timePerPx is zero.");
         return false;
     }
-    std::string sql = "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.depth, flow.timestamp - ?"
+    std::string sql = "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.id As sliceId, slice.track_id AS "
+        "sTrackId, flow.timestamp - ?"
         "FROM " +
         flowTable + " " + "LEFT JOIN " + sliceTable + " USING (track_id, timestamp) " + "JOIN " + threadTable +
-        " USING (track_id) "
-        "WHERE flow_id IN "
-        "(SELECT flow_id from "
+        " USING (track_id) WHERE flow_id IN (SELECT flow_id from "
         "(SELECT flow_id, ROUND(flow.timestamp / ?) as rank FROM flow WHERE flow_id IN "
         "(SELECT flow_id FROM flow WHERE cat = ? "
         "AND ((timestamp >= ? AND (type = 'f' OR type = 't')) OR (timestamp <= ? AND (type = 's' OR type = 't'))"
-        ")"
-        "GROUP BY flow_id HAVING COUNT(flow_id) >= 2) "
-        "GROUP BY track_id, type, rank HAVING max(timestamp)"
-        ")"
-        ")"
+        ") GROUP BY flow_id HAVING COUNT(flow_id) >= 2) "
+        "GROUP BY track_id, type, rank HAVING max(timestamp)))"
         "ORDER BY flow.flow_id, timestamp;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1608,8 +1564,12 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
         flowCategoryEventsDto.flowId = resultSet->GetString(col++);
         flowCategoryEventsDto.pid = resultSet->GetString(col++);
         flowCategoryEventsDto.tid = resultSet->GetString(col++);
-        flowCategoryEventsDto.depth = resultSet->GetInt32(col++);
+        uint64_t sliceId = resultSet->GetInt64(col++);
+        uint64_t sTrackId = resultSet->GetInt64(col++);
         flowCategoryEventsDto.timestamp = resultSet->GetUint64(col++);
+        std::unordered_map<uint64_t, int32_t> depthCache =
+            SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(sTrackId).sliceIdAndDepthMap;
+        flowCategoryEventsDto.depth = depthCache[sliceId];
         flowEventsVec.emplace_back(flowCategoryEventsDto);
     }
     FlowEventsToResponse(flowEventsVec, params.category, flowDetailList);
@@ -1975,7 +1935,7 @@ void JsonTraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultS
 bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "SELECT depth, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp = ?";
+    std::string sql = "SELECT id, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp = ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
@@ -1988,8 +1948,11 @@ bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
     }
     uint64_t trackId = 0;
     if (resultSet->Next()) {
-        responseBody.depth = resultSet->GetUint64("depth");
+        uint64_t id = resultSet->GetUint64("id");
         trackId = resultSet->GetUint64("track_id");
+        std::unordered_map<uint64_t, int32_t> depthCache =
+            SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+        responseBody.depth = depthCache[id];
     }
     const OneKernelData &data = QueryKernelTid(trackId);
     responseBody.threadId = data.threadId;

@@ -7,6 +7,7 @@
 
 #include "ParserFactory.h"
 #include "TimelineRequestHandler.h"
+#include "FileParser.h"
 
 namespace Dic {
 namespace Module {
@@ -26,7 +27,9 @@ private:
     static void ClusterProcess(const std::string &token, const std::string &selectedFolder);
     static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
 
-    void SetParseCallBack(std::string token);
+    void SetParseCallBack(const std::string token, FileParser &fileParser);
+
+    bool isSimulation(std::string filePath);
 
     static void SendAllParseSuccess(const std::string &token);
 };
