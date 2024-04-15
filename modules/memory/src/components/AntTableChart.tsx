@@ -6,7 +6,8 @@ import type { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
 import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
-import ResizeTable from './resize/ResizeTable';
+// eslint-disable-next-line import/no-unresolved
+import ResizeTable from 'lib/ResizeTable';
 
 interface IProps {
     tableData: MemoryTable;

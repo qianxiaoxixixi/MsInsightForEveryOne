@@ -10,7 +10,8 @@ import './HotMethod.css';
 import type { Session } from '../../entity/session';
 import Filter from '../Filter';
 import CodeViewer from '../codeViewer/CodeViewer';
-import ResizeTable from '../resize/ResizeTable';
+// eslint-disable-next-line import/no-unresolved
+import ResizeTable from 'lib/ResizeTable';
 import Bar from '../Bar';
 import {
     HeaderFixedContainer,
