@@ -1751,10 +1751,14 @@ bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &re
     const LayerStatData &data = QueryLayerData(requestParams.layer, searchName);
     double layerOperatorTime = data.allOperatorTime;
     std::string orderBy;
+    if (!StringUtil::checkSQLValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        return false;
+    }
     if (requestParams.order == "descend") {
-        orderBy = " order by " + requestParams.orderBy + " DESC ";
+        orderBy = " ORDER BY " + requestParams.orderBy + " DESC";
     } else {
-        orderBy = " order by " + requestParams.orderBy + " ASC ";
+        orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
     }
     std::string sql = "SELECT name, ROUND(cast(sum(duration) as double) * 100 / ?, 2) as "
         "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
@@ -1871,10 +1875,14 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
 {
     std::string orderBy;
     std::string coreTypes;
+    if (!StringUtil::checkSQLValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        return false;
+    }
     if (requestParams.order == "descend") {
-        orderBy = " order by " + requestParams.orderBy + " DESC";
+        orderBy = " ORDER BY " + requestParams.orderBy + " DESC";
     } else {
-        orderBy = " order by " + requestParams.orderBy + " ASC";
+        orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
     }
     if (!requestParams.coreType.empty()) {
         coreTypes = " AND accelerator_core = ? ";
@@ -1988,6 +1996,10 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
     std::string orderBy;
+    if (!StringUtil::checkSQLValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        return false;
+    }
     if (requestParams.order == "descend") {
         orderBy = " ORDER BY " + requestParams.orderBy + " DESC";
     } else {

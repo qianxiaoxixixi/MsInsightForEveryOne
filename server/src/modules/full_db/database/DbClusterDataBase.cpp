@@ -6,8 +6,10 @@
 #include "TableDefs.h"
 #include "FileUtil.h"
 #include "JsonUtil.h"
+#include "ServerLog.h"
 
 namespace Dic {
+using namespace Server;
 namespace Module {
 namespace FullDb {
 DbClusterDataBase::~DbClusterDataBase() {}
@@ -36,7 +38,14 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
                       "sum(ROUND(overlapped,2)) as communicationOverLappedTime, "
                       "sum(ROUND(free,2)) as freeTime FROM " + TABLE_STEP_TRACE_TIME +
                       " WHERE rankId !='' " + stepCondition + rankCondition
-                      + "group by rankId order by " + requestParams.orderBy + " desc";
+                      + "group by rankId ";
+
+    if (!StringUtil::checkSQLValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+    } else if (!requestParams.orderBy.empty()) {
+        sql += " ORDER by " + requestParams.orderBy + " desc ";
+    }
+
     return ExecuteQuerySummaryData(requestParams, responseBody, sql);
 }
 
@@ -54,8 +63,7 @@ bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseB
 {
     std::string filePath = responseBody.filePath;
     double dataSize = FileUtil::GetFileSize(filePath.c_str());
-    std::string baseInfoSql = "select '" + filePath +
-        "' as filePath, (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
+    std::string baseInfoSql = "(select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
         "ClusterStepTraceTime where \"index\" !='' AND type = 'rank')) as rank , (select json_group_array(step) from ("
         "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +
         " where \"index\" !='')) as step, '" + std::to_string(dataSize) + "' as dataSize ";
@@ -80,11 +88,14 @@ bool DbClusterDataBase::GetStages(Protocol::PipelineStageParam param, Protocol::
 bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
     Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
-    std::string sql = "SELECT '" + param.stageId + "' as stageId, "
-                      "max(ROUND(stage, 4)) as stageTime, "
+    std::string sql = "SELECT max(ROUND(stage, 4)) as stageTime, "
                       "max(ROUND(bubble, 4)) as bubbleTime "
-                      "FROM " + TABLE_STEP_TRACE_TIME + " WHERE \"index\" IN " + param.stageId + " AND step = ?";
-    return ExecuteGetStageAndBubble(param, responseBody, sql);
+                      "FROM " + TABLE_STEP_TRACE_TIME + " WHERE step = ?";
+
+    std::vector<std::string> stageIds;
+    PrepareForStageId(param.stageId, sql, stageIds);
+
+    return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
 }
 
 bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
@@ -94,8 +105,12 @@ bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
                       "ROUND(stage, 4) as stageTime, "
                       "ROUND(bubble, 4) as bubbleTime "
                       " FROM " + TABLE_STEP_TRACE_TIME +
-                      " WHERE step = ? AND \"index\" IN" + param.stageId + " ";
-    return ExecuteGetRankAndBubble(param, responseBody, sql);
+                      " WHERE step = ? ";
+
+    std::vector<std::string> stageIds;
+    PrepareForStageId(param.stageId, sql, stageIds);
+
+    return ExecuteGetRankAndBubble(param, stageIds, responseBody, sql);
 }
 
 bool DbClusterDataBase::GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody)
@@ -340,6 +355,32 @@ bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &re
                       " ORDER BY hccl_op_name";
     requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
+}
+
+void DbClusterDataBase::PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds)
+{
+    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), '('), stageIdStr.end());
+    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), ')'), stageIdStr.end());
+    std::vector<std::string> stageIdArray = StringUtil::Split(stageIdStr, ",");
+    const int maxBindParam = 1000;
+    if (stageIdStr.size() > maxBindParam) {
+        Server::ServerLog::Error("Too many parameters, binding failed. stage id size:", stageIdStr.size());
+        return;
+    }
+    for (std::string stageId : stageIdArray) {
+        stageIds.push_back(StringUtil::Trim(stageId));
+    }
+
+    std::string rankSql;
+    for (int i = 0; i < stageIds.size(); i++) {
+        if (i == 0) {
+            rankSql.append("?");
+        }
+        rankSql.append(",?");
+    }
+    if (!rankSql.empty()) {
+        sql += "AND \"index\" IN (" + rankSql + ")";
+    }
 }
 }
 }

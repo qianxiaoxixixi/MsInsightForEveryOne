@@ -69,6 +69,8 @@ public:
     bool QueryCommunicationGroup(Document &responseBody) override;
     double QueryMinStartTime() override;
 
+    void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
+
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;
     sqlite3_stmt *insertBandwidthStmt = nullptr;

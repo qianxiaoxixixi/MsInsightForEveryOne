@@ -48,6 +48,7 @@ public:
     double QueryMinStartTime() override;
 
     void SetBaseInfo(Protocol::SummaryTopRankResBody responseBody);
+    void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
 private:
     Protocol::SummaryTopRankResBody baseInfoResponse;
     std::string parseStatus = "UN_FINISH";

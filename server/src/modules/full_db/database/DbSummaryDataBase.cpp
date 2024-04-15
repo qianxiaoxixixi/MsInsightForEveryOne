@@ -59,13 +59,6 @@ bool DbSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams 
 
 std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams& request)
 {
-    std::string orderList = request.orderBy;
-    std::string ascend;
-    if (request.order == "ascend") {
-        ascend = "ASC";
-    } else {
-        ascend = "DESC";
-    }
     std::string sql = "SELECT NAME.value AS name, "
                       "OP_TYPE.value as type, "
                       "CASE WHEN startNs == 0 THEN 0 ELSE ROUND((startNs - ?) /(1000.0 * 1000.0), 4) END AS startTime, "
@@ -90,8 +83,11 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       " JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats "
                       " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
                       " WHERE TASKTYPE.value = ? ";
-    if (!orderList.empty()) {
-        sql +=  " ORDER BY " + orderList + " " + ascend;
+
+    if (!StringUtil::checkSQLValid(request.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
+    } else if (!request.orderBy.empty() && !request.order.empty()) {
+        sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
     }
     sql += " LIMIT ? offset ?";
     return sql;
@@ -228,7 +224,9 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
             "     ) subquery ";
 
-    if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+    if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+    } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
 
@@ -401,7 +399,10 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
     } else {
         sql += " WHERE name = ? AND input_shapes = ?";
     }
-    if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+
+    if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+    } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
 
@@ -504,13 +505,6 @@ bool DbSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPara
 
 std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& request)
 {
-    std::string order = request.orderBy;
-    std::string ascend;
-    if (request.order == "ascend") {
-        ascend = "ASC";
-    } else {
-        ascend = "DESC";
-    }
     std::string sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
                       "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
                       "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM ( "
@@ -525,9 +519,13 @@ std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& reque
                       "     WHERE taskTypes = ?"
                       "     GROUP BY TASK.globalTaskId"
                       " ) subquery ";
-    if (!order.empty()) {
-        sql += " ORDER BY " + order + " " + ascend;
+
+    if (!StringUtil::checkSQLValid(request.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
+    } else if (!request.orderBy.empty() && !request.order.empty()) {
+        sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
     }
+
     sql += " LIMIT ? offset ?";
     return sql;
 }
@@ -656,7 +654,10 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
             "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
             "     ORDER by duration DESC LIMIT ?"
             " ) subquery ";
-    if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+
+    if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+    } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
     sql += " LIMIT ? OFFSET ?";

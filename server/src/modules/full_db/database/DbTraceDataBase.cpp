@@ -482,13 +482,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
 
 std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
 {
-    std::string orderBy;
     std::string coreTypes;
-    if (requestParams.order == "descend") {
-        orderBy = " order by " + requestParams.orderBy + " DESC";
-    } else {
-        orderBy = " order by " + requestParams.orderBy + " ASC";
-    }
     if (!requestParams.coreType.empty()) {
         coreTypes = " AND accelerator_core = ? ";
     }
@@ -517,7 +511,15 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
                       "   JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
                       "   JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
                       " )subquery "
-                      "where 1=1 and name LIKE ? " + coreTypes + orderBy + " limit ? offset ?";
+                      "where 1=1 and name LIKE ? " + coreTypes;
+
+    if (!StringUtil::checkSQLValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+    } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
+        sql += " ORDER by " + requestParams.orderBy + " " + (requestParams.order == "ascend" ? "ASC" : "DESC");
+    }
+    sql += " LIMIT ? OFFSET ?";
+
     return sql;
 }
 

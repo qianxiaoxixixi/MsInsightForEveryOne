@@ -74,7 +74,6 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryTopRankResBod
     }
     while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
         int coll = resultStartIndex;
-        responseBody.filePath = sqlite3_column_string(stmtBaseInfo, coll++);
         std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!ranks.empty()) {
             responseBody.rankList = JsonUtil::JsonToVector(ranks);
@@ -127,7 +126,9 @@ bool VirtualClusterDatabase::ExecuteGetStages(Protocol::PipelineStageParam param
 }
 
 bool VirtualClusterDatabase::ExecuteGetStageAndBubble(Protocol::PipelineStageTimeParam param,
-    Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql)
+                                                      std::vector<std::string> stageIds,
+                                                      Protocol::PipelineStageOrRankTimeResponseBody &responseBody,
+                                                      std::string sql)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -135,11 +136,14 @@ bool VirtualClusterDatabase::ExecuteGetStageAndBubble(Protocol::PipelineStageTim
         ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    for (int i = 0; i < stageIds.size(); ++i) {
+        sqlite3_bind_text(stmt, index++, stageIds[i].c_str(), stageIds[i].length(), SQLITE_TRANSIENT);
+    }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::BubbleDetail bubbleDetail;
-        bubbleDetail.stageOrRankId = sqlite3_column_string(stmt, col++);
+        bubbleDetail.stageOrRankId = param.stageId;
         bubbleDetail.stageTime = sqlite3_column_double(stmt, col++);
         bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
         responseBody.bubbleDetails.emplace_back(bubbleDetail);
@@ -149,7 +153,9 @@ bool VirtualClusterDatabase::ExecuteGetStageAndBubble(Protocol::PipelineStageTim
 }
 
 bool VirtualClusterDatabase::ExecuteGetRankAndBubble(Protocol::PipelineRankTimeParam param,
-    Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql)
+                                                     std::vector<std::string> stageIds,
+                                                     Protocol::PipelineStageOrRankTimeResponseBody &responseBody,
+                                                     std::string sql)
 {
     int index = bindStartIndex;
     sqlite3_stmt *stmt = nullptr;
@@ -157,7 +163,10 @@ bool VirtualClusterDatabase::ExecuteGetRankAndBubble(Protocol::PipelineRankTimeP
         ServerLog::Error("Failed to prepare GetRankAndBubble statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    for (int i = 0; i < stageIds.size(); ++i) {
+        sqlite3_bind_text(stmt, index++, stageIds[i].c_str(), stageIds[i].length(), SQLITE_TRANSIENT);
+    }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::BubbleDetail bubbleDetail;
@@ -563,6 +572,11 @@ std::string VirtualClusterDatabase::GetRanksSql(std::vector<std::string> rankLis
         return "";
     } else {
         for (int i = 0; i < rankList.size(); i++) {
+            if (!StringUtil::checkSQLValid(rankList[i])) {
+                ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", rankList[i]);
+                return "";
+            }
+
             if (i == rankList.size() - 1) {
                 ranks += rankList[i];
             } else {
