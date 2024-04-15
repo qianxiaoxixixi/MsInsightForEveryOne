@@ -70,6 +70,7 @@ const std::string REQ_RES_UPLOAD_FILE = "upload/file";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";
+const std::string REQ_RES_COMMUNICATION_OPERATOR_LISTS = "communication/operatorLists";
 const std::string REQ_RES_COMMUNICATION_BANDWIDTH = "communication/bandwidth";
 const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/distribution";
 const std::string REQ_RES_COMMUNICATION_COMMUNICATOR = "communication/communicator";

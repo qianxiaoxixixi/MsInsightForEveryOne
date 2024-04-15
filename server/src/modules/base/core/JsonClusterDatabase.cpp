@@ -734,5 +734,26 @@ bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
     }
     return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
+
+bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &requestParams,
+    Protocol::OperatorListsResponseBody &responseBody)
+{
+    std::string sql =
+            "SELECT rank_id, op_name,"
+            " CASE WHEN start_time == 0 THEN 0 ELSE (start_time - ?) END as startTime,"
+            " ROUND((elapse_time * 1000), 3) as elapse_time From " + TABLE_TIME_INFO +
+            " WHERE iteration_id = ? AND stage_id = ? AND op_name <> 'Total Op Info'";
+    std::vector<std::string> rankList = requestParams.rankList;
+    if (!rankList.empty()) {
+        std::string ranks = GetRanksSql(rankList);
+        sql += " AND rank_id IN " + ranks;
+    }
+    if (requestParams.operatorName != totalOpInfo) {
+        sql += " AND op_name = ?";
+    }
+    sql += " ORDER by rank_id ASC";
+    double startTime = QueryMinStartTime();
+    return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
+}
 } // end of namespace Module
 } // end of namespace Dic

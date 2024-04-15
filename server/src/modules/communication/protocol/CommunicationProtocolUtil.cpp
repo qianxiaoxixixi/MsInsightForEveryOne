@@ -162,6 +162,34 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(const OperatorListsResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t dataArray(kArrayType);
+    for (int i = 0; i < response.body.rankLists.size(); ++i) {
+        json_t oneRankJson(kObjectType);
+        JsonUtil::AddMember(oneRankJson, "rankId", response.body.rankLists[i], allocator);
+        json_t opListJson(kArrayType);
+        for (auto item : response.body.opLists[i]) {
+            json_t opJson(kObjectType);
+            JsonUtil::AddMember(opJson, "operatorName", item.operatorName, allocator);
+            JsonUtil::AddMember(opJson, "startTime", item.startTime, allocator);
+            JsonUtil::AddMember(opJson, "duration", item.elapseTime, allocator);
+            opListJson.PushBack(opJson, allocator);
+        }
+        JsonUtil::AddMember(oneRankJson, "lists", opListJson, allocator);
+        dataArray.PushBack(oneRankJson, allocator);
+    }
+    JsonUtil::AddMember(body, "data", dataArray, allocator);
+    JsonUtil::AddMember(body, "minTime", response.body.minTime, allocator);
+    JsonUtil::AddMember(body, "maxTime", response.body.maxTime, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksResponse &response)
 {
     document_t json(kObjectType);

@@ -22,6 +22,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorNamesResponse>(cons
 template <>
 std::optional<document_t> ToResponseJson<MatrixSortOpNamesResponse>(const MatrixSortOpNamesResponse &response);
 template <> std::optional<document_t> ToResponseJson<DurationResponse>(const DurationResponse &response);
+template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(const OperatorListsResponse &response);
 template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksResponse &response);
 
 template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response);

@@ -24,6 +24,7 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS, ToDurationRequest);
 }
 
 void CommunicationProtocol::RegisterResponseToJsonFuncs()
@@ -36,6 +37,7 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS, ToOperatorListResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListResponse);
@@ -247,6 +249,11 @@ std::optional<document_t> CommunicationProtocol::ToMatrixOpNamesResponse(const D
 std::optional<document_t> CommunicationProtocol::ToDurationResponse(const Response &response)
 {
     return ToResponseJson<DurationResponse>(dynamic_cast<const DurationResponse &>(response));
+}
+
+std::optional<document_t> CommunicationProtocol::ToOperatorListResponse(const Response &response)
+{
+    return ToResponseJson<OperatorListsResponse>(dynamic_cast<const OperatorListsResponse &>(response));
 }
 
 std::optional<document_t> CommunicationProtocol::ToRanksResponse(const Response &response)
