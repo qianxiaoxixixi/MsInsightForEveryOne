@@ -15,7 +15,8 @@ import {
 import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
-import ResizeTable from '../resize/ResizeTable';
+// eslint-disable-next-line import/no-unresolved
+import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
 
 export interface DataType {

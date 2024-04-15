@@ -9,7 +9,6 @@
     right: -8px;
     top: 0;
     cursor: w-resize;
-    pointer-events: all;
 }
 .ant-table-cell .resizor{
     cursor: col-resize;
