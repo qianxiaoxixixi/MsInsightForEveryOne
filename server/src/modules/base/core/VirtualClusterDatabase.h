@@ -65,9 +65,9 @@ protected:
     bool ExecuteGetStepIdList(Protocol::PipelineStepResponseBody &responseBody, std::string sql);
     bool ExecuteGetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody,
         std::string sql);
-    bool ExecuteGetStageAndBubble(Protocol::PipelineStageTimeParam param,
+    bool ExecuteGetStageAndBubble(Protocol::PipelineStageTimeParam param, std::vector<std::string> stageIds,
         Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
-    bool ExecuteGetRankAndBubble(Protocol::PipelineRankTimeParam param,
+    bool ExecuteGetRankAndBubble(Protocol::PipelineRankTimeParam param, std::vector<std::string> stageIds,
         Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
     bool ExecuteGetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody,
         std::string sql);

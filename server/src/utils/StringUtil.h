@@ -229,6 +229,20 @@ static std::string GetHashStrName(const std::string &string)
             fileHashStr.substr(0, 5) + "_" + timestampStr.substr(timestampStr.length() - 5);
     return dbName;
 }
+
+static bool checkSQLValid(const std::string& input)
+{
+    std::string pattern = "[a-zA-Z0-9_-]";
+    std::regex regex(pattern);
+    // 该方法用于处理SQL参数，当前只验证字母数字下划线中划线，后续可以兼容扩展
+    std::string result;
+    for (char c : input) {
+        if (!std::regex_match(std::string(1, c), regex)) {
+            return false;
+        }
+    }
+    return true;
+}
 };
 }
 

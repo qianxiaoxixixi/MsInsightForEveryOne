@@ -548,11 +548,14 @@ bool JsonClusterDatabase::GetStages(Protocol::PipelineStageParam param,
 bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
     Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
-    std::string sql = "SELECT '" + param.stageId + "' as stageId, "
-                      "max(ROUND(stage_time, 4)) as stageTime, "
+    std::string sql = "SELECT max(ROUND(stage_time, 4)) as stageTime, "
                       "max(ROUND(bubble_time, 4)) as bubbleTime "
-                      "FROM " + TABLE_STEP_TRACE + " WHERE rank_id IN " + param.stageId + " AND step_id = ?";
-    return ExecuteGetStageAndBubble(param, responseBody, sql);
+                      "FROM " + TABLE_STEP_TRACE + " WHERE step_id = ?";
+
+    std::vector<std::string> stageIds;
+    PrepareForStageId(param.stageId, sql, stageIds);
+
+    return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
 }
 
 bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
@@ -562,8 +565,11 @@ bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param
                       "ROUND(stage_time, 4) as stageTime, "
                       "ROUND(bubble_time, 4) as bubbleTime "
                       " FROM " + TABLE_STEP_TRACE +
-                      " WHERE step_id = ? AND rank_id IN" + param.stageId + " ";
-    return ExecuteGetRankAndBubble(param, responseBody, sql);
+                      " WHERE step_id = ? ";
+    std::vector<std::string> stageIds;
+    PrepareForStageId(param.stageId, sql, stageIds);
+
+    return ExecuteGetRankAndBubble(param, stageIds, responseBody, sql);
 }
 
 bool JsonClusterDatabase::GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody)
@@ -754,6 +760,33 @@ bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     sql += " ORDER by rank_id ASC";
     double startTime = QueryMinStartTime();
     return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
+}
+
+void JsonClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string &sql,
+                                            std::vector<std::string> &stageIds)
+{
+    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), '('), stageIdStr.end());
+    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), ')'), stageIdStr.end());
+    std::vector<std::string> stageIdArray = StringUtil::Split(stageIdStr, ",");
+    const int maxBindParam = 1000;
+    if (stageIdStr.size() > maxBindParam) {
+        Server::ServerLog::Error("Too many parameters, binding failed. stage id size:", stageIdStr.size());
+        return;
+    }
+    for (std::string stageId : stageIdArray) {
+        stageIds.push_back(StringUtil::Trim(stageId));
+    }
+
+    std::string rankSql;
+    for (int i = 0; i < stageIds.size(); i++) {
+        if (i == 0) {
+            rankSql.append("?");
+        }
+        rankSql.append(",?");
+    }
+    if (!rankSql.empty()) {
+        sql += "AND rank_id IN (" + rankSql + ")";
+    }
 }
 } // end of namespace Module
 } // end of namespace Dic

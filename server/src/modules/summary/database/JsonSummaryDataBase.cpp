@@ -226,16 +226,19 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
 
 std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
 {
-    std::string orderList = request.orderBy;
-    double offset = (request.currentPage - 1) * request.pageSize;
-    std::string ascend;
-    if (request.order == "ascend") {
-        ascend = "ASC";
+    std::string orderBy;
+    if (!StringUtil::checkSQLValid(request.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
     } else {
-        ascend = "DESC";
+        if (request.order == "descend") {
+            orderBy = " ORDER BY " + request.orderBy + " DESC";
+        } else {
+            orderBy = " ORDER BY " + request.orderBy + " ASC";
+        }
     }
-    std::string sql = "";
-    if (orderList.size() == 0) {
+
+    std::string sql;
+    if (request.orderBy.size() == 0) {
         sql = "SELECT name, op_type as type, "
               "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "duration, wait_time as waitTime, block_dim as blockDim, "
@@ -250,7 +253,7 @@ std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
-              " WHERE accelerator_core = ?  ORDER BY " + orderList + " " + ascend + " LIMIT ? offset ?";
+              " WHERE accelerator_core = ?  " + orderBy + " LIMIT ? offset ?";
     }
     return sql;
 }
@@ -276,15 +279,19 @@ bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 
 std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
 {
-    std::string order = request.orderBy;
-    std::string ascend;
-    if (request.order == "ascend") {
-        ascend = "ASC";
+    std::string orderBy;
+    if (!StringUtil::checkSQLValid(request.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
     } else {
-        ascend = "DESC";
+        if (request.order == "descend") {
+            orderBy = " ORDER BY " + request.orderBy + " DESC";
+        } else {
+            orderBy = " ORDER BY " + request.orderBy + " ASC";
+        }
     }
-    std::string sql = "";
-    if (order.size() == 0) {
+
+    std::string sql;
+    if (request.orderBy.size() == 0) {
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
               "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
@@ -293,7 +300,7 @@ std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams 
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
               "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
-              " WHERE accelerator_core = ?  ORDER BY " + order + " " + ascend + " LIMIT ? offset ?";
+              " WHERE accelerator_core = ? " + orderBy + " LIMIT ? offset ?";
     }
     return sql;
 }
@@ -482,7 +489,9 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
 
-        if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+        if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
 
@@ -682,7 +691,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         } else {
             sql += " WHERE name = ? AND input_shapes = ?";
         }
-        if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+
+        if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
 
