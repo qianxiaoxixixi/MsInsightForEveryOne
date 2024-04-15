@@ -4,6 +4,7 @@
 
 #include "CommunicationModule.h"
 #include "CommunicationOperatorDetailsHandler.h"
+#include "CommunicationOperatorListsHandler.h"
 #include "CommunicatorGroupQueryHandler.h"
 #include "BandwidthHandler.h"
 #include "DistributionHandler.h"
@@ -44,6 +45,8 @@ void CommunicationModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_LIST, std::make_unique<DurationListHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, std::make_unique<GroupHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, std::make_unique<MatrixListHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS,
+                              std::make_unique<CommunicationOperatorListsHandler>());
 }
 
 void CommunicationModule::OnRequest(std::unique_ptr<Protocol::Request> request)

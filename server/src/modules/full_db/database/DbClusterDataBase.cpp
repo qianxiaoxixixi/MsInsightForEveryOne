@@ -276,6 +276,28 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
     return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
 
+bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestParams,
+    Protocol::OperatorListsResponseBody &responseBody)
+{
+    std::string sql =
+            "SELECT rank_id, hccl_op_name as op_name,"
+            " CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp - ?) / 1000.0, 3) END as start_time, "
+            " ROUND(elapsed_time, 3) as elapse_time From " + TABLE_COMM_ANALYZER_TIME +
+            " WHERE step = ? AND rank_set = ? AND hccl_op_name <> 'Total Op Info'";
+    std::vector<std::string> rankList = requestParams.rankList;
+    if (!rankList.empty()) {
+        std::string ranks = GetRanksSql(rankList);
+        sql += " AND rank_id IN " + ranks;
+    }
+    if (requestParams.operatorName != totalOpInfo) {
+        sql += " AND hccl_op_name = ?";
+    }
+    sql += " ORDER by rank_id ASC";
+    requestParams.iterationId = "step" + requestParams.iterationId;
+    double startTime = QueryMinStartTime();
+    return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
+}
+
 bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)
 {
     std::string baseInfoSql =

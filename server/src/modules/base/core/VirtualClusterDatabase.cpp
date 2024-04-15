@@ -467,6 +467,56 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
     return true;
 }
 
+bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListParams &requestParams,
+    Protocol::OperatorListsResponseBody &responseBody, const std::string& sql, double startTime)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string iterationId = requestParams.iterationId;
+    std::string stage = requestParams.stage;
+    std::string operatorName = requestParams.operatorName;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare Query Operator List statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_double(stmt, index++, startTime);
+    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    if (requestParams.operatorName != totalOpInfo) {
+        sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
+    }
+
+    std::vector<std::string> rankLists = {};
+    std::vector<std::vector<Protocol::OperatorItem>> opLists = {};
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::OperatorItem object;
+        std::string rankId = sqlite3_column_string(stmt, col++);
+        if (std::find(rankLists.begin(), rankLists.end(), rankId) == rankLists.end()) {
+            rankLists.push_back(rankId);
+            std::vector<Protocol::OperatorItem> list = {};
+            opLists.push_back(list);
+        }
+        object.operatorName = sqlite3_column_string(stmt, col++);
+        object.startTime = sqlite3_column_double(stmt, col++);
+        object.elapseTime = sqlite3_column_double(stmt, col++);
+        for (int i = 0; i < rankLists.size(); ++ i) {
+            if (rankLists[i] == rankId) {
+                opLists[i].push_back(object);
+                break;
+            }
+        }
+        responseBody.minTime = std::min(responseBody.minTime, object.startTime);
+        responseBody.maxTime = std::max(responseBody.maxTime, object.startTime + object.elapseTime);
+    }
+    responseBody.opLists = opLists;
+    responseBody.rankLists = rankLists;
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 void VirtualClusterDatabase::GetStepsOrRanksObject(const std::string &jsonStr,
     std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {

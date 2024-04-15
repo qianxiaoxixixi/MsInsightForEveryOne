@@ -50,12 +50,15 @@ public:
     virtual bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody) = 0;
     virtual bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody) = 0;
+    virtual bool QueryOperatorList(Protocol::DurationListParams &requestParams,
+        Protocol::OperatorListsResponseBody &responseBody) = 0;
     virtual bool QueryCommunicationGroup(rapidjson::Document &responseBody) = 0;
     virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
         std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual double QueryMinStartTime() = 0;
 
 protected:
+    const std::string totalOpInfo = "Total Op Info";
     bool ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
         Protocol::SummaryTopRankResBody &responseBody, std::string sql);
     bool ExecuteQueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody, std::string sql);
@@ -85,6 +88,8 @@ protected:
     bool ExecuteQueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody, std::string sql);
     bool ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
         std::vector<Protocol::Duration> &responseBody, std::string sql, double startTime);
+    bool ExecuteQueryOperatorList(Protocol::DurationListParams &requestParams,
+        Protocol::OperatorListsResponseBody &responseBody, const std::string &sql, double startTime);
     bool ExecuteQueryCommunicationGroup(rapidjson::Document &responseBody, std::string sql);
     bool ExecuteQueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
                                        std::vector<Protocol::OperatorNamesObject> &responseBody, std::string sql);

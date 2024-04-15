@@ -1,0 +1,41 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#include "CommunicationOperatorListsHandler.h"
+#include "ServerLog.h"
+#include "CommunicationProtocolRequest.h"
+#include "CommunicationProtocolResponse.h"
+#include "WsSessionManager.h"
+#include "DataBaseManager.h"
+
+namespace Dic {
+namespace Module {
+namespace Communication {
+using namespace Dic::Server;
+void CommunicationOperatorListsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
+    DurationListRequest &request = dynamic_cast<DurationListRequest &>(*requestPtr.get());
+    std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Error("Failed to check session token , command = ", command);
+        return;
+    }
+    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    std::unique_ptr<OperatorListsResponse> responsePtr = std::make_unique<OperatorListsResponse>();
+    OperatorListsResponse &response = *responsePtr.get();
+    SetBaseResponse(request, response);
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    if (!database->QueryOperatorList(request.params, response.body)) {
+        SetResponseResult(response, false);
+        ServerLog::Error("Failed to get communication operator list data.");
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
+    SetResponseResult(response, true);
+    // add response to response queue in session
+    session.OnResponse(std::move(responsePtr));
+}
+} // Dic
+} // Module
+} // Communication

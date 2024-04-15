@@ -40,6 +40,7 @@ private:
     static std::optional<document_t> ToOperatorNamesResponse(const Response &response);
     static std::optional<document_t> ToMatrixOpNamesResponse(const Response &response);
     static std::optional<document_t> ToDurationResponse(const Response &response);
+    static std::optional<document_t> ToOperatorListResponse(const Response &response);
     static std::optional<document_t> ToRanksResponse(const Response &response);
     static std::optional<document_t> ToMatrixGroupResponse(const Response &response);
     static std::optional<document_t> ToMatrixListResponse(const Response &response);

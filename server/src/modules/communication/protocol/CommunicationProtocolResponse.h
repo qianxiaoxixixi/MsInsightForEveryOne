@@ -6,6 +6,7 @@
 #define DIC_COMMUNICATION_PROTOCOL_COMMUNICATION_RESPONSE_H
 
 #include <vector>
+#include <cfloat>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
@@ -119,6 +120,19 @@ struct DurationResponse : public Response {
     DurationResponse() : Response(REQ_RES_COMMUNICATION_LIST) {}
     std::vector<Duration> body;
 };
+
+struct OperatorListsResponseBody {
+    double minTime = DBL_MAX;
+    double maxTime = DBL_MIN;
+    std::vector<std::string> rankLists;
+    std::vector<std::vector<OperatorItem>> opLists;
+};
+
+struct OperatorListsResponse : public Response {
+    OperatorListsResponse() : Response(REQ_RES_COMMUNICATION_OPERATOR_LISTS) {}
+    OperatorListsResponseBody body;
+};
+
 struct MatrixList {
     int srcRank;
     int dstRank;
