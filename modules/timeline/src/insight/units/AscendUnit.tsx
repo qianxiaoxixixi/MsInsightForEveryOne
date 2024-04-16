@@ -36,7 +36,8 @@ import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
-import ResizeTable from '../../components/resize/ResizeTable';
+// eslint-disable-next-line import/no-unresolved
+import ResizeTable from 'lib/ResizeTable';
 import { getDefaultColumData, GetPageData } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
 
