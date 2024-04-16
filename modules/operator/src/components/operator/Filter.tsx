@@ -5,7 +5,8 @@ import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { Select, InputNumber } from 'antd';
-import { Label } from '../Common';
+// eslint-disable-next-line import/no-unresolved
+import { Label } from 'lib/CommonUtils';
 import { optionMapType, VoidFunction } from '../../utils/interface';
 import { Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
