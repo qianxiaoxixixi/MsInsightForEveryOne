@@ -8,7 +8,8 @@ import { Button, Input } from 'antd';
 import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
-
+// eslint-disable-next-line import/no-unresolved
+import { limitInput } from 'lib/CommonUtils';
 interface ColumData {
     title: string;
     dataIndex: string;
@@ -198,14 +199,3 @@ export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, set
         },
     });
 };
-
-export function limitInput(maxlength?: string): void {
-    setTimeout(() => {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            if (input.maxLength < 0) {
-                input.setAttribute('maxlength', maxlength ?? '200');
-            }
-        });
-    });
-}

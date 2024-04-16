@@ -4,3 +4,4 @@
 declare module 'lib/ResizeTable';
 declare module 'lib/Resizor';
 declare module 'lib/Simple';
+declare module 'lib/CommonUtils';
