@@ -6,7 +6,6 @@ set -e
 CUR_DIR=$(dirname $(readlink -f $0))
 TOP_DIR=${CUR_DIR}/..
 cd ${TOP_DIR}/server/build
-python3 download_third_party.py
 python3 preprocess_third_party.py
 python3 build.py test
 
