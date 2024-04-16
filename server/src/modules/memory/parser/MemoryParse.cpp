@@ -74,7 +74,6 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
                 return false;
             }
             GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
-            memoryDatabase->SetInferenceType(row[0] == Dic::DEVICE_ID);
             continue;
         }
         // 如果某一行数据个数与表头不一致，则跳过

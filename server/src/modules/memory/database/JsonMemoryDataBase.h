@@ -45,9 +45,6 @@ public:
     uint64_t QueryMinOperatorAllocationTime();
     uint64_t QueryMinRecordTimestamp();
 
-    void SetInferenceType(bool inference);
-    bool IsInferenceType() const;
-
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
 
