@@ -263,7 +263,7 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path)
 
 bool ParserJson::IsJsonValid(const std::string &fileName)
 {
-    static std::string reg = R"(^(trace_view|msprof(_slice)?(_[0-9]{1,15}){1,4})\.json$)";
+    static std::string reg = R"(^(trace_view|trace|msprof(_slice)?(_[0-9]{1,15}){1,4})\.json$)";
     auto result = RegexUtil::RegexMatch(fileName, reg);
     return result.has_value();
 }
