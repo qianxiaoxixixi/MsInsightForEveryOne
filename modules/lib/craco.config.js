@@ -16,6 +16,7 @@ module.exports = {
           './Simple': './src/Simple',
           './Resizor': './src/resize/Resizor.tsx',
           './style/color': './src/style/color.css',
+          './CommonUtils': './src/utils/Common.tsx',
         },
         shared: {
           react: {singleton: true},
