@@ -358,16 +358,6 @@ bool JsonMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string
     return ExecuteOperatorSize(min, max, sql);
 }
 
-void JsonMemoryDataBase::SetInferenceType(bool inference)
-{
-    isInference = inference;
-}
-
-bool JsonMemoryDataBase::IsInferenceType() const
-{
-    return isInference;
-}
-
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

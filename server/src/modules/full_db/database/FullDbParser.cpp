@@ -172,8 +172,6 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
         auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
         if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
-            FileType type = DataBaseManager::Instance().GetFileType();
-            memoryDatabase->SetInferenceType(type == FileType::MS_PROF);
             FullDb::DbMemoryDataBase::ParserEnd(id, true);
             FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");
         } else {

@@ -111,6 +111,7 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string peakMemory;
     std::vector<Protocol::ComponentDto> componentDtoVec;
+    std::set<std::string> componentSets;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::ComponentDto componentDto{};
@@ -120,9 +121,14 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
         componentDto.totalReserved = sqlite3_column_double(stmt, col++);
         componentDto.totalActivated = sqlite3_column_double(stmt, col++);
         componentDto.streamId = sqlite3_column_string(stmt, col++);
+        componentSets.emplace(componentDto.component);
         componentDtoVec.emplace_back(componentDto);
     }
     sqlite3_finalize(stmt);
+
+    if (componentSets.size() == 1 && *componentSets.begin() == COMPONENT_GE) {
+        isInference = true;
+    }
 
     // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
     std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
