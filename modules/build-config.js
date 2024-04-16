@@ -7,6 +7,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require('fs');
 const path = require('path');
 const {ModuleFederationPlugin} = require('webpack').container;
+const {whenDev} = require('@craco/craco');
 
 class ScriptTypePlugin {
   apply(compiler) {

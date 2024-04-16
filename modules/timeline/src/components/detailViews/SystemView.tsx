@@ -20,7 +20,8 @@ import {
     querySystemViewDetails,
     systemViewItems,
 } from './Common';
-import ResizeTable from '../resize/ResizeTable';
+// eslint-disable-next-line import/no-unresolved
+import ResizeTable from 'lib/ResizeTable';
 import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
