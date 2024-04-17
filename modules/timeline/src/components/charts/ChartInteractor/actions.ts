@@ -59,7 +59,6 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         runInAction(() => {
             if (e.altKey) {
                 session.domainRange = { domainStart: newSelected[0], domainEnd: newSelected[1] };
-                session.contextMenu.zoomHistory.push(session.domainRange);
                 setZoomHistory(session, session.domainRange);
             }
             session.selectedRange = newSelected;
