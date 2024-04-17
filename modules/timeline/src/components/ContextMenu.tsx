@@ -91,11 +91,11 @@ function undoZoom(session: Session, menuItem?: MenuItemModel): void {
     }
     runInAction(() => {
         session.contextMenu.zoomHistory.pop();
-        const lastZoom = session.contextMenu.zoomHistory.at(-1);
-        if (lastZoom !== undefined) {
-            session.domainRange = lastZoom;
-        } else {
+        const zoomHistoryLength = session.contextMenu.zoomHistory.length;
+        if (zoomHistoryLength === 0) {
             session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+        } else {
+            session.domainRange = session.contextMenu.zoomHistory[zoomHistoryLength - 1];
         }
         session.contextMenu.isVisible = false;
     });
@@ -155,7 +155,7 @@ const getMenuItems = (props: Props): JSX.Element => {
         event: zoomIntoSelection,
         visible: session.selectedRange !== undefined,
     }, {
-        name: `Undo Zoom (${session.contextMenu.zoomHistory.length})`,
+        name: `Undo Zoom (${zoomHistory.length})`,
         key: 'undoZoom',
         event: undoZoom,
         disabled: zoomHistory.length === 0,
