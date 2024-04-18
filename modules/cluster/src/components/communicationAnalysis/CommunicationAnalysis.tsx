@@ -14,7 +14,9 @@ import CommunicationTimeChart, { dataType as chartDataType }
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
 import { Space, Tan } from '../Common';
-import { queryCommunication } from '../../utils/RequestUtils';
+import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
+import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
+import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 
 const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
     return (
@@ -32,15 +34,17 @@ const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any
 
 interface showDataType{
     chartData: chartDataType;
+    analysisChartData: AnalysisChartData;
     tableData: [];
 }
 
 const searchData = async (conditions: ConditionDataType): Promise<showDataType> => {
+    const communicationOperatorData = await queryCommunicationOperatorLists(conditions);
     const res = await queryCommunication(conditions);
     const { items: data = [] } = res;
     data.forEach((item: any, index: number) => { item.index = index; });
     data.sort((a: DataType, b: DataType) => b.elapseTime - a.elapseTime);
-    return { chartData: wrapChartData(data), tableData: data };
+    return { chartData: wrapChartData(data), analysisChartData: communicationOperatorData, tableData: data };
 };
 const wrapChartData = (data: tableDataType[]): chartDataType => {
     // 显示字段
@@ -57,6 +61,7 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
     const [rankId, setRankId] = useState('');
     const [showData, setShowData] = useState<showDataType>({
         chartData: {} as chartDataType,
+        analysisChartData: {} as AnalysisChartData,
         tableData: [],
     });
     const [conditions, setConditions] = useState<ConditionDataType>(
@@ -116,6 +121,7 @@ const CommunicationAnalysisCom = (props: {isShow:
                 position={'left'}
                 drag={<Help />}
                 main={ <div style={{ padding: '0 16px' }}>
+                    <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
                         conditions={conditions} updateSort={(data) => {

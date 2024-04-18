@@ -258,7 +258,45 @@ export const communicationAnalysisData: any = [
     { 'Rank ID': '6', 'Elapse Time(ms)': 135.6, 'Transit Time(ms)': 175.6, 'Synchronization Time(ms)': 175.6, 'Wait Time(ms)': 175.6, 'Synchronization Time Ratio': 20.3, 'Wait Time Ratio': 2.3 },
 ];
 
-export const OperatorDetailsData: any = [
+export const communicationOperatorData: any = {
+    minTime: 0,
+    maxTime: 170,
+    data: [
+        {
+            rankId: '1',
+            lists: [
+                {
+                    operatorName: 'operator1',
+                    startTime: 0,
+                    duration: 62.9322,
+                },
+
+                {
+                    operatorName: 'operator2',
+                    startTime: 70,
+                    duration: 100,
+                },
+            ],
+        },
+        {
+            rankId: '2',
+            lists: [
+                {
+                    operatorName: 'operator1',
+                    startTime: 0,
+                    duration: 62.9322,
+                },
+                {
+                    operatorName: 'operator3',
+                    startTime: 120,
+                    duration: 42,
+                },
+            ],
+        },
+    ],
+};
+
+export const operatorDetailsData: any = [
     {
         'Rank ID': 1,
         'Operator Name': 'operator1',
