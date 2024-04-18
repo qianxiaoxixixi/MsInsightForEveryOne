@@ -1,13 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { isNull } from '../components/Common';
-import {
-    communicationAnalysisData,
-    communicationMatrixData,
-    computationCommunicationData,
-    OperatorDetailsData,
-} from './__test__/mockData';
 
 /**
  * 查询所有迭代ID
@@ -15,9 +8,6 @@ import {
  * @return {[]} 返回迭代数组[0,1,2,3]
  */
 export const queryIterations = async(): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return [0, 1, 2, 3];
-    }
     return window.requestData('communication/duration/iterations', {});
 };
 
@@ -27,9 +17,6 @@ export const queryIterations = async(): Promise<any> => {
  * @return {[]} 返回迭代数组['(0,1,2)']
  */
 export const queryStages = async(param: {iterationId: string }): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return ['(0,1,2)'];
-    }
     return window.requestData('communication/matrix/group', param);
 };
 
@@ -39,9 +26,6 @@ export const queryStages = async(param: {iterationId: string }): Promise<any> =>
  * @return {[]} 返回Rank数组[0,1,2,3]
  */
 export const queryRanks = async(param: {iterationId: string }): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return [0, 1, 2, 3];
-    }
     return window.requestData('communication/duration/ranks', param);
 };
 
@@ -52,9 +36,6 @@ export const queryRanks = async(param: {iterationId: string }): Promise<any> => 
  * @return {[]} 返回算子名数组[0,1,2,3]
  */
 export const queryOperators = async(param: {iterationId: string ;rankList: string[];stage: string}): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return ['op1', 1, 2, 3];
-    }
     return window.requestData('communication/duration/operatorNames', param);
 };
 
@@ -65,9 +46,6 @@ export const queryOperators = async(param: {iterationId: string ;rankList: strin
  * @return {[]} 返回算子名数组[0,1,2,3]
  */
 export const queryMatrixOperators = async(param: {iterationId: string ;stage: string}): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return ['op1', 1, 2, 3];
-    }
     return window.requestData('communication/matrix/sortOpNames', param);
 };
 
@@ -82,10 +60,20 @@ export const queryMatrixOperators = async(param: {iterationId: string ;stage: st
 export const queryCommunication = async(param: {
     iterationId: string ; rankIds: string[]; operatorName: string;
 }): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return communicationAnalysisData;
-    }
     return window.requestData('communication/duration/list', { ...param, rankList: param.rankIds });
+};
+
+/**
+ * 查询通信算子时间列表
+ *
+ * @param {string} iterationId 迭代ID
+ * @param {number[]} rankIds
+ * @param {string} operatorName 算子名
+ */
+export const queryCommunicationOperatorLists = async(param: {
+    iterationId: string ; rankIds: string[]; operatorName: string;
+}): Promise<any> => {
+    return window.requestData('communication/operatorLists', { ...param, rankList: param.rankIds });
 };
 
 /**
@@ -100,9 +88,6 @@ export const queryOperatorDetails = async(param: {
     iterationId: number; rankId: number; pageSize: number;currentPage: number;orderBy: string;order: string;
     stage: string;
 }): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return OperatorDetailsData;
-    }
     return window.requestData('communication/operatorDetails', param);
 };
 
@@ -114,9 +99,6 @@ export const queryOperatorDetails = async(param: {
  * @return {[]} 返回数组
  */
 export const querySummaryStatistics = async (param: {rankId: string; timeFlag: string;stepId: string}): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return computationCommunicationData[param.timeFlag];
-    }
     return window.requestData('summary/statistic', param);
 };
 
@@ -132,17 +114,11 @@ export const querySummaryStatistics = async (param: {rankId: string; timeFlag: s
 export const queryComputeDetail = async (param: {
     rankId: string; timeFlag: string; pageSize: number;currentPage: number;orderBy: string;order: string;
 }): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return [];
-    }
     return window.requestData('summary/queryComputeDetail', param);
 };
 
 export const queryCommunicationDetail = async (param: {
     rankId: string; pageSize: number;currentPage: number;orderBy: string;order: string;}): Promise<any> => {
-    if (isNull(window.requestData)) {
-        return [];
-    }
     return window.requestData('summary/queryCommunicationDetail', param);
 };
 
@@ -171,8 +147,5 @@ export const queryTopSummary = async (param:
  */
 export const queryCommunicationMatrix = async(param: { iterationId: string ; stage: string ; operatorName: string}):
 Promise<any> => {
-    if (isNull(window.requestData)) {
-        return communicationMatrixData;
-    }
     return window.requestData('communication/matrix/bandwidthInfo', param);
 };

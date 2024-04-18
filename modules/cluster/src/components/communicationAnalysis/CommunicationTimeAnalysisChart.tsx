@@ -1,0 +1,200 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import * as echarts from 'echarts';
+
+import type { Session } from '../../entity/session';
+import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { addResizeEvent, chartVisbilityListener, Container, Loading, safeStr } from '../Common';
+import { colorPalette, hashToNumber } from '../../utils/colorUtil';
+
+const DEFAULT_CHART_HEIGHT = 460;
+const DEFAULT_INNER_CHART_HEIGHT = 300;
+const DEFAULT_CHART_ZOOM_HEIGHT = 400;
+const MIN_CHART_ITEM_HEIGHT = 30;
+const MAX_CHART_HEIGHT = 10000;
+function wrapData(dataSource: AnalysisChartData): any {
+    const data: any = [];
+    const yAxisData: string[] = [];
+    dataSource?.data?.forEach((item, index) => {
+        yAxisData.push(item.rankId);
+        item?.lists?.forEach((childItem, _) => {
+            const time = childItem.startTime + childItem.duration;
+            data.push(
+                {
+                    name: childItem.operatorName,
+                    value: [index, childItem.startTime, time, childItem.duration],
+                    itemStyle: {
+                        normal: {
+                            color: colorPalette[hashToNumber(childItem.operatorName, colorPalette.length)],
+                        },
+                    },
+                },
+            );
+        });
+    });
+    option.yAxis.data = yAxisData;
+    option.xAxis.min = dataSource.minTime;
+    option.xAxis.max = dataSource.maxTime;
+    const dataHeight = calculateDataHeight(dataSource);
+    option.grid.height = dataHeight;
+    option.dataZoom[0].top = dataHeight - DEFAULT_INNER_CHART_HEIGHT + DEFAULT_CHART_ZOOM_HEIGHT;
+    option.series[0].data = data;
+    return option;
+}
+
+function renderItem(params: any, api: any): any {
+    const categoryIndex = api.value(0);
+    const start = api.coord([api.value(1), categoryIndex]);
+    const end = api.coord([api.value(2), categoryIndex]);
+    const height = api.size([0, 1])[1] * 0.6;
+    const rectShape = echarts.graphic.clipRectByRect(
+        {
+            x: start[0],
+            y: start[1] - (height / 2),
+            width: end[0] - start[0],
+            height,
+        },
+        {
+            x: params.coordSys.x,
+            y: params.coordSys.y,
+            width: params.coordSys.width,
+            height: params.coordSys.height,
+        },
+    );
+    return (
+        {
+            type: 'rect',
+            transition: ['shape'],
+            shape: rectShape,
+            style: api.style(),
+        }
+    );
+}
+
+function getTipLineStr(name: string, value: string): string {
+    let html = '';
+    html += `${safeStr((`${name}`))}`;
+    html += `<strong style="color: black">${safeStr((`${value}`))}</strong><br/>`;
+    return html;
+}
+
+const option: any = {
+    tooltip: {
+        formatter: function (params: {marker: any; name: any; value: string[] }) {
+            let tooltipMarkup = `${params.marker} ${safeStr((`${params.value[0]}`))}<br/>`;
+            tooltipMarkup += getTipLineStr('Operator Name : ', `${params.name}`);
+            tooltipMarkup += getTipLineStr('Start Time : ', `${params.value[1]}`);
+            tooltipMarkup += getTipLineStr('Elapse Time : ', `${params.value[3]}`);
+            return tooltipMarkup;
+        },
+    },
+
+    dataZoom: [
+        {
+            type: 'slider',
+            filterMode: 'weakFilter',
+            showDataShadow: false,
+            top: DEFAULT_CHART_ZOOM_HEIGHT,
+            labelFormatter: '',
+        },
+        {
+            type: 'inside',
+            filterMode: 'weakFilter',
+        },
+    ],
+    grid: {
+        height: DEFAULT_INNER_CHART_HEIGHT,
+    },
+    xAxis: {
+        scale: true,
+        axisLabel: {
+            formatter: function (val: number) {
+                return `${Math.max(0, val)} ms`;
+            },
+        },
+    },
+    yAxis: {
+        data: [],
+    },
+    series: [
+        {
+            type: 'custom',
+            renderItem,
+            itemStyle: {
+                opacity: 0.8,
+            },
+            encode: {
+                x: [1, 2],
+                y: 0,
+            },
+            data: [],
+        },
+    ],
+};
+
+export interface OperatorTimeItem {
+    operatorName: string;
+    startTime: number;
+    duration: number;
+}
+export interface OperatorTimeInfo {
+    rankId: string;
+    lists: OperatorTimeItem[];
+}
+
+export interface AnalysisChartData {
+    minTime: number;
+    maxTime: number;
+    data: OperatorTimeInfo[];
+}
+function InitCharts(dataSource: AnalysisChartData): void {
+    const chartDom = document.getElementById('hccl');
+    if (chartDom === null || chartDom.offsetParent === null) {
+        return;
+    }
+    echarts.init(chartDom).dispose();
+    const myChart = echarts.init(chartDom);
+    if (dataSource !== undefined) {
+        myChart.setOption(wrapData(dataSource));
+    }
+    addResizeEvent(myChart);
+}
+
+function calculateDataHeight(dataSource: AnalysisChartData): number {
+    let calculateHeight: number;
+    if (dataSource?.data?.length !== undefined) {
+        calculateHeight = Math.max(dataSource.data.length * MIN_CHART_ITEM_HEIGHT, DEFAULT_INNER_CHART_HEIGHT);
+    } else {
+        calculateHeight = DEFAULT_INNER_CHART_HEIGHT;
+    }
+    return Math.min(MAX_CHART_HEIGHT, calculateHeight);
+}
+function getChartHeight(dataSource: AnalysisChartData): number {
+    return calculateDataHeight(dataSource) + DEFAULT_CHART_HEIGHT - DEFAULT_INNER_CHART_HEIGHT;
+}
+
+const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
+    const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
+    chartVisbilityListener('hccl', () => {
+        InitCharts(dataSource);
+    });
+    useEffect(() => {
+        setTimeout(() => {
+            setChartHeight(getChartHeight(dataSource));
+            InitCharts(dataSource);
+        });
+    }, [dataSource]);
+    return (
+        <Container
+            title={'HCCL'}
+            content={session.durationFileCompleted
+                ? <div id={'hccl'} style={{ height: `${chartHeight}px` }} ></div>
+                : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div> }
+            bodyStyle={{ overflow: 'visible' }}
+        />
+    );
+});
+
+export default CommunicationTimeAnalysisChart;
