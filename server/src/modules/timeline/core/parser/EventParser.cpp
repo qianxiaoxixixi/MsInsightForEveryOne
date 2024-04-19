@@ -230,6 +230,7 @@ void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
     threadEvent.tid = event.tid;
     threadEvent.pid = event.pid;
     threadEvent.threadName = event.threadName;
+    threadEvent.SetThreadSortIndex();
     ProcessEvent processEvent;
     processEvent.pid = event.pid;
     processEvent.processName = event.processName;

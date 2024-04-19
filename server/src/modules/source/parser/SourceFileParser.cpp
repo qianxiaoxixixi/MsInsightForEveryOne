@@ -154,6 +154,7 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
     }
     database->CreateIndex();
     database->UpdateSimulationDepthWithNoOverlap();
+    database->SimulationUpdateProcessSortIndex();
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }
