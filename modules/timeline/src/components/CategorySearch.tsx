@@ -6,7 +6,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import { Session } from '../entity/session';
-import { CustomButton } from './base/StyledButton';
+import { CustomButton, StyledButton } from './base/StyledButton';
 import { StyledInput } from './base/StyledInput';
 import { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
@@ -16,6 +16,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { ThreadMetaData } from '../entity/data';
 import { generateFlowParam } from '../insight/units/details';
 import { getTimeOffset } from '../insight/units/utils';
+import { StyledTooltip } from './base/StyledTooltip';
 
 const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
@@ -73,7 +74,7 @@ type SliceData = {
 let remoteCntArray: RemoteCount[] = [];
 
 // 获取搜索的结果数量
-const queryDataCount = async (session: Session, searchContent: string): Promise<number> => {
+const queryDataCount = async (session: Session, searchContent: string, isMatchCase: boolean, isMatchExact: boolean): Promise<number> => {
     if (searchContent === undefined || searchContent === '') {
         return 0;
     }
@@ -84,7 +85,7 @@ const queryDataCount = async (session: Session, searchContent: string): Promise<
             continue;
         }
         const metadata = unit.metadata as any;
-        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent } });
+        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent, isMatchCase, isMatchExact } });
         if (res.totalCount === 0) {
             continue;
         }
@@ -95,7 +96,7 @@ const queryDataCount = async (session: Session, searchContent: string): Promise<
 };
 
 // 跳转函数
-const jumpSlice = async (session: Session, searchContent: string, index: number): Promise<void> => {
+const jumpSlice = async (session: Session, searchContent: string, index: number, isMatchCase: boolean, isMatchExact: boolean): Promise<void> => {
     let finalDataSource;
     let finalRankId;
     let flag = false;
@@ -114,7 +115,7 @@ const jumpSlice = async (session: Session, searchContent: string, index: number)
             currentIndex -= rankCount.count;
         }
     }
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex) } });
+    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact } });
     doJumpSlice(session, slice, currentIndex === 0);
 };
 
@@ -174,6 +175,7 @@ const ImgWithFallback = ({ className = '' }): JSX.Element => {
     );
 };
 
+// eslint-disable-next-line max-lines-per-function
 const CategorySearchContent = (session: Session): JSX.Element => {
     const [messageApi, contextHolder] = message.useMessage();
     const theme = useTheme();
@@ -181,6 +183,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     const [searchIconVisible, setSearchIconVisible] = useState(true);
     const [searchContent, setSearchContent] = useState('');
     const [searchingStatus, setSearchingStatus] = useState(false);
+    const [isMatchCase, setIsMatchCase] = useState(false);
+    const [isMatchExact, setIsMatchExact] = useState(false);
 
     useEffect(action(() => {
         setSearchIconVisible(true); setSearchContent('');
@@ -188,15 +192,15 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     }), [session]);
     const onPageChange = (current: number): void => {
         updatePaginationData(prevState => ({ current, total: prevState.total }));
-        jumpSlice(session, searchContent, current);
+        jumpSlice(session, searchContent, current, isMatchCase, isMatchExact);
     };
     const onInputPressEnter = async (): Promise<void> => {
         if (searchContent === '') { return; }
         setSearchingStatus(true);
-        const totalCnt = await queryDataCount(session, searchContent);
+        const totalCnt = await queryDataCount(session, searchContent, isMatchCase, isMatchExact);
         if (totalCnt > 0) {
             updatePaginationData({ current: 0, total: totalCnt });
-            jumpSlice(session, searchContent, 0);
+            jumpSlice(session, searchContent, 0, isMatchCase, isMatchExact);
             setSearchIconVisible(false);
         } else { messageApi.warning(i18n.t('notify:SearchEmpty')); }
         setSearchingStatus(false);
@@ -205,7 +209,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         const inputContent = e.target.value;
         setSearchContent(inputContent);
         setSearchIconVisible(true);
-        session.searchData = { content: inputContent };
+        session.searchData = { content: inputContent, isMatchCase, isMatchExact };
     });
 
     return (
@@ -216,7 +220,11 @@ const CategorySearchContent = (session: Session): JSX.Element => {
             <div className="searchResult">{searchingStatus
                 ? <ImgWithFallback className={'loading'} />
                 : searchIconVisible
-                    ? <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
+                    ? <div className={'search_icon_css'}>
+                        <StyledTooltip title="Match case"><StyledButton icon={isMatchCase ? <div className={'icon_selected_case_match'}/> : <div className={'icon_case_match'}/>} onClick={(): void => setIsMatchCase(!isMatchCase)}></StyledButton></StyledTooltip>
+                        <StyledTooltip title="Words"><StyledButton icon={isMatchExact ? <div className={'icon_selected_exact_match'}/> : <div className={'icon_exact_match'}/>} onClick={(): void => setIsMatchExact(!isMatchExact)}></StyledButton></StyledTooltip>
+                        <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
+                    </div>
                     : <StylePagination {...paginationData} onChange={onPageChange} /> }
             </div>
         </CustomDiv>

@@ -45,7 +45,7 @@ public:
     virtual bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
         Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, int64_t trackId) = 0;
     virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params) = 0;
-    virtual bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+    virtual bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody) = 0;
     virtual bool QueryFlowCategoryList(std::vector<std::string> &categories) = 0;
     virtual bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,

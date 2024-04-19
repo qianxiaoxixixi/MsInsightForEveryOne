@@ -120,7 +120,9 @@ bool JsonTraceDatabase::SetConfig()
     }
     std::string dbVersion = GetDataBaseVersion();
     std::unique_lock<std::mutex> lock(mutex);
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
+    // PRAGMA case_sensitive_like=1; 设置数据库大小写敏感。
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; "
+                   "PRAGMA case_sensitive_like=1; PRAGMA user_version = " + dbVersion + ";");
 }
 
 bool JsonTraceDatabase::CreateTable()
@@ -1435,7 +1437,17 @@ void JsonTraceDatabase::CommitData()
 
 int JsonTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
-    std::string sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like '%'||?||'%'";
+    int32_t result = 0;
+    std::string sql;
+    if (params.isMatchExact && params.isMatchCase) {
+        sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like ?;";
+    } else if (params.isMatchExact) {
+        sql = "SELECT count(*) FROM " + sliceTable + " WHERE lower(name) like lower(?);";
+    } else if (params.isMatchCase) {
+        sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like '%'||?||'%';";
+    } else {
+        sql = "SELECT count(*) FROM " + sliceTable + " WHERE lower(name) like lower('%'||?||'%');";
+    }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceNameCount failed!.");
@@ -1447,26 +1459,36 @@ int JsonTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
         return 0;
     }
     if (resultSet->Next()) {
-        return resultSet->GetInt32(resultStartIndex);
+        result = resultSet->GetInt32(resultStartIndex);
     }
-    return 0;
+    return result;
 }
 
-bool JsonTraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+bool JsonTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
     Protocol::SearchSliceBody &responseBody)
 {
+    std::string nameMatch;
+    if (params.isMatchExact && params.isMatchCase) {
+        nameMatch = "name like ?";
+    } else if (params.isMatchExact) {
+        nameMatch = "lower(name) like lower(?)";
+    } else if (params.isMatchCase) {
+        nameMatch = "name like '%'||?||'%'";
+    } else {
+        nameMatch = "lower(name) like lower('%'||?||'%')";
+    }
     std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
         " FROM " +
         sliceTable + " JOIN " + threadTable +
         " USING (track_id)"
-        " WHERE name like '%'||?||'%'"
+        " WHERE " + nameMatch +
         " ORDER BY timestamp LIMIT 1 OFFSET ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceName failed!.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, name, index);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.searchContent, index);
     if (resultSet == nullptr) {
         ServerLog::Error("SearchSliceName. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1768,7 +1790,7 @@ bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &re
         "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
         "ROUND(avg(duration) / 1000.0, 4) as avg, "
         "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
-        "FROM slice WHERE name LIKE ? AND slice.track_id IN ( SELECT track_id "
+        "FROM slice WHERE lower(name) LIKE lower(?) AND slice.track_id IN ( SELECT track_id "
         "FROM process JOIN thread t ON process.pid = t.pid "
         "WHERE process_name = ? ) "
         "GROUP BY name " +
@@ -1807,7 +1829,7 @@ LayerStatData JsonTraceDatabase::QueryLayerData(const std::string &layer, const 
 {
     LayerStatData layerStatData;
     std::string sql = "SELECT sum(duration) AS totalTime, count(distinct name) FROM slice "
-        "WHERE name LIKE ? and slice.track_id IN "
+        "WHERE lower(name) LIKE lower(?) and slice.track_id IN "
         "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
         "WHERE process_name = ? ) ";
     auto stmt = CreatPreparedStatement(sql);
@@ -1851,7 +1873,7 @@ std::vector<std::string> JsonTraceDatabase::QueryCoreType()
 uint64_t JsonTraceDatabase::QueryTotalKernel(const std::string &coreType, const std::string &name)
 {
     uint64_t total = 0;
-    std::string sql = "SELECT count(*) FROM kernel_detail where name LIKE ?";
+    std::string sql = "SELECT count(*) FROM kernel_detail where lower(name) LIKE lower(?)";
     if (!coreType.empty()) {
         sql += " AND accelerator_core = ? ";
     }
@@ -1897,7 +1919,7 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
         "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
         "output_formats AS outputFormats FROM kernel_detail "
-        "where 1=1 and name LIKE ? " +
+        "where 1=1 and lower(name) LIKE lower(?) " +
         coreTypes + orderBy + " limit ? offset ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {

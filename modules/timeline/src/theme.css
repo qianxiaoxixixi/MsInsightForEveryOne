@@ -632,3 +632,40 @@ tr.ant-table-row.click-able:hover > td.ant-table-cell {
 .theme_dark .ant-select-multiple .ant-select-selection-item {
     background:var(--grey60);
 }
+
+.icon_case_match{
+    background: no-repeat center url('./assets/images/case_match_light.svg');
+    height: 16px;
+    width: 16px;
+}
+.theme_dark .icon_case_match{
+    background: no-repeat center url('./assets/images/case_match_dark.svg');
+    height: 16px;
+    width: 16px;
+}
+.icon_exact_match{
+    background: no-repeat center url('./assets/images/exact_match_light.svg');
+    height: 16px;
+    width: 16px;
+}
+.theme_dark .icon_exact_match{
+    background: no-repeat center url('./assets/images/exact_match_dark.svg');
+    height: 16px;
+    width: 16px;
+}
+
+.icon_selected_exact_match{
+    background: no-repeat center url('./assets/images/selected_exact_match.svg');
+    height: 16px;
+    width: 16px;
+}
+
+.icon_selected_case_match{
+    background: no-repeat center url('./assets/images/selected_case_match.svg');
+    height: 16px;
+    width: 16px;
+}
+
+.search_icon_css{
+    display: flex;
+}

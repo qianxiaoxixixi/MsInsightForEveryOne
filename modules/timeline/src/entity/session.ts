@@ -62,10 +62,6 @@ export class Session {
         zoomHistory: [],
     };
 
-    private _name: string | null;
-    private _phase: Phase = 'configuring';
-    private _units: InsightUnit[] = [];
-    private _availableUnits: InsightUnit[] = [];
     pinnedUnits: InsightUnit[] = [];
     icon: JSX.Element | undefined;
     caches: Caches | null = null;
@@ -73,9 +69,6 @@ export class Session {
 
     // Frontend start time of recording.
     startRecordTime: TimeStamp;
-
-    // Relative to the startTimeOffset, which means that it will start from 0.
-    private _endTimeAll: TimeStamp | undefined;
 
     // Any data out of max duration would be dropped, Number.MAX_SAFE_INTEGER means unlimited
     maxDuration = Number.MAX_SAFE_INTEGER;
@@ -87,16 +80,12 @@ export class Session {
     selectedParams: SelectedParams = { baseRawId: undefined, curRawId: undefined };
     selectedRange: undefined | [ TimeStamp, TimeStamp ];
     scrollTop: number = 0;
-    private readonly _domain: Domain;
-    private _selectedUnitKeys: [string] | [] = [];
     expandedUnitKeys: string[] | [] = [];
     selectedUnits: [InsightUnit] | [] = []; // redundant for reducing extra computation
     selectedDetailKeys: [string] | [] = [];
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: Record<string, Record<string, unknown>> = {};
-    private _selectedData?: Record<string, unknown>;
-    private _selectedRangeData?: Array<Record<string, unknown>>;
-    searchData?: { content: string; [x: string]: unknown };
+    searchData?: { [x: string]: unknown; content: string; isMatchCase: boolean; isMatchExact: boolean };
     linkData?: LinkData;
     linkLines: LinkLines = {};
 
@@ -111,7 +100,6 @@ export class Session {
     locateUnit?: UnitMatcher;
 
     timer: ReturnType<typeof setInterval> | undefined;
-    private _interval: number;
 
     sharedState: Record<string, unknown> = {}; // used for sharing state across different units
 
@@ -119,6 +107,17 @@ export class Session {
     timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
 
     zoom: {zoomCount: number; zoomPoint?: number | undefined} | undefined;
+    private readonly _domain: Domain;
+    private _selectedUnitKeys: [string] | [] = [];
+    // Relative to the startTimeOffset, which means that it will start from 0.
+    private _endTimeAll: TimeStamp | undefined;
+    private _name: string | null;
+    private _phase: Phase = 'configuring';
+    private _units: InsightUnit[] = [];
+    private _availableUnits: InsightUnit[] = [];
+    private _selectedData?: Record<string, unknown>;
+    private _selectedRangeData?: Array<Record<string, unknown>>;
+    private _interval: number;
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {

@@ -408,12 +408,49 @@ TEST_F(TestSuit, QueryExtremumTimestamp)
     EXPECT_EQ(max, expectMax);
 }
 
-TEST_F(TestSuit, SearchSliceNameCount)
+TEST_F(TestSuit, SearchSliceNameCountWithFuzzyMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    int expectCount = 9523;
+    int expectCount = 91;
     SearchCountParams params;
-    params.searchContent = "AscendCL@";
+    params.searchContent = "Mul";
+
+    int count = database->SearchSliceNameCount(params);
+    EXPECT_EQ(count, expectCount);
+}
+
+TEST_F(TestSuit, SearchSliceNameCountWithExactMatch)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    int expectCount = 4;
+    SearchCountParams params;
+    params.isMatchExact = true;
+    params.searchContent = "Mul";
+
+    int count = database->SearchSliceNameCount(params);
+    EXPECT_EQ(count, expectCount);
+}
+
+TEST_F(TestSuit, SearchSliceNameCountWithCaseMatch)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    int expectCount = 55;
+    SearchCountParams params;
+    params.isMatchCase = true;
+    params.searchContent = "Mul";
+
+    int count = database->SearchSliceNameCount(params);
+    EXPECT_EQ(count, expectCount);
+}
+
+TEST_F(TestSuit, SearchSliceNameCountWithCaseAndExactMatch)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    int expectCount = 4;
+    SearchCountParams params;
+    params.isMatchExact = true;
+    params.isMatchCase = true;
+    params.searchContent = "Mul";
 
     int count = database->SearchSliceNameCount(params);
     EXPECT_EQ(count, expectCount);
@@ -422,7 +459,8 @@ TEST_F(TestSuit, SearchSliceNameCount)
 TEST_F(TestSuit, SearchSliceName)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    std::string sliceName = "Enqueue";
+    Dic::Protocol::SearchSliceParams params;
+    params.searchContent = "Enqueue";
     int index = 0;
     uint64_t minTimestamp = 0;
     Dic::Protocol::SearchSliceBody body;
@@ -433,7 +471,7 @@ TEST_F(TestSuit, SearchSliceName)
     int32_t expectDepth = 3;
     uint64_t expectDuration = 18250;
 
-    database->SearchSliceName(sliceName, index, minTimestamp, body);
+    database->SearchSliceName(params, index, minTimestamp, body);
     EXPECT_EQ(body.pid, expectPid);
     EXPECT_EQ(body.tid, expectTid);
     EXPECT_EQ(body.startTime, expectStartTime);
