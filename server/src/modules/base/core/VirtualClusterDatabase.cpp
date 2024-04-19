@@ -242,8 +242,25 @@ double VirtualClusterDatabase::ExecuteQueryMinStartTime(std::string sql)
     return minStartTime;
 }
 
+bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare Cluster::QueryExtremumTimestamp statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_int64(stmt, col++);
+        max = sqlite3_column_int64(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsParam &param,
-    Protocol::OperatorDetailsResBody &resBody, std::string sql, double startTime)
+    Protocol::OperatorDetailsResBody &resBody, std::string sql, uint64_t startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     std::vector<std::string> orderByFlagVector = {"operatorName", "startTime", "elapseTime", "synchronizationTime",
@@ -262,7 +279,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_double(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
@@ -441,7 +458,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
 }
 
 bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
-    std::vector<Protocol::Duration> &responseBody, std::string sql, double startTime)
+    std::vector<Protocol::Duration> &responseBody, std::string sql, uint64_t startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -454,7 +471,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_double(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
@@ -477,7 +494,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
 }
 
 bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListParams &requestParams,
-    Protocol::OperatorListsResponseBody &responseBody, const std::string& sql, double startTime)
+    Protocol::OperatorListsResponseBody &responseBody, const std::string& sql, uint64_t startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -489,7 +506,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Operator List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_double(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     if (requestParams.operatorName != totalOpInfo) {

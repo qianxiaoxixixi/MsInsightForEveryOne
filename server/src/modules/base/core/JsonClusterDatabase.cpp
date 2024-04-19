@@ -8,6 +8,7 @@
 #include "SummaryProtocolResponse.h"
 #include "TableDefs.h"
 #include "NumDefs.h"
+#include "TraceTime.h"
 
 namespace Dic {
 namespace Module {
@@ -620,28 +621,30 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
     return sql;
 }
 
-double JsonClusterDatabase::QueryMinStartTime()
+bool JsonClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
-    std::string sql = "SELECT MIN(start_time) FROM " + TABLE_TIME_INFO + " WHERE start_time != 0";
-    return ExecuteQueryMinStartTime(sql);
+    std::string sql = "SELECT (MIN(start_time) * 1000) as minTime, (MAX(start_time) * 1000) as maxTime "
+                      "FROM " + TABLE_TIME_INFO + " WHERE start_time != 0";
+    return ExecuteQueryExtremumTimestamp(sql, min, max);
 }
 
 bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    double startTime = QueryMinStartTime();
-    std::string sql = "SELECT op_name as operatorName, "
-                      " CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 4) END as startTime,"
-                      " ROUND(elapse_time, 4) as elapseTime, "
-                      " ROUND(transit_time, 4) as transitTime,"
-                      " ROUND(synchronization_time, 4) as synchronizationTime,"
-                      " ROUND(wait_time, 4) as waitTime,"
-                      " ROUND(idle_time, 4) as idleTime,"
-                      " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
-                      " ROUND(wait_time_ratio, 4) as waitTimeRatio "
-                      "FROM " + TABLE_TIME_INFO +
-                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
-                      " AND op_name != 'Total Op Info' ";
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::string sql =
+        "SELECT op_name as operatorName, "
+        " CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time * 1000 - ?) / 1000000.0, 4) END as startTime,"
+        " ROUND(elapse_time, 4) as elapseTime, "
+        " ROUND(transit_time, 4) as transitTime,"
+        " ROUND(synchronization_time, 4) as synchronizationTime,"
+        " ROUND(wait_time, 4) as waitTime,"
+        " ROUND(idle_time, 4) as idleTime,"
+        " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
+        " ROUND(wait_time_ratio, 4) as waitTimeRatio "
+        "FROM " + TABLE_TIME_INFO +
+        " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
+        " AND op_name != 'Total Op Info' ";
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 
@@ -722,16 +725,16 @@ bool JsonClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRank
 bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
     std::vector<Protocol::Duration> &responseBody)
 {
-    double startTime = QueryMinStartTime();
+    uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql =
-            "SELECT rank_id, "
-            "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 4) END as startTime, "
-            "ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
-            "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-            "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-            "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
-            " WHERE iteration_id = ? AND stage_id = ?";
+        "SELECT rank_id, "
+        "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time * 1000 - ?) / 1000000.0, 4) END as startTime, "
+        "ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+        "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
+        "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
+        "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
+        " WHERE iteration_id = ? AND stage_id = ?";
     if (rankList.empty()) {
         sql += " AND op_name = ?";
     } else {
@@ -745,10 +748,10 @@ bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     Protocol::OperatorListsResponseBody &responseBody)
 {
     std::string sql =
-            "SELECT rank_id, op_name,"
-            " CASE WHEN start_time == 0 THEN 0 ELSE (start_time - ?) END as startTime,"
-            " ROUND((elapse_time * 1000), 3) as elapse_time From " + TABLE_TIME_INFO +
-            " WHERE iteration_id = ? AND stage_id = ? AND op_name <> 'Total Op Info'";
+        "SELECT rank_id, op_name,"
+        " CASE WHEN start_time == 0 THEN 0 ELSE (start_time * 1000 - ?) / 1000.0 END as startTime,"
+        " ROUND((elapse_time * 1000), 3) as elapse_time From " + TABLE_TIME_INFO +
+        " WHERE iteration_id = ? AND stage_id = ? AND op_name <> 'Total Op Info'";
     std::vector<std::string> rankList = requestParams.rankList;
     if (!rankList.empty()) {
         std::string ranks = GetRanksSql(rankList);
@@ -758,7 +761,7 @@ bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
         sql += " AND op_name = ?";
     }
     sql += " ORDER by rank_id ASC";
-    double startTime = QueryMinStartTime();
+    uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
 }
 

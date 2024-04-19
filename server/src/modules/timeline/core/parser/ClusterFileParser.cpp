@@ -11,13 +11,13 @@
 #include "CommunicationRapidSaxHandler.h"
 #include "FileUtil.h"
 #include "ValidateUtil.h"
-#include "ExecUtil.h"
 #include "ConstantDefs.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
 #include "JsonUtil.h"
 #include "NumDefs.h"
 #include "DbClusterDataBase.h"
+#include "TraceTime.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -116,12 +116,22 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         ServerLog::Error("Init cluster database occur an err");
         return false;
     }
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (database == nullptr) {
+        ServerLog::Error("Can't get cluster database.");
+        return false;
+    }
     if (!needClearDb) {
         ServerLog::Info("cluster db file is already exist, skip parse ");
         ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+        uint64_t min = UINT64_MAX;
+        uint64_t max = 0;
+        database->QueryExtremumTimestamp(min, max);
+        if (min != UINT64_MAX && max != 0) {
+            Timeline::TraceTime::Instance().UpdateTime(min, max);
+        }
         return true;
     }
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // parse communication file
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
@@ -184,6 +194,12 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
     }
     database->UpdateClusterParseStatus(FINISH_STATUS);
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+    uint64_t min = UINT64_MAX;
+    uint64_t max = 0;
+    database->QueryExtremumTimestamp(min, max);
+    if (min != UINT64_MAX && max != 0) {
+        Timeline::TraceTime::Instance().UpdateTime(min, max);
+    }
     return true;
 }
 

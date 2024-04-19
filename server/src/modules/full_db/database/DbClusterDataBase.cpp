@@ -7,6 +7,7 @@
 #include "FileUtil.h"
 #include "JsonUtil.h"
 #include "ServerLog.h"
+#include "TraceTime.h"
 
 namespace Dic {
 using namespace Server;
@@ -134,18 +135,19 @@ bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
     return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
-double DbClusterDataBase::QueryMinStartTime()
+bool DbClusterDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
-    std::string sql = "SELECT MIN(start_timestamp) FROM " + TABLE_COMM_ANALYZER_TIME + " WHERE start_timestamp != 0";
-    return ExecuteQueryMinStartTime(sql);
+    std::string sql = "SELECT MIN(start_timestamp) * 1000 as minTime, MAX(start_timestamp) * 1000 as maxTime "
+                      "FROM " + TABLE_COMM_ANALYZER_TIME + " WHERE start_timestamp != 0";
+    return ExecuteQueryExtremumTimestamp(sql, min, max);
 }
 
 bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    double startTime = QueryMinStartTime();
+    uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::string sql = "SELECT hccl_op_name as operatorName, "
-                      " ROUND((start_timestamp - ?) / 1000.0, 4) as startTime,"
+                      " ROUND((start_timestamp * 1000 - ?) / 1000000.0, 3) as startTime,"
                       " ROUND(elapsed_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
@@ -268,19 +270,19 @@ bool DbClusterDataBase::QueryIterations(std::vector<Protocol::IterationsOrRanksO
 bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestParams,
     std::vector<Protocol::Duration> &responseBody)
 {
-    double startTime = QueryMinStartTime();
+    uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql = "SELECT rank_id, "
-            "CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp - ?) / 1000.0, 4) END as start_time, "
-            "ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
-            "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-            "ROUND(idle_time, 4) as idle_time, "
-            " CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
-            " / (synchronization_time + transit_time), 4) END AS synchronization_time_ratio,"
-            " CASE WHEN wait_time = 0 THEN 0 ELSE "
-            " ROUND(wait_time / (wait_time + transit_time), 4) END AS wait_time_ratio"
-            " FROM " + TABLE_COMM_ANALYZER_TIME +
-            " WHERE step = ? AND rank_set = ?";
+        "CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp * 1000 - ?) / 1000000.0, 4) END, "
+        "ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+        "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
+        "ROUND(idle_time, 4) as idle_time, "
+        " CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
+        " / (synchronization_time + transit_time), 4) END AS synchronization_time_ratio,"
+        " CASE WHEN wait_time = 0 THEN 0 ELSE "
+        " ROUND(wait_time / (wait_time + transit_time), 4) END AS wait_time_ratio"
+        " FROM " + TABLE_COMM_ANALYZER_TIME +
+        " WHERE step = ? AND rank_set = ?";
     if (rankList.empty()) {
         sql += " AND hccl_op_name = ?";
     } else {
@@ -295,10 +297,10 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
     Protocol::OperatorListsResponseBody &responseBody)
 {
     std::string sql =
-            "SELECT rank_id, hccl_op_name as op_name,"
-            " CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp - ?) / 1000.0, 3) END as start_time, "
-            " ROUND(elapsed_time, 3) as elapse_time From " + TABLE_COMM_ANALYZER_TIME +
-            " WHERE step = ? AND rank_set = ? AND hccl_op_name <> 'Total Op Info'";
+        "SELECT rank_id, hccl_op_name as op_name,"
+        " CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp * 1000- ?) / 1000.0, 3) END as start_time, "
+        " ROUND(elapsed_time, 3) as elapse_time From " + TABLE_COMM_ANALYZER_TIME +
+        " WHERE step = ? AND rank_set = ? AND hccl_op_name <> 'Total Op Info'";
     std::vector<std::string> rankList = requestParams.rankList;
     if (!rankList.empty()) {
         std::string ranks = GetRanksSql(rankList);
@@ -309,7 +311,7 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
     }
     sql += " ORDER by rank_id ASC";
     requestParams.iterationId = "step" + requestParams.iterationId;
-    double startTime = QueryMinStartTime();
+    uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
 }
 
