@@ -118,6 +118,8 @@ struct ResetWindowRequest : public Request {
 };
 
 struct SearchCountParams {
+    bool isMatchCase = false;
+    bool isMatchExact = false;
     std::string rankId;
     std::string searchContent;
 };
@@ -128,6 +130,8 @@ struct SearchCountRequest : public Request {
 };
 
 struct SearchSliceParams {
+    bool isMatchCase = false;
+    bool isMatchExact = false;
     std::string rankId;
     std::string searchContent;
     int index = 0;

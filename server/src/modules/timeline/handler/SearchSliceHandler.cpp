@@ -35,7 +35,7 @@ void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    if (!database->SearchSliceName(request.params.searchContent, request.params.index - 1,
+    if (!database->SearchSliceName(request.params, request.params.index - 1,
                                    TraceTime::Instance().GetStartTime(), response.body)) {
         ServerLog::Error("Failed to search slice name. rankId:", request.params.rankId, ", searchContent:",
                          request.params.searchContent, ", index:", request.params.index);

@@ -200,6 +200,8 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchCountRequest(const json_t &js
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isMatchCase, json["params"], "isMatchCase");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isMatchExact, json["params"], "isMatchExact");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchContent, json["params"], "searchContent");
     return reqPtr;
@@ -212,6 +214,8 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchSliceRequest(const json_t &js
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isMatchCase, json["params"], "isMatchCase");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isMatchExact, json["params"], "isMatchExact");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchContent, json["params"], "searchContent");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.index, json["params"], "index");

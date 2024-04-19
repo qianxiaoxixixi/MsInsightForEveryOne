@@ -243,29 +243,8 @@ bool DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
 
 int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
 {
-    std::string sql;
-    if (strcmp(params.rankId.c_str(), "Host") == 0) {
-        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
-              " SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API;
-        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += " union all select name from  " + TABLE_API;
-        }
-        sql += ") api join ids on id = api.name";
-    } else {
-        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), "
-              "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
-              "     com as (select opId, info.globalTaskId, name from COMMUNICATION_TASK_INFO info join tasks "
-              " on  info.globalTaskId = tasks.globalTaskId), "
-              "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
-              " on  info.globalTaskId = tasks.globalTaskId) "
-              "select count(1) from ( "
-              "    select coalesce(compute.name, main.taskType) as name from tasks main "
-              "         left join compute on compute.globalTaskId = main.globalTaskId "
-              "    union ALL select name from com "
-              "    union ALL select opName as name from COMMUNICATION_OP op join (select opId from com group by opId) a"
-              " on op.opId = a.opId "
-              ") allNames join ids on id = allNames.name;";
-    }
+    int32_t result = 0;
+    const std::string &sql = GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase, params.rankId);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceNameCount failed!.");
@@ -277,9 +256,9 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
         return 0;
     }
     if (resultSet->Next()) {
-        return resultSet->GetInt32(resultStartIndex);
+        result =  resultSet->GetInt32(resultStartIndex);
     }
-    return 0;
+    return result;
 }
 
 bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories)
@@ -288,43 +267,16 @@ bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories
     return true;
 }
 
-bool DbTraceDataBase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                                       Protocol::SearchSliceBody &responseBody)
 {
-    std::string sql;
-    if (strcmp(responseBody.rankId.c_str(), path.c_str()) == 0) {
-        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
-              "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
-              " depth, api.id, 'HOST' as metaType ,? as rankId"
-              " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " + TABLE_CANN_API;
-        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth,"
-                   " ROWID as id, name from " + TABLE_API;
-        }
-        sql += " ) api join ids on ids.id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
-    } else {
-        sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), minTime as (select ? as value),\n"
-              " tasks as (select ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
-              " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
-              " where deviceId = ? ORDER BY startTime),\n"
-              " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
-              " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
-              " ORDER BY startTime)\n"
-              " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
-              " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
-              " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
-              " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
-              " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
-              " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
-              " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
-              " on op.opId = a.opId ORDER BY startTime ) allNames join ids on ids.id = allNames.name LIMIT 1 OFFSET ?";
-    }
+    const std::string &sql = GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase, responseBody.rankId);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceName failed!.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(name, minTimestamp, responseBody.rankId, index);
+    auto resultSet = stmt->ExecuteQuery(params.searchContent, minTimestamp, responseBody.rankId, index);
     if (resultSet == nullptr || !resultSet->Next()) {
         ServerLog::Error("SearchSliceName. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -975,7 +927,7 @@ bool DbTraceDataBase::SetConfig()
     if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
         ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
     }
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA case_sensitive_like=1; PRAGMA journal_mode = MEMORY;");
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
@@ -1263,5 +1215,86 @@ bool DbTraceDataBase::QueryDurationFromTaskByTimeRange(const Protocol::ThreadDet
         nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
     }
     return true;
+}
+
+std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId)
+{
+    std::string sql;
+    std::string nameMatch;
+    if (isMatchExact && isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like ?";
+    } else if (isMatchExact) {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower(?)";
+    } else if (isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    if (strcmp(rankId.c_str(), path.c_str()) == 0) {
+        sql = "with ids as (" + nameMatch + ") "
+              "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
+              " depth, api.id, 'HOST' as metaType ,? as rankId"
+              " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " + TABLE_CANN_API;
+        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
+            sql += " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth,"
+                   " ROWID as id, name from " + TABLE_API;
+        }
+        sql += " ) api join ids on ids.id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
+    } else {
+        sql = "with ids as (" + nameMatch + "), minTime as (select ? as value),\n"
+              " tasks as (select ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
+              " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
+              " where deviceId = ? ORDER BY startTime),\n"
+              " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
+              " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
+              " ORDER BY startTime)\n"
+              " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
+              " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
+              " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
+              " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
+              " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
+              " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
+              " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
+              " on op.opId = a.opId ORDER BY startTime ) allNames join ids on ids.id = allNames.name LIMIT 1 OFFSET ?";
+    }
+    return sql;
+}
+
+std::string DbTraceDataBase::GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId)
+{
+    std::string sql;
+    std::string nameMatch;
+    if (isMatchExact && isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like ?";
+    } else if (isMatchExact) {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower(?)";
+    } else if (isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    if (strcmp(rankId.c_str(), "Host") == 0) {
+        sql = "with ids as (" + nameMatch + ") "
+                                            " SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API;
+        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
+            sql += " union all select name from  " + TABLE_API;
+        }
+        sql += ") api join ids on id = api.name";
+    } else {
+        sql = "with ids as (" + nameMatch + "), "
+              "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
+              "     com as (select opId, info.globalTaskId, name from COMMUNICATION_TASK_INFO info join tasks "
+              " on  info.globalTaskId = tasks.globalTaskId), "
+              "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
+              " on  info.globalTaskId = tasks.globalTaskId) "
+              "select count(1) from ( "
+              "    select coalesce(compute.name, main.taskType) as name from tasks main "
+              "         left join compute on compute.globalTaskId = main.globalTaskId "
+              "    union ALL select name from com "
+              "    union ALL select opName as name from COMMUNICATION_OP op join (select opId from com group by opId) a"
+              " on op.opId = a.opId "
+              ") allNames join ids on id = allNames.name;";
+    }
+    return sql;
 }
 }

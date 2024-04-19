@@ -71,7 +71,7 @@ public:
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
         uint64_t minTimestamp, int64_t trackId) override;
     int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
-    bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+    bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
         Protocol::SearchSliceBody &responseBody) override;
     bool QueryFlowCategoryList(std::vector<std::string> &categories) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,

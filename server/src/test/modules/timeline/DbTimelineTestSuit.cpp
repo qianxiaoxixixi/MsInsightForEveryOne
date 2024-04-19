@@ -7,7 +7,7 @@
 class DbTimelineTestSuit : FullDbTestSuit {
 };
 
-TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCount)
+TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
     int expectCount = 9;
@@ -19,11 +19,52 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCount)
     EXPECT_EQ(count, expectCount);
 }
 
+TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseMatch)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    int expectCount = 0;
+    Dic::Protocol::SearchCountParams params;
+    params.searchContent = "Hcom";
+    params.rankId = "2"; // cardId = 2
+    params.isMatchCase = true;
+
+    auto count = database->SearchSliceNameCount(params);
+    EXPECT_EQ(count, expectCount);
+}
+
+TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithExactMatch)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    int expectCount = 3;
+    Dic::Protocol::SearchCountParams params;
+    params.searchContent = "aclnnInplaceadd";
+    params.rankId = "2"; // cardId = 2
+    params.isMatchExact = true;
+
+    auto count = database->SearchSliceNameCount(params);
+    EXPECT_EQ(count, expectCount);
+}
+
+TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithCaseAndExactMatch)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    int expectCount = 0;
+    Dic::Protocol::SearchCountParams params;
+    params.searchContent = "aclnnInplaceadd";
+    params.rankId = "2"; // cardId = 2
+    params.isMatchExact = true;
+    params.isMatchCase = true;
+
+    auto count = database->SearchSliceNameCount(params);
+    EXPECT_EQ(count, expectCount);
+}
+
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
 {
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    std::string sliceName = "hcom";
+    Dic::Protocol::SearchSliceParams params;
+    params.searchContent = "hcom";
     int index = 0;
     Dic::Protocol::SearchSliceBody body;
 
@@ -34,7 +75,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
     int32_t expectDepth = 0;
     uint64_t expectDuration = 51121;
 
-    database->SearchSliceName(sliceName, index, minTimestamp, body);
+    database->SearchSliceName(params, index, minTimestamp, body);
     EXPECT_EQ(body.pid, expectPid);
     EXPECT_EQ(body.tid, expectTid);
     EXPECT_EQ(body.startTime, expectStartTime);
