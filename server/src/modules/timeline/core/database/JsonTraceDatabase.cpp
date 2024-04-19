@@ -84,9 +84,14 @@ bool JsonTraceDatabase::InitProcessThreadStmt()
     sql = "INSERT INTO " + threadTable + " (track_id, thread_sort_index) VALUES (?, ?) " +
         " ON CONFLICT (track_id) DO UPDATE SET thread_sort_index = excluded.thread_sort_index;";
     updateThreadSortIndexStmt = CreatPreparedStatement(sql);
+    sql = "INSERT INTO " + threadTable +
+        " (track_id, tid, pid, thread_name, thread_sort_index) VALUES (?, ?, ?, ?, ?)" +
+        " ON CONFLICT (track_id) DO UPDATE " +
+        " SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name;";
+    simulationInsertThreadNameStmt = CreatPreparedStatement(sql);
     if (updateProcessNameStmt == nullptr || updateProcessLabelStmt == nullptr ||
         updateProcessSortIndexStmt == nullptr || updateThreadInfoStmt == nullptr || updateThreadNameStmt == nullptr ||
-        updateThreadSortIndexStmt == nullptr) {
+        updateThreadSortIndexStmt == nullptr || simulationInsertThreadNameStmt == nullptr) {
         ServerLog::Error("Failed to prepare process and thread statement.");
         return false;
     }
@@ -101,7 +106,6 @@ void JsonTraceDatabase::ReleaseStmt()
     initStmt = false;
     // stmt对象需要在关闭数据库之前释放
     insertSliceStmt = nullptr;
-    updateSliceStmt = nullptr;
     updateProcessNameStmt = nullptr;
     updateProcessLabelStmt = nullptr;
     updateProcessSortIndexStmt = nullptr;
@@ -110,6 +114,7 @@ void JsonTraceDatabase::ReleaseStmt()
     updateThreadSortIndexStmt = nullptr;
     insertFlowStmt = nullptr;
     insertCounterStmt = nullptr;
+    simulationInsertThreadNameStmt = nullptr;
 }
 
 bool JsonTraceDatabase::SetConfig()
@@ -290,15 +295,16 @@ bool JsonTraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std:
 
 bool JsonTraceDatabase::InsertSimulationThreadList()
 {
-    if (updateThreadNameStmt == nullptr) {
-        ServerLog::Error("Update thread info fail. ");
+    if (simulationInsertThreadNameStmt == nullptr) {
+        ServerLog::Error("Insert thread info fail. ");
         return false;
     }
     for (const auto &item : simulationThreadInfoCache) {
-        updateThreadNameStmt->Reset();
+        simulationInsertThreadNameStmt->Reset();
         std::unique_lock<std::mutex> lock(mutex);
-        if (!updateThreadNameStmt->Execute(item.trackId, item.tid, item.pid, item.threadName)) {
-            ServerLog::Error("Update thread info fail. ", updateThreadNameStmt->GetErrorMessage());
+        if (!simulationInsertThreadNameStmt->Execute(item.trackId, item.tid, item.pid, item.threadName,
+            item.threadSortIndex)) {
+            ServerLog::Error("Insert thread info fail. ", simulationInsertThreadNameStmt->GetErrorMessage());
             return false;
         }
     }
@@ -452,6 +458,29 @@ std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetCounterStmt(uint6
         sql.append(",(?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
+}
+
+void JsonTraceDatabase::SimulationUpdateProcessSortIndex()
+{
+    std::vector<Protocol::SimpleSlice> simpleSliceVec;
+    std::string queryAllProcess = "select pid FROM " + processTable + " ORDER BY process_name, pid;";
+    auto processStmt = CreatPreparedStatement(queryAllProcess);
+    if (processStmt == nullptr) {
+        ServerLog::Error("SimulationUpdateProcessSortIndex. Failed to prepare sql.", GetLastError());
+        return;
+    }
+    auto processResultSet = processStmt->ExecuteQuery();
+    if (processResultSet == nullptr) {
+        ServerLog::Error("SimulationUpdateProcessSortIndex. Failed to get result set.", processStmt->GetErrorMessage());
+        return;
+    }
+    uint32_t order = 0;
+    while (processResultSet->Next()) {
+        Trace::MetaData event;
+        event.pid = processResultSet->GetString("pid");
+        event.args.sortIndex = ++order;
+        UpdateProcessSortIndex(event);
+    }
 }
 
 void JsonTraceDatabase::UpdateSimulationDepthWithNoOverlap()
@@ -1290,9 +1319,7 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         " ORDER BY "
         " pt.process_sort_index ASC, "
         " pt.thread_sort_index ASC, "
-        " pt.name ASC,"
-        " pt.process_name ASC,"
-        " pt.thread_name ASC;";
+        " pt.name ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryUnitsMetadata failed!.");
@@ -2081,7 +2108,7 @@ uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
     return total;
 }
 
-bool JsonTraceDatabase::UpdateParseStatus(const std::string& status)
+bool JsonTraceDatabase::UpdateParseStatus(const std::string &status)
 {
     return UpdateValueIntoStatusInfoTable(timelineParseStatus, status, mutex);
 }

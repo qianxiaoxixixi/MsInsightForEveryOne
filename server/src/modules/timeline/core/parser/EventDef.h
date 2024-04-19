@@ -7,6 +7,7 @@
 
 #include <string>
 #include <optional>
+#include <map>
 
 namespace Dic {
 namespace Module {
@@ -51,12 +52,21 @@ struct ThreadEvent : public Event {
     std::string tid;
     std::string pid;
     std::string threadName;
+    uint32_t threadSortIndex = 0;
     bool operator < (const ThreadEvent &right) const
     {
         if (trackId < right.trackId) {
             return true;
         }
         return false;
+    }
+
+    void SetThreadSortIndex()
+    {
+        static std::map<std::string, uint32_t> orderMap = { { "SCALAR", 1 }, { "FLOWCTRL", 2 }, { "MTE1", 3 },
+                                                            { "CUBE", 4 },   { "FIXP", 5 },     { "MTE2", 6 },
+                                                            { "VECTOR", 7 }, { "MTE3", 8 },     { "CACHEMISS", 9 } };
+        threadSortIndex = orderMap[threadName];
     }
 };
 

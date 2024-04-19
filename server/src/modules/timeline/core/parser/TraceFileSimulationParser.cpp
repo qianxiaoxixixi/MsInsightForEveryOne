@@ -136,6 +136,7 @@ void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const st
     }
     database->CreateIndex();
     database->UpdateSimulationDepthWithNoOverlap();
+    database->SimulationUpdateProcessSortIndex();
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }

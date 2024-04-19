@@ -109,6 +109,8 @@ public:
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
 
+    void SimulationUpdateProcessSortIndex();
+
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
@@ -136,7 +138,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> updateThreadSortIndexStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
-    std::unique_ptr<SqlitePreparedStatement> updateSliceStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> simulationInsertThreadNameStmt = nullptr;
 
     std::vector<Trace::Slice> sliceCache;
     std::list<Protocol::SimpleSlice> sliceDepthHelper;
@@ -170,9 +172,6 @@ private:
     std::vector<std::string> GetCounterDataType(const std::string &args);
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
         Protocol::KernelDetailsBody &responseBody) const;
-
-    bool UpdateSimulationSliceDepth(std::list<Protocol::SimpleSlice> &sliceLinkedList);
-
     std::vector<int32_t> QueryAllTrackId();
 
     std::vector<Protocol::SimpleSlice> QueryAllSliceByTrackId(const int32_t &trackId);
