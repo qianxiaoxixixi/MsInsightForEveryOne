@@ -20,11 +20,13 @@ function wrapData(dataSource: AnalysisChartData): any {
     dataSource?.data?.forEach((item, index) => {
         yAxisData.push(item.rankId);
         item?.lists?.forEach((childItem, _) => {
-            const time = childItem.startTime + childItem.duration;
+            const startTime = usToMs(childItem.startTime);
+            const duration = usToMs(childItem.duration);
+            const endTime = startTime + duration;
             data.push(
                 {
                     name: childItem.operatorName,
-                    value: [index, childItem.startTime, time, childItem.duration],
+                    value: [index, startTime, endTime, duration],
                     itemStyle: {
                         normal: {
                             color: colorPalette[hashToNumber(childItem.operatorName, colorPalette.length)],
@@ -35,8 +37,8 @@ function wrapData(dataSource: AnalysisChartData): any {
         });
     });
     option.yAxis.data = yAxisData;
-    option.xAxis.min = dataSource.minTime;
-    option.xAxis.max = dataSource.maxTime;
+    option.xAxis.min = usToMs(dataSource.minTime);
+    option.xAxis.max = usToMs(dataSource.maxTime);
     const dataHeight = calculateDataHeight(dataSource);
     option.grid.height = dataHeight;
     option.dataZoom[0].top = dataHeight - DEFAULT_INNER_CHART_HEIGHT + DEFAULT_CHART_ZOOM_HEIGHT;
@@ -73,20 +75,26 @@ function renderItem(params: any, api: any): any {
     );
 }
 
+function numberToStr(value: number): string {
+    return `${value.toFixed(6).replace(/\.?0+$/, '')}`;
+}
+function usToMs(value: number): number {
+    return value * 0.001;
+}
 function getTipLineStr(name: string, value: string): string {
-    let html = '';
-    html += `${safeStr((`${name}`))}`;
+    let html = `${name}`;
     html += `<strong style="color: black">${safeStr((`${value}`))}</strong><br/>`;
     return html;
 }
 
 const option: any = {
     tooltip: {
-        formatter: function (params: {marker: any; name: any; value: string[] }) {
-            let tooltipMarkup = `${params.marker} ${safeStr((`${params.value[0]}`))}<br/>`;
-            tooltipMarkup += getTipLineStr('Operator Name : ', `${params.name}`);
-            tooltipMarkup += getTipLineStr('Start Time : ', `${params.value[1]}`);
-            tooltipMarkup += getTipLineStr('Elapse Time : ', `${params.value[3]}`);
+        formatter: function (params: {marker: any; name: any; value: any[] }) {
+            let tooltipMarkup = `${params.marker} `;
+            tooltipMarkup += getTipLineStr('Rank ID: ', `${params.value[0]}`);
+            tooltipMarkup += getTipLineStr('Operator Name: ', `${params.name}`);
+            tooltipMarkup += getTipLineStr('Start Time: ', `${numberToStr(params.value[1])}ms`);
+            tooltipMarkup += getTipLineStr('Elapse Time: ', `${numberToStr(params.value[3])}ms`);
             return tooltipMarkup;
         },
     },
@@ -109,14 +117,16 @@ const option: any = {
     },
     xAxis: {
         scale: true,
+        name: 'Time(ms)',
         axisLabel: {
             formatter: function (val: number) {
-                return `${Math.max(0, val)} ms`;
+                return numberToStr(Math.max(0, val));
             },
         },
     },
     yAxis: {
         data: [],
+        name: 'Rank ID',
     },
     series: [
         {
