@@ -13,29 +13,31 @@ const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
 const DEFAULT_CHART_ZOOM_HEIGHT = 400;
 const MIN_CHART_ITEM_HEIGHT = 30;
-const MAX_CHART_HEIGHT = 10000;
+const MAX_CHART_HEIGHT = 800;
 function wrapData(dataSource: AnalysisChartData): any {
     const data: any = [];
     const yAxisData: string[] = [];
-    dataSource?.data?.forEach((item, index) => {
-        yAxisData.push(item.rankId);
-        item?.lists?.forEach((childItem, _) => {
-            const startTime = usToMs(childItem.startTime);
-            const duration = usToMs(childItem.duration);
+    const dataLength = Math.max(dataSource?.data?.length, 0);
+    for (let i = dataLength - 1; i >= 0; --i) {
+        const rankId = dataSource.data[i].rankId;
+        yAxisData.push(rankId);
+        dataSource.data[i].lists?.forEach((item, _) => {
+            const startTime = usToMs(item.startTime);
+            const duration = usToMs(item.duration);
             const endTime = startTime + duration;
             data.push(
                 {
-                    name: childItem.operatorName,
-                    value: [index, startTime, endTime, duration],
+                    name: item.operatorName,
+                    value: [rankId, startTime, endTime, duration],
                     itemStyle: {
                         normal: {
-                            color: colorPalette[hashToNumber(childItem.operatorName, colorPalette.length)],
+                            color: colorPalette[hashToNumber(item.operatorName, colorPalette.length)],
                         },
                     },
                 },
             );
         });
-    });
+    }
     option.yAxis.data = yAxisData;
     option.xAxis.min = usToMs(dataSource.minTime);
     option.xAxis.max = usToMs(dataSource.maxTime);
@@ -105,6 +107,14 @@ const option: any = {
             filterMode: 'weakFilter',
             showDataShadow: false,
             top: DEFAULT_CHART_ZOOM_HEIGHT,
+            labelFormatter: '',
+        },
+        {
+            type: 'slider',
+            filterMode: 'weakFilter',
+            showDataShadow: false,
+            left: '95%',
+            yAxisIndex: 0,
             labelFormatter: '',
         },
         {
