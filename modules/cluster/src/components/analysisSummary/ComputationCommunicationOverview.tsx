@@ -266,6 +266,10 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
         }
         const res: any = await queryTopSummary(conditions);
         const { summaryList } = res;
+        if (conditions.orderBy === 'computingTime') {
+            summaryList.sort((a: any, b: any) =>
+                b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);
+        }
         const data = [...summaryList];
         setAllDatasource(data);
         setDatasource(conditions.top === 0 ? summaryList : summaryList.slice(0, conditions.top));
