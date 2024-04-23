@@ -13,9 +13,10 @@ void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatem
                                             std::map<std::string, std::string> &stringCache)
 {
     auto processType = GetProcessType(requestParams.metaType);
-    auto resultSet = QueryTaskCacheInfoById(stmt, requestParams);
+    bool attrInfoExist = isAttrInfoExist(stmt);
+    auto resultSet = QueryTaskCacheInfoById(stmt, requestParams, attrInfoExist);
     std::vector<std::string> types = {"inputShapes", "inputDataTypes", "inputFormats",
-                                      "outputShapes", "outputDataTypes", "outputFormats"};
+                                      "outputShapes", "outputDataTypes", "outputFormats", "attrInfo"};
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     if (resultSet.operator bool() && resultSet->Next()) {
@@ -26,6 +27,10 @@ void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatem
             responseBody.data.outputShapes = stringCache[resultSet->GetString("outputShapes")];
             responseBody.data.outputDataTypes = stringCache[resultSet->GetString("outputDataTypes")];
             responseBody.data.outputFormats = stringCache[resultSet->GetString("outputFormats")];
+            // 存在attrInfo，返回给前端展示在界面上
+            if (attrInfoExist) {
+                responseBody.data.attrInfo = stringCache[resultSet->GetString("attrInfo")];
+            }
         }
         for (auto &item: resultSet->GetColumns()) {
             if (std::find(types.begin(), types.end(), item.first) != types.end()) {
@@ -78,16 +83,24 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskCacheInfoById(
-    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::ThreadDetailParams &requestParams)
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::ThreadDetailParams &requestParams,
+    bool attrInfoExist)
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
     std::unique_ptr<SqliteResultSet> resultSet;
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            sql = "SELECT inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes,"
-                  " outputFormats, CTI.taskType, opType FROM TASK main join COMPUTE_TASK_INFO CTI"
-                  " on main.globalTaskId = CTI.globalTaskId  where main.ROWID = ?";
+            // 存在attrInfo字段，则查询出来
+            if (attrInfoExist) {
+                sql = "SELECT inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes,"
+                      " outputFormats, attrInfo, CTI.taskType, opType FROM TASK main join COMPUTE_TASK_INFO CTI"
+                      " on main.globalTaskId = CTI.globalTaskId  where main.ROWID = ?";
+            } else {
+                sql = "SELECT inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes,"
+                      " outputFormats, CTI.taskType, opType FROM TASK main join COMPUTE_TASK_INFO CTI"
+                      " on main.globalTaskId = CTI.globalTaskId  where main.ROWID = ?";
+            }
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::HCCL:
             sql = "SELECT com.taskType, com.groupName ,com.rdmaType,com.transportType, com.dataType, com.linkType "
@@ -102,6 +115,22 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskCacheInfoById(
         default:
             return resultSet;
     }
+}
+
+/**
+ * 兼容330的全量db数据，330交付的COMPUTE_TASK_INFO表中没有attrInfo这个字段，查询时先判断此字段是否存在
+ * @param stmt
+ * @return is attrInfo exist
+ */
+bool TraceDatabaseHelper::isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt)
+{
+    std::string sql = "SELECT count(*) FROM sqlite_master "
+                      "WHERE type = 'table' AND name = 'COMPUTE_TASK_INFO' AND sql LIKE '%attrInfo%';";
+    auto resultSet = ExecuteQuery(stmt, sql);
+    if (resultSet->Next()) {
+        return resultSet->GetInt64("count(*)");
+    }
+    return false;
 }
 
 }

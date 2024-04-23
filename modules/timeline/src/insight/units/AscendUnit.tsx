@@ -109,6 +109,7 @@ const singleSliceDetail = singleData({
         ['Output Shapes', (data: AscendSliceDetail): string => getDisplay(data.outputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
         ['Output Data Types', (data: AscendSliceDetail): string => getDisplay(data.outputDataTypes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
         ['Output Formats', (data: AscendSliceDetail): string => getDisplay(data.outputFormats), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
+        ['Attr Info', (data: AscendSliceDetail): string => getDisplay(data.attrInfo), (data: AscendSliceDetail): boolean => isHidden(data.attrInfo)],
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
@@ -125,21 +126,13 @@ const singleSliceDetail = singleData({
             timePerPx: session.domain.timePerPx,
         };
         const result = await window.request(metadata.dataSource, { command: 'unit/threadDetail', params });
+        const res = result?.data ?? {};
         const data: AscendSliceDetail = {
             pid: metadata?.processId,
             tid: metadata?.threadId,
-            title: result?.data?.title,
             startTime: selectedSliceData?.startTime,
             depth: selectedSliceData?.depth,
-            duration: result?.data?.duration,
-            selfTime: result?.data?.selfTime,
-            args: result?.data?.args,
-            inputShapes: result?.data?.inputShapes,
-            inputDataTypes: result?.data?.inputDataTypes,
-            inputFormats: result?.data?.inputFormats,
-            outputShapes: result?.data?.outputShapes,
-            outputDataTypes: result?.data?.outputDataTypes,
-            outputFormats: result?.data?.outputFormats,
+            ...res,
         };
         return data;
     },

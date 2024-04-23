@@ -250,7 +250,8 @@ static std::unique_ptr<SqliteResultSet> QueryTaskStrInfoById(std::unique_ptr<Sql
                                 const Protocol::ThreadDetailParams &requestParams);
 
 static std::unique_ptr<SqliteResultSet> QueryTaskCacheInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                    const Protocol::ThreadDetailParams &requestParams);
+                                    const Protocol::ThreadDetailParams &requestParams, bool attrInfoExist);
+static bool isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt);
 
     static  std::unique_ptr<SqliteResultSet> QueryThreadTraces(
             std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesParams &requestParams,
