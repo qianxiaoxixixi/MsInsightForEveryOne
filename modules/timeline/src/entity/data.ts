@@ -769,6 +769,7 @@ export type AscendSliceDetail = {
     outputShapes?: string;
     outputDataTypes?: string;
     outputFormats?: string;
+    attrInfo?: string;
 };
 
 export type AscendMultiSliceList = {

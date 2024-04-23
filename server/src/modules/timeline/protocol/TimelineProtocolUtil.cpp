@@ -144,6 +144,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(c
     JsonUtil::AddMember(data, "outputShapes", response.body.data.outputShapes, allocator);
     JsonUtil::AddMember(data, "outputDataTypes", response.body.data.outputDataTypes, allocator);
     JsonUtil::AddMember(data, "outputFormats", response.body.data.outputFormats, allocator);
+    JsonUtil::AddMember(data, "attrInfo", response.body.data.attrInfo, allocator);
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);

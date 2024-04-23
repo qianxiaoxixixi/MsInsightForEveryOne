@@ -100,6 +100,7 @@ struct ThreadDetail {
     std::string outputShapes;
     std::string outputDataTypes;
     std::string outputFormats;
+    std::string attrInfo;
 };
 
 struct UnitThreadDetailBody {
