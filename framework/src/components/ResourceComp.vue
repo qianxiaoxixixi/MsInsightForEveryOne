@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, reactive, onMounted, computed, watch} from 'vue';
+import {ref, reactive, onMounted, computed, watch, nextTick} from 'vue';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import FolderIcon from '@/components/icons/folder_icon.vue';
 import FileIcon from '@/components/icons/file_icon.vue';
@@ -130,6 +130,14 @@ const searchPath = async () => {
     return;
   }
   if (findFile) {
+    const nodeEI = document.getElementById(state.inputPath);
+    setTimeout(() => {
+      if (nodeEI) {
+        nextTick(() => {
+          nodeEI.scrollIntoView({behavior: "smooth", block: "center"});
+        })
+      }
+    },500);
     return;
   }
   if (exist && treeRef.value.getCurrentKey !== state.inputPath) {
@@ -255,7 +263,7 @@ defineExpose({
                             <FileIcon v-if="data.leaf" />
                             <FolderIcon v-else />
                         </el-icon>
-                        <span :name="data.path?.replace(/\\|:|\//g,'_').replace(/\./g, '--dot--')">{{ data.name }}</span>
+                        <span :name="data.path?.replace(/\\|:|\//g,'_').replace(/\./g, '--dot--')" :id="data.path">{{ data.name }}</span>
                     </div>
                 </template>
             </el-tree>
