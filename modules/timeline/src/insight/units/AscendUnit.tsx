@@ -34,7 +34,7 @@ import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
-import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
+import type { ChartHandle, ChartType, Scale, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
 // eslint-disable-next-line import/no-unresolved
 import ResizeTable from 'lib/ResizeTable';
@@ -199,30 +199,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         decorator: (session: Session, metaData: unknown) => {
             return {
                 action: async (handle, xScale, yScale, theme) => {
-                    if (!session.searchData) {
-                        return;
-                    }
-                    const name = session.searchData.content;
-                    const isAble = (it: {name: string}): boolean => {
-                        if (session.searchData?.isMatchCase === undefined) {
-                            return false;
-                        }
-                        if (session.searchData.isMatchExact && session.searchData.isMatchCase) {
-                            return it.name !== name;
-                        }
-                        if (session.searchData.isMatchExact) {
-                            return it.name.toLocaleLowerCase() !== session.searchData.content.toLocaleLowerCase();
-                        } else if (session.searchData.isMatchCase) {
-                            return !it.name.includes(name);
-                        } else {
-                            return !it.name.toLocaleLowerCase().includes(session.searchData.content.toLocaleLowerCase());
-                        }
-                    };
-                    const data = handle.findAll(isAble).map(it => it.map(notSelectedData => ({
-                        ...notSelectedData,
-                        color: 'transparentMask' as const,
-                    })));
-                    handle.draw(data, xScale, yScale);
+                    maskedNotSelectData(session, handle, xScale, yScale);
                     // click
                     const ctx = handle.context;
                     const selectedData = session.selectedData as ThreadTrace | undefined;
@@ -291,6 +268,33 @@ export const ThreadUnit = unit<ThreadMetaData>({
         });
     },
 });
+
+function maskedNotSelectData<T extends ChartType>(session: Session, handle: ChartHandle<T>, xScale: Scale, yScale: Scale): void {
+    if (session.searchData) {
+        const name = session.searchData.content;
+        const isAble = (item: any): boolean => {
+            if (session.searchData?.isMatchCase === undefined) {
+                return false;
+            }
+            const it = item as {name: string};
+            if (session.searchData.isMatchExact && session.searchData.isMatchCase) {
+                return it.name !== name;
+            }
+            if (session.searchData.isMatchExact) {
+                return it.name?.toLocaleLowerCase() !== session.searchData.content.toLocaleLowerCase();
+            } else if (session.searchData.isMatchCase) {
+                return !it.name?.includes(name);
+            } else {
+                return !it.name?.toLocaleLowerCase().includes(session.searchData.content.toLocaleLowerCase());
+            }
+        };
+        const data = handle.findAll(isAble).map((it: any) => it.map((notSelectedData: any) => ({
+            ...notSelectedData,
+            color: 'transparentMask' as const,
+        })));
+        handle.draw(data, xScale, yScale);
+    }
+}
 
 const SummaryChart = chart({
     type: 'status',
