@@ -40,11 +40,14 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
                       "sum(ROUND(free,2)) as freeTime FROM " + TABLE_STEP_TRACE_TIME +
                       " WHERE rankId !='' " + stepCondition + rankCondition
                       + "group by rankId ";
-
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
-    } else if (!requestParams.orderBy.empty()) {
-        sql += " ORDER by " + requestParams.orderBy + " desc ";
+    } else {
+        if (requestParams.orderBy == "rankId") {
+            sql += " ORDER by CAST(rankId AS UNSIGNED) asc";
+        } else {
+            sql += " ORDER by " + requestParams.orderBy + " desc";
+        }
     }
 
     return ExecuteQuerySummaryData(requestParams, responseBody, sql);

@@ -617,7 +617,16 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
                       "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
                       "sum(ROUND(free_time,2)) as freeTime FROM " + TABLE_STEP_TRACE +
                       " WHERE rank_id !='' " + stepCondition + rankCondition
-                      + "group by rank_id order by " + requestParams.orderBy + " desc";
+                      + "group by rank_id ";
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+    } else {
+        if (requestParams.orderBy == "rankId") {
+            sql += " ORDER by CAST(rankId AS UNSIGNED) asc";
+        } else {
+            sql += " ORDER by " + requestParams.orderBy + " desc";
+        }
+    }
     return sql;
 }
 

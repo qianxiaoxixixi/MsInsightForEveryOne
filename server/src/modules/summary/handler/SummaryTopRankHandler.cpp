@@ -29,7 +29,7 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     std::unique_ptr<SummaryTopRankResponse> responsePtr = std::make_unique<SummaryTopRankResponse>();
     SummaryTopRankResponse &response = *responsePtr.get();
     std::vector<std::string> timeFlagVector = {"computingTime", "communicationNotOverLappedTime",
-                                               "communicationOverLappedTime", "freeTime"};
+                                               "communicationOverLappedTime", "freeTime", "rankId"};
     if (request.params.orderBy.empty() ||
         std::find(timeFlagVector.begin(), timeFlagVector.end(), request.params.orderBy) ==
         timeFlagVector.end()) {
