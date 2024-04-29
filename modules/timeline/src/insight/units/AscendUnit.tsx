@@ -213,8 +213,6 @@ export const ThreadUnit = unit<ThreadMetaData>({
                         cardId: threadMetaData.cardId,
                         cname: data.cname,
                         id: data.id,
-                        step: data.step,
-                        group: data.group,
                     } as StackStatusData;
                 }));
             } catch (e) {
