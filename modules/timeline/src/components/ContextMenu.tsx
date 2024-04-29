@@ -5,11 +5,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
+import { runInAction } from 'mobx';
+import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
-import { runInAction } from 'mobx';
-import type { ThreadTrace } from '../entity/data';
-import { observer } from 'mobx-react';
+import type { ThreadTrace, ThreadMetaData } from '../entity/data';
 import type { TimeStamp } from '../entity/common';
 import connector from '../connection';
 
@@ -86,7 +86,17 @@ function fitToScreen(session: Session): void {
     });
 }
 
-function findInCommunication(session: Session): void {
+async function findInCommunication(session: Session): Promise<void> {
+    if (!session.selectedData) {
+        return;
+    }
+    const { startTime: timestamp, name, cardId: rankId } = session.selectedData;
+    const params = {
+        rankId,
+        name,
+        timestamp,
+    };
+    const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
     connector.send({
         event: 'switchModule',
         body: {
@@ -94,11 +104,12 @@ function findInCommunication(session: Session): void {
             toModuleEvent: 'locateHCCL',
             params: {
                 operatorName: session.selectedData?.name,
-                iterationId: session.selectedData?.step,
-                stage: session.selectedData?.group,
+                iterationId: res?.step,
+                stage: res?.group,
             },
         },
     });
+    session.contextMenu.isVisible = false;
 }
 
 function undoZoom(session: Session, menuItem?: MenuItemModel): void {
@@ -159,6 +170,9 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
 
 const getMenuItems = (props: Props): JSX.Element => {
     const { session, session: { contextMenu: { zoomHistory } } } = props;
+    const isGroupCommunicationUnit = (session.selectedUnits?.[0]?.metadata as ThreadMetaData)?.threadName?.startsWith('Group') ?? false;
+    const isCommunicationOperator = (session.selectedData?.name as string)?.startsWith('hcom_') ?? false;
+    const findInCommunicationVisible = isGroupCommunicationUnit && isCommunicationOperator && session.isCluster;
 
     const menuItems: MenuItemModel[] = [{
         name: 'Fit to screen',
@@ -169,7 +183,7 @@ const getMenuItems = (props: Props): JSX.Element => {
         name: 'Find in Communication',
         key: 'findInCommunication',
         event: findInCommunication,
-        visible: ((session.selectedData?.name as string)?.startsWith('hcom_') && session.isCluster) ?? false,
+        visible: findInCommunicationVisible,
     }, {
         name: 'Zoom into selection',
         key: 'zoomIntoSelection',
