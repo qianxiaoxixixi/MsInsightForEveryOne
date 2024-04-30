@@ -39,3 +39,12 @@ export const queryApiInstr = async(): Promise<any> => {
 export const queryBaseInfo = async(): Promise<any> => {
     return window.requestData('source/details/baseInfo', {});
 };
+
+/**
+ * 查询算子计算负载数据
+ *
+ * @return {[x:string]:string|number}
+ */
+export const queryComputeWorkload = async(): Promise<any> => {
+    return window.requestData('source/details/computeworkload', {});
+};

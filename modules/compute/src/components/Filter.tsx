@@ -8,7 +8,7 @@ import { Label } from './Common';
 import type { optionDataType, optionMapDataType } from '../utils/interface';
 import type { Session } from '../entity/session';
 
-export interface ConditionType {
+interface ConditionType {
     core: string ;
     source: string;
 };
@@ -33,7 +33,7 @@ const getOptionsAndValue = (initObj: ConditionType, initOptionMap: optionMapData
     return { optionMap: { coreOptions, sourceOptions }, condition: { core, source } };
 };
 
-function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T): T {
+export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T): T {
     if (options.length === 0) {
         return defaultVal;
     }
@@ -108,7 +108,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
     </div>);
 }
 
-const FormItem = (props: {name: string;style?: React.CSSProperties;content: ReactElement}): JSX.Element => {
+export function FormItem(props: {name: string;style?: React.CSSProperties;content: ReactElement}): JSX.Element {
     return (<div style={{
         display: 'inline-block',
         height: '30px',
