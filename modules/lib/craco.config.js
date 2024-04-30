@@ -16,6 +16,7 @@ module.exports = {
           './Simple': './src/Simple',
           './Resizor': './src/resize/Resizor.tsx',
           './style/color': './src/style/color.css',
+          './style/index': './src/style/index.css',
           './CommonUtils': './src/utils/Common.tsx',
           './Connector': './src/connection/index',
         },

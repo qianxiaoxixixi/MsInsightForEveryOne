@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+/*默认颜色配置*/
+@import "color.css";
+/*默认light样式*/
+@import "light.css";
+/*默认dark样式*/
+@import 'dark.css';
+/*默认antd组件css依赖*/
+@import '~antd/dist/antd.css';
+@import "antdExtendsLight.css";
+@import "antdExtendsDark.css";
+
