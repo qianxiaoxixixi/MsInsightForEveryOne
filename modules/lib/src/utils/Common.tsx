@@ -4,6 +4,8 @@
 import React from 'react';
 import BaseContainer from '../container/BaseContainer';
 import BaseDescription from '../descriptions/BaseDescription';
+import COLOR from './Color';
+import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
 export function limitInput(maxlength?: string): void {
     setTimeout(() => {
         const inputs = document.querySelectorAll('input');
@@ -25,4 +27,12 @@ export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
 };
 
-export { BaseContainer, BaseDescription };
+export function getSet<T extends object>(list: T[], field: keyof T): unknown[] {
+    return Array.from(new Set(list.map(item => item[field])));
+}
+
+export function firstLetterUpper(word: string): string {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };

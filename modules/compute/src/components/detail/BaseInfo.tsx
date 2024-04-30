@@ -3,6 +3,7 @@
  */
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
 import type { ColumnsType } from 'antd/es/table';
+import { observer } from 'mobx-react';
 // eslint-disable-next-line import/no-unresolved
 import { BaseContainer, BaseDescription } from 'lib/CommonUtils';
 // eslint-disable-next-line import/no-unresolved
@@ -154,7 +155,7 @@ const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo): Record<string, unknown> 
     }
 };
 
-function Index({ session }: Iprops): JSX.Element {
+const index = observer(({ session }: Iprops): JSX.Element => {
     const [data, setData] = useState<Ibaseinfo>({});
     const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
 
@@ -182,6 +183,6 @@ function Index({ session }: Iprops): JSX.Element {
             body={<BaseDescription items={items}/>}
         />
     );
-}
+});
 
-export default Index;
+export default index;
