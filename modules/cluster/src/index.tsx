@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import './i18n';
+// eslint-disable-next-line import/no-unresolved
+import 'lib/style/index';
 import './index.css';
 import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';

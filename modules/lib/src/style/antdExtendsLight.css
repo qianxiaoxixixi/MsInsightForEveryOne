@@ -1,0 +1,119 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+.ant-tooltip {
+    max-width: fit-content;
+}
+
+.ant-breadcrumb {
+    height: 36px;
+    line-height: 36px;
+}
+
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    border-color: var(--grey15);
+}
+
+.ant-pagination-jump-prev .ant-pagination-item-container .ant-pagination-item-ellipsis,
+.ant-pagination-jump-next .ant-pagination-item-container .ant-pagination-item-ellipsis {
+    color: var(--grey20);
+}
+
+.ant-message-custom-content > span {
+    color: var(--grey90);
+}
+
+body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.insight-category-search-overlay div.ant-tooltip-arrow {
+    display: none;
+}
+
+.ant-tabs-top > .ant-tabs-nav::before {
+    border-bottom: 1px solid var(--grey0);
+}
+
+.ant-tabs .ant-tabs-nav {
+    background: var(--grey5);
+}
+
+.ant-tabs-top > .ant-tabs-nav {
+    margin: 0;
+}
+
+.ant-tabs-tab {
+    padding: 9px 0;
+}
+
+.ant-tabs-tab {
+    margin: 0 0 0 32px;
+}
+
+/*
+ * table组件相关配置
+ */
+.ant-table {
+    background: unset;
+    color: unset;
+}
+
+.ant-table-tbody > tr > td {
+    word-break: break-word;
+}
+
+.ant-table .ant-table-thead > tr > th.ant-table-cell {
+    background-color: unset;
+    border-bottom-color: unset;
+    color: unset;
+}
+
+.ant-table-tbody > tr > td > button.ant-table-row-expand-icon {
+    background-color: transparent;
+    width: 15px;
+    height: 15px;
+    border: none;
+}
+
+/* disable antd default highlight for hovered row */
+.ant-table-tbody > tr > td.ant-table-cell-row-hover, tr.ant-table-row:hover > td.ant-table-cell {
+    color: unset;
+    background: unset;
+}
+
+/* disable antd default highlight for selected row */
+.ant-table-tbody > tr.ant-table-row-selected > td {
+    background: unset;
+    border-color: unset;
+}
+
+.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+    top: 15%;
+    transform: none;
+    height: 70%;
+    background-color: var(--grey20);
+}
+
+.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
+    background-color: var(--grey20) !important;
+}
+
+.ant-table-expanded-row .ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
+    border-top: none;
+}
+
+.ant-table .ant-table-thead > tr > th.ant-table-cell {
+    background-color: var(--grey5);
+    color: var(--grey80);
+}
+
+.ant-table-thead > tr > th {
+    border: none;
+}
+
+.ant-table-tbody > tr > td {
+    border-bottom: 1px solid var(--grey6);
+    color: var(--grey60);
+}

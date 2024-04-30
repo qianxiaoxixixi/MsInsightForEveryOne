@@ -1,0 +1,125 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+.theme_dark button.ant-btn-link * {
+    color: #1890ff !important;
+}
+
+
+.theme_dark .ant-pagination-prev .ant-pagination-item-link, .theme_dark .ant-pagination-next .ant-pagination-item-link {
+    background-color: var(--grey80);
+}
+
+.theme_dark .ant-pagination-item-active {
+    background-color: var(--grey80);
+}
+
+.theme_dark .ant-pagination-item {
+    background-color: black;
+}
+
+.theme_dark .ant-pagination-item a {
+    color: white;
+}
+
+.theme_dark .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    background: var(--grey90);
+    border-color: var(--grey60);
+}
+
+.theme_dark .ant-breadcrumb a:hover * {
+    color: #40a9ff;
+}
+
+
+.theme_dark .ant-select-multiple .ant-select-selection-item-remove svg {
+    color: var(--grey20);
+}
+
+.theme_dark .ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    background: var(--grey60);
+}
+
+.theme_dark .ant-input-number {
+    border-color: var(--grey60);
+}
+
+.theme_dark .ant-layout {
+    background: var(--grey80);
+}
+
+.theme_dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background-color: var(--grey80);
+}
+
+.theme_dark .ant-select-dropdown {
+    background-color: black;
+}
+
+.theme_dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: var(--grey70);
+}
+
+.theme_dark .ant-notification-notice {
+    background: var(--grey85);
+}
+
+.theme_dark .ant-breadcrumb a * {
+    color: var(--grey10);
+}
+
+.theme_dark .ant-pagination-options-quick-jumper input {
+    background: var(--grey90);
+    color: var(--grey0);
+}
+
+.theme_dark .ant-tabs-top > .ant-tabs-nav::before {
+    border-bottom: 1px solid var(--grey95);
+}
+
+.theme_dark .ant-tabs-nav {
+    background: var(--grey83);
+}
+
+.theme_dark .ant-tabs.ant-tabs-top {
+    background: var(--grey85);
+}
+
+/*
+ * table组件相关配置
+ */
+.theme_dark tr.ant-table-expanded-row > td, .theme_dark tr.ant-table-expanded-row:hover > td {
+    background: var(--grey95);
+}
+
+.theme_dark .ant-table-column-sorter-up.active svg, .theme_dark .ant-table-column-sorter-down.active svg {
+    color: #1890ff;
+}
+
+.theme_dark .ant-table-column-sorter svg {
+    color: var(--grey20blue);
+}
+
+.theme_dark tr.ant-table-placeholder:hover > td {
+    background: var(--grey80);
+}
+.theme_dark td.ant-table-column-sort {
+    background: var(--grey70);
+}
+
+.theme_dark .ant-table .ant-table-thead > tr > th.ant-table-cell {
+    background: var(--grey80blue);
+    color:var(--whiteblue);
+}
+
+.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+    background-color: var(--grey50) !important;
+}
+
+.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
+    background-color: var(--grey50) !important;
+}
+
+.theme_dark .ant-select-selector {
+    background-color: var(--grey80);
+}
