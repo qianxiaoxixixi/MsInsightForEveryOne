@@ -247,12 +247,12 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
         updateCharts();
     });
     useEffect(() => {
-        if (session.clusterCompleted && isShow) {
-            updateData(conditions);
-        } else if (isShow) {
-            setDataSource({ data: [], rankIds: [] });
-        } else {
-            // stay the same
+        if (isShow) {
+            if (session.clusterCompleted) {
+                updateData(conditions);
+            } else {
+                setDataSource({ data: [], rankIds: [] });
+            }
         }
     }, [isShow, conditions]);
     useEffect(() => {

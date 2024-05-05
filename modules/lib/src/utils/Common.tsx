@@ -35,4 +35,14 @@ export function firstLetterUpper(word: string): string {
     return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
+export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T): T {
+    if (options.length === 0) {
+        return defaultVal;
+    }
+    if (options.find(item => item.value === val)) {
+        return val;
+    }
+    return options[0].value;
+};
+
 export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
