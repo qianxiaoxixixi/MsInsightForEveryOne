@@ -69,11 +69,6 @@ public class CmdConstants {
     public static final String PROFILER_SERVER = "profiler_server" + ExecutableUtils.ext(".exe", "");
 
     /**
-     * TRACE_STREAMER
-     */
-    public static final String TRACE_STREAMER = "trace_streamer" + ExecutableUtils.ext(".exe", "");
-
-    /**
      * SYSTEM_PATH
      */
     public static final String SYSTEM_PATH = PathManager.getSystemPath();
