@@ -49,6 +49,53 @@ struct SourceApiInstrResponse : public Response {
 
     SourceApiInstrResBody body;
 };
+
+struct BlockDetailBody {
+    int64_t blockId;
+    std::string coreType;
+    std::vector<std::string> duration;
+};
+
+struct DetailsBaseInfoResBody {
+    std::string name;
+    std::string soc;
+    std::string opType;
+    int64_t blockDim;
+    int64_t mixBlockDim;
+    std::string duration;
+    std::vector<BlockDetailBody> blockDetail;
+    std::vector<std::string> advice;
+};
+
+struct DetailsBaseInfoResponse : public Response {
+    DetailsBaseInfoResponse() : Response(REQ_RES_DETAILS_BASE_INFO) {}
+    DetailsBaseInfoResBody body;
+};
+
+struct SubBlockUnitData {
+    std::int64_t blockId;
+    std::string blockType;
+    std::string name;
+    std::string unit;
+    std::string value;
+    std::string originValue;
+};
+
+struct SubBlockData {
+    std::vector<SubBlockUnitData> detailDataList;
+    std::vector<std::string> advice;
+};
+
+struct DetailsLoadInfoResBody {
+    std::vector<int64_t> blockIdList;
+    SubBlockData chartData;
+    SubBlockData tableData;
+};
+
+struct DetailsLoadInfoResponse : public Response {
+    DetailsLoadInfoResponse() : Response(REQ_RES_DETAILS_COMPUTE_LOAD_INFO) {}
+    DetailsLoadInfoResBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -2,7 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
+#include "SourceFileParser.h"
 #include <fstream>
+#include <unordered_set>
 #include "ServerLog.h"
 #include "rapidjson.h"
 #include "document.h"
@@ -13,7 +15,7 @@
 #include "TraceTime.h"
 #include "FileUtil.h"
 #include "JsonTraceDatabase.h"
-#include "SourceFileParser.h"
+#include "SourceProtocolResponse.h"
 
 namespace Dic {
 namespace Module {
@@ -397,6 +399,79 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
     return content;
 }
 
+bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody)
+{
+    std::ifstream file(filePath, std::ios::binary);
+    std::string baseInfo = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_BASE_INFO);
+    file.close();
+    if (baseInfo.empty()) {
+        return false;
+    }
+    try {
+        std::string error;
+        auto d = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(baseInfo, error);
+        if (!error.empty()) {
+            ServerLog::Error("Get base info error:", error);
+            return false;
+        }
+        responseBody.name = JsonUtil::GetString(d.value(), "name");
+        responseBody.soc = JsonUtil::GetString(d.value(), "soc");
+        responseBody.opType = JsonUtil::GetString(d.value(), "op_type");
+        responseBody.blockDim = JsonUtil::GetInteger(d.value(), "block_dim");
+        responseBody.mixBlockDim = JsonUtil::GetInteger(d.value(), "mix_block_dim");
+        responseBody.duration = JsonUtil::GetString(d.value(), "duration");
+        responseBody.blockDim = JsonUtil::GetInteger(d.value(), "block_dim");
+        Value &blockDetailsValue =
+                responseBody.opType == "mix" ? d.value()["mix_block_detail"] : d.value()["block_detail"];
+        std::vector<Protocol::BlockDetailBody> blockDetailList;
+        for (const auto &item: blockDetailsValue.GetArray()) {
+            Protocol::BlockDetailBody detail;
+            detail.blockId = JsonUtil::GetInteger(item, "block_id");
+            detail.coreType = responseBody.opType;
+            detail.duration = JsonUtil::GetVector<std::string>(item, "duration");
+            blockDetailList.push_back(detail);
+        }
+        responseBody.blockDetail = blockDetailList;
+        return true;
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse details base info,not json.Error is ", e.what());
+        return false;
+    }
+}
+
+bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & responseBody)
+{
+    // 从文件获取内容
+    std::ifstream file(filePath, std::ios::binary);
+    std::string loadGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_GRAPH);
+    std::string loadTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_TABLE);
+    file.close();
+    if (loadGraph.empty() && loadTable.empty()) {
+        ServerLog::Warn("Details load data does not exist.");
+        return false;
+    }
+
+    std::optional<Protocol::SubBlockData> blockData = ConvertStrToSubBlockData(loadGraph);
+    if (blockData.has_value()) {
+        responseBody.chartData = blockData.value();
+    }
+    std::optional<Protocol::SubBlockData> tableData = ConvertStrToSubBlockData(loadTable);
+    if (tableData.has_value()) {
+        responseBody.tableData = tableData.value();
+    }
+
+    // 获取blockid列表
+    std::unordered_set<int64_t> blockIdSet;
+    for (const auto &item: responseBody.chartData.detailDataList) {
+        blockIdSet.insert(item.blockId);
+    }
+    for (const auto &item: responseBody.tableData.detailDataList) {
+        blockIdSet.insert(item.blockId);
+    }
+    std::copy(blockIdSet.begin(), blockIdSet.end(), std::back_inserter(responseBody.blockIdList));
+    return true;
+}
+
 void SourceFileParser::ConvertToData()
 {
     std::ifstream file(filePath, std::ios::binary);
@@ -585,6 +660,52 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
     return sourceFileLines;
 }
 
+std::string SourceFileParser::GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum)
+{
+    if (!file.is_open()) {
+        return "";
+    }
+    // 从文件获取内容
+    std::vector<std::pair<int64_t, int64_t>> &baseInfoPos =
+            dataBlockMap[static_cast<int>(dataTypeEnum)];
+    if (baseInfoPos.empty()) {
+        return "";
+    }
+    return GetContentStr(file, baseInfoPos[0]);
+}
+
+std::optional<Protocol::SubBlockData> SourceFileParser::ConvertStrToSubBlockData(const std::string& str)
+{
+    if (str.empty()) {
+        return std::nullopt;
+    }
+    Protocol::SubBlockData blockData;
+    try {
+        std::string error;
+        auto d = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(str, error);
+        if (!error.empty()) {
+            ServerLog::Error("Get base info error:", error);
+            return std::nullopt;
+        }
+        blockData.advice = JsonUtil::GetVector<std::string>(d.value(), "advice");
+        Value &blockDetails = d.value()["subblock_detail"];
+        for (auto &item : blockDetails.GetArray()) {
+            Protocol::SubBlockUnitData unitData;
+            unitData.blockId = JsonUtil::GetInteger(item, "block_id");
+            unitData.blockType = JsonUtil::GetString(item, "block_type");
+            unitData.name = JsonUtil::GetString(item, "name");
+            unitData.unit = GetUnitType(JsonUtil::GetInteger(item, "unit"));
+            unitData.value = JsonUtil::GetString(item, "value");
+            unitData.originValue = JsonUtil::GetString(item, "origin_value");
+            blockData.detailDataList.emplace_back(unitData);
+        }
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't convert string to sub block data.Error is ", e.what());
+        return std::nullopt;
+    }
+    return blockData;
+}
+
 std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const
 {
     int64_t start = pair.first;
@@ -601,6 +722,16 @@ std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair
         return "";
     }
     return jsonStr;
+}
+
+std::string SourceFileParser::GetUnitType(int64_t unitTypeNumber)
+{
+    if (unitTypeMapping.find(unitTypeNumber) != unitTypeMapping.end()) {
+        return unitTypeMapping[unitTypeNumber];
+    } else {
+        ServerLog::Error("Unknown unit type.");
+        return "";
+    }
 }
 } // end of namespace Memory
 } // end of namespace Module

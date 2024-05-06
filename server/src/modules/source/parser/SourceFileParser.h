@@ -11,6 +11,7 @@
 #include "document.h"
 #include "FileParser.h"
 #include "ThreadPool.h"
+#include "SourceProtocolResponse.h"
 
 namespace Dic {
 namespace Module {
@@ -27,6 +28,11 @@ enum class DataTypeEnum : int {
     TRACE = 2,
     API_FILE = 3,
     API_INSTR = 4,
+    DETAILS_BASE_INFO = 5,
+    DETAILS_COMPUTE_LOAD_GRAPH = 6,
+    DETAILS_COMPUTE_LOAD_TABLE = 7,
+    DETAILS_MEMORY_GRAPH = 8,
+    DETAILS_MEMORY_TABLE = 9,
 };
 
 class SourceFileParser : public FileParser {
@@ -55,6 +61,8 @@ public:
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(std::string core, std::string sourceName);
     std::string GetInstr();
     std::string GetSourceByName(std::string sourceName);
+    bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody);
+    bool GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &responseBody);
     void ConvertToData();
     int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
     int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
@@ -73,7 +81,10 @@ private:
     void ConvertApiFile(const std::string &jsonStr);
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
+    std::string GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum);
+    std::optional<Protocol::SubBlockData> ConvertStrToSubBlockData(const std::string& str);
     std::string GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const;
+    std::string GetUnitType(int64_t unitTypeNumber);
 
     std::unique_ptr<ThreadPool> threadPool;
     const int maxThreadNum = 4;
@@ -87,6 +98,12 @@ private:
     int64_t trackId = 0;
     int64_t pid = 0;
     int64_t tid = 0;
+    std::map<int64_t, std::string> unitTypeMapping = {
+        {0, "Duration(μs)"},
+        {1, "Instructions"},
+        {2, "Data Volume(byte)"},
+        {3, "PRE"}
+    };
 };
 } // end of namespace Summary
 } // end of namespace Module

@@ -16,6 +16,8 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SOURCE_CODE_FILE, ToCodeFileRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_LINE, ToApiLineRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrRequest);
+    jsonToReqFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoRequest);
+    jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoRequest);
 }
 
 void SourceProtocol::RegisterResponseToJsonFuncs()
@@ -23,6 +25,8 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SOURCE_CODE_FILE, ToCodeFileResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_LINE, ToApiLineResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrResponse);
+    resToJsonFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoResponse);
+    resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoResponse);
 }
 
 void SourceProtocol::RegisterEventToJsonFuncs()
@@ -64,6 +68,26 @@ std::unique_ptr<Request> SourceProtocol::ToApiInstrRequest(const Dic::json_t &js
     return reqPtr;
 }
 
+std::unique_ptr<Request> SourceProtocol::ToDetailsBaseInfoRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SourceDetailBaseInfoRequest> reqPtr = std::make_unique<SourceDetailBaseInfoRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SourceProtocol::ToDetailsLoadInfoRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SourceDetailsLoadInfoRequest> reqPtr = std::make_unique<SourceDetailsLoadInfoRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Reponse To Json>>
@@ -83,6 +107,15 @@ std::optional<document_t> SourceProtocol::ToApiInstrResponse(const Dic::Protocol
     return ToResponseJson<SourceApiInstrResponse>(dynamic_cast<const SourceApiInstrResponse &>(response));
 }
 
+std::optional<document_t> SourceProtocol::ToDetailsBaseInfoResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<DetailsBaseInfoResponse>(dynamic_cast<const DetailsBaseInfoResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToDetailsLoadInfoResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<DetailsLoadInfoResponse>(dynamic_cast<const DetailsLoadInfoResponse &>(response));
+}
 #pragma endregion
 
     } // namespace Protocol

@@ -7,16 +7,18 @@
 #include "QueryCodeFileHandler.h"
 #include "QueryApiLineHandler.h"
 #include "QueryApiInstructionsHandler.h"
+#include "QueryDetailsBaseInfoHandler.h"
+#include "QueryDetailsLoadInfoHandler.h"
 
 namespace Dic {
 namespace Module {
 using namespace Dic::Module::Source;
-    SourceModule::SourceModule() : BaseModule()
+SourceModule::SourceModule() : BaseModule()
 {
     moduleName = ModuleType::SOURCE;
 }
 
-    SourceModule::~SourceModule()
+SourceModule::~SourceModule()
 {
     requestHandlerMap.clear();
 }
@@ -27,6 +29,8 @@ void SourceModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SOURCE_CODE_FILE, std::make_unique<QueryCodeFileHandler>());
     requestHandlerMap.emplace(REQ_RES_SOURCE_API_LINE, std::make_unique<QueryApiLineHandler>());
     requestHandlerMap.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, std::make_unique<QueryApiInstructionsHandler>());
+    requestHandlerMap.emplace(REQ_RES_DETAILS_BASE_INFO, std::make_unique<QueryDetailsBaseInfoHandler>());
+    requestHandlerMap.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, std::make_unique<QueryDetailsLoadInfoHandler>());
 }
 
 void SourceModule::OnRequest(std::unique_ptr<Protocol::Request> request)

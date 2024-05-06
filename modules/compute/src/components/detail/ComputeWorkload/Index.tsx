@@ -16,6 +16,7 @@ export interface IblockData {
     name: string;
     unit: string;
     value: string;
+    originValue: string;
 }
 interface Idata {
     blockIdList: string[];
@@ -34,7 +35,15 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryComputeWorkload();
-        setData(res ?? defaultData);
+        if (res === null) {
+            return;
+        }
+        const renderData = {
+            blockIdList: res.blockIdList,
+            chartData: res.chartData.detailDataList,
+            tableData: res.tableData.detailDataList,
+        };
+        setData(renderData ?? defaultData);
     };
     const handleFilterChange = (newCondition: Icondition): void => {
         setCondition({ ...condition, ...newCondition });
