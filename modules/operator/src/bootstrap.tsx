@@ -5,15 +5,12 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
 import './i18n';
-// eslint-disable-next-line import/no-unresolved
 import 'lib/style/index';
 import './index.css';
 import { store } from './store';
 import App from './App';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
-// Module Federation组件
-// eslint-disable-next-line import/no-unresolved
 import 'lib/style/color';
 
 // 禁用右键刷新以及F5、Ctrl+R刷新

@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
 import { notNull, GetPageConfigWhithPageData, Loading } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
-// eslint-disable-next-line import/no-unresolved
 import ResizeTable from 'lib/ResizeTable';
 import { Session } from '../../entity/session';
 
