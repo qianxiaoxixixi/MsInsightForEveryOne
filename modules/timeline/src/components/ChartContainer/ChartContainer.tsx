@@ -25,7 +25,6 @@ import { loopActionFactory } from '../../utils/FactoryActions';
 import { RenderEngineContext } from '../../context/context';
 import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
-// eslint-disable-next-line import/no-unresolved
 import Resizor from 'lib/Resizor';
 
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;

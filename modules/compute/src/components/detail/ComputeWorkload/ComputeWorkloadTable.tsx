@@ -3,9 +3,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { type IblockData } from './Index';
-// eslint-disable-next-line import/no-unresolved
 import ResizeTable from 'lib/ResizeTable';
-// eslint-disable-next-line import/no-unresolved
 import { getSet, firstLetterUpper } from 'lib/CommonUtils';
 
 interface Iprops {

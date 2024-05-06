@@ -5,7 +5,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
 import './i18n';
-// eslint-disable-next-line import/no-unresolved
 import 'lib/style/index';
 import './index.css';
 import App from './App';

@@ -4,9 +4,7 @@
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
 import type { ColumnsType } from 'antd/es/table';
 import { observer } from 'mobx-react';
-// eslint-disable-next-line import/no-unresolved
 import { BaseContainer, BaseDescription } from 'lib/CommonUtils';
-// eslint-disable-next-line import/no-unresolved
 import ResizeTable from 'lib/ResizeTable';
 import { type Session } from '../../entity/session';
 import { queryBaseInfo } from '../RequestUtils';

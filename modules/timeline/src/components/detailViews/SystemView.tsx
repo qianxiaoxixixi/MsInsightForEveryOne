@@ -19,9 +19,7 @@ import {
     querySystemViewDetails,
     systemViewItems,
 } from './Common';
-// eslint-disable-next-line import/no-unresolved
 import ResizeTable from 'lib/ResizeTable';
-// eslint-disable-next-line import/no-unresolved
 import { Label, limitInput } from 'lib/CommonUtils';
 import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
