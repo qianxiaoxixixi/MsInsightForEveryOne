@@ -6,7 +6,6 @@ import { observer } from 'mobx-react';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
 import ComputeWorkloadTable from './ComputeWorkloadTable';
 import { type Session } from '../../../entity/session';
-// eslint-disable-next-line import/no-unresolved
 import { BaseContainer } from 'lib/CommonUtils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';

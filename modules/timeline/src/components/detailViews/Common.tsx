@@ -8,7 +8,6 @@ import { Button, Input } from 'antd';
 import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
-// eslint-disable-next-line import/no-unresolved
 import { limitInput } from 'lib/CommonUtils';
 interface ColumData {
     title: string;
