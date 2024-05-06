@@ -69,14 +69,6 @@ code {
     background: rgba(0, 0, 0, 0.7);
 }
 
-.fullmask {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    top: 0;
-    background: rgba(0, 0, 0, 0.7);
-}
-
 /*Communicator相关的配置*/
 .CommunicatorHeader {
     min-width: 600px;
