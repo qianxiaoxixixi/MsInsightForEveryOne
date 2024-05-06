@@ -57,10 +57,8 @@ export const queryMatrixOperators = async(param: {iterationId: string ;stage: st
  * @param {string} operatorName 算子名
  * @return {[]} 返回数组
  */
-export const queryCommunication = async(param: {
-    iterationId: string ; rankIds: string[]; operatorName: string;
-}): Promise<any> => {
-    return window.requestData('communication/duration/list', { ...param, rankList: param.rankIds });
+export const queryCommunication = async(param: { iterationId: string ; operatorName: string}): Promise<any> => {
+    return window.requestData('communication/duration/list', param);
 };
 
 /**
@@ -70,10 +68,8 @@ export const queryCommunication = async(param: {
  * @param {number[]} rankIds
  * @param {string} operatorName 算子名
  */
-export const queryCommunicationOperatorLists = async(param: {
-    iterationId: string ; rankIds: string[]; operatorName: string;
-}): Promise<any> => {
-    return window.requestData('communication/operatorLists', { ...param, rankList: param.rankIds });
+export const queryCommunicationOperatorLists = async(param: { iterationId: string ; operatorName: string}): Promise<any> => {
+    return window.requestData('communication/operatorLists', param);
 };
 
 /**

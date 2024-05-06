@@ -3,27 +3,26 @@
  */
 import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Select, Radio } from 'antd';
+// eslint-disable-next-line import/no-unresolved
+import { getUsableVal } from 'lib/CommonUtils';
 import { isNull, Label } from '../Common';
 import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
-import { queryIterations, queryMatrixOperators, queryOperators, queryRanks, queryStages } from '../../utils/RequestUtils';
+import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
-import { debounce } from 'lodash';
 
 export interface ConditionDataType{
     [key: string]: string | string[];
     iterationId: string ;
-    rankIds: string[];
+    stage: string;
     operatorName: string ;
     type: string;
-    stage: string;
 }
 export const totalOperator = 'Total Op Info';
 const defaultCondition = {
     iterationId: '',
     stage: '',
-    rankIds: [],
     operatorName: '',
     type: 'CommunicationMatrix',
 };
@@ -33,49 +32,61 @@ const defaultOptionMap = {
     rankIdOptions: [],
     stageOptions: [],
 };
-const conditions: ConditionDataType = observable(defaultCondition);
-const optionMap: optionMapDataType = observable(defaultOptionMap);
+
+const observeCondition = observable({ value: defaultCondition });
 
 export function updateData(filterParams: ConditionDataType): void {
-    runInAction(() => {
-        for (const key in filterParams) {
-            if (!isNull(filterParams[key])) {
-                conditions[key] = filterParams[key];
-            }
+    const condition: any = {};
+    for (const key in filterParams) {
+        if (!isNull(filterParams[key])) {
+            condition[key] = filterParams[key];
         }
-    });
+    }
     const hasValue = !isNull(filterParams.iterationId) && !isNull(filterParams.stage);
-    const valueChanged = filterParams.iterationId !== conditions.iterationId || filterParams.stage !== conditions.stage;
-    if (hasValue && valueChanged) {
-        handleRelatedChange('iterationId', conditions.iterationId);
+    if (hasValue) {
+        runInAction(() => {
+            observeCondition.value = condition;
+        });
     }
 }
 
-const setOptions = async(initObj = {} as ConditionDataType): Promise<void> => {
-    // step
+const getOptionsAndValue = async (initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):
+Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
+    if (key !== undefined) {
+        const condition = { ...initObj, [key]: val };
+        const optionMap = initOptionMap;
+        if (key === 'iterationId') {
+            const stageOptions: optionDataType[] = await getStageOptions(val);
+            const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
+            optionMap.stageOptions = stageOptions;
+            condition.stage = stage;
+        }
+        if (['iterationId', 'stage', 'type'].includes(key as string)) {
+            const operatorOptions: optionDataType[] = await getOperatorOptions(
+                { iterationId: condition.iterationId, rankList: [], stage: condition.stage, type: condition.type });
+            optionMap.operatorOptions = operatorOptions;
+            condition.operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator);
+        }
+        return { optionMap, condition };
+    }
+
+    // iterationId（step）
     const iterationOptions: optionDataType[] = await getiterationOptions();
-    const iterationId = initObj.iterationId || iterationOptions[0]?.value as string;
-    runInAction(() => {
-        optionMap.iterationOptions = iterationOptions;
-        conditions.iterationId = iterationId;
-    });
+    const iterationId = getUsableVal(initObj.iterationId, iterationOptions, defaultCondition.iterationId);
+
     // stage
     const stageOptions: optionDataType[] = await getStageOptions(iterationId);
-    const stage = initObj.stage || stageOptions[0]?.value as string;
-    runInAction(() => {
-        optionMap.stageOptions = stageOptions;
-        conditions.stage = stage;
-    });
+    const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
+
+    // type
     const type = initObj.type ?? 'CommunicationMatrix';
 
     // Operator Name
     const operatorOptions: optionDataType[] =
         await getOperatorOptions({ iterationId, rankList: [], stage, type });
-    const operatorName = initObj.operatorName || totalOperator;
-    runInAction(() => {
-        optionMap.operatorOptions = operatorOptions;
-        conditions.operatorName = operatorName;
-    });
+    const operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator);
+
+    return { optionMap: { iterationOptions, stageOptions, operatorOptions }, condition: { iterationId, stage, type, operatorName } };
 };
 
 // 下拉可选项
@@ -102,100 +113,74 @@ Promise<optionDataType[]> => {
     return options;
 };
 
-export const getRankIdOptions = async (iterationId: string): Promise<optionDataType[]> => {
-    const res: {iterationsOrRanks: Array<{rank_id: string } > } = await queryRanks({ iterationId });
-    const list = res.iterationsOrRanks.map(item => item.rank_id);
-    const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
-    return options;
-};
-
-const handleChange = (key: string, val: any): void => {
-    runInAction(() => {
-        conditions[key] = val;
-    });
-    handleRelatedChange(key, val);
-};
-
-const handleRelatedChange = async (source: string, value: string): Promise<void> => {
-    if (source === 'iterationId') {
-        const stageOptions: optionDataType[] = await getStageOptions(value);
-        const stage = conditions.stage || stageOptions[0]?.value as string;
-        runInAction(() => {
-            optionMap.stageOptions = stageOptions;
-            conditions.stage = stage;
-        });
-    }
-    if (['iterationId', 'stage', 'type'].includes(source)) {
-        const operatorOptions: optionDataType[] = await getOperatorOptions(
-            { iterationId: conditions.iterationId, rankList: [], stage: conditions.stage, type: conditions.type });
-        runInAction(() => {
-            optionMap.operatorOptions = operatorOptions;
-            if (!operatorOptions.map(item => item.value).includes(conditions.operatorName)) {
-                conditions.operatorName = totalOperator;
-            }
-        });
-    }
-};
-
 const Filter = observer(({ session, handleFilterChange }: {session: Session;handleFilterChange: VoidFunction}) => {
+    const [condition, setCondition] = useState<ConditionDataType>(defaultCondition);
+    const [optionMap, setOptionMap] = useState<optionMapDataType>(defaultOptionMap);
     const activeCommunicator = session.activeCommunicator?.value;
-    const Update = (initObj = {} as ConditionDataType): void => {
+
+    const handleChange = (key: keyof ConditionDataType, val: any): void => {
+        updateCondition(condition, key, val);
+    };
+    const updateCondition = async (initObj: ConditionDataType, key?: keyof ConditionDataType, val?: any): Promise<void> => {
         if (!session.clusterCompleted) {
-            runInAction(() => {
-                conditions.iterationId = '';
-                conditions.stage = '';
-                conditions.rankIds = [];
-                conditions.operatorName = '';
-                optionMap.iterationOptions = [];
-                optionMap.operatorOptions = [];
-                optionMap.rankIdOptions = [];
-                optionMap.stageOptions = [];
-            });
+            setCondition({ ...defaultCondition, type: condition.type });
+            setOptionMap(defaultOptionMap);
             return;
         }
-        setOptions(initObj);
+        const { condition: newCondition, optionMap: newOptionMap } = await getOptionsAndValue(initObj, optionMap, key, val);
+        setCondition(newCondition);
+        setOptionMap(newOptionMap);
     };
-    // 初始化
+
     useEffect(() => {
-        const debouncedHandleFilterChange = debounce(handleFilterChange, 300);
-        observe(conditions, (change) => {
-            debouncedHandleFilterChange(conditions);
+        observe(observeCondition, () => {
+            updateCondition({ ...condition, ...observeCondition.value });
         });
     }, []);
+
     useEffect(() => {
-        Update(conditions);
+        updateCondition(condition);
     }, [session.renderId]);
     useEffect(() => {
-        Update({ stage: activeCommunicator } as ConditionDataType);
-    }, [session.allRankIds]);
-    useEffect(() => {
         setTimeout(() => {
-            if (activeCommunicator !== undefined && activeCommunicator !== conditions.stage) {
-                Update({ ...conditions, stage: activeCommunicator });
+            if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {
+                updateCondition(condition, 'stage', activeCommunicator);
             }
         });
     }, [activeCommunicator]);
+    useEffect(() => {
+        handleFilterChange(condition);
+    }, [JSON.stringify(condition)]);
 
-    return (<FilterCom />);
+    return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap}/>);
 });
 
-const FilterCom = observer((): JSX.Element => {
+interface IcomProps {
+    optionMap: optionMapDataType;
+    condition: ConditionDataType;
+    handleChange: (key: keyof ConditionDataType, val: string) => void;
+}
+function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Element {
     return (<div>
         <FormItem
             name="Step"
             content={(<Select
-                value={conditions.iterationId}
+                value={condition.iterationId}
                 style={{ width: 120 }}
-                onChange={val => handleChange('iterationId', val)}
+                onChange={(val): void => {
+                    handleChange('iterationId', val);
+                }}
                 options={optionMap.iterationOptions}
             />
             )}/>
         <FormItem
             name="Communication Group"
             content={(<Select
-                value={conditions.stage}
+                value={condition.stage}
                 style={{ width: 200 }}
-                onChange={val => handleChange('stage', val)}
+                onChange={(val): void => {
+                    handleChange('stage', val);
+                }}
                 options={optionMap.stageOptions}
             />
             )}/>
@@ -203,24 +188,28 @@ const FilterCom = observer((): JSX.Element => {
             name="Operator Name"
             content={(
                 <Select
-                    value={conditions.operatorName}
+                    value={condition.operatorName}
                     style={{ width: 300 }}
-                    onChange={val => handleChange('operatorName', val)}
+                    onChange={(val): void => {
+                        handleChange('operatorName', val);
+                    }}
                     options={optionMap.operatorOptions}
                     showSearch={true}
                 />)}/>
         <FormItem content={(
-            <Radio.Group value={conditions.type}
-                onChange={(e) => { handleChange('type', e.target.value); }}>
+            <Radio.Group value={condition.type}
+                onChange={(e): void => {
+                    handleChange('type', e.target.value);
+                }}>
                 <Radio value={'CommunicationMatrix'}>Communication Matrix</Radio>
                 <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
             </Radio.Group>)}/>
         <div>
         </div>
     </div>);
-});
+}
 
-const FormItem = (props: any): JSX.Element => {
+function FormItem(props: any): JSX.Element {
     return (<div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
         <Label name={props.name}/>
         {props.content}
