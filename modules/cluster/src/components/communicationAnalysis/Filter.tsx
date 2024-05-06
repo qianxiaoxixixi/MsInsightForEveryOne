@@ -5,7 +5,6 @@ import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio } from 'antd';
-// eslint-disable-next-line import/no-unresolved
 import { getUsableVal, delayExecute } from 'lib/CommonUtils';
 import { isNull, Label } from '../Common';
 import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';

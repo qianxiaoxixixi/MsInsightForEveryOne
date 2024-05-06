@@ -4,7 +4,6 @@
 import React, { useEffect, useMemo } from 'react';
 import * as echarts from 'echarts';
 import { type IblockData } from './Index';
-// eslint-disable-next-line import/no-unresolved
 import { COLOR, getResizeEcharts, chartVisbilityListener } from 'lib/CommonUtils';
 interface Iprops {
     blockId: string;
