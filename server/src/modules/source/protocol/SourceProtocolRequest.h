@@ -37,6 +37,22 @@ struct SourceApiInstrRequest : public Request {
     SourceApiInstrRequest() : Request(REQ_RES_SOURCE_API_INSTRUCTIONS) {};
 };
 
+struct SourceDetailBaseInfoParams {
+};
+
+struct SourceDetailBaseInfoRequest : public Request {
+    SourceDetailBaseInfoRequest() : Request(REQ_RES_DETAILS_BASE_INFO) {};
+    SourceDetailBaseInfoParams params;
+};
+
+struct SourceDetailLoadInfoParams {
+};
+
+struct SourceDetailsLoadInfoRequest: public Request {
+    SourceDetailsLoadInfoRequest() : Request(REQ_RES_DETAILS_COMPUTE_LOAD_INFO) {};
+    SourceDetailLoadInfoParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

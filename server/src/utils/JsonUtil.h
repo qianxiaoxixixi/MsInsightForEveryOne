@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 #include "GlobalDefs.h"
+#include "ServerLog.h"
 
 namespace Dic {
 class JsonUtil {
@@ -66,6 +67,27 @@ public:
     static inline bool IsJsonArray(const json_t &json, std::string_view key)
     {
         return (json.HasMember(key.data()) && json[key.data()].IsArray());
+    }
+
+    template <typename T>
+    static inline std::vector<T> GetVector(const json_t &json, std::string_view key)
+    {
+        std::vector<T> vec;
+        if (!IsJsonArray(json, key)) {
+            return vec;
+        }
+        const Value& array = json[key.data()];
+        vec.reserve(array.Size());
+        for (auto &item : array.GetArray()) {
+            if constexpr (std::is_same_v<T, double>) {
+                vec.push_back(item.GetDouble());
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                vec.push_back(item.GetString());
+            } else {
+                Server::ServerLog::Error("get vector from json error: Unsupported type!");
+            }
+        }
+        return vec;
     }
 
     static inline std::string JsonDump(const json_t &json)

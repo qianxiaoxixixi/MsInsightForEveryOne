@@ -129,3 +129,41 @@ TEST_F(TestSuit, QueryCodeFile)
     EXPECT_EQ(true, StringUtil::Contains(sourcefile, "InitForeachCommonTilingData"));
     EXPECT_EQ(true, StringUtil::Contains(sourcefile, "endif"));
 }
+
+TEST_F(TestSuit, QueryBaseInfo)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find_last_of("server");
+    currPath = currPath.substr(NUM0, index + 1);
+    std::string selectedFolder = currPath + R"(/src/test/test_data/base_info.bin)";
+
+    Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
+    EXPECT_EQ(true, parser.CheckOperatorBinary(selectedFolder));
+    parser.Parse(std::vector<std::string>(), "", selectedFolder);
+
+    Protocol::DetailsBaseInfoResBody resBody;
+    bool res = parser.GetDetailsBaseInfo(resBody);
+    EXPECT_EQ(true, res);
+    EXPECT_EQ("sin_custom", resBody.name);
+    EXPECT_EQ("Ascend910B4", resBody.soc);
+    EXPECT_EQ(NUM32, resBody.blockDim);
+    EXPECT_EQ("13.0600004196167", resBody.duration);
+    EXPECT_EQ(NUM32, resBody.blockDetail.size());
+}
+
+TEST_F(TestSuit, QueryLoadData)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find_last_of("server");
+    currPath = currPath.substr(NUM0, index + 1);
+    std::string selectedFolder = currPath + R"(/src/test/test_data/load_data.bin)";
+
+    Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
+    EXPECT_EQ(true, parser.CheckOperatorBinary(selectedFolder));
+    parser.Parse(std::vector<std::string>(), "", selectedFolder);
+
+    Protocol::DetailsLoadInfoResBody resBody;
+    bool res = parser.GetDetailsLoadInfo(resBody);
+    EXPECT_EQ(true, res);
+    EXPECT_EQ(NUM32, resBody.blockIdList.size());
+}
