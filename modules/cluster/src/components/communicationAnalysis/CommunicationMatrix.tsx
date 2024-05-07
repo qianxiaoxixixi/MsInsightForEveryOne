@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { Select, Checkbox } from 'antd';
+import { Select, Checkbox, InputNumber, Button, message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
 import { addResizeEvent, Container, Label, COLOR, getDecimalCount, chartVisbilityListener, safeStr } from '../Common';
@@ -9,6 +9,24 @@ import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
+
+interface FilterInfos {
+    min: number;
+    max: number;
+}
+
+interface RangeInfo {
+    minRange: number;
+    maxRange: number;
+}
+
+interface ICommunicationMatrixProps {
+    isShow: boolean;
+    handleChange: VoidFunction;
+    switchCondition: any;
+    range: RangeInfo;
+    setFilter: VoidFunction;
+}
 
 const options: optionDataType[] = [
     {
@@ -88,7 +106,7 @@ const defaultVisualMap = {
     dimension: 2,
 };
 function wrapData(dataSource: any): any {
-    const { data, rankIds, type } = dataSource;
+    const { data, rankIds, type, min, max } = dataSource;
     const option: any = baseOption;
     option.xAxis.data = rankIds;
     option.yAxis.data = rankIds;
@@ -101,9 +119,7 @@ function wrapData(dataSource: any): any {
         const mixData = handleRepeatData(repeatDataToolTip, data);
         option.series[0].data = mixData;
         option.visualMap = cloneDeep(defaultVisualMap);
-        if (data.length > 0) {
-            const max = Math.max(...data.map((item: number[]) => item[2]));
-            const min = Math.min(...data.map((item: number[]) => item[2]));
+        if (data.length > 0 || isFinite(max)) {
             option.visualMap.max = max;
             option.visualMap.min = min;
             if (min === max) {
@@ -227,11 +243,29 @@ const transportTypeOption = {
     },
 };
 
+const updateData = async(conditions: ConditionDataType, callback: VoidFunction): Promise<void> => {
+    const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
+    const res = await queryCommunicationMatrix(param);
+    const data = res?.matrixList ?? [];
+    const rankRes: {iterationOrRankId: string[] } =
+        await queryRanks({ iterationId: conditions.iterationId });
+    const stageRanks = _.map(_.split(_.replace(conditions.stage, /[(),]/, ''), ','),
+        value => Number.parseInt(value)).filter(value => !Number.isNaN(value))
+        .sort((a, b) => a - b);
+    let rankIds = rankRes.iterationOrRankId.map(item => String(item));
+    if (stageRanks.length > 0) {
+        rankIds = _.filter(rankIds, value => Number(value) >= stageRanks[0] && Number(value) <= stageRanks[stageRanks.length - 1]);
+    }
+    rankIds.sort((a, b) => Number(a) - Number(b));
+    callback({ data, rankIds });
+};
+
 const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow: boolean;conditions: ConditionDataType;session: Session}) => {
     const [dataSource, setDataSource] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
     const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
+    const [range, setRange] = useState<RangeInfo>({ minRange: 0, maxRange: 1 });
 
-    const updateCharts = (): void => {
+    const updateCharts = (shouldUpdateRange: boolean, filterInfo?: FilterInfos): void => {
         let data: any = dataSource.data.map((item: any) => {
             return [String(item.srcRank), String(item.dstRank),
                 item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
@@ -240,48 +274,81 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
             data = data.filter((item: any[]) => item[0] !== item[1]);
         }
         data = data.filter((item: any[]) => dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
-        InitCharts({ ...dataSource, data, type: switchCondition.type });
+        if (filterInfo) {
+            data = data.filter((item: any[]) =>
+                typeof item[2] === 'number' && item[2] >= filterInfo.min && item[2] <= filterInfo.max);
+        }
+        const max = Math.max(...data.map((item: number[]) => item[2]));
+        const min = Math.min(...data.map((item: number[]) => item[2]));
+        if (shouldUpdateRange) {
+            setRange({ minRange: min, maxRange: max });
+        }
+        InitCharts({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max });
     };
-
     chartVisbilityListener('matrixchart', () => {
-        updateCharts();
+        updateCharts(true);
     });
     useEffect(() => {
         if (isShow) {
             if (session.clusterCompleted) {
-                updateData(conditions);
+                updateData(conditions, setDataSource);
             } else {
                 setDataSource({ data: [], rankIds: [] });
             }
         }
     }, [isShow, conditions]);
     useEffect(() => {
-        updateCharts();
+        updateCharts(true);
     }, [dataSource, switchCondition]);
-    const updateData = async(conditions: ConditionDataType): Promise<void> => {
-        const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
-        const res = await queryCommunicationMatrix(param);
-        const data = res.matrixList ?? [];
-        const rankRes: {iterationOrRankId: string[] } =
-            await queryRanks({ iterationId: conditions.iterationId });
-        const stageRanks = _.map(_.split(_.replace(conditions.stage, /[(),]/, ''), ','),
-            value => Number.parseInt(value)).filter(value => !Number.isNaN(value))
-            .sort((a, b) => a - b);
-        let rankIds = rankRes.iterationOrRankId.map(item => String(item));
-        if (stageRanks.length > 0) {
-            rankIds = _.filter(rankIds, value => Number(value) >= stageRanks[0] && Number(value) <= stageRanks[stageRanks.length - 1]);
-        }
-        rankIds.sort((a, b) => Number(a) - Number(b));
-        setDataSource({ data, rankIds });
-    };
     const handleChange = (filed: string, val: string | boolean): void => {
         setSwitchCondition({ ...switchCondition, [filed]: val });
     };
-    return <CommunicationMatrixCom isShow={isShow} handleChange={handleChange} switchCondition={switchCondition}/>;
+    const handleFilterChange = (data: FilterInfos): void => {
+        updateCharts(false, data);
+    };
+
+    return <CommunicationMatrixCom isShow={isShow} handleChange={handleChange} switchCondition={switchCondition} range={range} setFilter={handleFilterChange}/>;
 });
 
-const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition }:
-{isShow: boolean;handleChange: VoidFunction;switchCondition: any}): JSX.Element => {
+const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: VoidFunction }): JSX.Element => {
+    const { minRange, maxRange } = range;
+    const [minValue, setMin] = useState(minRange);
+    const [maxValue, setMax] = useState(maxRange);
+    const [isValid, setIsValid] = useState(true);
+    const onConfirm = (): void => {
+        if (minValue > maxValue) {
+            message.warning('Invalid Range: The start value cannot be greater than the end value.');
+            setIsValid(false);
+            return;
+        }
+        changeFilter({ min: minValue, max: maxValue });
+    };
+    const changeInput = (value: number, type: string): void => {
+        setIsValid(true);
+        if (type === 'min') {
+            setMin(value);
+        } else {
+            setMax(value);
+        }
+    };
+    useEffect(() => {
+        setMin(minRange);
+        setMax(maxRange);
+    }, [JSON.stringify(range)]);
+    return (
+        <>
+            <Label name={'Visible Range'} />
+            <InputNumber value={minValue} style={{ width: 100, marginRight: 10 }} min={minRange} max={maxRange}
+                onChange={(value): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
+            ~
+            <InputNumber value={maxValue} style={{ width: 100, margin: '0 10px' }} min={minRange} max={maxRange}
+                onChange={(value): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
+            <Button onClick={onConfirm} type="primary" style={{ height: 30, width: 100 }}>Confirm</Button>
+        </>
+    );
+};
+
+const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, setFilter }: ICommunicationMatrixProps): JSX.Element => {
     return (<div style={{ display: isShow ? 'block' : 'none', overflow: 'auto' }}>
         <Container
             type={'headerfixed'}
@@ -304,6 +371,7 @@ const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition }:
                             handleChange('showInner', e.target.checked);
                         }}
                     >Show Inner Communication</Checkbox>
+                    {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
                 </div>
                 <div>
                     <div id={'matrixchart'} style={{ height: '800px' }}></div>
