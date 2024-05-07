@@ -137,6 +137,13 @@ Section "Uninstall"
     Abort
   ${EndIf}
 
+  nsProcessW::_FindProcess "profiler_server.exe" $R0
+    Pop $0
+    ${If} $0 = "0"
+      MessageBox MB_OK "profiler_server.exe is running. Please close it first."
+      Abort
+    ${EndIf}
+
   ; Remove files
   Delete $INSTDIR\ascend_insight.exe
   RMDir /r $INSTDIR\resources
