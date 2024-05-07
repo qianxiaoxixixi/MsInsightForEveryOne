@@ -31,6 +31,7 @@ private:
     std::string clusterDbPath;
     bool needClearDb = true;
     static bool AttAnalyze(const std::string& selectedPath, const std::string& model);
+    static bool TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication);
 };
 } // end of namespace Timeline
 } // end of namespace Module

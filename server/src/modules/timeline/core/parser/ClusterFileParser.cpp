@@ -169,16 +169,48 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 
 bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
 {
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+    std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
+    std::vector<std::string> communicationMatrixFileList =
+            FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
+    bool isCopyMatrixFile = false;
+    std::string tempFilePath = FileUtil::SplicePath(selectedPath, "tmp_matrix.json");
+    // cluster_communication_matrix存在，但cluster_communication不存在时，将matrix文件复制到selectedPath下的临时文件中
+    if (!communicationMatrixFileList.empty() && communicationFileList.empty()) {
+        isCopyMatrixFile = FileUtil::CopyFileByPath(communicationMatrixFileList[0],
+                                                    tempFilePath);
+        if (!isCopyMatrixFile) {
+            ServerLog::Warn("Copy matrix file failed.");
+        }
+    }
     // cluster analysis
     if (communicationFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_TIME)) {
         return false;
     }
-    communicationFileList =
+
+    // 如果发生过文件的复制，则将临时文件复制回cluster_analysis_output文件夹中，并且删除临时文件
+    if (isCopyMatrixFile) {
+        bool reductionFileRes =
+                FileUtil::CopyFileByPath(tempFilePath, communicationMatrixFileList[0]) &&
+                FileUtil::RemoveFile(tempFilePath);
+        if (!reductionFileRes) {
+            ServerLog::Warn("Copy and clear matrix temp file failed.");
+        }
+    }
+    return TransCommunicationToDb(selectedPath, patternCommunication);
+}
+
+bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication)
+{
+    auto database = dynamic_cast<JsonClusterDatabase *>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (database == nullptr) {
+        ServerLog::Error("Failed to connect to cluster database.", selectedPath);
+        return false;
+    }
+    std::vector<std::string> communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
     if (!communicationFileList.empty()) {
         ParseCommunication(communicationFileList);

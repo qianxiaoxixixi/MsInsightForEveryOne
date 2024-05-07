@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <climits>
+#include <sys/wait.h>
 #endif
 #ifdef __APPLE__
 #include <filesystem>
@@ -209,6 +210,37 @@ public:
             return true;
         }
         return RemoveFile(path);
+    }
+
+    static inline bool CopyFileByPath(const std::string &sourceFilePath, const std::string &targetFilePath)
+    {
+#ifdef _WIN32
+        std::string tmpSourcePath(sourceFilePath);
+        std::string tmpTargetPath(targetFilePath);
+        if (StringUtil::IsUtf8String(sourceFilePath)) {
+            tmpSourcePath = StringUtil::Utf8ToGbk(sourceFilePath.c_str());
+        }
+        if (StringUtil::IsUtf8String(targetFilePath)) {
+            tmpTargetPath = StringUtil::Utf8ToGbk(targetFilePath.c_str());
+        }
+        return CopyFile(tmpSourcePath.c_str(), tmpTargetPath.c_str(), false);
+#else
+        pid_t pid = fork();
+        if (pid == -1) {
+            // fork进程失败
+            return false;
+        } else if (pid == 0) {
+            // 子进程执行cp命令
+            execl("/bin/cp", "cp", sourceFilePath.c_str(), targetFilePath.c_str(), NULL);
+            // 如果子进程执行成功，则不会继续往下执行
+            return false;
+        } else {
+            // 等待子进程结束，判断子进程执行情况
+            int status;
+            waitpid(pid, &status, 0);
+            return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+        }
+#endif
     }
 
     static inline std::vector<std::string> GetDiskInfo()
