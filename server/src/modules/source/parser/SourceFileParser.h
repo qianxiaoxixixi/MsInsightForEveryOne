@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_SOURCEFILEPARSER_H
 
 #include <map>
+#include <unordered_map>
 #include "document.h"
 #include "rapidjson.h"
 #include "document.h"
