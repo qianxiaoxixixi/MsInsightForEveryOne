@@ -36,7 +36,10 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     std::map<std::string, std::string> devicePaths;
     FullDb::FullDbParser::FindDevicePaths(selectedFolder, devicePaths);
     auto rankList = GetReportFiles(path, response.body);
-    SetBaseActionOfResponse(response, "Host", devicePaths, "");
+    if (!rankList.empty()) {
+        // 如果rank列表为空，则Timeline页面不展示Host
+        SetBaseActionOfResponse(response, "Host", devicePaths, "");
+    }
     for (const auto &ranks: rankList) {
         for (const auto& rank: ranks.second) {
             SetBaseActionOfResponse(response, rank, devicePaths, ranks.first);
@@ -52,9 +55,12 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     for (const auto &ranks: rankList) {
         FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
     }
+    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(path, std::regex(clusterDBReg));
+    // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
+    bool isCluster = (rankList.size() > 1) || (rankList.empty() && (clusterPath.size() > 0));
     // 执行集群数据解析
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path,
-        (rankList.size() > 1));
+                                                                                  isCluster);
 }
 
 void ParserDb::ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster)
