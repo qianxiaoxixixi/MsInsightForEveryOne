@@ -409,12 +409,17 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
 
 bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
 {
+    std::string tempPath(selectedPath);
+    // 如果selectedPath是单个文件，则使用该文件所在文件夹作为分析路径
+    if (!FileUtil::IsFolder(selectedPath)) {
+        tempPath = FileUtil::GetParentPath(selectedPath);
+    }
     // cluster analysis
-    if (!AttAnalyze(selectedPath, ATT_MODEL_DEFAULT)) {
+    if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT)) {
         return false;
     }
 
-    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(selectedPath, std::regex(clusterDBReg));
+    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(tempPath, std::regex(clusterDBReg));
     if (clusterPath.size() == 0) {
         return false;
     }
