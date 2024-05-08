@@ -30,3 +30,5 @@ else()
             dl
             sqlite)
 endif()
+
+target_link_libraries(${PROJECT_NAME} z)

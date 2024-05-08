@@ -87,8 +87,31 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
         return nullptr;
     }
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
-    buffer = buffer.substr(bodyPos + bodyLen); // buffer removes head and body string
-    std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
+    auto bodyJson = JsonUtil::TryParse(bodyStr, error).value();
+
+    // 增加上传二进制数据的处理
+    uint64_t textLen = 0;
+    if (JsonUtil::IsJsonKeyValid(bodyJson, "command") && bodyJson["command"].GetString() == REQ_RES_UPLOAD_FILE &&
+        JsonUtil::IsJsonKeyValid(bodyJson, "params") && JsonUtil::IsJsonKeyValid(bodyJson["params"], "textLength")) {
+        textLen = bodyJson["params"]["textLength"].GetInt();
+        if (buffer.length() < msgLen + textLen) {
+            return nullptr;
+        }
+
+        uint64_t textPos = bodyPos + bodyLen;
+        const std::optional<std::string> &textStr = StringUtil::Decompress(buffer.substr(textPos, textLen));
+        if (textStr.has_value()) {
+            if (bodyJson["params"].HasMember("text")) {
+                bodyJson["params"]["text"].SetString(textStr.value().c_str(), bodyJson.GetAllocator());
+            } else {
+                bodyJson["params"].AddMember("text", rapidjson::Value(textStr.value().c_str(), bodyJson.GetAllocator()),
+                    bodyJson.GetAllocator());
+            }
+        }
+    }
+
+    buffer = buffer.substr(bodyPos + bodyLen + textLen); // buffer removes head and body string
+    std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(JsonUtil::JsonDump(bodyJson), error);
     if (request == nullptr) {
         return nullptr;
     }

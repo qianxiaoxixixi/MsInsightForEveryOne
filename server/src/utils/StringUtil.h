@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
+#include <zlib.h>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -259,6 +260,47 @@ static bool CheckSqlValid(const std::string& input)
         }
     }
     return true;
+}
+
+static std::optional<std::string> Decompress(const std::string &str)
+{
+    // 解压后的数据不能大于50M
+    const size_t MAX_DECOMPRESSED_SIZE = 1024 * 1024 * 50;
+
+    z_stream zs;
+    if (inflateInit2(&zs, MAX_WBITS) != Z_OK) {
+        return std::nullopt;
+    }
+
+    zs.next_in = (Bytef *)str.data();
+    zs.avail_in = str.size();
+
+    int ret;
+    char buffer[32768];
+    std::string output;
+
+    do {
+        zs.next_out = reinterpret_cast<Bytef *>(buffer);
+        zs.avail_out = sizeof(buffer);
+
+        ret = inflate(&zs, 0);
+
+        if (output.size() < zs.total_out) {
+            if (zs.total_out > MAX_DECOMPRESSED_SIZE) {
+                inflateEnd(&zs);
+                return std::nullopt;
+            }
+            output.append(buffer, zs.total_out - output.size());
+        }
+    } while (ret == Z_OK);
+
+    inflateEnd(&zs);
+
+    if (ret != Z_STREAM_END) {
+        return std::nullopt;
+    }
+
+    return output;
 }
 };
 }

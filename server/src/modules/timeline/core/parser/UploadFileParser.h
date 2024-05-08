@@ -30,7 +30,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 const int MAX_SLICE_SIZE = 1024 * 10;
-const int MAX_STR_SIZE = 1024 * 1024;
+const int MAX_STR_SIZE = 1024 * 1024 * 50;
 const int MAX_ATTEMPT = 50;
 const int WAIT_TIME = 100;
 

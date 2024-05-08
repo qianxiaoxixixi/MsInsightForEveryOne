@@ -53,8 +53,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
             iphlpapi
             shlwapi
             sqlite
-            -lssp)
-    target_link_libraries(insight_performance gtest_main gmock_main uv_a userenv ws2_32 iphlpapi shlwapi sqlite -lssp)
+            -lssp
+            z)
+    target_link_libraries(insight_performance gtest_main gmock_main uv_a userenv ws2_32 iphlpapi shlwapi sqlite -lssp z)
 else()
     target_link_libraries(insight_test
             gtest_main
@@ -62,6 +63,7 @@ else()
             uv_a
             pthread
             dl
-            sqlite)
-    target_link_libraries(insight_performance gtest_main gmock_main uv_a pthread dl sqlite)
+            sqlite
+            z)
+    target_link_libraries(insight_performance gtest_main gmock_main uv_a pthread dl sqlite z)
 endif()
