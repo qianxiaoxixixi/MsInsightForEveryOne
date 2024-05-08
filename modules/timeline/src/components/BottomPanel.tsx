@@ -13,6 +13,7 @@ import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { FILTER_HEIGHT } from './FilterContainer';
 import eventBus, { useEventBus } from '../utils/eventBus';
 import { getDetailViewItem } from './detailViews/DetailView';
+import { getFindDetail } from './detailViews/FindInWindow';
 
 interface CssProps {
     className?: string;
@@ -305,9 +306,16 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         setItem('DataCard');
     }, [session.selectedData, session.selectedRange]);
 
+    useEffect(() => {
+        if (session.doContextSearch) {
+            setItem('Find');
+        }
+    }, [session.doContextSearch]);
+
     const items = [
         getDataCardItem(bottomHeight, session),
         getDetailViewItem(session),
+        getFindDetail(session),
     ];
 
     return (<Container ref={ref} className="bottomPanelContainer">

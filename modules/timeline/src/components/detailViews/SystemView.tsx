@@ -86,7 +86,7 @@ const ViewSelect = observer(() => {
     );
 });
 
-const RankFilter = observer((props: any): JSX.Element => {
+export const RankFilter = observer((props: any): JSX.Element => {
     const [rankId, setRankId] = useState<string | undefined>(undefined);
     const [rankIdList, setRankIdList] = useState<string[]>([]);
     useEffect(() => {

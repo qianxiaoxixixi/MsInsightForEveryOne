@@ -93,6 +93,10 @@ public:
     OneKernelData QueryKernelTid(uint64_t trackId) override;
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
+
+    bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
+                                uint64_t minTimestamp) override;
+
     bool QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
                                       SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult,
                                       int64_t streamId);
@@ -151,6 +155,8 @@ private:
     static std::string GetStringCacheValue(const std::string& path, std::string key);
     void GetCounterUnitsAndDataTypes(Protocol::PROCESS_TYPE type, std::vector<std::string> &units,
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
+    std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
+                                             const std::string& order, const std::string& orderByField);
 };
 }
 

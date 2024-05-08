@@ -100,6 +100,9 @@ public:
         uint64_t minTimestamp) override;
     OneKernelData QueryKernelTid(const uint64_t trackId) override;
 
+    bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
+                                Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp) override;
+
     KernelShapesDataDto QueryKernelShapes(const std::vector<SliceDto> &rows);
 
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,

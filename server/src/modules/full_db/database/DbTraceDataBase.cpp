@@ -1535,4 +1535,88 @@ std::string DbTraceDataBase::GetSearchSliceNameCountSql(bool isMatchExact, bool 
     }
     return sql;
 }
+
+bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
+                                             Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp)
+{
+    uint64_t count = 0;
+    uint64_t offset = (params.current - 1) * params.pageSize;
+    const std::string &sql = GetSearchAllSlicesDetailsSql(params.isMatchExact, params.isMatchCase,
+                                                          params.order, params.orderBy);
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QuerySliceName failed!.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(params.searchContent, minTimestamp, params.rankId,
+                                        params.pageSize, offset);
+    if (resultSet == nullptr) {
+        ServerLog::Error("SearchAllSlicesDetails. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::SearchAllSlices searchAllSlice{};
+        searchAllSlice.name = resultSet->GetString("value");
+        searchAllSlice.timestamp = resultSet->GetUint64("startTime");
+        searchAllSlice.duration = resultSet->GetUint64("duration");
+        body.searchAllSlices.emplace_back(searchAllSlice);
+    }
+    body.currentPage = params.current;
+    body.pageSize = params.pageSize;
+    Protocol::SearchCountParams searchCountParams;
+    searchCountParams.searchContent = params.searchContent;
+    searchCountParams.isMatchCase = params.isMatchCase;
+    searchCountParams.isMatchExact = params.isMatchExact;
+    searchCountParams.rankId = params.rankId;
+    count += SearchSliceNameCount(searchCountParams);
+    searchCountParams.rankId = "Host";
+    count += SearchSliceNameCount(searchCountParams);
+    body.count = count;
+    return true;
+}
+
+std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
+                                                          const std::string &order, const std::string &orderByField)
+{
+    std::string sql;
+    std::string nameMatch;
+    std::string orderBy;
+    std::string orderKey = orderByField == "timestamp" ? "startTime" : orderByField;
+    if (order == "descend") {
+        orderBy = " ORDER BY " + orderKey + " DESC";
+    } else {
+        orderBy = " ORDER BY " + orderKey + " ASC";
+    }
+    if (isMatchExact && isMatchCase) {
+        nameMatch = "select id, value from STRING_IDS where value like ?";
+    } else if (isMatchExact) {
+        nameMatch = "select id, value from STRING_IDS where lower(value) like lower(?)";
+    } else if (isMatchCase) {
+        nameMatch = "select id, value from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    sql = "with ids as (" + nameMatch +
+          "), minTime as (select ? as value),\n"
+          " tasks as (select TASK.ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
+          " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
+          " where deviceId = ? ORDER BY startTime),\n"
+          " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
+          " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
+          " ORDER BY startTime)\n"
+          " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
+          " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
+          " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
+          " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
+          " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
+          " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
+          " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
+          " on op.opId = a.opId UNION all select name, globalTid as pid, 'HOST' as metaType, type as tid, "
+          "startNs - minTime.value AS startTime, CANN_API.ROWID as id, endNs - startNs AS duration, depth from "
+          "CANN_API JOIN minTime UNION all select name, globalTid as pid, 'HOST' as metaType, 'pytorch' as tid, "
+          "startNs - minTime.value AS startTime,  PYTORCH_API.ROWID as id, endNs - startNs AS duration, depth from "
+          "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" + orderBy +" LIMIT ? OFFSET ?";
+    return sql;
+}
+
 }

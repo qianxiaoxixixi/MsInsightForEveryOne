@@ -115,6 +115,13 @@ export const queryOneKernel = async(param: {
     return window.requestData('unit/one/kernelDetail', param, 'timeline');
 };
 
+export const searchAllSlices = async(param: {
+    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+    searchContent: string; isMatchCase: boolean; isMatchExact: boolean;
+}): Promise<any> => {
+    return window.requestData('search/all/slices', param, 'timeline');
+};
+
 export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {
     return (<div className={'loading'}
         style={{ width: `${size}px`, height: `${size}px`, ...style }}></div>);

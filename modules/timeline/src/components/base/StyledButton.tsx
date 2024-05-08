@@ -51,3 +51,16 @@ export const CustomButton = React.forwardRef(({ icon, isDisabled, isSuspend, too
 });
 
 CustomButton.displayName = 'CustomButton';
+
+export const PressButton = styled(Button)`
+    display: flex;
+    align-items: center;
+    color: ${props => props.theme.fontColor} !important;
+    background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
+    border-radius: 4px;
+    justify-content: center;
+    height: 20px;
+    margin-top: 6px;
+    border: none;
+    margin-right: 3px;
+`;

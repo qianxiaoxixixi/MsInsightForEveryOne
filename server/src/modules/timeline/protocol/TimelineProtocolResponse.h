@@ -415,6 +415,24 @@ struct UploadFileResponse : public Response {
     UploadFileResponse() : Response(REQ_RES_UPLOAD_FILE) {}
     UploadFileResBody body;
 };
+
+struct SearchAllSlices {
+    std::string name;
+    uint64_t timestamp = 0;
+    uint64_t duration = 0;
+};
+
+struct SearchAllSlicesBody {
+    std::vector<SearchAllSlices> searchAllSlices;
+    uint64_t count;
+    uint64_t pageSize;
+    uint64_t currentPage;
+};
+
+struct SearchAllSlicesResponse : public Response {
+    SearchAllSlicesResponse() : Response(REQ_RES_SEARCH_ALL_SLICES) {}
+    SearchAllSlicesBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 
