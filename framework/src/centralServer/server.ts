@@ -73,8 +73,9 @@ export const request = function (
     dataSource: DataSource,
     moduleName: ModuleName,
     args: DataRequest,
-    voidResponse: boolean = false
+    voidResponse?: boolean,
+    bufferField?: string,
 ): Promise<unknown> {
     const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
-    return new Promise((resolve, reject) => connection?.fetch(moduleName, args, voidResponse)?.then(resolve, reject));
+    return new Promise((resolve, reject) => connection?.fetch(moduleName, args, voidResponse, bufferField)?.then(resolve, reject));
 };

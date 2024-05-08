@@ -24,13 +24,22 @@ declare global {
         setTheme: (isDark: boolean) => void;
         request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
-        requestData: (method: string, params: any, module?: string, voidResponse?: boolean) => Promise<any>;
+        requestData: (method: string | RequestParams, params?: any, module?: string, voidResponse?: boolean) => Promise<any>;
     }
 
     interface DataSource {
         remote: string;
         port: number;
         dataPath: string[];
+    }
+
+    interface RequestParams {
+        command: string;
+        params: any;
+        module?: string;
+        voidResponse?: boolean;
+        keepRawData?: boolean;
+        bufferField?: string;
     }
 };
 
@@ -62,10 +71,29 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
 });
 
 window.requestData = async (command, params, module, voidResponse = false): Promise<any> => {
+    if (typeof command === 'object') {
+        return await requestWithOptions(command);
+    } else {
+        return await requestWithMultiParams(command, params, module, voidResponse);
+    }
+};
+
+async function requestWithMultiParams(command: string, params: any, module?: string, voidResponse = false): Promise<any> {
     const data = await connector.fetch({
         args: { command, params },
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
         voidResponse,
     });
     return (data as any).body;
-};
+}
+
+async function requestWithOptions({ command, params, module, voidResponse = false, keepRawData = false, bufferField }: RequestParams): Promise<any> {
+    const data = await connector.fetch({
+        args: { command, params },
+        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+        voidResponse,
+        keepRawData,
+        bufferField,
+    });
+    return (data as any).body;
+}
