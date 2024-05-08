@@ -8,6 +8,7 @@
 #include "SummaryProtocolResponse.h"
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
+#include "OperatorGroupConverter.h"
 #include "ConstantDefs.h"
 
 namespace Dic::Module::Summary {
@@ -353,26 +354,35 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     std::string JsonSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
-        std::string group;
-        std::string name;
-        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
-            name = "op_type";
-            group = "op_type || accelerator_core";
-        } else if (reqParams.group == Protocol::OPERATOR_GROUP) {
-            name = "name";
-            group = "name || accelerator_core";
-        } else {
-            name = R"(name || '[' || input_shapes || ']')";
-            group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::UNKNOWN) {
+            ServerLog::Error("GenerateQueryCategoryDurationSql failed, unknown operator group.");
+            return "";
         }
+        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
 
-        std::string sql =
-                " SELECT " + name + " as name," + (reqParams.group == Protocol::OPERATOR_GROUP ?
-                " ROUND(duration, 2) as duration" : " ROUND(sum(duration), 2) as duration") +
-                " FROM " + kernelTable +
-                " WHERE rank_id = ? AND accelerator_core <> 'HCCL'" + (reqParams.group == Protocol::OPERATOR_GROUP ?
-                " " : " GROUP by " + group) +
+        std::string sql;
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_NAME_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_NAME_GROUP) {
+            std::string name = "name";
+            sql = " SELECT " + name + " as name , ROUND(duration, 2) as duration FROM " + kernelTable +
+                " WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'" +
                 " ORDER BY duration DESC LIMIT ?";
+        } else {
+            std::string name;
+            std::string group;
+            if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+                operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+                name = "op_type";
+                group = "op_type || accelerator_core";
+            } else {
+                name = R"(name || '[' || input_shapes || ']')";
+                group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
+            }
+            sql = " SELECT " + name + " as name, ROUND(sum(duration), 2) as duration FROM " + kernelTable +
+                " WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL' GROUP by " + group +
+                " ORDER BY duration DESC LIMIT ?";
+        }
         return sql;
     }
 
@@ -447,18 +457,27 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     bool JsonSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
-        sqlite3_stmt *stmt = nullptr;
-        std::string group = reqParams.group == Protocol::OP_TYPE_GROUP ?
-                            "op_type || accelerator_core" : R"(name || input_shapes || accelerator_core)";
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
+        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+
+        std::string group;
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+            group = "op_type || accelerator_core";
+        } else {
+            group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
+        }
+
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery";
 
+        sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
@@ -478,9 +497,13 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     std::string JsonSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
-        std::string group;
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
+        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+
         std::string name;
-        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+        std::string group;
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
             group = "op_type || accelerator_core";
             name = "''";
         } else {
@@ -496,7 +519,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
@@ -555,12 +578,13 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     bool JsonSummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
+        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
         sqlite3_stmt *stmt = nullptr;
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
 
@@ -583,6 +607,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     std::string JsonSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
+        bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
@@ -590,10 +615,12 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
-        if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+        if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
         sql += " LIMIT ? OFFSET ?";
@@ -652,10 +679,14 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     bool JsonSummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
     {
-        sqlite3_stmt *stmt = nullptr;
-        std::string condition =
-                (reqParams.group == Protocol::OP_TYPE_GROUP) ? " op_type = ?" : " name = ? AND input_shapes = ?";
-
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
+        std::string condition;
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+            condition = " op_type = ?";
+        } else {
+            condition = " name = ? AND input_shapes = ?";
+        }
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
@@ -663,6 +694,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     WHERE rank_id = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
+        sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
@@ -672,7 +704,8 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
-        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
         } else {
             sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
@@ -698,7 +731,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     WHERE rank_id = ? AND accelerator_core = ?"
                 "     ORDER by duration DESC"
                 " ) subquery ";
-        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
             sql += " WHERE op_type = ?";
         } else {
             sql += " WHERE name = ? AND input_shapes = ?";
@@ -766,7 +802,9 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_bind_int64(stmt, index++, startTime);
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
-        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
+        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
         } else {
             sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
