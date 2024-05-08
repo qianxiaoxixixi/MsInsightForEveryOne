@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React from 'react';
+import pako from 'pako';
 import { notification } from 'antd';
 import './DragFile.css';
 import { formatTimestamp } from '../../utils/humanReadable';
@@ -10,7 +11,7 @@ import connector from '../../connection';
 import type { NotificationHandler } from '../../connection/defs';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10G
-const DEFAULT_SLICE_SIZE = 1024 * 1024; // Byte
+const DEFAULT_SLICE_SIZE = 10 * 1024 * 1024; // Byte
 const ALLOW_FILE_TYPES = ['application/json'];
 
 export interface FileDataType {
@@ -287,21 +288,30 @@ class DragFileImport extends DragFile {
     }
 
     loadFile(fileBlob: Blob, file: FileDataType, i: number, count: number): Promise<FileDataType> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const { attr } = file;
             const reader = new FileReader();
-            reader.readAsText(fileBlob);
+            reader.readAsArrayBuffer(fileBlob);
             reader.onload = (event): void => {
                 const text: any = event.target?.result;
                 if (text !== null && text !== undefined) {
                     const isLastSlice = count <= 1 || i === count;
-                    window.requestData('upload/file', {
-                        text,
-                        fileAttr: attr,
-                        slice: {
-                            isSliced: count > 1, index: i, count, isLast: isLastSlice,
+                    const compressSlice = pako.deflate(text);
+                    window.requestData({
+                        command: 'upload/file',
+                        keepRawData: true,
+                        bufferField: 'text',
+                        params: {
+                            text: compressSlice,
+                            textLength: compressSlice.byteLength,
+                            fileAttr: attr,
+                            slice: {
+                                isSliced: count > 1, index: i, count, isLast: isLastSlice,
+                            },
                         },
-                    }, 'timeline', !isLastSlice).then((res: ImportFileData) => {
+                        module: 'timeline',
+                        voidResponse: !isLastSlice,
+                    }).then((res: ImportFileData) => {
                         const isSuccess = res?.result?.[0].result;
                         resolve({ succeed: isSuccess, attr, res });
                     }).catch((error: any) => {
@@ -331,7 +341,7 @@ class DragFileImport extends DragFile {
                 this.loadFile(fileBlob, file, i, count);
             }
             if (i % 20 === 0) {
-                await sleep(900);
+                await sleep(1200);
             }
             if (this.isStopped) {
                 break;

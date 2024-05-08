@@ -73,8 +73,9 @@ abstract class BaseConnector {
         }
         body.from = Object.entries(window.parent as Window).findIndex(([, val]) => val === window);
         const targetWindows = body.to !== undefined ? [(window.parent as Window)[body.to]] : this._targetWindows;
+        const postBody = body.keepRawData === true ? body : JSON.stringify(body);
         targetWindows.forEach(targetWindow => {
-            targetWindow.postMessage(JSON.stringify(body), this.getTargetOrigin());
+            targetWindow.postMessage(postBody, this.getTargetOrigin());
         });
     }
 

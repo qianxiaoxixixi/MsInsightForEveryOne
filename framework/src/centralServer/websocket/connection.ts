@@ -125,7 +125,7 @@ export class Connection {
         }) as Promise<void>;
     }
 
-    async fetch(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false): Promise<unknown> {
+    async fetch(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false, bufferField?: string): Promise<unknown> {
         if(!this.isConnected){
             ElMessage.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart Ascend Insight.');
         }
@@ -146,7 +146,7 @@ export class Connection {
                 dataRequest.params,
                 this._token
             );
-            this.request(msg);
+            this.request(msg, bufferField);
             const reqCallback = (res: Response): void => {
                 if (res.result && res.body !== undefined) {
                     // wedge: return cache resolve
@@ -203,13 +203,25 @@ export class Connection {
         callback(msg);
     };
 
-    private async request(msg: Request): Promise<void> {
+    private async request(msg: Request, bufferField?: string): Promise<void> {
+        let arrayBufferData: ArrayBuffer | null = null;
+        if (bufferField !== undefined && Object.prototype.hasOwnProperty.call(msg.params, bufferField)) {
+            const data = msg.params[bufferField];
+            if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+                arrayBufferData = data;
+                msg.params[bufferField] = '';
+            }
+        }
+
         const msgStr = JSON.stringify(msg);
         if (this._ws === undefined) {
             throw new Error('');
         }
         this._ws.send(`${CONTENT_LENGTH_PREFIX}:${new TextEncoder().encode(msgStr).length}\r\n\r\n`);
         this._ws.send(msgStr);
+        if (arrayBufferData !== null) {
+            this._ws.send(arrayBufferData);
+        }
         this.setHeartCheck();
     }
 

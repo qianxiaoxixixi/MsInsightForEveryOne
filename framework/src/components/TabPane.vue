@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, watch, computed} from 'vue';
+import {ref, onMounted, watch} from 'vue';
 import {request} from '@/centralServer/server';
 import connector from '@/connection';
 import {type ModuleConfig, modulesConfig} from '@/moduleConfig';
@@ -55,8 +55,8 @@ onMounted(async () => {
         if (!e.data.remote) {
             e.data.remote = useDataSources().lastDataSource;
         }
-        const {remote, args, module, voidResponse} = e.data;
-        const result = await request(remote, module, args, voidResponse);
+        const {remote, args, module, voidResponse, bufferField} = e.data;
+        const result = await request(remote, module, args, voidResponse, bufferField);
         return {dataSource: remote, body: result};
     });
 
