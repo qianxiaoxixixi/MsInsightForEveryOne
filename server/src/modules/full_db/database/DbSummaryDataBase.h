@@ -7,6 +7,8 @@
 
 #include "VirtualSummaryDataBase.h"
 #include "OperatorProtocolRequest.h"
+#include "OperatorGroupConverter.h"
+
 namespace Dic::Module::FullDb {
 using namespace Dic::Protocol;
 class DbSummaryDataBase : public Summary::VirtualSummaryDataBase {
@@ -45,6 +47,9 @@ private:
     const int maxCategorySize = 50;
 
     void BindSqliteParam(sqlite3_stmt *stmt, OperatorMoreInfoReqParams &reqParams);
+    static std::string GenerateQueryCategoryDurationSqlForHCCL(
+        const Dic::Protocol::OperatorGroupConverter::OperatorGroup &operatorGroup);
+    std::string &GenerateQueryMoreInfoSqlForHCCL(std::string &sql) const;
 };
 
 }

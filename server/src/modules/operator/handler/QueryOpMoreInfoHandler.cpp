@@ -5,6 +5,7 @@
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolResponse.h"
+#include "OperatorGroupConverter.h"
 #include "WsSessionManager.h"
 #include "ServerLog.h"
 #include "OperatorProtocol.h"
@@ -49,11 +50,14 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to check rankId in QueryOpMoreInfoHandler.");
             return false;
         }
-        if (params.opName.empty() && params.opType.empty() && params.shape.empty()) {
+        if (params.opName.empty() && params.opType.empty()) {
             ServerLog::Error("[Operator]Failed to check parameter in QueryOpMoreInfoHandler.");
             return false;
         }
-        if (params.group != Protocol::OP_TYPE_GROUP && params.group != Protocol::INPUT_SHAPE_GROUP) {
+        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(params.group);
+        if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
+            operatorGroup != OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP &&
+            operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
             ServerLog::Error("[Operator]Wrong group type in QueryOpMoreInfoHandler.");
             return false;
         }
