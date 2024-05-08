@@ -172,30 +172,13 @@ public:
     }
     static std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase)
     {
-        std::string sql;
-        if (isMatchExact && isMatchCase) {
-            sql = "SELECT count(*) FROM " + SLICE_TABLE + " WHERE name like ?;";
-        } else if (isMatchExact) {
-            sql = "SELECT count(*) FROM " + SLICE_TABLE + " WHERE lower(name) like lower(?);";
-        } else if (isMatchCase) {
-            sql = "SELECT count(*) FROM " + SLICE_TABLE + " WHERE name like '%'||?||'%';";
-        } else {
-            sql = "SELECT count(*) FROM " + SLICE_TABLE + " WHERE lower(name) like lower('%'||?||'%');";
-        }
+        std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
+        std::string sql = "SELECT count(*) FROM " + SLICE_TABLE + " WHERE " + nameMatch;
         return sql;
     }
     static std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase)
     {
-        std::string nameMatch;
-        if (isMatchExact && isMatchCase) {
-            nameMatch = "name like ?";
-        } else if (isMatchExact) {
-            nameMatch = "lower(name) like lower(?)";
-        } else if (isMatchCase) {
-            nameMatch = "name like '%'||?||'%'";
-        } else {
-            nameMatch = "lower(name) like lower('%'||?||'%')";
-        }
+        std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
         std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
             " FROM " +
             SLICE_TABLE + " JOIN " + THREAD_TABLE + " USING (track_id) WHERE " + nameMatch +
@@ -278,6 +261,36 @@ public:
         std::string sql = "SELECT timestamp, duration FROM " + SLICE_TABLE +
             " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ? " + orderBy +
             " limit ? offset ?";
+        return sql;
+    }
+
+    static std::string GetSearchNameSqlSuffix(bool isMatchExact, bool isMatchCase)
+    {
+        std::string nameMatch;
+        if (isMatchExact && isMatchCase) {
+            nameMatch = "name like ?";
+        } else if (isMatchExact) {
+            nameMatch = "lower(name) like lower(?)";
+        } else if (isMatchCase) {
+            nameMatch = "name like '%'||?||'%'";
+        } else {
+            nameMatch = "lower(name) like lower('%'||?||'%')";
+        }
+        return nameMatch;
+    }
+
+    static std::string GetSearchSliceDetailSql(bool isMatchExact, bool isMatchCase,
+                                               std::string order, std::string orderByField)
+    {
+        std::string orderBy;
+        if (order == "descend") {
+            orderBy = " ORDER BY " + orderByField + " DESC";
+        } else {
+            orderBy = " ORDER BY " + orderByField + " ASC";
+        }
+        std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
+        std::string sql = "SELECT name, timestamp, duration FROM " +
+                          SLICE_TABLE + " WHERE " + nameMatch +  orderBy + " limit ? offset ?";
         return sql;
     }
 };

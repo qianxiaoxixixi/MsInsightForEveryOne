@@ -534,3 +534,25 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     EXPECT_EQ(responseBody.sameOperatorsDetails[1].duration, DURATION2);
     EXPECT_EQ(responseBody.count, COUNT);
 }
+
+TEST_F(TestSuit, SearchAllSlicesDetailsWithFuzzyMatch)
+{
+    uint64_t START_TIME = 1695115378726082200;
+    uint64_t DURATION = 3439;
+    uint64_t PAGE_SIZE = 10;
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    int expectCount = 91;
+    SearchAllSliceParams params;
+    params.searchContent = "Mul";
+    params.pageSize = PAGE_SIZE;
+    params.current = 1;
+    params.orderBy = "duration";
+
+    SearchAllSlicesBody body;
+
+    database->SearchAllSlicesDetails(params, body, 0);
+    EXPECT_EQ(body.searchAllSlices[0].timestamp, START_TIME);
+    EXPECT_EQ(body.searchAllSlices[0].duration, DURATION);
+    EXPECT_EQ(body.searchAllSlices[0].name, "Mul");
+    EXPECT_EQ(body.count, expectCount);
+}

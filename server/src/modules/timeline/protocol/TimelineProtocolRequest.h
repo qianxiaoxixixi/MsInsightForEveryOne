@@ -291,6 +291,22 @@ struct UploadFileRequest : public Request {
     UploadFileRequest() : Request(REQ_RES_UPLOAD_FILE) {}
     UploadFileParams params;
 };
+
+struct SearchAllSliceParams {
+    bool isMatchCase = false;
+    bool isMatchExact = false;
+    std::string rankId;
+    std::string searchContent;
+    std::string orderBy;
+    std::string order;
+    uint64_t current;
+    uint64_t pageSize;
+};
+
+struct SearchAllSlicesRequest : public Request {
+    SearchAllSlicesRequest() : Request(REQ_RES_SEARCH_ALL_SLICES){};
+    SearchAllSliceParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

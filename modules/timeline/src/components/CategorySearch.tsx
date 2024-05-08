@@ -6,7 +6,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import { Session } from '../entity/session';
-import { CustomButton, StyledButton } from './base/StyledButton';
+import { CustomButton, PressButton, StyledButton } from './base/StyledButton';
 import { StyledInput } from './base/StyledInput';
 import { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
@@ -47,6 +47,9 @@ const CustomDiv = styled.div`
         width: 50px;
         border-radius: 5px;
         height: 22px;
+        font-size: 12px;
+    }
+    button.ant-btn.ant-btn-default {
         font-size: 12px;
     }
 `;
@@ -212,6 +215,39 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         session.searchData = { content: inputContent, isMatchCase, isMatchExact };
     });
 
+    function changeMatchCaseStatus(): void {
+        const status = !isMatchCase;
+        setIsMatchCase(status);
+        runInAction(() => {
+            if (session.searchData !== null && session.searchData !== undefined) {
+                session.searchData.isMatchCase = status;
+            }
+        });
+    }
+
+    function changeMatchExactStatus(): void {
+        const status = !isMatchExact;
+        setIsMatchExact(status);
+        runInAction(() => {
+            if (session.searchData !== null && session.searchData !== undefined) {
+                session.searchData.isMatchExact = status;
+            }
+        });
+    }
+    const doSearchList = (): void => {
+        runInAction(() => {
+            if (session.searchData !== null && session.searchData !== undefined) {
+                session.searchData = { ...session.searchData, content: searchContent, isMatchCase, isMatchExact };
+            }
+            session.doContextSearch = true;
+        });
+        setTimeout(() => {
+            runInAction(() => {
+                session.doContextSearch = false;
+            });
+        });
+    };
+
     return (
         <CustomDiv theme={theme} onClick={(e) => { e.stopPropagation(); }}>
             { contextHolder}
@@ -221,11 +257,14 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 ? <ImgWithFallback className={'loading'} />
                 : searchIconVisible
                     ? <div className={'search_icon_css'}>
-                        <StyledTooltip title="Match case"><StyledButton icon={isMatchCase ? <div className={'icon_selected_case_match'}/> : <div className={'icon_case_match'}/>} onClick={(): void => setIsMatchCase(!isMatchCase)}></StyledButton></StyledTooltip>
-                        <StyledTooltip title="Words"><StyledButton icon={isMatchExact ? <div className={'icon_selected_exact_match'}/> : <div className={'icon_exact_match'}/>} onClick={(): void => setIsMatchExact(!isMatchExact)}></StyledButton></StyledTooltip>
+                        <StyledTooltip title="Match case"><StyledButton icon={isMatchCase ? <div className={'icon_selected_case_match'}/> : <div className={'icon_case_match'}/>} onClick={(): void => changeMatchCaseStatus()}></StyledButton></StyledTooltip>
+                        <StyledTooltip title="Words"><StyledButton icon={isMatchExact ? <div className={'icon_selected_exact_match'}/> : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton></StyledTooltip>
                         <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
                     </div>
-                    : <StylePagination {...paginationData} onChange={onPageChange} /> }
+                    : <div className={'search_icon_css'}>
+                        <StylePagination {...paginationData} onChange={onPageChange} />
+                        <PressButton size="small" onClick={doSearchList}>Open in Find Window</PressButton>
+                    </div> }
             </div>
         </CustomDiv>
     );
@@ -247,7 +286,6 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             runInAction(() => { session.searchData = searchDataRef.current; });
         } else {
             searchDataRef.current = session.searchData;
-            session.searchData = undefined;
         }
     };
     return (

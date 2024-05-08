@@ -478,6 +478,28 @@ template <> std::optional<document_t> ToResponseJson<UploadFileResponse>(const U
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
+template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(const SearchAllSlicesResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t searchAllSlicesDetails(kArrayType);
+    for (const SearchAllSlices &searchAllSlices : response.body.searchAllSlices) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "name", searchAllSlices.name, allocator);
+        JsonUtil::AddMember(itemJson, "timestamp", searchAllSlices.timestamp, allocator);
+        JsonUtil::AddMember(itemJson, "duration", searchAllSlices.duration, allocator);
+        searchAllSlicesDetails.PushBack(itemJson, allocator);
+    }
+    JsonUtil::AddMember(body, "searchAllSlicesDetails", searchAllSlicesDetails, allocator);
+    JsonUtil::AddMember(body, "count", response.body.count, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
+    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 
 #pragma region << Event to json>>

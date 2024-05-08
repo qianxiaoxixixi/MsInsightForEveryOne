@@ -87,6 +87,7 @@ export class Session {
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: Record<string, Record<string, unknown>> = {};
     searchData?: { [x: string]: unknown; content: string; isMatchCase: boolean; isMatchExact: boolean };
+    doContextSearch: boolean = false;
     linkData?: LinkData;
     linkLines: LinkLines = {};
 

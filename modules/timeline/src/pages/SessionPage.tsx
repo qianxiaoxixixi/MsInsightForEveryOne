@@ -68,6 +68,12 @@ export const SessionPage = observer(function SessionPage({ session }: { session:
         }
     }, [session.selectedUnitKeys, session.selectedRange, session.selectedData]);
 
+    useEffect(() => {
+        if (session.doContextSearch) {
+            handleOpen(true);
+        }
+    }, [session.doContextSearch]);
+
     return view({
         mainContainer: <ChartContainer session={session} interactive />,
         draggableContainer: <BottomPanel session={session} />,

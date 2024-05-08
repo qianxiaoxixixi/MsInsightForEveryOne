@@ -1890,6 +1890,41 @@ bool JsonTraceDatabase::HasFinishedParseLastTime()
 {
     return CheckValueFromStatusInfoTable(timelineParseStatus, FINISH_STATUS);
 }
+
+bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
+                                               Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp)
+{
+    std::string sql = JsonSqlConstant::GetSearchSliceDetailSql(params.isMatchExact,
+                                                               params.isMatchCase, params.order, params.orderBy);
+    uint64_t offset = (params.current - 1) * params.pageSize;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("SearchAllSlicesDetails failed!.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(params.searchContent, params.pageSize, offset);
+    if (resultSet == nullptr) {
+        ServerLog::Error("SearchAllSlicesDetails. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        Protocol::SearchAllSlices searchAllSlice{};
+        searchAllSlice.name = resultSet->GetString(col++);
+        searchAllSlice.timestamp = resultSet->GetUint64(col++) - minTimestamp;
+        searchAllSlice.duration = resultSet->GetUint64(col++);
+        body.searchAllSlices.emplace_back(searchAllSlice);
+    }
+    body.currentPage = params.current;
+    body.pageSize = params.pageSize;
+    Protocol::SearchCountParams searchCountParams;
+    searchCountParams.searchContent = params.searchContent;
+    searchCountParams.isMatchCase = params.isMatchCase;
+    searchCountParams.isMatchExact = params.isMatchExact;
+    searchCountParams.rankId = params.rankId;
+    body.count = SearchSliceNameCount(searchCountParams);
+    return true;
+}
 } // end of namespace Timeline
   // end of namespace Module
   // end of namespace Dic
