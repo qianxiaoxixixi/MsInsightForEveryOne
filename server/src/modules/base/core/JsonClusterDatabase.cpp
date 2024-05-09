@@ -648,7 +648,8 @@ bool JsonClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 bool JsonClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "select iteration_id, stage_id from " + TABLE_TIME_INFO + " where op_name = ? and start_time = ?";
+    std::string sql = "select iteration_id, stage_id from " + TABLE_TIME_INFO +
+        " where op_name = ? and abs(start_time - ? ) <= 500";
     uint64_t reallyStartTime = params.timestamp + minTimestamp;
     return ExecuteQueryIterationAndCommunicationGroup(sql, params.name, reallyStartTime, responseBody.step,
         responseBody.group);
