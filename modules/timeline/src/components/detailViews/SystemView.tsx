@@ -28,6 +28,7 @@ import { calculateDomainRange } from '../CategorySearch';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 
 const Container = styled.div`
     width: 100%;
@@ -264,12 +265,18 @@ const KernelDetails = observer((props: any) => {
             rankId: props.rankId,
             pageSize: pages.pageSize,
             current: pages.current,
-            orderBy: sorters.field ?? defaultSorter.field,
+            orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
             coreType: '',
             searchName,
         });
-        setDataSource(res.kernelDetails);
+        const data = res.kernelDetails.map((item: {
+            startTimeLabel: string;
+            startTime: number;}) => {
+            item.startTimeLabel = getDetailTimeDisplay(item.startTime);
+            return item;
+        });
+        setDataSource(data);
         setPage({ ...page, total: res.count });
     };
     const handleSelected = async(): Promise<void> => {

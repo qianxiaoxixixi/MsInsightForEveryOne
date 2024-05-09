@@ -11,6 +11,7 @@ import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { RankFilter } from './SystemView';
 import { Space } from 'antd/lib/index';
 import type { CardMetaData } from '../../entity/data';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 
 export interface SearchTableData {
     /**
@@ -28,6 +29,7 @@ export interface SearchTableData {
 }
 
 export interface SearchAllSlicesDetails {
+    startTime: string;
     /**
      *
      * @type {string}
@@ -58,7 +60,7 @@ export function getFindDetail(session: Session): any {
 
 const colums = [
     { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
-    { title: 'Start', dataIndex: 'timestamp', ...getDefaultColumData('timestamp') },
+    { title: 'Start', dataIndex: 'startTime', ...getDefaultColumData('startTime') },
     { title: 'Duration(ns)', dataIndex: 'duration', ...getDefaultColumData('duration') },
 ];
 
@@ -105,7 +107,11 @@ const FindDetail = observer((props: any) => {
         }
         setLoading(true);
         const res = await searchData(pages, sorters, prop).finally(() => setLoading(false));
-        setDataSource(res.searchAllSlicesDetails);
+        const data = res.searchAllSlicesDetails.map(item => {
+            item.startTime = getDetailTimeDisplay(item.timestamp);
+            return item;
+        });
+        setDataSource(data);
         setPage({ ...page, total: res.count });
     };
     return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
@@ -130,7 +136,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         rankId: prop.rankId,
         pageSize: pages.pageSize,
         current: pages.current,
-        orderBy: sorters.field ?? defaultSorter.field,
+        orderBy: sorters.field === 'startTime' ? 'timestamp' : sorters.field ?? defaultSorter.field,
         order: sorters.order ?? defaultSorter.order,
         searchContent: prop.session.searchData.content,
         isMatchCase: prop.session.searchData.isMatchCase,
