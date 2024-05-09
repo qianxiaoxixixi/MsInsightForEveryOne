@@ -536,13 +536,14 @@ export const SliceRight = observer(({ session, detail, metadata }: { session: Se
 });
 
 interface OpData {
+    startTime: string;
     timestamp: number;
     duration: number;
 }
 
 const colums = [
     { title: 'Index', dataIndex: 'index', ellipsis: true, width: 60 },
-    { title: 'Timestamp', dataIndex: 'timestamp', ...getDefaultColumData('time') },
+    { title: 'Timestamp', dataIndex: 'startTime', ...getDefaultColumData('time') },
     { title: 'Duration(ns)', dataIndex: 'duration', ...getDefaultColumData('duration') },
 ];
 // eslint-disable-next-line max-lines-per-function
@@ -601,11 +602,12 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
             ...slice,
             ...sorter,
             ...page,
-            orderBy: sorter.field,
+            orderBy: sorter.field === 'startTime' ? 'timestamp' : sorter.field,
         };
         const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
-        const { sameOperatorsDetails = [], count, currentPage, pageSize } = res;
-        setDataSource((sameOperatorsDetails as OpData[]).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
+        const { count, currentPage, pageSize } = res;
+        const data = changeDataType(res.sameOperatorsDetails);
+        setDataSource((data).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
         setPage({ total: count, current: currentPage, pageSize });
         setLoading(false);
     }
@@ -644,3 +646,10 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         />
     </div>;
 });
+
+function changeDataType(data: OpData[]): OpData[] {
+    return data.map(item => {
+        item.startTime = getDetailTimeDisplay(item.timestamp);
+        return item;
+    });
+}

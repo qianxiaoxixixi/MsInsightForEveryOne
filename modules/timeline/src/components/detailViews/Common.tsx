@@ -61,7 +61,7 @@ export const pythonApiSummaryColumns: ColumData[] = [
 export const kernelDetails: ColumData[] = [
     { title: 'Type', dataIndex: 'type', ...getDefaultColumData('type') },
     { title: 'Accelerator Core', dataIndex: 'acceleratorCore', ...getDefaultColumData('acceleratorCore') },
-    { title: 'Start Time', dataIndex: 'startTime', ...getDefaultColumData('startTime') },
+    { title: 'Start Time', dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
     { title: 'Duration(us)', dataIndex: 'duration', ...getDefaultColumData('duration') },
     { title: 'Wait Time(us)', dataIndex: 'waitTime', ...getDefaultColumData('waitTime') },
     { title: 'Block Dim', dataIndex: 'blockDim', ...getDefaultColumData('blockDim') },
