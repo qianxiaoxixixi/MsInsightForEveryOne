@@ -126,7 +126,7 @@ private:
     const std::string timelineParseStatus = "Timeline files parsing status";
     const std::string hcclType = "HCCL";
     const int unit = 1000;
-    const int tolerance = 100; // 匹配算子时的范围为±100
+    const int tolerance = 500; // 匹配算子时的范围为±500
     // 5G size limit 2024.02.01
     const double lowImage = 5.0;
 
