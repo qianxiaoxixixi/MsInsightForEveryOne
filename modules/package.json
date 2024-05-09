@@ -25,6 +25,7 @@
         "testTimeline": "cd timeline && npm run test"
     },
     "dependencies": {
+        "ascend-lib": "./lib",
         "ascend-cluster": "./cluster",
         "ascend-compute": "./compute",
         "ascend-memory": "./memory",
