@@ -264,13 +264,6 @@ const menuItems: MenuProps['items'] = [
     },
 ];
 
-function onClickMenu(key: string, setDopDownVisible: (_: boolean) => void): void {
-    if (key === 'findInTimeline') {
-        redirectToTimeline();
-    }
-    setDopDownVisible(false);
-}
-
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDopDownVisible] = useState(false);
@@ -290,7 +283,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                 ? <Dropdown
                     menu={{
                         items: menuItems,
-                        onClick: ({ key }): void => onClickMenu(key, setDopDownVisible),
+                        onClick: (): void => setDopDownVisible(false),
                         onBlur: (e): void => {
                             const hasItem = menuItems.findIndex(item =>
                                 (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
