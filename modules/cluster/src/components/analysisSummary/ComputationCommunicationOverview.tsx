@@ -160,11 +160,25 @@ const baseOption: any = {
     ],
     series: [],
 };
+
+function checkIfContainsFieldPreparing(data: SummaryDataType[]): boolean {
+    if (data.length === 0 || data[0].prepareTime < 0) { // 后台返回的预处理时间小于零，说明是旧版本数据，移除预处理时间相关的字段，兼容一个版本，后续可删除
+        return false;
+    }
+    for (const item of data) {
+        if (item.prepareTime > 0) {
+            return true;
+        }
+    }
+    // 后台返回的数据全部为0，说明是旧版本数据
+    return false;
+}
+
 function wrapData(data: SummaryDataType[]): any {
     const list = ['prepareTime', 'computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime'];
     const totalFields = ['prepareTime', 'computingTime', 'communicationNotOverLappedTime', 'freeTime'];
     let isContainsFieldPreparing = true;
-    if (data.length > 0 && data[0].prepareTime < 0) { // 后台返回的预处理时间小于零，说明是旧版本数据，移除预处理时间相关的字段，兼容一个版本，后续可删除
+    if (!checkIfContainsFieldPreparing(data)) { // 后台返回的预处理时间小于零，说明是旧版本数据，移除预处理时间相关的字段，兼容一个版本，后续可删除
         isContainsFieldPreparing = false;
         list.shift();
         totalFields.shift();
