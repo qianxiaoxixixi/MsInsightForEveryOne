@@ -65,6 +65,11 @@ export type OrderOptions = {
 
 export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], supportJump: boolean,
     orderOptions: OrderOptions, dom: HTMLDivElement | null): void => {
+    function scrollToResult(scrollHResult: number): void {
+        requestAnimationFrame(() => {
+            dom?.scrollTo(0, scrollHResult);
+        });
+    }
     React.useEffect(() => autorun(
         () => {
             if (dom === null || !supportJump) { return; }
@@ -80,7 +85,7 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
                 session.locateUnit?.onSuccess(targetUnit);
                 const scrollHResult = getNormalUnitHeight(unitsArea, orderOptions, targetUnit);
                 if (scrollHResult !== undefined) {
-                    dom?.scrollTo(0, scrollHResult);
+                    scrollToResult(scrollHResult);
                 }
             }
             runInAction(() => {
