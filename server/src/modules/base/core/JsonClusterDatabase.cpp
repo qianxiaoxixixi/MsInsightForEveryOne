@@ -481,8 +481,7 @@ bool JsonClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams 
 
 bool JsonClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
-    std::string baseInfoSql =
-            "select file_path as filePath,ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
+    std::string baseInfoSql = "select ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
     return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
 }
 
