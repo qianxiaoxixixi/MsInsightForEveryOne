@@ -29,6 +29,7 @@ if (CMAKE_BUILD_TYPE MATCHES "release")
     set(CMAKE_CXX_VISIBILITY_PRESET hidden)
     set(CMAKE_C_VISIBILITY_PRESET hidden)
     set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+    set(CMAKE_SKIP_RPATH true)
 endif()
 # windows add link option: -static
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
