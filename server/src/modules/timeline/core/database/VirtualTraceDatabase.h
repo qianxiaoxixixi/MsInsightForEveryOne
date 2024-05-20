@@ -20,6 +20,7 @@
 #include "EventDef.h"
 
 namespace Dic::Module::Timeline {
+using namespace Dic::Protocol;
 /*
  * timeline数据库抽象类，定义所有查询接口调用的数据库查询纯虚函数，
  */
@@ -37,7 +38,7 @@ public:
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) = 0;
     virtual bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) = 0;
-    virtual bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
+    virtual bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitSingleFlow &responseBody,
                          uint64_t minTimestamp) = 0;
     virtual bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) = 0;
@@ -49,9 +50,9 @@ public:
     virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params) = 0;
     virtual bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody) = 0;
-    virtual bool QueryFlowCategoryList(std::vector<std::string> &categories) = 0;
+    virtual bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) = 0;
     virtual bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                 std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList) = 0;
+                                 std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
     virtual bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) = 0;
 

@@ -64,6 +64,9 @@ public:
     void SetFileType(FileType type);
     void SetDbPathMapping(const std::string& rankId, const std::string& filePath);
 
+    bool curIsCluster = false;
+    bool curIsDb = false;
+
 private:
     DataBaseManager() = default;
     ~DataBaseManager() = default;

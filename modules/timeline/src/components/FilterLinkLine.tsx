@@ -130,7 +130,9 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
     const unitsRef = React.useRef<string>();
     React.useEffect(() => {
         const cardUnits = getCardUnits(session.units);
-        const cardUnitsString = JSON.stringify(cardUnits);
+        const cardUnitsString = JSON.stringify(cardUnits, (key, value) => {
+            return key !== 'parent' ? value : undefined;
+        });
         if (!isSuspend || cardUnitsString === unitsRef.current) { return; }
         unitsRef.current = cardUnitsString;
         const fetchList: Array<Promise<{ category: string[] }>> = [];

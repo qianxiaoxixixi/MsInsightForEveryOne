@@ -300,7 +300,7 @@ template <> std::optional<document_t> ToResponseJson<FlowCategoryListResponse>(c
     return std::move(json);
 }
 
-json_t FlowEventLocationToJson(const FlowEventLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+json_t FlowEventLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
     json_t json(kObjectType);
     JsonUtil::AddMember(json, "pid", flowLocation.pid, allocator);
@@ -321,7 +321,7 @@ std::optional<document_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowC
     json_t flowDetailList(kArrayType);
     for (const auto &flowDetail : response.body.flowDetailList) {
         json_t flowDetailJson(kObjectType);
-        JsonUtil::AddMember(flowDetailJson, "category", flowDetail->category, allocator);
+        JsonUtil::AddMember(flowDetailJson, "category", flowDetail->cat, allocator);
         JsonUtil::AddMember(flowDetailJson, "from", FlowEventLocationToJson(flowDetail->from, allocator), allocator);
         JsonUtil::AddMember(flowDetailJson, "to", FlowEventLocationToJson(flowDetail->to, allocator), allocator);
         flowDetailList.PushBack(flowDetailJson, allocator);

@@ -28,10 +28,6 @@ using namespace Dic;
 using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 
-bool ParserAlloc::curIsCluster = false;
-bool ParserAlloc::curIsDb = false;
-bool ParserAlloc::curIsCompute = false;
-
 std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
 {
     std::shared_ptr<ParserAlloc> alloc;
@@ -213,10 +209,11 @@ std::string ParserAlloc::GetDbPath(const std::string &filePath, const int index)
 bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb)
 {
     bool isCluster = (filesSize > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(path);
-    bool reset = isCluster || curIsCluster || isDb || curIsDb;
-    ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
-    curIsCluster = isCluster;
-    curIsDb = isDb;
+    bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb;
+    ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", DataBaseManager::Instance().curIsCluster,
+                    ", reset:", reset);
+    DataBaseManager::Instance().curIsCluster = isCluster;
+    DataBaseManager::Instance().curIsDb = isDb;
     if (reset) {
         if (isDb) {
             FullDb::FullDbParser::Instance().Reset();
