@@ -13,6 +13,11 @@
 #include <sstream>
 #include <cstdio>
 #include <mutex>
+#ifdef __APPLE__
+#include <filesystem>
+#elif __linux__
+#include <sys/stat.h>
+#endif
 #include "TimeUtil.h"
 
 namespace Dic {
@@ -214,6 +219,16 @@ private:
             } else {
                 this->ofs.open(filePath, std::ofstream::out | std::ofstream::app);
             }
+#ifdef __APPLE__
+            this->ofs.close(); // 关闭文件以设置权限
+            std::filesystem::permissions(filePath, std::filesystem::perms::owner_read |
+                    std::filesystem::perms::owner_write | std::filesystem::perms::group_read);
+            this->ofs.open(filePath, std::ofstream::out | std::ofstream::app); // 重新打开文件
+#elif __linux__
+            this->ofs.close();
+            chmod(filePath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
+            this->ofs.open(filePath, std::ofstream::out | std::ofstream::app);
+#endif
         }
     }
 
@@ -269,6 +284,16 @@ private:
                 ofs.open(filePath, std::ios::out | std::ios::trunc);
                 currentSize = 0;
             }
+#ifdef __APPLE__
+            ofs.close(); // 关闭文件以设置权限
+            std::filesystem::permissions(filePath, std::filesystem::perms::owner_read |
+                    std::filesystem::perms::owner_write | std::filesystem::perms::group_read);
+            ofs.open(filePath, std::ofstream::out | std::ofstream::app); // 重新打开文件
+#elif __linux__
+            ofs.close();
+            chmod(filePath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
+            ofs.open(filePath, std::ofstream::out | std::ofstream::app);
+#endif
         }
     }
 
