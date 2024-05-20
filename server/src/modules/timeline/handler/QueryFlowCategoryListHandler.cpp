@@ -31,7 +31,7 @@ void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    bool result = database->QueryFlowCategoryList(response.body.category);
+    bool result = database->QueryFlowCategoryList(response.body.category, request.params.rankId);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

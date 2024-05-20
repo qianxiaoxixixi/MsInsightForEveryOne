@@ -63,7 +63,7 @@ public:
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
         Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) override;
 
-    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
+    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitSingleFlow &responseBody,
         uint64_t minTimestamp) override;
     bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
@@ -76,9 +76,9 @@ public:
     int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
         Protocol::SearchSliceBody &responseBody) override;
-    bool QueryFlowCategoryList(std::vector<std::string> &categories) override;
+    bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-        std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList) override;
+        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
         std::vector<Protocol::UnitCounterData> &dataList) override;
 
@@ -171,9 +171,9 @@ private:
         const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult,
         int64_t trackId);
     bool FlowDetailToResponse(const std::vector<FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
-        Protocol::UnitFlowBody &responseBody);
+        Protocol::UnitSingleFlow &responseBody);
     void FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
-        std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList);
+        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
     void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);

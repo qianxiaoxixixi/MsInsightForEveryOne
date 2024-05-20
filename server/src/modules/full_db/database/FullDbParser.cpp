@@ -14,6 +14,7 @@
 #include "DbSummaryDataBase.h"
 #include "FileUtil.h"
 #include "ClusterParseThreadPoolExecutor.h"
+#include "CommonCacheManager.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;
@@ -63,6 +64,7 @@ void FullDbParser::Reset()
     Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
     FullDb::DbMemoryDataBase::Reset();
     FullDb::DbSummaryDataBase::Reset();
+    CommonCacheManager::Instance().Clear();
     ServerLog::Info("End Reset trace Parser");
     threadPool->Reset();
 }
@@ -128,6 +130,8 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     for (const auto &future : *futures) {
         future.wait();
     }
+
+    FullDbParser::Instance().threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->InitFlowCache(); });
 
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);

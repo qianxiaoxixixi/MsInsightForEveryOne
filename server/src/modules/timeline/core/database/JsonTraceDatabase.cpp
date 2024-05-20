@@ -953,7 +953,7 @@ KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<Slice
 }
 
 bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
-    Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
+    Protocol::UnitSingleFlow &responseBody, uint64_t minTimestamp)
 {
     std::vector<FlowDetailDto> flowDetailVec = QuerySingleFlowDetail(requestParams.flowId, minTimestamp);
     return FlowDetailToResponse(flowDetailVec, minTimestamp, responseBody);
@@ -1019,7 +1019,7 @@ std::map<uint64_t, std::pair<std::string, std::string>> JsonTraceDatabase::Query
 }
 
 bool JsonTraceDatabase::FlowDetailToResponse(const std::vector<FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
-    Protocol::UnitFlowBody &responseBody)
+    Protocol::UnitSingleFlow &responseBody)
 {
     const static int FLOW_COUNT = 2; // from + to
     if (flowDetailVec.size() != FLOW_COUNT) {
@@ -1370,7 +1370,7 @@ bool JsonTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
     return true;
 }
 
-bool JsonTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
+bool JsonTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId)
 {
     std::string sql = "SELECT cat FROM flow GROUP BY cat";
     auto stmt = CreatPreparedStatement(sql);
@@ -1412,7 +1412,7 @@ std::vector<uint64_t> JsonTraceDatabase::QueryAllTrackIdsByPid(std::string pid)
 }
 
 bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
-    std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
+    std::vector<std::unique_ptr<UnitSingleFlow>> &flowDetailList)
 {
     Timer timer("JsonTraceDatabase::QueryFlowCategoryEvents");
     std::vector<FlowCategoryEventsDto> flowPointResult;
@@ -1475,11 +1475,11 @@ void JsonTraceDatabase::QueryFlowPointByCategory(FlowCategoryEventsParams &param
 }
 
 void JsonTraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
-    const std::string &category, std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
+    const std::string &category, std::vector<std::unique_ptr<UnitSingleFlow>> &flowDetailList)
 {
     std::string curFlowId;
-    FlowEventLocation location;
-    FlowEventLocation *locationPtr = &location;
+    FlowLocation location;
+    FlowLocation *locationPtr = &location;
     for (const auto &flow : flowEventsVec) {
         std::string type = flow.type;
         std::string flowId = flow.flowId;
@@ -1491,8 +1491,8 @@ void JsonTraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEvent
             location.type = type;
             locationPtr = &location;
         } else if ((type == LINE_END || type == LINE_END_OPTIONAL) && flowId == curFlowId) {
-            auto flowEvent = std::make_unique<FlowEvent>();
-            flowEvent->category = category;
+            auto flowEvent = std::make_unique<UnitSingleFlow>();
+            flowEvent->cat = category;
             flowEvent->from = *locationPtr;
             flowEvent->to.pid = flow.pid;
             flowEvent->to.tid = flow.tid;

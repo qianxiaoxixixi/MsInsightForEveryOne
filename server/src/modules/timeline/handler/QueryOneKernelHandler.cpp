@@ -37,7 +37,7 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         ServerLog::Error("Failed to query the operator response data.");
     }
 
-    if (!ParserAlloc::IsCluster()) {
+    if (!DataBaseManager::Instance().curIsCluster) {
         session.OnResponse(std::move(responsePtr));
         return;
     }

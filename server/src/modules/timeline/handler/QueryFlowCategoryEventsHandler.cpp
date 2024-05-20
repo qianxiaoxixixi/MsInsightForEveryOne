@@ -24,15 +24,23 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     std::unique_ptr<FlowCategoryEventsResponse> responsePtr = std::make_unique<FlowCategoryEventsResponse>();
     FlowCategoryEventsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
-        SetResponseResult(response, true);
-        session.OnResponse(std::move(responsePtr));
-        return;
+    bool result = false;
+    std::vector<std::string> fileIdList;
+    if (request.params.rankId.empty() || strcmp(request.params.rankId.c_str(), "Host") == 0) {
+        fileIdList = DataBaseManager::Instance().GetAllFileId();
+    } else {
+        fileIdList.emplace_back(request.params.rankId);
     }
-    bool result = database->QueryFlowCategoryEvents(request.params, TraceTime::Instance().GetStartTime(),
-                                                    response.body.flowDetailList);
+    for (const auto &fileId : fileIdList) {
+        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        if (database != nullptr) {
+            result = database->QueryFlowCategoryEvents(request.params, TraceTime::Instance().GetStartTime(),
+                                                       response.body.flowDetailList);
+        }
+        if (!result) {
+            break;
+        }
+    }
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
