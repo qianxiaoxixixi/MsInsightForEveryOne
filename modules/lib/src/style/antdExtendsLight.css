@@ -117,3 +117,10 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     border-bottom: 1px solid var(--grey6);
     color: var(--grey60);
 }
+
+.rc-virtual-list-holder{
+    overflow-y: auto!important;
+}
+.rc-virtual-list-scrollbar{
+    display: none!important;
+}
