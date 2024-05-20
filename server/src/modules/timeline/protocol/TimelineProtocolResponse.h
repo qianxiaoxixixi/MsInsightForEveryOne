@@ -139,27 +139,21 @@ struct FlowLocation {
     uint64_t duration = 0; // slice duration
     std::string pid;
     std::string name; // slice name
+    std::string deviceId;
+    std::string type;
 };
 
-struct UnitFlowBody {
-    std::string title;
+struct UnitSingleFlow {
     std::string cat;
     std::string id;
     FlowLocation from;
     FlowLocation to;
+    std::string title;
 };
 
 struct UnitFlowResponse : public Response {
     UnitFlowResponse() : Response(REQ_RES_UNIT_FLOW) {}
-    UnitFlowBody body;
-};
-
-struct UnitSingleFlow {
-    std::string title;
-    std::string cat;
-    std::string id;
-    FlowLocation from;
-    FlowLocation to;
+    UnitSingleFlow body;
 };
 
 struct UnitCatFlows {
@@ -284,23 +278,8 @@ struct FlowCategoryListResponse : public Response {
     FlowCategoryListBody body;
 };
 
-struct FlowEventLocation {
-    std::string tid;
-    int32_t depth = 0;
-    uint64_t timestamp = 0;
-    std::string pid;
-    std::string type;
-    std::string rankId;
-};
-
-struct FlowEvent {
-    std::string category;
-    FlowEventLocation from;
-    FlowEventLocation to;
-};
-
 struct FlowCategoryEventsBody {
-    std::vector<std::unique_ptr<FlowEvent>> flowDetailList;
+    std::vector<std::unique_ptr<UnitSingleFlow>> flowDetailList;
 };
 
 struct FlowCategoryEventsResponse : public Response {

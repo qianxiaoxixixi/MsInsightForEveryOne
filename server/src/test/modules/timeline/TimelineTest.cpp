@@ -194,7 +194,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::FlowCategoryEventsParams requestParams;
-    std::vector<std::unique_ptr<Dic::Protocol::FlowEvent>> flowDetailList;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitSingleFlow>> flowDetailList;
     uint64_t STARTTIME = 9171200;
     uint64_t ENDTIME = 20617000;
     requestParams.startTime = STARTTIME;
@@ -208,7 +208,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     database->QueryFlowCategoryEvents(requestParams, minTimestamp, flowDetailList);
     std::string EXPECT_FROM_TID = "1408366";
     EXPECT_EQ(flowDetailList.size(), expectSize); // flowDetailList size = 5
-    EXPECT_EQ(flowDetailList[0]->category, "HostToDevice");
+    EXPECT_EQ(flowDetailList[0]->cat, "HostToDevice");
     EXPECT_EQ(flowDetailList[0]->from.timestamp, expectFromTimestamp); // timestamp = 1695115378722143800
     EXPECT_EQ(flowDetailList[0]->from.pid, "140836602");
     EXPECT_EQ(flowDetailList[0]->from.depth, 0);
@@ -223,7 +223,7 @@ TEST_F(TestSuit, QueryFlowCategoryList)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     std::vector<std::string> categories;
-    database->QueryFlowCategoryList(categories);
+    database->QueryFlowCategoryList(categories, "");
     const int thirdNumber = 2;
     EXPECT_EQ(categories.size(), 3); // categories.size = 3
     EXPECT_EQ(categories[0], "HostToDevice");
@@ -387,7 +387,7 @@ TEST_F(TestSuit, QueryFlowDetail)
     to.timestamp = TOTIMESTAMP;
 
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    Dic::Protocol::UnitFlowBody response;
+    Dic::Protocol::UnitSingleFlow response;
     database->QueryFlowDetail(request, response, minTimestamp);
 
     EXPECT_EQ(response.title, title);

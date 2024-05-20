@@ -173,6 +173,8 @@ void DataBaseManager::Clear()
     summaryDatabaseMap.clear();
     dbMutexMap.clear();
     dbFilePathMap.clear();
+    curIsCluster = false;
+    curIsDb = false;
 }
 
 void DataBaseManager::Clear(DatabaseType type)

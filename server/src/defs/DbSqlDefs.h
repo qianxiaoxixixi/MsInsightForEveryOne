@@ -164,6 +164,69 @@ const static std::string FULL_DB_UPDATE_TIME =
         "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
         "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
         "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
+
+// QueryDeviceLocationSql
+const static std::string QUERY_DEVICE_LOCATION_SQL =
+        " with constValue as (select ? as minTime) "
+        " select connectionCats.cat, connectionCats.connectionId, task.ROWID as id, streamId as tid, depth,"
+        " startNs - constValue.minTime as startTime, endNs - startNs as duration, 'ASCEND HARDWARE' as pid, "
+        " 'ASCEND HARDWARE' as metaType, name, deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
+        " on task.globalTaskId = CTI.globalTaskId join connectionCats on task.connectionId=connectionCats.connectionId "
+        " union all select connectionCats.cat, connectionCats.connectionId, op.ROWID as id, groupName||'group' as tid, "
+        " 0 as depth,op.startNs-constValue.minTime as startTime, op.endNs - op.startNs as duration, 'HCCL' as pid, "
+        " 'HCCL' as metaType, opName as name, deviceId from COMMUNICATION_OP op join constValue "
+        " join TASK task on task.connectionId = op.connectionId "
+        " join connectionCats on op.connectionId = connectionCats.connectionId group by opId, connectionCats.cat "
+        " order by startTime;";
+
+class DbSqlDefs {
+public:
+static std::string GetConnectionCatSql(bool isExistCann, bool isExistPytorch)
+{
+    std::string sql =
+               "with operateConnIds as (select op.connectionId from COMMUNICATION_OP op "
+               "   UNION all select connectionId from TASK task "
+               " join COMPUTE_TASK_INFO CTI on task.globalTaskId = CTI.globalTaskId) ";
+    if (isExistCann) {
+        sql.append(" select api.connectionId, 'HostToDevice' as cat  from CANN_API api "
+                   " join operateConnIds on api.connectionId = operateConnIds.connectionId ");
+        sql.append(isExistPytorch ? " union " : "");
+    }
+    if (isExistPytorch) {
+        sql.append(" select api.connectionId, 'async_npu' as cat from CONNECTION_IDS api "
+                   " join operateConnIds on api.connectionId = operateConnIds.connectionId "
+                   " union select conn.connectionId, case ids.value when 'Enqueue' then 'async_task_queue'"
+                   " else 'fwdbwd' end as cat from CONNECTION_IDS conn join main.PYTORCH_API PA "
+                   " on conn.id = PA.connectionId join STRING_IDS ids on ids.id = PA.name ");
+    }
+    sql.append(" group by conn.connectionId having count(1) > 1 ");
+    return sql;
+}
+
+static std::string GetQueryApiLocationSql(bool isExistCann, bool isExistPytorch)
+{
+    std::string sql = "with constValue as (select ? as minTime), "
+                      "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
+    if (isExistCann) {
+        sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, api.type as tid,"
+                   " depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
+                   " 'CANN_API' as metaType, name, deviceId from " + TABLE_CANN_API + " api join constValue "
+                   " join connectionCats on api.connectionId = connectionCats.connectionId and cat != 'async_npu' "
+                   " join rankIds on api.globalTid >> 32 = rankIds.globalPid ");
+        sql.append(isExistPytorch ? " union all " : "");
+    }
+    if (isExistPytorch) {
+        sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'pytorch' as tid, depth,"
+                   " startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid,"
+                   " 'PYTORCH_API' as metaType, name, rankIds.deviceId from PYTORCH_API api join constValue "
+                   " join CONNECTION_IDS ids on api.connectionId = ids.id "
+                   " join connectionCats on ids.connectionId = connectionCats.connectionId and cat != 'HostToDevice' "
+                   " join rankIds on api.globalTid >> 32 = rankIds.globalPid ");
+    }
+    sql.append(" order by startTime;");
+    return sql;
+}
+};
 };
 
 #endif // PROFILER_SERVER_DBSQLDEFS_H
