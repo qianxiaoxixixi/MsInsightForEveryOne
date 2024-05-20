@@ -255,18 +255,22 @@ interface UnitInfoProps {
     hasPinButton: boolean;
     isPinned: boolean;
     height: number;
+    className: string;
 }
 
-export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, ...props }: UnitInfoProps): JSX.Element => {
+export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, className, ...props }: UnitInfoProps): JSX.Element => {
     const [isHovered, setIsHovered] = React.useState(false);
     const selectUnit = useSelectUnit(session);
     return <UnitInfoContainer
-        className="unit-info"
+        className={`unit-info ${className ?? ''}`}
         unit={unit}
         laneInfoWidth={laneInfoWidth}
-        onClick={() => { selectUnit(unit); traceSingle('selectLane', [unit.name]); }}
         onMouseOver={() => { !isHovered && setIsHovered(true); }}
         onMouseLeave={() => { setIsHovered(false); }}
+        onMouseDown={(): void => {
+            selectUnit(unit);
+            traceSingle('selectLane', [unit.name]);
+        }}
     >
         {hasExpandIcon && <ExpandIcon unit={unit} session={session}/>}
         <UnitInfoContent

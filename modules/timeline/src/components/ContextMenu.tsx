@@ -9,9 +9,12 @@ import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
-import type { ThreadTrace, ThreadMetaData } from '../entity/data';
+import type { ThreadTrace, ThreadMetaData, CardMetaData } from '../entity/data';
 import type { TimeStamp } from '../entity/common';
 import connector from '../connection';
+import { unit } from '../entity/insight';
+import type { InsightUnit } from '../entity/insight';
+import { StyledTooltip } from './base/StyledTooltip';
 
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
@@ -138,6 +141,26 @@ function resetZoom(session: Session, menuItem?: MenuItemModel): void {
     });
 }
 
+function hideUnit(session: Session, menuItem?: MenuItemModel): void {
+    if (menuItem?.disabled) {
+        return;
+    }
+    hideUnits(session, session.selectedUnits);
+    runInAction(() => {
+        session.contextMenu.isVisible = false;
+    });
+}
+
+function showHidedUnit(session: Session, menuItem?: MenuItemModel): void {
+    if (menuItem?.disabled) {
+        return;
+    }
+    showAllHidedUnits(session);
+    runInAction(() => {
+        session.contextMenu.isVisible = false;
+    });
+}
+
 function closeMenu(session: Session): void {
     runInAction(() => {
         session.contextMenu.isVisible = false;
@@ -149,6 +172,148 @@ function openMenu(session: Session): void {
         session.contextMenu.isVisible = true;
     });
 }
+
+const showAllHidedUnits = (session: Session): void => {
+    const setUnitNotHide = (insightUnit: InsightUnit): void => {
+        runInAction(() => {
+            insightUnit.isUnitVisible = true;
+            if (insightUnit.name === 'Empty') {
+                insightUnit.parent?.children?.pop();
+            }
+        });
+
+        if (insightUnit.children) {
+            insightUnit.children.forEach(child => setUnitNotHide(child));
+        }
+    };
+
+    const handleEmptyUnit = (selectUnit: InsightUnit): void => {
+        if (selectUnit.parent) {
+            setUnitNotHide(selectUnit.parent);
+        } else {
+            session.units.forEach(cardUnit => setUnitNotHide(cardUnit));
+            runInAction(() => {
+                session.units.pop();
+            });
+        }
+    };
+
+    const showChildrenUnits = (insightUnit: InsightUnit): void => {
+        if (insightUnit.children) {
+            insightUnit.children.forEach(child => setUnitNotHide(child));
+        }
+    };
+
+    const selectUnit = session.selectedUnits[0];
+    if (selectUnit) {
+        if (selectUnit.name === 'Empty') {
+            handleEmptyUnit(selectUnit);
+        } else {
+            showChildrenUnits(selectUnit);
+        }
+    }
+};
+
+export const EmptyUnit = unit<EmptyMetaData>({
+    name: 'Empty',
+    pinType: 'copied',
+    renderInfo: (session: Session, metadata: { count: number}) => <StyledTooltip placement="leftBottom"><span style={{ marginLeft: 3, overflow: 'hidden', fontSize: 14, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{metadata.count}{' units hidden'}</span></StyledTooltip>,
+});
+
+interface EmptyMetaData {
+    count: number;
+    dataSource: DataSource;
+};
+
+const hideUnits = (session: Session, selectUnit: InsightUnit[]): void => {
+    const hideEveryUnit = (insightUnit: InsightUnit): void => {
+        if (selectUnit[0].metadata === insightUnit.metadata) {
+            hideSelectUnit(insightUnit);
+        }
+        if (insightUnit.children) {
+            for (const child of insightUnit.children) {
+                hideEveryUnit(child);
+            }
+        }
+    };
+
+    const hideSelectUnit = (insightUnit: InsightUnit): void => {
+        runInAction(() => {
+            insightUnit.isUnitVisible = false;
+            session.selectedUnits = [];
+            updateEmptyUnits(insightUnit);
+        });
+
+        if (insightUnit.children) {
+            setChildrenUnitHide(insightUnit.children);
+        }
+    };
+
+    const updateEmptyUnits = (insightUnit: InsightUnit): void => {
+        if (insightUnit.parent === undefined) {
+            const rankEmptyUnit = session.units.find(item => item.name === 'Empty');
+            if (rankEmptyUnit !== undefined) {
+                (rankEmptyUnit.metadata as EmptyMetaData).count++;
+            } else {
+                session.units.push(new EmptyUnit({
+                    count: 1,
+                    dataSource: (insightUnit.metadata as CardMetaData).dataSource,
+                } as EmptyMetaData));
+            }
+        } else {
+            const emptyUnit = insightUnit.parent.children?.find(item => item.name === 'Empty');
+            if (emptyUnit !== undefined) {
+                (emptyUnit.metadata as EmptyMetaData).count++;
+            } else {
+                insightUnit.parent.children?.push(new EmptyUnit({ count: 1 } as EmptyMetaData));
+            }
+        }
+    };
+
+    for (const sessionUnit of session.units) {
+        hideEveryUnit(sessionUnit);
+    }
+};
+
+const setChildrenUnitHide = (units: InsightUnit[]): void => {
+    const hideChildrenUnit = (insightUnit: InsightUnit): void => {
+        runInAction(() => {
+            insightUnit.isUnitVisible = false;
+        });
+        if (insightUnit.children) {
+            for (const child of insightUnit.children) {
+                hideChildrenUnit(child);
+            }
+        }
+    };
+    for (const insightUnit of units) {
+        hideChildrenUnit(insightUnit);
+    }
+};
+
+const isShowHideText = (session: Session): boolean => {
+    if (!session.selectedUnits[0]) {
+        return false;
+    }
+    if (session.selectedUnits[0].name === 'Empty') {
+        return true;
+    }
+    if (session.selectedUnits[0].children) {
+        for (const child of session.selectedUnits[0].children) {
+            if (!child.isUnitVisible) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+const isHideText = (session: Session): boolean => {
+    if (!session.selectedUnits[0]) {
+        return false;
+    }
+    return session.selectedUnits[0].name !== 'Empty';
+};
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
@@ -174,34 +339,15 @@ const getMenuItems = (props: Props): JSX.Element => {
     const isCommunicationOperator = (session.selectedData?.name as string)?.startsWith('hcom_') ?? false;
     const findInCommunicationVisible = isGroupCommunicationUnit && isCommunicationOperator && session.isCluster;
 
-    const menuItems: MenuItemModel[] = [{
-        name: 'Fit to screen',
-        key: 'fitToScreen',
-        event: fitToScreen,
-        visible: session.selectedData !== undefined,
-    }, {
-        name: 'Find in Communication',
-        key: 'findInCommunication',
-        event: findInCommunication,
-        visible: findInCommunicationVisible,
-    }, {
-        name: 'Zoom into selection',
-        key: 'zoomIntoSelection',
-        event: zoomIntoSelection,
-        visible: session.selectedRange !== undefined,
-    }, {
-        name: `Undo Zoom (${zoomHistory.length})`,
-        key: 'undoZoom',
-        event: undoZoom,
-        disabled: zoomHistory.length === 0,
-        visible: true,
-    }, {
-        name: 'Reset Zoom',
-        key: 'resetZoom',
-        event: resetZoom,
-        disabled: zoomHistory.length === 0,
-        visible: true,
-    }];
+    const menuItems: MenuItemModel[] = [
+        { name: 'Fit to screen', key: 'fitToScreen', event: fitToScreen, visible: session.selectedData !== undefined },
+        { name: 'Find in Communication', key: 'findInCommunication', event: findInCommunication, visible: findInCommunicationVisible },
+        { name: 'Zoom into selection', key: 'zoomIntoSelection', event: zoomIntoSelection, visible: session.selectedRange !== undefined },
+        { name: `Undo Zoom (${zoomHistory.length})`, key: 'undoZoom', event: undoZoom, disabled: zoomHistory.length === 0, visible: true },
+        { name: 'Reset Zoom', key: 'resetZoom', event: resetZoom, disabled: zoomHistory.length === 0, visible: true },
+        { name: 'Hide', key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
+        { name: 'Show All Hidden', key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
+    ];
 
     return <>
         {menuItems.filter(menuItem => menuItem.visible).map(item => (<MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
