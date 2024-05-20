@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import './highlight.scss';
 import './CodeViewer.css';
-import { addClass, removeClass, isViewable } from '../Common';
+import { addClass, removeClass, isViewable } from '../../Common';
 import { highlightAllWithNumber } from './highlightLineNumbers';
 
 // eslint-disable-next-line max-lines-per-function
