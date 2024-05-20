@@ -484,7 +484,7 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
     const onMousemove = handleMouseMove(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
     const onMouseup = handleMouseUp(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
     const showDraggable = handleDraggableShow(dragDirection, containerWH, isOpen, MIN_DRAG_WH, draggable, dragTranslate, setDragTranslate);
-    const handleOpen = (needOpen = false): void => { if (needOpen && !isOpen.current && autoPopUp) { showDraggable(); setAutoPopUp(false); } };
+    const handleOpen = (needOpen = false): void => { if ((needOpen && !isOpen.current) || autoPopUp) { showDraggable(); setAutoPopUp(false); } };
     const Container = containerMap.get(dragDirection) as typeof ContainerBase;
     // 分割线混乱问题解决
     useEffect(() => {
