@@ -10,6 +10,7 @@
 #include "TraceDatabaseHelper.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
+#include "CommonCacheManager.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -18,6 +19,9 @@ static std::map<std::string, std::map<std::string, std::string>> stringsCache;
 DbTraceDataBase::~DbTraceDataBase()
 {
     stringsCache.erase(path);
+    for (const auto &rankId: rankIds) {
+        CommonCacheManager::Instance().EraseFlowByRank(rankId);
+    }
     updateCannApiDepthStmt = nullptr;
     insertOverlapStmt = nullptr;
     updateApiDepthStmt = nullptr;
@@ -174,52 +178,9 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
 }
 
 bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
-    Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
+    Protocol::UnitSingleFlow &responseBody, uint64_t minTimestamp)
 {
-    auto stmt = CreatPreparedStatement();
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryFlowDetail. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    std::unique_ptr<SqliteResultSet> resultSet;
-    try {
-        auto processType = TraceDatabaseHelper::GetProcessType(requestParams.metaType);
-        switch (processType) {
-            case PROCESS_TYPE::ASCEND_HARDWARE:
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE,
-                    requestParams, stringsCache.at(path));
-                responseBody.from.rankId = path;
-                break;
-            case PROCESS_TYPE::HCCL:
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL, requestParams,
-                    stringsCache.at(path));
-                responseBody.from.rankId = path;
-                break;
-            case PROCESS_TYPE::CANN_API:
-            case PROCESS_TYPE::API: {
-                UnitFlowParams params;
-                params.flowId = requestParams.id;
-                params.id = requestParams.flowId;
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL, params,
-                    stringsCache.at(path));
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE, params,
-                    stringsCache.at(path));
-            }
-                responseBody.from.rankId = path;
-                break;
-            default:
-                throw DatabaseException("unsupported type!");
-        }
-    } catch (DatabaseException &e) {
-        ServerLog::Error("QueryFlowDetail Fail, ", e.What());
-        return false;
-    }
-    responseBody.id = responseBody.from.id;
-    responseBody.title = responseBody.from.name;
-    responseBody.cat = "HostToDevice";
-    responseBody.from.timestamp -= minTimestamp;
-    responseBody.to.timestamp -= minTimestamp;
-    return true;
+    return false;
 }
 
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
@@ -335,9 +296,12 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
     return result;
 }
 
-bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories)
+bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId)
 {
-    categories.emplace_back("HostToDevice");
+    if (!isExistCann && !isExistPytorch) {
+        return false;
+    }
+    CommonCacheManager::Instance().GetCategoryList(rankId, categories);
     return true;
 }
 
@@ -365,37 +329,23 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
 }
 
 bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-    std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList)
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList)
 {
-    std::map<std::string, std::vector<FlowEventLocation>> from;
-    std::map<std::string, std::vector<FlowEventLocation>> to;
-    auto stmt = CreatPreparedStatement();
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryFlowCategoryEvents. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
+    std::vector<std::string> deviceIds;
+    if (params.rankId.empty() || strcmp(params.rankId.c_str(), "Host") == 0) {
+        deviceIds.assign(rankIds.begin(), rankIds.end());
+    } else {
+        deviceIds.emplace_back(params.rankId);
     }
-    params.startTime += minTimestamp;
-    params.endTime += minTimestamp;
-    TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::ASCEND_HARDWARE, to);
-    TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::HCCL, to);
-
-    for (const auto &item : from) {
-        for (const auto &fromLocation : item.second) {
-            if (to.count(item.first) == 0) {
+    for (const auto &rankId: deviceIds) {
+        auto flowCache = CommonCacheManager::Instance().GetFlowCache(rankId, params.category);
+        for (const auto &flow: flowCache) {
+            if (flow.from.timestamp > params.startTime && flow.from.timestamp < params.endTime) {
+                flowDetailList.emplace_back(std::make_unique<UnitSingleFlow>(flow));
                 continue;
             }
-            for (const auto &toLocation : to.at(item.first)) {
-                auto event = std::make_unique<FlowEvent>();
-                event->category = "HostToDevice";
-                event->from = FlowEventLocation(fromLocation);
-                event->from.rankId = path;
-                event->from.timestamp -= minTimestamp;
-                event->from.type = "s";
-                event->to = FlowEventLocation(toLocation);
-                event->to.rankId = params.rankId;
-                event->to.timestamp -= minTimestamp;
-                event->to.type = "f";
-                flowDetailList.emplace_back(std::move(event));
+            if (flow.to.timestamp > params.startTime && flow.to.timestamp < params.endTime) {
+                flowDetailList.emplace_back(std::make_unique<UnitSingleFlow>(flow));
             }
         }
     }
@@ -745,7 +695,7 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
         std::unique_lock<std::recursive_mutex> lockGuard(mutex);
         ExecSql("delete from OVERLAP_ANALYSIS where 1 = 1");
     }
-    auto rankIds = QueryRankId();
+    QueryRankId();
     for (const auto &rankId: rankIds) {
         std::vector<OVERLAP_INFO> timeInfoList; // 包含computing,Communication 覆盖数据
         QueryTaskTimeInfo(true, timeInfoList, rankId);
@@ -937,6 +887,9 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
 
 std::vector<std::string> DbTraceDataBase::QueryRankId()
 {
+    if (!rankIds.empty()) {
+        return rankIds;
+    }
     sqlite3_stmt *stmt = nullptr;
     std::string sql;
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -949,7 +902,6 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
             sql = "SELECT DISTINCT id FROM " + TABLE_NPU_INFO;
         }
     }
-    std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
@@ -1099,6 +1051,66 @@ bool DbTraceDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
     InitStmt();
 }
 
+void DbTraceDataBase::InitFlowCache()
+{
+    {
+        std::lock_guard<std::recursive_mutex> lockGuard(mutex);
+        if (!ExecSql("CREATE TEMPORARY TABLE IF NOT EXISTS connectionCats as " +
+                        DbSqlDefs::GetConnectionCatSql(isExistCann, isExistPytorch))) {
+            return;
+        }
+    }
+    std::map<std::string, std::map<std::string, FlowLocation>> startFlowLocations; // 连线起始节点
+    std::map<std::string, std::map<std::string, std::vector<FlowLocation>>> endFlowLocations; // 连线结束节点
+    QueryFlowLocation(DbSqlDefs::GetQueryApiLocationSql(isExistCann, isExistPytorch),
+                      startFlowLocations, endFlowLocations);
+    QueryFlowLocation(QUERY_DEVICE_LOCATION_SQL, startFlowLocations, endFlowLocations);
+    auto dealLineData = [](const std::string &cat,  const std::string &connectionId, const FlowLocation &startLocation,
+            std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations) {
+        auto endLocations = endFlowLocations[cat][connectionId];
+        for (const auto &endFlowLocation : endLocations) {
+            UnitSingleFlow singleFlow {.cat = cat, .id = connectionId,
+                    .from = startLocation, .to = endFlowLocation };
+            CommonCacheManager::Instance().Put(startLocation.deviceId, cat, singleFlow);
+        }
+    };
+    for (const auto &catGroup: startFlowLocations) {
+        for (const auto &startLocation: catGroup.second) {
+            dealLineData(catGroup.first, startLocation.first, startLocation.second, endFlowLocations);
+        }
+    }
+    for (const auto &rankId: rankIds) {
+        CommonCacheManager::Instance().SetFlowState(rankId, true);
+    }
+}
+
+void DbTraceDataBase::QueryFlowLocation(const std::string& sql,
+    std::map<std::string, std::map<std::string, FlowLocation>>& startFlowLocations,
+    std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations)
+{
+    auto stmt = CreatPreparedStatement();
+    auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, TraceTime::Instance().GetStartTime());
+    while (resultSet->Next()) {
+        auto metaType = resultSet->GetString("metaType");
+        auto deviceId = resultSet->GetString("deviceId");
+        auto cat = resultSet->GetString("cat");
+        auto connectionId = resultSet->GetString("connectionId");
+        FlowLocation location {.tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
+                .metaType = metaType, .rankId = metaType == TABLE_API || metaType == TABLE_CANN_API ? path : deviceId,
+                .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+                .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
+                .name = resultSet->GetString("name"), .deviceId=deviceId};
+        if (startFlowLocations[cat].count(connectionId) == 0) {
+            startFlowLocations[cat][connectionId] = location;
+        } else if (startFlowLocations[cat][connectionId].timestamp > location.timestamp) {
+            endFlowLocations[cat][connectionId].emplace_back(startFlowLocations[cat][connectionId]);
+            startFlowLocations[cat][connectionId] = location;
+        } else {
+            endFlowLocations[cat][connectionId].emplace_back(location);
+        }
+    }
+}
+
 void DbTraceDataBase::InitStringsCache()
 {
     if (!stringsCache[path].empty()) {
@@ -1163,6 +1175,7 @@ bool DbTraceDataBase::SetConfig()
     std::lock_guard<std::recursive_mutex> lock(mutex);
     isExistPytorch = CheckTableExist(TABLE_API);
     isExistCann = CheckTableExist(TABLE_CANN_API);
+    QueryRankId();
 
     if (IsDatabaseVersionChange()) {
         UpdateValueIntoStatusInfoTable(CONFIG_STATUS, NOT_FINISH_STATUS);

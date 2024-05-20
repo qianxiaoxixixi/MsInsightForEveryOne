@@ -58,7 +58,7 @@ public:
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp,
                            int64_t trackId) override;
-    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
+    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitSingleFlow &responseBody,
                          uint64_t minTimestamp) override;
     bool QueryUnitsMetadata(const std::string &fileId,
                             std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
@@ -70,9 +70,9 @@ public:
     int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody) override;
-    bool QueryFlowCategoryList(std::vector<std::string> &categories) override;
+    bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                 std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList) override;
+                                 std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) override;
 
@@ -118,6 +118,7 @@ public:
     void UpdateStartTime();
     void UpdateAllDepth();
     void InitStringsCache();
+    void InitFlowCache();
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();
 
@@ -135,6 +136,7 @@ private:
     std::vector<TASK_INFO> taskDepthCache;
     std::vector<WAIT_TIME> taskWaitTimeCache;
     std::vector<OVERLAP_INFO> timeInfoCache;
+    std::vector<std::string> rankIds;
 
     bool SetConfig();
     bool InitStmt();
@@ -168,6 +170,9 @@ private:
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
     std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
                                              const std::string& order, const std::string& orderByField);
+    void QueryFlowLocation(const std::string& sql,
+                           std::map<std::string, std::map<std::string, FlowLocation>>& startFlowLocations,
+                           std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations);
 };
 }
 

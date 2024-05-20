@@ -131,7 +131,7 @@ void ParserJson::SetParseCallBack(std::string token, FileParser &fileParser)
 void ParserJson::ClusterProcess(const std::string &token, const std::string &selectedFolder)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
-    if (ParserAlloc::curIsCluster) {
+    if (DataBaseManager::Instance().curIsCluster) {
         ClusterFileParser clusterFileParser;
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
             ServerLog::Info("ParseClusterFiles is success");
