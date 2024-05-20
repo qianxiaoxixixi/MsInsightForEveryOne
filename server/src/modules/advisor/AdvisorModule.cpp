@@ -3,6 +3,8 @@
   */
 
 #include "QueryAffinityOptimizerAdvice.h"
+#include "QueryAiCpuOpAdviceHandler.h"
+#include "QueryAclnnOpAdvisorHandler.h"
 #include "AdvisorModule.h"
 
 namespace Dic::Module {
@@ -20,6 +22,8 @@ void AdvisorModule::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
     requestHandlerMap.emplace(REQ_RES_ADVISOR_AFFINITY_OPTIMIZER, std::make_unique<QueryAffinityOptimizerAdvice>());
+    requestHandlerMap.emplace(REQ_RES_ADVISOR_AICPU_OPERATORS, std::make_unique<QueryAiCpuOpAdviceHandler>());
+    requestHandlerMap.emplace(REQ_RES_ADVISOR_ACLNN_OPERATORS, std::make_unique<QueryAclnnOpAdvisorHandler>());
 }
 
 void AdvisorModule::OnRequest(std::unique_ptr<Protocol::Request> request)

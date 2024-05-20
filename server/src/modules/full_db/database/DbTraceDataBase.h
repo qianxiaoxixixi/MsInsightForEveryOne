@@ -110,6 +110,8 @@ public:
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
     bool QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
+    bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
+        std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
 
     bool CheckTableDataInvalid(std::string tableName);
 

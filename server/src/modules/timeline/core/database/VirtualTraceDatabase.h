@@ -78,6 +78,8 @@ public:
             Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) = 0;
     virtual bool QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;
+    virtual bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
+        std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H
