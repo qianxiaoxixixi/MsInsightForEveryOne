@@ -201,6 +201,8 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
     children?: InsightUnit[];
     type: 'basic' | 'transparent';
     phase: string;
+    isUnitVisible: boolean;
+    parent?: InsightUnit;
 }
 // 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
@@ -251,9 +253,13 @@ const wrapSpread = (original?: SpreadDesc): SpreadDesc | undefined => {
     };
 };
 
+// eslint-disable-next-line max-lines-per-function
 export const unit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
 Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'metadata'>): typeof BasicUnit => {
     const BasicUnit = class implements InsightUnit {
+        parent?: InsightUnit;
+        _children?: InsightUnit[];
+        isUnitVisible = true;
         type = 'basic' as const;
         pinType = params.pinType ?? 'copied';
         name = params.name;
@@ -265,11 +271,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         chart = params.chart;
         tabState = params.tabState ?? undefined;
         notifications = params.notifications as Array<(metaData: unknown) => (false | string)>;
-        renderInfo = (session: Session): (string | JSX.Element | null) => {
-            return params.renderInfo?.(session, this.metadata, this) ?? null;
-        };
 
-        height = (): number => heightOf(this.chart);
         expandable = false;
         isExpanded = false;
         isDisplay = true;
@@ -277,7 +279,6 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         bottomPanelRender = params.bottomPanelRender;
         collapseAction = params.collapseAction;
         spreadUnits = wrapSpread(params.spreadUnits);
-        children?: InsightUnit[] = params.spreadUnits ? [] : undefined;
         phase: UnitPhase = 'configuring';
         searchConfig = params.searchConfig;
         collapsible = true;
@@ -285,9 +286,34 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         constructor(metadata: T) {
             makeAutoObservable(this, { searchConfig: false });
             this.metadata = metadata;
+            this.children = params.spreadUnits ? [] : undefined;
             const spreadUnits = params.spreadUnits;
             if (spreadUnits?.phase === 'create') { spreadUnits.action(this); }
         }
+
+        get children(): InsightUnit[] | undefined {
+            if (Array.isArray(this._children)) {
+                for (const child of this._children) {
+                    child.parent = this;
+                }
+            }
+            return this._children;
+        }
+
+        set children(ch: InsightUnit[] | undefined) {
+            if (Array.isArray(ch)) {
+                for (const child of ch) {
+                    child.parent = this;
+                }
+            }
+            this._children = ch;
+        }
+
+        renderInfo = (session: Session): (string | JSX.Element | null) => {
+            return params.renderInfo?.(session, this.metadata, this) ?? null;
+        };
+
+        height = (): number => heightOf(this.chart);
     };
     return BasicUnit;
 };
@@ -295,6 +321,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
 export const transparentUnit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
 Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof TransparentUnit => {
     const TransparentUnit = class implements InsightUnit {
+        isUnitVisible = true;
         type = 'transparent' as const;
         description = params.description;
         pinType = params.pinType ?? 'copied';

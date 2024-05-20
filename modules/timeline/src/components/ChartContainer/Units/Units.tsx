@@ -35,6 +35,9 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
             fill: ${props => props.theme.fontColor};
         }
     }
+    .empty.unit-info{
+        background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.buttonBackgroundColor};
+     }
     .chart-selected {
         box-shadow: 0 0 0 3px ${props => props.theme.selectedChartBorderColor} inset;
     }
@@ -99,6 +102,7 @@ export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps)
     const selectUnit = useSelectUnit(session);
     return <Lane className={cls('unit', { [UNIT_SELECTED]: isSelected, [UNIT_VISIBLE]: isVisible })} laneHeight={height}>
         <UnitInfo
+            className={unit.name === 'Empty' ? 'empty' : ''}
             height={height}
             session={session}
             unit={unit}
@@ -187,7 +191,8 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     const [scrollTop, setScrollTop] = React.useState(0);
     // 监听滚动事件，计算虚拟滚动的泳道
     useEventBus(eventType, (value) => setScrollTop(value as number));
-    const flattenUnits = computed(() => orderOptions.preOrderFlatten(session.units, 0, orderOptions.options)).get();
+    const flattenUnitsAll = computed(() => orderOptions.preOrderFlatten(session.units, 0, orderOptions.options)).get();
+    const flattenUnits = computed(() => flattenUnitsAll.filter(unit => unit.isUnitVisible)).get();
     const [first, last] = React.useMemo(() => computeVisibleUnitRange(flattenUnits, height, scrollTop),
         [session.pinnedUnits, flattenUnits, height, scrollTop],
     );
