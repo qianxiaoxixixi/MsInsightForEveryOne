@@ -2007,6 +2007,31 @@ bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
     body.count = SearchSliceNameCount(searchCountParams);
     return true;
 }
+
+bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
+{
+    auto stmt = CreatPreparedStatement(QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::KernelBaseInfo one{};
+        one.name = resultSet->GetString("name");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+        data.emplace_back(one);
+    }
+    return true;
+}
 } // end of namespace Timeline
   // end of namespace Module
   // end of namespace Dic

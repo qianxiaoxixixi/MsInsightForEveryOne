@@ -116,6 +116,8 @@ public:
 
     bool QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
+    bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
+        std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
     bool UpdateParseStatus(const std::string &status);
     bool HasFinishedParseLastTime();
 

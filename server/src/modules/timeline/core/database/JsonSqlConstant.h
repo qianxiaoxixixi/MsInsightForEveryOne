@@ -123,6 +123,12 @@ const std::string QUERY_AICPU_OP_EXCEED_THRESHOLD_SQL =
         "    WHERE args LIKE '%Task Type%AI_CPU%' AND duration > ?) s "
         "JOIN " + KERNEL_DETAIL + " kd ON s.name = kd.name AND s.timestamp = kd.start_time "
         "JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id";
+const std::string QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL =
+    "SELECT s.name as name, s.timestamp - ? as startTime, s.duration as duration, t.pid as pid, t.tid as tid "
+    "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+    "WHERE s.name IN ( "
+    "    SELECT name FROM " + SLICE_TABLE + " WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
+    "    GROUP BY name HAVING COUNT(name) >= ? )";
 
 class JsonSqlConstant {
 public:

@@ -1667,6 +1667,7 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
     return sql;
 }
 
+
 bool DbTraceDataBase::QueryAffinityOptimizer(const std::string &optimizers,
     std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
@@ -1702,5 +1703,11 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
     responseBody.currentPage = requestParams.current;
     responseBody.pageSize = requestParams.pageSize;
     return true;
+}
+
+bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
+{
+    return false;
 }
 }

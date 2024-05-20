@@ -16,10 +16,10 @@ template<typename RequestType> std::unique_ptr<Request> ToRequest(const Dic::jso
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderType, json["params"], "orderType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderType, json["params"], "order");
     return reqPtr;
 }
 
