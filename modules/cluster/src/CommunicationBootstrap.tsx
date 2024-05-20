@@ -11,7 +11,7 @@ import connector from './connection';
 import { observer } from 'mobx-react';
 import { getSearchParams } from './utils/localUrl';
 import { themeInstance } from './theme/theme';
-import CommunicationAnalysis from './components/communicationAnalysis/CommunicationAnalysis';
+import CommunicationAnalysis from './components/communication/CommunicationAnalysis';
 import { Loading } from './index';
 
 export const App = observer(() => {

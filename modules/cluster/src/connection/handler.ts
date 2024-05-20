@@ -4,8 +4,8 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import { NotificationHandler } from './defs';
-import { updateData } from '../components/communicationAnalysis/Filter';
-import type { ConditionDataType } from '../components/communicationAnalysis/Filter';
+import { updateData } from '../components/communication/Filter';
+import type { ConditionDataType } from '../components/communication/Filter';
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
