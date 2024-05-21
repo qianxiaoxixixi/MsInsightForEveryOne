@@ -129,6 +129,8 @@ const std::string REQ_RES_SOURCE_API_LINE = "source/api/line";
 const std::string REQ_RES_SOURCE_API_INSTRUCTIONS = "source/api/instructions";
 const std::string REQ_RES_DETAILS_BASE_INFO = "source/details/baseInfo";
 const std::string REQ_RES_DETAILS_COMPUTE_LOAD_INFO = "source/details/computeworkload";
+const std::string REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH = "source/details/memoryGraph";
+const std::string REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE = "source/details/memoryTable";
 
 // Advisor Request/Response
 const std::string REQ_RES_ADVISOR_AFFINITY_OPTIMIZER = "advisor/affinity_optimizer";

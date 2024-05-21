@@ -18,6 +18,8 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoRequest);
+    jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphRequest);
+    jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableRequest);
 }
 
 void SourceProtocol::RegisterResponseToJsonFuncs()
@@ -27,6 +29,8 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoResponse);
+    resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphResponse);
+    resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableResponse);
 }
 
 void SourceProtocol::RegisterEventToJsonFuncs()
@@ -88,6 +92,28 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsLoadInfoRequest(const Dic::jso
     return reqPtr;
 }
 
+std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryGraphRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<DetailsMemoryGraphRequest> reqPtr = std::make_unique<DetailsMemoryGraphRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.blockId, json["params"], "blockId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryTableRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<DetailsMemoryTableRequest> reqPtr = std::make_unique<DetailsMemoryTableRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.blockId, json["params"], "blockId");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Reponse To Json>>
@@ -115,6 +141,16 @@ std::optional<document_t> SourceProtocol::ToDetailsBaseInfoResponse(const Dic::P
 std::optional<document_t> SourceProtocol::ToDetailsLoadInfoResponse(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<DetailsLoadInfoResponse>(dynamic_cast<const DetailsLoadInfoResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToDetailsMemoryGraphResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<DetailsMemoryGraphResponse>(dynamic_cast<const DetailsMemoryGraphResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToDetailsMemoryTableResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<DetailsMemoryTableResponse>(dynamic_cast<const DetailsMemoryTableResponse &>(response));
 }
 #pragma endregion
 

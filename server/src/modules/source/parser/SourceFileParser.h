@@ -64,6 +64,8 @@ public:
     std::string GetSourceByName(std::string sourceName);
     bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody);
     bool GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &responseBody);
+    bool GetDetailsMemoryGraph(const std::string& targetBlockId, Protocol::DetailsMemoryGraphResBody &responseBody);
+    bool GetDetailsMemoryTable(const std::string& targetBlockId, Protocol::DetailsMemoryTableResBody &responseBody);
     void ConvertToData();
     int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
     int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
@@ -86,6 +88,8 @@ private:
     std::optional<Protocol::SubBlockData> ConvertStrToSubBlockData(const std::string& str);
     std::string GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const;
     std::string GetUnitType(int64_t unitTypeNumber);
+    static Protocol::MemoryGraph ParseJsonToMemoryGraph(const json_t &json);
+    static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
 
     std::unique_ptr<ThreadPool> threadPool;
     const int maxThreadNum = 4;
