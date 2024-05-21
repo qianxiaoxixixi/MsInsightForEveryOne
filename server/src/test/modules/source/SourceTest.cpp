@@ -167,3 +167,35 @@ TEST_F(TestSuit, QueryLoadData)
     EXPECT_EQ(true, res);
     EXPECT_EQ(NUM32, resBody.blockIdList.size());
 }
+
+TEST_F(TestSuit, QueryMemoryGraphDataMix)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find_last_of("server");
+    currPath = currPath.substr(NUM0, index + 1);
+    std::string selectedFolder = currPath + R"(/src/test/test_data/memory_data.bin)";
+
+    Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
+    EXPECT_EQ(true, parser.CheckOperatorBinary(selectedFolder));
+    parser.Parse(std::vector<std::string>(), "", selectedFolder);
+
+    Protocol::DetailsMemoryGraphResBody resBody;
+    bool res = parser.GetDetailsMemoryGraph("0", resBody);
+    EXPECT_EQ(true, res);
+}
+
+TEST_F(TestSuit, QueryMemoryTableDataMix)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find_last_of("server");
+    currPath = currPath.substr(NUM0, index + 1);
+    std::string selectedFolder = currPath + R"(/src/test/test_data/memory_data.bin)";
+
+    Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
+    EXPECT_EQ(true, parser.CheckOperatorBinary(selectedFolder));
+    parser.Parse(std::vector<std::string>(), "", selectedFolder);
+
+    Protocol::DetailsMemoryTableResBody resBody;
+    bool res = parser.GetDetailsMemoryTable("0", resBody);
+    EXPECT_EQ(true, res);
+}

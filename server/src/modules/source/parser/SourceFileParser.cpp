@@ -472,6 +472,148 @@ bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & res
     return true;
 }
 
+bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId,
+                                             Protocol::DetailsMemoryGraphResBody &responseBody)
+{
+    if (targetBlockId.empty()) {
+        ServerLog::Error("Block id is empty, get memory graph data failed.");
+        return false;
+    }
+    // 读取内存表数据
+    std::ifstream file(filePath, std::ios::binary);
+    std::string memoryGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_GRAPH);
+    file.close();
+    if (memoryGraph.empty()) {
+        ServerLog::Warn("Details memory graph data does not exist.");
+        return false;
+    }
+    try {
+        std::string error;
+        auto graphJson = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(memoryGraph, error);
+        if (!error.empty()) {
+            ServerLog::Error("Parse memory graph data error:", error);
+            return false;
+        }
+        if (!graphJson.value().HasMember("core_memory_map") || !graphJson.value()["core_memory_map"].IsArray()) {
+            ServerLog::Error("Memory graph data invalid.");
+            return false;
+        }
+        Value &coreMemoryList = graphJson.value()["core_memory_map"];
+        for (const auto &item: coreMemoryList.GetArray()) {
+            if (targetBlockId != JsonUtil::GetString(item, "core_no")) {
+                continue;
+            }
+            Protocol::MemoryGraph temp = ParseJsonToMemoryGraph(item);
+            responseBody.coreMemory.push_back(temp);
+        }
+        if (responseBody.coreMemory.size() > 1) {
+            ServerLog::Warn("Details memory graph data is not unique, block id:", targetBlockId);
+        }
+        return true;
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse details memory graph data,not json.Error is ", e.what());
+        return false;
+    }
+}
+
+Protocol::MemoryGraph SourceFileParser::ParseJsonToMemoryGraph(const json_t &json)
+{
+    Protocol::MemoryGraph temp;
+    temp.blockId = JsonUtil::GetInteger(json, "core_no");
+    temp.blockType = JsonUtil::GetString(json, "op_type");
+    temp.chipType = JsonUtil::GetString(json, "soc");
+    temp.advice = JsonUtil::GetVector<std::string>(json, "advice");
+
+    if (json.HasMember("memory_unit") && json["memory_unit"].IsArray()) {
+        auto &memoryUnit = const_cast<Value &>(json["memory_unit"]);
+        for (auto &unit: memoryUnit.GetArray()) {
+            Protocol::MemoryUnit memoryUnitTemp;
+            memoryUnitTemp.memoryPath = JsonUtil::GetString(unit, "memory_path");
+            memoryUnitTemp.request = JsonUtil::GetInteger(unit, "request");
+            memoryUnitTemp.bandwidth = JsonUtil::GetString(unit, "bandwidth");
+            memoryUnitTemp.peakRatio = JsonUtil::GetString(unit, "peak_ratio");
+            memoryUnitTemp.display = (JsonUtil::GetInteger(unit, "display") == 1);
+            temp.memoryUnit.push_back(memoryUnitTemp);
+        }
+    }
+    if (json.HasMember("L2cache") && json["L2cache"].IsObject()) {
+        auto &L2cache = const_cast<Value &>(json["L2cache"]);
+        Protocol::L2Cache l2CacheTemp;
+        l2CacheTemp.hit = JsonUtil::GetString(L2cache, "hit");
+        l2CacheTemp.miss = JsonUtil::GetString(L2cache, "miss");
+        l2CacheTemp.totalRequest = JsonUtil::GetString(L2cache, "total_request");
+        l2CacheTemp.hitRatio = JsonUtil::GetString(L2cache, "hit_ratio");
+        temp.l2Cache = l2CacheTemp;
+    }
+    return temp;
+}
+
+bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId,
+                                             Protocol::DetailsMemoryTableResBody &responseBody)
+{
+    if (targetBlockId.empty()) {
+        ServerLog::Error("Block id is empty, get memory table data failed.");
+        return false;
+    }
+    std::ifstream file(filePath, std::ios::binary);
+    std::string memoryTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_TABLE);
+    file.close();
+    if (memoryTable.empty()) {
+        ServerLog::Warn("Details memory table data does not exist.");
+        return false;
+    }
+    try {
+        std::string error;
+        auto tableJson = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(memoryTable, error);
+        if (!error.empty()) {
+            ServerLog::Error("Parse memory graph data error:", error);
+            return false;
+        }
+        if (!tableJson.value().HasMember("table_per_block") || !tableJson.value()["table_per_block"].IsArray()) {
+            ServerLog::Error("Memory table data invalid.");
+            return false;
+        }
+        Value &tableList = tableJson.value()["table_per_block"];
+        for (const auto &item: tableList.GetArray()) {
+            if (targetBlockId != JsonUtil::GetString(item, "block_id")) {
+                continue;
+            }
+            responseBody.memoryTable.push_back(ParseJsonToMemoryTable(item));
+        }
+        if (responseBody.memoryTable.size() > 1) {
+            ServerLog::Warn("Details memory graph data is not unique, block id:", targetBlockId);
+        }
+        return true;
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse details memory graph data,not json.Error is ", e.what());
+        return false;
+    }
+}
+
+Protocol::MemoryTable SourceFileParser::ParseJsonToMemoryTable(const json_t &json)
+{
+    Protocol::MemoryTable result;
+    result.blockId = JsonUtil::GetInteger(json, "block_id");
+    result.tableOpType = JsonUtil::GetString(json, "table_op_type");
+    result.advice = JsonUtil::GetVector<std::string>(json, "advice");
+    auto &tableDetailJson = const_cast<Value &>(json["table_detail"]);
+    for (auto &item: tableDetailJson.GetArray()) {
+        Protocol::TableDetail tableDetail;
+        tableDetail.tableName = JsonUtil::GetString(item, "table_name");
+        tableDetail.size = JsonUtil::GetVector<std::string>(item, "size");
+        tableDetail.headerName = JsonUtil::GetVector<std::string>(item, "header_name");
+        Value &row = item["row"];
+        for (const auto &dataRow: row.GetArray()) {
+            Protocol::MemoryTableRow memoryTableRow;
+            memoryTableRow.name = JsonUtil::GetString(dataRow, "name");
+            memoryTableRow.value = JsonUtil::GetVector<std::string>(dataRow, "value");
+            tableDetail.row.push_back(memoryTableRow);
+        }
+        result.tableDetail.push_back(tableDetail);
+    }
+    return result;
+}
+
 void SourceFileParser::ConvertToData()
 {
     std::ifstream file(filePath, std::ios::binary);

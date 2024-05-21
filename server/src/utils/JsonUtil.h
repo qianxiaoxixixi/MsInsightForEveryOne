@@ -43,6 +43,20 @@ public:
         AddMemberHelper(json, key, value, allocator);
     }
 
+    template <class T> static inline void AddMember(json_t &json, std::string_view key, std::vector<T> value,
+                                                    RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    {
+        json_t temp(kArrayType);
+        for (const T item: value) {
+            if constexpr (std::is_same_v<T, std::string>) {
+                temp.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+            } else {
+                temp.PushBack(json_t().SetString(std::to_string(item).c_str(), allocator), allocator);
+            }
+        }
+        AddMemberHelper(json, key, temp, allocator);
+    }
+
     static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
     {
         return TryParse<kParseDefaultFlags>(jsonStr, error);

@@ -96,6 +96,65 @@ struct DetailsLoadInfoResponse : public Response {
     DetailsLoadInfoResponse() : Response(REQ_RES_DETAILS_COMPUTE_LOAD_INFO) {}
     DetailsLoadInfoResBody body;
 };
+
+struct MemoryUnit {
+    std::string memoryPath;
+    uint64_t request;
+    std::string bandwidth;
+    std::string peakRatio;
+    bool display;
+};
+
+struct L2Cache {
+    std::string hit;
+    std::string miss;
+    std::string totalRequest;
+    std::string hitRatio;
+};
+
+struct MemoryGraph {
+    int64_t blockId;
+    std::string blockType;
+    std::string chipType;
+    std::vector<MemoryUnit> memoryUnit;
+    L2Cache l2Cache;
+    std::vector<std::string> advice;
+};
+
+struct MemoryTableRow {
+    std::string name;
+    std::vector<std::string> value;
+};
+
+struct TableDetail {
+    std::string tableName;
+    std::vector<std::string> size;
+    std::vector<std::string> headerName;
+    std::vector<MemoryTableRow> row;
+};
+struct MemoryTable {
+    int64_t blockId;
+    std::string tableOpType;
+    std::vector<TableDetail> tableDetail;
+    std::vector<std::string> advice;
+};
+struct DetailsMemoryGraphResBody {
+    std::vector<MemoryGraph> coreMemory;
+};
+
+struct DetailsMemoryGraphResponse : public Response {
+    DetailsMemoryGraphResponse() : Response(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH) {};
+    DetailsMemoryGraphResBody body;
+};
+
+struct DetailsMemoryTableResBody {
+    std::vector<MemoryTable> memoryTable;
+};
+
+struct DetailsMemoryTableResponse : public Response {
+    DetailsMemoryTableResponse() : Response(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE) {};
+    DetailsMemoryTableResBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

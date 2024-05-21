@@ -53,6 +53,20 @@ struct SourceDetailsLoadInfoRequest: public Request {
     SourceDetailLoadInfoParams params;
 };
 
+struct DetailsMemoryInfoParams {
+    std::string blockId;
+};
+
+struct DetailsMemoryGraphRequest: public Request {
+    DetailsMemoryGraphRequest() : Request(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH) {};
+    DetailsMemoryInfoParams params;
+};
+
+struct DetailsMemoryTableRequest: public Request {
+    DetailsMemoryTableRequest() : Request(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH) {};
+    DetailsMemoryInfoParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

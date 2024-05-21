@@ -20,7 +20,10 @@ template<> std::optional<document_t> ToResponseJson<SourceApiLineResponse>(const
 template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(const SourceApiInstrResponse &response);
 template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(const DetailsBaseInfoResponse &response);
 template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(const DetailsLoadInfoResponse &response);
-
+template<>
+std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const DetailsMemoryGraphResponse &response);
+template<>
+std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const DetailsMemoryTableResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 
