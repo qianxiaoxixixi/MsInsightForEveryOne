@@ -76,6 +76,7 @@ function FilterCom({ condition, optionMap, handleChange }: IcomProps): JSX.Eleme
             />
             )}/>
         <FormItem
+            style={{ display: 'none' }}
             name="Show as"
             content={(<Select
                 value={condition.showAs}

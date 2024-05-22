@@ -7,13 +7,14 @@ import { drawFlowChart } from './FlowChart/draw';
 import * as d3 from 'd3';
 import { type Icondition } from './Filter';
 import { queryMemoryGraph } from '../../RequestUtils';
+import { type Session } from '../../../entity/session';
 
 export interface ImemoryData {
     blockId: string;
     blockType: string;
     chipType: string;
     memoryUnit: ImemoryUnit[] ;
-    L2catch: {
+    l2Cache: {
         hit: string;
         miss: string;
         totalRequest: string;
@@ -25,6 +26,7 @@ export interface ImemoryUnit {
     memoryPath: string;
     request: string;
     requestPerByte: string;
+    peakRatio: string;
 }
 
 const defaultData = {
@@ -32,7 +34,7 @@ const defaultData = {
     blockType: '',
     chipType: '',
     memoryUnit: [],
-    L2catch: {
+    l2Cache: {
         hit: '',
         miss: '',
         totalRequest: '',
@@ -41,8 +43,9 @@ const defaultData = {
 };
 
 const chartId = 'memory';
-const chart = observer(({ condition }: {condition: Icondition}): JSX.Element => {
+const chart = observer(({ condition, session }: {condition: Icondition;session: Session}): JSX.Element => {
     const [data, setData] = useState<ImemoryData>(defaultData);
+    const [style, setStyle] = useState({ height: '420px' });
     const updateData = async (): Promise<void> => {
         const res = await queryMemoryGraph(condition);
         const newData = (res?.coreMemory?.[0] ?? defaultData) as ImemoryData;
@@ -54,9 +57,23 @@ const chart = observer(({ condition }: {condition: Icondition}): JSX.Element => 
     }, [condition.blockId]);
     useEffect(() => {
         const svg = d3.select(`#${chartId}>svg`);
-        drawFlowChart(svg, { ...data, ...condition });
-    }, [data, condition.showAs]);
-    return <div id={chartId} style={{ height: '670px', width: '980px', margin: '10px auto' }}>
+        drawFlowChart(svg, { ...data, ...condition, theme: session.theme });
+    }, [data, condition, session.theme]);
+    useEffect(() => {
+        let newStyle;
+        const { blockType, chipType } = data;
+        const chartType = blockType + chipType.slice(0, 3);
+        switch (chartType) {
+            case 'mix910':
+                newStyle = { height: '670px' };
+                break;
+            default:
+                newStyle = { height: '420px' };
+                break;
+        }
+        setStyle(newStyle);
+    }, [data]);
+    return <div id={chartId} style={{ ...style, width: '1200px', margin: '10px auto' }}>
         <svg width={'100%'} height={'100%'}></svg>
     </div>;
 });

@@ -6,8 +6,10 @@ import { type Icondition } from './Filter';
 import { queryMemoryTable } from '../../RequestUtils';
 import { LimitHit } from '../../LimitSet';
 import ResizeTable from 'lib/ResizeTable';
+import { firstLetterUpper } from 'lib/CommonUtils';
 
 interface ItableDetail {
+    tableName: string;
     headerName: string[];
     row: Array<{
         name: string;
@@ -29,7 +31,7 @@ interface Ilimit {
 function getFullCols(headerName: string[]): any[] {
     return headerName.map((item, index) => (
         {
-            title: item,
+            title: index === 0 ? item : firstLetterUpper(item),
             dataIndex: item,
             ellipsis: true,
         }
@@ -42,7 +44,8 @@ function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfi
         if (count > limit.maxSize) {
             return pre;
         }
-        const { headerName, row } = tableDetail;
+        const { headerName, row, tableName } = tableDetail;
+        headerName[0] = tableName;
         const cols = getFullCols(headerName);
         let dataset = row.map(item => {
             const arr = [item.name, ...item.value];
