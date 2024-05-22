@@ -25,6 +25,17 @@ interface SearchData {
     searchedColumn: string;
 }
 
+export interface IQueryCondition {
+    rankId: string;
+    pageSize: number;
+    current: number;
+    orderBy: string;
+    order: string;
+    isQueryTotal?: boolean;
+    layer?: string;
+    searchName?: string;
+}
+
 export const getDefaultColumData = (key: string): {
     sorter: boolean;
     showSorterTooltip: boolean;
@@ -74,13 +85,65 @@ export const kernelDetails: ColumData[] = [
 
 ];
 
-export const systemViewItems: Array<{title: string;key: string}> = [
-    { title: 'Python API Summary', key: '0' },
-    { title: 'CANN API Summary', key: '1' },
-    { title: 'Ascend HardWare Task Summary', key: '2' },
-    { title: 'HCCL Summary', key: '3' },
-    { title: 'Overlap Analysis', key: '4' },
-    { title: 'Kernel Details', key: '5' },
+const commonExpertColums: ColumData[] = [
+    { title: 'Start Time', dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
+    { title: 'Duration(us)', dataIndex: 'duration', ...getDefaultColumData('duration') },
+    { title: 'Process Id', dataIndex: 'pid', ...getDefaultColumData('pid') },
+    { title: 'Thread Id', dataIndex: 'tid', ...getDefaultColumData('tid') },
+];
+
+export const affinityAPIColumns: ColumData[] = [
+    { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
+    { title: 'Origin API', dataIndex: 'originAPI', ...getDefaultColumData('originAPI') },
+    { title: 'Replacement API', dataIndex: 'replaceAPI', ...getDefaultColumData('replaceAPI') },
+    ...commonExpertColums,
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+];
+
+export const affinityOptimizerColumns: ColumData[] = [
+    { title: 'Origin Optimizer', dataIndex: 'originOptimizer', ...getDefaultColumData('originOptimizer') },
+    { title: 'Replacement Optimizer', dataIndex: 'replaceOptimizer', ...getDefaultColumData('replaceOptimizer') },
+    ...commonExpertColums,
+];
+
+export const aicpuOperatorColumns: ColumData[] = [
+    { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
+    { title: 'Replacement Operator', dataIndex: 'replaceOp', ...getDefaultColumData('replaceOp') },
+    ...commonExpertColums,
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+];
+
+export const aclnnOperatorColumns: ColumData[] = [
+    { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
+    ...commonExpertColums,
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+];
+
+export const fusionOperatorColumns: ColumData[] = [
+    { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
+    { title: 'Origin Operators', dataIndex: 'originOpList', ...getDefaultColumData('originOpList') },
+    { title: 'Fused Operator', dataIndex: 'fusedOp', ...getDefaultColumData('fusedOp') },
+    ...commonExpertColums,
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+];
+
+export const statsSystemViewItems: string[] = [
+    'Python API Summary',
+    'CANN API Summary',
+    'Ascend HardWare Task Summary',
+    'HCCL Summary',
+    'Overlap Analysis',
+    'Kernel Details',
+];
+
+export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'Overlap Analysis', 'HCCL'];
+
+export const expertSystemViewItems: string[] = [
+    'Affinity API',
+    'Affinity Optimizer',
+    'AICPU Operators',
+    'ACLNN Operators',
+    'Operators Fusion',
 ];
 
 export const GetPageData = (page: { current: number; pageSize: number; total: number }, setPage: VoidFunction): object => {
@@ -120,6 +183,36 @@ export const searchAllSlices = async(param: {
     searchContent: string; isMatchCase: boolean; isMatchExact: boolean;
 }): Promise<any> => {
     return window.requestData('search/all/slices', param, 'timeline');
+};
+
+export const queryAffinityOptimizer = async(param: {
+    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<any> => {
+    return window.requestData('advisor/affinity_optimizer', param);
+};
+
+export const queryAffinityAPI = async(param: {
+    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<any> => {
+    return window.requestData('advisor/affinity_api', param);
+};
+
+export const queryOperatorFusion = async(param: {
+    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<any> => {
+    return window.requestData('advisor/operator_fusion', param);
+};
+
+export const queryAICPUOperators = async(param: {
+    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<any> => {
+    return window.requestData('advisor/aicpu_operator', param);
+};
+
+export const queryACLNNOperators = async(param: {
+    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<any> => {
+    return window.requestData('advisor/aclnn_operator', param);
 };
 
 export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {

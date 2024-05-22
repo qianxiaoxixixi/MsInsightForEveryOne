@@ -17,7 +17,20 @@ import {
     queryKernelDetails,
     queryOneKernel,
     querySystemViewDetails,
-    systemViewItems,
+    statsSystemViewItems,
+    expertSystemViewItems,
+    layerTypes,
+    type IQueryCondition,
+    queryAffinityOptimizer,
+    affinityOptimizerColumns,
+    queryAICPUOperators,
+    queryACLNNOperators,
+    aicpuOperatorColumns,
+    aclnnOperatorColumns,
+    queryAffinityAPI,
+    affinityAPIColumns,
+    queryOperatorFusion,
+    fusionOperatorColumns,
 } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { Label, limitInput } from 'lib/CommonUtils';
@@ -61,28 +74,34 @@ const SelectContainer = styled.div`
 `;
 
 export const SystemView = observer((props: any) => {
+    const [viewOption, setViewOption] = useState(0);
     const [key, setKey] = useState(0);
-    const SelectContent = useMemo(() => ContentList[key], [key]);
+    const SelectContent = useMemo(() => contentList[viewOption][key], [viewOption, key]);
     const [conditions, setConditions] = useState<{ rankId: string }>({ rankId: '' });
     const handleChange = (rankId: string): void => {
         setConditions({ rankId });
     };
+    const handleViewChange = (value: number): void => {
+        setViewOption(value);
+        setKey(0);
+    };
     return (<Container className={'theme-view'}>
-        <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
-            <ViewSelect />
+        <Space direction="vertical" size="middle" style={{ display: 'flex', flex: 1 }}>
+            <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             <RankFilter session={props.session} handleChange={handleChange}></RankFilter>
-            <SelectList setKey={setKey}></SelectList>
+            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey}></SelectList>
         </Space>
         <Divider type="vertical" />
         <ChartErrorBoundary><SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session}></SelectContent></SelectContainer></ChartErrorBoundary>
     </Container>);
 });
 
-const ViewSelect = observer(() => {
-    const options = [{ label: 'Stats System View', value: 0 }];
+const ViewSelect = observer((props: any) => {
+    const { viewOption, handleViewChange } = props;
+    const options = [{ label: 'Stats System View', value: 0 }, { label: 'Expert System View', value: 1 }];
     return (
         <div className={'systemViewSelect'}>
-            <Select style={{ width: 180 }} defaultValue={0} options={options}/>
+            <Select style={{ width: 180 }} value={viewOption} onChange={handleViewChange} options={options}/>
         </div>
     );
 });
@@ -129,20 +148,24 @@ export const RankFilter = observer((props: any): JSX.Element => {
 });
 
 const SelectList = observer((props: any) => {
-    const [selectedKey, setSelectedKey] = useState('0');
-    const handleClick = (key: string): void => {
+    const [selectedKey, setSelectedKey] = useState(0);
+    const handleClick = (key: number): void => {
         props.setKey(key);
         setSelectedKey(key);
     };
+    useEffect(() => {
+        setSelectedKey(props.selectKey);
+    }, [props.selectKey]);
+    const systemViewItems = props.viewOption === 0 ? statsSystemViewItems : expertSystemViewItems;
     return (<div className={'selectLayer'}>
         {
             systemViewItems.map((item, index) =>
                 (<div
-                    className={selectedKey === item.key ? 'selected' : ''}
+                    className={selectedKey === index ? 'selected' : ''}
                     key={index}
-                    onClick={() => { handleClick(item.key); }}
+                    onClick={(): void => handleClick(index)}
                 >
-                    {item.title}
+                    {item}
                 </div>
                 ))
         }
@@ -152,34 +175,66 @@ const SelectList = observer((props: any) => {
 
 // eslint-disable-next-line max-lines-per-function
 const BaseSummary = observer((props: any) => {
+    const isStats = props.isStats as boolean;
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
-    const defaultSorter = { field: 'totalTime', order: 'descend' };
+    const defaultSorter = isStats ? { field: 'totalTime', order: 'descend' } : { field: 'duration', order: 'descend' };
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [isLoading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [searchedColumn, setSearchedColumn] = useState('');
+    const [rowData, setRowData] = useState<any>({});
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
+    let columns = props.columns;
+    if (isStats) {
+        columns = [{
+            title: 'Name',
+            dataIndex: 'name',
+            ...getDefaultColumData('name'),
+            ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
+        }, ...columns];
+    } else {
+        columns = [...columns, {
+            title: 'Click To Timeline',
+            dataIndex: 'click',
+            key: 'click',
+            ellipsis: true,
+            render: (_: any, record: any) => (<Button type="link"
+                onClick={() => {
+                    setRowData({ name: record.name ?? record.originOptimizer, startTime: record.startTime, duration: record.duration });
+                }}>click</Button>),
+        }];
+    }
     const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
+        const _isStats = prop.isStats as boolean;
         if (props.rankId === undefined || props.rankId === '') {
             setDataSource([]);
             setPage(defaultPage);
             return;
         }
         setLoading(true);
-        const res = await querySystemViewDetails({
-            isQueryTotal: true,
+        let params: IQueryCondition = {
             rankId: prop.rankId,
             pageSize: pages.pageSize,
             current: pages.current,
             orderBy: sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
-            layer: prop.layerType,
-            searchName,
-        });
+        };
+        if (_isStats) {
+            params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
+        }
+        const res = await props.request(params);
         setLoading(false);
-        setDataSource(res.systemViewDetails);
+        if (_isStats) {
+            setDataSource(res.systemViewDetails);
+        } else {
+            const data = res.data.map((item: any) => {
+                item.startTimeLabel = getDetailTimeDisplay(item.startTime);
+                return item;
+            });
+            setDataSource(data);
+        }
         setPage({ ...page, total: res.count });
     };
     useEffect(() => {
@@ -190,16 +245,13 @@ const BaseSummary = observer((props: any) => {
             updateData(searchText, page, sorter, props);
         }
     }, [status]);
+    useEffect(() => {
+        if (rowData.name === null || rowData.name === undefined) {
+            return;
+        }
+        handleSelected(rowData, props);
+    }, [rowData]);
 
-    const colums = [
-        {
-            title: 'Name',
-            dataIndex: 'name',
-            ...getDefaultColumData('name'),
-            ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
-        },
-        ...pythonApiSummaryColumns,
-    ];
     return (
         (status === 'download' || props.rankId === undefined)
             ? <ResizeTable
@@ -208,32 +260,45 @@ const BaseSummary = observer((props: any) => {
                 }}
                 pagination={GetPageData(page, setPage)}
                 dataSource={dataSource}
-                columns={colums}
+                columns={columns}
                 size="small"
                 loading = {isLoading}/>
             : <Loading style={{ marginTop: '10px' }}/>
     );
 });
 
-const PythonApiSummary = observer((props: any) => {
-    return <BaseSummary layerType={'Python'} {...props}/>;
-});
-
-const CannApiSummary = observer((props: any) => {
-    return <BaseSummary layerType={'CANN'} {...props}/>;
-});
-
-const AscendHardWareTask = observer((props: any) => {
-    return <BaseSummary layerType={'Ascend Hardware'} {...props}/>;
-});
-
-const OverlapAnalysis = observer((props: any) => {
-    return <BaseSummary layerType={'Overlap Analysis'} {...props}/>;
-});
-
-const HCCLSummary = observer((props: any) => {
-    return <BaseSummary layerType={'HCCL'} {...props}/>;
-});
+const handleSelected = async(rowData: any, props: any): Promise<void> => {
+    const res = await queryOneKernel({
+        rankId: props.rankId,
+        name: rowData.name,
+        timestamp: rowData.startTime,
+        duration: Number((rowData.duration * 1000).toFixed(0)),
+    });
+    runInAction(() => {
+        props.session.locateUnit = {
+            target: (unit: any) => {
+                return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
+            },
+            onSuccess: (unit: InsightUnit): void => {
+                const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
+                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                props.session.selectedData = {
+                    id: res.id,
+                    startTime,
+                    name: rowData.name,
+                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
+                    duration: Number((rowData.duration * 1000).toFixed(0)),
+                    depth: res.depth,
+                    threadId: res.threadId,
+                    startRecordTime: props.session.startRecordTime,
+                    metaType: res.pid,
+                    showDetail: false,
+                };
+            },
+        };
+    });
+};
 
 // eslint-disable-next-line max-lines-per-function
 const KernelDetails = observer((props: any) => {
@@ -279,38 +344,6 @@ const KernelDetails = observer((props: any) => {
         setDataSource(data);
         setPage({ ...page, total: res.count });
     };
-    const handleSelected = async(): Promise<void> => {
-        const res = await queryOneKernel({
-            rankId: props.rankId,
-            name: rowData.name,
-            timestamp: rowData.startTime,
-            duration: Number((rowData.duration * 1000).toFixed(0)),
-        });
-        runInAction(() => {
-            props.session.locateUnit = {
-                target: (unit: any) => {
-                    return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
-                },
-                onSuccess: (unit: InsightUnit): void => {
-                    const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
-                    const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
-                    props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                    props.session.selectedData = {
-                        id: res.id,
-                        startTime,
-                        name: rowData.name,
-                        color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
-                        duration: Number((rowData.duration * 1000).toFixed(0)),
-                        depth: res.depth,
-                        threadId: res.threadId,
-                        startRecordTime: props.session.startRecordTime,
-                        metaType: res.pid,
-                        showDetail: false,
-                    };
-                },
-            };
-        });
-    };
 
     const colums = [
         {
@@ -336,7 +369,7 @@ const KernelDetails = observer((props: any) => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
         }
-        handleSelected();
+        handleSelected(rowData, props);
     }, [rowData]);
     return (
         (status === 'download' || props.rankId === undefined)
@@ -352,5 +385,36 @@ const KernelDetails = observer((props: any) => {
     );
 });
 
-const ContentList = [PythonApiSummary, CannApiSummary,
-    AscendHardWareTask, HCCLSummary, OverlapAnalysis, KernelDetails];
+const AffinityAPI = observer((props: any) => {
+    return <BaseSummary request={queryAffinityAPI} columns={affinityAPIColumns} {...props} />;
+});
+
+const AffinityOptimizer = observer((props: any) => {
+    return <BaseSummary request={queryAffinityOptimizer} columns={affinityOptimizerColumns} {...props} />;
+});
+
+const AICPUOperator = observer((props: any) => {
+    return <BaseSummary request={queryAICPUOperators} columns={aicpuOperatorColumns} {...props} />;
+});
+
+const ACLNNOperator = observer((props: any) => {
+    return <BaseSummary request={queryACLNNOperators} columns={aclnnOperatorColumns} {...props} />;
+});
+
+const FusedOperator = observer((props: any) => {
+    return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
+});
+
+const contentList: any[][] = [[...layerTypes.map((type) => {
+    return observer((props: any) => {
+        return (
+            <BaseSummary
+                layerType={type}
+                request={querySystemViewDetails}
+                isStats={true}
+                columns={pythonApiSummaryColumns}
+                {...props}
+            />
+        );
+    });
+}), KernelDetails], [AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator]];
