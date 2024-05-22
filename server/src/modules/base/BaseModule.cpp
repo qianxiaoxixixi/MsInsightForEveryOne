@@ -12,7 +12,8 @@ using namespace Dic::Server;
 using namespace Dic::Protocol;
 void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {
-    static ThreadPool threadPool(SystemUtil::GetCpuCoreCount());
+    const int maxThreadNum = 4;
+    static ThreadPool threadPool(maxThreadNum);
     std::string command = request->command;
     if (requestHandlerMap.count(command) == 0) {
         std::string token = request->token;

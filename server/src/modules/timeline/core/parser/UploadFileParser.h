@@ -57,7 +57,8 @@ public:
     bool ResetAllFiles();
 
 private:
-    ThreadPool threadPool = ThreadPool(SystemUtil::GetCpuCoreCount());
+    const int maxThreadNum = 4;
+    std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, SingleFileData> singleFileDataMap;
 
     void InitDataBase(std::string fileId);
