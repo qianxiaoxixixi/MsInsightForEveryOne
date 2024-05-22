@@ -8,6 +8,7 @@
 #include "ProtocolManager.h"
 #include "RegexUtil.h"
 #include "JsonUtil.h"
+#include "TimelineProtocolRequest.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {
@@ -87,6 +88,7 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
         return nullptr;
     }
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
+    std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
     auto bodyJson = JsonUtil::TryParse(bodyStr, error).value();
 
     // 增加上传二进制数据的处理
@@ -98,20 +100,12 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
             return nullptr;
         }
 
+        auto &uploadFileRequest = dynamic_cast<UploadFileRequest &>(*request);
         uint64_t textPos = bodyPos + bodyLen;
-        const std::optional<std::string> &textStr = StringUtil::Decompress(buffer.substr(textPos, textLen));
-        if (textStr.has_value()) {
-            if (bodyJson["params"].HasMember("text")) {
-                bodyJson["params"]["text"].SetString(textStr.value().c_str(), bodyJson.GetAllocator());
-            } else {
-                bodyJson["params"].AddMember("text", rapidjson::Value(textStr.value().c_str(), bodyJson.GetAllocator()),
-                    bodyJson.GetAllocator());
-            }
-        }
+        uploadFileRequest.params.text = buffer.substr(textPos, textLen);
     }
 
     buffer = buffer.substr(bodyPos + bodyLen + textLen); // buffer removes head and body string
-    std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(JsonUtil::JsonDump(bodyJson), error);
     if (request == nullptr) {
         return nullptr;
     }

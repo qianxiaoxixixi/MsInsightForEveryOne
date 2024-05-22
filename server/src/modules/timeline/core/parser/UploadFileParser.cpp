@@ -15,11 +15,14 @@ UploadFileParser &UploadFileParser::Instance()
     static UploadFileParser instance;
     return instance;
 }
-UploadFileParser::UploadFileParser() {}
+UploadFileParser::UploadFileParser()
+{
+    threadPool = std::make_unique<ThreadPool>(UploadFileParser::maxThreadNum);
+}
 
 UploadFileParser::~UploadFileParser()
 {
-    threadPool.ShutDown();
+    threadPool->ShutDown();
 }
 
 bool UploadFileParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
@@ -27,7 +30,7 @@ bool UploadFileParser::Parse(const std::vector<std::string> &filePaths, const st
 
 void UploadFileParser::Parse(UploadFileRequest request)
 {
-    threadPool.AddTask([this, request]() { return this->ParseTask(request); });
+    threadPool->AddTask([this, request]() { return this->ParseTask(request); });
 }
 
 bool UploadFileParser::ResetByFiles(const std::vector<std::string> &filePaths)
@@ -77,7 +80,7 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
     }
 
     // 处理分片json内容
-    std::string content = request.params.text;
+    std::string content = StringUtil::Decompress(request.params.text).value();
     const std::tuple<std::string, std::string, std::string> tuple = SplitValidJsonStr(content);
     const std::string middleJson = std::get<1>(tuple);
     size_t pos = middleJson.find('{');
