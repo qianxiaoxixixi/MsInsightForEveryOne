@@ -18,20 +18,29 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
         return false;
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    std::vector<Protocol::KernelBaseInfo> data{};
+    std::vector<Protocol::FlowLocation> data{};
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
                                            .current = params.currentPage, .pageSize = params.pageSize};
-
+    for (const auto& item : FUSEABLE_OPERATER_RULE_LIST) {
+        std::vector<Protocol::FlowLocation> result{};
+        if (!database->QueryFuseableOpData(param, item, result, startTime)) {
+            continue;
+        }
+        if (!result.empty()) {
+            data.insert(data.end(), result.begin(), result.end());
+        }
+    }
     for (const auto &item : data) {
         Protocol::OperatorFusionData one{};
         one.baseInfo.rankId = params.rankId;
-        one.baseInfo.startTime = item.startTime;
+        one.baseInfo.startTime = item.timestamp;
         one.baseInfo.duration = item.duration;
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
         one.name = item.name;
-        one.originOpList = item.name;
-        one.note = "";
+        one.originOpList = item.type;
+        one.fusedOp = item.metaType;
+        one.note = item.id;
         resBody.datas.emplace_back(one);
     }
     resBody.size = data.size();

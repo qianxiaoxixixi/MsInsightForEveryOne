@@ -85,6 +85,12 @@ struct AICpuCheckDataType {
     std::vector<std::string> output;
     std::string note;
 };
+
+struct FuseableOpRule {
+    std::vector<std::string> opList;
+    std::string fusedOp;
+    std::string note;
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

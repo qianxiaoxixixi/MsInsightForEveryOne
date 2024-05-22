@@ -129,6 +129,13 @@ const std::string QUERY_AFFINITY_API_SQL =
     "JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
     "WHERE s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' ORDER BY s.track_id ASC, s.timestamp ASC";
 
+const std::string QUERY_FUSEABLE_OP_SUB_SQL = "WITH data AS ( "
+    "SELECT kd.rank_id, kd.name, kd.op_type, kd.accelerator_core, kd.start_time, kd.duration, t.pid, t.tid, "
+    "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num FROM " + KERNEL_DETAIL + " kd "
+    "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+    "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+    "WHERE kd.accelerator_core != 'HCCL' ) "; // 过滤去kernel_detail中所有非HCCL算子，并按照track和start_time联合排序
+
 class JsonSqlConstant {
 public:
     static std::string GetInsertSliceSql()
@@ -332,6 +339,25 @@ public:
             "    ) OR "
             "    kd.duration >= ?" // 执行时间超过20us
             ") ";
+        return sql;
+    }
+
+    static std::string GenerateFuseableOpFilterSql(const Timeline::FuseableOpRule &rule)
+    {
+        std::string sql = "WITH data AS ( "
+            "SELECT kd.rank_id, kd.name, kd.op_type, kd.accelerator_core, kd.start_time - ?, kd.duration, "
+            "t.pid, t.tid, ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
+            "FROM " + KERNEL_DETAIL + " kd "
+            "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+            "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+            "WHERE kd.accelerator_core != 'HCCL' ) "
+            "SELECT d0.* FROM data d0 ";
+        for (int i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
+            std::string table = "d" + std::to_string(i);
+            sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
+                    " AND " + table + ".name = '" + rule.opList.at(i) + "' ";
+        }
+        sql += "WHERE d0.name = '" +  rule.opList.at(0) + "'";
         return sql;
     }
 

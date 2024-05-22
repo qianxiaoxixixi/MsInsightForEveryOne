@@ -119,8 +119,7 @@ bool JsonTraceDatabase::SetConfig()
     std::unique_lock<std::recursive_mutex> lock(mutex);
     // PRAGMA case_sensitive_like=1; 设置数据库大小写敏感。
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; "
-        "PRAGMA case_sensitive_like=1; PRAGMA user_version = " +
-        dbVersion + ";");
+        "PRAGMA case_sensitive_like=1; PRAGMA user_version = " + dbVersion + ";");
 }
 
 bool JsonTraceDatabase::CreateTable()
@@ -816,8 +815,7 @@ void JsonTraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValu
 bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
     Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId)
 {
-    std::string sql = QUERY_SLICE_DETAIL_SQL;
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(QUERY_SLICE_DETAIL_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadDetail. Failed to prepare sql.");
         return false;
@@ -927,8 +925,7 @@ KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<Slice
         ServerLog::Error("sliceDto array is empty!");
         return kernelShapesDataDto;
     }
-    std::string sql = QUERY_KERNAL_SHAPE_SQL;
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(QUERY_KERNAL_SHAPE_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelShapes. Failed to prepare sql.", sqlite3_errmsg(db));
         return kernelShapesDataDto;
@@ -961,9 +958,8 @@ bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestP
 
 std::vector<FlowDetailDto> JsonTraceDatabase::QuerySingleFlowDetail(const std::string &flowId, uint64_t minTimestamp)
 {
-    std::string sql = QUERY_FLOW_BY_FLOWID_SQL;
     std::vector<FlowDetailDto> flowDetailVec;
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(QUERY_FLOW_BY_FLOWID_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("QueryFlowDetail. Failed to prepare sql.");
         return flowDetailVec;
@@ -997,8 +993,7 @@ std::vector<FlowDetailDto> JsonTraceDatabase::QuerySingleFlowDetail(const std::s
 
 std::map<uint64_t, std::pair<std::string, std::string>> JsonTraceDatabase::QueryAllThreadMap()
 {
-    std::string threadSql = QUERY_ALL_THREAD_SQL;
-    auto threadStmt = CreatPreparedStatement(threadSql);
+    auto threadStmt = CreatPreparedStatement(QUERY_ALL_THREAD_SQL);
     std::map<uint64_t, std::pair<std::string, std::string>> threadMap;
     if (threadStmt == nullptr) {
         ServerLog::Error("QueryFlowDetail. Failed to prepare sql.");
@@ -1069,8 +1064,7 @@ void JsonTraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &reques
 std::vector<FlowName> JsonTraceDatabase::QueryFlowNameByTimeRange(uint64_t startTime, uint64_t endTime, int64_t trackId)
 {
     std::vector<FlowName> flowNameVec;
-    std::string sql = QUERY_FLOW_BY_TIME_RANGE_SQL;
-    auto stmt = CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(QUERY_FLOW_BY_TIME_RANGE_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("QueryFlowName. Failed to prepare sql.");
         return flowNameVec;
@@ -1122,8 +1116,7 @@ bool JsonTraceDatabase::QueryUintFlows(const Protocol::UnitFlowsParams &requestP
 std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimeRange(uint64_t startTime, uint64_t endTime,
     uint64_t minTimestamp, int64_t trackId)
 {
-    std::string sliceSql = QUERY_SLICE_BY_TIME_RANGE_SQL;
-    auto sliceStmt = CreatPreparedStatement(sliceSql);
+    auto sliceStmt = CreatPreparedStatement(QUERY_SLICE_BY_TIME_RANGE_SQL);
     std::vector<SimpleSlice> simpleSliceVec;
     if (sliceStmt == nullptr) {
         ServerLog::Error("QueryFlowName. Failed to prepare sql.");
@@ -1146,8 +1139,7 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimeRange(uint64_t
 std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
     int64_t trackId)
 {
-    std::string sliceSql = QUERY_SLICE_BY_TIME_POINT_SQL;
-    auto sliceStmt = CreatPreparedStatement(sliceSql);
+    auto sliceStmt = CreatPreparedStatement(QUERY_SLICE_BY_TIME_POINT_SQL);
     std::vector<SimpleSlice> simpleSliceVec;
     if (sliceStmt == nullptr) {
         ServerLog::Error("QueryFlowName. Failed to prepare sql.");
@@ -2080,6 +2072,37 @@ bool JsonTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams
         }
         indexMap[trackId] = indexMap[trackId] + 1;
         data[trackId].emplace_back(one);
+    }
+
+    return true;
+}
+
+bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
+    std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
+{
+    std::string sql = JsonSqlConstant::GenerateFuseableOpFilterSql(rule);
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
+        return false;
+    }
+
+    while (resultSet->Next()) {
+        Protocol::FlowLocation one{};
+        one.name = resultSet->GetString("name");
+        one.timestamp = resultSet->GetUint64("kd.start_time - ?");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+        one.type = StringUtil::join(rule.opList, ", ");
+        one.metaType = rule.fusedOp;
+        one.id = rule.note;
+        data.emplace_back(one);
     }
 
     return true;

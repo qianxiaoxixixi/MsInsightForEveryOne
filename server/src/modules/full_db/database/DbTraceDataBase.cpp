@@ -1737,4 +1737,10 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
 {
     return false;
 }
+
+bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
+    std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
+{
+    return false;
+}
 }
