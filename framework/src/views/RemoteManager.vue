@@ -8,6 +8,7 @@ import connector from '@/connection';
 import ProjectMode from '@/components/ProjectMode.vue';
 import { ElMessage } from 'element-plus';
 import { isWindows } from '@/utils/is';
+import useWatchTranslation from '@/hooks/useWatchTranslation';
 
 const MAX_FILE_PATH_LENGTH_WINDOWS = 260;
 const MAX_FILE_PATH_LENGTH_LINUX = 4096;
@@ -37,6 +38,8 @@ watch(isDarkTheme, () => {
     });
     document.body.className = document.body.className === 'dark-theme' ? 'light-theme' : 'dark-theme';
 });
+const [ImportData, SwitchTheme, Confirm, Cancel, FileExplorer, RefreshDirectoryDescribe] = useWatchTranslation(['Import Data','Switch Theme', 'Confirm', 'Cancel', 'File Explorer', 'RefreshDirectoryDescribe']);
+
 const changeConfirmButtonState = (buttonState: boolean) => {
   fileIsExist.value = buttonState;
 };
@@ -81,23 +84,23 @@ function onInputChange(val:number) {
 <template>
     <header class="header">
         <ProjectMode />
-        <el-tooltip content="Import Data" :effect="isDarkTheme ? 'light' : 'dark'">
+        <el-tooltip :content="ImportData" :effect="isDarkTheme ? 'light' : 'dark'">
           <el-icon class="icon-button" :size="16" @click="addRemote">
             <AddIcon />
           </el-icon>
         </el-tooltip>
-        <el-tooltip content="Switch Theme" :effect="isDarkTheme ? 'light' : 'dark'">
+        <el-tooltip :content="SwitchTheme" :effect="isDarkTheme ? 'light' : 'dark'">
           <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
         </el-tooltip>
-        <el-dialog v-model="showModal" title="File Explorer" width="30%" :close-on-click-modal="false">
+        <el-dialog v-model="showModal" :title="FileExplorer" width="30%" :close-on-click-modal="false">
             <ResourceComp ref="resourceComp" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
             <template #footer>
                 <div class="foot-tip">
-                    To refresh a directory, collapse and expand the directory.
+                    {{RefreshDirectoryDescribe}}
                 </div>
                 <span>
-                    <el-button :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">Confirm</el-button>
-                    <el-button @click="showModal = false">Cancel</el-button>
+                    <el-button :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">{{ Confirm }}</el-button>
+                    <el-button @click="showModal = false">{{ Cancel }}</el-button>
                 </span>
             </template>
         </el-dialog>

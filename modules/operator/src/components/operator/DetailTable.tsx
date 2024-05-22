@@ -3,6 +3,7 @@
  */
 import ResizeTable from 'lib/ResizeTable';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { Container, GetPageConfigWhithPageData } from '../Common';
@@ -26,271 +27,288 @@ const OPERATOR_TYPE = 'Operator Type';
 const INPUT_SHAPE = 'Input Shape';
 const HCCL_OPERATOR = 'HCCL Operator';
 const HCCL_OPERATOR_TYPE = 'HCCL Operator Type';
-const opl0Columns: ColumnsType<any> = [
-    {
-        title: 'Name',
-        dataIndex: 'name',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Type',
-        dataIndex: 'type',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Accelerator Core',
-        dataIndex: 'accCore',
-        key: 'accCore',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Start Time(ms)',
-        dataIndex: 'startTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Duration(μs)',
-        dataIndex: 'duration',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Wait Time(μs)',
-        dataIndex: 'waitTime',
-        sorter: true,
-        ellipsis: true,
-    },
-];
-const opl2Columns = [
-    ...opl0Columns,
-    {
-        title: 'Block Dim',
-        dataIndex: 'blockDim',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Input Shapes',
-        dataIndex: 'inputShape',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Input Data Types',
-        dataIndex: 'inputType',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Input Formats',
-        dataIndex: 'inputFormat',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Output Shapes',
-        dataIndex: 'outputShape',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Output Data Types',
-        dataIndex: 'outputType',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Output Formats',
-        dataIndex: 'outputFormat',
-        sorter: true,
-        ellipsis: true,
-    },
-];
-const opStaticColumns = [
-    {
-        title: 'Type',
-        dataIndex: 'opType',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Accelerator Core',
-        dataIndex: 'accCore',
-        key: 'accCore',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Count',
-        dataIndex: 'count',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Total Time(μs)',
-        dataIndex: 'totalTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Avg Time(μs)',
-        dataIndex: 'avgTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Max Time(μs)',
-        dataIndex: 'maxTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Min Time(μs)',
-        dataIndex: 'minTime',
-        sorter: true,
-        ellipsis: true,
-    },
-];
-const opShapeStaticColumns = [
-    {
-        title: 'Name',
-        dataIndex: 'opName',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Shape',
-        dataIndex: 'inputShape',
-        key: 'Shape',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Accelerator Core',
-        dataIndex: 'accCore',
-        key: 'accCore',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Count',
-        dataIndex: 'count',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Total Time(μs)',
-        dataIndex: 'totalTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Avg Time(μs)',
-        dataIndex: 'avgTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Max Time(μs)',
-        dataIndex: 'maxTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Min Time(μs)',
-        dataIndex: 'minTime',
-        sorter: true,
-        ellipsis: true,
-    },
-];
-const hcclOpColumns = [
-    {
-        title: 'Name',
-        dataIndex: 'name',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Type',
-        dataIndex: 'type',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Start Time(ms)',
-        dataIndex: 'startTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Duration(μs)',
-        dataIndex: 'duration',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Wait Time(μs)',
-        dataIndex: 'waitTime',
-        sorter: true,
-        ellipsis: true,
-    },
-];
+const useOpl0Columns = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        {
+            title: t('Name'),
+            dataIndex: 'name',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('Type'),
+            dataIndex: 'type',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('AcceleratorCore'),
+            dataIndex: 'accCore',
+            key: 'accCore',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('StartTime')}(ms)`,
+            dataIndex: 'startTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('Duration')}(μs)`,
+            dataIndex: 'duration',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('WaitTime')}(μs)`,
+            dataIndex: 'waitTime',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
+const useOpl2Columns = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        ...useOpl0Columns(),
+        {
+            title: t('BlockDim'),
+            dataIndex: 'blockDim',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('InputShapes'),
+            dataIndex: 'inputShape',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('InputDataTypes'),
+            dataIndex: 'inputType',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('InputFormats'),
+            dataIndex: 'inputFormat',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('OutputShapes'),
+            dataIndex: 'outputShape',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('OutputDataTypes'),
+            dataIndex: 'outputType',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('OutputFormats'),
+            dataIndex: 'outputFormat',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
+const useOpStaticColumns = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        {
+            title: t('Type'),
+            dataIndex: 'opType',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('AcceleratorCore'),
+            dataIndex: 'accCore',
+            key: 'accCore',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('Count'),
+            dataIndex: 'count',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('TotalTime')}(μs)`,
+            dataIndex: 'totalTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('AvgTime')}(μs)`,
+            dataIndex: 'avgTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('MaxTime')}(μs)`,
+            dataIndex: 'maxTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('MinTime')}(μs)`,
+            dataIndex: 'minTime',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
+const useOpShapeStaticColumns = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        { title: t('Name'), dataIndex: 'opName', sorter: true, ellipsis: true },
+        { title: t('Shape'), dataIndex: 'inputShape', key: 'Shape', sorter: true, ellipsis: true },
+        {
+            title: t('AcceleratorCore'),
+            dataIndex: 'accCore',
+            key: 'accCore',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('Count'),
+            dataIndex: 'count',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('TotalTime')}(μs)`,
+            dataIndex: 'totalTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('AvgTime')}(μs)`,
+            dataIndex: 'avgTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('MaxTime')}(μs)`,
+            dataIndex: 'maxTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('MinTime')}(μs)`,
+            dataIndex: 'minTime',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
+const useHcclOpColumns = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        {
+            title: t('Name'),
+            dataIndex: 'name',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('Type'),
+            dataIndex: 'type',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('StartTime')}(ms)`,
+            dataIndex: 'startTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('Duration')}(μs)`,
+            dataIndex: 'duration',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('WaitTime')}(μs)`,
+            dataIndex: 'waitTime',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
 
-const hcclOpTypeColumns = [
-    {
-        title: 'Type',
-        dataIndex: 'opType',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Count',
-        dataIndex: 'count',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Total Time(μs)',
-        dataIndex: 'totalTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Avg Time(μs)',
-        dataIndex: 'avgTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Max Time(μs)',
-        dataIndex: 'maxTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Min Time(μs)',
-        dataIndex: 'minTime',
-        sorter: true,
-        ellipsis: true,
-    },
-];
-const colMap: any = {
-    [OPERATOR]: {
-        l0: opl0Columns,
-        l1: opl2Columns,
-        l2: opl2Columns,
-    },
-    [OPERATOR_TYPE]: opStaticColumns,
-    [INPUT_SHAPE]: opShapeStaticColumns,
-    [HCCL_OPERATOR]: hcclOpColumns,
-    [HCCL_OPERATOR_TYPE]: {
-        l0: hcclOpTypeColumns,
-        l1: hcclOpColumns,
-    },
+const useHcclOpTypeColumns = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        {
+            title: t('Type'),
+            dataIndex: 'opType',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('Count'),
+            dataIndex: 'count',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('TotalTime')}(μs)`,
+            dataIndex: 'totalTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('AvgTime')}(μs)`,
+            dataIndex: 'avgTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('MaxTime')}(μs)`,
+            dataIndex: 'maxTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('MinTime')}(μs)`,
+            dataIndex: 'minTime',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
+
+const useColMap = (): any => {
+    const opl0Columns = useOpl0Columns();
+    const opl2Columns = useOpl2Columns();
+    const opStaticColumns = useOpStaticColumns();
+    const opShapeStaticColumns = useOpShapeStaticColumns();
+    const hcclOpColumns = useHcclOpColumns();
+    const hcclOpTypeColumns = useHcclOpTypeColumns();
+
+    return {
+        [OPERATOR]: {
+            l0: opl0Columns,
+            l1: opl2Columns,
+            l2: opl2Columns,
+        },
+        [OPERATOR_TYPE]: opStaticColumns,
+        [INPUT_SHAPE]: opShapeStaticColumns,
+        [HCCL_OPERATOR]: hcclOpColumns,
+        [HCCL_OPERATOR_TYPE]: {
+            l0: hcclOpTypeColumns,
+            l1: hcclOpColumns,
+        },
+    };
 };
 
 const OperatorTable = ({ condition, opType, accCore, opName, inputShape, session }:
@@ -315,7 +333,8 @@ const defaultSorter = { field: '', order: '' };
 // eslint-disable-next-line max-lines-per-function
 const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
 {condition: ConditionType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
-    const [cols, setCols] = useState<any[]>(opl0Columns);
+    const { t } = useTranslation();
+    const [cols, setCols] = useState<any[]>(useOpl0Columns());
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [data, setData] = useState<any[]>([]);
@@ -324,7 +343,7 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
     const [loading, setLoading] = useState(false);
     const [fullCondition, setFullCondition] = useState<FullConditionType>({ current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0 });
     const btnCol = {
-        title: 'Details',
+        title: t('Details'),
         width: 115,
         key: 'action',
         render: (_: any, record: any) => (<Button type="link"
@@ -339,8 +358,9 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
                     }
                     return list;
                 });
-            }}>see more<DownOutlined/></Button>),
+            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined/></Button>),
     };
+    const colMap = useColMap();
 
     const getCols = ({ group, columnLevel }: any): any[] => {
         switch (group) {
@@ -426,7 +446,7 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
             return;
         }
         updateTable();
-    }, [JSON.stringify(fullCondition)]);
+    }, [JSON.stringify(fullCondition), t]);
 
     useEffect(() => {
         setSorter(defaultSorter);
@@ -469,6 +489,7 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
 };
 
 const DetailTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
+    const { t } = useTranslation('operator');
     let table;
     switch (condition.group) {
         case OPERATOR:
@@ -485,7 +506,7 @@ const DetailTable = ({ condition, session }: {condition: ConditionType;session: 
     }
     return <Container
         style={{ height: 'auto' }}
-        title={'Operator Detail'}
+        title={t('sessionTitle.OperatorDetail')}
         bodyStyle={{ overflow: 'visible' }}
         content={table}
     />;

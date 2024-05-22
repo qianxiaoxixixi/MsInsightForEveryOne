@@ -2,7 +2,9 @@
 import type { TreeNodeType } from './types';
 import LocalIcon from '@/components/icons/loaclImport_icon.vue';
 import DeletePopConfirm from '@/components/MenuTree/DeletePopConfirm.vue';
+import useWatchTranslation from '@/hooks/useWatchTranslation';
 
+const [DeleteAll, DeleteItem] = useWatchTranslation(['Delete All', 'Delete Item']);
 const props = defineProps<{
     dataSource: TreeNodeType[];
     isDarkTheme: boolean;
@@ -25,12 +27,12 @@ const props = defineProps<{
                             </span>
                         </el-tooltip>
                     </span>
-                    <el-tooltip v-if="node.level === 1" content="Delete All" :effect="isDarkTheme ? 'light' : 'dark'">
+                    <el-tooltip v-if="node.level === 1" :content="DeleteAll" :effect="isDarkTheme ? 'light' : 'dark'">
                             <span class="deleteIcon">
                               <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1"/>
                             </span>
                     </el-tooltip>
-                    <el-tooltip v-if="node.level === 2" content="Delete Item" :effect="isDarkTheme ? 'light' : 'dark'">
+                    <el-tooltip v-if="node.level === 2" :content="DeleteItem" :effect="isDarkTheme ? 'light' : 'dark'">
                             <span class="deleteIcon">
                               <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1"/>
                             </span>

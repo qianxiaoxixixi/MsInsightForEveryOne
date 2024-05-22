@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
 import { FormItem, getUsableVal } from 'lib/CommonUtils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
@@ -54,9 +55,10 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
 }
 
 function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element {
+    const { t } = useTranslation('details');
     return (<div>
         <FormItem
-            name="Block ID"
+            name={t('BlockID')}
             content={(<Select
                 value={condition.blockId}
                 style={{ width: '150px' }}

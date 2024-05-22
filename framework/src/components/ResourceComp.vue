@@ -6,6 +6,7 @@ import FileIcon from '@/components/icons/file_icon.vue';
 import { useResource, type ResourceItem } from '@/stores/resourceComp';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
+import useWatchTranslation from '@/hooks/useWatchTranslation';
 
 const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void }>();
 const emit = defineEmits(['input-change']);
@@ -111,7 +112,8 @@ const handleClick = async (data: ResourceItem, node: Node) => {
 
 let findFile = false;
 let errorAlert = ref(false);
-const inputErrorText = computed(() => errorAlert.value ? 'File not found, check the file path' : 'Enter the file path and press enter to search');
+const [FileSearchDescribe, FileNotFundDescribe] = useWatchTranslation(['FileSearchDescribe', 'FileNotFundDescribe']);
+const inputErrorText = computed(() => errorAlert.value ? FileNotFundDescribe.value : FileSearchDescribe.value);
 
 const searchPath = async () => {
   if (!state.inputPath) {

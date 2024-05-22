@@ -3,6 +3,7 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { LeftRightContainer, addResizeEvent, chartVisbilityListener } from '../Common';
 import { ConditionType } from './Filter';
@@ -95,6 +96,7 @@ const baseOption: echarts.EChartsOption = {
 const DetailChart = observer(function ({ condition, session }: {condition: ConditionType;session: Session}) {
     const [opTypeData, setOpTypeData] = useState([]);
     const [computeData, setComputeData] = useState([]);
+    const { t } = useTranslation('operator', { keyPrefix: 'sessionTitle' });
     const updateData = (): void => {
         if (condition.rankId === '') {
             setOpTypeData([]);
@@ -133,9 +135,9 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     };
     function renderChart(): void {
         const isDark = themeInstance.currentTheme === 'dark';
-        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark, title: `Total Time(μs) Group by ${condition.group}` });
+        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark, title: t('TotalTimeGroupByCriteria', { criteria: t(condition.group) }) });
         if (!isHideRight()) {
-            InitCharts({ data: computeData, domId: 'computeChart', isDark, title: 'Total Time(μs) Group by Accelerator Core' });
+            InitCharts({ data: computeData, domId: 'computeChart', isDark, title: t('TotalTimeGroupByCriteria', { criteria: t('Accelerator Core') }) });
         }
     }
     // 避免echarts渲染空白
@@ -150,7 +152,7 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     }, [opTypeData, computeData]);
     useEffect(() => {
         renderChart();
-    }, [themeInstance.currentTheme]);
+    }, [themeInstance.currentTheme, t]);
     return (
         <LeftRightContainer
             style={{ height: '500px', padding: '20px 20px 0' }}

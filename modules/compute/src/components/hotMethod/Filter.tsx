@@ -3,6 +3,7 @@
 */
 import { observer } from 'mobx-react';
 import React, { type ReactElement, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
 import { Label } from '../Common';
 import type { optionDataType, optionMapDataType } from '../../utils/interface';
@@ -78,9 +79,10 @@ interface Iprops {
     handleChange: (key: keyof ConditionType, val: string) => void;
 }
 function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element {
+    const { t } = useTranslation('source');
     return (<div>
         <FormItem
-            name="Core"
+            name={t('Core')}
             style={{ width: 'calc(30% - 40px)', minWidth: '270px' }}
             content={(<Select
                 value={condition.core}
@@ -93,7 +95,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             />
             )}/>
         <FormItem
-            name="Source"
+            name={t('Source')}
             style={{ width: 'calc(70% - 300px)', minWidth: '700px' }}
             content={(<Select
                 value={condition.source}

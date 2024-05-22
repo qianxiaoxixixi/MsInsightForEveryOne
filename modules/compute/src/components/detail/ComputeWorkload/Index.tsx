@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
@@ -33,6 +34,7 @@ const defaultData = {
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     const [data, setData] = useState<Idata>(defaultData);
     const [condition, setCondition] = useState(defaultCondition);
+    const { t } = useTranslation('details');
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryComputeWorkload();
@@ -63,7 +65,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     }, [data.blockIdList]);
     return (
         <BaseContainer
-            header="Compute Workload Analysis"
+            header={t('ComputeWorkloadAnalysis')}
             body={<div style={{ padding: '10px 20px' }}>
                 <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList}/>
                 <ComputeWorkloadChart blockId={condition.blockId} data={data.chartData}/>

@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
@@ -10,8 +11,7 @@ import { Button, Col, Empty, Input, InputNumber, message, Row, Select, Spin } fr
 import { Session } from '../entity/session';
 import { Graph, MemoryCurve, MemoryTableColumn, OperatorDetail, OperatorMemoryCondition } from '../entity/memory';
 import { memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
-import { hit, Label } from '../components/Common';
-import i18n from '../i18n';
+import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
 
 interface SelectedRange {
@@ -26,7 +26,10 @@ const MemoryWrapper = styled.div`
       height: 100%;
     `;
 
-const groupBy = ['Overall', 'Stream'];
+const groupBy = [
+    { label: 'Overall', value: 'Overall' },
+    { label: 'Stream', value: 'Stream' },
+];
 
 // eslint-disable-next-line max-lines-per-function
 const MemoryAnalysis = observer(function({ session, isDark }: { session: Session; isDark: boolean }) {
@@ -56,6 +59,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [isBtnDisabled, setBtnDisabled] = useState<boolean>(true);
     // 监听窗口唤醒状态以重绘echarts
     const [isWakeup, setIsWakeup] = useState<boolean>(false);
+    const { t } = useTranslation('memory');
 
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
         setSearchEventOperatorName(event.target.value as string);
@@ -79,13 +83,12 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             return;
         }
         if (maximumSize < minimumSize) {
-            message.warning(i18n.t('Invalid Size Warning'));
+            message.warning(t('Invalid Size Warning'));
             return;
         }
         let tempCurrent = current;
         if (resetCurrent) {
-            tempCurrent = 1;
-            setCurrent(1);
+            tempCurrent = 1; setCurrent(1);
         }
         let param: OperatorMemoryCondition = {
             rankId,
@@ -98,8 +101,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             maxSize: maximumSize,
         };
         if (selectedRange) {
-            param.startTime = selectedRange.startTs;
-            param.endTime = selectedRange.endTs;
+            param.startTime = selectedRange.startTs; param.endTime = selectedRange.endTs;
         }
         if (order !== undefined) {
             param = { order, orderBy, ...param };
@@ -158,6 +160,11 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setPageSize(10);
     };
 
+    const groupByOptions = groupBy.map(item => ({
+        ...item,
+        label: t(`searchCriteria.${item.label}`),
+    }));
+
     useEffect(() => {
         onSearch(searchEventOperatorName, minSize, maxSize);
     }, [selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId]);
@@ -209,7 +216,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             <MemoryWrapper>
                 <Row style={{ height: 60, alignContent: 'center' }}>
                     <Col span={4}>
-                        <Label name="RankId" />
+                        <Label name={t('searchCriteria.RankId')} />
                         <Select
                             value={rankId}
                             style={{ width: 200 }}
@@ -223,17 +230,12 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         />
                     </Col>
                     <Col span={4}>
-                        <Label name={<span>Group By{hit}</span>} />
+                        <Label name={<span>{t('searchCriteria.GroupBy')}{useHit()}</span>} />
                         <Select
                             value={groupId}
                             style={{ width: 180 }}
                             onChange={(value: string): void => setGroupId(value)}
-                            options={groupBy.map((type) => {
-                                return {
-                                    value: type,
-                                    label: type,
-                                };
-                            })}
+                            options={groupByOptions}
                         />
                     </Col>
                 </Row>
@@ -259,18 +261,18 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                 </Spin>
                 <Row style={{ height: 60, alignContent: 'center', marginTop: '75px' }}>
                     <Col span={6}>
-                        <Label name={i18n.t('Name')} />
+                        <Label name={t('searchCriteria.Name')} />
                         <Input
                             value={searchEventOperatorName}
                             style={{ width: 200 }}
                             onChange={onSearchEventOperatorChanged}
-                            placeholder="Search by Name"
+                            placeholder={t('searchCriteria.Search by Name')}
                             allowClear
                             maxLength={200}
                         />
                     </Col>
                     <Col span={6}>
-                        <Label name={i18n.t('Min Size')} />
+                        <Label name={t('searchCriteria.Min Size')} />
                         <InputNumber
                             value={minSize}
                             style={{ width: 200 }}
@@ -281,7 +283,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         />
                     </Col>
                     <Col span={6}>
-                        <Label name={i18n.t('Max Size')} />
+                        <Label name={t('searchCriteria.Max Size')} />
                         <InputNumber
                             value={maxSize}
                             style={{ width: 200 }}
@@ -299,14 +301,14 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                             style={{ marginRight: 10, width: 100 }}
                             disabled={isBtnDisabled}
                         >
-                            {i18n.t('Button Query')}
+                            {t('searchCriteria.Button Query')}
                         </Button>
                         <Button
                             onClick={onReset}
                             style={{ width: 100 }}
                             disabled={isBtnDisabled}
                         >
-                            {i18n.t('Button Reset')}
+                            {t('searchCriteria.Button Reset')}
                         </Button>
                     </Col>
                 </Row>

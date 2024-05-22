@@ -35,14 +35,14 @@ const copyrightYear = ref('2024');
 const { language, switchLanguage } = useLanguage();
 
 const isChinese = computed(() => language.value === Languages.ZH);
-const [Timeline, Memory, Operator, Summary, Communication, Details, Compute] = useWatchTranslation([
+const [Timeline, Memory, Operator, Summary, Communication, Details, Source] = useWatchTranslation([
     'tabs:Timeline',
     'tabs:Memory',
     'tabs:Operator',
     'tabs:Summary',
     'tabs:Communication',
     'tabs:Details',
-    'tabs:Compute',
+    'tabs:Source',
 ]);
 
 const tabsName = reactive({
@@ -52,7 +52,7 @@ const tabsName = reactive({
   Summary: Summary,
   Communication: Communication,
   Details: Details,
-  Compute: Compute,
+  Source: Source,
 });
 
 interface ITabName {
@@ -62,7 +62,7 @@ interface ITabName {
   Summary: string;
   Communication: string;
   Details: string;
-  Compute: string;
+  Source: string;
 }
 
 function getTabName(name: string) {

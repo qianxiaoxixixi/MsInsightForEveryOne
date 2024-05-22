@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Graph, OperatorDetail } from '../entity/memory';
 import { useResizeEventDependency, binarySearch } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
-import { chartCharacter, safeStr } from './Common';
+import { useChartCharacter, safeStr } from './Common';
 
 interface IProps {
     graph: Graph;
@@ -203,6 +203,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const [resizeEventDependency] = useResizeEventDependency();
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
     const selectedPoints = React.useRef<number[]>([]);
+    const chartCharacter = useChartCharacter();
 
     React.useLayoutEffect(() => {
         const element = graphRef.current;
