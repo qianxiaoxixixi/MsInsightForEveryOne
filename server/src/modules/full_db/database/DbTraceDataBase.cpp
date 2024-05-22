@@ -1724,4 +1724,11 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
 {
     return false;
 }
+
+bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
+    const std::vector<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
+    std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
+{
+    return false;
+}
 }

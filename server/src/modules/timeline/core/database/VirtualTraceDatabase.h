@@ -82,6 +82,10 @@ public:
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;
     virtual bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;
+    virtual bool QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
+        const std::vector<std::string> &pattern, uint64_t minTimestamp,
+        std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data,
+        std::map<uint64_t, std::vector<uint32_t>> &indexs) = 0;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

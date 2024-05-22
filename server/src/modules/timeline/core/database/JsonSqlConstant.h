@@ -123,6 +123,11 @@ const std::string QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL =
     "WHERE s.name IN ( "
     "    SELECT name FROM " + SLICE_TABLE + " WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
     "    GROUP BY name HAVING COUNT(name) >= ? )";
+const std::string QUERY_AFFINITY_API_SQL =
+    "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
+    "t.pid as pid, t.tid as tid FROM " + SLICE_TABLE + " s "
+    "JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+    "WHERE s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' ORDER BY s.track_id ASC, s.timestamp ASC";
 
 class JsonSqlConstant {
 public:
