@@ -1898,12 +1898,12 @@ uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
     return total;
 }
 
-bool JsonTraceDatabase::QueryAffinityOptimizer(const std::string &optimizers,
-    std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
+bool JsonTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params,
+    const std::string &optimizers, std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
-    std::string sql = "Select (s.timestamp - ?) as timestamp, s.duration, s.name, t.pid, t.tid "
+    std::string sql = "Select (s.timestamp - ?) as startTime, s.duration, s.name as originOptimizer, t.pid, t.tid "
         "From " + sliceTable + " s Join " + threadTable + " t ON s.track_id = t.track_id "
-        "WHERE s.name IN (" + optimizers + ") order by s.timestamp asc";
+        "WHERE s.name IN (" + optimizers + ") order by " + params.orderBy + " " + params.order;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for QueryAffinityOptimizer.", sqlite3_errmsg(db));
@@ -1916,8 +1916,8 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const std::string &optimizers,
     }
     while (resultSet->Next()) {
         Protocol::ThreadTraces one{};
-        one.startTime = resultSet->GetUint64("timestamp");
-        one.name = resultSet->GetString("name");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.name = resultSet->GetString("originOptimizer");
         one.duration = resultSet->GetUint64("duration");
         one.threadId = resultSet->GetString("tid");
         one.id = resultSet->GetString("pid");

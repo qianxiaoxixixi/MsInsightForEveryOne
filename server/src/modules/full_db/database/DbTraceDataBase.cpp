@@ -1681,7 +1681,7 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
 }
 
 
-bool DbTraceDataBase::QueryAffinityOptimizer(const std::string &optimizers,
+bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
     std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
     return false;

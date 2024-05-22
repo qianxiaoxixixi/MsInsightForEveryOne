@@ -107,7 +107,7 @@ public:
 
     std::vector<std::string> QueryRankId();
 
-    bool QueryAffinityOptimizer(const std::string &optimizers,
+    bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
     bool QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
         const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
