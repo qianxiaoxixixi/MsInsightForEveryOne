@@ -51,6 +51,9 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
         setCondition({ ...condition, ...newCondition });
     };
     useEffect(() => {
+        runInAction(() => {
+            session.blockIdList = [];
+        });
         getBaseInfo();
     }, [session.updateId]);
     useEffect(() => {

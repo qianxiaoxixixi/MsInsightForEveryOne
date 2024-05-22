@@ -7,6 +7,15 @@ import { type NotificationHandler } from './defs';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        const isDark = Boolean(data.isDark);
+        session.theme = isDark ? 'dark' : 'light';
+    });
 };
 
 export const importRemoteHandler = (): void => {

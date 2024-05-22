@@ -11,7 +11,6 @@ import MemoryTable from './MemoryTable';
 
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     const [condition, setCondition] = useState<Icondition>(defaultCondition);
-
     const handleFilterChange = (newCondition: Icondition): void => {
         setCondition({ ...condition, ...newCondition });
     };
@@ -21,8 +20,8 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
             header="Memory Workload Analysis"
             body={<>
                 <Filter blockIdList={session.blockIdList} handleFilterChange={handleFilterChange}/>
-                <MemoryChart condition={condition}/>
-                <MemoryTable condition={condition}/>
+                <MemoryChart condition={condition} session={session}/>
+                <MemoryTable condition={condition} />
             </>
             }
         />
