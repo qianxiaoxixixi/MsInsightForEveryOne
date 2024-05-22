@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { observer } from 'mobx-react';
@@ -16,6 +18,7 @@ interface Iprops {
 interface Ilabel {
     label: ReactNode;
     key: string;
+    isMix?: boolean;
 }
 interface IblockDuration {
     blockId: string ;
@@ -32,90 +35,98 @@ interface Ibaseinfo {
     mixBlockDim?: string ;
 
 }
-const allLabellist = [
-    {
-        label: 'Name',
-        key: 'name',
-    },
-    {
-        label: 'Soc',
-        key: 'soc',
-    },
-    {
-        label: 'Duration (μs)',
-        key: 'duration',
-    },
-    {
-        label: 'Op Type',
-        key: 'opType',
-    },
-    {
-        label: 'Block Dim',
-        key: 'blockDim',
-        isMix: false,
-    },
-    {
-        label: 'Block Detail',
-        key: 'blockDetail',
-        isMix: false,
-    },
-    {
-        label: 'Mix Block Dim',
-        key: 'blockDim',
-        isMix: true,
-    },
-    {
-        label: 'Mix Block Detail',
-        key: 'blockDetail',
-        isMix: true,
-    },
-];
+const getAllLabellist = (t: TFunction): Ilabel[] => {
+    return [
+        {
+            label: t('Name'),
+            key: 'name',
+        },
+        {
+            label: t('Soc'),
+            key: 'soc',
+        },
+        {
+            label: `${t('Duration')} (μs)`,
+            key: 'duration',
+        },
+        {
+            label: t('OpType'),
+            key: 'opType',
+        },
+        {
+            label: t('BlockDim'),
+            key: 'blockDim',
+            isMix: false,
+        },
+        {
+            label: t('BlockDetail'),
+            key: 'blockDetail',
+            isMix: false,
+        },
+        {
+            label: t('MixBlockDim'),
+            key: 'blockDim',
+            isMix: true,
+        },
+        {
+            label: t('MixBlockDetail'),
+            key: 'blockDetail',
+            isMix: true,
+        },
+    ];
+};
 
-const getLabellist = (dataObj: Ibaseinfo): Ilabel[] => {
+const getLabellist = (dataObj: Ibaseinfo, t: TFunction): Ilabel[] => {
+    const allLabellist = getAllLabellist(t);
     return allLabellist.filter(label => label.isMix === undefined || label.isMix === (dataObj.opType?.toLowerCase() === 'mix'));
 };
-const blockCol: ColumnsType<IblockDuration> = [
-    {
-        title: 'Block ID',
+const useBlockCol = (): ColumnsType<IblockDuration> => {
+    const { t } = useTranslation('details');
+    return [{
+        title: t('BlockID'),
         dataIndex: 'blockId',
         ellipsis: true,
         width: 100,
     },
     {
-        title: 'Core Type',
+        title: t('CoreType'),
         dataIndex: 'coreType',
         ellipsis: true,
     },
     {
-        title: 'Duration (μs)',
+        title: `${t('Duration')} (μs)`,
         dataIndex: 'duration',
         ellipsis: true,
     },
-];
+    ];
+};
 
-const mixBlockCol: ColumnsType<IblockDuration> = [
-    {
-        title: 'Block ID',
-        dataIndex: 'blockId',
-        ellipsis: true,
-        width: 100,
-    },
-    {
-        title: 'CUBE0 Duration (μs)',
-        dataIndex: 'aicDuration',
-        ellipsis: true,
-    },
-    {
-        title: 'VECTOR0 Duration (μs)',
-        dataIndex: 'aiv0Duration',
-        ellipsis: true,
-    },
-    {
-        title: 'VECTOR1 Duration (μs)',
-        dataIndex: 'aiv1Duration',
-        ellipsis: true,
-    },
-];
+const useMixBlockCol = (): ColumnsType<IblockDuration> => {
+    const { t } = useTranslation('details');
+    return [
+        {
+            title: t('BlockID'),
+            dataIndex: 'blockId',
+            ellipsis: true,
+            width: 100,
+        },
+        {
+            title: `CUBE0 ${t('Duration')} (μs)`,
+            dataIndex: 'aicDuration',
+            ellipsis: true,
+        },
+        {
+            title: `VECTOR0 ${t('Duration')} (μs)`,
+            dataIndex: 'aiv0Duration',
+            ellipsis: true,
+        },
+        {
+            title: `VECTOR1 ${t('Duration')} (μs)`,
+            dataIndex: 'aiv1Duration',
+            ellipsis: true,
+        },
+    ];
+};
 function BlockDetail({ opType = '', blockDetail = [] }: Ibaseinfo): JSX.Element {
     const [limit, setLimit] = useState({ maxSize: 10000, overlimit: false, current: 0 });
 
@@ -138,6 +149,8 @@ function BlockDetail({ opType = '', blockDetail = [] }: Ibaseinfo): JSX.Element 
     useEffect(() => {
         setLimit({ ...limit, overlimit: blockDetail.length > limit.maxSize, current: blockDetail.length });
     }, [blockDetail]);
+    const mixBlockCol = useMixBlockCol();
+    const blockCol = useBlockCol();
     const col = useMemo(() => opType?.toLowerCase() === 'mix' ? mixBlockCol : blockCol, [opType]);
     return (<div style={{ width: '600px' }}>
         {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`Block Detail Records (${limit.current})`}/>)}
@@ -174,6 +187,8 @@ const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo): Record<string, unknown> 
 const index = observer(({ session }: Iprops): JSX.Element => {
     const [data, setData] = useState<Ibaseinfo>({});
     const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
+    const { t } = useTranslation();
+    const { t: tDetails } = useTranslation('details');
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryBaseInfo();
@@ -181,7 +196,7 @@ const index = observer(({ session }: Iprops): JSX.Element => {
     };
 
     const showBaseInfo = (dataObj: Ibaseinfo): void => {
-        const labellist = getLabellist(dataObj);
+        const labellist = getLabellist(dataObj, tDetails);
         const disaplayList = labellist.map(item => getInfoItem(item, dataObj));
         setItems(disaplayList);
     };
@@ -191,11 +206,11 @@ const index = observer(({ session }: Iprops): JSX.Element => {
     }, [session.updateId]);
     useEffect(() => {
         showBaseInfo(data);
-    }, [JSON.stringify(data)]);
+    }, [JSON.stringify(data), t]);
 
     return (
         <BaseContainer
-            header="Base Info"
+            header={t('BaseInfo')}
             body={<BaseDescription items={items}/>}
         />
     );

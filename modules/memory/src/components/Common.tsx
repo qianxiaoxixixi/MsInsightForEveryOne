@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { QuestionCircleFilled } from '@ant-design/icons';
 import { StyledTooltip } from './StyledTooltip';
 
@@ -9,27 +10,30 @@ export const Label = (props: {name: React.ReactNode;style?: object }): JSX.Eleme
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name}{' :'} </span>;
 };
 
-export const hit = (<StyledTooltip title={
-    (
-        <div style={{ padding: '1rem' }}>
-            <div>Overall: Displays the memory sizes of operators in the Reserved, Allocated,
-                and Active states and the overall Memory Reserved size of PyTorch.</div>
-            <div style={{ marginTop: '2rem' }}>Stream: Displays the memory sizes of operators
-                in the Reserved, Allocated, and Active states by stream.</div>
-        </div>
-    )
-}>
-    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 0 0 10px' }}/>
-</StyledTooltip>);
+export const useHit = (): React.ReactElement => {
+    const { t } = useTranslation('memory');
+    return <StyledTooltip title={
+        (
+            <div style={{ padding: '1rem' }}>
+                <div>{t('searchCriteria.Overall')}: {t('searchCriteria.OverallDescribe')}</div>
+                <div style={{ marginTop: '2rem' }}>{t('searchCriteria.Stream')}: {t('searchCriteria.StreamDescribe')}</div>
+            </div>
+        )
+    }>
+        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 0 0 10px' }}/>
+    </StyledTooltip>;
+};
 
-export const chartCharacter = (<StyledTooltip title={
-    <div style={{ padding: '1rem' }}>
-        <div>Operator Allocated includes the memory occupied by both PyTorch and GE,
-                while Operator Activated only includes the memory occupied by PyTorch.</div>
-    </div>
-}>
-    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
-</StyledTooltip>);
+export const useChartCharacter = (): React.ReactElement => {
+    const { t } = useTranslation('memory');
+    return <StyledTooltip title={
+        <div style={{ padding: '1rem' }}>
+            <div>{t('searchCriteria.OperatorAllocatedDescribe')}</div>
+        </div>
+    }>
+        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+    </StyledTooltip>;
+};
 
 export const safeStr = (str: string, ignore?: string): string => {
     if (str === undefined || str === null) {

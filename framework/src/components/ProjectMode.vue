@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import ProjectIcon from '@/components/icons/project_icon.vue';
+import {useWatchTranslation} from '@/hooks/useWatchTranslation';
+
+const [DataManager] =  useWatchTranslation(['Data Manager']);
 </script>
 
 <template>
@@ -7,7 +10,7 @@ import ProjectIcon from '@/components/icons/project_icon.vue';
     <el-icon class="projectModeIcon" :size="16">
       <ProjectIcon/>
     </el-icon>
-    <span class="modeName">Data Manager</span>
+    <span class="modeName">{{ DataManager }}</span>
   </div>
 </template>
 

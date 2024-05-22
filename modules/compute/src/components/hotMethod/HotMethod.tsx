@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Checkbox, Tooltip } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
@@ -38,70 +39,68 @@ interface ConditionType {
     onlyRelated?: boolean;
 };
 
-const codeColumns: ColumnsType<Ilinetable> = [
-    {
-        title: 'Instructions Executed',
+const useCodeColumns = (): ColumnsType<Ilinetable> => {
+    const { t } = useTranslation('source');
+    return [{
+        title: t('InstructionsExecuted'),
         dataIndex: 'Instructions Executed',
         ellipsis: true,
         width: 155,
     },
     {
-        title: 'Cycles',
+        title: t('Cycles'),
         dataIndex: 'Cycles',
         ellipsis: true,
         width: 50,
-    },
-];
+    }];
+};
 
-const instrsColumns: ColumnsType<InstrsColumnType> = [
-    {
-        title: '#',
-        dataIndex: 'index',
-        width: 40,
-        align: 'right',
-        ellipsis: true,
-    },
-    {
-        title: 'Address',
-        dataIndex: 'Address',
-        width: 100,
-        ellipsis: true,
-    },
-    {
-        title: 'Pipe',
-        dataIndex: 'Pipe',
-        width: 100,
-        ellipsis: true,
-    },
-    {
-        title: 'Source',
-        dataIndex: 'Source',
-        ellipsis: { showTitle: false },
-        render: Source => (
-            <Tooltip placement="topLeft" title={Source} >
-                {Source}
-            </Tooltip>
-        ),
-    },
-    {
-        title: 'Instructions Executed',
-        dataIndex: 'Instructions Executed',
-        ellipsis: true,
-        width: 165,
-    },
-    {
-        title: 'Cycles',
-        dataIndex: 'Cycles',
-        width: 150,
-        ellipsis: true,
-        render: (Cycles, record) => {
-            if (Cycles === '') {
-                return '';
-            }
-            return <Bar value={Cycles} max={record.maxCycles ?? Cycles}/>;
+const useInstrsColumns = (): ColumnsType<InstrsColumnType> => {
+    const { t } = useTranslation('source');
+    return [
+        { title: '#', dataIndex: 'index', width: 40, align: 'right', ellipsis: true },
+        {
+            title: t('Address'),
+            dataIndex: 'Address',
+            width: 100,
+            ellipsis: true,
         },
-    },
-];
+        {
+            title: t('Pipe'),
+            dataIndex: 'Pipe',
+            width: 100,
+            ellipsis: true,
+        },
+        {
+            title: t('Source'),
+            dataIndex: 'Source',
+            ellipsis: { showTitle: false },
+            render: source => (
+                <Tooltip placement="topLeft" title={source} >
+                    {source}
+                </Tooltip>
+            ),
+        },
+        {
+            title: t('InstructionsExecuted'),
+            dataIndex: 'Instructions Executed',
+            ellipsis: true,
+            width: 165,
+        },
+        {
+            title: t('Cycles'),
+            dataIndex: 'Cycles',
+            width: 150,
+            ellipsis: true,
+            render: (cycles, record): string | React.ReactElement => {
+                if (cycles === '') {
+                    return '';
+                }
+                return <Bar value={cycles} max={record.maxCycles ?? cycles}/>;
+            },
+        },
+    ];
+};
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {
@@ -113,8 +112,10 @@ const Index = observer(({ session }: { session: Session }) => {
     const [instrsData, setInstrsData] = useState<InstrsColumnType[]>([]);
     const [selectedline, setSelectedline] = useState<number>(-1);
     const [tableHeight, setTableHeight] = useState<number>(1000);
+    const instrsColumns = useInstrsColumns();
     const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
     const [doneQuery, setDoneQuery] = useState(false);
+    const { t } = useTranslation('source');
     const reset = (): void => {
         // 重置选中行数，-1不选中任一行
         setSelectedline(-1);
@@ -349,7 +350,7 @@ const Index = observer(({ session }: { session: Session }) => {
 
     useEffect(() => {
         updateInstrsColumns();
-    }, [condition.onlyRelated, instrsData]);
+    }, [condition.onlyRelated, instrsData, t]);
 
     return <div id={DomId} style={{ height: '100%', width: '100%' }} className={'th35'}>
         <HeaderFixedContainer
@@ -359,11 +360,11 @@ const Index = observer(({ session }: { session: Session }) => {
                     <Filter session={session} handleFilterChange={handleFilterChange}/>
                     <div className="hit-label">
                         <span>
-                            Line :
+                            {t('Line')} :
                             <span>
-                                {selectedline >= 0 ? selectedline : ''}
+                                {selectedline >= 0 ? selectedline : ''},
                             </span>
-                            {' , Related Instructions Count : '}
+                            {t('RelatedInstructionsCount')} :
                             <span>
                                 {getRelatedInstrs().length}
                             </span>
@@ -374,7 +375,7 @@ const Index = observer(({ session }: { session: Session }) => {
                             onChange={(e: CheckboxChangeEvent): void => {
                                 handleFilterChange({ ...condition, onlyRelated: e.target.checked });
                             }}
-                        >Only Realted Instructions</Checkbox>
+                        > {t('OnlyRelatedInstructions')}</Checkbox>
                     </div>
                 </>
             }
@@ -388,7 +389,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                 <HeaderFixedContainer
                                     header={<div className={'table-header'}>
                                         <div style={{ width: '45px', textAlign: 'right' }}><span>#</span></div>
-                                        <div><span>Source</span></div>
+                                        <div><span>{t('Source')}</span></div>
                                     </div>}
                                     bodyProps={{ id: 'CodeTable' }}
                                     bodyStyle={{ overflowX: 'scroll' }}
@@ -410,7 +411,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                     size="small"
                                     minThWidth={50}
                                     pagination={false}
-                                    columns={codeColumns}
+                                    columns={useCodeColumns()}
                                     dataSource={codeLines}
                                     rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
                                     onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {

@@ -4,6 +4,7 @@
 import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select, InputNumber } from 'antd';
 import { Label } from 'lib/CommonUtils';
 import { optionMapType, VoidFunction } from '../../utils/interface';
@@ -108,18 +109,27 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
 });
 
 const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
+    const { t } = useTranslation('operator', { keyPrefix: 'searchCriteria' });
+    const groupOptions = optionMap.groupOptions.map(item => ({
+        ...item,
+        label: t(item.label),
+    }));
+    const topKOptions = optionMap.topKOptions.map(item => ({
+        ...item,
+        label: t(item.label),
+    }));
     return (<div>
         <FormItem
-            name="Group By"
+            name={t('Group By')}
             content={(<Select
                 value={condition.group}
                 style={{ width: 250 }}
                 onChange={val => handleChange('group', val)}
-                options={optionMap.groupOptions}
+                options={groupOptions}
             />
             )}/>
         <FormItem
-            name="RankId"
+            name={t('Rank ID')}
             content={(<Select
                 value={condition.rankId}
                 style={{ width: 200 }}
@@ -129,12 +139,12 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             />
             )}/>
         <FormItem
-            name="Top"
+            name={t('Top')}
             content={(<><Select
                 value={condition.topK}
                 style={{ width: 100 }}
                 onChange={val => handleChange('topK', val)}
-                options={optionMap.topKOptions}
+                options={topKOptions}
             />
             <InputNumber
                 min={0}

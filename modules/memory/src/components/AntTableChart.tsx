@@ -5,6 +5,8 @@
 import type { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
 import ResizeTable from 'lib/ResizeTable';
 
@@ -58,12 +60,13 @@ const orderByColName: IColName = {
 const getTableColumns = function (
     columns: MemoryTableColumn[],
     sort: string | undefined,
+    t: TFunction,
 ): any {
     return columns.map((col: MemoryTableColumn, index) => {
         return {
             dataIndex: col.key,
             key: col.key,
-            title: col.name,
+            title: t(col.name),
             sorter: true,
             ellipsis: true,
         };
@@ -72,14 +75,15 @@ const getTableColumns = function (
 
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
+    const { t } = useTranslation('memory', { keyPrefix: 'tableHead' });
     const {
         tableData, sortColumn, onRowSelected, current, pageSize,
         onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange,
     } = props;
 
     const columns = React.useMemo(
-        () => getTableColumns(tableData.columns, sortColumn),
-        [tableData.columns, sortColumn],
+        () => getTableColumns(tableData.columns, sortColumn, t),
+        [tableData.columns, sortColumn, t],
     );
 
     // key is used to reset the Table state (page and sort) if the columns change

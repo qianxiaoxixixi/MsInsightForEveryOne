@@ -4,10 +4,15 @@ import type Node from 'element-plus/es/components/tree/src/model/node';
 import type { TreeNodeType } from '@/components/MenuTree/types';
 import { useDataSources } from '@/stores/dataSource';
 import Delete from './DeleteIcon.vue';
+import useWatchTranslation from '@/hooks/useWatchTranslation';
 
 const props = defineProps<{ data: TreeNodeType; isDeleteAll: boolean; node: Node }>();
 const dialogVisible = ref(false);
 const store = useDataSources();
+const [DeleteAll, DeleteItem, Cancel, Confirm, DeleteItemConfirmDescribe, DeleteAllConfirmDescribe] = useWatchTranslation(
+    ['Delete All', 'Delete Item', 'Cancel', 'Confirm', 'DeleteItemConfirmDescribe', 'DeleteAllConfirmDescribe']
+);
+
 const handleDeleteSingle = () => {
     const parentData = props.node.parent.data;
     const parentIndex = store.menuTree.findIndex(data => data === toRaw(parentData));
@@ -28,18 +33,18 @@ const handleDeleteAll = () => {
 
 <template>
     <el-popconfirm width="200" v-if="!isDeleteAll" :hide-icon="true" @confirm="handleDeleteSingle" :hide-after="0"
-        title="Are you sure to delete this?">
+        :title="DeleteItemConfirmDescribe">
         <template #reference>
             <Delete />
         </template>
     </el-popconfirm>
     <Delete v-if="isDeleteAll" @click="dialogVisible = true" />
-    <el-dialog v-model="dialogVisible" title="Delete All" width="20%" :show-close="false" :align-center="true">
-        <span>Are you sure to delete All</span>
+    <el-dialog v-model="dialogVisible" :title="DeleteAll" width="20%" :show-close="false" :align-center="true">
+        <span>{{ DeleteAllConfirmDescribe }}</span>
         <template #footer>
             <span class="dialog-footer">
-                <el-button @click="dialogVisible = false">Cancel</el-button>
-                <el-button type="primary" @click="handleDeleteAll"> Confirm </el-button>
+                <el-button @click="dialogVisible = false">{{ Cancel }}</el-button>
+                <el-button type="primary" @click="handleDeleteAll"> {{ Confirm }} </el-button>
             </span>
         </template>
     </el-dialog>
