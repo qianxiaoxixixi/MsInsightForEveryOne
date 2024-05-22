@@ -9,6 +9,7 @@ import type { Icondition } from '../Filter';
 const cubeCore: Inode = {
     name: '',
     left: 0,
+    top: 0,
     container: [
         {
             x: 100,
@@ -21,34 +22,34 @@ const cubeCore: Inode = {
         {
             name: 'L1',
             x: 140,
-            y: 80,
+            y: 105,
             width: 80,
-            height: 180,
+            height: 170,
             label: 'L1',
         },
         {
             left: 100,
-            top: 15,
+            top: 20,
             width: 100,
             height: 50,
             label: 'L0A',
         },
         {
-            top: 100,
+            top: 90,
             left: -100,
             width: 100,
             height: 50,
             label: 'L0B',
         },
         {
-            top: -70,
+            top: -80,
             left: 100,
             width: 150,
-            height: 90,
+            height: 120,
             label: 'Cube',
         },
         {
-            top: -100,
+            top: -110,
             left: -125,
             width: 100,
             height: 50,
@@ -57,53 +58,79 @@ const cubeCore: Inode = {
     ],
     line: [
         {
+            id: 'L2_TO_L1',
+            label: 'L2_TO_L1',
             x: 0,
             y: 155,
             orient: 'right',
             length: 139,
-            label: '0',
         },
         {
+            id: 'L1_TO_L2',
+            label: 'L1_TO_L2',
             x: 140,
             y: 180,
             length: 139,
             orient: 'left',
-            label: '0',
             labelPosition: 'bottom',
         },
         {
-            x: 220,
-            y: 220,
-            length: 99,
-            orient: 'right',
-            label: '0',
+            id: 'GM_OR_L1_TO_L0A',
+            label: 'GM_OR_L1_TO_L0A',
+            points: '0,80 250,80 250,150 220,150 318,150',
+            labelXy: { x: 265, y: 165 },
         },
         {
-            x: 600,
-            y: 125,
-            length: 49,
+            id: 'GM_OR_L1_TO_L0B',
+            label: 'GM_OR_L1_TO_L0B',
+            points: '0,290 250,290 250,240 220,240 250,240 318,240',
+            labelXy: { x: 265, y: 228 },
+        },
+        {
+            id: 'L0A_TO_CUBE',
+            label: 'L0A_TO_CUBE',
+            x: 420,
+            y: 150,
+            orient: 'right',
+            length: 99,
+            labelPosition: 'bottom',
+        },
+        {
+            id: 'L0B_TO_CUBE',
+            label: 'L0B_TO_CUBE',
+            x: 420,
+            y: 240,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            id: 'CUBE_TO_L0C',
+            label: 'CUBE_TO_L0C',
+            x: 590,
+            y: 75,
+            length: 59,
+            orient: 'bottom',
+            labelPosition: 'left',
+        },
+        {
+            id: 'L0C_TO_CUBE',
+            label: 'L0C_TO_CUBE',
+            x: 610,
+            y: 135,
+            length: 59,
             orient: 'top',
-            label: '0',
             labelPosition: 'right',
         },
         {
-            points: '0,280 365,280 365,250',
-            label: '0',
-            labelXy: { x: 320, y: 295 },
+            id: 'L0C_TO_L1',
+            label: 'L0C_TO_L1',
+            points: '545,65 180,65 180,100',
+            labelXy: { x: 210, y: 50 },
         },
         {
-            points: '0,60 250,60 250,150 220,150 250,150 250,60 365,60 365,91',
-            label: '0',
-            labelXy: { x: 320, y: 50 },
-        },
-        {
-            points: '420,115  450,115 450,170 450,220 420,220 450,220 450,170  520,170',
-            label: '0',
-            labelXy: { x: 475, y: 160 },
-        },
-        {
+            id: 'L0C_TO_L2',
+            label: 'L0C_TO_L2',
             points: '600,25 600,10 0,10',
-            label: '0',
             labelXy: { x: 60, y: 25 },
         },
     ],
@@ -138,38 +165,222 @@ const vectorCore: Inode = {
     ],
     line: [
         {
+            id: 'L2_TO_UB',
+            label: 'L2_TO_UB',
             x: 0,
             top: '46%-10',
-            length: 139,
+            length: 138,
             orient: 'right',
-            label: '0',
         },
         {
+            id: 'UB_TO_L2',
+            label: 'UB_TO_L2',
             x: 140,
             top: '46%+10',
-            length: 139,
+            length: 138,
             orient: 'left',
-            label: '0',
             labelPosition: 'bottom',
         },
         {
+            id: 'UB_TO_VEC',
+            label: 'UB_TO_VEC',
             x: 290,
             top: '46%-10',
-            length: 119,
+            length: 118,
             orient: 'right',
-            label: '0',
         },
         {
+            id: 'VEC_TO_UB',
+            label: 'VEC_TO_UB',
             x: 410,
             top: '46%+10',
-            length: 119,
+            length: 118,
             orient: 'left',
-            label: '0',
             labelPosition: 'bottom',
         },
     ],
 };
-const cube: Igraph = [
+const vectorCore2: Inode = {
+    ...vectorCore,
+    line: (vectorCore.line ?? []).map(item => ({ ...item, id: `${item.id}_2`, label: `${item.label}_2` })),
+};
+const mixCore: Inode = {
+    name: '',
+    left: 0,
+    top: 0,
+    rect: [
+        {
+            name: 'L1',
+            x: 100,
+            y: 0,
+            width: 80,
+            height: 170,
+            label: 'L1',
+        },
+        {
+            left: 100,
+            top: 20,
+            width: 100,
+            height: 50,
+            label: 'L0A',
+        },
+        {
+            top: 90,
+            left: -100,
+            width: 100,
+            height: 50,
+            label: 'L0B',
+        },
+        {
+            top: -80,
+            left: 100,
+            width: 150,
+            height: 120,
+            label: 'Cube',
+        },
+        {
+            top: 15,
+            left: 100,
+            width: 100,
+            height: 50,
+            label: 'L0C',
+        },
+        {
+            top: 120,
+            left: -300,
+            width: 100,
+            height: 50,
+            label: 'Vec',
+        },
+        {
+            top: 120,
+            left: -450,
+            width: 650,
+            height: 100,
+            label: 'UB',
+        },
+    ],
+    line: [
+        {
+            id: 'L2_OR_UB_TO_L1',
+            label: 'L2_OR_UB_TO_L1',
+            x: 0,
+            y: 85,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            id: 'L2_OR_UB_TO_L1_append',
+            label: '',
+            points: '200,285 200,230 50,230 50,85 99,85',
+        },
+        {
+            id: 'L2_OR_L1_TO_UB',
+            x: 0,
+            y: 310,
+            orient: 'right',
+            length: 179,
+            label: 'L2_OR_L1_TO_UB',
+            labelPosition: 'bottom',
+        },
+        {
+            id: 'L2_OR_L1_TO_UB_append',
+            label: '',
+            points: '140,170 140,310 180,310',
+        },
+        {
+            id: 'UB_TO_L2',
+            label: 'UB_TO_L2',
+            x: 179,
+            y: 360,
+            orient: 'left',
+            length: 179,
+            labelPosition: 'bottom',
+        },
+        {
+            id: 'L1_TO_L0A',
+            label: 'L1_TO_L0A',
+            x: 180,
+            y: 45,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            label: 'L2_OR_L1_TO_L0B',
+            id: 'L2_OR_L1_TO_L0B',
+            x: 180,
+            y: 135,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            id: 'L2_OR_L1_TO_L0B_append',
+            points: '0,210 200,210 200,135 279,135',
+            label: '',
+        },
+        {
+            id: 'L0A_TO_CUBE',
+            label: 'L0A_TO_CUBE',
+            x: 380,
+            y: 45,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            id: 'L0B_TO_CUBE',
+            label: 'L0B_TO_CUBE',
+            x: 380,
+            y: 135,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            id: 'CUBE_TO_L0C',
+            label: 'CUBE_TO_L0C',
+            x: 630,
+            y: 70,
+            orient: 'right',
+            length: 99,
+        },
+        {
+            id: 'L0C_TO_CUBE',
+            label: 'L0C_TO_CUBE',
+            x: 770,
+            y: 95,
+            length: 189,
+            orient: 'bottom',
+            labelPosition: 'left',
+        },
+        {
+            id: 'CUBE_TO_L0C',
+            label: 'CUBE_TO_L0C',
+            x: 790,
+            y: 285,
+            length: 189,
+            orient: 'top',
+            labelPosition: 'right',
+        },
+        {
+            id: 'VEC_TO_UB',
+            label: 'VEC_TO_UB',
+            x: 570,
+            y: 215,
+            length: 69,
+            orient: 'bottom',
+            labelPosition: 'left',
+        },
+        {
+            id: ' UB_TO_VEC',
+            label: 'UB_TO_VEC',
+            x: 590,
+            y: 285,
+            length: 69,
+            orient: 'top',
+            labelPosition: 'right',
+        },
+    ],
+};
+const common: Inode[] = [
     {
         name: 'hbm',
         x: 1,
@@ -177,100 +388,7 @@ const cube: Igraph = [
         rect: [
             {
                 name: 'HBM',
-                width: 80,
-                height: 400,
-                label: 'HBM',
-            },
-        ],
-    },
-    {
-        name: 'l2catch',
-        left: 0,
-        rect: [
-            {
-                name: 'L2Catch',
-                left: 80,
-                width: 60,
-                height: 400,
-                label: 'L2 Catch',
-            },
-        ],
-        line: [
-            {
-                x: 80,
-                y: 85,
-                orient: 'left',
-                length: 79,
-                label: 0,
-            },
-            {
-                x: 0,
-                y: 110,
-                orient: 'right',
-                length: 79,
-                label: 0,
-                labelPosition: 'bottom',
-            },
-        ],
-    },
-    cubeCore,
-];
-const vector: Igraph = [
-    {
-        name: 'hbm',
-        x: 1,
-        y: 1,
-        rect: [
-            {
-                name: 'HBM',
-                width: 80,
-                height: 200,
-                label: 'HBM',
-            },
-        ],
-    },
-    {
-        name: 'l2catch',
-        left: 0,
-        rect: [
-            {
-                name: 'L2Catch',
-                top: 0,
-                left: 80,
-                width: 60,
-                height: 200,
-                label: 'L2 Catch',
-            },
-        ],
-        line: [
-            {
-                x: 80,
-                y: 85,
-                orient: 'left',
-                length: 0,
-                label: 0,
-            },
-            {
-                x: 0,
-                y: 110,
-                orient: 'right',
-                length: 79,
-                label: 0,
-                labelPosition: 'bottom',
-            },
-        ],
-    },
-    vectorCore,
-];
-const mix: Igraph = [
-    {
-        name: 'hbm',
-        x: 1,
-        y: 1,
-        rect: [
-            {
-                name: 'HBM',
-                width: 80,
+                width: 85,
                 height: 650,
                 label: 'HBM',
             },
@@ -278,46 +396,94 @@ const mix: Igraph = [
     },
     {
         name: 'l2catch',
+        top: 0,
         left: 0,
         rect: [
             {
                 name: 'L2Catch',
                 left: 120,
-                width: 60,
+                width: 70,
                 height: 650,
                 labels: [
-                    { value: 'L2 Catch' },
+                    { value: 'L2 Cache' },
                     { value: '' },
-                    { value: 'Hit Ratio' },
+                    { value: 'Hit Rate' },
                     { id: 'hitRatio', value: '0%' },
-
                 ],
             },
         ],
         line: [
             {
-                x: 120,
+                id: 'HBM_TO_L2',
+                label: 'HBM_TO_L2',
+                x: 0,
                 top: '46%-10',
-                orient: 'left',
-                length: 119,
-                label: '0',
-                id: '1',
+                orient: 'right',
+                length: 118,
             },
             {
-                x: 0,
+                id: 'L2_TO_HBM',
+                label: 'L2_TO_HBM',
+                x: 120,
                 top: '46%+10',
-                orient: 'right',
-                length: 119,
-                label: '0',
+                orient: 'left',
+                length: 118,
                 labelPosition: 'bottom',
             },
         ],
     },
-    cubeCore,
-    { ...vectorCore, x: 260, y: 320 },
-    { ...vectorCore, x: 260, y: 500 },
 ];
-const flow: Record<string, Igraph> = { mix, cube, vector };
+const cube: Igraph = [
+    ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 310 })) })),
+    cubeCore,
+];
+const vector: Igraph = [
+    ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 150 })) })),
+    vectorCore,
+];
+const mix: Igraph = [
+    ...common,
+    cubeCore,
+    { ...vectorCore, x: 275, y: 320 },
+    { ...vectorCore2, x: 275, y: 500 },
+];
+const mix310: Igraph = [
+    ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 390 })) })),
+    mixCore,
+];
+const flow: Record<string, Igraph> = { mix910: mix, cube910: cube, vector910: vector, mix310 };
+enum Path {
+    // 公共pipe
+    HBM_TO_L2 = 0,
+    L2_TO_HBM = 1,
+    // cube Pipe
+    L2_TO_L1 = 2,
+    L1_TO_L2 = 3,
+    GM_OR_L1_TO_L0A = 4,
+    GM_OR_L1_TO_L0B = 5,
+    L0A_TO_CUBE = 6,
+    L0B_TO_CUBE = 7,
+    CUBE_TO_L0C = 8,
+    L0C_TO_L1 = 9,
+    L0C_TO_L2 = 10,
+    L0C_TO_CUBE = 11,
+    // Vec Pipe
+    L2_TO_UB = 12,
+    UB_TO_L2 = 13,
+    UB_TO_VEC = 14,
+    VEC_TO_UB = 15,
+    L2_TO_UB_2 = 16,
+    UB_TO_L2_2 = 17,
+    UB_TO_VEC_2 = 18,
+    VEC_TO_UB_2 = 19,
+    // 310P
+    L2_OR_UB_TO_L1 = 20,
+    L1_TO_L0A = 21,
+    L2_OR_L1_TO_L0B = 22,
+    VEC_TO_L0C = 23,
+    L0C_TO_VEC = 24,
+    L2_OR_L1_TO_UB = 25,
+}
 
 const defaultBox = {
     x1: 0,
@@ -581,10 +747,10 @@ const transLineLabel = (origin: Iline, points: string): {x: number;y: number} =>
             dy = 15;
             break;
         case 'left':
-            dx = -String(origin.label).length * 7;
+            dx = -10;
             break;
         case 'right':
-            dx = String(origin.label).length * 7;
+            dx = 10;
             break;
         default:
             break;
@@ -639,14 +805,29 @@ const getNodeBox = (node: Ixy, boxlist: Ibox[]): Ibox => {
     return { x1: x + x1, x2: x + x2, y1: y + y1, y2: y + y2, width: x2 - x1, height: y2 - y1 };
 };
 
-const COLOR = {
-    container: 'rgb(43,43,43)',
-    rect: '#89c35e',
-    rectStroke: '#696969',
-    line: '#808080',
-    label: '#fff',
-    memory: '#40a9ff',
+const colorConfig: Record<string, Record<string, any>> = {
+    light: {
+        container: 'rgb(255,255,255)',
+        rect: '#89c35e',
+        rectStroke: '#a9a9a9',
+        line: '#000000',
+        rectLabel: '#fff',
+        label: '#7b7a7a',
+        memory: '#40a9ff',
+        range: ['#4c008a', '#c42627', '#ff5f03', '#ffc55b', '#fcc95e', '#ffffff'],
+    },
+    dark: {
+        container: 'rgb(43,43,43)',
+        rect: '#89c35e',
+        rectStroke: '#696969',
+        line: '#808080',
+        rectLabel: '#fff',
+        label: '#fff',
+        memory: '#40a9ff',
+        range: ['#4c008a', '#c42627', '#ff5f03', '#ffc55b', '#fcc95e', '#ffffff'],
+    },
 };
+let COLOR: any = colorConfig.light;
 
 const drawNode = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: IdrawGraph): d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unknown> => {
     return svg.selectAll('g.node')
@@ -704,7 +885,7 @@ const drawRect = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unkno
         .attr('dominant-baseline', 'middle')
         .text(d => d.label ?? '')
         .style('font-size', '14px')
-        .style('fill', COLOR.label);
+        .style('fill', COLOR.rectLabel);
     nodes.selectAll('text.rect-labels')
         .data(d => {
             const allLabels = (d.rect ?? []).map(item => item.labels ?? []);
@@ -719,7 +900,7 @@ const drawRect = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unkno
         .attr('dominant-baseline', 'middle')
         .text(d => d.value ?? '')
         .style('font-size', '14px')
-        .style('fill', COLOR.label);
+        .style('fill', COLOR.rectLabel);
 };
 
 const drawLine = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unknown>): void => {
@@ -783,11 +964,87 @@ const addMarker = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): v
         .attr('d', arrowPath)
         .attr('fill', COLOR.line);
 };
+
+const valueRange = [0, 20, 40, 60, 80, 100];
+const gradientColors: Array<(val: number) => string> = [];
+for (let i = 0; i < valueRange.length - 1; i++) {
+    const lineScale = d3.scaleLinear()
+        .domain([valueRange[i], valueRange[i + 1]])
+        .range([0, 1]);
+    const colorScale = d3.interpolate(COLOR.range[i], COLOR.range[i + 1]);
+    gradientColors.push((d: number) => colorScale(lineScale(d)));
+}
+const computeColor = (d: number): string => {
+    for (let i = 0; i < valueRange.length - 1; i++) {
+        if (d >= valueRange[i] && d <= valueRange[i + 1]) {
+            return gradientColors[i](d);
+        }
+    }
+    return COLOR.line;
+};
+
+const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): void => {
+    // 定义渐变色的比例尺
+    const colorScale = d3.scaleLinear()
+        .domain([0, COLOR.range.length - 1])
+        .range([0, 1]);
+
+    // 创建渐变色
+    const defs = svg.append('defs');
+    const gradient = defs.append('linearGradient')
+        .attr('id', 'gradient')
+        .attr('x1', '0%')
+        .attr('y1', '100%')
+        .attr('x2', '0%')
+        .attr('y2', '0%');
+
+    // 添加渐变色的颜色节点
+    gradient.selectAll('stop')
+        .data((COLOR.range as string[]) ?? [])
+        .enter().append('stop')
+        .attr('offset', (d, i) => colorScale(i))
+        .attr('stop-color', d => d);
+
+    const g = svg.append('g')
+        .attr('class', 'legend')
+        .attr('transform', 'translate(1130,10)');
+    // 创建渐变色的矩形
+    const size = { width: 15, height: 380 };
+    g.append('rect')
+        .attr('width', size.width)
+        .attr('height', size.height)
+        .attr('x', 5)
+        .attr('y', 10)
+        .style('fill', 'url(#gradient)');
+
+    // 添加渐变色的文本标签
+    g.append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .text('Peak')
+        .style('font-size', '12px')
+        .style('font-family', 'Micro Yahei')
+        .style('fill', COLOR.label);
+
+    // 添加渐变色的颜色标签
+    g.selectAll('text.stop')
+        .data([0, 20, 40, 60, 80, 100])
+        .enter()
+        .append('text')
+        .attr('x', 30)
+        .attr('y', d => Math.ceil((100 - d) / 100 * size.height) + 15)
+        .text(d => `${d}%`)
+        .style('font-size', '12px')
+        .attr('class', 'stop')
+        .style('fill', COLOR.label);
+};
 export const clear = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): void => {
     svg.selectAll('*').remove();
 };
-export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, config: Igraph): void => {
+export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, config: Igraph, theme: string): void => {
     clear(svg);
+    COLOR = colorConfig[theme];
+    addLegend(svg);
     const graph = getDrawConfig(config);
     const nodes = drawNode(svg, graph);
     drawContainer(nodes);
@@ -796,29 +1053,92 @@ export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, a
     addMarker(svg);
 };
 
-export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
-    const { blockType } = data;
-    const graphConfig = flow[blockType];
-    drawGraph(svg, graphConfig);
+export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition & {theme: string}): void => {
+    const { blockType = '', chipType = '', theme = 'dark' } = data;
+    const graphConfig = flow[blockType + chipType.slice(0, 3)] ?? flow.mix310;
+    drawGraph(svg, graphConfig, theme);
     updateData(svg, data);
 };
 
 export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
-    const { showAs, memoryUnit } = data;
-    const dic: Record<string, string> = {};
-    memoryUnit.forEach(unit => {
-        dic[unit.memoryPath] = unit[showAs];
-    });
-    svg.selectAll('text.line-label')
-        .text(d => {
-            const id = (d as IdrawLine).id ?? '';
-            return dic[id] ?? '0';
-        });
+    updateHitRatio(svg, data);
+    updatePath(svg, data);
+};
+
+const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
     svg.selectAll('text.rect-labels')
         .text((d: any) => {
             if (d.id === 'hitRatio') {
-                return data.L2catch.hitRatio;
+                let hitRatio = Number(data?.l2Cache?.hitRatio);
+                if (!isNaN(hitRatio)) {
+                    hitRatio = Number(hitRatio.toFixed(2));
+                }
+                return `${hitRatio}%`;
             }
             return d.value ?? '';
+        });
+};
+const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
+    const { showAs, memoryUnit } = data;
+    const labelDic: Record<string, string> = {};
+    const peakDic: Record<string, number> = {};
+    const peakSet = new Set<number>();
+    memoryUnit.forEach(unit => {
+        labelDic[unit.memoryPath] = unit[showAs];
+        const peak = Number(unit.peakRatio);
+        if (!isNaN(peak)) {
+            peakDic[unit.memoryPath] = peak;
+            peakSet.add(peak);
+        }
+    });
+    updateLabel(svg, labelDic);
+    updateHotPath(svg, peakDic, peakSet);
+};
+const updateLabel = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, labelDic: Record<string, string>): void => {
+    svg.selectAll('text.line-label')
+        .text(d => {
+            const lineid: any = ((d as IdrawLine)?.id ?? '');
+            const memoryUnitId = Path[lineid];
+            return labelDic[memoryUnitId] ?? '';
+        });
+};
+
+const updateHotPath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, peakDic: Record<string, number>, peakSet: Set<number>): void => {
+    const colorDic: Record<number, string> = {};
+    [...peakSet].forEach(peakRatio => {
+        colorDic[peakRatio] = computeColor(peakRatio);
+    });
+    const defs = svg.selectAll('defs').append('defs');
+    const arrowMarker = defs.selectAll('marker')
+        .data([...peakSet])
+        .enter()
+        .append('marker')
+        .attr('id', d => `arrow${d}`)
+        .attr('markerUnits', 'strokeWidth')
+        .attr('markerWidth', '8')
+        .attr('markerHeight', '8')
+        .attr('viewBox', '0 0 12 12')
+        .attr('refX', '8')
+        .attr('refY', '5')
+        .attr('orient', 'auto');
+    const arrowPath = 'M 0 0 L 10 5 L 0 10 z';
+    arrowMarker.append('path')
+        .attr('d', arrowPath)
+        .attr('fill', d => colorDic[d]);
+    svg.selectAll('polyline')
+        .attr('stroke', d => {
+            const lineid: any = ((d as IdrawLine)?.id ?? '').split('_append')[0];
+            const memoryUnitId = Path[lineid];
+            const peakRatio = peakDic[memoryUnitId];
+            if (peakRatio !== undefined) {
+                return colorDic[peakRatio];
+            }
+            return COLOR.line;
+        })
+        .attr('marker-end', d => {
+            const lineid: any = ((d as IdrawLine)?.id ?? '').split('_append')[0];
+            const memoryUnitId = Path[lineid];
+            const peakRatio = peakDic[memoryUnitId];
+            return `url(#arrow${peakRatio ?? ''})`;
         });
 };
