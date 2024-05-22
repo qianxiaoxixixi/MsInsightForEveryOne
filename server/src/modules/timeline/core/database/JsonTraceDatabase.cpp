@@ -2034,6 +2034,56 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
     }
     return true;
 }
+
+bool JsonTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
+    const std::vector<std::string> &pattern, uint64_t minTimestamp,
+    std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
+{
+    auto stmt = CreatPreparedStatement(QUERY_AFFINITY_API_SQL);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for Affinity API.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Affinity API data.", stmt->GetErrorMessage());
+        return false;
+    }
+    std::map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthCacheMap{};
+    std::map<uint64_t, uint64_t> indexMap;
+    while (resultSet->Next()) {
+        Protocol::FlowLocation one{};
+        uint64_t trackId = resultSet->GetUint64("track");
+        uint64_t id = resultSet->GetUint64("id");
+        if (depthCacheMap.count(trackId) == 0) {
+            depthCacheMap.emplace(trackId,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap);
+        }
+        if (depthCacheMap[trackId][id] != 1) { // 仅取depth为1的数据, depth为0的是step
+            continue;
+        }
+        one.name = resultSet->GetString("name");
+        one.timestamp = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+
+        if (data.count(trackId) == 0) {
+            data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
+            indexMap.emplace(trackId, 0);
+            indexs.emplace(trackId, std::vector<uint32_t>{});
+        }
+        std::string name = StringUtil::StartWith(one.name, "aten::") ?
+            one.name.substr(strlen("aten::"), one.name.length()) : one.name.substr(strlen("npu::"), one.name.length());
+        if (std::find(pattern.begin(), pattern.end(), name) != pattern.end()) {
+            indexs[trackId].emplace_back(indexMap[trackId]); // 记录所有可能的索引值，加速后续处理速度
+        }
+        indexMap[trackId] = indexMap[trackId] + 1;
+        data[trackId].emplace_back(one);
+    }
+
+    return true;
+}
 } // end of namespace Timeline
   // end of namespace Module
   // end of namespace Dic

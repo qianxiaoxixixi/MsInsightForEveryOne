@@ -9,6 +9,7 @@
 #include "VirtualTraceDatabase.h"
 #include "TraceDatabaseDef.h"
 #include "map"
+#include "TimelineProtocolRequest.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Module::Timeline;
@@ -113,6 +114,9 @@ public:
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
     bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
+    bool QueryAffinityAPIData(const Protocol::KernelDetailsParams &params, const std::vector<std::string> &pattern,
+        uint64_t minTimestamp, std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data,
+        std::map<uint64_t, std::vector<uint32_t>> &indexs) override;
 
     bool CheckTableDataInvalid(std::string tableName);
 
