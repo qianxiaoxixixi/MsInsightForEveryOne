@@ -1,0 +1,29 @@
+{
+    "translation": {
+        "buildVersion": "版本号为 {{version}}，构建于 {{modifyTime}}",
+        "copyRight": "版权所有 © {{copyrightYear}} 华为技术有限公司。 保留所有权利",
+        "Data Manager": "数据管理器",
+        "Import Data": "导入数据",
+        "Switch Theme": "切换主题",
+        "Delete All": "全部删除",
+        "Delete Item": "删除项目",
+        "DeleteAllConfirmDescribe": "您确认要全部删除吗?",
+        "DeleteItemConfirmDescribe": "您确认要删除此项吗？",
+        "File Explorer": "文件资源管理器",
+        "FileSearchDescribe": "输入文件路径，然后按回车键进行搜索",
+        "RefreshDirectoryDescribe": "请展开并折叠该目录以进行刷新。",
+        "FileNotFundDescribe": "文件未找到，请检查文件路径",
+        "About": "关于",
+        "Confirm": "确认",
+        "Cancel": "取消"
+    },
+    "tabs": {
+        "Timeline": "Timeline",
+        "Memory": "内存",
+        "Operator": "算子",
+        "Summary": "概览",
+        "Communication": "通信",
+        "Source": "源码",
+        "Details": "详情"
+    }
+}

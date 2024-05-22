@@ -8,6 +8,7 @@ import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
 import '@assets/reset.css'
 import router from './router';
+import '@/i18n';
 
 type CefQueryType = {
     request: string;

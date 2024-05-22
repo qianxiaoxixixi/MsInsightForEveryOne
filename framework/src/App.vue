@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import {computed, onMounted, ref} from 'vue';
+import { ElConfigProvider } from 'element-plus';
+import zhCN from 'element-plus/es/locale/lang/zh-cn';
+import enUS from 'element-plus/es/locale/lang/en';
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
 import Resizor from '@/utils/Resizor.vue';
-import { useSession, type Session } from '@/stores/session';
+import { useSession } from '@/stores/session';
 let lastWidth = 300;
 const displayAside = ref(true);
 const asideWidth = ref(lastWidth);
@@ -18,6 +21,15 @@ const { session } = useSession();
 const forbidDefaultEvent = (e: MouseEvent) => {
     e.preventDefault();
 };
+
+const locales = {
+  zhCN,
+  enUS
+};
+
+type Language = 'zhCN' | 'enUS';
+
+const locale = computed(() => locales[session.language as Language] ?? enUS);
 
 onMounted(() => {
     // 默认颜色主题
@@ -42,6 +54,7 @@ function resize(deltaX: number, width: number) {
 </script>
 
 <template>
+  <el-config-provider :locale="locale">
     <el-container v-loading="session.loading" class="container">
         <el-aside class="aside" :width="`${asideWidth}px`">
           <div :style="`width:${asideWidth}px;height:100%;position:absolute;`">
@@ -63,6 +76,7 @@ function resize(deltaX: number, width: number) {
             <Modules />
         </el-main>
     </el-container>
+  </el-config-provider>
 </template>
 
 <style scoped>

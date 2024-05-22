@@ -65,7 +65,7 @@
 
     --border-style-hover: 1px solid var(--color-border-hover);
     --border-radius: 0.3rem;
-    --SvgFillColor: #ffffff;
+    --SvgFillColor: #D1D1D1;
     --color-background: #252526;
     --header-background-color: rgb(44, 44, 44);
     --treeContent-color: #f4f6fa;
@@ -80,7 +80,7 @@
     --color-background-mute: #f2f2f2;
     --color-background-medium: rgb(155, 155, 155);
     --color-background-medium-active: rgba(100, 100, 100, 0.8);
-    --SvgFillColor: #000000;
+    --SvgFillColor: #595959;
 
     --color-border: var(--vt-c-divider-dark-2);
     --color-border-hover: #d3d3d3;

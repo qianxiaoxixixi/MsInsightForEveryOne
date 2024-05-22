@@ -2,7 +2,9 @@
   <!-- Generator: Adobe Illustrator 24.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
   <svg id="图层_1" xmlns="http://www.w3.org/2000/svg" x="0px"
        y="0px"
-       viewBox="0 0 16 16" xml:space="preserve">
+       viewBox="0 0 16 16" xml:space="preserve"
+       class="icon"
+  >
     <g id="icons_x2F_light_x2F_disable_x2F_ascendinsight_x2F_help">
       <path id="_x3F_" class="st0" d="M8.5,10V9.9c0-0.2,0.1-0.5,0.1-0.7C8.8,9,8.9,8.9,9.1,8.7C9.5,8.3,9.8,8,9.9,7.9
         c0.2-0.3,0.4-0.7,0.4-1.2c0-0.6-0.2-1.1-0.6-1.4C9.3,4.9,8.8,4.7,8.1,4.7c-0.7,0-1.3,0.2-1.7,0.6C5.9,5.8,5.7,6.3,5.7,7h1.1

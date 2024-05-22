@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import {ref, onMounted, watch} from 'vue';
-import {request} from '@/centralServer/server';
+import {ref, onMounted, watch, computed, reactive} from 'vue';
+import { request } from '@/centralServer/server';
 import connector from '@/connection';
-import {type ModuleConfig, modulesConfig} from '@/moduleConfig';
-import {useSession, type Session} from '@/stores/session';
-import {connectRemote} from '@/centralServer/server';
-import {LOCAL_HOST, PORT, setPort} from '@/centralServer/websocket/defs';
-import {useDataSources} from '@/stores/dataSource';
-import {Console} from '@/utils/console';
+import { type ModuleConfig, modulesConfig } from '@/moduleConfig';
+import { useSession, type Session } from '@/stores/session';
+import { connectRemote } from '@/centralServer/server';
+import { LOCAL_HOST, PORT, setPort } from '@/centralServer/websocket/defs';
+import { useDataSources } from '@/stores/dataSource';
+import { Console } from '@/utils/console';
 import HelpIcon from '@/components/icons/help_icon.vue';
+import LangZhIcon from '@/components/icons/lang_zh_icon.vue';
+import LangEnIcon from '@/components/icons/lang_en_icon.vue';
 import VersionInfo from '@/version_info.json';
-import {useResource} from '@/stores/resourceComp';
+import { useLanguage, Languages } from '@/hooks/useLanguage';
+import { t } from '@/i18n';
+import { localStorageService, LocalStorageKeys } from '@/utils/local-storage';
+import useWatchTranslation from '@/hooks/useWatchTranslation';
+
 const { confirmDrop } = useDataSources();
-const { setCurrentPath } = useResource();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute';
 const scene = ref<SceneType>('Default');
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
-const {session, setSession} = useSession();
+const { session, setSession } = useSession();
 const showHelpModal = ref(false);
 
 // Ascend-Insight版本信息
@@ -27,6 +32,42 @@ const version = ref('UNKNOWN');
 const modifyTime = ref('UNKNOWN');
 // 版权年份范围，默认2024年（软件首发年分）
 const copyrightYear = ref('2024');
+const { language, switchLanguage } = useLanguage();
+
+const isChinese = computed(() => language.value === Languages.ZH);
+const [Timeline, Memory, Operator, Summary, Communication, Details, Compute] = useWatchTranslation([
+    'tabs:Timeline',
+    'tabs:Memory',
+    'tabs:Operator',
+    'tabs:Summary',
+    'tabs:Communication',
+    'tabs:Details',
+    'tabs:Compute',
+]);
+
+const tabsName = reactive({
+  Timeline: Timeline,
+  Memory: Memory,
+  Operator: Operator,
+  Summary: Summary,
+  Communication: Communication,
+  Details: Details,
+  Compute: Compute,
+});
+
+interface ITabName {
+  Timeline: string;
+  Memory: string;
+  Operator: string;
+  Summary: string;
+  Communication: string;
+  Details: string;
+  Compute: string;
+}
+
+function getTabName(name: string) {
+  return tabsName[name as keyof ITabName] ?? name;
+}
 
 /**
  * 问号图标鼠标点击事件处理函数
@@ -34,30 +75,47 @@ const copyrightYear = ref('2024');
  * @param e 鼠标事件
  */
 function questionIconClickHandler(e: MouseEvent) {
-  // 读取文件内容
-  version.value = VersionInfo.version;
-  modifyTime.value = VersionInfo.modifyTime;
+    // 读取文件内容
+    version.value = VersionInfo.version;
+    modifyTime.value = VersionInfo.modifyTime;
 
-  // “软件最近修改年份”不是“首次发布年份时”，版权时间范围需要修改为“首年年份-最近修改年份”
-  const modifyYear = VersionInfo.modifyTime.split('/')[0];
-  if (modifyYear !== copyrightYear.value) {
-    copyrightYear.value = copyrightYear.value + '-' + modifyYear;
-  }
+    // “软件最近修改年份”不是“首次发布年份时”，版权时间范围需要修改为“首年年份-最近修改年份”
+    const modifyYear = VersionInfo.modifyTime.split('/')[0];
+    if (modifyYear !== copyrightYear.value) {
+        copyrightYear.value = copyrightYear.value + '-' + modifyYear;
+    }
 
-  e.stopPropagation();
-  // 显示“帮助”弹框，展示版本信息内容
-  showHelpModal.value = true;
+    e.stopPropagation();
+    // 显示“帮助”弹框，展示版本信息内容
+    showHelpModal.value = true;
 }
 
-
 onMounted(async () => {
+    registerEventListeners();
+
+    if (!session.isVscode) {
+        await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+    }
+});
+
+watch(
+    () => [session.isBinary, session.isCluster],
+    () => {
+        if (session.isBinary === null && session.isCluster === null) {
+            return;
+        }
+        updateScene();
+    },
+);
+
+function registerEventListeners() {
     connector.resigsterAwaitFetch(async (e) => {
         if (!e.data.remote) {
             e.data.remote = useDataSources().lastDataSource;
         }
-        const {remote, args, module, voidResponse, bufferField} = e.data;
+        const { remote, args, module, voidResponse, bufferField } = e.data;
         const result = await request(remote, module, args, voidResponse, bufferField);
-        return {dataSource: remote, body: result};
+        return { dataSource: remote, body: result };
     });
 
     connector.addListener('updateSession', (e) => {
@@ -71,17 +129,27 @@ onMounted(async () => {
         const updateState: any = {};
         for (const key of receivePropKeys) {
             // 1.receiver的字段key在session中存在 2.receiver[key]的类型（例如string、boolean)与session[key]也相同，或者session[key]当前为null
-            if (validPropKeys.includes(key) && (Object.prototype.toString.call(receiver[key]) === Object.prototype.toString.call(session[key as keyof Session]) ||
-                session[key as keyof Session] === null)) {
-                Object.assign(updateState, {[key]: receiver[key]});
+            if (
+                validPropKeys.includes(key) &&
+                (Object.prototype.toString.call(receiver[key]) ===
+                    Object.prototype.toString.call(session[key as keyof Session]) ||
+                    session[key as keyof Session] === null)
+            ) {
+                Object.assign(updateState, { [key]: receiver[key] });
                 continue;
             }
-            Console.warn(`you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`);
+            Console.warn(
+                `you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`,
+            );
         }
         setSession(updateState);
         setTimeout(() => {
-            const isSend = updateState.parseCompleted !== undefined || updateState.clusterCompleted !== undefined || updateState.unitcount !== undefined
-                || updateState.isBinary || updateState.durationFileCompleted;
+            const isSend =
+                updateState.parseCompleted !== undefined ||
+                updateState.clusterCompleted !== undefined ||
+                updateState.unitcount !== undefined ||
+                updateState.isBinary ||
+                updateState.durationFileCompleted;
             if (isSend) {
                 connector.send({
                     event: 'updateSession',
@@ -89,7 +157,7 @@ onMounted(async () => {
                         parseCompleted: session.parseCompleted,
                         clusterCompleted: session.clusterCompleted,
                         unitcount: session.unitcount,
-                        ...updateState
+                        ...updateState,
                     },
                 });
             }
@@ -112,18 +180,15 @@ onMounted(async () => {
     });
 
     connector.addListener('updateHtml', (e) => {
-        const {modules, port}: { modules: string[], port: number } = e.data;
+        const { modules, port }: { modules: string[]; port: number } = e.data;
         setPort(port);
         modulesConfig.forEach((config, index) => {
             config.attributes.src = window.URL.createObjectURL(
-                new Blob(
-                    [modules[index]],
-                    {type: 'text/html'}
-                )
+                new Blob([modules[index]], { type: 'text/html' }),
             );
         });
         session.isVscode = false;
-        connectRemote({remote: LOCAL_HOST, port: PORT, dataPath: []});
+        connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
     });
     connector.addListener('deleteRank', (e) => {
         const receiver = e.data.body;
@@ -132,39 +197,36 @@ onMounted(async () => {
             Console.warn('data.body is undefined, please check your params');
             return;
         }
-        connector.send({event: 'deleteRank', body: receiver});
+        connector.send({ event: 'deleteRank', body: receiver });
     });
 
     connector.addListener('dropFile', (e) => {
-      const res = e.data.body;
-      const path = res.result?.[0]?.cardPath;
-      const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [path] };
-      confirmDrop(dataSource, res);
+        const res = e.data.body;
+        const path = res.result?.[0]?.cardPath;
+        const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [path] };
+        confirmDrop(dataSource, res);
     });
 
     connector.addListener('switchModule', (e) => {
-      const body = e.data.body;
-      const switchTo = body?.switchTo;
-      const index = modulesConfig.findIndex((tab) => tab.requestName === switchTo);
-      if (index > -1 && isShow(modulesConfig[index])) {
-        activeModule.value = index;
-        if (body.toModuleEvent) {
-          connector.send({ event: body.toModuleEvent, to: index, body: body.params });
+        const body = e.data.body;
+        const switchTo = body?.switchTo;
+        const index = modulesConfig.findIndex((tab) => tab.requestName === switchTo);
+        if (index > -1 && isShow(modulesConfig[index])) {
+            activeModule.value = index;
+            if (body.toModuleEvent) {
+                connector.send({ event: body.toModuleEvent, to: index, body: body.params });
+            }
         }
-      }
     });
 
-    if (!session.isVscode) {
-        await connectRemote({remote: LOCAL_HOST, port: PORT, dataPath: []});
-    }
-});
-
-watch(() => [session.isBinary, session.isCluster], () => {
-    if (session.isBinary === null && session.isCluster === null) {
-        return;
-    }
-    updateScene();
-});
+    connector.addListener('getLanguage', (e) => {
+        connector.send({
+            event: 'switchLanguage',
+            to: e.data.from,
+            body: { lang: localStorageService.getItem(LocalStorageKeys.LANGUAGE) || 'enUS' },
+        });
+    });
+}
 
 function updateScene() {
     scene.value = getScene();
@@ -209,11 +271,15 @@ function toggleTab(index: number): void {
     });
 }
 
+function handleToggleLang(): void {
+    const lang = isChinese.value ? Languages.EN : Languages.ZH;
+    switchLanguage(lang);
+}
 </script>
 <template>
     <div class="tab-pane">
         <div class="tab-titles">
-            <el-menu class="el-menu-title" mode="horizontal" background-color="var(--color-background)" router>
+            <el-menu class="el-menu-title" mode="horizontal" router>
                 <template v-for="(moduleConfig, index) in modulesConfig">
                     <el-menu-item
                         :key="`title_${index}_${moduleConfig.name}`"
@@ -221,35 +287,46 @@ function toggleTab(index: number): void {
                         @click="() => toggleTab(index)"
                         :class="index === activeModule && 'active'"
                     >
-                        {{ moduleConfig.name }}
+                        {{ getTabName(moduleConfig.name) }}
                     </el-menu-item>
                 </template>
             </el-menu>
-            <el-icon class="QuestionIcon" @click="questionIconClickHandler" background-color="var(--color-background)" router>
-              <HelpIcon style="height: 30px; width: 30px; cursor: pointer;"/>
-            </el-icon>
+
+            <div class="right-tool-box">
+                <el-tooltip content="中文/English">
+                    <el-icon class="tool-item" @click="handleToggleLang">
+                        <LangEnIcon class="icon" v-if="isChinese" />
+                        <LangZhIcon class="icon" v-else />
+                    </el-icon>
+                </el-tooltip>
+
+                <el-icon class="tool-item" @click="questionIconClickHandler">
+                    <HelpIcon class="icon" />
+                </el-icon>
+            </div>
         </div>
         <div class="tab-body">
             <template v-for="(moduleConfig, index) in modulesConfig">
                 <iframe
                     :key="`frame-${index}-${moduleConfig.name}`"
                     v-if="isShow(moduleConfig) && !session.isVscode"
-                    v-bind={...moduleConfig.attributes}
-                    :style="{display:activeModule === index?'block':'none'}"
+                    v-bind="{ ...moduleConfig.attributes }"
+                    :style="{ display: activeModule === index ? 'block' : 'none' }"
                     :id="`${moduleConfig.name}`"
                     ref="moduleRefs"
                 ></iframe>
             </template>
         </div>
-        <el-dialog v-model="showHelpModal" title="About Ascend Insight" width="20%" :close-on-click-modal="false" :show-close="true">
-          <ul class="help-ul">
-            <li>
-              Build {{ version.valueOf() }}, build on {{ modifyTime.valueOf() }}
-            </li>
-            <li>
-              Copyright © {{ copyrightYear.valueOf() }} Huawei Technologies Co, Ltd. All Rights Reserved.
-            </li>
-          </ul>
+        <el-dialog
+            v-model="showHelpModal"
+            :title="`${t('About')} Ascend Insight`"
+            width="20%"
+            :show-close="true"
+        >
+            <ul class="help-ul">
+                <li>{{ t('buildVersion', { version, modifyTime }) }}</li>
+                <li>{{ t('copyRight', { copyrightYear }) }}</li>
+            </ul>
         </el-dialog>
     </div>
 </template>
@@ -263,7 +340,31 @@ function toggleTab(index: number): void {
 }
 
 .tab-titles {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     height: var(--header-height);
+}
+
+.tab-titles .right-tool-box {
+    display: flex;
+    align-items: center;
+    padding-right: 20px;
+    font-size: 14px;
+}
+
+.tab-titles .right-tool-box .tool-item {
+    flex-shrink: 0;
+    margin-left: 10px;
+    cursor: pointer;
+    user-select: none;
+    width: 20px;
+    height: 20px;
+}
+
+.tab-titles .right-tool-box .tool-item .icon {
+    width: 100%;
+    height: 100%;
 }
 
 .el-menu {
@@ -276,20 +377,14 @@ function toggleTab(index: number): void {
     --el-menu-hover-bg-color: var(--color-border-hover) !important;
 }
 
-.QuestionIcon {
-  display: inline-flex;
-  width: 5%;
-  height: 30px;
-  position: absolute;
-  right: 0;
-}
-
 .help-ul {
-  list-style: none;
+    padding: 0;
+    list-style: none;
 }
 
 .help-ul > li {
-  margin-bottom: 10px;
+    margin-bottom: 10px;
+    line-height: 1.5em;
 }
 
 .el-menu-item {
@@ -303,7 +398,7 @@ function toggleTab(index: number): void {
 }
 
 .el-menu-item.active {
-    color: #007AFF !important;
+    color: #007aff !important;
 }
 
 .el-menu-item.active:after {
@@ -313,13 +408,7 @@ function toggleTab(index: number): void {
     width: calc(100% - 60px);
     height: 1px;
     background-color: #007aff;
-    left:30px;
-}
-
-@media (min-height: 1024px) {
-    .tab-titles {
-        height: 40px;
-    }
+    left: 30px;
 }
 
 .tab-body {
