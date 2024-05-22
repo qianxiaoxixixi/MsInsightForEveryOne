@@ -1,0 +1,29 @@
+{
+    "translation": {
+        "buildVersion": "Build {{version}}, built on {{modifyTime}}",
+        "copyRight": "Copyright © {{copyrightYear}} Huawei Technologies Co., Ltd. All Rights Reserved.",
+        "Data Manager": "Data Manager",
+        "Import Data": "Import Data",
+        "Switch Theme": "Switch Theme",
+        "Delete All": "Delete All",
+        "Delete Item": "Delete Item",
+        "DeleteAllConfirmDescribe": "Are you sure to delete all?",
+        "DeleteItemConfirmDescribe": "Are you sure to delete this?",
+        "File Explorer": "File Explorer",
+        "FileSearchDescribe": "Enter the file path and press enter to search",
+        "RefreshDirectoryDescribe": "To refresh a directory, collapse and expand the directory.",
+        "FileNotFundDescribe": "File not found, check the file path",
+        "About": "About",
+        "Confirm": "Confirm",
+        "Cancel": "Cancel"
+    },
+    "tabs": {
+        "Timeline": "Timeline",
+        "Memory": "Memory",
+        "Operator": "Operator",
+        "Summary": "Summary",
+        "Communication": "Communication",
+        "Source": "Source",
+        "Details": "Details"
+    }
+}
