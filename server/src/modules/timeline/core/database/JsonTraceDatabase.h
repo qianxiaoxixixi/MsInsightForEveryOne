@@ -112,7 +112,7 @@ public:
     std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
 
     uint64_t SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime, uint64_t &endTime);
-    bool QueryAffinityOptimizer(const std::string &optimizers,
+    bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
 
     bool QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,

@@ -26,11 +26,19 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
     }
 
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    if (!database->QueryAffinityOptimizer(optimizers, data, startTime)) {
+    Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
+                                           .current = params.currentPage, .pageSize = params.pageSize};
+    param.order = params.orderType == "ascend" ? "ASC" : "DESC";
+    if (std::count(ORDER_BY_NAME_LIST.begin(), ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
+        param.orderBy = "duration";
+    }
+    if (!database->QueryAffinityOptimizer(param, optimizers, data, startTime)) {
         ServerLog::Error("Failed to Query Affinity Optimizer from database.");
         return false;
     }
-    for (const auto& item : data) {
+    uint64_t start = param.pageSize * (param.current - 1);
+    for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
+        auto item = data.at(i);
         Protocol::AffinityOptimizerData one{};
         one.baseInfo.rankId = params.rankId;
         one.baseInfo.startTime = item.startTime;
