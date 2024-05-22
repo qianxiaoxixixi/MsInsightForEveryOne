@@ -1684,7 +1684,34 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
 bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
     std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
-    return false;
+    if (!CheckTableExist(TABLE_API)) {
+        ServerLog::Warn("The PYTORCH_API table isn't exist.");
+        return false;
+    }
+    std::string sql = "SELECT py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
+        "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid "
+        "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
+        "WHERE str.value IN (" + optimizers + ") ORDER BY " + params.orderBy + " " + params.order;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for Query Affinity Optimizer by DB.", sqlite3_errmsg(db));
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Query Affinity Optimizer by DB.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::ThreadTraces one{};
+        one.startTime = resultSet->GetUint64("startTime");
+        one.name = resultSet->GetString("originOptimizer");
+        one.duration = resultSet->GetUint64("duration");
+        one.threadId = resultSet->GetString("tid");
+        one.id = resultSet->GetString("pid");
+        data.emplace_back(one);
+    }
+    return true;
 }
 
 bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
