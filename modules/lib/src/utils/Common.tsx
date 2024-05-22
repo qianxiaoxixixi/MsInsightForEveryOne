@@ -35,7 +35,8 @@ export function getSet<T extends object>(list: T[], field: keyof T): unknown[] {
 }
 
 export function firstLetterUpper(word: string): string {
-    return word.charAt(0).toUpperCase() + word.slice(1);
+    const list = word.split(/\s+/);
+    return list.map(item => item.charAt(0).toUpperCase() + item.slice(1)).join(' ');
 }
 
 export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T): T {

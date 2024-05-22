@@ -11,6 +11,7 @@ export class Session {
     parseStatus: boolean = false;
     updateId: number = 0;
     blockIdList: string[] = [];
+    theme: string = 'dark';
     constructor() {
         makeAutoObservable(this);
     }
