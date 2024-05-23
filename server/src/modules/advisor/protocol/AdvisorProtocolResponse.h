@@ -94,7 +94,7 @@ struct AclnnOperatorData {
 };
 
 struct AclnnOperatorResBody {
-    uint32_t size;
+    uint32_t size{};
     std::vector<AclnnOperatorData> datas;
 };
 

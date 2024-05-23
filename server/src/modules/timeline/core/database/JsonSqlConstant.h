@@ -122,19 +122,12 @@ const std::string QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL =
     "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
     "WHERE s.name IN ( "
     "    SELECT name FROM " + SLICE_TABLE + " WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
-    "    GROUP BY name HAVING COUNT(name) >= ? )";
+    "    GROUP BY name HAVING COUNT(name) >= ? ) ORDER BY ? ?";
 const std::string QUERY_AFFINITY_API_SQL =
     "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
     "t.pid as pid, t.tid as tid FROM " + SLICE_TABLE + " s "
     "JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
     "WHERE s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' ORDER BY s.track_id ASC, s.timestamp ASC";
-
-const std::string QUERY_FUSEABLE_OP_SUB_SQL = "WITH data AS ( "
-    "SELECT kd.rank_id, kd.name, kd.op_type, kd.accelerator_core, kd.start_time, kd.duration, t.pid, t.tid, "
-    "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num FROM " + KERNEL_DETAIL + " kd "
-    "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
-    "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
-    "WHERE kd.accelerator_core != 'HCCL' ) "; // 过滤去kernel_detail中所有非HCCL算子，并按照track和start_time联合排序
 
 class JsonSqlConstant {
 public:
