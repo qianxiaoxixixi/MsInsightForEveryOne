@@ -12,7 +12,7 @@ export interface ModuleConfig {
 
 export const modulesConfig: ModuleConfig[] = [
     {
-        name: 'Timeline View',
+        name: 'Timeline',
         requestName: 'timeline',
         attributes: {
             src: './plugins/Timeline/index.html'

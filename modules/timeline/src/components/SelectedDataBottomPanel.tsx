@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import { SelectedDataBase } from './details/base/SelectedData';
@@ -31,6 +32,7 @@ const StyledSliceArgsDiv = styled.div`
 const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element => {
     const argsJson = data.args;
     const [isHiddenArgs, setHidden] = useState(false);
+    const { t } = useTranslation('timeline', { keyPrefix: 'sliceDetail' });
     if (argsJson === undefined) {
         return <></>;
     }
@@ -40,10 +42,10 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
             <StyledSliceArgsDiv>
                 <ExpandIcon
                     onClick={ () => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
-                <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>Args</div>
+                <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
                 {!isHiddenArgs
                     ? Object.keys(args).map(key => {
-                        return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}><div style={{ minWidth: '110px', width: '150px', float: 'left', display: 'flex', whiteSpace: 'nowrap' }}>{key}</div>
+                        return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}><div style={{ minWidth: '110px', width: '150px', float: 'left', display: 'flex', whiteSpace: 'nowrap' }}>{t(key)}</div>
                             <div style={{ float: 'left' }} dangerouslySetInnerHTML={{ __html: key === 'Call stack' ? args[key].replace(/\n/g, '<br>') : args[key] }}></div></div>;
                     })
                     : <></>}

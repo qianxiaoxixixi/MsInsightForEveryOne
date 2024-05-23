@@ -7,7 +7,7 @@ import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/Link
 import { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';
 import { SvgType } from './base/rc-table/types';
-import i18n from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { StyledCheckbox } from './base/StyledCheckbox';
 import { StyledEmpty } from './base/StyledEmpty';
 import { runInAction } from 'mobx';
@@ -221,6 +221,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
 });
 
 export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.Element | null => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
@@ -241,7 +242,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={i18n.t('tooltip:linker')} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={t('tooltip:linker')} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

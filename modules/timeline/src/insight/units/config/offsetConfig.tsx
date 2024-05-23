@@ -11,7 +11,8 @@ import { runInAction } from 'mobx';
 import { Session } from '../../../entity/session';
 import styled from '@emotion/styled';
 import { StyledTooltip } from '../../../components/base/StyledTooltip';
-import i18n from '../../../i18n';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useTheme } from '@emotion/react';
 import { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
 import { getTimeOffset } from '../utils';
@@ -31,11 +32,15 @@ const inputBorderShadow = '0 0 0 2px rgba(24, 144, 255, 0.2)';
 const invalidBorderShadow = '0 0 0 2px rgba(255, 0, 0, 0.2)';
 
 // Changing the border color of the input box when the input value is invalid
-const onChange = (e: ChangeEvent<HTMLInputElement>, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>,
-    setVisible: React.Dispatch<React.SetStateAction<boolean>>,
-    setTitle: React.Dispatch<React.SetStateAction<string>>): void => {
+const onChange = ({ e, session, setOffset, setVisible, setTitle, t }: {
+    e: ChangeEvent<HTMLInputElement>; session: Session;
+    setOffset: React.Dispatch<React.SetStateAction<string>>;
+    setVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    setTitle: React.Dispatch<React.SetStateAction<string>>;
+    t: TFunction;
+}): void => {
     runInAction(() => {
-        setValue(e.target.value);
+        setOffset(e.target.value);
         const inputValue = Number(e.target.value);
         if (!isNaN(inputValue) && inputValue >= minOffset && inputValue <= maxOffset) {
             e.target.style.borderColor = inputBorderColor;
@@ -44,7 +49,7 @@ const onChange = (e: ChangeEvent<HTMLInputElement>, session: Session, setValue: 
         } else {
             e.target.style.borderColor = invalidBorderColor;
             e.target.style.boxShadow = invalidBorderShadow;
-            setTitle(i18n.t('headerButtonTooltip:TimeStampOffset') ?? '');
+            setTitle(t('headerButtonTooltip:TimeStampOffset') ?? '');
             setVisible(true);
         }
     });
@@ -133,20 +138,21 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
     const [visible, setVisible] = useState(false);
     const [title, setTitle] = useState('Please enter a proper value');
     const inputRef = useRef<InputRef>(null);
+    const { t } = useTranslation();
     return <StyledSelect
         width={100}
         height={18}
-        value={'Offset'}
+        value={t('Offset', { ns: 'timeline' })}
         dropdownRender={() => <InputContainer>
             <StyledTooltip title={title} visible={visible} overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
                 <InputDiv>
-                    <InputSpan>Timestamp Offset(ns):</InputSpan>
+                    <InputSpan>{t('Timestamp Offset', { ns: 'timeline' })}(ns):</InputSpan>
                     <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef} maxLength={500}
-                        onChange={(e) => onChange(e, session, setOffset, setVisible, setTitle)}
+                        onChange={(e): void => onChange({ e, session, setOffset, setVisible, setTitle, t })}
                         onBlur={(e) => onBlur(e, session, setOffset, setVisible, metaData)}
                         onFocus={onFocus}
                         onPressEnter={(e) => onPressEnter(session, setOffset, setVisible, e, metaData)}/>
-                    <CustomButton tooltip="Align to start" icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
+                    <CustomButton tooltip={t('Align to Start', { ns: 'timeline' })} icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
                 </InputDiv>
             </StyledTooltip>
         </InputContainer>}>

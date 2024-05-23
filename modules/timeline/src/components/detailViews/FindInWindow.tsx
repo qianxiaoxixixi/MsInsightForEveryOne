@@ -4,6 +4,7 @@
 
 import type { Session } from '../../entity/session';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { getDefaultColumData, GetPageData, searchAllSlices } from './Common';
 import ResizeTable from 'lib/ResizeTable';
@@ -50,19 +51,23 @@ export interface SearchAllSlicesDetails {
     duration: number;
 }
 
-export function getFindDetail(session: Session): any {
+export function useFindDetail(session: Session): any {
+    const { t } = useTranslation('timeline');
     return {
-        label: <div className={'title'}><span>Find</span></div>,
+        label: <div className={'title'}><span>{t('Find')}</span></div>,
         key: 'Find',
         children: <FindDetailView session={session}/>,
     };
 }
 
-const colums = [
-    { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
-    { title: 'Start', dataIndex: 'startTime', ...getDefaultColumData('startTime') },
-    { title: 'Duration(ns)', dataIndex: 'duration', ...getDefaultColumData('duration') },
-];
+const useColumns = (): any => {
+    const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
+    return [
+        { title: t('Name'), dataIndex: 'name', ...getDefaultColumData('name') },
+        { title: t('Start Time'), dataIndex: 'startTime', ...getDefaultColumData('startTime') },
+        { title: t('Duration(ns)'), dataIndex: 'duration', ...getDefaultColumData('duration') },
+    ];
+};
 
 export const FindDetailView = observer((props: any) => {
     const [conditions, setConditions] = useState<{ rankId: string }>({ rankId: '' });
@@ -125,7 +130,7 @@ const FindDetail = observer((props: any) => {
             }}
             pagination={GetPageData(page, setPage)}
             dataSource={dataSource}
-            columns={colums}
+            columns={useColumns()}
             size="small"
             loading = {isLoading}
             rowClassName={'click-able'}

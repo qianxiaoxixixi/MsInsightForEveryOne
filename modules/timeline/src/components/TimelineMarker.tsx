@@ -19,7 +19,8 @@ import type { Theme } from '@emotion/react';
 import { TimeLineMakerProps } from '../utils/TimeMakerUtils';
 import { ThemeProvider, useTheme } from '@emotion/react';
 import { themeInstance } from '../theme/theme';
-import i18n from '../i18n';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import { TimeStamp } from '../entity/common';
@@ -93,12 +94,20 @@ const drawRangeFlag = (ctx: CanvasRenderingContext2D, rangStartX: number, rangeE
     };
 };
 
-export const drawTimelineFlags = (session: Session, domain: number[], current: HTMLCanvasElement,
-    range: React.MutableRefObject<[number, number]>, vertical: HTMLCanvasElement): void => {
+interface IDrawFlagsParams {
+    session: Session;
+    domain: number[];
+    current: HTMLCanvasElement;
+    range: React.MutableRefObject<[number, number]>;
+    vertical: HTMLCanvasElement;
+    t: TFunction;
+}
+
+export const drawTimelineFlags = ({ session, domain, current, range, vertical, t }: IDrawFlagsParams): void => {
     // draw timeline flag
     const ctx = current.getContext('2d');
     const verticalCtx = vertical.getContext('2d');
-    if (!ctx || !verticalCtx || session.name === i18n.t('Realtime Monitor')) {
+    if (!ctx || !verticalCtx || session.name === t('Realtime Monitor')) {
         return;
     }
     // 清空画布
@@ -417,6 +426,7 @@ const EditInputContainer = styled.div`
 `;
 
 const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element => {
+    const { t } = useTranslation();
     const index = props.index;
     const session = props.session;
     if (index === undefined) {
@@ -436,14 +446,14 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
     const cancelListener = (): void => handleCancel(session, index);
     const inputChangeListener = (e: React.ChangeEvent<HTMLInputElement>): void => handleEditInputChange(e, timelineAxisFlag, theme);
     return <SingleFlagEditDiv id={ 'singleFlagEdit' } style={{ background: theme.tooltipBGColor }}>
-        <Describe style={{ color: theme.svgPlayBackgroundColor }}>{i18n.t('timelineMarker:description')}<CloseIcon style={{ float: 'right', marginRight: '15px', fill: '#71757F' }} onClick={cancelListener}></CloseIcon></Describe>
+        <Describe style={{ color: theme.svgPlayBackgroundColor }}>{t('timelineMarker:description')}<CloseIcon style={{ float: 'right', marginRight: '15px', fill: '#71757F' }} onClick={cancelListener}></CloseIcon></Describe>
         <EditInputContainer>
             <EditInput style={{ color: theme.svgPlayBackgroundColor, backgroundColor: theme.searchBackgroundColor }} defaultValue={ timelineAxisFlag.descriptionCache } onChange={inputChangeListener} type={ 'text' }/>
             <InputLengthContainer>
                 <span id={ 'inputLength' } style={{ fontSize: '10px', color: timelineAxisFlag.descriptionCache.length === 256 ? '#D94838' : theme.svgPlayBackgroundColor }}>{ timelineAxisFlag.descriptionCache.length }</span>
                 <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>/</span>
                 <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>256</span></InputLengthContainer></EditInputContainer>
-        <ColorText style={{ color: theme.svgPlayBackgroundColor }} id={ 'colorText' }>{i18n.t('timelineMarker:color')}</ColorText>
+        <ColorText style={{ color: theme.svgPlayBackgroundColor }} id={ 'colorText' }>{t('timelineMarker:color')}</ColorText>
         <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
             { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
                 let needAddFlagColor = true;
@@ -461,8 +471,8 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
             }) }
             <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
         </div>
-        <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ confirmListener }>{i18n.t('timelineMarker:confirmButton')}</ConfirmButton>
-        <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={ deleteListener }>{i18n.t('timelineMarker:deleteButton')}</DeleteButton>
+        <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ confirmListener }>{t('timelineMarker:confirmButton')}</ConfirmButton>
+        <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={ deleteListener }>{t('timelineMarker:deleteButton')}</DeleteButton>
     </SingleFlagEditDiv>;
 });
 
@@ -711,6 +721,7 @@ const CanvasContainer = styled.div`
 `;
 
 export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps): JSX.Element => {
+    const { t } = useTranslation();
     const range = useRef<[ number, number ]>([0, 0]);
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const { domainStart, domainEnd } = session.domainRange;
@@ -728,11 +739,11 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
         }
         const singleClickListener = (e: MouseEvent): void => handleSingleClick(e, session, range, domainStart, domainEnd, canvas.current);
         const doubleClickListener = (e: MouseEvent): void => handleDoubleClick(e, session, range, domainStart, domainEnd);
-        if (session.name !== i18n.t('Realtime Monitor')) {
+        if (session.name !== t('Realtime Monitor')) {
             addEventListener('click', singleClickListener);
             addEventListener('dblclick', doubleClickListener);
         }
-        drawTimelineFlags(session, [domainStart, domainEnd], canvas.current, range, vertical.current);
+        drawTimelineFlags({ session, domain: [domainStart, domainEnd], current: canvas.current, range, vertical: vertical.current, t });
         range.current = [0, canvas.current.clientWidth];
         return () => {
             removeEventListener('click', singleClickListener);
@@ -781,13 +792,14 @@ export const ColorEditor = observer((props: TimeLineMakerProps): JSX.Element => 
     const colorBoxClickListener = (event: React.MouseEvent<HTMLDivElement, MouseEvent>): void => handleColorBoxClick(theme, event, timelineAxisFlag);
     const diyColorListener = (): void => handleColorSelect(theme, session, timelineAxisFlag);
     const [theme, setTheme] = useState(useTheme());
+    const { t } = useTranslation();
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
         }
     }, [themeInstance.getThemeType()]);
     return <SingleFlagEditDiv id={ 'colorEditor' } style={{ backgroundColor: theme.tooltipBGColor, height: '150px' }}>
-        <ColorText id={ 'colorText' } style={{ color: theme.svgPlayBackgroundColor, userSelect: 'none' }}>{i18n.t('timelineMarker:color')}</ColorText >
+        <ColorText id={ 'colorText' } style={{ color: theme.svgPlayBackgroundColor, userSelect: 'none' }}>{t('timelineMarker:color')}</ColorText >
         <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
             { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
                 let needAddFlagColor = true;
@@ -805,8 +817,14 @@ export const ColorEditor = observer((props: TimeLineMakerProps): JSX.Element => 
             }) }
             <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
         </div>
-        <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ () => { confirmClickHandler(timelineAxisFlag, session, setFlagColor); }}>{i18n.t('timelineMarker:confirmButton')}</ConfirmButton>
-        <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={closeEditorWindow}>{i18n.t('timelineMarker:cancelButton')}</DeleteButton>
+        <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ (): void => {
+            confirmClickHandler(timelineAxisFlag, session, setFlagColor);
+        }}>
+            {t('timelineMarker:confirmButton')}
+        </ConfirmButton>
+        <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={closeEditorWindow}>
+            {t('timelineMarker:cancelButton')}
+        </DeleteButton>
     </SingleFlagEditDiv>;
 });
 

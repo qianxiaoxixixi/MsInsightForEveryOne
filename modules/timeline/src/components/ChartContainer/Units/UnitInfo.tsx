@@ -5,7 +5,7 @@ import { isEmpty } from 'lodash';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 // support utils/types
-import i18n from '../../../i18n';
+import { useTranslation } from 'react-i18next';
 import { level } from '../../../entity/common';
 import { Session } from '../../../entity/session';
 import { KeyedInsightUnit } from './types';
@@ -116,11 +116,12 @@ interface PinButtonProps {
     isPinned: boolean;
 }
 const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }: PinButtonProps): JSX.Element => {
+    const { t } = useTranslation();
     const style = { backgroundColor: 'transparent', marginLeft: 10 };
     const placeholder = <StyledButton style={style} icon={<StickyIcon fill="transparent" />} />;
     return <>
         {shouldDisplayStickyButton(session, isHovered, hasPinButton, isPinned)
-            ? <StyledTooltip title={i18n.t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
+            ? <StyledTooltip title={t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
                 <StyledButton
                     style={style}
                     icon={isPinned ? <div className={'icon_un_pin'}/> : <div className={'icon_pin_to_top'}/>}

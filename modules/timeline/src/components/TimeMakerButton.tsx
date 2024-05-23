@@ -6,7 +6,8 @@ import { handleTimeMakerAction } from '../utils/TimeMakerUtils';
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { useWatchResize } from '../utils/useWatchDomResize';
-import i18n from '../i18n';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as AntdPlaceFlagButtonSvg } from '../assets/images/timeline/ic_place_flag.svg';
 import { ReactComponent as AntdFlagIcon } from '../assets/images/insights/UIicon_timeFlag_filled.svg';
 import { addRangeFlag, deleteRangeFlag, linearScaleFactory, transformTimeToLeft } from './TimelineMarker';
@@ -18,12 +19,13 @@ const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
 const FlagIcon = AntdFlagIcon as SvgType;
 
 export const TimeMakerButton = observer(({ session }: { session: Session }): JSX.Element | null => {
+    const { t } = useTranslation();
     const [isSuspend, updateIsSuspend] = useState(false);
     const onToolTipVisibleChange = (open: boolean): void => {
         updateIsSuspend(open);
     };
     const timeMakerProps = { session, onToolTipVisibleChange };
-    return <CustomButton icon={FlagIcon} tooltip={i18n.t('timelineMarker:markerList')}
+    return <CustomButton icon={FlagIcon} tooltip={t('timelineMarker:markerList')}
         isSuspend={ isSuspend } onClick={ () => { handleTimeMakerAction(timeMakerProps); }}/>;
 });
 
@@ -39,6 +41,7 @@ type RangeMarkerButtonProps = {
 };
 
 export const RangeMarkerButtonCanvas = observer(({ session, timelineHeight }: RangeMarkerButtonProps): JSX.Element => {
+    const { t } = useTranslation();
     const range = useRef<[ number, number ]>([0, 0]);
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const { domainStart, domainEnd } = session.domainRange;
@@ -48,10 +51,10 @@ export const RangeMarkerButtonCanvas = observer(({ session, timelineHeight }: Ra
             return;
         }
         const singleClickListener = (e: MouseEvent): void => handleSingleClick(e, session, range, domainStart, domainEnd);
-        if (session.name !== i18n.t('Realtime Monitor')) {
+        if (session.name !== t('Realtime Monitor')) {
             addEventListener('click', singleClickListener);
         }
-        drawPlaceRangeButton(session, canvas.current, [domainStart, domainEnd]);
+        drawPlaceRangeButton(session, canvas.current, [domainStart, domainEnd], t);
         range.current = [0, canvas.current.clientWidth];
         return () => {
             removeEventListener('click', singleClickListener);
@@ -68,10 +71,12 @@ export const RangeMarkerButtonCanvas = observer(({ session, timelineHeight }: Ra
     </CanvasContainer>;
 });
 
-const drawPlaceRangeButton = (session: Session, current: HTMLCanvasElement, domain: number[]): void => {
+const drawPlaceRangeButton = (session: Session, current: HTMLCanvasElement, domain: number[], t: TFunction): void => {
     const ctx = current.getContext('2d');
     const selectedRange = session.selectedRange;
-    if (!ctx || session.name === i18n.t('Realtime Monitor')) { return; }
+    if (!ctx || session.name === t('Realtime Monitor')) {
+        return;
+    }
     let buttonSvg: SVGSVGElement | undefined;
     document.querySelectorAll('svg').forEach(svgItem => {
         if (svgItem.id === 'ic_place_flag') { buttonSvg = svgItem; }

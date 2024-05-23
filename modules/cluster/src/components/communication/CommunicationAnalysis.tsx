@@ -3,6 +3,7 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
@@ -19,11 +20,12 @@ import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 
 const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
+    const { t } = useTranslation('communication');
     return (
         <div className={'fullbox'} style={{ padding: '0 20px', overflow: 'auto' }}>
             <Breadcrumb>
                 <Breadcrumb.Item onClick={returnHome }>
-                    <a><ArrowLeftOutlined /><Space length={10}/><span>Communication Duration Analysis</span></a>
+                    <a><ArrowLeftOutlined /><Space length={10}/><span>{t('searchCriteria.CommunicationDurationAnalysis')}</span></a>
                 </Breadcrumb.Item>
                 <Breadcrumb.Item>{operatorName}(RankId {rankId})</Breadcrumb.Item>
             </Breadcrumb>

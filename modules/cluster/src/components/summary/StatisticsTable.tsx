@@ -2,203 +2,196 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { Button } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { StringMap } from '../../utils/interface';
 import { notNull, GetPageConfigWhithPageData, Loading } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 import ResizeTable from 'lib/ResizeTable';
 import { Session } from '../../entity/session';
 
-const computingStatisticsColumns = [
-    {
-        title: 'Accelerator Core',
-        dataIndex: 'acceleratorCore',
-        key: 'acceleratorCore',
-        ellipsis: true,
-    },
-    {
-        title: 'Accelerator Core Durations(μs)',
-        dataIndex: 'duration',
-        key: 'duration',
-        ellipsis: true,
-    },
-];
+const useComputingStatisticsColumns = (): ColumnsType => {
+    const { t } = useTranslation('summary');
+    return [
+        {
+            title: t('AcceleratorCore'),
+            dataIndex: 'acceleratorCore',
+            key: 'acceleratorCore',
+            ellipsis: true,
+        },
+        {
+            title: `${t('AcceleratorCoreDurations')}(μs)`,
+            dataIndex: 'duration',
+            key: 'duration',
+            ellipsis: true,
+        },
+    ];
+};
 
-const computingDetailColumns = [
-    {
-        title: 'Name',
-        dataIndex: 'name',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Type',
-        dataIndex: 'type',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Start Time(ms)',
-        dataIndex: 'startTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Duration(μs)',
-        dataIndex: 'duration',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Wait Time(μs)',
-        dataIndex: 'waitTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Block Dim',
-        dataIndex: 'blockDim',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Input Shapes',
-        dataIndex: 'inputShapes',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Input Data Types',
-        dataIndex: 'inputDataTypes',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Input Formats',
-        dataIndex: 'inputFormats',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Output Shapes',
-        dataIndex: 'outputShapes',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Output Data Types',
-        dataIndex: 'outputDataTypes',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Output Formats',
-        dataIndex: 'outputFormats',
-        sorter: true,
-        ellipsis: true,
-    },
-];
+const useComputingDetailColumns = (): ColumnsType => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        { title: t('Name'), dataIndex: 'name', sorter: true, ellipsis: true },
+        { title: t('Type'), dataIndex: 'type', sorter: true, ellipsis: true },
+        { title: `${t('StartTime')}(ms)`, dataIndex: 'startTime', sorter: true, ellipsis: true },
+        { title: `${t('Duration')}(μs)`, dataIndex: 'duration', sorter: true, ellipsis: true },
+        { title: `${t('WaitTime')}(μs)`, dataIndex: 'waitTime', sorter: true, ellipsis: true },
+        { title: t('BlockDim'), dataIndex: 'blockDim', sorter: true, ellipsis: true },
+        {
+            title: t('InputShapes'),
+            dataIndex: 'inputShapes',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('InputDataTypes'),
+            dataIndex: 'inputDataTypes',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('InputFormats'),
+            dataIndex: 'inputFormats',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('OutputShapes'),
+            dataIndex: 'outputShapes',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('OutputDataTypes'),
+            dataIndex: 'outputDataTypes',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('OutputFormats'),
+            dataIndex: 'outputFormats',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
 
-const communicationStatisticsColumns = [
-    {
-        title: 'Accelerator Core',
-        dataIndex: 'acceleratorCore',
-        key: 'acceleratorCore',
-        ellipsis: true,
-    },
-    {
-        title: 'Communication(Not Overlapped) Durations(μs)',
-        dataIndex: 'NotOverlapped',
-        key: 'NotOverlapped',
-        ellipsis: true,
-    },
-    {
-        title: 'Communication(Overlapped) Durations(μs)',
-        dataIndex: 'Overlapped',
-        key: 'Overlapped',
-        ellipsis: true,
-    },
-];
+const useCommunicationStatisticsColumns = (): ColumnsType => {
+    const { t } = useTranslation('summary');
+    return [
+        {
+            title: t('AcceleratorCore'),
+            dataIndex: 'acceleratorCore',
+            key: 'acceleratorCore',
+            ellipsis: true,
+        },
+        {
+            title: `${t('CommunicationDurationsNotOverlapped')}(μs)`,
+            dataIndex: 'NotOverlapped',
+            key: 'NotOverlapped',
+            ellipsis: true,
+        },
+        {
+            title: `${t('CommunicationDurationsOverlapped')}(μs)`,
+            dataIndex: 'Overlapped',
+            key: 'Overlapped',
+            ellipsis: true,
+        },
+    ];
+};
 
-const communicationDetailColumns = [
-    {
-        title: 'Name',
-        dataIndex: 'name',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Type',
-        dataIndex: 'type',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Start Time(ms)',
-        dataIndex: 'startTime',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Duration(μs)',
-        dataIndex: 'duration',
-        sorter: true,
-        ellipsis: true,
-    },
-    {
-        title: 'Wait Time(μs)',
-        dataIndex: 'waitTime',
-        sorter: true,
-        ellipsis: true,
-    },
-];
+const useCommunicationDetailColumns = (): ColumnsType => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        {
+            title: t('Name'),
+            dataIndex: 'name',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: t('Type'),
+            dataIndex: 'type',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('StartTime')}(ms)`,
+            dataIndex: 'startTime',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('Duration')}(μs)`,
+            dataIndex: 'duration',
+            sorter: true,
+            ellipsis: true,
+        },
+        {
+            title: `${t('WaitTime')}(μs)`,
+            dataIndex: 'waitTime',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
 
-const communicationOverlappedDetailColumns = [
-    ...communicationDetailColumns,
-    {
-        title: 'Overlapped Durations(μs)',
-        dataIndex: 'overlapDuration',
-        key: 'overlapDuration',
-        sorter: true,
-        ellipsis: true,
-    },
-];
+const useCommunicationOverlappedDetailColumns = (): ColumnsType => {
+    const { t } = useTranslation('summary');
+    return [
+        ...useCommunicationDetailColumns(),
+        {
+            title: `${t('Overlapped Durations')}(μs)`,
+            dataIndex: 'overlapDuration',
+            key: 'overlapDuration',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
 
-const communicationNotOverlappedDetailColumns = [
-    ...communicationDetailColumns,
-    {
-        title: 'Not Overlapped Durations(μs)',
-        dataIndex: 'notOverlapDuration',
-        key: 'notOverlapDuration',
-        sorter: true,
-        ellipsis: true,
-    },
-];
+const useCommunicationNotOverlappedDetailColumns = (): ColumnsType => {
+    const { t } = useTranslation('summary');
+    return [
+        ...useCommunicationDetailColumns(),
+        {
+            title: `${t('Not Overlapped Durations')}(μs)`,
+            dataIndex: 'notOverlapDuration',
+            key: 'notOverlapDuration',
+            sorter: true,
+            ellipsis: true,
+        },
+    ];
+};
 
 const rowKeyMap: any = {
     compute: 'acceleratorCore',
     communication: 'acceleratorCore',
 };
-const colMap: any = {
-    compute: computingStatisticsColumns,
-    computeDetail: computingDetailColumns,
-    communication: communicationStatisticsColumns,
-    CommunicationDetail: communicationDetailColumns,
-    'Communication(Overlapped)Detail': communicationOverlappedDetailColumns,
-    'Communication(Not Overlapped)Detail': communicationNotOverlappedDetailColumns,
-};
+const useColMap = (): any => ({
+    compute: useComputingStatisticsColumns(),
+    computeDetail: useComputingDetailColumns(),
+    communication: useCommunicationStatisticsColumns(),
+    CommunicationDetail: useCommunicationDetailColumns(),
+    'Communication(Overlapped)Detail': useCommunicationOverlappedDetailColumns(),
+    'Communication(Not Overlapped)Detail': useCommunicationNotOverlappedDetailColumns(),
+});
 
-const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
+const useTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     const rowKey = rowKeyMap[timeFlag];
+    const colMap = useColMap();
     const columns = notNull(colMap[timeFlag]) ? [...colMap[timeFlag]] : [];
+    const { t } = useTranslation('summary');
     if (['compute', 'communication'].includes(timeFlag)) {
         const btnCol = {
-            title: 'Details',
+            title: t('Details'),
             ellipsis: true,
             minWidth: 85,
             render: (_: any, record: any) => (<Button type="link"
-                onClick={() => {
+                onClick={(): void => {
                     setExpandedKeys((pre: string[]) => {
                         const list = [...pre];
                         const keyIndex = list.indexOf(record[rowKey]);
@@ -209,7 +202,7 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
                         }
                         return list;
                     });
-                }}>details<DownOutlined/></Button>),
+                }}>{t('Details')}<DownOutlined/></Button>),
         };
         columns.push(btnCol);
     }
@@ -252,7 +245,7 @@ const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
-    const { columns, rowKey } = getTableSet(name);
+    const { columns, rowKey } = useTableSet(name);
     useEffect(() => {
         updateData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId]);
@@ -285,8 +278,8 @@ const timeFlagMap: StringMap = {
     communicationOverLappedTime: 'Communication(OverLapped)',
     freeTime: 'Free',
 };
-function getTitle(timeFlag: string): string {
-    return (timeFlagMap[timeFlag]) + ' Detail';
+function getTitle(timeFlag: string, t: TFunction): string {
+    return t(`${timeFlagMap[timeFlag]}Detail`);
 }
 
 export const ComputeStatisticsTable = (props: any): JSX.Element => {
@@ -294,7 +287,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
     const { rankId = '', step = '' } = props;
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
-    const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
+    const { columns, rowKey } = useTableSet(timeFlag, setExpandedKeys);
     useEffect(() => {
         updateData();
         setExpandedKeys([]);
@@ -330,7 +323,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     const { rankId = '', step = '' } = props;
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
-    const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
+    const { columns, rowKey } = useTableSet(timeFlag, setExpandedKeys);
     useEffect(() => {
         updateData();
         setExpandedKeys([]);
@@ -363,12 +356,13 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
 
 const StatisticsTable = (props: {step: string;rankId: string;session: Session}): JSX.Element => {
     const { rankId = '', step = '', session } = props;
+    const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
             <div>
                 <div style={{ marginBottom: '20px' }}>
                     <div className={'common-title-h2'}>
-                        {getTitle('compute')} ( Rank {rankId} )
+                        {getTitle('compute', t)} ( Rank {rankId} )
                     </div>
                     {session.parseCompleted
                         ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
@@ -380,7 +374,7 @@ const StatisticsTable = (props: {step: string;rankId: string;session: Session}):
                         ? (
                             <div style={{ marginBottom: '20px' }}>
                                 <div className={'common-title-h2'}>
-                                    {'Communication Detail'} ( Rank {rankId} )
+                                    {t('CommunicationDetail')} ( Rank {rankId} )
                                 </div>
                                 {session.parseCompleted
                                     ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>

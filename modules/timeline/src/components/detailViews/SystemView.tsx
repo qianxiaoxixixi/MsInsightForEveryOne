@@ -4,6 +4,7 @@
 
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Divider, Space } from 'antd/lib/index';
 import styled from '@emotion/styled';
 import { Button, Select } from 'antd';
@@ -11,7 +12,7 @@ import {
     getColumnSearchProps,
     getDefaultColumData,
     GetPageData,
-    kernelDetails,
+    useKernelDetails,
     Loading,
     pythonApiSummaryColumns,
     queryKernelDetails,
@@ -98,7 +99,8 @@ export const SystemView = observer((props: any) => {
 
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
-    const options = [{ label: 'Stats System View', value: 0 }, { label: 'Expert System View', value: 1 }];
+    const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: 'Expert System View', value: 1 }];
     return (
         <div className={'systemViewSelect'}>
             <Select style={{ width: 180 }} value={viewOption} onChange={handleViewChange} options={options}/>
@@ -109,6 +111,7 @@ const ViewSelect = observer((props: any) => {
 export const RankFilter = observer((props: any): JSX.Element => {
     const [rankId, setRankId] = useState<string | undefined>(undefined);
     const [rankIdList, setRankIdList] = useState<string[]>([]);
+    const { t } = useTranslation('timeline');
     useEffect(() => {
         const rankList: any[] = [];
         for (const unit of props.session.units) {
@@ -131,7 +134,7 @@ export const RankFilter = observer((props: any): JSX.Element => {
         setRankId(value);
     };
     return (<div className={'systemViewRank'} >
-        <Label name="RankId" />
+        <Label name={t('Rank ID')} />
         <Select
             value={rankId}
             style={{ width: 120 }}
@@ -310,6 +313,8 @@ const KernelDetails = observer((props: any) => {
     const [rowData, setRowData] = useState<any>({});
     const [searchText, setSearchText] = useState('');
     const [searchedColumn, setSearchedColumn] = useState('');
+    const kernelDetails = useKernelDetails();
+    const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
     useEffect(() => {
@@ -347,21 +352,21 @@ const KernelDetails = observer((props: any) => {
 
     const colums = [
         {
-            title: 'Name',
+            title: t('Name'),
             dataIndex: 'name',
             ...getDefaultColumData('name'),
             ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
         },
         ...kernelDetails,
         {
-            title: 'Click To Timeline',
+            title: t('Click To Timeline'),
             dataIndex: 'click',
             key: 'click',
             ellipsis: true,
             render: (_: any, record: any) => (<Button type="link"
                 onClick={() => {
                     setRowData(record as any);
-                }}>click</Button>),
+                }}>{t('Click')}</Button>),
         },
     ];
 

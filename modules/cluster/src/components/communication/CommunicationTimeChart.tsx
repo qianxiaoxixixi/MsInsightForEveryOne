@@ -3,6 +3,7 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { Spin } from 'antd';
 import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container } from '../Common';
@@ -171,6 +172,7 @@ export interface dataType{
 }
 
 const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: dataType; session: Session}) => {
+    const { t } = useTranslation('communication');
     chartVisbilityListener('main', () => {
         InitCharts(dataSource);
     });
@@ -181,7 +183,7 @@ const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: d
     }, [dataSource]);
     return (
         <Container
-            title={'Visualized Communication Time'}
+            title={t('sessionTitle.VisualizedCommunicationTime')}
             content={
                 <Spin spinning={session.clusterCompleted && !session.durationFileCompleted } tip="">
                     <div id={'main'} style={{ height: '400px' }} ></div>

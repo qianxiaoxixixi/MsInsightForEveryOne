@@ -4,6 +4,7 @@
 import { observer } from 'mobx-react';
 import { observable, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select, Radio } from 'antd';
 import { getUsableVal, delayExecute } from 'lib/CommonUtils';
 import { Label } from '../Common';
@@ -152,9 +153,10 @@ interface IcomProps {
     handleChange: (key: keyof ConditionDataType, val: string) => void;
 }
 function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Element {
+    const { t } = useTranslation('communication');
     return (<div>
         <FormItem
-            name="Step"
+            name={t('searchCriteria.Step')}
             content={(<Select
                 value={condition.iterationId}
                 style={{ width: 120 }}
@@ -165,7 +167,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
             />
             )}/>
         <FormItem
-            name="Communication Group"
+            name={t('searchCriteria.CommunicationGroup')}
             content={(<Select
                 value={condition.stage}
                 style={{ width: 200 }}
@@ -176,7 +178,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
             />
             )}/>
         <FormItem
-            name="Operator Name"
+            name={t('searchCriteria.OperatorName')}
             content={(
                 <Select
                     value={condition.operatorName}
@@ -192,8 +194,8 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                 onChange={(e): void => {
                     handleChange('type', e.target.value);
                 }}>
-                <Radio value={'CommunicationMatrix'}>Communication Matrix</Radio>
-                <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
+                <Radio value={'CommunicationMatrix'}>{t('searchCriteria.CommunicationMatrix')}</Radio>
+                <Radio value={'CommunicationDurationAnalysis'}>{t('searchCriteria.CommunicationDurationAnalysis')}</Radio>
             </Radio.Group>)}/>
         <div>
         </div>

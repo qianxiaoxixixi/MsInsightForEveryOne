@@ -4,6 +4,7 @@
 
 import type { CompareFn, FilterConfirmProps } from 'antd/es/table/interface';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Input } from 'antd';
 import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
@@ -69,21 +70,23 @@ export const pythonApiSummaryColumns: ColumData[] = [
     { title: 'Max(us)', dataIndex: 'max', ...getDefaultColumData('max') },
 ];
 
-export const kernelDetails: ColumData[] = [
-    { title: 'Type', dataIndex: 'type', ...getDefaultColumData('type') },
-    { title: 'Accelerator Core', dataIndex: 'acceleratorCore', ...getDefaultColumData('acceleratorCore') },
-    { title: 'Start Time', dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
-    { title: 'Duration(us)', dataIndex: 'duration', ...getDefaultColumData('duration') },
-    { title: 'Wait Time(us)', dataIndex: 'waitTime', ...getDefaultColumData('waitTime') },
-    { title: 'Block Dim', dataIndex: 'blockDim', ...getDefaultColumData('blockDim') },
-    { title: 'Input Shapes', dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes') },
-    { title: 'Input Data Types', dataIndex: 'inputDataTypes', ...getDefaultColumData('inputDataTypes') },
-    { title: 'Input Formats', dataIndex: 'inputFormats', ...getDefaultColumData('inputFormats') },
-    { title: 'Output Shapes', dataIndex: 'outputShapes', ...getDefaultColumData('outputShapes') },
-    { title: 'Output Data Types', dataIndex: 'outputDataTypes', ...getDefaultColumData('outputDataTypes') },
-    { title: 'Output Formats', dataIndex: 'outputFormats', ...getDefaultColumData('outputFormats') },
-
-];
+export const useKernelDetails = (): ColumData[] => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        { title: t('Type'), dataIndex: 'type', ...getDefaultColumData('type') },
+        { title: t('AcceleratorCore'), dataIndex: 'acceleratorCore', ...getDefaultColumData('acceleratorCore') },
+        { title: t('StartTime'), dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
+        { title: `${t('Duration')}(us)`, dataIndex: 'duration', ...getDefaultColumData('duration') },
+        { title: `${t('WaitTime')}(us)`, dataIndex: 'waitTime', ...getDefaultColumData('waitTime') },
+        { title: t('BlockDim'), dataIndex: 'blockDim', ...getDefaultColumData('blockDim') },
+        { title: t('InputShapes'), dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes') },
+        { title: t('InputDataTypes'), dataIndex: 'inputDataTypes', ...getDefaultColumData('inputDataTypes') },
+        { title: t('InputFormats'), dataIndex: 'inputFormats', ...getDefaultColumData('inputFormats') },
+        { title: t('OutputShapes'), dataIndex: 'outputShapes', ...getDefaultColumData('outputShapes') },
+        { title: t('OutputDataTypes'), dataIndex: 'outputDataTypes', ...getDefaultColumData('outputDataTypes') },
+        { title: t('OutputFormats'), dataIndex: 'outputFormats', ...getDefaultColumData('outputFormats') },
+    ];
+};
 
 const commonExpertColums: ColumData[] = [
     { title: 'Start Time', dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },

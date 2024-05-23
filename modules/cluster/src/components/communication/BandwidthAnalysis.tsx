@@ -5,6 +5,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -27,7 +28,7 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
             <Table
                 pagination={false}
                 expandable={{ defaultExpandedRowKeys: ['SDMA'] }}
-                columns={columns}
+                columns={useColumns()}
                 dataSource={data}
                 rowKey={'transportType'}
             />
@@ -94,16 +95,17 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
 
 const BandwidthAnalysis = observer(function (props:
 { iterationId: string; rankId: number; operatorName: string; stage: string }) {
+    const { t } = useTranslation('communication');
     return (
         <Layout>
             <Container
                 style={{ minWidth: '1000px' }}
-                title={'Packet Distribution'}
+                title={t('sessionTitle.PacketDistribution')}
                 content={ <BandwidthChart {...props}/>}
             />
             <Container
                 style={{ minWidth: '1000px' }}
-                title={'Bandwidth Analysis'}
+                title={t('sessionTitle.BandwidthAnalysis')}
                 content={ <BandwidthTable {...props}/> }
             />
         </Layout>
@@ -296,41 +298,44 @@ interface DataType {
     children?: DataType[];
 }
 
-const columns: ColumnsType<DataType> = [
-    {
-        title: 'Transport Type',
-        dataIndex: 'transportType',
-        key: 'TransportType',
-        align: 'center',
-        ellipsis: true,
-    },
-    {
-        title: 'Transit Size(MB)',
-        dataIndex: 'transitSize',
-        key: 'TransitSize',
-        align: 'center',
-        ellipsis: true,
-    },
-    {
-        title: 'Transit Time(ms)',
-        dataIndex: 'transitTime',
-        key: 'TransitTime',
-        align: 'center',
-        ellipsis: true,
-    },
-    {
-        title: 'Bandwidth(GB/s) ',
-        dataIndex: 'bandwidth',
-        key: 'Bandwidth',
-        align: 'center',
-        ellipsis: true,
-    },
-    {
-        title: 'Large Packet Ratio',
-        dataIndex: 'largePacketRatio',
-        key: 'LargePacketRatio',
-        align: 'center',
-        ellipsis: true,
-    },
-];
+const useColumns = (): ColumnsType<DataType> => {
+    const { t } = useTranslation('communication');
+    return [
+        {
+            title: t('searchCriteria.TransportType'),
+            dataIndex: 'transportType',
+            key: 'TransportType',
+            align: 'center',
+            ellipsis: true,
+        },
+        {
+            title: `${t('searchCriteria.TransitSize')}(MB)`,
+            dataIndex: 'transitSize',
+            key: 'TransitSize',
+            align: 'center',
+            ellipsis: true,
+        },
+        {
+            title: `${t('searchCriteria.TransitTime')}(ms)`,
+            dataIndex: 'transitTime',
+            key: 'TransitTime',
+            align: 'center',
+            ellipsis: true,
+        },
+        {
+            title: `${t('searchCriteria.Bandwidth')}(GB/s)`,
+            dataIndex: 'bandwidth',
+            key: 'Bandwidth',
+            align: 'center',
+            ellipsis: true,
+        },
+        {
+            title: t('tableHead.LargePacketRatio'),
+            dataIndex: 'largePacketRatio',
+            key: 'LargePacketRatio',
+            align: 'center',
+            ellipsis: true,
+        },
+    ];
+};
 export default BandwidthAnalysis;
