@@ -221,7 +221,7 @@ const BaseSummary = observer((props: any) => {
             rankId: prop.rankId,
             pageSize: pages.pageSize,
             current: pages.current,
-            orderBy: sorters.field ?? defaultSorter.field,
+            orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
         };
         if (_isStats) {
