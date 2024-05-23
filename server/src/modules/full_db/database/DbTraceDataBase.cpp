@@ -1794,7 +1794,47 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     const std::vector<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
 {
-    return false;
+    std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
+        "py.globalTid as pid, 'pytorch' as tid "
+        "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
+        "WHERE py.depth = 1 ORDER BY py.globalTid ASC, py.startNs ASC ";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for Affinity API.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Affinity API data.", stmt->GetErrorMessage());
+        return false;
+    }
+
+    std::map<uint64_t, uint64_t> indexMap;
+    while (resultSet->Next()) {
+        Protocol::FlowLocation one{};
+        uint64_t trackId = resultSet->GetUint64("pid");
+        one.name = resultSet->GetString("name");
+        one.timestamp = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+
+        if (data.count(trackId) == 0) {
+            data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
+            indexMap.emplace(trackId, 0);
+            indexs.emplace(trackId, std::vector<uint32_t>{});
+        }
+        if (StringUtil::StartWith(one.name, "aten::")) {
+            std::string name = one.name.substr(strlen("aten::"), one.name.length());
+            if (std::find(pattern.begin(), pattern.end(), name) != pattern.end()) {
+                indexs[trackId].emplace_back(indexMap[trackId]); // 记录所有可能的索引值，加速后续处理速度
+            }
+        }
+        indexMap[trackId] = indexMap[trackId] + 1;
+        data[trackId].emplace_back(one);
+    }
+
+    return true;
 }
 
 bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
