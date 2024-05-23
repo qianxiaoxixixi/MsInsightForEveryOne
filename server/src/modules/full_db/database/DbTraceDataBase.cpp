@@ -1718,7 +1718,7 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    std::string sql = JsonSqlConstant::GenerateAICpuQuerySqlDB(replace, dataType);
+    std::string sql = JsonSqlConstant::GenerateAICpuQuerySqlDB(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for AICpuOpCanBeOptimized.");
@@ -1736,7 +1736,7 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
         one.startTime = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
-        one.tid = "";
+        one.tid = "Stream " + resultSet->GetString("tid");
         data.emplace_back(one);
     }
     return true;
