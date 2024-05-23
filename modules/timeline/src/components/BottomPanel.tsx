@@ -4,6 +4,8 @@ import { CardProps } from 'antd/lib/card';
 import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { BottomPanelRender, TriggerEvent } from '../entity/insight';
 import { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
@@ -14,7 +16,7 @@ import { FILTER_HEIGHT } from './FilterContainer';
 import eventBus, { useEventBus } from '../utils/eventBus';
 import { getDetailViewItem } from './detailViews/DetailView';
 import { themeInstance } from '../theme/theme';
-import { getFindDetail } from './detailViews/FindInWindow';
+import { useFindDetail } from './detailViews/FindInWindow';
 
 interface CssProps {
     className?: string;
@@ -151,7 +153,10 @@ const MoreContainer = styled.div`
     height: 100%;
 `;
 
-const NoDetail = (): JSX.Element => <div className="empty">No Detail</div>;
+const NoDetail = (): JSX.Element => {
+    const { t } = useTranslation();
+    return <div className="empty">{t('NoData')}</div>;
+};
 
 interface BottomPanelReactNodes {
     detailTitle: ReactNode;
@@ -190,8 +195,9 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
     const contentHeight = bottomPanelComponents?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
         : (height - DETAIL_HEADER_HEIGHT_PX);
+    const { t } = useTranslation('timeline');
     return React.useMemo(() => {
-        const detailTitle = getDetailTitleContent(session, bottomPanelComponents);
+        const detailTitle = getDetailTitleContent(session, t, bottomPanelComponents);
         eventBus.emit('setDetailTitle', detailTitle);
         return {
             detailTitle,
@@ -203,7 +209,7 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
             moreWh: bottomPanelComponents?.MoreWh ?? 590,
             open: bottomPanelComponents?.open ?? true,
         };
-    }, [bottomPanelComponents, height]);
+    }, [bottomPanelComponents, height, t]);
 };
 
 /* decide what to put in Detail container */
@@ -225,9 +231,9 @@ const getMoreContent = (session: Session, height: number, bottomPanelComponents?
 };
 
 /* Details head container */
-const getDetailTitleContent = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element | undefined => {
+const getDetailTitleContent = (session: Session, t: TFunction, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element | undefined => {
     if (typeof bottomPanelComponents?.DetailTitle === 'string') {
-        return <span>{bottomPanelComponents?.DetailTitle}</span>;
+        return <span>{t(bottomPanelComponents?.DetailTitle)}</span>;
     }
     return bottomPanelComponents?.DetailTitle && <bottomPanelComponents.DetailTitle session={session} />;
 };
@@ -316,7 +322,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     const items = [
         getDataCardItem(bottomHeight, session),
         getDetailViewItem(session),
-        getFindDetail(session),
+        useFindDetail(session),
     ];
 
     return (<Container ref={ref} className="bottomPanelContainer">
@@ -333,7 +339,8 @@ function getDataCardItem(bottomHeight: number, session: Session): any {
 }
 
 const DataCardTitle = (): JSX.Element => {
+    const { t } = useTranslation('timeline');
     const [detailTitle, setDetailTitle] = useState<JSX.Element | undefined>(undefined);
     useEventBus('setDetailTitle', (data) => setDetailTitle(data as JSX.Element));
-    return (<div className={'title'}>{detailTitle !== undefined ? detailTitle : <span>Details</span>}</div>);
+    return (<div className={'title'}>{detailTitle !== undefined ? detailTitle : <span>{t('Details')}</span>}</div>);
 };

@@ -3,6 +3,7 @@
 */
 
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
 import { useEventBus } from '../../utils/eventBus';
@@ -21,7 +22,8 @@ export function getDetailViewItem(session: Session): any {
 }
 
 const ViewSelect = observer((props: any) => {
-    return (<div className={'title'}>{<span>System View</span>}</div>);
+    const { t } = useTranslation('timeline');
+    return (<div className={'title'}>{<span>{t('System View')}</span>}</div>);
 });
 
 const ViewContainer = observer((props: any) => {

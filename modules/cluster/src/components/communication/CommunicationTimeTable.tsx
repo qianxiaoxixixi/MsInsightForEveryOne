@@ -3,6 +3,8 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
@@ -33,56 +35,53 @@ export interface DataType {
     [prop: string]: any;
 }
 
-const commonColumns: ColumnsType<DataType> = [
-    {
-        title: 'Start Time(ms)',
-        dataIndex: 'startTime',
-        sorter: (a: DataType, b: DataType) => a.startTime - b.startTime,
-        ellipsis: true,
-    },
-    {
-        title: 'Elapse Time(ms)',
-        dataIndex: 'elapseTime',
-        sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime,
-        ellipsis: true,
-    },
-    {
-        title: 'Transit Time(ms)',
-        dataIndex: 'transitTime',
-        sorter: (a: DataType, b: DataType) => a.transitTime - b.transitTime,
-        ellipsis: true,
-    },
-    {
-        title: 'Synchronization Time(ms)',
-        dataIndex: 'synchronizationTime',
-        sorter: (a: DataType, b: DataType) => a.synchronizationTime - b.synchronizationTime,
-        ellipsis: true,
-    },
-    {
-        title: 'Wait Time(ms)',
-        dataIndex: 'waitTime',
-        sorter: (a: DataType, b: DataType) => a.waitTime - b.waitTime,
-        ellipsis: true,
-    },
-    {
-        title: 'Synchronization Time Ratio',
-        dataIndex: 'synchronizationTimeRatio',
-        sorter: (a: DataType, b: DataType) => a.synchronizationTimeRatio - b.synchronizationTimeRatio,
-        ellipsis: true,
-    },
-    {
-        title: 'Wait Time Ratio',
-        dataIndex: 'waitTimeRatio',
-        sorter: (a: DataType, b: DataType) => a.waitTimeRatio - b.waitTimeRatio,
-        ellipsis: true,
-    },
-    {
-        title: 'Idle Time(ms)',
-        dataIndex: 'idleTime',
-        sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
-        ellipsis: true,
-    }];
-
+const useCommonColumns = (): ColumnsType<DataType> => {
+    const { t } = useTranslation('communication');
+    return [
+        { title: `${t('tableHead.StartTime')}(ms)`, dataIndex: 'startTime', sorter: (a: DataType, b: DataType) => a.startTime - b.startTime, ellipsis: true },
+        {
+            title: `${t('tableHead.ElapseTime')}(ms)`,
+            dataIndex: 'elapseTime',
+            sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime,
+            ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.TransitTime')}(ms)`,
+            dataIndex: 'transitTime',
+            sorter: (a: DataType, b: DataType) => a.transitTime - b.transitTime,
+            ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.SynchronizationTime')}(ms)`,
+            dataIndex: 'synchronizationTime',
+            sorter: (a: DataType, b: DataType) => a.synchronizationTime - b.synchronizationTime,
+            ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.WaitTime')}(ms)`,
+            dataIndex: 'waitTime',
+            sorter: (a: DataType, b: DataType) => a.waitTime - b.waitTime,
+            ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.SynchronizationTimeRatio')}`,
+            dataIndex: 'synchronizationTimeRatio',
+            sorter: (a: DataType, b: DataType) => a.synchronizationTimeRatio - b.synchronizationTimeRatio,
+            ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.WaitTimeRatio')}`,
+            dataIndex: 'waitTimeRatio',
+            sorter: (a: DataType, b: DataType) => a.waitTimeRatio - b.waitTimeRatio,
+            ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.IdleTime')}(ms)`,
+            dataIndex: 'idleTime',
+            sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
+            ellipsis: true,
+        }];
+};
 // Total HCCL Opertators表
 const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
@@ -110,7 +109,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
 
     const columns: TableColumnsType<DataType> = [
         { title: 'Operator Name', dataIndex: 'operatorName', key: 'operatorName', sorter: true, ellipsis: true },
-        ...commonColumns.map(item => {
+        ...useCommonColumns().map(item => {
             return { ...item, sorter: true };
         }),
     ];
@@ -126,38 +125,38 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     </div>;
 };
 
-const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
+const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunction): any => {
     const [showOperator, setExpandedKeys] = handleAction;
     return [
         {
-            title: 'Rank ID',
+            title: t('tableHead.RankID'),
             dataIndex: 'rankId',
             key: 'rankId',
             sorter: (a: DataType, b: DataType) => Number(a.rankId) - Number(b.rankId),
             ellipsis: true,
             width: 70,
         },
-        ...commonColumns,
+        ...useCommonColumns(),
         {
-            title: 'Bandwidth Analysis',
+            title: t('tableHead.BandwidthAnalysis'),
             key: 'action1',
             ellipsis: true,
             width: 110,
             minWidth: 100,
             render: (_: any, record: DataType) => (
                 <Button type="link"
-                    onClick={() => {
+                    onClick={(): void => {
                         showOperator(record.rankId);
-                    }}>see more</Button>),
+                    }}>{t('tableHead.see more')}</Button>),
         },
         {
-            title: 'Communication Operators Details',
+            title: t('tableHead.CommunicationOperatorsDetails'),
             key: 'action2',
             ellipsis: true,
             width: 110,
             minWidth: 110,
             render: (_: any, record: DataType) => (<Button type="link"
-                onClick={() => {
+                onClick={(): void => {
                     setExpandedKeys((pre: any) => {
                         const list = [...pre];
                         const keyIndex = list.indexOf(record[rowKey]);
@@ -168,7 +167,7 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
                         }
                         return list;
                     });
-                }}>see more<DownOutlined/></Button>),
+                }}>{t('tableHead.see more')}<DownOutlined/></Button>),
             display: conditions.operatorName === totalOperator,
         },
     ].filter((item: any) => item.display !== false);
@@ -176,15 +175,16 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
 const rowKey = 'index';
 const CommunicationTimeTable = observer(function (props:
 {dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction; session: Session}) {
+    const { t } = useTranslation('communication');
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
-    const columns = getRankColumns([props.showOperator, setExpandedKeys], props.conditions);
+    const columns = useRankColumns([props.showOperator, setExpandedKeys], props.conditions, t);
     const dataSource: DataType[] = props.dataSource ?? [];
     useEffect(() => {
         setExpandedKeys([]);
     }, [props.dataSource]);
     return (
         <Container
-            title={'Data Analysis of Communication Time'}
+            title={t('sessionTitle.DataAnalysisCommunicationTime')}
             style={{ margin: '1rem 0' }}
             content={<ResizeTable
                 loading={!props.session.durationFileCompleted}

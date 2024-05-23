@@ -4,6 +4,7 @@
 import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
@@ -18,6 +19,7 @@ import {
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
     const [activeTab, setActiveTab] = useState<string>('pp');
     const [unitCount, setUnitCount] = useState<number>(0);
+    const { t } = useTranslation('summary');
     useEffect(() => {
         if (!session.clusterCompleted) {
             session.communicatorData = { partitionModes: [], defaultPPSize: 0 };
@@ -52,7 +54,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
             <Tabs activeKey={activeTab} onTabClick={(key) => { eventBus.emit('setActiveTab', key); setActiveTab(key); }} style={{ height: '240px' }}>
                 {
                     items.map(item => (
-                        <Tabs.TabPane tab={item.tab} key={item.key} style={{ height: '140px' }}>
+                        <Tabs.TabPane tab={t(item.tab)} key={item.key} style={{ height: '140px' }}>
                             <div style={{ width: '100%', height: '100%', overflow: 'auto' }} className={'common-tabcontent'}>
                                 {item.content}
                             </div>
@@ -104,6 +106,7 @@ const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: S
 
 const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { session: Session; defaultPPSize: number; unitCount: number }) => {
     const [form] = Form.useForm();
+    const { t } = useTranslation('summary');
     const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
         if (values.dpSize * values.tpSize * values.ppSize !== unitCount) {
@@ -115,23 +118,23 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
     };
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
-            <Form.Item name={'algorithm'} label={'Algorithm'} style={{ margin: '10px 10px 10px 0' }}>
+            <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 10px 10px 0' }}>
                 <Select defaultValue="Megatron" disabled={true} style={{ width: '120px' }} options={[
                     {
                         value: 'Megatron',
                         label: 'Megatron',
                     }]}/>
             </Form.Item>
-            <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
+            <Form.Item name={'ppSize'} label={t('PPSize')} style={{ margin: '10px 10px 10px 0' }}>
                 <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Form.Item name={'tpSize'} label={'TP Size'} style={{ margin: '10px 10px 10px 0' }}>
+            <Form.Item name={'tpSize'} label={t('TPSize')} style={{ margin: '10px 10px 10px 0' }}>
                 <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
+            <Form.Item name={'dpSize'} label={t('DPSize')} style={{ margin: '10px 10px 10px 0' }}>
                 <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
+            <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>{t('Generate')}</Button>
         </Form>
     );
 });

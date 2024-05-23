@@ -10,7 +10,7 @@ import { Session } from '../entity/session';
 import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';
 import { StyledTooltip } from './base/StyledTooltip';
-import i18n from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 const TEXT_WIDTH = 50;
 const FONT_SIZE = 12;
@@ -38,7 +38,7 @@ const StyledReset = styled(Reset)<{ pathfill: string }>`
 
 export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
     const theme = useTheme();
-
+    const { t } = useTranslation();
     const { zoom, isLowerBound, isUpperBound, shouldResetDisable } = React.useMemo(() => ({
         zoom: getDuration(session.domain.duration, { precision: session.isNsMode ? 'ns' : 'ms', maxChars: TEXT_WIDTH / FONT_SIZE }),
         isLowerBound: session.domain.isLowerBound,
@@ -47,7 +47,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
     }), [session.domain.duration, session.endTimeAll]);
     return <Container>
         <Container>
-            <StyledTooltip title={i18n.t('tooltip:reset')}><StyledReset
+            <StyledTooltip title={t('tooltip:reset')}><StyledReset
                 pathfill={shouldResetDisable ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
                 onClick={() => {
                     runInAction(() => {
@@ -57,7 +57,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
                 }}
             /></StyledTooltip>
         </Container>
-        <StyledTooltip title={i18n.t('tooltip:del')}>
+        <StyledTooltip title={t('tooltip:del')}>
             <Del
                 fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
                 onClick={() => {
@@ -71,7 +71,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         <StyledTooltip title={zoom}>
             <Percentage>{zoom}</Percentage>
         </StyledTooltip>
-        <StyledTooltip title={i18n.t('tooltip:add')}>
+        <StyledTooltip title={t('tooltip:add')}>
             <Add
                 fill={isLowerBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
                 onClick={() => {

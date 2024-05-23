@@ -4,7 +4,7 @@ import { observer } from 'mobx-react';
 import { RowProps } from 'antd/lib/grid';
 import { Session } from '../entity/session';
 import { ChartRowLeft, ChartRowRight } from './base/ChartRow';
-import i18n from '../i18n';
+import { useTranslation } from 'react-i18next';
 import { TimelineMarkerElement } from './TimelineMarker';
 import { useTheme } from '@emotion/react';
 
@@ -36,7 +36,8 @@ const ChartRow = observer((props: ChartRowProps) => {
 
 export const TimeMakerAxis = observer(({ session, laneInfoWidth, showRecommendation, timelineHeight }:
 { session: Session; laneInfoWidth: number; showRecommendation: boolean; timelineHeight: number }) => {
-    if (session.name === i18n.t('Realtime Monitor')) {
+    const { t } = useTranslation();
+    if (session.name === t('Realtime Monitor')) {
         return null;
     }
     const theme = useTheme();

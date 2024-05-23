@@ -4,7 +4,7 @@ import * as React from 'react';
 import { DetailDescriptor, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
 import { SelectedParams, Session } from '../../entity/session';
 import { TabState } from '../../entity/tabDependency';
-import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import { platform } from '../../platforms';
 import { Logger } from '../../utils/Logger';
 import { EMPTY_TABLE_STATE, TableState } from './types';
@@ -70,7 +70,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
                 }
             }).catch(() => {
                 setState(EMPTY_TABLE_STATE);
-                platform.dialog(i18n.t('error:4004'));
+                platform.dialog('error:4004');
             });
         } else {
             setState(EMPTY_TABLE_STATE);
@@ -122,6 +122,7 @@ TableState => {
     const dependenciesKeys = Object.keys(session.selectedParams) as unknown as Array<keyof SelectedParams>;
     const hasDependencies = _.isEmpty(dependenciesKeys.filter((dependenciesKey) => session.selectedParams[dependenciesKey] === undefined));
     const dependencies = dependenciesKeys.map((dependencyKey) => session.selectedParams[dependencyKey]);
+    const { t } = useTranslation();
     const loadData = (): void => {
         const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
         const fetchData = detail?.fetchData;
@@ -140,7 +141,7 @@ TableState => {
                 });
             }).catch(() => {
                 setState(EMPTY_TABLE_STATE);
-                platform.dialog(i18n.t('error:4004'));
+                platform.dialog(t('error:4004'));
             });
         } else {
             setState(EMPTY_TABLE_STATE);
@@ -187,8 +188,8 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
 
     const recentUnits = React.useRef(selectedUnits);
     const recentData = React.useRef(selectedData);
-    recentUnits.current = selectedUnits;
-    recentData.current = selectedData;
+    const { t } = useTranslation();
+    recentUnits.current = selectedUnits; recentData.current = selectedData;
 
     const loadData = (): void => {
         if (onDataFetched !== undefined && selectedData !== undefined && session.phase === 'download') {
@@ -210,7 +211,7 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
                 });
                 setRenderFields(renderField);
             }).catch(() => {
-                platform.dialog(i18n.t('error:4004'));
+                platform.dialog(t('error:4004'));
             });
         }
     };

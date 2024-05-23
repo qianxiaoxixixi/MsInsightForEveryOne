@@ -3,6 +3,8 @@
  */
 
 import React, { useRef, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
@@ -333,20 +335,20 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu.focus();
 };
 
-const getMenuItems = (props: Props): JSX.Element => {
+const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     const { session, session: { contextMenu: { zoomHistory } } } = props;
     const isGroupCommunicationUnit = (session.selectedUnits?.[0]?.metadata as ThreadMetaData)?.threadName?.startsWith('Group') ?? false;
     const isCommunicationOperator = (session.selectedData?.name as string)?.startsWith('hcom_') ?? false;
     const findInCommunicationVisible = isGroupCommunicationUnit && isCommunicationOperator && session.isCluster;
 
     const menuItems: MenuItemModel[] = [
-        { name: 'Fit to screen', key: 'fitToScreen', event: fitToScreen, visible: session.selectedData !== undefined },
-        { name: 'Find in Communication', key: 'findInCommunication', event: findInCommunication, visible: findInCommunicationVisible },
-        { name: 'Zoom into selection', key: 'zoomIntoSelection', event: zoomIntoSelection, visible: session.selectedRange !== undefined },
-        { name: `Undo Zoom (${zoomHistory.length})`, key: 'undoZoom', event: undoZoom, disabled: zoomHistory.length === 0, visible: true },
-        { name: 'Reset Zoom', key: 'resetZoom', event: resetZoom, disabled: zoomHistory.length === 0, visible: true },
-        { name: 'Hide', key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
-        { name: 'Show All Hidden', key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
+        { name: t('Fit to screen'), key: 'fitToScreen', event: fitToScreen, visible: session.selectedData !== undefined },
+        { name: t('Find in Communication'), key: 'findInCommunication', event: findInCommunication, visible: findInCommunicationVisible },
+        { name: t('Zoom into selection'), key: 'zoomIntoSelection', event: zoomIntoSelection, visible: session.selectedRange !== undefined },
+        { name: `${t('Undo Zoom')} (${zoomHistory.length})`, key: 'undoZoom', event: undoZoom, disabled: zoomHistory.length === 0, visible: true },
+        { name: t('Reset Zoom'), key: 'resetZoom', event: resetZoom, disabled: zoomHistory.length === 0, visible: true },
+        { name: t('Hide'), key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
+        { name: t('Show All Hidden'), key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
     ];
 
     return <>
@@ -362,6 +364,7 @@ const Menu = (props: Props): JSX.Element => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<Position>({ left: '0px', top: '0px' });
     const xPos = useRef(0); const yPos = useRef(0);
+    const { t } = useTranslation('timeline', { keyPrefix: 'contextMenu' });
 
     useEffect(() => {
         document.addEventListener('contextmenu', handleContextMenu);
@@ -402,7 +405,7 @@ const Menu = (props: Props): JSX.Element => {
             ? <MenuContainer ref={menuRef} style={{ ...position }} tabIndex={-1} onBlur={(): void => {
                 closeMenu(session);
             }} >
-                {getMenuItems(props)}
+                {getMenuItems(props, t)}
             </MenuContainer>
             : <></>
     );

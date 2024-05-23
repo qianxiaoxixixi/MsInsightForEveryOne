@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react';
@@ -228,20 +229,22 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
     myChart.on('click', handleClick);
     addResizeEvent(myChart);
 }
-export const hit = (<Tooltip title={
-    (
-        <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
-            <div>Computing = Sum of kernel time on NPU - Communication(Overlapped)</div>
-            <div>Total Time = Computing + Communication(Overlapped) + Communication(Not Overlapped) + Free</div>
-            <div>Computing Ratio = Computing / Total Time</div>
-            <div>Communication Ratio = Communication(Not Overlapped) / Total Time</div>
-            <div style={{ marginTop: '2rem' }}><ExclamationCircleFilled style={{ marginRight: '10px' }}/>
-                Click Bar Chart Display The Single Rank Computation / Communication Detail</div>
-        </div>
-    )
-}>
-    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
-</Tooltip>);
+export const useHit = (): React.ReactElement => {
+    const { t } = useTranslation('summary');
+    const hit = t('Computation/CommunicationDescribe', { returnObjects: true });
+    return (<Tooltip title={
+        (
+            <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
+                {hit?.map((item: string, index: number) => <div key={index}>{item}</div>)}
+                <div style={{ marginTop: '2rem' }}>
+                    <ExclamationCircleFilled style={{ marginRight: '10px' }}/>
+                    {t('Computation/CommunicationLastDescribe')}</div>
+            </div>
+        )
+    }>
+        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+    </Tooltip>);
+};
 
 const ComputationCommunicationOverview = observer(({ session }: { session: Session }): JSX.Element => {
     const [dataSource, setDatasource] = useState<SummaryDataType[]>([]);
@@ -293,6 +296,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
 });
 const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any): JSX.Element => {
     const [pipelineVisible, setPipelineVisible] = useState(true);
+    const { t } = useTranslation('summary');
     useEventBus('setActiveTab', (data) => {
         setPipelineVisible(data === 'pp');
     });
@@ -302,7 +306,7 @@ const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any)
         <CommunicatorContainer session={session}></CommunicatorContainer>
         <div className={pipelineVisible ? 'hide' : ''}>
             <div>
-                <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
+                <div className={'common-title-bottom'}>{t('Computation/CommunicationOverview')}{useHit()}</div>
                 <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>

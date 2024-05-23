@@ -5,7 +5,7 @@ import { Row, Col, Select } from 'antd';
 import { RowProps } from 'antd/lib/row';
 import styled from '@emotion/styled';
 import _ from 'lodash';
-import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import { TableViewProps, TableState } from './types';
 import { Session, SelectedParams } from '../../entity/session';
 import { selectRow } from './utils';
@@ -96,6 +96,7 @@ type CallbackFunc = {
 type ComparisonDetailProps<T extends CommonStateProto> = TableViewProps<DetailTabs, T> & CallbackFunc;
 
 export const ComparisonDetail = observer(function<T extends CommonStateProto>({ session, height, detail, processDisplayValue, filterListValues, createSelectOption }: ComparisonDetailProps<T>): JSX.Element {
+    const { t } = useTranslation();
     const state = useComparisonUpdater(session, detail);
     const [handleBase, handleCur] = getHandleFuncs(session, Object.keys(session.selectedParams) as unknown as Array<keyof SelectedParams>);
     const [baseValue, curValue, baseId, curId] = getDisplayValue(session, state.extraData.result as unknown[], processDisplayValue);
@@ -103,7 +104,7 @@ export const ComparisonDetail = observer(function<T extends CommonStateProto>({ 
     return (
         <>
             <ControllerBar gutter={7} align="middle">
-                <Col style={{ marginLeft: 10 }}>{i18n.t('Comparison Base')}</Col>
+                <Col style={{ marginLeft: 10 }}>{t('Comparison Base')}</Col>
                 <Col><StyledSelect
                     width={130}
                     height={32}
@@ -116,7 +117,7 @@ export const ComparisonDetail = observer(function<T extends CommonStateProto>({ 
                     })}
                 </StyledSelect></Col>
                 <Col><ArrowIcon width={13} height={13}/></Col>
-                <Col>{i18n.t('Comparison Target')}</Col>
+                <Col>{t('Comparison Target')}</Col>
                 <Col><StyledSelect
                     width={130}
                     height={32}

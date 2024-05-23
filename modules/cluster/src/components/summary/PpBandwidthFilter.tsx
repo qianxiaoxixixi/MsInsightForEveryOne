@@ -4,6 +4,7 @@
 
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
 import { Label } from '../Common';
 import { getStepsData } from './PpBandwidthAnalysis';
@@ -63,15 +64,16 @@ const Filter = observer((props: any) => {
 
 const FilterCom = (props: any): JSX.Element => {
     const { conditions, handleChange = [], options = {} } = props;
+    const { t } = useTranslation('summary');
     return (<div style={ { margin: '0 20px 10px', textAlign: 'left' }}>
-        <Label name="Step" />
+        <Label name={t('Step')} />
         <Select
             value={conditions.step}
             style={{ width: 120 }}
             onChange={(val: any) => handleChange('step', val)}
             options={options.stepOptions}
         />
-        <Label name="Stage"/>
+        <Label name={t('Stage')}/>
         <Select
             value={conditions.stage}
             style={{ width: 200 }}

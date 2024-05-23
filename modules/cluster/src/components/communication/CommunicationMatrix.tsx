@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select, Checkbox, InputNumber, Button, message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
@@ -28,24 +29,27 @@ interface ICommunicationMatrixProps {
     setFilter: VoidFunction;
 }
 
-const options: optionDataType[] = [
-    {
-        label: 'Bandwidth(GB/s)',
-        value: 'bandwidth',
-    },
-    {
-        label: 'Transit Size(MB)',
-        value: 'transitSize',
-    },
-    {
-        label: 'Transport Type',
-        value: 'transportType',
-    },
-    {
-        label: 'Transit Time(ms)',
-        value: 'transitTime',
-    },
-];
+const useOptions = (): optionDataType[] => {
+    const { t } = useTranslation('communication');
+    return [
+        {
+            label: `${t('searchCriteria.Bandwidth')}(GB/s)`,
+            value: 'bandwidth',
+        },
+        {
+            label: `${t('searchCriteria.TransitSize')}(MB)`,
+            value: 'transitSize',
+        },
+        {
+            label: t('searchCriteria.TransportType'),
+            value: 'transportType',
+        },
+        {
+            label: `${t('searchCriteria.TransitTime')}(ms)`,
+            value: 'transitTime',
+        },
+    ];
+};
 
 function InitCharts(data: any): void {
     const chartDom = document.getElementById('matrixchart');
@@ -315,6 +319,8 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
     const [minValue, setMin] = useState(minRange);
     const [maxValue, setMax] = useState(maxRange);
     const [isValid, setIsValid] = useState(true);
+    const { t } = useTranslation();
+
     const onConfirm = (): void => {
         if (minValue > maxValue) {
             message.warning('Invalid Range: The start value cannot be greater than the end value.');
@@ -337,40 +343,41 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
     }, [JSON.stringify(range)]);
     return (
         <>
-            <Label name={'Visible Range'} />
+            <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} />
             <InputNumber value={minValue} style={{ width: 100, marginRight: 10 }} min={minRange} max={maxRange}
                 onChange={(value): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
             ~
             <InputNumber value={maxValue} style={{ width: 100, margin: '0 10px' }} min={minRange} max={maxRange}
                 onChange={(value): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
-            <Button onClick={onConfirm} type="primary" style={{ height: 30, width: 100 }}>Confirm</Button>
+            <Button onClick={onConfirm} type="primary" style={{ height: 30, width: 100 }}>{t('Confirm', { ns: 'buttonText' })}</Button>
         </>
     );
 };
 
 const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, setFilter }: ICommunicationMatrixProps): JSX.Element => {
+    const { t } = useTranslation('communication');
     return (<div style={{ display: isShow ? 'block' : 'none', overflow: 'auto' }}>
         <Container
             type={'headerfixed'}
-            title={'Matrix Model'}
+            title={t('sessionTitle.MatrixModel')}
             style={{ margin: '0 20px' }}
             content={<div>
                 <div>
-                    <Label name={'Communication Matrix Type'}/>
+                    <Label name={t('searchCriteria.CommunicationMatrixType')}/>
                     <Select
                         defaultValue="0"
                         style={{ width: 200, marginRight: '20px' }}
                         onChange={val => {
                             handleChange('type', val);
                         }}
-                        options={options}
+                        options={useOptions()}
                         value={switchCondition.type}
                     />
                     <Checkbox checked={switchCondition.showInner}
                         onChange={(e: CheckboxChangeEvent): void => {
                             handleChange('showInner', e.target.checked);
                         }}
-                    >Show Inner Communication</Checkbox>
+                    >{t('searchCriteria.ShowInnerCommunication')}</Checkbox>
                     {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
                 </div>
                 <div>

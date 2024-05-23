@@ -11,7 +11,7 @@ import { InsightUnit } from '../entity/insight';
 import { SvgType } from './base/rc-table/types';
 import { StyledSelect } from './base/StyledSelect';
 import { CardMetaData, ProcessMetaData } from '../entity/data';
-import i18n from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 const FilterIcon = AntdFilterIcon as SvgType;
 
@@ -328,6 +328,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
         });
     };
     const ref = useRef<HTMLButtonElement>(null);
+    const { t } = useTranslation();
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
             title={CategorySearchContent(session)}
@@ -337,7 +338,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={i18n.t('tooltip:filter')} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={t('tooltip:filter')} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

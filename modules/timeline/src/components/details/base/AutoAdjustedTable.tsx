@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { Empty } from 'antd';
 import classNames from 'classnames';
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import { ReactComponent as ExpandIcon } from '../../../assets/images/insights/PullDownIcon.svg';
 import { TreeNode } from '../../../entity/common';
@@ -173,6 +174,7 @@ export const AutoAdjustedTable = React.forwardRef(function Support(props: AutoAd
     const tableBodyHeight = data?.length === 0 ? height : height - TABLE_HEAD_HEIGHT;
     const scrollerHeight = calcEffectiveNum(tableBodyHeight);
     const marginTop = useEmptyViewMargin(height);
+    const { t } = useTranslation();
     return (<StyledTable
         tableHeight={ scrollerHeight }
         {...props}
@@ -200,6 +202,6 @@ export const AutoAdjustedTable = React.forwardRef(function Support(props: AutoAd
                 </div>;
             },
         }}
-        locale={ { emptyText: () => isLoading ? null : <Empty style={{ marginTop, textAlign: 'center' }} description="No Detail" imageStyle={{ display: 'none' }}></Empty> } }
+        locale={ { emptyText: () => isLoading ? null : <Empty style={{ marginTop, textAlign: 'center' }} description={t('NoData')} imageStyle={{ display: 'none' }}></Empty> } }
         scroll={ { x: data?.length ? 'max-content' : undefined, y: scrollerHeight } } />);
 });

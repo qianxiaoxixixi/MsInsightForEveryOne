@@ -13,7 +13,8 @@ import { observer } from 'mobx-react';
 import { ThemeProvider, useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
 import { themeInstance } from '../theme/theme';
-import i18n from '../i18n';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { StyledButton } from '../components/base/StyledButton';
 import { runInAction } from 'mobx';
 import { getTimestamp } from './humanReadable';
@@ -78,17 +79,17 @@ export const handleTimeMakerAction = (props: TimeLineMakerProps): void => {
     });
 };
 
-const getTitleDisplay = (props: TimeLineMakerProps): string => {
+const getTitleDisplay = (props: TimeLineMakerProps, t: TFunction): string => {
     const selectedFlag = props.session.timelineMaker.selectedFlag;
     if (selectedFlag === undefined) {
-        return i18n.t('timelineMarker:unselected');
+        return t('timelineMarker:unselected');
     } else {
         return selectedFlag.description;
     }
 };
 
 // 单击删除行
-const handleDelete = (event: MouseEvent | undefined, deleteSignal: number, uid: string, props: TimeLineMakerProps, setDeleteSignal: (deleteSignal: number) => void, setTimeDiff: (timeDiff: string) => void): void => {
+const handleDelete = (event: MouseEvent | undefined, deleteSignal: number, uid: string, props: TimeLineMakerProps, setDeleteSignal: (deleteSignal: number) => void, setTimeDiff: (timeDiff: string) => void, t: TFunction): void => {
     event?.stopPropagation();
     const flagList = props.session.timelineMaker.timelineFlagList;
     const selectedFlag = props.session.timelineMaker.selectedFlag;
@@ -96,7 +97,7 @@ const handleDelete = (event: MouseEvent | undefined, deleteSignal: number, uid: 
         runInAction(() => {
             props.session.timelineMaker.selectedFlag = undefined;
         });
-        setTimeDiff(i18n.t('timelineMarker:unselected'));
+        setTimeDiff(t('timelineMarker:unselected'));
     }
     for (let i = 0; i < flagList.length; i++) {
         if (flagList[i].uid === uid) {
@@ -273,6 +274,7 @@ interface MarkerBodyProps {
 }
 const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
     const { theme, list, timeLineMarkerProps, setTimeDiff, setSelectFlag, setFlagColor, setDeleteSignal, deleteSignal } = props;
+    const { t } = useTranslation();
     return <MarkerTable id={'flagTable'} style={{ color: theme.fontColor }} >
         {
             list.map((item) => (
@@ -288,7 +290,7 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
                         { handleMakerTimeDisplay(timeLineMarkerProps.session, item) }
                         <div style={{ width: '15%' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: item.anotherTimeStamp === undefined ? '0px' : '11px' }}>
                             <div id={item.uid + 'color'} style={{ width: '12px', height: '12px', backgroundColor: item.color, cursor: 'pointer' }} onClick={() => handleSelectColor(item, timeLineMarkerProps, setFlagColor)} />
-                            <DeleteIcon id={'deleteButton'} style={{ fill: theme.svgPlayBackgroundColor, cursor: 'pointer' }} onClick={(event) => handleDelete(event, deleteSignal, item.uid, timeLineMarkerProps, setDeleteSignal, setTimeDiff)} />
+                            <DeleteIcon id={'deleteButton'} style={{ fill: theme.svgPlayBackgroundColor, cursor: 'pointer' }} onClick={(event) => handleDelete(event, deleteSignal, item.uid, timeLineMarkerProps, setDeleteSignal, setTimeDiff, t)} />
                             <SvgComponent theme={theme} onClick = {() => { handleJump(item, timeLineMarkerProps.session); }} SvgElement={JumpingIcon}/>
                         </div>
                         </div>
@@ -372,9 +374,10 @@ const handleJump = (item: TimelineAxisFlag, session: Session): void => {
 };
 
 const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element => {
+    const { t } = useTranslation();
     const [list] = useState(props.session.timelineMaker.timelineFlagList);
     const [selectedFlag, setSelectFlag] = useState(props.session.timelineMaker.selectedFlag);
-    const [timeDiff, setTimeDiff] = useState(selectedFlag ? getTimeDifference(0, 0, props.session.isNsMode) : i18n.t('timelineMarker:unselected') as string);
+    const [timeDiff, setTimeDiff] = useState(selectedFlag ? getTimeDifference(0, 0, props.session.isNsMode) : t('timelineMarker:unselected') as string);
     const [flagColor, setFlagColor] = useState('');
     const [deleteSignal, setDeleteSignal] = useState(0);
     const [theme, setTheme] = useState(useTheme());
@@ -387,21 +390,29 @@ const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element =
 
     return <MarkerListBody id="timeMakerList" style={{ backgroundColor: theme.tooltipBGColor, width: '400px', height: '263px' }}>
         <MarkerListText style={{ display: 'flex', fontSize: '14px' }}>
-            <Tooltip visible={ shouldShowDescToolTip } id = "descToolTip" arrowContent={ null } arrowPointAtCenter={ false } placement={ 'topLeft' } destroyTooltipOnHide={ true } color={ theme.timeMakerListToolTipBackgroundColor } overlayStyle={{ fontSize: '12px', wordBreak: 'break-all' }} overlayInnerStyle={{ color: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', width: '345px' }} title={ getTitleDisplay(props) }>
-                <TitleText id = "selectedMarkerDec" onMouseOver={ (e) => showDescTooTip(e, setShouldShowDescToolTip) } onMouseLeave={ () => { setShouldShowDescToolTip(false); } } style={{ color: theme.fontColor }}>{getTitleDisplay(props)}</TitleText></Tooltip>
+            <Tooltip visible={ shouldShowDescToolTip } id = "descToolTip" arrowContent={ null } arrowPointAtCenter={ false } placement={ 'topLeft' } destroyTooltipOnHide={ true } color={ theme.timeMakerListToolTipBackgroundColor } overlayStyle={{ fontSize: '12px', wordBreak: 'break-all' }} overlayInnerStyle={{ color: 'rgba(255, 255, 255, 0.9)', borderRadius: '16px', width: '345px' }} title={ getTitleDisplay(props, t) }>
+                <TitleText id = "selectedMarkerDec"
+                    onMouseOver={
+                        (e): void => showDescTooTip(e, setShouldShowDescToolTip)
+                    }
+                    onMouseLeave={ (): void => {
+                        setShouldShowDescToolTip(false);
+                    } } style={{ color: theme.fontColor }}>
+                    {getTitleDisplay(props, t)}
+                </TitleText></Tooltip>
             <StyledButton style={{ width: '10%', backgroundColor: theme.tooltipBGColor }} icon={<CloseIcon style={{ fill: '#71757F' }}></CloseIcon>} onClick={() => { closeConfirm(props); }}></StyledButton>
         </MarkerListText>
-        <MarkerListText style={{ color: theme.fontColor, opacity: '0.6', lineHeight: '10x' }}>{i18n.t('timelineMarker:guide')}</MarkerListText>
+        <MarkerListText style={{ color: theme.fontColor, opacity: '0.6', lineHeight: '10x' }}>{t('timelineMarker:guide')}</MarkerListText>
         <MarkerListTr style={{ display: 'flex', color: theme.fontColor, textAlign: 'left' }}>
-            <th style={{ flexGrow: 1, width: '40%' }}>{i18n.t('timelineMarker:marker')}</th>
-            <th style={{ width: '40%' }}>{i18n.t('timelineMarker:time')}</th>
-            <th style={{ width: '15%' }}>{i18n.t('timelineMarker:operation')}</th>
+            <th style={{ flexGrow: 1, width: '40%' }}>{t('timelineMarker:marker')}</th>
+            <th style={{ width: '40%' }}>{t('timelineMarker:time')}</th>
+            <th style={{ width: '15%' }}>{t('timelineMarker:operation')}</th>
         </MarkerListTr>
         <MarkerBody theme={theme} timeLineMarkerProps={props} list={list} setTimeDiff={setTimeDiff} setSelectFlag={setSelectFlag} setFlagColor={setFlagColor} setDeleteSignal={setDeleteSignal} deleteSignal={deleteSignal}/>
         <MarkerListText>
             <div id={'bottomActionGroup'} style={{ color: theme.svgPlayBackgroundColor, display: 'flex' }} >
-                <div style={{ paddingTop: '5%', width: props.session.timelineMaker.selectedFlag ? '70%' : '60%' }}><DeleteIcon style={{ cursor: 'pointer', width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }} onClick={() => deleteAll(props)}></DeleteIcon><text style={{ cursor: 'pointer', paddingLeft: '10px' }} onClick={() => deleteAll(props)}>{i18n.t('timelineMarker:clear')}</text></div>
-                <StyledTooltip title={i18n.t('timelineMarker:markerDiff')} placement={'bottom'}>
+                <div style={{ paddingTop: '5%', width: props.session.timelineMaker.selectedFlag ? '70%' : '60%' }}><DeleteIcon style={{ cursor: 'pointer', width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }} onClick={(): void => deleteAll(props)}></DeleteIcon><text style={{ cursor: 'pointer', paddingLeft: '10px' }} onClick={(): void => deleteAll(props)}>{t('timelineMarker:clear')}</text></div>
+                <StyledTooltip title={t('timelineMarker:markerDiff')} placement={'bottom'}>
                     <div style={{ paddingTop: '5%' }}><TimeDiffIcon style={{ width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }}></TimeDiffIcon><text id={ 'timeDiffDisplay' } style={{ paddingLeft: '5px' }}>{timeDiff}</text></div>
                 </StyledTooltip>
             </div>
@@ -413,6 +424,7 @@ const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element =
 const DeleteALLConfirm = observer((props: TimeLineMakerProps): JSX.Element => {
     const list = props.session.timelineMaker.timelineFlagList;
     const [theme, setTheme] = useState(useTheme());
+    const { t } = useTranslation();
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
@@ -420,7 +432,7 @@ const DeleteALLConfirm = observer((props: TimeLineMakerProps): JSX.Element => {
     }, [themeInstance.getThemeType()]);
     return (
         <MarkerListBody id="deleteALLConfirm" style={{ backgroundColor: theme.tooltipBGColor, color: theme.svgPlayBackgroundColor, width: '258px', height: '150px' }} >
-            <ListTitleText >{i18n.t('timelineMarker:confirmClear')}</ListTitleText>
+            <ListTitleText >{t('timelineMarker:confirmClear')}</ListTitleText>
             <ConfirmButton onClick={() => {
                 list.splice(0);
                 Modal.destroyAll();
@@ -428,8 +440,13 @@ const DeleteALLConfirm = observer((props: TimeLineMakerProps): JSX.Element => {
                     props.session.timelineMaker.selectedFlag = undefined;
                     props.session.timelineMaker.refreshTrigger = (props.session.timelineMaker.refreshTrigger + 1) % 10;
                 });
-            }}>{i18n.t('timelineMarker:confirmButton')}</ConfirmButton>
-            <CancelButton style={{ background: theme.solidLine }} onClick={() => { const maskDiv = document.getElementsByClassName('ant-modal-root'); maskDiv[1].parentNode?.removeChild(maskDiv[1]); }}>{i18n.t('timelineMarker:cancelButton')}</CancelButton>
+            }}>{t('timelineMarker:confirmButton')}</ConfirmButton>
+            <CancelButton style={{ background: theme.solidLine }} onClick={(): void => {
+                const maskDiv = document.getElementsByClassName('ant-modal-root');
+                maskDiv[1].parentNode?.removeChild(maskDiv[1]);
+            }}>
+                {t('timelineMarker:cancelButton')}
+            </CancelButton>
         </MarkerListBody>
     );
 });

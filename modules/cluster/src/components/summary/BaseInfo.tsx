@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Container, formatDate, Loading } from '../Common';
 import { StringMap } from '../../utils/interface';
 import { Session } from '../../entity/session';
@@ -13,6 +14,12 @@ export interface BaseInfoDataType{
     [prop: string]: any;
 }
 
+interface ListItem {
+    label: string;
+    key: string;
+    value?: string;
+}
+
 export const defaultBaseInfo = {
     filePath: '',
     dataSize: '',
@@ -22,33 +29,36 @@ export const defaultBaseInfo = {
     collectDuration: '',
 };
 
-const list = [
-    {
-        label: 'Report file',
-        key: 'filePath',
-        value: '',
-    },
-    {
-        label: 'Report size(MB)',
-        key: 'dataSize',
-    },
-    {
-        label: 'Report capture time',
-        key: 'collectStartTime',
-    },
-    {
-        label: 'Device count',
-        key: 'rankCount',
-    },
-    {
-        label: 'Step count',
-        key: 'stepNum',
-    },
-    {
-        label: 'Profiling session duration',
-        key: 'collectDuration',
-    },
-];
+const useList = (): ListItem[] => {
+    const { t } = useTranslation('summary');
+    return [
+        {
+            label: t('ReportFile'),
+            key: 'filePath',
+            value: '',
+        },
+        {
+            label: `${t('ReportSize')}(MB)`,
+            key: 'dataSize',
+        },
+        {
+            label: t('ReportCaptureTime'),
+            key: 'collectStartTime',
+        },
+        {
+            label: t('DeviceCount'),
+            key: 'rankCount',
+        },
+        {
+            label: t('StepCount'),
+            key: 'stepNum',
+        },
+        {
+            label: t('ProfilingSessionDuration'),
+            key: 'collectDuration',
+        },
+    ];
+};
 
 const formateTime = (t: number): string => {
     if (isNaN(t)) {
@@ -94,7 +104,8 @@ const initBaseInfo = async (setData: any): Promise<void> => {
     });
 };
 
-const getDisplayItems = (session: Session): any[] => {
+const useDisplayItems = (session: Session): any[] => {
+    const list = useList();
     if (session.unitcount === 0) {
         return list.filter(item => !['collectStartTime', 'collectDuration'].includes(item.key));
     }
@@ -102,6 +113,7 @@ const getDisplayItems = (session: Session): any[] => {
 };
 const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
     const [data, setData] = useState<StringMap>({});
+    const { t } = useTranslation('summary');
     useEffect(() => {
         if (!session.clusterCompleted) {
             setData({});
@@ -111,9 +123,9 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
             initBaseInfo(setData);
         });
     }, [session.parseCompleted, session.renderId]);
-    const displaylist = getDisplayItems(session);
+    const displaylist = useDisplayItems(session);
     return <Container
-        title={'Base Info'}
+        title={t('BaseInfo')}
         titleClassName={'common-title-bottom'}
         style={{ height: 'auto' }}
         content={(<div className={'baseinfo'}>

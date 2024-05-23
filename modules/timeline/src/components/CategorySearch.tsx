@@ -11,7 +11,7 @@ import { StyledInput } from './base/StyledInput';
 import { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
-import i18n from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { ThreadMetaData } from '../entity/data';
 import { generateFlowParam } from '../insight/units/details';
@@ -180,6 +180,7 @@ const ImgWithFallback = ({ className = '' }): JSX.Element => {
 
 // eslint-disable-next-line max-lines-per-function
 const CategorySearchContent = (session: Session): JSX.Element => {
+    const { t } = useTranslation();
     const [messageApi, contextHolder] = message.useMessage();
     const theme = useTheme();
     const [paginationData, updatePaginationData] = useState({ current: 0, total: 0 });
@@ -205,7 +206,9 @@ const CategorySearchContent = (session: Session): JSX.Element => {
             updatePaginationData({ current: 0, total: totalCnt });
             jumpSlice(session, searchContent, 0, isMatchCase, isMatchExact);
             setSearchIconVisible(false);
-        } else { messageApi.warning(i18n.t('notify:SearchEmpty')); }
+        } else {
+            messageApi.warning(t('notify:SearchEmpty'));
+        }
         setSearchingStatus(false);
     };
     const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
@@ -257,13 +260,13 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 ? <ImgWithFallback className={'loading'} />
                 : searchIconVisible
                     ? <div className={'search_icon_css'}>
-                        <StyledTooltip title="Match case"><StyledButton icon={isMatchCase ? <div className={'icon_selected_case_match'}/> : <div className={'icon_case_match'}/>} onClick={(): void => changeMatchCaseStatus()}></StyledButton></StyledTooltip>
-                        <StyledTooltip title="Words"><StyledButton icon={isMatchExact ? <div className={'icon_selected_exact_match'}/> : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton></StyledTooltip>
+                        <StyledTooltip title={t('Match case', { ns: 'tooltip' })}><StyledButton icon={isMatchCase ? <div className={'icon_selected_case_match'}/> : <div className={'icon_case_match'}/>} onClick={(): void => changeMatchCaseStatus()}></StyledButton></StyledTooltip>
+                        <StyledTooltip title={t('Words', { ns: 'tooltip' })}><StyledButton icon={isMatchExact ? <div className={'icon_selected_exact_match'}/> : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton></StyledTooltip>
                         <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
                     </div>
                     : <div className={'search_icon_css'}>
                         <StylePagination {...paginationData} onChange={onPageChange} />
-                        <PressButton size="small" onClick={doSearchList}>Open in Find Window</PressButton>
+                        <PressButton size="small" onClick={doSearchList}>{t('Open in Find Window', { ns: 'buttonText' })}</PressButton>
                     </div> }
             </div>
         </CustomDiv>
@@ -271,6 +274,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
 };
 
 export const CategorySearch = observer(({ session }: { session: Session}): JSX.Element | null => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
@@ -298,7 +302,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={i18n.t('tooltip:search')} { ...customButtonProps }/>
+            <CustomButton tooltip={t('tooltip:search')} { ...customButtonProps }/>
         </Tooltip>
     );
 });

@@ -3,6 +3,7 @@
  */
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
 import { Label } from '../Common';
 import _ from 'lodash';
@@ -121,10 +122,11 @@ const Filter = observer((props: any) => {
 const FilterCom = (props: any): JSX.Element => {
     const { conditions, handleChange = [], options = {} } = props;
     const session: Session = props.session;
+    const { t } = useTranslation('summary');
     return (<div style={ { margin: '0 20px 10px' }}>
         {
             !(session.isFullDb)
-                ? <Label name="Step" />
+                ? <Label name={t('Step')} />
                 : <></>
         }
         {
@@ -137,7 +139,7 @@ const FilterCom = (props: any): JSX.Element => {
                 />
                 : <></>
         }
-        <Label name="Rank Group"/>
+        <Label name={t('RankGroup')}/>
         <Select
             defaultValue={conditions.group}
             value={conditions.group}
@@ -145,7 +147,7 @@ const FilterCom = (props: any): JSX.Element => {
             onChange={(val: any) => handleChange('group', val)}
             options={options.groupOptions}
         />
-        <Label name="Order By"/>
+        <Label name={t('OrderBy')}/>
         <Select
             value={conditions.orderBy}
             style={{ width: 280 }}

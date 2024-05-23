@@ -5,7 +5,7 @@
 import { ErrorBoundaryBase, UncaughtError } from './ErrorBoundaryBase';
 import { Logger } from '../../utils/Logger';
 import { Session } from '../../entity/session';
-import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 export class AppErrorBoundary extends ErrorBoundaryBase {
@@ -14,11 +14,14 @@ export class AppErrorBoundary extends ErrorBoundaryBase {
         Logger('insightError', `${error.stack}`, 'error');
     };
 
-    fallBackUI = (session: Session): JSX.Element => <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-        height: '100%',
-    }}><p>{i18n.t('error:4004')}</p></div>;
+    fallBackUI = (session: Session): JSX.Element => {
+        const { t } = useTranslation();
+        return <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+        }}><p>{t('error:4004')}</p></div>;
+    };
 }

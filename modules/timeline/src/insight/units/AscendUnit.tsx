@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
+import { useTranslation } from 'react-i18next';
 import {
     chart, ChartDesc,
     InsightUnit,
@@ -546,11 +547,14 @@ interface OpData {
     metaType?: string;
 }
 
-const colums = [
-    { title: 'Index', dataIndex: 'index', ellipsis: true, width: 60 },
-    { title: 'Timestamp', dataIndex: 'startTime', ...getDefaultColumData('time') },
-    { title: 'Duration(ns)', dataIndex: 'duration', ...getDefaultColumData('duration') },
-];
+const useColumns = (): any => {
+    const { t } = useTranslation('timeline', { keyPrefix: 'sliceList' });
+    return [
+        { title: t('Index'), dataIndex: 'index', ellipsis: true, width: 60 },
+        { title: t('Timestamp'), dataIndex: 'startTime', ...getDefaultColumData('time') },
+        { title: t('Duration(ns)'), dataIndex: 'duration', ...getDefaultColumData('duration') },
+    ];
+};
 // eslint-disable-next-line max-lines-per-function
 export const SliceRightOpDetail = observer(({ session, metadata }: { session: Session; metadata: unknown }) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
@@ -637,7 +641,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
             }}
             pagination={GetPageData(page, setPage)}
             dataSource={dataSource}
-            columns={colums}
+            columns={useColumns()}
             size="small"
             loading = {isLoading}
             onRow={(record: OpData): {onClick: () => void} => {
