@@ -308,6 +308,7 @@ public:
     }
 
     static std::string GenerateAICpuQuerySql(const std::vector<std::string> &replace,
+        const Protocol::KernelDetailsParams &params,
         const std::map<std::string, Timeline::AICpuCheckDataType> &dataTypeMap)
     {
         std::vector<std::string> opTypeList{};
@@ -338,11 +339,12 @@ public:
             "    " + dataTypeCheckSql + // 检查数据类型是否符合要求
             "    ) OR "
             "    kd.duration >= ?" // 执行时间超过20us
-            ") ";
+            ") ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
 
     static std::string GenerateAICpuQuerySqlDB(const std::vector<std::string> &replace,
+        const Protocol::KernelDetailsParams &params,
         const std::map<std::string, Timeline::AICpuCheckDataType> &dataTypeMap)
     {
         std::vector<std::string> opTypeList{};
@@ -363,7 +365,7 @@ public:
 
         std::string sql =
             "SELECT s2.value as name, s1.value as type, s0.value as unit, t.startNs - ? as startTime, "
-            "t.endNs - t.startNs as duration, t.globalPid as pid "
+            "t.endNs - t.startNs as duration, t.globalPid as pid, t.streamId as tid "
             "FROM COMPUTE_TASK_INFO info "
             "JOIN STRING_IDS s0 ON info.taskType = s0.id "
             "JOIN TASK t ON info.globalTaskId = t.globalTaskId "
@@ -377,7 +379,7 @@ public:
             "    " + dataTypeCheckSql + // 检查数据类型是否符合要求
             "    ) OR "
             "    duration >= ?" // 执行时间超过20us
-            ") ";
+            ") ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
 

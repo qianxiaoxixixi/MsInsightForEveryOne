@@ -20,13 +20,18 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     std::vector<Protocol::KernelBaseInfo> data{};
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
                                            .current = params.currentPage, .pageSize = params.pageSize};
+    param.order = params.orderType == "ascend" ? "ASC" : "DESC";
+    if (std::count(AICPU_OP_ORDER_BY_NAME_LIST.begin(), AICPU_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
+        param.orderBy = "duration";
+    }
     if (!database->QueryAICpuOpCanBeOptimized(param, AICPU_OP_EQUIVALENT_REPLACE,
                                               AICPU_OP_DATATYPE_RULE, data, startTime)) {
-        ServerLog::Error("Failed to Query Long Time AI CPU Op from database.");
+        ServerLog::Error("Failed to Query Can Be Optimized AI CPU Op from database. fileId:", params.rankId);
         return false;
     }
-
-    for (const auto &item : data) {
+    uint64_t start = param.pageSize * (param.current - 1);
+    for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
+        auto item = data.at(i);
         Protocol::AICpuOperatorData one{};
         one.baseInfo.rankId = params.rankId;
         one.baseInfo.startTime = item.startTime;

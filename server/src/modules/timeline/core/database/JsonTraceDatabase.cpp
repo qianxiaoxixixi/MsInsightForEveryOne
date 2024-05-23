@@ -1915,7 +1915,7 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
     if (!CheckTableExist(sliceTable) || !CheckTableExist(TABLE_KERNEL)) {
         return false;
     }
-    std::string sql = JsonSqlConstant::GenerateAICpuQuerySql(replace, dataType);
+    std::string sql = JsonSqlConstant::GenerateAICpuQuerySql(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for AICpuOpExceedThreshold.");

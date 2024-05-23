@@ -76,6 +76,10 @@ const std::map<std::string, Timeline::AICpuCheckDataType> AICPU_OP_DATATYPE_RULE
     }
 };
 
+const std::vector<std::string> AICPU_OP_ORDER_BY_NAME_LIST = {
+    "startTime", "duration", "pid", "tid", "name"
+};
+
 class AICpuOpAdvisor {
 public:
     static bool Process(const Protocol::APITypeParams& params, Protocol::AICpuOperatorResBody& resBody);
