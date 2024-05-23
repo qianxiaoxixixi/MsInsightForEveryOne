@@ -29,7 +29,7 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
                                            .current = params.currentPage, .pageSize = params.pageSize};
     param.order = params.orderType == "ascend" ? "ASC" : "DESC";
-    if (std::count(ORDER_BY_NAME_LIST.begin(), ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
+    if (std::count(AFFINITY_OP_ORDER_BY_NAME_LIST.begin(), AFFINITY_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";
     }
     if (!database->QueryAffinityOptimizer(param, optimizers, data, startTime)) {

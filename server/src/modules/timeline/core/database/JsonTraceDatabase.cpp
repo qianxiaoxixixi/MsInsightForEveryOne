@@ -1992,7 +1992,7 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold, params.orderBy, params.order);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;

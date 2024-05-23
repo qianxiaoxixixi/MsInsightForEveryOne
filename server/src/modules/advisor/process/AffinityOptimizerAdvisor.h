@@ -21,7 +21,7 @@ const std::map<std::string, std::string> OPTIMIZER_MAP = {
     {"Optimizer.step#RMSprop.step", "torch_npu.optim.NpuFusedRMSprop"},
     {"Optimizer.step#RMSpropTF.step", "torch_npu.optim.NpuFusedRMSpropTF"}
 };
-const std::vector<std::string> ORDER_BY_NAME_LIST = {
+const std::vector<std::string> AFFINITY_OP_ORDER_BY_NAME_LIST = {
     "startTime", "duration", "pid", "tid", "originOptimizer"
 };
 

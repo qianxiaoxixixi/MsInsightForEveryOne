@@ -1778,7 +1778,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
 {
     std::string sql =
         "SELECT s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
-        "task.endNs - task.startNs as duration, task.globalPid as pid "
+        "task.endNs - task.startNs as duration, task.globalPid as pid, task.streamId as tid "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
         "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
         "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
@@ -1788,13 +1788,13 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
         "    WHERE str.value LIKE 'AscendCL@aclnn%' AND str.value NOT LIKE '%GetWorkspaceSize' "
         "    GROUP BY str.value HAVING COUNT(str.value) >= ?"
-        ")";
+        ") ORDER BY ? ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold, params.orderBy, params.order);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
@@ -1805,7 +1805,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         one.startTime = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
-        one.tid = "";
+        one.tid = "Stream " + resultSet->GetString("tid");
         data.emplace_back(one);
     }
     return true;
