@@ -37,13 +37,13 @@ export interface IQueryCondition {
     searchName?: string;
 }
 
-export const getDefaultColumData = (key: string): {
+export const getDefaultColumData = (key: string, sorter = true): {
     sorter: boolean;
     showSorterTooltip: boolean;
     ellipsis: boolean;
     key: string; } => {
     return {
-        sorter: true,
+        sorter,
         showSorterTooltip: false,
         ellipsis: true,
         key,
@@ -98,36 +98,36 @@ const commonExpertColums: ColumData[] = [
 export const affinityAPIColumns: ColumData[] = [
     { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
     { title: 'Origin API', dataIndex: 'originAPI', ...getDefaultColumData('originAPI') },
-    { title: 'Replacement API', dataIndex: 'replaceAPI', ...getDefaultColumData('replaceAPI') },
+    { title: 'Replacement API', dataIndex: 'replaceAPI', ...getDefaultColumData('replaceAPI', false) },
     ...commonExpertColums,
-    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
 
 export const affinityOptimizerColumns: ColumData[] = [
     { title: 'Origin Optimizer', dataIndex: 'originOptimizer', ...getDefaultColumData('originOptimizer') },
-    { title: 'Replacement Optimizer', dataIndex: 'replaceOptimizer', ...getDefaultColumData('replaceOptimizer') },
+    { title: 'Replacement Optimizer', dataIndex: 'replaceOptimizer', ...getDefaultColumData('replaceOptimizer', false) },
     ...commonExpertColums,
 ];
 
 export const aicpuOperatorColumns: ColumData[] = [
     { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
-    { title: 'Replacement Operator', dataIndex: 'replaceOp', ...getDefaultColumData('replaceOp') },
+    { title: 'Replacement Operator', dataIndex: 'replaceOp', ...getDefaultColumData('replaceOp', false) },
     ...commonExpertColums,
-    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
 
 export const aclnnOperatorColumns: ColumData[] = [
     { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
     ...commonExpertColums,
-    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
 
 export const fusionOperatorColumns: ColumData[] = [
     { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
-    { title: 'Origin Operators', dataIndex: 'originOpList', ...getDefaultColumData('originOpList') },
-    { title: 'Fused Operator', dataIndex: 'fusedOp', ...getDefaultColumData('fusedOp') },
+    { title: 'Origin Operators', dataIndex: 'originOpList', ...getDefaultColumData('originOpList', false) },
+    { title: 'Fused Operator', dataIndex: 'fusedOp', ...getDefaultColumData('fusedOp', false) },
     ...commonExpertColums,
-    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note') },
+    { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
 
 export const statsSystemViewItems: string[] = [
