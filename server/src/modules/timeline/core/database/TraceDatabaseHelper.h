@@ -346,10 +346,10 @@ static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::uni
      const Protocol::UnitThreadsOperatorsParams &requestParams, uint64_t minTimestamp, const std::string& orderBy);
 
 /* Functions for JsonTraceDataBase */
-static std::unique_ptr<SqliteResultSet> QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    const Protocol::EventsViewParams &params);
+static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
 static void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
-    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp);
+    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp, uint64_t count);
 static void QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
     const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody);
 static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
@@ -367,6 +367,13 @@ private:
         }
         return PROCESS_TYPE::NONE;
     }
+    static std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams &params);
+    static std::string GetSql4QueryEventsViewTotalCountInText()
+    {
+        return "SELECT COUNT(*) AS totalCount FROM slice AS s LEFT JOIN thread AS t "
+               "ON s.track_id = t.track_id WHERE t.pid = ? ";
+    }
+    static void ResolveEventsViewTotalCountInText(std::unique_ptr<SqliteResultSet> &resultSet, int32_t &count);
 
 /* Functions for BbTraceDataBase */
     static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,

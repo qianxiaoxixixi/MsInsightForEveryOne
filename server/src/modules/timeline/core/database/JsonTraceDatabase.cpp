@@ -1585,15 +1585,7 @@ bool JsonTraceDatabase::QueryEventsViewData(const EventsViewParams &params, Even
     if (stmt == nullptr) {
         return false;
     }
-    std::unique_ptr<SqliteResultSet> resultSet = TraceDatabaseHelper::QueryEventsViewData4Text(stmt, params);
-    if (resultSet == nullptr) {
-        ServerLog::Error("QueryEventsViewData. Failed to get result set.", stmt->GetErrorMessage());
-        return false;
-    }
-
-    // 封装结果
-    TraceDatabaseHelper::ResolveEventsViewResultSet(resultSet, params, body, minTimestamp);
-    return true;
+    return TraceDatabaseHelper::QueryEventsViewData4Text(stmt, params, body, minTimestamp);
 }
 
 bool JsonTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
