@@ -29,6 +29,9 @@ const std::vector<Timeline::FuseableOpRule> FUSEABLE_OPERATER_RULE_LIST = {
     },
 };
 
+const std::vector<std::string> FUSED_OP_ORDER_BY_NAME_LIST = {
+    "startTime", "duration", "pid", "tid", "name"
+};
 class FusedOpAdvisor {
 public:
     static bool Process(const Protocol::APITypeParams& params, Protocol::OperatorFusionResBody& resBody);

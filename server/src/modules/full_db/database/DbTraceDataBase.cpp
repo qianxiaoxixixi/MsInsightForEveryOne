@@ -1865,7 +1865,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         "WITH data AS ( "
         "SELECT task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
         "task.startNs - ? as startTime, task.endNs - task.startNs as duration, task.globalPid as pid, "
-        "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
+        "task.streamId as tid, ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
         "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
         "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
@@ -1877,7 +1877,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
                " AND " + table + ".op_type = '" + rule.opList.at(i) + "' ";
     }
-    sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "'";
+    sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "' ORDER " + params.orderBy + " " + params.order;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
@@ -1895,7 +1895,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         one.timestamp = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
-        one.tid = "";
+        one.tid = "Stream " + resultSet->GetString("tid");
         one.type = StringUtil::join(rule.opList, ", ");
         one.metaType = rule.fusedOp;
         one.id = rule.note;

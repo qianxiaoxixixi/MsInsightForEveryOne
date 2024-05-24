@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "TraceTime.h"
 #include "VirtualTraceDatabase.h"
+#include "AdvisorProcessUtil.h"
 #include "FusedOpAdvisor.h"
 
 namespace Dic::Module::Advisor {
@@ -21,6 +22,10 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
     std::vector<Protocol::FlowLocation> data{};
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
                                            .current = params.currentPage, .pageSize = params.pageSize};
+    param.order = params.orderType == "ascend" ? "ASC" : "DESC";
+    if (std::count(FUSED_OP_ORDER_BY_NAME_LIST.begin(), FUSED_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
+        param.orderBy = "duration";
+    }
     for (const auto& item : FUSEABLE_OPERATER_RULE_LIST) {
         std::vector<Protocol::FlowLocation> result{};
         if (!database->QueryFuseableOpData(param, item, result, startTime)) {
@@ -30,7 +35,10 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
             data.insert(data.end(), result.begin(), result.end());
         }
     }
-    for (const auto &item : data) {
+    AdvisorProcessUtil::SortFlowLocationData(data, param);
+    uint64_t start = param.pageSize * (param.current - 1);
+    for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
+        auto item = data.at(i);
         Protocol::OperatorFusionData one{};
         one.baseInfo.rankId = params.rankId;
         one.baseInfo.startTime = item.timestamp;

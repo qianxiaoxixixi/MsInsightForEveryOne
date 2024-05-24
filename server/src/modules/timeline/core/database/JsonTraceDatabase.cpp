@@ -2054,7 +2054,7 @@ bool JsonTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams
 bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
-    std::string sql = JsonSqlConstant::GenerateFuseableOpFilterSql(rule);
+    std::string sql = JsonSqlConstant::GenerateFuseableOpFilterSql(params, rule);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
@@ -2069,7 +2069,7 @@ bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
         one.name = resultSet->GetString("name");
-        one.timestamp = resultSet->GetUint64("kd.start_time - ?");
+        one.timestamp = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
