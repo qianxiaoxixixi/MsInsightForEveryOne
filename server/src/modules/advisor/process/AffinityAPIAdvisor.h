@@ -33,6 +33,10 @@ const std::vector<AffinityApiData> AFFINITY_API_RULE = {
     { std::vector<std::string>{ "chunk", "mul", "gelu" }, "torch_npu.npu_geglu", "" },
 };
 
+const std::vector<std::string> AFFINITY_API_ORDER_BY_NAME_LIST = {
+    "startTime", "duration", "pid", "tid", "name"
+};
+
 class AffinityAPIAdvisor {
 public:
     static bool Process(const Protocol::APITypeParams &params, Protocol::AffinityAPIResBody &resBody);
@@ -40,8 +44,8 @@ public:
 private:
     static std::vector<std::string> GetFirstApiList(const std::vector<AffinityApiData> &affinityApiData);
     static void FilterAffinityApiData(const Protocol::APITypeParams &params,
-        const std::vector<Protocol::FlowLocation> &dataList, const std::vector<uint32_t> &indexList,
-        Protocol::AffinityAPIResBody &resBody);
+        std::vector<Protocol::FlowLocation> &dataList, const std::vector<uint32_t> &indexList,
+        std::vector<Protocol::FlowLocation> &result);
     static bool CheckApiSeqWithRule(const std::vector<std::string> &rule,
         const std::vector<Protocol::FlowLocation> &dataList, uint32_t index);
 };

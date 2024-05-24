@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_JSONSQLCONSTANT_H
 #include <string>
 #include "StringUtil.h"
+#include "TimelineProtocolRequest.h"
 
 namespace Dic::Module::Timeline {
 const int CACHE_SIZE = 1000;
@@ -383,11 +384,13 @@ public:
         return sql;
     }
 
-    static std::string GenerateFuseableOpFilterSql(const Timeline::FuseableOpRule &rule)
+    static std::string GenerateFuseableOpFilterSql(const Protocol::KernelDetailsParams &params,
+        const Timeline::FuseableOpRule &rule)
     {
         std::string sql = "WITH data AS ( "
-            "SELECT kd.rank_id, kd.name, kd.op_type, kd.accelerator_core, kd.start_time - ?, s.duration, "
-            "t.pid, t.tid, ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
+            "SELECT kd.rank_id, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
+            "s.duration as duration, t.pid as pid, t.tid as tid, "
+            "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
             "FROM " + KERNEL_DETAIL + " kd "
             "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
             "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
@@ -398,7 +401,7 @@ public:
             sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
                     " AND " + table + ".name = '" + rule.opList.at(i) + "' ";
         }
-        sql += "WHERE d0.name = '" +  rule.opList.at(0) + "'";
+        sql += "WHERE d0.name = '" +  rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
 

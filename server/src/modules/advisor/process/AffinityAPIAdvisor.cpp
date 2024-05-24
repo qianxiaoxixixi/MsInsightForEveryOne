@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
+#include "AdvisorProcessUtil.h"
 #include "DataBaseManager.h"
 #include "ServerLog.h"
 #include "TraceTime.h"
@@ -21,19 +22,40 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
                                            .current = params.currentPage, .pageSize = params.pageSize};
+    param.order = params.orderType == "ascend" ? "ASC" : "DESC";
+    if (std::count(AFFINITY_API_ORDER_BY_NAME_LIST.begin(),
+                   AFFINITY_API_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
+        param.orderBy = "duration";
+    }
     std::map<uint64_t, std::vector<Protocol::FlowLocation>> dataMap{};
     std::map<uint64_t, std::vector<uint32_t>> indexMap{};
     if (!database->QueryAffinityAPIData(param, GetFirstApiList(AFFINITY_API_RULE), startTime, dataMap, indexMap)) {
         ServerLog::Error("Failed to Query Affinity API from database.");
         return false;
     }
+    std::vector<Protocol::FlowLocation> results;
     for (const auto& it : dataMap) { // 获取某个泳道的数据
         uint64_t trackId = it.first;
         std::vector<Protocol::FlowLocation> datas = it.second;
         std::vector<uint32_t> indexList = indexMap[trackId];
-        FilterAffinityApiData(params, datas, indexList, resBody);
+        FilterAffinityApiData(params, datas, indexList, results);
     }
-    resBody.size = resBody.datas.size();
+    AdvisorProcessUtil::SortFlowLocationData(results, param);
+    uint64_t start = param.pageSize * (param.current - 1);
+    for (uint64_t i = start; i < start + param.pageSize && i < results.size(); ++i) {
+        auto item = results.at(i);
+        Protocol::AffinityAPIData one{};
+        one.name = item.name;
+        one.baseInfo.pid = item.pid;
+        one.baseInfo.tid = item.tid;
+        one.baseInfo.startTime = item.timestamp;
+        one.baseInfo.duration = item.duration;
+        one.originAPI = item.type;
+        one.replaceAPI = item.metaType;
+        one.note = item.deviceId;
+        resBody.datas.emplace_back(one);
+    }
+    resBody.size = results.size();
     return true;
 }
 
@@ -57,8 +79,8 @@ std::vector<std::string> AffinityAPIAdvisor::GetFirstApiList(const std::vector<A
 
 // 匹配连续的api
 void AffinityAPIAdvisor::FilterAffinityApiData(const Protocol::APITypeParams &params,
-    const std::vector<Protocol::FlowLocation> &dataList, const std::vector<uint32_t> &indexList,
-    Protocol::AffinityAPIResBody &resBody)
+    std::vector<Protocol::FlowLocation> &dataList, const std::vector<uint32_t> &indexList,
+    std::vector<Protocol::FlowLocation> &result)
 {
     if (dataList.empty() || indexList.empty()) {
         return;
@@ -70,15 +92,10 @@ void AffinityAPIAdvisor::FilterAffinityApiData(const Protocol::APITypeParams &pa
             if (!CheckApiSeqWithRule(rule.apiList, dataList, index)) {
                 continue;
             }
-            one.name = dataList[index].name;
-            one.note = rule.note;
-            one.baseInfo.startTime = dataList[index].timestamp;
-            one.baseInfo.tid = dataList[index].tid;
-            one.baseInfo.pid = dataList[index].pid;
-            one.baseInfo.duration = dataList[index].duration;
-            one.originAPI = StringUtil::join(rule.apiList, ",");
-            one.replaceAPI = rule.affinityApi;
-            resBody.datas.emplace_back(one);
+            dataList[index].type = StringUtil::join(rule.apiList, ",");
+            dataList[index].metaType = rule.affinityApi;
+            dataList[index].deviceId = rule.note;
+            result.emplace_back(dataList[index]);
         }
     }
 }
