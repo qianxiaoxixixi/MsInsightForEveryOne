@@ -354,6 +354,140 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     }
 }
 
+std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    // pid匹配的入参为globalTid的高32位
+    std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa "
+        "LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
+        "WHERE pid = ? UNION "
+        "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, (globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE pid = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
+        "WHERE globalTid = ? UNION "
+        "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, (globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE globalTid = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4Pytorch(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
+        "WHERE globalTid = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4HostHccl(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE globalTid = ? AND ca.type = 5500 ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4CANN(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE globalTid = ? AND ca.type IN (5000, 10000, 15000, 20000) ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE globalTid = ? AND ca.type = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.tid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT si.value AS name, startNs, endNs - startNs as duration, "
+        "'Stream '||streamId as threadName, "
+        "'Rank '||deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
+        "on CTI.globalTaskId = main.globalTaskId "
+        "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) WHERE main.deviceId = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT si.value AS name, startNs, endNs - startNs as duration, "
+        "'Stream '||streamId as threadName, 'Rank '||deviceId AS rankId FROM  TASK AS main "
+        "LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
+        "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) "
+        "WHERE main.deviceId = ? AND main.streamId = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.tid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
+        "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+        "sub as (select startNs, endNs-startNs as duration, si.value as name, groupName "
+        "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
+        "where opId in (select opId from tmp group by opId)) "
+        "select name, startNs as start, duration, "
+        "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
+        "? AS rankId from sub ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.rankId);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
+        "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+        "sub as (select startNs, endNs-startNs as duration, si.value as name, groupName "
+        "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
+        "where opId in (select opId from tmp group by opId)) "
+        "select name, startNs as start, duration, "
+        "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
+        "? AS rankId from sub WHERE groupName||'group' = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
+        params.rankId, params.rankId, params.tid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName,"
+                      "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4OverlapSub(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName,"
+                      "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? AND type = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.tid);
+}
+
 /* Functions for JsonTraceDataBase */
 bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
