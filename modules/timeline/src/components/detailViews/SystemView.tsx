@@ -32,6 +32,7 @@ import {
     affinityAPIColumns,
     queryOperatorFusion,
     fusionOperatorColumns,
+    eventViewData,
 } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { Label, limitInput } from 'lib/CommonUtils';
@@ -43,6 +44,7 @@ import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { EventDetail } from './EventsView';
 
 const Container = styled.div`
     width: 100%;
@@ -86,10 +88,15 @@ export const SystemView = observer((props: any) => {
         setViewOption(value);
         setKey(0);
     };
+    useEffect(() => {
+        if (props.session.showEvent as boolean) {
+            setViewOption(2);
+        }
+    }, [props.session.showEvent]);
     return (<Container className={'theme-view'}>
         <Space direction="vertical" size="middle" style={{ display: 'flex', flex: 1 }}>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
-            <RankFilter session={props.session} handleChange={handleChange}></RankFilter>
+            {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
             <SelectList viewOption={viewOption} selectKey={key} setKey={setKey}></SelectList>
         </Space>
         <Divider type="vertical" />
@@ -100,7 +107,7 @@ export const SystemView = observer((props: any) => {
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }];
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
         <div className={'systemViewSelect'}>
             <Select style={{ width: 180 }} value={viewOption} onChange={handleViewChange} options={options}/>
@@ -160,7 +167,19 @@ const SelectList = observer((props: any) => {
     useEffect(() => {
         setSelectedKey(props.selectKey);
     }, [props.selectKey]);
-    const systemViewItems = props.viewOption === 0 ? statsSystemViewItems : expertSystemViewItems;
+    let systemViewItems: string[] = [];
+    switch (props.viewOption) {
+        case 0:
+            systemViewItems = statsSystemViewItems;
+            break;
+        case 1:
+            systemViewItems = expertSystemViewItems;
+            break;
+        case 2:
+            break;
+        default:
+            break;
+    }
     return (<div className={'selectLayer'}>
         {
             systemViewItems.map((item, index) =>
@@ -416,6 +435,10 @@ const FusedOperator = observer((props: any) => {
     return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
 });
 
+const EventView = observer((props: any) => {
+    return <EventDetail request={eventViewData} {...props} />;
+});
+
 const contentList: any[][] = [[...layerTypes.map((type) => {
     return observer((props: any) => {
         return (
@@ -428,4 +451,4 @@ const contentList: any[][] = [[...layerTypes.map((type) => {
             />
         );
     });
-}), KernelDetails], [AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator]];
+}), KernelDetails], [AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator], [EventView]];

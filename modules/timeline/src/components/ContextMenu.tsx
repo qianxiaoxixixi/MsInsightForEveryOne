@@ -317,6 +317,42 @@ const isHideText = (session: Session): boolean => {
     return session.selectedUnits[0].name !== 'Empty';
 };
 
+function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
+    if (menuItem?.disabled) {
+        return;
+    }
+    runInAction(() => {
+        session.showEvent = true;
+        session.contextMenu.isVisible = false;
+    });
+    setTimeout(() => {
+        runInAction(() => {
+            session.showEvent = false;
+        });
+    });
+}
+
+const isShowEventMenu = (session: Session): boolean => {
+    const selectUnit = session.selectedUnits[0];
+    if (!selectUnit) {
+        return false;
+    }
+    if (['Empty', 'Card', 'Counter'].includes(selectUnit.name)) {
+        return false;
+    }
+    if (selectUnit.children) {
+        for (const child of selectUnit.children) {
+            if (child.name === 'Counter') {
+                return false;
+            }
+        }
+    }
+    if ((selectUnit.metadata as ThreadMetaData).threadName?.includes('Plane')) {
+        return false;
+    }
+    return true;
+};
+
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
     setPosition: (_: Position) => void;
@@ -349,6 +385,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Reset Zoom'), key: 'resetZoom', event: resetZoom, disabled: zoomHistory.length === 0, visible: true },
         { name: t('Hide'), key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
         { name: t('Show All Hidden'), key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
+        { name: t('Show in events view'), key: 'showInEventsView', event: showInEventsView, disabled: false, visible: isShowEventMenu(session) },
     ];
 
     return <>

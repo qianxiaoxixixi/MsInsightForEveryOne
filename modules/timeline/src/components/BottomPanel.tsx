@@ -317,7 +317,10 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         if (session.doContextSearch) {
             setItem('Find');
         }
-    }, [session.doContextSearch]);
+        if (session.showEvent) {
+            setItem('SystemView');
+        }
+    }, [session.doContextSearch, session.showEvent]);
 
     const items = [
         getDataCardItem(bottomHeight, session),

@@ -92,6 +92,7 @@ export class Session {
     unitsConfig: Record<string, Record<string, unknown>> = {};
     searchData?: { [x: string]: unknown; content: string; isMatchCase: boolean; isMatchExact: boolean };
     doContextSearch: boolean = false;
+    showEvent: boolean = false;
     linkData?: LinkData;
     linkLines: LinkLines = {};
 
