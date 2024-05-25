@@ -349,33 +349,11 @@ static bool QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &st
 /* Functions for JsonTraceDataBase */
 static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
-static void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
-    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp, uint64_t count);
 static void QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
     const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody);
 static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody);
 private:
-/* Functions for JsonTraceDataBase */
-    static std::map<std::string, Protocol::PROCESS_TYPE> metaTypeMap;
-    static std::map<Protocol::PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap;
-    static inline Protocol::PROCESS_TYPE GetProcessTypeByProcessName(const std::string &processName)
-    {
-        for (const auto &item: metaTypeMap) {
-            if (StringUtil::StartWith(processName, item.first)) {
-                return item.second;
-            }
-        }
-        return PROCESS_TYPE::NONE;
-    }
-    static std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams &params);
-    static std::string GetSql4QueryEventsViewTotalCountInText()
-    {
-        return "SELECT COUNT(*) AS totalCount FROM slice AS s LEFT JOIN thread AS t "
-               "ON s.track_id = t.track_id WHERE t.pid = ? ";
-    }
-    static void ResolveEventsViewTotalCountInText(std::unique_ptr<SqliteResultSet> &resultSet, int32_t &count);
-
 /* Functions for BbTraceDataBase */
     static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,
                              std::map<std::string, uint64_t> &selfTimeKeyValue,

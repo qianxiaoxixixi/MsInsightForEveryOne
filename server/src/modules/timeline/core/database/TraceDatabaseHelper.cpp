@@ -6,7 +6,7 @@
 
 
 namespace Dic::Module::Timeline {
-std::map<std::string, Protocol::PROCESS_TYPE> TraceDatabaseHelper::metaTypeMap = {
+std::map<std::string, Protocol::PROCESS_TYPE> metaTypeMap = {
     {"Python", Protocol::PROCESS_TYPE::API},
     {"CANN", Protocol::PROCESS_TYPE::CANN_API},
     {"Ascend Hardware", Protocol::PROCESS_TYPE::ASCEND_HARDWARE},
@@ -24,8 +24,14 @@ const Protocol::EventsViewColumnAttr columnStreamName = {"Stream Name", "string"
 const Protocol::EventsViewColumnAttr columnGroupName = {"Group Name", "string", "threadName"};
 const Protocol::EventsViewColumnAttr columnAnalysisType = {"Analysis Type", "string", "threadName"};
 
-std::map<Protocol::PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>>
-    TraceDatabaseHelper::eventsViewColumnsMap = {
+std::map<std::string, std::string> analysisType = {
+    {"0", "Computing"},
+    {"1", "Communication"},
+    {"2", "Communication(Not Overlapped)"},
+    {"3", "Free"},
+};
+
+std::map<Protocol::PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap = {
     {Protocol::PROCESS_TYPE::API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {Protocol::PROCESS_TYPE::CANN_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {Protocol::PROCESS_TYPE::ASCEND_HARDWARE,
@@ -426,7 +432,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <Sqli
 {
     std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
         "'Stream '||streamId as threadName, "
-        "'Rank '||deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
+        "deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) WHERE main.deviceId = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId);
@@ -436,7 +442,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
-        "'Stream '||streamId as threadName, 'Rank '||deviceId AS rankId FROM  TASK AS main "
+        "'Stream '||streamId as threadName, deviceId AS rankId FROM  TASK AS main "
         "LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) "
         "WHERE main.deviceId = ? AND main.streamId = ? ";
@@ -545,6 +551,17 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
     for (int i = indexStart; i <indexEnd; ++i) {
         body.eventDetailList.emplace_back(std::move(details.at(i)));
     }
+    if (metaType == Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS) {
+        for (const auto &item: body.eventDetailList) {
+            auto overlapPtr = dynamic_cast<DeviceEventDetail*>(item.get());
+            if (overlapPtr) {
+                overlapPtr->threadName = analysisType.at(overlapPtr->threadName);
+            }
+        }
+    }
+    for (const auto &item: eventsViewColumnsMap.at(metaType)) {
+        body.columnList.emplace_back(item);
+    }
 }
 
 bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -599,78 +616,27 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
     }
     // 解析查询结果，并封装到Response body中
     ResolveEventsViewResultSet4Db(resultSet, params, body, minTimestamp);
-    for (const auto &item: eventsViewColumnsMap.at(metaType)) {
-        body.columnList.emplace_back(item);
-    }
 }
 
 /* Functions for JsonTraceDataBase */
-bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+Protocol::PROCESS_TYPE GetProcessTypeByProcessName(const std::string &processName)
 {
-    // 检查入参合法性
-    if (params.pid.empty()) {
-        ServerLog::Error("Can not to query events view data while process id is empty.");
-        return false;
-    }
-    std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
-    if (!StringUtil::CheckSqlValid(orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
-        return false;
-    }
-    std::string sql4Details = GetSql4QueryEventsViewDetailsInText(params);
-    std::string sql4TotalCount = GetSql4QueryEventsViewTotalCountInText();
-
-    // 拼接SQL语句
-    sql4Details.append("WHERE t.pid = ? ");
-    if (!params.tid.empty()) {
-        sql4Details.append("AND t.tid = ? ");
-        sql4TotalCount.append("AND t.tid = ? ");
-    }
-
-    // 拼接分页相关的条件
-    std::string order = params.order == "descend" ? "DESC" : "ASC";
-    sql4Details.append("ORDER BY " + orderBy + " " + order + " LIMIT ? OFFSET ?");
-    uint64_t limit = params.pageSize;
-    uint64_t currentPage = params.currentPage > 0 ? params.currentPage : 1;
-    uint64_t offset = (currentPage - 1) * limit;
-
-    // 查询数据库
-    int32_t count = 0;
-    std::unique_ptr<SqliteResultSet> resultSet;
-    try {
-        if (params.tid.empty()) {
-            auto result4TotalCount = ExecuteQuery(stmt, sql4TotalCount, params.pid);
-            ResolveEventsViewTotalCountInText(result4TotalCount, count);
-            resultSet = ExecuteQuery(stmt, sql4Details, params.pid, limit, offset);
-        } else {
-            auto  result4TotalCount = ExecuteQuery(stmt, sql4TotalCount, params.pid, params.tid);
-            ResolveEventsViewTotalCountInText(result4TotalCount, count);
-            resultSet = ExecuteQuery(stmt, sql4Details, params.pid, params.tid, limit, offset);
+    for (const auto &item: metaTypeMap) {
+        if (StringUtil::StartWith(processName, item.first)) {
+            return item.second;
         }
-    } catch (DatabaseException &e) {
-        ServerLog::Error("QueryEventsViewData4Text. Execute query failed: ", e.What());
-        return false;
     }
-    ResolveEventsViewResultSet(resultSet, params, body, minTimestamp, count);
-    return true;
+    return PROCESS_TYPE::NONE;
 }
 
-void TraceDatabaseHelper::ResolveEventsViewTotalCountInText(std::unique_ptr<SqliteResultSet> &resultSet, int32_t &count)
-{
-    if (resultSet->Next()) {
-        count = resultSet->GetInt32("totalCount");
-    }
-}
-
-std::string TraceDatabaseHelper::GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams &params)
+std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams &params)
 {
     std::string baseSql;
     auto metaType = GetProcessTypeByProcessName(params.processName);
     switch (metaType) {
         case Protocol::PROCESS_TYPE::API:
         case Protocol::PROCESS_TYPE::CANN_API:
-            baseSql = "SELECT name, timestamp AS start, duration FROM slice AS s "
+            baseSql = "SELECT name, timestamp AS start, duration, tid, pid FROM slice AS s "
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
             break;
         case Protocol::PROCESS_TYPE::HCCL:
@@ -688,17 +654,18 @@ std::string TraceDatabaseHelper::GetSql4QueryEventsViewDetailsInText(const Proto
     return baseSql;
 }
 
-void TraceDatabaseHelper::ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
-    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp, uint64_t count)
+void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
+    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp)
 {
     // 封装结果
     auto metaType = GetProcessTypeByProcessName(params.processName);
+    std::vector<std::unique_ptr<EventDetail>> details;
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API) {
             auto hostPtr = std::make_unique<HostEventDetail>();
-            hostPtr->tid = params.tid;
-            hostPtr->pid = params.pid;
+            hostPtr->tid = resultSet->GetString("tid");
+            hostPtr->pid = resultSet->GetString("pid");
             ptr = std::move(hostPtr);
         } else {
             auto devicePtr = std::make_unique<DeviceEventDetail>();
@@ -709,14 +676,62 @@ void TraceDatabaseHelper::ResolveEventsViewResultSet(std::unique_ptr<SqliteResul
         ptr->name = resultSet->GetString("name");
         ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
         ptr->duration = resultSet->GetUint64("duration");
-        body.eventDetailList.emplace_back(std::move(ptr));
+        details.emplace_back(std::move(ptr));
     }
-    body.count = count;
+    body.count = details.size();
     body.currentPage = params.currentPage;
     body.pageSize = params.pageSize;
+    // 计算分页信息，获取对应分页的数据
+    auto indexStart = (params.currentPage - 1) * params.pageSize;
+    auto indexEnd = indexStart + params.pageSize;
+    indexEnd = indexEnd > details.size() ? details.size() : indexEnd;
+    for (int i = indexStart; i <indexEnd; ++i) {
+        body.eventDetailList.emplace_back(std::move(details.at(i)));
+    }
     for (const auto &item: eventsViewColumnsMap.at(metaType)) {
         body.columnList.emplace_back(item);
     }
+}
+
+bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+{
+    // 检查入参合法性
+    if (params.pid.empty()) {
+        ServerLog::Error("Can not to query events view data while process id is empty.");
+        return false;
+    }
+    std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
+    if (!StringUtil::CheckSqlValid(orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        return false;
+    }
+    std::string sql4Details = GetSql4QueryEventsViewDetailsInText(params);
+
+    // 拼接SQL语句
+    sql4Details.append("WHERE t.pid = ? ");
+    if (!params.tid.empty()) {
+        sql4Details.append("AND t.tid = ? ");
+    }
+
+    // 拼接分页相关的条件
+    std::string order = params.order == "descend" ? "DESC" : "ASC";
+    sql4Details.append("ORDER BY " + orderBy + " " + order);
+
+    // 查询数据库
+    std::unique_ptr<SqliteResultSet> resultSet;
+    try {
+        if (params.tid.empty()) {
+            resultSet = ExecuteQuery(stmt, sql4Details, params.pid);
+        } else {
+            resultSet = ExecuteQuery(stmt, sql4Details, params.pid, params.tid);
+        }
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryEventsViewData4Text. Execute query failed: ", e.What());
+        return false;
+    }
+    ResolveEventsViewResultSet(resultSet, params, body, minTimestamp);
+    return true;
 }
 
 void TraceDatabaseHelper::QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
