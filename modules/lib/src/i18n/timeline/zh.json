@@ -16,7 +16,8 @@
       "Undo Zoom": "撤消缩放",
       "Reset Zoom": "重置缩放",
       "Hide": "隐藏",
-      "Show All Hidden": "显示全部已隐藏泳道"
+      "Show All Hidden": "显示全部已隐藏泳道",
+      "Show in events view": "在事件视图中显示"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",
@@ -62,7 +63,8 @@
       "Affinity Optimizer": "亲和优化器",
       "AICPU Operators": "AICPU 算子",
       "ACLNN Operators": "ACLNN 算子",
-      "Operators Fusion": "算子融合"
+      "Operators Fusion": "算子融合",
+      "Events View": "事件视图"
     },
     "tableHead": {
       "Name": "名称",

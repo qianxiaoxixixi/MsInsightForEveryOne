@@ -141,40 +141,42 @@ const clearIpynbInfo = (session: Session): void => {
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
-        const dataSource = getPropFromData(data, 'dataSource') as DataSource;
-        const session = store.sessionStore.activeSession as Session;
-        session.isFullDb = false;
-        const removeUnits = session.pinnedUnits.concat(session.units).filter((unit) => {
-            const metadata = unit.metadata as any;
-            const isSameDataPath = dataSource.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
-            return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
+        runInAction(() => {
+            const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+            const session = store.sessionStore.activeSession as Session;
+            session.isFullDb = false;
+            const removeUnits = session.pinnedUnits.concat(session.units).filter((unit) => {
+                const metadata = unit.metadata as any;
+                const isSameDataPath = dataSource.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
+                return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
+            });
+            for (const unit of removeUnits) {
+                const metadata = unit.metadata as any;
+                session.remoteAttrs.delete(metadata.dataSource.remote);
+            }
+            session.units = session?.units.filter((unit) => {
+                const metadata = unit.metadata as any;
+                return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
+            });
+            session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
+                const metadata = unit.metadata as any;
+                return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
+            });
+            session.simpleCache.clear();
+            let remoteMaxTimeStamps = 0;
+            session.remoteAttrs.forEach((attrs) => {
+                remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
+            });
+            session.endTimeAll = remoteMaxTimeStamps;
+            if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
+                session.selectedUnits = [];
+            }
+            if (session.units.length === 0) {
+                session.selectedRange = undefined;
+            }
+            clearIpynbInfo(session);
+            clearTimeMarkerFlags(session);
         });
-        for (const unit of removeUnits) {
-            const metadata = unit.metadata as any;
-            session.remoteAttrs.delete(metadata.dataSource.remote);
-        }
-        session.units = session?.units.filter((unit) => {
-            const metadata = unit.metadata as any;
-            return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
-        });
-        session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
-            const metadata = unit.metadata as any;
-            return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
-        });
-        session.simpleCache.clear();
-        let remoteMaxTimeStamps = 0;
-        session.remoteAttrs.forEach((attrs) => {
-            remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
-        });
-        session.endTimeAll = remoteMaxTimeStamps;
-        if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
-            session.selectedUnits = [];
-        }
-        if (session.units.length === 0) {
-            session.selectedRange = undefined;
-        }
-        clearIpynbInfo(session);
-        clearTimeMarkerFlags(session);
     } catch (error) {
         console.error(error);
     }
@@ -344,7 +346,7 @@ export const jupyterCompletedHandler: NotificationHandler = (data): void => {
     session.ipynbUrl = data.url as string;
     connector.send({
         event: 'updateSession',
-        body: { isIpynb: isIpynb, ipynbUrl: data.url as string },
+        body: { isIpynb, ipynbUrl: data.url as string },
     });
     if (!isIpynb) {
         message.error('Jupyter launch error!');

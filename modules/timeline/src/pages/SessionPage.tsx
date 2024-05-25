@@ -75,10 +75,10 @@ export const SessionPage = observer(function SessionPage({ session }: { session:
     }, [session.selectedUnitKeys, session.selectedRange, session.selectedData]);
 
     useEffect(() => {
-        if (session.doContextSearch) {
+        if (session.doContextSearch || session.showEvent) {
             handleOpen(true);
         }
-    }, [session.doContextSearch]);
+    }, [session.doContextSearch, session.showEvent]);
 
     return view({
         mainContainer: <ChartContainer session={session} interactive />,

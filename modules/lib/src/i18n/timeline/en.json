@@ -16,7 +16,8 @@
       "Undo Zoom": "Undo Zoom",
       "Reset Zoom": "Reset Zoom",
       "Hide": "Hide",
-      "Show All Hidden": "Show All Hidden"
+      "Show All Hidden": "Show All Hidden",
+      "Show in events view": "Show in events view"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",
@@ -62,7 +63,8 @@
       "Affinity Optimizer": "Affinity Optimizer",
       "AICPU Operators": "AICPU Operators",
       "ACLNN Operators": "ACLNN Operators",
-      "Operators Fusion": "Operators Fusion"
+      "Operators Fusion": "Operators Fusion",
+      "Events View": "Events View"
     },
     "tableHead": {
       "Name": "Name",

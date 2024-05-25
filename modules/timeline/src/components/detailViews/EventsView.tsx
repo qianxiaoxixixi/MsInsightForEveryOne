@@ -1,0 +1,207 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+
+import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react';
+import { eventViewData, getDefaultColumData, GetPageData, queryOneKernel } from './Common';
+import ResizeTable from 'lib/ResizeTable';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import type { ThreadMetaData } from '../../entity/data';
+import { Button } from 'antd';
+import type { InsightUnit } from '../../entity/insight';
+import { colorPalette, getTimeOffset } from '../../insight/units/utils';
+import { calculateDomainRange } from '../CategorySearch';
+import { hashToNumber } from '../../utils/colorUtils';
+import { runInAction } from 'mobx';
+
+export interface EventTableData {
+    eventDetails: EventDetails[];
+    columnList: EventTableColumn[];
+    count: number;
+}
+
+export interface EventDetails {
+    start: number;
+    name: string;
+    duration: number;
+    startTime: string;
+    tid?: string;
+    pid?: string;
+    threadName?: string;
+    rankId?: string;
+    analysisType?: string;
+}
+
+export interface EventTableColumn {
+    name: string;
+    type: string;
+    key: string;
+}
+
+interface UpdateDatas {
+    pages: { current: number; pageSize: number; total: number };
+    sorters: { field: string; order: string };
+    props: any;
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    setDataSource: React.Dispatch<React.SetStateAction<any[]>>;
+    setPage: React.Dispatch<React.SetStateAction<any>>;
+    setEventColum: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+const getColumns = (tableColumns: EventTableColumn[]): any => {
+    const result = [];
+    for (const tableColumn of tableColumns) {
+        if (tableColumn.key === 'rankId') {
+            result.push({ title: tableColumn.name, dataIndex: tableColumn.key });
+        } else if (tableColumn.key === 'start') {
+            result.push({ title: tableColumn.name, dataIndex: 'startTime', ...getDefaultColumData('startTime') });
+        } else {
+            result.push({ title: tableColumn.name, dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key) });
+        }
+    }
+    return result;
+};
+
+const defaultPage = { current: 1, pageSize: 10, total: 0 };
+const defaultSorter = { field: 'duration', order: 'descend' };
+export const EventDetail = observer((props: any) => {
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
+    const [isLoading, setLoading] = useState(false);
+    const [eventColum, setEventColum] = useState<string[]>([]);
+    const [rowData, setRowData] = useState<any>({});
+    const [allCondition, setAllCondition] = useState({ showEvent: props.session.showEvent, page, sorter, selectedUnits: props.session.selectedUnits });
+
+    useEffect(() => {
+        setAllCondition({ ...allCondition, page, sorter, selectedUnits: props.session.selectedUnits });
+    }, [sorter, page.current, page.pageSize, props.session.selectedUnits]);
+    useEffect(() => {
+        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, selectedUnits: props.session.selectedUnits });
+    }, [props.session.showEvent]);
+
+    useEffect(() => {
+        if (props.session.selectedUnits === undefined || props.session.selectedUnits.length === 0) {
+            setDataSource([]);
+            setPage(defaultPage);
+            setSorter(defaultSorter);
+            setEventColum([]);
+            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter, selectedUnits: props.session.selectedUnits });
+            return;
+        }
+        updateData({ pages: allCondition.page, sorters: allCondition.sorter, props, setLoading, setDataSource, setPage, setEventColum });
+    }, [allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
+        allCondition.sorter.field, allCondition.sorter.order, allCondition.selectedUnits]);
+
+    useEffect(() => {
+        if (rowData.name !== null && rowData.name !== undefined) {
+            handleSelected(rowData, props);
+        }
+    }, [rowData]);
+
+    const eventColumns = generateEventColumns(eventColum, setRowData);
+
+    return (
+        <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
+            <ResizeTable
+                onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
+                    if (extra.action === 'sort') {
+                        setSorter(newsorter as typeof sorter);
+                    }
+                }}
+                pagination={GetPageData(page, setPage)}
+                dataSource={dataSource}
+                columns={eventColumns}
+                size="small"
+                loading={isLoading}
+                rowClassName={'click-able'}
+            />
+        </div>
+    );
+});
+
+const updateData = async ({
+    pages,
+    sorters,
+    props,
+    setLoading,
+    setDataSource,
+    setPage,
+    setEventColum,
+}: UpdateDatas): Promise<void> => {
+    setLoading(true);
+    const res = await searchData(pages, sorters, props).finally(() => setLoading(false));
+    const data = res.eventDetails.map((item: any) => {
+        item.startTime = getDetailTimeDisplay(item.start);
+        return item;
+    });
+    setEventColum(getColumns(res.columnList));
+    setDataSource(data);
+    setPage((prevPage: any) => ({ ...pages, total: res.count }));
+};
+
+const generateEventColumns = (
+    eventColum: string[],
+    setRowData: React.Dispatch<React.SetStateAction<any>>,
+): any[] => [
+    ...eventColum,
+    {
+        title: 'Click To Timeline',
+        dataIndex: 'click',
+        key: 'click',
+        ellipsis: true,
+        render: (_: any, record: any) => (
+            <Button type="link" onClick={(): void => setRowData(record)}>click</Button>
+        ),
+    },
+];
+
+const handleSelected = async(rowData: any, props: any): Promise<void> => {
+    const res = await queryOneKernel({
+        rankId: (props.session.selectedUnits?.[0]?.metadata as ThreadMetaData).cardId as string,
+        name: rowData.name,
+        timestamp: rowData.start,
+        duration: rowData.duration,
+    });
+    runInAction(() => {
+        props.session.locateUnit = {
+            target: (unit: any): boolean => {
+                return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
+            },
+            onSuccess: (unit: InsightUnit): void => {
+                const startTime = rowData.start - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
+                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                props.session.selectedData = {
+                    id: res.id,
+                    startTime,
+                    name: rowData.name,
+                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
+                    duration: rowData.duration,
+                    depth: res.depth,
+                    threadId: res.threadId,
+                    startRecordTime: props.session.startRecordTime,
+                    metaType: res.pid,
+                    showDetail: false,
+                };
+            },
+        };
+    });
+};
+
+const searchData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<EventTableData> => {
+    const requestData = prop.session.selectedUnits?.[0]?.metadata as ThreadMetaData;
+    return await eventViewData({
+        rankId: requestData.cardId as string,
+        pageSize: pages.pageSize,
+        currentPage: pages.current,
+        orderBy: sorters.field === 'startTime' ? 'start' : sorters.field ?? defaultSorter.field,
+        order: sorters.order ?? defaultSorter.order,
+        pid: requestData.processId as string,
+        tid: requestData.threadId as string,
+        threadName: requestData.threadName,
+        processName: requestData.processName as string,
+        metaType: requestData.metaType as string,
+    });
+};
