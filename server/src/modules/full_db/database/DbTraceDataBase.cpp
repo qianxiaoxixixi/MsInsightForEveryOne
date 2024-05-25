@@ -1908,6 +1908,10 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
 bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
     uint64_t minTimestamp)
 {
-    return false;
+    auto stmt = CreatPreparedStatement();
+    if (stmt == nullptr) {
+        return false;
+    }
+    return TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp);
 }
 }

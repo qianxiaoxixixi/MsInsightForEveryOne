@@ -361,10 +361,10 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <Sqlit
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa "
         "LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
-        "WHERE pid = ? UNION "
+        "WHERE pid||'' = ? UNION "
         "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, (globalTid & 0xFFFFFFFF) AS tid, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
-        "WHERE pid = ? ";
+        "WHERE pid||'' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
 }
 
@@ -424,7 +424,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <Sqlit
 std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
-    std::string sql = "SELECT si.value AS name, startNs, endNs - startNs as duration, "
+    std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
         "'Stream '||streamId as threadName, "
         "'Rank '||deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
@@ -435,7 +435,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <Sqli
 std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
-    std::string sql = "SELECT si.value AS name, startNs, endNs - startNs as duration, "
+    std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
         "'Stream '||streamId as threadName, 'Rank '||deviceId AS rankId FROM  TASK AS main "
         "LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) "
@@ -486,6 +486,122 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4OverlapSub(std::unique_ptr <Sq
     std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName,"
                       "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? AND type = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.tid);
+}
+
+std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    // 根据泳道的类型，分别调用不同的query语句
+    std::string processName = params.processName;
+    if (StringUtil::StartWith(processName, "process")) {
+        return QueryEventsView4Process(stmt, orderByCondition, params);
+    } else if (StringUtil::StartWith(processName, "Thread")) {
+        if (params.tid.empty() && params.threadName.empty()) {
+            return QueryEventsView4Thread(stmt, orderByCondition, params);
+        } else if (params.threadName == "hccl") {
+            return QueryEventsView4HostHccl(stmt, orderByCondition, params);
+        }
+    } else if (StringUtil::StartWith(processName, "CANN")) {
+        if (params.tid.empty() && params.threadName.empty()) {
+            return QueryEventsView4CANN(stmt, orderByCondition, params);
+        } else {
+            return QueryEventsView4SubCANN(stmt, orderByCondition, params);
+        }
+    }
+}
+
+void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+{
+    auto metaType = TraceDatabaseHelper::GetProcessType(params.metaType);
+    std::vector<std::unique_ptr<EventDetail>> details;
+    while (resultSet->Next()) {
+        auto ptr = std::make_unique<EventDetail>();
+        // 根据泳道类型，创建对应子类对象的指针，填充特有数据
+        if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API) {
+            auto hostPtr = std::make_unique<HostEventDetail>();
+            hostPtr->tid = resultSet->GetString("tid");
+            hostPtr->pid = resultSet->GetString("pid");
+            ptr = std::move(hostPtr);
+        } else {
+            auto devicePtr = std::make_unique<DeviceEventDetail>();
+            devicePtr->threadName = resultSet->GetString("threadName");
+            devicePtr->rankId =  resultSet->GetString("rankId");
+            ptr = std::move(devicePtr);
+        }
+        // 父类指针，填充公共数据
+        ptr->name = resultSet->GetString("name");
+        ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
+        ptr->duration = resultSet->GetUint64("duration");
+        details.emplace_back(std::move(ptr));
+    }
+    body.count = details.size();
+    body.currentPage = params.currentPage;
+    body.pageSize = params.pageSize;
+    // 计算分页信息，获取对应分页的数据
+    auto indexStart = (params.currentPage - 1) * params.pageSize;
+    auto indexEnd = indexStart + params.pageSize;
+    indexEnd = indexEnd > details.size() ? details.size() : indexEnd;
+    for (int i = indexStart; i <indexEnd; ++i) {
+        body.eventDetailList.emplace_back(std::move(details.at(i)));
+    }
+}
+
+bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+{
+    std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
+    if (!StringUtil::CheckSqlValid(orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        return false;
+    }
+    std::string order = params.order == "descend" ? "DESC" : "ASC";
+    std::string orderByCondition = " ORDER BY " + orderBy + " " + order;
+
+    auto metaType = GetProcessType(params.metaType);
+    std::unique_ptr <SqliteResultSet> resultSet;
+    try {
+        switch (metaType) { // 根据不同的泳道类型，调用不同的query查询数据表
+            case Protocol::PROCESS_TYPE::API:
+                resultSet = QueryEventsView4Pytorch(stmt, orderByCondition, params);
+                break;
+            case Protocol::PROCESS_TYPE::CANN_API:
+                resultSet = GetEventsViewResult4CANNAPI(stmt, orderByCondition, params);
+                break;
+            case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
+                if (params.tid.empty() && params.threadName.empty()) {
+                    resultSet = QueryEventsView4Hardware(stmt, orderByCondition, params);
+                } else {
+                    resultSet = QueryEventsView4Stream(stmt, orderByCondition, params);
+                }
+                break;
+            case Protocol::PROCESS_TYPE::HCCL:
+                if (params.tid.empty() && params.threadName.empty()) {
+                    resultSet = QueryEventsView4DeviceHCCL(stmt, orderByCondition, params);
+                } else {
+                    resultSet = QueryEventsView4Group(stmt, orderByCondition, params);
+                }
+                break;
+            case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
+                if (params.tid.empty() && params.threadName.empty()) {
+                    resultSet = QueryEventsView4Overlap(stmt, orderByCondition, params);
+                } else {
+                    resultSet = QueryEventsView4OverlapSub(stmt, orderByCondition, params);
+                }
+        }
+    } catch (DatabaseException &de) {
+        ServerLog::Error("QueryEventsViewData4Db. Execute query failed: ", de.What());
+        return false;
+    }
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryEventsViewData4Db. Sqlite result set is null.");
+        return false;
+    }
+    // 解析查询结果，并封装到Response body中
+    ResolveEventsViewResultSet4Db(resultSet, params, body, minTimestamp);
+    for (const auto &item: eventsViewColumnsMap.at(metaType)) {
+        body.columnList.emplace_back(item);
+    }
 }
 
 /* Functions for JsonTraceDataBase */
