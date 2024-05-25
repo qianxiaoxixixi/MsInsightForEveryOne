@@ -344,7 +344,8 @@ static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<Sqli
     }
 static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::unique_ptr<SqlitePreparedStatement> &stmt,
      const Protocol::UnitThreadsOperatorsParams &requestParams, uint64_t minTimestamp, const std::string& orderBy);
-
+static bool QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
 /* Functions for JsonTraceDataBase */
 static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
