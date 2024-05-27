@@ -1913,7 +1913,7 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         ServerLog::Error("Fail to prepare sql for AICpuOpExceedThreshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for AICpuOpExceedThreshold.", stmt->GetErrorMessage());
         return false;
