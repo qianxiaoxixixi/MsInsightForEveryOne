@@ -44,12 +44,6 @@ export interface MemoryCurve {
      * @memberof MemoryCurve
      */
     lines: Array<Array<number | string>>;
-    /**
-     *
-     * @type {string}
-     * @memberof MemoryCurve
-     */
-    token?: string;
 }
 
 /**
@@ -69,7 +63,6 @@ export interface OperatorMemory {
      * @type {string}
      * @memberof OperatorMemory
      */
-    token: string;
     /**
      *
      * @type {number}
@@ -228,10 +221,6 @@ export interface OperatorMemoryCondition {
      * 结束时间
      */
     endTime?: number;
-    /**
-     * token信息
-     */
-    token: string;
     /**
      * 当前页
      */

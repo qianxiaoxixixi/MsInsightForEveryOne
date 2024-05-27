@@ -25,6 +25,7 @@ const App = observer(() => {
         session = sessionStore.activeSession;
         window.setTheme(true);
         getLanguage();
+        connector.send({ event: 'getParseStatus', body: { from: 'Operator', request: 'operatorRankIds' } });
     }, []);
 
     const getLanguage = (): void => {

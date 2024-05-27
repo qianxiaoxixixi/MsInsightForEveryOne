@@ -24,6 +24,8 @@ export class Session {
     isBinary: boolean | null = false;
     coreList: string[] = [];
     sourceList: string[] = [];
+    memoryRankIds: string[] = [];
+    operatorRankIds: string[] = [];
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
@@ -60,6 +62,8 @@ export class Session {
             this.isCluster = false;
             this.isBinary = false;
         }
+        this.memoryRankIds = [];
+        this.operatorRankIds = [];
     }
 };
 
