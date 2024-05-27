@@ -11,7 +11,6 @@ import ResizeTable from 'lib/ResizeTable';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { RankFilter } from './SystemView';
 import { Space } from 'antd/lib/index';
-import type { CardMetaData } from '../../entity/data';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 
 export interface SearchTableData {
@@ -90,26 +89,24 @@ const FindDetail = observer((props: any) => {
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [isLoading, setLoading] = useState(false);
-    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
+    const [allCondition, setAllCondition] = useState({ doContextSearch: props.session.doContextSearch, page, sorter, selectRank: props.rankId });
 
     useEffect(() => {
-        updateData(page, sorter, props);
-    }, [sorter, props.rankId, page.current, page.pageSize, props.session.doContextSearch]);
-
+        setAllCondition({ ...allCondition, page, sorter });
+    }, [sorter, page.current, page.pageSize]);
     useEffect(() => {
-        if (status === 'download') {
-            updateData(page, sorter, props);
-        }
-    }, [status]);
+        setAllCondition({ ...allCondition, doContextSearch: props.session.doContextSearch, page: defaultPage, selectRank: props.rankId });
+        setPage(defaultPage);
+    }, [props.session.doContextSearch, props.rankId]);
+    useEffect(() => {
+        updateData(allCondition.page, allCondition.sorter, props);
+    }, [allCondition.sorter, allCondition.selectRank, allCondition.page.current, allCondition.page.pageSize, allCondition.doContextSearch]);
     const updateData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
-        if (props.rankId === undefined || props.rankId === '') {
+        if (props.rankId === undefined || props.rankId === '' || prop.session.searchData?.content === '') {
             setDataSource([]);
             setPage(defaultPage);
-            return;
-        }
-        if (prop.session.searchData === undefined || prop.session.searchData?.content === '') {
-            setDataSource([]);
-            setPage(defaultPage);
+            setSorter(defaultSorter);
+            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter });
             return;
         }
         setLoading(true);
