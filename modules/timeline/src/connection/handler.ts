@@ -109,6 +109,10 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
                 session.units.push(unit);
             });
             session.sortUnits();
+            if (result.reset === true) {
+                session.memoryRankIds = [];
+                session.operatorRankIds = [];
+            }
         });
         connector.send({
             event: 'updateSession',
@@ -178,6 +182,8 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             clearTimeMarkerFlags(session);
             session.doReset = !session.doReset;
         });
+        session.memoryRankIds = [];
+        session.operatorRankIds = [];
     } catch (error) {
         console.error(error);
     }
@@ -285,6 +291,13 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         clearTimeMarkerFlags(session);
         clearIpynbInfo(session);
         connector.send({ event: 'deleteRank', body: { rankId: removeCardIds } });
+        if (removeCardIds.length > 0) {
+            const memoryRankIds = session.memoryRankIds.filter((item: string) => !removeCardIds?.includes(item));
+            session.memoryRankIds = memoryRankIds;
+            const operatorRankIds = session.operatorRankIds.filter((item: string) => !removeCardIds?.includes(item));
+            session.operatorRankIds = operatorRankIds;
+            connector.send({ event: 'updateSession', body: { operatorRankIds, memoryRankIds, broadcast: false } });
+        }
     } catch (error) {
         console.error(error);
     }
@@ -363,4 +376,36 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
         });
     }
     i18n.changeLanguage(lang);
+};
+
+export const parseMemorySuccessHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        const memoryResult = data.memoryResult as Array<{ rankId: string;hasMemory: boolean }>;
+        const memoryRankIds: string[] = [];
+        memoryResult.forEach(item => {
+            if (item.hasMemory) {
+                memoryRankIds.push(item.rankId);
+            }
+        });
+        session.memoryRankIds = memoryRankIds;
+        connector.send({ event: 'updateSession', body: { memoryRankIds, broadcast: false } });
+    });
+};
+
+export const parseOperatorSuccessHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        const ids = [...session.operatorRankIds, String(data.rankId)].sort((a, b) => Number(a) - Number(b));
+        session.operatorRankIds = ids;
+        connector.send({ event: 'updateSession', body: { operatorRankIds: session.operatorRankIds, broadcast: false } });
+    });
 };

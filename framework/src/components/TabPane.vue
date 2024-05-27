@@ -145,13 +145,14 @@ function registerEventListeners() {
         setSession(updateState);
         setTimeout(() => {
             const isSend =
-                updateState.parseCompleted !== undefined ||
-                updateState.clusterCompleted !== undefined ||
-                updateState.unitcount !== undefined ||
-                updateState.isBinary ||
-                updateState.durationFileCompleted ||
-                updateState.isIpynb ||
-                updateState.ipynbUrl !== '';
+                (updateState.parseCompleted !== undefined ||
+                    updateState.clusterCompleted !== undefined ||
+                    updateState.unitcount !== undefined ||
+                    updateState.isBinary ||
+                    updateState.durationFileCompleted ||
+                    updateState.isIpynb ||
+                    updateState.ipynbUrl !== '')
+                && receiver.broadcast !== false;
             if (isSend) {
                 connector.send({
                     event: 'updateSession',
@@ -166,12 +167,32 @@ function registerEventListeners() {
         });
     });
 
-    connector.addListener('getParseStatus', () => {
+    connector.addListener('getParseStatus', (e) => {
+        const receiver = e.data.body;
         if (session.isIpynb === true) {
             connector.send({
-              event: 'module.reset',
-              body: {}
+                event: 'module.reset',
+                body: {}
             });
+        }
+        if (receiver?.request !== undefined) {
+            let val = {};
+            switch (receiver.request) {
+                case 'memoryRankIds':
+                    val = {memoryRankIds: session.memoryRankIds};
+                    break;
+                case 'operatorRankIds':
+                    val = {operatorRankIds: session.operatorRankIds};
+                    break;
+                default:
+                    break;
+            }
+            connector.send({
+                event: 'updateSession',
+                body: val,
+                to: getTabIndex(receiver?.from),
+            });
+            return;
         }
         connector.send({
             event: 'updateSession',
@@ -236,6 +257,11 @@ function registerEventListeners() {
             body: { lang: localStorageService.getItem(LocalStorageKeys.LANGUAGE) || 'enUS' },
         });
     });
+}
+
+function getTabIndex(name: '') {
+    const tabs = modulesConfig.filter(moduleConfig => isShow(moduleConfig) && !session.isVscode);
+    return tabs.findIndex(item => item.name === name);
 }
 
 function updateScene() {
