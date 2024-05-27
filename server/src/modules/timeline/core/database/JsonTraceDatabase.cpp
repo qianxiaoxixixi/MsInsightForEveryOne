@@ -1841,7 +1841,10 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         sameOperatorsDetail.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
-        sameOperatorsDetail.depth = resultSet->GetUint64(col++);
+        auto trackId = resultSet->GetUint64("track_id");
+        std::unordered_map<uint64_t, int32_t> depthCache =
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+        sameOperatorsDetail.depth = depthCache[std::atoll(sameOperatorsDetail.id.c_str())];
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
     responseBody.currentPage = requestParams.current;
