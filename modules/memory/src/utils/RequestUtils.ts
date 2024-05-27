@@ -17,6 +17,6 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
  * @param params 查询条件
  * @returns {OperatorDetail[]} 查询结果
  */
-export const memoryCurveGet = async (params: {rankId: string; type: string; token: string}): Promise<MemoryCurve> => {
+export const memoryCurveGet = async (params: {rankId: string; type: string }): Promise<MemoryCurve> => {
     return window.request({ command: 'Memory/view/memoryUsage', params });
 };

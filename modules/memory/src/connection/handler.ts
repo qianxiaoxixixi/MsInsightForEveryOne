@@ -12,7 +12,6 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
             if (!session) {
                 return;
             }
-            session.token = data.token as string;
             const memoryResult = data.memoryResult as RankInfo[];
             const isCluster = data.isCluster as boolean;
             if (!isCluster && !session.isCluster) {
@@ -82,10 +81,16 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             if (!session) {
                 return;
             }
-            const keys: string[] = ['isCluster', 'unitcount'];
-            keys.forEach((key: string) => {
-                if (data[key] !== undefined) {
-                    Object.assign(session, { [key]: data[key] });
+            const dataKeys = Object.keys(data);
+            const usableKeys: string[] = ['isCluster', 'unitcount'];
+            dataKeys.forEach((key: any) => {
+                if (key === 'memoryRankIds') {
+                    const memoryRankIds = data.memoryRankIds as string[];
+                    session.memoryRankIds = [...new Set([...session.memoryRankIds, ...memoryRankIds])];
+                    return;
+                }
+                if (usableKeys.includes(key)) {
+                    (session as any)[key] = data[key];
                 }
             });
         });
