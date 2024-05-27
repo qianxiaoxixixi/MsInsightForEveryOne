@@ -115,6 +115,8 @@ export class Session {
 
     zoom: {zoomCount: number; zoomPoint?: number | undefined} | undefined;
     doReset: boolean = false;
+    memoryRankIds: string[] = [];
+    operatorRankIds: string[] = [];
     private readonly _domain: Domain;
     private _selectedUnitKeys: [string] | [] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.

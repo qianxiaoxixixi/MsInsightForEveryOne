@@ -28,6 +28,7 @@ export const App = observer(() => {
         getLanguage();
         themeInstance.setCurrentTheme('dark');
         window.setTheme(true);
+        connector.send({ event: 'getParseStatus', body: { from: 'Memory', request: 'memoryRankIds' } });
     }, []);
 
     if (!hasListenerRef.current) {

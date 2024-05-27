@@ -22,6 +22,10 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
             if (sessionKeys.includes(key)) {
                 (session as any)[key] = data[key];
             }
+            if (key === 'operatorRankIds') {
+                const ids = [...session.allRankIds, ...data[key] as string[]].sort((a, b) => Number(a) - Number(b));
+                session.allRankIds = ids;
+            }
         });
         session.renderId = session.renderId++ % 1000;
     });

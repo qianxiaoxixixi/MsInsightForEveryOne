@@ -93,7 +93,6 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         let param: OperatorMemoryCondition = {
             rankId,
             type: groupId,
-            token: session.token,
             currentPage: tempCurrent,
             pageSize,
             searchName,
@@ -181,7 +180,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             return;
         }
         setCurveSpin(true);
-        memoryCurveGet({ rankId, type: groupId, token: session.token }).then((resp) => {
+        memoryCurveGet({ rankId, type: groupId }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryCurveData(resp);
