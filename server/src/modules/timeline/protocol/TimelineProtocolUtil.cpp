@@ -395,6 +395,9 @@ template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const E
         JsonUtil::AddMember(itemJson, "name", item->name, allocator);
         JsonUtil::AddMember(itemJson, "start", item->startTime, allocator);
         JsonUtil::AddMember(itemJson, "duration", item->duration, allocator);
+        JsonUtil::AddMember(itemJson, "depth", item->depth, allocator);
+        JsonUtil::AddMember(itemJson, "threadId", item->threadId, allocator);
+        JsonUtil::AddMember(itemJson, "processId", item->processId, allocator);
         if (dynamic_cast<HostEventDetail*>(item.get())) {
             auto detail = dynamic_cast<HostEventDetail*>(item.get());
             JsonUtil::AddMember(itemJson, "tid", detail->tid, allocator);

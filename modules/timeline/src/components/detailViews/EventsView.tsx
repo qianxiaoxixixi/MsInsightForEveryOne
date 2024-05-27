@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
-import { eventViewData, getDefaultColumData, GetPageData, queryOneKernel } from './Common';
+import { eventViewData, getDefaultColumData, GetPageData } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
@@ -158,31 +158,23 @@ const generateEventColumns = (
 ];
 
 const handleSelected = async(rowData: any, props: any): Promise<void> => {
-    const res = await queryOneKernel({
-        rankId: (props.session.selectedUnits?.[0]?.metadata as ThreadMetaData).cardId as string,
-        name: rowData.name,
-        timestamp: rowData.start,
-        duration: rowData.duration,
-    });
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
-                return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
+                return unit.metadata.threadId === rowData.threadId && unit.metadata.processId === rowData.processId;
             },
             onSuccess: (unit: InsightUnit): void => {
                 const startTime = rowData.start - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
-                    id: res.id,
                     startTime,
                     name: rowData.name,
                     color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
                     duration: rowData.duration,
-                    depth: res.depth,
-                    threadId: res.threadId,
+                    depth: rowData.depth,
+                    threadId: rowData.threadId,
                     startRecordTime: props.session.startRecordTime,
-                    metaType: res.pid,
                     showDetail: false,
                 };
             },

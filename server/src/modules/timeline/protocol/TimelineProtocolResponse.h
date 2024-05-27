@@ -331,6 +331,9 @@ public:
     std::string name;
     uint64_t startTime = 0;
     uint64_t duration = 0;
+    uint64_t depth = 0;
+    std::string threadId;
+    std::string processId;
 };
 
 class HostEventDetail : public EventDetail {

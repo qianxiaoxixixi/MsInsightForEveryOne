@@ -510,11 +510,12 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <Sqlit
 {
     // pid匹配的入参为globalTid的高32位
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa "
-        "LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, "
+        "'pytorch' as threadId FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
         "WHERE pid||'' = ? UNION "
         "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, (globalTid & 0xFFFFFFFF) AS tid, "
-        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "(globalTid / 4294967296) AS pid, depth, globalTid as processId, type as threadId "
+        "FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
         "WHERE pid||'' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
 }
@@ -523,11 +524,12 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <Sqlite
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, "
-        "(globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, "
+        "'pytorch' as threadId FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
         "WHERE globalTid = ? UNION "
         "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, (globalTid & 0xFFFFFFFF) AS tid, "
-        "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "(globalTid / 4294967296) AS pid, depth, globalTid as processId, type as threadId "
+        "FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
         "WHERE globalTid = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
 }
@@ -536,7 +538,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Pytorch(std::unique_ptr <Sqlit
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'pytorch' as threadId, "
         "(globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
         "WHERE globalTid = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
@@ -546,7 +548,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4HostHccl(std::unique_ptr <Sqli
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
         "WHERE globalTid = ? AND ca.type = 5500 ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
@@ -556,7 +558,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4CANN(std::unique_ptr <SqlitePr
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
         "WHERE globalTid = ? AND ca.type IN (5000, 10000, 15000, 20000) ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
@@ -566,7 +568,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <Sqlit
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT value AS name, startNs AS start, (endNs - startNs) AS duration, "
-        "(globalTid & 0xFFFFFFFF) AS tid, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
         "WHERE globalTid = ? AND ca.type = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.tid);
@@ -576,7 +578,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <Sqli
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
-        "'Stream '||streamId as threadName, "
+        "'Stream '||streamId as threadName, depth, 'Ascend Hardware' as processId, streamId as threadId, "
         "deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) WHERE main.deviceId = ? ";
@@ -587,7 +589,8 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
     std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
-        "'Stream '||streamId as threadName, deviceId AS rankId FROM  TASK AS main "
+        "'Stream '||streamId as threadName, deviceId AS rankId, depth, 'Ascend Hardware' as processId, "
+        "streamId as threadId FROM TASK AS main "
         "LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) "
         "WHERE main.deviceId = ? AND main.streamId = ? ";
@@ -602,7 +605,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <Sq
         "sub as (select startNs, endNs-startNs as duration, si.value as name, groupName "
         "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
         "where opId in (select opId from tmp group by opId)) "
-        "select name, startNs as start, duration, "
+        "select name, startNs as start, duration, 0 as depth, 'HCCL' as processId, groupName||'group' as threadId, "
         "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
         "? AS rankId from sub ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.rankId);
@@ -616,7 +619,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqliteP
         "sub as (select startNs, endNs-startNs as duration, si.value as name, groupName "
         "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
         "where opId in (select opId from tmp group by opId)) "
-        "select name, startNs as start, duration, "
+        "select name, startNs as start, duration, 0 as depth, 'HCCL' as processId, groupName||'group' as threadId, "
         "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
         "? AS rankId from sub WHERE groupName||'group' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
@@ -626,7 +629,8 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqliteP
 std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
-    std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName,"
+    std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName, "
+                      "0 as depth, 'OVERLAP_ANALYSIS' as processId, type as threadId, "
                       "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId);
 }
@@ -634,7 +638,8 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <Sqlit
 std::unique_ptr <SqliteResultSet> QueryEventsView4OverlapSub(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
-    std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName,"
+    std::string sql = "select type AS name, startNs as start, endNs - startNs as duration, type AS threadName, "
+                      "0 as depth, 'OVERLAP_ANALYSIS' as processId, type as threadId, "
                       "deviceId AS rankId from OVERLAP_ANALYSIS where deviceId = ? AND type = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.tid);
 }
@@ -684,6 +689,9 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
         ptr->name = resultSet->GetString("name");
         ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
         ptr->duration = resultSet->GetUint64("duration");
+        ptr->depth = resultSet->GetUint64("depth");
+        ptr->threadId = resultSet->GetString("threadId");
+        ptr->processId = resultSet->GetString("processId");
         details.emplace_back(std::move(ptr));
     }
     body.count = details.size();
@@ -781,16 +789,18 @@ std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams
     switch (metaType) {
         case Protocol::PROCESS_TYPE::API:
         case Protocol::PROCESS_TYPE::CANN_API:
-            baseSql = "SELECT name, timestamp AS start, duration, tid, pid FROM slice AS s "
-                      "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
+            baseSql = "SELECT id, name, timestamp AS start, duration, tid, pid, s.track_id, tid AS threadId, "
+                      "pid AS processId FROM slice AS s LEFT JOIN thread AS t ON s.track_id = t.track_id ";
             break;
         case Protocol::PROCESS_TYPE::HCCL:
-            baseSql = "SELECT name, timestamp AS start, duration, thread_name AS threadName FROM slice AS s "
+            baseSql = "SELECT id, name, timestamp AS start, duration, thread_name AS threadName, s.track_id, "
+                      "tid AS threadId, pid AS processId FROM slice AS s "
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id AND threadName NOT LIKE 'Plane%' ";
             break;
         case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
         case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
-            baseSql = "SELECT name, timestamp AS start, duration, thread_name AS threadName FROM slice AS s "
+            baseSql = "SELECT id, name, timestamp AS start, duration, thread_name AS threadName, s.track_id, "
+                      "tid AS threadId, pid AS processId FROM slice AS s "
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
             break;
         default:
@@ -805,6 +815,7 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
     // 封装结果
     auto metaType = GetProcessTypeByProcessName(params.processName);
     std::vector<std::unique_ptr<EventDetail>> details;
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API) {
@@ -821,6 +832,14 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
         ptr->name = resultSet->GetString("name");
         ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
         ptr->duration = resultSet->GetUint64("duration");
+        ptr->threadId = resultSet->GetString("threadId");
+        ptr->processId = resultSet->GetString("processId");
+        auto track_id = resultSet->GetUint64("track_id");
+        if (depthMap.count(track_id) == 0) {
+            depthMap.emplace(track_id,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
+        }
+        ptr->depth = depthMap[track_id][resultSet->GetUint64("id")];
         details.emplace_back(std::move(ptr));
     }
     body.count = details.size();
