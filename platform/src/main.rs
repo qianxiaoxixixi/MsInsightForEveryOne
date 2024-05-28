@@ -299,7 +299,11 @@ fn is_admin() -> bool {
 }
 
 fn main() {
-    let cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
+    let mut cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
+    let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
+    #[cfg(windows)] {
+        cache_path = root_path.join(".ascend_insight");//fix windows permission error.
+    }
     std::fs::create_dir_all(cache_path.as_path()).expect("no permission to create cache_path");
     #[cfg(windows)] {
         let mut webview_path = cache_path.clone();
@@ -308,7 +312,6 @@ fn main() {
         }
         env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_path.as_path());
     }
-    let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
 
     if wry::webview::webview_version().is_err() {
         #[cfg(windows)] {
