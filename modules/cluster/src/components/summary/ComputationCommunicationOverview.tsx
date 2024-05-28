@@ -247,6 +247,16 @@ export const useHit = (): React.ReactElement => {
     </Tooltip>);
 };
 
+async function GetTopSummary(conditions: ConditionDataType): Promise<SummaryDataType[]> {
+    const res: any = await queryTopSummary(conditions);
+    const { summaryList } = res;
+    if (conditions.orderBy === 'computingTime') {
+        summaryList.sort((a: any, b: any) =>
+            b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);
+    }
+    return summaryList;
+};
+
 const ComputationCommunicationOverview = observer(({ session }: { session: Session }): JSX.Element => {
     const [dataSource, setDatasource] = useState<SummaryDataType[]>([]);
     const [allDataSource, setAllDatasource] = useState<SummaryDataType[]>([]);
@@ -276,18 +286,15 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
             data = data.slice(0, conditions.top);
             setDatasource(data);
             setSelected({ ...selected, step: conditions.step, rankId: data[0]?.rankId });
+            setChartRankId(data[0]?.rankId);
             return;
         }
-        const res: any = await queryTopSummary(conditions);
-        const { summaryList } = res;
-        if (conditions.orderBy === 'computingTime') {
-            summaryList.sort((a: any, b: any) =>
-                b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);
-        }
+        const summaryList: any = await GetTopSummary(conditions);
         const data = [...summaryList];
         setAllDatasource(data);
         setDatasource(conditions.top === 0 ? summaryList : summaryList.slice(0, conditions.top));
         setSelected({ ...selected, step: conditions.step, rankId: data[0]?.rankId });
+        setChartRankId(data[0]?.rankId);
     };
 
     const handleClick = (param: any): void => {
