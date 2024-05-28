@@ -707,6 +707,7 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
         for (const auto &item: body.eventDetailList) {
             auto overlapPtr = dynamic_cast<DeviceEventDetail*>(item.get());
             if (overlapPtr) {
+                overlapPtr->name = analysisType.at(overlapPtr->name);
                 overlapPtr->threadName = analysisType.at(overlapPtr->threadName);
             }
         }
