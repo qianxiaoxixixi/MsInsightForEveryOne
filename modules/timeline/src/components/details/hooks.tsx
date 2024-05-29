@@ -9,6 +9,7 @@ import { platform } from '../../platforms';
 import { Logger } from '../../utils/Logger';
 import { EMPTY_TABLE_STATE, TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
+import i18n from '../../i18n';
 
 const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigger: any[], depsList: unknown[]): boolean => {
     const [triggerHook, setTriggerHook] = React.useState(false);
@@ -37,6 +38,7 @@ const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigge
     return triggerHook;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unknown> | undefined, tabState: TabState | undefined, dep: unknown = [], onDataLoaded?: (data: unknown[]) => void): TableState => {
     const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedRange, selectedDetailKeys } = session;
@@ -65,19 +67,29 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
                 if (tabState?.data !== undefined && tabState?.filter !== undefined) {
                     runInAction(() => { tabState.data = result; });
                 } else {
-                    setState({ data: result, columns: parseColDef(detail, session, tabState ?? selectedUnit?.tabState), rowKey: (detail.rowKey ?? undefined) as (row: object) => string, onExpand: onExpandForChildren(session, detail.onExpand, setState), isLoading: false });
+                    const columns = parseColDef(detail, session, tabState ?? selectedUnit?.tabState).map(col => ({
+                        ...col,
+                        title: i18n.t(`sliceList.${col.title}`, { ns: 'timeline' }),
+                    }));
+                    setState({
+                        data: result,
+                        columns,
+                        rowKey: (detail.rowKey ?? undefined) as (row: object) => string,
+                        onExpand: onExpandForChildren(session, detail.onExpand, setState),
+                        isLoading: false,
+                    });
                     onDataLoaded?.(result);
                 }
             }).catch(() => {
                 setState(EMPTY_TABLE_STATE);
-                platform.dialog('error:4004');
+                platform.dialog(i18n.t('error:4004'));
             });
         } else {
             setState(EMPTY_TABLE_STATE);
         }
     };
 
-    React.useEffect(loadData, [selectedUnits, selectedRange, detail, ...trigger, ...depsList]);
+    React.useEffect(loadData, [selectedUnits, selectedRange, detail, ...trigger, ...depsList, session.language]);
     // 需要进行多选过滤的才会执行下面的代码
     React.useEffect(() =>
         autorun(() => {

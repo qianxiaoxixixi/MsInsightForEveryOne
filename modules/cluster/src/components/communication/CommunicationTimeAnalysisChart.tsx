@@ -12,6 +12,7 @@ import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import connector from '../../connection';
+import i18n from '../../i18n';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -95,7 +96,7 @@ function msToNs(value: number): number {
 }
 
 function getTipLineStr(name: string, value: string): string {
-    let html = `${name}`;
+    let html = `${i18n.t(`tableHead.${name}`, { ns: 'communication' })}: `;
     html += `<strong style="color: black">${safeStr((`${value}`))}</strong><br/>`;
     return html;
 }
@@ -104,10 +105,10 @@ const option: any = {
     tooltip: {
         formatter: function (params: {marker: any; name: any; value: any[] }) {
             let tooltipMarkup = `${params.marker} `;
-            tooltipMarkup += getTipLineStr('Rank ID: ', `${params.value[0]}`);
-            tooltipMarkup += getTipLineStr('Operator Name: ', `${params.name}`);
-            tooltipMarkup += getTipLineStr('Start Time: ', `${numberToStr(params.value[1])}ms`);
-            tooltipMarkup += getTipLineStr('Elapse Time: ', `${numberToStr(params.value[3])}ms`);
+            tooltipMarkup += getTipLineStr('Rank ID', `${params.value[0]}`);
+            tooltipMarkup += getTipLineStr('Operator Name', `${params.name}`);
+            tooltipMarkup += getTipLineStr('Start Time', `${numberToStr(params.value[1])}ms`);
+            tooltipMarkup += getTipLineStr('Elapse Time', `${numberToStr(params.value[3])}ms`);
             return tooltipMarkup;
         },
     },

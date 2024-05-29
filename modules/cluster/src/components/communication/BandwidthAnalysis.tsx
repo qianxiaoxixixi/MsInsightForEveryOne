@@ -7,11 +7,13 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
+import type { PlainLegendComponentOption } from 'echarts';
 import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 import i18n from '../../i18n';
+import { cloneDeep } from 'lodash';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);
@@ -56,12 +58,13 @@ function wrapData(data: any): any {
 
 const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string;
     stage: string; }> = (props: any) => {
+    const { t } = useTranslation('communication');
     useEffect(() => {
         InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName, props.stage);
         InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName, props.stage);
         InitPacketAndBandwidthCharts('RDMA', props.iterationId, props.rankId, props.operatorName, props.stage);
         InitPacketAndBandwidthCharts('SIO', props.iterationId, props.rankId, props.operatorName, props.stage);
-    }, []);
+    }, [t]);
     return (
         <div className={'bandwidthChart'}>
             <Row wrap={false}>
@@ -144,12 +147,20 @@ async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
     }
 }
 
+const translateList = <T extends Record<string, any>>(list: T[]): T[] => {
+    return list.map((item: any) => ({
+        ...item,
+        name: i18n.t(item.name, { ns: 'communication' }),
+    }));
+};
+
 async function wrapBandwidthData(domId: string, iterationId: number,
     rankId: number, operatorName: string, stage: string): Promise<echarts.EChartsOption | null> {
     const distributionData = await getChartData(domId, iterationId, rankId, operatorName, stage);
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];
+    const bandwidthOptionClone = cloneDeep(bandwidthOption);
     // 如果返回内容为空字符串，说明数据库中不存在数据，此时，对应的带宽图做隐藏处理
     if (distributionData === '') {
         const chartDom = document.getElementById(domId);
@@ -182,10 +193,15 @@ async function wrapBandwidthData(domId: string, iterationId: number,
         packetSizeData.push(Number(packetSizeNumber.toFixed(4)));
         packetNumberData.push(packetNumber);
     }
-    (bandwidthOption.xAxis as CategoryAxisBaseOption).data = packetSizeData;
-    (bandwidthOption.series as echarts.SeriesOption[])[0].data = packetNumberData;
-    (bandwidthOption.series as echarts.SeriesOption[])[1].data = packetBandwidthData;
-    return bandwidthOption;
+
+    (bandwidthOptionClone.legend as PlainLegendComponentOption).data = translateList((bandwidthOptionClone.legend as PlainLegendComponentOption).data as []);
+    bandwidthOptionClone.series = translateList(bandwidthOptionClone.series as []);
+    bandwidthOptionClone.yAxis = translateList(bandwidthOptionClone.yAxis as []);
+    (bandwidthOptionClone.xAxis as CategoryAxisBaseOption).name = i18n.t((bandwidthOptionClone.xAxis as CategoryAxisBaseOption).name, { ns: 'communication' });
+    (bandwidthOptionClone.xAxis as CategoryAxisBaseOption).data = packetSizeData;
+    (bandwidthOptionClone.series as echarts.SeriesOption[])[0].data = packetNumberData;
+    (bandwidthOptionClone.series as echarts.SeriesOption[])[1].data = packetBandwidthData;
+    return bandwidthOptionClone;
 }
 
 export interface Distribution {
@@ -331,7 +347,7 @@ const useColumns = (): ColumnsType<DataType> => {
             ellipsis: true,
         },
         {
-            title: t('tableHead.LargePacketRatio'),
+            title: t('tableHead.Large Packet Ratio'),
             dataIndex: 'largePacketRatio',
             key: 'LargePacketRatio',
             align: 'center',

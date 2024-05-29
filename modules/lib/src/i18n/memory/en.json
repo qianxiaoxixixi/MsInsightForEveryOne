@@ -1,6 +1,11 @@
 {
   "memory": {
     "Invalid Size Warning": "Invalid Condition: The \"Max Size\" cannot be smaller than the \"Min Size\"",
+    "Time (ms)": "Time (ms)",
+    "Memory Usage (MB)": "Memory Usage (MB)",
+    "Operators Allocated": "Operator Allocated",
+    "Operators Reserved": "Operator Reserved",
+    "App Reserved": "App Reserved",
     "searchCriteria": {
       "RankId": "Rank ID",
       "GroupBy": "Group By",

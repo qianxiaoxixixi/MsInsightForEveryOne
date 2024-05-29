@@ -23,6 +23,14 @@
         ]
       }
     ],
+    "bandwidth": "带宽",
+    "transitSize": "传输大小",
+    "transportType": "链路方式",
+    "transitTime": "传输时长",
+    "operatorName": "算子名称",
+    "Packet Number": "包数量",
+    "Bandwidth(GB/s)": "带宽(GB/s)",
+    "Packet Size(MB)": "包大小(MB)",
     "Find in Timeline": "跳转至Timeline",
     "sessionTitle": {
       "MatrixModel": "通信矩阵",
@@ -46,18 +54,19 @@
       "TransitTime": "传输时长"
     },
     "tableHead": {
-      "RankID": "卡序号",
-      "StartTime": "开始时间",
-      "ElapseTime": "总时间",
-      "TransitTime":"传输时间",
-      "SynchronizationTime": "同步时间",
-      "WaitTime":"等待时间",
-      "SynchronizationTimeRatio": "同步时间占比",
-      "WaitTimeRatio":"等待时间占比",
-      "IdleTime": "空闲时间",
-      "BandwidthAnalysis":"带宽分析",
-      "LargePacketRatio": "大通信包占比",
-      "CommunicationOperatorsDetails": "通信算子详情",
+      "Operator Name": "算子名称",
+      "Rank ID": "卡序号",
+      "Start Time": "开始时间",
+      "Elapse Time": "总时间",
+      "Transit Time":"传输时间",
+      "Synchronization Time": "同步时间",
+      "Wait Time":"等待时间",
+      "Synchronization Time Ratio": "同步时间占比",
+      "Wait Time Ratio":"等待时间占比",
+      "Idle Time": "空闲时间",
+      "Bandwidth Analysis":"带宽分析",
+      "Large Packet Ratio": "大通信包占比",
+      "Communication Operators Details": "通信算子详情",
       "see more": "查看更多"
     }
   }
