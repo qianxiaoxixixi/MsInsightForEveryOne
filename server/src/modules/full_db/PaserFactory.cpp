@@ -96,6 +96,25 @@ void ParserAlloc::ParseEndCallBack(const std::string &token, const std::string &
     }
 }
 
+void ParserAlloc::ParseProgressCallBack(const std::string &token, const std::string &fileId, uint64_t parsedSize,
+    uint64_t totalSize, int progress)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
+    auto event = std::make_unique<ParseProgressEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.fileId = fileId;
+    event->body.parsedSize = parsedSize;
+    event->body.totalSize = totalSize;
+    event->body.progress = progress;
+    session->OnEvent(std::move(event));
+}
+
 void ParserAlloc::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
 {
     WsSession *session = WsSessionManager::Instance().GetSession(token);

@@ -73,6 +73,7 @@ private:
     static std::optional<document_t> ToParseClusterCompletedEventJson(const Event &event);
     static std::optional<document_t> ToParseClusterStep2CompletedEventJson(const Event &event);
     static std::optional<document_t> ToParseMemoryCompletedEventJson(const Event &event);
+    static std::optional<document_t> ToParseProgressEventJson(const Event &event);
 };
 } // namespace Protocol
 } // namespace Dic

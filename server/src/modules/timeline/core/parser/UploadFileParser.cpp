@@ -65,6 +65,9 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
         singleFileDataMap[fileId];
     }
     SingleFileData &singleFileData = singleFileDataMap.at(fileId);
+    if (fileProgressMap.count(fileId) == 0) {
+        fileProgressMap[fileId] = std::make_unique<FileProgress>(0, request.params.slice.count + 1);
+    }
 
     int sliceIndex = request.params.slice.index;
     if (sliceIndex > singleFileData.stringArray.size()) {
@@ -80,7 +83,12 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
     }
 
     // 处理分片json内容
-    std::string content = StringUtil::Decompress(request.params.text).value();
+    std::optional<std::string> deStr = StringUtil::Decompress(request.params.text);
+    if (!deStr.has_value()) {
+        ServerLog::Error("Failed to Decompress text,file: ", fileId, ",current index: ", sliceIndex);
+        return;
+    }
+    std::string content = deStr.value();
     const std::tuple<std::string, std::string, std::string> tuple = SplitValidJsonStr(content);
     const std::string middleJson = std::get<1>(tuple);
     size_t pos = middleJson.find('{');
@@ -95,6 +103,12 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
     singleFileData.stringArray[sliceIndex] = firstElement + thirdElement;
     ++singleFileData.currentSize;
     lock.unlock();
+
+    // 发送当前解析进度
+    std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];
+    curFileProgress->AddToParsedSize(1);
+    ParserAlloc::ParseProgressCallBack(request.token, fileId, curFileProgress->GetParsedSize(),
+                                       curFileProgress->GetTotalSize(), curFileProgress->GetProgressPercentage());
 
     bool isLast = request.params.slice.isLast;
     if (isLast) {
@@ -139,6 +153,13 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
     database->CreateIndex();
     database->UpdateSimulationDepthWithNoOverlap();
     SimulationSliceCacheManager::Instance().ClearCacheByFileId(fileId);
+
+    // 发送当前解析进度
+    std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];
+    curFileProgress->AddToParsedSize(1);
+    ParserAlloc::ParseProgressCallBack(request.token, fileId, curFileProgress->GetParsedSize(),
+        curFileProgress->GetTotalSize(), curFileProgress->GetProgressPercentage());
+
     // 根据是否重置发送解析完成消息
     bool reset = singleFileData.reset.load();
     ParseEndSendResp(fileId, request, !reset);

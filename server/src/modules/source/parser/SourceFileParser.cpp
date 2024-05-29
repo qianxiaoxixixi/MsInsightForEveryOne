@@ -125,6 +125,14 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         adjustTraceFilePos.emplace_back(AdjustPosition(file, pos.first, pos.second));
     }
     file.close();
+
+    // 计算待解析的文件大小
+    uint64_t totalSize = 0;
+    for (const auto &pos : adjustTraceFilePos) {
+        totalSize += (pos.second - pos.first);
+    }
+    instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, totalSize);
+
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &pos : adjustTraceFilePos) {
         auto future = instance.threadPool->AddTask(ParseTask, fileId, pos);
@@ -179,6 +187,11 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
             ParseEndCallBack(fileId, false, eventParser.GetError());
         }
     }
+    // 发送单卡解析进度事件
+    std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
+    curFileProgress->AddToParsedSize(pos.second - pos.first);
+    instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+                                   curFileProgress->GetProgressPercentage());
 }
 std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file, int64_t start, int64_t end)
 {

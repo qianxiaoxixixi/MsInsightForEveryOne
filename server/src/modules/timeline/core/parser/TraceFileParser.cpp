@@ -90,6 +90,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     for (const auto &filePath : filePathArr) {
         ServerLog::Info("Start parse. file id:", fileId, ". path:", filePath);
         auto splitFile = TraceFileParser::SplitFile(filePath);
+        instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
             ParseEndCallBack(fileId, false, "Failed to split file: " + filePath);
@@ -118,6 +119,12 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
             ParseEndCallBack(fileId, false, eventParser.GetError());
         }
     }
+    // 发送单卡解析进度事件
+    auto &instance = TraceFileParser::Instance();
+    std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
+    curFileProgress->AddToParsedSize(pos.second - pos.first);
+    instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+                                   curFileProgress->GetProgressPercentage());
 }
 
 void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,

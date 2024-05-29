@@ -90,6 +90,12 @@ void ParserBin::SetParseCallBack(const std::string &token, FileParser &fileParse
     std::function<void(const std::string, bool, const std::string)> func =
         std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     fileParser.SetParseEndCallBack(func);
+
+    // 复用解析完成回调函数设置逻辑
+    std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> progressFunc =
+        std::bind(ParseProgressCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        std::placeholders::_4);
+    fileParser.SetParseProgressCallBack(progressFunc);
 }
 } // Module
 } // Dic

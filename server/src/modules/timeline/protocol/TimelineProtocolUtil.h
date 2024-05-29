@@ -51,6 +51,7 @@ template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(co
 template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSuccessEvent &event);
 template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event);
 template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const ModuleResetEvent &event);
+template <> std::optional<document_t> ToEventJson<ParseProgressEvent>(const ParseProgressEvent &event);
 } // end of namespace Protocol
 } // end of namespace Dic
 

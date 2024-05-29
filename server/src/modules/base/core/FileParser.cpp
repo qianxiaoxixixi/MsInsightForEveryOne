@@ -15,10 +15,18 @@ void FileParser::SetParseEndCallBack(std::function<void(const std::string, bool 
     paserEndCallback = callback;
 }
 
+void FileParser::SetParseProgressCallBack(
+    std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> &callback)
+{
+    paserProgressCallback = callback;
+}
+
 void FileParser::Reset()
 {
     error.clear();
     paserEndCallback == nullptr;
+    paserProgressCallback == nullptr;
+    fileProgressMap.clear();
 }
 } // end of namespace Module
 } // end of namespace Dic
