@@ -685,6 +685,20 @@ template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const Module
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToEventJson<ParseProgressEvent>(const ParseProgressEvent &event)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "fileId", event.body.fileId, allocator);
+    JsonUtil::AddMember(body, "parsedSize", event.body.parsedSize, allocator);
+    JsonUtil::AddMember(body, "totalSize", event.body.totalSize, allocator);
+    JsonUtil::AddMember(body, "progress", event.body.progress, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

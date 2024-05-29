@@ -103,6 +103,18 @@ struct ModuleResetEvent : public Event {
     ModuleResetEvent() : Event(EVENT_MODULE_RESET) {}
     bool reset = false;
 };
+
+struct ParseProgressEventBody {
+    std::string fileId;
+    uint64_t parsedSize;
+    uint64_t totalSize;
+    int progress;
+};
+
+struct ParseProgressEvent : public Event {
+    ParseProgressEvent() : Event(EVENT_PARSE_PROGRESS) {}
+    ParseProgressEventBody body;
+};
 } // end of namespace Protocol
 } // end if namespace Dic
 

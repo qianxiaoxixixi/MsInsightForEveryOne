@@ -301,6 +301,12 @@ static std::optional<std::string> Decompress(const std::string &str)
     const static size_t MAX_DECOMPRESSED_SIZE = 1024 * 1024 * 50;
 
     z_stream zs;
+    zs.zalloc = Z_NULL;
+    zs.zfree = Z_NULL;
+    zs.opaque = Z_NULL;
+    zs.avail_in = 0;
+    zs.next_in = Z_NULL;
+
     if (inflateInit2(&zs, MAX_WBITS) != Z_OK) {
         return std::nullopt;
     }
@@ -323,7 +329,7 @@ static std::optional<std::string> Decompress(const std::string &str)
                 inflateEnd(&zs);
                 return std::nullopt;
             }
-            output.append(buffer, zs.total_out - output.size());
+            output.append(buffer, zs.next_out - reinterpret_cast<Bytef *>(buffer));
         }
     } while (ret == Z_OK);
 

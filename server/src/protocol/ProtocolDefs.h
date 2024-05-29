@@ -45,6 +45,7 @@ const std::string EVENT_ALL_SUCCESS = "allPagesSuccess";
 const std::string EVENT_PARSE_CLUSTER_STEP2_COMPLETED = "parse/clusterStep2Completed";
 const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
 const std::string EVENT_MODULE_RESET = "module.reset";
+const std::string EVENT_PARSE_PROGRESS = "parse/progress";
 #pragma endregion
 
 #pragma region << Request / Response Command>>
