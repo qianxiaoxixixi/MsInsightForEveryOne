@@ -33,7 +33,15 @@
       "Event(s)": "事件",
       "Link": "连接",
       "Input Dims": "输入数量",
-      "Input type": "输入类型"
+      "Input type": "输入类型",
+      "Input Shapes": "输入Shapes",
+      "Input Data Types": "输入数据类型",
+      "Input Formats": "输入格式",
+      "Output Shapes": "输出Shapes",
+      "Output Data Types": "输出数据类型",
+      "Output Formats": "输出格式",
+      "Incoming flow": "入线",
+      "Outgoing flow": "出线"
     },
     "sliceList": {
       "Slices List": "选中列表",

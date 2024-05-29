@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Select, Checkbox, InputNumber, Button, message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
@@ -51,12 +52,12 @@ const useOptions = (): optionDataType[] => {
     ];
 };
 
-function InitCharts(data: any): void {
+function InitCharts(data: any, t: TFunction): void {
     const chartDom = document.getElementById('matrixchart');
     if (chartDom !== null) {
         echarts.init(chartDom).dispose();
         const myChart = echarts.init(chartDom);
-        myChart.setOption(wrapData(data));
+        myChart.setOption(wrapData(data, t));
         addResizeEvent(myChart);
     }
 }
@@ -81,7 +82,7 @@ function handleRepeatData(repeatDataToolTip: {[key: string]: string}, data: any[
     }, []);
 }
 
-function handleTransportType(dataSource: any, option: any, type: any): void {
+function handleTransportType(dataSource: any, option: any, type: any, t: TFunction): void {
     dataSource.forEach((item: any[]) => {
         item[2] = allTransporType.indexOf(item[2]);
     });
@@ -93,8 +94,8 @@ function handleTransportType(dataSource: any, option: any, type: any): void {
     option.series[0].tooltip.formatter = function (params: any): string {
         const data = params?.data;
         const str = data?.[3]?.length === 0
-            ? `srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${type}: ${allTransporType[data?.[2]]}`
-            : `operatorName: ${data?.[3]} <br/> srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${type}: ${allTransporType[data?.[2]]}`;
+            ? `srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${t(type)}: ${allTransporType[data?.[2]]}`
+            : `${t('operatorName')}: ${data?.[3]} <br/> srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${t(type)}: ${allTransporType[data?.[2]]}`;
         return safeStr(str, '<br/>');
     };
 }
@@ -109,7 +110,7 @@ const defaultVisualMap = {
     textStyle: { color: COLOR.Grey40 },
     dimension: 2,
 };
-function wrapData(dataSource: any): any {
+function wrapData(dataSource: any, t: TFunction): any {
     const { data, rankIds, type, min, max } = dataSource;
     const option: any = baseOption;
     option.xAxis.data = rankIds;
@@ -117,7 +118,7 @@ function wrapData(dataSource: any): any {
     option.series[0].label.show = rankIds.length <= 16;
 
     if (type === 'transportType') {
-        handleTransportType(data, option, type);
+        handleTransportType(data, option, type, t);
     } else {
         const repeatDataToolTip: {[key: string]: string} = {};
         const mixData = handleRepeatData(repeatDataToolTip, data);
@@ -145,8 +146,8 @@ function wrapData(dataSource: any): any {
         option.series[0].tooltip.formatter = function (params: any) {
             const datalist = params?.data;
             const str = datalist?.[3]?.length === 0
-                ? `srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${type}: ${datalist?.[2]}`
-                : `operatorName: ${datalist?.[3]} <br/> srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${type}: ${datalist?.[2]}`;
+                ? `srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${t(type)}: ${datalist?.[2]}`
+                : `${t('operatorName')}: ${datalist?.[3]} <br/> srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/>${t(type)}: ${datalist?.[2]}`;
             return safeStr(str, '<br/>');
         };
     }
@@ -268,6 +269,7 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
     const [dataSource, setDataSource] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
     const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
     const [range, setRange] = useState<RangeInfo>({ minRange: 0, maxRange: 1 });
+    const { t } = useTranslation('communication');
 
     const updateCharts = (shouldUpdateRange: boolean, filterInfo?: FilterInfos): void => {
         let data: any = dataSource.data.map((item: any) => {
@@ -287,7 +289,7 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
         if (shouldUpdateRange) {
             setRange({ minRange: min, maxRange: max });
         }
-        InitCharts({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max });
+        InitCharts({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max }, t);
     };
     chartVisbilityListener('matrixchart', () => {
         updateCharts(true);

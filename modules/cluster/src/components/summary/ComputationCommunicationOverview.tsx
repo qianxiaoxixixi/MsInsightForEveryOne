@@ -57,55 +57,53 @@ const commonSeries: any = {
     data: [],
 };
 
-const baseOptionSeries = [
-    {
-        id: 'preparing',
-        name: 'Preparing',
-        ...commonSeries,
-    },
-    {
-        id: 'compute',
-        name: 'Computing',
-        ...commonSeries,
-    },
-    {
-        id: 'communicationNotOverLappedTime',
-        name: 'Communication(Not Overlapped)',
-        ...commonSeries,
-    },
-    {
-        id: 'communicationOverLappedTime',
-        name: 'Communication(Overlapped)',
-        ...commonSeries,
-    },
-    {
-        id: 'freeTime',
-        name: 'Free',
-        ...commonSeries,
-    },
-    {
-        name: 'Computing Ratio',
-        type: 'line',
-        yAxisIndex: 1,
-        tooltip: {
-            valueFormatter: function (value: any) {
-                return value + ' %';
-            },
+const getBaseOptionSeries = (): any[] => {
+    return [
+        { id: 'preparing', name: i18n.t('Preparing', { ns: 'summary' }), ...commonSeries },
+        {
+            id: 'compute',
+            name: i18n.t('Computing', { ns: 'summary' }),
+            ...commonSeries,
         },
-        data: [],
-    },
-    {
-        name: 'Communication Ratio',
-        type: 'line',
-        yAxisIndex: 1,
-        tooltip: {
-            valueFormatter: function (value: any) {
-                return value + ' %';
-            },
+        {
+            id: 'communicationNotOverLappedTime',
+            name: i18n.t('Communication(Not Overlapped)', { ns: 'summary' }),
+            ...commonSeries,
         },
-        data: [],
-    },
-];
+        {
+            id: 'communicationOverLappedTime',
+            name: i18n.t('Communication(Overlapped)', { ns: 'summary' }),
+            ...commonSeries,
+        },
+        {
+            id: 'freeTime',
+            name: i18n.t('Free', { ns: 'summary' }),
+            ...commonSeries,
+        },
+        {
+            name: i18n.t('Computing Ratio', { ns: 'summary' }),
+            type: 'line',
+            yAxisIndex: 1,
+            tooltip: {
+                valueFormatter: function (value: any): string {
+                    return `${value} %`;
+                },
+            },
+            data: [],
+        },
+        {
+            name: i18n.t('Communication Ratio', { ns: 'summary' }),
+            type: 'line',
+            yAxisIndex: 1,
+            tooltip: {
+                valueFormatter: function (value: any): string {
+                    return `${value} %`;
+                },
+            },
+            data: [],
+        },
+    ];
+};
 
 const baseOption: any = {
     tooltip: commonEchartsOptions.tooltip,
@@ -205,7 +203,7 @@ function wrapData(data: SummaryDataType[]): any {
     const order: Array<keyof SummaryDataType> = ['prepareTime', 'computingTimeTransfer', 'communicationNotOverLappedTime',
         'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio'];
     const legendDataTemp = [...baseOptionLegendData];
-    const seriesTemp = [...baseOptionSeries];
+    const seriesTemp = [...getBaseOptionSeries()];
     if (!isContainsFieldPreparing) { // 如果不包含预处理字段，移除相关的图标和tooltips信息
         order.shift();
         legendDataTemp.shift();
@@ -262,6 +260,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     const [allDataSource, setAllDatasource] = useState<SummaryDataType[]>([]);
     const [selected, setSelected] = useState({ rankId: '', step: '' });
     const [chartRankId, setChartRankId] = useState('');
+    const { t } = useTranslation('summary');
 
     chartVisbilityListener('overview-chart', () => {
         initCharts(dataSource, handleClick);
@@ -270,7 +269,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
         setTimeout(() => {
             initCharts(dataSource, handleClick);
         });
-    }, [dataSource]);
+    }, [dataSource, t]);
     useEffect(() => {
         setSelected({ ...selected, rankId: chartRankId });
     }, [chartRankId]);
@@ -282,8 +281,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
             return;
         }
         if (doQuery === false) {
-            let data = [...allDataSource];
-            data = data.slice(0, conditions.top);
+            let data = [...allDataSource]; data = data.slice(0, conditions.top);
             setDatasource(data);
             setSelected({ ...selected, step: conditions.step, rankId: data[0]?.rankId });
             setChartRankId(data[0]?.rankId);

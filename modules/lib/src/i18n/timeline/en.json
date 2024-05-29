@@ -33,7 +33,15 @@
       "Event(s)": "Event(s)",
       "Link": "Link",
       "Input Dims": "Input Dims",
-      "Input type": "Input type"
+      "Input type": "Input type",
+      "Input Shapes": "Input Shapes",
+      "Input Data Types": "Input Data Types",
+      "Input Formats": "Input Formats",
+      "Output Shapes": "Output Shapes",
+      "Output Data Types": "Output Data Types",
+      "Output Formats": "Output Formats",
+      "Incoming flow": "Incoming flow",
+      "Outgoing flow": "Outgoing flow"
     },
     "sliceList": {
       "Slices List": "Slice List",

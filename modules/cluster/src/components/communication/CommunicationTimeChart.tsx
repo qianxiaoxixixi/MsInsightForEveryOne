@@ -9,6 +9,7 @@ import { Spin } from 'antd';
 import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container } from '../Common';
 import type { Session } from '../../entity/session';
 import i18n from '../../i18n';
+import { cloneDeep } from 'lodash';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -21,13 +22,22 @@ function InitCharts(data: dataType): void {
     addResizeEvent(myChart);
 }
 function wrapData(data: dataType): any {
-    baseOption.xAxis[0].data = data.rankId;
+    const options = cloneDeep(baseOption);
+    options.legend.data = baseOption.legend.data.map((item: any) => ({
+        ...item,
+        name: i18n.t(`tableHead.${item.name}`, { ns: 'communication' }),
+    }));
+    options.series = baseOption.series.map((item: any) => ({
+        ...item,
+        name: i18n.t(`tableHead.${item.name}`, { ns: 'communication' }),
+    }));
+    options.xAxis[0].data = data.rankId;
     const order: Array<keyof dataType> = ['elapseTime', 'transitTime', 'synchronizationTime',
         'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
-    for (let i = 0; i < 6; i++) {
-        baseOption.series[i].data = data[order[i]] ?? [];
+    for (let i = 0; i < options.series.length; i++) {
+        options.series[i].data = data[order[i]] ?? [];
     }
-    return baseOption;
+    return options;
 }
 
 const baseOption: any = {
@@ -181,7 +191,7 @@ const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: d
         setTimeout(() => {
             InitCharts(dataSource);
         });
-    }, [dataSource]);
+    }, [dataSource, t]);
     return (
         <Container
             title={t('sessionTitle.VisualizedCommunicationTime')}

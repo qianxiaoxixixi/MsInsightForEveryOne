@@ -24,6 +24,14 @@
       }
     ],
     "Find in Timeline": "Find in Timeline",
+    "bandwidth": "bandwidth",
+    "transitSize": "transitSize",
+    "transportType": "transportType",
+    "transitTime": "transitTime",
+    "operatorName": "operatorName",
+    "Packet Number": "Packet Number",
+    "Bandwidth(GB/s)": "Bandwidth(GB/s)",
+    "Packet Size(MB)": "Packet Size(MB)",
     "sessionTitle": {
       "MatrixModel": "Matrix Model",
       "VisualizedCommunicationTime": "Visualized Communication Time",
@@ -46,18 +54,19 @@
       "TransitTime": "Transit Time"
     },
     "tableHead": {
-      "RankID": "Rank ID",
-      "StartTime": "Start Time",
-      "ElapseTime": "Elapse Time",
-      "TransitTime":"Transit Time",
-      "SynchronizationTime": "Synchronization Time",
-      "WaitTime":"Wait Time",
-      "SynchronizationTimeRatio": "Synchronization Time Ratio",
-      "WaitTimeRatio":"Wait Time Ratio",
-      "IdleTime": "Idle Time",
-      "BandwidthAnalysis":"Bandwidth Analysis",
-      "LargePacketRatio": "Large Packet Ratio",
-      "CommunicationOperatorsDetails": "Communication Operators Details",
+      "Operator Name": "operator Name",
+      "Rank ID": "Rank ID",
+      "Start Time": "Start Time",
+      "Elapse Time": "Elapse Time",
+      "Transit Time":"Transit Time",
+      "Synchronization Time": "Synchronization Time",
+      "Wait Time":"Wait Time",
+      "Synchronization Time Ratio": "Synchronization Time Ratio",
+      "Wait Time Ratio":"Wait Time Ratio",
+      "Idle Time": "Idle Time",
+      "Bandwidth Analysis":"Bandwidth Analysis",
+      "Large Packet Ratio": "Large Packet Ratio",
+      "Communication Operators Details": "Communication Operators Details",
       "see more": "see more"
     }
   }

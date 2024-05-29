@@ -186,7 +186,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setMemoryCurveData(resp);
             setLineChartData({
                 title: resp.title,
-                columns: resp.legends,
+                columns: resp.legends?.map(legend => t(legend)),
                 rows: resp.lines,
             });
         }).catch(err => {
@@ -194,7 +194,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankId, session.isClusterMemoryCompletedSwitch, groupId]);
+    }, [rankId, session.isClusterMemoryCompletedSwitch, groupId, t]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
@@ -244,8 +244,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
                             { lineChartData
                                 ? <LineChart
-                                    hAxisTitle="Time (ms)"
-                                    vAxisTitle="Memory Usage (MB)"
+                                    hAxisTitle={t('Time (ms)')}
+                                    vAxisTitle={t('Memory Usage (MB)')}
                                     graph={lineChartData}
                                     onSelectionChanged={onSelectedRangeChanged}
                                     record={selectedRecord}

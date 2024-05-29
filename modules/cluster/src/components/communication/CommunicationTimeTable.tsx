@@ -38,45 +38,45 @@ export interface DataType {
 const useCommonColumns = (): ColumnsType<DataType> => {
     const { t } = useTranslation('communication');
     return [
-        { title: `${t('tableHead.StartTime')}(ms)`, dataIndex: 'startTime', sorter: (a: DataType, b: DataType) => a.startTime - b.startTime, ellipsis: true },
+        { title: `${t('tableHead.Start Time')}(ms)`, dataIndex: 'startTime', sorter: (a: DataType, b: DataType) => a.startTime - b.startTime, ellipsis: true },
         {
-            title: `${t('tableHead.ElapseTime')}(ms)`,
+            title: `${t('tableHead.Elapse Time')}(ms)`,
             dataIndex: 'elapseTime',
             sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime,
             ellipsis: true,
         },
         {
-            title: `${t('tableHead.TransitTime')}(ms)`,
+            title: `${t('tableHead.Transit Time')}(ms)`,
             dataIndex: 'transitTime',
             sorter: (a: DataType, b: DataType) => a.transitTime - b.transitTime,
             ellipsis: true,
         },
         {
-            title: `${t('tableHead.SynchronizationTime')}(ms)`,
+            title: `${t('tableHead.Synchronization Time')}(ms)`,
             dataIndex: 'synchronizationTime',
             sorter: (a: DataType, b: DataType) => a.synchronizationTime - b.synchronizationTime,
             ellipsis: true,
         },
         {
-            title: `${t('tableHead.WaitTime')}(ms)`,
+            title: `${t('tableHead.Wait Time')}(ms)`,
             dataIndex: 'waitTime',
             sorter: (a: DataType, b: DataType) => a.waitTime - b.waitTime,
             ellipsis: true,
         },
         {
-            title: `${t('tableHead.SynchronizationTimeRatio')}`,
+            title: `${t('tableHead.Synchronization Time Ratio')}`,
             dataIndex: 'synchronizationTimeRatio',
             sorter: (a: DataType, b: DataType) => a.synchronizationTimeRatio - b.synchronizationTimeRatio,
             ellipsis: true,
         },
         {
-            title: `${t('tableHead.WaitTimeRatio')}`,
+            title: `${t('tableHead.Wait Time Ratio')}`,
             dataIndex: 'waitTimeRatio',
             sorter: (a: DataType, b: DataType) => a.waitTimeRatio - b.waitTimeRatio,
             ellipsis: true,
         },
         {
-            title: `${t('tableHead.IdleTime')}(ms)`,
+            title: `${t('tableHead.Idle Time')}(ms)`,
             dataIndex: 'idleTime',
             sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
             ellipsis: true,
@@ -129,7 +129,7 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
     const [showOperator, setExpandedKeys] = handleAction;
     return [
         {
-            title: t('tableHead.RankID'),
+            title: t('tableHead.Rank ID'),
             dataIndex: 'rankId',
             key: 'rankId',
             sorter: (a: DataType, b: DataType) => Number(a.rankId) - Number(b.rankId),
@@ -138,7 +138,7 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
         },
         ...useCommonColumns(),
         {
-            title: t('tableHead.BandwidthAnalysis'),
+            title: t('tableHead.Bandwidth Analysis'),
             key: 'action1',
             ellipsis: true,
             width: 110,
@@ -150,7 +150,7 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
                     }}>{t('tableHead.see more')}</Button>),
         },
         {
-            title: t('tableHead.CommunicationOperatorsDetails'),
+            title: t('tableHead.Communication Operators Details'),
             key: 'action2',
             ellipsis: true,
             width: 110,
