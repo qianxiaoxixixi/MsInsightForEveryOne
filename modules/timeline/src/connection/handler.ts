@@ -106,6 +106,7 @@ export const parseFailHandler: NotificationHandler = (data): void => {
     message.error(data.error);
 };
 
+// eslint-disable-next-line max-lines-per-function
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -126,6 +127,8 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
                 const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
                 if (item.result as boolean) {
                     unit.phase = 'analyzing';
+                    unit.progress = 0;
+                    unit.showProgress = true;
                 } else {
                     unit.phase = 'error';
                 }
