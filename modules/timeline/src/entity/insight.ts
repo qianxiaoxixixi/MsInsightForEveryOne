@@ -285,7 +285,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         searchConfig = params.searchConfig;
         collapsible = true;
         progress: number = 0; // 解析进度：实际解析进度
-        showProgress: boolean = true; // 解析进度：是否显示进度条
+        showProgress: boolean = false; // 解析进度：是否显示进度条
         constructor(metadata: T) {
             makeAutoObservable(this, { searchConfig: false });
             this.metadata = metadata;
@@ -326,7 +326,7 @@ Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknow
     const TransparentUnit = class implements InsightUnit {
         isUnitVisible = true;
         progress: number = 0; // 解析进度：实际解析进度
-        showProgress: boolean = true; // 解析进度：是否显示进度条
+        showProgress: boolean = false; // 解析进度：是否显示进度条
         type = 'transparent' as const;
         description = params.description;
         pinType = params.pinType ?? 'copied';
