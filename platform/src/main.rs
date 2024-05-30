@@ -314,15 +314,14 @@ fn compare_first_segment(s1: &str, s2: &str) -> bool {
 fn main() {
     let mut cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
     let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    #[cfg(windows)] {
-        cache_path = root_path.join(".ascend_insight");//fix windows permission error.
-    }
     std::fs::create_dir_all(cache_path.as_path()).expect("no permission to create cache_path");
     #[cfg(windows)] {
+        //当用户安装在C盘时，使用user目录
         let mut webview_path = cache_path.clone();
-        let usr_path = home_dir().unwrap().join(".ascend_insight");
-        if compare_first_segment(usr_path.to_str().unwrap(), root_path.to_str().unwrap()) {
-            webview_path = usr_path;
+        //当用户安装在C盘外时，使用安装目录
+        if !compare_first_segment(cache_path.to_str().unwrap(), root_path.to_str().unwrap()) {
+            cache_path = root_path.join(".ascend_insight");
+            webview_path = cache_path.clone();
         }
         if is_admin() {
             webview_path.push("admin");
