@@ -62,7 +62,7 @@ export const SelectedDataBase = observer(function SelectedDataBase(props: timeDe
             <div className = "sliceDetailMsg">{t('Link')}</div>
         </div>}
         {renderer?.map((item, index) => <div className = "sliceDetail" key={`${item[0]}-${index}`}>
-            <div style={{ width: '30%' }} className = "sliceDetailName">{t(item[0])}</div>
+            <div style={{ width: '30%' }} className = "sliceDetailName">{t(item[0], { defaultValue: item[0] })}</div>
             <div style={{ width: '70%' }} className = "sliceDetailMsg">{item[1]}</div>
         </div>)}
     </StyledSliceDetailDiv>;

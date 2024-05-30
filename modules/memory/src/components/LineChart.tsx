@@ -4,6 +4,7 @@
 
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Graph, OperatorDetail } from '../entity/memory';
 import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
@@ -166,7 +167,7 @@ const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefOb
 };
 
 const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
-    selectedPoints: React.MutableRefObject<number[]>, graph: Graph): void => {
+    selectedPoints: React.MutableRefObject<number[]>, graph: Graph, t: TFunction): void => {
     const { record } = props;
     const compareFun = (key: number, mid: Array<number | string>): number => key - parseFloat(mid[0] as string);
     if (chartObj) {
@@ -178,19 +179,19 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
             endId >= 0 && selection.push(endId);
             chartObj.dispatchAction({
                 type: 'downplay',
-                seriesName: 'Operators Allocated',
+                seriesName: t('Operators Allocated'),
                 dataIndex: selectedPoints.current,
             });
             chartObj.dispatchAction({
                 type: 'highlight',
-                seriesName: 'Operators Allocated',
+                seriesName: t('Operators Allocated'),
                 dataIndex: selection,
             });
             selectedPoints.current = selection;
         } else {
             chartObj.dispatchAction({
                 type: 'downplay',
-                seriesName: 'Operators Allocated',
+                seriesName: t('Operators Allocated'),
                 dataIndex: selectedPoints.current,
             });
             selectedPoints.current = [];
@@ -212,6 +213,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const selectedPoints = React.useRef<number[]>([]);
     const chartCharacter = useChartCharacter();
     const title = useTitle(graph.title ?? '');
+    const { t } = useTranslation('memory');
 
     React.useLayoutEffect(() => {
         const element = graphRef.current;
@@ -231,7 +233,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     }, [graph, resizeEventDependency, isDark, isWakeup]);
 
     React.useEffect(() => {
-        _handleEvents(chartObj, props, selectedPoints, graph);
+        _handleEvents(chartObj, props, selectedPoints, graph, t);
     }, [graph, record, chartObj]);
 
     return (
