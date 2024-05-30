@@ -69,7 +69,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
                 } else {
                     const columns = parseColDef(detail, session, tabState ?? selectedUnit?.tabState).map(col => ({
                         ...col,
-                        title: i18n.t(`sliceList.${col.title}`, { ns: 'timeline' }),
+                        title: i18n.t(`sliceList.${col.title}`, { ns: 'timeline', defaultValue: col.title }),
                     }));
                     setState({
                         data: result,
