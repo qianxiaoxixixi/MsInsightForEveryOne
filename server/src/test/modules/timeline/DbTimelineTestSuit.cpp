@@ -3,6 +3,7 @@
  */
 
 #include "../../FullDbTestSuit.cpp"
+#include "TimelineTestUtil.h"
 
 class DbTimelineTestSuit : FullDbTestSuit {
 };
@@ -347,4 +348,154 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
 
     params.metaType = "Ascend Hardware";
     EXPECT_EQ(database->QueryUnitCounter(params, minTimestamp, counterData), false);
+}
+
+TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcess)
+{
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = CUR_PAGE_1;
+    params.metaType = "CANN_API";
+    params.order = "descend";
+    params.orderBy = "duration";
+    params.pageSize = PAGE_SIZE;
+    params.pid = "2750";
+    params.processName = "process 2750";
+    params.rankId = "2";
+
+    Dic::Protocol::EventsViewBody body;
+    database->QueryEventsViewData(params, body, minTimestamp);
+    const uint64_t EXPECT_COUNT = 4;
+    const uint64_t EXPECT_START = 39360870;
+    const uint64_t EXPECT_DURATION = 2560;
+    const uint64_t EXPECT_DEPTH = 0;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), EXPECT_COUNT);
+
+    auto ptr = dynamic_cast<Dic::Protocol::HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "aclrtGetDeviceCount");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "3571117473");
+    EXPECT_EQ(ptr->pid, "2750");
+    EXPECT_EQ(ptr->processId, "11814731181473");
+    EXPECT_EQ(ptr->threadId, "20000");
+    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
+}
+
+TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThread)
+{
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = CUR_PAGE_1;
+    params.metaType = "CANN_API";
+    params.order = "descend";
+    params.orderBy = "duration";
+    params.pageSize = PAGE_SIZE;
+    params.pid = "11814731181473";
+    params.processName = "Thread 3571117473";
+    params.rankId = "2";
+
+    Dic::Protocol::EventsViewBody body;
+    database->QueryEventsViewData(params, body, minTimestamp);
+    const uint64_t EXPECT_COUNT = 4;
+    const uint64_t EXPECT_START = 39360870;
+    const uint64_t EXPECT_DURATION = 2560;
+    const uint64_t EXPECT_DEPTH = 0;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), EXPECT_COUNT);
+
+    auto ptr = dynamic_cast<Dic::Protocol::HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "aclrtGetDeviceCount");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "3571117473");
+    EXPECT_EQ(ptr->pid, "2750");
+    EXPECT_EQ(ptr->processId, "11814731181473");
+    EXPECT_EQ(ptr->threadId, "20000");
+    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
+}
+
+TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANN)
+{
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = CUR_PAGE_1;
+    params.metaType = "CANN_API";
+    params.order = "descend";
+    params.orderBy = "duration";
+    params.pageSize = PAGE_SIZE;
+    params.pid = "11814731181473";
+    params.processName = "CANN";
+    params.rankId = "2";
+
+    Dic::Protocol::EventsViewBody body;
+    database->QueryEventsViewData(params, body, minTimestamp);
+    const uint64_t EXPECT_COUNT = 4;
+    const uint64_t EXPECT_START = 39360870;
+    const uint64_t EXPECT_DURATION = 2560;
+    const uint64_t EXPECT_DEPTH = 0;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), EXPECT_COUNT);
+
+    auto ptr = dynamic_cast<Dic::Protocol::HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "aclrtGetDeviceCount");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "3571117473");
+    EXPECT_EQ(ptr->pid, "2750");
+    EXPECT_EQ(ptr->processId, "11814731181473");
+    EXPECT_EQ(ptr->threadId, "20000");
+    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
+}
+
+TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANNAcl)
+{
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+    Dic::Protocol::EventsViewParams params;
+    params.currentPage = CUR_PAGE_1;
+    params.metaType = "CANN_API";
+    params.order = "descend";
+    params.orderBy = "duration";
+    params.pageSize = PAGE_SIZE;
+    params.pid = "11814731181473";
+    params.processName = "CANN";
+    params.rankId = "2";
+    params.threadName = "acl";
+    params.tid = "20000";
+
+    Dic::Protocol::EventsViewBody body;
+    database->QueryEventsViewData(params, body, minTimestamp);
+    const uint64_t EXPECT_COUNT = 4;
+    const uint64_t EXPECT_START = 39360870;
+    const uint64_t EXPECT_DURATION = 2560;
+    const uint64_t EXPECT_DEPTH = 0;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), EXPECT_COUNT);
+
+    auto ptr = dynamic_cast<Dic::Protocol::HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "aclrtGetDeviceCount");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "3571117473");
+    EXPECT_EQ(ptr->pid, "2750");
+    EXPECT_EQ(ptr->processId, "11814731181473");
+    EXPECT_EQ(ptr->threadId, "20000");
+    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
 }
