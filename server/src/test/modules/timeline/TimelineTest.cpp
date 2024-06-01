@@ -7,6 +7,7 @@
 #include "DataBaseManager.h"
 #include "../../TestSuit.cpp"
 #include "cmath"
+#include "TimelineTestUtil.h"
 
 class TimelineTest : TestSuit {
 };
@@ -495,4 +496,335 @@ TEST_F(TestSuit, SearchAllSlicesDetailsWithFuzzyMatch)
     EXPECT_EQ(body.searchAllSlices[0].duration, DURATION);
     EXPECT_EQ(body.searchAllSlices[0].name, "Mul");
     EXPECT_EQ(body.count, expectCount);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4Python)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.processName = "Python (1408366)";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_2;
+    params.pid = "1408366";
+    params.rankId = "0";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 6614;
+    const uint64_t EXPECT_START = 1695115378714485500;
+    const uint64_t EXPECT_DURATION = 262400;
+    const uint64_t EXPECT_DEPTH = 2;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+
+    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "aten::_to_copy");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "1408366");
+    EXPECT_EQ(ptr->pid, "1408366");
+    EXPECT_EQ(ptr->processId, "1408366");
+    EXPECT_EQ(ptr->threadId, "1408366");
+    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4PythonThread)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "1408366";
+    params.processName = "Python (1408366)";
+    params.tid = "1408366";
+    params.threadName = "Thread 1408366";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_2;
+    params.rankId = "0";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 5644;
+    const uint64_t EXPECT_START = 1695115378714532200;
+    const uint64_t EXPECT_DURATION = 96310;
+    const uint64_t EXPECT_DEPTH = 3;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "aten::empty_strided");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "1408366");
+    EXPECT_EQ(ptr->pid, "1408366");
+    EXPECT_EQ(ptr->processId, "1408366");
+    EXPECT_EQ(ptr->threadId, "1408366");
+    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4CANN)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "140836602";
+    params.processName = "CANN (140836602)";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_2;
+    params.rankId = "0";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 9523;
+    const uint64_t EXPECT_START = 1695115378714600200;
+    const uint64_t EXPECT_DURATION = 27010;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "AscendCL@aclrtDestroyEvent");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "1408366");
+    EXPECT_EQ(ptr->pid, "140836602");
+    EXPECT_EQ(ptr->processId, "140836602");
+    EXPECT_EQ(ptr->threadId, "1408366");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4CANNThread)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "140836602";
+    params.processName = "CANN (140836602)";
+    params.tid = "1408366";
+    params.threadName = "Thread 1408366";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_2;
+    params.rankId = "0";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 5524;
+    const uint64_t EXPECT_START = 1695115378714991500;
+    const uint64_t EXPECT_DURATION = 468180;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Api(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "AscendCL@hcom_broadcast_");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->tid, "1408366");
+    EXPECT_EQ(ptr->pid, "140836602");
+    EXPECT_EQ(ptr->processId, "140836602");
+    EXPECT_EQ(ptr->threadId, "1408366");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4Hardware)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "300";
+    params.processName = "Ascend Hardware (300)";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_2;
+    params.rankId = "0";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 2263;
+    const uint64_t EXPECT_START = 1695115378715411000;
+    const uint64_t EXPECT_DURATION = 20;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Hardware(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "Notify Wait");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Stream 22");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "300");
+    EXPECT_EQ(ptr->threadId, "22");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4HardwareStream)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "300";
+    params.processName = "Ascend Hardware (300)";
+    params.tid = "16";
+    params.threadName = "Stream 16";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_2;
+    params.rankId = "0";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 879;
+    const uint64_t EXPECT_START = 1695115378723943800;
+    const uint64_t EXPECT_DURATION = 369064;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Hardware(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "Tril");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Stream 16");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "300");
+    EXPECT_EQ(ptr->threadId, "16");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4HCCL)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "14083661400";
+    params.processName = "HCCL (14083661400)";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_1;
+    params.rankId = "0";
+    params.orderBy = "duration";
+    params.order = "descend";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 28;
+    const uint64_t EXPECT_START = 1695115378818416800;
+    const uint64_t EXPECT_DURATION = 102721612;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Group(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "hcom_allReduce__459_0");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Group 2 Communication");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "14083661400");
+    EXPECT_EQ(ptr->threadId, "17");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4HCCLGroup)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "14083661400";
+    params.processName = "HCCL (14083661400)";
+    params.tid = "0";
+    params.threadName = "Group 0 Communication";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_1;
+    params.rankId = "0";
+    params.orderBy = "duration";
+    params.order = "descend";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 20;
+    const uint64_t EXPECT_START = 1695115378715400200;
+    const uint64_t EXPECT_DURATION = 4975266;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Group(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "hcom_broadcast__483_0");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Group 0 Communication");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "14083661400");
+    EXPECT_EQ(ptr->threadId, "0");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4Overlap)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "14083661700";
+    params.processName = "Overlap Analysis (14083661700)";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_1;
+    params.rankId = "0";
+    params.orderBy = "duration";
+    params.order = "descend";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 1243;
+    const uint64_t EXPECT_START = 1695115378818416665;
+    const uint64_t EXPECT_DURATION = 102721612;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Overlap(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "Communication");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Communication");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "14083661700");
+    EXPECT_EQ(ptr->threadId, "1");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4OverlapComputing)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "14083661700";
+    params.processName = "Overlap Analysis (14083661700)";
+    params.tid = "0";
+    params.threadName = "Computing";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_1;
+    params.rankId = "0";
+    params.orderBy = "duration";
+    params.order = "descend";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 586;
+    const uint64_t EXPECT_START = 1695115378795017389;
+    const uint64_t EXPECT_DURATION = 7151681;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Overlap(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "Computing");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Computing");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "14083661700");
+    EXPECT_EQ(ptr->threadId, "0");
+    EXPECT_EQ(ptr->depth, 0);
 }
