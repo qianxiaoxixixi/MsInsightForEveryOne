@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import i18n from '../../i18n';
-import pako from 'pako';
 import { notification } from 'antd';
 import './DragFile.css';
 import { formatTimestamp } from '../../utils/humanReadable';
@@ -10,8 +9,9 @@ import { Logger } from '../../utils/Logger';
 import connector from '../../connection';
 import type { NotificationHandler } from '../../connection/defs';
 
+const isSupportCompress = (window as any).CompressionStream !== undefined;
 const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10G
-const DEFAULT_SLICE_SIZE = 10 * 1024 * 1024; // Byte
+const DEFAULT_SLICE_SIZE = isSupportCompress ? 10 * 1024 * 1024 : 1024 * 1024; // 若支持压缩，切片为10M，否则为1M
 const ALLOW_FILE_TYPES = ['application/json'];
 
 export interface FileDataType {
@@ -61,7 +61,8 @@ interface ImportFileData {
         result: true;
     }>;
 }
-
+const regexArrayFormat = /^\[\{.*"ph":/;
+const regexObjectFormat = /^\{.*"traceEvents": /;
 class DragFile {
     onSuccess?: SuccessHandler;
     onDrop?: DropHandler;
@@ -250,16 +251,20 @@ class DragFileImport extends DragFile {
 
     isTraceViewFormat(text: string): boolean {
         // 校验TraceView文件格式
-        const regexArrayFormat = /^\[\{.*"ph":/;
-        const regexObjectFormat = /^\{.*"traceEvents": /;
         if (regexArrayFormat.test(text)) {
             return true;
-        } else if (regexObjectFormat.test(text)) {
-            const traceEventsVal = text.split('"traceEvents": ')[1];
-            return regexArrayFormat.test(traceEventsVal);
-        } else {
-            return false;
         }
+
+        if (regexObjectFormat.test(text)) {
+            // 提前检查是否包含 "traceEvents":
+            const traceEventsIndex = text.indexOf('"traceEvents": ');
+            if (traceEventsIndex !== -1) {
+                const traceEventsVal = text.slice(traceEventsIndex + '"traceEvents": '.length);
+                return regexArrayFormat.test(traceEventsVal);
+            }
+        }
+
+        return false;
     }
 
     checkFileSize(size: number): boolean {
@@ -287,42 +292,42 @@ class DragFileImport extends DragFile {
         return resList;
     }
 
-    loadFile(fileBlob: Blob, file: FileDataType, i: number, count: number): Promise<FileDataType> {
-        return new Promise((resolve) => {
-            const { attr } = file;
-            const reader = new FileReader();
-            reader.readAsArrayBuffer(fileBlob);
-            reader.onload = (event): void => {
-                const text: any = event.target?.result;
-                if (text !== null && text !== undefined) {
-                    const isLastSlice = count <= 1 || i === count;
-                    const compressSlice = pako.deflate(text);
-                    window.requestData({
-                        command: 'upload/file',
-                        keepRawData: true,
-                        bufferField: 'text',
-                        params: {
-                            text: compressSlice,
-                            textLength: compressSlice.byteLength,
-                            fileAttr: attr,
-                            slice: {
-                                isSliced: count > 1, index: i, count, isLast: isLastSlice,
-                            },
-                        },
-                        module: 'timeline',
-                        voidResponse: !isLastSlice,
-                    }).then((res: ImportFileData) => {
-                        const isSuccess = res?.result?.[0].result;
-                        resolve({ succeed: isSuccess, attr, res });
-                    }).catch((error: any) => {
-                        resolve({ succeed: false, attr, error });
-                    });
+    async loadFile(fileBlob: Blob, file: FileDataType, i: number, count: number): Promise<FileDataType> {
+        const { attr } = file;
+        const text: Blob = fileBlob;
+        if (text !== null && text !== undefined) {
+            const isLastSlice = count <= 1 || i === count;
+            let compressSlice;
+
+            try {
+                if (isSupportCompress) {
+                    compressSlice = await compressData(text);
+                } else {
+                    compressSlice = await blobToArrayBuffer(text);
                 }
-            };
-            reader.onerror = (): void => {
-                resolve({ succeed: false, attr });
-            };
-        });
+                const res: ImportFileData = await window.requestData({
+                    command: 'upload/file',
+                    keepRawData: true,
+                    bufferField: 'text',
+                    params: {
+                        text: compressSlice,
+                        textLength: compressSlice.byteLength,
+                        fileAttr: attr,
+                        slice: {
+                            isSliced: count > 1, index: i, count, isLast: isLastSlice,
+                        },
+                    },
+                    module: 'timeline',
+                    voidResponse: !isLastSlice,
+                });
+                const isSuccess = res?.result?.[0].result;
+                return { succeed: isSuccess, attr, res };
+            } catch (error) {
+                return { succeed: false, attr, error };
+            }
+        } else {
+            return { succeed: false, attr, error: 'Blob is null or undefined' };
+        }
     }
 
     async readFile(file: FileDataType): Promise<FileDataType> {
@@ -360,6 +365,40 @@ class DragFileImport extends DragFile {
             this.isStopped = true;
         }
     }
+}
+
+function blobToArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (): void => {
+            resolve(reader.result as ArrayBuffer);
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(blob);
+    });
+}
+
+async function compressData(input: Blob): Promise<ArrayBuffer> {
+    const compressedChunks: Uint8Array[] = [];
+    const compressor = new (window as any).CompressionStream('deflate');
+    const writableStream = new WritableStream<Uint8Array>({
+        write(chunk): void {
+            compressedChunks.push(chunk);
+        },
+    });
+
+    const readableStream = input.stream();
+
+    await readableStream.pipeThrough(compressor).pipeTo(writableStream);
+
+    const concatenated = new Uint8Array(
+        compressedChunks.reduce(
+            (acc: number[], chunk: Uint8Array) => acc.concat(Array.from(chunk)),
+            [],
+        ),
+    );
+
+    return concatenated.buffer;
 }
 
 function sleep(duration = 1000): Promise<void> {
