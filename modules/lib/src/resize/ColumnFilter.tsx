@@ -1,0 +1,77 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+import React from 'react';
+import type { ColumnType } from 'antd/es/table';
+import { Input, Button, Space } from 'antd';
+import { FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import type { FilterDropdownProps } from 'antd/es/table/interface';
+
+const state = {
+    searchText: '',
+    searchedColumn: '',
+    searchInput: null,
+};
+const handleSearch = (
+    selectedKeys: string[],
+    confirm: FilterDropdownProps['confirm'],
+    dataIndex: string,
+): void => {
+    confirm();
+    state.searchText = selectedKeys[0];
+    state.searchedColumn = dataIndex;
+};
+const handleReset = (
+    clearFilters: () => void,
+    confirm: FilterDropdownProps['confirm'],
+    selectedKeys: string[],
+    dataIndex: string,
+): void => {
+    state.searchText = '';
+    clearFilters();
+    handleSearch(selectedKeys as string[], confirm, dataIndex);
+};
+
+export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: string, translation: any): ColumnType<any> {
+    const getColumnFilterProps = (dataIndex: string): ColumnType<any> => ({
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }): React.ReactNode => (
+            <div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
+                <Input
+                    ref={(node): void => {
+                        state.searchInput = node as null;
+                    }}
+                    placeholder={`${translation('buttonText:Search')} ${translation(`filterColumnName:${columnTitle}`)}`}
+                    value={selectedKeys[0]}
+                    onChange={(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                        type="primary"
+                        onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                        icon={<SearchOutlined />} size="small" style={{ width: 90 }}
+                    >{translation('buttonText:Search')}</Button>
+                    <Button
+                        onClick={(): void => clearFilters && handleReset(clearFilters, confirm, selectedKeys as string[], dataIndex)}
+                        size="small" style={{ width: 90 }}
+                    >{translation('buttonText:Reset')}</Button>
+                </Space>
+            </div>
+        ),
+        filterIcon: (filtered: boolean) => (
+            <FilterOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+        ),
+        onFilter: (value, record) =>
+            record[dataIndex]
+                .toString()
+                .toLowerCase()
+                .includes((value as string).toLowerCase()),
+        onFilterDropdownOpenChange: (visible): void => {
+            if (visible) {
+                setTimeout(() => state.searchInput, 100);
+            }
+        },
+    });
+    return getColumnFilterProps(columnDataIndex);
+}

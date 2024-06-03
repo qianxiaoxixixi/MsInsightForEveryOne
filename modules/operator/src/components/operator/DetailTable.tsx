@@ -2,16 +2,18 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import ResizeTable from 'lib/ResizeTable';
+import { fetchColumnFilterProps } from 'lib/ColumnFilter';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { Container, GetPageConfigWhithPageData } from '../Common';
-import { type ConditionType } from './Filter';
+import { type ConditionType, type FilterType } from './Filter';
 import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import { Session } from '../../entity/session';
 import type { ColumnsType } from 'antd/es/table';
+import i18n from '../../i18n';
 
 interface FullConditionType {
     rankId: string ;
@@ -21,6 +23,11 @@ interface FullConditionType {
     pageSize: number;
     field: string;
     order: string;
+    type: string[];
+    opType: string[];
+    name: string[];
+    opName: string[];
+    accCore: string[];
 }
 const OPERATOR = 'Operator';
 const OPERATOR_TYPE = 'Operator Type';
@@ -35,12 +42,14 @@ const useOpl0Columns = (): ColumnsType<any> => {
             dataIndex: 'name',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('name', 'Name', i18n.t),
         },
         {
             title: t('Type'),
             dataIndex: 'type',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('type', 'Type', i18n.t),
         },
         {
             title: t('AcceleratorCore'),
@@ -48,6 +57,7 @@ const useOpl0Columns = (): ColumnsType<any> => {
             key: 'accCore',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('accCore', 'AcceleratorCore', i18n.t),
         },
         {
             title: `${t('StartTime')}(ms)`,
@@ -125,6 +135,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
             dataIndex: 'opType',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('opType', 'Type', i18n.t),
         },
         {
             title: t('AcceleratorCore'),
@@ -132,6 +143,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
             key: 'accCore',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('accCore', 'AcceleratorCore', i18n.t),
         },
         {
             title: t('Count'),
@@ -168,7 +180,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
 const useOpShapeStaticColumns = (): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
-        { title: t('Name'), dataIndex: 'opName', sorter: true, ellipsis: true },
+        { title: t('Name'), dataIndex: 'opName', sorter: true, ellipsis: true, ...fetchColumnFilterProps('opName', 'Name', i18n.t) },
         { title: t('Shape'), dataIndex: 'inputShape', key: 'Shape', sorter: true, ellipsis: true },
         {
             title: t('AcceleratorCore'),
@@ -176,6 +188,7 @@ const useOpShapeStaticColumns = (): ColumnsType<any> => {
             key: 'accCore',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('accCore', 'AcceleratorCore', i18n.t),
         },
         {
             title: t('Count'),
@@ -217,12 +230,14 @@ const useHcclOpColumns = (): ColumnsType<any> => {
             dataIndex: 'name',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('name', 'Name', i18n.t),
         },
         {
             title: t('Type'),
             dataIndex: 'type',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('type', 'Type', i18n.t),
         },
         {
             title: `${t('StartTime')}(ms)`,
@@ -253,6 +268,7 @@ const useHcclOpTypeColumns = (): ColumnsType<any> => {
             dataIndex: 'opType',
             sorter: true,
             ellipsis: true,
+            ...fetchColumnFilterProps('opType', 'Type', i18n.t),
         },
         {
             title: t('Count'),
@@ -311,10 +327,11 @@ const useColMap = (): any => {
     };
 };
 
-const OperatorTable = ({ condition, opType, accCore, opName, inputShape, session }:
-{condition: ConditionType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
+const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputShape, session }:
+{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
     return <BaseTable
         condition={condition}
+        filterType={filterType}
         opType={opType}
         accCore={accCore}
         opName={opName}
@@ -323,25 +340,29 @@ const OperatorTable = ({ condition, opType, accCore, opName, inputShape, session
     />;
 };
 
-const OperatorTypeTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
-    return <BaseTable condition={condition} session={session} />;
+const OperatorTypeTable = ({ condition, filterType, session }: {condition: ConditionType;filterType: FilterType;session: Session}): JSX.Element => {
+    return <BaseTable condition={condition} filterType={filterType} session={session} />;
 };
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: '' };
+const defaultFilters = { type: [], opType: [], name: [], opName: [], accCore: [] };
 
 // eslint-disable-next-line max-lines-per-function
-const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
-{condition: ConditionType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
+const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape, session }:
+{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
     const { t } = useTranslation();
     const [cols, setCols] = useState<any[]>(useOpl0Columns());
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
+    const [filters, setFilters] = useState(defaultFilters);
     const [data, setData] = useState<any[]>([]);
     const rowKey = 'rowKey';
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
-    const [fullCondition, setFullCondition] = useState<FullConditionType>({ current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0 });
+    const [fullCondition, setFullCondition] = useState<FullConditionType>({
+        current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
+    });
     const btnCol = {
         title: t('Details'),
         width: 115,
@@ -380,16 +401,26 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
     const updateData = async(): Promise<void> => {
         let res;
         let isExpend = false;
+        const filterColumn = ['type', 'opType', 'name', 'opName', 'accCore'];
+        const filterTypes: string[] = [];
+        Object.keys(fullCondition).forEach(key => {
+            const filterValue = fullCondition[key as keyof FullConditionType];
+            if (filterColumn.includes(key) && filterValue != null) {
+                if (Array.isArray((filterValue)) && filterValue.length > 0) {
+                    filterTypes.push(JSON.stringify({ columnName: key, value: filterValue[0] }));
+                }
+            }
+        });
         // 展开算子
         if (opType !== undefined || opName !== undefined || accCore !== undefined) {
-            const param = { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '', accCore: accCore ?? '' };
+            const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes, opType: opType ?? '', opName, shape: inputShape ?? '', accCore: accCore ?? '' };
             isExpend = true;
             res = await queryOperatorsInStatic(param);
         } else if (condition.group === OPERATOR || condition.group === HCCL_OPERATOR) {
-            const param = { ...fullCondition, orderBy: fullCondition.field };
+            const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes };
             res = await queryOperators(param);
         } else {
-            const param = { ...fullCondition, orderBy: fullCondition.field };
+            const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes };
             res = await queryOperatorStatic(param);
         }
         if (res === null || res === undefined) {
@@ -427,7 +458,8 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
     const updateFullCondition = (obj: FullConditionType): void => {
         setTimeout(() => {
             const newFullCondition = { ...fullCondition };
-            const keys = ['group', 'rankId', 'topK', 'current', 'pageSize', 'field', 'order'];
+            const keys = ['group', 'rankId', 'topK', 'current', 'pageSize',
+                'field', 'order', 'type', 'opType', 'name', 'opName', 'accCore'];
             Object.keys(obj).forEach(key => {
                 if (keys.includes(key)) {
                     Object.assign(newFullCondition, { [key]: obj[key as keyof FullConditionType] });
@@ -451,12 +483,15 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
     useEffect(() => {
         setSorter(defaultSorter);
         setPage(defaultPage);
-        updateFullCondition({ ...defaultSorter, ...defaultPage, ...condition });
+        setFilters(defaultFilters);
+        updateFullCondition({ ...defaultSorter, ...defaultPage, ...defaultFilters, ...condition });
     }, [condition.group]);
 
     useEffect(() => {
-        updateFullCondition({ ...sorter, ...page, ...condition });
-    }, [page.current, page.pageSize, sorter.field, sorter.order, condition.rankId, condition.topK]);
+        updateFullCondition({ ...sorter, ...page, ...filters, ...condition });
+    }, [page.current, page.pageSize, sorter.field, sorter.order,
+        filters.type, filters.opType, filters.name, filters.opName, filters.accCore,
+        condition.rankId, condition.topK]);
     return <ResizeTable
         size="small"
         minThWidth={50}
@@ -468,6 +503,9 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
             if (extra.action === 'sort') {
                 setSorter(sorter.order === undefined ? { field: '', order: '' } : sorter);
             }
+            if (extra.action === 'filter') {
+                setFilters(filters === undefined ? {} : filters);
+            }
         }
         }
         rowKey={rowKey}
@@ -475,6 +513,7 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
             ? {
                 expandedRowRender: (record: any) => <OperatorTable
                     condition={condition}
+                    filterType={filterType}
                     opName={record.opName}
                     opType={record.opType}
                     inputShape={record.inputShape}
@@ -488,20 +527,20 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
     />;
 };
 
-const DetailTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
+const DetailTable = ({ condition, filterType, session }: {condition: ConditionType;filterType: FilterType;session: Session}): JSX.Element => {
     const { t } = useTranslation('operator');
     let table;
     switch (condition.group) {
         case OPERATOR:
         case HCCL_OPERATOR:
-            table = <OperatorTable condition={condition} session={session}/>;
+            table = <OperatorTable condition={condition} filterType={filterType} session={session}/>;
             break;
         case OPERATOR_TYPE:
         case HCCL_OPERATOR_TYPE:
-            table = <OperatorTypeTable condition={condition} session={session}/>;
+            table = <OperatorTypeTable condition={condition} filterType={filterType} session={session}/>;
             break;
         default:
-            table = <BaseTable condition={condition} session={session}/>;
+            table = <BaseTable condition={condition} filterType={filterType} session={session}/>;
             break;
     }
     return <Container
