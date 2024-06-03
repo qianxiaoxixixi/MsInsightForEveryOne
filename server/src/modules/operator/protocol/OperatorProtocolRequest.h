@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_OPERATORPROTOCOLREQUEST_H
 
 #include <string>
+#include <vector>
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
@@ -32,6 +33,7 @@ namespace Dic::Protocol {
         int64_t pageSize;
         std::string orderBy;
         std::string order;
+        std::vector<std::pair<std::string, std::string>> filters;
     };
 
     // Operator Type、Operator Name + Input Shape类型时See More的请求参数
@@ -47,6 +49,7 @@ namespace Dic::Protocol {
         int64_t pageSize;
         std::string orderBy;
         std::string order;
+        std::vector<std::pair<std::string, std::string>> filters;
     };
 
     // 获取算子按类型耗时信息

@@ -235,6 +235,9 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     ORDER by total_time DESC LIMIT ?"
             "     ) subquery ";
     }
+    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
+        return "";
+    }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
@@ -263,25 +266,30 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             ") subquery";
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
-            "opTypes || taskTypes" :
-            R"(name || inputShapes || taskTypes)";
+            "op_type || accelerator_core" :
+            R"(name || inputShapes || accelerator_core)";
         sql = " SELECT COUNT(*) as nums"
             " FROM ( "
             "     SELECT "
             "     deviceId,"
             "     startNs, "
             "     endNs, "
-            "     TASKTYPE.value AS taskTypes, "
-            "     OPTYPE.value AS opTypes"
+            "     TASKTYPE.value AS accelerator_core, "
+            "     OPTYPE.value AS op_type,"
+            "     NAME.value AS name"
             "     FROM COMPUTE_TASK_INFO"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     WHERE taskTypes <> 'HCCL' "
+            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
+            "     WHERE accelerator_core <> 'HCCL' "
             "     GROUP by " +
             group +
-            "     ORDER by (endNs - startNs) DESC LIMIT ?"
+            "     ORDER by ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) DESC LIMIT ?"
             " ) subquery";
+    }
+    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
+        return false;
     }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -358,7 +366,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
         std::string condition = (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP) ?
             " op_type = ?" : " name = ? AND input_shapes = ?";
         sql = " SELECT COUNT(*) as nums FROM ("
-            "     SELECT NAME.value AS name, INPUTSHAPES.value AS input_shapes, TASKTYPE.value AS task_type, "
+            "     SELECT NAME.value AS name, INPUTSHAPES.value AS input_shapes, TASKTYPE.value AS accelerator_core, "
             "     OPTYPE.value AS op_type"
             "     FROM " + TABLE_COMPUTE_TASK_INFO +
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId"
@@ -366,8 +374,10 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     WHERE task_type = ? AND" +
-            condition + " ) subquery";
+            "     WHERE accelerator_core = ? AND" + condition + " ) subquery";
+    }
+    if (!GenerateQueryFiltersSql<OperatorMoreInfoReqParams>(reqParams, sql)) {
+        return false;
     }
 
     sqlite3_stmt *stmt = nullptr;
@@ -441,6 +451,7 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
         operatorGroup == OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
         sql += "AND input_shapes = ?";
     }
+    if (!GenerateQueryMoreInfoFilters(reqParams, sql)) { return ""; }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
@@ -668,14 +679,20 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     } else {
         sql = " SELECT COUNT(*) as nums"
             " FROM ("
-            "     SELECT deviceId, TASKTYPE.value as taskTypes, ROUND((endNs - startNs)/1000.0, 3) as duration "
-            "     FROM " +
-            TABLE_COMPUTE_TASK_INFO +
+            "     SELECT ROUND((endNs - startNs)/1000.0, 3) as duration, " + blockDimColumnName +
+            "     , deviceId as rank_id, streamId as step_id,NAME.value AS name,"
+            "     OPTYPE.value AS op_type,TASKTYPE.value as accelerator_core, startNs as start_time"
+            " FROM " + TABLE_COMPUTE_TASK_INFO +
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     WHERE taskTypes <> 'HCCL'"
+            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
+            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
+            "     WHERE accelerator_core <> 'HCCL'"
             "     ORDER BY duration DESC LIMIT ?"
             " ) subquery";
+    }
+    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
+        return false;
     }
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -735,6 +752,9 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
             "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
             "     WHERE accelerator_core <> 'HCCL' ORDER by duration DESC LIMIT ? ) subquery ";
     }
+    if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
+        return "";
+    }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
@@ -788,6 +808,41 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForHCCL(std::string &sql
         "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
         "  ORDER by duration DESC ) subquery ";
     return sql;
+}
+
+template <typename T>
+bool DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
+{
+    if (reqParams.filters.empty()) {
+        return true;
+    }
+    sql += " WHERE ";
+    for (int64_t index = 0; index < reqParams.filters.size(); index++) {
+        std::pair<std::string, std::string> filter = reqParams.filters[index];
+        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
+                             filter.first, ", ", filter.second, ")");
+            return false;
+        }
+        if (index != 0) {
+            sql += " AND ";
+        }
+        sql += filter.first + " LIKE '%" + filter.second + "%' ";
+    }
+    return true;
+}
+
+bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql)
+{
+    for (const auto &filter: reqParams.filters) {
+        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
+                             filter.first, ", ", filter.second, ")");
+            return false;
+        }
+        sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";
+    }
+    return true;
 }
 
 void DbSummaryDataBase::ParserEnd(const std::string &token, const std::string &fileId, bool result,
