@@ -24,6 +24,23 @@ export const defaultCondition = {
     topK: 15,
     custom: 0,
 };
+
+export interface FilterType {
+    name: string[];
+    opName: string[];
+    type: string[];
+    opType: string[];
+    accCore: string[];
+}
+
+export const defaultFilterType = {
+    name: [],
+    opName: [],
+    type: [],
+    opType: [],
+    accCore: [],
+};
+
 const defaultOptionMap = {
     rankIdOptions: [],
     groupOptions: [

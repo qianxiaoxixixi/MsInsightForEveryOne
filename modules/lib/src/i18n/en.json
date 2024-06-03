@@ -143,6 +143,14 @@
     "Confirm": "Confirm",
     "SeeMore": "See more",
     "Generate": "Generate",
+    "Open in Find Window": "Open in Find Window",
+    "Search": "Search",
+    "Reset": "Reset"
+  },
+  "filterColumnName": {
+    "Name": "Name",
+    "Type": "Type",
+    "AcceleratorCore": "Accelerator Core",
     "Open in Find Window": "Open in Find Window"
   },
   "chart": {

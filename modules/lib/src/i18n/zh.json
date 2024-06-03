@@ -143,6 +143,14 @@
     "Confirm": "确认",
     "SeeMore": "查看更多",
     "Generate": "生成",
+    "Open in Find Window": "在发现窗口打开",
+    "Search": "搜索",
+    "Reset": "重置"
+  },
+  "filterColumnName": {
+    "Name": "名称",
+    "Type": "类型",
+    "AcceleratorCore": "加速器核",
     "Open in Find Window": "在发现窗口打开"
   },
   "chart": {

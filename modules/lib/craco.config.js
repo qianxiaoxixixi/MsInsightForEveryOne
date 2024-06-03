@@ -22,6 +22,7 @@ module.exports = {
           './useDraggableContainer': './src/useDraggableContainer/useDraggableContainer.tsx',
           './i18n': './src/i18n/index.ts',
           './SharedConfigProvider': './src/SharedConfigProvider/index.tsx',
+          './ColumnFilter': './src/resize/ColumnFilter.tsx',
         },
         shared: {
           react: {singleton: true},

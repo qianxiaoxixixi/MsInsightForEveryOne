@@ -53,6 +53,7 @@ export const queryOperatorComputeUnit = async(param: ShortParam): Promise<any> =
  * @param {number} pageSize
  * @param {number} orderBy 排序
  * @param {number} order
+ * @param {Array} filters
  * @return {total:number;data:[]}
  */
 export const queryOperators = async(param: StaticParam): Promise<any> => {
@@ -69,6 +70,7 @@ export const queryOperators = async(param: StaticParam): Promise<any> => {
  * @param {number} pageSize
  * @param {number} orderBy 排序
  * @param {number} order
+ * @param {Array} filters
  * @return {total:number;data:[]}
  */
 export const queryOperatorStatic = async(param: StaticParam): Promise<any> => {
@@ -87,6 +89,7 @@ export const queryOperatorStatic = async(param: StaticParam): Promise<any> => {
  * @param {number} order
  * @param {string} opType 算子类型
  * @param {string} shape
+ * @param {Array} filters
  * @return {total:number;data:[]}
  */
 export const queryOperatorsInStatic = async(param: DetailParam): Promise<any> => {
