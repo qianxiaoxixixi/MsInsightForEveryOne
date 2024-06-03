@@ -5,5 +5,5 @@ import { ClientConnector } from 'lib/Connector';
 
 export default new ClientConnector({
     getTargetWindow: (): any[] => [window.parent],
-    module: 'cluster',
+    module: 'compute',
 });

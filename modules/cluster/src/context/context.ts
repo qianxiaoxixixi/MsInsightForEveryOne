@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+// Cluster Module
 import { createContext, useContext } from 'react';
 import { RootStore } from '../store';
 export const RootStoreContext = createContext<RootStore | undefined>(undefined);
