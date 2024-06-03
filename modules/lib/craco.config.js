@@ -23,6 +23,7 @@ module.exports = {
           './i18n': './src/i18n/index.ts',
           './SharedConfigProvider': './src/SharedConfigProvider/index.tsx',
           './ColumnFilter': './src/resize/ColumnFilter.tsx',
+          './ThemeStore': './src/utils/ThemeStore.ts',
         },
         shared: {
           react: {singleton: true},
