@@ -474,8 +474,12 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     SELECT * FROM " + kernelTable +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
-                "     ORDER by duration DESC LIMIT ?"
+                "     ORDER by ROUND(SUM(duration), 2) DESC LIMIT ?"
                 " ) subquery";
+
+        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
+            return false;
+        }
 
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -523,6 +527,9 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
+        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
+            return "";
+        }
 
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
@@ -543,6 +550,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         }
 
         std::string sql = GenerateQueryStatisticSql(reqParams);
+        if (sql.empty()) {
+            ServerLog::Error("Failed to generate query statistic sql.");
+            return false;
+        }
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
@@ -588,6 +599,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
 
+        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
+            return false;
+        }
+
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
@@ -618,6 +633,11 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
+
+        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
+            return "";
+        }
+
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
@@ -635,6 +655,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             return false;
         }
         std::string sql = GenerateQueryDetailSql(reqParams);
+        if (sql.empty()) {
+            ServerLog::Error("Failed to generate query statistic sql.");
+            return false;
+        }
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
@@ -694,6 +718,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     WHERE rank_id = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
+        if (!GenerateQueryFiltersSql<Protocol::OperatorMoreInfoReqParams>(reqParams, sql)) {
+            return false;
+        }
+
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
@@ -740,6 +768,15 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             sql += " WHERE name = ? AND input_shapes = ?";
         }
 
+        for (const auto &filter: reqParams.filters) {
+            if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+                ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
+                                 filter.first, ", ", filter.second, ")");
+                return "";
+            }
+            sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";
+        }
+
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
@@ -759,6 +796,10 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         }
 
         std::string sql = GenerateQueryMoreInfoSql(reqParams);
+        if (sql.empty()) {
+            ServerLog::Error("Failed to generate query statistic sql.");
+            return false;
+        }
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
@@ -812,6 +853,28 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         }
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+    }
+
+    template <typename T>
+    bool JsonSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
+    {
+        if (reqParams.filters.empty()) {
+            return true;
+        }
+        sql += " WHERE ";
+        for (int64_t index = 0; index < reqParams.filters.size(); index++) {
+            std::pair<std::string, std::string> filter = reqParams.filters[index];
+            if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+                ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
+                                 filter.first, ", ", filter.second, ")");
+                return false;
+            }
+            if (index != 0) {
+                sql += " AND ";
+            }
+            sql += filter.first + " LIKE '%" + filter.second + "%' ";
+        }
+        return true;
     }
 
     std::set<std::string> JsonSummaryDataBase::QueryRankIds()

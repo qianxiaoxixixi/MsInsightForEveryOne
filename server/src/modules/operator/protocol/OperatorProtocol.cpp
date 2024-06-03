@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
+#include <map>
 #include "JsonUtil.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolUtil.h"
@@ -76,6 +77,7 @@ namespace Dic::Protocol {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+        ToOperatorInfoRequestFilters<OperatorStatisticInfoRequest>(reqPtr, json, error);
         return reqPtr;
     }
 
@@ -93,6 +95,7 @@ namespace Dic::Protocol {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+        ToOperatorInfoRequestFilters<OperatorDetailInfoRequest>(reqPtr, json, error);
         return reqPtr;
     }
 
@@ -114,7 +117,32 @@ namespace Dic::Protocol {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+        ToOperatorInfoRequestFilters<OperatorMoreInfoRequest>(reqPtr, json, error);
         return reqPtr;
+    }
+
+    template <typename T>
+    void OperatorProtocol::ToOperatorInfoRequestFilters(std::unique_ptr<T> &reqPtr,
+                                                        const json_t &json, std::string &error)
+    {
+        std::map<std::string, std::string> colNameMap = {
+                {"opType", "op_type"},
+                {"type", "op_type"},
+                {"opName", "name"},
+                {"accCore", "accelerator_core"},
+                {"name", "name"}
+        };
+        if (json["params"].HasMember("filters") && json["params"]["filters"].IsArray()) {
+            for (const auto &filter : json["params"]["filters"].GetArray()) {
+                if (filter.IsString()) {
+                    std::pair<std::string, std::string> pFilter("", "");
+                    auto fil = JsonUtil::TryParse(filter.GetString(), error);
+                    pFilter.first = colNameMap[JsonUtil::GetString(fil->GetObj(), "columnName")];
+                    pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
+                    reqPtr->params.filters.emplace_back(pFilter);
+                }
+            }
+        }
     }
 
     std::optional<document_t> OperatorProtocol::ToOperatorCategoryInfoResponse(const Response &response)

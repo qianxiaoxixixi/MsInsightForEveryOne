@@ -78,6 +78,9 @@ private:
     bool QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total);
 
     void BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams);
+
+    template <typename T>
+    bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
 };
 
 } // end of namespace Summary

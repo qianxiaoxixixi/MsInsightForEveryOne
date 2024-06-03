@@ -51,6 +51,9 @@ private:
     static std::string GenerateQueryCategoryDurationSqlForHCCL(
         const Dic::Protocol::OperatorGroupConverter::OperatorGroup &operatorGroup);
     std::string &GenerateQueryMoreInfoSqlForHCCL(std::string &sql) const;
+    template <typename T>
+    bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
+    bool GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql);
     std::string blockDimColumnName;
 };
 
