@@ -155,9 +155,22 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
         JsonUtil::AddMember(itemJson, "idleTime", duration.idleTime, allocator);
         JsonUtil::AddMember(itemJson, "synchronizationTimeRatio", duration.synchronizationTimeRatio, allocator);
         JsonUtil::AddMember(itemJson, "waitTimeRatio", duration.waitTimeRatio, allocator);
+        JsonUtil::AddMember(itemJson, "sdmaBw", duration.sdmaBw, allocator);
+        JsonUtil::AddMember(itemJson, "rdmaBw", duration.rdmaBw, allocator);
+        items.PushBack(itemJson, allocator);
+    }
+    json_t adviceJson(kArrayType);
+    for (const auto& item : response.bwStatistics) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "type", item.type, allocator);
+        JsonUtil::AddMember(itemJson, "max", item.max, allocator);
+        JsonUtil::AddMember(itemJson, "min", item.min, allocator);
+        JsonUtil::AddMember(itemJson, "avg", item.avg, allocator);
+        JsonUtil::AddMember(itemJson, "diff", item.diff, allocator);
         items.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "items", items, allocator);
+    JsonUtil::AddMember(body, "advice", adviceJson, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

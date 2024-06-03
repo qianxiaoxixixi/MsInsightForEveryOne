@@ -120,11 +120,22 @@ struct Duration {
     double idleTime;
     double synchronizationTimeRatio;
     double waitTimeRatio;
+    double sdmaBw{};
+    double rdmaBw{};
+};
+
+struct BandwidthStatistic {
+    std::string type; // SDMA、RDMA
+    double avg; // 单位GB/s
+    double max; // 单位GB/s
+    double min; // 单位GB/s
+    double diff; // 单位GB/s
 };
 
 struct DurationResponse : public Response {
     DurationResponse() : Response(REQ_RES_COMMUNICATION_LIST) {}
     std::vector<Duration> body;
+    std::vector<BandwidthStatistic> bwStatistics{};
 };
 
 struct OperatorListsResponseBody {
