@@ -25,13 +25,13 @@
         "testTimeline": "cd timeline && npm run test"
     },
     "dependencies": {
-        "ascend-lib": "./lib",
         "ascend-cluster": "./cluster",
         "ascend-compute": "./compute",
+        "ascend-jupyter": "./jupyter",
+        "ascend-lib": "./lib",
         "ascend-memory": "./memory",
         "ascend-operator": "./operator",
-        "ascend-timeline": "./timeline",
-        "ascend-jupyter": "./jupyter"
+        "ascend-timeline": "./timeline"
     },
     "devDependencies": {
         "@craco/craco": "7.1.0",
@@ -46,7 +46,6 @@
         "@types/jest": "27.5.2",
         "@types/lodash": "4.14.197",
         "@types/node": "18.14.1",
-        "@types/pako": "2.0.3",
         "@types/react": "18.2.0",
         "@types/react-dom": "18.2.7",
         "@types/shallowequal": "1.1.1",

@@ -297,6 +297,10 @@ static bool CheckSqlValid(const std::string& input)
 
 static std::optional<std::string> Decompress(const std::string &str)
 {
+    // 非 zlib 格式压缩数据直接返回
+    if (str.empty() || str[0] != '\x78') {
+        return str;
+    }
     // 解压后的数据不能大于50M
     const static size_t MAX_DECOMPRESSED_SIZE = 1024 * 1024 * 50;
 
