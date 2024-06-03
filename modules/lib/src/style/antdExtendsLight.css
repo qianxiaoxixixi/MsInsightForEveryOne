@@ -140,3 +140,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .rc-virtual-list-scrollbar{
     display: none!important;
 }
+
+.ant-table-cell-scrollbar:not([rowspan]) {
+    box-shadow: none;
+}
