@@ -16,6 +16,7 @@ import { hashToNumber } from '../../utils/colorUtils';
 import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+import { DETAIL_HEADER_HEIGHT_ETC_PX } from './SystemView';
 
 export interface EventTableData {
     eventDetails: EventDetails[];
@@ -106,7 +107,7 @@ export const EventDetail = observer((props: any) => {
     const eventColumns = generateEventColumns(eventColum, setRowData);
 
     return (
-        <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
+        <div style={{ height: '100%', padding: '5px 5px 15px 5px' }}>
             <ResizeTable
                 onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
                     if (extra.action === 'sort') {
@@ -114,6 +115,7 @@ export const EventDetail = observer((props: any) => {
                     }
                 }}
                 pagination={GetPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading} rowClassName={'click-able'}
+                scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
             />
         </div>
     );

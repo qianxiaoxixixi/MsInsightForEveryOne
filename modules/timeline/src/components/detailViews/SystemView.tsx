@@ -5,7 +5,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Divider, Space } from 'antd/lib/index';
+import { Divider } from 'antd/lib/index';
 import styled from '@emotion/styled';
 import { Button, Select } from 'antd';
 import {
@@ -46,13 +46,13 @@ import { hashToNumber } from '../../utils/colorUtils';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
 
+export const DETAIL_HEADER_HEIGHT_ETC_PX = 130;
 const Container = styled.div`
     width: 100%;
     height: 100%;
     display: flex;
     flex-flow: nowrap;
     user-select:text;
-    overflow: scroll;
     .ant-tree {
         width: 280px;
         height: 100%;
@@ -69,7 +69,7 @@ const Container = styled.div`
 `;
 
 const SelectContainer = styled.div`
-    width: calc(100% - 290px);
+    width: calc(100% - 270px);
     height: 100%;
     .ant-table-wrapper {
         height: 100%;
@@ -94,13 +94,13 @@ export const SystemView = observer((props: any) => {
         }
     }, [props.session.showEvent]);
     return (<Container className={'theme-view'}>
-        <Space direction="vertical" size="middle" style={{ display: 'flex', flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'auto', width: '250px' }}>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
             <SelectList viewOption={viewOption} selectKey={key} setKey={setKey}></SelectList>
-        </Space>
+        </div>
         <Divider type="vertical" />
-        <ChartErrorBoundary><SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session}></SelectContent></SelectContainer></ChartErrorBoundary>
+        <ChartErrorBoundary><SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}></SelectContent></SelectContainer></ChartErrorBoundary>
     </Container>);
 });
 
@@ -315,6 +315,7 @@ const BaseSummary = observer((props: any) => {
                 dataSource={dataSource}
                 columns={columns}
                 size="small"
+                scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
                 loading = {isLoading}/>
             : <Loading style={{ marginTop: '10px' }}/>
     );
@@ -435,6 +436,7 @@ const KernelDetails = observer((props: any) => {
                 pagination={GetPageData(page, setPage)}
                 dataSource={dataSource}
                 columns={colums}
+                scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
                 size="small"/>
             : <Loading style={{ marginTop: '10px' }}/>
     );
