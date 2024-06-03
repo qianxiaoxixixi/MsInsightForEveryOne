@@ -54,7 +54,13 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
         JsonUtil::AddMember(summaryDtoJson, "prepareTime", summaryDto.prepareTime, allocator);
         summaryList.PushBack(summaryDtoJson, allocator);
     }
+    json_t adviceJson(kObjectType);
+    JsonUtil::AddMember(adviceJson, "compute", response.body.traceStatistic.computeDiff, allocator);
+    JsonUtil::AddMember(adviceJson, "communication", response.body.traceStatistic.communicationDiff, allocator);
+    JsonUtil::AddMember(adviceJson, "free", response.body.traceStatistic.freeDiff, allocator);
+
     JsonUtil::AddMember(body, "summaryList", summaryList, allocator);
+    JsonUtil::AddMember(body, "advice", adviceJson, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

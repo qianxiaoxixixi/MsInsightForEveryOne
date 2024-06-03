@@ -23,6 +23,12 @@ struct SummaryDto {
     double prepareTime;
 };
 
+struct TraceStatistic {
+    double computeDiff{};
+    double communicationDiff{};
+    double freeDiff{};
+};
+
 struct SummaryTopRankResBody {
     int rankCount;
     std::vector<std::string> rankList;
@@ -33,6 +39,7 @@ struct SummaryTopRankResBody {
     int stepNum;
     std::vector<std::string> stepList;
     std::vector<SummaryDto> summaryList;
+    TraceStatistic traceStatistic;
 };
 
 struct SummaryTopRankResponse : public Response {
