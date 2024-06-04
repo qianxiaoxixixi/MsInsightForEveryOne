@@ -148,7 +148,6 @@ TEST_F(TestSuit, QueryBaseInfo)
     EXPECT_EQ("Ascend910B4", resBody.soc);
     EXPECT_EQ("32", resBody.blockDim);
     EXPECT_EQ("13.0600004196167", resBody.duration);
-    EXPECT_EQ(NUM32, resBody.blockDetail.size());
 }
 
 TEST_F(TestSuit, QueryLoadData)

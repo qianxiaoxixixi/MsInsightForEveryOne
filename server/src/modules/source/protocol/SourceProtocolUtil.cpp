@@ -83,19 +83,17 @@ template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(con
     JsonUtil::AddMember(body, "blockDim", response.body.blockDim, allocator);
     JsonUtil::AddMember(body, "mixBlockDim", response.body.mixBlockDim, allocator);
     JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
-    json_t blockDetail(kArrayType);
-    for (const auto &item: response.body.blockDetail) {
-        json_t detail(kObjectType);
-        JsonUtil::AddMember(detail, "blockId", item.blockId, allocator);
-        JsonUtil::AddMember(detail, "coreType", item.coreType, allocator);
-        json_t durationList(kArrayType);
-        for (const auto &duration: item.duration) {
-            durationList.PushBack(json_t().SetString(duration.c_str(), allocator),
-                                  allocator);
-        }
-        JsonUtil::AddMember(detail, "duration", durationList, allocator);
-        blockDetail.PushBack(detail, allocator);
+
+    json_t blockDetail(kObjectType);
+    JsonUtil::AddMember(blockDetail, "headerName", response.body.blockDetail.headerName, allocator);
+    JsonUtil::AddMember(blockDetail, "size", response.body.blockDetail.size, allocator);
+    json_t rowJson(kArrayType);
+    for (const auto &rowItem: response.body.blockDetail.row) {
+        json_t oneRow(kObjectType);
+        JsonUtil::AddMember(oneRow, "value", rowItem.value, allocator);
+        rowJson.PushBack(oneRow, allocator);
     }
+    JsonUtil::AddMember(blockDetail, "row", rowJson, allocator);
     JsonUtil::AddMember(body, "blockDetail", blockDetail, allocator);
     json_t advice(kArrayType);
     for (const auto &item: response.body.advice) {
@@ -114,14 +112,14 @@ template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(con
     json_t body(kObjectType);
     json_t blockIdList(kArrayType);
     for (const auto &item: response.body.blockIdList) {
-        blockIdList.PushBack(json_t().SetString(std::to_string(item).c_str(), allocator), allocator);
+        blockIdList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "blockIdList", blockIdList, allocator);
     json_t chartData(kObjectType);
     json_t detailDataList(kArrayType);
     for (const auto &item: response.body.chartData.detailDataList) {
         json_t unitData(kObjectType);
-        JsonUtil::AddMember(unitData, "blockId", std::to_string(item.blockId), allocator);
+        JsonUtil::AddMember(unitData, "blockId", item.blockId, allocator);
         JsonUtil::AddMember(unitData, "blockType", item.blockType, allocator);
         JsonUtil::AddMember(unitData, "name", item.name, allocator);
         JsonUtil::AddMember(unitData, "unit", item.unit, allocator);
@@ -140,7 +138,7 @@ template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(con
     json_t tableDetailDataList(kArrayType);
     for (const auto &item: response.body.tableData.detailDataList) {
         json_t unitData(kObjectType);
-        JsonUtil::AddMember(unitData, "blockId", std::to_string(item.blockId), allocator);
+        JsonUtil::AddMember(unitData, "blockId", item.blockId, allocator);
         JsonUtil::AddMember(unitData, "blockType", item.blockType, allocator);
         JsonUtil::AddMember(unitData, "name", item.name, allocator);
         JsonUtil::AddMember(unitData, "unit", item.unit, allocator);
