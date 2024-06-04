@@ -1593,6 +1593,12 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
         searchAllSlice.name = resultSet->GetString("value");
         searchAllSlice.timestamp = resultSet->GetUint64("startTime");
         searchAllSlice.duration = resultSet->GetUint64("duration");
+        searchAllSlice.id = resultSet->GetString("id");
+        searchAllSlice.tid = resultSet->GetString("tid");
+        searchAllSlice.pid = resultSet->GetString("pid");
+        searchAllSlice.depth = resultSet->GetUint64("depth");
+        auto deviceId = resultSet->GetString("deviceId");
+        searchAllSlice.deviceId = deviceId.empty() ? path : deviceId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
     body.currentPage = params.current;
@@ -1631,22 +1637,26 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
         nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
     sql = "with ids as (" + nameMatch + "), minTime as (select ? as value),\n"
-          " tasks as (select TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
+          " tasks as (select deviceId, TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
           " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
           " where deviceId = ? ORDER BY startTime),\n"
-          " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
-          " info.taskType as name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
+          " com as (select deviceId, opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid,"
+          " startTime, duration, 0 as depth, info.taskType as name"
+          " from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
           " ORDER BY startTime)\n"
-          " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
+          " select * from ( select deviceId, coalesce(compute.name, main.taskType) as name, main.pid,"
+          " main.pid as metaType,"
           " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
           " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
-          " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
-          " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
+          " select deviceId,name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
+          " union ALL select deviceId,opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
           " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
-          " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
-          " on op.opId = a.opId UNION all select name, globalTid as pid, 'HOST' as metaType, type as tid, "
+          " from COMMUNICATION_OP op join minTime join (select opId,deviceId from com group by opId) a \n"
+          " on op.opId = a.opId UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
+          " type as tid, "
           "startNs - minTime.value AS startTime, CANN_API.ROWID as id, endNs - startNs AS duration, depth from "
-          "CANN_API JOIN minTime UNION all select name, globalTid as pid, 'HOST' as metaType, 'pytorch' as tid, "
+          "CANN_API JOIN minTime UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
+          " 'pytorch' as tid, "
           "startNs - minTime.value AS startTime,  PYTORCH_API.ROWID as id, endNs - startNs AS duration, depth from "
           "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" + orderBy +" LIMIT ? OFFSET ?";
     return sql;

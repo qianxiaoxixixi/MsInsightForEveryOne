@@ -204,6 +204,8 @@ static void QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowTh
     const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody);
 static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody);
+static void SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
+                            Protocol::KernelDetailsBody &responseBody);
 private:
 /* Functions for BbTraceDataBase */
     static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,

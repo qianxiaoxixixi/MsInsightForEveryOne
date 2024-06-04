@@ -946,4 +946,26 @@ void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<Sq
     responseBody.data.emplace_back(summary);
     ServerLog::Info("Summery Size is: ", responseBody.data.size());
 }
+
+void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
+                                                 Protocol::KernelDetailsBody &responseBody)
+{
+    while (resultSet->Next()) {
+        Protocol::KernelDetail detail;
+        detail.name = resultSet->GetString("name");
+        detail.type = resultSet->GetString("type");
+        detail.acceleratorCore = resultSet->GetString("acceleratorCore");
+        detail.startTime = resultSet->GetUint64("startTime") - minTimestamp;
+        detail.duration = resultSet->GetDouble("duration");
+        detail.waitTime = resultSet->GetDouble("waitTime");
+        detail.blockDim = resultSet->GetUint64("blockDim");
+        detail.inputShapes = resultSet->GetString("inputShapes");
+        detail.inputDataTypes = resultSet->GetString("inputDataTypes");
+        detail.inputFormats = resultSet->GetString("inputFormats");
+        detail.outputShapes = resultSet->GetString("outputShapes");
+        detail.outputDataTypes = resultSet->GetString("outputDataTypes");
+        detail.outputFormats = resultSet->GetString("outputFormats");
+        responseBody.kernelDetails.emplace_back(detail);
+    }
+}
 }
