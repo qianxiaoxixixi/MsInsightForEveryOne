@@ -50,10 +50,16 @@ struct SourceApiInstrResponse : public Response {
     SourceApiInstrResBody body;
 };
 
-struct BlockDetailBody {
-    int64_t blockId;
-    std::string coreType;
-    std::vector<std::string> duration;
+struct TableRow {
+    std::string name;
+    std::vector<std::string> value;
+};
+
+struct TableDetail {
+    std::string tableName;
+    std::vector<std::string> size;
+    std::vector<std::string> headerName;
+    std::vector<TableRow> row;
 };
 
 struct DetailsBaseInfoResBody {
@@ -63,7 +69,7 @@ struct DetailsBaseInfoResBody {
     std::string blockDim;
     std::string mixBlockDim;
     std::string duration;
-    std::vector<BlockDetailBody> blockDetail;
+    TableDetail blockDetail;
     std::vector<std::string> advice;
 };
 
@@ -73,7 +79,7 @@ struct DetailsBaseInfoResponse : public Response {
 };
 
 struct SubBlockUnitData {
-    std::int64_t blockId;
+    std::string blockId;
     std::string blockType;
     std::string name;
     std::string unit;
@@ -87,7 +93,7 @@ struct SubBlockData {
 };
 
 struct DetailsLoadInfoResBody {
-    std::vector<int64_t> blockIdList;
+    std::vector<std::string> blockIdList;
     SubBlockData chartData;
     SubBlockData tableData;
 };
@@ -113,7 +119,7 @@ struct L2Cache {
 };
 
 struct MemoryGraph {
-    int64_t blockId;
+    std::string blockId;
     std::string blockType;
     std::string chipType;
     std::vector<MemoryUnit> memoryUnit;
@@ -121,19 +127,8 @@ struct MemoryGraph {
     std::vector<std::string> advice;
 };
 
-struct MemoryTableRow {
-    std::string name;
-    std::vector<std::string> value;
-};
-
-struct TableDetail {
-    std::string tableName;
-    std::vector<std::string> size;
-    std::vector<std::string> headerName;
-    std::vector<MemoryTableRow> row;
-};
 struct MemoryTable {
-    int64_t blockId;
+    std::string blockId;
     std::string tableOpType;
     std::vector<TableDetail> tableDetail;
     std::vector<std::string> advice;

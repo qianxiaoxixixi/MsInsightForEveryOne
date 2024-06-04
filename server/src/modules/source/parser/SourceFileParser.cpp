@@ -426,28 +426,40 @@ bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &resp
     }
     try {
         std::string error;
-        auto d = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(baseInfo, error);
+        auto baseInfoJson = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(baseInfo, error);
         if (!error.empty()) {
             ServerLog::Error("Get base info error:", error);
             return false;
         }
-        responseBody.name = JsonUtil::GetString(d.value(), "name");
-        responseBody.soc = JsonUtil::GetString(d.value(), "soc");
-        responseBody.opType = JsonUtil::GetString(d.value(), "op_type");
-        responseBody.blockDim = JsonUtil::GetString(d.value(), "block_dim");
-        responseBody.mixBlockDim = JsonUtil::GetString(d.value(), "mix_block_dim");
-        responseBody.duration = JsonUtil::GetString(d.value(), "duration");
-        Value &blockDetailsValue =
-                responseBody.opType == "mix" ? d.value()["mix_block_detail"] : d.value()["block_detail"];
-        std::vector<Protocol::BlockDetailBody> blockDetailList;
-        for (const auto &item: blockDetailsValue.GetArray()) {
-            Protocol::BlockDetailBody detail;
-            detail.blockId = JsonUtil::GetInteger(item, "block_id");
-            detail.coreType = responseBody.opType;
-            detail.duration = JsonUtil::GetVector<std::string>(item, "duration");
-            blockDetailList.push_back(detail);
+        responseBody.name = JsonUtil::GetString(baseInfoJson.value(), "name");
+        responseBody.soc = JsonUtil::GetString(baseInfoJson.value(), "soc");
+        responseBody.opType = JsonUtil::GetString(baseInfoJson.value(), "op_type");
+        responseBody.blockDim = JsonUtil::GetString(baseInfoJson.value(), "block_dim");
+        responseBody.mixBlockDim = JsonUtil::GetString(baseInfoJson.value(), "mix_block_dim");
+        responseBody.duration = JsonUtil::GetString(baseInfoJson.value(), "duration");
+        Value blockDetailsValue;
+        if (responseBody.opType == "mix" && baseInfoJson.value().HasMember("mix_block_detail")) {
+            blockDetailsValue = baseInfoJson.value()["mix_block_detail"];
+        } else if (responseBody.opType != "mix" && baseInfoJson.value().HasMember("block_detail")) {
+            blockDetailsValue = baseInfoJson.value()["block_detail"];
+        } else {
+            return true;
         }
-        responseBody.blockDetail = blockDetailList;
+        if (!blockDetailsValue.IsObject()) {
+            return true;
+        }
+        Protocol::TableDetail tableDetail;
+        tableDetail.size = JsonUtil::GetVector<std::string>(blockDetailsValue, "size");
+        tableDetail.headerName = JsonUtil::GetVector<std::string>(blockDetailsValue, "head_name");
+        if (blockDetailsValue.HasMember("row") && blockDetailsValue["row"].IsArray()) {
+            Value &row = blockDetailsValue["row"];
+            for (const auto &dataRow: row.GetArray()) {
+                Protocol::TableRow memoryTableRow;
+                memoryTableRow.value = JsonUtil::GetVector<std::string>(dataRow, "value");
+                tableDetail.row.push_back(memoryTableRow);
+            }
+        }
+        responseBody.blockDetail = tableDetail;
         return true;
     } catch (const std::exception &e) {
         ServerLog::Error("Can't parse details base info,not json.Error is ", e.what());
@@ -477,7 +489,7 @@ bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & res
     }
 
     // 获取blockid列表
-    std::unordered_set<int64_t> blockIdSet;
+    std::unordered_set<std::string> blockIdSet;
     for (const auto &item: responseBody.chartData.detailDataList) {
         blockIdSet.insert(item.blockId);
     }
@@ -535,7 +547,7 @@ bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId,
 Protocol::MemoryGraph SourceFileParser::ParseJsonToMemoryGraph(const json_t &json)
 {
     Protocol::MemoryGraph temp;
-    temp.blockId = JsonUtil::GetInteger(json, "core_no");
+    temp.blockId = JsonUtil::GetString(json, "core_no");
     temp.blockType = JsonUtil::GetString(json, "op_type");
     temp.chipType = JsonUtil::GetString(json, "soc");
     temp.advice = JsonUtil::GetVector<std::string>(json, "advice");
@@ -609,7 +621,7 @@ bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId,
 Protocol::MemoryTable SourceFileParser::ParseJsonToMemoryTable(const json_t &json)
 {
     Protocol::MemoryTable result;
-    result.blockId = JsonUtil::GetInteger(json, "block_id");
+    result.blockId = JsonUtil::GetString(json, "block_id");
     result.tableOpType = JsonUtil::GetString(json, "table_op_type");
     result.advice = JsonUtil::GetVector<std::string>(json, "advice");
     auto &tableDetailJson = const_cast<Value &>(json["table_detail"]);
@@ -620,7 +632,7 @@ Protocol::MemoryTable SourceFileParser::ParseJsonToMemoryTable(const json_t &jso
         tableDetail.headerName = JsonUtil::GetVector<std::string>(item, "header_name");
         Value &row = item["row"];
         for (const auto &dataRow: row.GetArray()) {
-            Protocol::MemoryTableRow memoryTableRow;
+            Protocol::TableRow memoryTableRow;
             memoryTableRow.name = JsonUtil::GetString(dataRow, "name");
             memoryTableRow.value = JsonUtil::GetVector<std::string>(dataRow, "value");
             tableDetail.row.push_back(memoryTableRow);
@@ -849,7 +861,7 @@ std::optional<Protocol::SubBlockData> SourceFileParser::ConvertStrToSubBlockData
         Value &blockDetails = d.value()["subblock_detail"];
         for (auto &item : blockDetails.GetArray()) {
             Protocol::SubBlockUnitData unitData;
-            unitData.blockId = JsonUtil::GetInteger(item, "block_id");
+            unitData.blockId = JsonUtil::GetString(item, "block_id");
             unitData.blockType = JsonUtil::GetString(item, "block_type");
             unitData.name = JsonUtil::GetString(item, "name");
             unitData.unit = GetUnitType(JsonUtil::GetInteger(item, "unit"));
