@@ -460,6 +460,11 @@ struct SearchAllSlices {
     std::string name;
     uint64_t timestamp = 0;
     uint64_t duration = 0;
+    std::string id;
+    std::string pid;
+    std::string tid;
+    uint64_t depth = 0;
+    std::string deviceId;
 };
 
 struct SearchAllSlicesBody {

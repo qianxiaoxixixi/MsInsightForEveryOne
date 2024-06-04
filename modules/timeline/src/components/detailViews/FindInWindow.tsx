@@ -6,12 +6,19 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
+import { Button } from 'antd';
+import { runInAction } from 'mobx';
 import { getDefaultColumData, GetPageData, searchAllSlices } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { RankFilter } from './SystemView';
 import { Space } from 'antd/lib/index';
-import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
+import type { InsightUnit } from '../../entity/insight';
+import { colorPalette, getTimeOffset } from '../../insight/units/utils';
+import { hashToNumber } from '../../utils/colorUtils';
+import type { ThreadMetaData } from '../../entity/data';
+import { calculateDomainRange } from '../CategorySearch';
 
 export interface SearchTableData {
     /**
@@ -48,6 +55,36 @@ export interface SearchAllSlicesDetails {
      * @memberof duration
      */
     duration: number;
+    /**
+     *
+     * @type {string}
+     * @memberof id
+     */
+    id: string;
+    /**
+     *
+     * @type {string}
+     * @memberof tid
+     */
+    tid: string;
+    /**
+     *
+     * @type {string}
+     * @memberof pid
+     */
+    pid: string;
+    /**
+     *
+     * @type {string}
+     * @memberof deviceId
+     */
+    deviceId: string;
+    /**
+     *
+     * @type {number}
+     * @memberof depth
+     */
+    depth: number;
 }
 
 export function useFindDetail(session: Session): any {
@@ -90,8 +127,19 @@ const FindDetail = observer((props: any) => {
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [isLoading, setLoading] = useState(false);
+    const [rowData, setRowData] = useState<any>({});
     const [allCondition, setAllCondition] = useState({ doContextSearch: props.session.doContextSearch, page, sorter, selectRank: props.rankId });
-
+    const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
+    let columns = [];
+    columns = [...useColumns(), {
+        title: t('Click To Timeline'),
+        dataIndex: 'click',
+        ellipsis: true,
+        render: (_: any, record: any): React.ReactElement => (<Button type="link"
+            onClick={(): void => {
+                setRowData({ name: record.name ?? record.originOptimizer, ...record });
+            }}>{t('Click')}</Button>),
+    }];
     useEffect(() => {
         setAllCondition({ ...allCondition, page, sorter });
     }, [sorter, page.current, page.pageSize]);
@@ -103,6 +151,12 @@ const FindDetail = observer((props: any) => {
         updateData(allCondition.page, allCondition.sorter, props);
     }, [allCondition.sorter, allCondition.selectRank, allCondition.page.current,
         allCondition.page.pageSize, allCondition.doContextSearch, props.session.doReset]);
+    useEffect(() => {
+        if (rowData.name === null || rowData.name === undefined) {
+            return;
+        }
+        handleFindSelected(rowData, props);
+    }, [rowData]);
     const updateData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
         if (props.rankId === undefined || props.rankId === '') {
             setDataSource([]);
@@ -134,7 +188,12 @@ const FindDetail = observer((props: any) => {
                     setSorter(newsorter as typeof sorter);
                 }
             }}
-            pagination={GetPageData(page, setPage)} dataSource={dataSource} columns={useColumns()} size="small" loading = {isLoading} rowClassName={'click-able'}
+            pagination={GetPageData(page, setPage)}
+            dataSource={dataSource}
+            columns={columns}
+            size="small"
+            loading = {isLoading}
+            rowClassName={'click-able'}
         />
     </div>;
 });
@@ -151,4 +210,33 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         isMatchExact: prop.session.searchData.isMatchExact,
     });
     return res;
+};
+
+const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
+    const queryName = rowData.name ?? rowData.originOptimizer;
+    runInAction(() => {
+        props.session.locateUnit = {
+            target: (unit: any): boolean => {
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId === rowData.deviceId)) &&
+                unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
+            },
+            onSuccess: (unit: InsightUnit): void => {
+                const startTime = rowData.timestamp - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
+                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                props.session.selectedData = {
+                    id: rowData.id,
+                    startTime,
+                    name: queryName,
+                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
+                    duration: rowData.duration,
+                    depth: rowData.depth,
+                    threadId: rowData.tid,
+                    startRecordTime: props.session.startRecordTime,
+                    metaType: rowData.pid,
+                    showDetail: false,
+                };
+            },
+        };
+    });
 };

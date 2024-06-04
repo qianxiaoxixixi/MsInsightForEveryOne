@@ -304,8 +304,12 @@ public:
             orderBy = " ORDER BY " + orderByField + " ASC";
         }
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
-        std::string sql = "SELECT name, timestamp, duration FROM " + SLICE_TABLE + " WHERE " + nameMatch + orderBy +
-            " limit ? offset ?";
+        std::string sql = "SELECT s.name as name, s.timestamp as timestamp, s.duration as duration,"
+                          " s.track_id as track_id, s.id as id, t.tid as tid, t.pid as pid"
+                          " FROM " +
+                          SLICE_TABLE + " s JOIN " + THREAD_TABLE +
+                          " t on s.track_id = t.track_id "
+                          "WHERE " + nameMatch + orderBy + " limit ? offset ?";
         return sql;
     }
 

@@ -1713,35 +1713,13 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
-    SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
+    TraceDatabaseHelper::SetKernelDetailHelpler(std::move(resultSet), minTimestamp, responseBody);
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
     const std::vector<std::string> cores = QueryCoreType();
     responseBody.acceleratorCoreList = cores;
     responseBody.count = QueryTotalKernel(requestParams.coreType, searchName);
     return true;
-}
-
-void JsonTraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
-    Protocol::KernelDetailsBody &responseBody) const
-{
-    while (resultSet->Next()) {
-        Protocol::KernelDetail detail;
-        detail.name = resultSet->GetString("name");
-        detail.type = resultSet->GetString("type");
-        detail.acceleratorCore = resultSet->GetString("acceleratorCore");
-        detail.startTime = resultSet->GetUint64("startTime") - minTimestamp;
-        detail.duration = resultSet->GetDouble("duration");
-        detail.waitTime = resultSet->GetDouble("waitTime");
-        detail.blockDim = resultSet->GetUint64("blockDim");
-        detail.inputShapes = resultSet->GetString("inputShapes");
-        detail.inputDataTypes = resultSet->GetString("inputDataTypes");
-        detail.inputFormats = resultSet->GetString("inputFormats");
-        detail.outputShapes = resultSet->GetString("outputShapes");
-        detail.outputDataTypes = resultSet->GetString("outputDataTypes");
-        detail.outputFormats = resultSet->GetString("outputFormats");
-        responseBody.kernelDetails.emplace_back(detail);
-    }
 }
 
 bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
@@ -1965,12 +1943,23 @@ bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         ServerLog::Error("SearchAllSlicesDetails. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SearchAllSlices searchAllSlice{};
         searchAllSlice.name = resultSet->GetString(col++);
         searchAllSlice.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         searchAllSlice.duration = resultSet->GetUint64(col++);
+        auto track_id = resultSet->GetUint64(col++);
+        if (depthMap.count(track_id) == 0) {
+            depthMap.emplace(track_id,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
+        }
+        searchAllSlice.id = resultSet->GetString(col++);
+        searchAllSlice.depth = depthMap[track_id][std::atoi(searchAllSlice.id.c_str())];
+        searchAllSlice.tid = resultSet->GetString(col++);
+        searchAllSlice.pid = resultSet->GetString(col++);
+        searchAllSlice.deviceId = params.rankId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
     body.currentPage = params.current;

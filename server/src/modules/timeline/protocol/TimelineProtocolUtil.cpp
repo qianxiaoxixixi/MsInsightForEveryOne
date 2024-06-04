@@ -541,6 +541,11 @@ template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(co
         JsonUtil::AddMember(itemJson, "name", searchAllSlices.name, allocator);
         JsonUtil::AddMember(itemJson, "timestamp", searchAllSlices.timestamp, allocator);
         JsonUtil::AddMember(itemJson, "duration", searchAllSlices.duration, allocator);
+        JsonUtil::AddMember(itemJson, "depth", searchAllSlices.depth, allocator);
+        JsonUtil::AddMember(itemJson, "id", searchAllSlices.id, allocator);
+        JsonUtil::AddMember(itemJson, "tid", searchAllSlices.tid, allocator);
+        JsonUtil::AddMember(itemJson, "pid", searchAllSlices.pid, allocator);
+        JsonUtil::AddMember(itemJson, "deviceId", searchAllSlices.deviceId, allocator);
         searchAllSlicesDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "searchAllSlicesDetails", searchAllSlicesDetails, allocator);
