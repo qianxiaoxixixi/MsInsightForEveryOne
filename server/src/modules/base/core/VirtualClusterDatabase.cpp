@@ -77,6 +77,9 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
         sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
     }
     bool isContainsFieldPreparing = (sql.find("preparing") != std::string::npos);
+    Protocol::TraceStatistic max{};
+    Protocol::TraceStatistic min = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double sum = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::SummaryDto summaryDto;
@@ -90,7 +93,23 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
         } else {
             summaryDto.prepareTime = -1; // 代表不存在Preparing字段
         }
+        max.computeDiff = std::max(summaryDto.computingTime, max.computeDiff);
+        max.communicationDiff = std::max(summaryDto.communicationNotOverLappedTime, max.communicationDiff);
+        max.freeDiff = std::max(summaryDto.freeTime, max.freeDiff);
+        min.computeDiff = std::min(summaryDto.computingTime, min.computeDiff);
+        min.communicationDiff = std::min(summaryDto.communicationNotOverLappedTime, min.communicationDiff);
+        min.freeDiff = std::min(summaryDto.freeTime, min.freeDiff);
+        sum += summaryDto.computingTime + summaryDto.communicationNotOverLappedTime + summaryDto.freeTime;
         responseBody.summaryList.emplace_back(summaryDto);
+    }
+    if (!responseBody.summaryList.empty() && sum != 0) {
+        double mean = sum / responseBody.summaryList.size();
+        double diff = max.freeDiff - min.freeDiff;
+        responseBody.traceStatistic.freeDiff = diff / mean > overlapThreshold ? diff: 0;
+        diff = max.computeDiff - min.computeDiff;
+        responseBody.traceStatistic.computeDiff =diff / mean > overlapThreshold ? diff : 0;
+        diff = max.communicationDiff - min.communicationDiff;
+        responseBody.traceStatistic.communicationDiff = diff / mean > overlapThreshold ? diff : 0;
     }
     sqlite3_finalize(stmt);
     return true;
