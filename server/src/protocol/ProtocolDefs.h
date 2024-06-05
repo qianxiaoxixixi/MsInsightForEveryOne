@@ -55,6 +55,10 @@ const std::string REQ_RES_TOKEN_DESTROY = "token.destroy";
 const std::string REQ_RES_TOKEN_CHECK = "token.check";
 const std::string REQ_RES_TOKEN_HEART_CHECK = "token.heartCheck";
 const std::string REQ_RES_FILES_GET = "files/get";
+const std::string REQ_RES_PROJECT_EXPLORER_UPDATE = "files/updateProjectExplorer";
+const std::string REQ_RES_PROJECT_EXPLORER_INFO_GET = "files/getProjectExplorer";
+const std::string REQ_RES_PROJECT_EXPLORER_INFO_DELETE = "files/deleteProjectExplorer";
+const std::string REQ_RES_PROJECT_CONFLICT_CHECK = "files/checkProjectConflict";
 
 // timeline
 const std::string REQ_RES_IMPORT_ACTION = "import/action";

@@ -43,6 +43,7 @@ public:
     virtual bool IsOpen() const;
     void CloseDb();
     virtual bool StartTransaction();
+    virtual bool RollbackTransaction();
     virtual bool EndTransaction();
     virtual std::string GetDbPath();
     virtual void SetDbPath(const std::string& dbPath);

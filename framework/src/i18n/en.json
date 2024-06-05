@@ -15,7 +15,10 @@
         "FileNotFundDescribe": "File not found, check the file path",
         "About": "About",
         "Confirm": "Confirm",
-        "Cancel": "Cancel"
+        "Cancel": "Cancel",
+        "FileConflict": "File Conflict",
+        "FileConflictContent": "The imported file conflicts with the original file of the project. Continuing to import will overwrite the original file",
+        "Cur Project": "Cur Project"
     },
     "tabs": {
         "Timeline": "Timeline",

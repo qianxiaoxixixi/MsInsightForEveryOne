@@ -18,6 +18,14 @@ template <> std::optional<document_t> ToResponseJson<TokenDestroyResponse>(const
 template <> std::optional<document_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response);
 template <> std::optional<document_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response);
 template <> std::optional<document_t> ToResponseJson<TokenHeartCheckResponse>(const TokenHeartCheckResponse &response);
+template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoUpdateResponse>(
+    const ProjectExplorerInfoUpdateResponse &response);
+template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoGetResponse>(
+    const ProjectExplorerInfoGetResponse &response);
+template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteResponse>(
+    const ProjectExplorerInfoDeleteResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<ProjectConflictCheckResponse>(const ProjectConflictCheckResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

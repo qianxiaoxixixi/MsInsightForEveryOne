@@ -89,7 +89,7 @@ function resize(deltaX: number, width: number) {
     background-color: var(--color-background);
 }
 
-.container >>> .el-loading-mask {
+.container :deep(.el-loading-mask) {
     opacity: 0.7;
 }
 
