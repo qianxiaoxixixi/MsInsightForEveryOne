@@ -529,9 +529,42 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
     sqlite3_finalize(stmt);
     return true;
 }
+void VirtualClusterDatabase::StatisticBandwidthData(const Protocol::Duration &item,
+    std::vector<Protocol::BandwidthStatistic> &bwStat)
+{
+    for (auto &one : bwStat) {
+        if (one.type == "SDMA") {
+            one.max = std::max(one.max, item.sdmaBw);
+            one.min = std::min(one.max, item.sdmaBw);
+            one.avg += item.sdmaBw;
+        } else {
+            one.max = std::max(one.max, item.rdmaBw);
+            one.min = std::min(one.max, item.rdmaBw);
+            one.avg += item.rdmaBw;
+        }
+    }
+}
+
+void VirtualClusterDatabase::GetBandwidthStatisticResult(std::vector<Protocol::BandwidthStatistic> &bwStat,
+    Protocol::DurationListsResponseBody &responseBody)
+{
+    if (responseBody.durationList.empty()) {
+        return;
+    }
+    for (auto &item : bwStat) {
+        if (item.avg == 0) {
+            continue;
+        }
+        item.avg = item.avg / responseBody.durationList.size();
+        if (item.min != DBL_MAX) {
+            item.diff = item.max - item.min;
+        }
+        responseBody.bwStatistics.emplace_back(item);
+    }
+}
 
 bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
-    std::vector<Protocol::Duration> &responseBody, std::string sql, uint64_t startTime)
+    Protocol::DurationListsResponseBody &responseBody, std::string sql, uint64_t startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -551,6 +584,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
+    std::vector<Protocol::BandwidthStatistic> bwStat = {{"SDMA", 0, 0, DBL_MAX, 0}, {"RDMA", 0, 0, DBL_MAX, 0}};
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::Duration object;
@@ -565,9 +599,12 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         object.waitTimeRatio = sqlite3_column_double(stmt, col++);
         object.sdmaBw = sqlite3_column_double(stmt, col++);
         object.rdmaBw = sqlite3_column_double(stmt, col++);
-        responseBody.emplace_back(object);
+        StatisticBandwidthData(object, bwStat);
+
+        responseBody.durationList.emplace_back(object);
     }
     sqlite3_finalize(stmt);
+    GetBandwidthStatisticResult(bwStat, responseBody);
     return true;
 }
 

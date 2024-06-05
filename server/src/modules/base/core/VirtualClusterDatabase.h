@@ -51,7 +51,7 @@ public:
                             std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody) = 0;
     virtual bool QueryDurationList(Protocol::DurationListParams &requestParams,
-                           std::vector<Protocol::Duration> &responseBody) = 0;
+        Protocol::DurationListsResponseBody &responseBody) = 0;
     virtual bool QueryOperatorList(Protocol::DurationListParams &requestParams,
         Protocol::OperatorListsResponseBody &responseBody) = 0;
     virtual bool QueryCommunicationGroup(rapidjson::Document &responseBody) = 0;
@@ -93,7 +93,7 @@ protected:
         std::vector<Protocol::OperatorNamesObject> &responseBody, std::string sql);
     bool ExecuteQueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody, std::string sql);
     bool ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
-        std::vector<Protocol::Duration> &responseBody, std::string sql, uint64_t startTime);
+        Protocol::DurationListsResponseBody &responseBody, std::string sql, uint64_t startTime);
     bool ExecuteQueryOperatorList(Protocol::DurationListParams &requestParams,
         Protocol::OperatorListsResponseBody &responseBody, const std::string &sql, uint64_t startTime);
     bool ExecuteQueryCommunicationGroup(rapidjson::Document &responseBody, std::string sql);
@@ -108,6 +108,9 @@ protected:
 private:
     void GetStepsOrRanksObject(const std::string &jsonStr,
         std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+    void StatisticBandwidthData(const Protocol::Duration &item, std::vector<Protocol::BandwidthStatistic> &bwStat);
+    void GetBandwidthStatisticResult(std::vector<Protocol::BandwidthStatistic> &bwStat,
+        Protocol::DurationListsResponseBody &responseBody);
 };
 } // end of namespace Module
 } // end of namespace Dic

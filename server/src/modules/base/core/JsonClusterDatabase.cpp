@@ -749,7 +749,7 @@ bool JsonClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRank
 }
 
 bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
-    std::vector<Protocol::Duration> &responseBody)
+    Protocol::DurationListsResponseBody &responseBody)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::string rankSql;

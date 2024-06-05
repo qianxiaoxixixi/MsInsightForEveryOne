@@ -144,7 +144,7 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t items(kArrayType);
-    for (const Duration& duration : response.body) {
+    for (const Duration& duration : response.body.durationList) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "rankId", duration.rankId, allocator);
         JsonUtil::AddMember(itemJson, "startTime", duration.startTime, allocator);
@@ -160,14 +160,14 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
         items.PushBack(itemJson, allocator);
     }
     json_t adviceJson(kArrayType);
-    for (const auto& item : response.bwStatistics) {
+    for (const auto& item : response.body.bwStatistics) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "type", item.type, allocator);
         JsonUtil::AddMember(itemJson, "max", item.max, allocator);
         JsonUtil::AddMember(itemJson, "min", item.min, allocator);
         JsonUtil::AddMember(itemJson, "avg", item.avg, allocator);
         JsonUtil::AddMember(itemJson, "diff", item.diff, allocator);
-        items.PushBack(itemJson, allocator);
+        adviceJson.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "items", items, allocator);
     JsonUtil::AddMember(body, "advice", adviceJson, allocator);

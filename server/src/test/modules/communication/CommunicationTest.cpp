@@ -70,21 +70,21 @@ TEST_F(TestSuit, QueryDurationData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
     Dic::Protocol::DurationListParams requestParams;
-    std::vector<Dic::Protocol::Duration> responseBody;
+    Protocol::DurationListsResponseBody responseBody;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";
     database->QueryDurationList(requestParams, responseBody);
     int expectSize = 2;
-    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(responseBody.durationList.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryDurationDataWithRank)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
     Dic::Protocol::DurationListParams requestParams;
-    std::vector<Dic::Protocol::Duration> responseBody;
+    Protocol::DurationListsResponseBody responseBody;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
@@ -92,7 +92,7 @@ TEST_F(TestSuit, QueryDurationDataWithRank)
     requestParams.rankList = {"0"};
     database->QueryDurationList(requestParams, responseBody);
     int expectSize = 1;
-    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(responseBody.durationList.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryBandwidthDistributionData)

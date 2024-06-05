@@ -92,21 +92,21 @@ TEST_F(DbCommunicationTest, QueryDurationData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     Dic::Protocol::DurationListParams requestParams;
-    std::vector<Dic::Protocol::Duration> responseBody;
+    Protocol::DurationListsResponseBody responseBody;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.operatorName = "Total Op Info";
     database->QueryDurationList(requestParams, responseBody);
     int expectSize = 8;
-    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(responseBody.durationList.size(), expectSize);
 }
 
 TEST_F(DbCommunicationTest, QueryDurationDataWithRank)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     Dic::Protocol::DurationListParams requestParams;
-    std::vector<Dic::Protocol::Duration> responseBody;
+    Protocol::DurationListsResponseBody responseBody;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
@@ -114,7 +114,7 @@ TEST_F(DbCommunicationTest, QueryDurationDataWithRank)
     requestParams.rankList = {"0"};
     database->QueryDurationList(requestParams, responseBody);
     int expectSize = 1;
-    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(responseBody.durationList.size(), expectSize);
 }
 
 TEST_F(DbCommunicationTest, QueryBandwidthDistributionData)

@@ -296,7 +296,7 @@ bool DbClusterDataBase::QueryIterations(std::vector<Protocol::IterationsOrRanksO
 }
 
 bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestParams,
-    std::vector<Protocol::Duration> &responseBody)
+    Protocol::DurationListsResponseBody &responseBody)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::string rankSql;
