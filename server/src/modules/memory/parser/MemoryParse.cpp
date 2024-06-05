@@ -290,6 +290,21 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
     }
 
     std::map<std::string, MemoryFilePairs> results = {};
+    GetMemoryFileList(results, fileList);
+
+    for (auto &result : results) {
+        std::vector<std::string> files;
+        std::copy(result.second.operatorFiles.begin(), result.second.operatorFiles.end(), std::back_inserter(files));
+        std::copy(result.second.recordFiles.begin(), result.second.recordFiles.end(), std::back_inserter(files));
+        ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", result.first);
+    }
+    isCluster = (results.size() > 1);
+    return results;
+}
+
+void MemoryParse::GetMemoryFileList(std::map<std::string, MemoryFilePairs> &results,
+                                    const std::vector<std::string> fileList)
+{
     for (const auto& operatorFile : fileList) {
         std::vector<std::string> recordFiles = GetPeerDirRecordFile(operatorFile);
         if (recordFiles.empty()) {
@@ -316,15 +331,6 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
             ranks.emplace(tempId, one);
         }
     }
-
-    for (auto &result : results) {
-        std::vector<std::string> files;
-        std::copy(result.second.operatorFiles.begin(), result.second.operatorFiles.end(), std::back_inserter(files));
-        std::copy(result.second.recordFiles.begin(), result.second.recordFiles.end(), std::back_inserter(files));
-        ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", result.first);
-    }
-    isCluster = (results.size() > 1);
-    return results;
 }
 
 bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::string &token)

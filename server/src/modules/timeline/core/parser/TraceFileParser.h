@@ -32,6 +32,7 @@ private:
     ~TraceFileParser() override;
     const int maxThreadNum = 4;
     std::unique_ptr<ThreadPool> threadPool;
+    static bool CheckInitParser(const std::string &fileId);
     static bool InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId);
     static void PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId);
     static void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);

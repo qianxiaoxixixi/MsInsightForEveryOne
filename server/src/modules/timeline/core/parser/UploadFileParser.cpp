@@ -55,6 +55,23 @@ bool UploadFileParser::ResetAllFiles()
     return true;
 }
 
+bool UploadFileParser::CheckParseTask(UploadFileRequest request, int sliceIndex, SingleFileData &singleFileData,
+                                      std::string fileId)
+{
+    if (sliceIndex > singleFileData.stringArray.size()) {
+        ServerLog::Error("Failed to parser upload file ", fileId, ",current index is ", sliceIndex, "max size is ",
+                         singleFileData.stringArray.size());
+        return false;
+    }
+    int textSize = request.params.text.size();
+    if (textSize > MAX_STR_SIZE) {
+        ServerLog::Error("Failed to parser upload file ", fileId, ",current content size is ", textSize, "max size is ",
+                         MAX_STR_SIZE);
+        return false;
+    }
+    return true;
+}
+
 void UploadFileParser::ParseTask(UploadFileRequest request)
 {
     std::string fileId = FileUtil::PathPreprocess(request.params.fileAttr.path);
@@ -70,15 +87,7 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
     }
 
     int sliceIndex = request.params.slice.index;
-    if (sliceIndex > singleFileData.stringArray.size()) {
-        ServerLog::Error("Failed to parser upload file ", fileId, ",current index is ", sliceIndex, "max size is ",
-            singleFileData.stringArray.size());
-        return;
-    }
-    int textSize = request.params.text.size();
-    if (textSize > MAX_STR_SIZE) {
-        ServerLog::Error("Failed to parser upload file ", fileId, ",current content size is ", textSize, "max size is ",
-            MAX_STR_SIZE);
+    if (!CheckParseTask(request, sliceIndex, singleFileData, fileId)) {
         return;
     }
 

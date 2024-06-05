@@ -51,6 +51,11 @@ private:
     static std::string GenerateQueryCategoryDurationSqlForHCCL(
         const Dic::Protocol::OperatorGroupConverter::OperatorGroup &operatorGroup);
     std::string &GenerateQueryMoreInfoSqlForHCCL(std::string &sql) const;
+    std::string &GenerateQueryMoreInfoSqlForOther(std::string &sql) const;
+    std::string &GenerateQueryDetailSqlForHCCL(std::string &sql) const;
+    std::string &GenerateMoreInfoTotalNumForOther(std::string &sql,
+                                                  OperatorGroupConverter::OperatorGroup opGroup) const;
+
     template <typename T>
     bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
     bool GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql);
