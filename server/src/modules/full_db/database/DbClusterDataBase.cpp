@@ -316,12 +316,14 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
         " / (synchronization_time + transit_time), 4) END AS synchronization_time_ratio, "
         "CASE WHEN wait_time = 0 THEN 0 ELSE "
         " ROUND(wait_time / (wait_time + transit_time), 4) END AS wait_time_ratio, "
-        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw, bw.sdma_time as sdma_time, bw.rdma_time as rdma_time "
         "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
         "JOIN ("
         "    SELECT rank_id, "
         "    MAX(CASE WHEN band_type = 'SDMA' THEN bandwidth ELSE 0 END) AS sdma_bw, "
-        "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw "
+        "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw, "
+        "    MAX(CASE WHEN band_type = 'SDMA' THEN transit_time ELSE 0 END) AS sdma_time, "
+        "    MAX(CASE WHEN band_type = 'RDMA' THEN transit_time ELSE 0 END) AS rdma_time "
         "    FROM " + TABLE_COMM_ANALYZER_BANDWIDTH +
         "    WHERE step = ? AND rank_set = ? AND hccl_op_name = ? " + rankSql +
         "    GROUP BY rank_id "

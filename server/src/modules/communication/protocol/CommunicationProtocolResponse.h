@@ -122,14 +122,17 @@ struct Duration {
     double waitTimeRatio;
     double sdmaBw{};
     double rdmaBw{};
+    double sdmaTime{};
+    double rdmaTime{};
 };
 
 struct BandwidthStatistic {
     std::string type; // SDMA、RDMA
-    double avg; // 单位GB/s
-    double max; // 单位GB/s
-    double min; // 单位GB/s
-    double diff; // 单位GB/s
+    double avgBw; // 单位GB/s
+    double maxBw; // 单位GB/s
+    double minBw; // 单位GB/s
+    double diffBw; // 单位GB/s
+    double allTime;
 };
 
 struct DurationListsResponseBody {
