@@ -441,6 +441,11 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     return true;
 }
+
+std::string ClusterFileParser::GetClusterDbPath()
+{
+    return clusterDbPath;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

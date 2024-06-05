@@ -80,6 +80,45 @@ struct FilesGetResponse : public Response {
     FilesGetResponse() : Response(REQ_RES_FILES_GET) {};
     FilesGetResBody body;
 };
+
+struct ProjectExplorerInfoUpdateBody {
+};
+
+struct ProjectExplorerInfoUpdateResponse : public Response {
+    ProjectExplorerInfoUpdateResponse() : Response(REQ_RES_PROJECT_EXPLORER_UPDATE) {};
+    ProjectExplorerInfoUpdateBody body;
+};
+
+struct ProjectDirectoryInfo {
+    std::string projectName;
+    std::vector<std::string> fileName;
+};
+
+struct ProjectExplorerInfoGetBody {
+    std::vector<ProjectDirectoryInfo> projectDirectoryList;
+};
+
+struct ProjectExplorerInfoGetResponse : public Response {
+    ProjectExplorerInfoGetResponse() : Response(REQ_RES_PROJECT_EXPLORER_INFO_GET) {};
+    ProjectExplorerInfoGetBody body;
+};
+
+struct ProjectExplorerInfoDeleteBody {
+};
+
+struct ProjectExplorerInfoDeleteResponse : public Response {
+    ProjectExplorerInfoDeleteResponse() : Response(REQ_RES_PROJECT_EXPLORER_INFO_DELETE) {};
+    ProjectExplorerInfoDeleteBody body;
+};
+
+struct ProjectConflictCheckBody {
+    bool isConflict;
+};
+
+struct ProjectConflictCheckResponse : public Response {
+    ProjectConflictCheckResponse() : Response(REQ_RES_PROJECT_CONFLICT_CHECK) {};
+    ProjectConflictCheckBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

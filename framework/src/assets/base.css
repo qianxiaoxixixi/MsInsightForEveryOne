@@ -73,6 +73,7 @@
     --dataPath-color: #F4F6FA;
     --dataTree-background: #0a0a0a;
     --dataTree-onclick: #2c2c2c;
+    --treeNode-onclick: #4a4a52;
 }
 
 .light-theme {
@@ -102,6 +103,7 @@
     --dataPath-color: #0B0905;
     --dataTree-background: #f5f5f5;
     --dataTree-onclick: var(--vt-c-divider-light-1);
+    --treeNode-onclick: #ceced0;
 }
 *,
 *::before,

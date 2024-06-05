@@ -279,7 +279,7 @@ void DataBaseManager::SetFileType(FileType type)
 void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath)
 {
     dbFilePathMap[rankId] = filePath;
-};
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

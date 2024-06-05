@@ -58,6 +58,44 @@ struct FilesGetRequest : public Request {
     FilesGetRequest() : Request(REQ_RES_FILES_GET) {}
     FilesGetParams params;
 };
+
+struct ProjectExplorerInfoUpdateParams {
+    std::string oldProjectName;
+    std::string newProjectName;
+};
+
+struct ProjectExplorerInfoUpdateRequest : public Request {
+    ProjectExplorerInfoUpdateRequest(): Request(REQ_RES_PROJECT_EXPLORER_UPDATE) {}
+    ProjectExplorerInfoUpdateParams params;
+};
+
+struct ProjectExplorerInfoGetParams {
+};
+
+struct ProjectExplorerInfoGetRequest : public Request {
+    ProjectExplorerInfoGetRequest(): Request(REQ_RES_PROJECT_EXPLORER_INFO_GET) {}
+    ProjectExplorerInfoGetParams params;
+};
+
+struct ProjectExplorerInfoDeleteParams {
+    std::string projectName;
+    std::vector<std::string> dataPath;
+};
+
+struct ProjectExplorerInfoDeleteRequest : public Request {
+    ProjectExplorerInfoDeleteRequest(): Request(REQ_RES_PROJECT_EXPLORER_INFO_DELETE) {}
+    ProjectExplorerInfoDeleteParams params;
+};
+
+struct ProjectConflictCheckParams {
+    std::string projectName;
+    std::vector<std::string> dataPath;
+};
+
+struct ProjectConflictCheckRequest : public Request {
+    ProjectConflictCheckRequest(): Request(REQ_RES_PROJECT_CONFLICT_CHECK) {}
+    ProjectConflictCheckParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

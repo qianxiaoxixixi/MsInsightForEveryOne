@@ -127,18 +127,17 @@ std::string Database::sqlite3_column_string(sqlite3_stmt *stmt, int iCol)
 
 bool Database::StartTransaction()
 {
-    if (!isOpen) {
-        return false;
-    }
-    return ExecSql("BEGIN;");
+    return isOpen && ExecSql("BEGIN;");
+}
+
+bool Database::RollbackTransaction()
+{
+    return isOpen && ExecSql("ROLLBACK;");
 }
 
 bool Database::EndTransaction()
 {
-    if (!isOpen) {
-        return false;
-    }
-    return ExecSql("COMMIT;");
+    return isOpen && ExecSql("COMMIT;");
 }
 
 std::string Database::GetDbPath()
