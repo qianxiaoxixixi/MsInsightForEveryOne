@@ -299,6 +299,26 @@ std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement()
     return std::make_unique<SqlitePreparedStatement>(db);
 }
 
+bool Database::CheckTableContainData(const std::string& tableName)
+{
+    if ((!isOpen)) {
+        ServerLog::Error("Failed Check Table. Database is closed or sql is empty.");
+        return false;
+    }
+    std::string sql = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed prepare sql. ");
+        return false;
+    }
+    auto result = stmt->ExecuteQuery(tableName);
+    if (result->GetErrorCode() == SQLITE_OK && result->Next()) {
+        return result->GetInt64("count(*)");
+    }
+    return false;
+}
+
+
 bool Database::CheckTableExist(const std::string& tableName)
 {
     if ((!isOpen)) {

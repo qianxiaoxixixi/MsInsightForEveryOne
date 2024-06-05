@@ -182,6 +182,29 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
     return record;
 }
 
+
+StaticOp MemoryParse::mapperToStaticOpDetail(std::map<std::string, size_t> dataMap, std::vector<std::string> row)
+{
+    StaticOp staticOp {};
+    size_t deviceId = dataMap[DEVICE_ID];
+    size_t opName = dataMap[OP_NAME];
+    size_t modelName = dataMap[MODEL_NAME];
+    size_t graphId = dataMap[GRAPH_ID];
+    staticOp.deviceId = row[deviceId];
+    staticOp.opName = row[opName];
+    staticOp.modelName = row[modelName];
+    staticOp.graphId = row[graphId];
+    size_t nodeIndexStart = dataMap[NODE_INDEX_START];
+    size_t nodeIndexEnd = dataMap[NODE_INDEX_END];
+    size_t size = dataMap[SIZE_KB];
+    staticOp.nodeIndexStart = atof(row[nodeIndexStart].c_str());
+    staticOp.nodeIndexEnd = atof(row[nodeIndexEnd].c_str());
+    staticOp.size = atof(row[size].c_str());
+
+    return staticOp;
+}
+
+
 bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
@@ -231,6 +254,11 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     return true;
 }
 
+bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &fileId)
+{
+    return true;
+}
+
 void MemoryParse::Reset()
 {
     ServerLog::Info("Memory reset. Wait task completed.");
@@ -250,7 +278,7 @@ void MemoryParse::Reset()
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
 }
 
-std::vector<std::string> MemoryParse::GetPeerDirRecordFile(const std::string& operatorFile)
+std::vector<std::string> MemoryParse::GetPeerDirOperatorFile(const std::string& operatorFile, const std::string &reg)
 {
     std::vector<std::string> recordFiles;
     std::vector<std::string> folders;
@@ -261,7 +289,7 @@ std::vector<std::string> MemoryParse::GetPeerDirRecordFile(const std::string& op
     }
 
     for (const auto& one : files) {
-        if (RegexUtil::RegexMatch(one, memoryRecordReg)) {
+        if (RegexUtil::RegexMatch(one, reg)) {
             recordFiles.push_back(FileUtil::SplicePath(FileUtil::GetParentPath(operatorFile), one));
             if (!RegexUtil::RegexSearch(one, SLICE_STR).has_value()) {
                 break;
@@ -272,65 +300,67 @@ std::vector<std::string> MemoryParse::GetPeerDirRecordFile(const std::string& op
     return recordFiles;
 }
 
-std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::vector<std::string>& paths)
+std::vector<std::string> MemoryParse::GetMemoryRecordFileLists(const std::vector<std::string>& paths)
 {
     std::vector<std::string> fileList = {};
     for (const std::string& path : paths) {
         std::vector<std::string> files = {};
         if (FileUtil::IsFolder(path)) {
-            files = FileUtil::FindFilesWithFilter(path, std::regex(memoryOperatorReg));
+            files = FileUtil::FindFilesWithFilter(path, std::regex(memoryRecordReg)); // 这个文件pytorch和MindSpore都有
         } else { // 当选中其中operator或record单个文件时，搜索所在目录下的文件
-            files = FileUtil::FindFilesWithFilter(FileUtil::GetParentPath(path), std::regex(memoryOperatorReg));
+            files = FileUtil::FindFilesWithFilter(FileUtil::GetParentPath(path), std::regex(memoryRecordReg));
         }
         fileList.insert(fileList.end(), files.begin(), files.end());
     }
-    if (fileList.empty()) {
-        ServerLog::Warn("There is no memory operator file.");
-        return {};
-    }
-
-    std::map<std::string, MemoryFilePairs> results = {};
-    GetMemoryFileList(results, fileList);
-
-    for (auto &result : results) {
-        std::vector<std::string> files;
-        std::copy(result.second.operatorFiles.begin(), result.second.operatorFiles.end(), std::back_inserter(files));
-        std::copy(result.second.recordFiles.begin(), result.second.recordFiles.end(), std::back_inserter(files));
-        ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", result.first);
-    }
-    isCluster = (results.size() > 1);
-    return results;
+    return fileList;
 }
 
-void MemoryParse::GetMemoryFileList(std::map<std::string, MemoryFilePairs> &results,
-                                    const std::vector<std::string> fileList)
+std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::vector<std::string>& paths)
 {
-    for (const auto& operatorFile : fileList) {
-        std::vector<std::string> recordFiles = GetPeerDirRecordFile(operatorFile);
-        if (recordFiles.empty()) {
-            ServerLog::Warn("There is no memory record file paired with ", operatorFile);
+    std::vector<std::string> fileList = GetMemoryRecordFileLists(paths);
+    if (fileList.empty()) {
+        ServerLog::Warn("There is no memory record file.");
+        return {};
+    }
+    std::map<std::string, MemoryFilePairs> results = {};
+    for (const auto& recordFile : fileList) {
+        std::vector<std::string> operatorFiles = GetPeerDirOperatorFile(recordFile, memoryOperatorReg);
+        std::vector<std::string> staticOpFiles = GetPeerDirOperatorFile(recordFile, staticOpMemReg);
+        if (operatorFiles.empty() && staticOpFiles.empty()) {
+            ServerLog::Warn("There is no memory record file or static op mem file paired with ", recordFile);
             continue;
         }
-        std::string fileId = FileUtil::GetProfilerFileId(operatorFile);
+        std::string fileId = FileUtil::GetProfilerFileId(recordFile);
         int i = 1;
         std::string tempId = fileId;
         while (Timeline::DataBaseManager::Instance().HasFileId(Timeline::DatabaseType::MEMORY, tempId)) {
             std::string dbPath = Timeline::DataBaseManager::Instance().GetMemoryDatabase(tempId)->GetDbPath();
-            if (RegexUtil::RegexSearch(FileUtil::GetFileName(operatorFile), SLICE_STR).has_value() &&
-                    FileUtil::GetParentPath(operatorFile) == FileUtil::GetParentPath(dbPath)) {
+            if (RegexUtil::RegexSearch(FileUtil::GetFileName(recordFile), SLICE_STR).has_value() &&
+                FileUtil::GetParentPath(recordFile) == FileUtil::GetParentPath(dbPath)) {
                 break;
             }
             tempId = fileId + "_" + std::to_string(++i);
         }
-        std::string dbPath = FileUtil::GetDbPath(operatorFile, tempId);
+        std::string dbPath = FileUtil::GetDbPath(recordFile, tempId);
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(tempId)->SetDbPath(dbPath);
-        results[tempId].operatorFiles.insert(operatorFile);
-        results[tempId].recordFiles.insert(recordFiles.begin(), recordFiles.end());
+        results[tempId].recordFiles.insert(recordFile);
+        results[tempId].operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
+        results[tempId].staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
         if (ranks.count(tempId) == 0) {
             Protocol::MemorySuccess one = {tempId, false, true};
             ranks.emplace(tempId, one);
         }
     }
+
+    for (auto &result : results) {
+        std::vector<std::string> files;
+        std::copy(result.second.operatorFiles.begin(), result.second.operatorFiles.end(), std::back_inserter(files));
+        std::copy(result.second.recordFiles.begin(), result.second.recordFiles.end(), std::back_inserter(files));
+        std::copy(result.second.staticOpFiles.begin(), result.second.staticOpFiles.end(), std::back_inserter(files));
+        ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", result.first);
+    }
+    isCluster = (results.size() > 1);
+    return results;
 }
 
 bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::string &token)
@@ -365,9 +395,11 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
 {
     std::set<std::string> operatorFiles = filePair.operatorFiles;
     std::set<std::string> recordFiles = filePair.recordFiles;
+    std::set<std::string> staticOpFiles = filePair.staticOpFiles;
     std::vector<std::string> files;
     std::copy(operatorFiles.begin(), operatorFiles.end(), std::back_inserter(files));
     std::copy(recordFiles.begin(), recordFiles.end(), std::back_inserter(files));
+    std::copy(staticOpFiles.begin(), staticOpFiles.end(), std::back_inserter(files));
     if (!ValidateUtil::CheckCsvFileList(files)) {
         message = "Failed to parse memory file: " + fileId + " due to access or file size.";
         return false;
@@ -389,6 +421,14 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
         return false;
     }
 
+    for (const auto& staticOpFile : staticOpFiles) {
+        if (MemoryParse::Instance().StaticOpParse(staticOpFile, fileId)) {
+            continue;
+        }
+        message = "Failed to parse staticOp record file, path = " + staticOpFile;
+        return false;
+    }
+
     ParseEndCallBack(fileId, true, "");
     Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
     return true;
@@ -396,7 +436,7 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
 
 bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message)
 {
-    if (filePair.operatorFiles.empty()) {
+    if (filePair.recordFiles.empty()) {
         return false;
     }
     if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(MEMORY_PREFIX + fileId)) {
@@ -404,7 +444,7 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
         // 如果文件解析信息不存在或状态不为INIT则返回false
         return false;
     }
-    std::string dbPath = FileUtil::GetDbPath(*(filePair.operatorFiles.begin()), fileId);
+    std::string dbPath = FileUtil::GetDbPath(*(filePair.recordFiles.begin()), fileId);
     auto db = dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     if (!db->OpenDb(dbPath, false)) {
         message = "Failed to open db file. Please delete the file manually: " + dbPath;

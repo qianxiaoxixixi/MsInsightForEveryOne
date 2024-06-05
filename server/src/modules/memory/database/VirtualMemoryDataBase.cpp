@@ -1,11 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "VirtualMemoryDataBase.h"
+#include <map>
 #include "ServerLog.h"
 #include "TraceTime.h"
 #include "DataBaseManager.h"
+#include "VirtualMemoryDataBase.h"
 
 namespace Dic {
 namespace Module {
@@ -42,6 +42,29 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     }
     sqlite3_finalize(stmt);
     return streams;
+}
+
+
+bool VirtualMemoryDataBase::ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type)
+{
+    if (!Database::CheckTableContainData(TABLE_STATIC_OPERATOR)) {
+        return true;
+    }
+    type = Module::Memory::MEMORY_TYPE_STATIC;
+    std::string sql = "SELECT DISTINCT graph_id as graphId FROM " + TABLE_STATIC_OPERATOR;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorSize failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string res = sqlite3_column_string(stmt, col++);
+        graphId.emplace_back(res);
+    }
+    sqlite3_finalize(stmt);
+    return true;
 }
 
 bool VirtualMemoryDataBase::ExecuteOperatorSize(double &min, double &max, std::string sql)
@@ -92,6 +115,13 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
         totalNum = sqlite3_column_int(stmt, resultStartIndex);
     }
     sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
+                                                              int64_t &totalNum,
+                                                              std::string sql)
+{
     return true;
 }
 
@@ -196,6 +226,189 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     return true;
 }
 
+bool VirtualMemoryDataBase::ExecuteStaticGraphTotalSize(Protocol::StaticOperatorGraphParams &requestParams,
+                                                        const std::string& totalSql, double &totalSize)
+{
+    sqlite3_stmt *totalStmt = nullptr;
+    int totalResult = sqlite3_prepare_v2(db, totalSql.c_str(), -1, &totalStmt, nullptr);
+    if (totalResult != SQLITE_OK) {
+        ServerLog::Error("QueryStaticGraphTotalSize. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string graphId = "%" + requestParams.graphId + "%";
+    sqlite3_bind_text(totalStmt, index, graphId.c_str(), graphId.length(), nullptr);
+    if (!requestParams.modelName.empty()) {
+        std::string modelName = "%" + requestParams.modelName + "%";
+        sqlite3_bind_text(totalStmt, index, modelName.c_str(), modelName.length(), nullptr);
+    }
+    if (sqlite3_step(totalStmt) == SQLITE_ROW) {
+        totalSize = sqlite3_column_double(totalStmt, resultStartIndex);
+    }
+    sqlite3_finalize(totalStmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteStaticGraphStartIndex(Protocol::StaticOperatorGraphParams &requestParams,
+                                                         const std::string& graphStartSql,
+                                                         std::map<int64_t, double> &graphSizeMap, int64_t &maxIndex)
+{
+    sqlite3_stmt *startStmt = nullptr;
+    int graphStartResult = sqlite3_prepare_v2(db, graphStartSql.c_str(), -1, &startStmt, nullptr);
+    if (graphStartResult != SQLITE_OK) {
+        ServerLog::Error("QueryStaticGraphStartIndex. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string graphId = "%" + requestParams.graphId + "%";
+    sqlite3_bind_text(startStmt, index++, graphId.c_str(), graphId.length(), nullptr);
+    if (!requestParams.modelName.empty()) {
+        std::string modelName = "%" + requestParams.modelName + "%";
+        sqlite3_bind_text(startStmt, index, modelName.c_str(), modelName.length(), nullptr);
+    }
+    while (sqlite3_step(startStmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        int64_t nodeIndex = sqlite3_column_int64(startStmt, col++);
+        double size = sqlite3_column_double(startStmt, col++);
+        if (graphSizeMap.find(nodeIndex) != graphSizeMap.end()) {
+            graphSizeMap[nodeIndex] += size;
+        } else {
+            graphSizeMap.insert({nodeIndex, size});
+        }
+        maxIndex = nodeIndex;
+    }
+    sqlite3_finalize(startStmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteStaticGraphEndIndex(Protocol::StaticOperatorGraphParams &requestParams,
+                                                       const std::string& graphEndSql,
+                                                       std::map<int64_t, double> &graphSizeMap, int64_t &maxIndex)
+{
+    sqlite3_stmt *endStmt = nullptr;
+    int graphEndResult = sqlite3_prepare_v2(db, graphEndSql.c_str(), -1, &endStmt, nullptr);
+    if (graphEndResult != SQLITE_OK) {
+        ServerLog::Error("QueryStaticGraphEndIndex. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string graphId = "%" + requestParams.graphId + "%";
+    sqlite3_bind_text(endStmt, index++, graphId.c_str(), graphId.length(), nullptr);
+    if (!requestParams.modelName.empty()) {
+        std::string modelName = "%" + requestParams.modelName + "%";
+        sqlite3_bind_text(endStmt, index, modelName.c_str(), modelName.length(), nullptr);
+    }
+    while (sqlite3_step(endStmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        int64_t nodeIndex = sqlite3_column_int64(endStmt, col++);
+        double size = sqlite3_column_double(endStmt, col++);
+        if (nodeIndex != maxUnsignedInt && nodeIndex > maxIndex) { // 无符号最大INT值，表示最终释放时终止,这里直接跳过
+            maxIndex = nodeIndex;
+        }
+        if (graphSizeMap.find(nodeIndex) != graphSizeMap.end()) {
+            graphSizeMap[nodeIndex] -= size;
+        } else {
+            graphSizeMap.insert({nodeIndex, -size});
+        }
+    }
+    sqlite3_finalize(endStmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                                                       Protocol::StaticOperatorGraphItem &graphItem,
+                                                       const std::string& totalSql,
+                                                       const std::string& graphStartSql,
+                                                       const std::string& graphEndSql)
+{
+    double totalSize = staticDefaultTotalSize;
+    if (!ExecuteStaticGraphTotalSize(requestParams, totalSql, totalSize)) {
+        return false;
+    }
+    if (totalSize == staticDefaultTotalSize) {
+        ServerLog::Error("QueryStaticOperatorGraph. Failed get TOTAL number.", sqlite3_errmsg(db));
+        return false;
+    }
+    std::map<int64_t, double> graphSizeMap;
+    int64_t maxIndex = 0;
+    if (!ExecuteStaticGraphStartIndex(requestParams, graphStartSql, graphSizeMap, maxIndex)) {
+        return false;
+    }
+    if (!ExecuteStaticGraphEndIndex(requestParams, graphEndSql, graphSizeMap, maxIndex)) {
+        return false;
+    }
+    if (graphSizeMap.empty()) {
+        ServerLog::Info("QueryStaticOperatorGraph. No data.");
+        return false;
+    }
+    // 组装图例和图像数据
+    graphItem.legends.insert(graphItem.legends.end(), staticGraphLegends.begin(), staticGraphLegends.end());
+    double size = 0;
+    std::string totalSizeStr = std::to_string(totalSize);
+    for (auto it = graphSizeMap.begin(); it != graphSizeMap.end(); ++it) {
+        std::vector<std::string> points = {};
+        size += it->second; // 遍历有序map，逐点计算总需分配内存
+        if (it->first != maxUnsignedInt) {
+            points.emplace_back(std::to_string(it->first)); // 正常的Node Index
+        } else {
+            points.emplace_back(std::to_string(maxIndex + 1)); // 存储值为maxUnsignedInt时，Node Index = maxIndex + 1
+        }
+        points.emplace_back(std::to_string(size)); // Size
+        points.emplace_back(totalSizeStr); // Total Size
+        graphItem.lines.emplace_back(points);
+    }
+
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
+                                                        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                                        std::vector<Protocol::StaticOperatorItem> &opDetails,
+                                                        const std::string& sql)
+{
+    int64_t pageSize = requestParams.pageSize;
+    if (pageSize == 0) {
+        pageSize = defaultPageSize;
+    }
+    int64_t currentPage = requestParams.currentPage - 1;
+    if (currentPage < 0) {
+        currentPage = 0;
+    }
+    int64_t offset = currentPage * pageSize;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryStaticOperatorDetail. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string orderName = "%" + requestParams.searchName + "%";
+    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    if (!requestParams.graphId.empty()) {
+        std::string graphId = "%" + requestParams.graphId + "%";
+        sqlite3_bind_text(stmt, index++, graphId.c_str(), graphId.length(), nullptr);
+    }
+    sqlite3_bind_int64(stmt, index++, pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
+    std::vector<Protocol::StaticOperatorItem> operatorDtoVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::StaticOperatorItem operatorDto{};
+        operatorDto.deviceId = sqlite3_column_string(stmt, col++);
+        operatorDto.opName = sqlite3_column_string(stmt, col++);
+        operatorDto.nodeIndexStart = sqlite3_column_int64(stmt, col++);
+        operatorDto.nodeIndexEnd = sqlite3_column_int64(stmt, col++);
+        operatorDto.size = sqlite3_column_double(stmt, col++);
+        operatorDtoVec.emplace_back(operatorDto);
+    }
+    sqlite3_finalize(stmt);
+    opDetails = operatorDtoVec;
+    for (const auto& column : staticOpTableColumnAttr) {
+        columnAttr.emplace_back(column);
+    }
+    return true;
+}
+
 void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql)
 {
     std::string ascend;
@@ -227,6 +440,39 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
     sql += " LIMIT ? offset ?";
 }
 
+void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql)
+{
+    std::string ascend;
+    if (requestParams.order == "ascend") {
+        ascend = "ASC";
+    } else {
+        ascend = "DESC";
+    }
+
+    if (!requestParams.graphId.empty()) {
+        sql += " AND graph_id = ?" ;
+    }
+
+    if (requestParams.startNodeIndex >= 0) {
+        sql += " AND node_index_start >= " + std::to_string(requestParams.startNodeIndex);
+    }
+    if (requestParams.endNodeIndex >= 0) {
+        sql += " AND node_index_end <= " + std::to_string(requestParams.endNodeIndex);
+    }
+
+    if (requestParams.minSize >= 0) {
+        sql += " AND size >= " + std::to_string(requestParams.minSize);
+    }
+    if (requestParams.maxSize >= 0) {
+        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+    }
+    if (!requestParams.orderBy.empty()) {
+        auto columnName = isLowCamel ? StringUtil::ToCamelCase(requestParams.orderBy) : requestParams.orderBy;
+        sql += " ORDER BY " + columnName + " " + ascend;
+    }
+    sql += " LIMIT ? offset ?";
+}
+
 /*
 * 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
 */
@@ -243,7 +489,8 @@ void VirtualMemoryDataBase::GetLines(const componentDtoVector componentDtoVec,
 
     for (auto &item: componentDtoVec) {
         std::vector<std::string> points = {};
-        if (item.component == COMPONENT_PTA_AND_GE || (isInference && item.component == COMPONENT_GE)) {
+        if (item.component == COMPONENT_PTA_AND_GE || item.component == MIND_SPORE_GE
+            || (isInference && item.component == COMPONENT_GE)) {
             peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
             peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
             peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);

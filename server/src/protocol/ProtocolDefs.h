@@ -114,9 +114,12 @@ const std::string REQ_RES_COMMUNICATION_MATRIX_GROUP = "communication/matrix/gro
 const std::string REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH = "communication/matrix/bandwidthInfo";
 
 // memory
+const std::string REQ_RES_MEMORY_TYPE = "Memory/view/type";
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
 const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operator/size";
+const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH = "Memory/view/staticOpMemoryGraph";
+const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST = "Memory/view/staticOpMemoryList";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";

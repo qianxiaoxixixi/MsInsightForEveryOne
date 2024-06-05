@@ -18,12 +18,21 @@ public:
     virtual ~DbMemoryDataBase() {};
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable);
+    bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails);
     bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody);
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryOperatorSize(double &min, double &max, std::string rankId);
+    bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
+
+    bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+                                 std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                 std::vector<Protocol::StaticOperatorItem> &opDetails) override;
+
+    bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                                  Protocol::StaticOperatorGraphItem &graphItem) override;
     static void ParserEnd(std::string rankId, bool result);
     static void ParseCallBack(const std::string &token, const std::string &fileId, bool result,
                               const std::string &msg);

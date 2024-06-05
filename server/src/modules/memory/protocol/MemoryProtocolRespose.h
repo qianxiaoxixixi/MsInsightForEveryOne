@@ -9,6 +9,7 @@
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "MemoryDef.h"
 
 namespace Dic {
 namespace Protocol {
@@ -31,6 +32,19 @@ struct MemoryOperator {
     std::string deviceType;
 };
 
+struct StaticOperatorItem {
+    std::string deviceId;
+    std::string opName;
+    int64_t nodeIndexStart;
+    int64_t nodeIndexEnd;
+    double size;
+};
+
+struct StaticOperatorGraphItem {
+    std::vector<std::string> legends;
+    std::vector<std::vector<std::string>> lines;
+};
+
 struct MemoryViewData {
     std::string title;
     std::vector<std::string> legends;
@@ -41,6 +55,12 @@ struct MemoryTableColumnAttr {
     std::string name;
     std::string type;
     std::string key;
+};
+
+struct MemoryTypeResponse : public Response {
+    MemoryTypeResponse() : Response(REQ_RES_MEMORY_TYPE) {}
+    std::string type = Module::Memory::MEMORY_TYPE_DYNAMIC;
+    std::vector<std::string> graphId;
 };
 
 struct MemoryOperatorResponse : public Response {
@@ -63,6 +83,18 @@ struct OperatorSize {
 struct MemoryOperatorSizeResponse : public Response {
     MemoryOperatorSizeResponse() : Response(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {}
     OperatorSize size;
+};
+
+struct MemoryStaticOperatorGraphResponse : public Response {
+    MemoryStaticOperatorGraphResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH) {}
+    StaticOperatorGraphItem data;
+};
+
+struct MemoryStaticOperatorListResponse : public Response {
+    MemoryStaticOperatorListResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
+    std::vector<MemoryTableColumnAttr> columnAttr;
+    std::vector<StaticOperatorItem> operatorDetails;
+    int64_t totalNum = 0;
 };
 
 struct ComponentDto {
