@@ -17,7 +17,9 @@
       "Reset Zoom": "Reset Zoom",
       "Hide": "Hide",
       "Show All Hidden": "Show All Hidden",
-      "Show in events view": "Show in events view"
+      "Show in events view": "Show in events view",
+      "Show python function": "Show python function",
+      "Hide python function": "Hide python function"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",

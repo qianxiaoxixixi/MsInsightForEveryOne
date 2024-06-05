@@ -17,7 +17,9 @@
       "Reset Zoom": "重置缩放",
       "Hide": "隐藏",
       "Show All Hidden": "显示全部已隐藏泳道",
-      "Show in events view": "在事件视图中显示"
+      "Show in events view": "在事件视图中显示",
+      "Show python function": "显示python调用栈",
+      "Hide python function": "隐藏python调用栈"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",

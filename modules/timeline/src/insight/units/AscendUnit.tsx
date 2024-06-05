@@ -38,7 +38,7 @@ import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
-import type { ChartHandle, ChartType, Scale, StackStatusData, StatusData } from '../../entity/chart';
+import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
 import ResizeTable from 'lib/ResizeTable';
 import { getDefaultColumData, GetPageData } from '../../components/detailViews/Common';
@@ -177,10 +177,12 @@ export const ThreadUnit = unit<ThreadMetaData>({
     chart: chart({
         type: 'stackStatus',
         height: UnitHeight.COLL,
-        mapFunc: async (session: Session, metaData: unknown) => {
+        mapFunc: async (session: Session, metaData: unknown, thisUnit?: InsightUnit) => {
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
             const timestampOffset = getTimeOffset(session, threadMetaData.cardId);
+            const key = threadMetaData.cardId !== undefined ? `${threadMetaData.cardId}_${threadMetaData.threadName}` : null;
+            const isFilterPythonFunction = key !== null ? (session?.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[key] ?? false : false;
             const requestParam: Record<string, unknown> & { timePerPx: number } = {
                 cardId: threadMetaData.cardId,
                 processId: threadMetaData.processId,
@@ -190,13 +192,18 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
                 dataSource: threadMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
+                isFilterPythonFunction,
             };
             try {
                 const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParam });
                 if (request === undefined) {
                     return [];
                 }
-                const threadTraceList = request.data as ThreadTrace[][];
+
+                const { data: threadTraceList, maxDepth: threadTraceMaxDepth, havePythonFunction } = request;
+                if (thisUnit) {
+                    updateUnitData(thisUnit, threadTraceMaxDepth, havePythonFunction);
+                }
                 // 泳道chart返回数据减去时间偏移
                 return _.map(threadTraceList, (it) => _.map(it, (data) => {
                     let uintColor;
@@ -312,6 +319,19 @@ export const ThreadUnit = unit<ThreadMetaData>({
         });
     },
 });
+
+const updateUnitData = (currentUnit: InsightUnit, threadTraceMaxDepth: number, havePythonFunction: boolean): void => {
+    const currentChart = currentUnit.chart as ChartDesc<'stackStatus'>;
+    const config = currentChart.config as StackStatusConfig;
+    runInAction(() => {
+        if (threadTraceMaxDepth) {
+            // 根据该接口返回的最大深度重新渲染泳道高度
+            currentChart.height = threadTraceMaxDepth * config.rowHeight;
+            config.maxDepth = threadTraceMaxDepth;
+            currentUnit.havePythonFunction = havePythonFunction;
+        }
+    });
+};
 
 function maskedNotSelectData<T extends ChartType>(session: Session, handle: ChartHandle<T>, xScale: Scale, yScale: Scale): void {
     if (session.searchData) {

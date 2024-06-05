@@ -153,6 +153,9 @@ export class Session {
             offsetConfig: {
                 timestampOffset: {},
             },
+            filterConfig: {
+                pythonFunction: {},
+            },
         };
         this.startRecordTime = 0;
         if (conf) {

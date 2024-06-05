@@ -33,7 +33,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
             return;
         }
         requestedWidth.current = width;
-        mapFunc(session, metadata).then(datas => {
+        mapFunc(session, metadata, unit).then(datas => {
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
                 return;
@@ -45,7 +45,9 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
         }).finally(() => {
             runInAction(() => { unit.phase = 'download'; });
         });
-    }, [session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset]);
+    }, [session.phase, domainStart, domainEnd, endTimeAll, width,
+        session.unitsConfig.offsetConfig.timestampOffset,
+        session.unitsConfig.filterConfig.pythonFunction]);
     return datasState;
 };
 
