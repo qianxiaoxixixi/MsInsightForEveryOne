@@ -163,10 +163,11 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
     for (const auto& item : response.body.bwStatistics) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "type", item.type, allocator);
-        JsonUtil::AddMember(itemJson, "max", item.max, allocator);
-        JsonUtil::AddMember(itemJson, "min", item.min, allocator);
-        JsonUtil::AddMember(itemJson, "avg", item.avg, allocator);
-        JsonUtil::AddMember(itemJson, "diff", item.diff, allocator);
+        JsonUtil::AddMember(itemJson, "max", item.maxBw, allocator);
+        JsonUtil::AddMember(itemJson, "min", item.minBw, allocator);
+        JsonUtil::AddMember(itemJson, "avg", item.avgBw, allocator);
+        JsonUtil::AddMember(itemJson, "diff", item.diffBw, allocator);
+        JsonUtil::AddMember(itemJson, "time", item.allTime, allocator);
         adviceJson.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "items", items, allocator);
