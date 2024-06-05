@@ -502,11 +502,11 @@ bool JsonMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorLi
     if (!requestParams.modelName.empty()) {
         sql += " AND model_name = ? ";
     }
-    if (requestParams.startNodeIndex >= 0) {
-        sql += " AND node_index_start >= ? ";
-    }
-    if (requestParams.endNodeIndex >= 0) {
-        sql += " AND node_index_end <= ? ";
+    if (requestParams.startNodeIndex >= 0 && requestParams.endNodeIndex >= requestParams.startNodeIndex) {
+        sql += " AND (node_index_start BETWEEN " + std::to_string(requestParams.startNodeIndex) +
+               " AND " + std::to_string(requestParams.endNodeIndex) +
+               " OR node_index_end BETWEEN " + std::to_string(requestParams.startNodeIndex) +
+               " AND " + std::to_string(requestParams.endNodeIndex) +")";
     }
     if (requestParams.minSize >= 0) {
         sql += " AND size >= ? ";
