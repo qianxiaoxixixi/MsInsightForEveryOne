@@ -52,6 +52,7 @@ private:
     void GetMapValid(const std::vector<std::string> &vec, std::map<std::string, size_t> dataMap);
     std::vector<std::string> GetPeerDirRecordFile(const std::string& operatorFile);
     std::map<std::string, MemoryFilePairs> GetMemoryFiles(const std::vector<std::string>& paths);
+    void GetMemoryFileList(std::map<std::string, MemoryFilePairs> &results, const std::vector<std::string> fileList);
     static void SetParseCallBack(const std::string& token);
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &message);
     static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);

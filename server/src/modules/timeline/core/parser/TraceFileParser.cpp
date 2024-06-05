@@ -51,10 +51,18 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
     }
 }
 
-bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId)
+bool TraceFileParser::CheckInitParser(const std::string &fileId)
 {
     if (!ParserStatusManager::Instance().SetRunningStatus(fileId)) {
         ServerLog::Info("Pre task skip this file.");
+        return false;
+    }
+    return true;
+}
+
+bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId)
+{
+    if (!CheckInitParser(fileId)) {
         return false;
     }
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);

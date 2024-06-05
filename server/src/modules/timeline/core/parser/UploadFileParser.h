@@ -62,6 +62,8 @@ private:
     std::map<std::string, SingleFileData> singleFileDataMap;
 
     void InitDataBase(std::string fileId);
+    static bool CheckParseTask(UploadFileRequest request, int sliceIndex, SingleFileData &singleFileData,
+                               std::string fileId);
     void ParseTask(UploadFileRequest request);
     void ParseLast(std::string fileId, UploadFileRequest request);
     void ParseEndSendResp(const std::string &fileId, const UploadFileRequest &request, const bool result) const;

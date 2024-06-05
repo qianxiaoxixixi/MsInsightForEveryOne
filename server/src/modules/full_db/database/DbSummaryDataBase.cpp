@@ -270,13 +270,9 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             R"(name || inputShapes || accelerator_core)";
         sql = " SELECT COUNT(*) as nums"
             " FROM ( "
-            "     SELECT "
-            "     deviceId,"
-            "     startNs, "
-            "     endNs, "
+            "     SELECT deviceId, startNs, endNs,"
             "     TASKTYPE.value AS accelerator_core, "
-            "     OPTYPE.value AS op_type,"
-            "     NAME.value AS name"
+            "     OPTYPE.value AS op_type, NAME.value AS name"
             "     FROM COMPUTE_TASK_INFO"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
@@ -363,18 +359,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
         sql = "SELECT COUNT(*) as nums FROM ( SELECT " + name + " as name FROM COMMUNICATION_OP"
             "   JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName WHERE " + name + " = ? ) subquery";
     } else {
-        std::string condition = (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP) ?
-            " op_type = ?" : " name = ? AND input_shapes = ?";
-        sql = " SELECT COUNT(*) as nums FROM ("
-            "     SELECT NAME.value AS name, INPUTSHAPES.value AS input_shapes, TASKTYPE.value AS accelerator_core, "
-            "     OPTYPE.value AS op_type"
-            "     FROM " + TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId"
-            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     WHERE accelerator_core = ? AND" + condition + " ) subquery";
+        GenerateMoreInfoTotalNumForOther(sql, operatorGroup);
     }
     if (!GenerateQueryFiltersSql<OperatorMoreInfoReqParams>(reqParams, sql)) {
         return false;
@@ -416,30 +401,7 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
     if (isHccl) {
         sql = GenerateQueryMoreInfoSqlForHCCL(sql);
     } else {
-        sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
-            " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-            " END AS startTime, duration, wait_time, " + blockDimColumnName + ","
-            " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
-            " FROM ("
-            "     SELECT " + blockDimColumnName + ", deviceId as rank_id, streamId as step_id, "
-            "     NAME.value AS name,  OPTYPE.value AS op_type,"
-            "  TASKTYPE.value as accelerator_core,startNs as start_time,ROUND((endNs - startNs)/1000.0, 3) as duration,"
-            "     ROUND((waitNs)/1000.0, 3) as wait_time, INPUTSHAPES.value as input_shapes, "
-            "     INPUTDATATYPES.value as input_data_types, "
-            "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
-            "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
-            "     FROM " + TABLE_COMPUTE_TASK_INFO + " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-            "     JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
-            "     JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
-            "     JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
-            "     JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
-            "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
-            "     WHERE accelerator_core = ?"
-            "     ORDER by duration DESC ) subquery ";
+        sql = GenerateQueryMoreInfoSqlForOther(sql);
     }
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
         operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
@@ -451,7 +413,9 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
         operatorGroup == OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
         sql += "AND input_shapes = ?";
     }
-    if (!GenerateQueryMoreInfoFilters(reqParams, sql)) { return ""; }
+    if (!GenerateQueryMoreInfoFilters(reqParams, sql)) {
+        return "";
+    }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
@@ -715,18 +679,7 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
     std::string sql;
     if (isHccl) {
-        sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
-            " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-            " END AS startTime, duration, wait_time, NULL AS " + blockDimColumnName + ", NULL AS input_shapes,"
-            " NULL AS input_data_types, NULL AS input_formats, NULL AS output_shapes, NULL AS output_data_types,"
-            " NULL AS output_formats FROM ("
-            "  SELECT NULL as rank_id, NULL as step_id, NAME.value AS name,"
-            "  SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type,"
-            "  NULL as accelerator_core,COMMUNICATION_OP.startNs as start_time,"
-            "  ROUND((COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 3) as duration,"
-            "  ROUND(COMMUNICATION_OP.waitNs/1000.0, 3) as wait_time FROM COMMUNICATION_OP"
-            "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
-            "  ORDER by duration DESC LIMIT ? ) subquery ";
+        sql = GenerateQueryDetailSqlForHCCL(sql);
     } else {
         sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
             " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
@@ -807,6 +760,70 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForHCCL(std::string &sql
         "  ROUND(COMMUNICATION_OP.waitNs/1000.0, 3) as wait_time FROM COMMUNICATION_OP"
         "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
         "  ORDER by duration DESC ) subquery ";
+    return sql;
+}
+
+std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForOther(std::string &sql) const
+{
+    sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
+          " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
+          " END AS startTime, duration, wait_time, " + blockDimColumnName + ","
+          " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
+          " FROM ("
+          "     SELECT " + blockDimColumnName + ", deviceId as rank_id, streamId as step_id, "
+          "     NAME.value AS name,  OPTYPE.value AS op_type,"
+          "  TASKTYPE.value as accelerator_core,startNs as start_time,ROUND((endNs - startNs)/1000.0, 3) as duration,"
+          "     ROUND((waitNs)/1000.0, 3) as wait_time, INPUTSHAPES.value as input_shapes, "
+          "     INPUTDATATYPES.value as input_data_types, "
+          "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
+          "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
+          "     FROM " + TABLE_COMPUTE_TASK_INFO + " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+          "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
+          "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
+          "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
+          "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
+          "     JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
+          "     JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
+          "     JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
+          "     JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
+          "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
+          "     WHERE accelerator_core = ?"
+          "     ORDER by duration DESC ) subquery ";
+    return sql;
+}
+
+std::string &DbSummaryDataBase::GenerateQueryDetailSqlForHCCL(std::string &sql) const
+{
+    sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
+          " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
+          " END AS startTime, duration, wait_time, NULL AS " + blockDimColumnName + ", NULL AS input_shapes,"
+          " NULL AS input_data_types, NULL AS input_formats, NULL AS output_shapes, NULL AS output_data_types,"
+          " NULL AS output_formats FROM ("
+          "  SELECT NULL as rank_id, NULL as step_id, NAME.value AS name,"
+          "  SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type,"
+          "  NULL as accelerator_core,COMMUNICATION_OP.startNs as start_time,"
+          "  ROUND((COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs)/1000.0, 3) as duration,"
+          "  ROUND(COMMUNICATION_OP.waitNs/1000.0, 3) as wait_time FROM COMMUNICATION_OP"
+          "  JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
+          "  ORDER by duration DESC LIMIT ? ) subquery ";
+    return sql;
+}
+
+std::string &DbSummaryDataBase::GenerateMoreInfoTotalNumForOther(std::string &sql,
+                                                                 OperatorGroupConverter::OperatorGroup opGroup) const
+{
+    std::string condition = (opGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP) ?
+                            " op_type = ?" : " name = ? AND input_shapes = ?";
+    sql = " SELECT COUNT(*) as nums FROM ("
+          "     SELECT NAME.value AS name, INPUTSHAPES.value AS input_shapes, TASKTYPE.value AS accelerator_core, "
+          "     OPTYPE.value AS op_type"
+          "     FROM " + TABLE_COMPUTE_TASK_INFO +
+          "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId"
+          "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
+          "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
+          "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
+          "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
+          "     WHERE accelerator_core = ? AND" + condition + " ) subquery";
     return sql;
 }
 
