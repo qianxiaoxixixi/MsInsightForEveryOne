@@ -50,14 +50,17 @@ bool JsonMemoryDataBase::CreateTable()
         "release_allocated INTEGER, release_reserve INTEGER, release_active INTEGER, stream TEXT);" +
         "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
         "total_allocated INTEGER, total_reserve INTEGER, total_active INTEGER, "
-        "device_type TEXT, stream TEXT, timestamp INTEGER);";
+        "device_type TEXT, stream TEXT, timestamp INTEGER);" +
+        "CREATE TABLE " + staticOpTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, device_id TEXT, " +
+        "op_name TEXT, model_name TEXT, graph_id TEXT, node_index_start INTEGER, " +
+        "node_index_end INTEGER, size INTEGER);";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
 
 bool JsonMemoryDataBase::DropTable()
 {
-    std::vector<std::string> tables = {operatorTable, recordTable};
+    std::vector<std::string> tables = {operatorTable, recordTable, staticOpTable};
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
@@ -78,7 +81,6 @@ bool JsonMemoryDataBase::InitStmt()
         ServerLog::Error("Failed to prepare insert Operator statement. error:", sqlite3_errmsg(db));
         return false;
     }
-
     sql = "INSERT INTO " + recordTable +
             " (component, total_allocated, total_reserve, total_active, device_type, stream, timestamp)" +
             " VALUES (?,?,?,?,?,?,?)";
@@ -87,6 +89,16 @@ bool JsonMemoryDataBase::InitStmt()
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertRecordStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert Record statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sql = "INSERT INTO " + staticOpTable +
+            " (device_id, op_name, model_name, graph_id, node_index_start, node_index_end, size)" +
+            " VALUES (?,?,?,?,?,?,?)";
+    for (int i = 0; i < cacheSize - 1; ++i) {
+        sql.append(",(?,?,?,?,?,?,?)");
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertStaticOpStmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare insert Static Op statement. error:", sqlite3_errmsg(db));
         return false;
     }
 
@@ -101,6 +113,9 @@ void JsonMemoryDataBase::ReleaseStmt()
     }
     if (insertRecordStmt != nullptr) {
         insertRecordStmt = nullptr;
+    }
+    if (insertStaticOpStmt != nullptr) {
+        insertStaticOpStmt = nullptr;
     }
 }
 
@@ -174,12 +189,48 @@ void JsonMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &event
     }
 }
 
+void JsonMemoryDataBase::InsertStaticOpDetailList(const std::vector<StaticOp> &eventList)
+{
+    sqlite3_stmt *stmt = GetStaticOpStmt(eventList.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get Record stmt.");
+        return;
+    }
+    int idx = bindStartIndex;
+    for (const auto &event : eventList) {
+        sqlite3_bind_text(stmt, idx++, event.deviceId.c_str(), event.deviceId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.opName.c_str(), event.opName.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.modelName.c_str(), event.modelName.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.graphId.c_str(), event.graphId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, event.nodeIndexStart);
+        sqlite3_bind_int64(stmt, idx++, event.nodeIndexEnd);
+        sqlite3_bind_double(stmt, idx++, event.size);
+    }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    auto result = sqlite3_step(stmt);
+    if (eventList.size() != cacheSize) {
+        sqlite3_finalize(stmt);
+    }
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Insert StaticOp fail. ", sqlite3_errmsg(db));
+    }
+}
+
 void JsonMemoryDataBase::insertRecordDetail(const Record &event)
 {
     recordCache.emplace_back(event);
     if (recordCache.size() == cacheSize) {
         InsertRecordDetailList(recordCache);
         recordCache.clear();
+    }
+}
+
+void JsonMemoryDataBase::insertStaticOpDetail(const StaticOp &event)
+{
+    staticOpCache.emplace_back(event);
+    if (staticOpCache.size() == cacheSize) {
+        InsertStaticOpDetailList(staticOpCache);
+        staticOpCache.clear();
     }
 }
 
@@ -249,6 +300,45 @@ std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
     return sql;
 }
 
+std::string  JsonMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
+{
+    std::string sql =
+        "SELECT device_id, op_name, node_index_start, node_index_end, size"
+        " FROM " + staticOpTable +
+        " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
+    AddStableOperatorSql(requestParams, sql);
+    return sql;
+}
+
+std::string JsonMemoryDataBase::GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams)
+{
+    std::string sql =
+            "SELECT node_index_start, size FROM " + staticOpTable +
+            " WHERE op_name <> 'TOTAL' AND size <> 0 AND graph_id = ?";
+    if (!requestParams.modelName.empty()) {
+        sql += " AND op_name = ?";
+    }
+    sql += " ORDER BY node_index_start ASC";
+    return sql;
+}
+
+std::string JsonMemoryDataBase::GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams)
+{
+    std::string sql =
+            "SELECT node_index_end, size FROM " + staticOpTable +
+            " WHERE op_name <> 'TOTAL' AND size <> 0 AND graph_id = ?";
+    if (!requestParams.modelName.empty()) {
+        sql += " AND op_name = ?";
+    }
+    sql += " ORDER BY node_index_end ASC";
+    return sql;
+}
+
+bool JsonMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::string> &graphId)
+{
+    return ExecuteMemoryType(graphId, type);
+}
+
 bool JsonMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
 {
@@ -268,6 +358,27 @@ bool JsonMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &reques
     return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
 }
 
+bool JsonMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+                                                 std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                                 std::vector<Protocol::StaticOperatorItem> &opDetails)
+{
+    std::string sql = GetStaticOperatorSql(requestParams);
+    return ExecuteStaticOperatorDetail(requestParams, columnAttr, opDetails, sql);
+}
+
+bool JsonMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                                                  Protocol::StaticOperatorGraphItem &graphItem)
+{
+    std::string totalSql = "SELECT size FROM " + staticOpTable +
+                           " WHERE op_name = 'TOTAL' AND graph_id = ?";
+    if (!requestParams.modelName.empty()) {
+        totalSql += " AND modelName = ?";
+    }
+    std::string graphStartSql = GetStaticGraphStartSql(requestParams);
+    std::string graphEndSql = GetStaticGraphEndSql(requestParams);
+    return ExecuteStaticOperatorGraph(requestParams, graphItem, totalSql, graphStartSql, graphEndSql);
+}
+
 void JsonMemoryDataBase::SaveOperatorDetail()
 {
     if (operatorCache.size() > 0) {
@@ -281,6 +392,14 @@ void JsonMemoryDataBase::SaveRecordDetail()
     if (recordCache.size() > 0) {
         InsertRecordDetailList(recordCache);
         recordCache.clear();
+    }
+}
+
+void JsonMemoryDataBase::SaveStaticOpDetail()
+{
+    if (staticOpCache.size() > 0) {
+        InsertStaticOpDetailList(staticOpCache);
+        staticOpCache.clear();
     }
 }
 
@@ -330,6 +449,27 @@ sqlite3_stmt *JsonMemoryDataBase::GetRecordStmt(uint64_t paramLen)
     return stmt;
 }
 
+sqlite3_stmt *JsonMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (paramLen == cacheSize) {
+        stmt = insertStaticOpStmt;
+        sqlite3_reset(stmt);
+    } else {
+        std::string sql = "INSERT INTO " + staticOpTable +
+                          " (device_id, op_name, model_name, graph_id, node_index_start, node_index_end, size)"
+                          " VALUES (?,?,?,?,?,?,?)";
+        for (int i = 0; i < paramLen - 1; ++i) {
+            sql.append(",(?,?,?,?,?,?,?)");
+        }
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));
+            return nullptr;
+        }
+    }
+    return stmt;
+}
+
 bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
@@ -350,6 +490,31 @@ bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
         sql += " AND size <= ? ";
     }
     return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
+}
+
+bool JsonMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
+                                                      int64_t &totalNum)
+{
+    std::string sql = "SELECT count(*) as nums FROM " + staticOpTable + " WHERE op_name <> 'TOTAL'";
+    if (!requestParams.graphId.empty()) {
+        sql += " AND graph_id = ?";
+    }
+    if (!requestParams.modelName.empty()) {
+        sql += " AND model_name = ? ";
+    }
+    if (requestParams.startNodeIndex >= 0) {
+        sql += " AND node_index_start >= ? ";
+    }
+    if (requestParams.endNodeIndex >= 0) {
+        sql += " AND node_index_end <= ? ";
+    }
+    if (requestParams.minSize >= 0) {
+        sql += " AND size >= ? ";
+    }
+    if (requestParams.maxSize >= 0) {
+        sql += " AND size <= ? ";
+    }
+    return ExecuteStaticOperatorListTotalNum(requestParams, totalNum, sql);
 }
 
 bool JsonMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)

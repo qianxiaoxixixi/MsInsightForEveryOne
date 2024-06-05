@@ -30,17 +30,29 @@ public:
     void insertOperatorDetail(const Operator &event);
     void InsertRecordDetailList(const std::vector<Record> &eventList);
     void insertRecordDetail(const Record &event);
+    void InsertStaticOpDetailList(const std::vector<StaticOp> &eventList);
+    void insertStaticOpDetail(const StaticOp &event);
 
+    bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails) override;
     bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                          Protocol::MemoryViewData &operatorBody) override;
 
+    bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+                             std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                             std::vector<Protocol::StaticOperatorItem> &opDetails) override;
+
+    bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                             Protocol::StaticOperatorGraphItem &graphItem) override;
+
     void SaveRecordDetail();
     void SaveOperatorDetail();
+    void SaveStaticOpDetail();
 
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
+    bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
     uint64_t QueryMinOperatorAllocationTime();
     uint64_t QueryMinRecordTimestamp();
@@ -51,6 +63,7 @@ public:
 private:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
+    const std::string staticOpTable = "static_op"; // 静态图表
     const std::string memoryParseStatus = "Memory files parsing status";
     const int exLength = 4;
 
@@ -58,14 +71,20 @@ private:
     const int cacheSize = 100;
     std::vector<Operator> operatorCache;
     std::vector<Record> recordCache;
+    std::vector<StaticOp> staticOpCache;
 
     sqlite3_stmt *insertOperatorStmt = nullptr;
     sqlite3_stmt *insertRecordStmt = nullptr;
+    sqlite3_stmt *insertStaticOpStmt = nullptr;
 
     sqlite3_stmt *GetOperatorStmt(uint64_t paramLen);
     sqlite3_stmt *GetRecordStmt(uint64_t paramLen);
+    sqlite3_stmt *GetStaticOpStmt(uint64_t paramLen);
 
     std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
+    std::string GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams);
+    std::string GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams);
+    std::string GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams);
 
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";

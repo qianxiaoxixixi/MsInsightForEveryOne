@@ -17,6 +17,8 @@ namespace Dic {
     const static std::string TABLE_COMMUNICATION_MATRIX = "communication_matrix";
     const static std::string TABLE_GROUP_ID = "group_id";
     const static std::string TABLE_KERNEL = "kernel_detail";
+    const static std::string TABLE_STATIC_OPERATOR = "static_op";
+    const static std::string TABLE_DYNAMIC_OPERATOR = "operator";
 
     // db table name
     const static std::string TABLE_TASK = "TASK";

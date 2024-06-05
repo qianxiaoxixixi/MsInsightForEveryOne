@@ -58,6 +58,7 @@ public:
 protected:
     bool ExecSql(const std::string &sql);
     bool CheckTableExist(const std::string& tableName);
+    bool CheckTableContainData(const std::string& tableName);
     static std::string CheckSqlString(const std::string &src);
     static std::string sqlite3_column_string(sqlite3_stmt *stmt, int iCol);
     std::string GetLastError();

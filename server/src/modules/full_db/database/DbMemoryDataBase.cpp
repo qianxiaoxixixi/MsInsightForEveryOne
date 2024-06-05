@@ -22,6 +22,11 @@ bool DbMemoryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
     return Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion();
 }
 
+bool DbMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::string> &graphId)
+{
+    return ExecuteMemoryType(graphId, type);
+}
+
 bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                            std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                            std::vector<Protocol::MemoryOperator> &opDetails)
@@ -130,6 +135,25 @@ bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string r
                " ROUND(max(size)/ 1024.0, 2) as maxSize FROM " + TABLE_OPERATOR_MEMORY;
     }
     return ExecuteOperatorSize(min, max, sql);
+}
+
+bool DbMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
+                                                    int64_t &totalNum)
+{
+    return false;
+}
+
+bool DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+                                               std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                               std::vector<Protocol::StaticOperatorItem> &opDetails)
+{
+    return false;
+}
+
+bool DbMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                                                Protocol::StaticOperatorGraphItem &graphItem)
+{
+    return false;
 }
 
 void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)

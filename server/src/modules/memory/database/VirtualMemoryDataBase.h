@@ -18,22 +18,38 @@ class VirtualMemoryDataBase : public Database {
 public:
     explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
     ~VirtualMemoryDataBase() override = default;
+    virtual bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) = 0;
     virtual bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                      std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                      std::vector<Protocol::MemoryOperator> &opDetails) = 0;
     virtual bool
     QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody) = 0;
+    virtual bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+                                         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                         std::vector<Protocol::StaticOperatorItem> &opDetails) = 0;
+
+    virtual bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                                         Protocol::StaticOperatorGraphItem &graphItem) = 0;
 
     virtual bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) = 0;
+    virtual bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) = 0;
+
     virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
 protected:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
     const int exLength = 4;
+    const int defaultPageSize = 10;
+    const int64_t maxUnsignedInt = 4294967295;
+    const double staticDefaultTotalSize = -1.0; // 静态表TOTAL字段默认赋值异常值
     bool isInference = false;
 
     const std::vector<std::string> baseLegends = {
         "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
+    };
+
+    const std::vector<std::string> staticGraphLegends = {
+        "Node Index", "Size", "Total Size"
     };
 
     const std::string appLegend = "App Reserved";
@@ -54,6 +70,14 @@ protected:
         {"Stream", "string", "streamId"}
     };
 
+    const std::vector<Protocol::MemoryTableColumnAttr> staticOpTableColumnAttr = {
+        {"Device ID", "string", "deviceId"},
+        {"Name", "string", "opName"},
+        {"Node Index Start", "number", "nodeIndexStart"},
+        {"Node Index End", "number", "nodeIndexEnd"},
+        {"Size(KB)", "number", "size"}
+    };
+
     const std::vector<std::string> activeRelatedColumn = {
         "Active Release Time(ms)",
         "Active Duration(ms)",
@@ -63,19 +87,39 @@ protected:
     };
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";
+    const std::string MIND_SPORE = "MindSpore";
     const std::string COMPONENT_PTA = "PTA";
     const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
+    const std::string MIND_SPORE_GE = "MindSpore+GE";
 
     std::vector<std::string> GetStreamLists(std::string rankId);
-
+    bool ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type);
     bool ExecuteOperatorSize(double &min, double &max, std::string sql);
     bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
+    bool ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
+                                           int64_t &totalNum, std::string sql);
     bool ExecuteQueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
                                 std::string sql);
     bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
         std::string sql);
+    bool ExecuteStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+                                    Protocol::StaticOperatorGraphItem &graphItem, const std::string& totalSql,
+                                    const std::string& graphStartSql, const std::string& graphEndSql);
+    bool ExecuteStaticGraphTotalSize(Protocol::StaticOperatorGraphParams &requestParams,
+                                      const std::string& graphStartSql, double &maxIndex);
+    bool ExecuteStaticGraphStartIndex(Protocol::StaticOperatorGraphParams &requestParams,
+                                      const std::string& graphStartSql, std::map<int64_t, double> &graphSizeMap,
+                                      int64_t &maxIndex);
+    bool ExecuteStaticGraphEndIndex(Protocol::StaticOperatorGraphParams &requestParams,
+                                    const std::string& graphEndSql, std::map<int64_t, double> &graphSizeMap,
+                                    int64_t &maxIndex);
+
+    bool ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
+        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::StaticOperatorItem> &opDetails,
+        const std::string& sql);
     void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);
+    void AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql);
 
 private:
     void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,

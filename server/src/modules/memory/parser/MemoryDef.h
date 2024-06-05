@@ -14,6 +14,7 @@ namespace Dic::Module::Memory {
 struct MemoryFilePairs {
     std::set<std::string> operatorFiles;
     std::set<std::string> recordFiles;
+    std::set<std::string> staticOpFiles;
 };
 
 struct Record {
@@ -43,6 +44,21 @@ struct Operator {
     std::string streamId;
     std::string deviceType;
 };
+
+struct StaticOp {
+    std::string deviceId;
+    std::string opName;
+    std::string modelName;
+    std::string graphId;
+    int64_t nodeIndexStart;
+    int64_t nodeIndexEnd;
+    double size;
+};
+
+// Type类型字段
+const std::string MEMORY_TYPE_DYNAMIC = "dynamic"; // 纯动态图数据
+const std::string MEMORY_TYPE_STATIC = "static"; // 纯静态图数据
+const std::string MEMORY_TYPE_MIX = "mix"; // 存在动态图数据以及静态子图数据
 
 // field in operator_memory
 const std::string ALLOCATION_TIME = "Allocation Time(us)";
@@ -76,6 +92,18 @@ const std::vector<std::string> RECORD_CSV = {COMPONENT, TIMESTAMP, DEVICETYPE, T
 const std::vector<std::string> RECORD_CSV_MSPROF = {
     COMPONENT, TIMESTAMP, DEVICE, TOTAL_ALLOCATED_KB, TOTAL_RESERVED_KB
 };
+
+// field in memory_record
+const std::string OP_NAME = "Op Name";
+const std::string MODEL_NAME = "Model Name";
+const std::string GRAPH_ID = "Graph ID";
+const std::string NODE_INDEX_START = "Node Index Start";
+const std::string NODE_INDEX_END = "Node Index End";
+const std::string SIZE_KB = "Size(KB)";
+const std::vector<std::string> STATIC_OP_MEM_CSV = {
+    DEVICE_ID, OP_NAME, MODEL_NAME, GRAPH_ID, NODE_INDEX_START, NODE_INDEX_END, SIZE_KB
+};
+
 
 // table header
 const std::vector<std::string> MEMORY_RECORD_HEADER = {

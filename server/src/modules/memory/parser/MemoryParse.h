@@ -31,14 +31,17 @@ public:
     void Reset() override;
     bool OperatorParse(const std::string &filePath, const std::string &fileId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
+    bool StaticOpParse(const std::string &filePath, const std::string &fileId);
 
     const std::string memoryOperatorReg = R"(operator_memory(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
     const std::string memoryRecordReg = R"(memory_record(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
+    const std::string staticOpMemReg = R"(static_op_mem(_[0-9]{1,14})?.csv$)";
 
 private:
     const int maxThreadNum = 4;
     const int operatorTableNum = 5;
     const int recordTableNum = 5;
+    const int staticOpTableNum = 7;
     std::map<std::string, Protocol::MemorySuccess> ranks;
     bool isCluster = false;
 
@@ -48,11 +51,12 @@ private:
 
     Record mapperToRecordDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
     Operator mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
+    StaticOp mapperToStaticOpDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
 
     void GetMapValid(const std::vector<std::string> &vec, std::map<std::string, size_t> dataMap);
-    std::vector<std::string> GetPeerDirRecordFile(const std::string& operatorFile);
+    std::vector<std::string> GetPeerDirOperatorFile(const std::string& operatorFile, const std::string &reg);
     std::map<std::string, MemoryFilePairs> GetMemoryFiles(const std::vector<std::string>& paths);
-    void GetMemoryFileList(std::map<std::string, MemoryFilePairs> &results, const std::vector<std::string> fileList);
+    std::vector<std::string> GetMemoryRecordFileLists(const std::vector<std::string>& paths);
     static void SetParseCallBack(const std::string& token);
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &message);
     static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
