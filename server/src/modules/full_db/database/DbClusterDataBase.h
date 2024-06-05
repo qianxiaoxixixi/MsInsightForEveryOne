@@ -41,7 +41,7 @@ public:
                                 std::vector<Protocol::OperatorNamesObject> &responseBody);
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody) override;
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
-                           std::vector<Protocol::Duration> &responseBody) override;
+        Protocol::DurationListsResponseBody &responseBody) override;
     bool QueryOperatorList(Protocol::DurationListParams &requestParams,
         Protocol::OperatorListsResponseBody &responseBody) override;
     bool QueryCommunicationGroup(Document &responseBody) override;

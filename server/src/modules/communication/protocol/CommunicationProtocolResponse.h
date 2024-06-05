@@ -132,10 +132,14 @@ struct BandwidthStatistic {
     double diff; // 单位GB/s
 };
 
+struct DurationListsResponseBody {
+    std::vector<Duration> durationList;
+    std::vector<BandwidthStatistic> bwStatistics{};
+};
+
 struct DurationResponse : public Response {
     DurationResponse() : Response(REQ_RES_COMMUNICATION_LIST) {}
-    std::vector<Duration> body;
-    std::vector<BandwidthStatistic> bwStatistics{};
+    DurationListsResponseBody body;
 };
 
 struct OperatorListsResponseBody {
