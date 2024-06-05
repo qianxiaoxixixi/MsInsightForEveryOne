@@ -17,7 +17,6 @@ import connector from '../connection';
 import { unit } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
 import { StyledTooltip } from './base/StyledTooltip';
-
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
     left: string;
@@ -354,6 +353,45 @@ const isShowEventMenu = (session: Session): boolean => {
     return true;
 };
 
+const showPythonFunction = (session: Session): void => {
+    const selectedUnit = session.selectedUnits?.[0];
+    if (!selectedUnit) {
+        return;
+    }
+    const metadata = selectedUnit.metadata as ThreadMetaData;
+    if (metadata.cardId !== undefined) {
+        const pythonFunctionConfig = session.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>;
+        const isFilteredPythonFunction = pythonFunctionConfig?.[`${metadata.cardId}_${metadata.threadName}`] ?? false;
+        runInAction(() => {
+            session.unitsConfig.filterConfig.pythonFunction = { ...pythonFunctionConfig, [`${metadata.cardId}_${metadata.threadName}`]: !isFilteredPythonFunction };
+        });
+    }
+    runInAction(() => {
+        session.contextMenu.isVisible = false;
+    });
+};
+const isShowPythonFunction = (session: Session): boolean => {
+    const selectedUnit = session.selectedUnits?.[0];
+    if (!selectedUnit) {
+        return false;
+    }
+    return selectedUnit.havePythonFunction ?? false;
+};
+
+const getShowPythonFunctionButtonText = (session: Session, t: TFunction): string => {
+    let isFilteredPythonFunction = true;
+    const selectedUnit = session.selectedUnits?.[0];
+    if (!selectedUnit) {
+        return '';
+    }
+    const metadata = selectedUnit.metadata as ThreadMetaData;
+    if (metadata.cardId !== undefined) {
+        isFilteredPythonFunction = (session.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[`${metadata.cardId}_${metadata.threadName}`] ?? false;
+    }
+
+    return isFilteredPythonFunction ? t('Show python function') : t('Hide python function');
+};
+
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
     setPosition: (_: Position) => void;
@@ -387,6 +425,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Hide'), key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
         { name: t('Show All Hidden'), key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
         { name: t('Show in events view'), key: 'showInEventsView', event: showInEventsView, disabled: false, visible: isShowEventMenu(session) },
+        { name: getShowPythonFunctionButtonText(session, t), key: 'showPythonFunction', event: showPythonFunction, disabled: false, visible: isShowPythonFunction(session) },
     ];
 
     return <>

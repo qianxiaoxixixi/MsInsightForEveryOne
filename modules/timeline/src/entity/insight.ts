@@ -205,6 +205,7 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
     parent?: InsightUnit;
     progress: number; // 解析进度：实际解析进度
     showProgress: boolean; // 解析进度：是否显示进度条
+    havePythonFunction?: boolean;
 }
 // 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
@@ -286,6 +287,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         collapsible = true;
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
+        havePythonFunction: boolean = false; // 是否采集了调用栈信息
         constructor(metadata: T) {
             makeAutoObservable(this, { searchConfig: false });
             this.metadata = metadata;

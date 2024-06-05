@@ -81,7 +81,7 @@ export type ChartProps<T extends ChartType> = ChartConfig<T> & {
 };
 
 export interface MapFunc<T extends ChartType> {
-    (session: Session, metadata?: unknown): Promise<ChartData<T>>;
+    (session: Session, metadata?: unknown, unit?: InsightUnit): Promise<ChartData<T>>;
 }
 
 export interface RenderTooltip<T extends ChartType> {
