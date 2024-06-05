@@ -16,6 +16,11 @@ namespace Protocol {
     template<typename RESPONSE>std::optional<document_t> ToResponseJson(const RESPONSE &response);
     template<>std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(const MemoryOperatorResponse &response);
     template<>std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response);
+    template<>std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeResponse &response);
+    template<>std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
+            (const MemoryStaticOperatorGraphResponse &response);
+    template<>std::optional<document_t> ToResponseJson<MemoryStaticOperatorListResponse>
+            (const MemoryStaticOperatorListResponse &response);
     template<>
     std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response);
 

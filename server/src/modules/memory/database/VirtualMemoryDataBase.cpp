@@ -122,6 +122,37 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
                                                               int64_t &totalNum,
                                                               std::string sql)
 {
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+
+    if (!requestParams.graphId.empty()) {
+        sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
+    }
+    if (!requestParams.modelName.empty()) {
+        std::string modelName = "%" + requestParams.modelName + "%";
+        sqlite3_bind_text(stmt, index++, modelName.c_str(), modelName.length(), nullptr);
+    }
+    if (requestParams.startNodeIndex >= 0) {
+        sqlite3_bind_int64(stmt, index++, requestParams.startNodeIndex);
+    }
+    if (requestParams.endNodeIndex >= 0) {
+        sqlite3_bind_int64(stmt, index++, requestParams.endNodeIndex);
+    }
+    if (requestParams.minSize >= 0) {
+        sqlite3_bind_int64(stmt, index++, requestParams.minSize);
+    }
+    if (requestParams.maxSize >= 0) {
+        sqlite3_bind_int64(stmt, index++, requestParams.maxSize);
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -236,8 +267,7 @@ bool VirtualMemoryDataBase::ExecuteStaticGraphTotalSize(Protocol::StaticOperator
         return false;
     }
     int index = bindStartIndex;
-    std::string graphId = "%" + requestParams.graphId + "%";
-    sqlite3_bind_text(totalStmt, index, graphId.c_str(), graphId.length(), nullptr);
+    sqlite3_bind_text(totalStmt, index, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     if (!requestParams.modelName.empty()) {
         std::string modelName = "%" + requestParams.modelName + "%";
         sqlite3_bind_text(totalStmt, index, modelName.c_str(), modelName.length(), nullptr);
@@ -260,8 +290,7 @@ bool VirtualMemoryDataBase::ExecuteStaticGraphStartIndex(Protocol::StaticOperato
         return false;
     }
     int index = bindStartIndex;
-    std::string graphId = "%" + requestParams.graphId + "%";
-    sqlite3_bind_text(startStmt, index++, graphId.c_str(), graphId.length(), nullptr);
+    sqlite3_bind_text(startStmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     if (!requestParams.modelName.empty()) {
         std::string modelName = "%" + requestParams.modelName + "%";
         sqlite3_bind_text(startStmt, index, modelName.c_str(), modelName.length(), nullptr);
@@ -292,8 +321,7 @@ bool VirtualMemoryDataBase::ExecuteStaticGraphEndIndex(Protocol::StaticOperatorG
         return false;
     }
     int index = bindStartIndex;
-    std::string graphId = "%" + requestParams.graphId + "%";
-    sqlite3_bind_text(endStmt, index++, graphId.c_str(), graphId.length(), nullptr);
+    sqlite3_bind_text(endStmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     if (!requestParams.modelName.empty()) {
         std::string modelName = "%" + requestParams.modelName + "%";
         sqlite3_bind_text(endStmt, index, modelName.c_str(), modelName.length(), nullptr);
@@ -385,8 +413,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
     std::string orderName = "%" + requestParams.searchName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     if (!requestParams.graphId.empty()) {
-        std::string graphId = "%" + requestParams.graphId + "%";
-        sqlite3_bind_text(stmt, index++, graphId.c_str(), graphId.length(), nullptr);
+        sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     }
     sqlite3_bind_int64(stmt, index++, pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
@@ -453,11 +480,11 @@ void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListPar
         sql += " AND graph_id = ?" ;
     }
 
-    if (requestParams.startNodeIndex >= 0) {
-        sql += " AND node_index_start >= " + std::to_string(requestParams.startNodeIndex);
-    }
-    if (requestParams.endNodeIndex >= 0) {
-        sql += " AND node_index_end <= " + std::to_string(requestParams.endNodeIndex);
+    if (requestParams.startNodeIndex >= 0 && requestParams.endNodeIndex >= requestParams.startNodeIndex) {
+        sql += " AND (node_index_start BETWEEN " + std::to_string(requestParams.startNodeIndex) +
+                " AND " + std::to_string(requestParams.endNodeIndex) +
+                " OR node_index_end BETWEEN " + std::to_string(requestParams.startNodeIndex) +
+                " AND " + std::to_string(requestParams.endNodeIndex) +")";
     }
 
     if (requestParams.minSize >= 0) {

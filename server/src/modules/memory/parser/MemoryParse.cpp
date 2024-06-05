@@ -256,6 +256,50 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
 
 bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &fileId)
 {
+    auto start = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("Start parse Memory Static Operator: ", filePath, ", FileId: ", fileId);
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        return false;
+    }
+    auto database =
+            dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    std::ifstream file(FileUtil::PathPreprocess(filePath));
+    std::string line;
+    std::map<std::string, size_t> dataMap;
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
+    Timeline::ParserStatus::RUNNING && getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<std::string> row;
+        std::string cell;
+        while (getline(ss, cell, ',')) {
+            row.push_back(cell);
+        }
+        if (!row.empty() && row[0] == Dic::DEVICE_ID) {
+            for (size_t i = 0; i < row.size(); i++) {
+                dataMap[row[i]] = i;
+            }
+            if (dataMap.size() < staticOpTableNum) {
+                ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + filePath);
+                return false;
+            }
+            GetMapValid(STATIC_OP_MEM_CSV, dataMap);
+            continue;
+        }
+        if (row.size() != dataMap.size()) {
+            continue;
+        }
+        StaticOp staticOpPtr = MemoryParse::mapperToStaticOpDetail(dataMap, row);
+        // 读取每一行数据并插入到record内
+        database->insertStaticOpDetail(staticOpPtr);
+    }
+    // 读取剩下的数据并插入到record内
+    database->SaveStaticOpDetail();
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("End parse Memory Record: ", filePath, ", cost time:",
+                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    uint64_t minTimestamp = database->QueryMinRecordTimestamp();
+    Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
+    file.close();
     return true;
 }
 
