@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined, QuestionCircleFilled } from '@ant-design/icons';
-import { Breadcrumb, Tooltip } from 'antd';
+import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
 import Help from './Help';
 import Filter, { ConditionDataType } from './Filter';
@@ -14,7 +14,7 @@ import CommunicationTimeChart, { dataType as chartDataType }
     from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
-import { notNullObj, Space, Tan } from '../Common';
+import { notNullObj, Space, StyledTooltip, Tan } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
@@ -145,15 +145,15 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
         <div style={{ marginBottom: '20px' }}>
             <div className={'communication-advice-title'}>
                 {t('Advice')}
-                <Tooltip title={
+                <StyledTooltip title={
                     (
-                        <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
+                        <div style={{ padding: '1rem' }}>
                             {t('AdviceTip')}
                         </div>
                     )
                 }>
                     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
-                </Tooltip>
+                </StyledTooltip>
             </div>
             <div className="communication-advice-header">{t('Overall')}</div>
             <div className="communication-advice-content">{overAllText}</div>
