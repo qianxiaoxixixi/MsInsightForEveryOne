@@ -14,9 +14,11 @@ aux_source_directory(${TEST_HOME_DIR}/modules/timeline/handler TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/timeline/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/timeline/database TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/advisor TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/operator TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/common TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/source TEST)
+
 aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
 
 list(APPEND DIC_TEST_LIST
