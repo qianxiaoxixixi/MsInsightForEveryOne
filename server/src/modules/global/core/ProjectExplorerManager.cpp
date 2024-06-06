@@ -176,7 +176,12 @@ void ProjectExplorerManager::UpdateProjectDbPath(const std::string &projectName,
 
 void ProjectExplorerManager::InitSystemMemoryDbPath(const std::string &filePath)
 {
-    systemMemoryDbPath = filePath + "/system_memory.db";
+    std::string path = FileUtil::SplicePath(filePath, "system_memory.db");
+#ifdef _WIN32
+    systemMemoryDbPath = StringUtil::GbkToUtf8(path.c_str());
+#else
+    systemMemoryDbPath = path;
+#endif
 }
 
 }
