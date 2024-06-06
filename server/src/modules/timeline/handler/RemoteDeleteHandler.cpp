@@ -31,7 +31,6 @@ void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     SetBaseResponse(request, response);
     TraceFileParser::Instance().DeleteParseFiles(request.params.rankId);
     TraceFileSimulationParser::Instance().DeleteParseFiles(request.params.rankId);
-    FullDb::FullDbParser::Instance().Reset();
     UploadFileParser::Instance().ResetByFiles(request.params.rankId);
     GetUpdateTime(response.body);
     SetResponseResult(response, true);
