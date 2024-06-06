@@ -76,11 +76,13 @@ const useCommonColumns = (): ColumnsType<DataType> => {
             showSorterTooltip: { title: `${t('tableHeadTooltip.Wait Time Ratio')}` },
         },
         {
-            title: `${t('tableHead.Idle Time')}(ms)`,
-            dataIndex: 'idleTime',
-            sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
-            ellipsis: true,
-            showSorterTooltip: { title: `${t('tableHeadTooltip.Idle Time')}` },
+            title: `${t('tableHead.Idle Time')}(ms)`, dataIndex: 'idleTime', sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime, ellipsis: true, showSorterTooltip: { title: `${t('tableHeadTooltip.Idle Time')}` },
+        },
+        {
+            title: `${t('tableHead.SDMABW')}(GB)`, dataIndex: 'sdmaBw', sorter: (a: DataType, b: DataType) => a.sdmaBw - b.sdmaBw, ellipsis: true,
+        },
+        {
+            title: `${t('tableHead.RDMABW')}(GB)`, dataIndex: 'rdmaBw', sorter: (a: DataType, b: DataType) => a.rdmaBw - b.rdmaBw, ellipsis: true,
         }];
 };
 // Total HCCL Opertators表

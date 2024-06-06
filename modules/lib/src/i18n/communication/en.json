@@ -66,6 +66,8 @@
       "Synchronization Time Ratio": "Synchronization Time Ratio",
       "Wait Time Ratio": "Wait Time Ratio",
       "Idle Time": "Idle Time",
+      "SDMABW": "SDMA BW",
+      "RDMABW": "RDMA BW",
       "Bandwidth Analysis": "Bandwidth Analysis",
       "Large Packet Ratio": "Large Packet Ratio",
       "Communication Operators Details": "Communication Operators Details",

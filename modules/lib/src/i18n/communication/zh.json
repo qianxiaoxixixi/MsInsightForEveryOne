@@ -66,6 +66,8 @@
       "Synchronization Time Ratio": "同步时间占比",
       "Wait Time Ratio": "等待时间占比",
       "Idle Time": "空闲时间",
+      "SDMABW": "SDMA带宽",
+      "RDMABW": "RDMA带宽",
       "Bandwidth Analysis": "带宽分析",
       "Large Packet Ratio": "大通信包占比",
       "Communication Operators Details": "通信算子详情",
