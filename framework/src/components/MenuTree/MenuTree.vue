@@ -15,7 +15,7 @@ const projectName = ref('');
 const activateNodeId = ref(0);
 
 
-const [DeleteAll, DeleteItem, Cancel, Confirm] = useWatchTranslation(['Delete All', 'Delete Item', 'Cancel', 'Confirm']);
+const [DeleteAll, DeleteItem, Cancel, Confirm, ImportData] = useWatchTranslation(['Delete All', 'Delete Item', 'Cancel', 'Confirm', 'Import Data']);
 const props = defineProps<{
     dataSource: TreeNodeType[];
     isDarkTheme: boolean;
@@ -55,20 +55,20 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
                 <div :class="['contentNode', {activateNode:data.id === activateNodeId}]">
                     <span class="contentBody">
                         <LocalIcon v-if="node.level === 1" style="flex: none"/>
-                        <el-tooltip :content="node.label" :effect="isDarkTheme ? 'light' : 'dark'">
+                        <el-tooltip :content="node.label" effect="light">
                             <EditableText  v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"></EditableText>
                             <span v-else class="contentNodeText">{{ node.label }} </span>
                         </el-tooltip>
                     </span>
 
                     <div class="btn-box">
-                      <el-tooltip v-if="node.level === 1" content="Import Data" :effect="isDarkTheme ? 'light' : 'dark'">
+                      <el-tooltip v-if="node.level === 1" :content="ImportData" effect="light">
                           <el-icon class="icon-button" @click.stop="addRemoteUnderProject(node, $event)">
                             <AddIcon />
                           </el-icon>
                       </el-tooltip>
 
-                      <el-tooltip :content="node.level === 1 ? DeleteAll : DeleteItem" :effect="isDarkTheme ? 'light' : 'dark'">
+                      <el-tooltip :content="node.level === 1 ? DeleteAll : DeleteItem" effect="light">
                         <div class="icon-button">
                           <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1"/>
                         </div>
