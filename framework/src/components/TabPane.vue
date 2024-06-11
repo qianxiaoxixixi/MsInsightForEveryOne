@@ -351,7 +351,7 @@ function handleToggleLang(): void {
             </el-menu>
 
             <div class="right-tool-box">
-                <el-tooltip content="中文/English">
+                <el-tooltip content="中文/English" effect="light">
                     <el-icon class="tool-item" @click="handleToggleLang">
                         <LangEnIcon class="icon" v-if="isChinese" />
                         <LangZhIcon class="icon" v-else />

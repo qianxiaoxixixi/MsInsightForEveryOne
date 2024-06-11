@@ -3,6 +3,7 @@
  */
 export enum LocalStorageKeys {
     LANGUAGE = 'language',
+    THEME = 'theme',
 }
 
 class LocalStorageService {

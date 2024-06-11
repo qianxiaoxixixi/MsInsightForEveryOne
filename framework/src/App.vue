@@ -8,6 +8,7 @@ import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
 import Resizor from '@/utils/Resizor.vue';
 import { useSession } from '@/stores/session';
+import {LocalStorageKeys, localStorageService} from '@/utils/local-storage';
 let lastWidth = 300;
 const displayAside = ref(true);
 const asideWidth = ref(lastWidth);
@@ -15,7 +16,6 @@ const handleDisplayAside = () => {
     displayAside.value = !displayAside.value;
     asideWidth.value = displayAside.value ? lastWidth : 0;
 };
-const theme = ref('dark-theme');
 const { session } = useSession();
 
 const forbidDefaultEvent = (e: MouseEvent) => {
@@ -32,8 +32,9 @@ type Language = 'zhCN' | 'enUS';
 const locale = computed(() => locales[session.language as Language] ?? enUS);
 
 onMounted(() => {
-    // 默认颜色主题
-    document.body.className = theme.value;
+    // 获取主题记忆信息，并设置主题
+    const curTheme = localStorageService.getItem(LocalStorageKeys.THEME) === 'dark';
+    document.body.className = curTheme ? 'dark-theme' : 'light-theme';
     // 禁用文件拖拽
     window.addEventListener('drop', forbidDefaultEvent);
     window.addEventListener('dragover', forbidDefaultEvent);
