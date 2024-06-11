@@ -509,6 +509,7 @@ public:
 
     static bool CheckFilePath(std::string filePath);
     static bool CheckFilePathLength(std::string filePath);
+    static uint32_t GetFilePathLengthLimit();
     static std::string GetCurrPath();
     static std::string GetRootPath(const std::string& filePath);
     static std::shared_ptr<std::string> GetRelativePath(const std::string& targetFilePath,

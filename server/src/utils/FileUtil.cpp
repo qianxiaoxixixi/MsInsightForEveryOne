@@ -64,6 +64,16 @@ bool FileUtil::CheckFilePathLength(std::string filePath)
     return true;
 }
 
+uint32_t FileUtil::GetFilePathLengthLimit()
+{
+#ifdef _WIN32
+    return MAX_PATH;
+#else
+    return PATH_MAX;
+#endif
+    return 0;
+}
+
 void FileUtil::CalculateDirSize(const std::string &path, long long int &size, int depth)
 {
     std::vector<std::string> matchedFiles;
