@@ -4,6 +4,7 @@
     "Time (ms)": "Time (ms)",
     "Node Index": "Node Index",
     "Memory Usage (MB)": "Memory Usage (MB)",
+    "Memory Usage (KB)": "Memory Usage (KB)",
     "Operators Allocated": "Operators Allocated",
     "Operators Reserved": "Operators Reserved",
     "Operators Activated": "Operators Activated",
