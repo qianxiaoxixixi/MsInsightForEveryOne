@@ -40,8 +40,11 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ModuleRequestHandler::SetBaseResponse(request, response);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
-
-    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(response, projectInfos);
+    std::string error;
+    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(response, projectInfos, error);
+    if (!std::empty(error)) {
+        SendParseFailEvent(token, "", error);
+    }
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         SetParseCallBack(token, Timeline::TraceFileSimulationParser::Instance());
@@ -50,7 +53,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         session.OnResponse(std::move(responsePtr));
         for (const auto &rankEntry : rankListMap) {
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
-                                                                  rankEntry.second[0]);
+                rankEntry.second[0]);
         }
         return;
     } else if (projectTypeEnum == ProjectTypeEnum::CLUSTER) {
@@ -63,15 +66,15 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ParserTraceData(rankListMap, projectInfos, request);
 }
 
-std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
-    ImportActionResponse &response, const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(ImportActionResponse &response,
+    const std::vector<Global::ProjectExplorerInfo> &projectInfos, std::string &error)
 {
     std::vector<std::pair<std::string, std::string>> files;
     std::vector<std::string> fileList;
     std::map<std::string, std::vector<std::string>> rankToSourceFileMap;
-    for (const auto &item: projectInfos) {
-        auto traceFiles = GetTraceFiles(item.fileName, response.body);
-        for (const auto &traceFile: traceFiles) {
+    for (const auto &item : projectInfos) {
+        auto traceFiles = GetTraceFiles(item.fileName, response.body, error);
+        for (const auto &traceFile : traceFiles) {
             rankToSourceFileMap[traceFile.second].push_back(item.fileName);
         }
         files.insert(files.end(), traceFiles.begin(), traceFiles.end());
@@ -84,13 +87,12 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
     return rankListMap;
 }
 
-void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::string>>& rankListMap,
-                                 const std::vector<Global::ProjectExplorerInfo> &projectInfos,
-                                 ImportActionRequest &request)
+void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
+    const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::string token = request.token;
     std::vector<std::string> fileList;
-    for (const auto &item: projectInfos) {
+    for (const auto &item : projectInfos) {
         fileList.push_back(item.fileName);
     }
     for (const auto &rankEntry : rankListMap) {
@@ -105,14 +107,12 @@ void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::st
     }
 
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token,
-                                                                                  projectInfos[0].fileName,
-                                                                                  dataPathToDbMap,
-                                                                                  projectInfos[0].projectName);
+        projectInfos[0].fileName, dataPathToDbMap, projectInfos[0].projectName);
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
 }
 
-void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo>& projectInfos,
-                              const ImportActionRequest &request)
+void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    const ImportActionRequest &request)
 {
     if (projectInfos.empty()) {
         return;
@@ -122,7 +122,7 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo>& pr
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     std::map<std::string, std::vector<std::string>> rankToSourceFileMap;
-    for (const auto &item: projectInfos) {
+    for (const auto &item : projectInfos) {
         rankToSourceFileMap[item.fileName].push_back(item.fileName);
     }
     for (const auto &rankEntry : rankToSourceFileMap) {
@@ -133,11 +133,11 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo>& pr
     response.moduleName = Protocol::ModuleType::TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    for (const auto &item: projectInfos) {
+    for (const auto &item : projectInfos) {
         std::string fileId = FileUtil::PathPreprocess(item.fileName);
         if (item.dbPath.empty()) {
             ParseEndCallBack(request.token, item.fileName, false,
-                             "Failed to get db file. Please delete and upload again.");
+                "Failed to get db file. Please delete and upload again.");
         }
         if (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, fileId)) {
             return;
@@ -205,8 +205,7 @@ void ParserJson::SetParseCallBack(std::string token, FileParser &fileParser)
 
 
 void ParserJson::ClusterProcess(const std::string &token, const std::string &selectedFolder,
-                                std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
-                                const std::string &projectName)
+    std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (DataBaseManager::Instance().curIsCluster) {
@@ -255,9 +254,9 @@ void ParserJson::ClusterProcessAsyncStep(const std::string &token, const std::st
 }
 
 std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const std::string &path,
-    ImportActionResBody &body)
+    ImportActionResBody &body, std::string &error)
 {
-    std::vector<std::string> traceFiles = FindAllTraceFile(path);
+    std::vector<std::string> traceFiles = FindAllTraceFile(path, error);
     CheckIfClusterAndReset(path, traceFiles.size(), body, false);
     if (traceFiles.empty()) {
         Server::ServerLog::Warn("Failed to find trace file.");
@@ -276,13 +275,13 @@ std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const
     return files;
 }
 
-std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path)
+std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path, std::string &error)
 {
     std::vector<std::string> traceFiles;
     if (path == "browser") {
-        return FindTraceFile(ExecUtil::SelectFolder());
+        return FindTraceFile(ExecUtil::SelectFolder(), error);
     }
-    auto files = FindTraceFile(path);
+    auto files = FindTraceFile(path, error);
     if (files.empty()) {
         ServerLog::Warn("Can't find trace file in path:", path);
     }
@@ -290,55 +289,68 @@ std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path)
     return traceFiles;
 }
 
-std::vector<std::string> ParserJson::FindTraceFile(const std::string &path)
+std::vector<std::string> ParserJson::FindTraceFile(const std::string &path, std::string &error)
 {
     std::vector<std::string> traceFiles = {};
+    if (!FileUtil::CheckFilePathLength(path)) {
+        error = " File path length is limit " + std::to_string(FileUtil::GetFilePathLengthLimit()) +
+            ",please shorten it: " + path;
+        return traceFiles;
+    }
     if (!FileUtil::IsFolder(path)) {
-        if (!FileUtil::CheckFilePathLength(path)) {
-            return traceFiles;
-        }
         size_t length = JSON_FILE_SUFFIX.size();
         if (path.size() > length && path.substr(path.size() - length) == JSON_FILE_SUFFIX) {
             traceFiles.emplace_back(path);
         }
         return traceFiles;
     }
-    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](const std::string &path,
-        int depth) {
-        if (depth > 5) {
-            return;
-        }
-        std::vector<std::string> folders;
-        std::vector<std::string> files;
-        if (!FileUtil::FindFolders(path, folders, files)) {
-            return;
-        }
-        if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
-            curScene = "train";
-            FindAscendFolder(path, traceFiles);
-            return;
-        }
-        if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
-            std::string tmpPath = FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT);
-            if (FileUtil::IsFolder(tmpPath)) {
-                curScene = "infer";
-                find(tmpPath, depth + 1);
-                return;
-            }
-        }
-
-        for (const auto &folder : folders) {
-            std::string tmpPath = FileUtil::SplicePath(path, folder);
-            find(tmpPath, depth + 1);
-        }
-        for (const auto &file : files) {
-            if (IsJsonValid(file)) {
-                traceFiles.push_back(FileUtil::SplicePath(path, file));
-            }
-        }
-    };
-    find(path, 0);
+    FindTraceFiles(path, 0, error, traceFiles);
     return traceFiles;
+}
+
+void ParserJson::FindTraceFiles(const std::string &path, int depth, std::string &error,
+    std::vector<std::string> &traceFiles)
+{
+    const int maxDepth = 5;
+    if (depth > maxDepth) {
+        return;
+    }
+    if (!std::empty(error)) {
+        return;
+    }
+    if (!FileUtil::CheckFilePathLength(path)) {
+        error = " File path length is limit " + std::to_string(FileUtil::GetFilePathLengthLimit()) +
+            ",please shorten it: " + path;
+        return;
+    }
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(path, folders, files)) {
+        return;
+    }
+    if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
+        curScene = "train";
+        FindAscendFolder(path, traceFiles);
+        return;
+    }
+    if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
+        std::string tmpPath = FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT);
+        if (FileUtil::IsFolder(tmpPath)) {
+            curScene = "infer";
+            FindTraceFiles(tmpPath, depth + 1, error, traceFiles);
+            return;
+        }
+    }
+
+    for (const auto &folder : folders) {
+        std::string tmpPath = FileUtil::SplicePath(path, folder);
+        FindTraceFiles(tmpPath, depth + 1, error, traceFiles);
+    }
+    for (const auto &file : files) {
+        if (IsJsonValid(file)) {
+            traceFiles.push_back(FileUtil::SplicePath(path, file));
+        }
+    }
 }
 
 bool ParserJson::IsJsonValid(const std::string &fileName)
@@ -395,9 +407,10 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
 
 ProjectTypeEnum ParserJson::GetProjectType(const std::vector<std::string> &dataPath)
 {
-    std::vector<std::string> traceFiles = FindAllTraceFile(dataPath[0]);
-    bool isCluster = (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0) ||
-            CheckIsCluster(dataPath[0]);
+    std::string error;
+    std::vector<std::string> traceFiles = FindAllTraceFile(dataPath[0], error);
+    bool isCluster =
+        (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(dataPath[0]);
     if (isCluster) {
         return ProjectTypeEnum::CLUSTER;
     }
@@ -406,6 +419,5 @@ ProjectTypeEnum ParserJson::GetProjectType(const std::vector<std::string> &dataP
     }
     return ProjectTypeEnum::TRACE;
 }
-
 } // Module
 } // Dic
