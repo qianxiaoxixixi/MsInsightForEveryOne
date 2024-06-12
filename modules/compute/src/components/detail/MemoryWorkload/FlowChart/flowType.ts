@@ -68,6 +68,7 @@ interface Ilabel {
     x?: number;
     y?: number;
     top?: number | string;
+    position?: orientType;
 }
 export type IdrawGraph = IdrawNode[];
 export interface IdrawNode {
@@ -93,6 +94,7 @@ export interface IdrawLabel {
     y: number;
     id?: string;
     value?: string;
+    position?: orientType;
 }
 export interface IdrawLine {
     points: string;

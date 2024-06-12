@@ -23,7 +23,7 @@
     "Hit": "命中次数",
     "Miss": "未命中次数",
     "Total": "总次数",
-    "Hit Rate:": "命中率:",
+    "Hit Rate": "命中率",
     "Hit Rate(%)": "命中率(%)",
     "Requests": "请求数",
     "Throughput": "吞吐量",
@@ -37,6 +37,6 @@
     "Show As": "显示为",
     "Num of Request": "请求数",
     "Bandwidth": "带宽",
-    "Ratio :": "利用率:"
+    "Ratio": "利用率"
   }
 }
