@@ -6,11 +6,13 @@
 
 """build for Insight"""
 import logging
+import multiprocessing
 import os
 import platform
 import shutil
 import subprocess
 import stat
+import sys
 from datetime import datetime, timezone
 import json
 
@@ -65,7 +67,7 @@ def clean():
     framework_dist = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist')
     if os.path.exists(framework_dist):
         shutil.rmtree(framework_dist)
-    modules = ['cluster', 'memory', 'timeline']
+    modules = ['cluster', 'memory', 'timeline', 'compute', 'jupyter', 'operator', 'lib']
     for module in modules:
         build_dir = os.path.join(PROJECT_PATH, Const.MODULES_DIR, module, Const.BUILD_DIR)
         if os.path.exists(build_dir):
@@ -89,19 +91,23 @@ def build_server():
 
     build_path = os.path.join(PROJECT_PATH, Const.SERVER_DIR, Const.BUILD_DIR)
     # 开源软件预处理，只要是生成sqlite的源码
-    exec_command([Const.PYTHON, 'preprocess_third_party.py'], build_path)
+    result = exec_command([Const.PYTHON, 'preprocess_third_party.py'], build_path, Const.SERVER_DIR)
+    if result != 0:
+        return 1
     # 编译代码
-    exec_command([Const.PYTHON, 'build.py', 'build', '--release'], build_path)
-
+    result = exec_command([Const.PYTHON, 'build.py', 'build', '--release'], build_path, Const.SERVER_DIR)
+    if result != 0:
+        return 1
     # 归一化构建产物目录，方便后续其他组件拷贝
     for tmp in os.listdir(output_path):
-        tmp_path = os.path.join(output_path, Const.BUILD_DIR, 'server')
+        tmp_path = os.path.join(output_path, Const.BUILD_DIR, Const.SERVER_DIR)
         os.makedirs(tmp_path)
         bin_path = os.path.join(output_path, tmp, 'bin')
         for file in os.listdir(bin_path):
             if file.endswith('.a'):  # 跳过.a文件
                 continue
             shutil.copyfile(os.path.join(bin_path, file), os.path.join(tmp_path, file))
+    return 0
 
 
 def build_frontend():
@@ -111,21 +117,30 @@ def build_frontend():
     os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
 
+    module_name = 'frontend'
     module_build_path = os.path.join(PROJECT_PATH, Const.MODULES_DIR, Const.BUILD_DIR)
-    exec_command([Const.PYTHON, 'build.py'], module_build_path)
+    result = exec_command([Const.PYTHON, 'build.py'], module_build_path, module_name)
+    if result != 0:
+        return 1
 
     framework_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR)
-    exec_command([Const.NPM, 'install', '--force'], framework_path)
-    exec_command([Const.NPM, 'run', 'build'], framework_path)
+    result = exec_command([Const.NPM, 'install', '--force'], framework_path, module_name)
+    if result != 0:
+        return 1
+
+    result = exec_command([Const.NPM, 'run', 'build'], framework_path, module_name)
+    if result != 0:
+        return 1
 
     shutil.copytree(os.path.join(framework_path, 'plugins'), os.path.join(framework_path, 'dist', 'plugins'))
+    return 0
 
 
 def build_vscode(vscode_version, os_name):
     # Linux和MacOS上默认不编译vscode插件
     if platform.system() != Const.WINDOWS_OS and os.getenv('NO_BUILD_VSCODE'):
         logging.info('The VSCode plugin is not compiled because NO_BUILD_VSCODE is set.')
-        return
+        return 0
 
     os.putenv('npm_config_build_from_source', 'true')
     os.putenv('npm_config_audit', 'false')
@@ -135,8 +150,13 @@ def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
 
     plugin_path = os.path.join(PROJECT_PATH, Const.VSCODE_PLUGINS_DIR)
-    exec_command([Const.NPM, 'install', '--force'], plugin_path)
-    exec_command([Const.NPM, 'run', 'vsce:package'], plugin_path)
+    result = exec_command([Const.NPM, 'install', '--force'], plugin_path, 'vscode_plugin')
+    if result != 0:
+        return 1
+
+    result = exec_command([Const.NPM, 'run', 'vsce:package'], plugin_path, 'vscode_plugin')
+    if result != 0:
+        return 1
 
     # copy vscode plugin to out directory
     plugin_name = 'ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix'
@@ -150,25 +170,41 @@ def build_vscode(vscode_version, os_name):
     dst_file = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR, zip_name)
     profiler_path = os.path.join(plugin_path, 'dist', 'profiler')
     shutil.make_archive(dst_file, 'zip', profiler_path)
+    return 0
 
 
 def build_intellij(idea_version, os_name):
     # MacOS上不编译intellij插件
     if platform.system() == Const.MAC_OS:
-        return
+        return 0
 
+    module_name = 'intellij_plugin'
     plugins_path = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR)
     url = os.getenv('GRADLE_URL')
     if url is None:
-        exec_command([Const.GRADLE, 'wrapper'], plugins_path)
+        result = exec_command([Const.GRADLE, 'wrapper'], plugins_path, module_name)
     else:
-        exec_command([Const.GRADLE, 'wrapper', '--gradle-distribution-url', url], plugins_path)
+        result = exec_command([Const.GRADLE, 'wrapper', '--gradle-distribution-url', url], plugins_path, module_name)
+    if result != 0:
+        return 1
+
     gradlew = os.path.join(plugins_path, Const.GRADLEW)
     if platform.system() != Const.WINDOWS_OS:
-        exec_command(['chmod', 'a+x', 'gradlew'], plugins_path)
-    exec_command([gradlew, 'clean'], plugins_path)
-    exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path)
-    exec_command([gradlew, 'buildPlugin'], plugins_path)
+        result = exec_command(['chmod', 'a+x', 'gradlew'], plugins_path, module_name)
+        if result != 0:
+            return 1
+
+    result = exec_command([gradlew, 'clean'], plugins_path, module_name)
+    if result != 0:
+        return 1
+
+    result = exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path, module_name)
+    if result != 0:
+        return 1
+
+    result = exec_command([gradlew, 'buildPlugin'], plugins_path, module_name)
+    if result != 0:
+        return 1
 
     distributions_path = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR, Const.BUILD_DIR, 'distributions')
     plugin_name = 'ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip'
@@ -176,6 +212,8 @@ def build_intellij(idea_version, os_name):
     for file in os.listdir(distributions_path):
         if file.endswith('.zip'):
             shutil.copy(os.path.join(distributions_path, file), dst_file)
+
+    return 0
 
 
 def build_light_package(version, os_name):
@@ -206,7 +244,10 @@ def build_light_package(version, os_name):
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
     bin_file = 'ascend_insight.exe' if platform.system() == Const.WINDOWS_OS else 'ascend_insight'
-    exec_command([cargo_cmd, 'build', '--release'], platform_path)
+    result = exec_command([cargo_cmd, 'build', '--release'], platform_path, 'bin_package')
+    if result != 0:
+        return 1
+
     shutil.copyfile(os.path.join(target_path, 'release', bin_file), os.path.join(preview_path, bin_file))
 
     # 打包
@@ -217,7 +258,9 @@ def build_light_package(version, os_name):
         bundle_path = os.path.join(platform_path, 'bundle')
         shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'), os.path.join(preview_path, 'installer.nsi'))
         nsis_cmd = os.path.join('C:\\Program Files (x86)\\NSIS', 'bin', 'makensis.exe')
-        exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], platform_path)
+        result = exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], platform_path, 'bin_package')
+        if result != 0:
+            return 1
         for tmp in os.listdir(preview_path):
             if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX):
                 continue
@@ -229,18 +272,24 @@ def build_light_package(version, os_name):
         os.chmod(os.path.join(preview_path, bin_file), 0o550)  # 3、ascend_insight 550
         shutil.make_archive(dst_file[:-4], 'zip', preview_path)
 
+    return 0
 
-def exec_command(command, path):
-    process = subprocess.run(command, cwd=path)
+
+def exec_command(command, path, module_name):
+    logging.basicConfig(level=logging.INFO)
+    process = subprocess.Popen(command, cwd=path, stdout=subprocess.PIPE)
+    for line in iter(process.stdout.readline, b''):
+        logging.info('[%s]%s', module_name, line.decode('utf-8').strip())
+    process.communicate(timeout=600)
     if process.returncode != 0:
-        logging.error('execute %s failed', command)
-        raise ExecError()
+        logging.error('[%s]Failed to execute %s.', module_name, ' '.join(command))
+    return process.returncode
 
 
 def build_huaweicloud_package(version, os_name):
     if os_name != "linux-aarch64" and os_name != "linux-x86_64":
-        logging.warning('Only build http package for arm and x86_64!')
-        return
+        logging.warning('[python_package]Only build http package for arm and x86_64!')
+        return 0
 
     tmp = os.path.join(PROJECT_PATH, 'tmp_http')
     if os.path.exists(tmp):
@@ -255,13 +304,16 @@ def build_huaweicloud_package(version, os_name):
     script_path = os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py")
     shutil.copy(script_path, tmp)
 
-    exec_command(
+    result = exec_command(
         ["pyinstaller", "--name", "ascend_insight", "--add-data", "frontend:./server/frontend", "--add-data",
-         "backend:./server/backend", "-F", "./huaweicloud_start_script.py"], tmp)
+         "backend:./server/backend", "-F", "./huaweicloud_start_script.py"], tmp, "python_package")
+    if result != 0:
+        return 1
 
     dist_dir = os.path.join(tmp, "dist")
     out_zip = os.path.join(PROJECT_PATH, "out", f"ascend_insight_huaweicloud_{version}_{os_name}")
     shutil.make_archive(out_zip, 'zip', dist_dir)
+    return 0
 
 
 # 获取版本信息，将从config.ini中读取到的版本后去掉最后一个后缀
@@ -303,6 +355,31 @@ def create_version_info_file(version, modify_time):
         f.write(json.dumps(data))
 
 
+def build_product_parallel(vscode_version, idea_version, os_name):
+    logging.info('Start to build products')
+    funcs = [build_vscode, build_intellij, build_light_package, build_huaweicloud_package]
+    args_list = [
+        (vscode_version, os_name),
+        (idea_version, os_name),
+        (idea_version, os_name),
+        (vscode_version, os_name)
+    ]
+    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
+    results = []
+    for func, args in zip(funcs, args_list):
+        results.append(pool.apply_async(func, args))
+    pool.close()
+    pool.join()
+
+    for func, result in zip(funcs, results):
+        if result.get() != 0:
+            logging.error('Failed to execute %s, and see the log for the error cause.', func)
+            return 1
+
+    logging.info('Finish to build products.')
+    return 0
+
+
 def main():
     idea_version = load_version_info('7.0.RC2')
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
@@ -315,14 +392,17 @@ def main():
         os_name = 'win'
     elif os_info.find('mac') > -1:
         os_name = 'darwin-' + framework
-    build_server()
-    build_frontend()
-    build_vscode(vscode_version, os_name)
-    build_intellij(idea_version, os_name)
-    build_light_package(idea_version, os_name)
+    result = build_server()
+    if result != 0:
+        logging.error('Failed to build server.')
+        return 1
+    result = build_frontend()
+    if result != 0:
+        logging.error('Failed to build frontend.')
+        return 1
 
-    build_huaweicloud_package(vscode_version, os_name)
+    return build_product_parallel(vscode_version, idea_version, os_name)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
