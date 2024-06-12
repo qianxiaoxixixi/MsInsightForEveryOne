@@ -172,7 +172,7 @@ const baseOption: any = {
 };
 
 export interface dataType{
-    ranklist: string[];
+    rankId: string[];
     ElapseTime?: number[];
     TransitTime?: number[];
     SynchronizationTime?: number[];
