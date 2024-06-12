@@ -118,6 +118,12 @@ struct L2Cache {
     std::string hitRatio;
 };
 
+struct UtilizationRate {
+    std::string cycle;
+    std::string totalCycles;
+    std::string ratio;
+};
+
 struct MemoryGraph {
     std::string blockId;
     std::string blockType;
@@ -125,6 +131,9 @@ struct MemoryGraph {
     std::vector<MemoryUnit> memoryUnit;
     L2Cache l2Cache;
     std::vector<std::string> advice;
+    UtilizationRate vector;
+    UtilizationRate vector1;
+    UtilizationRate cube;
 };
 
 struct MemoryTable {

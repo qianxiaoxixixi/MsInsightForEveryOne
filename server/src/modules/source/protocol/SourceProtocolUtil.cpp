@@ -187,6 +187,21 @@ std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const Detai
             memoryUnitJson.PushBack(unitJson, allocator);
         }
         JsonUtil::AddMember(singleCoreMemory, "memoryUnit", memoryUnitJson, allocator);
+        json_t vector(kObjectType);
+        JsonUtil::AddMember(vector, "cycle", item.vector.cycle, allocator);
+        JsonUtil::AddMember(vector, "totalCycles", item.vector.totalCycles, allocator);
+        JsonUtil::AddMember(vector, "ratio", item.vector.ratio, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "vector", vector, allocator);
+        json_t vector1(kObjectType);
+        JsonUtil::AddMember(vector1, "cycle", item.vector1.cycle, allocator);
+        JsonUtil::AddMember(vector1, "totalCycles", item.vector1.totalCycles, allocator);
+        JsonUtil::AddMember(vector1, "ratio", item.vector1.ratio, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "vector1", vector1, allocator);
+        json_t cube(kObjectType);
+        JsonUtil::AddMember(cube, "cycle", item.cube.cycle, allocator);
+        JsonUtil::AddMember(cube, "totalCycles", item.cube.totalCycles, allocator);
+        JsonUtil::AddMember(cube, "ratio", item.cube.ratio, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "cube", cube, allocator);
         coreMemory.PushBack(singleCoreMemory, allocator);
     }
     JsonUtil::AddMember(body, "coreMemory", coreMemory, allocator);

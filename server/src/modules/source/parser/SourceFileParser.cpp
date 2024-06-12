@@ -544,6 +544,15 @@ bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId,
     }
 }
 
+Protocol::UtilizationRate SourceFileParser::ParseJsonToUtilizationRate(const json_t &json)
+{
+    Protocol::UtilizationRate utilizationRate;
+    utilizationRate.cycle = JsonUtil::GetString(json, "cycle");
+    utilizationRate.ratio = JsonUtil::GetString(json, "ratio");
+    utilizationRate.totalCycles = JsonUtil::GetString(json, "total_cycles");
+    return utilizationRate;
+}
+
 Protocol::MemoryGraph SourceFileParser::ParseJsonToMemoryGraph(const json_t &json)
 {
     Protocol::MemoryGraph temp;
@@ -572,6 +581,16 @@ Protocol::MemoryGraph SourceFileParser::ParseJsonToMemoryGraph(const json_t &jso
         l2CacheTemp.totalRequest = JsonUtil::GetString(L2cache, "total_request");
         l2CacheTemp.hitRatio = JsonUtil::GetString(L2cache, "hit_ratio");
         temp.l2Cache = l2CacheTemp;
+    }
+
+    if (json.HasMember("Vector") && json["Vector"].IsObject()) {
+        temp.vector = ParseJsonToUtilizationRate(json["Vector"]);
+    }
+    if (json.HasMember("Vector1") && json["Vector1"].IsObject()) {
+        temp.vector1 = ParseJsonToUtilizationRate(json["Vector1"]);
+    }
+    if (json.HasMember("Cube") && json["Cube"].IsObject()) {
+        temp.cube = ParseJsonToUtilizationRate(json["Cube"]);
     }
     return temp;
 }

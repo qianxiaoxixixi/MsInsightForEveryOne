@@ -90,6 +90,7 @@ private:
     std::string GetUnitType(int64_t unitTypeNumber);
     static Protocol::MemoryGraph ParseJsonToMemoryGraph(const json_t &json);
     static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
+    static Protocol::UtilizationRate ParseJsonToUtilizationRate(const json_t &json);
 
     std::unique_ptr<ThreadPool> threadPool;
     const int maxThreadNum = 4;
