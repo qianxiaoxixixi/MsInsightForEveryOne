@@ -50,9 +50,8 @@ const cubeCore: Inode = {
             height: 120,
             labels: [
                 { value: 'Cube' },
-                { value: '' },
-                { value: 'Ratio :' },
-                { id: 'cubeRatio', value: '0%' },
+                { value: 'Ratio:', x: 575, y: 215 },
+                { id: 'cubeRatio', value: '0%', x: 605, y: 215, position: 'right' },
             ],
         },
         {
@@ -171,9 +170,8 @@ const vectorCore: Inode = {
             name: 'Vector',
             labels: [
                 { value: 'Vector' },
-                { value: '' },
-                { value: 'Ratio :' },
-                { id: 'vectorRatio', value: '0%' },
+                { value: 'Ratio:', x: 490, y: 95 },
+                { id: 'vectorRatio', value: '0%', x: 520, y: 95, position: 'right' },
             ],
         },
     ],
@@ -222,9 +220,8 @@ const vectorCore2: Inode = {
                 ...item,
                 labels: [
                     { value: 'Vector' },
-                    { value: '' },
-                    { value: 'Ratio :' },
-                    { id: 'vector1Ratio', value: '0%' },
+                    { value: 'Ratio:', x: 490, y: 95 },
+                    { id: 'vector1Ratio', value: '0%', x: 520, y: 95, position: 'right' },
                 ],
             };
         }
@@ -266,9 +263,8 @@ const mixCore: Inode = {
             height: 120,
             labels: [
                 { value: 'Cube' },
-                { value: '' },
-                { value: 'Ratio :' },
-                { id: 'cubeRatio', value: '0%' },
+                { value: 'Ratio:', x: 535, y: 110 },
+                { id: 'cubeRatio', value: '0%', x: 565, y: 110, position: 'right' },
             ],
         },
         {
@@ -285,8 +281,8 @@ const mixCore: Inode = {
             height: 50,
             labels: [
                 { value: 'Vector', x: 655, y: 180 },
-                { value: 'Ratio :', x: 630, y: 200 },
-                { id: 'vectorRatio', x: 690, y: 200, value: '0%' },
+                { value: 'Ratio:', x: 635, y: 200 },
+                { id: 'vectorRatio', x: 665, y: 200, value: '0%', position: 'right' },
             ],
             name: 'Vector',
         },
@@ -570,7 +566,7 @@ function getDrawConfig(originData: Igraph, tDetails: TFunction): IdrawGraph {
             const labelXy = transRectLabel(originRect, rectPosition);
             const labels = transRectLabels(originRect, rectPosition);
             labels?.forEach(item => {
-                item.value = tDetails(item.value ?? '');
+                item.value = item.value?.split(':').map(str => tDetails(str)).join(':');
             });
             const label = originRect.label !== undefined ? tDetails(originRect.label) : undefined;
             return { ...originRect, ...rectPosition, labelXy, labels, label };
@@ -964,7 +960,16 @@ const drawRectLabel = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, 
         .attr('class', 'rect-labels')
         .attr('x', d => d.x ?? 0)
         .attr('y', d => d.y ?? 0)
-        .attr('text-anchor', 'middle')
+        .attr('text-anchor', d => {
+            switch (d.position) {
+                case 'left':
+                    return 'end';
+                case 'right':
+                    return 'start';
+                default:
+                    return 'middle';
+            }
+        })
         .attr('dominant-baseline', 'middle')
         .text(d => d.value ?? '')
         .style('font-size', '14px')
