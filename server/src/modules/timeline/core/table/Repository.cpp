@@ -11,6 +11,7 @@ void Repository::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQue
     sliceTable.Select(SliceColumn::ID, SliceColumn::TIMESTAMP, SliceColumn::ENDTIME)
         .Eq(SliceColumn::TRACKID, sliceQuery.trackId)
         .OrderBy(SliceColumn::TIMESTAMP, TableOrder::ASC)
+        .OrderBy(SliceColumn::ID, TableOrder::ASC)
         .ExcuteQuery(sliceQuery.db, tempSlicePOVec);
     for (const auto &item : tempSlicePOVec) {
         SliceDomain cachelice;

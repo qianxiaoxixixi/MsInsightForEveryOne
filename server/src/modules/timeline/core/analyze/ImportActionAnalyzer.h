@@ -22,8 +22,6 @@ public:
 private:
     static void ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
         SliceDepthCacheStruct &sliceDepthCacheStruct);
-
-    static void ComputeSingleSliceDepth(Protocol::SimpleSlice &rowThreadTrace, std::set<int32_t> &depthSet);
 };
 }
 #endif // PROFILER_SERVER_IMPORTACTIONANALYZER_H

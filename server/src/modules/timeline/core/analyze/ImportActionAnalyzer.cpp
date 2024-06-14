@@ -17,57 +17,20 @@ void ImportActionAnalyzer::UpdateAllSimulationSliceDepthWithNoOverlap(
 void ImportActionAnalyzer::ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
     SliceDepthCacheStruct &sliceDepthCacheStruct)
 {
-    std::list<Protocol::SimpleSlice> sliceDepthHelper;
-    int32_t trackMaxDepth = 0;
+    std::vector<uint64_t> endList;
     std::unordered_map<uint64_t, int32_t> sliceIdAndDepthMap;
-    for (auto &rowThreadTrace : rowThreadTraceVec) {
-        std::set<int32_t> depthSet;
-        uint64_t index = 0;
-        auto iterator = sliceDepthHelper.begin();
-        for (const auto &traceVec : sliceDepthHelper) {
-            if (rowThreadTrace.timestamp <= traceVec.endTime) {
-                depthSet.emplace(traceVec.depth);
-            }
-            if (rowThreadTrace.timestamp > traceVec.endTime) {
-                break;
-            }
-            if (rowThreadTrace.endTime < traceVec.endTime) {
-                ++index;
-            }
+    for (auto &item : rowThreadTraceVec) {
+        while (item.depth < endList.size() && endList[item.depth] > item.timestamp) {
+            item.depth++;
         }
-        if (depthSet.empty()) {
-            rowThreadTrace.depth = 0;
-            sliceIdAndDepthMap[rowThreadTrace.id] = 0;
-            std::advance(iterator, index);
-            sliceDepthHelper.insert(iterator, rowThreadTrace);
-            continue;
+        if (item.depth < endList.size()) {
+            endList[item.depth] = item.endTime;
+        } else {
+            endList.emplace_back(item.endTime);
         }
-        ComputeSingleSliceDepth(rowThreadTrace, depthSet);
-        trackMaxDepth = std::max(trackMaxDepth, rowThreadTrace.depth);
-        sliceIdAndDepthMap[rowThreadTrace.id] = rowThreadTrace.depth;
-        std::advance(iterator, index);
-        sliceDepthHelper.insert(iterator, rowThreadTrace);
+        sliceIdAndDepthMap[item.id] = item.depth;
     }
     sliceDepthCacheStruct.sliceIdAndDepthMap = sliceIdAndDepthMap;
-    sliceDepthCacheStruct.maxDepTh = trackMaxDepth;
-}
-
-void ImportActionAnalyzer::ComputeSingleSliceDepth(Protocol::SimpleSlice &rowThreadTrace, std::set<int32_t> &depthSet)
-{
-    uint32_t maxDepth = *(--depthSet.end());
-    uint32_t depthSize = depthSet.size();
-    bool isBlank = false;
-    // 判断是否有空位
-    if (maxDepth + 1 != depthSize) {
-        isBlank = true;
-        for (int i = maxDepth; i >= 0; --i) {
-            if (depthSet.find(i) == depthSet.end()) {
-                rowThreadTrace.depth = i;
-            }
-        }
-    }
-    if (!isBlank) {
-        rowThreadTrace.depth = maxDepth + 1;
-    }
+    sliceDepthCacheStruct.maxDepTh = endList.size();
 }
 }
