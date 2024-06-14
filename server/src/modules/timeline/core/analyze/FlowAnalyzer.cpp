@@ -52,7 +52,7 @@ void FlowAnalyzer::ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &f
     unitSingleFlow.id = flowDetailVec[0].flowId;
     FlowDetailDto from(flowDetailVec[0]);
     FlowDetailDto to(flowDetailVec[1]);
-    if (from.timestamp > to.timestamp) {
+    if (from.type != to.type && to.type == Protocol::LINE_START) {
         from = flowDetailVec[1];
         to = flowDetailVec[0];
     }
@@ -280,10 +280,21 @@ bool FlowAnalyzer::CompareFlowIdAndTimestampASC(const FlowCategoryEventsDto &fir
     if (first.flowId < second.flowId) {
         return true;
     }
-    if (first.flowId == second.flowId && first.timestamp < second.timestamp) {
+    if (first.flowId > second.flowId) {
+        return false;
+    }
+    if (second.type != Protocol::LINE_START && first.type == Protocol::LINE_START) {
         return true;
     }
-    if (first.timestamp == second.timestamp && first.id < second.id) {
+    if (first.type != Protocol::LINE_START && second.type == Protocol::LINE_START) {
+        return false;
+    }
+    if (first.type != Protocol::LINE_START && second.type != Protocol::LINE_START &&
+        first.id < second.id) {
+        return true;
+    }
+    if (first.type == Protocol::LINE_START && second.type == Protocol::LINE_START &&
+        first.id < second.id) {
         return true;
     }
     return false;

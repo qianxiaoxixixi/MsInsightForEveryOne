@@ -203,7 +203,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     requestParams.timePerPx = 1;
     requestParams.category = "HostToDevice";
     uint64_t minTimestamp = 1695115378704489800;
-    const int expectSize = 4;
+    const int expectSize = 12;
     const uint64_t expectFromTimestamp = 17654000;
     const uint64_t expectToTimestamp = 17902700;
     database->QueryFlowCategoryEvents(requestParams, minTimestamp, flowDetailList);
