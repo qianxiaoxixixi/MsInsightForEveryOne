@@ -36,7 +36,7 @@ export function useResizeEventDependency(): readonly [number] {
  * @param compareFun 比较函数
  * @returns {number} 要搜索值的索引
  */
-export function binarySearch(arr: any[][], key: any, compareFun: Function): number {
+export function binarySearch(arr: any[][], key: number, compareFun: (key: number, mid: Array<number | string>) => number): number {
     let low = 0;
     let high = arr.length - 1;
     while (low <= high) {
@@ -53,13 +53,17 @@ export function binarySearch(arr: any[][], key: any, compareFun: Function): numb
             }
 
             let step = 1;
-            while ((mid - step >= 0 && arr[mid - step][0] === `${key}`) ||
-                (mid + step <= arr.length - 1 && arr[mid + step][0] === `${key}`)) {
-                if (mid - step >= 0 && arr[mid - step][0] === `${key}` && arr[mid - step][1] !== null) {
+            while (true) {
+                const isLowerOk = mid - step >= 0 && Number(arr[mid - step][0]) === key;
+                const isHigherOk = mid + step <= arr.length - 1 && Number(arr[mid + step][0]) === key;
+                if (isLowerOk && arr[mid - step][1] !== null) {
                     return mid - step;
                 }
-                if (mid + step <= arr.length - 1 && arr[mid + step][0] === `${key}` && arr[mid + step][1] !== null) {
+                if (isHigherOk && arr[mid + step][1] !== null) {
                     return mid + step;
+                }
+                if (!isLowerOk && !isHigherOk) {
+                    break;
                 }
                 step += 1;
             }
