@@ -53,7 +53,7 @@ const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON
     " (track_id, timestamp, end_time);" + "CREATE INDEX " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
     " (track_id, cat);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
 const std::string QUERY_SLICE_BY_TRACKID_SQL =
-    "select id, timestamp, end_time as endTime from slice where track_id = ? order by timestamp;";
+    "select id, timestamp, end_time as endTime from slice where track_id = ? order by timestamp ASC, id ASC;";
 const std::string QUERY_ALL_TRACKID_SQL = "select track_id as trackId from thread;";
 const std::string QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL =
     "SELECT id, timestamp, end_time FROM " + SLICE_TABLE + " WHERE track_id = ? ";

@@ -96,13 +96,13 @@ std::set<std::pair<uint64_t, uint32_t>> SliceAnalyzer::ComputeSmallScreenIds(uin
         }
         if (item.depth < endList.size()) {
             endList[item.depth].endTime = item.endTime;
-            if (item.endTime >= startTime && item.timestamp <= endTime) {
-                ids.emplace(item.id, item.depth);
-            }
         } else {
             DepthHelper depthHelper;
             depthHelper.endTime = item.endTime;
             endList.emplace_back(depthHelper);
+        }
+        if (item.endTime >= startTime && item.timestamp <= endTime) {
+            ids.emplace(item.id, item.depth);
         }
     }
     return ids;
@@ -194,7 +194,7 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
     // 泳道下数据量大于10万则放入缓存，否则仍从数据库查询,这里20万改为10万是因为从数据库查询20万数据时间略长
     constexpr int minCacheSizeLimit = 100000;
     std::string sliceCacheKey =
-        sliceQuery.cardId + "_" + std::to_string(sliceQuery.trackId) + "_SliceAnalyzer::ComputeScreenSliceIds";
+        sliceQuery.cardId + "_" + std::to_string(sliceQuery.trackId) + "_SliceAnalyzer::QuerySliceByCondition";
     auto &instance = CacheManager::Instance();
     std::vector<SliceDomain> sliceDomainVec = instance.GetSliceDomainVec(sliceCacheKey);
     if (std::empty(sliceDomainVec)) {
