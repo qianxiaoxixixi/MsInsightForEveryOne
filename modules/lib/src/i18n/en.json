@@ -151,6 +151,12 @@
     "Name": "Name",
     "Type": "Type",
     "AcceleratorCore": "Accelerator Core",
+    "InputShapes": "Input Shapes",
+    "InputDataTypes": "Input Data Types",
+    "InputFormats": "Input Formats",
+    "OutputShapes": "Output Shapes",
+    "OutputDataTypes": "Output Data Types",
+    "OutputFormats": "Output Formats",
     "Open in Find Window": "Open in Find Window"
   },
   "chart": {

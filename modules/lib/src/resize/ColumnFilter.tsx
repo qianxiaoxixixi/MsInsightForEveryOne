@@ -6,6 +6,7 @@ import type { ColumnType } from 'antd/es/table';
 import { Input, Button, Space } from 'antd';
 import { FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
+import { limitInput } from '../utils/Common';
 
 const state = {
     searchText: '',
@@ -69,7 +70,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
                 .includes((value as string).toLowerCase()),
         onFilterDropdownOpenChange: (visible): void => {
             if (visible) {
-                setTimeout(() => state.searchInput, 100);
+                limitInput();
             }
         },
     });
