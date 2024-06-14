@@ -172,8 +172,8 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
     const compareFun = (key: number, mid: Array<number | string>): number => key - parseFloat(mid[0] as string);
     if (chartObj) {
         if (record !== undefined) {
-            const startId = binarySearch(graph.rows, record?.allocationTime | record?.nodeIndexStart, compareFun);
-            const endId = binarySearch(graph.rows, record?.releaseTime | record?.nodeIndexEnd, compareFun);
+            const startId = binarySearch(graph.rows, Number(record?.allocationTime ?? record?.nodeIndexStart), compareFun);
+            const endId = binarySearch(graph.rows, Number(record?.releaseTime ?? record?.nodeIndexEnd), compareFun);
             const selection = [];
             startId >= 0 && selection.push(startId);
             endId >= 0 && selection.push(endId);
