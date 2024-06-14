@@ -121,6 +121,7 @@ const ViewSelect = observer((props: any) => {
     );
 });
 
+// eslint-disable-next-line max-lines-per-function
 export const RankFilter = observer((props: any): JSX.Element => {
     const [rankIdCondition, setRankIdCondition] = useState<ConditionType>({ options: [], value: '' });
     const [hostCondition, setHostCondition] = useState<ConditionType>({ options: [], value: '' });
@@ -387,6 +388,23 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
     });
 };
 
+const defaultFilters = {
+    name: [],
+    type: [],
+    accCore: [],
+    inputShapes: [],
+    inputDataTypes: [],
+    inputFormats: [],
+    outputShapes: [],
+    outputDataTypes: [],
+    outputFormats: [],
+};
+
+const filterColumn = [
+    'name', 'type', 'acceleratorCore', 'inputShapes', 'inputDataTypes',
+    'inputFormats', 'outputShapes', 'outputDataTypes', 'outputFormats',
+];
+
 // eslint-disable-next-line max-lines-per-function
 const KernelDetails = observer((props: any) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
@@ -394,27 +412,35 @@ const KernelDetails = observer((props: any) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
+    const [filters, setFilters] = useState(defaultFilters);
     const [rowData, setRowData] = useState<any>({});
-    const [searchText, setSearchText] = useState('');
-    const [searchedColumn, setSearchedColumn] = useState('');
     const kernelDetails = useKernelDetails();
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
     useEffect(() => {
-        updateData(searchText, page, sorter);
-    }, [sorter, props.rankId]);
+        updateData(page, sorter, filters);
+    }, [sorter, filters, props.rankId]);
     useEffect(() => {
         if (status === 'download') {
-            updateData(searchText, page, sorter);
+            updateData(page, sorter, filters);
         }
     }, [status]);
-    const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}): Promise<void> => {
+    const updateData = async(pages: any, sorters: {field: string;order: string}, filtersConditions: any): Promise<void> => {
         if (props.rankId === undefined) {
             setDataSource([]);
             setPage(defaultPage);
             return;
         }
+        const filterTypes: string[] = [];
+        Object.keys(filtersConditions).forEach(key => {
+            const filterValue = filtersConditions[key];
+            if (filterColumn.includes(key) && filterValue != null) {
+                if (Array.isArray((filterValue)) && filterValue.length > 0) {
+                    filterTypes.push(JSON.stringify({ columnName: key, value: filterValue[0] }));
+                }
+            }
+        });
         const res = await queryKernelDetails({
             rankId: props.rankId,
             pageSize: pages.pageSize,
@@ -422,7 +448,7 @@ const KernelDetails = observer((props: any) => {
             orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
             order: sorters.order ?? defaultSorter.order,
             coreType: '',
-            searchName,
+            filterCondition: filterTypes,
         });
         const timestampoffset = getTimeOffset(props.session, props.rankId);
         const data = res.kernelDetails.map((item: {
@@ -436,12 +462,6 @@ const KernelDetails = observer((props: any) => {
     };
 
     const colums = [
-        {
-            title: t('Name'),
-            dataIndex: 'name',
-            ...getDefaultColumData('name'),
-            ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
-        },
         ...kernelDetails,
         {
             title: t('Click To Timeline'),
@@ -466,6 +486,7 @@ const KernelDetails = observer((props: any) => {
             ? <ResizeTable
                 onChange={(pagination: any, filters: any, sorter: any) => {
                     setSorter(sorter);
+                    setFilters(filters);
                 }}
                 pagination={GetPageData(page, setPage)}
                 dataSource={dataSource}

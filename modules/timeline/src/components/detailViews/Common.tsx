@@ -10,12 +10,14 @@ import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import { limitInput } from 'lib/CommonUtils';
+import { fetchColumnFilterProps } from 'lib/ColumnFilter';
 import i18n from '../../i18n';
 interface ColumData {
     title: string;
     dataIndex: string;
     key: string;
     sorter?: boolean | CompareFn<any>;
+    filter?: ColumnType<any>;
     showSorterTooltip?: boolean;
 }
 
@@ -42,7 +44,8 @@ export const getDefaultColumData = (key: string, sorter = true): {
     sorter: boolean;
     showSorterTooltip: boolean;
     ellipsis: boolean;
-    key: string; } => {
+    key: string;
+} => {
     return {
         sorter,
         showSorterTooltip: false,
@@ -58,7 +61,7 @@ export function isNull(val: any): boolean {
     return val === undefined || val === null || val === '';
 }
 
-export const Label = (props: {name: string;style?: object }): JSX.Element => {
+export const Label = (props: { name: string; style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
 };
 
@@ -71,21 +74,56 @@ export const pythonApiSummaryColumns: ColumData[] = [
     { title: 'Max(us)', dataIndex: 'max', ...getDefaultColumData('max') },
 ];
 
+function columFilterWithTrans(columnIndex: string, columnTitle: string): () => ColumnType<any> {
+    return fetchColumnFilterProps(columnIndex, columnTitle, i18n.t);
+};
+
 export const useKernelDetails = (): ColumData[] => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
-        { title: t('Type'), dataIndex: 'type', ...getDefaultColumData('type') },
-        { title: t('AcceleratorCore'), dataIndex: 'acceleratorCore', ...getDefaultColumData('acceleratorCore') },
+        { title: t('Name'), dataIndex: 'name', ...getDefaultColumData('name'), ...columFilterWithTrans('name', 'Name') },
+        { title: t('Type'), dataIndex: 'type', ...getDefaultColumData('type'), ...columFilterWithTrans('type', 'Type') },
+        {
+            title: t('AcceleratorCore'),
+            dataIndex: 'acceleratorCore',
+            ...getDefaultColumData('acceleratorCore'),
+            ...columFilterWithTrans('acceleratorCore', 'AcceleratorCore'),
+        },
         { title: t('StartTime'), dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
         { title: `${t('Duration')}(us)`, dataIndex: 'duration', ...getDefaultColumData('duration') },
         { title: `${t('WaitTime')}(us)`, dataIndex: 'waitTime', ...getDefaultColumData('waitTime') },
         { title: t('BlockDim'), dataIndex: 'blockDim', ...getDefaultColumData('blockDim') },
-        { title: t('InputShapes'), dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes') },
-        { title: t('InputDataTypes'), dataIndex: 'inputDataTypes', ...getDefaultColumData('inputDataTypes') },
-        { title: t('InputFormats'), dataIndex: 'inputFormats', ...getDefaultColumData('inputFormats') },
-        { title: t('OutputShapes'), dataIndex: 'outputShapes', ...getDefaultColumData('outputShapes') },
-        { title: t('OutputDataTypes'), dataIndex: 'outputDataTypes', ...getDefaultColumData('outputDataTypes') },
-        { title: t('OutputFormats'), dataIndex: 'outputFormats', ...getDefaultColumData('outputFormats') },
+        { title: t('InputShapes'), dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes'), ...columFilterWithTrans('inputShapes', 'InputShapes') },
+        {
+            title: t('InputDataTypes'),
+            dataIndex: 'inputDataTypes',
+            ...getDefaultColumData('inputDataTypes'),
+            ...columFilterWithTrans('inputDataTypes', 'InputDataTypes'),
+        },
+        {
+            title: t('InputFormats'),
+            dataIndex: 'inputFormats',
+            ...getDefaultColumData('inputFormats'),
+            ...columFilterWithTrans('inputFormats', 'InputFormats'),
+        },
+        {
+            title: t('OutputShapes'),
+            dataIndex: 'outputShapes',
+            ...getDefaultColumData('outputShapes'),
+            ...columFilterWithTrans('outputShapes', 'OutputShapes'),
+        },
+        {
+            title: t('OutputDataTypes'),
+            dataIndex: 'outputDataTypes',
+            ...getDefaultColumData('outputDataTypes'),
+            ...columFilterWithTrans('outputDataTypes', 'OutputDataTypes'),
+        },
+        {
+            title: t('OutputFormats'),
+            dataIndex: 'outputFormats',
+            ...getDefaultColumData('outputFormats'),
+            ...columFilterWithTrans('outputFormats', 'OutputFormats'),
+        },
     ];
 };
 
@@ -161,70 +199,72 @@ export const GetPageData = (page: { current: number; pageSize: number; total: nu
     };
 };
 
-export const querySystemViewDetails = async(param: {
+export const querySystemViewDetails = async (param: {
     isQueryTotal: boolean; rankId: string; pageSize: number; current: number; orderBy: string; order: string;
     layer: string; searchName: string;
 }): Promise<any> => {
     return window.requestData('unit/systemView', param, 'timeline');
 };
 
-export const queryKernelDetails = async(param: {
+export const queryKernelDetails = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-    coreType: string; searchName: string;
+    coreType: string; filterCondition: string[];
 }): Promise<any> => {
     return window.requestData('unit/kernelDetails', param, 'timeline');
 };
 
-export const queryOneKernel = async(param: {
+export const queryOneKernel = async (param: {
     rankId: string; name: string; timestamp: number; duration: number;
 }): Promise<any> => {
     return window.requestData('unit/one/kernelDetail', param, 'timeline');
 };
 
-export const searchAllSlices = async(param: {
+export const searchAllSlices = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
     searchContent: string; isMatchCase: boolean; isMatchExact: boolean;
 }): Promise<any> => {
     return window.requestData('search/all/slices', param, 'timeline');
 };
 
-export const queryAffinityOptimizer = async(param: {
+export const queryAffinityOptimizer = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
 }): Promise<any> => {
     return window.requestData('advisor/affinity_optimizer', param);
 };
 
-export const queryAffinityAPI = async(param: {
+export const queryAffinityAPI = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
 }): Promise<any> => {
     return window.requestData('advisor/affinity_api', param);
 };
 
-export const queryOperatorFusion = async(param: {
+export const queryOperatorFusion = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
 }): Promise<any> => {
     return window.requestData('advisor/operator_fusion', param);
 };
 
-export const queryAICPUOperators = async(param: {
+export const queryAICPUOperators = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
 }): Promise<any> => {
     return window.requestData('advisor/aicpu_operator', param);
 };
 
-export const queryACLNNOperators = async(param: {
+export const queryACLNNOperators = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
 }): Promise<any> => {
     return window.requestData('advisor/aclnn_operator', param);
 };
 
-export const eventViewData = async (param: { currentPage: number; rankId: string; processName: string;
+export const eventViewData = async (param: {
+    currentPage: number; rankId: string; processName: string;
     pageSize: number; orderBy: string; metaType: string; pid: string; tid: string;
-    threadName: string; order: string; }): Promise<any> => {
+    threadName: string; order: string;
+}): Promise<any> => {
     return window.requestData('unit/eventView', param, 'timeline');
 };
 
-export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {
+export const Loading = ({ size = 20, style = {} }: { size?: number; style?: object }): JSX.Element => {
     return (<div className={'loading'}
         style={{ width: `${size}px`, height: `${size}px`, ...style }}></div>);
 };
@@ -252,7 +292,7 @@ const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confir
                 <Button
                     type="primary"
                     onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
-                    icon={<SearchOutlined/>}
+                    icon={<SearchOutlined />}
                     size="small"
                     style={{ width: 80 }}
                 >
@@ -292,7 +332,7 @@ export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, set
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) =>
             filterDropdownCom({ setSelectedKeys, selectedKeys, handleSearch, confirm, dataIndex, clearFilters, handleReset }),
         filterIcon: (filtered: boolean) => (
-            <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }}/>
+            <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
         ),
         onFilter: (value, record) =>
             record[dataIndex]
