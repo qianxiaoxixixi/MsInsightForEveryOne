@@ -65,7 +65,7 @@ public:
         if (it != pythonFunctionIDCache.end()) {
             Touch(it);
         } else {
-            if (pythonFunctionIDCache.size() == m_python_capacity) {
+            if (pythonFunctionIDCache.size() == m_pythonCapacity) {
                 pythonFunctionIDCache.erase(pythonFunctionIdUsed.back());
                 pythonFunctionIdUsed.pop_back();
             }
@@ -124,7 +124,7 @@ private:
     // 算子调用栈id缓存使用记录
     VisitOrderList pythonFunctionIdUsed;
     // 算子调用栈id缓存大小
-    int m_python_capacity = 3;
+    int m_pythonCapacity = 3;
 
     // 更新算子缓存使用记录
     void Touch(CacheMap::iterator it)
