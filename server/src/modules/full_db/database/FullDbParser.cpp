@@ -113,13 +113,14 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         InitMemory(rankIds, filePath, token);
     }
 
+    auto realRankIds = database->QueryRankId();
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
-        for (const auto& rankId: rankIds) {
+        for (const auto& rankId: realRankIds) {
             FullDb::DbSummaryDataBase::ParserEnd(token, rankId, false, "");
         }
         ServerLog::Error("There is no Summery Data in this db file:" + filePath);
     } else {
-        InitSummery(rankIds, filePath, token);
+        InitSummery(realRankIds, filePath, token);
     }
 }
 
