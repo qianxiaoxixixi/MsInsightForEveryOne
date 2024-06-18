@@ -142,3 +142,7 @@
     color: rgba(255, 255, 255, .9);
     max-width: 400px;
 }
+
+.theme_dark .ant-tooltip-arrow-content:before {
+    background: rgba(255, 255, 255, .9);
+}
