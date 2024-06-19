@@ -221,6 +221,8 @@ def build_light_package(version, os_name):
     os.putenv('RUSTUP_UPDATE_ROOT', 'http://rust.inhuawei.com/rustup-static/rustup')
     os.putenv('RUSTUP_DIST_SERVER', 'http://rust.inhuawei.com/rustup-static')
     os.putenv('CARGO_REGISTRY', 'https://mirrors.tools.huawei.com/rust/crates.io-index/')
+    if os.getenv('BEPHOME') is not None:  # 规避目前cargo不能跑bep问题
+        os.putenv('LD_PRELOAD', '')
 
     # 清理构建缓存
     resource_dir = 'resources'
