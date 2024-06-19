@@ -90,8 +90,9 @@ bool JupyterServerManager::Start(const std::string& path)
     // 获取路径的根目录，在根目录下启动
     std::shared_ptr<std::string> cmd = std::make_shared<std::string>(("jupyter-lab " + path +
                 " --ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
-                "\"self\" * wry://localhost'}}\" --ServerApp.cookie_options=\"{'SameSite': 'None', 'Secure': True}\""
-                " --no-browser --port 4000 --allow-root > " + jupyterLogPath + " 2>&1"));
+                "\"self\" * wry://localhost'}}\" --ServerApp.disable_check_xsrf=True --ServerApp.token=\"\" "
+                "--ServerApp.password=\"\" --no-browser --port 4000 "
+                "--allow-root > " + jupyterLogPath + " 2>&1"));
 
     // 开启子进程启动jupyter服务
     pipe = popen(cmd->c_str(), "r");
@@ -115,7 +116,7 @@ bool JupyterServerManager::Start(const std::string& path)
 
 bool JupyterServerManager::IsJupyterRunning()
 {
-    if (jupyterServerInfo.query.empty()) {
+    if (jupyterServerInfo.port.empty()) {
         return false;
     }
     std::string cmd = "jupyter-lab list";
@@ -125,8 +126,8 @@ bool JupyterServerManager::IsJupyterRunning()
         ServerLog::Warn("jupyter-lab execute failed!");
         return false;
     }
-    // 校验token是否存在，如果token存在则说明服务运行中
-    if (result.find(jupyterServerInfo.query) != std::string::npos) {
+    // 校验端口号是否存在，如果token存在则说明服务运行中
+    if (result.find(jupyterServerInfo.port) != std::string::npos) {
         return true;
     } else {
         // 服务不存在，则清空缓存记录
@@ -171,7 +172,7 @@ std::string JupyterServerManager::GetJupyterUrl(const std::string &filePath)
 {
     std::string res;
     // 检查服务信息是否已存在
-    if (jupyterServerInfo.query.empty()) {
+    if (jupyterServerInfo.port.empty()) {
         return res;
     }
     // 初始化jupyter信息
@@ -179,7 +180,7 @@ std::string JupyterServerManager::GetJupyterUrl(const std::string &filePath)
             FileUtil::GetRelativePath(filePath, jupyterServerInfo.startDirectory);
     if (relativePath != nullptr) {
         res = jupyterServerInfo.protocol + "://" + jupyterServerInfo.host + ":" + jupyterServerInfo.port +
-              "/lab/tree/" + *relativePath + "?" + jupyterServerInfo.query;
+              "/lab/tree/" + *relativePath;
     }
 
     return res;
@@ -223,8 +224,6 @@ void JupyterServerManager::ClearJupyterServerInfo()
     jupyterServerInfo.url = "";
     jupyterServerInfo.port = "";
     jupyterServerInfo.startDirectory = "";
-    jupyterServerInfo.query = "";
-    jupyterServerInfo.fragment = "";
     jupyterServerInfo.path = "";
 }
 
@@ -238,8 +237,6 @@ void JupyterServerManager::FillJupyterServerInfo(const std::string& url)
         jupyterServerInfo.host = url_match[urlHostPosition].str();
         jupyterServerInfo.port = url_match[urlPortPosition].str();
         jupyterServerInfo.path = url_match[urlPathPosition].str();
-        jupyterServerInfo.query = url_match[urlQueryPosition].str();
-        jupyterServerInfo.fragment = url_match[urlFragmentPosition].str();
     }
 }
 
