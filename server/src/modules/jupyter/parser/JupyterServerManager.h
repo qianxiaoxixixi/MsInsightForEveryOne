@@ -19,8 +19,6 @@ struct JupyterServerInfo {
     std::string host;
     std::string port;
     std::string path;
-    std::string query;
-    std::string fragment;
 };
 
 class JupyterServerManager {
@@ -48,13 +46,11 @@ private:
     const std::string jupyterLogPath = "./jupyter.log";
     static const int maxRetryTimes = 5;
     const std::string jupyterUrlReg =
-            R"(^(?:([a-z]+):\/\/)?([a-z0-9.-]+)(?::(\d+))?(\/[^?#]*)?(?:\?([^#]*))?(?:#(.*))?$)";
+            R"(^(?:([a-z]+):\/\/)?([a-z0-9.-]+)(?::(\d+))?(\/[^?#]*)?$)";
     static const int urlProtocolPosition = 1;
     static const int urlHostPosition = 2;
     static const int urlPortPosition = 3;
     static const int urlPathPosition = 4;
-    static const int urlQueryPosition = 5;
-    static const int urlFragmentPosition = 6;
 };
 }
 }
