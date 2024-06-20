@@ -250,7 +250,7 @@ uint64_t JsonMemoryDataBase::QueryMinOperatorAllocationTime()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for QueryMinOperatorAllocationTime.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for query min operator allocation time.", sqlite3_errmsg(db));
         return 0;
     }
     uint64_t min;
@@ -268,7 +268,7 @@ uint64_t  JsonMemoryDataBase::QueryMinRecordTimestamp()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for QueryMinRecordTimestamp.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for query min record timestamp.", sqlite3_errmsg(db));
         return 0;
     }
     uint64_t min;
