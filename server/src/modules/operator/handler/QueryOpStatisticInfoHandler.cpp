@@ -27,7 +27,7 @@ namespace Dic::Module::Operator {
         OperatorStatisticInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
         if (!CheckRequestParam(request.params)) {
-            ServerLog::Error("[Operator]Failed to check request parameter in QueryOpStatisticInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check request parameter in query op statistic info.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return;

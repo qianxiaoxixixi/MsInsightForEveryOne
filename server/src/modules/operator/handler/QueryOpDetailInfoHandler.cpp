@@ -26,7 +26,7 @@ namespace Dic::Module::Operator {
         OperatorDetailInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
         if (!CheckRequestParam(request.params)) {
-            ServerLog::Error("[Operator]Failed to check request parameter in QueryOpDetailInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check request parameter in query op detail info.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return;
@@ -46,12 +46,12 @@ namespace Dic::Module::Operator {
     bool QueryOpDetailInfoHandler::CheckRequestParam(OperatorStatisticReqParams& params)
     {
         if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in QueryOpDetailInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check rankId in query op detail info.");
             return false;
         }
         if (!params.orderBy.empty()) {
             if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
-                ServerLog::Error("[Operator]Failed to check orderBy in QueryOpDetailInfoHandler.");
+                ServerLog::Error("[Operator]Failed to check orderBy in query op detail info.");
                 return false;
             }
             params.orderBy = OperatorProtocol::GetDetailColumName(params.orderBy);

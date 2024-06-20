@@ -27,7 +27,7 @@ namespace Dic::Module::Operator {
         OperatorMoreInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
         if (!CheckRequestParam(request.params)) {
-            ServerLog::Error("[Operator]Failed to check request parameter in QueryOpMoreInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check request parameter in query op more info.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return;
@@ -47,23 +47,23 @@ namespace Dic::Module::Operator {
     bool QueryOpMoreInfoHandler::CheckRequestParam(OperatorMoreInfoReqParams& params)
     {
         if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in QueryOpMoreInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check rankId in query op more info.");
             return false;
         }
         if (params.opName.empty() && params.opType.empty()) {
-            ServerLog::Error("[Operator]Failed to check parameter in QueryOpMoreInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check parameter in query op more info.");
             return false;
         }
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(params.group);
         if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
             operatorGroup != OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP &&
             operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
-            ServerLog::Error("[Operator]Wrong group type in QueryOpMoreInfoHandler.");
+            ServerLog::Error("[Operator]Wrong group type in query op more info.");
             return false;
         }
         if (!params.orderBy.empty()) {
             if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
-                ServerLog::Error("[Operator]Failed to check orderBy in QueryOpMoreInfoHandler.");
+                ServerLog::Error("[Operator]Failed to check orderBy in query op more info.");
                 return false;
             }
             params.orderBy = OperatorProtocol::GetDetailColumName(params.orderBy);
