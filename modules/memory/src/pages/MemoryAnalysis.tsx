@@ -331,7 +331,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankIdCondition, session.isClusterMemoryCompletedSwitch, groupId, t]);
+    }, [rankIdCondition.value, groupId, t]);
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
