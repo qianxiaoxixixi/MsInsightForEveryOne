@@ -380,7 +380,7 @@ const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, 
                     {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
                 </div>
                 <div>
-                    <div id={'matrixchart'} style={{ height: '800px' }}></div>
+                    <div id={'matrixchart'} style={{ width: 'calc(100vw - 40px)', height: '800px' }}></div>
                 </div>
             </div>}
         />
