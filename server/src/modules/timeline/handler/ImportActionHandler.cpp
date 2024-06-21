@@ -55,22 +55,6 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 }
 
-void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &message)
-{
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
-    if (session == nullptr) {
-        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
-        return;
-    }
-    auto event = std::make_unique<ParseFailEvent>();
-    event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
-    event->result = false;
-    event->body.error = message;
-    session->OnEvent(std::move(event));
-}
-
-
 bool ImportActionHandler::TransferProject(ImportActionRequest &request)
 {
     std::vector<Global::ProjectExplorerInfo> projectExplorerInfo = Global::ProjectExplorerManager::Instance()

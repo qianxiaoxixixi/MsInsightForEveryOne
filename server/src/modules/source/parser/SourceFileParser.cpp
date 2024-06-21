@@ -332,7 +332,7 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
     }
     int index = std::distance(apiCores.begin(), it);
 
-    if (apiFiles.count(sourceName) == 0) {
+    if (apiFiles.find(sourceName) == apiFiles.end()) {
         ServerLog::Warn("The specified file doesn't exist in api files, and source name is:", sourceName);
         return result;
     }

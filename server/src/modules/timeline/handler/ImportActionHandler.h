@@ -25,7 +25,6 @@ public:
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
-    static void SendParseFailEvent(const std::string &token, const std::string &message);
     static bool TransferProject(ImportActionRequest &request);
     static bool ImportFile(ImportActionRequest &request);
 };
