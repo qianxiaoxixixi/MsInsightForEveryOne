@@ -461,14 +461,14 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
             return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::CANN_API:
-            sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
-                  " FROM " + TABLE_CANN_API;
-            if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-                sql += " UNION SELECT startNs -? as start_time,endNs - startNs as duration,"
-                       " endNs - ? as end_time from " + TABLE_API;
-            }
-            sql += " WHERE globalTid = ? AND start_time >= ? AND start_time <= ? ORDER BY start_time;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.processId,
+            sql = "with constValue as (select ? as minTime, ? as pid, ? as startTime, ? as endTime) "
+                  "SELECT startNs - minTime as start_time, endNs - startNs as duration, endNs - minTime as end_time "
+                  "    FROM " + TABLE_CANN_API + " join constValue WHERE globalTid = pid "
+                  " AND start_time >= startTime AND start_time <= endTime "
+                  " UNION SELECT startNs -minTime as start_time,endNs - startNs as duration,"
+                  "    endNs - minTime as end_time from  " + TABLE_API + " join constValue "
+                  " WHERE globalTid = pid AND start_time >= startTime AND start_time <= endTime ORDER BY start_time;";
+            return ExecuteQuery(stmt, sql, minTimestamp, requestParams.processId,
                                 requestParams.startTime, requestParams.endTime);
         default:
             throw DatabaseException("unsupported type!");
