@@ -116,7 +116,7 @@ public:
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
     bool QueryAffinityAPIData(const Protocol::KernelDetailsParams &params, const std::set<std::string> &pattern,
         uint64_t minTimestamp, std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data,
-        std::map<uint64_t, std::vector<uint32_t>> &indexs) override;
+        std::map<uint64_t, std::vector<uint32_t>> &indexes) override;
     bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) override;
     bool UpdateParseStatus(const std::string &status);
