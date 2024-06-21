@@ -222,12 +222,12 @@ onMounted(() => {
 
 const handleMounted = () => {
   if (!window.location.pathname.includes('\/proxy\/')) {
-    loadFiles(resourceState.currentPath);
+    loadFiles('');
   } else {
     // 云指定路径
     let defaultSelectedDir = '/home/ma-user/work';
 
-    loadFiles(resourceState.currentPath).then(() => {
+    loadFiles('').then(() => {
       expandPath(defaultSelectedDir);
     });
   }
@@ -241,7 +241,7 @@ const handleMounted = () => {
         nodeEl?.scrollIntoView({behavior:'smooth',block: 'center'});
       });
     }
-  }, 400);
+  }, 800);
 };
 
 const doCheckFileConflict = async (projectName: string) => {
@@ -357,7 +357,7 @@ defineExpose({
     overflow-y: auto;
     background: var(--dataTree-background);
     color: var(--dataPath-color) !important;
-    padding: 10px;
+    padding: 10px 0;
     border-radius: 4px;
 }
 
@@ -415,9 +415,7 @@ defineExpose({
   display: flex;
   align-items: center;
 }
-.btn-refresh{
-  color:var(--SvgFillColor);
-}
+
 .icon-refresh{
   cursor: pointer;
   margin-left: 8px;
