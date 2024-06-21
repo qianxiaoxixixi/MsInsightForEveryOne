@@ -132,11 +132,11 @@ const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
 const std::string QUERY_AFFINITY_API_SQL =
-    "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime,"
-    " s.duration / 1000 as duration, t.pid as pid, t.tid as tid FROM " +
-    SLICE_TABLE + " s JOIN " + THREAD_TABLE +
-    " t on s.track_id = t.track_id "
-    "WHERE s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' ORDER BY s.track_id ASC, s.timestamp ASC";
+    "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, "
+    "s.end_time - ? as endTime, t.pid as pid, t.tid as tid "
+    "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+    "WHERE s.cat = 'cpu_op' AND s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' "
+    "ORDER BY s.track_id ASC, s.timestamp ASC";
 
 class JsonSqlConstant {
 public:

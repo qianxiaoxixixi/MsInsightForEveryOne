@@ -1853,44 +1853,46 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
 
 bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
     const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
-    std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
+    std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
 {
     std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, "
-        "(py.endNs - py.startNs) / 1000 as duration, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
+        "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid "
         "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
-        "WHERE py.depth = 1 ORDER BY py.globalTid ASC, py.startNs ASC ";
+        "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' ORDER BY py.globalTid ASC, py.startNs ASC ";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for Affinity API.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, minTimestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Affinity API data.", stmt->GetErrorMessage());
         return false;
     }
-
-    std::map<uint64_t, uint64_t> indexMap;
+    std::map<uint64_t, std::vector<Protocol::FlowLocation>> filterData;
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
         uint64_t trackId = resultSet->GetUint64("pid");
         one.name = resultSet->GetString("name");
         one.timestamp = resultSet->GetUint64("startTime");
-        one.duration = resultSet->GetUint64("duration");
+        // Protocol::FlowLocation数据结构中只定义start time和duration，绝大多数场景下也是只用上述两个字段，
+        // 此处需要比较start time和end time，是个特例，在不修改数据结构的情况下，duration中实际存的是end time，
+        // 过滤顶层API后，在根据end time和start time求出duration
+        one.duration = resultSet->GetUint64("endTime");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
-        one.depth = resultSet->GetUint64("depth");
 
         if (data.count(trackId) == 0) {
+            filterData.emplace(trackId, std::vector<Protocol::FlowLocation>{});
             data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
-            indexMap.emplace(trackId, 0);
-            indexs.emplace(trackId, std::vector<uint32_t>{});
+            indexes.emplace(trackId, std::vector<uint32_t>{});
         }
-        if (pattern.find(one.name) != pattern.end()) {
-            indexs[trackId].emplace_back(indexMap[trackId]); // 记录所有可能的索引值，加速后续处理速度
-        }
-        indexMap[trackId] = indexMap[trackId] + 1;
-        data[trackId].emplace_back(one);
+
+        filterData[trackId].emplace_back(one);
+    }
+    for (const auto &item : filterData) {
+        std::vector<Protocol::FlowLocation> originData = item.second;
+        TraceDatabaseHelper::FilterTopLevelApi(originData, pattern, data[item.first], indexes[item.first]);
     }
 
     return true;

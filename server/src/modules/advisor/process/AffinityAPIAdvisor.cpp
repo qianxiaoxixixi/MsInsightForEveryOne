@@ -4,6 +4,7 @@
 
 #include "AdvisorProcessUtil.h"
 #include "DataBaseManager.h"
+#include "NumberUtil.h"
 #include "ServerLog.h"
 #include "TraceTime.h"
 #include "VirtualTraceDatabase.h"
@@ -49,7 +50,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
         one.baseInfo.startTime = item.timestamp;
-        one.baseInfo.duration = item.duration;
+        one.baseInfo.duration = (item.duration - item.timestamp) / THOUSAND; // duration里存储的是end time，前端需要的是us
         one.baseInfo.depth = item.depth;
         one.originAPI = item.type;
         one.replaceAPI = item.metaType;

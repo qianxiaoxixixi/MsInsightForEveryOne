@@ -208,6 +208,9 @@ static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet>
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody);
 static void SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                             Protocol::KernelDetailsBody &responseBody);
+static void FilterTopLevelApi(std::vector<Protocol::FlowLocation> &originData, const std::set<std::string> &pattern,
+    std::vector<Protocol::FlowLocation> &filterData, std::vector<uint32_t> &indexes);
+
 private:
 /* Functions for BbTraceDataBase */
     static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,

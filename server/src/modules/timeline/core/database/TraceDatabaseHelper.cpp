@@ -991,4 +991,31 @@ void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet
         responseBody.kernelDetails.emplace_back(detail);
     }
 }
+
+void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> &originData,
+    const std::set<std::string> &pattern, std::vector<Protocol::FlowLocation> &filterData,
+    std::vector<uint32_t> &indexes)
+{
+    std::vector<uint64_t> endList;
+    uint32_t index = 0;
+    for (auto &item : originData) {
+        int32_t depth = 0;
+        while (depth < endList.size() && endList[depth] > item.timestamp) {
+            depth++;
+        }
+        if (depth < endList.size()) {
+            endList[depth] = item.duration;
+        } else {
+            endList.emplace_back(item.duration);
+        }
+        if (depth != 0) { // 过滤顶层API
+            continue;
+        }
+        filterData.emplace_back(item);
+        if (pattern.find(item.name) != pattern.end()) {
+            indexes.emplace_back(index); // 标记潜在的亲和API第一个索引位置
+        }
+        index++;
+    }
+}
 }
