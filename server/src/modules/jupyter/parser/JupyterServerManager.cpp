@@ -28,6 +28,7 @@ bool JupyterServerManager::Close()
 
     // 根据pid杀死进程
     if (!KillProcessByPid(pid)) {
+        ServerLog::Warn("Failed to kill process!");
         return false;
     }
     ClearJupyterServerInfo();

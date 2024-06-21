@@ -7,6 +7,7 @@
 #include "TraceFileParser.h"
 #include "MemoryParse.h"
 #include "SourceFileParser.h"
+#include "StringUtil.h"
 
 
 namespace Dic {
@@ -243,7 +244,15 @@ void UploadFileParser::ParseEndSendResp(const std::string &fileId, const UploadF
 
 std::tuple<std::string, std::string, std::string> UploadFileParser::SplitValidJsonStr(const std::string &fileContent)
 {
-    const std::pair<int64_t, int64_t> position = GetSplitPosition(fileContent);
+    std::pair<int64_t, int64_t> position;
+    std::regex regex(R"(\}\s*,\s*\{)"); // 匹配 "}, {"
+    std::vector<int64_t> positions;
+    if (StringUtil::GetRegularMatchPositions(fileContent, regex, positions)) {
+        position.first = positions.front(); // 第一个匹配
+        position.second = positions.back(); // 最后一个匹配
+    } else {
+        ServerLog::Warn("FileContent is empty.");
+    }
 
     std::string prefixStr = fileContent.substr(0, position.first);
     std::string middleStr = fileContent.substr(position.first, position.second - position.first);
@@ -252,36 +261,7 @@ std::tuple<std::string, std::string, std::string> UploadFileParser::SplitValidJs
     return std::tuple<std::string, std::string, std::string>(prefixStr, middleStr, suffixStr);
 }
 
-std::pair<int64_t, int64_t> UploadFileParser::GetSplitPosition(const std::string &fileContent)
-{
-    std::pair<int64_t, int64_t> res;
-    std::regex regex(R"(\}\s*,\s*\{)"); // 匹配 "}, {"
-
-    // 第一个匹配
-    std::smatch match;
-    if (std::regex_search(fileContent, match, regex)) {
-        res.first = match.position();
-    }
-
-    // 最后一个匹配
-    std::string::const_iterator it = fileContent.cbegin();
-    std::string::const_iterator end = fileContent.cend();
-    std::regex_iterator<std::string::const_iterator> iter(it, end, regex);
-    std::regex_iterator<std::string::const_iterator> enditer;
-    std::regex_iterator<std::string::const_iterator> lastMatchIter;
-    while (iter != enditer) {
-        lastMatchIter = iter;
-        ++iter;
-    }
-    if (lastMatchIter != enditer) {
-        std::smatch lastMatch = *lastMatchIter;
-        res.second = lastMatch.position();
-    }
-
-    return res;
-}
-
-void UploadFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
+    void UploadFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
     if (!(result && Timeline::ParserStatusManager::Instance().SetFinishStatus(fileId))) {
         result = false;
