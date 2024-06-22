@@ -32,12 +32,12 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
     Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
     if (requestParams.timePerPx == 0) {
-        ServerLog::Error("QueryThreadTraces. timePerPx is zero.");
+        ServerLog::Error("Query_thread_traces. timePerPx is zero.");
         return false;
     }
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query_thread_traces. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     std::unique_ptr<SqliteResultSet> resultSet;
@@ -46,11 +46,11 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
         resultSet = TraceDatabaseHelper::QueryThreadTraces(stmt, requestParams,
                                                            GetRealRankId(requestParams.cardId), minTimestamp);
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryThreadTraces Fail, ", e.What());
+        ServerLog::Error("Query thread traces fail, ", e.What());
         return false;
     }
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query_thread_traces. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
@@ -88,7 +88,7 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
     uint64_t endTime = requestParams.endTime + minTimestamp;
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreads. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query_threads. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     std::vector<Protocol::SimpleSlice> simpleSliceVec;
@@ -106,7 +106,7 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
             simpleSliceVec.emplace_back(simpleSlice);
         }
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryThreads Fail, ", e.What());
+        ServerLog::Error("Query threads failed, ", e.What());
         return false;
     }
 
@@ -129,14 +129,14 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadDetail. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query thread detailed. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     std::optional<SliceDto> sliceDto;
     try {
         sliceDto = TraceDatabaseHelper::QueryThreadDetail(stmt, requestParams);
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryThreadDetail Fail, ", e.What());
+        ServerLog::Error("Query thread detail failed, ", e.What());
         return false;
     }
 
@@ -249,12 +249,12 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
     const std::string &sql = GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase, params.rankId);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QuerySliceNameCount failed!.");
+        ServerLog::Error("Query slice name count failed!.");
         return 0;
     }
     auto resultSet = stmt->ExecuteQuery(params.searchContent, GetRealRankId(params.rankId));
     if (resultSet == nullptr) {
-        ServerLog::Error("SearchSliceNameCount. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query_slice_name_count. Failed to get result set.", stmt->GetErrorMessage());
         return 0;
     }
     if (resultSet->Next()) {
@@ -276,12 +276,12 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
                                                    "descend", "timestamp");
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QuerySliceName failed!.");
+        ServerLog::Error("Query slice name failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(params.searchContent, minTimestamp, GetRealRankId(responseBody.rankId), index);
     if (resultSet == nullptr || !resultSet->Next()) {
-        ServerLog::Error("SearchSliceName. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query_slice_name. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     responseBody.pid = resultSet->GetString("pid");
@@ -324,14 +324,14 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
-        ServerLog::Error("QueryUnitCounter. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query_unit_counter. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     try {
         resultSet = TraceDatabaseHelper::QueryUnitCounter(stmt, params, minTimestamp, GetRealRankId(params.rankId));
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryUnitCounter Fail, ", e.What());
+        ServerLog::Error("Query unit counter failed, ", e.What());
         return false;
     }
     while (resultSet->Next()) {
@@ -358,7 +358,7 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
         " GROUP BY acceleratorCore";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        Server::ServerLog::Error("QueryComputeStatisticsData failed!. ", sqlite3_errmsg(db));
+        Server::ServerLog::Error("Query compute statistics data failed!. ", sqlite3_errmsg(db));
         return false;
     }
     double totalDuration = 0;
@@ -396,7 +396,7 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
     try {
         resultSet = TraceDatabaseHelper::QuerySystemViewData(stmt, requestParams, GetRealRankId(requestParams.rankId));
     } catch (DatabaseException &e) {
-        ServerLog::Error("QuerySystemViewData Fail, ", e.What());
+        ServerLog::Error("Query system view data failed, ", e.What());
         return false;
     }
     while (resultSet->Next()) {
@@ -426,13 +426,13 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
     std::string sql = GetKernelDetailSql(requestParams);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        Server::ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
+        Server::ServerLog::Error("Fail to prepare sql to query kernel detail data.");
         return false;
     }
     stmt->BindParams(GetRealRankId(requestParams.rankId));
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryKernelDetailData. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set to query kernel detail data.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -550,7 +550,7 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &
     }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        Server::ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
+        Server::ServerLog::Error("Fail to prepare sql to query total kernel.");
         return 0;
     }
     if (!requestParams.coreType.empty()) {
@@ -558,7 +558,7 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryTotalKernel. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set to query total kernel.", stmt->GetErrorMessage());
         return 0;
     }
     uint64_t total = 0;
@@ -581,14 +581,14 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
+        ServerLog::Error("Fail to prepare sql to query kernel depth and thread.");
         return false;
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
     resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;
     }
     if (resultSet->Next()) {
@@ -599,7 +599,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
         responseBody.rankId = QueryHostInfo() + GetRealRankId(params.rankId);
         return true;
     }
-    ServerLog::Error("QueryKernelDepthAndThread. Fail to query data. Please check whether the data is correct.");
+    ServerLog::Error("Fail to query data to query kernel depth and thread. Please check whether the data is correct.");
     return false;
 }
 
@@ -615,12 +615,12 @@ std::vector<std::string> DbTraceDataBase::QueryCoreType()
         " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY accelerator_core";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryCoreType, fail to prepare sql.");
+        ServerLog::Error("Fail to prepare sql to query core type.");
         return acceleratorCoreList;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryCoreType. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set to query core type.", stmt->GetErrorMessage());
         return acceleratorCoreList;
     }
     while (resultSet->Next()) {
@@ -640,7 +640,7 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadTracesSummary. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql to query thread traces summary. ", sqlite3_errmsg(db));
         return false;
     }
     std::unique_ptr<SqliteResultSet> resultSet;
@@ -648,11 +648,11 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
         resultSet = TraceDatabaseHelper::QueryThreadTracesSummary(stmt, requestParams,
                                                                   GetRealRankId(requestParams.cardId), minTimestamp);
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryThreadTracesSummary Fail, ", e.What());
+        ServerLog::Error("Query thread traces summary failed, ", e.What());
         return false;
     }
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set to query thread traces summary.", stmt->GetErrorMessage());
         return false;
     }
     uint64_t maxTime = 0;

@@ -21,7 +21,7 @@ ClusterParseThreadPoolExecutor &ClusterParseThreadPoolExecutor::Instance()
 ClusterParseThreadPoolExecutor::ClusterParseThreadPoolExecutor()
 {
     singleThreadPool = std::make_shared<ThreadPool>(1);
-    ServerLog::Info("singleThreadPool init success");
+    ServerLog::Info("single thread pool init success");
 }
 
 ClusterParseThreadPoolExecutor::~ClusterParseThreadPoolExecutor()

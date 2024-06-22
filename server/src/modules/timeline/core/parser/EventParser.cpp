@@ -51,25 +51,25 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (databasePtr == nullptr) {
         error = "Failed to open Database";
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EventParser.");
+        ServerLog::Error("Failed to convert virtual trace database to json trace database in event parser.");
         return false;
     }
     databasePtr->InitStmt();
     std::string buffer = ReadBuffer(startPosition, endPosition);
     if (buffer.empty()) {
         error = "Failed to read file.";
-        ServerLog::Error("EventParser. Failed to read buffer. fileId:", fileId);
+        ServerLog::Error("Event parser failed to read buffer. fileId:", fileId);
         return false;
     }
     auto data = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(buffer, error);
     if (!data.has_value()) {
         error = "File is not valid json. " + error;
-        ServerLog::Error("EventParser. fileId:", fileId, ". ", error);
+        ServerLog::Error("Event Parser. fileId:", fileId, ". ", error);
         return false;
     }
     if (!data.value().IsArray()) {
         error = "json is not an array.";
-        ServerLog::Error("EventParser. json is not an array. fileId:", fileId);
+        ServerLog::Error("Event Parser. json is not an array. fileId:", fileId);
         return false;
     }
     database = databasePtr;
@@ -82,7 +82,7 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
     ProcessLastFlagSlice();
     database->CommitData();
     database.reset(); // return connection pool
-    ServerLog::Info("EventParser. fileId:", fileId, " Parse ", startPosition, " to ", endPosition,
+    ServerLog::Info("Event Parser. fileId:", fileId, " Parse ", startPosition, " to ", endPosition,
         ". Count:", parseCount, ", ignore Count:", ignoreCount);
     return true;
 }
@@ -117,18 +117,18 @@ void EventParser::Parse(int sliceIndex, const std::string &fileContent)
     }
     database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in Parse2 of EventParser.");
+        ServerLog::Error("Failed to convert virtual trace database to json trace database in parse2 of event parser.");
         return;
     }
     database->InitStmt();
 
     auto jsonContent = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(fileContent, error);
     if (!jsonContent.has_value()) {
-        ServerLog::Error("EventParser. File is not valid json.");
+        ServerLog::Error("Event Parser. File is not valid json.");
         return;
     }
     if (!jsonContent.value().IsArray()) {
-        ServerLog::Error("EventParser. json is not an array.");
+        ServerLog::Error("Event Parser. json is not an array.");
         return;
     }
     for (auto &event : jsonContent.value().GetArray()) {
@@ -137,7 +137,7 @@ void EventParser::Parse(int sliceIndex, const std::string &fileContent)
     ProcessLastFlagSlice();
     database->CommitData();
     database.reset(); // return connection pool
-    ServerLog::Info("EventParser slice index is ", sliceIndex, ". Count:", parseCount, ", ignore Count:", ignoreCount);
+    ServerLog::Info("Event parser slice index is ", sliceIndex, ". Count:", parseCount, ", ignore Count:", ignoreCount);
 }
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
@@ -152,7 +152,7 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
     std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
     if (!file.is_open()) {
-        ServerLog::Error("EventParser. Failed to open file.");
+        ServerLog::Error("Event Parser. Failed to open file.");
         return "";
     }
     if (startPosition == 0 && endPosition == 0) {
@@ -165,7 +165,7 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
     auto buffer = std::make_unique<char[]>(len);
     if (!file.read(buffer.get() + 1, len - suffixLen)) { // reserved '[' and ']'
         file.close();
-        ServerLog::Error("EventParser. Failed to read file. start:", startPosition, ", end:", endPosition);
+        ServerLog::Error("Event Parser. Failed to read file. start:", startPosition, ", end:", endPosition);
         return "";
     }
     file.close();
@@ -181,7 +181,7 @@ void EventParser::EventHandle(const json_t &json)
         type = "S" + type;
     }
     if (type.empty()) {
-        ServerLog::Error("EventHandle. event type is empty. ", JsonUtil::JsonDump(json));
+        ServerLog::Error("Event Handle. event type is empty. ", JsonUtil::JsonDump(json));
         return;
     }
     if (eventHandleMap.count(type) > 0) {
@@ -211,7 +211,7 @@ void EventParser::MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr)
         event.trackId = GetTrackId(event.pid, event.tid);
         database->UpdateThreadSortIndex(event);
     } else {
-        ServerLog::Error("EventParser. Failed to get meta data type. name:", event.name);
+        ServerLog::Error("Event Parser. Failed to get meta data type. name:", event.name);
     }
 }
 

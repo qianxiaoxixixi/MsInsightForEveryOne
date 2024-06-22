@@ -27,7 +27,7 @@ void SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get searchAllSlices connection. fileId:", request.params.rankId);
+        ServerLog::Error("Failed to get searchAllSlices  connection. fileId:", request.params.rankId);
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

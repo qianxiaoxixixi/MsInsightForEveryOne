@@ -66,11 +66,11 @@ bool TraceFileSimulationParser::InitParser(const std::vector<std::string> &fileP
     std::shared_ptr<JsonTraceDatabase> database =
         std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EventParser.");
+        ServerLog::Error("Failed to convert virtual trace database to json trace database in event parser.");
         return false;
     }
     if (!(database->DropTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
+        ServerLog::Error("Failed to open trace database. rankId:", fileId);
         return false;
     }
     auto &instance = TraceFileSimulationParser::Instance();

@@ -216,13 +216,13 @@ void ParserJson::ClusterProcess(const std::string &token, const std::string &sel
     if (DataBaseManager::Instance().curIsCluster) {
         ClusterFileParser clusterFileParser;
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
-            ServerLog::Info("ParseClusterFiles is success");
+            ServerLog::Info("The cluster file is parsed successfully.");
             parseClusterResult = PARSE_RESULT_OK;
             dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
             ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep, token,
                 selectedFolder);
         } else {
-            ServerLog::Warn("ParseClusterFiles is failed");
+            ServerLog::Warn("Failed to parse cluster files.");
             parseClusterResult = PARSE_RESULT_FAIL;
         }
     }
@@ -237,10 +237,10 @@ void ParserJson::ClusterProcessAsyncStep(const std::string &token, const std::st
     ClusterFileParser clusterFileParser;
     if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
         clusterFileParser.ParseClusterStep2Files(selectedFolder)) {
-        ServerLog::Info("ParseClusterStep2Files is success");
+        ServerLog::Info("The cluster step2 file is parsed successfully.");
         parseClusterResult = PARSE_RESULT_OK;
     } else {
-        ServerLog::Warn("ParseClusterStep2Files is failed");
+        ServerLog::Warn("Failed to parse cluster step2 files.");
         parseClusterResult = PARSE_RESULT_FAIL;
     }
     // send event

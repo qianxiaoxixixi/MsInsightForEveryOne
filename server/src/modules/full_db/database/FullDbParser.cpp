@@ -87,7 +87,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     }
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in InitOpenDb.");
+        ServerLog::Error("Failed to convert virtual trace database to db trace dataBase in init open db.");
         return;
     }
     auto &threadPool = FullDbParser::Instance().threadPool;
@@ -166,7 +166,7 @@ void FullDbParser::SendHostEvent(const std::string &token, const std::string &fi
     }
     auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in full db SendHostEvent.");
+        ServerLog::Error("Failed to convert virtual trace database to db trace dataBase in full db send host event.");
         return;
     }
     event->body.unit.metadata.cardId = database->QueryHostInfo()+"Host";
