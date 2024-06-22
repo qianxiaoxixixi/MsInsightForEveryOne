@@ -51,12 +51,12 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
             std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
             "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 2) as active_duration, "
-            "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 11) as allocation_allocated, "
-            " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 11) as allocation_reserve, "
-            "ROUND(allocation_total_active / (1024.0 * 1024.0), 11) as allocation_active, "
-            " ROUND(release_total_allocated / (1024.0 * 1024.0), 11) as release_allocated, "
-            "ROUND(release_total_reserved / (1024.0 * 1024.0), 11) as release_reserve, "
-            "ROUND(release_total_active / (1024.0 * 1024.0), 11) as release_active, stream_ptr as stream FROM ";
+            "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
+            " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
+            "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
+            " ROUND(release_total_allocated / (1024.0 * 1024.0), 2) as release_allocated, "
+            "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
+            "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
             " WHERE realName LIKE ? ";
@@ -75,9 +75,9 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
         sql += "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) as timestamp, "
-            "ROUND(total_allocated / (1024.0 * 1024.0), 11) as total_allocated, "
-            " ROUND(total_reserved / (1024.0 * 1024.0), 11) as total_reserve, "
-            "ROUND(total_active / (1024.0 * 1024.0), 11) as total_active, stream_ptr as stream FROM ";
+            "ROUND(total_allocated / (1024.0 * 1024.0), 2) as total_allocated, "
+            " ROUND(total_reserved / (1024.0 * 1024.0), 2) as total_reserve, "
+            "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
     }

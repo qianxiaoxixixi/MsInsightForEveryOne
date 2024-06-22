@@ -244,7 +244,7 @@ TEST_F(TestSuit, QueryStaticOperatorGraph)
     int expectSize = 3;
     int expectColumnSize = 24;
     int pickedIndex = 5;
-    string exceptPickedData = "4453.586914";
+    string exceptPickedData = "4.35";
     EXPECT_EQ(data.legends.size(), expectSize);
     EXPECT_EQ(data.lines.size(), expectColumnSize);
     EXPECT_EQ(data.lines[pickedIndex][1], exceptPickedData);
@@ -259,7 +259,7 @@ TEST_F(TestSuit, QueryStaticOperatorGraphWithGraphId)
     StaticOperatorGraphItem data;
     database->QueryStaticOperatorGraph(requestParams, data);
     int expectColumnSize = 26;
-    string exceptPickedData = "4590.180664";
+    string exceptPickedData = "4.48";
     int pickedIndex = 19;
     EXPECT_EQ(data.lines.size(), expectColumnSize);
     EXPECT_EQ(data.lines[pickedIndex][1], exceptPickedData);

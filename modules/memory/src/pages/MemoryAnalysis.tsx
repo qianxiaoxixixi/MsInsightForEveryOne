@@ -462,7 +462,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                     { staticLineChartData
                                         ? <LineChart
                                             hAxisTitle={t('Node Index')}
-                                            vAxisTitle={t('Memory Usage (KB)')}
+                                            vAxisTitle={t('Memory Usage (MB)')}
                                             graph={staticLineChartData}
                                             onSelectionChanged={onSelectedRangeChanged}
                                             record={selectedStaticRecord}
