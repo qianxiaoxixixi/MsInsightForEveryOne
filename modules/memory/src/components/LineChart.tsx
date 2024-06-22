@@ -238,7 +238,7 @@ export const LineChart: React.FC<IProps> = (props) => {
 
     return (
         <div>
-            {graph.title !== undefined
+            {graph.title !== undefined && graph.title?.length !== 0
                 ? <div style={{ fontSize: 14, fontWeight: 'bold' } }>
                     {title}{chartCharacter}
                 </div>
