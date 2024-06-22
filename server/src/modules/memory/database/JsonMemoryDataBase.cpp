@@ -293,9 +293,10 @@ std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
         "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
         std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
         "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 2) as active_duration, "
-        "allocation_allocated, allocation_reserve, allocation_active, release_allocated, release_reserve, "
-        "release_active, stream FROM " + operatorTable +
-        " WHERE name LIKE ?";
+        "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
+        "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
+        "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
+        "stream FROM " + operatorTable + " WHERE name LIKE ?";
     AddOperatorSql(requestParams, sql);
     return sql;
 }
@@ -303,7 +304,7 @@ std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
 std::string  JsonMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
 {
     std::string sql =
-        "SELECT device_id, op_name, node_index_start, node_index_end, size"
+        "SELECT device_id, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
         " FROM " + staticOpTable +
         " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
     AddStableOperatorSql(requestParams, sql);

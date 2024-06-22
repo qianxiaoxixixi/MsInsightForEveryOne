@@ -20,6 +20,7 @@
 #include <windows.h>
 #endif
 #include <map>
+#include <iomanip>
 
 namespace Dic {
 class StringUtil {
@@ -313,6 +314,13 @@ static bool GetRegularMatchPositions(const std::string &input, const std::regex 
         ++iter;
     }
     return true;
+}
+
+inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
+{
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(2) << value; // 保留有效位数为2，四舍五入
+    return stream.str();
 }
 
 static std::optional<std::string> Decompress(const std::string &str)

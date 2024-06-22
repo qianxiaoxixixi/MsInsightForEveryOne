@@ -44,7 +44,6 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     return streams;
 }
 
-
 bool VirtualMemoryDataBase::ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type)
 {
     if (!Database::CheckTableContainData(TABLE_STATIC_OPERATOR)) {
@@ -368,7 +367,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorGraph(Protocol::StaticOperatorG
     // 组装图例和图像数据
     graphItem.legends.insert(graphItem.legends.end(), staticGraphLegends.begin(), staticGraphLegends.end());
     double size = 0;
-    std::string totalSizeStr = std::to_string(totalSize);
+    std::string totalSizeStr = StringUtil::DoubleToStringWithTwoDecimalPlaces(totalSize / kbSizeDouble); // 结果保留两位有效数字
     for (auto it = graphSizeMap.begin(); it != graphSizeMap.end(); ++it) {
         std::vector<std::string> points = {};
         size += it->second; // 遍历有序map，逐点计算总需分配内存
@@ -377,7 +376,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorGraph(Protocol::StaticOperatorG
         } else {
             points.emplace_back(std::to_string(maxIndex + 1)); // 存储值为maxUnsignedInt时，Node Index = maxIndex + 1
         }
-        points.emplace_back(std::to_string(size)); // Size
+        points.emplace_back(StringUtil::DoubleToStringWithTwoDecimalPlaces(size / kbSizeDouble)); // Size，结果保留两位有效数字
         points.emplace_back(totalSizeStr); // Total Size
         graphItem.lines.emplace_back(points);
     }
