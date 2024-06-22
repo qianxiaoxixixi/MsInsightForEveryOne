@@ -61,7 +61,7 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
         reader.Parse(is, matrixRapidHandler);
     }
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end SaxParseJsonFile data into db ,file:", filePath, "cost time:", (end - start).count());
+    ServerLog::Info("End sax_parse_json_file data into db, file:", filePath, "cost time:", (end - start).count());
     fclose(fp);
 }
 
@@ -87,7 +87,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end parseStepStatisticsFile data into db ,file:", filePath, ",cost time:",
+    ServerLog::Info("End parse step statistics file data into db, file:", filePath, ",cost time:",
                     (end - start).count());
     stepTraceFileCsv.close();
 }
@@ -105,7 +105,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     ParseCommunicationGroup(selectedPath, baseInfo);
     auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     database->InsertClusterBaseInfo(baseInfo);
-    ServerLog::Info("end saveClusterBaseInfo data into db ,path: ", selectedPath, " collectStartTime= ",
+    ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
                     baseInfo.collectStartTime);
 }
 
@@ -157,7 +157,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         SaveClusterBaseInfo(selectedPath);
     }
     if (!database->CreateIndex()) {
-        ServerLog::Error("Failed to CreateIndex on cluster database. path:", selectedPath);
+        ServerLog::Error("Failed to create index on cluster database. path:", selectedPath);
         return false;
     }
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {

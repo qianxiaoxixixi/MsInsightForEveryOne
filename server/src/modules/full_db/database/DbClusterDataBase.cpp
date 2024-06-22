@@ -228,7 +228,7 @@ bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &p
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to prepare QueryDistributionData statement. error:", sqlite3_errmsg(db));
+        Server::ServerLog::Error("Failed to prepare a statement to query distributed data. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);

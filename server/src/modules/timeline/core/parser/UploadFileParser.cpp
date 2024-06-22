@@ -118,7 +118,7 @@ void UploadFileParser::ParseSliceData(const UploadFileRequest& request, const st
     // 处理分片json内容
     std::optional<std::string> deStr = StringUtil::Decompress(request.params.text);
     if (!deStr.has_value()) {
-        ServerLog::Error("Failed to Decompress text,file: ", fileId, ",current index: ", sliceIndex);
+        ServerLog::Error("Failed to decompress text,file: ", fileId, ",current index: ", sliceIndex);
         return;
     }
     std::string content = deStr.value();
@@ -175,12 +175,12 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
 
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
-        ServerLog::Error("Failed to open traceDatabase for ParseLast. rankId:", fileId);
+        ServerLog::Error("Failed to open trace database for parse last. rankId:", fileId);
         return;
     }
     auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDatabase in ParseLast.");
+        ServerLog::Error("Failed to convert virtual trace database to json trace database in parse last.");
         return;
     }
     database->CreateIndex();
@@ -213,7 +213,7 @@ std::string UploadFileParser::InitDataBase(std::string fileId)
     }
     auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr || !(database->DropAllTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open traceDatabase. fileId:", fileId);
+        ServerLog::Error("Failed to open trace database. fileId:", fileId);
         ParseEndCallBack(fileId, false, "Failed to open db file. Please try again.");
         return "";
     }

@@ -74,11 +74,11 @@ void ParserDb::ClusterProcess(const std::string &token, const std::string &selec
     DataBaseManager::Instance().ClearClusterDb();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (isCluster) {
-        ServerLog::Info("ParseClusterFiles is success");
+        ServerLog::Info("The cluster file is parsed successfully.");
         parseClusterResult = PARSE_RESULT_OK;
         ClusterProcessAsyncStep(token, selectedFolder);
     } else {
-        ServerLog::Warn("ParseClusterFiles is failed");
+        ServerLog::Warn("Failed to parse cluster files.");
         parseClusterResult = PARSE_RESULT_FAIL;
     }
     // send event
@@ -91,16 +91,16 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::stri
     ClusterFileParser clusterFileParser;
     if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
         clusterFileParser.ParserClusterOfDb(selectedFolder)) {
-        ServerLog::Info("ParseClusterDbFiles is success");
+        ServerLog::Info("The cluster db file is parsed successfully.");
         DataBaseManager::Instance().curIsCluster = true;
         parseClusterResult = PARSE_RESULT_OK;
     } else {
-        ServerLog::Warn("ParseClusterDbFiles is failed");
+        ServerLog::Warn("Failed to parse cluster db files");
         DataBaseManager::Instance().curIsCluster = false;
         parseClusterResult = PARSE_RESULT_FAIL;
     }
     // send event
-    ServerLog::Info("Parse Cluster File end, send event");
+    ServerLog::Info("Parse cluster file end, send event");
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session token ");
@@ -144,7 +144,7 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::string &path
         }
         auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
         if (database == nullptr) {
-            ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in GetReportFiles.");
+            ServerLog::Error("Failed to convert virtual trace database to db trace database in getting report files.");
             continue;
         }
         std::vector<std::string> rankIds = database->QueryRankId();

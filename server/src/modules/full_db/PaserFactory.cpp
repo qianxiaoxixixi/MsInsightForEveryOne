@@ -221,11 +221,11 @@ bool ParserAlloc::CheckIsCluster(const std::string &filePath)
     std::vector<std::string> folders;
     std::vector<std::string> files;
     if (filePath.find("cluster_analysis_output") != std::string::npos) {
-        ServerLog::Info("this folder is cluster_analysis_output,CheckIsCluster is true");
+        ServerLog::Info("this folder is cluster_analysis_output, Check_Is_Cluster is true");
         return true;
     }
     if (!FileUtil::FindFolders(filePath, folders, files)) {
-        ServerLog::Info("FindFolders is empty,CheckIsCluster is false");
+        ServerLog::Info("FindFolders is empty, Check_Is_Cluster is false");
         return false;
     }
     return std::any_of(folders.begin(), folders.end(),

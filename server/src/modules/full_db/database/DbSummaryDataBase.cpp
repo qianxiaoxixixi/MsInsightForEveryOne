@@ -34,7 +34,7 @@ bool DbSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams 
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryOperatorDetail failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query operator detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -172,7 +172,7 @@ bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticRe
 
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryOperatorStatisticInfo. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql to query operator statistic info.", sqlite3_errmsg(db));
         return false;
     }
     auto resultSet =
@@ -289,7 +289,7 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
     }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryStatisticTotalNum. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql to query statistic total num.", sqlite3_errmsg(db));
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(reqParams.topK);

@@ -153,7 +153,7 @@ bool JsonTraceDatabase::CreateIndex()
     std::unique_lock<std::recursive_mutex> lock(mutex);
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
-    ServerLog::Info("CreateIndex end. time:", dur.count());
+    ServerLog::Info("Creating index end. time:", dur.count());
     return true;
 }
 
