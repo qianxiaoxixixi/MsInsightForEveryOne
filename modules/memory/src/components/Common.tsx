@@ -15,8 +15,8 @@ export const useHit = (): React.ReactElement => {
     return <StyledTooltip title={
         (
             <div style={{ padding: '1rem' }}>
-                <div>{t('searchCriteria.Overall')}: {t('searchCriteria.OverallDescribe')}</div>
-                <div style={{ marginTop: '2rem' }}>{t('searchCriteria.Stream')}: {t('searchCriteria.StreamDescribe')}</div>
+                <div>{safeStr(t('searchCriteria.Overall'))}: {safeStr(t('searchCriteria.OverallDescribe'))}</div>
+                <div style={{ marginTop: '2rem' }}>{safeStr(t('searchCriteria.Stream'))}: {safeStr(t('searchCriteria.StreamDescribe'))}</div>
             </div>
         )
     }>
@@ -26,10 +26,12 @@ export const useHit = (): React.ReactElement => {
 
 export const useChartCharacter = (): React.ReactElement => {
     const { t } = useTranslation('memory');
-    const hit = t('searchCriteria.CurveDescribe', { returnObjects: true });
+    const hit = t('searchCriteria.CurveDescribe', { returnObjects: true }) as [];
     return <StyledTooltip title={
         <div style={{ padding: '1rem' }}>
-            {hit?.map((item: string, index: number) => <div style={{ padding: '3px 0' }} key={index}>{item}</div>)}
+            {hit?.map((item: string, index: number) =>
+                <div style={{ padding: '3px 0' }} key={index}>{safeStr(item)}</div>)
+            }
         </div>
     }>
         <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
