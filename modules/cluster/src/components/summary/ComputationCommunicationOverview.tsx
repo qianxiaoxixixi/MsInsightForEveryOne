@@ -240,7 +240,7 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 }
 export const useHit = (): React.ReactElement => {
     const { t } = useTranslation('summary');
-    const hit = t('Computation/CommunicationDescribe', { returnObjects: true });
+    const hit = t('Computation/CommunicationDescribe', { returnObjects: true }) as string[];
     return (<StyledTooltip title={
         (
             <div style={{ padding: '1rem' }}>
@@ -257,7 +257,7 @@ export const useHit = (): React.ReactElement => {
 
 async function GetTopSummary(conditions: ConditionDataType): Promise<AdviceAndSummary> {
     const res: any = await queryTopSummary(conditions);
-    const { advice, summaryList } = res;
+    const { advice = {}, summaryList = [] } = res ?? {};
     if (conditions.orderBy === 'computingTime') {
         summaryList.sort((a: any, b: any) =>
             b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);

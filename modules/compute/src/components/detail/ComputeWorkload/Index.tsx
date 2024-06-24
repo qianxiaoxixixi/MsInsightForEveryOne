@@ -38,13 +38,10 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryComputeWorkload();
-        if (res === null || res === undefined) {
-            return;
-        }
         const renderData = {
-            blockIdList: res.blockIdList ?? [],
-            chartData: res.chartData?.detailDataList ?? [],
-            tableData: res.tableData?.detailDataList ?? [],
+            blockIdList: res?.blockIdList ?? [],
+            chartData: res?.chartData?.detailDataList ?? [],
+            tableData: res?.tableData?.detailDataList ?? [],
         } as Idata;
         renderData.blockIdList.sort((a, b) => sortFunc(a, b, 'asc'));
         setData(renderData);

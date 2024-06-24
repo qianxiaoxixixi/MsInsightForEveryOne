@@ -223,12 +223,18 @@ const Index = observer(({ session }: { session: Session }) => {
             if (res === undefined || res === null || res.instructions === '') {
                 return [];
             }
+            let obj;
+            try {
+                obj = JSON.parse(res.instructions);
+            } catch (err) {
+                return [];
+            }
+            let list = obj.Instructions ?? [];
+            if (list.length > MAX_INSTRUCTION) {
+                list = list.slice(0, MAX_INSTRUCTION);
+                confrimMessage('warn', `Only display the first ${MAX_INSTRUCTION} Instructions`);
+            }
             runInAction(() => {
-                let list = JSON.parse(res.instructions)?.Instructions;
-                if (list?.length > MAX_INSTRUCTION) {
-                    list = list.slice(0, MAX_INSTRUCTION);
-                    confrimMessage('warn', `Only display the first ${MAX_INSTRUCTION} Instructions`);
-                }
                 session.Instructions = list;
             });
             setDoneQuery(true);
@@ -258,7 +264,7 @@ const Index = observer(({ session }: { session: Session }) => {
             return [];
         }
         const res = await queryApiLine({ sourceName: source, coreName: core });
-        const records: Iline[] = res.lines ?? [];
+        const records: Iline[] = res?.lines ?? [];
         const list = records.map((item: Iline, index: number) => ({
             ...item,
             Cycles: item.Cycle,
