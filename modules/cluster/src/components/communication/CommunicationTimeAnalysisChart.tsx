@@ -240,17 +240,18 @@ async function redirectToTimeline(): Promise<void> {
         timestamp,
     };
     const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
+    const resObj = res ?? {};
     connector.send({
         event: 'switchModule',
         body: {
             switchTo: 'timeline',
             toModuleEvent: 'locateUnit',
             params: {
-                ...res,
+                ...resObj,
                 ...params,
-                processId: res.pid,
+                processId: resObj.pid,
                 startTime: timestamp,
-                rankId: res.rankId,
+                rankId: resObj.rankId,
                 duration,
             },
         },

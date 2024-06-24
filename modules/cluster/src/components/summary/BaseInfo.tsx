@@ -96,11 +96,12 @@ const formateTime = (t: number): string => {
 
 const initBaseInfo = async (setData: any): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
+    const resObj = res ?? {};
     setData({
-        ...res,
-        collectDuration: formateTime(Number(res.collectDuration)),
-        collectStartTime: formatDate(new Date(res.collectStartTime)),
-        dataSize: res.dataSize !== undefined && res.dataSize > 0.01 ? Number(res.dataSize?.toFixed(2)) : res.dataSize,
+        ...resObj,
+        collectDuration: formateTime(Number(resObj.collectDuration)),
+        collectStartTime: formatDate(new Date(resObj.collectStartTime)),
+        dataSize: resObj.dataSize !== undefined && resObj.dataSize > 0.01 ? Number(resObj.dataSize?.toFixed(2)) : resObj.dataSize,
     });
 };
 

@@ -106,8 +106,8 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             order: sorter.order,
             stage: conditions.stage,
         });
-        setDataSource(res.allOperators);
-        setPage({ ...page, total: res.count });
+        setDataSource(res?.allOperators ?? []);
+        setPage({ ...page, total: res?.count ?? 0 });
     };
 
     const columns: TableColumnsType<DataType> = [

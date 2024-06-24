@@ -33,7 +33,7 @@ window.requestData = async (command, params, module): Promise<object> => {
         args: { command, params },
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
     });
-    return (data as {body: object}).body;
+    return (data as {body: object})?.body;
 };
 window.setTheme = (isDark: boolean): void => {
     document.body.className = isDark ? 'theme_dark' : 'theme_light';

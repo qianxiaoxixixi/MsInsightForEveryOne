@@ -56,7 +56,7 @@ const searchData = async (conditions: ConditionDataType): Promise<showDataType> 
     }
     const communicationOperatorData = await queryCommunicationOperatorLists(conditions);
     const res = await queryCommunication(conditions);
-    const { advice, items: data = [] } = res;
+    const { advice = [], items: data = [] } = res ?? {};
     data.forEach((item: any, index: number) => { item.index = index; });
     data.sort((a: DataType, b: DataType) => b.elapseTime - a.elapseTime);
     return { chartData: wrapChartData(data), analysisChartData: communicationOperatorData, tableData: data, adviceData: advice };
