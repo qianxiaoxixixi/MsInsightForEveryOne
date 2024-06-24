@@ -19,6 +19,14 @@ void QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Reque
     std::unique_ptr<AffinityOptimizerResponse> responsePtr = std::make_unique<AffinityOptimizerResponse>();
     AffinityOptimizerResponse &response = *responsePtr;
     SetBaseResponse(request, response);
+    std::string error;
+    request.params.Check(error);
+    if (!std::empty(error)) {
+        ServerLog::Warn(error);
+        SetResponseResult(response, false, error);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     if (!AffinityOptimizerAdvisor::Process(request.params, response.body)) {
         ServerLog::Warn("Failed to Query Affinity Optimizer Advice");
         SetResponseResult(response, false);

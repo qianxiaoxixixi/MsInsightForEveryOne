@@ -252,6 +252,17 @@ struct KernelDetailsParams {
     std::string coreType;
     std::string searchName;
     std::vector<std::pair<std::string, std::string>> filters;
+    void Check(std::string &error) const
+    {
+        if (current == 0) {
+            error = "current is invaild";
+            return;
+        }
+        if (pageSize == 0) {
+            error = "pageSize is invaild";
+            return;
+        }
+    }
 };
 
 struct KernelDetailsRequest : public Request {

@@ -20,6 +20,14 @@ void QueryFusedOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     OperatorFusionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
+    std::string error;
+    request.params.Check(error);
+    if (!std::empty(error)) {
+        ServerLog::Warn(error);
+        SetResponseResult(response, false, error);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     if (!FusedOpAdvisor::Process(request.params, response.body)) {
         ServerLog::Warn("Failed to Query Fused Operator Advice for rank: ", request.params.rankId);
         SetResponseResult(response, false);

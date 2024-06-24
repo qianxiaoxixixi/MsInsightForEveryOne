@@ -1,6 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
-*/
+ */
 
 #include "QueryKernelDetailHandler.h"
 #include "ServerLog.h"
@@ -31,15 +31,21 @@ void QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    if (!database->QueryKernelDetailData(request.params, response.body,
-                                         TraceTime::Instance().GetStartTime())) {
+    std::string error;
+    request.params.Check(error);
+    if (!std::empty(error)) {
+        ServerLog::Warn(error);
+        SetResponseResult(response, false, error);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
+    if (!database->QueryKernelDetailData(request.params, response.body, TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get kernel detail response data.");
     }
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }
-
 } // Timeline
 } // Module
 } // Dic
