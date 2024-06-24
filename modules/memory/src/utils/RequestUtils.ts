@@ -6,6 +6,7 @@ import type {
     OperatorMemory,
     OperatorMemoryCondition,
     MemoryType,
+    ResourceType,
     StaticMemoryCondition,
     StaticOperatorList,
     StaticOperatorCurve,
@@ -18,6 +19,10 @@ import type {
  */
 export const memoryTypeGet = async (params: {rankId: string}): Promise<MemoryType> => {
     return window.request({ command: 'Memory/view/type', params });
+};
+
+export const resourceTypeGet = async (params: {rankId: string}): Promise<ResourceType> => {
+    return window.request({ command: 'Memory/view/resourceType', params });
 };
 
 /**

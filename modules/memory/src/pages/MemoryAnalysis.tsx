@@ -13,7 +13,10 @@ import type {
     Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,
     StaticOperatorListDetail, OperatorMemoryCondition, StaticMemoryCondition,
 } from '../entity/memory';
-import { memoryTypeGet, staticOpMemoryGraphGet, staticOpMemoryListGet, memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
+import {
+    memoryTypeGet, staticOpMemoryGraphGet, staticOpMemoryListGet,
+    memoryCurveGet, operatorsMemoryGet, resourceTypeGet,
+} from '../utils/RequestUtils';
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
 import { GroupRankIdsByHost, StyledEmpty } from 'lib/CommonUtils';
@@ -46,10 +49,17 @@ const memoryGraphType = {
     mix: 'mix',
 };
 
+const dataResourceType = {
+    pytorch: 'Pytorch',
+    mindspore: 'MindSpore',
+};
+
 // eslint-disable-next-line max-lines-per-function
 const MemoryAnalysis = observer(function({ session, isDark }: { session: Session; isDark: boolean }) {
     // memory数据类型，默认为dynamic
     const [memoryType, setMemoryType] = useState<string>(memoryGraphType.dynamic);
+    // memory数据来源，默认为pytorch
+    const [resourceType, setResourceType] = useState<string>(dataResourceType.pytorch);
     // 静态图graphId
     const [memoryGraphId, setMemoryGraphId] = useState<string | undefined>(undefined);
     // 静态图graphIdList
@@ -72,6 +82,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     // 最大内存范围，默认1000000KB
     const [maxSize, setMaxSize] = useState<number>(1000000);
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
+    const [staticCurveSpin, setStaticCurveSping] = useState<boolean>(false);
     const [tableSpin, setTableSpin] = useState<boolean>(false);
     const [groupId, setGroupId] = useState<string>('Overall');
     const [current, setCurrent] = useState<number>(1);
@@ -85,6 +96,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     // 监听窗口唤醒状态以重绘echarts
     const [isWakeup, setIsWakeup] = useState<boolean>(false);
     const { t } = useTranslation('memory');
+    const hit = useHit();
 
     const fetchMemoryType = (memoryRankId: string | undefined): void => {
         if (memoryRankId === undefined || memoryRankId === '') {
@@ -98,6 +110,18 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                 setMemoryGraphId(graphIdList[0]);
             }
             setMemoryGraphIdList(graphIdList);
+        }).catch(err => {
+            message.error(err);
+        });
+    };
+
+    const fetchResourceType = (memoryRankId: string | undefined): void => {
+        if (memoryRankId === undefined || memoryRankId === '') {
+            return;
+        }
+        resourceTypeGet({ rankId: memoryRankId }).then((resp) => {
+            const type = resp.type;
+            setResourceType(type);
         }).catch(err => {
             message.error(err);
         });
@@ -290,6 +314,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         fetchMemoryType(rankIdCondition.value);
+        fetchResourceType(rankIdCondition.value);
     }, [rankIdCondition.value]);
 
     useEffect(() => {
@@ -349,7 +374,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setPageSize(10);
             return;
         }
-        setCurveSpin(true);
+        setStaticCurveSping(true);
         staticOpMemoryGraphGet({ rankId: rankIdCondition.value, graphId: memoryGraphId }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
@@ -361,7 +386,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).catch(err => {
             message.error(err);
         }).finally(() => {
-            setCurveSpin(false);
+            setStaticCurveSping(false);
         });
     }, [rankIdCondition.value, session.isClusterMemoryCompletedSwitch, memoryGraphId, t]);
 
@@ -407,15 +432,19 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                             })}
                         />
                     </Col>
-                    <Col span={4}>
-                        <Label name={<span>{t('searchCriteria.GroupBy')}{useHit()}</span>} />
-                        <Select
-                            value={groupId}
-                            style={{ width: 180 }}
-                            onChange={(value: string): void => setGroupId(value)}
-                            options={groupByOptions}
-                        />
-                    </Col>
+                    {
+                        resourceType === dataResourceType.pytorch
+                            ? <Col span={4}>
+                                <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
+                                <Select
+                                    value={groupId}
+                                    style={{ width: 180 }}
+                                    onChange={(value: string): void => setGroupId(value)}
+                                    options={groupByOptions}
+                                />
+                            </Col>
+                            : null
+                    }
                 </Row>
                 <Spin spinning={curveSpin} tip="loading...">
                     <Row style={{ height: 400 }}>
@@ -455,7 +484,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                 />
                             </Col>
                         </Row>
-                        <Spin spinning={curveSpin} tip="loading...">
+                        <Spin spinning={staticCurveSpin} tip="loading...">
                             <Row style={{ height: 400 }}>
                                 <Col span={24}>
 

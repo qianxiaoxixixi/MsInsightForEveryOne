@@ -334,6 +334,14 @@ export interface MemoryType {
 }
 
 /**
+ * 内存数据来源返回类型
+ * @interface MemoryType
+ */
+export interface ResourceType {
+    type: string;
+}
+
+/**
  * 静态图表格详细内容的返回类型
  * @interface StaticOperatorListDetail
  */
