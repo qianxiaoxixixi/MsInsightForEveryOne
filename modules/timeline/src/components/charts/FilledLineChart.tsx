@@ -19,7 +19,7 @@ const findHeights = (datas: number[][]): [number, number] => {
         let height = 0;
         data.forEach((val, index) => {
             if (index === 0) { return; }
-            height += val;
+            height += isNaN(Number(val)) ? 0 : Number(val);
         });
         minHeight = Math.min(minHeight, height);
         maxHeight = Math.max(maxHeight, height);
