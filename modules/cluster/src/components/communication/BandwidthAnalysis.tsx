@@ -23,8 +23,8 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
 
     const updateData = async(): Promise<void> => {
         const result = await getTableData(props.iterationId, props.rankId, props.operatorName, props.stage);
-        const data = wrapData(result);
-        setData(data);
+        const newData = wrapData(result ?? []);
+        setData(newData);
     };
     return (
         <>
@@ -119,17 +119,14 @@ const BandwidthAnalysis = observer(function (props:
 async function getTableData (iterationId: number, rankId: number, operatorName: string, stage: string): Promise<any> {
     const bandwidthDetails = await window.requestData('communication/bandwidth',
         { iterationId, rankId, operatorName, stage });
-    return bandwidthDetails.items;
+    return bandwidthDetails?.items ?? [];
 }
 
 async function getChartData (domId: string, iterationId: number, rankId: number,
     operatorName: string, stage: string): Promise<any> {
     const distributions = await window.requestData('communication/distribution',
         { iterationId, rankId, operatorName, transportType: domId, stage });
-    if (distributions.distributionData === undefined) {
-        return '{}';
-    }
-    return distributions.distributionData;
+    return distributions?.distributionData ?? '{}';
 }
 
 async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
@@ -137,7 +134,7 @@ async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
         const res = await wrapBandwidthData(domId, iterationId, rankId, operatorName, stage);
-        if (res === null) {
+        if (res === null || res === undefined) {
             ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
             const myChart = echarts.init(chartDom);
@@ -197,7 +194,7 @@ async function wrapBandwidthData(domId: string, iterationId: number,
     (bandwidthOptionClone.legend as PlainLegendComponentOption).data = translateList((bandwidthOptionClone.legend as PlainLegendComponentOption).data as []);
     bandwidthOptionClone.series = translateList(bandwidthOptionClone.series as []);
     bandwidthOptionClone.yAxis = translateList(bandwidthOptionClone.yAxis as []);
-    (bandwidthOptionClone.xAxis as CategoryAxisBaseOption).name = i18n.t((bandwidthOptionClone.xAxis as CategoryAxisBaseOption).name, { ns: 'communication' });
+    (bandwidthOptionClone.xAxis as CategoryAxisBaseOption).name = i18n.t((bandwidthOptionClone.xAxis as CategoryAxisBaseOption).name ?? '', { ns: 'communication' });
     (bandwidthOptionClone.xAxis as CategoryAxisBaseOption).data = packetSizeData;
     (bandwidthOptionClone.series as echarts.SeriesOption[])[0].data = packetNumberData;
     (bandwidthOptionClone.series as echarts.SeriesOption[])[1].data = packetBandwidthData;

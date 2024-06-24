@@ -225,7 +225,7 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
     };
     if (name === 'computeDetail') {
         const res = await queryComputeDetail(param);
-        data = res.computeDetails;
+        data = res?.computeDetails ?? [];
         data = data.map((item: any) => ({
             ...item,
             duration: Number(item.duration?.toFixed(4)),
@@ -234,8 +234,8 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
         total = res.totalNum;
     } else {
         const res = await queryCommunicationDetail(param);
-        data = res.communicationDetails;
-        total = res.totalNum;
+        data = res?.communicationDetails ?? [];
+        total = res?.totalNum ?? 0;
     }
     return { data, total };
 };
@@ -295,7 +295,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
     }, [props.rankId, props.step]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
-        let data = res.summaryStatisticsItemList ?? [];
+        let data = res?.summaryStatisticsItemList ?? [];
         data = data.map((item: any) => ({
             ...item,
             duration: Number(item.duration.toFixed(4)),
@@ -331,7 +331,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     }, [props.rankId, props.step]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
-        const list: any[] = res.summaryStatisticsItemList ?? [];
+        const list: any[] = res?.summaryStatisticsItemList ?? [];
         const data = {
             acceleratorCore: 'HCCL',
             Overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,
