@@ -44,6 +44,10 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     const std::string &selectedFile)
 {
     DataBaseManager::Instance().curIsBin = true;
+    if (!FileUtil::CheckFilePathLength(selectedFile)) {
+        ServerLog::Error("File path length check failed.");
+        return false;
+    }
     std::ifstream file(FileUtil::PathPreprocess(selectedFile), std::ios::binary);
     if (!file) {
         ServerLog::Warn("Failed to open file: ", selectedFile);
@@ -279,7 +283,12 @@ void SourceFileParser::Reset()
 
 bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
 {
-    std::ifstream file(FileUtil::PathPreprocess(selectedFilePath), std::ios::binary);
+    if (!FileUtil::CheckFilePathLength(selectedFilePath)) {
+        ServerLog::Error("File path length check failed");
+        return false;
+    }
+    std::string processedFilePath = FileUtil::PathPreprocess(selectedFilePath);
+    std::ifstream file(processedFilePath, std::ios::binary);
     if (!file) {
         return false;
     }
@@ -301,7 +310,7 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
     file.close();
 
     if (isBinary) {
-        this->filePath = FileUtil::PathPreprocess(selectedFilePath);
+        this->filePath = processedFilePath;
     }
 
     return isBinary;
@@ -687,8 +696,8 @@ void SourceFileParser::ConvertToData()
             ServerLog::Error("Failed to read file path buffer.");
             break;
         }
-        std::string filePath(filePathBuffer.data());
-        sourceFiles[filePath] = std::make_pair(start + filePathLengthConst, end);
+        std::string sourceFilePath(filePathBuffer.data());
+        sourceFiles[sourceFilePath] = std::make_pair(start + filePathLengthConst, end);
     }
 
     std::vector<std::pair<int64_t, int64_t>> &apiFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::API_FILE)];

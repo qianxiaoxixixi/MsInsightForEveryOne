@@ -9,7 +9,7 @@ std::string FileUtil::GetCurrPath()
     char currPath[1024];
     std::string strCurrPath;
 #ifdef _WIN32
-    ::GetModuleFileName(NULL, currPath, MAX_PATH);
+    ::GetModuleFileName(nullptr, currPath, MAX_PATH);
     (_tcsrchr(currPath, '\\'))[1] = 0;
     strCurrPath = StringUtil::GbkToUtf8(currPath);
 #else
@@ -29,7 +29,7 @@ std::string FileUtil::GetCurrPath()
     return strCurrPath;
 }
 
-bool FileUtil::CheckFilePath(std::string filePath)
+bool FileUtil::CheckFilePath(const std::string& filePath)
 {
     if (access(filePath.c_str(), R_OK) == -1) {
         Server::ServerLog::Error("Cannot read" + filePath +": ", filePath);
@@ -48,7 +48,7 @@ bool FileUtil::CheckFilePath(std::string filePath)
     return true;
 }
 
-bool FileUtil::CheckFilePathLength(std::string filePath)
+bool FileUtil::CheckFilePathLength(const std::string& filePath)
 {
 #ifdef _WIN32
     if (filePath.size() >= MAX_PATH) {
