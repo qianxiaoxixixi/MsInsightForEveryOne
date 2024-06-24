@@ -445,35 +445,37 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
     const deleteListener = (): void => handleDelete(session, index);
     const cancelListener = (): void => handleCancel(session, index);
     const inputChangeListener = (e: React.ChangeEvent<HTMLInputElement>): void => handleEditInputChange(e, timelineAxisFlag, theme);
-    return <SingleFlagEditDiv id={ 'singleFlagEdit' } style={{ background: theme.tooltipBGColor }}>
-        <Describe style={{ color: theme.svgPlayBackgroundColor }}>{t('timelineMarker:description')}<CloseIcon style={{ float: 'right', marginRight: '15px', fill: '#71757F' }} onClick={cancelListener}></CloseIcon></Describe>
-        <EditInputContainer>
-            <EditInput style={{ color: theme.svgPlayBackgroundColor, backgroundColor: theme.searchBackgroundColor }} defaultValue={ timelineAxisFlag.descriptionCache } onChange={inputChangeListener} type={ 'text' }/>
-            <InputLengthContainer>
-                <span id={ 'inputLength' } style={{ fontSize: '10px', color: timelineAxisFlag.descriptionCache.length === 256 ? '#D94838' : theme.svgPlayBackgroundColor }}>{ timelineAxisFlag.descriptionCache.length }</span>
-                <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>/</span>
-                <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>256</span></InputLengthContainer></EditInputContainer>
-        <ColorText style={{ color: theme.svgPlayBackgroundColor }} id={ 'colorText' }>{t('timelineMarker:color')}</ColorText>
-        <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
-            { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
-                let needAddFlagColor = true;
-                if (index < 23) {
-                    if (item === timelineAxisFlag.color) {
-                        needAddFlagColor = false;
+    return timelineAxisFlag !== undefined
+        ? <SingleFlagEditDiv id={ 'singleFlagEdit' } style={{ background: theme.tooltipBGColor }}>
+            <Describe style={{ color: theme.svgPlayBackgroundColor }}>{t('timelineMarker:description')}<CloseIcon style={{ float: 'right', marginRight: '15px', fill: '#71757F' }} onClick={cancelListener}></CloseIcon></Describe>
+            <EditInputContainer>
+                <EditInput style={{ color: theme.svgPlayBackgroundColor, backgroundColor: theme.searchBackgroundColor }} defaultValue={ timelineAxisFlag.descriptionCache } onChange={inputChangeListener} type={ 'text' }/>
+                <InputLengthContainer>
+                    <span id={ 'inputLength' } style={{ fontSize: '10px', color: timelineAxisFlag.descriptionCache.length === 256 ? '#D94838' : theme.svgPlayBackgroundColor }}>{ timelineAxisFlag.descriptionCache.length }</span>
+                    <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>/</span>
+                    <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>256</span></InputLengthContainer></EditInputContainer>
+            <ColorText style={{ color: theme.svgPlayBackgroundColor }} id={ 'colorText' }>{t('timelineMarker:color')}</ColorText>
+            <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
+                { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
+                    let needAddFlagColor = true;
+                    if (index < 23) {
+                        if (item === timelineAxisFlag.color) {
+                            needAddFlagColor = false;
+                        }
+                        if (index === 23 && needAddFlagColor) {
+                            return <div key={index} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
+                        } else {
+                            return <div key={index} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
+                        }
                     }
-                    if (index === 23 && needAddFlagColor) {
-                        return <div key={index} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
-                    } else {
-                        return <div key={index} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
-                    }
-                }
-                return '';
-            }) }
-            <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
-        </div>
-        <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ confirmListener }>{t('timelineMarker:confirmButton')}</ConfirmButton>
-        <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={ deleteListener }>{t('timelineMarker:deleteButton')}</DeleteButton>
-    </SingleFlagEditDiv>;
+                    return '';
+                }) }
+                <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
+            </div>
+            <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ confirmListener }>{t('timelineMarker:confirmButton')}</ConfirmButton>
+            <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={ deleteListener }>{t('timelineMarker:deleteButton')}</DeleteButton>
+        </SingleFlagEditDiv>
+        : <></>;
 });
 
 const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>, timelineAxisFlag: TimelineAxisFlag, theme: Theme): void => {
@@ -488,7 +490,7 @@ const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>, timelineA
     });
     const inputLength = document.getElementById('inputLength');
     if (inputLength !== null) {
-        inputLength.innerHTML = timelineAxisFlag.descriptionCache.length.toString();
+        inputLength.innerText = timelineAxisFlag.descriptionCache.length.toString();
     }
 };
 
