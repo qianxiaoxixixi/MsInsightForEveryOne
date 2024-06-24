@@ -55,7 +55,7 @@ export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'computing
 
 const getStepOptions = async(): Promise<optionDataType[]> => {
     const res = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
-    const list: string[] = res.data;
+    const list: string[] = res?.data ?? [];
     const options: optionDataType[] = ['All', ...list].map(item => ({ value: item, label: item }));
     return options;
 };
@@ -92,7 +92,7 @@ const Filter = observer((props: any) => {
     const initDefault = async (): Promise<void> => {
         const stepOptions = await getStepOptions();
         const summaryRes: any = await queryTopSummary(conditions);
-        const { rankList = [] } = summaryRes;
+        const rankList = summaryRes?.rankList ?? [];
         const communicators: communicator[] = [];
         _.filter(props.session.communicatorData.partitionModes, data => data.mode !== 'pp')
             .map(data => data.communicators).forEach((item) => {

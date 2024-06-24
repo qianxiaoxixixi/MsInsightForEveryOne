@@ -81,13 +81,13 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
 // 下拉可选项
 const getiterationOptions = async(): Promise<optionDataType[]> => {
     const res: {iterationOrRankId: string[] } = await queryIterations();
-    const list: string[] = res.iterationOrRankId;
+    const list: string[] = res?.iterationOrRankId ?? [];
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
 const getStageOptions = async (iterationId: string): Promise<optionDataType[]> => {
     const res: {data: string[] } = await queryStages({ iterationId });
-    const list = res.data;
+    const list = res?.data ?? [];
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
@@ -97,7 +97,7 @@ Promise<optionDataType[]> => {
     const res: {operatorName: string[] } = (type === 'CommunicationDurationAnalysis'
         ? await queryOperators({ iterationId, rankList, stage })
         : await queryMatrixOperators({ iterationId, stage }));
-    const list = res.operatorName;
+    const list = res?.operatorName ?? [];
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
