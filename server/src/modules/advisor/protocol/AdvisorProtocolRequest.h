@@ -14,6 +14,17 @@ struct APITypeParams {
     uint32_t pageSize{};
     std::string orderBy;
     std::string orderType;
+    void Check(std::string &error) const
+    {
+        if (currentPage == 0) {
+            error = "currentPage is invaild";
+            return;
+        }
+        if (pageSize == 0) {
+            error = "pageSize is invaild";
+            return;
+        }
+    }
 };
 
 struct AffinityOptimizerRequest : public Request {

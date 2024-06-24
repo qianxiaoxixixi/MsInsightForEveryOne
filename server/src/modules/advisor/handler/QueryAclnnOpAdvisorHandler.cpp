@@ -20,6 +20,14 @@ void QueryAclnnOpAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     AclnnOperatorResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
+    std::string error;
+    request.params.Check(error);
+    if (!std::empty(error)) {
+        ServerLog::Warn(error);
+        SetResponseResult(response, false, error);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     if (!AclnnOpAdvisor::Process(request.params, response.body)) {
         ServerLog::Warn("Failed to Query Aclnn Operator Advice");
         SetResponseResult(response, false);
