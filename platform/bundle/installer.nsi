@@ -12,7 +12,7 @@ Name "MindStudio Insight"
 
 !define REGKEY "Software\huawei\MindStudio Insight"
 
-!define MUI_FINISHPAGE_RUN  "$INSTDIR\MindStudio Insight.exe"
+!define MUI_FINISHPAGE_RUN  "$INSTDIR\MindStudio-Insight.exe"
 
 ; Modern UI settings
 !define MUI_ICON "resources\images\icons\mindstudio.ico"
@@ -71,10 +71,10 @@ FunctionEnd
 
 
 Function .onInit
-  nsProcessW::_FindProcess "MindStudio Insight.exe" $R0
+  nsProcessW::_FindProcess "MindStudio-Insight.exe" $R0
   Pop $0
   ${If} $0 = "0" 
-    MessageBox MB_OK "MindStudio Insight.exe is running. Please close it first."
+    MessageBox MB_OK "MindStudio-Insight.exe is running. Please close it first."
     Abort
   ${EndIf}
 
@@ -100,7 +100,7 @@ Section "MindStudio Insight" Secascend_insight
   RMDir /r "$SMPROGRAMS\MindStudio Insight"
 
   SetOutPath $INSTDIR
-  File /r "MindStudio Insight.exe"
+  File /r "MindStudio-Insight.exe"
   SetOutPath $INSTDIR\resources
   File /r "resources\*"
   SetOutPath $INSTDIR\config
@@ -110,15 +110,15 @@ Section "MindStudio Insight" Secascend_insight
   
   ; Create Start Menu shortcut
   CreateDirectory "$SMPROGRAMS\MindStudio Insight"
-  CreateShortCut "$SMPROGRAMS\MindStudio Insight\MindStudio Insight.lnk" "$INSTDIR\MindStudio Insight.exe"
+  CreateShortCut "$SMPROGRAMS\MindStudio Insight\MindStudio Insight.lnk" "$INSTDIR\MindStudio-Insight.exe"
   ; Create Desktop shortcut
-  CreateShortCut "$DESKTOP\MindStudio Insight.lnk" "$INSTDIR\MindStudio Insight.exe"
+  CreateShortCut "$DESKTOP\MindStudio Insight.lnk" "$INSTDIR\MindStudio-Insight.exe"
 
   ; Add to control panel
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "DisplayName" "MindStudio Insight"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "UninstallString" "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "DisplayVersion" "${CURRENT_VERSION}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "DisplayIcon" "$INSTDIR\MindStudio Insight.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "DisplayIcon" "$INSTDIR\MindStudio-Insight.exe"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "Publisher" "Huawei Technologies CO.,Ltd."
 
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "NoModify" 1
@@ -135,10 +135,10 @@ SectionEnd
 
 ; Uninstaller
 Section "Uninstall"
-  nsProcessW::_FindProcess "MindStudio Insight.exe" $R0
+  nsProcessW::_FindProcess "MindStudio-Insight.exe" $R0
   Pop $0
   ${If} $0 = "0" 
-    MessageBox MB_OK "MindStudio Insight.exe is running. Please close it first."
+    MessageBox MB_OK "MindStudio-Insight.exe is running. Please close it first."
     Abort
   ${EndIf}
 
@@ -150,7 +150,7 @@ Section "Uninstall"
     ${EndIf}
 
   ; Remove files
-  Delete "$INSTDIR\MindStudio Insight.exe"
+  Delete "$INSTDIR\MindStudio-Insight.exe"
   RMDir /r $INSTDIR\config
   ; remove all except logs
   RMDir /r $INSTDIR\.mindstudio_insight\admin

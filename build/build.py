@@ -246,7 +246,7 @@ def build_light_package(version, os_name):
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
     bin_file = 'MindStudio_Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio_Insight'
-    target_file = 'MindStudio Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio Insight'
+    target_file = 'MindStudio-Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio-Insight'
     result = exec_command([cargo_cmd, 'build', '--release'], platform_path, 'bin_package')
     if result != 0:
         return 1
@@ -308,7 +308,7 @@ def build_huaweicloud_package(version, os_name):
     shutil.copy(script_path, tmp)
 
     result = exec_command(
-        ["pyinstaller", "--name", "MindStudio Insight", "--add-data", "frontend:./server/frontend", "--add-data",
+        ["pyinstaller", "--name", "MindStudio-Insight", "--add-data", "frontend:./server/frontend", "--add-data",
          "backend:./server/backend", "-F", "./huaweicloud_start_script.py"], tmp, "python_package")
     if result != 0:
         return 1
