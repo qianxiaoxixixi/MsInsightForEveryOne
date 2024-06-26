@@ -181,7 +181,6 @@ void EventParser::EventHandle(const json_t &json)
         type = "S" + type;
     }
     if (type.empty()) {
-        ServerLog::Error("Event Handle. event type is empty. ", JsonUtil::JsonDump(json));
         return;
     }
     if (eventHandleMap.count(type) > 0) {
