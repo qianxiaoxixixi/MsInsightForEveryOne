@@ -38,6 +38,11 @@ const MemoryWrapper = styled.div`
       height: 100%;
     `;
 
+const FlexDiv = styled.div`
+    display: flex;
+    align-items: center;
+`;
+
 const groupBy = [
     { label: 'Overall', value: 'Overall' },
     { label: 'Stream', value: 'Stream' },
@@ -403,9 +408,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     return (
         <div className="memory-analysis-wrapper">
             <MemoryWrapper>
-                <Row style={{ height: 60, alignContent: 'center' }}>
+                <FlexDiv style={{ flexWrap: 'wrap', gap: '10px', padding: '14px', alignContent: 'center' }}>
                     {hostCondition.options.length > 0
-                        ? <Col span={4}>
+                        ? <FlexDiv>
                             <Label name={t('searchCriteria.Host')} />
                             <Select
                                 value={hostCondition.value}
@@ -415,10 +420,10 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                     return { value: host, label: host };
                                 })}
                             />
-                        </Col>
+                        </FlexDiv>
                         : <div></div>
                     }
-                    <Col span={4}>
+                    <FlexDiv>
                         <Label name={t('searchCriteria.RankId')} />
                         <Select
                             value={rankIdCondition.value}
@@ -431,10 +436,10 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                 };
                             })}
                         />
-                    </Col>
+                    </FlexDiv>
                     {
                         resourceType === dataResourceType.pytorch
-                            ? <Col span={4}>
+                            ? <FlexDiv>
                                 <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
                                 <Select
                                     value={groupId}
@@ -442,10 +447,10 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                     onChange={(value: string): void => setGroupId(value)}
                                     options={groupByOptions}
                                 />
-                            </Col>
+                            </FlexDiv>
                             : null
                     }
-                </Row>
+                </FlexDiv>
                 <Spin spinning={curveSpin} tip="loading...">
                     <Row style={{ height: 400 }}>
                         <Col span={24}>
