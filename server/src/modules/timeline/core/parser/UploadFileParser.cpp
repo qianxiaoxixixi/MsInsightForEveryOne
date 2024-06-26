@@ -36,16 +36,6 @@ bool UploadFileParser::Parse(const std::vector<std::string> &filePaths, const st
 
 void UploadFileParser::Parse(UploadFileRequest request)
 {
-    TraceFileParser::Instance().Reset();
-    Summary::KernelParse::Instance().Reset();
-    Memory::MemoryParse::Instance().Reset();
-    UploadFileParser::Instance().ResetAllFiles();
-    Source::SourceFileParser::Instance().Reset();
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
-    Global::ProjectExplorerManager::Instance().SaveProjectExplorer(request.params.fileAttr.path,
-                                                                   request.params.fileAttr.path,
-                                                                   ProjectTypeEnum::TRACE, "drag",
-                                                                   std::vector<std::string>());
     threadPool->AddTask([this, request]() { return this->ParseTask(request); });
 }
 
@@ -92,6 +82,16 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
 {
     std::string fileId = FileUtil::PathPreprocess(request.params.fileAttr.path);
     if (!DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, fileId)) {
+        TraceFileParser::Instance().Reset();
+        Summary::KernelParse::Instance().Reset();
+        Memory::MemoryParse::Instance().Reset();
+        UploadFileParser::Instance().ResetAllFiles();
+        Source::SourceFileParser::Instance().Reset();
+        Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+        Global::ProjectExplorerManager::Instance().SaveProjectExplorer(request.params.fileAttr.path,
+                                                                       request.params.fileAttr.path,
+                                                                       ProjectTypeEnum::TRACE, "drag",
+                                                                       std::vector<std::string>());
         std::string dbPath = InitDataBase(fileId);
         std::map<std::string, std::vector<std::string>> dataPathToDbMap;
         dataPathToDbMap[request.params.fileAttr.path].push_back(dbPath);
@@ -142,7 +142,6 @@ void UploadFileParser::ParseSliceData(const UploadFileRequest& request, const st
     curFileProgress->AddToParsedSize(1);
     ParserAlloc::ParseProgressCallBack(request.token, fileId, curFileProgress->GetParsedSize(),
                                        curFileProgress->GetTotalSize(), curFileProgress->GetProgressPercentage());
-
     bool isLast = request.params.slice.isLast;
     if (isLast) {
         ParseLast(fileId, request);
