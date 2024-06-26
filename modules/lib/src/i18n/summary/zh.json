@@ -50,7 +50,7 @@
     "OverlappedDurations": "被覆盖时长",
     "NotOverlappedDurations": "未被覆盖时长",
     "Advice": "专家建议",
-    "SummaryAdvice": "此集群中{{type}}存在一些问题，因为{{type}}的最大差值达到了{{time}}毫秒。",
+    "SummaryAdvice": "此集群中{{type}}存在一些问题，因为{{type}}的最大差值达到了{{time}}微秒。",
     "StageTimeAndBubbleTimeDescribe": [
       "Stage Time: pp并行时，stage时间代表除recieve算子时间外的其他耗时",
       "Bubble Time: Bubble时间，指receive时间的总和"

@@ -110,8 +110,6 @@ tr.selected {
     background: #272822;
 }
 .hit-label {
-    width: 50%;
-    float: right;
     padding: 0 10px 0 20px;
 }
 .hit-label > span > span:first-child {

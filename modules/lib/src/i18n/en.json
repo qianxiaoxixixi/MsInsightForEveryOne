@@ -43,7 +43,8 @@
     "Rank": "Rank",
     "Custom": "Custom",
     "PaginationTotal": "Total {{total}} items",
-    "Details": "Details"
+    "Details": "Details",
+    "LimitWarn": "Warn : {{name}} exceed the limit , Only display the first {{maxSize}} ."
   },
   "sessionList": {
     "Template": "Template",
