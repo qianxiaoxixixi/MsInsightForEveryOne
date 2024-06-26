@@ -98,7 +98,7 @@ function BlockDetail({ blockDetail = { headerName: [], row: [] }, translate }: I
         setLimit({ ...limit, overlimit: blockDetail.row.length > limit.maxSize, current: blockDetail.row.length });
     }, [blockDetail]);
     return (<div style={{ width: '600px' }}>
-        {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`Block Detail Records (${limit.current})`}/>)}
+        {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`${translate('Block Detail Records')} (${limit.current})`}/>)}
         <ResizeTable
             size="small"
             columns={tableset.cols}

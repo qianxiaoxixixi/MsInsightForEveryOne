@@ -19,7 +19,6 @@ import {
     syncScroller,
     limitInput,
     GetPageConfigWhithPageData,
-    confrimMessage,
 } from '../Common';
 import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
@@ -27,7 +26,6 @@ import { runInAction } from 'mobx';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100万
-const MAX_FILE_SIZE_LABLE = '1 million';
 const MAX_LINE_LENGTH = 10000; // 1万
 const MAX_LINE = 10000; // 1万
 const MAX_INSTRUCTION = 1000000; // 100万
@@ -115,6 +113,7 @@ const Index = observer(({ session }: { session: Session }) => {
     const instrsColumns = useInstrsColumns();
     const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
     const [doneQuery, setDoneQuery] = useState(false);
+    const [instrLimit, setInstrLimit] = useState({ maxSize: MAX_INSTRUCTION, overlimit: false, current: 0 });
     const { t } = useTranslation('source');
     const reset = (): void => {
         // 重置选中行数，-1不选中任一行
@@ -197,17 +196,17 @@ const Index = observer(({ session }: { session: Session }) => {
         }
         if (str.length > MAX_FILE_SIZE) {
             str = str.slice(0, MAX_FILE_SIZE);
-            str += `${linebreak}----------【Characters Exceed ${MAX_FILE_SIZE_LABLE} , Hide the rest content.】----------`;
+            str += `${linebreak}----------【${t('CharactersExceed', { max: MAX_FILE_SIZE })}】----------`;
         }
         if (str.length > 0) {
             let splitlines: string[] = str.split(BREAK_LINE_REGEXP);
             if (splitlines.length > MAX_LINE) {
                 splitlines = splitlines.slice(0, MAX_LINE);
-                splitlines.push(`----------【Exceed ${MAX_LINE} lines , Hide the rest content.】----------`);
+                splitlines.push(`----------【${t('LineExceed', { max: MAX_LINE })}】----------`);
             }
             splitlines = splitlines.map(codeline => {
                 if (codeline.length > MAX_LINE_LENGTH) {
-                    return `${codeline.slice(0, MAX_LINE_LENGTH)} 【Exceed ${MAX_LINE_LENGTH} , Hide the rest content.】`;
+                    return `${codeline.slice(0, MAX_LINE_LENGTH)} 【${t('Exceed', { max: MAX_LINE_LENGTH })}】`;
                 } else {
                     return codeline;
                 }
@@ -230,9 +229,9 @@ const Index = observer(({ session }: { session: Session }) => {
                 return [];
             }
             let list = obj.Instructions ?? [];
+            setInstrLimit({ ...instrLimit, overlimit: list.length > instrLimit.maxSize });
             if (list.length > MAX_INSTRUCTION) {
                 list = list.slice(0, MAX_INSTRUCTION);
-                confrimMessage('warn', `Only display the first ${MAX_INSTRUCTION} Instructions`);
             }
             runInAction(() => {
                 session.Instructions = list;
@@ -283,6 +282,30 @@ const Index = observer(({ session }: { session: Session }) => {
         setCodeLines([]);
         setDoneQuery(false);
     }
+
+    async function updateData(): Promise<void> {
+        Promise.all([
+            getCode(condition.source),
+            getLines(condition.source, condition.core),
+        ]).then(([newCode, newLoggedCodeLines]) => {
+            // 文件源码
+            setCode(newCode);
+            // 代码行记录
+            setLoggedCodeLines(newLoggedCodeLines);
+            // 全部代码行
+            const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
+            const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
+                const Line = index + 1;
+                const lineInfo = newLoggedCodeLines.find((item: Ilinetable) => item.Line === Line) ?? {};
+                return { Line, ...lineInfo };
+            });
+            setCodeLines(sourceCodeLines);
+        });
+        // 指令记录
+        getInstrs(condition.core).then((newInstrlist) => {
+            setInstrsData(newInstrlist);
+        });
+    }
     // 初始化
     useEffect(() => {
         reset();
@@ -303,29 +326,6 @@ const Index = observer(({ session }: { session: Session }) => {
             return;
         }
         updateData();
-        async function updateData(): Promise<void> {
-            Promise.all([
-                getCode(condition.source),
-                getLines(condition.source, condition.core),
-            ]).then(([newCode, newLoggedCodeLines]) => {
-                // 文件源码
-                setCode(newCode);
-                // 代码行记录
-                setLoggedCodeLines(newLoggedCodeLines);
-                // 全部代码行
-                const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
-                const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
-                    const Line = index + 1;
-                    const lineInfo = newLoggedCodeLines.find((item: Ilinetable) => item.Line === Line) ?? {};
-                    return { Line, ...lineInfo };
-                });
-                setCodeLines(sourceCodeLines);
-            });
-            // 指令记录
-            getInstrs(condition.core).then((newInstrlist) => {
-                setInstrsData(newInstrlist);
-            });
-        }
     }, [condition.core, condition.source, session.parseStatus, session.updateId]);
 
     useEffect(() => {
@@ -334,7 +334,11 @@ const Index = observer(({ session }: { session: Session }) => {
 
     useEffect(() => {
         updateInstrsColumns();
-    }, [instrsData, t]);
+    }, [instrsData]);
+    useEffect(() => {
+        updateInstrsColumns();
+        updateData();
+    }, [t]);
 
     return <div id={DomId} style={{ height: '100%', width: '100%' }} className={'th35'}>
         <HeaderFixedContainer
@@ -342,25 +346,34 @@ const Index = observer(({ session }: { session: Session }) => {
             header={
                 <>
                     <Filter session={session} handleFilterChange={handleFilterChange}/>
-                    <div className="hit-label">
-                        <span>
-                            {t('Line')} :
-                            <span>
-                                {selectedline >= 0 ? selectedline : ''},
-                            </span>
-                            {t('RelatedInstructionsCount')} :
-                            <span>
-                                {getRelatedInstrs().length}
-                            </span>
-                        </span>
-                        <Checkbox
-                            style={{ float: 'right' }}
-                            checked={condition.onlyRelated}
-                            onChange={(e: CheckboxChangeEvent): void => {
-                                handleFilterChange({ ...condition, onlyRelated: e.target.checked });
-                            }}
-                        > {t('OnlyRelatedInstructions')}</Checkbox>
-                    </div>
+                    <LeftRightContainer right={
+                        <>
+                            <div className="hit-label">
+                                <span>
+                                    {t('Line')} :
+                                    <span>
+                                        {selectedline >= 0 ? selectedline : ''},
+                                    </span>
+                                    {t('RelatedInstructionsCount')} :
+                                    <span>
+                                        {getRelatedInstrs().length}
+                                    </span>
+                                </span>
+                                <Checkbox
+                                    style={{ float: 'right' }}
+                                    checked={condition.onlyRelated}
+                                    onChange={(e: CheckboxChangeEvent): void => {
+                                        handleFilterChange({ ...condition, onlyRelated: e.target.checked });
+                                    }}
+                                > {t('OnlyRelatedInstructions')}</Checkbox>
+                            </div>
+                            { instrLimit.overlimit
+                                ? (<div style={{ color: 'red', padding: '0 10px 0 20px' }} >
+                                    {t('ExceedInstructions', { max: instrLimit.maxSize })}
+                                </div>)
+                                : <></> }
+                        </>
+                    }/>
                 </>
             }
             body={

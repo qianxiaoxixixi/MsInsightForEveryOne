@@ -37,6 +37,10 @@
     "Show As": "显示为",
     "Num of Request": "请求数",
     "Bandwidth": "带宽",
-    "Ratio": "利用率"
+    "Ratio": "利用率",
+    "Block Detail Records":"Block详情记录数",
+    "All Instruction Records": "指令记录数",
+    "Memory Workload Table Records": "内存负载表记录数",
+    "Current Count": "当前总数"
   }
 }

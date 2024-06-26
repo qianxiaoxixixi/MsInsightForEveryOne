@@ -2,9 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React from 'react';
+import i18n from '../i18n';
 
-const MAX_SIZE = 10000; // 1万
-
-export function LimitHit({ maxSize, name }: {maxSize?: number;name?: string}): JSX.Element {
-    return (<div style={{ color: 'red' }}>{`Warn : ${name ?? ''} exceed the limit , Only display the first ${maxSize ?? MAX_SIZE} .`}</div>);
+export function LimitHit({ maxSize = 0, name = '' }: {maxSize?: number;name?: string}): JSX.Element {
+    return (<div style={{ color: 'red' }}>{i18n.t('LimitWarn', { maxSize, name })}</div>);
 }

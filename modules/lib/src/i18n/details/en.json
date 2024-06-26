@@ -16,6 +16,10 @@
     "Byte": "Byte",
     "MixBlockDim": "Mix Block Dim",
     "MixBlockDetail": "Mix Block Detail",
-    "NAHit": "NA : displays the multi-core average."
+    "NAHit": "NA : displays the multi-core average.",
+    "Block Detail Records":"Block Detail Records",
+    "All Instruction Records": "All Instruction Records",
+    "Memory Workload Table Records": "Memory Workload Table Records",
+    "Current Count": "Current Count"
   }
 }
