@@ -45,6 +45,7 @@
       "Node Index Start": "Node Index Start",
       "Node Index End": "Node Index End",
       "Size(KB)": "Size(KB)",
+      "Size(MB)": "Size(MB)",
       "Allocation Time(ms)": "Allocation Time(ms)",
       "Release Time(ms)": "Release Time(ms)",
       "Duration(ms)": "Duration(ms)",
