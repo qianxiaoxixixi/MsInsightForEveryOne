@@ -37,6 +37,8 @@ template <> std::optional<document_t> ToResponseJson<OperatorDetailsResponse>(co
         JsonUtil::AddMember(itemJson, "synchronizationTimeRatio",
                             operatorItem.synchronizationTimeRatio, allocator);
         JsonUtil::AddMember(itemJson, "waitTimeRatio", operatorItem.waitTimeRatio, allocator);
+        JsonUtil::AddMember(itemJson, "sdmaBw", operatorItem.sdmaBw, allocator);
+        JsonUtil::AddMember(itemJson, "rdmaBw", operatorItem.rdmaBw, allocator);
         allOperators.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);

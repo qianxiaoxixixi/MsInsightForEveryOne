@@ -338,7 +338,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
 {
     sqlite3_stmt *stmt = nullptr;
     std::vector<std::string> orderByFlagVector = {"operatorName", "startTime", "elapseTime", "synchronizationTime",
-                                                  "waitTime", "idleTime", "transitTime",
+                                                  "waitTime", "idleTime", "transitTime", "sdma_bw", "rdma_bw",
                                                   "synchronizationTimeRatio", "waitTimeRatio"};
     if (param.orderBy.empty() ||
         std::find(orderByFlagVector.begin(), orderByFlagVector.end(), param.orderBy) ==
@@ -357,6 +357,9 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, index++, (param.currentPage - 1) * param.pageSize);
     sqlite3_bind_int(stmt, index, param.pageSize);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -371,6 +374,8 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
         operatorItem.idleTime = sqlite3_column_double(stmt, col++);
         operatorItem.synchronizationTimeRatio = sqlite3_column_double(stmt, col++);
         operatorItem.waitTimeRatio = sqlite3_column_double(stmt, col++);
+        operatorItem.sdmaBw = sqlite3_column_double(stmt, col++);
+        operatorItem.rdmaBw = sqlite3_column_double(stmt, col++);
         resBody.allOperators.emplace_back(operatorItem);
     }
     sqlite3_finalize(stmt);

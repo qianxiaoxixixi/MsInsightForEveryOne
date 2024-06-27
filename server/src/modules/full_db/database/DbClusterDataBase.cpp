@@ -174,20 +174,28 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
-    std::string sql = "SELECT hccl_op_name as operatorName, "
-                      " ROUND((start_timestamp - ?/1000.0) / 1000.0, 3) as startTime,"
-                      " ROUND(elapsed_time, 4) as elapseTime, "
-                      " ROUND(transit_time, 4) as transitTime,"
-                      " ROUND(synchronization_time, 4) as synchronizationTime,"
-                      " ROUND(wait_time, 4) as waitTime,"
-                      " ROUND(idle_time, 4) as idleTime,"
-                      " CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
-                      " / (synchronization_time + transit_time), 4) END AS synchronizationTimeRatio,"
-                      " CASE WHEN wait_time = 0 THEN 0 ELSE "
-                      " ROUND(wait_time / (wait_time + transit_time), 4) END AS waitTimeRatio"
-                      " FROM " + TABLE_COMM_ANALYZER_TIME +
-                      " WHERE step = ? AND rank_id = ? AND rank_set = ?"
-                      " AND hccl_op_name != 'Total Op Info' ";
+    std::string sql = "SELECT t.hccl_op_name as operatorName, "
+        "ROUND((start_timestamp - ?/1000.0) / 1000.0, 3) as startTime, "
+        "ROUND(elapsed_time, 4) as elapseTime, "
+        "ROUND(transit_time, 4) as transitTime, "
+        "ROUND(synchronization_time, 4) as synchronizationTime, "
+        "ROUND(wait_time, 4) as waitTime, "
+        "ROUND(idle_time, 4) as idleTime, "
+        "CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
+        " / (synchronization_time + transit_time), 4) END AS synchronizationTimeRatio, "
+        "CASE WHEN wait_time = 0 THEN 0 ELSE "
+        "ROUND(wait_time / (wait_time + transit_time), 4) END AS waitTimeRatio, "
+        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
+        "JOIN ( "
+        "    SELECT hccl_op_name, "
+        "    MAX(CASE WHEN band_type = 'SDMA' THEN bandwidth ELSE 0 END) AS sdma_bw, "
+        "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw "
+        "    FROM " + TABLE_COMM_ANALYZER_BANDWIDTH +
+        "    WHERE step = ? AND rank_id = ? AND rank_set = ? AND hccl_op_name != 'Total Op Info'"
+        "    GROUP BY hccl_op_name "
+        ") bw ON t.hccl_op_name = bw.hccl_op_name "
+        "WHERE t.step = ? AND t.rank_id = ? AND t.rank_set = ? AND t.hccl_op_name != 'Total Op Info'";
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 

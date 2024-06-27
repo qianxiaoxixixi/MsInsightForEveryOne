@@ -659,18 +659,26 @@ bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql =
-        "SELECT op_name as operatorName, "
-        " CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000000.0, 4) END as startTime,"
-        " ROUND(elapse_time, 4) as elapseTime, "
-        " ROUND(transit_time, 4) as transitTime,"
-        " ROUND(synchronization_time, 4) as synchronizationTime,"
-        " ROUND(wait_time, 4) as waitTime,"
-        " ROUND(idle_time, 4) as idleTime,"
-        " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
-        " ROUND(wait_time_ratio, 4) as waitTimeRatio "
-        "FROM " + TABLE_TIME_INFO +
-        " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
-        " AND op_name != 'Total Op Info' ";
+        "SELECT t.op_name as operatorName, "
+        "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000000.0, 4) END as startTime, "
+        "ROUND(elapse_time, 4) as elapseTime, "
+        "ROUND(transit_time, 4) as transitTime, "
+        "ROUND(synchronization_time, 4) as synchronizationTime, "
+        "ROUND(wait_time, 4) as waitTime, "
+        "ROUND(idle_time, 4) as idleTime, "
+        "ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio, "
+        "ROUND(wait_time_ratio, 4) as waitTimeRatio, "
+        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "FROM " + TABLE_TIME_INFO + " t "
+        "JOIN ( "
+        "    SELECT op_name, "
+        "    MAX(CASE WHEN transport_type = 'SDMA' THEN bandwidth_size ELSE 0 END) AS sdma_bw, "
+        "    MAX(CASE WHEN transport_type = 'RDMA' THEN bandwidth_size ELSE 0 END) AS rdma_bw "
+        "    FROM " + TABLE_BANDWIDTH + " "
+        "    WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name != 'Total Op Info' "
+        "    GROUP BY op_name "
+        ") bw ON t.op_name = bw.op_name "
+        " WHERE t.iteration_id = ? AND t.rank_id = ? AND t.stage_id = ? AND t.op_name != 'Total Op Info'";
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 

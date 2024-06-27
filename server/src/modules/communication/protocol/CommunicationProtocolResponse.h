@@ -29,6 +29,8 @@ struct OperatorItem {
     double idleTime;
     double synchronizationTimeRatio;
     double waitTimeRatio;
+    double sdmaBw{};
+    double rdmaBw{};
 };
 
 struct OperatorDetailsResBody {
