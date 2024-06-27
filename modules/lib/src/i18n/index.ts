@@ -17,6 +17,8 @@ import memoryEn from './memory/en.json';
 import memoryZh from './memory/zh.json';
 import timelineEn from './timeline/en.json';
 import timelineZh from './timeline/zh.json';
+import jupyterEn from './jupyter/en.json';
+import jupyterZh from './jupyter/zh.json';
 export const resources = {
     enUS: {
         ...en,
@@ -27,6 +29,7 @@ export const resources = {
         ...summaryEn,
         ...memoryEn,
         ...timelineEn,
+        ...jupyterEn,
     },
     zhCN: {
         ...zh,
@@ -37,6 +40,7 @@ export const resources = {
         ...summaryZh,
         ...memoryZh,
         ...timelineZh,
+        ...jupyterZh,
     },
 };
 

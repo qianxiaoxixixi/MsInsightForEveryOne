@@ -10,9 +10,15 @@ import Jupyter from './components/jupyter/Jupyter';
 const app = observer(() => {
     const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
+    const getLanguage = (): void => {
+        connector.send({
+            event: 'getLanguage',
+        });
+    };
     useEffect(() => {
         session = sessionStore.activeSession;
         connector.send({ event: 'getParseStatus', body: { } });
+        getLanguage();
     }, []);
     return session !== undefined ? <Jupyter session={session} /> : <></>;
 });
