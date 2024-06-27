@@ -45,6 +45,7 @@
       "Node Index Start": "节点索引开始",
       "Node Index End": "节点索引结束",
       "Size(KB)": "大小(KB)",
+      "Size(MB)": "大小(MB)",
       "Allocation Time(ms)": "分配时间(ms)",
       "Release Time(ms)": "释放时间(ms)",
       "Duration(ms)": "时长(ms)",
