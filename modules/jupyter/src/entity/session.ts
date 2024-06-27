@@ -4,6 +4,7 @@
 import { makeAutoObservable } from 'mobx';
 
 export class Session {
+    language: 'zhCN' | 'enUS' = 'enUS';
     isIpynb: boolean = false;
     ipynbUrl: string = '';
     constructor() {
