@@ -102,8 +102,6 @@ tr.ant-table-row.click-able:hover > td.ant-table-cell {
 }
 
 .selectLayer>*{
-    height:30px;
-    line-height: 30px;
     padding: 5px 0;
     cursor: pointer;
 }
