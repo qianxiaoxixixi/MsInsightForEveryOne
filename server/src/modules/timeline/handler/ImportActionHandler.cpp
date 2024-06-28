@@ -77,6 +77,10 @@ void ImportActionHandler::SendParseFailEvent(const std::string &token, const std
 void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo,
                                             std::string token)
 {
+    // 拖拽的文件原始文件不会保存在本地，因此不需要对拖拽的文件路径进行校验
+    if (!projectExplorerInfo.empty() && projectExplorerInfo[0].importType == "drag") {
+        return;
+    }
     for (auto file: projectExplorerInfo) {
         if (!FileUtil::CheckFilePathExist(file.fileName)) {
             string message = "paths do not exist: " + file.fileName;

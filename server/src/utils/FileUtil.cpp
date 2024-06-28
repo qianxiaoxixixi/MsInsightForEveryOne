@@ -31,8 +31,14 @@ std::string FileUtil::GetCurrPath()
 
 bool FileUtil::CheckFilePathExist(const std::string& filePath)
 {
-    if (access(filePath.c_str(), R_OK) == -1) {
-        Server::ServerLog::Error("Cannot read filePath: ", filePath);
+    std::string tmpPath(filePath);
+#ifdef _WIN32
+    if (StringUtil::IsUtf8String(filePath)) {
+        tmpPath = StringUtil::Utf8ToGbk(filePath.c_str());
+    }
+#endif
+    if (access(tmpPath.c_str(), R_OK) == -1) {
+        Server::ServerLog::Error("Cannot read filePath: ", tmpPath);
         return false;
     }
     return true;
