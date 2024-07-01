@@ -8,6 +8,10 @@
     "Pipe": "Pipe",
     "OnlyRelatedInstructions": "Only Related Instructions",
     "Line": "Line",
-    "RelatedInstructionsCount": "Related Instructions Count"
+    "RelatedInstructionsCount": "Related Instructions Count",
+    "CharactersExceed": "Characters Exceed {{max}} , Hide the rest content",
+    "LineExceed": "Exceed {{max}} lines , Hide the rest content",
+    "Exceed": "Exceed {{max}} , Hide the rest content",
+    "ExceedInstructions": "Only display the first {{max}} Instructions"
   }
 }

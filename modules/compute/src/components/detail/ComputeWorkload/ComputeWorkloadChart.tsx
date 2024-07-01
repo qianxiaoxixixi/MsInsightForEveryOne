@@ -3,6 +3,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import * as echarts from 'echarts';
+import { useTranslation } from 'react-i18next';
 import { type IblockData } from './Index';
 import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc } from 'lib/CommonUtils';
 import { LimitHit } from '../../LimitSet';
@@ -96,6 +97,7 @@ function wrapData(data: IblockData[]): any {
 
 const chartID = 'ComputeWorkload';
 function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
+    const { t } = useTranslation('details');
     const [limit, setLimit] = useState({ maxSize: 5000, overlimit: true, current: 0 });
     const allData = useMemo(() => data.filter(item => item.blockId === blockId), [blockId, data]);
     const showData = useMemo(() => data.filter(item => item.blockId === blockId).slice(0, limit.maxSize), [blockId, data]);
@@ -113,7 +115,7 @@ function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
     }, [showData]);
     return (
         <div style={{ padding: '20px' }}>
-            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`Current Count (${limit.current})`}/>}
+            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${t('Current Count')} (${limit.current})`}/>}
             <div id={chartID} style={{ height: '400px' }} ></div>
         </div>
     );
