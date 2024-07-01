@@ -43,7 +43,8 @@
     "Rank": "卡",
     "Custom": "自定义",
     "PaginationTotal": "共 {{total}} 条",
-    "Details": "详情"
+    "Details": "详情",
+    "LimitWarn": "提示 : {{name}} 超出限制数量限制, 只显示前 {{maxSize}} 条。"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",
