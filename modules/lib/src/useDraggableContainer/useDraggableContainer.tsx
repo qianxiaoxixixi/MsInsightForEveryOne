@@ -49,24 +49,24 @@ const MIN_VERTICAL_WH = 36;
 
 const ContainerBase = styled.div<CssProps>`
     display: flex;
-    background-color: ${p => p.theme.contentBackgroundColor};
+    background-color: ${(p): string => p.theme.contentBackgroundColor};
     flex-grow: 1;
     overflow: hidden;
     width: 100%;
 
     .bottomC {
-        background-color: ${p => p.theme.contentBackgroundColor};
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
         svg + .buttonShow {
             position: absolute;
             g {
-                fill: ${props => props.theme.closeDragContainerBG};
+                fill: ${(props): string => props.theme.closeDragContainerBG};
             }
             .caret {
                 position: absolute;
                 cursor: pointer;
                 top: 50%;
                 right: 0;
-                color: ${p => p.theme.switchIconColor};
+                color: ${(p): string => p.theme.switchIconColor};
                 svg {
                     width: 10px;
                 }
@@ -81,7 +81,7 @@ const ContainerBase = styled.div<CssProps>`
 `;
 const ContainerLeft = styled(ContainerBase)`
     flex-direction: row-reverse;
-    border-bottom: ${p => p.theme.dividerColor} 1px solid;
+    border-bottom: ${(p): string => p.theme.dividerColor} 1px solid;
     & > .topC {
         flex: 1;
         flex-flow: row;
@@ -90,8 +90,8 @@ const ContainerLeft = styled(ContainerBase)`
     & > .bottomC {
         position: relative;
         height: 100%;
-        width: ${p => p.draggableWH};
-        border-right: ${p => p.theme.dividerColor} 2px solid;
+        width: ${(p): string => p.draggableWH};
+        border-right: ${(p): string => p.theme.dividerColor} 2px solid;
         overflow: hidden;
         display: flex;
         & > .splitLine {
@@ -100,7 +100,7 @@ const ContainerLeft = styled(ContainerBase)`
             width: 10px;
             right: 0;
             background-color: transparent;
-            border-right: ${p => p.theme.dividerColor} 0 solid;
+            border-right: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=false] {
                 border-right-width: 1px;
                 cursor: e-resize;
@@ -114,7 +114,7 @@ const ContainerLeft = styled(ContainerBase)`
             transform: rotate(90deg);
             right: -33px;
             g {
-                fill: ${props => props.theme.closeDragContainerBG};
+                fill: ${(props): string => props.theme.closeDragContainerBG};
             }
         }
         & > .caret {
@@ -124,7 +124,7 @@ const ContainerLeft = styled(ContainerBase)`
             z-index: 2;
             top: 50%;
             right: 0;
-            color: ${p => p.theme.switchIconColor};
+            color: ${(p): string => p.theme.switchIconColor};
             svg {
                 width: 10px;
             }
@@ -142,14 +142,14 @@ const ContainerRight = styled(ContainerBase)`
     & > .bottomC {
         position: relative;
         height: 100%;
-        width: ${p => p.draggableWH};
+        width: ${(p): string => p.draggableWH};
         overflow: hidden;
         display: flex;
         & > .dragContainer {
             z-index: 1;
         }
         & > .dragContainer[aria-disabled=true] {
-            border-left: ${p => p.theme.dividerColor} 2px solid;
+            border-left: ${(p): string => p.theme.dividerColor} 2px solid;
             padding-left: 15px;
         }
         & > .splitLine {
@@ -159,7 +159,7 @@ const ContainerRight = styled(ContainerBase)`
             left: 0;
             z-index: 1;
             background-color: transparent;
-            border-left: ${p => p.theme.dividerColor} 0 solid;
+            border-left: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=false] {
                 border-left-width: 3px;
                 cursor: e-resize;
@@ -173,7 +173,7 @@ const ContainerRight = styled(ContainerBase)`
             transform: rotate(-90deg);
             left: -33px;
             g {
-                fill: ${props => props.theme.closeDragContainerBG};
+                fill: ${(props): string => props.theme.closeDragContainerBG};
             }
         }
         & > .caret {
@@ -182,7 +182,7 @@ const ContainerRight = styled(ContainerBase)`
             z-index: 2;
             top: 50%;
             left: 2px;
-            color: ${p => p.theme.switchIconColor};
+            color: ${(p): string => p.theme.switchIconColor};
             svg {
                 width: 10px;
             }
@@ -200,8 +200,8 @@ const ContainerBottom = styled(ContainerBase)`
 
     & > .bottomC {
         width: 100%;
-        height: ${p => p.draggableWH};
-        border-top: ${p => p.theme.dividerColor} 2px solid;
+        height: ${(p): string => p.draggableWH};
+        border-top: ${(p): string => p.theme.dividerColor} 2px solid;
         position: relative;
         & > .splitLine {
             position: absolute;
@@ -210,7 +210,7 @@ const ContainerBottom = styled(ContainerBase)`
             width: 100%;
             top: 0;
             background-color: transparent;
-            border-top: ${p => p.theme.dividerColor} 0 solid;
+            border-top: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=false] {
                 border-top-width: 1px;
                 cursor: n-resize;
@@ -224,7 +224,7 @@ const ContainerBottom = styled(ContainerBase)`
             z-index: 4;
 
             g {
-                fill: ${p => p.theme.closeDragContainerBG};
+                fill: ${(p): string => p.theme.closeDragContainerBG};
             }
         }
 
@@ -235,7 +235,7 @@ const ContainerBottom = styled(ContainerBase)`
             left: calc(50% - 6px);;
             top: -2px;
             transform: rotate(90deg);
-            color: ${p => p.theme.switchIconColor};
+            color: ${(p): string => p.theme.switchIconColor};
 
             svg {
                 width: 10px;
@@ -252,13 +252,13 @@ const ContainerBottom = styled(ContainerBase)`
 const ContainerTop = styled(ContainerBase)`
     flex-direction: column-reverse;
     .topC {
-      height: calc(100vh - ${p => p.translateXY === 0 ? p.draggableWH : p.minWH}px);
+      height: calc(100vh - ${(p): string | number => p.translateXY === 0 ? p.draggableWH : p.minWH}px);
     }
     .bottomC {
         top: 0;
         left: 0;
         right: 0;
-        height: ${p => p.draggableWH}px;
+        height: ${(p): string => p.draggableWH}px;
         .buttonShow {
             position: absolute;
             bottom: 0;
@@ -498,12 +498,13 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
                 key={props.id} ref={container} column translateXY={dragTranslate}
                 draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)}
                 dragDirection={dragDirection} minWH={MIN_DRAG_WH}
-                onMouseUp={e => onMouseup(e.nativeEvent)} onMouseDown={e => onMousedown(e.nativeEvent)} onMouseMove={e => onMousemove(e.nativeEvent)}>
+                onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
+                onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
                 <div className={'topC'}> {props.mainContainer} </div>
                 <div className={'bottomC'} ref={draggable}>
                     <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{props.draggableContainer}</div>
-                    <DrawerButton className={'buttonShow'} onClick={() => showDraggable()} />
-                    {dragTranslate ? <CaretLeftOutlined onClick={() => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={() => showDraggable()} className={'caret'}/>}
+                    <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} />
+                    {dragTranslate ? <CaretLeftOutlined onClick={(): void => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={(): void => showDraggable()} className={'caret'}/>}
                     <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
                 </div>
                 {props.slot}
