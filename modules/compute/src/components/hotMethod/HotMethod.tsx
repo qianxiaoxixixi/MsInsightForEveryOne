@@ -25,10 +25,12 @@ import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
-const MAX_FILE_SIZE = 1000000; // 100万
-const MAX_LINE_LENGTH = 10000; // 1万
-const MAX_LINE = 10000; // 1万
-const MAX_INSTRUCTION = 1000000; // 100万
+const MAX_FILE_SIZE = 1000000; // 100,0000
+const MAX_LINE_LENGTH = 10000; // 10000
+const MAX_LINE = 10000;
+const MAX_INSTRUCTION = 1000000; // 100,0000
+const PAGE_LIMIT = 500000; // 50,0000
+const ROW_HEIGHT = 29;
 
 interface ConditionType {
     core: string;
@@ -89,6 +91,7 @@ const useInstrsColumns = (): ColumnsType<InstrsColumnType> => {
             dataIndex: 'Cycles',
             width: 150,
             ellipsis: true,
+            sorter: true,
             render: (cycles, record): string | React.ReactElement => {
                 if (cycles === '') {
                     return '';
@@ -309,6 +312,13 @@ const Index = observer(({ session }: { session: Session }) => {
             setInstrsData(newInstrlist);
         });
     }
+
+    function updateCode(): void {
+        getCode(condition.source).then(newCode => {
+            // 文件源码
+            setCode(newCode);
+        });
+    }
     // 初始化
     useEffect(() => {
         reset();
@@ -337,10 +347,9 @@ const Index = observer(({ session }: { session: Session }) => {
 
     useEffect(() => {
         updateInstrsColumns();
-    }, [instrsData]);
+    }, [instrsData, t]);
     useEffect(() => {
-        updateInstrsColumns();
-        updateData();
+        updateCode();
     }, [t]);
 
     return <div id={DomId} style={{ height: '100%', width: '100%' }} className={'th35'}>
@@ -460,8 +469,7 @@ interface IinstrProp {
     lineClickListener: number;
     isShowPage?: boolean;
 }
-const PAGE_LIMIT = 500000;
-const rowHeight = 29;
+
 const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr }:
 {
     condition: ConditionType;
@@ -478,7 +486,7 @@ const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr 
         if (index < 0) {
             return;
         }
-        const top = index * rowHeight;
+        const top = index * ROW_HEIGHT;
         const parentNode = document.querySelector('#Instructions .ant-table-body') as HTMLElement;
         parentNode.scrollTo({ top });
     });
@@ -509,32 +517,60 @@ function InstructionTable({
             lineClickListener={lineClickListener}/>;
 };
 
+const getShowData = (dataSource: InstrsColumnType[], filters: Record<string, any[]>, sorter: Record<string, any>): InstrsColumnType[] => {
+    let newDataSource = [...dataSource];
+    // 筛选
+    newDataSource = filterData(newDataSource, filters);
+    // 排序
+    newDataSource = sortData(newDataSource, sorter);
+    return newDataSource;
+};
+
+const filterData = (dataSource: InstrsColumnType[], filters: Record<string, any[]>): InstrsColumnType[] => {
+    const fields = Object.keys(filters).filter(field => filters[field] !== null);
+    if (fields.length === 0) {
+        return dataSource;
+    }
+    return dataSource.filter(row => {
+        let fit = true;
+        for (let i = 0; i < fields.length; i++) {
+            const field = fields[i];
+            const value = (row as any)[field];
+            fit = fit && filters[field].find((filterValue: string | number) => filterValue === value);
+            if (!fit) {
+                break;
+            }
+        }
+        return fit;
+    });
+};
+
+const sortData = (dataSource: InstrsColumnType[], sorter: Record<string, any>): InstrsColumnType[] => {
+    if (sorter?.order === undefined || sorter?.order === null || dataSource?.length === 0) {
+        return dataSource;
+    }
+    const sign = sorter.order === 'ascend' ? 1 : -1;
+    const field: keyof InstrsColumnType = sorter.field;
+    const filedType = typeof dataSource[0][field];
+    return [...dataSource].sort((a, b) => {
+        switch (filedType) {
+            case 'number':
+                return sign * (Number(a[field]) - Number(b[field]));
+            default:
+                return sign * String(a[field]).localeCompare(String(b[field]));
+        }
+    });
+};
 function InstructionTableNopage({
     columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState(dataSource);
     const [filters, setFilters] = useState<Record<string, any[]>>({});
+    const [sorter, setSorter] = useState<Record<string, any>>({});
 
     useEffect(() => {
-        let newDataSource = dataSource;
-        // 筛选条件
-        const fields = Object.keys(filters).filter(field => filters[field] !== null);
-        if (fields.length > 0) {
-            newDataSource = dataSource.filter(row => {
-                let res = true;
-                for (let i = 0; i < fields.length; i++) {
-                    const field = fields[i];
-                    const value = (row as any)[field];
-                    res = res && filters[field].find((filterValue: string | number) => filterValue === value);
-                    if (!res) {
-                        break;
-                    }
-                }
-                return res;
-            });
-        }
-        setShowDataSource(newDataSource);
-    }, [dataSource, filters]);
+        setShowDataSource(getShowData(dataSource, filters, sorter));
+    }, [dataSource, filters, sorter]);
 
     useEffect(() => {
         srcollToView({ condition, selectedline, showDataSource, isRelatedInstr });
@@ -552,50 +588,41 @@ function InstructionTableNopage({
             },
         })}
         pagination={false}
-        scroll={{ y: tableHeight, rowHeight, scrollToFirstRowOnChange: false }}
+        scroll={{ y: tableHeight, rowHeight: ROW_HEIGHT, scrollToFirstRowOnChange: false }}
         virtual={true}
-        onChange={(pagination: any, newFilters: {[p: string]: any[]}, sorter: any, extra: any): void => {
-            if (extra.action === 'filter') {
-                setFilters(newFilters);
+        onChange={(pagination: any, newFilters: {[p: string]: any[]}, newSorter: any, extra: any): void => {
+            switch (extra.action) {
+                case 'filter':
+                    setFilters(newFilters);
+                    break;
+                case 'sort':
+                    setSorter(newSorter);
+                    break;
+                default:
+                    break;
             }
         }}
     />;
 }
-// eslint-disable-next-line max-lines-per-function
+
 function InstructionTablePage({
     columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState<InstrsColumnType[]>([]);
     const [filters, setFilters] = useState<Record<string, any[]>>({});
+    const [sorter, setSorter] = useState<Record<string, any>>({});
     const [page, setPage] = useState({ current: 1, pageSize: PAGE_LIMIT, total: dataSource.length });
     const [pageData, setPageData] = useState(showDataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize));
 
     useEffect(() => {
-        let newDataSource = dataSource;
-        // 筛选条件
-        const fields = Object.keys(filters).filter(field => filters[field] !== null);
-        if (fields.length > 0) {
-            newDataSource = dataSource.filter(row => {
-                let res = true;
-                for (let i = 0; i < fields.length; i++) {
-                    const field = fields[i];
-                    const value = (row as any)[field];
-                    res = res && filters[field].find((filterValue: string | number) => filterValue === value);
-                    if (!res) {
-                        break;
-                    }
-                }
-                return res;
-            });
-        }
-        setShowDataSource(newDataSource);
-    }, [dataSource, filters]);
+        setShowDataSource(getShowData(dataSource, filters, sorter));
+    }, [dataSource, filters, sorter]);
     useEffect(() => {
         setPage({ ...page, total: showDataSource.length });
     }, [showDataSource]);
     useEffect(() => {
         const index = showDataSource.findIndex(isRelatedInstr);
-        const onPage = Number(page.pageSize) > 0 ? Math.floor(index / page.pageSize) + 1 : 1;
+        const onPage = Number(page.pageSize) > 0 ? Math.ceil((index + 1) / page.pageSize) : 1;
         if (index > 0 && onPage !== page.current) {
             setPage({ ...page, current: onPage, total: showDataSource.length });
         }
@@ -621,11 +648,18 @@ function InstructionTablePage({
             },
         })}
         pagination={ GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT]) }
-        scroll={{ y: tableHeight - 50, rowHeight }}
+        scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT }}
         virtual={true}
-        onChange={(pagination: any, newFilters: {[p: string]: any[]}, sorter: any, extra: any): void => {
-            if (extra.action === 'filter') {
-                setFilters(newFilters);
+        onChange={(pagination: any, newFilters: {[p: string]: any[]}, newSorter: any, extra: any): void => {
+            switch (extra.action) {
+                case 'filter':
+                    setFilters(newFilters);
+                    break;
+                case 'sort':
+                    setSorter(newSorter);
+                    break;
+                default:
+                    break;
             }
         }}
     />;
