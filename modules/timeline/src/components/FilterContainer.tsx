@@ -41,15 +41,15 @@ const Container = styled.div`
     align-items: center;
     width: 100%;
     height: ${FILTER_HEIGHT}px;
-    background-color: ${props => props.theme.contentBackgroundColor};
-    border-top: 1px solid ${p => p.theme.dividerColor};
+    background-color: ${(props): string => props.theme.contentBackgroundColor};
+    border-top: 1px solid ${(p): string => p.theme.dividerColor};
 
     .ant-select {
         height: 24px;
         margin-left: 8px;
         border-radius: 8px;
-        border: 1px solid ${props => props.theme.solidLine};
-        color: ${props => props.theme.deviceProcessContentFontColor};
+        border: 1px solid ${(props): string => props.theme.solidLine};
+        color: ${(props): string => props.theme.deviceProcessContentFontColor};
         text-align: left;
         font-size: 1rem;
         .ant-select-arrow {
@@ -64,31 +64,31 @@ const Container = styled.div`
             height: 24px;
             padding: 0 6px;
             border: none;
-            background-color: ${props => props.theme.deviceProcessBackgroundColor};
+            background-color: ${(props): string => props.theme.deviceProcessBackgroundColor};
             .ant-select-selection-overflow {
                 margin-top: -6px;
             }
             .ant-select-selection-placeholder {
                 padding-left: 3px;
-                color: ${props => props.theme.filterColor};
+                color: ${(props): string => props.theme.filterColor};
             }
             .ant-select-selection-overflow-item .ant-select-selection-item {
                 max-width: 80px;
                 border-radius: 8px;
-                border: 1px solid ${props => props.theme.solidLine};
+                border: 1px solid ${(props): string => props.theme.solidLine};
                 background: transparent;
                 .ant-select-selection-item-content {
-                    color: ${props => props.theme.filterColor};
+                    color: ${(props): string => props.theme.filterColor};
                 }
                 .ant-select-selection-item-remove svg {
-                    fill: ${props => props.theme.devicePullDown};
+                    fill: ${(props): string => props.theme.devicePullDown};
                 }
             }
             .ant-select-selection-search .ant-select-selection-search-input {
                 height: 0px;
             }
             .ant-select-selection-item {
-                color: ${props => props.theme.filterColor};
+                color: ${(props): string => props.theme.filterColor};
             }
         }
         .ant-select-selection-item {
@@ -104,15 +104,15 @@ const Container = styled.div`
                 & > div {
                     border-radius: 10px;
                     font-size: 1rem;
-                    background: ${props => props.theme.deviceProcessBackgroundColor};
-                    color: ${props => props.theme.filterColor};
+                    background: ${(props): string => props.theme.deviceProcessBackgroundColor};
+                    color: ${(props): string => props.theme.filterColor};
                 }
                 .ant-select-item-option-active {
-                    color: ${props => props.theme.filterColor} !important;
-                    background-color: ${props => props.theme.filterSelectActiveBgColor} !important;
+                    color: ${(props): string => props.theme.filterColor} !important;
+                    background-color: ${(props): string => props.theme.filterSelectActiveBgColor} !important;
                     svg {
                         g {
-                            fill: ${props => props.theme.deviceProcessActiveFontColor};
+                            fill: ${(props): string => props.theme.deviceProcessActiveFontColor};
                         }
                     }
                 }
@@ -138,7 +138,7 @@ const Container = styled.div`
             height: 20px;
             align-items: center;
             border: none!important;
-            background: ${props => props.theme.multiSelectBgColor} !important;
+            background: ${(props): string => props.theme.multiSelectBgColor} !important;
             .ant-checkbox {
                 display: none;
                 & + span {
@@ -155,21 +155,21 @@ const Container = styled.div`
                 }
                 .ant-checkbox-inner {
                     border-radius: 4px;
-                    background-color: ${props => props.theme.multiSelectUnCheckedBgColor};
-                    border: 1px solid ${props => props.theme.multiSelectUnCheckedBorderColor};
+                    background-color: ${(props): string => props.theme.multiSelectUnCheckedBgColor};
+                    border: 1px solid ${(props): string => props.theme.multiSelectUnCheckedBorderColor};
                 }
                 &.ant-checkbox-checked::after {
                     border-radius: 4px;
                 }
             }
             div {
-                color: ${props => props.theme.filterColor};
+                color: ${(props): string => props.theme.filterColor};
             }
         }
     }
 
     .pullDownIcon g use {
-        fill: ${props => props.theme.devicePullDown};
+        fill: ${(props): string => props.theme.devicePullDown};
     }
 
     /* 搜索框 */
@@ -177,7 +177,7 @@ const Container = styled.div`
         display: flex;
         height: 24px;
         align-items: center;
-        background-color: ${props => props.theme.searchBackgroundColor};
+        background-color: ${(props): string => props.theme.searchBackgroundColor};
         border-radius: 20px;
         margin-left: 8px;
         padding: 0 10px;
@@ -186,25 +186,25 @@ const Container = styled.div`
             background-color: transparent;
             border: none;
             font-size: 1rem;
-            caret-color: ${props => props.theme.searchInputCaretColor};
-            color: ${props => props.theme.filterColor};
+            caret-color: ${(props): string => props.theme.searchInputCaretColor};
+            color: ${(props): string => props.theme.filterColor};
             &.ant-input:focus, &.ant-input:hover {
-                border-color: ${props => props.theme.solidLine};
+                border-color: ${(props): string => props.theme.solidLine};
                 box-shadow: none;
             }
             &::placeholder {
-                color: ${props => props.theme.filterTipColor};
+                color: ${(props): string => props.theme.filterTipColor};
             }
         }
         .searchIcon {
             g use {
-                fill: ${props => props.theme.searchIconBackgroundColor};
+                fill: ${(props): string => props.theme.searchIconBackgroundColor};
             }
         }
         .cancalIcon {
             cursor: pointer;
             g, g path {
-                fill: ${props => props.theme.cancelIconBackgroundColor};
+                fill: ${(props): string => props.theme.cancelIconBackgroundColor};
             }
         }
     }
@@ -215,13 +215,13 @@ const Container = styled.div`
         align-items: center;
         // 开关关闭
         .ant-switch {
-            background-color: ${props => props.theme.switchClose};
+            background-color: ${(props): string => props.theme.switchClose};
         }
         // 开关开启
         .ant-switch-checked {
-            background-color: ${props => props.theme.switchOpen};
+            background-color: ${(props): string => props.theme.switchOpen};
         }
-        .ant-switch-checked: focus {
+        .ant-switch-checked:focus {
             box-shadow: none;
         }
         button {
@@ -269,8 +269,8 @@ const SingleSelect = ({ theme, tabState, optionVal, options, style, origin }: Si
         suffixIcon={<PullDownIcon className="pullDownIcon"/>}
         dropdownStyle={{ background: theme.deviceProcessBackgroundColor }}
         bordered={false}
-        onSelect={(value: any) => selectVal(value, tabState, origin)}
-        getPopupContainer={(trigger: HTMLElement) => trigger.parentNode}
+        onSelect={(value: any): void => selectVal(value, tabState, origin)}
+        getPopupContainer={(trigger: HTMLElement): ParentNode | null => trigger.parentNode}
         options={options}
         style={style}>
     </Select>;
@@ -286,17 +286,17 @@ const MultiSelect = ({ theme, tabState, dftVal, options, style, mode }: Multiple
         suffixIcon={<PullDownIcon className="pullDownIcon"/>}
         dropdownStyle={{ background: theme.deviceProcessBackgroundColor }}
         bordered={false}
-        getPopupContainer={(trigger: HTMLElement) => trigger.parentNode}
+        getPopupContainer={(trigger: HTMLElement): ParentNode | null => trigger.parentNode}
         style={style}
         mode={mode}
-        onChange={(value: unknown) => handleChange(value, tabState, setDirty)}
-        onMouseDown={(e: React.MouseEvent) => { setDirty(false); e.stopPropagation(); }}
+        onChange={(value: unknown): void => handleChange(value, tabState, setDirty)}
+        onMouseDown={(e: React.MouseEvent): void => { setDirty(false); e.stopPropagation(); }}
         maxTagCount="responsive"
         placeholder="Click to choose">
         { options.map(item =>
             <Select.Option key={item.value}>
                 <Row className={'multiSelectRow'}>
-                    <Checkbox value={item.value} onClick={(e: React.MouseEvent) => { if (dirty) { e.stopPropagation(); } setDirty(false); }}
+                    <Checkbox value={item.value} onClick={(e: React.MouseEvent): void => { if (dirty) { e.stopPropagation(); } setDirty(false); }}
                         checked={tabState?.filter?.filterKeys.includes(String(item.value))}>
                         <div style={{ width: '135px' }}><Abbreviature content={ item.label } placement={'right'} availableWidth={135} /></div>
                     </Checkbox>
@@ -347,12 +347,12 @@ const SearchContainer = observer(({ initialContent, fieldName, tabState }: { ini
         <SearchIcon className="searchIcon"/>
         <Input
             placeholder={`Involves ${fieldName}`}
-            onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => handleSearch(tabState, e)}
+            onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>): void => handleSearch(tabState, e)}
             key={fieldName}
             value={content}
             onChange={handleInput}
         />
-        <CancelIcon className="cancalIcon" onClick={() => { setContent(''); handleSearch(tabState); }} />
+        <CancelIcon className="cancalIcon" onClick={(): void => { setContent(''); handleSearch(tabState); }} />
     </div>;
 });
 
@@ -392,7 +392,7 @@ export const FilterContainer = observer(({ tabState }: {tabState: TabState}) => 
             checked !== undefined && tips !== undefined &&
             <div className="switch">
                 <span>{tips}</span>
-                <Switch defaultChecked={checked} onChange={(checked: boolean) => { switchChange(checked, tabState); changeCallBack?.(checked); }} size="small"/>
+                <Switch defaultChecked={checked} onChange={(newCheckedState: boolean): void => { switchChange(newCheckedState, tabState); changeCallBack?.(newCheckedState); }} size="small"/>
             </div>
         }
     </Container>;
