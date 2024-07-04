@@ -87,7 +87,7 @@ export class Connection {
                 reject(new Error('connection is not initialized'));
                 return;
             }
-            this._ws.onopen = (ev: Event) => {
+            this._ws.onopen = (ev: Event): void => {
                 console.info('[connector]', 'onopen');
                 // token Create
                 const msg: Request = createRequestHead(0, 'global', 'token.create', { token: '' });
@@ -240,19 +240,22 @@ export class Connection {
             this.initHeartCheck();
         }, 30 * 1000);
     }
-    private setHeartCheck(){
+
+    private setHeartCheck(): void {
         this.clearHeartCheckTimer();
         this._heartCheckTimer = setTimeout(()=>{
             this.sendHeartCheck();
         },60*1000)
     }
-    private clearHeartCheckTimer(){
+
+    private clearHeartCheckTimer(): void {
         if(this._heartCheckTimer){
             clearTimeout(this._heartCheckTimer);
             this._heartCheckTimer = undefined;
         }
     }
-    private sendHeartCheck(){
+
+    private sendHeartCheck(): void {
         const msg: Request = createRequestHead(this._msgId++, 'global', 'token.heartCheck', { token: this._token });
         this.request(msg);
     }

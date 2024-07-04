@@ -119,9 +119,9 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     return <div>
         <ResizeTable columns={columns} dataSource={dataSource} size="small"
             pagination={GetPageConfigWhithPageData(page, setPage)}
-            onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
+            onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
                 if (extra.action === 'sort') {
-                    setSorter(sorter);
+                    setSorter(newSorter);
                 }
             }}
         />
@@ -194,16 +194,16 @@ const CommunicationTimeTable = observer(function (props:
                 dataSource={dataSource}
                 columns={columns}
                 expandable={{
-                    expandedRowRender: (record: DataType) => <div style={{ marginLeft: '0' }}>
+                    expandedRowRender: (record: DataType): JSX.Element => <div style={{ marginLeft: '0' }}>
                         <OperatorsTable record={record} conditions={props.conditions}/>
                     </div>,
                     expandedRowKeys,
-                    expandIcon: () => (<></>),
+                    expandIcon: (): JSX.Element => (<></>),
                 }}
                 rowKey={rowKey}
                 pagination={GetPageConfigWhithAllData(dataSource.length)}
                 size="small"
-                onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
+                onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
                     if (extra.action === 'sort') {
                         setExpandedKeys([]);
                         props.updateSort(extra.currentDataSource);
