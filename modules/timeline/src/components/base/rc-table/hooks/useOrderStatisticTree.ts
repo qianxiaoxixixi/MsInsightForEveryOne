@@ -23,7 +23,7 @@ export function insert<T extends Record<string, unknown>>(
     childrenColumnName: string,
     expandedKeys: Set<Key>,
     getRowKey: GetRowKey<T>
-) {
+): void {
     const vm = treeMap(child, node.depth + 1, childrenColumnName, expandedKeys, getRowKey, node);
     node.children.push(vm);
     let cur: TreeViewModel<T> | undefined = node;
@@ -41,7 +41,7 @@ export function insert<T extends Record<string, unknown>>(
  */
 export function remove<T>(
     node: TreeViewModel<T>,
-) {
+): void {
     if (!node.parent) {
         throw new Error('Can\'t remove a root view model');
     }
@@ -87,7 +87,7 @@ export function useOrderStatisticTree<T extends Record<string, unknown>>(
     childrenColumnName: string,
     expandedKeys: Set<Key>,
     getRowKey: GetRowKey<T>
-) {
+): OrderStatisticTree<T> {
     return React.useMemo(() => {
         let tree;
         if (Array.isArray(data)) {
@@ -104,6 +104,61 @@ export class OrderStatisticTree<T> {
 
     constructor(tree: TreeViewModel<T> | TreeViewModel<T>[]) {
         this.vm = tree;
+    }
+
+    findNodeIndex(selectedNode: T): number {
+        let resultIndex = 0;
+        const recursiveNodeIndex = (node: TreeViewModel<T>[], subTreeIndex: number): number => {
+            node.forEach(item => {
+                if (item.data === selectedNode) {
+                    resultIndex = subTreeIndex;
+                    return;
+                } else {
+                    subTreeIndex --;
+                    if (item.children.length !== 0) {
+                        subTreeIndex = recursiveNodeIndex(item.children, subTreeIndex);
+                    }
+                }
+            })
+            return subTreeIndex;
+        };
+        let initTreeLength = 0;
+        if (!Array.isArray(this.vm)) {
+            throw new Error('Unsupported Data');
+        }
+        this.vm.forEach(item => initTreeLength += item.subtreeSize);
+        recursiveNodeIndex(this.vm, initTreeLength);
+        return initTreeLength - resultIndex;
+    }
+
+    // could be optimized by linking tree nodes in order
+    getVisibleData(scrollTop: number, vpHeight: number, rowHeight: number, tolerance: number = 0): Array<TreeViewModel<T>> {
+        if (!this.vm || Array.isArray(this.vm) && this.vm.length === 0) {
+            return [];
+        }
+        const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - tolerance);
+        const endIndex = Math.min(this.getTotalCount() - 1, tolerance + Math.floor((scrollTop + vpHeight - 1) / rowHeight));
+        const result = [];
+        for (let i = startIndex; i <= endIndex; i++) {
+            const found = this.findNode(this.vm, i);
+            if (!found) {
+                warning(false, 'getFlattenData found undefined element');
+            } else {
+                result.push(found);
+            }
+        }
+        return result;
+    }
+
+    getTotalCount(): number {
+        if (Array.isArray(this.vm)) {
+            return this.vm.reduce((prev, cur) => prev + cur.subtreeSize, 0);
+        }
+        return this.vm.subtreeSize;
+    }
+
+    getTotalHeight(rowHeight: number): number {
+        return this.getTotalCount() * rowHeight;
     }
 
     private findNode(tree: TreeViewModel<T> | TreeViewModel<T>[], index: number): TreeViewModel<T> | undefined {
@@ -141,57 +196,5 @@ export class OrderStatisticTree<T> {
         }
         console.log('findNode returning undefined');
         return undefined;
-    }
-
-    findNodeIndex(selectedNode: T): number {
-        let resultIndex = 0;
-        const recursiveNodeIndex = (node: TreeViewModel<T>[], subTreeIndex: number): number => {
-            node.forEach(item => {
-                if (item.data === selectedNode) {
-                    resultIndex = subTreeIndex;
-                    return;
-                } else {
-                    subTreeIndex --;
-                    if (item.children.length !== 0) {
-                        subTreeIndex = recursiveNodeIndex(item.children, subTreeIndex);
-                    }
-                }
-            })
-            return subTreeIndex;
-        };
-        let initTreeLength = 0;
-        if (!Array.isArray(this.vm)) {
-            throw new Error('Unsupported Data');
-        }
-        this.vm.forEach(item => initTreeLength += item.subtreeSize);
-        recursiveNodeIndex(this.vm, initTreeLength);
-        return initTreeLength - resultIndex;
-    }
-
-    // could be optimized by linking tree nodes in order
-    getVisibleData(scrollTop: number, vpHeight: number, rowHeight: number, tolerance: number = 0) {
-        if (!this.vm || Array.isArray(this.vm) && this.vm.length === 0) {
-            return [];
-        }
-        const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - tolerance);
-        const endIndex = Math.min(this.getTotalCount() - 1, tolerance + Math.floor((scrollTop + vpHeight - 1) / rowHeight));
-        const result = [];
-        for (let i = startIndex; i <= endIndex; i++) {
-            const found = this.findNode(this.vm, i);
-            found || warning(false, 'getFlattenData found undefined element');
-            found && result.push(found);
-        }
-        return result;
-    }
-
-    getTotalCount(): number {
-        if (Array.isArray(this.vm)) {
-            return this.vm.reduce((prev, cur) => prev + cur.subtreeSize, 0);
-        }
-        return this.vm.subtreeSize;
-    }
-
-    getTotalHeight(rowHeight: number): number {
-        return this.getTotalCount() * rowHeight;
     }
 }

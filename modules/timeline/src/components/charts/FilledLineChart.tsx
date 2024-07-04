@@ -121,7 +121,7 @@ type ColorBlockProps = {
 };
 
 const ColorBlock = styled.div<ColorBlockProps>`
-    background-color: ${props => (props.isHiding ? 'none' : props.bgColor)};
+    background-color: ${(props): string => (props.isHiding ? 'none' : props.bgColor)};
     height: 12px;
     width: 12px;
     margin-right: 8px;
@@ -129,15 +129,15 @@ const ColorBlock = styled.div<ColorBlockProps>`
     display: inline-block;
     padding: 0;
     border-radius: 4px;
-    border-style: ${props => (props.isHiding ? 'dotted' : 'solid')};
-    border-color: ${props => props.bgColor};
+    border-style: ${(props): string => (props.isHiding ? 'dotted' : 'solid')};
+    border-color: ${(props): string => props.bgColor};
     pointer-events: none;
 `;
 
 const LegendJSX = ({ legend, palette, hideLayer, setHideLayer }: LegendProps): JSX.Element => {
     if (legend === undefined) { return <></>; }
     const table: JSX.Element[] = [];
-    legend.forEach((name, index) => {
+    legend.forEach((name, index): void => {
         table.push(<div style={{ marginRight: '16px', padding: 0, height: '12px' }} key={`legend_${index}`} onClick={() => {
             flipLayerBit(index, hideLayer, setHideLayer);
         }} className={'clickable'}>

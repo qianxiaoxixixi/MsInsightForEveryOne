@@ -4,8 +4,8 @@ import { Radio } from 'antd';
 import { RadioProps } from 'antd/lib/radio';
 
 export const StyledRadio = styled((props: RadioProps & { fontSize?: number }) => <Radio {...props}/>)`
-    color: ${(props) => props.theme.fontColor};
-    font-size: ${(props) => typeof props.fontSize === 'undefined' ? 12 : props.fontSize}px;
+    color: ${(props): string => props.theme.fontColor};
+    font-size: ${(props): number => typeof props.fontSize === 'undefined' ? 12 : props.fontSize}px;
 
     .ant-radio-checked > .ant-radio-inner {
         border-color: #1890ff;
@@ -20,7 +20,7 @@ export const StyledRadio = styled((props: RadioProps & { fontSize?: number }) =>
         &::after {
             background-color: #FFF;
         }
-        background-color: ${(props) => props.theme.deviceProcessBackgroundColor};
-        border: 1px solid ${(props) => props.theme.enclosureBorder};
+        background-color: ${(props): string => props.theme.deviceProcessBackgroundColor};
+        border: 1px solid ${(props): string => props.theme.enclosureBorder};
     }
 `;
