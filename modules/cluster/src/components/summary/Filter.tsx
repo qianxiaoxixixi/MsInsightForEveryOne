@@ -141,7 +141,7 @@ const FilterCom = (props: any): JSX.Element => {
                 ? <Select
                     value={conditions.step}
                     style={{ width: 120 }}
-                    onChange={(val: any) => handleChange('step', val)}
+                    onChange={(val: any): void => handleChange('step', val)}
                     options={options.stepOptions}
                 />
                 : <></>
@@ -151,21 +151,21 @@ const FilterCom = (props: any): JSX.Element => {
             defaultValue={conditions.group}
             value={conditions.group}
             style={{ width: 200 }}
-            onChange={(val: any) => handleChange('group', val)}
+            onChange={(val: any): void => handleChange('group', val)}
             options={options.groupOptions}
         />
         <Label name={t('OrderBy')}/>
         <Select
             value={conditions.orderBy}
             style={{ width: 280 }}
-            onChange={(val: any) => handleChange('orderBy', val)}
+            onChange={(val: any): void => handleChange('orderBy', val)}
             options={tOrderOptions}
         />
         <Label name={t('Top')}/>
         <Select
             value={conditions.top}
             style={{ width: 120 }}
-            onChange={(val: any) => handleChange('top', val)}
+            onChange={(val: any): void => handleChange('top', val)}
             options={options.topOptions}
         />
     </div>);

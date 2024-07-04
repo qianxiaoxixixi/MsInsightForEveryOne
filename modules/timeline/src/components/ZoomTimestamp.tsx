@@ -32,7 +32,7 @@ const Percentage = styled.span`
 
 const StyledReset = styled(Reset)<{ pathfill: string }>`
     path {
-        fill: ${props => props.pathfill};
+        fill: ${(props): string => props.pathfill};
     }
 `;
 
@@ -49,7 +49,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         <Container>
             <StyledTooltip title={t('tooltip:reset')}><StyledReset
                 pathfill={shouldResetDisable ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
-                onClick={() => {
+                onClick={(): void => {
                     runInAction(() => {
                         session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
                         session.contextMenu.zoomHistory = [];
@@ -60,7 +60,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         <StyledTooltip title={t('tooltip:del')}>
             <Del
                 fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
-                onClick={() => {
+                onClick={(): void => {
                     runInAction(() => {
                         traceStart('zoomProportion', { action: 'zoomProportion' });
                         session.zoom = { zoomCount: 1 };
@@ -74,7 +74,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         <StyledTooltip title={t('tooltip:add')}>
             <Add
                 fill={isLowerBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
-                onClick={() => {
+                onClick={(): void => {
                     runInAction(() => {
                         traceStart('zoomProportion', { action: 'zoomProportion' });
                         session.zoom = { zoomCount: -1 };

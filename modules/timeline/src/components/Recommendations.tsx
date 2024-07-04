@@ -35,17 +35,17 @@ const ThumbTipContainer = styled.div<ThumbTipProps>`
     z-index: 3;
     transition: width 0.2s linear;
     background-color: rgba(255, 255, 255, 0.2);
-    left: calc(${(props) => props.left}% - ${(ICON_SIZE / 2) + 3}px);
+    left: calc(${(props): number => props.left}% - ${(ICON_SIZE / 2) + 3}px);
     padding: 0;
     margin: 0 3px;
-    width: ${(props) => props.width}px;
+    width: ${(props): number => props.width}px;
     &:hover {
         z-index: 2;
         cursor: pointer;
     }
 
     .thumbIcon {
-        background-color: ${(props) => props.theme.thumbIconBackgroundColor}
+        background-color: ${(props): string => props.theme.thumbIconBackgroundColor}
     }
 
     .barIcons {
@@ -118,7 +118,7 @@ const TemplatesIcons = ({ left, recommendedTemplates, createSession, templates, 
                 align={{ offset: [0, -5] }}
                 autoAdjustOverflow
                 placement="bottom"
-            ><Icon className="barIcons" onClick={() => createSession(template)}>{template.icon}</Icon></Tooltip>
+            ><Icon className="barIcons" onClick={(): void => createSession(template)}>{template.icon}</Icon></Tooltip>
         ))}
     </ThumbTipContainer>);
 };

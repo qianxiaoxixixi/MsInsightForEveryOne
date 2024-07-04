@@ -12,12 +12,12 @@ interface ScrollerProps {
     leftLaneInfoWidth: number;
 };
 const Scroller = styled.div<ScrollerProps>`
-    width: calc(100% - ${(props) => props.leftLaneInfoWidth}px);
+    width: calc(100% - ${(props): number => props.leftLaneInfoWidth}px);
     height: 8px;
     overflow-x: auto;
     overflow-y: hidden;
     position: absolute;
-    left: ${(props) => props.leftLaneInfoWidth}px;
+    left: ${(props): number => props.leftLaneInfoWidth}px;
     bottom: 0;
     z-index: 2;
 
@@ -141,8 +141,8 @@ const HorizontalScroller = observer((props: ScrollBarProps) => {
     return (
         <Scroller leftLaneInfoWidth={leftLaneInfoWidth}
             ref={scrollerRef}
-            onMouseDown={() => { isManulHandleRef.current = true; }}
-            onMouseUp={() => { isManulHandleRef.current = false; }}
+            onMouseDown={(): void => { isManulHandleRef.current = true; }}
+            onMouseUp={(): void => { isManulHandleRef.current = false; }}
             onScroll={handleScroll}
         >
             <div className="padding" style={{ width: `${paddingWidth}%`, height: THUMB_WIDTH_PX * 1.2 }} />

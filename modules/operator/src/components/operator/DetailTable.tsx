@@ -499,12 +499,12 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         columns={cols}
         dataSource={data}
         pagination={GetPageConfigWhithPageData(page, setPage)}
-        onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
+        onChange={(pagination: any, newFilters: any, newSorter: any, extra: any): void => {
             if (extra.action === 'sort') {
-                setSorter(sorter.order === undefined ? { field: '', order: '' } : sorter);
+                setSorter(newSorter.order === undefined ? { field: '', order: '' } : newSorter);
             }
             if (extra.action === 'filter') {
-                setFilters(filters === undefined ? {} : filters);
+                setFilters(newFilters === undefined ? {} : newFilters);
             }
         }
         }

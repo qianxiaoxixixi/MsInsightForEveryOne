@@ -173,7 +173,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             content={(<Select
                 value={condition.group}
                 style={{ width: 250 }}
-                onChange={val => handleChange('group', val)}
+                onChange={(val): void => handleChange('group', val)}
                 options={groupOptions}
             />
             )}/>
@@ -182,7 +182,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             content={(<Select
                 value={condition.rankId}
                 style={{ width: 200 }}
-                onChange={val => handleChange('rankId', val)}
+                onChange={(val): void => handleChange('rankId', val)}
                 options={optionMap.rankIdOptions}
                 showSearch={true}
             />
@@ -192,14 +192,14 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             content={(<><Select
                 value={condition.topK}
                 style={{ width: 100 }}
-                onChange={val => handleChange('topK', val)}
+                onChange={(val): void => handleChange('topK', val)}
                 options={topKOptions}
             />
             <InputNumber
                 min={0}
                 max={100000000}
                 value={condition.custom}
-                onChange={val => handleChange('custom', val)}
+                onChange={(val): void => handleChange('custom', val)}
                 controls={false}
                 precision={0}
                 style={{ marginLeft: '10px', width: '80px', display: condition.topK === 0 ? 'inline-block' : 'none' }} />

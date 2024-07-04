@@ -75,14 +75,14 @@ export const MultiSelectWithAll = (props: any): JSX.Element => {
         <Select
             {...props}
             mode="multiple"
-            dropdownRender={menu => (
+            dropdownRender={(menu): JSX.Element => (
                 <div>
                     {menu}
                     <Divider style={{ margin: '2px 0' }} />
                     <div style={{ padding: '4px 8px 8px 8px' }}>
                         <Checkbox
                             checked={checked}
-                            onChange={event => {
+                            onChange={(event): void => {
                                 setChecked(event.target.checked);
                                 if (event?.target.checked) {
                                     onChange(options.map((item: optionDataType) => item.value));
@@ -111,7 +111,7 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
         defaultCurrent={1}
         pageSizeOptions= {[10, 20, 50, 100] }
         showTotal={(total: number): React.ReactElement => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>)}
-        onChange={(current, pageSize) => { setPage({ ...page, current, pageSize }); }}
+        onChange={(current, pageSize): void => { setPage({ ...page, current, pageSize }); }}
         showQuickJumper={page.total / notZero(page.pageSize) > 5}
         style={{ float: 'right', marginTop: '10px' }}
     />;
@@ -124,7 +124,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         pageSizeOptions: [10, 20, 50, 100],
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
         hideOnSinglePage: false,
-        onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
+        onChange: (current: number, pageSize: number): void => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.total / notZero(page.pageSize) > 5,
     };
 };
@@ -196,12 +196,12 @@ export function formatDate(date: Date): string {
 }
 
 export function addResizeEvent(echart: EChartsType): void {
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', (): void => {
         if (checkDomDisplay(echart.getDom())) {
             echart.resize();
         }
     });
-    window.addEventListener('load', () => {
+    window.addEventListener('load', (): void => {
         if (checkDomDisplay(echart.getDom())) {
             echart.resize();
         }
