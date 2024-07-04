@@ -4,10 +4,10 @@ import Item from "antd/lib/list/Item";
 type FilterProps = { text: string; value: string; children: FilterProps[] };
 type KeyType = string | number | boolean;
 
-const flattenKeys = (filters: Array<FilterProps>) => {
+const flattenKeys = (filters: Array<FilterProps>): KeyType[] => {
     let keys: KeyType[] = [];
-    (filters || []).forEach(function (_ref2) {
-        const value = _ref2.value, children = _ref2.children;
+    (filters || []).forEach((_ref2): void => {
+        const { value, children } = _ref2;
         keys.push(value);
         if (children !== undefined) {
             keys = keys.concat(flattenKeys(children));
@@ -17,12 +17,12 @@ const flattenKeys = (filters: Array<FilterProps>) => {
 };
 
 // 判断data数组是否有含有children属性的元素
-const judgeChildren = (data: any[]) => {
+const judgeChildren = (data: any[]): boolean => {
     return data.some((item: any) => item !== undefined && item.children !== undefined && item.children.length > 0);
 };
 
 // 过滤树的某个字段,返回过滤后的数组
-const recurFilter = (data: any[] | any, keyword: string, onFilter: Function) => {
+const recurFilter = (data: any[] | any, keyword: string, onFilter: (keyword: string, item: any) => boolean): any => {
     if (data instanceof Array) {
         // data为数组
         let arr: any[] = [];
@@ -46,7 +46,7 @@ const recurFilter = (data: any[] | any, keyword: string, onFilter: Function) => 
     return onFilter(keyword, data) ? {...data} : undefined;
 };
 
-export const customizeFilterData = (data: any[], filterStates: any[]) => {
+export const customizeFilterData = (data: any[], filterStates: any[]): any => {
     if (data.length === 0 || filterStates.length === 0) {
         return data;
     }
@@ -65,9 +65,7 @@ export const customizeFilterData = (data: any[], filterStates: any[]) => {
             return currentData.filter((record: unknown) => {
                 return filteredKeys.some((key: KeyType) => {
                     const keys = flattenKeys(filters);
-                    const keyIndex = keys.findIndex(function (k) {
-                        return String(k) === String(key);
-                    });
+                    const keyIndex = keys.findIndex((k): boolean => String(k) === String(key));
                     const realKey = keyIndex !== -1 ? keys[keyIndex] : key;
                     return onFilter(realKey, record);
                 });

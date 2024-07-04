@@ -58,7 +58,7 @@ export const selectRow = (row: AutoKey<Record<string, unknown>>, session: Sessio
     session.selectedDetails = [row];
 });
 
-type OnExpandAction = (expanded: boolean, r: Record<string, unknown>) => void;
+export type OnExpandAction = (expanded: boolean, r: Record<string, unknown>) => void;
 
 type OnExpandConfig = ((session: Session, data: TreeNode<Record<string, unknown>>) => Promise<TreeNode<Record<string, unknown>> | undefined>);
 
