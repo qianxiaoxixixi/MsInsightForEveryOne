@@ -368,7 +368,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         width: 115,
         key: 'action',
         render: (_: any, record: any) => (<Button type="link"
-            onClick={() => {
+            onClick={(): void => {
                 setExpandedKeys((pre: any) => {
                     const list = [...pre];
                     const keyIndex = list.indexOf(record[rowKey]);

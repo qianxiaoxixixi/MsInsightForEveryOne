@@ -122,9 +122,10 @@ export type CallStackViewProps<T extends Record<string, unknown>> = {
 export const CallStackView = observer(function CallStackView<T extends Record<string, unknown>>(
     { session, height, compare, columns, onNavigate }: CallStackViewProps<T>): JSX.Element {
     const state = useStackUpdater(session, compare, { columns });
-    return <AutoAdjustedTable {...state} height={height} expandable={{ showExpandColumn: false }} onRow={row => ({
+    return <AutoAdjustedTable {...state} height={height} expandable={{ showExpandColumn: false }}
+                              onRow={(row): {onClick:() => void; onDoubleClick:() => void | undefined} => ({
         onDoubleClick: () => onNavigate?.({ row }),
-        onClick: () => {
+        onClick: (): void => {
             session.selectedDetailKeys = [getAutoKey(row)];
             // need combine two functions
             ((state.data[0] as unknown as Traceable<T>).ref)?.current?.appendExpandedKeys(state.data.map(getAutoKey));

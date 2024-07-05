@@ -405,7 +405,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                     body={
                                         <CodeViewer
                                             code={code}
-                                            handleLineClick={(line: number) => {
+                                            handleLineClick={(line: number): void => {
                                                 setSelectedline(line);
                                                 setLineClickListener((lineClickListener + 1) % 100);
                                             }}
@@ -425,7 +425,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                     rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
                                     onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
                                         return {
-                                            onClick: (event: React.MouseEvent<HTMLElement>) => {
+                                            onClick: (event: React.MouseEvent<HTMLElement>): void => {
                                                 setSelectedline(record.Line);
                                                 setLineClickListener((lineClickListener + 1) % 100);
                                             },

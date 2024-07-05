@@ -36,7 +36,7 @@ export class ChartErrorBoundary extends ErrorBoundaryBase<FallBackProps> {
 
 const ChartErrorContainer = styled.div<{height?: number; width?: number}>`
     display: flex;
-    height: ${p => {
+    height: ${(p): string => {
         if (p.height === undefined) {
             return '100%';
         }
@@ -45,5 +45,5 @@ const ChartErrorContainer = styled.div<{height?: number; width?: number}>`
     width: 100%;
     justify-content: center;
     align-items: center;
-    background-color: ${props => props.theme.chartWrongBGColor};
+    background-color: ${(props): string => props.theme.chartWrongBGColor};
 `;

@@ -117,10 +117,10 @@ export const AntTableChart: React.FC<IProps> = (props) => {
 
     const onRow = (record: OperatorDetail, rowIndex?: number): React.HTMLAttributes<any> => {
         return {
-            onMouseEnter: (event: any) => {
+            onMouseEnter: (event: any): void => {
                 onRowSelected?.(record, rowIndex);
             },
-            onMouseLeave: (event: any) => {
+            onMouseLeave: (event: any): void => {
                 onRowSelected?.(undefined, undefined);
             },
         };

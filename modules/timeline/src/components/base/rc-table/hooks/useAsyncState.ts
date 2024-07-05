@@ -12,12 +12,12 @@ export const useAsyncState = <State>(defaultState: State): [State, (updater: Upd
         return () => { lastExecuteRef.current = undefined; }
     }, []);
 
-    const setAsyncState = (updater: Updater<State>) => {
+    const setAsyncState = (updater: Updater<State>): void => {
         const asyncExecutor = Promise.resolve();
         lastExecuteRef.current = asyncExecutor;
         updaterBatchRef.current.push(updater);
 
-        (async () => {
+        (async (): Promise<void> => {
             await asyncExecutor;
             if (lastExecuteRef.current !== asyncExecutor) {
                 return;

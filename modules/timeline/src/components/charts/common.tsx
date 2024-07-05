@@ -144,8 +144,8 @@ export const search = <T extends number | object>(data: T[], target: number, get
 
 export const CanvasContainer = styled.div<{ width: number; height: number }>`
     position: relative;
-    width: ${p => p.width}px;
-    height: ${p => p.height}px;
+    width: ${(p): number => p.width}px;
+    height: ${(p): number => p.height}px;
 `;
 
 export const Canvas = styled.canvas`

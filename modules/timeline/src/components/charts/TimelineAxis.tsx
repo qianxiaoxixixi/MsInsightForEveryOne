@@ -25,7 +25,7 @@ const DEFAULT_DRAW_TIMELINE_AXIS_OPTIONS = {
     fontColor: 'black',
     lineColor: 'black',
     lineWidth: 2,
-    textParser: (text: string | number) => text.toString(),
+    textParser: (text: string | number): string => text.toString(),
     timePerPx: 1,
 };
 export const TIME_LINE_AXIS_CLASSNAME = 'timelineAxis';
@@ -259,7 +259,7 @@ const drawTimelineAxis = (canvas: HTMLCanvasElement, {
     fontColor = 'black',
     lineColor = 'black',
     lineWidth = 2,
-    textParser = (text: number) => text.toString(),
+    textParser = (text: number): string => text.toString(),
     timePerPx = 1,
 }: DrawAxisOptions = DEFAULT_DRAW_TIMELINE_AXIS_OPTIONS): void => {
     const ctx = canvas.getContext('2d');

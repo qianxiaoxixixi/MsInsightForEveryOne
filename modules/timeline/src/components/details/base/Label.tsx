@@ -7,8 +7,8 @@ interface LabelPropType {
 }
 const Label = ({ name }: LabelPropType): JSX.Element => {
     const StyledLabel = styled.span`
-        color: ${p => p.theme.categories[name].color};
-        background-color: ${p => p.theme.categories[name].background};
+        color: ${(p): string => p.theme.categories[name].color};
+        background-color: ${(p): string => p.theme.categories[name].background};
         font-weight: 400;
         font-size: .85rem;
         border-radius: 4px;

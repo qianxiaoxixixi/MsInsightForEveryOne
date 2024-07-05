@@ -531,7 +531,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                             onChange={onFilterEventMinSizeInputChanged}
                             min={0}
                             max={4294967295}
-                            formatter={value => `${Number(value)}`}
+                            formatter={(value): string => `${Number(value)}`}
                         />
                     </Col>
                     <Col span={6}>
@@ -543,7 +543,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                             min={0}
                             max={4294967295}
                             minLength={1}
-                            formatter={value => `${Number(value)}`}
+                            formatter={(value): string => `${Number(value)}`}
                         />
                     </Col>
                     <Col span={6}>

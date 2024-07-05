@@ -1,5 +1,5 @@
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
-const getParamMap = () => {
+const getParamMap = (): Map<string, string> => {
     const paramMap: Map<string, string> = new Map();
     if (window.location.search !== '') {
         const params = window.location.search.slice(1).split('&');
@@ -17,7 +17,7 @@ const getParamMap = () => {
 }
 const PARAM_MAP = getParamMap();
 export let PORT = Number.parseInt(<string>PARAM_MAP.get('port'));
-export function setPort(port: number) {
+export function setPort(port: number): void {
     PORT = port;
 }
 export const LOCAL_HOST = '127.0.0.1';

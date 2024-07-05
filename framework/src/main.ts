@@ -24,8 +24,8 @@ app.use(ElementPlus);
 app.mount('#app');
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
-document.oncontextmenu = () => false;
-document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+document.oncontextmenu = (): boolean => false;
+document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 
 declare global {
     interface Window {
