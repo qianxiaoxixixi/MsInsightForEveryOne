@@ -275,7 +275,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Packet Number',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value) {
+                valueFormatter: function (value): string {
                     return `${value}`;
                 },
             },
@@ -287,7 +287,7 @@ const bandwidthOption: echarts.EChartsOption = {
             type: 'line',
             yAxisIndex: 1,
             tooltip: {
-                valueFormatter: function (value) {
+                valueFormatter: function (value): string {
                     return `${value}` + ' GB/s';
                 },
             },

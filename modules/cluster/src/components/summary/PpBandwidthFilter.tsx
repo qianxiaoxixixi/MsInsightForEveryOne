@@ -10,6 +10,9 @@ import { Label, StyledTooltip } from '../Common';
 import { getStepsData } from './PpBandwidthAnalysis';
 import { getAllPpStageIds, getPpContainerData } from '../communicatorContainer/ContainerUtils';
 import { QuestionCircleFilled } from '@ant-design/icons';
+import type { Session } from '../../entity/session';
+
+type ValueType = string | number | string[];
 
 export interface ConditionDataType {
     step: string;
@@ -63,22 +66,29 @@ const Filter = observer((props: any) => {
     return (<FilterCom conditions={props.conditions} handleChange={handleChange} options={options} session={props.session}/>);
 });
 
-const FilterCom = (props: any): JSX.Element => {
-    const { conditions, handleChange = [], options = {} } = props;
+interface FilterComProps {
+    conditions: ConditionDataType;
+    handleChange: (prop: keyof ConditionDataType, val: ValueType) => void;
+    options?: optionMapDataType;
+    session?: Session;
+}
+
+function FilterCom(props: FilterComProps): JSX.Element {
+    const { conditions, handleChange, options = {} } = props;
     const { t } = useTranslation('summary');
     return (<div style={ { margin: '0 20px 10px', textAlign: 'left', display: 'flex', alignItems: 'center' }}>
         <Label name={t('Step')} />
         <Select
             value={conditions.step}
             style={{ width: 120 }}
-            onChange={(val: any) => handleChange('step', val)}
+            onChange={(val: any): void => handleChange('step', val)}
             options={options.stepOptions}
         />
         <Label name={t('Stage')}/>
         <Select
             value={conditions.stage}
             style={{ width: 200 }}
-            onChange={val => handleChange('stage', val)}
+            onChange={(val: any): void => handleChange('stage', val)}
             options={options.stageOptions}
         />
         <div>{useHit()}</div>

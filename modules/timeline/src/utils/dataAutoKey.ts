@@ -2,7 +2,7 @@ const autoKey = Symbol('autokey');
 
 export type AutoKey<T extends object> = T & { [autoKey]?: string };
 
-export const getAutoKey = (function<T extends object>() {
+export const getAutoKey = (function<T extends object>(): (data: AutoKey<T>) => string {
     let counter = 0;
     const generateRowKey = (): string => {
         if (counter === Number.MAX_SAFE_INTEGER) {
@@ -10,7 +10,7 @@ export const getAutoKey = (function<T extends object>() {
         }
         return `${counter++}`;
     };
-    return (data: AutoKey<T>) => {
+    return (data: AutoKey<T>): string => {
         let key = data[autoKey];
         if (key === undefined) {
             key = data[autoKey] = generateRowKey();

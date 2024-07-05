@@ -12,7 +12,7 @@ interface ChartRowLeftProps {
 }
 
 export const ChartRowLeft = styled.div<ChartRowLeftProps>`
-    width: ${(props) => props.width}px;
+    width: ${(props): number => props.width}px;
     height: 100%;
     position: relative;
 `;
@@ -23,7 +23,7 @@ interface ChartRowRightProps {
 
 export const ChartRowRight = styled.div<ChartRowRightProps>`
     flex-grow: 1;
-    width: ${(props) => props?.width !== undefined ? `${props.width}` : 'unset'};
+    width: ${(props): string => props?.width !== undefined ? `${props.width}` : 'unset'};
     height: 100%;
     position: relative;
 `;

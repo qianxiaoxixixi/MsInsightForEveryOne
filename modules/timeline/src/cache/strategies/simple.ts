@@ -32,7 +32,7 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
         useRelative: boolean = true) {
         this.key = key;
         // wedge data[time]
-        this.getTime = typeof time === 'function' ? time : (data) => data as unknown as number;
+        this.getTime = typeof time === 'function' ? time : (data): number => data as unknown as number;
         this.useRelative = useRelative;
     }
 
@@ -80,7 +80,7 @@ export class SimpleOfflineGroupedTimeSeriesCache<K extends KeysMatching<any, obj
     constructor(key: K, timeField: KeysMatching<ElementType<ElementType<any>>, number>, useRelative: boolean = true) {
         this.key = key;
         this.useRelative = useRelative;
-        this.getTime = (data) => data[timeField] as unknown as number;
+        this.getTime = (data): number => data[timeField] as unknown as number;
     }
 
     async getData<T extends any>(session: ValidSession, params: any): Promise<any> {

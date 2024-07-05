@@ -42,9 +42,9 @@ export interface TabActionCallback<Tab> {
 
 export const createInteractorProps = <Tab extends TabProto, CommonState extends CommonStateProto>(tabs: Tab[], commonState: CommonState, tabActionCallback?: TabActionCallback<Tab>): InteractorProps => {
     return {
-        createdToggleProps: (id: number, session: Session) => {
+        createdToggleProps: (id: number, session: Session): any => {
             return {
-                onClick: (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+                onClick: (e: React.MouseEvent<HTMLElement, MouseEvent>): void => {
                     e.preventDefault();
                     runInAction(() => {
                         commonState.activeKey = id;

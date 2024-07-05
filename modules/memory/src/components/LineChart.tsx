@@ -28,7 +28,7 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
         },
         tooltip: {
             trigger: 'axis',
-            formatter: function (params: any) {
+            formatter: function (params: any): string {
                 let res = `${safeStr(params?.[0]?.name)} <br/>`;
                 for (const item of params) {
                     if (!isNaN(Number(item?.value?.[item?.encode?.y?.[0]]))) {
@@ -220,7 +220,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         if (!element) {
             return;
         }
-        element.oncontextmenu = () => { return false; };
+        element.oncontextmenu = (): boolean => { return false; };
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed');
         onSelectionChanged?.(0, -1);

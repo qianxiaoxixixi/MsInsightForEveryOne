@@ -51,7 +51,7 @@ const getIndexInUnits = (session: Session, name: any): number => {
 const CustomDiv = styled.div`
     border-radius: 18px;
     padding: 8px;
-    background: ${props => props.theme.tooltipBGColor};
+    background: ${(props): string => props.theme.tooltipBGColor};
 `;
 
 const UnitListContent = (session: Session): JSX.Element => {
@@ -66,7 +66,7 @@ const UnitListContent = (session: Session): JSX.Element => {
                             <Checkbox
                                 style={{ color: theme.tooltipFontColor, backgroundColor: theme.tooltipBGColor }}
                                 defaultChecked={getIndexInUnits(session, unit.constructor) !== -1}
-                                onChange={(e: CheckboxChangeEvent) => onChange(session, index, e)}>{unit.name}
+                                onChange={(e: CheckboxChangeEvent): void => onChange(session, index, e)}>{unit.name}
                             </Checkbox>
                             <br />
                         </Fragment>

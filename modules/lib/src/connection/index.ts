@@ -26,11 +26,11 @@ abstract class BaseConnector {
         if (typeof window !== 'object') {
             const errMsg = 'cannot find global Window object, please check your runtime environment';
             console.error(this.printErrMsg(errMsg));
-            this.invalidFunc = () => { throw new Error(this.printErrMsg(errMsg)); };
+            this.invalidFunc = (): void => { throw new Error(this.printErrMsg(errMsg)); };
         }
         this._getTargetWindows = getTargetWindow;
 
-        window.onmessage = (event: MessageEvent) => {
+        window.onmessage = (event: MessageEvent): void => {
             if (!(typeof event.data === 'string' && event.data.includes('{'))) {
                 return;
             }

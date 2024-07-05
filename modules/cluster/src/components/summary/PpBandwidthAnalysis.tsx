@@ -222,7 +222,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Stage Time',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value) {
+                valueFormatter: function (value): string {
                     return `${value}`;
                 },
             },
@@ -233,7 +233,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Bubble Time',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value) {
+                valueFormatter: function (value): string {
                     return `${value}`;
                 },
             },

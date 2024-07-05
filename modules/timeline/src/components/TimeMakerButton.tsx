@@ -26,7 +26,7 @@ export const TimeMakerButton = observer(({ session }: { session: Session }): JSX
     };
     const timeMakerProps = { session, onToolTipVisibleChange };
     return <CustomButton icon={FlagIcon} tooltip={t('timelineMarker:markerList')}
-        isSuspend={ isSuspend } onClick={ () => { handleTimeMakerAction(timeMakerProps); }}/>;
+        isSuspend={ isSuspend } onClick={ (): void => { handleTimeMakerAction(timeMakerProps); }}/>;
 });
 
 const CanvasContainer = styled.div`
@@ -92,7 +92,7 @@ const drawPlaceRangeButton = (session: Session, current: HTMLCanvasElement, doma
     const buttonSvgData = 'data:image/svg+xml;base64,' + btoa(buttonSvgString);
     const buttonImage: HTMLImageElement = new Image();
     buttonImage.src = buttonSvgData;
-    buttonImage.onload = () => {
+    buttonImage.onload = (): void => {
         const buttonMarginTop = 10;
         ctx.drawImage(buttonImage, beginX, buttonMarginTop);
     };

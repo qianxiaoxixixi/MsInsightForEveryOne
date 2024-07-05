@@ -36,7 +36,7 @@ interface GetColumnKeyColumn {
     dataIndex?: DataIndex;
 }
 
-export function getColumnsKey(columns: readonly GetColumnKeyColumn[]) {
+export function getColumnsKey(columns: readonly GetColumnKeyColumn[]): React.Key[] {
     const columnKeys: React.Key[] = [];
     const keys: Record<React.Key, boolean> = {};
 
@@ -55,6 +55,6 @@ export function getColumnsKey(columns: readonly GetColumnKeyColumn[]) {
     return columnKeys;
 }
 
-export function isValidValue<T>(val: T) {
+export function isValidValue<T>(val: T): boolean {
     return val !== null && val !== undefined;
 }

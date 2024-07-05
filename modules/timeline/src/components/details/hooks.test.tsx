@@ -31,14 +31,14 @@ describe('hooks test', () => {
                 },
                 width: "max-content",
                 fixed: undefined,
-                render: () => { }
+                render: (): void => { },
             }
         ],
         rowKey: undefined,
         onExpand: undefined,
         isLoading: false,
     };
-    const col: ColumnDef<Record<string, unknown>> = ['name2', () => 'render2', 'max-content'];
+    const col: ColumnDef<Record<string, unknown>> = ['name2', (): string => 'render2', 'max-content'];
 
     it('useDetailUpdater test', async () => {
         let detail: DetailDescriptor<unknown> = {
