@@ -129,8 +129,7 @@ void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
         std::string tokenString = session->GetTokenString();
         session->WaitForExit();
         WsSessionManager::Instance().RemoveSession(tokenString);
-        ServerLog::Info("session remove ok, token = ", StringUtil::AnonymousString(tokenString),
-            ", sub = ", session->IsSubSession());
+        ServerLog::Info("session remove ok.");
     }
 }
 

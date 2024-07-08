@@ -64,7 +64,7 @@ bool WsSession::CheckMessage(ProtocolMessage &msg)
 
 void WsSession::OnHandleMsgBuffer(WsSession &session)
 {
-    ServerLog::Info("Handle message buffer thread start, token = ", StringUtil::AnonymousString(session.tokenString));
+    ServerLog::Info("Handle message buffer thread start.");
     const int interval = 10;
     while (true) {
         if (session.status == Status::CLOSED) {
@@ -89,8 +89,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(interval));
     }
-    ServerLog::Info("Handle message buffer thread has exited, token = ",
-        StringUtil::AnonymousString(session.tokenString));
+    ServerLog::Info("Handle message buffer thread has exited.");
     session.OnNotifyExit();
 }
 
@@ -142,8 +141,7 @@ const WsChannel *WsSession::GetChannel() const
 bool WsSession::BindToken(const std::string &token, const std::string &parentToken)
 {
     if (token != tokenString) {
-        ServerLog::Error("Failed to bind token, src token = ", StringUtil::AnonymousString(tokenString),
-            ", dst token = ", StringUtil::AnonymousString(token));
+        ServerLog::Error("Failed to bind token.");
         return false;
     }
     // only bind once
@@ -219,8 +217,8 @@ void WsSession::OnRequestMessage(const std::string &data)
 
 void PrintResponseInfo(const Protocol::Response &response)
 {
-    ServerLog::Info("send response: ", response.command, ", token = ", StringUtil::AnonymousString(response.token),
-        ", result = ", response.result, ", request id = ", response.requestId, ", response id = ", response.id, "\n");
+    ServerLog::Info("send response: ", response.command, ", result = ", response.result, ", request id = ",
+                    response.requestId, ", response id = ", response.id, "\n");
 }
 
 void WsSession::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
@@ -246,7 +244,7 @@ void WsSession::OnEvent(std::unique_ptr<Protocol::Event> eventPtr)
 void WsSession::Send(const std::string &message)
 {
     if (GetStatus() == Status::CLOSED) {
-        ServerLog::Info("Session has been closed, token = ", StringUtil::AnonymousString(tokenString));
+        ServerLog::Info("Session has been closed.");
         return;
     }
     if (channel != nullptr) {
@@ -291,8 +289,7 @@ void WsSession::SendEvent(Protocol::Event &event)
         Send(eventStr);
         ServerLog::Info("send event end.");
     });
-    ServerLog::Info("send event: ", event.event, ", token = ", StringUtil::AnonymousString(event.token),
-        ", result = ", event.result, ", event id = ", event.id);
+    ServerLog::Info("send event: ", event.event, ", result = ", event.result, ", event id = ", event.id);
 }
 
 void WsSession::Start()
