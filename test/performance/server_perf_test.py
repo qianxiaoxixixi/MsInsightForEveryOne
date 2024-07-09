@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 SCRIPT_PATH = os.path.realpath(__file__)
-PROJECT_PATH = os.path.dirname(os.path.dirname(SCRIPT_PATH))
+PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_PATH)))
 
 
 class Const:
@@ -32,7 +32,7 @@ def exec_command(cmd, workspace):
     proc = subprocess.Popen(cmd, cwd=workspace, stdout=subprocess.PIPE)
     for line in iter(proc.stdout.readline, b''):
         logging.info(line.decode('utf-8').strip())
-    proc.communicate(timeout=6000)
+    proc.communicate(timeout=6000)  # 单个命令执行时间不超过6000s
     return proc.returncode
 
 
@@ -73,6 +73,9 @@ def execute_test():
     for file in os.listdir(output_path):
         test_path = os.path.join(output_path, file, 'bin')
         break
+    if not test_path.endswith('bin') or not os.path.exists(test_path):
+        logging.error('There is no executable files in %s.', test_path)
+        return -1
     result_file = os.path.join(test_path, 'performance_test.csv')
     if os.path.exists(result_file):
         os.remove(result_file)
@@ -98,9 +101,11 @@ def main():
     init()
     result = build_project()
     if result != 0:
+        logging.error('Failed to build profiler server.')
         return -1
     result = execute_test()
     if result != 0:
+        logging.error('Failed to execute performance test.')
         return -1
     return 0
 
