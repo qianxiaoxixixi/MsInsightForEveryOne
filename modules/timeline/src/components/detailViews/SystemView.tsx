@@ -56,7 +56,7 @@ const Container = styled.div`
     .ant-tree {
         width: 280px;
         height: 100%;
-        background-color: ${p => p.theme.contentBackgroundColor};
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
         overflow: auto;
     }
     .ant-tree-node-selected {
@@ -285,7 +285,7 @@ const BaseSummary = observer((props: any) => {
             key: 'click',
             ellipsis: true,
             render: (_: any, record: any) => (<Button type="link"
-                onClick={() => {
+                onClick={(): void => {
                     setRowData({ name: record.name ?? record.originOptimizer, ...record });
                 }}>{t('Click')}</Button>),
         }];
