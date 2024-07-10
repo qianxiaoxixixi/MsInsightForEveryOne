@@ -3,17 +3,16 @@
 */
 import { useTranslation } from 'react-i18next';
 import {
-    chart, ChartDesc,
-    InsightUnit,
-    LinkDataDesc, LinkLine, LinkLines,
-    MetaData,
+    chart,
     on,
     singleData,
-    TriggerEvent,
     unit,
     UnitHeight,
 } from '../../entity/insight';
-import { Session } from '../../entity/session';
+import type {
+    ChartDesc, InsightUnit, LinkDataDesc, LinkLine, LinkLines, MetaData, TriggerEvent, renderFieldsType,
+} from '../../entity/insight';
+import type { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import type {
     AscendSliceDetail,
@@ -66,8 +65,8 @@ const nsToMs = (ns: number): number => {
 
 const nsToNs = (ns: number): string => {
     const ms = Math.floor(ns / 1000000);
-    const us = Math.floor((ns - ms * 1000000) / 1000);
-    const nsRemainder = ns - ms * 1000000 - us * 1000;
+    const us = Math.floor((ns - (ms * 1000000)) / 1000);
+    const nsRemainder = ns - (ms * 1000000) - (us * 1000);
     if (ms === 0 && us === 0) {
         return `${nsRemainder}ns`;
     }
@@ -81,7 +80,7 @@ export const getSliceTimeDisplay = (startTime: number | undefined): string => {
     if (startTime === undefined) {
         return '';
     }
-    return `${nsToMs(startTime).toFixed(6).toString() + ' ms'}`;
+    return `${nsToMs(startTime).toFixed(6).toString()} ms`;
 };
 
 export const getDetailTimeDisplay = (startTime: number | undefined): string => {
@@ -102,10 +101,10 @@ const isHidden = (val: string | undefined): boolean => {
 const singleSliceDetail = singleData({
     name: 'SingleSlice',
     renderFields: [
-        ['Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
+        ['Title', (data): string => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
         ['Start', (data: AscendSliceDetail): string => getDetailTimeDisplay(data.startTime ?? 0), isHiddenStartTime],
-        ['Wall Duration', data => getDetailTimeDisplay(data.duration), isHiddenDuration],
-        ['Self Time', data => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime],
+        ['Wall Duration', (data): string => getDetailTimeDisplay(data.duration), isHiddenDuration],
+        ['Self Time', (data): string => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime],
         ['Input Shapes', (data: AscendSliceDetail): string => getDisplay(data.inputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputShapes)],
         ['Input Data Types', (data: AscendSliceDetail): string => getDisplay(data.inputDataTypes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
         ['Input Formats', (data: AscendSliceDetail): string => getDisplay(data.inputFormats), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
@@ -231,19 +230,22 @@ export const ThreadUnit = unit<ThreadMetaData>({
         },
         decorator: (session: Session, metaData: unknown) => {
             return {
-                action: async (handle, xScale, yScale, theme) => {
+                action: async (handle, xScale, yScale, theme): Promise<void> => {
                     maskedNotSelectData(session, handle, xScale, yScale);
                     // click
                     const ctx = handle.context;
                     const selectedData = session.selectedData as ThreadTrace | undefined;
                     const selectedUnitMetaData = session.selectedUnits?.[0]?.metadata as ThreadMetaData;
                     const threadMetaData = metaData as ThreadMetaData;
-                    if (ctx === null || selectedData === undefined || selectedUnitMetaData === undefined || selectedUnitMetaData !== threadMetaData) {
+                    const check = ctx === null || selectedData === undefined || selectedUnitMetaData === undefined || selectedUnitMetaData !== threadMetaData;
+                    if (check) {
                         return;
                     }
                     // 来自本泳道点击的数据，给数据描边+画线
                     ctx.strokeStyle = theme.fontColor;
-                    renderRadiusBorder(xScale(selectedData.startTime), yScale(0), xScale(selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration) - xScale(selectedData.startTime), yScale(1), selectedData.depth, ctx);
+                    const duration = selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration;
+                    const bottomRight = xScale(duration) - xScale(selectedData.startTime);
+                    renderRadiusBorder(xScale(selectedData.startTime), yScale(0), bottomRight, yScale(1), selectedData.depth, ctx);
                 },
                 triggers: [
                     session.selectedData,
@@ -293,29 +295,32 @@ export const ThreadUnit = unit<ThreadMetaData>({
             isCollapse: true,
         },
     }),
-    bottomPanelRender: (session: Session, triggerEvent: TriggerEvent, metadata) => {
+    bottomPanelRender: (newSession: Session, triggerEvent: TriggerEvent, metadata) => {
         if (triggerEvent === 'SELECTED_DATA') {
             return {
-                Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
+                Detail: ({ session }): JSX.Element => <SelectedDataBottomPanel
+                    session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
                 DetailTitle: 'Slice Detail',
-                More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
+                More: ({ session }): JSX.Element =>
+                    <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
         return {
-            Detail: ({ session, height }) => <SelectSimpleTabularDetail session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
+            Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail
+                session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
             DetailTitle: 'Slices List',
-            More: (): JSX.Element => <SliceRightOpDetail session={session} metadata={metadata} />,
+            More: (): JSX.Element => <SliceRightOpDetail session={newSession} metadata={metadata} />,
             MoreWh: 320,
         };
     },
-    collapseAction: (unit) => {
-        const chart = (unit.chart as ChartDesc<ChartType>);
-        const config = (unit.chart as ChartDesc<ChartType>).config;
+    collapseAction: (insightUnit) => {
+        const chartDesc = (insightUnit.chart as ChartDesc<ChartType>);
+        const config = (insightUnit.chart as ChartDesc<ChartType>).config;
         runInAction(() => {
             (config as any).isCollapse = !((config as any).isCollapse as boolean);
             const collapseHeight = UnitHeight.COLL;
             const expandedHeight = (config as any).maxDepth * (config as any).rowHeight;
-            chart.height = ((config as any).isCollapse as boolean) ? collapseHeight : expandedHeight;
+            chartDesc.height = ((config as any).isCollapse as boolean) ? collapseHeight : expandedHeight;
         });
     },
 });
@@ -422,7 +427,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',
     chart: SummaryChart,
-    renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
+    renderInfo: (session: Session, metadata: ProcessMetaData, thisUnit) => {
         return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName}` : `${metadata.processName}`;
     },
 });
@@ -431,7 +436,7 @@ export const LabelUnit = unit<ProcessMetaData>({
     name: 'Label',
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',
-    renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
+    renderInfo: (session: Session, metadata: ProcessMetaData, thisUnit) => {
         return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName}`;
     },
 });
@@ -512,11 +517,40 @@ const getFlowName = (res: any): string | undefined => {
         flowName = 'Outgoing flow';
     } else if (res.type === 'f') {
         flowName = 'Incoming flow';
+    } else {
+        flowName = undefined;
     }
     return flowName;
 };
 
-const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
+const handleArrayResult = (result: Array<Record<string, unknown>>, templateField: renderFieldsType<Record<string, unknown>>,
+    state: Array<[string, string | JSX.Element]>, metadata: unknown): void => {
+    result.forEach(res => {
+        const render = templateField[1];
+        if (templateField[2] !== undefined) {
+            const isHiden = templateField[2];
+            if (isHiden(res)) { state.push([templateField[0], render(res, session, metadata)]); }
+        } else {
+            state.push([getFlowName(res) ?? templateField[0], render(res, session, metadata)]);
+        }
+    });
+};
+
+const handleNonArrayResult = (result: Record<string, unknown>, state: Array<[string, (string | JSX.Element)]>,
+    detailDesc: LinkDataDesc<Record<string, unknown>>, metadata: unknown): void => {
+    detailDesc.renderFields.forEach(renderField => {
+        const render = renderField[1];
+        if (renderField[2] !== undefined) {
+            const isHiden = renderField[2];
+            if (isHiden(result)) { state.push([renderField[0], render(result, session, metadata)]); }
+        } else {
+            state.push([renderField[0], render(result, session, metadata)]);
+        }
+    });
+};
+
+const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>,
+    linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
     const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
     const { selectedUnits } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
@@ -533,36 +567,19 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
     const loadData = (): void => {
         if (onDataFetched !== undefined && linkFlow !== undefined) {
             onDataFetched?.then(result => {
-                if (recentUnits.current !== selectedUnits || recentData.current !== linkFlow) return;
+                if (recentUnits.current !== selectedUnits || recentData.current !== linkFlow) { return; }
                 const state: Array<[string, string | JSX.Element]> = [];
                 if (Array.isArray(result)) {
                     const templateField = detail.templateField;
                     if (!templateField) { return; }
-                    result.forEach(res => {
-                        const render = templateField[1];
-                        if (templateField[2] !== undefined) {
-                            const isHiden = templateField[2];
-                            isHiden(res) && state.push([templateField[0], render(res, session, metadata)]);
-                        } else {
-                            state.push([getFlowName(res) ?? templateField[0], render(res, session, metadata)]);
-                        }
-                    });
+                    handleArrayResult(result, templateField, state, metadata);
                 } else {
-                    detail.renderFields.forEach(renderField => {
-                        const render = renderField[1];
-                        if (renderField[2] !== undefined) {
-                            const isHiden = renderField[2];
-                            isHiden(result) && state.push([renderField[0], render(result, session, metadata)]);
-                        } else {
-                            state.push([renderField[0], render(result, session, metadata)]);
-                        }
-                    });
+                    handleNonArrayResult(result, state, detail, metadata);
                 }
                 setRenderFields(state);
             });
         }
     };
-
     React.useEffect(loadData, [selectedUnits, linkFlow, detail, session.linkDetail]);
     return renderFields;
 };

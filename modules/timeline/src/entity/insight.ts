@@ -99,7 +99,7 @@ type DetailDesc<DataType extends Record<string, unknown>, ExtraDataType extends 
     mouseLeaveCallback?: (args: TabularEnterCacallbackArgs<DataType>) => void;
 } & TableDataAdapter<DataType>;
 
-type renderFieldsType<DataType> =
+export type renderFieldsType<DataType> =
 [string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element), (data: DataType) => boolean ] |
 [string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element) ];
 
