@@ -1,12 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
+#include "pch.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolResponse.h"
 #include "WsSessionManager.h"
-#include "ServerLog.h"
 #include "QueryOpCategoryInfoHandler.h"
 
 namespace Dic::Module::Operator {

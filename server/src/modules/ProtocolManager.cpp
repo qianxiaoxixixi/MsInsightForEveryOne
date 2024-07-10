@@ -1,10 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
-
-#include "ProtocolManager.h"
-#include "ServerLog.h"
-#include "JsonUtil.h"
+#include "pch.h"
 #include "GlobalProtocol.h"
 #include "TimelineProtocol.h"
 #include "ProtocolEnumUtil.h"
@@ -15,6 +12,7 @@
 #include "SourceProtocol.h"
 #include "AdvisorProtocolUtil.h"
 #include "JupyterProtocol.h"
+#include "ProtocolManager.h"
 
 namespace Dic {
 namespace Protocol {

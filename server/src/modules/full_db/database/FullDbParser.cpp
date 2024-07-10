@@ -1,20 +1,16 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "FullDbParser.h"
-
-#include <utility>
-#include "ServerLog.h"
+#include "pch.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "DbTraceDataBase.h"
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
-#include "FileUtil.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "CommonCacheManager.h"
+#include "FullDbParser.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;

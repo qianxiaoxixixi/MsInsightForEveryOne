@@ -1,14 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "OperatorModule.h"
 #include "OperatorRequestHandler.h"
 #include "QueryOpCategoryInfoHandler.h"
 #include "QueryOpComputeUnitHandler.h"
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
 #include "QueryOpMoreInfoHandler.h"
+#include "OperatorModule.h"
 
 namespace Dic::Module {
     using namespace Operator;

@@ -1,9 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "ParserDb.h"
-#include "FileUtil.h"
 #include "TimelineRequestHandler.h"
 #include "ModuleRequestHandler.h"
 #include "FullDbParser.h"
@@ -12,6 +9,7 @@
 #include "ClusterFileParser.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "ParserStatusManager.h"
+#include "ParserDb.h"
 
 namespace Dic {
 namespace Module {

@@ -1,9 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
-
-#include "ModuleManager.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "GlobalModule.h"
 #include "TimelineModule.h"
 #include "SummaryModule.h"
@@ -13,6 +11,7 @@
 #include "SourceModule.h"
 #include "AdvisorModule.h"
 #include "JupyterModule.h"
+#include "ModuleManager.h"
 
 namespace Dic {
 namespace Module {

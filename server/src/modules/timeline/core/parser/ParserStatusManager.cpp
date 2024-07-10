@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include "ParserStatusManager.h"
+#include "pch.h"
 #include "ConstantDefs.h"
-#include "algorithm"
+#include "ParserStatusManager.h"
 
 namespace Dic {
 namespace Module {

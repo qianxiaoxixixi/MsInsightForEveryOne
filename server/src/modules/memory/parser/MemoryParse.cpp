@@ -1,20 +1,15 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "MemoryParse.h"
-#include "ServerLog.h"
-
-#include "FileUtil.h"
-#include "ValidateUtil.h"
+#include "pch.h"
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "FileDef.h"
-#include "NumberUtil.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
 #include "TraceTime.h"
+#include "MemoryParse.h"
 
 namespace Dic {
 namespace Module {

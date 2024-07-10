@@ -1,10 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "OperatorProtocolUtil.h"
+#include "pch.h"
 #include "ProtocolUtil.h"
-#include "JsonUtil.h"
+#include "OperatorProtocolUtil.h"
 
 namespace Dic::Protocol {
 using namespace rapidjson;

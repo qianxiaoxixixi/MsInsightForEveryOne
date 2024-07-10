@@ -1,17 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "ParserBin.h"
-#include "FileUtil.h"
 #include "TimelineRequestHandler.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
 #include "ModuleRequestHandler.h"
-#include "TraceFileParser.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
+#include "ParserBin.h"
 
 namespace Dic {
 namespace Module {

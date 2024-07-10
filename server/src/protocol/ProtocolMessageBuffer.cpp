@@ -3,11 +3,9 @@
  * Description: implementation for request buffer
  */
 
-#include "ServerLog.h"
+#include "pch.h"
 #include "ProtocolDefs.h"
 #include "ProtocolManager.h"
-#include "RegexUtil.h"
-#include "JsonUtil.h"
 #include "TimelineProtocolRequest.h"
 #include "ProtocolMessageBuffer.h"
 

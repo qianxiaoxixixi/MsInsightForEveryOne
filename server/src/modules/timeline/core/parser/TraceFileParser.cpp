@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
-#include "ServerLog.h"
-#include "FileUtil.h"
+#include "pch.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "ParserStatusManager.h"

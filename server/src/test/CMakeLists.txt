@@ -44,8 +44,15 @@ list(APPEND DIC_PERFORMANCE_TEST_LIST
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
         FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp modules/timeline/protocol/ProtocolTest.cpp
         modules/timeline/database/DatabaseTest.cpp)
+# 添加预编译头文件到目标
+target_precompile_headers(insight_test PRIVATE ${SRC_HOME_DIR}/entry/server/bin/include/pch.h)
+# U_SOCKETS_SRC_LIST无法使用预编译头文件，故排除
+set_source_files_properties(${U_SOCKETS_SRC_LIST} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
-
+# 添加预编译头文件到目标
+target_precompile_headers(insight_performance PRIVATE ${SRC_HOME_DIR}/entry/server/bin/include/pch.h)
+# U_SOCKETS_SRC_LIST无法使用预编译头文件，故排除
+set_source_files_properties(${U_SOCKETS_SRC_LIST} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
             gtest_main gmock_main

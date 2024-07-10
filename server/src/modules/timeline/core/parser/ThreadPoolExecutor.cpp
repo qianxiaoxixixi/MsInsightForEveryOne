@@ -1,11 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
+#include "pch.h"
 #include "ClusterParseThreadPoolExecutor.h"
-
-#include <memory>
-#include "ServerLog.h"
 
 namespace Dic {
 namespace Module {

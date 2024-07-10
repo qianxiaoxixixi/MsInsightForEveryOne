@@ -196,7 +196,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SOURCE_PROTOCOL_SRC}
         ${DIC_MODULES_ADVISOR_SRC} ${DIC_MODULES_ADVISOR_HANDLER_SRC}
         ${DIC_MODULES_ADVISOR_PROTOCOL_SRC} ${DIC_MODULES_ADVISOR_PROCESS_SRC})
-
+include_directories(${SRC_HOME_DIR}/entry/server/bin/include)
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test")
     enable_testing()

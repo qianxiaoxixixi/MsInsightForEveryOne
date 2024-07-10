@@ -1,13 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "DbClusterDataBase.h"
+#include "pch.h"
 #include "TableDefs.h"
-#include "FileUtil.h"
-#include "JsonUtil.h"
-#include "ServerLog.h"
 #include "TraceTime.h"
+#include "DbClusterDataBase.h"
 
 namespace Dic {
 using namespace Server;

@@ -1,13 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "QueryKernelDetailHandler.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
-
+#include "QueryKernelDetailHandler.h"
 namespace Dic {
 namespace Module {
 namespace Timeline {

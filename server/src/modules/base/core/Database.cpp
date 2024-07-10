@@ -2,12 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
 
-#include <thread>
-#include "ServerLog.h"
-#include "Database.h"
+#include "pch.h"
 #include "TableDefs.h"
-#include "FileUtil.h"
-#include "sys/stat.h"
+#include "Database.h"
 
 namespace Dic {
 namespace Module {

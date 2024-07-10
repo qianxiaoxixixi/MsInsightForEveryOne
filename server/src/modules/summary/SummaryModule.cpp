@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include "SummaryModule.h"
 #include "SummaryTopRankHandler.h"
 #include "SummaryStatisticsHandler.h"
 #include "QueryComputeDetailInfoHandler.h"
@@ -11,6 +10,7 @@
 #include "StageAndBubbleTimeHandler.h"
 #include "RankAndBubbleTimeHandler.h"
 #include "QueryCommunicationDetailHandler.h"
+#include "SummaryModule.h"
 
 namespace Dic {
 namespace Module {

@@ -1,8 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "MemoryModule.h"
 #include "QueryMemoryTypeHandler.h"
 #include "QueryMemoryResourceTypeHandler.h"
 #include "QueryMemoryOperatorHandler.h"
@@ -10,6 +8,7 @@
 #include "QueryOperatorSizeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
 #include "QueryMemoryStaticOperatorListHandler.h"
+#include "MemoryModule.h"
 
 namespace Dic {
 namespace Module {

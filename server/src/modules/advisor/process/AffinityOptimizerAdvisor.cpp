@@ -1,9 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
+#include "pch.h"
 #include "DataBaseManager.h"
-#include "ServerLog.h"
 #include "TraceTime.h"
 #include "VirtualTraceDatabase.h"
 #include "AffinityOptimizerAdvisor.h"

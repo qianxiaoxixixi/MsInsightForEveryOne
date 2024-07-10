@@ -1,15 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "UploadFileParser.h"
+#include "pch.h"
 #include "CacheManager.h"
 #include "ProjectExplorerManager.h"
 #include "TraceFileParser.h"
 #include "MemoryParse.h"
 #include "SourceFileParser.h"
-#include "StringUtil.h"
-
-
+#include "UploadFileParser.h"
 namespace Dic {
 namespace Module {
 namespace Timeline {

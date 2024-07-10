@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
 
-#include "ServerLog.h"
+#include "pch.h"
 #include "IdBuilder.h"
 #include "ModuleRequestHandler.h"
 

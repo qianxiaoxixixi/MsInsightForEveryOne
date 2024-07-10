@@ -96,7 +96,7 @@ def get_gxx_type():
 
 def build_bin(args):
     build_log('begin build...\n')
-    generator = 'MinGW Makefiles' if IS_WINDOWS else 'Ninja'
+    generator = 'Ninja'
     gxx_type = get_gxx_type()
     build_dir = os.path.join(CMAKE_BUILD_DIR, gxx_type)
     if not os.path.exists(build_dir):

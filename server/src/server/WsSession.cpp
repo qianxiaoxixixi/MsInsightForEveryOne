@@ -1,11 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
-
-#include "ServerLog.h"
-#include "Protocol.h"
-#include "JsonUtil.h"
-#include "TokenBuilder.h"
+#include "pch.h"
+#include "LogUtil.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
 #include "WsSession.h"

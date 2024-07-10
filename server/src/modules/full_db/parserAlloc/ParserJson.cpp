@@ -1,11 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "ParserJson.h"
-
-#include <utility>
-#include "FileUtil.h"
+#include "pch.h"
 #include "TimelineRequestHandler.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
@@ -18,6 +14,7 @@
 #include "MemoryParse.h"
 #include "ParserStatusManager.h"
 #include "EventNotifyThreadPoolExecutor.h"
+#include "ParserJson.h"
 
 namespace Dic {
 namespace Module {

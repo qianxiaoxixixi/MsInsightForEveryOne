@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "algorithm"
+#include "pch.h"
 #include "TraceDatabaseDef.h"
 #include "FlowAnalyzer.h"
 namespace Dic::Module::Timeline {

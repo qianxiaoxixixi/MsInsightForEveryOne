@@ -1,9 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
-#include "ServerLog.h"
-#include "JsonUtil.h"
-#include "ProtocolEnumUtil.h"
+#include "pch.h"
 #include "CommunicationProtocol.h"
 #include "CommunicationProtocolUtil.h"
 

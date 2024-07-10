@@ -1,13 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
+#include "pch.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolResponse.h"
 #include "OperatorGroupConverter.h"
 #include "WsSessionManager.h"
-#include "ServerLog.h"
 #include "OperatorProtocol.h"
 #include "QueryOpMoreInfoHandler.h"
 

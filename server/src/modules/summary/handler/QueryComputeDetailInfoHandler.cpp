@@ -1,11 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "QueryComputeDetailInfoHandler.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "QueryComputeDetailInfoHandler.h"
 
 namespace Dic {
 namespace Module {
