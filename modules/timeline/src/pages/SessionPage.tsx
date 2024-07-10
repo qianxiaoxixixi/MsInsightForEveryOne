@@ -64,7 +64,7 @@ export const BOTTOM_HEIGHT = 332;
 export const SessionPage = observer(function SessionPage({ session }: { session: Session }) {
     const [view, handleOpen] = useDraggableContainer({
         draggableWH: BOTTOM_HEIGHT,
-        dragDirection: DragDirection.bottom,
+        dragDirection: DragDirection.BOTTOM,
         open: false,
         theme: themeInstance.getThemeType(),
     });

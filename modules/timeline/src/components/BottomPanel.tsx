@@ -254,7 +254,7 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
 
 const DataCard = observer(({ session, height }: DataCardType) => {
     const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height);
-    const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: moreWh, theme: themeInstance.getThemeType() });
+    const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: moreWh, theme: themeInstance.getThemeType() });
     return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
             !isEmpty(more)
