@@ -7,14 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined, QuestionCircleFilled } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
-import Help from './Help';
 import Filter, { ConditionDataType } from './Filter';
 import CommunicationTimeTable, { DataType, DataType as tableDataType } from './CommunicationTimeTable';
 import CommunicationTimeChart, { dataType as chartDataType }
     from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
-import { notNullObj, Space, StyledTooltip, Tan } from '../Common';
+import { notNullObj, Space, StyledTooltip } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
@@ -182,10 +181,8 @@ const CommunicationAnalysisCom = (props: {isShow:
             {/* 筛选条件 */}
             <Filter handleFilterChange={handleFilterChange} session={session} />
             {/* 通信用时分析 */}
-            <Tan
-                position={'left'}
-                drag={<Help />}
-                main={ <div style={{ padding: '0 16px' }}>
+            <div className={'communication'} style={{ padding: '0 16px', display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}>
+                <div>
                     <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
@@ -194,12 +191,7 @@ const CommunicationAnalysisCom = (props: {isShow:
                         }}/>
                     { showData.adviceData.length > 0 && <AdviceLabel adviceData={showData.adviceData} /> }
                 </div>
-                }
-                dragSize={400}
-                id={'communication-analysis'}
-                style={{ display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}
-                className={'communication'}
-            />
+            </div>
             {/* 通信矩阵 */}
             <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions} session={session}/>
             {/* 带宽分析 */}
