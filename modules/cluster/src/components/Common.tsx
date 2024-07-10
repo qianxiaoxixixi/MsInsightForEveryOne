@@ -4,11 +4,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Checkbox, Divider, Select, Pagination, Tooltip } from 'antd';
-import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
-import { themeInstance } from '../theme/theme';
-import { observer } from 'mobx-react';
 import i18n from '../i18n';
 import type { TooltipProps } from 'antd/lib/tooltip';
 import { useTheme } from '@emotion/react';
@@ -37,26 +34,6 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
             style={{ height: 'calc(100% - 20px)', overflow: 'auto', ...props.bodyStyle ?? {} }}>{props.content}</div>
     </div>;
 };
-
-export const Tan = observer((props: {position: string;main: JSX.Element;drag: JSX.Element;
-    id: string;dragSize?: number;style?: object;className?: string;}): JSX.Element => {
-    const [view] = useDraggableContainer({
-        draggableWH: props.dragSize ?? 300,
-        dragDirection: DragDirection.left,
-        open: true,
-        theme: themeInstance.getThemeType(),
-    });
-    const { style = {}, className } = props;
-    return <div style={{ display: 'block', userSelect: 'text', ...style }} className={className ?? ''}>
-        <div style={{ display: 'flex', height: '100%', overflow: 'auto' }} className={'tan-box'}>
-            {view({
-                mainContainer: props.main,
-                draggableContainer: props.drag,
-                id: props.id,
-            })}
-        </div>
-    </div>;
-});
 
 export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {
     return (<div className={'loading'}
