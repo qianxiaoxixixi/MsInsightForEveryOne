@@ -1,22 +1,24 @@
-/** @jsxImportSource @emotion/react */
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef } from 'react';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
 import { useAsyncEffect } from '../../utils/useEffectHooks';
 import styled from '@emotion/styled';
 
-export type ArcData = {
+export interface ArcData {
     startAngle: number;
     endAngle: number;
     innerRadius: number;
     outerRadius: number;
 };
 
-type GaugeChartProps = {
+interface GaugeChartProps {
     session: Session;
     dataFormat: (data: number) => string;
     mapFunc: () => Promise<Array<[number, string]>>;
@@ -48,8 +50,8 @@ const drawLeft = (ctx: CanvasRenderingContext2D, {
     const totalValue = datas.reduce((previousValue, data) => previousValue + data[0], 0);
     if (totalValue === 0) {
         ctx.beginPath();
-        ctx.arc(margin + step / 2, canvasHeight / 2, step / 3, 0, 2 * Math.PI);
-        ctx.arc(margin + step / 2, canvasHeight / 2, step / 2, 0, 2 * Math.PI, true);
+        ctx.arc(margin + (step / 2), canvasHeight / 2, step / 3, 0, 2 * Math.PI);
+        ctx.arc(margin + (step / 2), canvasHeight / 2, step / 2, 0, 2 * Math.PI, true);
         ctx.fillStyle = 'grey';
         ctx.fill();
         ctx.closePath();
@@ -59,7 +61,7 @@ const drawLeft = (ctx: CanvasRenderingContext2D, {
     const arcDatas: ArcData[] = datas.map((data, index) => {
         const arcData = {
             startAngle: nowRadStart,
-            endAngle: nowRadStart + 2 * Math.PI * data[0] / totalValue,
+            endAngle: nowRadStart + (2 * Math.PI * data[0] / totalValue),
             innerRadius: step / 3,
             outerRadius: step / 2,
         };
@@ -71,8 +73,8 @@ const drawLeft = (ctx: CanvasRenderingContext2D, {
     });
     arcDatas.forEach((data, index) => {
         ctx.beginPath();
-        ctx.arc(margin + step / 2, canvasHeight / 2, data.innerRadius, data.startAngle, data.endAngle);
-        ctx.arc(margin + step / 2, canvasHeight / 2, data.outerRadius, data.endAngle, data.startAngle, true);
+        ctx.arc(margin + (step / 2), canvasHeight / 2, data.innerRadius, data.startAngle, data.endAngle);
+        ctx.arc(margin + (step / 2), canvasHeight / 2, data.outerRadius, data.endAngle, data.startAngle, true);
         ctx.fillStyle = palette[index];
         ctx.fill();
         ctx.closePath();
@@ -86,16 +88,16 @@ const drawTotalText = (ctx: CanvasRenderingContext2D, height: number, totalForma
     const totalLength = ctx.measureText('Total').width;
     const valueLength = ctx.measureText(totalFormat[0]).width;
     if (totalFormat[1] === undefined) {
-        ctx.fillText('Total', margin + step / 2 - totalLength / 2, height / 2 - 3);
-        ctx.fillText(totalFormat[0], margin + step / 2 - valueLength / 2, height / 2 + 13);
+        ctx.fillText('Total', margin + (step / 2) - (totalLength / 2), (height / 2) - 3);
+        ctx.fillText(totalFormat[0], margin + (step / 2) - (valueLength / 2), (height / 2) + 13);
         return;
     }
-    ctx.fillText('Total', margin + step / 2 - totalLength / 2, height / 2 - 10);
-    ctx.fillText(totalFormat[0], margin + step / 2 - valueLength / 2, height / 2 + 6);
+    ctx.fillText('Total', margin + (step / 2) - (totalLength / 2), (height / 2) - 10);
+    ctx.fillText(totalFormat[0], margin + (step / 2) - (valueLength / 2), (height / 2) + 6);
     ctx.fillStyle = theme.tableHeadFontColor;
     ctx.font = 'Regular 10px PingFangSC';
     const unitLength = ctx.measureText(totalFormat[1]).width;
-    ctx.fillText(totalFormat[1], margin + step / 2 - unitLength / 2, height / 2 + 20);
+    ctx.fillText(totalFormat[1], margin + (step / 2) - (unitLength / 2), (height / 2) + 20);
 };
 
 interface DrawRightParams {
@@ -121,7 +123,7 @@ const drawRight = (ctx: CanvasRenderingContext2D, {
     const paddingTop = 10;
     const radius = canvasHeight * ratio / 6;
     datas.forEach((data, index) => {
-        const positionY = index * yOffset + paddingTop;
+        const positionY = (index * yOffset) + paddingTop;
         ctx.fillStyle = palette[index];
         ctx.beginPath();
         ctx.arc(xScale(0), positionY, radius, Math.PI, Math.PI * 1.5);

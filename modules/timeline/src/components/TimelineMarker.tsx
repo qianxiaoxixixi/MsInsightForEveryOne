@@ -1,4 +1,7 @@
-import { Session } from '../entity/session';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type { Session } from '../entity/session';
 import * as React from 'react';
 import { getTimestamp } from '../utils/humanReadable';
 import { observer } from 'mobx-react';
@@ -8,7 +11,7 @@ import { ReactComponent as TimeLineFlagSvg } from '../assets/images/timeline/tim
 import { ReactComponent as RangeEndFlagSvg } from '../assets/images/timeline/ic_range_end_flag.svg';
 import { ReactComponent as RangeStartFlagSvg } from '../assets/images/timeline/ic_range_start_flag.svg';
 import { ReactComponent as GCIcon } from '../assets/images/insights/ark_gc.svg';
-import { TimelineAxisFlag } from '../entity/timeMaker';
+import type { TimelineAxisFlag } from '../entity/timeMaker';
 import { ReactComponent as BrushIcon } from '../assets/images/timeline/ic_brush_black_lined.svg';
 import { Modal } from 'antd';
 import { runInAction } from 'mobx';
@@ -16,14 +19,14 @@ import { platform } from '../platforms';
 import styled from '@emotion/styled';
 import { useWatchResize } from '../utils/useWatchDomResize';
 import type { Theme } from '@emotion/react';
-import { TimeLineMakerProps } from '../utils/TimeMakerUtils';
+import type { TimeLineMakerProps } from '../utils/TimeMakerUtils';
 import { ThemeProvider, useTheme } from '@emotion/react';
 import { themeInstance } from '../theme/theme';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
-import { TimeStamp } from '../entity/common';
+import type { TimeStamp } from '../entity/common';
 import { adaptDpr } from 'lib/CommonUtils';
 
 const FLAG_DEFAULT_NAME_REG = /default-\d+/;
@@ -33,7 +36,7 @@ const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: T
     svg.style.fill = item.color;
     svg.style.stroke = 'none';
     const svgString = new XMLSerializer().serializeToString(svg);
-    const svgData = 'data:image/svg+xml;base64,' + btoa(svgString);
+    const svgData = `data:image/svg+xml;base64,${btoa(svgString)}`;
     const icon = new Image();
     icon.src = svgData;
     icon.onload = (): void => {
@@ -76,25 +79,33 @@ const drawVerticalLineUnderFlag = (ctx: CanvasRenderingContext2D, beginX: number
     ctx.stroke();
 };
 
-const drawRangeFlag = (ctx: CanvasRenderingContext2D, rangStartX: number, rangeEndX: number, color: string,
-    session: Session, rangStartSvg: SVGSVGElement, rangEndSvg: SVGSVGElement): void => {
-    rangStartSvg.style.fill = color;
-    rangEndSvg.style.fill = color;
-    const rangStartSvgString = new XMLSerializer().serializeToString(rangStartSvg);
-    const rangEndSvgString = new XMLSerializer().serializeToString(rangEndSvg);
-    const rangStartSvgData = 'data:image/svg+xml;base64,' + btoa(rangStartSvgString);
-    const rangEndSvgData = 'data:image/svg+xml;base64,' + btoa(rangEndSvgString);
+const drawRangeFlag = ({ ctx, rangeStartX, rangeEndX, color, rangeStartSvg, rangeEndSvg }: IDrawRangeFlagParams): void => {
+    rangeStartSvg.style.fill = color;
+    rangeEndSvg.style.fill = color;
+    const rangStartSvgString = new XMLSerializer().serializeToString(rangeStartSvg);
+    const rangEndSvgString = new XMLSerializer().serializeToString(rangeEndSvg);
+    const rangStartSvgData = `data:image/svg+xml;base64,${btoa(rangStartSvgString)}`;
+    const rangEndSvgData = `data:image/svg+xml;base64,${btoa(rangEndSvgString)}`;
     const rangeStartIcon = new Image();
     const rangeEndIcon = new Image();
     rangeStartIcon.src = rangStartSvgData;
     rangeEndIcon.src = rangEndSvgData;
     rangeStartIcon.onload = (): void => {
-        ctx.drawImage(rangeStartIcon, rangStartX - 3, 0);
+        ctx.drawImage(rangeStartIcon, rangeStartX - 3, 0);
     };
     rangeEndIcon.onload = (): void => {
         ctx.drawImage(rangeEndIcon, rangeEndX - 3, 0);
     };
 };
+
+interface IDrawRangeFlagParams {
+    ctx: CanvasRenderingContext2D;
+    rangeStartX: number;
+    rangeEndX: number;
+    color: string;
+    rangeStartSvg: SVGSVGElement;
+    rangeEndSvg: SVGSVGElement;
+}
 
 interface IDrawFlagsParams {
     session: Session;
@@ -105,19 +116,7 @@ interface IDrawFlagsParams {
     t: TFunction;
 }
 
-export const drawTimelineFlags = ({ session, domain, current, range, vertical, t }: IDrawFlagsParams): void => {
-    // draw timeline flag
-    const ctx = current.getContext('2d');
-    const verticalCtx = vertical.getContext('2d');
-    if (!ctx || !verticalCtx || session.name === t('Realtime Monitor')) {
-        return;
-    }
-    const { canvasWidth } = adaptDpr(current, ctx);
-    adaptDpr(vertical, verticalCtx);
-    // 清空画布
-    ctx.clearRect(0, 0, current.width, current.height);
-    verticalCtx.clearRect(0, 0, vertical.width, vertical.height);
-    const flagList = session.timelineMaker.timelineFlagList;
+const getSvgItems = (): Array<SVGSVGElement | undefined> => {
     let pointSvg: SVGSVGElement | undefined;
     let rangeStartSvg: SVGSVGElement | undefined;
     let rangeEndSvg: SVGSVGElement | undefined;
@@ -132,8 +131,27 @@ export const drawTimelineFlags = ({ session, domain, current, range, vertical, t
             case 'ic_range_end_flag':
                 rangeEndSvg = svgItem;
                 break;
+            default:
+                break;
         }
     });
+    return [pointSvg, rangeStartSvg, rangeEndSvg];
+};
+
+export const drawTimelineFlags = ({ session, domain, current, range, vertical, t }: IDrawFlagsParams): void => {
+    // draw timeline flag
+    const ctx = current.getContext('2d');
+    const verticalCtx = vertical.getContext('2d');
+    if (!ctx || !verticalCtx || session.name === t('Realtime Monitor')) {
+        return;
+    }
+    const { canvasWidth } = adaptDpr(current, ctx);
+    adaptDpr(vertical, verticalCtx);
+    // 清空画布
+    ctx.clearRect(0, 0, current.width, current.height);
+    verticalCtx.clearRect(0, 0, vertical.width, vertical.height);
+    const flagList = session.timelineMaker.timelineFlagList;
+    const [pointSvg, rangeStartSvg, rangeEndSvg] = getSvgItems();
     flagList?.forEach((item: TimelineAxisFlag) => {
         if (!pointSvg || !rangeStartSvg || !rangeEndSvg) { return; }
         switch (item.type) {
@@ -143,20 +161,29 @@ export const drawTimelineFlags = ({ session, domain, current, range, vertical, t
                 // 在旗子下方绘制线条
                 drawVerticalLineUnderFlag(verticalCtx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth), item.color);
                 break;
-            case 'range':
+            case 'range': {
                 if (item.anotherTimeStamp === undefined) {
                     return;
                 }
                 // 判断标记中首尾时间戳是否有其中一个在范围内
-                if (!(item.timeStamp >= domain[0] && item.timeStamp <= domain[1]) && !(item.anotherTimeStamp >= domain[0] && item.anotherTimeStamp <= domain[1])) { return; }
-                drawRangeFlag(ctx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth),
-                    transformTimeToLeft(domain[0], domain[1], item.anotherTimeStamp, canvasWidth),
-                    item.color, session, rangeStartSvg, rangeEndSvg);
+                const isTimeStampInDomain = item.timeStamp >= domain[0] && item.timeStamp <= domain[1];
+                const isAnotherTimeStampInDomain = item.anotherTimeStamp >= domain[0] && item.anotherTimeStamp <= domain[1];
+                if (!(isTimeStampInDomain) && !(isAnotherTimeStampInDomain)) { return; }
+                drawRangeFlag({
+                    ctx,
+                    rangeStartX: transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth),
+                    rangeEndX: transformTimeToLeft(domain[0], domain[1], item.anotherTimeStamp, canvasWidth),
+                    color: item.color,
+                    rangeStartSvg,
+                    rangeEndSvg,
+                });
                 // 在范围边界的两个旗子下绘制竖线
                 drawVerticalLineUnderFlag(verticalCtx, transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth), item.color);
                 drawVerticalLineUnderFlag(verticalCtx, transformTimeToLeft(domain[0], domain[1], item.anotherTimeStamp, canvasWidth), item.color);
                 break;
+            }
             default:
+                break;
         }
     });
 };
@@ -170,7 +197,7 @@ export const transformTimeToLeft = (domainStart: number, domainEnd: number, time
 
 const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): void => {
     const maxNumber = generateDefaultNumber(session);
-    const defaultDesc = 'default-' + maxNumber.toString();
+    const defaultDesc = `default-${maxNumber.toString()}`;
     const color = session.timelineMaker.timelineFlagColorList[maxNumber % session.timelineMaker.timelineFlagColorList.length];
     runInAction(() => {
         session.timelineMaker.selectedFlag = {
@@ -186,7 +213,7 @@ const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): v
         };
         session.timelineMaker.timelineFlagList.push(session.timelineMaker.selectedFlag);
         platform.trace('useTag', {});
-        session.timelineMaker.timelineFlagList.sort(function(a, b) {
+        session.timelineMaker.timelineFlagList.sort((a, b) => {
             return a.timeStamp - b.timeStamp;
         });
         // 通知时间轴进行标记绘图更新
@@ -196,7 +223,7 @@ const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): v
 
 export const addRangeFlag = (session: Session, rangeStartTimeStamp: number, rangeStartDisplay: string, rangeEndTimeStamp: number): void => {
     const maxNumber = generateDefaultNumber(session);
-    const defaultDesc = 'default-' + maxNumber.toString();
+    const defaultDesc = `default-${maxNumber.toString()}`;
     const color = session.timelineMaker.timelineFlagColorList[maxNumber % session.timelineMaker.timelineFlagColorList.length];
     const uid = crypto.getRandomValues(new Uint32Array(3)).join('-');
     runInAction(() => {
@@ -212,7 +239,7 @@ export const addRangeFlag = (session: Session, rangeStartTimeStamp: number, rang
             anotherTimeStamp: rangeEndTimeStamp,
         };
         session.timelineMaker.timelineFlagList.push(rangeStartFlag);
-        session.timelineMaker.timelineFlagList.sort(function(a, b) {
+        session.timelineMaker.timelineFlagList.sort((a, b) => {
             return a.timeStamp - b.timeStamp;
         });
         // 通知时间轴进行标记绘图更新
@@ -305,17 +332,25 @@ export const handleMouseMove = (e: MouseEvent, session: Session, current: HTMLCa
     drawTimeLineFlagForMouseMove(ctx, mouse.x, svg);
 };
 
-export const handleSingleClick = (e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>,
-    domainStart: number, domainEnd: number, current: HTMLCanvasElement | null): void => {
-    if (session.phase === 'waiting' || session.phase === 'recording' || session.phase === 'analyzing' || session.selectedRange !== undefined) { return; }
+interface ISingleClickParams {
+    event: MouseEvent;
+    session: Session;
+    range: React.MutableRefObject<[number, number]>;
+    domainStart: number;
+    domainEnd: number;
+    current: HTMLCanvasElement | null;
+}
+
+export const handleSingleClick = ({ event, session, range, domainStart, domainEnd, current }: ISingleClickParams): void => {
+    if (['waiting', 'recording', 'analyzing'].includes(session.phase) || session.selectedRange !== undefined) { return; }
     const xScale = linearScaleFactory(range.current, [domainStart, domainEnd]);
-    const timeStamp = Math.floor(xScale(e.offsetX));
+    const timeStamp = Math.floor(xScale(event.offsetX));
     const timeDisplay = getTimestamp(timeStamp, { precision: session.isNsMode ? 'ns' : 'ms' });
     if (current === null || session.endTimeAll === undefined || timeStamp > session.endTimeAll) { return; }
     const ctx = current?.getContext('2d');
-    const flagCanvas = document.elementsFromPoint(e.clientX, e.clientY).find(t => t.id === 'timelineFlagCnvas');
-    const canvasNow = document.elementsFromPoint(e.clientX, e.clientY).find(t => t.classList.contains('drawCanvas'));
-    const tableElement = document.elementsFromPoint(e.clientX, e.clientY).find(t => tableElementId.includes(t.id));
+    const flagCanvas = document.elementsFromPoint(event.clientX, event.clientY).find(t => t.id === 'timelineFlagCnvas');
+    const canvasNow = document.elementsFromPoint(event.clientX, event.clientY).find(t => t.classList.contains('drawCanvas'));
+    const tableElement = document.elementsFromPoint(event.clientX, event.clientY).find(t => tableElementId.includes(t.id));
     if (!ctx || !flagCanvas) {
         if (canvasNow && !tableElement) {
             runInAction(() => {
@@ -334,16 +369,15 @@ export const handleSingleClick = (e: MouseEvent, session: Session, range: React.
     for (let index = 0; index < session.timelineMaker.timelineFlagList.length; index++) {
         const flagXOffset = xOffset(session.timelineMaker.timelineFlagList[index].timeStamp);
         const anotherMakerTimeStamp = session.timelineMaker.timelineFlagList[index].anotherTimeStamp;
-        if (isInFlagXOffsetRange(e.offsetX, flagXOffset)) {
-            setSelectFlag(session, index, e.offsetX, xOffset);
+        if (isInFlagXOffsetRange(event.offsetX, flagXOffset)) {
+            setSelectFlag(session, index, event.offsetX, xOffset);
             return;
-        } else if (anotherMakerTimeStamp !== undefined) {
-            if (isInFlagXOffsetRange(e.offsetX, xOffset(anotherMakerTimeStamp))) {
-                setSelectFlag(session, index, e.offsetX, xOffset);
-                return;
-            }
         }
-        setSelectFlag(session, index, e.offsetX, xOffset);
+        if (anotherMakerTimeStamp !== undefined && isInFlagXOffsetRange(event.offsetX, xOffset(anotherMakerTimeStamp))) {
+            setSelectFlag(session, index, event.offsetX, xOffset);
+            return;
+        }
+        setSelectFlag(session, index, event.offsetX, xOffset);
     }
     // 未放置标记，则放置标记
     addNewFlag(session, timeStamp, timeDisplay);
@@ -432,9 +466,7 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
     const { t } = useTranslation();
     const index = props.index;
     const session = props.session;
-    if (index === undefined) {
-        return <></>;
-    }
+    if (index === undefined) { return <></>; }
     const timelineAxisFlag = session.timelineMaker.timelineFlagList[index];
     const [theme, setTheme] = useState(useTheme());
     React.useEffect(() => {
@@ -459,16 +491,16 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
                     <span style={{ fontSize: '10px', color: theme.svgPlayBackgroundColor }}>256</span></InputLengthContainer></EditInputContainer>
             <ColorText style={{ color: theme.svgPlayBackgroundColor }} id={ 'colorText' }>{t('timelineMarker:color')}</ColorText>
             <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
-                { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
+                { session.timelineMaker.timelineFlagColorList.map((item: string, idx: number) => {
                     let needAddFlagColor = true;
-                    if (index < 23) {
+                    if (idx < 23) {
                         if (item === timelineAxisFlag.color) {
                             needAddFlagColor = false;
                         }
-                        if (index === 23 && needAddFlagColor) {
-                            return <div key={index} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
+                        if (idx === 23 && needAddFlagColor) {
+                            return <div key={idx} onClick={colorBoxClickListener} id = { timelineAxisFlag.color } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: theme.colorSelectedBorder }}></div>;
                         } else {
-                            return <div key={index} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
+                            return <div key={idx} onClick={colorBoxClickListener} id = { item } style={{ float: 'left', backgroundColor: item, height: '12px', width: '12px', marginTop: '6px', marginRight: '6px', border: item === timelineAxisFlag.colorCache ? theme.colorSelectedBorder : 'none' }}></div>;
                         }
                     }
                     return '';
@@ -606,7 +638,9 @@ const handleCancel = (session: Session, index: number): void => {
     Modal.destroyAll();
 };
 
-export const handleDoubleClick = (e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>, domainStart: number, domainEnd: number): void => {
+export const handleDoubleClick = (
+    e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>, domainStart: number, domainEnd: number,
+): void => {
     const canvasNow = document.elementsFromPoint(e.clientX, e.clientY).find(t => t.classList.contains('timeMakerAxis'));
     if (!canvasNow) {
         return;
@@ -618,7 +652,8 @@ export const handleDoubleClick = (e: MouseEvent, session: Session, range: React.
         if (isInFlagXOffsetRange(e.offsetX, flagXOffset)) {
             popupEditor(session, index);
             return;
-        } else if (anotherMarkerTimestamp !== undefined && isInFlagXOffsetRange(e.offsetX, xOffset(anotherMarkerTimestamp))) {
+        }
+        if (anotherMarkerTimestamp !== undefined && isInFlagXOffsetRange(e.offsetX, xOffset(anotherMarkerTimestamp))) {
             // 框选标记双击框选结束时的标记也会弹出编辑框
             popupEditor(session, index);
             return;
@@ -667,11 +702,11 @@ export const linearScaleFactory = (from: [number, number], to: [number, number])
             return x;
         }
         const scale = (to[1] - to[0]) / (from[1] - from[0]);
-        return (x - from[0]) * scale + to[0];
+        return ((x - from[0]) * scale) + to[0];
     };
 };
 
-type TimelineMarkerProps = {
+interface TimelineMarkerProps {
     session: Session;
     theme: Theme;
 };
@@ -695,9 +730,9 @@ registerCrossUnitRenderer({
 // 点击gc按钮绘制gc图标提示
 registerCrossUnitRenderer({
     action: (ctx, session, xScale, theme) => {
-        const GCActionTimeStamp = session.sharedState?.GCActionTimeStamp as number[] | undefined;
-        if (ctx !== null && GCActionTimeStamp !== undefined) {
-            GCActionTimeStamp.forEach(itemTimeStamp => {
+        const gcActionTimeStamp = session.sharedState?.GCActionTimeStamp as number[] | undefined;
+        if (ctx !== null && gcActionTimeStamp !== undefined) {
+            gcActionTimeStamp.forEach(itemTimeStamp => {
                 const img = new Image();
                 let svg: SVGSVGElement | undefined;
                 document.querySelectorAll('svg').forEach(svgItem => {
@@ -710,7 +745,7 @@ registerCrossUnitRenderer({
                     return;
                 }
                 const svgString = new XMLSerializer().serializeToString(svg);
-                const svgData = 'data:image/svg+xml;base64,' + btoa(svgString);
+                const svgData = `data:image/svg+xml;base64,${btoa(svgString)}`;
                 img.src = svgData;
                 ctx.drawImage(img, xScale(itemTimeStamp), 32);
             });
@@ -740,9 +775,9 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
 
     React.useEffect(() => {
         if (!canvas.current || !vertical.current) {
-            return;
+            return () => {};
         }
-        const singleClickListener = (e: MouseEvent): void => handleSingleClick(e, session, range, domainStart, domainEnd, canvas.current);
+        const singleClickListener = (e: MouseEvent): void => handleSingleClick({ event: e, session, range, domainStart, domainEnd, current: canvas.current });
         const doubleClickListener = (e: MouseEvent): void => handleDoubleClick(e, session, range, domainStart, domainEnd);
         if (session.name !== t('Realtime Monitor')) {
             addEventListener('click', singleClickListener);

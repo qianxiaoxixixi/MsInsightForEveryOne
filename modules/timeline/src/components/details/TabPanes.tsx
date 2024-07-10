@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import * as React from 'react';
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import { useTheme } from '@emotion/react';
-import { Session } from '../../entity/session';
-import { DetailDescriptor, BottomPanelRender } from '../../entity/insight';
+import type { Session } from '../../entity/session';
+import type { DetailDescriptor, BottomPanelRender } from '../../entity/insight';
 import { FilterContainer } from '../FilterContainer';
-import { createInteractorProps, TabComponentProps, CommonStateProto as DetailTabsState, TabTitlesProto, TabProto } from './base/Tabs';
-import { OptionType, TabState } from '../../entity/tabDependency';
+import { createInteractorProps, TabTitlesProto } from './base/Tabs';
+import type { TabComponentProps, CommonStateProto as DetailTabsState, TabProto } from './base/Tabs';
+import type { OptionType, TabState } from '../../entity/tabDependency';
 export interface DetailTabs extends TabProto {
     detail: DetailDescriptor<unknown>;
     bottomPanel?: Partial<CommonBottomPanel>;
@@ -30,7 +34,7 @@ TabComponentProps<DetailTabs, DetailTabsState>): JSX.Element => {
     </>);
 });
 
-export type CommonBottomPanel<DetailProps = any, MoreProps = any> = {
+export interface CommonBottomPanel<DetailProps = any, MoreProps = any> {
     Detail?: React.FC<DetailProps>;
     detailProps?: DetailProps;
     DetailTitle?: React.FC<Record<string, unknown>> | string;
