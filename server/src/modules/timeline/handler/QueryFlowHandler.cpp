@@ -1,13 +1,9 @@
 //
 // * Copyright (c) Huawei Technologies Co., Ltd. 2012-2023. All rights reserved.
 //
-
-#include "QueryFlowHandler.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "TraceTime.h"
-#include "DataBaseManager.h"
-
+#include "QueryFlowHandler.h"
 namespace Dic {
 namespace Module {
 namespace Timeline {

@@ -1,17 +1,16 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "DbSummaryDataBase.h"
+#include "pch.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorGroupConverter.h"
 #include "OperatorProtocolResponse.h"
-#include "ServerLog.h"
 #include "OperatorProtocol.h"
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
 #include "TraceTime.h"
 #include "DataBaseManager.h"
+#include "DbSummaryDataBase.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;

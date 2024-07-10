@@ -1,14 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "MemoryProtocol.h"
+#include "pch.h"
 #include "ProtocolDefs.h"
 #include "MemoryProtocolRequest.h"
-#include "JsonUtil.h"
 #include "MemoryProtocolRespose.h"
 #include "MemoryProtocolUtil.h"
 #include "TimelineProtocol.h"
+#include "MemoryProtocol.h"
 
 namespace Dic {
 namespace Protocol {

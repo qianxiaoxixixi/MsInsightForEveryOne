@@ -1,9 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
-
-#include "GlobalModule.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "TokenCreateHandler.h"
 #include "TokenDestroyHandler.h"
 #include "TokenCheckHandler.h"
@@ -13,6 +11,7 @@
 #include "GetProjectExplorerInfoHandler.h"
 #include "DeleteProjectExplorerInfoHandler.h"
 #include "CheckProjectConflictHandler.h"
+#include "GlobalModule.h"
 
 namespace Dic {
 namespace Module {

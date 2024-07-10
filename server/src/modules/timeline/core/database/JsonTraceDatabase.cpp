@@ -1,14 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
-#include <algorithm>
-#include "ServerLog.h"
-#include "TraceTime.h"
+#include "pch.h"
 #include "TableDefs.h"
-#include "TraceFileParser.h"
 #include "TraceDatabaseHelper.h"
 #include "SliceDepthCacheManager.h"
-#include "SliceTable.h"
 #include "JsonTraceDatabase.h"
 
 namespace Dic::Module::Timeline {

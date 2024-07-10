@@ -1,13 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "DbMemoryDataBase.h"
+#include "pch.h"
 #include "WsSessionManager.h"
-#include "ServerLog.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "DataBaseManager.h"
+#include "DbMemoryDataBase.h"
 
 namespace Dic {
 namespace Module {

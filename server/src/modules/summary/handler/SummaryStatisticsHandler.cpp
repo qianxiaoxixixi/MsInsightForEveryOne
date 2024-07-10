@@ -1,14 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "SummaryStatisticsHandler.h"
-#include "ServerLog.h"
-#include "TraceFileParser.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "SummaryStatisticsHandler.h"
 
 namespace Dic {
 namespace Module {

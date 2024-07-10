@@ -1,13 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "ProjectExplorerManager.h"
+#include "pch.h"
 #include "SystemMemoryDatabase.h"
-#include "FileUtil.h"
-#include "ServerLog.h"
-#include "vector"
 #include "SystemMemoryDatabaseDef.h"
 #include "ParserFactory.h"
+#include "ProjectExplorerManager.h"
 
 namespace Dic {
 namespace Module {

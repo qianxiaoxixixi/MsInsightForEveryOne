@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include <map>
-#include "JsonUtil.h"
+#include "pch.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolUtil.h"
 #include "ProtocolDefs.h"

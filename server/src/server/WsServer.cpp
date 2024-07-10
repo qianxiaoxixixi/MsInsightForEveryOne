@@ -3,7 +3,7 @@
  * Description: Entry of data insight core server binary
  */
 
-#include "ServerLog.h"
+#include "pch.h"
 #include "WsSessionManager.h"
 #include "WsDefs.h"
 #include "WsServer.h"

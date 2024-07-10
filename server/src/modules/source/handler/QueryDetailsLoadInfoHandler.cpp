@@ -1,13 +1,12 @@
 /**
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "QueryDetailsLoadInfoHandler.h"
+#include "pch.h"
 #include "SourceFileParser.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "SourceProtocolRequest.h"
 #include "SourceProtocolResponse.h"
+#include "QueryDetailsLoadInfoHandler.h"
 
 namespace Dic {
 namespace Module {

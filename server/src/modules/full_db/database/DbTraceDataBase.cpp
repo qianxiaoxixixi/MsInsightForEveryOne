@@ -1,16 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-
-#include "DbTraceDataBase.h"
-#include "ServerLog.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "CommonCacheManager.h"
+#include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;

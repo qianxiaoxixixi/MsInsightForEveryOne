@@ -1,26 +1,20 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "ParserFactory.h"
+#include "pch.h"
 #include "ParserBin.h"
 #include "ParserJson.h"
 #include "ParserIpynb.h"
 #include "ParserDb.h"
-#include "ServerLog.h"
-#include "ExecUtil.h"
-#include "FileUtil.h"
-#include "RegexUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
-#include "ParserStatusManager.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 #include "MemoryParse.h"
-#include "OperatorProtocolEvent.h"
 #include "FullDbParser.h"
 #include "ProjectExplorerManager.h"
+#include "ParserFactory.h"
 
 namespace Dic {
 namespace Module {

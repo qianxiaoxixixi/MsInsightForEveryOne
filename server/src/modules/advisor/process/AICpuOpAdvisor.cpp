@@ -1,12 +1,10 @@
  /*
   * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
   */
-
-#include "AICpuOpAdvisor.h"
+#include "pch.h"
 #include "DataBaseManager.h"
-#include "ServerLog.h"
 #include "TraceTime.h"
-#include "NumberUtil.h"
+#include "AICpuOpAdvisor.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;

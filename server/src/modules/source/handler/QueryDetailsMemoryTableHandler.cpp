@@ -1,12 +1,11 @@
 /**
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "QueryDetailsMemoryTableHandler.h"
+#include "pch.h"
 #include "SourceFileParser.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "SourceProtocolRequest.h"
+#include "QueryDetailsMemoryTableHandler.h"
 
 namespace Dic {
 namespace Module {

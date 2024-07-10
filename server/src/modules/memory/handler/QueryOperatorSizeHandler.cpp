@@ -1,11 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "QueryOperatorSizeHandler.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "QueryOperatorSizeHandler.h"
 
 namespace Dic {
 namespace Module {

@@ -4,11 +4,7 @@
 
 #ifndef PROFILER_SERVER_UPLOADFILEHANDLER_H
 #define PROFILER_SERVER_UPLOADFILEHANDLER_H
-
 #include "TimelineRequestHandler.h"
-#include "WsSessionManager.h"
-#include "UploadFileParser.h"
-#include "ServerLog.h"
 
 namespace Dic {
 namespace Module {

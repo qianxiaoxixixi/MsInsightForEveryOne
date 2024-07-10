@@ -1,10 +1,6 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
- * Description: Entry of data insight core server binary
- */
+// Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 
-#include <vector>
-#include "ServerLog.h"
+#include "pch.h"
 #include "ParamsParser.h"
 #include "SocketUtil.h"
 #include "WsServer.h"

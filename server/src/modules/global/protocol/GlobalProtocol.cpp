@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include "ServerLog.h"
-#include "JsonUtil.h"
+#include "pch.h"
 #include "GlobalProtocolRequest.h"
 #include "GlobalProtocolResponse.h"
 #include "GlobalProtocolUtil.h"

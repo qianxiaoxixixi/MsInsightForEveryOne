@@ -2,10 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 
-#include <iostream>
-#include "NumberUtil.h"
-#include "StringUtil.h"
-#include "RegexUtil.h"
+#include "pch.h"
 #include "ParamsParser.h"
 
 namespace Dic {

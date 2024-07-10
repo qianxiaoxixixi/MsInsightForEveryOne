@@ -1,14 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "JsonSummaryDataBase.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
 #include "ConstantDefs.h"
+#include "JsonSummaryDataBase.h"
 
 namespace Dic::Module::Summary {
 using namespace Server;

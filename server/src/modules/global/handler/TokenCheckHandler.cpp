@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 
-#include "ServerLog.h"
+#include "pch.h"
 #include "WsSessionManager.h"
 #include "ProtocolErrorCode.h"
 #include "TokenCheckHandler.h"

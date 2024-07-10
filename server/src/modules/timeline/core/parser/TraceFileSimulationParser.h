@@ -11,7 +11,6 @@
 #include <mutex>
 #include "FileParser.h"
 #include "ThreadPool.h"
-#include "SystemUtil.h"
 #include "JsonFileProcess.h"
 
 namespace Dic {

@@ -2,9 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include <fstream>
-#include "ServerLog.h"
-#include "JsonUtil.h"
+#include "pch.h"
 #include "EventUtil.h"
 #include "DataBaseManager.h"
 #include "TraceFileParser.h"

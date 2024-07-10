@@ -1,11 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "GetProjectExplorerInfoHandler.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "WsSessionManager.h"
 #include "ProjectExplorerManager.h"
+#include "GetProjectExplorerInfoHandler.h"
 
 namespace Dic {
 namespace Module {

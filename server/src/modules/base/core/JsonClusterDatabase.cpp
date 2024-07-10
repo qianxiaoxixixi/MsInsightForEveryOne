@@ -1,15 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-
-#include "JsonClusterDatabase.h"
-#include "ServerLog.h"
-#include "JsonUtil.h"
+#include "pch.h"
 #include "SummaryProtocolResponse.h"
 #include "TimelineProtocolResponse.h"
 #include "TableDefs.h"
 #include "NumDefs.h"
 #include "TraceTime.h"
+#include "JsonClusterDatabase.h"
 
 namespace Dic {
 namespace Module {

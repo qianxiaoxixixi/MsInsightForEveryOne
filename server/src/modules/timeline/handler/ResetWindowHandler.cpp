@@ -1,9 +1,7 @@
 //
 // * Copyright (c) Huawei Technologies Co., Ltd. 2012-2023. All rights reserved.
 //
-
-#include "ResetWindowHandler.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "WsSessionManager.h"
 #include "TraceFileParser.h"
 #include "KernelParse.h"
@@ -12,6 +10,7 @@
 #include "DataBaseManager.h"
 #include "UploadFileParser.h"
 #include "SourceFileParser.h"
+#include "ResetWindowHandler.h"
 
 namespace Dic {
 namespace Module {

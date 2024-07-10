@@ -1,13 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "OperatorNamesHandler.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "OperatorNamesHandler.h"
 
 namespace Dic {
 namespace Module {

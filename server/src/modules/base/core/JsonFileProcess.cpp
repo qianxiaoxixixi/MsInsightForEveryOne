@@ -1,9 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
+#include "pch.h"
 #include "FileParser.h"
-#include "FileUtil.h"
-#include "StringUtil.h"
 #include "JsonFileProcess.h"
 
 namespace Dic {

@@ -2,13 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
-#include "SystemUtil.h"
+#include "pch.h"
 #include "JsonMemoryDataBase.h"
 #include "DbTraceDataBase.h"
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
 #include "DbClusterDataBase.h"
-#include "FileUtil.h"
 #include "DataBaseManager.h"
 
 namespace Dic {

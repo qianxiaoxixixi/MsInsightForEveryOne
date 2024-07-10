@@ -1,10 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-#include "SystemMemoryDatabase.h"
-#include "ServerLog.h"
+#include "pch.h"
 #include "GlobalDefs.h"
+#include "SystemMemoryDatabase.h"
 
 namespace Dic {
 namespace Module {

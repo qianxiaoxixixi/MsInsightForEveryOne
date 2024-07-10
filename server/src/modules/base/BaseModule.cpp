@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 
-#include "ServerLog.h"
-#include "SystemUtil.h"
+#include "pch.h"
 #include "BaseModule.h"
 
 namespace Dic {

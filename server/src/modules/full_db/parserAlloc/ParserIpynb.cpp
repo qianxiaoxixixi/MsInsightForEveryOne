@@ -1,18 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "ParserIpynb.h"
-
+#include "pch.h"
 #include "JupyterServerManager.h"
 #include "JupyterFileParser.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
-#include "ServerLog.h"
-#include "CmdUtil.h"
 #include "ConstantDefs.h"
 #include "JupyterProtocolEvent.h"
-
-
+#include "ParserIpynb.h"
 namespace Dic {
 namespace Module {
 using namespace Jupyter;

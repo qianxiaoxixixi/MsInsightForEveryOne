@@ -1,11 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-#include "RankAndBubbleTimeHandler.h"
-#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "RankAndBubbleTimeHandler.h"
 
 namespace Dic {
 namespace Module {
