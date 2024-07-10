@@ -1,18 +1,21 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useRef } from 'react';
-import { ChartProps, Scale, ScaleType } from '../../entity/chart';
+import type { ChartProps, Scale, ScaleType } from '../../entity/chart';
 import { Canvas, CanvasContainer, drawRoundedRect } from './common';
 import { useBatchedRender, useData, useHoverPosX, useRangeAndDomain } from './hooks';
-import { TooltipComponent, TooltipProps } from './TooltipComp';
+import { TooltipComponent, type TooltipProps } from './TooltipComp';
 import { useTheme } from '@emotion/react';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 
 type ScaleTypeDefinition = Record<ScaleType, d3.ScaleContinuousNumeric<number, number>>;
 
 const getScale: ScaleTypeDefinition = {
-    Linear: d3.scaleLinear(),
-    SymLog: d3.scaleSymlog(),
+    linear: d3.scaleLinear(),
+    symLog: d3.scaleSymlog(),
 };
 
 /**
@@ -25,9 +28,9 @@ const getScale: ScaleTypeDefinition = {
 const getTotalHeight = (data: Data, limited: number, callback?: (accHeight: number, curHeight: number, index: number, all: number[]) => void): number => {
     const { values: heights } = data;
     return heights.slice(0, limited + 1).reduce((accumulativeHeight, curHeight, index, all) => {
-        accumulativeHeight += curHeight;
-        callback?.(accumulativeHeight, curHeight, index, all);
-        return accumulativeHeight;
+        const tempHeight = accumulativeHeight + curHeight;
+        callback?.(tempHeight, curHeight, index, all);
+        return tempHeight;
     }, 0);
 };
 
@@ -43,7 +46,7 @@ const drawAuxiliaryLine = (context: CanvasRenderingContext2D,
     context.stroke();
 };
 
-type DrawAreaArgs = {
+interface DrawAreaArgs {
     ctx: CanvasRenderingContext2D;
     datas: Data[];
     minHeight: number;
@@ -60,15 +63,15 @@ const getThisDrawWidth = (index: number, datas: Data[], xScale: (x: number) => n
     // find bar width pixel
     if (index > 0 && index < datas.length - 1) {
         // find min distance
-        return xScale(Math.min(datas[index + 1].timestamp - datas[index].timestamp, datas[index].timestamp - datas[index - 1].timestamp) / 2 + domainStart);
+        return xScale(Math.min(datas[index + 1].timestamp - datas[index].timestamp, datas[index].timestamp - (datas[index - 1].timestamp / 2)) + domainStart);
     }
     if (datas.length === 1) {
         return 24;
     }
     if (index === 0) {
-        return xScale((datas[index + 1].timestamp - datas[index].timestamp) / 2 + domainStart);
+        return xScale((datas[index + 1].timestamp - (datas[index].timestamp / 2)) + domainStart);
     }
-    return xScale((datas[index].timestamp - datas[index - 1].timestamp) / 2 + domainStart);
+    return xScale((datas[index].timestamp - (datas[index - 1].timestamp / 2)) + domainStart);
 };
 
 const drawArea = ({
@@ -78,25 +81,25 @@ const drawArea = ({
         return;
     }
     datas.forEach((data, index) => {
-        if (data.timestamp + barWidthStamp / 2 < domainStart) {
+        if (data.timestamp + (barWidthStamp / 2) < domainStart) {
             return;
         }
         let thisDrawWidth: number = barWidthPix as number;
         if (barWidthPix === undefined) {
             thisDrawWidth = getThisDrawWidth(index, datas, xScale, domainStart);
         }
-        const drawRect = (accumulativeHeight: number, curHeight: number, index: number, allHeights: number[]): void => {
-            ctx.fillStyle = palette[index];
+        const drawRect = (accumulativeHeight: number, curHeight: number, idx: number, allHeights: number[]): void => {
+            ctx.fillStyle = palette[idx];
             // setting chart transparency 1 -> totally nontransparent
             ctx.globalAlpha = 1;
             const thisDrawHeight = yScale(minHeight) - yScale(curHeight);
             const thisDrawLess = Math.min(thisDrawHeight, thisDrawWidth);
             const thisRadius = thisDrawLess < 2 * radius ? thisDrawLess / 2 : radius;
-            const bottomRouned = index === 0 ? thisRadius : 0;
+            const bottomRouned = idx === 0 ? thisRadius : 0;
             const lastNonEmptyIndex = allHeights.length - 1 - allHeights.slice().reverse().findIndex((height) => height !== 0);
             const validLastNonEmptyIndex = lastNonEmptyIndex === -1 ? allHeights.length - 1 : lastNonEmptyIndex;
-            const topRounded = index === validLastNonEmptyIndex ? thisRadius : 0;
-            const startDrawWidth = xScale(data.timestamp) - thisDrawWidth / 2;
+            const topRounded = idx === validLastNonEmptyIndex ? thisRadius : 0;
+            const startDrawWidth = xScale(data.timestamp) - (thisDrawWidth / 2);
             const startDrawHeight = thisDrawHeight > 1 ? yScale(accumulativeHeight) : ctx.canvas.height - 1;
             // when draw height < 1px, draw 1px.
             drawRoundedRect([
@@ -110,7 +113,7 @@ const drawArea = ({
         getTotalHeight(data, palette.length - 1, drawRect);
     });
 };
-type DrawArgs = {
+interface DrawArgs {
     ctx: CanvasRenderingContext2D | null;
     datas: Data[];
     palette: StackedBarChartProps['palette'];
@@ -143,8 +146,8 @@ const draw = ({
     }
     let maxHeight = 0;
     let minHeight = 0;
-    const findHeights = (datas: Data[]): void => {
-        datas.forEach((data) => {
+    const findHeights = (dataList: Data[]): void => {
+        dataList.forEach((data) => {
             const curHeight = getTotalHeight(data, palette.length - 1);
             maxHeight = Math.max(maxHeight, curHeight);
             minHeight = Math.min(minHeight, curHeight);
@@ -165,7 +168,7 @@ const draw = ({
 
 type ToolTipData = [ Data, number ];
 const findDataByX = (mousePosX: number | undefined, datas: Data[], rangeAndDomain: Array<[number, number]>): ToolTipData | undefined => {
-    if (rangeAndDomain.length === 0 || datas.length === 0 || mousePosX === undefined) { return; }
+    if (rangeAndDomain.length === 0 || datas.length === 0 || mousePosX === undefined) { return undefined; }
     const reverseXScale = d3.scaleLinear().range([rangeAndDomain[1][0], rangeAndDomain[1][1]])
         .domain([rangeAndDomain[0][0], rangeAndDomain[0][1]]).clamp(false) as Scale;
     const xScale = d3.scaleLinear().domain([rangeAndDomain[1][0], rangeAndDomain[1][1]])
@@ -180,7 +183,7 @@ const findDataByX = (mousePosX: number | undefined, datas: Data[], rangeAndDomai
             selectedData = datas[i];
         }
     }
-    if (!selectedData) { return; }
+    if (!selectedData) { return undefined; }
     return [selectedData, xScale(selectedData.timestamp)];
 };
 
@@ -199,15 +202,18 @@ const getBarWidthStamp = (barWidth: number | string, rangeAndDomain: Array<[numb
 };
 
 const isHoverPosOnBar = (data: ToolTipData, barWidthStamp: number, rangeAndDomain: Array<[number, number]>, mousePosX: number): boolean => {
-    const drawStartStamp = data[0].timestamp - barWidthStamp / 2;
-    const drawEndStamp = data[0].timestamp + barWidthStamp / 2;
+    const drawStartStamp = data[0].timestamp - (barWidthStamp / 2);
+    const drawEndStamp = data[0].timestamp + (barWidthStamp / 2);
     const reverseXScale = d3.scaleLinear().range([rangeAndDomain[1][0], rangeAndDomain[1][1]])
         .domain([rangeAndDomain[0][0], rangeAndDomain[0][1]]).clamp(false) as Scale;
     const mouseTimestamp = reverseXScale(mousePosX);
     return mouseTimestamp >= drawStartStamp && mouseTimestamp <= drawEndStamp;
 };
 
-type Data = { timestamp: number; values: number[] };
+interface Data {
+    timestamp: number;
+    values: number[];
+};
 type StackedBarChartProps = ChartProps<'stackedBar'>;
 export const StackedBarChart = observer(({
     margin, session, mapFunc, palette, unit,
@@ -218,26 +224,31 @@ export const StackedBarChart = observer(({
     const canvas = useRef<HTMLCanvasElement>(null);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
     const barWidthStamp = getBarWidthStamp(barWidth, rangeAndDomain);
-    const datas = useData(session, mapFunc, unit, metadata, width, (data) => data.filter(item => item.timestamp + barWidthStamp / 2 >= rangeAndDomain[1][0] && item.timestamp - barWidthStamp / 2 <= rangeAndDomain[1][1]));
+    const datas = useData(session, mapFunc, unit, metadata, width,
+        (data) => data.filter(item => {
+            return item.timestamp + (barWidthStamp / 2) >= rangeAndDomain[1][0] && item.timestamp - (barWidthStamp / 2) <= rangeAndDomain[1][1];
+        }));
     const mousePosX = useHoverPosX(canvasContainer);
     const theme = useTheme();
     const defaultPalette = ['#4183a2', '#549251', '#b09239', '#bb5f43', theme.colorPalette.otherColor];
     const hoveredData = React.useMemo(() => findDataByX(mousePosX, datas, rangeAndDomain), [mousePosX, datas, rangeAndDomain]);
     useBatchedRender(() => {
-        if (canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
-            canvas.current.width === 0 || canvas.current.height === 0) {
+        const isCanvasInvalid = canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
+            canvas.current.width === 0 || canvas.current.height === 0;
+        if (isCanvasInvalid) {
             return;
         }
         const ctx = canvas.current.getContext('2d');
         ctx?.clearRect(0, 0, width, height);
-        if (palette === undefined) {
-            palette = defaultPalette;
-        }
-        draw({ ctx, datas, height, yScaleType, rangeAndDomain, radius, valueRange, auxiliaryValue, barWidth, palette, barWidthStamp });
+        const drawPalette = palette ?? defaultPalette;
+        draw({ ctx, datas, height, yScaleType, rangeAndDomain, radius, valueRange, auxiliaryValue, barWidth, palette: drawPalette, barWidthStamp });
     }, [datas, rangeAndDomain, valueRange]);
 
     const tooltipProp: TooltipProps<ToolTipData, Data[]> = {
-        data: (hoveredData !== undefined && !isTooltipXInDomain(hoveredData, session) && !isHoverPosOnBar(hoveredData, barWidthStamp, rangeAndDomain, mousePosX ?? 0)) ? undefined : hoveredData,
+        data: (hoveredData !== undefined && !isTooltipXInDomain(hoveredData, session) &&
+         !isHoverPosOnBar(hoveredData, barWidthStamp, rangeAndDomain, mousePosX ?? 0))
+            ? undefined
+            : hoveredData,
         x: (data) => isTooltipXInDomain(data, session) ? data[1] : mousePosX ?? 0,
         mouseX: mousePosX ?? null,
         session,

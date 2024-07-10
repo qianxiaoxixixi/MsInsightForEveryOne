@@ -154,5 +154,5 @@ export type StackStatusConfig = {
     maxDepth?: number;
 };
 
-export type ScaleType = 'Linear' | 'SymLog';
+export type ScaleType = 'linear' | 'symLog';
 // #endregion
