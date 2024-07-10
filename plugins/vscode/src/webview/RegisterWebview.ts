@@ -30,11 +30,11 @@ export class RegisterWebview extends Webview {
         this.startServer();
     }
 
-    newPanel() {
+    newPanel(): void {
         super.newPanel();
     }
 
-    previewUIPage() {
+    previewUIPage(): void {
         this.active();
         this.panel?.webview.postMessage(this._extensionUri.toString);
         (this.panel as vscode.WebviewPanel).webview.html = this.html();
@@ -42,12 +42,12 @@ export class RegisterWebview extends Webview {
             modules: modules.map(path => this.getModulesHtml(path)), port: this.port});
     }
 
-    startServer() {
+    startServer(): void {
         this.executeStartServerCommand();
         this.startServerCheckAndRestart();
     }
 
-    executeStartServerCommand() {
+    executeStartServerCommand(): void {
         let serverName = './profiler/server/profiler_server';
         if (platform() === 'win32') {
             serverName = serverName + '.exe';
@@ -74,20 +74,21 @@ export class RegisterWebview extends Webview {
         });
     }
 
-    scanPort(serverCommand: string) {
+    scanPort(serverCommand: string): string {
         const scanPort = spawnSync(serverCommand, ['--scan=' + this.port]);
         if (scanPort.error) {
-            return;
+            return '';
         } else {
             const output = scanPort.output.toString();
             if (output.indexOf('Available port: ') !== -1) {
                 const result = output.match(/\d+/);
-                return result?.pop();
+                return result?.pop() ?? '';
             }
+            return '';
         }
     }
 
-    startServerCheckAndRestart() {
+    startServerCheckAndRestart(): void {
         this.serverCheckSchedule = setInterval(() => {
             if (this.server && this.server.exitCode !== null && this.panel?.active) {
                 if (this.tryRestartTime++ < 3) {
@@ -99,18 +100,18 @@ export class RegisterWebview extends Webview {
         }, 3000);
     }
 
-    dispose() {
+    dispose(): void {
         console.log('profiler is closed!');
         clearInterval(this.serverCheckSchedule);
         this.server?.kill();
         this.webviewManger.dispose();
     }
 
-    html() {
+    html(): string {
         return this.htmlStr;
     }
     
-    getModulesHtml(path: string) {
+    getModulesHtml(path: string): string {
         return readFileSync(join(__dirname, path), 'utf8');
     }
 }

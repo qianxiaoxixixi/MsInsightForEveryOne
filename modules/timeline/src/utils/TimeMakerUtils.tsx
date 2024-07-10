@@ -280,7 +280,7 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
             list.map((item) => (
                 <div key ={item.uid} id={item.uid} onMouseMove = {(event) => mouseMoveListener(event, timeLineMarkerProps, theme, setTimeDiff)}
                     className = {'singleTimeMakerRow'} style={{ backgroundColor: item.uid === timeLineMarkerProps.session.timelineMaker.selectedFlag?.uid ? theme.flagListSelectedColor : theme.tooltipBGColor, borderBottom: '1px solid #979797' }}
-                    onClick={() => {
+                    onClick={(): void => {
                         handleSelected(item, timeLineMarkerProps, theme, setSelectFlag);
                         setTimeDiff(getTimeDifference(0, 0, timeLineMarkerProps.session.isNsMode));
                     }
@@ -291,7 +291,7 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
                         <div style={{ width: '15%' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: item.anotherTimeStamp === undefined ? '0px' : '11px' }}>
                             <div id={item.uid + 'color'} style={{ width: '12px', height: '12px', backgroundColor: item.color, cursor: 'pointer' }} onClick={() => handleSelectColor(item, timeLineMarkerProps, setFlagColor)} />
                             <DeleteIcon id={'deleteButton'} style={{ fill: theme.svgPlayBackgroundColor, cursor: 'pointer' }} onClick={(event) => handleDelete(event, deleteSignal, item.uid, timeLineMarkerProps, setDeleteSignal, setTimeDiff, t)} />
-                            <SvgComponent theme={theme} onClick = {() => { handleJump(item, timeLineMarkerProps.session); }} SvgElement={JumpingIcon}/>
+                            <SvgComponent theme={theme} onClick = {(): void => { handleJump(item, timeLineMarkerProps.session); }} SvgElement={JumpingIcon}/>
                         </div>
                         </div>
                     </div>

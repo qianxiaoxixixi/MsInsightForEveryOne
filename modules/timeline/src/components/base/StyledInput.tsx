@@ -9,26 +9,26 @@ export const StyledInput = styled(React.forwardRef(
     },
 ))`
     border-radius: 20px;
-    min-width: ${(props) => props.minwidth}px;
-    width: ${(props) => props.width}px;
-    height: ${(props) => props.height}px;
-    border: 1px solid  ${(props) => props.theme.enclosureBorder};
+    min-width: ${(props): number => props.minwidth}px;
+    width: ${(props): number => props.width as number}px;
+    height: ${(props): number => props.height as number}px;
+    border: 1px solid  ${(props): string => props.theme.enclosureBorder};
     background-color: transparent;
     padding: 0px 8px;
     margin: 0px 5px;
-    display: ${(props) => props.isshow === 1 ? 'inline-flex' : 'none'};
-    color: ${(props) => props.theme.fontColor};
+    display: ${(props): string => props.isshow === 1 ? 'inline-flex' : 'none'};
+    color: ${(props): string => props.theme.fontColor};
 
     .ant-input {
         background-color: transparent;
         font-size: 14px;
-        caret-color: ${props => props.theme.searchInputCaretColor};
-        color: ${(props) => props.theme.fontColor};
+        caret-color: ${(props): string => props.theme.searchInputCaretColor};
+        color: ${(props): string => props.theme.fontColor};
     }
 
     .ant-input-suffix {
         height: 16px;
-        color: ${(props) => props.theme.svgBackgroundColor};
+        color: ${(props): string => props.theme.svgBackgroundColor};
         font-size: 12px;
         margin-top: 5px;
         margin-right: -4px;

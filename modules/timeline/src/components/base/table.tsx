@@ -22,12 +22,12 @@ export const Table = styled(React.forwardRef(function Support(props: TableProps<
         transition: .3s background-color;
     }
     .insight-table .insight-table-thead th.insight-table-cell {
-        background-color: ${props => props.theme.contentBackgroundColor};
+        background-color: ${(props): string => props.theme.contentBackgroundColor};
         border-bottom-color: unset;
         color: unset;
     }
 
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
 
     .insight-table-cell {
         white-space: nowrap;
@@ -36,17 +36,17 @@ export const Table = styled(React.forwardRef(function Support(props: TableProps<
     }
     /* highlight selected row */
     tr.insight-table-row-selected {
-        background-color: ${props => props.theme.selectBackgroundColor};
+        background-color: ${(props): string => props.theme.selectBackgroundColor};
     }
     /* highlight hovered row */
     tr.insight-table-row:hover {
-        background-color: ${props => props.theme.selectBackgroundColor};
+        background-color: ${(props): string => props.theme.selectBackgroundColor};
     }
     .insight-table-tbody > tr > td {
-        border-bottom: solid 1px ${props => props.theme.tableBorderColor};
+        border-bottom: solid 1px ${(props): string => props.theme.tableBorderColor};
     }
     .insight-table-header {
-        border-bottom: solid 1px ${props => props.theme.tableBorderColor};
+        border-bottom: solid 1px ${(props): string => props.theme.tableBorderColor};
         .insight-table-thead .insight-table-cell {
             border-bottom: none;
         }
@@ -66,7 +66,7 @@ export const Table = styled(React.forwardRef(function Support(props: TableProps<
         background-color: unset;
     }
     .insight-table-cell-fix-right, .insight-table-cell-fix-left {
-        background-color: ${props => props.theme.contentBackgroundColor};
+        background-color: ${(props): string => props.theme.contentBackgroundColor};
         z-index: 5;
     }
     .insight-table .insight-table-thead > tr > th,

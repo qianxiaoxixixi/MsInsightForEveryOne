@@ -17,14 +17,14 @@ interface CustomButtonProps {
 export const StyledButton = styled(Button)`
     display: flex;
     align-items: center;
-    width: ${props => props.width !== undefined ? `${props.width}px` : '22px'};
+    width: ${(props): string => props.width !== undefined ? `${props.width}px` : '22px'};
     height: 20px;
     line-height: 20px;
-    color: ${props => props.theme.fontColor} !important;
-    background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
+    color: ${(props): string => props.theme.fontColor} !important;
+    background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
     &:hover {
-        background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor};
-        cursor: ${props => props.disabled as boolean ? 'not-allowed' : 'pointer'};
+        background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor};
+        cursor: ${(props): string => props.disabled as boolean ? 'not-allowed' : 'pointer'};
     }
 
     border-radius: 4px;
@@ -55,8 +55,8 @@ CustomButton.displayName = 'CustomButton';
 export const PressButton = styled(Button)`
     display: flex;
     align-items: center;
-    color: ${props => props.theme.fontColor} !important;
-    background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
+    color: ${(props): string => props.theme.fontColor} !important;
+    background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
     border-radius: 4px;
     justify-content: center;
     height: 20px;

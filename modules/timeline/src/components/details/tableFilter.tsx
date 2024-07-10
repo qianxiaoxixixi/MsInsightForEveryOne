@@ -10,8 +10,8 @@ const FilterContainer = styled.div`
     height: 50px;
     padding: 10px;
     border-radius: 16px;
-    background-color: ${props => props.theme.selectBackgroundColor};
-    color: ${props => props.theme.fontColor};
+    background-color: ${(props): string => props.theme.selectBackgroundColor};
+    color: ${(props): string => props.theme.fontColor};
     align-items: center;
     justify-content: space-evenly;
     input {
@@ -20,9 +20,9 @@ const FilterContainer = styled.div`
         border: none;
         font-size: .875rem;
         border-radius: 6px;
-        background-color: ${props => props.theme.searchBackgroundColor};
-        caret-color: ${props => props.theme.searchInputCaretColor};
-        color: ${props => props.theme.tableHeadFontColor};
+        background-color: ${(props): string => props.theme.searchBackgroundColor};
+        caret-color: ${(props): string => props.theme.searchInputCaretColor};
+        color: ${(props): string => props.theme.tableHeadFontColor};
     }
     input:focus {
         box-shadow: none;
@@ -31,7 +31,7 @@ const FilterContainer = styled.div`
         cursor: pointer;
         margin-left: 11px;
         g, g path {
-            fill: ${props => props.theme.cancelIconBackgroundColor};
+            fill: ${(props): string => props.theme.cancelIconBackgroundColor};
         }
     }
 }
@@ -50,10 +50,10 @@ const setFiltersContent = ({ setSelectedKeys, selectedKeys, confirm, clearFilter
         <Input
             placeholder="Filter by field content"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-            onPressEnter={() => confirm()}
+            onChange={(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={(): void => confirm()}
         />
-        <CancelIcon className="cancalIcon" onClick={() => { clearFilters?.(); confirm(); }} />
+        <CancelIcon className="cancalIcon" onClick={(): void => { clearFilters?.(); confirm(); }} />
     </FilterContainer>;
 };
 
