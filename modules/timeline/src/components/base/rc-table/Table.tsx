@@ -1,18 +1,20 @@
-import { Spin, TooltipProps } from 'antd';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import { Spin, type TooltipProps } from 'antd';
 import useFilter from 'antd/lib/table/hooks/useFilter';
 import useSorter, { getSortData } from 'antd/lib/table/hooks/useSorter';
 import useTitleColumns from 'antd/lib/table/hooks/useTitleColumns';
 import classNames from 'classnames';
 import useMergedState from 'rc-util/lib/hooks/useMergedState';
 import * as React from 'react';
-import BaseTable, { INSIGHT_TABLE_PREFIX, TableProps as BaseTableProps } from './BaseTable';
-import {
+import BaseTable, { INSIGHT_TABLE_PREFIX, type TableProps as BaseTableProps } from './BaseTable';
+import type {
     ColumnsType, GetPopupContainer, GetRowKey, Key, SortOrder, TableHandle, TableLocale, TableRowSelection
 } from './interface';
-import { DefaultRecordType } from './types';
 import { customizeFilterData } from './utils/filterUtil';
-import { ColumnsType as AntdColumnsType } from 'antd/lib/table/interface';
-import { ColumnsType as TypesColumnsType } from './types';
+import type { ColumnsType as AntdColumnsType } from 'antd/lib/table/interface';
+import type { DefaultRecordType, ColumnsType as TypesColumnsType } from './types';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 export type { ColumnsType };
@@ -57,28 +59,28 @@ function expandIconFor(locale: TableLocale) {
 }
 
 const defaultLocale: TableLocale = {
-    cancelSort: "Click to cancel sorting",
-    collapse: "Collapse row",
-    emptyText: "No Data",
-    expand: "Expand row",
-    filterCheckall: "Select all items",
-    filterConfirm: "OK",
-    filterEmptyText: "No filters",
-    filterReset: "Reset",
-    filterSearchPlaceholder: "Search in filters",
-    filterTitle: "Filter menu",
-    sortTitle: "Sort",
-    triggerAsc: "Click to sort ascending",
-    triggerDesc: "Click to sort descending",
+    cancelSort: 'Click to cancel sorting',
+    collapse: 'Collapse row',
+    emptyText: 'No Data',
+    expand: 'Expand row',
+    filterCheckall: 'Select all items',
+    filterConfirm: 'OK',
+    filterEmptyText: 'No filters',
+    filterReset: 'Reset',
+    filterSearchPlaceholder: 'Search in filters',
+    filterTitle: 'Filter menu',
+    sortTitle: 'Sort',
+    triggerAsc: 'Click to sort ascending',
+    triggerDesc: 'Click to sort descending',
 };
 
 function useSelection<RecordType>(rowSelection?: TableRowSelection<RecordType>): Set<Key> {
     const {
         selectedRowKeys,
         defaultSelectedRowKeys,
-    } = rowSelection || {};
+    } = rowSelection ?? {};
     const [mergedSelectedKeys, setMergedSelectedKeys] = useMergedState(
-        selectedRowKeys || defaultSelectedRowKeys || EMPTY_LIST,
+        selectedRowKeys ?? defaultSelectedRowKeys ?? EMPTY_LIST,
         { value: selectedRowKeys },
     );
     React.useEffect(() => {
@@ -168,7 +170,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
         onFilterChange: () => {},
     });
     // 添加useMemo,目的是在过滤树形结构时，避免重复计算引起卡顿的问题。
-    const pageData = React.useMemo(() => customizeFilterData(sortedData, filterStates), [ filterStates, sortedData ]);
+    const pageData = React.useMemo(() => customizeFilterData(sortedData, filterStates), [filterStates, sortedData]);
 
     const [transformTitleColumns] = useTitleColumns(sorterTitleProps);
     const transformColumns = React.useCallback((innerColumns: ColumnsType<RecordType>): ColumnsType<RecordType> =>
@@ -189,7 +191,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
     mergedExpandable.expandIcon = mergedExpandable.expandIcon || expandIconFor(tableLocale);
 
     const wrapperClassNames = classNames(`${prefixCls}-wrapper`, className);
-    Spin.setDefaultIndicator(<div className='loading'/>)
+    Spin.setDefaultIndicator(<div className='loading'/>);
     return (
         <div className={wrapperClassNames}>
             <Spin spinning={isLoading}>
