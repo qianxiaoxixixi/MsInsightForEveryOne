@@ -26,10 +26,20 @@ export interface ViewProps {
 }
 
 export enum DragDirection {
-    'top',
-    'bottom',
-    'left',
-    'right',
+    TOP = 0,
+    BOTTOM = 1,
+    LEFT = 2,
+    RIGHT = 3,
+}
+
+export interface DraggableContext {
+    dragDirection: DragDirection;
+    container: [number, number];
+    isOpen: React.MutableRefObject<boolean>;
+    minDragWh: number;
+    draggable: React.RefObject<HTMLDivElement>;
+    dragTranslate: number;
+    setDragTranslate: React.Dispatch<React.SetStateAction<number>>;
 }
 
 /**
@@ -282,7 +292,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
     let offset; const baseMS: MovingState = { stat: 'movable', startX: 0, startY: 0, screenX: e.screenX, screenY: e.screenY };
     const domDragRect = domDrag.getBoundingClientRect();
     switch (dragDirection) {
-        case DragDirection.top:
+        case DragDirection.TOP:
             offset = domDragRect.bottom - e.clientY;
             if (offset <= 8 && offset > 0 && isOpen.current) {
                 movingState.current = {
@@ -292,7 +302,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
                 };
             }
             break;
-        case DragDirection.bottom:
+        case DragDirection.BOTTOM:
             offset = e.clientY - domDragRect.top;
             if (offset <= 8 && offset > 0 && isOpen.current) {
                 movingState.current = {
@@ -302,7 +312,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
                 };
             }
             break;
-        case DragDirection.left:
+        case DragDirection.LEFT:
             offset = domDragRect.right - e.clientX;
             if (offset <= 8 && offset > 0 && isOpen.current) {
                 movingState.current = {
@@ -327,8 +337,8 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
 
 const RIGHT_PERCENT = 0.99;
 
-const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
-    dragDirection: DragDirection, MIN_DRAG_WH: number) => (e: MouseEvent): void => {
+const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>,
+    movingState: React.MutableRefObject<MovingState>, dragDirection: DragDirection, minDragWh: number) => (e: MouseEvent): void => {
     const dom = container.current;
     const domDrag = draggable.current;
     const moving = movingState.current;
@@ -339,21 +349,22 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
     if (!dom || !domDrag) { return; }
     if (moving.stat === 'idle') { return; }
     if (Math.abs(e.screenY - moving.screenY) < 2 && Math.abs(e.screenX - moving.screenX) < 2) { return; }
-    let offsetY: number, offsetX: number;
+    let offsetY: number;
+    let offsetX: number;
     switch (dragDirection) {
-        case DragDirection.bottom:
+        case DragDirection.BOTTOM:
             offsetY = e.y - moving.startY;
             if (Math.abs(offsetY) >= 5) {
-                domDrag.style.height = `${clamp(dom.clientHeight - e.y, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
+                domDrag.style.height = `${clamp(dom.clientHeight - e.y, minDragWh, dom.clientHeight - minDragWh)}px`;
             }
             break;
-        case DragDirection.top:
+        case DragDirection.TOP:
             offsetY = e.y - moving.startY;
             if (Math.abs(offsetY) >= 5) {
-                domDrag.style.height = `${clamp(e.y, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
+                domDrag.style.height = `${clamp(e.y, minDragWh, dom.clientHeight - minDragWh)}px`;
             }
             break;
-        case DragDirection.left:
+        case DragDirection.LEFT:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
                 domDrag.style.width = `${clamp(e.x, 245, dom.clientWidth * 0.4)}px`;
@@ -362,7 +373,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
         default:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(moving.startX - e.clientX, MIN_DRAG_WH, dom.clientWidth * RIGHT_PERCENT)}px`;
+                domDrag.style.width = `${clamp(moving.startX - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT)}px`;
             }
             break;
     }
@@ -370,7 +381,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
 };
 
 const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
-    dragDirection: DragDirection, MIN_DRAG_WH: number) => (e: MouseEvent): void => {
+    dragDirection: DragDirection, minDragWh: number) => (e: MouseEvent): void => {
     const dom = container.current;
     const domDrag = draggable.current;
     const moving = movingState.current;
@@ -381,23 +392,23 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
     }
     let dragWHTmp: number;
     switch (dragDirection) {
-        case DragDirection.top:
-            dragWHTmp = clamp(e.y, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH);
+        case DragDirection.TOP:
+            dragWHTmp = clamp(e.y, minDragWh, dom.clientHeight - minDragWh);
             domDrag.style.height = `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('topResize'));
             break;
-        case DragDirection.bottom:
-            dragWHTmp = clamp(dom.clientHeight - e.y, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH);
+        case DragDirection.BOTTOM:
+            dragWHTmp = clamp(dom.clientHeight - e.y, minDragWh, dom.clientHeight - minDragWh);
             domDrag.style.height = `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('bottomResize'));
             break;
-        case DragDirection.left:
+        case DragDirection.LEFT:
             dragWHTmp = clamp(e.clientX, 245, dom.clientWidth * 0.4);
             domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('leftResize'));
             break;
-        case DragDirection.right:
-            dragWHTmp = clamp(moving.startX - e.clientX, MIN_DRAG_WH, dom.clientWidth * RIGHT_PERCENT);
+        case DragDirection.RIGHT:
+            dragWHTmp = clamp(moving.startX - e.clientX, minDragWh, dom.clientWidth * RIGHT_PERCENT);
             domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('rightResize'));
             break;
@@ -415,45 +426,46 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
 };
 
 // 主容器宽高未确定时,初始化为设定的px值,主容器挂载结束后,后续宽高设置为百分比
-const pxConvert = (px: number, container: number[], dragDirection: DragDirection): string => {
-    if (container[0] === 0 || container[1] === 0) { return String(px) + 'px'; }
+const pxConvert = (px: number, container: [number, number], dragDirection: DragDirection): string => {
+    let tempPx = px;
+    if (container[0] === 0 || container[1] === 0) { return `${tempPx}px`; }
     if (dragDirection <= 1) {
-        if (dragDirection === 1) { px += 4; } // bottom面板需要加上分割线的宽度
-        return String(px / container[1] * 100) + '%';
+        if (dragDirection === 1) { tempPx += 4; } // bottom面板需要加上分割线的宽度
+        return `${tempPx / container[1] * 100}%`;
     } else {
-        return String(px / container[0] * 100) + '%';
+        return `${tempPx / container[0] * 100}%`;
     }
 };
 
-const handleDraggableShow = (dragDirection: DragDirection, container: number[], isOpen: React.MutableRefObject<boolean>, MIN_DRAG_WH: number, draggable: React.RefObject<HTMLDivElement>,
-    dragTranslate: number, setDragTranslate: React.Dispatch<React.SetStateAction<number>>) => (): void => {
-    const domDrag = draggable.current; if (!domDrag) { return; }
-    if (dragDirection <= 1) {
-        if (isOpen.current) { // open -> close
-            setDragTranslate(domDrag.clientHeight);
-            domDrag.style.height = `${MIN_DRAG_WH}px`;
+const handleDraggableShow = (draggableProps: DraggableContext) => (): void => {
+    const domDrag = draggableProps.draggable.current;
+    if (!domDrag) { return; }
+    if (draggableProps.dragDirection <= 1) {
+        if (draggableProps.isOpen.current) { // open -> close
+            draggableProps.setDragTranslate(domDrag.clientHeight);
+            domDrag.style.height = `${draggableProps.minDragWh}px`;
         } else { // close -> open
-            domDrag.style.height = `${pxConvert(dragTranslate, container, dragDirection)}`;
-            setDragTranslate(0);
+            domDrag.style.height = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection)}`;
+            draggableProps.setDragTranslate(0);
         }
     } else {
-        if (isOpen.current) { // open -> close
-            setDragTranslate(domDrag.clientWidth);
-            domDrag.style.width = `${MIN_DRAG_WH}px`;
+        if (draggableProps.isOpen.current) { // open -> close
+            draggableProps.setDragTranslate(domDrag.clientWidth);
+            domDrag.style.width = `${draggableProps.minDragWh}px`;
         } else { // close -> open
-            domDrag.style.width = `${pxConvert(dragTranslate, container, dragDirection)}`;
-            setDragTranslate(0);
+            domDrag.style.width = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection)}`;
+            draggableProps.setDragTranslate(0);
         }
     }
-    isOpen.current = !isOpen.current;
+    draggableProps.isOpen.current = !draggableProps.isOpen.current;
     window.dispatchEvent(new Event('resize'));
 };
 
 const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
-    [DragDirection.top, ContainerTop],
-    [DragDirection.bottom, ContainerBottom],
-    [DragDirection.left, ContainerLeft],
-    [DragDirection.right, ContainerRight],
+    [DragDirection.TOP, ContainerTop],
+    [DragDirection.BOTTOM, ContainerBottom],
+    [DragDirection.LEFT, ContainerLeft],
+    [DragDirection.RIGHT, ContainerRight],
 ]);
 
 /**
@@ -468,7 +480,7 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
     const container = useRef<HTMLDivElement>(null); const draggable = useRef<HTMLDivElement>(null);
     const [dragWh, setDragWh] = useState(String(draggableWH));
     const [autoPopUp, setAutoPopUp] = useState(true);
-    const [containerWH, setContainerWH] = useState([0, 0]);
+    const [containerWH, setContainerWH] = useState([0, 0] as [number, number]);
     useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [draggableWH, containerWH, dragDirection]);
     const MIN_DRAG_WH = useMemo(() => dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH, [dragDirection]);
     const [dragTranslate, setDragTranslate] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
@@ -483,31 +495,33 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
     const onMousedown = getHandleMouseDown(dragDirection, draggable, movingState, isOpen);
     const onMousemove = handleMouseMove(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
     const onMouseup = handleMouseUp(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
-    const showDraggable = handleDraggableShow(dragDirection, containerWH, isOpen, MIN_DRAG_WH, draggable, dragTranslate, setDragTranslate);
+    const dragProps: DraggableContext = { dragDirection, container: containerWH, isOpen, minDragWh: MIN_DRAG_WH, draggable, dragTranslate, setDragTranslate };
+    const showDraggable = handleDraggableShow(dragProps);
     const handleOpen = (needOpen = false): void => { if ((needOpen && !isOpen.current) || autoPopUp) { showDraggable(); setAutoPopUp(false); } };
     const Container = containerMap.get(dragDirection) as typeof ContainerBase;
     // 分割线混乱问题解决
     useEffect(() => {
-        if (!isOpen.current && dragTranslate !== 0 && draggable.current && dragDirection === DragDirection.right) {
+        const isDragTranslate = !isOpen.current && dragTranslate !== 0;
+        if (isDragTranslate && draggable.current && dragDirection === DragDirection.RIGHT) {
             draggable.current.style.width = `${MIN_DRAG_WH}px`;
         }
     });
-    const view = (props: ViewProps): JSX.Element => {
+    const view = (viewProps: ViewProps): JSX.Element => {
         return <ThemeProvider theme={theme}>
             <Container
-                key={props.id} ref={container} column translateXY={dragTranslate}
+                key={viewProps.id} ref={container} column translateXY={dragTranslate}
                 draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)}
                 dragDirection={dragDirection} minWH={MIN_DRAG_WH}
                 onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
                 onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
-                <div className={'topC'}> {props.mainContainer} </div>
+                <div className={'topC'}> {viewProps.mainContainer} </div>
                 <div className={'bottomC'} ref={draggable}>
-                    <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{props.draggableContainer}</div>
+                    <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{viewProps.draggableContainer}</div>
                     <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} />
                     {dragTranslate ? <CaretLeftOutlined onClick={(): void => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={(): void => showDraggable()} className={'caret'}/>}
                     <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
                 </div>
-                {props.slot}
+                {viewProps.slot}
             </Container>
         </ThemeProvider>;
     };
