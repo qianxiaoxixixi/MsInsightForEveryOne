@@ -113,14 +113,15 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     std::string orderName = "%" + requestParams.searchName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    if (requestParams.startTime != -1) {
+    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
         sqlite3_bind_int64(stmt, index++, startTime);
         sqlite3_bind_double(stmt, index++, requestParams.startTime);
-    }
-    if (requestParams.endTime != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.endTime);
         sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_double(stmt, index++, requestParams.startTime);
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
     }
+
     if (requestParams.minSize != -1) {
         sqlite3_bind_double(stmt, index++, requestParams.minSize);
     }
@@ -468,11 +469,11 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " AND stream <> ''";
     }
-    if (requestParams.startTime != -1) {
-        sql += " AND allocationTimestamp >= " + std::to_string(requestParams.startTime);
-    }
-    if (requestParams.endTime != -1) {
-        sql += " AND allocationTimestamp <= " + std::to_string(requestParams.endTime);
+    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
+        sql += " AND (allocationTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
+               " AND " + std::to_string(requestParams.endTime) +
+               " OR releaseTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
+               " AND " + std::to_string(requestParams.endTime) + ")";
     }
 
     if (requestParams.minSize != -1) {

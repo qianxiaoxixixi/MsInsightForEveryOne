@@ -52,7 +52,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             "ROUND((allocation_time - " + std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) END AS allocationTimestamp, "
             "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
-            ") / (1000.0 * 1000.0), 2) END AS release_time, ROUND(duration / (1000.0 * 1000.0), 2) as duration, "
+            ") / (1000.0 * 1000.0), 2) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 2) as duration, "
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
             std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
             "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 2) as active_duration, "
@@ -104,7 +104,8 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql = "SELECT count(*) as nums FROM "
             " ("
             "   SELECT NAME.value as name, ";
-        sql.append(isLowCamel ? "streamPtr, allocationTime," : "stream_ptr, allocation_time,");
+        sql.append(isLowCamel ? "streamPtr, allocationTime, releaseTime," :
+            "stream_ptr, allocation_time, release_time,");
         sql.append(" ROUND(size / 1024.0, 2) as size, size as realSize FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
             ") "
@@ -114,13 +115,11 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql.append(isLowCamel ? " AND streamPtr <> ''" : " AND stream_ptr <> ''");
     }
-    if (requestParams.startTime != -1) {
-        sql.append(" AND ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
-            .append(" - ?) / (1000.0 * 1000.0), 2) >= ? ");
-    }
-    if (requestParams.endTime != -1) {
-        sql.append(" AND ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
-            .append(" - ?) / (1000.0 * 1000.0), 2) <= ? ");
+    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
+        sql.append(" AND (ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
+                .append(" - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ? ");
+        sql.append(" OR ROUND((").append(isLowCamel ? "releaseTime" : "release_time")
+                .append(" - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ?) ");
     }
     if (requestParams.minSize != -1) {
         sql += " AND realSize >= ? ";

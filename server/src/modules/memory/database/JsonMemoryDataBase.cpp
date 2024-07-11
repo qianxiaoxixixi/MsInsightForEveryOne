@@ -287,7 +287,7 @@ std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
         std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) END AS allocationTimestamp, "
         "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
         std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
-        "END AS release_time, ROUND(duration / 1000.0, 2) as duration, "
+        "END AS releaseTimestamp, ROUND(duration / 1000.0, 2) as duration, "
         "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
         std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
         "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 2) as active_duration, "
@@ -488,11 +488,9 @@ bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " AND stream <> ''";
     }
-    if (requestParams.startTime != -1) {
-        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) >= ? ";
-    }
-    if (requestParams.endTime != -1) {
-        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) <= ? ";
+    if (requestParams.startTime != -1 && requestParams.endTime != -1) {
+        sql += " AND (ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ? "
+               " OR ROUND((release_time - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ?) ";
     }
     if (requestParams.minSize != -1) {
         sql += " AND size >= ? ";
