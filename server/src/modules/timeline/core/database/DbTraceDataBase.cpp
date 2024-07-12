@@ -1706,7 +1706,7 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
           "CANN_API JOIN minTime UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
           " 'pytorch' as tid, "
           "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, PYTORCH_API.ROWID as id from "
-          "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" + orderBy +" LIMIT ? OFFSET ?";
+          "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" + orderBy + " LIMIT ? OFFSET ?";
     return sql;
 }
 
