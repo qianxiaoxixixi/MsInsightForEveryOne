@@ -1,4 +1,6 @@
-
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 export type TimeStamp = number;
 
 export const level = Symbol('unitLevel');
@@ -8,7 +10,7 @@ export type TreeNode<T> = T & {
     [level]?: number;
 };
 
-export type PreOrderFlattenOptions<T> = {
+export interface PreOrderFlattenOptions<T> {
     // nodes that should always be flattened, but not appearing in the result, and not counted as one level
     bypass?: (node: TreeNode<T>) => boolean;
 
@@ -30,7 +32,8 @@ export function preOrderFlatten<T>(tree: Array<TreeNode<T>>, currentLevel: numbe
             return node.children ? [...preOrderFlatten(node.children, currentLevel, options)] : [];
         } else {
             const self = (options?.exclude?.(node) ?? false) ? [] : [node];
-            if (self.length > 0 && node.children && (options?.when?.(node) ?? true)) {
+            const isFlat = (self.length > 0 && (options?.when?.(node) ?? true));
+            if (isFlat && node.children) {
                 const nextLevel = node[level] as number + 1;
                 return [...self, ...preOrderFlatten(node.children, nextLevel, options)];
             } else {

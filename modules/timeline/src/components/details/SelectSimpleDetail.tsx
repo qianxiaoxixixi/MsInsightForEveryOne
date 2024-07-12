@@ -1,11 +1,14 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import React, { useEffect } from 'react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { MoreTableProps, TableViewProps } from './types';
+import type { MoreTableProps, TableViewProps } from './types';
 import { useDetailUpdater, useMoreUpdater } from './hooks';
 import { selectRow } from './utils';
 import { AutoAdjustedTable } from './base/AutoAdjustedTable';
-import { CommonStateProto, TabProto } from './base/Tabs';
+import type { CommonStateProto, TabProto } from './base/Tabs';
 
 export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     { session, height, detail, tabState, commonState, depsList }: TableViewProps<TabProto, T>) => {

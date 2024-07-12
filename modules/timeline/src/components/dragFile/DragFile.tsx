@@ -486,7 +486,7 @@ function notify(type: NotifyType, param?: any): void {
     }
 };
 
-export const DragFileImportInit = ({ id, onSuccess, onDrop }: DragFileParams): DragFileImport => {
+export const dragFileImportInit = ({ id, onSuccess, onDrop }: DragFileParams): DragFileImport => {
     return new DragFileImport({ id, onSuccess, onDrop });
 };
 

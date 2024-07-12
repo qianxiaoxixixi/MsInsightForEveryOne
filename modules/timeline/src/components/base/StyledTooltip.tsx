@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import * as React from 'react';
 import { Tooltip } from 'antd';
-import { TooltipProps } from 'antd/lib/tooltip';
+import type { TooltipProps } from 'antd/lib/tooltip';
 import { useTheme } from '@emotion/react';
 
 export const StyledTooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle, ...props }: TooltipProps) => {

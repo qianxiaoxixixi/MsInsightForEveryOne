@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 export class TimeoutPromise {
     private readonly delay: number;
     private readonly promise: Promise<unknown>;
@@ -5,6 +8,14 @@ export class TimeoutPromise {
     constructor(promise: Promise<unknown>, delay: number) {
         this.delay = delay;
         this.promise = promise;
+    }
+
+    run(msg?: string): Promise<unknown> {
+        return this.timeoutPromise(this.promise, this.delay, msg);
+    }
+
+    runAbort(msg?: string): AbortPromise {
+        return this.abortPromise(this.promise, this.delay, msg);
     }
 
     private delayPromise(ms: number): Promise<never> {
@@ -20,10 +31,6 @@ export class TimeoutPromise {
         return Promise.race([promise, timeout]);
     }
 
-    run(msg?: string): Promise<unknown> {
-        return this.timeoutPromise(this.promise, this.delay, msg);
-    }
-
     private abortPromise(promise: Promise<unknown>, ms: number, msg?: string): AbortPromise {
         const timeout = this.delayPromise(ms).then((): void => {
             throw new Error(msg ?? 'Operation timed out');
@@ -34,10 +41,6 @@ export class TimeoutPromise {
         });
         abortP.promise = Promise.race([promise, abortPromise, timeout]);
         return abortP;
-    }
-
-    runAbort(msg?: string): AbortPromise {
-        return this.abortPromise(this.promise, this.delay, msg);
     }
 }
 

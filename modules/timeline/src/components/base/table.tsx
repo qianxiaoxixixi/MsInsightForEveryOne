@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import styled from '@emotion/styled';
 import React from 'react';
-import AntdTable, { TableProps } from './rc-table';
-import { TableHandle } from './rc-table/interface';
+import AntdTable, { type TableProps } from './rc-table';
+import type { TableHandle } from './rc-table/interface';
 
 const Support = React.forwardRef(
     (props: TableProps<any>, ref: React.Ref<TableHandle>) => {

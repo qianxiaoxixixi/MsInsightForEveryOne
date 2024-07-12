@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 export const loopActionFactory = (callBackFunc: Function, msPerTime: number, msDelay: number = 0): { beginLoop: Function; clearLoop: Function } => {
     let lastTime = 0;
     let isZoomInning = true;

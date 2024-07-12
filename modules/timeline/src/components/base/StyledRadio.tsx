@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { Radio } from 'antd';
-import { RadioProps } from 'antd/lib/radio';
+import type { RadioProps } from 'antd/lib/radio';
 
 export const StyledRadio = styled((props: RadioProps & { fontSize?: number }) => <Radio {...props}/>)`
     color: ${(props): string => props.theme.fontColor};

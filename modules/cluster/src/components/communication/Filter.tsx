@@ -8,11 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { Select, Radio } from 'antd';
 import { getUsableVal, delayExecute } from 'lib/CommonUtils';
 import { Label } from '../Common';
-import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
+import type { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 
-export interface ConditionDataType{
+export interface ConditionDataType {
     [key: string]: string | string[];
     iterationId: string ;
     stage: string;

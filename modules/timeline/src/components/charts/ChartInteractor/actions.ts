@@ -4,8 +4,8 @@
 
 import { clamp, throttle, debounce } from 'lodash';
 import { runInAction } from 'mobx';
-import React from 'react';
-import { Session } from '../../../entity/session';
+import type React from 'react';
+import type { Session } from '../../../entity/session';
 import { traceStart } from '../../../utils/traceLogger';
 import type { InteractorMouseState, InteractorParams } from './ChartInteractor';
 import { INTERACTOR_WIDTH } from './ChartInteractor';
@@ -37,6 +37,24 @@ export const resetCanvasSize = (canvas: React.RefObject<HTMLCanvasElement>, rect
     canvas.current.width = rect?.width ?? 0;
     canvas.current.height = rect?.height ?? 0;
 };
+
+const updateSessionStatus = (e: MouseEvent, session: Session, newSelected: [number, number]): void => {
+    runInAction(() => {
+        if (e.altKey) {
+            session.domainRange = { domainStart: newSelected[0], domainEnd: newSelected[1] };
+            setZoomHistory(session, session.domainRange);
+        }
+        session.selectedRange = newSelected;
+        changeRangeMarkerTimestamp(session, newSelected);
+        const selectedRange = session.selectedRange[1] - session.selectedRange[0];
+        traceStart('selectBrushScope', {
+            action: 'selectBrushScope',
+            units: session.selectedUnits.map((unit) => unit?.name),
+            selectedRange: session.isNsMode ? Math.ceil(selectedRange / 1e6) : selectedRange,
+        });
+    });
+};
+
 export const mouseUpAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
     const { normalCanvas: canvas, hoverCanvas, session, xReverseScale, xScale, isNsMode, customRenderers, theme } = interactorParams;
     const clickPos = interactorMouseState.clickPos.current;
@@ -45,7 +63,11 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     if (hoverCanvas.current) {
         hoverCanvas.current.style.pointerEvents = 'none';
     }
-    if (clickPos === undefined || canvas.current === null || session.endTimeAll === undefined || lastPos === undefined) { return; }
+    if (session.endTimeAll === undefined) {
+        return;
+    }
+    const isInValid = (clickPos === undefined || canvas.current === null || lastPos === undefined);
+    if (isInValid) { return; }
 
     if (session.contextMenu.isVisible) {
         return;
@@ -61,20 +83,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         const newSelected = mouseRange.sort((a, b) => a - b);
 
         if (newSelected[0] < session.endTimeAll && session.endTimeAll < newSelected[1]) { newSelected[1] = session.endTimeAll; }
-        runInAction(() => {
-            if (e.altKey) {
-                session.domainRange = { domainStart: newSelected[0], domainEnd: newSelected[1] };
-                setZoomHistory(session, session.domainRange);
-            }
-            session.selectedRange = newSelected;
-            changeRangeMarkerTimestamp(session, newSelected);
-            const selectedRange = session.selectedRange[1] - session.selectedRange[0];
-            traceStart('selectBrushScope', {
-                action: 'selectBrushScope',
-                units: session.selectedUnits.map((unit) => unit?.name),
-                selectedRange: session.isNsMode ? Math.ceil(selectedRange / 1e6) : selectedRange,
-            });
-        });
+        updateSessionStatus(e, session, newSelected);
     }
 
     interactorMouseState.clickPos.current = undefined;
@@ -94,7 +103,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     draw(drawArgs);
 };
 
-type GetDrawOnMoveArgs = {
+interface GetDrawOnMoveArgs {
     canvas: React.RefObject<HTMLCanvasElement>;
     xReverseScale: (tx: number) => number;
     xScale: (pos: number) => number;

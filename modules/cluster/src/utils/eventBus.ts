@@ -14,15 +14,6 @@ class EventBus<T> {
         this._events = new Map(); // 储存事件/回调键值对
     }
 
-    private _getHandlers(event: string): Array<EventHandler<T>> {
-        let handlers = this._events.get(event);
-        if (!handlers) {
-            handlers = [];
-            this._events.set(event, handlers);
-        };
-        return handlers;
-    }
-
     // 触发事件
     public emit(event: string, args?: T): void {
         const handler = this._getHandlers(event);
@@ -55,6 +46,15 @@ class EventBus<T> {
             handler(arg);
         };
         this.on(event, cb);
+    }
+
+    private _getHandlers(event: string): Array<EventHandler<T>> {
+        let handlers = this._events.get(event);
+        if (!handlers) {
+            handlers = [];
+            this._events.set(event, handlers);
+        };
+        return handlers;
     }
 }
 

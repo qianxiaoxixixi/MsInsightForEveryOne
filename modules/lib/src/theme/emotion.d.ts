@@ -85,10 +85,10 @@ declare module '@emotion/react' {
         fpsTextColor: string; // FPS文字颜色
         fpsColor: string; // FPS本身颜色
         categories: {
-            System: { name: 'System'; color: string; background: string }; // 系统分类标签颜色与背景色
-            ArkTS: { name: 'ArkTS'; color: string; background: string }; // JS分类标签颜色与背景色
+            system: { name: 'System'; color: string; background: string }; // 系统分类标签颜色与背景色
+            arkTS: { name: 'ArkTS'; color: string; background: string }; // JS分类标签颜色与背景色
             NAPI: { name: 'NAPI'; color: string; background: string }; // NAPI分类标签颜色与背景色
-            Native: { name: 'Native'; color: string; background: string }; // Native分类标签颜色与背景色
+            native: { name: 'Native'; color: string; background: string }; // Native分类标签颜色与背景色
         };
         searchIconBackgroundColor: string; // 全部session页搜索按钮背景色
         cancelIconBackgroundColor: string; // 全部session页删除按钮背景色

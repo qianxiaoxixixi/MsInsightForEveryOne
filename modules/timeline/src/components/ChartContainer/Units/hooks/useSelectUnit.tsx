@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { runInAction } from 'mobx';
-import { Session } from '../../../../entity/session';
+import type { Session } from '../../../../entity/session';
 import { getAutoKey } from '../../../../utils/dataAutoKey';
-import { KeyedInsightUnit } from '../types';
+import type { KeyedInsightUnit } from '../types';
 
 type SelectUnit = (unit: KeyedInsightUnit) => void;
 export const useSelectUnit = (session: Session): SelectUnit => {

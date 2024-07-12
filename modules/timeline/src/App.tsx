@@ -10,7 +10,7 @@ import { SessionPage } from './pages/SessionPage';
 import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
 import eventBus, { EventType } from './utils/eventBus';
-import { DragFileImportInit } from './components/dragFile/DragFile';
+import { dragFileImportInit } from './components/dragFile/DragFile';
 import type { CheckResultType } from './components/dragFile/DragFile';
 import connector from './connection';
 
@@ -136,7 +136,7 @@ export const App = observer(() => {
         if (!isInitialized.current) {
             // 防止严格模式下useEffect渲染两次
             isInitialized.current = true;
-            DragFileImportInit({
+            dragFileImportInit({
                 id: 'root',
                 onDrop: (result: any) => {
                     handleDropFile(result);

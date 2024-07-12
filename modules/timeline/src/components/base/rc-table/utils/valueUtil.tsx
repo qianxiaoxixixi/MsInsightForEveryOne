@@ -1,5 +1,8 @@
-import { DataIndex, Key } from '../types';
-import React from 'react';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import type { DataIndex, Key } from '../types';
+import type React from 'react';
 
 const INTERNAL_KEY_PREFIX = 'INSIGHT_TABLE_KEY';
 
