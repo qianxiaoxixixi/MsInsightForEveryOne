@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { platform } from '../platforms';
-// 打点工具，用于全局保存打点数据，以对象形式返回
 
+// 打点工具，用于全局保存打点数据，以对象形式返回
 interface TraceData {
     startTime: number;
     endTime: number;
@@ -19,15 +22,15 @@ const noneResEvent = [
 ];
 
 interface TraceInfo {
-    action: string;
     [x: string]: unknown;
+    action: string;
     responseTime?: number;
     units?: string[];
     selectRange?: number;
 }
 
 // 打点入口 traceStart
-export function traceStart(key: string, infos: { action: string; [x: string]: unknown }): void {
+export function traceStart(key: string, infos: { [x: string]: unknown; action: string }): void {
     traceMessages[key] = {
         startTime: new Date().getTime(),
         endTime: 0,

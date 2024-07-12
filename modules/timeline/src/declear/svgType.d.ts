@@ -1,7 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 declare module '*.svg' {
-    import * as React from 'react';
-
-    export const ReactComponent: React.ReactNode;
     const src: string;
     export default src;
 }

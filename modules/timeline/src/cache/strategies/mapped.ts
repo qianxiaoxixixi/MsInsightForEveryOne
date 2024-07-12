@@ -1,6 +1,9 @@
-import { ValidSession } from '../../entity/session';
-import { Cache, CacheFactory } from '../cache';
-import { KeyedCacheFactory } from './simple';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import type { ValidSession } from '../../entity/session';
+import type { Cache, CacheFactory } from '../cache';
+import type { KeyedCacheFactory } from './simple';
 
 /**
  * session: {

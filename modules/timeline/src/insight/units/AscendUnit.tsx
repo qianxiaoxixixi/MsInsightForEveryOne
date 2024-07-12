@@ -40,7 +40,7 @@ import type { Theme } from '@emotion/react';
 import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
 import ResizeTable from 'lib/ResizeTable';
-import { getDefaultColumData, GetPageData } from '../../components/detailViews/Common';
+import { getDefaultColumData, getPageData } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
@@ -694,7 +694,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                     setSorter(newsorter as typeof sorter);
                 }
             }}
-            pagination={GetPageData(page, setPage)}
+            pagination={getPageData(page, setPage)}
             dataSource={dataSource}
             columns={useColumns()}
             size="small"

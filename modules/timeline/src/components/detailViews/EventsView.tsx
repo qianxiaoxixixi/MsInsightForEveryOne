@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
-import { eventViewData, getDefaultColumData, GetPageData } from './Common';
+import { eventViewData, getDefaultColumData, getPageData } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
@@ -114,7 +114,7 @@ export const EventDetail = observer((props: any) => {
                         setSorter(newsorter as typeof sorter);
                     }
                 }}
-                pagination={GetPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading} rowClassName={'click-able'}
+                pagination={getPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading} rowClassName={'click-able'}
                 scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
             />
         </div>

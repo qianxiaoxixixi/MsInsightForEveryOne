@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { makeAutoObservable, observable } from 'mobx';
 
-export type OptionType = { value: number | string; label: string };
+export interface OptionType { value: number | string; label: string };
 
 // 筛选类型
 export enum FilterType {

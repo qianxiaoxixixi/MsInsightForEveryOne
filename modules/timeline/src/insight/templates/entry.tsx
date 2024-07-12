@@ -1,8 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import React from 'react';
-import { InsightTemplate } from '../../entity/insight';
+import type { InsightTemplate } from '../../entity/insight';
 import { ReactComponent as HomePageIcon } from '../../assets/images/insights/HomePageIcon.svg';
 
-export const EntryTemplate: InsightTemplate = {
+export const entryTemplate: InsightTemplate = {
     id: 'entry',
     name: 'entry',
     source: '<internal>' as const,

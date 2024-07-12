@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 export type Key = React.Key;
 
 export type FixedType = 'left' | 'right' | boolean;
@@ -23,7 +26,7 @@ export interface CellType<RecordType> {
     colEnd?: number;
 }
 
-export type DataIndex = string | number | readonly (string | number)[];
+export type DataIndex = ReadonlyArray<string | number>;
 
 export type CellEllipsisType = { showTitle?: boolean } | boolean;
 
@@ -54,7 +57,7 @@ export interface ColumnType<RecordType> {
     width?: number | string;
 }
 
-export type ColumnsType<RecordType = unknown> = ColumnType<RecordType>[];
+export type ColumnsType<RecordType = unknown> = Array<ColumnType<RecordType>>;
 
 export type GetRowKey<RecordType> = (record: RecordType, index?: number) => Key;
 

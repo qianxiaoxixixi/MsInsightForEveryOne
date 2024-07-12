@@ -5,7 +5,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { useEventBus } from '../../utils/eventBus';
 import { ViewList } from './index';
 

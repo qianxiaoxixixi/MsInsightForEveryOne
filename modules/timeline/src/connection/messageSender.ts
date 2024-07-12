@@ -1,19 +1,6 @@
-import { Browser } from '../platforms/Browser';
-import { IntellijPlatform } from '../platforms/IntellijPlatform';
-import { VsCodePlatform } from '../platforms/VsCodePlatform';
-
-declare function acquireVsCodeApi(): any;
-
-export let messageSender: IMessageSender = new Browser();
-
-if (typeof acquireVsCodeApi === 'function') {
-    messageSender = new VsCodePlatform();
-    messageSender.sendMessage = acquireVsCodeApi().postMessage;
-}
-
-if (typeof window.cefQuery === 'function') {
-    messageSender = new IntellijPlatform();
-}
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 
 export interface IMessageSender {
     sendMessage: (ceq: any) => void;
@@ -24,10 +11,14 @@ export interface IMessageSender {
 export const removeAndAddEventListener = (resolve: (value: (string | PromiseLike<string>)) => void): void => {
     function onMessage(event: MessageEvent): void {
         const message = event.data;
-        if (message.command === 'ascend.folderSelected') {
-            resolve(message.path);
-        } else if (message.command === 'ascend.folderSelectionCanceled') {
-            resolve('');
+        switch (message.command) {
+            case 'ascend.folderSelected':
+                resolve(message.path);
+                break;
+            case 'ascend.folderSelectionCanceled':
+                resolve('');
+                break;
+            default:
         }
     }
     window.removeEventListener('message', onMessage);

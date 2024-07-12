@@ -1,10 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import * as React from 'react';
 import { observer } from 'mobx-react';
 import { AutoAdjustedTable } from '../base/AutoAdjustedTable';
-import { Session } from '../../../entity/session';
-import { InsightUnit, TableDataAdapter } from '../../../entity/insight';
+import type { Session } from '../../../entity/session';
+import type { InsightUnit, TableDataAdapter } from '../../../entity/insight';
 import { parseColDef } from '../utils';
-import { TableState, EMPTY_TABLE_STATE } from '../types';
+import { type TableState, EMPTY_TABLE_STATE } from '../types';
 
 /**
  * This Component is independent fetch data More Component,

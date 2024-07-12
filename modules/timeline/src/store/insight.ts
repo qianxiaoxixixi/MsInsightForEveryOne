@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { action, makeAutoObservable } from 'mobx';
-import { InsightTemplate } from '../entity/insight';
-import { EntryTemplate } from '../insight/templates/entry';
+import type { InsightTemplate } from '../entity/insight';
+import { entryTemplate } from '../insight/templates/entry';
 
 export class InsightStore {
     readonly templates: Map<string, InsightTemplate>;
@@ -20,7 +23,7 @@ export class InsightStore {
 
     loadTemplates(): Promise<void> {
         this.templates.clear();
-        const list = [EntryTemplate];
+        const list = [entryTemplate];
         return new Promise<void>(resolve => {
             setTimeout(action(() => {
                 list.forEach(template => {

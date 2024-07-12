@@ -187,7 +187,7 @@ export const expertSystemViewItems: string[] = [
     'Operators Fusion',
 ];
 
-export const GetPageData = (page: { current: number; pageSize: number; total: number }, setPage: VoidFunction): object => {
+export const getPageData = (page: { current: number; pageSize: number; total: number }, setPage: VoidFunction): object => {
     return {
         ...page,
         showSizeChanger: page.total > 10,

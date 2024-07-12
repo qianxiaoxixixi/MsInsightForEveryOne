@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Button } from 'antd';
 import { runInAction } from 'mobx';
-import { getDefaultColumData, GetPageData, searchAllSlices } from './Common';
+import { getDefaultColumData, getPageData, searchAllSlices } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import styled from '@emotion/styled';
@@ -198,7 +198,7 @@ const FindDetail = observer((props: any) => {
                     setSorter(newsorter as typeof sorter);
                 }
             }}
-            pagination={GetPageData(page, setPage)}
+            pagination={getPageData(page, setPage)}
             dataSource={dataSource}
             columns={columns}
             scroll={{ y: props.bottomHeight - 180 }}

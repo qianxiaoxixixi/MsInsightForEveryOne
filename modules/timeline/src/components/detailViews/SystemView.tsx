@@ -11,7 +11,7 @@ import { Button, Select } from 'antd';
 import {
     getColumnSearchProps,
     getDefaultColumData,
-    GetPageData,
+    getPageData,
     useKernelDetails,
     Loading,
     pythonApiSummaryColumns,
@@ -343,7 +343,7 @@ const BaseSummary = observer((props: any) => {
                 onChange={(pagination: any, filters: any, sorter: any) => {
                     setSorter(sorter);
                 }}
-                pagination={GetPageData(page, setPage)}
+                pagination={getPageData(page, setPage)}
                 dataSource={dataSource}
                 columns={columns}
                 size="small"
@@ -488,7 +488,7 @@ const KernelDetails = observer((props: any) => {
                     setSorter(sorter);
                     setFilters(filters);
                 }}
-                pagination={GetPageData(page, setPage)}
+                pagination={getPageData(page, setPage)}
                 dataSource={dataSource}
                 columns={colums}
                 scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}

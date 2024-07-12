@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import './assets/main.css';
 
 import { createApp } from 'vue';
@@ -6,11 +9,11 @@ import App from './App.vue';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import 'element-plus/theme-chalk/dark/css-vars.css';
-import '@assets/reset.css'
+import '@assets/reset.css';
 import router from './router';
 import '@/i18n';
 
-type CefQueryType = {
+interface CefQueryType {
     request: string;
     onSuccess: (response: string) => void;
     onFailure: (errorCode: number, errorMessage: string) => void;

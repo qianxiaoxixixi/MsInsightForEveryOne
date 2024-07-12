@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 export const light: Theme = {
     backgroundColor: '#FFFFFF',
@@ -61,10 +64,10 @@ export const light: Theme = {
     fpsTextColor: 'rgb(0, 0, 0)', // FPS文字颜色
     fpsColor: 'rgb(0, 0, 0, 0.5)', // FPS本身颜色
     categories: {
-        System: { name: 'System', color: '#0A59F7', background: '#E7EFFE' }, // 系统分类标签颜色与背景色
-        ArkTS: { name: 'ArkTS', color: '#64BB5C', background: '#EFF6EE' }, // JS分类标签颜色与背景色
+        system: { name: 'System', color: '#0A59F7', background: '#E7EFFE' }, // 系统分类标签颜色与背景色
+        arkTS: { name: 'ArkTS', color: '#64BB5C', background: '#EFF6EE' }, // JS分类标签颜色与背景色
         NAPI: { name: 'NAPI', color: '#ED6F21', background: '#FBF0EC' }, // NAPI分类标签颜色与背景色
-        Native: { name: 'Native', color: '#ED6F21', background: '#FBF0EC' }, // Native分类标签颜色与背景色
+        native: { name: 'Native', color: '#ED6F21', background: '#FBF0EC' }, // Native分类标签颜色与背景色
     },
     searchIconBackgroundColor: 'rgb(0, 0, 0)',
     cancelIconBackgroundColor: 'rgb(0, 0, 0, 0.6)',

@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { getDuration } from '../../../utils/humanReadable';
 
-export type Pos = {
+export interface Pos {
     x: number;
     y: number;
 };
@@ -19,10 +22,11 @@ export const isOnSideline = (mousePos: Pos | undefined, selectedRange: [ number,
         return false;
     }
     const offsetX = mousePos.x;
-    if ((offsetX <= xReverseScale(selectedRange[0]) + SINGLE_DRAG_OFFSET &&
+    const isOnSideLine = ((offsetX <= xReverseScale(selectedRange[0]) + SINGLE_DRAG_OFFSET &&
             offsetX >= xReverseScale(selectedRange[0]) - SINGLE_DRAG_OFFSET) ||
         (offsetX <= xReverseScale(selectedRange[1]) + SINGLE_DRAG_OFFSET &&
-            offsetX >= xReverseScale(selectedRange[1]) - SINGLE_DRAG_OFFSET)) {
+            offsetX >= xReverseScale(selectedRange[1]) - SINGLE_DRAG_OFFSET));
+    if (isOnSideLine) {
         return true;
     }
     return false;
