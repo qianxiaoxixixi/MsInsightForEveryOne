@@ -8,7 +8,7 @@
 
 #include <string>
 #include <vector>
-#include <ClusterDef.h>
+#include "ClusterDef.h"
 
 namespace Dic {
 namespace Module {

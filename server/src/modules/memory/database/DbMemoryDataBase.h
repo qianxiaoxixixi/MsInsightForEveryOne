@@ -25,7 +25,7 @@ public:
                              std::vector<Protocol::MemoryOperator> &opDetails);
     bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody);
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
-    bool QueryOperatorSize(double &min, double &max, std::string rankId);
+    bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
 
     bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,

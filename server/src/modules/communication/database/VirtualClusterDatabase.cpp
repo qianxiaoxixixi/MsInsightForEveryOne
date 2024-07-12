@@ -87,11 +87,7 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
         summaryDto.communicationNotOverLappedTime = sqlite3_column_double(stmt, col++);
         summaryDto.communicationOverLappedTime = sqlite3_column_double(stmt, col++);
         summaryDto.freeTime = sqlite3_column_double(stmt, col++);
-        if (isContainsFieldPreparing) {
-            summaryDto.prepareTime = sqlite3_column_double(stmt, col++);
-        } else {
-            summaryDto.prepareTime = -1; // 代表不存在Preparing字段
-        }
+        summaryDto.prepareTime = isContainsFieldPreparing ? sqlite3_column_double(stmt, col++) : -1;
         max.computeDiff = std::max(summaryDto.computingTime, max.computeDiff);
         max.communicationDiff = std::max(summaryDto.communicationNotOverLappedTime, max.communicationDiff);
         max.freeDiff = std::max(summaryDto.freeTime, max.freeDiff);
