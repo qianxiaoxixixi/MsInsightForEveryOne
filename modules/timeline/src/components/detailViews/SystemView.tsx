@@ -284,8 +284,8 @@ const BaseSummary = observer((props: any) => {
             dataIndex: 'click',
             key: 'click',
             ellipsis: true,
-            render: (_: any, record: any) => (<Button type="link"
-                onClick={(): void => {
+            render: (_: any, record: any): JSX.Element => (<Button type="link"
+                onClick={() => {
                     setRowData({ name: record.name ?? record.originOptimizer, ...record });
                 }}>{t('Click')}</Button>),
         }];
@@ -340,8 +340,8 @@ const BaseSummary = observer((props: any) => {
     return (
         (status === 'download' || props.rankId === undefined)
             ? <ResizeTable
-                onChange={(pagination: any, filters: any, sorter: any) => {
-                    setSorter(sorter);
+                onChange={(pagination: any, filters: any, nwSorter: any): void => {
+                    setSorter(nwSorter);
                 }}
                 pagination={getPageData(page, setPage)}
                 dataSource={dataSource}
@@ -362,7 +362,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
     });
     runInAction(() => {
         props.session.locateUnit = {
-            target: (unit: any) => {
+            target: (unit: any): boolean => {
                 return unit instanceof ThreadUnit && unit.metadata.cardId === props.rankId &&
                     unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
             },
@@ -468,8 +468,8 @@ const KernelDetails = observer((props: any) => {
             dataIndex: 'click',
             key: 'click',
             ellipsis: true,
-            render: (_: any, record: any) => (<Button type="link"
-                onClick={() => {
+            render: (_: any, record: any): JSX.Element => (<Button type="link"
+                onClick={(): void => {
                     setRowData(record as any);
                 }}>{t('Click')}</Button>),
         },
@@ -484,9 +484,9 @@ const KernelDetails = observer((props: any) => {
     return (
         (status === 'download' || props.rankId === undefined)
             ? <ResizeTable
-                onChange={(pagination: any, filters: any, sorter: any) => {
-                    setSorter(sorter);
-                    setFilters(filters);
+                onChange={(pagination: any, newFilters: any, newSorter: any): void => {
+                    setSorter(newSorter);
+                    setFilters(newFilters);
                 }}
                 pagination={getPageData(page, setPage)}
                 dataSource={dataSource}

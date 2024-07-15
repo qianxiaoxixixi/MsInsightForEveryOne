@@ -1,11 +1,11 @@
 import { Modal, Tooltip } from 'antd';
 import React, { useState, MouseEvent } from 'react';
-import { TimelineAxisFlag } from '../entity/timeMaker';
+import type { TimelineAxisFlag } from '../entity/timeMaker';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import { ReactComponent as TimeDiffIcon } from '../assets/images/ic_public_timeDiff.svg';
 import { ReactComponent as DeleteIcon } from '../assets/images/ic_public_delete.svg';
 import { ReactComponent as JumpingIcon } from '../assets/images/rectangle.svg';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { ColorEditor } from '../components/TimelineMarker';
 import { getTimeDifference } from '../components/charts/ChartInteractor';
 import styled from '@emotion/styled';
@@ -88,8 +88,18 @@ const getTitleDisplay = (props: TimeLineMakerProps, t: TFunction): string => {
     }
 };
 
+interface HandleDeleteParams {
+    event: MouseEvent;
+    deleteSignal: number;
+    uid: string;
+    props: TimeLineMakerProps;
+    setDeleteSignal: (deleteSignal: number) => void;
+    setTimeDiff: (timeDiff: string) => void;
+    t: TFunction;
+}
+
 // 单击删除行
-const handleDelete = (event: MouseEvent | undefined, deleteSignal: number, uid: string, props: TimeLineMakerProps, setDeleteSignal: (deleteSignal: number) => void, setTimeDiff: (timeDiff: string) => void, t: TFunction): void => {
+const handleDelete = ({ event, deleteSignal, uid, props, setDeleteSignal, setTimeDiff, t }: HandleDeleteParams): void => {
     event?.stopPropagation();
     const flagList = props.session.timelineMaker.timelineFlagList;
     const selectedFlag = props.session.timelineMaker.selectedFlag;
@@ -100,16 +110,18 @@ const handleDelete = (event: MouseEvent | undefined, deleteSignal: number, uid: 
         setTimeDiff(t('timelineMarker:unselected'));
     }
     for (let i = 0; i < flagList.length; i++) {
-        if (flagList[i].uid === uid) {
-            const markedRange = props.session.timelineMaker.oldMarkedRange;
-            if (markedRange !== undefined && flagList[i].anotherTimeStamp !== undefined &&
-                flagList[i].timeStamp === markedRange[0] && flagList[i].anotherTimeStamp === markedRange[1]) {
-                runInAction(() => {
-                    props.session.timelineMaker.oldMarkedRange = undefined;
-                });
-            }
-            flagList.splice(i, 1);
+        if (flagList[i].uid !== uid) {
+            continue;
         }
+        const markedRange = props.session.timelineMaker.oldMarkedRange;
+        const isFlagList = markedRange !== undefined && flagList[i].anotherTimeStamp !== undefined &&
+            flagList[i].timeStamp === markedRange[0] && flagList[i].anotherTimeStamp === markedRange[1];
+        if (isFlagList) {
+            runInAction(() => {
+                props.session.timelineMaker.oldMarkedRange = undefined;
+            });
+        }
+        flagList.splice(i, 1);
     }
     deleteSignal = (deleteSignal + 1) % 10;
     setDeleteSignal(deleteSignal);
@@ -175,7 +187,8 @@ const mouseMoveListener = (event: MouseEvent, props: TimeLineMakerProps, theme: 
 
 const showDescTooTip = (e: React.MouseEvent<SVGTextElement>, setShouldShowDescToolTip: (shouldShowDescToolTip: boolean) => void): void => {
     const descTitleElement = document.getElementById('selectedMarkerDec');
-    if (descTitleElement?.scrollWidth === undefined || descTitleElement.clientWidth === undefined || descTitleElement.scrollWidth <= descTitleElement.clientWidth) {
+    if (descTitleElement?.scrollWidth === undefined || descTitleElement.clientWidth === undefined ||
+        descTitleElement.scrollWidth <= descTitleElement.clientWidth) {
         setShouldShowDescToolTip(false);
         return;
     }
@@ -278,7 +291,7 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
     return <MarkerTable id={'flagTable'} style={{ color: theme.fontColor }} >
         {
             list.map((item) => (
-                <div key ={item.uid} id={item.uid} onMouseMove = {(event) => mouseMoveListener(event, timeLineMarkerProps, theme, setTimeDiff)}
+                <div key ={item.uid} id={item.uid} onMouseMove = {(event): void => mouseMoveListener(event, timeLineMarkerProps, theme, setTimeDiff)}
                     className = {'singleTimeMakerRow'} style={{ backgroundColor: item.uid === timeLineMarkerProps.session.timelineMaker.selectedFlag?.uid ? theme.flagListSelectedColor : theme.tooltipBGColor, borderBottom: '1px solid #979797' }}
                     onClick={(): void => {
                         handleSelected(item, timeLineMarkerProps, theme, setSelectFlag);
@@ -289,8 +302,8 @@ const MarkerBody = (props: MarkerBodyProps): JSX.Element => {
                         <div style={{ width: '40%', flexGrow: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', lineHeight: item.anotherTimeStamp === undefined ? undefined : '38px' }}> { item.description }</div>
                         { handleMakerTimeDisplay(timeLineMarkerProps.session, item) }
                         <div style={{ width: '15%' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: item.anotherTimeStamp === undefined ? '0px' : '11px' }}>
-                            <div id={item.uid + 'color'} style={{ width: '12px', height: '12px', backgroundColor: item.color, cursor: 'pointer' }} onClick={() => handleSelectColor(item, timeLineMarkerProps, setFlagColor)} />
-                            <DeleteIcon id={'deleteButton'} style={{ fill: theme.svgPlayBackgroundColor, cursor: 'pointer' }} onClick={(event) => handleDelete(event, deleteSignal, item.uid, timeLineMarkerProps, setDeleteSignal, setTimeDiff, t)} />
+                            <div id={`${item.uid}color`} style={{ width: '12px', height: '12px', backgroundColor: item.color, cursor: 'pointer' }} onClick={(): void => handleSelectColor(item, timeLineMarkerProps, setFlagColor)} />
+                            <DeleteIcon id={'deleteButton'} style={{ fill: theme.svgPlayBackgroundColor, cursor: 'pointer' }} onClick={(event): void => handleDelete({ event, deleteSignal, uid: item.uid, props: timeLineMarkerProps, setDeleteSignal, setTimeDiff, t })} />
                             <SvgComponent theme={theme} onClick = {(): void => { handleJump(item, timeLineMarkerProps.session); }} SvgElement={JumpingIcon}/>
                         </div>
                         </div>
@@ -319,7 +332,7 @@ interface SvgComponentProps {
     SvgElement: React.ComponentType;
 }
 const SvgComponent: React.FC<SvgComponentProps> = ({ theme, onClick, SvgElement }) => (
-    <svg onClick={ (event) => { onClick(event); } } width={16}
+    <svg onClick={ (event): void => { onClick(event); } } width={16}
         height={16} style={{ cursor: 'pointer' }} className={'JumpSvgIcon'}>
         <style>
             {`
@@ -343,8 +356,8 @@ const handleJump = (item: TimelineAxisFlag, session: Session): void => {
             return;
         };
         runInAction(() => {
-            const start = Math.max(0, item.timeStamp - domain.duration / 2);
-            const end = Math.min(session.endTimeAll ?? 0, item.timeStamp + domain.duration / 2);
+            const start = Math.max(0, item.timeStamp - (domain.duration / 2));
+            const end = Math.min(session.endTimeAll ?? 0, item.timeStamp + (domain.duration / 2));
             session.domainRange = { domainStart: start, domainEnd: end };
         });
     } else {
@@ -355,12 +368,14 @@ const handleJump = (item: TimelineAxisFlag, session: Session): void => {
         if (selectedDuration > domain.duration) {
             domainStart = item.timeStamp;
             domainEnd = item.anotherTimeStamp;
-        } else if (item.timeStamp < domain.domainRange.domainStart || item.anotherTimeStamp > domain.domainRange.domainEnd) {
-            const middlePointTimestamp = (item.anotherTimeStamp + item.timeStamp) / 2;
-            const start = Math.max(0, middlePointTimestamp - domain.duration / 2);
-            const end = Math.min(session.endTimeAll ?? 0, middlePointTimestamp + domain.duration / 2);
-            domainStart = end === session.endTimeAll ? end - domain.duration : start;
-            domainEnd = start === 0 ? start + domain.duration : end;
+        } else {
+            if (item.timeStamp < domain.domainRange.domainStart || item.anotherTimeStamp > domain.domainRange.domainEnd) {
+                const middlePointTimestamp = (item.anotherTimeStamp + (item.timeStamp / 2));
+                const start = Math.max(0, middlePointTimestamp - (domain.duration / 2));
+                const end = Math.min(session.endTimeAll ?? 0, middlePointTimestamp + (domain.duration / 2));
+                domainStart = end === session.endTimeAll ? end - domain.duration : start;
+                domainEnd = start === 0 ? start + domain.duration : end;
+            }
         }
         runInAction(() => {
             if (item.anotherTimeStamp === undefined) {
@@ -400,7 +415,7 @@ const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element =
                     } } style={{ color: theme.fontColor }}>
                     {getTitleDisplay(props, t)}
                 </TitleText></Tooltip>
-            <StyledButton style={{ width: '10%', backgroundColor: theme.tooltipBGColor }} icon={<CloseIcon style={{ fill: '#71757F' }}></CloseIcon>} onClick={() => { closeConfirm(props); }}></StyledButton>
+            <StyledButton style={{ width: '10%', backgroundColor: theme.tooltipBGColor }} icon={<CloseIcon style={{ fill: '#71757F' }}></CloseIcon>} onClick={(): void => { closeConfirm(props); }}></StyledButton>
         </MarkerListText>
         <MarkerListText style={{ color: theme.fontColor, opacity: '0.6', lineHeight: '10x' }}>{t('timelineMarker:guide')}</MarkerListText>
         <MarkerListTr style={{ display: 'flex', color: theme.fontColor, textAlign: 'left' }}>
@@ -408,7 +423,8 @@ const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element =
             <th style={{ width: '40%' }}>{t('timelineMarker:time')}</th>
             <th style={{ width: '15%' }}>{t('timelineMarker:operation')}</th>
         </MarkerListTr>
-        <MarkerBody theme={theme} timeLineMarkerProps={props} list={list} setTimeDiff={setTimeDiff} setSelectFlag={setSelectFlag} setFlagColor={setFlagColor} setDeleteSignal={setDeleteSignal} deleteSignal={deleteSignal}/>
+        <MarkerBody theme={theme} timeLineMarkerProps={props} list={list} setTimeDiff={setTimeDiff}
+            setSelectFlag={setSelectFlag} setFlagColor={setFlagColor} setDeleteSignal={setDeleteSignal} deleteSignal={deleteSignal}/>
         <MarkerListText>
             <div id={'bottomActionGroup'} style={{ color: theme.svgPlayBackgroundColor, display: 'flex' }} >
                 <div style={{ paddingTop: '5%', width: props.session.timelineMaker.selectedFlag ? '70%' : '60%' }}><DeleteIcon style={{ cursor: 'pointer', width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }} onClick={(): void => deleteAll(props)}></DeleteIcon><text style={{ cursor: 'pointer', paddingLeft: '10px' }} onClick={(): void => deleteAll(props)}>{t('timelineMarker:clear')}</text></div>
@@ -433,7 +449,7 @@ const DeleteALLConfirm = observer((props: TimeLineMakerProps): JSX.Element => {
     return (
         <MarkerListBody id="deleteALLConfirm" style={{ backgroundColor: theme.tooltipBGColor, color: theme.svgPlayBackgroundColor, width: '258px', height: '150px' }} >
             <ListTitleText >{t('timelineMarker:confirmClear')}</ListTitleText>
-            <ConfirmButton onClick={() => {
+            <ConfirmButton onClick={(): void => {
                 list.splice(0);
                 Modal.destroyAll();
                 runInAction(() => {
