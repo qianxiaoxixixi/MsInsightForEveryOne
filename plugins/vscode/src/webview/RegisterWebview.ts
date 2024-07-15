@@ -74,18 +74,20 @@ export class RegisterWebview extends Webview {
         });
     }
 
-    scanPort(serverCommand: string): string {
+    scanPort(serverCommand: string): undefined | string {
         const scanPort = spawnSync(serverCommand, ['--scan=' + this.port]);
         if (scanPort.error) {
-            return '';
-        } else {
-            const output = scanPort.output.toString();
-            if (output.indexOf('Available port: ') !== -1) {
-                const result = output.match(/\d+/);
-                return result?.pop() ?? '';
-            }
-            return '';
+            return undefined;
         }
+        const output = scanPort.output.toString();
+        if (output.indexOf('Available port: ') !== -1) {
+            const result = output.match(/d+/);
+            if (result) {
+                return result.pop();
+            }
+            return undefined;
+        }
+        return undefined;
     }
 
     startServerCheckAndRestart(): void {

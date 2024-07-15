@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
 import styled from '@emotion/styled';
 import classNames from 'classnames';
 import { keys } from 'lodash';
@@ -14,8 +17,8 @@ import { Header } from './Header';
 import { useAsyncState } from './hooks/useAsyncState';
 import { useOrderStatisticTree } from './hooks/useOrderStatisticTree';
 import { useStickyOffsets } from './hooks/useStickyOffsets';
-import { TableHandle } from './interface';
-import { ColumnsType, ColumnType, DefaultRecordType, ExpandableConfig, ExpandIconProps, GetComponentProps, GetRowKey, Key, RowClassName, TableLayout, TriggerEventHandler } from './types';
+import type { TableHandle } from './interface';
+import type { ColumnsType, ColumnType, DefaultRecordType, ExpandableConfig, ExpandIconProps, GetComponentProps, GetRowKey, Key, RowClassName, TableLayout, TriggerEventHandler } from './types';
 import { getCellFixedInfo } from './utils/fixUtil';
 import { getColumnsKey, isValidValue } from './utils/valueUtil';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
@@ -72,10 +75,10 @@ const useExpand = <RecordType extends Record<string, unknown>>(
         expandedRowKeys,
     } = expandable;
 
-    const [ expandedKeys, setExpandedKeys ] = React.useState(defaultExpandedRowKeys);
+    const [expandedKeys, setExpandedKeys] = React.useState(defaultExpandedRowKeys);
     const expandedKeySet = React.useMemo(
         () => new Set(expandedRowKeys ?? expandedKeys),
-        [ expandedRowKeys, expandedKeys ],
+        [expandedRowKeys, expandedKeys],
     );
     const onTriggerExpand: TriggerEventHandler<RecordType> = React.useCallback((record: RecordType) => {
         let newExpandedKeys: Key[];
@@ -100,14 +103,14 @@ const useExpand = <RecordType extends Record<string, unknown>>(
                 keysAdded.add(childKey);
                 children = child[childrenColumnName];
             }
-            newExpandedKeys = [ ...expandedKeySet, ...keysAdded ];
+            newExpandedKeys = [...expandedKeySet, ...keysAdded];
         }
         setExpandedKeys(newExpandedKeys);
         onExpandedRowsChange?.(newExpandedKeys);
-    }, [ getRowKey, expandedKeySet, data, onExpand, onExpandedRowsChange ]);
+    }, [getRowKey, expandedKeySet, data, onExpand, onExpandedRowsChange]);
 
-    return [ expandedKeySet, onTriggerExpand, setExpandedKeys ];
-}
+    return [expandedKeySet, onTriggerExpand, setExpandedKeys];
+};
 
 function renderExpandIcon<RecordType>({
     prefixCls,
@@ -125,7 +128,7 @@ function renderExpandIcon<RecordType>({
     const onClick: React.MouseEventHandler<HTMLElement> = useCallback(event => {
         onExpand?.(record, event);
         event.stopPropagation();
-    }, [ onExpand, record ]);
+    }, [onExpand, record]);
 
     return (<span
         className={classNames(iconClassName, {
@@ -184,9 +187,9 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
         indentSize = 15,
     } = expandable;
 
-    const [ expandedKeySet, onTriggerExpand, setExpandedKeys ] = useExpand(data, getRowKey, expandable, childrenColumnName);
+    const [expandedKeySet, onTriggerExpand, setExpandedKeys] = useExpand(data, getRowKey, expandable, childrenColumnName);
 
-    const [ componentWidth, setComponentWidth ] = React.useState(0);
+    const [componentWidth, setComponentWidth] = React.useState(0);
 
     const flattenColumns = React.useMemo(() => {
         let finalColumns = transformColumns?.(props.columns) ?? props.columns;
@@ -200,8 +203,8 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
     const wholeTableRef = React.useRef<HTMLDivElement>(null);
     const headerTableRef = React.useRef<HTMLDivElement>(null);
     const bodyTableRef = React.useRef<HTMLDivElement>(null);
-    const [ scrollTop, setScrollTop ] = React.useState(0);
-    const [ colsWidths, updateColsWidths ] = useAsyncState(new Map<React.Key, number>());
+    const [scrollTop, setScrollTop] = React.useState(0);
+    const [colsWidths, updateColsWidths] = useAsyncState(new Map<React.Key, number>());
 
     // Convert map to number width
     const colsKeys = getColumnsKey(flattenColumns);
@@ -260,10 +263,13 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
     }, [componentWidth]);
 
     // ===================== Effects ======================
-    const [ scrollbarSize, setScrollbarSize ] = React.useState(0);
+    const [scrollbarSize, setScrollbarSize] = React.useState(0);
 
     React.useEffect(() => {
-        bodyTableRef.current && setScrollbarSize(getTargetScrollBarSize(bodyTableRef.current).width);
+        if (bodyTableRef.current) {
+            const scrollbarWidth = getTargetScrollBarSize(bodyTableRef.current).width;
+            setScrollbarSize(scrollbarWidth);
+        }
     }, []);
 
     // ====================== Render ======================
@@ -279,7 +285,7 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
             return 'fixed';
         }
         return 'auto';
-    }, [ fixColumn, flattenColumns, tableLayout ]);
+    }, [fixColumn, flattenColumns, tableLayout]);
 
     // Empty
     const emptyNode: React.ReactNode = React.useMemo(() => {
@@ -293,7 +299,7 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
     const viewModel = useOrderStatisticTree(data, childrenColumnName, expandedKeySet, getRowKey);
     const totalHeight = useMemo(() => {
         return viewModel.getTotalHeight(rowHeight);
-    }, [ viewModel, rowHeight ]);
+    }, [viewModel, rowHeight]);
 
     const viewportHeight = scroll?.y as number;
 
@@ -306,15 +312,15 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
 
     const visibleData = useMemo(() => {
         return viewModel.getVisibleData(scrollTop, viewportHeight, rowHeight, VIRTUAL_TOLERANCE);
-    }, [ viewModel, scrollTop, viewportHeight, rowHeight ]);
+    }, [viewModel, scrollTop, viewportHeight, rowHeight]);
 
     // Get ref form parent component
     useImperativeHandle(ref, () => ({
         scrollTo: (node: unknown): void => {
             if (bodyTableRef.current !== null) {
-                const scrollTop = viewModel.findNodeIndex(node as RecordType) * rowHeight;
-                setScrollTop(scrollTop);
-                bodyTableRef.current.scrollTo({top: scrollTop});
+                const newScrollTop = viewModel.findNodeIndex(node as RecordType) * rowHeight;
+                setScrollTop(newScrollTop);
+                bodyTableRef.current.scrollTo({top: newScrollTop});
             }
         },
         appendExpandedKeys: (res): void => {
@@ -336,7 +342,7 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
             } else { // multiple root nodes, just select the first
                 firstContentRow?.click();
             }
-        }
+        },
     }), [onTriggerExpand]);
 
     const bodyTable = (
@@ -398,7 +404,8 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
             };
         } else {
             return item;
-        }})
+        }
+    });
 
     const groupTableNode = (
         <>
