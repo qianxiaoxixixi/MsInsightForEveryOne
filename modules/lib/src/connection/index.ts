@@ -120,13 +120,13 @@ type FetchParams = {
     [x: string]: unknown;
 };
 type FetchRequest = {
+    [x: string]: any;
     event: 'request';
     from: SendTargetKey;
     id: FetchSequenceID;
-    [x: string]: unknown;
 };
 export class ClientConnector extends BaseConnector {
-    private readonly _msgSequence: Map<FetchSequenceID, Function> = new Map();
+    private readonly _msgSequence: Map<FetchSequenceID, {resolve: (value: unknown) => void; reject: (value: unknown) => void}> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
     private readonly _module: string;
 
@@ -142,15 +142,16 @@ export class ClientConnector extends BaseConnector {
     }
 
     protected awaitFetch(res: MessageEvent<FetchRequest>): void {
-        const _resolve = this._msgSequence.get(res.data.id);
-        if (!_resolve) {
-            console.warn(this.printErrMsg(
-                'cannot find relative resolve for this fetch, this maybe cause omission of message, please check your connection',
-            ));
-            return;
+        const result = this._msgSequence.get(res.data.id);
+        if (result !== undefined) {
+            const { resolve, reject } = result;
+            if (res.data.body?.error !== null && res.data.body?.error !== undefined) {
+                reject(res.data.body.error);
+            } else {
+                resolve(res.data);
+            }
+            this._msgSequence.delete(res.data.id);
         }
-        _resolve(res.data);
-        this._msgSequence.delete(res.data.id);
     }
 
     send<T extends EventHanlder>(body: SendParams<T>, reject?: Function): void {
@@ -168,7 +169,7 @@ export class ClientConnector extends BaseConnector {
             if (voidResponse) {
                 return;
             }
-            this._msgSequence.set(this._curFetchSequenceID++, resolve);
+            this._msgSequence.set(this._curFetchSequenceID++, { resolve, reject });
         });
     };
 };
