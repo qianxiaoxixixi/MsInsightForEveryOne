@@ -157,7 +157,7 @@ export class Connection {
                     }
                     const { code, message } = res.error;
                     console.error('[connector]', 'errorCode:', code, 'msg:', message);
-                    reject(new Error(message));
+                    resolve({ error: res.error ?? {} });
                 }
             };
             if (voidResponse) {
