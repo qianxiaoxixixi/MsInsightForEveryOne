@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
 import { AutoComplete } from 'antd';
-import React from "react";
-import styled from "@emotion/styled";
+import React from 'react';
+import styled from '@emotion/styled';
 
 
 export const StyledAutoComplete = styled(AutoComplete)`
@@ -32,4 +36,4 @@ export const StyledAutoComplete = styled(AutoComplete)`
                 background-color: ${(props): string => props.theme.deviceProcessNotActiveFontColor} !important; /* 设置滚动条滑块的颜色为红色 */
             }
         }
-`
+`;

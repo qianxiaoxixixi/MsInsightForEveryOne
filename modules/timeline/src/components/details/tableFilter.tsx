@@ -1,7 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import React from 'react';
 import { ReactComponent as FunnelIcon } from '../../assets/images/insights/FunnelIcon.svg';
 import styled from '@emotion/styled';
-import { FilterConfirmProps } from '../base/rc-table/interface';
+import type { FilterConfirmProps } from '../base/rc-table/interface';
 import { ReactComponent as CancelIcon } from '../../assets/images/insights/CancelIcon.svg';
 import Input from 'antd/lib/input';
 
@@ -37,11 +41,11 @@ const FilterContainer = styled.div`
 }
 `;
 
-type FilterDropdownType = {
+interface FilterDropdownType {
     setSelectedKeys: (selectedKeys: React.Key[]) => void;
     selectedKeys: React.Key[];
     confirm: (param?: FilterConfirmProps | undefined) => void;
-    clearFilters: (() => void) | undefined;
+    clearFilters: (() => void);
 };
 
 // 过滤视图
@@ -64,8 +68,9 @@ const onFilterFunc = <T extends Record<string, unknown>>(dataIndex: keyof T | Ar
         } else if (dataIndex instanceof Array) {
             const filteredDataIndex = dataIndex.filter(item => record[item] !== undefined);
             return filteredDataIndex.some(index => filterIndex(String(record[index]), String(value)));
+        } else {
+            return false;
         }
-        return false;
     };
     return onFilter;
 };

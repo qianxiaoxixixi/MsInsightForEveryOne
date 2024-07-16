@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import { RowProps } from 'antd/lib/grid';
-import { Session } from '../entity/session';
+import type { RowProps } from 'antd/lib/grid';
+import type { Session } from '../entity/session';
 import { ChartRowLeft, ChartRowRight } from './base/ChartRow';
 import { useTranslation } from 'react-i18next';
 import { TimelineMarkerElement } from './TimelineMarker';

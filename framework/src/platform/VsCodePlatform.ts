@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
+
 import { BasePlatform, removeAndAddEventListener } from './BasePlatform';
 
 export class VsCodePlatform extends BasePlatform {
@@ -15,10 +19,6 @@ export class VsCodePlatform extends BasePlatform {
         });
     }
 
-    private getAbsolutePath(path: string): string {
-        return import.meta.url.replace('/index.html', path.replace('.',  ''));
-    }
-
     convertPath(paths: string[]): Promise<string[]> {
         return new Promise((resolve) => {
             this.sendMessage({ command: 'ascend.transUri', body: paths.map(this.getAbsolutePath) });
@@ -26,4 +26,8 @@ export class VsCodePlatform extends BasePlatform {
         });
     }
     sendMessage = (ceq: any): void => {};
+
+    private getAbsolutePath(path: string): string {
+        return import.meta.url.replace('/index.html', path.replace('.', ''));
+    }
 }

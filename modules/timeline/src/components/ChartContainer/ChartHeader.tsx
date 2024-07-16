@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import TimelineAxis from '../../components/charts/TimelineAxis';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { ChartRow } from '../base/ChartRow';
 import Recommendations from '../Recommendations';
 import { ZoomTimestamp } from '../ZoomTimestamp';

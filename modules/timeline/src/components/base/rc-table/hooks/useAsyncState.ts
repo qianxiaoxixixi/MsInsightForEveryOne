@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import React from 'react';
 
 export type Updater<State> = (prev: State) => State;
@@ -6,10 +10,10 @@ export const useAsyncState = <State>(defaultState: State): [State, (updater: Upd
     const [, forceRender] = React.useState({});
     const immutableStateRef = React.useRef(defaultState);
     const lastExecuteRef = React.useRef<Promise<void>>();
-    const updaterBatchRef = React.useRef<Updater<State>[]>([]);
+    const updaterBatchRef: React.MutableRefObject<Array<Updater<State>>> = React.useRef([]);
 
     React.useEffect(() => {
-        return () => { lastExecuteRef.current = undefined; }
+        return () => { lastExecuteRef.current = undefined; };
     }, []);
 
     const setAsyncState = (updater: Updater<State>): void => {
@@ -31,9 +35,11 @@ export const useAsyncState = <State>(defaultState: State): [State, (updater: Upd
             });
 
             lastExecuteRef.current = undefined;
-            (prevState !== immutableStateRef.current) && forceRender({});
+            if (prevState !== immutableStateRef.current) {
+                forceRender({});
+            };
         })();
-    }
+    };
 
     return [immutableStateRef.current, setAsyncState];
-}
+};

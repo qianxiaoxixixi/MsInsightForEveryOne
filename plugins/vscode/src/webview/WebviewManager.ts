@@ -1,6 +1,10 @@
-import { RegisterWebview } from "./RegisterWebview";
-import { Webview } from "./Webview";
-import * as vscode  from 'vscode';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+import { RegisterWebview } from './RegisterWebview';
+import type { Webview } from './Webview';
+import type * as vscode from 'vscode';
 
 
 export class WebviewManager {

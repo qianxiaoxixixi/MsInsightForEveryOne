@@ -1,14 +1,16 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-import { ErrorBoundaryBase, UncaughtError } from './ErrorBoundaryBase';
+import { ErrorBoundaryBase } from './ErrorBoundaryBase';
+import type { UncaughtError } from './ErrorBoundaryBase';
 import { logger } from '../../utils/Logger';
-import React, { ReactNode } from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import styled from '@emotion/styled';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 
-type FallBackProps = {
+interface FallBackProps {
     height?: number;
     width?: number;
     className?: string;

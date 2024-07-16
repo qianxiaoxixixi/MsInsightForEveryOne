@@ -1,14 +1,14 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 import type { TableProps } from 'antd/es/table';
-import { SorterResult } from 'antd/lib/table/interface';
+import type { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from '../i18n';
-import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
+import type { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
 import ResizeTable from 'lib/ResizeTable';
 
 interface IProps {

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import * as React from 'react';
 import styled from '@emotion/styled';
 import type { Theme, Interpolation } from '@emotion/react';
@@ -53,11 +57,12 @@ export const HoverTip: React.FC<HoverTipProps> = (props) => {
     return (
         <HoverContainer
             onMouseMove={(e): void => {
-                isDragRef.current &&
-                setPosition(({ left, top }) => ({
-                    left: Math.max(0, Math.min((rect?.width ?? DefaultBoundary) - props.width, left + e.movementX)),
+                if (isDragRef.current) {
+                    setPosition(({ left, top }) => ({
+                        left: Math.max(0, Math.min((rect?.width ?? DefaultBoundary) - props.width, left + e.movementX)),
                     top: Math.max(0, Math.min((rect?.height ?? DefaultBoundary) - props.height, top + e.movementY)),
-                }));
+                    }));
+                }
             }}
             onMouseLeave={(): void => {
                 isDragRef.current = false;
@@ -73,7 +78,9 @@ export const HoverTip: React.FC<HoverTipProps> = (props) => {
                 height={props.height}
                 onMouseEnter={(): void => {
                     setTimeout(() => {
-                        !isDragRef.current && setCircleWidth(props.width);
+                        if (!isDragRef.current) {
+                            setCircleWidth(props.width);
+                        };
                     }, 100);
                 }}
                 onMouseLeave={(): void => { setCircleWidth(props.height); }}

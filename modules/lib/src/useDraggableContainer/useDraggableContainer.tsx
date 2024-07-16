@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
+
 import { ThemeProvider } from '@emotion/react';
 import type { Theme } from '@emotion/react';
 import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons';

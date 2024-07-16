@@ -1,4 +1,7 @@
-import { FixedType, StickyOffsets } from '../types';
+/*
+* Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
+import type { FixedType, StickyOffsets } from '../types';
 
 export interface FixedInfo {
     fixLeft?: number | false;
@@ -11,32 +14,33 @@ export interface FixedInfo {
 export function getCellFixedInfo(
     start: number,
     end: number,
-    columns: readonly { fixed?: FixedType }[],
+    columns: ReadonlyArray<{ readonly fixed?: FixedType }>,
     stickyOffsets: StickyOffsets,
 ): FixedInfo {
     const startColumn = columns[start] || {};
     const endColumn = columns[end] || {};
-  
     let fixLeft: number | undefined;
     let fixRight: number | undefined;
-  
     if (startColumn.fixed === 'left') {
         fixLeft = stickyOffsets.left[start];
-    } else if (endColumn.fixed === 'right') {
-        fixRight = stickyOffsets.right[end];
+    } else {
+        if (endColumn.fixed === 'right') {
+            fixRight = stickyOffsets.right[end];
+        }
     }
-  
+
     let lastFixLeft = false;
     let firstFixRight = false;
     const nextColumn = columns[end + 1];
     const prevColumn = columns[start - 1];
-  
     if (fixLeft !== undefined) {
         lastFixLeft = !(nextColumn && nextColumn.fixed === 'left');
-    } else if (fixRight !== undefined) {
-        firstFixRight = !(prevColumn && prevColumn.fixed === 'right');
+    } else {
+        if (fixRight !== undefined) {
+            firstFixRight = !(prevColumn && prevColumn.fixed === 'right');
+        }
     }
-  
+
     return {
         isSticky: stickyOffsets.isSticky,
         fixLeft,

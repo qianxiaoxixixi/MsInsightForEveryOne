@@ -1,10 +1,15 @@
-import { detail, DetailDescriptor, linkData, LinkDataDesc } from '../../entity/insight';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
+import { detail, linkData } from '../../entity/insight';
+import type { DetailDescriptor, LinkDataDesc } from '../../entity/insight';
 import { isEmpty } from 'lodash';
 import styled from '@emotion/styled';
 import React from 'react';
 import { action, runInAction } from 'mobx';
-import { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
-import { Session } from '../../entity/session';
+import type { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
+import type { Session } from '../../entity/session';
 import { getSliceTimeDisplay, ThreadUnit } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
 import { colorPalette, getTimeOffset } from './utils';

@@ -1,5 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
 import styled from '@emotion/styled';
-import { ButtonProps } from 'antd/lib/button';
+import type { ButtonProps } from 'antd/lib/button';
 import { Button } from 'antd';
 import * as React from 'react';
 import { useTheme } from '@emotion/react';
@@ -37,11 +40,14 @@ export const CustomButton = React.forwardRef(({ icon, isDisabled, isSuspend, too
     ref?: ForwardedRef<HTMLButtonElement>): JSX.Element => {
     const theme = useTheme();
     let buttonFillColor = theme.buttonColor.enableClickColor;
-    if (isEmphasize && !isDisabled) {
-        buttonFillColor = theme.buttonColor.emphasizeColor;
-    } else if (isDisabled) {
+    if (isDisabled) {
         buttonFillColor = theme.buttonColor.disableClickColor;
+    } else {
+        if (isEmphasize) {
+            buttonFillColor = theme.buttonColor.emphasizeColor;
+        }
     }
+
     const Icon = icon;
     return <StyledTooltip title={tooltip}>
         <StyledButton ref={ref} disabled={isDisabled} {...props} icon={Icon && <Icon fill={buttonFillColor}/>}

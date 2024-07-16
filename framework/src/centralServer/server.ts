@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
 import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
 import connector from '@/connection';
@@ -6,7 +10,7 @@ export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
 const getConnectionMapKey = (dataSource: DataSource): string => {
     return `${dataSource.remote}:${dataSource.port}`;
-}
+};
 
 export const isConnected = (dataSoure: DataSource): boolean => {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSoure));
@@ -27,7 +31,7 @@ export const disconnectRemote = function (dataSource: DataSource): boolean {
 
 export const isExistedRemote = function(dataSource: DataSource): boolean {
     return CONNECTION_MAP.has(getConnectionMapKey(dataSource));
-}
+};
 
 export const connectRemote = async function (dataSource: DataSource): Promise<boolean> {
     const connection = new Connection(dataSource);
@@ -55,7 +59,7 @@ export const addDataPath = function(dataSource: DataSource, importMethod?: 'drag
             });
         }
     }
-}
+};
 
 export const deleteDataPath = function(dataSource: DataSource): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
@@ -65,7 +69,7 @@ export const deleteDataPath = function(dataSource: DataSource): void {
             body: { dataSource },
         });
     }
-}
+};
 
 export const request = function (
     dataSource: DataSource,

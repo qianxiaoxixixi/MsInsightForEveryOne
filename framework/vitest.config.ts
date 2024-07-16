@@ -1,6 +1,10 @@
-import { fileURLToPath } from 'node:url'
-import { mergeConfig, defineConfig, configDefaults } from 'vitest/config'
-import viteConfig from './vite.config'
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+import { fileURLToPath } from 'node:url';
+import { mergeConfig, defineConfig, configDefaults } from 'vitest/config';
+import viteConfig from './vite.config';
 
 export default mergeConfig(
   viteConfig,
@@ -8,7 +12,7 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       exclude: [...configDefaults.exclude, 'e2e/*'],
-      root: fileURLToPath(new URL('./', import.meta.url))
-    }
+      root: fileURLToPath(new URL('./', import.meta.url)),
+    },
   })
-)
+);

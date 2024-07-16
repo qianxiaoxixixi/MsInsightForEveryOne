@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { isValidSession, ValidSession } from '../entity/session';
 import { dataFunc } from './utils';
 
@@ -16,8 +19,8 @@ export type Caches = Record<any, Cache | null>;
  * @param session new session without caches
  * @returns new caches for session
  */
-// const nullObj = {};
 
+// const nullObj = {};
 export const createCaches = (session: ValidSession): Caches => {
     return {};
 };
@@ -38,7 +41,7 @@ export default class DicCachedEngine {
         }
 
         let jsonData: Partial<any> = {};
-        for (const key in params) {
+        for (const key of Object.keys(params)) {
             const requestKey = key as keyof any;
             const currCache = null; // sessionCaches[requestKey];
             if (dataFunc === undefined) {
@@ -54,10 +57,6 @@ export default class DicCachedEngine {
             } catch (e) {
                 // wedge ErrorRes
                 const err = e as (any | undefined);
-            }
-            // The absolute time of milliseconds needs to be converted.
-            if (msAbsoluteTimeInterfaces.includes(key as keyof any)) {
-                // convertTimeStamp(data as unknown as Record<string, Array<{ timestamp?: TimeStamp | TimeStamp[]; happenTime?: number }>>, session.startRecordTime);
             }
             jsonData = { ...jsonData, ...data };
         }

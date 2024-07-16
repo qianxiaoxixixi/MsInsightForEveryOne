@@ -1,6 +1,10 @@
-import { defineStore } from "pinia";
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
+import { defineStore } from 'pinia';
 import { reactive } from 'vue';
-import { isConnected } from "@/centralServer/server";
+import { isConnected } from '@/centralServer/server';
 import { LOCAL_HOST, PORT } from "@/centralServer/websocket/defs";
 import connector from '@/connection/index';
 
@@ -32,16 +36,16 @@ export class Session {
         return this._sharedState;
     }
 
+    get hasLocalServer(): boolean {
+        return isConnected({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
+    }
+
     set sharedState(newState: Record<string, unknown>) {
         this._sharedState = newState;
         connector.send({
             event: 'updateSharedState',
             body: this._sharedState,
         });
-    }
-
-    get hasLocalServer(): boolean {
-        return isConnected({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     }
 
     reset(remove = false): void {
@@ -71,6 +75,6 @@ export const useSession = defineStore('session', () => {
     const session = reactive(new Session());
     const setSession = function<T extends keyof Session>(curState: Record<T, Session[T]> | ((prevState: typeof session) => Record<T, Session[T]>)): void {
         Object.assign(session, typeof curState !== 'function' ? curState : curState(session));
-    }
+    };
     return { session, setSession };
 });

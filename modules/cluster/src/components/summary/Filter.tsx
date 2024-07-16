@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
 import { Label } from '../Common';
 import _ from 'lodash';
-import { communicator } from '../communicatorContainer/ContainerUtils';
+import type { communicator } from '../communicatorContainer/ContainerUtils';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 
 export interface ConditionDataType {
     step: string ;
@@ -19,14 +19,14 @@ export interface ConditionDataType {
     group?: string;
 }
 
-interface optionDataType{
+interface optionDataType {
     key?: string;
     label: React.ReactNode;
     value: string | number ;
     data?: string[];
 }
 
-interface optionMapDataType{
+interface optionMapDataType {
     [props: string]: optionDataType[];
 }
 const orderOptions = [
