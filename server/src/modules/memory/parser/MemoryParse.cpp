@@ -346,10 +346,17 @@ std::vector<std::string> MemoryParse::GetMemoryRecordFileLists(const std::vector
         std::vector<std::string> files = {};
         if (FileUtil::IsFolder(path)) {
             files = FileUtil::FindFilesWithFilter(path, std::regex(memoryRecordReg)); // 这个文件pytorch和MindSpore都有
-        } else { // 当选中其中operator或record单个文件时，搜索所在目录下的文件
-            files = FileUtil::FindFilesWithFilter(FileUtil::GetParentPath(path), std::regex(memoryRecordReg));
+        } else {
+            std::string fileName = FileUtil::GetFileName(path);
+            // 如果导入时选择Memory文件，此时在此文件父目录下进行匹配，以实现匹配memory_record文件或operator_memory文件
+            if (RegexUtil::RegexMatch(fileName, memoryRecordReg) ||
+                    RegexUtil::RegexMatch(fileName, memoryOperatorReg)) {
+                files = FileUtil::FindFilesWithFilter(FileUtil::GetParentPath(path), std::regex(memoryRecordReg));
+            }
         }
-        fileList.insert(fileList.end(), files.begin(), files.end());
+        if (!files.empty()) {
+            fileList.insert(fileList.end(), files.begin(), files.end());
+        }
     }
     return fileList;
 }
