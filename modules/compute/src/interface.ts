@@ -11,11 +11,13 @@ import {
 } from './connection/handler';
 
 const IMPORT = 'remote/import';
+const REMOVE = 'remote/remove';
+const RESET = 'remote/reset';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
     [IMPORT]: importRemoteHandler,
     updateSession: updateSessionHandler,
-    'remote/remove': resetHandler,
-    'remote/reset': resetHandler,
+    [REMOVE]: resetHandler,
+    [RESET]: resetHandler,
     switchLanguage: switchLanguageHandler,
 };

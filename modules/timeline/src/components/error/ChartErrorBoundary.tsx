@@ -3,7 +3,7 @@
  */
 
 import { ErrorBoundaryBase, UncaughtError } from './ErrorBoundaryBase';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import React, { ReactNode } from 'react';
 import styled from '@emotion/styled';
 import { Session } from '../../entity/session';
@@ -17,7 +17,7 @@ type FallBackProps = {
 export class ChartErrorBoundary extends ErrorBoundaryBase<FallBackProps> {
     handleError = (error: UncaughtError): void => {
         // 根据不同子组件，按需设置session状态为error、右下角弹出提示、自定义状态/重置数据尝试恢复现场等等
-        Logger('insightError', `error in chart：
+        logger('insightError', `error in chart：
         ${error.stack}`, 'warn');
     };
 

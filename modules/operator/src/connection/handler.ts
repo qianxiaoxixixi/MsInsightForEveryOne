@@ -3,7 +3,7 @@
  */
 import { store } from '../store';
 import { runInAction } from 'mobx';
-import { NotificationHandler } from './defs';
+import type { NotificationHandler } from './defs';
 import i18n from '../i18n';
 
 export const setTheme: NotificationHandler = (data): void => {

@@ -1,5 +1,7 @@
-import { ThemeItem } from '../theme/theme';
-import { IMessageSender, removeAndAddEventListener } from '../connection/messageSender';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type { ThemeItem } from '../theme/theme';
 
 export type NotifyLevel = 'info' | 'warn' | 'error';
 

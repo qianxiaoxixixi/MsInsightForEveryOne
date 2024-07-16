@@ -252,19 +252,24 @@ static std::vector<std::string> StringSplit(const std::string& str)
 
 static std::string ToCamelCase(const std::string& str)
 {
-    std::string result(str);
-    bool isNeedChange = false;
-    for (auto it = result.begin(); it != result.end(); it ++) {
-        while (it != result.end() && *it == '_') {
-            it = result.erase(it);
-            isNeedChange = true;
+    std::string res;
+    if (str.empty()) {
+        return res;
+    }
+    // 将字符串使用“_”进行分割
+    std::vector<std::string> strList = StringUtil::Split(str, "_");
+    if (strList.empty()) {
+        return res;
+    }
+    res = strList[0];
+    // 对第二个子串开始，如果子串不为空，则将子串的首字母变成大写
+    for (int i = 1; i < strList.size(); ++i) {
+        if (!strList[i].empty()) {
+            strList[i][0] = std::toupper(strList[i][0]);
+            res += strList[i];
         }
-        if (isNeedChange && it != result.end()) {
-            *it = std::toupper(*it); // 转大写
-            isNeedChange = false;
-        }
-    };
-    return result;
+    }
+    return res;
 }
 
 static std::string GetHashStrName(const std::string &string)

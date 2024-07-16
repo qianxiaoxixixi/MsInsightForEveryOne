@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 const pinState = Symbol('pinnedState');
 const sonPinned = Symbol('sonPinned');
 
@@ -30,8 +33,9 @@ const getPinnedFlag = <T extends object>(unit: PinUnit<T>): boolean => {
         return unit[pinState];
     } else if (unit[sonPinned]) {
         return unit[sonPinned];
+    } else {
+        return false;
     }
-    return false;
 };
 
 function switchSonPinned<T extends object>(unit: PinUnit<T>): void {

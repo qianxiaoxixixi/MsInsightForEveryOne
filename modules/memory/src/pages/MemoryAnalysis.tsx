@@ -8,7 +8,7 @@ import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
 import { Button, Col, Input, InputNumber, message, Row, Select, Spin } from 'antd';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import type {
     Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,
     StaticOperatorListDetail, OperatorMemoryCondition, StaticMemoryCondition,

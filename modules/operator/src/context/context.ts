@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { createContext, useContext } from 'react';
-import { RootStore } from '../store';
+import type { RootStore } from '../store';
 export const RootStoreContext = createContext<RootStore | undefined>(undefined);
 
 export const useRootStore = (): RootStore => {

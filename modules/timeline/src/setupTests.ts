@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { Session } from './entity/session';
 import { cleanup as reactCleanup } from '@testing-library/react';
 import { cleanup as reactHooksCleanup } from '@testing-library/react-hooks';
+import { CustomConsole as console } from 'lib/CommonUtils';
 
 declare global {
     const session: Session;

@@ -4,7 +4,7 @@
 
 import React, { ErrorInfo, ReactNode } from 'react';
 import { Session } from '../../entity/session';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 
 interface ErrorProps {
     children: JSX.Element;
@@ -22,7 +22,7 @@ export abstract class ErrorBoundaryBase<P = {}> extends React.Component<P & Erro
     componentDidCatch(error: Error, info: ErrorInfo): void {
         // 1、打印日志到底座log
         // 2、看DevEco有没有error report通道可以接入
-        Logger('insightError', `componentStack:
+        logger('insightError', `componentStack:
         ${info.componentStack}`);
         this.handleError(error);
     }

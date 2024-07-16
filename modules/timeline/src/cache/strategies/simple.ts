@@ -1,6 +1,6 @@
 import { ElementType, KeysMatching } from '../../entity/common';
 import { ValidSession } from '../../entity/session';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import { getRange, dataFunc } from '../utils';
 import { Cache, CacheFactory } from '../cache';
 import { binarySearchFirstBig, binarySearchLastSmall } from './utils';
@@ -43,7 +43,9 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
             } catch (e) {
                 // wedge e: ErrorRes
                 const err = e as (any | undefined);
-                err && Logger(`simpleCache/${this.key}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
+                if (err) {
+                    logger(`simpleCache/${this.key}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
+                }
             }
         }
         if (this.data === undefined) {

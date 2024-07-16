@@ -9,7 +9,7 @@ import {addDataPath, connectRemote, disconnectRemote, isExistedRemote, request} 
 import connector from '@/connection';
 import { useSession } from './session';
 import {ElMessage} from 'element-plus';
-import { Console as console } from '@/utils/console';
+import { console } from '@/utils/console';
 import { t } from '@/i18n';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
@@ -226,7 +226,7 @@ export const useDataSources = defineStore('dataSources', () => {
             };
             dataSources.value.push(source);
         });
-    }
+    };
 
     return { menuTree, remove, confirm, confirmDrop, removeSingle, lastDataSource, updateProjectName, initProjectName, checkConflict };
 });

@@ -21,13 +21,13 @@ export interface ConditionDataType {
     top?: number;
 }
 
-interface optionDataType{
+interface optionDataType {
     key?: string;
     label: React.ReactNode;
     value: string | number ;
 }
 
-interface optionMapDataType{
+interface optionMapDataType {
     [props: string]: optionDataType[];
 }
 

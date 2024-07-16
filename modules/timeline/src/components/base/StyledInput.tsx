@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { Input } from 'antd';
-import { InputProps, InputRef } from 'antd/lib/input';
+import type { InputProps, InputRef } from 'antd/lib/input';
 
 const Support = React.forwardRef(
     (props: InputProps & { minwidth: number; isshow: number; width?: number }, ref: React.ForwardedRef<InputRef>) => {

@@ -1,5 +1,8 @@
-import { ValidSession } from '../../entity/session';
-import { Cache, CacheFactory } from '../cache';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type { ValidSession } from '../../entity/session';
+import type { Cache, CacheFactory } from '../cache';
 
 export class SwitchCacheInPhase implements Cache {
     phase: ValidSession['phase'];

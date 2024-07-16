@@ -3,7 +3,7 @@
 */
 // Cluster Module
 import { createContext, useContext } from 'react';
-import { RootStore } from '../store';
+import type { RootStore } from '../store';
 export const RootStoreContext = createContext<RootStore | undefined>(undefined);
 
 export const useRootStore = (): RootStore => {

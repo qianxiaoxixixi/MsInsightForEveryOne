@@ -1,6 +1,6 @@
 import { cloneDeep, throttle } from 'lodash';
 import { Cache } from '../cache';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import { ValidSession } from '../../entity/session';
 import { getRange, dataFunc } from '../utils';
 
@@ -26,7 +26,9 @@ export class ThrottleCache<T extends any> implements Cache {
             } catch (e) {
                 // e: ErrorRes;
                 const err = e as (any | undefined);
-                err && Logger(`throttleCache/${this.key}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
+                if (err) {
+                    logger(`throttleCache/${this.key}`, `got error when fetching data: ${err.errorMessage}`, 'warn');
+                }
             }
         }, threshold));
     };

@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 const autoKey = Symbol('autokey');
 
 export type AutoKey<T extends object> = T & { [autoKey]?: string };

@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 // @ts-check
 
 'use strict';
@@ -51,7 +54,7 @@ const extensionConfig = {
     new CopyWebpackPlugin({
       patterns: [
         { from: '../../server/output/build', to: 'profiler' },
-        { from: '../../framework/dist', to: 'profiler' }
+        { from: '../../framework/dist', to: 'profiler' },
       ],
     }),
   ],

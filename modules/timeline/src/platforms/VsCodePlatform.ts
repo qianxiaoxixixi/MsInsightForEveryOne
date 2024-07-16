@@ -1,4 +1,7 @@
-import { IMessageSender, removeAndAddEventListener } from '../connection/messageSender';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import { type IMessageSender, removeAndAddEventListener } from '../connection/messageSender';
 
 export class VsCodePlatform implements IMessageSender {
     selectFolder(): Promise<string> {

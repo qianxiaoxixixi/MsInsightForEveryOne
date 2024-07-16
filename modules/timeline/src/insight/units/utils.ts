@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 import type { Session } from '../../entity/session';
 import type { CardMetaData } from '../../entity/data';
