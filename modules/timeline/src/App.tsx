@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { ThemeProvider } from '@emotion/react';
 import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import styled from '@emotion/styled';
@@ -8,7 +12,8 @@ import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBou
 import { useRootStore } from './context/context';
 import { SessionPage } from './pages/SessionPage';
 import { platform } from './platforms';
-import { themeInstance, ThemeItem } from './theme/theme';
+import { themeInstance } from './theme/theme';
+import type { ThemeItem } from './theme/theme';
 import eventBus, { EventType } from './utils/eventBus';
 import { dragFileImportInit } from './components/dragFile/DragFile';
 import type { CheckResultType } from './components/dragFile/DragFile';

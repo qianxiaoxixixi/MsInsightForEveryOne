@@ -1,9 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-import React, { ErrorInfo, ReactNode } from 'react';
-import { Session } from '../../entity/session';
+import React from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+import type { Session } from '../../entity/session';
 import { logger } from '../../utils/Logger';
 
 interface ErrorProps {
@@ -16,8 +17,12 @@ interface ErrorState {
 
 export type UncaughtError = Error;
 
-export abstract class ErrorBoundaryBase<P = {}> extends React.Component<P & ErrorProps, ErrorState> {
+export abstract class ErrorBoundaryBase<P = Record<string, unknown>> extends React.Component<P & ErrorProps, ErrorState> {
     state = { hasError: false };
+    static getDerivedStateFromError(): Record<string, unknown> {
+        // 更新状态，使下一次渲染显示回退 UI
+        return { hasError: true };
+    }
 
     componentDidCatch(error: Error, info: ErrorInfo): void {
         // 1、打印日志到底座log
@@ -26,15 +31,6 @@ export abstract class ErrorBoundaryBase<P = {}> extends React.Component<P & Erro
         ${info.componentStack}`);
         this.handleError(error);
     }
-
-    abstract handleError(error: UncaughtError): void;
-
-    static getDerivedStateFromError(): {} {
-        // 更新状态，使下一次渲染显示回退 UI
-        return { hasError: true };
-    }
-
-    abstract fallBackUI(session: Session): JSX.Element;
 
     reset(): void {
         this.setState({ hasError: false });
@@ -47,4 +43,8 @@ export abstract class ErrorBoundaryBase<P = {}> extends React.Component<P & Erro
 
         return this.props.children;
     }
+
+    abstract handleError(error: UncaughtError): void;
+
+    abstract fallBackUI(session: Session): JSX.Element;
 }

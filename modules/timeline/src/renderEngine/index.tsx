@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { throttle } from 'lodash';
 
 type RenderID = number;
@@ -14,6 +18,25 @@ export class RenderEngine {
 
     constructor() {
         this.run();
+    }
+
+    start(): void {
+        this._status = 'running';
+    }
+
+    stop(): void {
+        this._status = 'waiting';
+    }
+
+    addTask(action: Function, type: 'once' | 'always' = 'always'): RenderID {
+        const renderID = this._curTaskID;
+        this._renderTasks.set(renderID, { action, status: 'pending', type });
+        this._curTaskID++;
+        return renderID;
+    }
+
+    deleteTask(renderID: RenderID): void {
+        this._renderTasks.delete(renderID);
     }
 
     private readonly run = throttle((): void => {
@@ -36,25 +59,6 @@ export class RenderEngine {
                 task.type === 'once' && (task.status = 'fullfilled');
             };
         });
-    }
-
-    start(): void {
-        this._status = 'running';
-    }
-
-    stop(): void {
-        this._status = 'waiting';
-    }
-
-    addTask(action: Function, type: 'once' | 'always' = 'always'): RenderID {
-        const renderID = this._curTaskID;
-        this._renderTasks.set(renderID, { action, status: 'pending', type });
-        this._curTaskID++;
-        return renderID;
-    }
-
-    deleteTask(renderID: RenderID): void {
-        this._renderTasks.delete(renderID);
     }
 };
 

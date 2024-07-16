@@ -1,26 +1,31 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+
 import { clamp } from 'lodash';
-import { TimeStamp } from '../entity/common';
+import type { TimeStamp } from '../entity/common';
 
 export type TimeUnit = 'ns' | 'μs' | 'ms' | 's' | 'min' | 'hour' | '';
-export type Time = { value: TimeStamp; unit: TimeUnit; length: number };
+export interface Time { value: TimeStamp; unit: TimeUnit; length: number };
 const getSplitTime = (timestamp: TimeStamp, startTimeUnit: TimeUnit, isNegative: boolean): { steps: Time[]; padder: Time[] } => {
     const timeUnits: TimeUnit[] = ['ns', 'μs', 'ms', 's', 'min', 'hour'];
     let curUnitIdx = timeUnits.indexOf(startTimeUnit);
     const SPLIT_TIME = timeUnits.indexOf('s');
     let curTimeSys = curUnitIdx < SPLIT_TIME ? 1e3 : 60;
     const steps: Time[] = [];
+    let tempTimestamp = timestamp;
     do {
-        const remainders = timestamp % curTimeSys;
+        const remainders = tempTimestamp % curTimeSys;
         const unit = timeUnits[curUnitIdx];
         if (curUnitIdx === timeUnits.length - 1) {
-            steps.unshift({ value: isNegative ? -timestamp : timestamp, unit, length: timestamp.toString().length });
+            steps.unshift({ value: isNegative ? -tempTimestamp : tempTimestamp, unit, length: tempTimestamp.toString().length });
             break;
         }
         steps.unshift({ value: isNegative ? -remainders : remainders, unit, length: remainders.toString().length });
-        timestamp = (timestamp - remainders) / curTimeSys;
+        tempTimestamp = (tempTimestamp - remainders) / curTimeSys;
         curUnitIdx++;
         curTimeSys = curUnitIdx < SPLIT_TIME ? 1e3 : 60;
-    } while (timestamp !== 0);
+    } while (tempTimestamp !== 0);
 
     const padder: Time[] = [];
     while (curUnitIdx < timeUnits.length - 1) {
@@ -87,13 +92,13 @@ export const adaptTime = (time: TimeStamp, {
     if (!isFinite(time) || isNaN(time)) { return { splitTime: [{ value: NaN, unit: '', length: precision.length + 1 }] }; };
     let tail;
     const isNegative = time < 0;
-    time = Math.abs(time);
-    if (time !== Math.trunc(time)) {
-        tail = Math.floor((time - Math.trunc(time)) * 10) / 10;
+    let tempTime = Math.abs(time);
+    if (tempTime !== Math.trunc(tempTime)) {
+        tail = Math.floor((tempTime - Math.trunc(tempTime)) * 10) / 10;
         isNegative && (tail *= -1);
-        time = Math.trunc(time);
+        tempTime = Math.trunc(tempTime);
     }
-    const { steps, padder: emptyPadder } = getSplitTime(time, precision, isNegative);
+    const { steps, padder: emptyPadder } = getSplitTime(tempTime, precision, isNegative);
 
     let splitTime: Time[] = [];
     let timesIdx = 0;
@@ -110,7 +115,8 @@ export const getLastValue = (isLastItem: boolean, value: number, tail?: number):
     if (isLastItem) {
         if (tail === 0) {
             return value.toFixed(1);
-        } else if (tail !== undefined) {
+        }
+        if (tail !== undefined) {
             return value + tail;
         }
     }

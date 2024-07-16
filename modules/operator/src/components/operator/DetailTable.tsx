@@ -7,11 +7,11 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { Container, GetPageConfigWhithPageData } from '../Common';
+import { Container, getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';
 import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../RequestUtils';
 import { runInAction } from 'mobx';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import type { ColumnsType } from 'antd/es/table';
 import i18n from '../../i18n';
 
@@ -356,7 +356,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [filters, setFilters] = useState(defaultFilters);
-    const [data, setData] = useState<any[]>([]);
+    const [tableData, setTableData] = useState<any[]>([]);
     const rowKey = 'rowKey';
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
@@ -428,9 +428,9 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         }
         const { data, total, level } = res;
         data.forEach((item: any, index: number) => {
-            item.rowKey = condition.group + String(page.pageSize * page.current + index);
+            item.rowKey = condition.group + String((page.pageSize * page.current) + index);
         });
-        setData(data);
+        setTableData(data);
         setPage({ ...page, total });
         let group = opType !== undefined ? OPERATOR : condition.group;
         let columnLevel = level;
@@ -471,7 +471,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
 
     useEffect(() => {
         if (condition.rankId === '') {
-            setData([]);
+            setTableData([]);
             runInAction(() => {
                 session.total = 0;
             });
@@ -497,8 +497,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         minThWidth={50}
         loading={loading}
         columns={cols}
-        dataSource={data}
-        pagination={GetPageConfigWhithPageData(page, setPage)}
+        dataSource={tableData}
+        pagination={getPageConfigWithPageData(page, setPage)}
         onChange={(pagination: any, newFilters: any, newSorter: any, extra: any): void => {
             if (extra.action === 'sort') {
                 setSorter(newSorter.order === undefined ? { field: '', order: '' } : newSorter);

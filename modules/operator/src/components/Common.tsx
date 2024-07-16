@@ -1,16 +1,16 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import React from 'react';
 import i18n from '../i18n';
 import { Col, Row } from 'antd';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
-    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
+    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
 };
 
 export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;
-    style?: any;type?: String;titleClassName?: string;bodyStyle?: any;headerStyle?: any;}): JSX.Element => {
+    style?: any;type?: string; titleClassName?: string; bodyStyle?: any; headerStyle?: any;}): JSX.Element => {
     if (props.type === 'headerfixed') {
         return <div className={'header-fixed-content-scroll'} style={{ ...(props.style ?? {}) }}>
             <div className={'container-header'}>{props.title}</div>
@@ -25,8 +25,8 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
 };
 export const HeaderFixedContainer = (
     { style, header, body, headerStyle, bodyStyle, headerProps, bodyProps, ...restProps }:
-    {header?: JSX.Element | string; body?: JSX.Element; style?: any;headerStyle?: any;bodyStyle?: any;leftProps?: any;
-        rightProps?: any;[props: string]: any;}): JSX.Element => {
+    {[props: string]: any; header?: JSX.Element | string; body?: JSX.Element; style?: any; headerStyle?: any;
+        bodyStyle?: any; leftProps?: any; rightProps?: any;}): JSX.Element => {
     return <div style={{
         height: ' 100%',
         display: 'flex',
@@ -99,8 +99,8 @@ export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object
         style={{ width: `${size}px`, height: `${size}px`, ...style }}></div>);
 };
 
-export const GetPageConfigWhithPageData = (page: { current: number; pageSize: number; total: number },
-    setPage: Function): object => {
+export const getPageConfigWithPageData = (page: { current: number; pageSize: number; total: number },
+    setPage: (data: any) => void): object => {
     return {
         ...page,
         showSizeChanger: page.total > 10,

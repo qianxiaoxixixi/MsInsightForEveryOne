@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import classNames from 'classnames';
-import React, { ReactNode } from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import { PerfContext } from './contexts';
-import { AlignType, CellEllipsisType, CellType, ColumnType, DataIndex, DefaultRecordType, RenderedCell } from './types';
+import type { AlignType, CellEllipsisType, CellType, ColumnType, DataIndex, DefaultRecordType, RenderedCell } from './types';
 import { getPathValue, isValidValue } from './utils/valueUtil';
 
 function isRenderedCell<RecordType>(
@@ -46,7 +51,8 @@ const extractTitle = ({
     if (ellipsisConfig && (ellipsisConfig.showTitle || rowType === 'header')) {
         if (typeof children === 'string' || typeof children === 'number') {
             return children.toString();
-        } else if (React.isValidElement(children) && typeof children.props.children === 'string') {
+        }
+        if (React.isValidElement(children) && typeof children.props.children === 'string') {
             return children.props.children;
         }
     }
@@ -91,7 +97,7 @@ function Cell<RecordType extends DefaultRecordType>({
         let cellProps: CellType<RecordType> | undefined;
 
         if (render) {
-            const renderData = render(value, record!, index!);
+            const renderData = render(value, record as RecordType, index as number);
             if (renderData && isRenderedCell(renderData)) {
                 returnChildNode = renderData.children;
                 cellProps = renderData.props;

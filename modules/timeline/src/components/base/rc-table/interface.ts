@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { TooltipProps } from 'antd';
-import * as React from 'react';
-import {
+import type * as React from 'react';
+import type {
     ColumnType as RcColumnType, ExpandableConfig, GetRowKey, Key, TriggerEventHandler
 } from './types';
 
@@ -115,7 +119,7 @@ export interface SorterResult<RecordType> {
 
 export type GetPopupContainer = (triggerNode: HTMLElement) => HTMLElement;
 
-export type TableHandle<RecordType = unknown> = {
+export interface TableHandle<RecordType = unknown> {
     scrollTo: (node: RecordType) => void;
     appendExpandedKeys: (res: Key[]) => void;
     selectFirstRoot: () => void;

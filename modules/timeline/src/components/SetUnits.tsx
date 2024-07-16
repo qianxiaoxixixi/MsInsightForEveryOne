@@ -1,14 +1,18 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Checkbox, Tooltip } from 'antd';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { observer } from 'mobx-react';
 import React, { Fragment, useState } from 'react';
 import { ReactComponent as AntdFunnelIcon } from '../assets/images/insights/FunnelIcon.svg';
-import { InsightUnit } from '../entity/insight';
-import { Session } from '../entity/session';
+import type { InsightUnit } from '../entity/insight';
+import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
-import { SvgType } from './base/rc-table/types';
+import type { SvgType } from './base/rc-table/types';
 
 const funnelIcon = AntdFunnelIcon as SvgType;
 

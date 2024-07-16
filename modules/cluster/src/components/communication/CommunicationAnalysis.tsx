@@ -1,16 +1,18 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
-import { Session } from '../../entity/session';
-import Filter, { ConditionDataType } from './Filter';
-import CommunicationTimeTable, { DataType, DataType as tableDataType } from './CommunicationTimeTable';
-import CommunicationTimeChart, { dataType as chartDataType }
-    from './CommunicationTimeChart';
+import type { Session } from '../../entity/session';
+import Filter from './Filter';
+import type { ConditionDataType } from './Filter';
+import CommunicationTimeTable from './CommunicationTimeTable';
+import type { DataType, DataType as tableDataType } from './CommunicationTimeTable';
+import CommunicationTimeChart from './CommunicationTimeChart';
+import type { dataType as chartDataType } from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
 import { notNullObj, Space, StyledTooltip } from '../Common';
@@ -43,7 +45,7 @@ interface CommunicationAdvice {
     time: number;
 }
 
-interface showDataType{
+interface showDataType {
     chartData: chartDataType;
     analysisChartData: AnalysisChartData;
     tableData: [];
@@ -82,8 +84,8 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
     });
     const [conditions, setConditions] = useState<ConditionDataType>(
         { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationMatrix', stage: '' });
-    const showOperator = (rankId: string): void => {
-        setRankId(rankId);
+    const showOperator = (newRankId: string): void => {
+        setRankId(newRankId);
     };
     const returnHome = (): void => { setRankId(''); };
     const handleFilterChange = async(newConditions: ConditionDataType): Promise<void> => {
@@ -171,8 +173,8 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     );
 };
 
-const CommunicationAnalysisCom = (props: {isShow:
-(name: string) => boolean;session: Session;[propName: string]: any;}): JSX.Element => {
+const CommunicationAnalysisCom = (props: {[propName: string]: any;
+    isShow: (name: string) => boolean;session: Session;}): JSX.Element => {
     const {
         session, handleFilterChange, showData, active, showOperator,
         setShowData, conditions, isShow, rankId, returnHome,

@@ -167,7 +167,7 @@ const StyledTable = styled(Table)`
     }
 `;
 
-export const AutoAdjustedTable = React.forwardRef(function Support(props: AutoAdjustedTableProps, ref?: React.Ref<TableHandle>): JSX.Element {
+export const AutoAdjustedTable = React.forwardRef((props: AutoAdjustedTableProps, ref?: React.Ref<TableHandle>): JSX.Element => {
     const { height, isLoading, data, rowKey, rowHeight = TABLE_ROW_HEIGHT } = props;
     const getKey = useMemo(() => rowKey ?? getAutoKey, [rowKey]); // memo
     // when data is empty don't decrease TABLE_HEAD_HEIGHT, or table height would be short
@@ -175,6 +175,7 @@ export const AutoAdjustedTable = React.forwardRef(function Support(props: AutoAd
     const scrollerHeight = calcEffectiveNum(tableBodyHeight);
     const marginTop = useEmptyViewMargin(height);
     const { t } = useTranslation();
+    AutoAdjustedTable.displayName = 'AutoAdjustedTable';
     return (<StyledTable
         tableHeight={ scrollerHeight }
         {...props}

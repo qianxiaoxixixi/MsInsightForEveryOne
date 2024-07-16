@@ -1,9 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { BottomPanel } from '../components/BottomPanel';
 import { ChartContainer } from '../components/ChartContainer';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { stateTexts } from '../utils/constant';
 import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { themeInstance } from '../theme/theme';

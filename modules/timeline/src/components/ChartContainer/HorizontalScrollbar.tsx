@@ -1,9 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import _, { clamp } from 'lodash';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { GOLDEN_RATE as MOVE_RATE } from '../../entity/domain';
 import { THUMB_WIDTH_PX } from '../base';
 import { traceStart } from '../../utils/traceLogger';
@@ -42,26 +46,48 @@ const Scroller = styled.div<ScrollerProps>`
 `;
 
 interface ScrollBarProps {
-    containerDom: HTMLElement | undefined;
+    containerDom?: HTMLElement;
     leftLaneInfoWidth: number;
     session: Session;
     scrollerRef: React.RefObject<HTMLDivElement>;
 };
 
-const useWatchDomainChange = (scrollerRef: React.RefObject<HTMLDivElement>, isManulHandleRef: React.MutableRefObject<boolean>,
-    session: Session, domainStart: number, domainEnd: number, totalTime: number): void => {
+interface WatchDomainChangeProps {
+    scrollerRef: React.RefObject<HTMLDivElement>;
+    isManualHandleRef: React.MutableRefObject<boolean>;
+    session: Session;
+    domainStart: number;
+    domainEnd: number;
+    totalTime: number;
+}
+const useWatchDomainChange = (props: WatchDomainChangeProps): void => {
+    const {
+        scrollerRef, isManualHandleRef,
+        session, domainStart, domainEnd, totalTime,
+    } = props;
     const bias = Math.max(0, (session.endTimeAll ?? 0) - session.maxDuration);
     React.useEffect(() => {
         // upadte scroller position when user is not handling and session is recording
-        if (scrollerRef.current && !isManulHandleRef.current && totalTime > 0) {
+        if (scrollerRef.current && !isManualHandleRef.current && totalTime > 0) {
             scrollerRef.current.scrollLeft = ((domainStart - bias) / totalTime) * scrollerRef.current.scrollWidth;
         }
     }, [session.endTimeAll, domainStart, domainEnd]);
 };
 
-const useWatchScrollEvent = (containerDom: HTMLElement | undefined,
-    isManulHandleRef: React.MutableRefObject<boolean>, session: Session, paddingWidth: number,
-    domainStart: number, domainEnd: number): void => {
+interface WatchScrollEventProps {
+    containerDom?: HTMLElement;
+    isManualHandleRef: React.MutableRefObject<boolean>;
+    session: Session;
+    paddingWidth: number;
+    domainStart: number;
+    domainEnd: number;
+}
+
+const useWatchScrollEvent = (props: WatchScrollEventProps): void => {
+    const {
+        containerDom, isManualHandleRef,
+        session, paddingWidth, domainStart, domainEnd,
+    } = props;
     const lastExecutor = React.useRef<Promise<void>>();
     const accumulativeShiftRef = React.useRef(0);
     React.useEffect(() => {
@@ -72,7 +98,7 @@ const useWatchScrollEvent = (containerDom: HTMLElement | undefined,
             const curExecutor = Promise.resolve();
             lastExecutor.current = curExecutor;
             if (e.shiftKey && paddingWidth > 100) {
-                isManulHandleRef.current = true;
+                isManualHandleRef.current = true;
                 // Browser's native scroll event could be different between off-screen-rendering turn on and turn off.
                 // When off-screen-rendering on and press 'shift' key, e.deltaY is 0, e.deltaX is scroll distance, else, the scroll distance is e.deltaY.
                 const scrollDist = e.deltaX === 0 ? e.deltaY : -e.deltaX;
@@ -88,7 +114,7 @@ const useWatchScrollEvent = (containerDom: HTMLElement | undefined,
                         session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
                     });
                     accumulativeShiftRef.current = 0;
-                    isManulHandleRef.current = false;
+                    isManualHandleRef.current = false;
                 });
             }
         }, 100);
@@ -117,17 +143,17 @@ const HorizontalScroller = observer((props: ScrollBarProps) => {
         prevPaddingWidthRef.current = width;
         return width;
     }, [totalTime, domainStart, domainEnd]);
-    const isManulHandleRef = React.useRef(false);
+    const isManualHandleRef = React.useRef(false);
 
-    useWatchDomainChange(scrollerRef, isManulHandleRef, session, domainStart, domainEnd, totalTime);
-    useWatchScrollEvent(containerDom, isManulHandleRef, session, paddingWidth, domainStart, domainEnd);
+    useWatchDomainChange({ scrollerRef, isManualHandleRef, session, domainStart, domainEnd, totalTime });
+    useWatchScrollEvent({ containerDom, isManualHandleRef, session, paddingWidth, domainStart, domainEnd });
 
     const handleScroll = _.throttle(({ currentTarget }: React.UIEvent<HTMLDivElement>): void => {
         runInAction(() => {
-            if (scrollerRef.current && isManulHandleRef.current && currentTarget.scrollWidth !== 0) {
+            if (scrollerRef.current && isManualHandleRef.current && currentTarget.scrollWidth !== 0) {
                 traceStart('dragLane', { action: 'dragLane' });
                 const bias = Math.max(0, (session.endTimeAll ?? 0) - session.maxDuration);
-                const start = totalTime * (currentTarget.scrollLeft / currentTarget.scrollWidth) + bias;
+                const start = (totalTime * (currentTarget.scrollLeft / currentTarget.scrollWidth)) + bias;
                 const end = start + domainEnd - domainStart;
                 // when calculate end value is within 50ms below than endTimeAll value,
                 // set domainEnd as endTimeAll approximately.
@@ -141,8 +167,8 @@ const HorizontalScroller = observer((props: ScrollBarProps) => {
     return (
         <Scroller leftLaneInfoWidth={leftLaneInfoWidth}
             ref={scrollerRef}
-            onMouseDown={(): void => { isManulHandleRef.current = true; }}
-            onMouseUp={(): void => { isManulHandleRef.current = false; }}
+            onMouseDown={(): void => { isManualHandleRef.current = true; }}
+            onMouseUp={(): void => { isManualHandleRef.current = false; }}
             onScroll={handleScroll}
         >
             <div className="padding" style={{ width: `${paddingWidth}%`, height: THUMB_WIDTH_PX * 1.2 }} />

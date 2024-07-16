@@ -1,7 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { store } from '../store';
 import { runInAction } from 'mobx';
-import { NotificationHandler } from './defs';
-import { RankInfo } from '../entity/memory';
+import type { NotificationHandler } from './defs';
+import type { RankInfo } from '../entity/memory';
 import i18n from '../i18n';
 
 export const parseMemoryCompletedHandler: NotificationHandler = async (data): Promise<void> => {
@@ -28,7 +32,9 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                 }
                 session.memoryRankIds = [];
                 memoryResult.forEach((item) => {
-                    item.hasMemory && session.memoryRankIds.push(item.rankId);
+                    if (item.hasMemory) {
+                        session.memoryRankIds.push(item.rankId);
+                    }
                 });
             }
         });

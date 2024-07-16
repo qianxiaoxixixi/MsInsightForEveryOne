@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import path = require('path');
 import * as vscode from 'vscode';
-import { WebviewManager } from './WebviewManager';
+import type { WebviewManager } from './WebviewManager';
 export abstract class Webview {
     viewType: string;
 
@@ -24,7 +28,7 @@ export abstract class Webview {
         }, {
             enableScripts: true,
             retainContextWhenHidden: true,
-            localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'profiler'))]
+            localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'profiler'))],
         });
         this.panel.onDidDispose(() => {
             if (this.panel !== undefined) {
@@ -44,8 +48,8 @@ export abstract class Webview {
                 canSelectFiles: canSelectFiles,
                 openLabel: '确定选择',
                 filters: {
-                    'JSON files': ['json']
-                }
+                    'JSON files': ['json'],
+                },
             };
             const result = await vscode.window.showOpenDialog(options);
             if (result && result.length > 0) {
@@ -64,6 +68,7 @@ export abstract class Webview {
                     case 'ascend.selectFile':
                         await openChooseDialog(false, true);
                         break;
+                    default:
                 }
             },
             undefined,

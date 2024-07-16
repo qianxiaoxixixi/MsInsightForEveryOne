@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import { SelectedDataBase } from './details/base/SelectedData';
-import { Session } from '../entity/session';
-import { SingleDataDesc } from '../entity/insight';
+import type { Session } from '../entity/session';
+import type { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
-import { AscendSliceDetail } from '../entity/data';
+import type { AscendSliceDetail } from '../entity/data';
 import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
 import { Col, Row } from 'antd';
 
