@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 type Callback<T extends unknown[], K> = (...args: T) => Promise<K>;
 export const customDebounce = function<T extends unknown[], K>(callback: Callback<T, K>): Callback<T, K> {
     let waitingTask: ReturnType<Callback<T, K>> | null = null;

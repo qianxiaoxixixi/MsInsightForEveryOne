@@ -240,11 +240,11 @@ const Index = observer(({ session }: { session: Session }) => {
                 list = list.slice(0, MAX_INSTRUCTION);
             }
             runInAction(() => {
-                session.Instructions = list;
+                session.instructions = list;
             });
             setDoneQuery(true);
         }
-        const records = session.Instructions;
+        const records = session.instructions;
         const coreIndex = session.coreList.findIndex(item => item === core);
         const list = records.map((item: JsonInstructionType, index: number) => ({
             ...item,

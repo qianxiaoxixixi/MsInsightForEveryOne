@@ -5,7 +5,7 @@ import i18n from '../../i18n';
 import { notification } from 'antd';
 import './DragFile.css';
 import { formatTimestamp } from '../../utils/humanReadable';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import connector from '../../connection';
 import type { NotificationHandler } from '../../connection/defs';
 
@@ -438,7 +438,7 @@ function getFileFromEntryRecusively(entry: any): Promise<any> {
                 const fileInfo = { data, attr: { path: entry.fullPath.slice(1), name: data.name } };
                 resolve(fileInfo);
             }, (e: any) => {
-                Logger('ReadFile', e);
+                logger('ReadFile', e);
             });
         } else {
             const reader = entry.createReader();
@@ -460,7 +460,7 @@ function readEntries(resolve: any, reader: any, list: any = []): void {
             }
         },
         (e: any) => {
-            Logger('ReadFile', e);
+            logger('ReadFile', e);
         },
     );
 }

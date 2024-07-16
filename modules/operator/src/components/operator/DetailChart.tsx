@@ -7,15 +7,15 @@ import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
 import { LeftRightContainer } from '../Common';
 import { getResizeEcharts, chartVisbilityListener } from 'lib/CommonUtils';
-import { ConditionType } from './Filter';
+import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { themeInstance } from '../../theme/theme';
 
 export type dataType = Array<{
+    [name: string]: any;
     name: string ;
     value: number;
-    [name: string]: any;
 }>;
 
 let myChart: echarts.ECharts;

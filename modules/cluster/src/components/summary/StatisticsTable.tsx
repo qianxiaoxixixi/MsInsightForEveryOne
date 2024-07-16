@@ -251,7 +251,7 @@ const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
         updateData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId]);
     const updateData = async(_page: any, _sorter: any): Promise<void> => {
-        const { data, total } = await serachData({ rankId, record, _page, _sorter, name, step });
+        const { data, total } = await serachData({ rankId, record, page: _page, sorter: _sorter, name, step });
         setDataSource(data);
         setPage({ ..._page, total });
     };

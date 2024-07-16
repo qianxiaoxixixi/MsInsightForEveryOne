@@ -1,7 +1,7 @@
 import React, { RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { ChartData, ChartType, MapFunc } from '../../entity/chart';
 import { Session } from '../../entity/session';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
 import { InsightUnit } from '../../entity/insight';
 
@@ -41,7 +41,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
             // the datas should be sorted by startTime(min -> max).
             setDatasState(processor?.(datas, width, domainStart, domainEnd) ?? datas);
         }).catch(() => {
-            Logger('hooks useData', 'mapFunc occurred an exception.');
+            logger('hooks useData', 'mapFunc occurred an exception.');
         }).finally(() => {
             runInAction(() => { unit.phase = 'download'; });
         });

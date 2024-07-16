@@ -25,4 +25,4 @@ class CustomConsole {
     }
 }
 
-export const Console = new CustomConsole();
+export const console = new CustomConsole();

@@ -7,6 +7,7 @@ import './index.css';
 import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
+import { CustomConsole as console } from 'lib/CommonUtils';
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
@@ -23,7 +24,7 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
 document.oncontextmenu = (): boolean => false;
 document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 
-type CefQueryType = {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
+interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
 export const Loading = (<div style={{ textAlign: 'center', top: '50%', position: 'absolute', width: '50px', left: 'calc(50% - 25px)' }}>
     <div className={'loading'} style={{ marginLeft: '15px' }}></div>

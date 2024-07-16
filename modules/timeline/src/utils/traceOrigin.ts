@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 const origin = Symbol('origin');
 
 export type WithOrigin<T extends object> = T & { [origin]?: T };

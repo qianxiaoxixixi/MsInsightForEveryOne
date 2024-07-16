@@ -7,7 +7,7 @@ import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef } from 'react';
 import type { Session } from '../../entity/session';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import { useAsyncEffect } from '../../utils/useEffectHooks';
 import styled from '@emotion/styled';
 
@@ -150,7 +150,7 @@ export const GaugeChart = observer(({ session, dataFormat, mapFunc, totalFormat,
         try {
             datas = await mapFunc();
         } catch {
-            Logger('GaugeChart', 'mapFunc occurred an exception.');
+            logger('GaugeChart', 'mapFunc occurred an exception.');
         }
         if (isCanceled() || !canvas.current) { return; }
         const height = canvas.current.clientHeight;

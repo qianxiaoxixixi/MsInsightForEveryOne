@@ -6,7 +6,7 @@ import { SelectedParams, Session } from '../../entity/session';
 import { TabState } from '../../entity/tabDependency';
 import { useTranslation } from 'react-i18next';
 import { platform } from '../../platforms';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import { EMPTY_TABLE_STATE, TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
 import i18n from '../../i18n';
@@ -59,7 +59,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
 
     const loadData = (): void => {
         if (detail && onDataFetched && selectedRange !== undefined) {
-            Logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
+            logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             setState({ ...EMPTY_TABLE_STATE, isLoading: true });
             onDataFetched?.then(result => {
                 if (recentUnits.current !== selectedUnits || recentRange.current !== selectedRange) return;
@@ -139,7 +139,7 @@ TableState => {
         const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
         const fetchData = detail?.fetchData;
         if (detail && fetchData && hasDependencies && session.phase === 'download') {
-            Logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
+            logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             platform.trace('useComparison', {});
             setState({ ...EMPTY_TABLE_STATE, isLoading: true });
             fetchData(session, selectedUnit?.metadata).then(result => {
@@ -170,14 +170,14 @@ export const useExtraDataUpdater = <T extends DetailDescriptor<unknown>>(session
     const loadData = (): void => {
         const fetchExtraData = detail?.fetchExtraData;
         if (detail && fetchExtraData && session.phase === 'download') {
-            Logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
+            logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             fetchExtraData(session, selectedUnit?.metadata).then(result => {
                 if (result !== undefined) {
                     setState({ result });
                 }
             }).catch(() => {
                 setState({});
-                Logger('useExtraDataUpdater', 'fetchExtraData occurred an exception.');
+                logger('useExtraDataUpdater', 'fetchExtraData occurred an exception.');
             });
         } else {
             setState({});
@@ -205,7 +205,7 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
 
     const loadData = (): void => {
         if (onDataFetched !== undefined && selectedData !== undefined && session.phase === 'download') {
-            Logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
+            logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             onDataFetched?.then(result => {
                 if (recentUnits.current !== selectedUnits || recentData.current !== selectedData) return;
                 setState(result);

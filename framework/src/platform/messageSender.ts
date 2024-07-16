@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { Browser } from './Browser';
 import { IntellijPlatform } from './IntellijPlatform';
 import { VsCodePlatform } from './VsCodePlatform';
-import { BasePlatform } from './BasePlatform';
+import type { BasePlatform } from './BasePlatform';
 
 declare function acquireVsCodeApi(): any;
 

@@ -8,6 +8,7 @@ import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
 import { Empty } from 'antd';
 import { useTheme } from '@emotion/react';
+export { customConsole } from './Console';
 
 export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
 

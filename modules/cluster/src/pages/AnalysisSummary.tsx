@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import ComputationCommunicationOverview from '../components/summary/ComputationCommunicationOverview';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 
 const AnalysisSummary = ({ session }: { session: Session;active?: boolean }): JSX.Element => {
     return <ComputationCommunicationOverview session={session} />;

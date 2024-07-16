@@ -9,7 +9,7 @@ import styled from '@emotion/styled';
 import { useAsyncEffect } from '../../utils/useEffectHooks';
 import { useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 
 interface GaugeChartHalfRoundProps {
     session: Session;
@@ -113,7 +113,7 @@ export const GaugeChartHalfRound = observer(({ session, splits, mapFunc, type, g
         try {
             datas = await mapFunc();
         } catch {
-            Logger('GaugeChartHalfRound', 'mapFunc occurred an exception.');
+            logger('GaugeChartHalfRound', 'mapFunc occurred an exception.');
         }
         if (isCanceled() || !canvas.current) { return; }
         const height = canvas.current.clientHeight;

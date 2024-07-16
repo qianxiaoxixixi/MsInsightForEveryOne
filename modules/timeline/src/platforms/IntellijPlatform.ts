@@ -1,4 +1,7 @@
-import { IMessageSender } from '../connection/messageSender';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type { IMessageSender } from '../connection/messageSender';
 
 export class IntellijPlatform implements IMessageSender {
     selectFolder(): Promise<string> {

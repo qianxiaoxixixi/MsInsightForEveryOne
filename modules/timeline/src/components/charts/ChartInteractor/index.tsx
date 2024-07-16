@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import {
-    CustomCrossRenderer,
-    CustomRenderEffect,
+    type CustomCrossRenderer,
+    type CustomRenderEffect,
     registerCrossUnitRenderer,
 } from './custom';
 import { getTimeDifference } from './common';

@@ -3,10 +3,11 @@
  */
 import { store } from '../store';
 import { runInAction } from 'mobx';
-import { NotificationHandler } from './defs';
+import type { NotificationHandler } from './defs';
 import { updateData } from '../components/communication/Filter';
 import type { ConditionDataType } from '../components/communication/Filter';
 import i18n from '../i18n';
+import { CustomConsole as console } from 'lib/CommonUtils';
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {

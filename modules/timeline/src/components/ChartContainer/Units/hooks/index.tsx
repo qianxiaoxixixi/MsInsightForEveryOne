@@ -1,5 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { useSelectUnit } from './useSelectUnit';
-import { useJumpTarget, OrderOptions } from './useLocate';
+import { useJumpTarget, type OrderOptions } from './useLocate';
 
 export {
     useSelectUnit,

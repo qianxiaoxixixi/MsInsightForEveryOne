@@ -1,5 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import { makeAutoObservable } from 'mobx';
-import { communicator, communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
+import type { communicator, communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     parseCompleted: boolean = false;

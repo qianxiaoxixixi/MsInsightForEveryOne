@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import './Operator.css';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { HeaderFixedContainer } from '../Common';
 import Filter from './Filter';
 import DetailChart from './DetailChart';

@@ -7,7 +7,7 @@ import { useSession, type Session } from '@/stores/session';
 import { connectRemote } from '@/centralServer/server';
 import { LOCAL_HOST, PORT, type ProjectDirectory, setPort } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
-import { Console } from '@/utils/console';
+import { console } from '@/utils/console';
 import HelpIcon from '@/components/icons/help_icon.vue';
 import LangZhIcon from '@/components/icons/lang_zh_icon.vue';
 import LangEnIcon from '@/components/icons/lang_en_icon.vue';
@@ -126,7 +126,7 @@ function registerEventListeners() {
     connector.addListener('updateSession', (e) => {
         const receiver = e.data.body;
         if (!receiver) {
-            Console.warn('data.body is undefined, please check your params');
+            console.warn('data.body is undefined, please check your params');
             return;
         }
         const receivePropKeys = Object.keys(receiver);
@@ -143,7 +143,7 @@ function registerEventListeners() {
                 Object.assign(updateState, { [key]: receiver[key] });
                 continue;
             }
-            Console.warn(
+            console.warn(
                 `you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`,
             );
         }
@@ -230,7 +230,7 @@ function registerEventListeners() {
         const receiver = e.data.body;
         session.loading = false;
         if (!receiver) {
-            Console.warn('data.body is undefined, please check your params');
+            console.warn('data.body is undefined, please check your params');
             return;
         }
         connector.send({ event: 'deleteRank', body: receiver });

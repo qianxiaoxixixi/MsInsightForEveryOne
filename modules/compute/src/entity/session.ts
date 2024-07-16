@@ -7,7 +7,7 @@ export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     coreList: string[] = [];
     sourceList: string[] = [];
-    Instructions: JsonInstructionType[] = [];
+    instructions: JsonInstructionType[] = [];
     parseStatus: boolean = false;
     updateId: number = 0;
     blockIdList: string[] = [];

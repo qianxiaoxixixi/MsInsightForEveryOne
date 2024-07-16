@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from 'vue';
-import { Console } from '@/utils/console';
+import { console } from '@/utils/console';
 
 const emit = defineEmits(['onResize']);
 const divRef: any = ref(null);
@@ -84,7 +84,7 @@ function handleTopWindow(event?: any): void {
       handleMouseUp();
     }
   } catch (error) {
-    Console.log(error);
+    console.log(error);
   }
 }
 

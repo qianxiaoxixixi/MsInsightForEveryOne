@@ -15,7 +15,7 @@ import type { InsightTemplate } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { platform } from '../platforms';
 import { getAutoKey } from '../utils/dataAutoKey';
-import { Logger } from '../utils/Logger';
+import { logger } from '../utils/Logger';
 
 interface ThumbTipProps {
     width: number;
@@ -211,7 +211,7 @@ const Recommendations = observer(({ session }: { session: Session }): JSX.Elemen
     const [recommandedTemplateData, setRecommandedTemplateData] = React.useState<RecommendedTemplateData[]>([]);
     const updateData = async (): Promise<void> => {
         setRecommandedTemplateData(await fetch(session).catch(() => {
-            Logger('Recommendations', 'fetch data error', 'warn');
+            logger('Recommendations', 'fetch data error', 'warn');
             return [];
         }));
     };

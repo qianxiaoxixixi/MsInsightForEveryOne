@@ -5,7 +5,7 @@ import { CONTENT_LENGTH_PREFIX, isResponse, PORT, LOCAL_HOST } from './defs';
 import type { DataRequest, ModuleName, DataSource, Notification, Response, Request, ResponseHandler } from './defs';
 import connector from '@/connection';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Console as console} from '@/utils/console';
+import { console } from '@/utils/console';
 import { connectRemote } from '../server';
 
 const createRequestHead = function (

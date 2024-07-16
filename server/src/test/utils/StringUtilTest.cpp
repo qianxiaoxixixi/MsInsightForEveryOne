@@ -20,6 +20,7 @@ TEST(StringUtil, IntToString) {
 TEST(StringUtil, ToCamelCase) {
     EXPECT_EQ(StringUtil::ToCamelCase("rank_id"), "rankId");
     EXPECT_EQ(StringUtil::ToCamelCase("rank_id, device_Id"), "rankId, deviceId");
+    EXPECT_EQ(StringUtil::ToCamelCase("rank__id, device_Id"), "rankId, deviceId");
 }
 
 TEST(StringUtil, Split) {

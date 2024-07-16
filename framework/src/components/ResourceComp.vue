@@ -8,7 +8,7 @@ import { useResource, type ResourceItem } from '@/stores/resourceComp';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
-import {Console as console} from '@/utils/console';
+import { console } from '@/utils/console';
 
 const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void, show: boolean }>();
 const emit = defineEmits(['input-change']);

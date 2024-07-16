@@ -1,4 +1,7 @@
-import { BasePlatform } from "./BasePlatform";
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+import { BasePlatform } from './BasePlatform';
 export class IntellijPlatform extends BasePlatform {
     selectFolder(): Promise<string> {
         return new Promise((resolve) => {

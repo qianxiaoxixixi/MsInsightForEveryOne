@@ -1,7 +1,7 @@
 import { cloneDeep, throttle } from 'lodash';
 import { ElementType, KeysMatching, TimeStamp } from '../../entity/common';
 import { ValidSession } from '../../entity/session';
-import { Logger } from '../../utils/Logger';
+import { logger } from '../../utils/Logger';
 import { Cache } from '../cache';
 import { dataFunc, getRange } from '../utils';
 import { binarySearchFirstBig, binarySearchLastSmall } from './utils';
@@ -49,7 +49,9 @@ export class TimeSeriesCache<E = TimeSeriesData> implements Cache {
         } catch (e) {
             // e: ErrorRes
             const err = e as (any | undefined);
-            err && Logger(`timeSeries/${this.key}`, `get error when fetching data: ${err.errorMessage}`, 'warn');
+            if (err) {
+                logger(`timeSeries/${this.key}`, `get error when fetching data: ${err.errorMessage}`, 'warn');
+            }
         }
         if (this.startTime < this.endTime - this.maxDuration) {
             this.startTime = this.endTime - this.maxDuration;
