@@ -35,6 +35,7 @@ const std::string MSPROF_SLICE_FILE_REG = R"(^msprof_slice_[0-9_]+\.json$)";
 
 const std::string JSON_FILE_SUFFIX = ".json";
 const std::string DB_FILE_SUFFIX = ".db";
+const std::string CSV_FILE_SUFFIX = ".csv";
 
 const std::string DATABASE_FILE_NAME = "mindstudio_insight_data.db";
 
