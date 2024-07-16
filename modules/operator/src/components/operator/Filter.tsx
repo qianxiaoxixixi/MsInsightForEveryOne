@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
@@ -7,8 +7,8 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, InputNumber } from 'antd';
 import { GroupRankIdsByHost, Label } from 'lib/CommonUtils';
-import { optionMapType, VoidFunction } from '../../utils/interface';
-import { Session } from '../../entity/session';
+import type { optionMapType, VoidFunction } from '../../utils/interface';
+import type { Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
 
 export interface ConditionType {

@@ -1,5 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import React from 'react';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import styled from '@emotion/styled';
 import { StyledSelect } from './base/StyledSelect';
 import { observer } from 'mobx-react';
@@ -11,7 +15,7 @@ const ChildrenContainer = styled.div`
     user-select: none;
 `;
 
-type SelectProps = {
+interface SelectProps {
     session: Session;
 };
 
@@ -34,7 +38,7 @@ const ImportModeSelect = observer((props: SelectProps) => {
     );
 });
 
-export type CardInfo = {
+export interface CardInfo {
     cardName: string;
     rankId: string;
     result: boolean;

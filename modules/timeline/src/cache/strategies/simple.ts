@@ -1,8 +1,12 @@
-import { ElementType, KeysMatching } from '../../entity/common';
-import { ValidSession } from '../../entity/session';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
+import type { ElementType, KeysMatching } from '../../entity/common';
+import type { ValidSession } from '../../entity/session';
 import { logger } from '../../utils/Logger';
 import { getRange, dataFunc } from '../utils';
-import { Cache, CacheFactory } from '../cache';
+import type { Cache, CacheFactory } from '../cache';
 import { binarySearchFirstBig, binarySearchLastSmall } from './utils';
 
 export interface KeyedCacheFactory<K extends any> extends CacheFactory {
@@ -17,6 +21,13 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
     private readonly useRelative: boolean;
     private readonly getTime: (e: ElementType<any>) => number;
 
+    constructor(key: K, time: KeysMatching<any, number> | ((e: ElementType<any>) => number), useRelative: boolean = true) {
+        this.key = key;
+        // wedge data[time]
+        this.getTime = typeof time === 'function' ? time : (data): number => data as unknown as number;
+        this.useRelative = useRelative;
+    }
+
     static newFactory<K extends KeysMatching<any, unknown[]>>(
         key: K,
         time: KeysMatching<any, number> | ((e: ElementType<any>) => number),
@@ -26,14 +37,6 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
             key,
             create: () => new SimpleOfflineTimeSeriesCache(key, time, useRelative),
         };
-    }
-
-    constructor(key: K, time: KeysMatching<any, number> | ((e: ElementType<any>) => number),
-        useRelative: boolean = true) {
-        this.key = key;
-        // wedge data[time]
-        this.getTime = typeof time === 'function' ? time : (data): number => data as unknown as number;
-        this.useRelative = useRelative;
     }
 
     async getData<T extends any>(session: ValidSession, params: any): Promise<any> {
@@ -67,6 +70,12 @@ export class SimpleOfflineGroupedTimeSeriesCache<K extends KeysMatching<any, obj
     private readonly useRelative: boolean;
     private readonly getTime: (e: ElementType<ElementType<any>>) => number;
 
+    constructor(key: K, timeField: KeysMatching<ElementType<ElementType<any>>, number>, useRelative: boolean = true) {
+        this.key = key;
+        this.useRelative = useRelative;
+        this.getTime = (data): number => data[timeField] as unknown as number;
+    }
+
     static newFactory<K extends KeysMatching<any, object[][]>>(
         key: K,
         timeField: KeysMatching<ElementType<ElementType<any>>, number>,
@@ -76,12 +85,6 @@ export class SimpleOfflineGroupedTimeSeriesCache<K extends KeysMatching<any, obj
             key,
             create: () => new SimpleOfflineGroupedTimeSeriesCache(key, timeField, useRelative),
         };
-    }
-
-    constructor(key: K, timeField: KeysMatching<ElementType<ElementType<any>>, number>, useRelative: boolean = true) {
-        this.key = key;
-        this.useRelative = useRelative;
-        this.getTime = (data): number => data[timeField] as unknown as number;
     }
 
     async getData<T extends any>(session: ValidSession, params: any): Promise<any> {

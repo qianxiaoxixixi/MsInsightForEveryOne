@@ -1,7 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { Select } from 'antd';
-import { SelectProps } from 'antd/lib/select';
+import type { SelectProps } from 'antd/lib/select';
 import { ReactComponent as PullDownIcon } from '../../assets/images/insights/PullDownIcon.svg';
 import { StyledEmpty } from './StyledEmpty';
 

@@ -1,7 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import { RowProps } from 'antd/lib/grid';
+import type { RowProps } from 'antd/lib/grid';
 
 const ChartRowContainer = styled.div`
     display: flex;

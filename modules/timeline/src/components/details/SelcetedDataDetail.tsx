@@ -1,12 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
-import { Session } from '../../entity/session';
-import { SingleDataDesc } from '../../entity/insight';
+import type { Session } from '../../entity/session';
+import type { SingleDataDesc } from '../../entity/insight';
 import { useSelectedDataDetailUpdater } from './hooks';
 import { SelectedDataBase } from '../details/base/SelectedData';
 
-export const SimpleSelectedDetail = observer(({ session, detail }: {session: Session; detail: SingleDataDesc<Record<string, unknown>, unknown>}): JSX.Element => {
+export const SimpleSelectedDetail = observer(
+    ({ session, detail }: {session: Session; detail: SingleDataDesc<Record<string, unknown>, unknown>}): JSX.Element => {
     useEffect(() => {
         runInAction(() => {
             session.selectedDetailKeys = [];

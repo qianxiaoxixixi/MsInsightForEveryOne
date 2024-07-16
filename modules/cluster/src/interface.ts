@@ -11,12 +11,12 @@ import {
     switchLanguageHandler,
 } from './connection/handler';
 
-type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
+interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
     request: Request;
     response: Response;
 };
 
-export type InterfaceDefs = {
+export interface InterfaceDefs {
     'chart/cpu': InsightInterface<{ chartId: number }, { data: Array<{ ts: number; value: number }>}>;
 };
 

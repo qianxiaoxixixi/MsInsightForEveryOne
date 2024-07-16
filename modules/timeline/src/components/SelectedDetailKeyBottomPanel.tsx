@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { useSelectedDataDetailUpdater } from './details/hooks';
-import { SingleDataDesc } from '../entity/insight';
-import { Session } from '../entity/session';
+import type { SingleDataDesc } from '../entity/insight';
+import type { Session } from '../entity/session';
 import styled from '@emotion/styled';
 import { getDuration, getTimestamp } from '../utils/humanReadable';
 
@@ -20,7 +20,8 @@ const StyledSliceMoreDiv = styled.div`
     }
 `;
 
-export const SelectedDetailKeyBottomPanel = observer(({ session, detail }: {session: Session; detail: SingleDataDesc<Record<string, unknown>, unknown>}): JSX.Element | null => {
+export const SelectedDetailKeyBottomPanel = observer(
+    ({ session, detail }: {session: Session; detail: SingleDataDesc<Record<string, unknown>, unknown>}): JSX.Element | null => {
     useEffect(() => {
         runInAction(() => {
             session.selectedDetailKeys = [];

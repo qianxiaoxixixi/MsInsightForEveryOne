@@ -1,17 +1,18 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Container, formatDate, Loading } from '../Common';
-import { StringMap } from '../../utils/interface';
-import { Session } from '../../entity/session';
+import type { StringMap } from '../../utils/interface';
+import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import { defaultConditions } from './Filter';
 
-export interface BaseInfoDataType{
-    collectDuration: string | number | undefined;
+export interface BaseInfoDataType {
     [prop: string]: any;
+    collectDuration: string | number;
 }
 
 interface ListItem {

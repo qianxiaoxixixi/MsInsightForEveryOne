@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import { autorun, runInAction } from 'mobx';
 import React from 'react';
-import { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
-import { InsightUnit, UnitMatcher } from '../../../../entity/insight';
-import { Session } from '../../../../entity/session';
+import type { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
+import type { InsightUnit, UnitMatcher } from '../../../../entity/insight';
+import type { Session } from '../../../../entity/session';
 import { getAutoKey } from '../../../../utils/dataAutoKey';
 import { getRootUnit } from '../../../../utils';
 /**
@@ -30,7 +34,7 @@ const searchUnit = (units: InsightUnit[], matcher: UnitMatcher['target'], path: 
 const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher['target']): InsightUnit | undefined => {
     const path: InsightUnit[] = [];
     if (!searchUnit(units, matcher, path)) {
-        return;
+        return undefined;
     }
     runInAction(() => {
         // expand all parent units
@@ -59,7 +63,7 @@ const getNormalUnitHeight = (unitsArea: InsightUnit[], orderOptions: OrderOption
     return findResult ? height : undefined;
 };
 
-export type OrderOptions = {
+export interface OrderOptions {
     preOrderFlatten: <T>(tree: Array<TreeNode<T>>, currentLevel: number, options?: PreOrderFlattenOptions<T> | undefined) => T[];
     options: PreOrderFlattenOptions<InsightUnit>;
 };

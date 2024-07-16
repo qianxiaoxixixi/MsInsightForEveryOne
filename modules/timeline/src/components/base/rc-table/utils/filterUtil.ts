@@ -1,7 +1,11 @@
-import Item from "antd/lib/list/Item";
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
+import Item from 'antd/lib/list/Item';
 
 // 修改antd过滤模块
-type FilterProps = { text: string; value: string; children: FilterProps[] };
+interface FilterProps { text: string; value: string; children: FilterProps[] };
 type KeyType = string | number | boolean;
 
 const flattenKeys = (filters: Array<FilterProps>): KeyType[] => {
@@ -18,7 +22,7 @@ const flattenKeys = (filters: Array<FilterProps>): KeyType[] => {
 
 // 判断data数组是否有含有children属性的元素
 const judgeChildren = (data: any[]): boolean => {
-    return data.some((item: any) => item !== undefined && item.children !== undefined && item.children.length > 0);
+    return data.some((item: any) => item?.children?.length > 0);
 };
 
 // 过滤树的某个字段,返回过滤后的数组
@@ -61,7 +65,8 @@ export const customizeFilterData = (data: any[], filterStates: any[]): any => {
     // 默认的过滤方式
     return filterStates.reduce((currentData, filterState: any) => {
         const { column: { onFilter, filters }, filteredKeys } = filterState;
-        if (onFilter !== undefined && filteredKeys !== null && filteredKeys !== undefined && filteredKeys.length > 0) {
+        const isFilteredKeys = filteredKeys !== null && filteredKeys !== undefined && filteredKeys.length > 0;
+        if (onFilter !== undefined && isFilteredKeys) {
             return currentData.filter((record: unknown) => {
                 return filteredKeys.some((key: KeyType) => {
                     const keys = flattenKeys(filters);

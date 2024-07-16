@@ -1,7 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
 import { cloneDeep, throttle } from 'lodash';
-import { Cache } from '../cache';
+import type { Cache } from '../cache';
 import { logger } from '../../utils/Logger';
-import { ValidSession } from '../../entity/session';
+import type { ValidSession } from '../../entity/session';
 import { getRange, dataFunc } from '../utils';
 
 /**
@@ -33,7 +37,7 @@ export class ThrottleCache<T extends any> implements Cache {
         }, threshold));
     };
 
-    getData = <T extends any>(session: ValidSession, params: any): Promise<any> => {
+    getData = (session: ValidSession, params: any): Promise<any> => {
         this.fetch(session, params);
         return Promise.resolve({ [this.key as string]: cloneDeep(this.data) });
     };

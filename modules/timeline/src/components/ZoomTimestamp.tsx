@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
@@ -6,7 +10,7 @@ import { observer } from 'mobx-react';
 import { ReactComponent as Reset } from '../assets/images/reset.svg';
 import { ReactComponent as Del } from '../assets/images/zoomTimestamp_delete.svg';
 import { ReactComponent as Add } from '../assets/images/zoomTimestamp_add.svg';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';
 import { StyledTooltip } from './base/StyledTooltip';

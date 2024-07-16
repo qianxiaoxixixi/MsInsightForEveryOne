@@ -1,4 +1,8 @@
-import { DataMatcher, Session } from '../../../entity/session';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+*/
+
+import type { DataMatcher, Session } from '../../../entity/session';
 import { InsightUnit } from '../../../entity/insight';
 import { isPinned } from '../../ChartContainer/unitPin';
 
@@ -17,7 +21,7 @@ export const getHeight = (session: Session, matcher: DataMatcher, findData: Reco
         if (matcher(unit) && !exclude) {
             // 补丁,drawData.height未定义时坐标为0的bug
             if (!Array.isArray(unit.chart) && typeof findData.depth === 'number') {
-                findData.height = ((unit.chart?.config as any)?.rowHeight ?? 0) * (2 * findData.depth + 1) / 2;
+                findData.height = ((unit.chart?.config as any)?.rowHeight ?? 0) * ((2 * findData.depth) + 1) / 2;
             } else {
                 findData.height = 0;
             }
@@ -51,11 +55,12 @@ export const getHeight = (session: Session, matcher: DataMatcher, findData: Reco
 };
 
 // 当连线不包含置顶泳道时，裁切掉置顶泳道以上的连线部分
-export function calculateClipTopAndPinedHeight<T, U>(pinnedUnits: InsightUnit[], target: { data: T; matcher: DataMatcher }, sources: Array<{ data: U; matcher: DataMatcher }>): [clipTop: number, pinnedHeight: number] {
+export function calculateClipTopAndPinedHeight<T, U>(pinnedUnits: InsightUnit[],
+    target: { data: T; matcher: DataMatcher }, sources: Array<{ data: U; matcher: DataMatcher }>): [clipTop: number, pinnedHeight: number] {
     const pinnedHeight = pinnedUnits.reduce((acc, unit) => acc + unit.height() + 1, 0);
     let clipTop = UNDRAW_HEIGHT;
     const matchers = [target.matcher].concat(sources.map(source => source.matcher));
     const hasPined = pinnedUnits.some(unit => matchers.some(matcher => matcher(unit)));
-    if (!hasPined) clipTop += pinnedHeight;
+    if (!hasPined) { clipTop += pinnedHeight; }
     return [clipTop, pinnedHeight];
 }

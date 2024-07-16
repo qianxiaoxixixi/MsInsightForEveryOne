@@ -3,7 +3,7 @@
  */
 
 import { observer } from 'mobx-react-lite';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { Col, Empty, Layout, Row } from 'antd';
 import {
     addResizeEvent,
@@ -15,7 +15,7 @@ import {
 } from '../Common';
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
-import Filter, { ConditionDataType } from './PpBandwidthFilter';
+import Filter, { type ConditionDataType } from './PpBandwidthFilter';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
@@ -166,13 +166,13 @@ export const getStepsData = async (): Promise<string[]> => {
     return steps?.data ?? [];
 };
 
-async function getStageAndBubbleTimeData (stepId: string, stageId: string): Promise<any> {
+async function getStageAndBubbleTimeData(stepId: string, stageId: string): Promise<any> {
     const stageAndBubbleTimeList = await window.requestData('parallelism/pipeline/stageAndBubbleTime',
         { stepId, stageId }, 'summary');
     return stageAndBubbleTimeList?.stageAndBubbleTimes ?? [];
 }
 
-async function getRankAndBubbleTimeData (stepId: string, stageId: string): Promise<any> {
+async function getRankAndBubbleTimeData(stepId: string, stageId: string): Promise<any> {
     const RankAndBubbleTimeData = await window.requestData('parallelism/pipeline/rankAndBubbleTime', { stepId, stageId }, 'summary');
     return RankAndBubbleTimeData?.stageAndBubbleTimes ?? [];
 }

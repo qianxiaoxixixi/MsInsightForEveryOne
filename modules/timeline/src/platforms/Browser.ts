@@ -1,8 +1,14 @@
-import { ThemeItem } from '../theme/theme';
-import { InsightState, NavigationParam, NotifyLevel, Platform } from './platform';
-import { IMessageSender } from '../connection/messageSender';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
+import type { ThemeItem } from '../theme/theme';
+import type { InsightState, NavigationParam, NotifyLevel, Platform } from './platform';
+import type { IMessageSender } from '../connection/messageSender';
 
 export class Browser implements Platform, IMessageSender {
+    isUltimateEdition: Promise<boolean> = Promise.resolve(false);
+
     trace = (action: string, traceInfo: object): void => {
         // do nothing
     };
@@ -46,8 +52,6 @@ export class Browser implements Platform, IMessageSender {
 
     openFrameworkUrl = (): void => {
     };
-
-    isUltimateEdition: Promise<boolean> = Promise.resolve(false);
 
     selectFolder = (): Promise<string> => new Promise(resolve => {
         resolve('browser');

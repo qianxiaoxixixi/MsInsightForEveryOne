@@ -1,8 +1,11 @@
-import * as React from 'react';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type * as React from 'react';
 import styled from '@emotion/styled';
 import type { Theme } from '@emotion/react';
 import { runInAction } from 'mobx';
-import { Session } from '../../../entity/session';
+import type { Session } from '../../../entity/session';
 
 export interface TabComponentProps<Tab extends TabProto, CommonState extends CommonStateProto> {
     tabs: Tab[];
@@ -40,7 +43,8 @@ export interface TabActionCallback<Tab> {
     callback: (tabs: Tab[], id: number, session: Session) => void;
 };
 
-export const createInteractorProps = <Tab extends TabProto, CommonState extends CommonStateProto>(tabs: Tab[], commonState: CommonState, tabActionCallback?: TabActionCallback<Tab>): InteractorProps => {
+export const createInteractorProps = <Tab extends TabProto, CommonState extends CommonStateProto>(
+    tabs: Tab[], commonState: CommonState, tabActionCallback?: TabActionCallback<Tab>): InteractorProps => {
     return {
         createdToggleProps: (id: number, session: Session): any => {
             return {

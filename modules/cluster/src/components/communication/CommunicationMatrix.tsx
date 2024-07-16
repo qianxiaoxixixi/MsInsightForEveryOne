@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
+
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,8 +10,8 @@ import { Select, Checkbox, InputNumber, Button, message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
 import { addResizeEvent, Container, Label, COLOR, getDecimalCount, safeStr } from '../Common';
-import { ConditionDataType } from './Filter';
-import { optionDataType, VoidFunction } from '../../utils/interface';
+import type { ConditionDataType } from './Filter';
+import type { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
