@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
 const getParamMap = (): Map<string, string> => {
     const paramMap: Map<string, string> = new Map();
@@ -14,7 +18,7 @@ const getParamMap = (): Map<string, string> => {
         paramMap.set('port', '9000');
     }
     return paramMap;
-}
+};
 const PARAM_MAP = getParamMap();
 export let PORT = Number.parseInt(<string>PARAM_MAP.get('port'));
 export function setPort(port: number): void {
@@ -22,12 +26,12 @@ export function setPort(port: number): void {
 }
 export const LOCAL_HOST = '127.0.0.1';
 
-export type DataRequest = {
+export interface DataRequest {
     command: string;
     params: Request['params'];
 };
 
-export type Request = {
+export interface Request {
     id: number;
     type: string;
     moduleName: string;
@@ -36,7 +40,7 @@ export type Request = {
     token?: string;
 };
 
-export type Response<T = Record<string, unknown>> = {
+export interface Response<T = Record<string, unknown>> {
     type: string;
     requestId: number;
     id?: number;
@@ -58,7 +62,7 @@ export type Notification<T = Record<string, unknown>> = {
 
 export type ModuleName = string;
 
-export type DataSource = {
+export interface DataSource {
     remote: string;
     port: number;
     projectName: string;

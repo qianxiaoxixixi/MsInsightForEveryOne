@@ -104,7 +104,7 @@ const useInstrsColumns = (): ColumnsType<InstrsColumnType> => {
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {
-    const DomId = 'hotMethod';
+    const domId = 'hotMethod';
     const [condition, setCondition] = useState<ConditionType>({ core: '', source: '', onlyRelated: false });
     const [code, setCode] = useState('');
     const [codeLines, setCodeLines] = useState<Ilinetable[]>([]);
@@ -301,9 +301,9 @@ const Index = observer(({ session }: { session: Session }) => {
             // 全部代码行
             const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
             const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
-                const Line = index + 1;
-                const lineInfo = newLoggedCodeLines.find((item: Ilinetable) => item.Line === Line) ?? {};
-                return { Line, ...lineInfo };
+                const line = index + 1;
+                const lineInfo = newLoggedCodeLines.find((item: Ilinetable) => item.Line === line) ?? {};
+                return { Line: line, ...lineInfo };
             });
             setCodeLines(sourceCodeLines);
         });
@@ -352,7 +352,7 @@ const Index = observer(({ session }: { session: Session }) => {
         updateCode();
     }, [t]);
 
-    return <div id={DomId} style={{ height: '100%', width: '100%' }} className={'th35'}>
+    return <div id={domId} style={{ height: '100%', width: '100%' }} className={'th35'}>
         <HeaderFixedContainer
             headerStyle={{ padding: '10px' }}
             header={

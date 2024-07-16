@@ -171,7 +171,8 @@ const baseOption: any = {
     },
 };
 
-export interface dataType{
+export interface dataType {
+    [name: string]: any;
     rankId: string[];
     ElapseTime?: number[];
     TransitTime?: number[];
@@ -179,7 +180,6 @@ export interface dataType{
     WaitTime?: number[];
     SynchronizationTimeRatio?: number[];
     WaitTimeRatio?: number[];
-    [name: string]: any;
 }
 
 const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: dataType; session: Session}) => {

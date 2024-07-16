@@ -1,6 +1,9 @@
-import { TimeStamp } from './common';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+import type { TimeStamp } from './common';
 
-export type TimelineAxisFlag = {
+export interface TimelineAxisFlag {
     uid: string;
     timeStamp: number;
     timeDisplay: string;
@@ -9,17 +12,17 @@ export type TimelineAxisFlag = {
     description: string;
     descriptionCache: string;
     type: MarkerType;
-    anotherTimeStamp: number | undefined;
+    anotherTimeStamp?: number;
 };
 
 export type MarkerType = 'point' | 'range';
 
-export type TimeLineMaker = {
+export interface TimeLineMaker {
     timelineFlagList: TimelineAxisFlag[];
-    selectedFlag: TimelineAxisFlag | undefined;
+    selectedFlag?: TimelineAxisFlag;
     timelineFlagColorList: string[];
     refreshTrigger: number;
-    oldMarkedRange: undefined | [TimeStamp, TimeStamp];
+    oldMarkedRange?: [TimeStamp, TimeStamp];
 };
 
 export const TIME_MAKER_DEFAULT: TimeLineMaker = {

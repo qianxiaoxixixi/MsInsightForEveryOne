@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import styled from '@emotion/styled';
 
 // rect: [x, y, width, height]
@@ -59,7 +63,8 @@ export const drawMultiBgRoundedRect = (rect: number[], context: CanvasRenderingC
  * @param end end time
  * @returns the data set that can all be actually rendered.
  */
-export const zipStatusData = <T extends { startTime: number; duration: number; type: string }>(originalData: T[], width: number, start: number, end: number): T[] => {
+export const zipStatusData = <T extends { startTime: number; duration: number; type: string }>(originalData: T[],
+    width: number, start: number, end: number): T[] => {
     return originalData;
 };
 
@@ -67,7 +72,7 @@ export const zipTimeSeriesData = (dataset: number[][], width: number, start: num
     if (width <= 0 || dataset.length === 0) {
         return [];
     }
-    const pxToTime = (px: number): number => start + (end - start) / width * px;
+    const pxToTime = (px: number): number => start + ((end - start) / width * px);
     const getTimestamp = (data: number[]): number => data[0];
 
     const result: number[][] = [];
@@ -122,7 +127,8 @@ export const zipTimeSeriesData = (dataset: number[][], width: number, start: num
 };
 
 // find the last data that has key <= target
-export const search = <T extends number | object>(data: T[], target: number, getKey: (elem: T) => number, range: [number, number] = [0, data.length]): number => {
+export const search = <T extends number | object>(data: T[], target: number, getKey: (elem: T) => number,
+    range: [number, number] = [0, data.length]): number => {
     let [lo, hi] = range;
     while (lo < hi - 1) {
         const mid = Math.floor((lo + hi) / 2);

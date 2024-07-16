@@ -1,12 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import { computed } from 'mobx';
 import { observer } from 'mobx-react';
-import { preOrderPinnedFlatten, TreeNode } from '../../entity/common';
-import { InsightUnit } from '../../entity/insight';
+import { preOrderPinnedFlatten } from '../../entity/common';
+import type { TreeNode } from '../../entity/common';
+import type { InsightUnit } from '../../entity/insight';
 import styled from '@emotion/styled';
 // support utils/types
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { getAutoKey } from '../../utils/dataAutoKey';
 // same level infer
 import { Unit, Scroller, computeVisibleUnitRange } from './Units';
@@ -88,7 +93,8 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
 
 const PUnits = ({ session, height, laneInfoWidth }:
 { session: Session; height: number; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
-    return <Scroller session={session} unitsArea={session.pinnedUnits} supportJump={false} ref={ref} orderOptions={orderOptions} eventType={EventType.PINNEDUNITWRAPPERSCROLL}>
+    return <Scroller session={session} unitsArea={session.pinnedUnits} supportJump={false}
+        ref={ref} orderOptions={orderOptions} eventType={EventType.PINNEDUNITWRAPPERSCROLL}>
         <FlattenUnits
             session={session}
             height={height}

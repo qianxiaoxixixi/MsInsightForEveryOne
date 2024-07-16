@@ -1,5 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { observer } from 'mobx-react';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { useRef, useState } from 'react';
 import { CustomButton } from './base/StyledButton';
 import { handleTimeMakerAction } from '../utils/TimeMakerUtils';
@@ -13,7 +17,7 @@ import { ReactComponent as AntdFlagIcon } from '../assets/images/insights/UIicon
 import { addRangeFlag, deleteRangeFlag, linearScaleFactory, transformTimeToLeft } from './TimelineMarker';
 import { runInAction } from 'mobx';
 import { getTimestamp } from '../utils/humanReadable';
-import { SvgType } from './base/rc-table/types';
+import type { SvgType } from './base/rc-table/types';
 import { adaptDpr } from 'lib/CommonUtils';
 
 const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
@@ -36,7 +40,7 @@ const CanvasContainer = styled.div`
 
 const rangeButtonCanvasId = 'rangeButtonCanvas';
 
-type RangeMarkerButtonProps = {
+interface RangeMarkerButtonProps {
     session: Session;
     timelineHeight: number;
 };
@@ -90,7 +94,7 @@ const drawPlaceRangeButton = (session: Session, current: HTMLCanvasElement, doma
     const beginX = transformTimeToLeft(domain[0], domain[1], rangeEndTimeStamp, canvasWidth) - buttonWith;
     buttonSvg.style.fill = session.timelineMaker.oldMarkedRange === undefined ? '#5291FF' : '#5BA854';
     const buttonSvgString = new XMLSerializer().serializeToString(buttonSvg);
-    const buttonSvgData = 'data:image/svg+xml;base64,' + btoa(buttonSvgString);
+    const buttonSvgData = `data:image/svg+xml;base64,${btoa(buttonSvgString)}`;
     const buttonImage: HTMLImageElement = new Image();
     buttonImage.src = buttonSvgData;
     buttonImage.onload = (): void => {

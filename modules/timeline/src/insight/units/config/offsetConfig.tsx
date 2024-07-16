@@ -8,13 +8,13 @@ import React, { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
-import { Session } from '../../../entity/session';
+import type { Session } from '../../../entity/session';
 import styled from '@emotion/styled';
 import { StyledTooltip } from '../../../components/base/StyledTooltip';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useTheme } from '@emotion/react';
-import { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
+import type { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
 import { getTimeOffset } from '../utils';
 import { CustomButton } from '../../../components/base/StyledButton';
 import type { SvgType } from '../../../components/base/rc-table/types';
@@ -65,7 +65,7 @@ function checkValue(inputElement: HTMLInputElement, session: Session, setValue: 
         if (preTimestampOffset === inputValue) {
             return;
         }
-        const prevObj = session.unitsConfig.offsetConfig.timestampOffset as Object;
+        const prevObj = session.unitsConfig.offsetConfig.timestampOffset as object;
         session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [cardMetaData.cardId]: (inputValue) };
     } else {
         setValue(defaultOffset);
@@ -133,8 +133,8 @@ function handleAlignStart(inputRef: InputRef, session: Session, setValue: React.
 
 const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
     const cardId = (metaData as ThreadTraceRequest).cardId;
-    const defaultOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0;
-    const [offset, setOffset] = useState(String(defaultOffset));
+    const timestampOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0;
+    const [offset, setOffset] = useState(String(timestampOffset));
     const [visible, setVisible] = useState(false);
     const [title, setTitle] = useState('Please enter a proper value');
     const inputRef = useRef<InputRef>(null);

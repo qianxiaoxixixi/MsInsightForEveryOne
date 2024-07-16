@@ -1,11 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import { observer } from 'mobx-react';
-import React, { ForwardedRef } from 'react';
-import { TableHandle } from '../base/rc-table/interface';
+import React from 'react';
+import type { ForwardedRef } from 'react';
+import type { TableHandle } from '../base/rc-table/interface';
 import { AutoAdjustedTable } from './base/AutoAdjustedTable';
-import { CommonStateProto } from './base/Tabs';
+import type { CommonStateProto } from './base/Tabs';
 import { useDetailUpdater, useMoreUpdater } from './hooks';
-import { DetailTabs } from './TabPanes';
-import { MoreTableProps, TableViewProps } from './types';
+import type { DetailTabs } from './TabPanes';
+import type { MoreTableProps, TableViewProps } from './types';
 import { selectRow } from './utils';
 
 function Support<T extends CommonStateProto>(

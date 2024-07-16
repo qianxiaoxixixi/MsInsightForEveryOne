@@ -1,14 +1,19 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import * as React from 'react';
 import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 import { useTheme } from '@emotion/react';
-import { Session } from '../../../entity/session';
-import { BottomPanelRender } from '../../../entity/insight';
-import { TabProto, TabComponentProps, CommonStateProto, TabTitlesProto, createInteractorProps } from '../base/Tabs';
+import type { Session } from '../../../entity/session';
+import type { BottomPanelRender } from '../../../entity/insight';
+import { TabTitlesProto, createInteractorProps } from '../base/Tabs';
+import type { TabProto, TabComponentProps, CommonStateProto } from '../base/Tabs';
 
 interface MoreRender<T extends object> {
     More: (props: T) => JSX.Element;
-    moreProps: Omit<T, 'session' | 'height'> | {};
+    moreProps: Omit<T, 'session' | 'height'> | Record<string, unknown>;
 }
 
 export interface MoreTabs<T extends object> extends TabProto {
@@ -49,7 +54,8 @@ interface TabMoresProps<T extends object> {
     state?: Record<string, unknown>;
 };
 
-type TabMoresReturn<More extends keyof ReturnType<BottomPanelRender>, Title extends Exclude<keyof ReturnType<BottomPanelRender>, More>> = Pick<ReturnType<BottomPanelRender>, More | Title>;
+type TabMoresReturn<More extends keyof ReturnType<BottomPanelRender>,
+    Title extends Exclude<keyof ReturnType<BottomPanelRender>, More>> = Pick<ReturnType<BottomPanelRender>, More | Title>;
 export const TabMores = function<T extends object, MoreTabsState extends CommonStateProto>({ tabs, state }: TabMoresProps<T>): TabMoresReturn<'More', 'MoreTitle'> {
     const commonState = observable(Object.assign(state ?? {}, { activeKey: 0 })) as MoreTabsState;
     const getProps = (session: Session): TabComponentProps<MoreTabs<T>, MoreTabsState> => {

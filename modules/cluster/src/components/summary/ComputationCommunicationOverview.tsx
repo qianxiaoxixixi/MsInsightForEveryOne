@@ -1,17 +1,18 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { observer } from 'mobx-react';
 import { ExclamationCircleFilled } from '@ant-design/icons';
-import { Session } from '../../entity/session';
-import { VoidFunction } from '../../utils/interface';
+import type { Session } from '../../entity/session';
+import type { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero, StyledTooltip } from '../Common';
-import Filter, { ConditionDataType } from './Filter';
+import Filter from './Filter';
+import type { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import SummaryTable from './SummaryTable';
 import BaseInfo from './BaseInfo';
@@ -62,7 +63,7 @@ const commonSeries: any = {
     },
     tooltip: {
         valueFormatter: function (value: any) {
-            return value + ' μs';
+            return `${value} μs`;
         },
     },
     data: [],

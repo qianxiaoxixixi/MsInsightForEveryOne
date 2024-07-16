@@ -1,4 +1,8 @@
-import {
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+
+import type {
     InsightMetaData,
     MetaData,
     ProcessMetaData,
@@ -6,12 +10,13 @@ import {
     ThreadMetaData,
     CounterRequest,
 } from '../../entity/data';
-import { ChartDesc, InsightUnit, UnitHeight } from '../../entity/insight';
+import { UnitHeight } from '../../entity/insight';
+import type { ChartDesc, InsightUnit } from '../../entity/insight';
 import { CounterUnit, ProcessUnit, ThreadUnit, LabelUnit } from './AscendUnit';
 
 const paramsTree = new Map();
 
-export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Array<InsightMetaData<T>>, parentUnit: InsightUnit): void {
+export function recursiveExpandUnit<T extends keyof MetaData> (metaDataList: Array<InsightMetaData<T>>, parentUnit: InsightUnit): void {
     if (metaDataList === undefined || parentUnit === undefined) {
         return;
     }
@@ -38,7 +43,7 @@ export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Ar
     }
 }
 
-export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
+export function handleMap<T extends keyof MetaData> (insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
     paramsTree.clear();
     insightMetaData.children?.forEach(processInfo => {
         const processMetadata = (processInfo.metadata as ProcessMetaData);
@@ -58,7 +63,7 @@ function handleChildren<T extends keyof MetaData>(processInfo: InsightMetaData<T
     });
 };
 
-function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): InsightUnit | undefined {
+function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): InsightUnit | undefined {
     switch (insightMetaData.type) {
         case 'label': {
             const meta = generateMetaData(paramsTree.get(insightMetaData.metadata).cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '', paramsTree.get(insightMetaData.metadata).dataSource);
