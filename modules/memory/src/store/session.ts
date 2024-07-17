@@ -12,12 +12,6 @@ export class SessionStore {
         this._activeSession = new Session();
     }
 
-    // creates a new session in the store.
-    async newSession(conf?: Partial<Session> | Session): Promise<Session | undefined> {
-        const session = new Session();
-        return session;
-    }
-
     /**
      * The session store is locked if a session is in recording, users can't switch between sessions when session store is locked.
      *
@@ -29,5 +23,11 @@ export class SessionStore {
 
     set activeSession(value: Session | undefined) {
         this._activeSession = value;
+    }
+
+    // creates a new session in the store.
+    async newSession(conf?: Partial<Session> | Session): Promise<Session | undefined> {
+        const session = new Session();
+        return session;
     }
 }
