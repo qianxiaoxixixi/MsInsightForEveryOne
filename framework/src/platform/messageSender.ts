@@ -8,12 +8,14 @@ import type { BasePlatform } from './BasePlatform';
 
 declare function acquireVsCodeApi(): any;
 
-export let MESSAGE_SENDER: BasePlatform = new Browser();
+let platform: BasePlatform = new Browser();
 if (typeof acquireVsCodeApi === 'function') {
-    MESSAGE_SENDER = new VsCodePlatform();
-    MESSAGE_SENDER.sendMessage = acquireVsCodeApi().postMessage;
+    platform = new VsCodePlatform();
+    platform.sendMessage = acquireVsCodeApi().postMessage;
 }
 
 if (typeof window.cefQuery === 'function') {
-    MESSAGE_SENDER = new IntellijPlatform();
+    platform = new IntellijPlatform();
 }
+
+export const MESSAGE_SENDER: BasePlatform = platform;
