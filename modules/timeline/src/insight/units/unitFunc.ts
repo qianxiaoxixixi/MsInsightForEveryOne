@@ -15,7 +15,7 @@ import { CounterUnit, ProcessUnit, ThreadUnit, LabelUnit } from './AscendUnit';
 
 const paramsTree = new Map();
 
-export function recursiveExpandUnit<T extends keyof MetaData> (metaDataList: Array<InsightMetaData<T>>, parentUnit: InsightUnit): void {
+export function recursiveExpandUnit<T extends keyof MetaData>(metaDataList: Array<InsightMetaData<T>>, parentUnit: InsightUnit): void {
     if (metaDataList === undefined || parentUnit === undefined) {
         return;
     }
@@ -42,7 +42,7 @@ export function recursiveExpandUnit<T extends keyof MetaData> (metaDataList: Arr
     }
 }
 
-export function handleMap<T extends keyof MetaData> (insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
+export function handleMap<T extends keyof MetaData>(insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
     paramsTree.clear();
     insightMetaData.children?.forEach(processInfo => {
         const processMetadata = (processInfo.metadata as ProcessMetaData);
@@ -65,12 +65,14 @@ function handleChildren<T extends keyof MetaData>(processInfo: InsightMetaData<T
 function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): InsightUnit | undefined {
     switch (insightMetaData.type) {
         case 'label': {
-            const meta = generateMetaData(paramsTree.get(insightMetaData.metadata).cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '', paramsTree.get(insightMetaData.metadata).dataSource);
+            const meta = generateMetaData(paramsTree.get(insightMetaData.metadata).cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '');
+            meta.dataSource = paramsTree.get(insightMetaData.metadata).dataSource;
             meta.metaType = insightMetaData.metadata.metaType;
             return new LabelUnit(meta);
         }
         case 'process': {
-            const meta = generateMetaData(insightMetaData.metadata.cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '', paramsTree.get(insightMetaData.metadata).dataSource);
+            const meta = generateMetaData(insightMetaData.metadata.cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '');
+            meta.dataSource = paramsTree.get(insightMetaData.metadata).dataSource;
             meta.label = insightMetaData.metadata.label;
             meta.metaType = insightMetaData.metadata.metaType;
             return new ProcessUnit(meta);
@@ -78,7 +80,8 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
         case 'thread': {
             const meta = generateMetaData(insightMetaData.metadata.cardId, (parentMetaData as ProcessMetaData).processId,
                 (parentMetaData as ProcessMetaData).processName, insightMetaData.metadata.threadId, insightMetaData.metadata.threadName,
-                paramsTree.get(insightMetaData.metadata).dataSource);
+            );
+            meta.dataSource = paramsTree.get(insightMetaData.metadata).dataSource;
             meta.metaType = insightMetaData.metadata.metaType;
             const threadUnit = new ThreadUnit(meta);
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
@@ -93,7 +96,8 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
         case 'counter': {
             const meta = generateMetaData(paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId, (parentMetaData as ProcessMetaData).processId,
                 insightMetaData.metadata.processName, insightMetaData.metadata.threadId, insightMetaData.metadata.threadName,
-                paramsTree.get(insightMetaData.metadata).dataSource);
+            );
+            meta.dataSource = paramsTree.get(insightMetaData.metadata).dataSource;
             meta.dataType = insightMetaData.metadata.dataType;
             meta.metaType = insightMetaData.metadata.metaType;
             return new CounterUnit(meta);
@@ -103,14 +107,13 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
     }
 }
 
-function generateMetaData(cardId: string, processId: string, processName: string, threadId: string, threadName: string, dataSource: DataSource): any {
+function generateMetaData(cardId: string, processId: string, processName: string, threadId: string, threadName: string): any {
     return {
         cardId,
         processId,
         processName,
         threadId,
         threadName,
-        dataSource,
     };
 };
 
