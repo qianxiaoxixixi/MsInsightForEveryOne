@@ -3,10 +3,11 @@
  */
 
 import { throttle } from 'lodash';
+import { CustomConsole as console } from 'lib/CommonUtils';
 
 type RenderID = number;
 interface Task {
-    action: Function;
+    action: () => void;
     status: 'pending' | 'fullfilled';
     type: 'once' | 'always';
 }
@@ -15,6 +16,15 @@ export class RenderEngine {
     private readonly _renderTasks: Map<RenderID, Task> = new Map();
     private _curTaskID: number = 0;
     private _status: 'running' | 'waiting' = 'running';
+
+    private readonly run = throttle((): void => {
+        requestAnimationFrame(() => {
+            this.flush();
+            if (this._status === 'running') {
+                this.run();
+            }
+        });
+    }, RENDER_FREQUENCY);
 
     constructor() {
         this.run();
@@ -28,7 +38,7 @@ export class RenderEngine {
         this._status = 'waiting';
     }
 
-    addTask(action: Function, type: 'once' | 'always' = 'always'): RenderID {
+    addTask(action: () => void, type: 'once' | 'always' = 'always'): RenderID {
         const renderID = this._curTaskID;
         this._renderTasks.set(renderID, { action, status: 'pending', type });
         this._curTaskID++;
@@ -38,15 +48,6 @@ export class RenderEngine {
     deleteTask(renderID: RenderID): void {
         this._renderTasks.delete(renderID);
     }
-
-    private readonly run = throttle((): void => {
-        requestAnimationFrame(() => {
-            this.flush();
-            if (this._status === 'running') {
-                this.run();
-            }
-        });
-    }, RENDER_FREQUENCY);
 
     private flush(): void {
         this._renderTasks.forEach((task) => {

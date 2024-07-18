@@ -73,6 +73,7 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
             element.addEventListener('wheel', handleWheel, { passive: false });
             return () => { element.removeEventListener('wheel', handleWheel); };
         }
+        return () => {};
     }, []);
     return <PinnedUnitsContainer ref={wrapRef} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }}>
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: headOffset }} />

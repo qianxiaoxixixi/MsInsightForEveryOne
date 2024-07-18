@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { TooltipProps } from 'antd';
+import type { TooltipProps } from 'antd';
 import type * as React from 'react';
 import type {
     ColumnType as RcColumnType, ExpandableConfig, GetRowKey, Key, TriggerEventHandler
@@ -27,10 +27,6 @@ export interface TableLocale {
 }
 
 export type SortOrder = 'descend' | 'ascend' | null;
-
-const TableActions = [ 'sort', 'filter' ] as const;
-export type TableAction = typeof TableActions[number];
-
 export type CompareFn<T> = (a: T, b: T, sortOrder?: SortOrder) => number;
 
 export interface ColumnFilterItem {
@@ -48,9 +44,7 @@ export type ColumnTitle<RecordType> =
     | React.ReactNode
     | ((props: ColumnTitleProps<RecordType>) => React.ReactNode);
 
-export type FilterValue = (Key | boolean)[];
-export type FilterKey = Key[] | null;
-export type FilterSearchType = boolean | ((input: string, record: {}) => boolean);
+export type FilterValue = Array<Key | boolean>;
 export interface FilterConfirmProps {
     closeDropdown: boolean;
 }
@@ -104,11 +98,6 @@ export interface TableRowSelection<T> {
 }
 
 export type TransformColumns<RecordType> = (columns: ColumnsType<RecordType>) => ColumnsType<RecordType>;
-
-export interface TableCurrentDataSource<RecordType> {
-    currentDataSource: RecordType[];
-    action: TableAction;
-}
 
 export interface SorterResult<RecordType> {
     column?: ColumnType<RecordType>;
