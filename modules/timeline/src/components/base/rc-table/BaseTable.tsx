@@ -7,7 +7,7 @@ import { keys } from 'lodash';
 import ResizeObserver from 'rc-resize-observer';
 import { getTargetScrollBarSize } from 'rc-util/lib/getScrollBarSize';
 import pickAttrs from 'rc-util/lib/pickAttrs';
-import React, { ForwardedRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
+import React, { type ForwardedRef, useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
 import { ReactComponent as SortNormal } from '../../../assets/images/sortNormal.svg';
 import { Body } from './Body';
 import { ColGroup } from './ColGroup';

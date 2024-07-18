@@ -1,6 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
- */
+*/
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
@@ -21,7 +21,7 @@ import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 import i18n from '../../i18n';
 import { HelpIcon } from 'lib/Icon';
 
-interface SummaryDataType{
+interface SummaryDataType {
     [propName: string]: any;
     rankId: string ;
     prepareTime: number;

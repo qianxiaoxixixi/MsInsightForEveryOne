@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
- */
-
+*/
 import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
 import connector from '@/connection';
@@ -27,7 +26,7 @@ export const disconnectRemote = function (dataSource: DataSource): boolean {
         return false;
     }
     return true;
-}
+};
 
 export const isExistedRemote = function(dataSource: DataSource): boolean {
     return CONNECTION_MAP.has(getConnectionMapKey(dataSource));

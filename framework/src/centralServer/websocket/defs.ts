@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
 const getParamMap = (): Map<string, string> => {
     const paramMap: Map<string, string> = new Map();
@@ -53,7 +52,7 @@ export interface Response<T = Record<string, unknown>> {
     };
 };
 
-export type Notification<T = Record<string, unknown>> = {
+export interface Notification<T = Record<string, unknown>> {
     dataSource?: DataSource;
     moduleName: ModuleName;
     event: string;

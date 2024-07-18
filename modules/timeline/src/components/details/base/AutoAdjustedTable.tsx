@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Empty } from 'antd';
@@ -6,13 +9,13 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMemo } from 'react';
 import { ReactComponent as ExpandIcon } from '../../../assets/images/insights/PullDownIcon.svg';
-import { TreeNode } from '../../../entity/common';
+import type { TreeNode } from '../../../entity/common';
 import { getAutoKey } from '../../../utils/dataAutoKey';
-import { TableProps } from '../../base/rc-table';
+import type { TableProps } from '../../base/rc-table';
 import { INSIGHT_TABLE_PREFIX } from '../../base/rc-table/BaseTable';
-import { TableHandle } from '../../base/rc-table/interface';
+import type { TableHandle } from '../../base/rc-table/interface';
 import { Table } from '../../base/table';
-import { TableState } from '../types';
+import type { TableState } from '../types';
 
 // constants
 const EMPTY_VIEW_HEIGHT = 22;

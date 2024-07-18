@@ -1,7 +1,6 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
-
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -285,7 +284,7 @@ const BaseSummary = observer((props: any) => {
             key: 'click',
             ellipsis: true,
             render: (_: any, record: any): JSX.Element => (<Button type="link"
-                onClick={() => {
+                onClick={(): void => {
                     setRowData({ name: record.name ?? record.originOptimizer, ...record });
                 }}>{t('Click')}</Button>),
         }];

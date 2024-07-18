@@ -1,5 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
 import { Modal, Tooltip } from 'antd';
-import React, { useState, MouseEvent } from 'react';
+import React, { useState, type MouseEvent } from 'react';
 import type { TimelineAxisFlag } from '../entity/timeMaker';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import { ReactComponent as TimeDiffIcon } from '../assets/images/ic_public_timeDiff.svg';

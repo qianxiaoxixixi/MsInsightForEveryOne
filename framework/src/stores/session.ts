@@ -1,11 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
- */
-
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
 import { defineStore } from 'pinia';
 import { reactive } from 'vue';
 import { isConnected } from '@/centralServer/server';
-import { LOCAL_HOST, PORT } from "@/centralServer/websocket/defs";
+import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import connector from '@/connection/index';
 
 export type Timestamp = number;

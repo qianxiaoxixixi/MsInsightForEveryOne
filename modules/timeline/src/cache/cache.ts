@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
- */
-import { isValidSession, ValidSession } from '../entity/session';
+*/
+import { isValidSession, type ValidSession } from '../entity/session';
 import { dataFunc } from './utils';
 
 export interface Cache {

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- */
-import { NotificationHandler } from './connection/defs';
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
+import type { NotificationHandler } from './connection/defs';
 import {
     removeRemoteHandler,
     parseClusterSuccessHandler,

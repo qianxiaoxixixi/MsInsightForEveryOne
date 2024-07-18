@@ -6,7 +6,7 @@ import type { ButtonProps } from 'antd/lib/button';
 import { Button } from 'antd';
 import * as React from 'react';
 import { useTheme } from '@emotion/react';
-import { ForwardedRef, FunctionComponent, SVGProps } from 'react';
+import type { ForwardedRef, FunctionComponent, SVGProps } from 'react';
 import { StyledTooltip } from './StyledTooltip';
 
 interface CustomButtonProps {
