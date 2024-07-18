@@ -139,13 +139,16 @@ function wrapData(dataSource: any, t: TFunction): any {
             option.visualMap.precision = Math.max(minDecimalCount, maxDecimalCount);
         }
         option.series[0].label.formatter = function (params: any): string {
-            const { data } = params;
-            const repeatedKey = `${data[0]},${data[1]}`;
+            const newData = params?.data;
+            if (newData.length < 3) {
+                return '';
+            }
+            const repeatedKey = `${newData[0]},${newData[1]}`;
             if (repeatedKey in repeatDataToolTip && repeatDataToolTip[repeatedKey]) {
-                data[2] = `[${data[2]},${repeatDataToolTip[repeatedKey]}]`;
+                newData[2] = `[${newData[2]},${repeatDataToolTip[repeatedKey]}]`;
                 repeatDataToolTip[repeatedKey] = '';
             }
-            return data[2];
+            return newData[2];
         };
         option.series[0].tooltip.formatter = function (params: any): string {
             const datalist = params?.data;

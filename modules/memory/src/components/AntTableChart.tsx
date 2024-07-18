@@ -99,8 +99,8 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     // key is used to reset the Table state (page and sort) if the columns change
     const key = React.useMemo(() => `${Math.random()}`, [tableData.columns]);
 
-    const onChange = (current: number, size: number): void => {
-        onCurrentChange(current);
+    const onChange = (newCurrent: number, size: number): void => {
+        onCurrentChange(newCurrent);
         onPageSizeChange(size);
     };
 

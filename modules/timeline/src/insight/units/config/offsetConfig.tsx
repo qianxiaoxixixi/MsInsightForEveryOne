@@ -1,6 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- */
+*/
 import type { InputRef } from 'antd';
 import { StyledInput } from '../../../components/base/StyledInput';
 import { StyledSelect } from '../../../components/base/StyledSelect';
@@ -21,7 +21,6 @@ import type { SvgType } from '../../../components/base/rc-table/types';
 import { ReactComponent as AlignStartIcon } from '../../../assets/images/timeline/ic_align_start.svg';
 import { message } from 'antd';
 const AlignIcon = AlignStartIcon as SvgType;
-
 const defaultOffset = '0';
 const minOffset = -Number.MAX_VALUE;
 const maxOffset = Number.MAX_VALUE;

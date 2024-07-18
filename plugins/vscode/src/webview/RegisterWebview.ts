@@ -1,10 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
 import * as vscode from 'vscode';
-import { Webview } from "./Webview";
-import { spawn, ChildProcess, spawnSync} from 'child_process';
+import { Webview } from './Webview';
+import { spawn, type ChildProcess, spawnSync} from 'child_process';
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import { platform } from 'os';
-import { WebviewManager } from './WebviewManager';
+import type { WebviewManager } from './WebviewManager';
 
 const modules = ['./profiler/plugins/Timeline/index.html',
     './profiler/plugins/Memory/index.html',
@@ -13,16 +16,14 @@ const modules = ['./profiler/plugins/Timeline/index.html',
 ];
 
 export class RegisterWebview extends Webview {
-
     private readonly _extensionUri: vscode.Uri;
-
     private htmlStr: string;
     private server?: ChildProcess;
     private serverCheckSchedule?: NodeJS.Timeout;
     private tryRestartTime = 0;
     private port = 9000;
 
-    constructor(viewType: string, title: string, context: vscode.ExtensionContext,  manager: WebviewManager) {
+    constructor(viewType: string, title: string, context: vscode.ExtensionContext, manager: WebviewManager) {
         super(viewType, title, context, manager);
         this._extensionUri = context.extensionUri;
         const filePath = join(__dirname, './profiler/index.html');
@@ -50,7 +51,7 @@ export class RegisterWebview extends Webview {
     executeStartServerCommand(): void {
         let serverName = './profiler/server/profiler_server';
         if (platform() === 'win32') {
-            serverName = serverName + '.exe';
+            serverName = `${serverName}.exe`;
         }
         const serverPath = join(__dirname, serverName);
         if (platform() !== 'win32') {
@@ -65,17 +66,11 @@ export class RegisterWebview extends Webview {
             return;
         }
         this.port = Number.parseInt(port);
-        this.server = spawn(serverCommand, [' --wsPort=' + this.port]);
-        this.server.stdout?.on('data', (data: any) => {
-            console.log('[server][info]: ' + data);
-        });
-        this.server.stderr?.on('data', (data: any) => {
-            console.log('[server][err]: ' + data);
-        });
+        this.server = spawn(serverCommand, [` --wsPort=${this.port}`]);
     }
 
     scanPort(serverCommand: string): undefined | string {
-        const scanPort = spawnSync(serverCommand, ['--scan=' + this.port]);
+        const scanPort = spawnSync(serverCommand, [`--scan=${this.port}`]);
         if (scanPort.error) {
             return undefined;
         }
@@ -92,7 +87,7 @@ export class RegisterWebview extends Webview {
 
     startServerCheckAndRestart(): void {
         this.serverCheckSchedule = setInterval(() => {
-            if (this.server && this.server.exitCode !== null && this.panel?.active) {
+            if (this.server?.exitCode !== null && this.panel?.active) {
                 if (this.tryRestartTime++ < 3) {
                     vscode.window.showWarningMessage('[insight]: server has been dead, please close and reopen');
                     return;

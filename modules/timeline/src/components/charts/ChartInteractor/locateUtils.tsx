@@ -1,9 +1,8 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
-
 import type { DataMatcher, Session } from '../../../entity/session';
-import { InsightUnit } from '../../../entity/insight';
+import { type InsightUnit } from '../../../entity/insight';
 import { isPinned } from '../../ChartContainer/unitPin';
 
 export const getAllNormalUnits = (units: InsightUnit[]): InsightUnit[] => {

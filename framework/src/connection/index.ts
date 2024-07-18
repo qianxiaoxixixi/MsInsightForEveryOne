@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- */
-
+*/
 import { console } from '@/utils/console';
 type ReservedEventHandler = 'request';
 type EventHanlder = string;

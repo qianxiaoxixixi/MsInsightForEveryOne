@@ -1,12 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- */
-
+*/
 import '@emotion/react';
 
 declare module '@emotion/react' {
 
-    type ColorPalette = {
+    interface ColorPalette {
         slateblue: string;
         royalblue: string;
         skyblue: string;
@@ -96,9 +95,10 @@ declare module '@emotion/react' {
         closeDragContainerBG: string; // 关闭按钮背景色
         tooltipFontColor: string; // ToolTip字体颜色
         tooltipBoxShadow: string; // ToolTip盒子阴影
+        // 基于DevEco2.0设计规范的推荐用色
         colorPalette: ColorPalette & {
             transparentMask: string;
-        }; // 基于DevEco2.0设计规范的推荐用色
+        };
         schedulingBorderColorPalette: ColorPalette;// 点选时延信息边框色系
         grayscaleColor: string; // 泳道元素的灰度颜色
         filterColor: string; // 过滤模块字体颜色

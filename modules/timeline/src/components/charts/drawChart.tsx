@@ -1,11 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
- */
-
+*/
 import { observer } from 'mobx-react';
 import React, { useMemo } from 'react';
 import type { ChartProps, ChartType } from '../../entity/chart';
-import { ChartDesc, InsightUnit, isGetChartConfig } from '../../entity/insight';
+import { type ChartDesc, type InsightUnit, isGetChartConfig } from '../../entity/insight';
 import type { Session } from '../../entity/session';
 import { EventChart } from './EventChart';
 import { FilledLineChart } from './FilledLineChart';
