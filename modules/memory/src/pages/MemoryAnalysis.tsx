@@ -457,6 +457,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                     onSelectionChanged={onSelectedRangeChanged}
                                     record={selectedRecord}
                                     isDark={isDark}
+                                    isStatic={false}
                                 />
                                 : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
                             }
@@ -494,6 +495,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                             onSelectionChanged={onSelectedRangeChanged}
                                             record={selectedStaticRecord}
                                             isDark={isDark}
+                                            isStatic={true}
                                         />
                                         : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
                                     }

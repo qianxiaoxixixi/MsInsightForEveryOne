@@ -6,6 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { HelpIcon } from 'lib/Icon';
 import { StyledTooltip } from './StyledTooltip';
 
+const HOUR_TO_MICROSECOND = 1000 * 1000 * 60 * 60;
+const MINUTE_TO_MICROSECOND = 1000 * 1000 * 60;
+const SECOND_TO_MICROSECOND = 1000 * 1000;
+const MILLISECOND_TO_MICROSECONTD = 1000;
+
 export const Label = (props: {name: React.ReactNode;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name}{' :'} </span>;
 };
@@ -48,4 +53,27 @@ export const safeStr = (str: string, ignore?: string): string => {
         return safelist.join(ignore);
     }
     return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+
+export const convertTime = (time: any): string => {
+    if ((typeof time !== 'string' && typeof time !== 'number') || isNaN(parseFloat(`${time}`))) {
+        return safeStr(time);
+    }
+
+    // 时间原本为ms单位，最小可到小数点后三位即微秒级别，为防止浮点数运算丢失精度，统一转为微秒即整数进行运算
+    let timeNum = Math.round(parseFloat(`${time}`) * MILLISECOND_TO_MICROSECONTD);
+    let res = '';
+    const hour = Math.floor(timeNum / HOUR_TO_MICROSECOND);
+    timeNum = timeNum % HOUR_TO_MICROSECOND;
+    res += `${hour}`.padStart(2, '0');
+    const min = Math.floor(timeNum / MINUTE_TO_MICROSECOND);
+    timeNum = timeNum % MINUTE_TO_MICROSECOND;
+    res += `:${String(min).padStart(2, '0')}`;
+    const second = Math.floor(timeNum / SECOND_TO_MICROSECOND);
+    timeNum = timeNum % SECOND_TO_MICROSECOND;
+    res += `:${String(second).padStart(2, '0')}`;
+    const millisecond = Math.floor(timeNum / MILLISECOND_TO_MICROSECONTD);
+    timeNum = timeNum % MILLISECOND_TO_MICROSECONTD;
+    res += `.${String(millisecond).padStart(3, '0')}.${String(timeNum).padStart(3, '0')}`;
+    return res;
 };
