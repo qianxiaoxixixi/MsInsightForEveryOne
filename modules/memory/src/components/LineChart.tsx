@@ -8,7 +8,7 @@ import type { TFunction } from 'i18next';
 import type { Graph } from '../entity/memory';
 import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
-import { safeStr, useChartCharacter } from './Common';
+import { convertTime, safeStr, useChartCharacter } from './Common';
 
 interface IProps {
     graph: Graph;
@@ -17,10 +17,11 @@ interface IProps {
     onSelectionChanged?: (start: number, end: number) => void;
     record?: any;
     isDark: boolean;
+    isStatic: boolean;
 }
 
 type T = string | undefined;
-const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: boolean): echarts.EChartsOption => {
+const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: boolean, isStatic: boolean): echarts.EChartsOption => {
     return {
         title: {
             text: '',
@@ -28,15 +29,15 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
         tooltip: {
             trigger: 'axis',
             formatter: function (params: any): string {
-                let res = `${safeStr(params?.[0]?.name)} <br/>`;
+                let res = `${isStatic ? safeStr(params?.[0]?.name) : convertTime(params?.[0]?.name)} <br/>`;
                 for (const item of params) {
                     if (!isNaN(Number(item?.value?.[item?.encode?.y?.[0]]))) {
                         res += `<span style="background: ${item.color};
-                        height:10px;
+                        height: 10px;
                         width: 10px;
                         border-radius: 50%;
                         display: inline-block;
-                        margin-right:10px;">
+                        margin-right: 10px;">
                         </span>
                         ${safeStr(item.seriesName)}: ${safeStr(item?.value?.[item?.encode?.y?.[0]])}<br/>`;
                     }
@@ -115,10 +116,10 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
 };
 
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
-    props: IProps, isDark: boolean): void => {
+    props: IProps, isDark: boolean, isStatic: boolean): void => {
     const { graph, hAxisTitle, vAxisTitle, onSelectionChanged } = props;
 
-    let option = _getOriginOption(graph.title, hAxisTitle, vAxisTitle, isDark);
+    let option = _getOriginOption(graph.title, hAxisTitle, vAxisTitle, isDark, isStatic);
     option = _handleOption(option, graph);
 
     myChart.setOption(option, true);
@@ -205,7 +206,7 @@ const useTitle = (title: string): string => {
     return translatedMessage;
 };
 export const LineChart: React.FC<IProps> = (props) => {
-    const { graph, record, isDark, onSelectionChanged } = props;
+    const { graph, record, isDark, isStatic, onSelectionChanged } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
@@ -223,7 +224,7 @@ export const LineChart: React.FC<IProps> = (props) => {
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed');
         onSelectionChanged?.(0, -1);
-        _showGraph(myChart, selectedPoints, props, isDark);
+        _showGraph(myChart, selectedPoints, props, isDark, isStatic);
 
         setChartObj(myChart);
         return () => {
