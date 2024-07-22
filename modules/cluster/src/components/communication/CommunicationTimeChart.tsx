@@ -8,7 +8,7 @@ import * as echarts from 'echarts';
 import { Spin } from 'antd';
 import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container } from '../Common';
 import type { Session } from '../../entity/session';
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
 
 function InitCharts(data: dataType): void {

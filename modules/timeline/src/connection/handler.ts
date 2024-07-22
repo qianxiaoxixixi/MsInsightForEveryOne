@@ -15,7 +15,7 @@ import connector from '../connection/index';
 import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
-import i18n from '../i18n';
+import i18n from 'lib/i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
 import { CustomConsole as console } from 'lib/CommonUtils';
 

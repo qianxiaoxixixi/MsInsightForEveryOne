@@ -7,6 +7,7 @@ import { Input, Button, Space } from 'antd';
 import { FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import { limitInput } from '../utils/Common';
+import i18n from '../i18n';
 
 const state = {
     searchText: '',
@@ -33,7 +34,7 @@ const handleReset = (
     handleSearch(selectedKeys as string[], confirm, dataIndex);
 };
 
-export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: string, translation: any): ColumnType<any> {
+export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: string): ColumnType<any> {
     const getColumnFilterProps = (dataIndex: string): ColumnType<any> => ({
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }): React.ReactNode => (
             <div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
@@ -41,7 +42,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
                     ref={(node): void => {
                         state.searchInput = node as null;
                     }}
-                    placeholder={`${translation('buttonText:Search')} ${translation(`filterColumnName:${columnTitle}`)}`}
+                    placeholder={`${i18n.t('buttonText:Search')} ${i18n.t(`filterColumnName:${columnTitle}`)}`}
                     value={selectedKeys[0]}
                     onChange={(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])}
                     onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
@@ -52,11 +53,11 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
                         type="primary"
                         onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
                         icon={<SearchOutlined />} size="small" style={{ width: 90 }}
-                    >{translation('buttonText:Search')}</Button>
+                    >{i18n.t('buttonText:Search')}</Button>
                     <Button
                         onClick={(): void => clearFilters && handleReset(clearFilters, confirm, selectedKeys as string[], dataIndex)}
                         size="small" style={{ width: 90 }}
-                    >{translation('buttonText:Reset')}</Button>
+                    >{i18n.t('buttonText:Reset')}</Button>
                 </Space>
             </div>
         ),

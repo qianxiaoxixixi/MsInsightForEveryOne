@@ -13,7 +13,7 @@ import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../
 import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
 import type { ColumnsType } from 'antd/es/table';
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 
 interface FullConditionType {
     rankId: string ;
@@ -135,7 +135,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
             dataIndex: 'opType',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('opType', 'Type', i18n.t),
+            ...fetchColumnFilterProps('opType', 'Type'),
         },
         {
             title: t('AcceleratorCore'),
@@ -143,7 +143,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
             key: 'accCore',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('accCore', 'AcceleratorCore', i18n.t),
+            ...fetchColumnFilterProps('accCore', 'AcceleratorCore'),
         },
         {
             title: t('Count'),
@@ -180,7 +180,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
 const useOpShapeStaticColumns = (): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
-        { title: t('Name'), dataIndex: 'opName', sorter: true, ellipsis: true, ...fetchColumnFilterProps('opName', 'Name', i18n.t) },
+        { title: t('Name'), dataIndex: 'opName', sorter: true, ellipsis: true, ...fetchColumnFilterProps('opName', 'Name') },
         { title: t('Shape'), dataIndex: 'inputShape', key: 'Shape', sorter: true, ellipsis: true },
         {
             title: t('AcceleratorCore'),
@@ -188,7 +188,7 @@ const useOpShapeStaticColumns = (): ColumnsType<any> => {
             key: 'accCore',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('accCore', 'AcceleratorCore', i18n.t),
+            ...fetchColumnFilterProps('accCore', 'AcceleratorCore'),
         },
         {
             title: t('Count'),
@@ -230,14 +230,14 @@ const useHcclOpColumns = (): ColumnsType<any> => {
             dataIndex: 'name',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('name', 'Name', i18n.t),
+            ...fetchColumnFilterProps('name', 'Name'),
         },
         {
             title: t('Type'),
             dataIndex: 'type',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('type', 'Type', i18n.t),
+            ...fetchColumnFilterProps('type', 'Type'),
         },
         {
             title: `${t('StartTime')}(ms)`,
@@ -268,7 +268,7 @@ const useHcclOpTypeColumns = (): ColumnsType<any> => {
             dataIndex: 'opType',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('opType', 'Type', i18n.t),
+            ...fetchColumnFilterProps('opType', 'Type'),
         },
         {
             title: t('Count'),

@@ -18,7 +18,7 @@ import SummaryTable from './SummaryTable';
 import BaseInfo from './BaseInfo';
 import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 import { HelpIcon } from 'lib/Icon';
 
 interface SummaryDataType {

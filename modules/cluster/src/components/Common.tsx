@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Checkbox, Divider, Select, Pagination, Tooltip } from 'antd';
 import type { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
-import i18n from '../i18n';
+import i18n from 'lib/i18n';
 import type { TooltipProps } from 'antd/lib/tooltip';
 import { useTheme } from '@emotion/react';
 

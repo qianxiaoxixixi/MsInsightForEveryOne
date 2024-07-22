@@ -10,7 +10,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import { limitInput } from 'lib/CommonUtils';
 import { fetchColumnFilterProps } from 'lib/ColumnFilter';
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 interface ColumData {
     title: string;
     dataIndex: string;
@@ -73,55 +73,51 @@ export const pythonApiSummaryColumns: ColumData[] = [
     { title: 'Max(us)', dataIndex: 'max', ...getDefaultColumData('max') },
 ];
 
-function columFilterWithTrans(columnIndex: string, columnTitle: string): () => ColumnType<any> {
-    return fetchColumnFilterProps(columnIndex, columnTitle, i18n.t);
-};
-
 export const useKernelDetails = (): ColumData[] => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
-        { title: t('Name'), dataIndex: 'name', ...getDefaultColumData('name'), ...columFilterWithTrans('name', 'Name') },
-        { title: t('Type'), dataIndex: 'type', ...getDefaultColumData('type'), ...columFilterWithTrans('type', 'Type') },
+        { title: t('Name'), dataIndex: 'name', ...getDefaultColumData('name'), ...fetchColumnFilterProps('name', 'Name') },
+        { title: t('Type'), dataIndex: 'type', ...getDefaultColumData('type'), ...fetchColumnFilterProps('type', 'Type') },
         {
             title: t('AcceleratorCore'),
             dataIndex: 'acceleratorCore',
             ...getDefaultColumData('acceleratorCore'),
-            ...columFilterWithTrans('acceleratorCore', 'AcceleratorCore'),
+            ...fetchColumnFilterProps('acceleratorCore', 'AcceleratorCore'),
         },
         { title: t('StartTime'), dataIndex: 'startTimeLabel', ...getDefaultColumData('startTimeLabel') },
         { title: `${t('Duration')}(us)`, dataIndex: 'duration', ...getDefaultColumData('duration') },
         { title: `${t('WaitTime')}(us)`, dataIndex: 'waitTime', ...getDefaultColumData('waitTime') },
         { title: t('BlockDim'), dataIndex: 'blockDim', ...getDefaultColumData('blockDim') },
-        { title: t('InputShapes'), dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes'), ...columFilterWithTrans('inputShapes', 'InputShapes') },
+        { title: t('InputShapes'), dataIndex: 'inputShapes', ...getDefaultColumData('inputShapes'), ...fetchColumnFilterProps('inputShapes', 'InputShapes') },
         {
             title: t('InputDataTypes'),
             dataIndex: 'inputDataTypes',
             ...getDefaultColumData('inputDataTypes'),
-            ...columFilterWithTrans('inputDataTypes', 'InputDataTypes'),
+            ...fetchColumnFilterProps('inputDataTypes', 'InputDataTypes'),
         },
         {
             title: t('InputFormats'),
             dataIndex: 'inputFormats',
             ...getDefaultColumData('inputFormats'),
-            ...columFilterWithTrans('inputFormats', 'InputFormats'),
+            ...fetchColumnFilterProps('inputFormats', 'InputFormats'),
         },
         {
             title: t('OutputShapes'),
             dataIndex: 'outputShapes',
             ...getDefaultColumData('outputShapes'),
-            ...columFilterWithTrans('outputShapes', 'OutputShapes'),
+            ...fetchColumnFilterProps('outputShapes', 'OutputShapes'),
         },
         {
             title: t('OutputDataTypes'),
             dataIndex: 'outputDataTypes',
             ...getDefaultColumData('outputDataTypes'),
-            ...columFilterWithTrans('outputDataTypes', 'OutputDataTypes'),
+            ...fetchColumnFilterProps('outputDataTypes', 'OutputDataTypes'),
         },
         {
             title: t('OutputFormats'),
             dataIndex: 'outputFormats',
             ...getDefaultColumData('outputFormats'),
-            ...columFilterWithTrans('outputFormats', 'OutputFormats'),
+            ...fetchColumnFilterProps('outputFormats', 'OutputFormats'),
         },
     ];
 };

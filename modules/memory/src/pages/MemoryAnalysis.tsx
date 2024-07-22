@@ -459,7 +459,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                     isDark={isDark}
                                     isStatic={false}
                                 />
-                                : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
+                                : <StyledEmpty style={{ marginTop: 160 }} />
                             }
 
                         </Col>
@@ -497,7 +497,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                             isDark={isDark}
                                             isStatic={true}
                                         />
-                                        : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
+                                        : <StyledEmpty style={{ marginTop: 160 }} />
                                     }
 
                                 </Col>

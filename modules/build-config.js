@@ -57,6 +57,9 @@ const federationConfig = {
     react: {singleton: true, eager: true},
     'react-dom': {singleton: true, eager: true},
     '@cloudsop/horizon': {singleton: true, eager: true},
+    i18next: {singleton: true},
+    'react-i18next': {singleton: true},
+    antd: {singleton: true},
   },
 };
 
