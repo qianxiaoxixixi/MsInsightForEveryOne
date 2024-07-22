@@ -12,7 +12,7 @@ import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
 import { CustomConsole as console } from 'lib/CommonUtils';
 

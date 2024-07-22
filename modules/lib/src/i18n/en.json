@@ -1,7 +1,7 @@
 {
   "translation": {
     "Welcome": "Welcome to DevEco Insight. Select a device and process to start.",
-    "NoData": "No Data",
+    "No Data": "No Data",
     "allSessionText": "View All Sessions",
     "Realtime Monitor": "Realtime Monitor",
     "Current process": "Current process",

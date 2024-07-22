@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import './i18n';
+import 'lib/i18n';
 import 'lib/style/index';
 import './index.css';
 import connector from './connection';

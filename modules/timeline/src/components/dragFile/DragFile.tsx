@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 import { notification } from 'antd';
 import './DragFile.css';
 import { formatTimestamp } from '../../utils/humanReadable';

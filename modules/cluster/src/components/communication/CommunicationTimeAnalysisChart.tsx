@@ -12,7 +12,7 @@ import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import connector from '../../connection';
-import i18n from '../../i18n';
+import i18n from 'lib/i18n';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;

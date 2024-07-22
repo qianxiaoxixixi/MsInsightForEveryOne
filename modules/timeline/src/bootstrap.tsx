@@ -5,7 +5,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { RootStoreContext } from './context/context';
-import './i18n';
+import 'lib/i18n';
 import 'lib/style/index';
 import './index.css';
 import './theme.css';

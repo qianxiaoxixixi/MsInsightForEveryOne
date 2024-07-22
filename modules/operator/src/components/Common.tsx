@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import React from 'react';
-import i18n from '../i18n';
+import i18n from 'lib/i18n';
 import { Col, Row } from 'antd';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {

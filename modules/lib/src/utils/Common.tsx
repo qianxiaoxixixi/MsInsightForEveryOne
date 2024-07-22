@@ -8,20 +8,22 @@ import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
 import { Empty } from 'antd';
 import { useTheme } from '@emotion/react';
+import { useTranslation } from 'react-i18next';
 export { customConsole } from './Console';
 
 export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
 
-export const StyledEmpty = ({ descriptor, style, translation }:
+export const StyledEmpty = ({ descriptor, style }:
 { descriptor: string; style?: object; translation: any}): JSX.Element => {
     const theme = useTheme();
+    const { t } = useTranslation();
     return (
         <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             style={style}
             description={
                 <span style={{ color: theme.fontColor }}>
-                    {translation(descriptor ?? 'No Data')}
+                    {t(descriptor ?? 'No Data')}
                 </span>}>
         </Empty>
     );

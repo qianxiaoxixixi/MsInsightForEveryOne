@@ -206,6 +206,6 @@ export const AutoAdjustedTable = React.forwardRef((props: AutoAdjustedTableProps
                 </div>;
             },
         }}
-        locale={ { emptyText: () => isLoading ? null : <Empty style={{ marginTop, textAlign: 'center' }} description={t('NoData')} imageStyle={{ display: 'none' }}></Empty> } }
+        locale={ { emptyText: () => isLoading ? null : <Empty style={{ marginTop, textAlign: 'center' }} description={t('No Data')} imageStyle={{ display: 'none' }}></Empty> } }
         scroll={ { x: data?.length ? 'max-content' : undefined, y: scrollerHeight } } />);
 });

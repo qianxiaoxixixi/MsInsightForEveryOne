@@ -158,7 +158,7 @@ const MoreContainer = styled.div`
 
 const NoDetail = (): JSX.Element => {
     const { t } = useTranslation();
-    return <div className="empty">{t('NoData')}</div>;
+    return <div className="empty">{t('No Data')}</div>;
 };
 
 interface BottomPanelReactNodes {
