@@ -81,15 +81,15 @@ public:
         Initialize();
     }
 
+    LogUtil(const LogOutType &type, const std::string &filePath, const std::string &wsPort, int maxSize)
+        : outType(type), originFilePath(filePath), wsPort(wsPort), maxSize(maxSize)
+    {
+        Initialize();
+    }
+
     ~LogUtil()
     {
         Destroy();
-    }
-
-    static std::unique_ptr<LogUtil> NewInstance(const LogOutType &type, const std::string &logFilePath,
-                                                const std::string &wsPort)
-    {
-        return std::make_unique<LogUtil>(type, logFilePath, wsPort);
     }
 
     inline LogUtil &SetOutType(const LogOutType &type)
@@ -124,12 +124,6 @@ public:
 
     inline LogUtil &SetMaxSize(const int logMaxSize)
     {
-        if (currentSize > logMaxSize) {
-            this->ofs.close();
-            this->ofs.open(filePath, std::ofstream::out | std::ofstream::trunc);
-            isAppend = false;
-            currentSize = 0;
-        }
         if (this->maxSize != logMaxSize) {
             this->maxSize = logMaxSize;
         }
@@ -197,38 +191,9 @@ public:
 private:
     void Initialize()
     {
-        filePath = originFilePath;
-        std::string::size_type pos = filePath.find_last_of(".");
-        std::string insertPort;
-        if (!wsPort.empty() && wsPort != "-1") {
-            insertPort += "_" + wsPort;
-        }
-        if (pos != std::string::npos) {
-            filePath.insert(pos, insertPort);
-            filePath.insert(pos + insertPort.size(), "_" + std::to_string(++count));
-        } else {
-            filePath += insertPort;
-            filePath += ("_" + std::to_string(++count));
-        }
-        if ((this->outType != LogOutType::TERMINAL) && !this->filePath.empty()) {
-            currentSize = GetFileSize(filePath);
-            if (currentSize > maxSize) {
-                isAppend = false;
-                this->ofs.open(filePath, std::ofstream::out | std::ofstream::trunc);
-                currentSize = 0;
-            } else {
-                this->ofs.open(filePath, std::ofstream::out | std::ofstream::app);
-            }
-#ifdef __APPLE__
-            this->ofs.close(); // 关闭文件以设置权限
-            std::filesystem::permissions(filePath, std::filesystem::perms::owner_read |
-                    std::filesystem::perms::owner_write | std::filesystem::perms::group_read);
-            this->ofs.open(filePath, std::ofstream::out | std::ofstream::app); // 重新打开文件
-#elif __linux__
-            this->ofs.close();
-            chmod(filePath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
-            this->ofs.open(filePath, std::ofstream::out | std::ofstream::app);
-#endif
+        // read the last write log file and the count
+        while (outType != LogOutType::TERMINAL && CheckRotating()) {
+            RotatingLogFile();
         }
     }
 
@@ -253,57 +218,62 @@ private:
         return str;
     }
 
-    inline int GetFileSize(const std::string &path) const
+    static inline int GetFileSize(const std::string &path)
     {
         std::ifstream fr;
         fr.open(path, std::ios::in | std::ios::binary);
         int result = 0;
         if (fr.is_open()) {
-            fr.seekg(0, fr.end);
+            fr.seekg(0, std::ifstream::end);
             result = static_cast<int>(fr.tellg());
         }
         fr.close();
         return result;
     }
 
-    inline void Check()
+    inline void RotatingLogFile()
     {
-        CheckPort();
-        if ((currentSize >= maxSize) && ofs.is_open()) {
+        if (ofs.is_open()) {
             ofs.close();
-            filePath = originFilePath;
-            if (count >= maxCount) {
-                count = 0;
-                isAppend = false;
-            }
-            filePath.insert(filePath.find_last_of("."), "_" + wsPort + "_" + std::to_string(++count));
-            if (isAppend) {
-                currentSize = GetFileSize(filePath);
-                ofs.open(filePath, std::ios::out | std::ios::app);
-            } else {
-                ofs.open(filePath, std::ios::out | std::ios::trunc);
-                currentSize = 0;
-            }
-#ifdef __APPLE__
-            ofs.close(); // 关闭文件以设置权限
-            std::filesystem::permissions(filePath, std::filesystem::perms::owner_read |
-                    std::filesystem::perms::owner_write | std::filesystem::perms::group_read);
-            ofs.open(filePath, std::ofstream::out | std::ofstream::app); // 重新打开文件
-#elif __linux__
-            ofs.close();
-            chmod(filePath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
-            ofs.open(filePath, std::ofstream::out | std::ofstream::app);
-#endif
         }
+        filePath = originFilePath;
+        if (count >= maxCount) {
+            count = 0;
+            isAppend = false;
+        }
+        filePath.insert(filePath.find_last_of('.'), "_" + wsPort + "_" + std::to_string(++count));
+        if (isAppend) {
+            currentSize = GetFileSize(filePath);
+            ofs.open(filePath, std::ios::out | std::ios::app);
+        } else {
+            ofs.open(filePath, std::ios::out | std::ios::trunc);
+            currentSize = 0;
+        }
+#ifdef __APPLE__
+        ofs.close(); // 关闭文件以设置权限
+        std::filesystem::permissions(filePath, std::filesystem::perms::owner_read |
+                std::filesystem::perms::owner_write | std::filesystem::perms::group_read);
+        ofs.open(filePath, std::ofstream::out | std::ofstream::app); // 重新打开文件
+#elif __linux__
+        ofs.close();
+        chmod(filePath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
+        ofs.open(filePath, std::ofstream::out | std::ofstream::app);
+#endif
     }
 
-    inline void CheckPort()
+    inline bool CheckRotating() const
+    {
+        // count == 0 is true when init
+        return (count == 0) || currentSize >= maxSize;
+    }
+
+    /**
+     * @brief force flush the log content to disk
+     */
+    inline void Flush()
     {
         if (!wsPort.empty() && wsPort != "-1" && ofs.is_open()) {
             ofs.close();
-            filePath = originFilePath;
-            filePath.insert(filePath.find_last_of("."), "_" + wsPort);
-            filePath.insert(filePath.find_last_of("."), "_" + std::to_string(count));
             currentSize = GetFileSize(filePath);
             ofs.open(filePath, std::ios::out | std::ios::app);
         }
@@ -324,7 +294,11 @@ private:
             (*outMap[level]) << str;
         }
         if (outType == LogOutType::BOTH || outType == LogOutType::FILE) {
-            Check();
+            if (CheckRotating()) {
+                RotatingLogFile();
+            }
+            // ensure the prev log write into disk
+            Flush();
             Append(str);
         }
     }

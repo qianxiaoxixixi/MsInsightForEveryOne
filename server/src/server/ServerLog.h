@@ -8,6 +8,7 @@
 #include <memory>
 #include "LogUtil.h"
 
+
 namespace Dic {
 namespace Server {
 using namespace Dic;
@@ -23,9 +24,9 @@ public:
         }
         if (serverLog.recordInstance == nullptr) {
             std::string logFileName = logPath + "/profiler_server.log";
-            serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName, wsPortStr);
+            serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName, wsPortStr, logSize);
             LogLevel logLevel = LogUtil::GetLogLevel(logLevelStr);
-            serverLog.recordInstance->SetLogLevel(logLevel).SetWsPort(wsPortStr).SetMaxSize(logSize);
+            serverLog.recordInstance->SetLogLevel(logLevel);
         }
     }
 
