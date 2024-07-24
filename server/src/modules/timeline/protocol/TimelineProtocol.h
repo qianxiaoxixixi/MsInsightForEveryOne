@@ -23,6 +23,8 @@ private:
 
     // json to request
     static std::unique_ptr<Request> ToImportActionRequest(const json_t &json, std::string &error);
+    // json to request
+    static std::unique_ptr<Request> ToParseCardsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadTracesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadTracesSummaryRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsRequest(const json_t &json, std::string &error);
@@ -67,6 +69,7 @@ private:
     static std::optional<document_t> ToUnitThreadsOperatorsResponseJson(const Response &response);
     static std::optional<document_t> ToUploadFileResponseJson(const Response &response);
     static std::optional<document_t> ToSearchAllSlicesResponseJson(const Response &response);
+    static std::optional<document_t> ToParseCardsResponseJson(const Response &response);
     // event to json
     static std::optional<document_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<document_t> ToParseFailEventJson(const Event &event);

@@ -57,6 +57,9 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         DataBaseManager::Instance().curIsCluster = true;
     }
     SetParseCallBack(token, Timeline::TraceFileParser::Instance());
+    if (rankListMap.size() >= PENDIND_CRITICAL_VALUE) {
+        response.body.isPending = true;
+    }
     ModuleRequestHandler::SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
@@ -96,7 +99,13 @@ void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::st
     for (const auto &item : projectInfos) {
         fileList.push_back(item.fileName);
     }
+    bool isParseTraceJson = rankListMap.size() < PENDIND_CRITICAL_VALUE;
     for (const auto &rankEntry : rankListMap) {
+        if (!isParseTraceJson) {
+            ParserStatusManager::Instance().SetPendingStatus(rankEntry.first,
+                { ProjectTypeEnum::TRACE, rankEntry.second });
+            continue;
+        }
         Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, rankEntry.second[0]);
     }
     if (!Summary::KernelParse::Instance().Parse(fileList, token)) {
@@ -168,28 +177,6 @@ bool ParserJson::isSimulation(std::string filePath)
         return true;
     }
     return false;
-}
-
-void ParserJson::SendAllParseSuccess(const std::string &token)
-{
-    std::string notFinishTask = "";
-    while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
-        ServerLog::Info("Not finish task is: ", notFinishTask);
-        const int sleepTime = 2000;
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
-    }
-    ServerLog::Info("Send all parse finished");
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
-    if (session == nullptr) {
-        ServerLog::Warn("Failed to get session token ");
-        return;
-    }
-    auto event = std::make_unique<AllSuccessEvent>();
-    event->moduleName = ModuleType::MEMORY;
-    event->token = token;
-    event->result = true;
-    event->body.isAllPageParsed = true;
-    session->OnEvent(std::move(event));
 }
 
 void ParserJson::SetParseCallBack(std::string token, FileParser &fileParser)

@@ -45,6 +45,9 @@ public:
     void WaitAllFinished(const std::vector<std::string> &fileIds);
     bool IsAllFinished(std::string &notFinishTask);
     bool IsFinished(const std::string &fileId);
+    void SetPendingStatus(const std::string &fileId,
+        const std::pair<ProjectTypeEnum, std::vector<std::string>> &filePathPair);
+    std::pair<ProjectTypeEnum, std::vector<std::string>> QueryPendingFilePath(const std::string &fileId);
 
 private:
     ParserStatusManager() = default;
@@ -52,6 +55,7 @@ private:
 
     std::mutex mutex;
     std::map<std::string, ParserStatus> statusMap;
+    std::map<std::string, std::pair<ProjectTypeEnum, std::vector<std::string>>> pendingRankAndFilePathMap;
     ParserStatus clusterParseStatus;
     std::condition_variable parseCv;
 };

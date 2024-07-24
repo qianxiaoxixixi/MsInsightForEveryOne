@@ -62,6 +62,7 @@ const std::string REQ_RES_PROJECT_CONFLICT_CHECK = "files/checkProjectConflict";
 
 // timeline
 const std::string REQ_RES_IMPORT_ACTION = "import/action";
+const std::string REQ_RES_PARSE_CARDS = "parse/cards";
 const std::string REQ_RES_UNIT_THREAD_TRACES = "unit/threadTraces";
 const std::string REQ_RES_UNIT_THREAD_TRACES_SUMMARY = "unit/threadTracesSummary";
 const std::string REQ_RES_UNIT_THREADS = "unit/threads";

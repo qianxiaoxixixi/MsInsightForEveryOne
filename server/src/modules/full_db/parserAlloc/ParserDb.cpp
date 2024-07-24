@@ -9,6 +9,7 @@
 #include "ClusterFileParser.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "ParserStatusManager.h"
+#include "EventNotifyThreadPoolExecutor.h"
 #include "ParserDb.h"
 
 namespace Dic {
@@ -28,24 +29,25 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
-
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::FULL_DB);
-
     std::string selectedFolder = FileUtil::GetParentPath(path);
     auto hostInfoMap = GetReportFiles(path, response.body);
-    for (auto &hostInfo: hostInfoMap) {
+    uint32_t rankSize = 0;
+    for (auto &hostInfo : hostInfoMap) {
         if (!hostInfo.second.empty()) {
             // 如果rank列表为空，则Timeline页面不展示Host
             SetBaseActionOfResponse(response, "Host", hostInfo.first, "");
         }
-        for (auto &ranks: hostInfo.second) {
-            for (auto& rank: ranks.second) {
+        rankSize += hostInfo.second.size();
+        for (auto &ranks : hostInfo.second) {
+            for (auto &rank : ranks.second) {
                 SetBaseActionOfResponse(response, rank, hostInfo.first, ranks.first);
                 rank = hostInfo.first + rank;
             }
         }
     }
-
+    bool isPendingParse = rankSize >= PENDIND_CRITICAL_VALUE;
+    response.body.isPending = isPendingParse;
     SetParseCallBack(token);
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
@@ -53,10 +55,15 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
     int rankCount = 0;
-    for (const auto &hostInfo: hostInfoMap) {
-        for (const auto &ranks: hostInfo.second) {
-            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
+    for (const auto &hostInfo : hostInfoMap) {
+        for (const auto &ranks : hostInfo.second) {
             rankCount += ranks.second.size();
+            if (isPendingParse) {
+                ParserStatusManager::Instance().SetPendingStatus(ranks.second[0],
+                    { ProjectTypeEnum::DB, { ranks.first } });
+                continue;
+            }
+            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
         }
     }
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(path, std::regex(clusterDBReg));
@@ -65,6 +72,7 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     // 执行集群数据解析
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path,
                                                                                   isCluster);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
 }
 
 void ParserDb::ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster)

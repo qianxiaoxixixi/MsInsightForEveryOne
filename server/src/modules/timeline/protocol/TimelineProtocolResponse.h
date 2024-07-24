@@ -32,6 +32,8 @@ struct ImportActionResBody {
     bool reset = true;
     bool isSimulation = false;
     bool isIpynb = false;
+    // 导入文件是否待解析
+    bool isPending = false;
 };
 
 struct ImportActionResponse : public Response {
@@ -369,6 +371,15 @@ struct EventsViewBody {
 struct EventsViewResponse : public Response {
     EventsViewResponse() : Response(REQ_RES_UNIT_EVENTS_VIEW) {}
     EventsViewBody body;
+};
+
+struct ParseCardsBody {
+    bool isContinueParse = false;
+};
+
+struct ParseCardsResponse : public Response {
+    ParseCardsResponse() : Response(REQ_RES_PARSE_CARDS) {}
+    ParseCardsBody body;
 };
 
 struct KernelDetail {

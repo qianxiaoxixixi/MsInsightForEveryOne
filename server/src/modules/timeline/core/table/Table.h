@@ -29,7 +29,7 @@ public:
         sql = "";
         orderByStr = "";
     }
-    Table &Select(std::string_view strView)
+    Table &Select(std::string strView)
     {
         std::string str{strView};
         if (std::empty(selectStr)) {
@@ -41,7 +41,7 @@ public:
         return *this;
     }
 
-    template <typename... Args> Table &Select(std::string_view strView, Args ... args)
+    template <typename... Args> Table &Select(std::string strView, Args ... args)
     {
         std::string str{strView};
         if (std::empty(selectStr)) {
@@ -54,7 +54,7 @@ public:
         return *this;
     }
 
-    Table &Eq(std::string_view strView, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Eq(std::string strView, std::variant<uint32_t, uint64_t, std::string> value)
     {
         std::string str{strView};
         conditionStr += " AND " + str + " = ? ";
@@ -76,7 +76,7 @@ public:
         return *this;
     }
 
-    Table &LessEq(std::string_view strView, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &LessEq(std::string strView, std::variant<uint32_t, uint64_t, std::string> value)
     {
         std::string str{strView};
         conditionStr += " AND " + str + " <= ? ";
@@ -84,7 +84,7 @@ public:
         return *this;
     }
 
-    Table &Greater(std::string_view strView, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Greater(std::string strView, std::variant<uint32_t, uint64_t, std::string> value)
     {
         std::string str{strView};
         conditionStr += " AND " + str + " > ? ";
@@ -99,7 +99,7 @@ public:
         return *this;
     }
 
-    Table &OrderBy(std::string_view columnName, TableOrder order)
+    Table &OrderBy(std::string columnName, TableOrder order)
     {
         std::string strColumnName{columnName};
         if (std::empty(orderByStr)) {
@@ -214,7 +214,7 @@ protected:
         orderByStr.clear();
     }
 
-    virtual std::unordered_map<std::string_view, assign> &GetAssignMap() = 0;
+    virtual std::unordered_map<std::string, assign> &GetAssignMap() = 0;
     virtual std::string &GetTableName() = 0;
 };
 }

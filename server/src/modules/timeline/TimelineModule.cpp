@@ -25,6 +25,7 @@
 #include "QueryFlowsBySliceInfoHandler.h"
 #include "SearchAllSlicesHandler.h"
 #include "QueryEventsViewHandler.h"
+#include "ParseCardsHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -51,6 +52,7 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOWS, std::make_unique<QueryFlowsBySliceInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());
+    requestHandlerMap.emplace(REQ_RES_PARSE_CARDS, std::make_unique<ParseCardsHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_COUNT, std::make_unique<SearchCountHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_SLICE, std::make_unique<SearchSliceHandler>());
     requestHandlerMap.emplace(REQ_RES_REMOTE_DELETE, std::make_unique<RemoteDeleteHandler>());

@@ -28,6 +28,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     JsonUtil::AddMember(body, "isSimulation", response.body.isSimulation, allocator);
     JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
     JsonUtil::AddMember(body, "isIpynb", response.body.isIpynb, allocator);
+    JsonUtil::AddMember(body, "isPending", response.body.isPending, allocator);
 
     json_t coreList(kArrayType);
     for (const std::string core : response.body.coreList) {
@@ -432,6 +433,17 @@ template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const E
     JsonUtil::AddMember(body, "count", response.body.count, allocator);
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+template <> std::optional<document_t> ToResponseJson<ParseCardsResponse>(const ParseCardsResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "isContinueParse", response.body.isContinueParse, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
