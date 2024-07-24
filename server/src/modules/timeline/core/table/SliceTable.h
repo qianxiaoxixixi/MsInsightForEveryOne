@@ -25,9 +25,9 @@ public:
     ~SliceTable() = default;
 
 protected:
-    std::unordered_map<std::string_view, assign> &GetAssignMap() override
+    std::unordered_map<std::string, assign> &GetAssignMap() override
     {
-        static std::unordered_map<std::string_view, assign> assignMap = {
+        static std::unordered_map<std::string, assign> assignMap = {
             { SliceColumn::ID, IdHandle },
             { SliceColumn::TIMESTAMP, TimeStampHandle },
             { SliceColumn::DURATION, DurationHandle },

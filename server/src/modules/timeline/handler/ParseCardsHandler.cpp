@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
+#include "pch.h"
+#include "WsSessionManager.h"
+#include "ParserStatusManager.h"
+#include "TraceFileParser.h"
+#include "FullDbParser.h"
+#include "ParseCardsHandler.h"
+namespace Dic::Module::Timeline {
+using namespace Dic;
+using namespace Dic::Server;
+void Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
+    ParseCardsRequest &request = dynamic_cast<ParseCardsRequest &>(*requestPtr.get());
+    if (!WsSessionManager::Instance().CheckSession(request.token)) {
+        ServerLog::Warn("Failed to check session, command = ", command);
+        return;
+    }
+    for (const auto &item : request.params.cards) {
+        std::pair<ProjectTypeEnum, std::vector<std::string>> filePathPair =
+            ParserStatusManager::Instance().QueryPendingFilePath(item);
+        if (std::empty(filePathPair.second)) {
+            ServerLog::Warn("File path is empty, CardId is: ", item);
+            continue;
+        }
+        if (filePathPair.first == ProjectTypeEnum::TRACE) {
+            TraceFileParser::Instance().Parse(filePathPair.second, item, "");
+            continue;
+        }
+        FullDb::FullDbParser::Instance().Parse({ item }, filePathPair.second[0], request.token);
+    }
+    std::unique_ptr<ParseCardsResponse> responsePtr = std::make_unique<ParseCardsResponse>();
+    ParseCardsResponse &response = *responsePtr.get();
+    SetBaseResponse(request, response);
+    SetResponseResult(response, true);
+    response.body.isContinueParse = true;
+    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    // add response to response queue in session
+    session.OnResponse(std::move(responsePtr));
+}
+}

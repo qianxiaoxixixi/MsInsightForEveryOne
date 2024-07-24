@@ -26,6 +26,7 @@ public:
                                  const std::string &message);
     static void ParseProgressCallBack(const std::string &token, const std::string &fileId, uint64_t parsedSize,
         uint64_t totalSize, int progress);
+    static void SendAllParseSuccess(const std::string &token);
     static void Reset();
 protected:
     std::string curScene;

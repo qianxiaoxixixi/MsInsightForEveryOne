@@ -36,6 +36,13 @@ struct ImportActionRequest : public Request {
     ImportActionRequest() : Request(REQ_RES_IMPORT_ACTION){};
     ImportActionParams params;
 };
+struct ParseCardsParams {
+    std::vector<std::string> cards;
+};
+struct ParseCardsRequest : public Request {
+    ParseCardsRequest() : Request(REQ_RES_PARSE_CARDS){};
+    ParseCardsParams params;
+};
 
 struct UnitThreadTracesParams {
     std::string cardId;

@@ -13,6 +13,7 @@ namespace Protocol {
 void TimelineProtocol::RegisterJsonToRequestFuncs()
 {
     jsonToReqFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionRequest);
+    jsonToReqFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, ToUnitThreadTracesSummaryRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
@@ -60,6 +61,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsResponseJson);
     resToJsonFactory.emplace(REQ_RES_UPLOAD_FILE, ToUploadFileResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesResponseJson);
+    resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -67,7 +69,6 @@ void TimelineProtocol::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_FAIL, ToParseFailEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToParseClusterCompletedEventJson);
-    eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToAllSuccessEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_STEP2_COMPLETED, ToParseClusterStep2CompletedEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_MEMORY_COMPLETED, ToParseMemoryCompletedEventJson);
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, ToModuleResetEventJson);
@@ -89,6 +90,21 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToParseCardsRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ParseCardsRequest> reqPtr = std::make_unique<ParseCardsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (json["params"].HasMember("cards") && json["params"]["cards"].IsArray()) {
+        for (const auto &card : json["params"]["cards"].GetArray()) {
+            reqPtr->params.cards.emplace_back(card.GetString());
+        }
+    }
     return reqPtr;
 }
 
@@ -566,6 +582,11 @@ std::optional<document_t> TimelineProtocol::ToUploadFileResponseJson(const Respo
 std::optional<document_t> TimelineProtocol::ToSearchAllSlicesResponseJson(const Response &response)
 {
     return ToResponseJson<SearchAllSlicesResponse>(dynamic_cast<const SearchAllSlicesResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToParseCardsResponseJson(const Response &response)
+{
+    return ToResponseJson<ParseCardsResponse>(dynamic_cast<const ParseCardsResponse &>(response));
 }
 #pragma endregion
 

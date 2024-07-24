@@ -34,8 +34,6 @@ private:
     void SetParseCallBack(const std::string token, FileParser &fileParser);
 
     bool isSimulation(std::string filePath);
-
-    static void SendAllParseSuccess(const std::string &token);
     void ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const ImportActionRequest &request);
     std::map<std::string, std::vector<std::string>> GetRankListMap(ImportActionResponse &response,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, std::string &error);

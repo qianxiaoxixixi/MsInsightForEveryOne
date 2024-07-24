@@ -18,6 +18,9 @@ namespace Dic {
     const static int INT_TWO = 2;
 
     const static int INT_TEN = 10;
+
+    // 是否立即解析Trace view的临界值
+    const static int PENDIND_CRITICAL_VALUE = 16;
 } // end of namespace Dic
 
 
