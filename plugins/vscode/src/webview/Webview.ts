@@ -82,4 +82,6 @@ export abstract class Webview {
         }
         this.newPanel();
     }
+
+    dispose(): void {}
 }
