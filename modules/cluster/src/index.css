@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-.theme_dark *:not(path,svg) {
+.theme_dark *:not(path,svg,.ant-table-wrapper *) {
     color: white;
 }
 
@@ -20,12 +20,6 @@
 
 .theme_dark .rc-virtual-list-scrollbar-thumb {
     background-color: var(--grey60) !important;
-}
-
-
-.theme_dark .ant-table-tbody > tr > td {
-    border-bottom: 1px solid var(--grey85);
-    color: var(--grey15);
 }
 
 .theme_dark .ant-notification-notice {

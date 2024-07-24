@@ -51,7 +51,7 @@ export const getColumnSearchProps = <T extends Record<string, unknown>>(clearFil
         filterDropdown: (props: FilterDropdownProps): React.ReactNode => (
             <FilterDropdown {...props} clearFilters={clearFilters}/>),
         filterIcon: (filtered: boolean) => (
-            <FilterOutlined style={{ color: filtered ? '#1677ff' : undefined }}/>
+            <FilterOutlined />
         ),
         onFilterDropdownOpenChange: (visible: boolean): void => {
             if (visible) {

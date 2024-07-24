@@ -145,6 +145,7 @@ declare module '@emotion/react' {
         primaryColorLight3: string;
         primaryColorLight4: string;
         primaryColorLight5: string;
+        primaryColorLight6: string;
         primaryColorDark: string;
         successColor: string; // 成功色
         successColorLight1: string;

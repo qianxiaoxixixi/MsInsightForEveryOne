@@ -204,7 +204,6 @@ const FindDetail = observer((props: any) => {
             scroll={{ y: props.bottomHeight - 180 }}
             size="small"
             loading = {isLoading}
-            rowClassName={'click-able'}
         />
     </CONTAINER>;
 });
