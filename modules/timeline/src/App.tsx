@@ -23,7 +23,6 @@ import { GlobalStyles } from 'lib/theme';
 const Window = styled.div`
     height: 100vh;
     overflow: hidden;
-    user-select: none;
     display: flex;
     width: 100vw;
     color: ${(props): string => props.theme.fontColor};

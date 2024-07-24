@@ -1,23 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-.ant-table-tbody > tr{
-    cursor: pointer;
-}
-
-.ant-table-cell.ant-table-cell-scrollbar{
-    display: none;
-}
-
-.ant-table-filter-trigger:hover {
-    color: white;
-}
 tr.selected {
     background: var(--blue30);
-}
-
-.theme_light .ant-table-tbody > tr > td.ant-table-cell-row-hover {
-    background:var(--grey5);
 }
 
 .theme_dark tr.selected {
@@ -28,9 +13,6 @@ tr.selected {
     background: var(--middleblue);
 }
 
-.theme_dark .ant-table-tbody > tr > td.ant-table-cell-row-hover {
-    background:var(--grey80);
-}
 .table-header {
     background: var(--grey5);
     color: var(--grey80);
@@ -53,13 +35,6 @@ tr.selected {
 }
 .table-header>div:last-child {
     flex:1 1;
-}
-.theme_dark .table-header {
-    background: #2e2f31;
-}
-.theme_dark .table-header>div {
-    color: var(--whiteblue);
-    border-right: 1px solid var(--grey60);
 }
 .theme_dark .ant-tooltip-inner{
     background: var(--grey50);
@@ -89,26 +64,11 @@ tr.selected {
 .theme_dark .ant-dropdown *{
     background:var(--grey90);
 }
-.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode-checkbox-checked .ant-tree-node-content-wrapper{
-    background:none;
-}
-.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode-checkbox-checked .ant-tree-node-content-wrapper .ant-tree-title{
-    color:var(--lightblue);
-}
+
 .theme_dark .ant-dropdown .ant-tree-title{
     background: none;
 }
-.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode .ant-tree-node-content-wrapper:hover {
-    background:none;
-}
-.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode .ant-tree-node-content-wrapper:hover .ant-tree-title{
-    background: none;
-    color:var(--labelblue);
-}
 
-.theme_dark #CodeTable {
-    background: #272822;
-}
 .hit-label {
     padding: 0 10px 0 20px;
 }
@@ -129,10 +89,6 @@ tr.selected {
 }
 .theme_dark .hit-label>span>span:first-child{
     color: var(--grey0);
-}
-
-.th35 .ant-table.ant-table-small .ant-table-thead > tr > th{
-    height:35px;
 }
 
 .theme_dark .ant-dropdown-menu-item:hover .ant-dropdown-menu-title-content *{

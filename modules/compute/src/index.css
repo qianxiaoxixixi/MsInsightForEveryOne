@@ -5,16 +5,6 @@
     background-color: rgb(106, 106, 106);
 }
 
-tr.ant-table-row:hover > td.ant-table-cell *{
-    color:unset;
-}
-#root .ant-table.ant-table-small {
-    font-size: 12px;
-}
-#root .ant-table.ant-table-small .ant-table-thead > tr > th{
-    height:35px;
-}
-
 .ant-tree .ant-tree-treenode:not(.ant-tree .ant-tree-treenode-disabled).filter-node .ant-tree-title {
     font-weight: 700;
     color: #7ec1ff;
@@ -23,16 +13,6 @@ tr.ant-table-row:hover > td.ant-table-cell *{
 #root .ant-table.ant-table-small .ant-table-tbody > tr > td{
     height:29px;
     padding: 3px 5px;
-}
-
-
-.theme_dark *:not(code *,path,svg,.anticon,.ant-table-filter-trigger){
-    color:white;
-}
-
-.theme_dark .ant-table-tbody > tr > td {
-    border-bottom: 1px solid var(--grey85);
-    color: var(--grey15);
 }
 
 .theme_dark .tan-box>div>.bottomC,.tan-box>div {
@@ -44,18 +24,6 @@ tr.ant-table-row:hover > td.ant-table-cell *{
     border-color: var(--grey60);
 }
 
-.theme_dark .ant-table-tbody > tr > td *{
-    color: var(--grey15);
-}
-.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before{
-    background-color:var(--grey60);
-}
-.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
-    background-color: var(--grey40) !important;
-}
-.theme_dark .ant-table-cell-fix-left, .theme_dark .ant-table-cell-fix-right {
-    background: var(--grey85);
-}
 .theme_dark .ant-modal-content{
     background: var(--grey60);
 }

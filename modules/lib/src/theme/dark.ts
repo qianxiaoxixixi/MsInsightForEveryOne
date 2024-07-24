@@ -140,6 +140,7 @@ export const dark: Theme = {
     primaryColorLight3: '#213d5b',
     primaryColorLight4: '#1d3043',
     primaryColorLight5: '#18222c',
+    primaryColorLight6: '#3291FE',
     primaryColorDark: '#66b1ff',
     successColor: '#24AB36',
     successColorLight1: '#4e8e2f',

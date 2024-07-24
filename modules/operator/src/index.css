@@ -25,30 +25,15 @@
     border-color: var(--grey60);
 }
 
-.theme_dark .ant-table-tbody > tr > td {
-    border-bottom: 1px solid var(--grey85);
-    color: var(--grey15);
-}
-
 .theme_dark .tan-box>div>.bottomC,.tan-box>div {
     background:none;
 }
 
-.theme_dark *:not(code *,path,svg,.anticon,.ant-table-filter-trigger){
-    color:white;
-}
 
 .theme_dark .rc-virtual-list-scrollbar-thumb{
     background-color:var(--grey60)!important;
 }
 
-.theme_dark .ant-table-cell-fix-left, .theme_dark .ant-table-cell-fix-right {
-    background: var(--grey85);
-}
 .theme_dark .ant-input-number-input{
     background: var(--grey85);
-}
-
-.ant-table.ant-table-small .ant-table-tbody .ant-table-wrapper:only-child .ant-table{
-    margin: 8px 8px 0 40px;
 }

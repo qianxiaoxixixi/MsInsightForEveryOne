@@ -60,82 +60,11 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     color: #40a9ff;
 }
 
-
-/*
- * table组件相关配置
- */
-.ant-table {
-    background: unset;
-    color: unset;
-}
-
-.ant-table-tbody > tr > td {
-    word-break: break-word;
-}
-
-.ant-table .ant-table-thead > tr > th.ant-table-cell {
-    background-color: unset;
-    border-bottom-color: unset;
-    color: unset;
-}
-
-.ant-table-tbody > tr > td > button.ant-table-row-expand-icon {
-    background-color: transparent;
-    width: 15px;
-    height: 15px;
-    border: none;
-}
-
-/* disable antd default highlight for hovered row */
-.ant-table-tbody > tr > td.ant-table-cell-row-hover, tr.ant-table-row:hover > td.ant-table-cell {
-    color: unset;
-    background: unset;
-}
-
-/* disable antd default highlight for selected row */
-.ant-table-tbody > tr.ant-table-row-selected > td {
-    background: unset;
-    border-color: unset;
-}
-
-.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
-    top: 15%;
-    transform: none;
-    height: 70%;
-    background-color: var(--grey20);
-}
-
-.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
-    background-color: var(--grey20) !important;
-}
-
-.ant-table-expanded-row .ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
-    border-top: none;
-}
-
-.ant-table .ant-table-thead > tr > th.ant-table-cell {
-    background-color: var(--grey5);
-    color: var(--grey80);
-}
-
-.ant-table-thead > tr > th {
-    border: none;
-}
-
-.ant-table-tbody > tr > td {
-    border-bottom: 1px solid var(--grey6);
-    color: var(--grey60);
-}
-
 .rc-virtual-list-holder{
     overflow-y: auto!important;
 }
 .rc-virtual-list-scrollbar{
     display: none!important;
-}
-
-.ant-table-cell-scrollbar:not([rowspan]) {
-    box-shadow: none;
 }
 
 .ant-tooltip-inner {
