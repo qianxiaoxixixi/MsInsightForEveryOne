@@ -48,16 +48,17 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
  * progress组件相关配置
  */
 .ant-progress.ant-progress-line {
-    width: 200px;
- }
+    width: 100px;
+}
 
 .ant-progress .ant-progress-outer .ant-progress-inner {
+    height: 4px;
     background-color: #bfbfbf;
 }
 
 .ant-progress .ant-progress-text {
     color: #40a9ff;
- }
+}
 
 
 /*

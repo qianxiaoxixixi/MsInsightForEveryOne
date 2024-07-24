@@ -119,6 +119,8 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
     (result.reset as boolean) && (session.units = []);
     session.phase = 'download';
     session.endTimeAll = undefined;
+    session.isPending = result.isPending as boolean;
+    session.isParserLoading = !(result.isPending as boolean);
     session.isSimulation = result.isSimulation;
     session.isIpynb = result.isIpynb;
     session.isCluster = result.isCluster;
@@ -131,6 +133,7 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
             curDataSource.dataPath = item.dataPathList;
             const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
             if (item.result as boolean) {
+                cardUnit.shouldParse = true;
                 cardUnit.phase = 'analyzing';
                 cardUnit.progress = 0;
                 cardUnit.showProgress = true;
@@ -480,4 +483,22 @@ export const parseOperatorSuccessHandler: NotificationHandler = (data): void => 
         session.operatorRankIds = ids;
         connector.send({ event: 'updateSession', body: { operatorRankIds: session.operatorRankIds, broadcast: false } });
     });
+};
+
+export const allSuccessHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            if (data.isAllPageParsed as boolean) {
+                session.isPending = false;
+                session.isParserLoading = false;
+            }
+        });
+    } catch (error) {
+        console.error(error);
+    }
 };

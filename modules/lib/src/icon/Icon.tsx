@@ -6,6 +6,7 @@ import './Icon.css';
 import { ReactComponent as HelpSvg } from './img/icons_dark_normal_ascendinsight_help.svg';
 import { ReactComponent as PinSvg } from './img/icons_dark_normal_ascendinsight_pin.svg';
 import { ReactComponent as LinePinSvg } from './img/icons_dark_normal_ascendinsight_pin_line.svg';
+import { ReactComponent as StartSvg } from './img/icons_dark_normal_mindstudioinsight_start.svg';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
     active?: boolean;
@@ -18,44 +19,11 @@ interface IIconProps extends ISVGProps {
     svgElement?: React.FunctionComponent<React.SVGProps< SVGSVGElement > & { title?: string }>;
 }
 
-const theme = {
-    light: {
-        normal: '#595959',
-        disabled: '#BDBDBD',
-        active: '#007AFF',
-    },
-    dark: {
-        normal: '#D1D1D1',
-        disabled: '#595959',
-        active: '#007AFF',
-    },
-};
-
-const defaultIconStyle = `
-        .svg-icon path {
-          fill: ${theme.light.normal};
-        }
-        .svg-icon.active path {
-          fill: ${theme.light.active};
-        }
-        .svg-icon.disabled path {
-          fill: ${theme.light.disabled};
-        }
-        .theme_dark .svg-icon path {
-          fill: ${theme.dark.normal};
-        }
-        .theme_dark .svg-icon.active path {
-          fill: ${theme.dark.active};
-        }
-        .theme_dark .svg-icon.disabled path {
-          fill: ${theme.dark.disabled};
-        }
-        `;
-
 const iconMap: Record<string, any> = {
     help: HelpSvg,
     pin: PinSvg,
     linePin: LinePinSvg,
+    start: StartSvg,
 };
 
 export function Icon({ type = '', svgElement, className = '', color, active, disabled, style, ...restProp }: IIconProps): JSX.Element {
@@ -73,7 +41,7 @@ export function Icon({ type = '', svgElement, className = '', color, active, dis
 
     return <span className={'icon-box'} style={{ ...(style ?? {}) }}>
         <style>
-            {`${defaultIconStyle} ${colorCss}`}
+            {`${colorCss}`}
         </style>
         <Svg
             width={16}
@@ -94,4 +62,8 @@ export function PinIcon(props: ISVGProps): JSX.Element {
 
 export function LinePinIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'linePin'} active={true} {...props }/>;
+}
+
+export function StartIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'start'} {...props }/>;
 }

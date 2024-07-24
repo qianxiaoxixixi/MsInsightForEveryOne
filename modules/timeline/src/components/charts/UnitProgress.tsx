@@ -2,23 +2,27 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useState, useEffect } from 'react';
+import type { KeyedInsightUnit } from '../ChartContainer/Units/types';
 import { Progress } from 'antd';
+import { useTheme } from '@emotion/react';
 
-export const UnitProgress = ({ realProgress, showProgress }: { realProgress: number; showProgress: boolean }): JSX.Element => {
+export const UnitProgress = ({ unit, realProgress, showProgress }: { unit: KeyedInsightUnit; realProgress: number; showProgress: boolean }): JSX.Element => {
     const [progress, setProgress] = useState(0);
     const [isShowProgress, setIsShowProgress] = useState(false);
+    const theme = useTheme();
 
     useEffect(() => {
         setProgress(realProgress);
         if (realProgress === 100 && !showProgress) {
             setTimeout(() => {
                 setIsShowProgress(showProgress);
-            }, 1000);
+            }, 300);
+            setTimeout(() => {
+                unit.shouldParse = false;
+            }, 300);
         } else {
             setIsShowProgress(showProgress);
         }
     }, [realProgress, showProgress]);
-    return <div style={{ textAlign: 'center' }}>
-        {isShowProgress ? <Progress percent={progress} type="line" size="small"></Progress> : null}
-    </div>;
+    return isShowProgress ? <Progress strokeColor={theme.primaryColor} percent={progress} type="line" size="small"></Progress> : <></>;
 };

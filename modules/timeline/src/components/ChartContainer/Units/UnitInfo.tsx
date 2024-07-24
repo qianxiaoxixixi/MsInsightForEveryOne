@@ -27,6 +27,11 @@ import { isPinned, switchPinned } from '../unitPin';
 import { useSelectUnit } from './hooks';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
 import { StyledTooltip } from '../../base/StyledTooltip';
+import { CardUnit } from '../../../insight/units/AscendUnit';
+import { StartIcon } from 'lib/Icon';
+import { UnitProgress } from '../../charts/UnitProgress';
+import { type ParseCardsParam, parseCards } from '../../../api/Request';
+import { message } from 'antd';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -190,6 +195,16 @@ const InsightLaneInfoContainer = styled.div`
     display: flex;
     justify-content: space-between;
 `;
+
+function getProgressVisiable(unit: KeyedInsightUnit): boolean {
+    return unit instanceof CardUnit && unit.metadata?.cardName !== 'Host' &&
+        (unit.phase === 'analyzing' || unit.phase === 'download') && unit.shouldParse;
+};
+
+function getParserVisiable(unit: KeyedInsightUnit): boolean {
+    return unit instanceof CardUnit && unit.metadata?.cardName !== 'Host' && unit.shouldParse;
+}
+
 const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentProps): JSX.Element => {
     const info = unit.renderInfo?.(session, unit.metadata, unit) ?? `${unit.name}`;
     if (typeof (info) === 'string') {
@@ -200,13 +215,42 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             {...props}
         />;
     }
+    const [loading, setLoading] = React.useState<boolean>(!session.isPending);
+    React.useEffect(() => {
+        if (session.isParserLoading) {
+            setLoading(true);
+        } else {
+            setLoading(false);
+        }
+    }, [session.isParserLoading]);
+    const handleStartClick = (): void => {
+        const param: ParseCardsParam = { cards: [] };
+        if (unit instanceof CardUnit && unit.metadata?.cardName !== '' && unit.metadata?.cardName !== 'Host') {
+            param.cards.push(unit.metadata.cardId);
+        };
+        parseCards(param).then(() => {
+            setLoading(true);
+        }).catch(err => {
+            message.error(err);
+        });
+    };
     return <InsightLaneInfoContainer className="insight-lane-info">
         {info}
-        {unit.configBar && <ConfigBar
+        { !unit.shouldParse && unit.configBar && <ConfigBar
             session={session}
             unit={unit}
             {...props}
         />}
+        { (getProgressVisiable(unit) && loading)
+            ? <div><UnitProgress unit={unit} realProgress={unit.progress} showProgress={unit.showProgress}/></div>
+            : <></> }
+        { getParserVisiable(unit)
+            ? <div>
+                <StyledButton style={{ backgroundColor: 'transparent' }}
+                    icon={<StartIcon height={14} width={14}/>}
+                    loading={loading} onClick={(): void => handleStartClick()}/>
+            </div>
+            : <></> }
     </InsightLaneInfoContainer>;
 });
 

@@ -25,7 +25,6 @@ import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
 import { Mask } from '../../charts/Mask';
 import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
-import { UnitProgress } from '../../charts/UnitProgress';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
 
@@ -81,7 +80,7 @@ const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsigh
     }
     if (unit instanceof CardUnit && (unit.phase === 'analyzing' || unit.phase === 'download')) {
         return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
-            <UnitProgress realProgress={unit.progress} showProgress={unit.showProgress}/>
+            <div className="chart-empty" style={{ width, height }}/>
         </ChartErrorBoundary>;
     } else {
         return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
