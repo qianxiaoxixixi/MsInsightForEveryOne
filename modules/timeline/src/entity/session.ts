@@ -54,6 +54,10 @@ export class Session {
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     singleLinkLine: LinkLines = {};
     linkLineCategories: string[] = [];
+    // 是否等待解析
+    isPending: boolean = false;
+    // 是否loading解析按钮
+    isParserLoading: boolean = false;
     // 是否是算子仿真图
     isSimulation: boolean = false;
     isCluster: boolean = false;

@@ -19,6 +19,7 @@ describe('hooks test', () => {
         isUnitVisible: true,
         type: 'basic',
         phase: 'download',
+        shouldParse: false,
         progress: 0,
         showProgress: true,
         metadata: {},

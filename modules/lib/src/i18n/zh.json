@@ -3,6 +3,7 @@
     "Welcome": "欢迎使用DevEco Insight，请先选择设备和进程",
     "No Data": "暂无数据",
     "allSessionText": "查看所有会话",
+    "Start Global Analysis": "开始全局解析",
     "Realtime Monitor": "实时监控",
     "Current process": "当前进程",
     "Current device": "当前设备",

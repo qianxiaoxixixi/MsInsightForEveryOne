@@ -81,7 +81,11 @@
  * progress组件相关配置
  */
  .theme_dark .ant-progress.ant-progress-line {
-    width: 200px;
+    width: 100px;
+ }
+
+ .theme_dark .ant-progress .ant-progress-outer .ant-progress-inner {
+    height: 4px;
  }
 
  .theme_dark .ant-progress .ant-progress-text {

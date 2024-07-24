@@ -225,12 +225,14 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
     phase: string;
     isUnitVisible: boolean;
     parent?: InsightUnit;
+    shouldParse: boolean; // 判断timeline卡是否需要解析
     progress: number; // 解析进度：实际解析进度
     showProgress: boolean; // 解析进度：是否显示进度条
     havePythonFunction?: boolean;
 }
 // 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
+// 解析状态在parseSucceess之后设置unit的phase为download
 export type UnitPhase = 'configuring' | 'initializing' | 'recording' | 'analyzing' | 'rendering' | 'download' | 'error' | 'loading';
 
 const heightOf = (chartDesc: InsightUnit['chart']): number => {
@@ -306,6 +308,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         phase: UnitPhase = 'configuring';
         searchConfig = params.searchConfig;
         collapsible = params.collapsible ?? true;
+        shouldParse: boolean = false; // 是否需要解析
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
         havePythonFunction: boolean = false; // 是否采集了调用栈信息
@@ -350,6 +353,7 @@ export const transparentUnit = <T extends { dataSource: DataSource } = { dataSou
 Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
     const transparentUnitClass = class implements InsightUnit {
         isUnitVisible = true;
+        shouldParse: boolean = false; // 是否需要解析
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
         type = 'transparent' as const;
