@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-.theme_dark *:not(path,svg){
+.theme_dark *:not(path,svg,.ant-table-wrapper *){
     color:white;
 }
 
@@ -22,9 +22,6 @@
     background: var(--grey95);
 }
 
-.theme_dark .ant-table-tbody > tr > td {
-    color: var(--grey15);
-}
 .theme_dark .ant-input-number-input{
     border-color: var(--grey60);
     background-color: var(--grey90);
@@ -45,12 +42,7 @@
 .theme_dark .ant-btn:disabled>span{
     color: rgba(0, 0, 0, 0.25);
 }
-.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before{
-    background-color:var(--grey15);
-}
-.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
-    background-color: var(--grey15) !important;
-}
+
 .memory-ant-table-row{
     word-wrap: break-word;
 }

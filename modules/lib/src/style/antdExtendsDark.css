@@ -92,41 +92,6 @@
     color: #40a9ff;
  }
 
-/*
- * table组件相关配置
- */
-.theme_dark tr.ant-table-expanded-row > td, .theme_dark tr.ant-table-expanded-row:hover > td {
-    background: var(--mi-bg-color);
-}
-
-.theme_dark .ant-table-column-sorter-up.active svg, .theme_dark .ant-table-column-sorter-down.active svg {
-    color: #1890ff;
-}
-
-.theme_dark .ant-table-column-sorter svg {
-    color: var(--grey20blue);
-}
-
-.theme_dark tr.ant-table-placeholder:hover > td {
-    background: var(--grey80);
-}
-.theme_dark td.ant-table-column-sort {
-    background: var(--grey70);
-}
-
-.theme_dark .ant-table .ant-table-thead > tr > th.ant-table-cell {
-    background: var(--grey80blue);
-    color:var(--whiteblue);
-}
-
-.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
-    background-color: var(--grey50) !important;
-}
-
-.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
-    background-color: var(--grey50) !important;
-}
-
 .theme_dark .ant-select-selector {
     background-color: var(--grey80);
 }

@@ -128,8 +128,6 @@ export const AntTableChart: React.FC<IProps> = (props) => {
 
     return (
         <ResizeTable
-            size="small"
-            bordered
             columns={columns}
             dataSource={tableData.rows.map((item, index) => { return { ...item, key: `${item.name}_${index}` }; })}
             onChange={onTableChange}

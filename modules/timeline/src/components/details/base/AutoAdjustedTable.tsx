@@ -19,7 +19,7 @@ import type { TableState } from '../types';
 
 // constants
 const EMPTY_VIEW_HEIGHT = 22;
-const TABLE_ROW_HEIGHT = 20;
+const TABLE_ROW_HEIGHT = 32;
 const TABLE_HEAD_HEIGHT = TABLE_ROW_HEIGHT - 1;
 const BORDER_HEIGHT = 2;
 
@@ -62,30 +62,33 @@ const StyledTable = styled(Table)`
         border-bottom: 2px solid ${(p): string => p.theme.buttonFontColor};
     }
     .insight-table {
-        font-size: 1rem;
-        font-weight: 100;
+        font-size: 12px;
     }
     .insight-table .insight-table-thead > tr > .insight-table-cell-fix-right {
         padding-left: 16px;
         background: ${(props): string => props.theme.contentBackgroundColor};
     }
     .insight-table-tbody > tr.insight-table-row-selected > td {
-        background: ${(props): string => props.theme.tableRowSelect};
+        background: ${(props): string => props.theme.bgColorLight};
     }
     .insight-table-tbody > tr > td.insight-table-cell-row-hover, tr.insight-table-row:hover > td.insight-table-cell {
-        background: ${(props): string => props.theme.tableRowSelect};
+        background: ${(props): string => props.theme.bgColorLight};
         transition: none;
     }
     .insight-table .insight-table-thead > tr > th.insight-table-cell {
-        color: ${(props): string => props.theme.tableHeadFontColor};
+        background-color: ${(props): string => props.theme.bgColorLight};
+        color: ${(props): string => props.theme.textColorSecondary};
         font-weight: 500;
         height: ${TABLE_ROW_HEIGHT}px;
     }
     .insight-table .insight-table-thead > tr > td.insight-table-cell {
-        color: rgba(255, 255, 255, 0.9);
+        color: ${(props): string => props.theme.textColorTertiary};
+    }
+    .insight-table .insight-table-row > tr > td.insight-table-cell {
+        color: ${(props): string => props.theme.textColorTertiary};
     }
     tr.insight-table-row:hover {
-        color: var(--activeblue);
+        color: ${(props): string => props.theme.primaryColorLight1};
         cursor: pointer;
     }
     .insight-table-header {

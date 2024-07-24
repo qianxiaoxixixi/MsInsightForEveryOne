@@ -2,13 +2,162 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { cloneElement, useState, useEffect, useRef, useMemo } from 'react';
-import { Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import styled from '@emotion/styled';
+import { Table, type PaginationProps } from 'antd';
+import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { isArray } from 'lodash';
 import Resizor from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
 import { limitInput } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
+import { CaretDownIcon, CaretRightIcon } from '../icon/Icon';
+
+const StyledTable = styled(Table)`
+    .ant-table {
+        background-color: unset;
+        font-size: 12px;
+        color: ${(p): string => p.theme.textColorTertiary};
+    }
+
+    //表头 
+    .ant-table-thead > tr > th {
+        background-color: ${(p): string => p.theme.bgColorLight};
+        color: ${(p): string => p.theme.textColorSecondary};
+        border-bottom: none;
+    }
+
+    .ant-table-thead th.ant-table-column-has-sorters:hover {
+        background: ${(p): string => p.theme.bgColorLight};
+    }
+
+    .ant-table-thead > tr > th, .ant-table tfoot > tr > th，.ant-table.ant-table-small .ant-table-thead > tr > th{
+        padding: 8px 8px 8px 16px;
+        line-height: 16px;
+        height: 32px;
+    }
+
+    .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+        background-color: ${(p): string => p.theme.borderColorLight};
+    }
+    .ant-table-thead th.ant-table-column-has-sorters:hover::before {
+        background-color: ${(p): string => p.theme.borderColorLight} !important;
+    }
+
+    //行
+    .ant-table-tbody > tr.ant-table-row:hover > td, .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+        background: ${(p): string => p.theme.bgColorLight};
+    }
+    .ant-table-tbody > tr.ant-table-placeholder:hover > td {
+        background: unset;
+    }
+
+    .ant-table-tbody > tr > td {
+        box-shadow: inset 0 -1px 0 0 ${(p): string => p.theme.borderColorLight};
+        border-bottom: none;
+    }
+
+    .ant-table-cell-scrollbar:not([rowspan]) {
+        box-shadow: 0 1px 0 1px ${(p): string => p.theme.borderColorLight};
+    }
+
+    .ant-table-tbody > tr > td, .ant-table tfoot > tr > td {
+        padding: 16px 16px;
+        line-height: 16px;
+    }
+    .ant-empty-normal{
+        color:${(p): string => p.theme.textColorTertiary};
+    }
+
+    tr.ant-table-row.click-able:hover > td.ant-table-cell {
+        color: ${(p): string => p.theme.primaryColorLight1};
+        background: ${(p): string => p.theme.bgColorLight};
+        cursor: pointer;
+    }
+
+    //筛选
+    .ant-table-filter-trigger:hover {
+        color: ${(p): string => p.theme.textColorPrimary};
+        background: rgba(0, 0, 0, 0.04);
+    }
+
+    .ant-table-filter-trigger.active {
+        color: ${(p): string => p.theme.primaryColor};
+    }
+    
+    //排序
+    td.ant-table-column-sort {
+        background: ${(p): string => p.theme.bgColorDark};
+    }
+
+    //分页
+    .ant-pagination {
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
+
+    .ant-pagination-item {
+        background: none;
+        border-color: transparent;
+    }
+
+    .ant-pagination-item-active.ant-pagination-item a {
+        color: ${(p): string => p.theme.primaryColor};
+    }
+
+    .ant-pagination-item a {
+        color: ${(p): string => p.theme.textColorSecondary};
+        font-size: 12px;
+    }
+
+    .ant-pagination-prev button, .ant-pagination-next button {
+        color: ${(p): string => p.theme.textColorTertiary};
+    }
+
+    .ant-pagination-disabled .ant-pagination-item-link, .ant-pagination-disabled:hover .ant-pagination-item-link {
+        color: ${(p): string => p.theme.textColorDisabled};
+    }
+
+    .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+        background-color: unset;
+        border-color: ${(p): string => p.theme.borderColorLighter};
+    }
+
+    .ant-select {
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
+
+    .ant-pagination-options-quick-jumper input {
+        border-color: ${(p): string => p.theme.borderColorLighter};
+        background-color: unset;
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
+
+    .ant-select-dropdown {
+        background-color: ${(p): string => p.theme.bgColor};
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
+
+    .ant-select-item {
+        color: ${(p): string => p.theme.textColorSecondary};
+    }
+
+    .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+        color: ${(p): string => p.theme.textColorSecondary};
+        background-color: ${(p): string => p.theme.primaryColor};
+    }
+
+    .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+        background-color: ${(p): string => p.theme.primaryColorLight6};
+    }
+
+    //嵌套表格
+    .ant-table-tbody > tr.ant-table-expanded-row > td {
+        padding: 16px 16px 16px 40px;
+        background: unset;
+    }
+    .ant-table.ant-table-small .ant-table-tbody .ant-table-wrapper:only-child .ant-table {
+        margin:0;
+    }
+`;
 interface ExtendsColumnType {minWidth?: number};
 
 interface IResizableTitleProps extends React.ReactElement {
@@ -39,8 +188,9 @@ interface Iprop<T> {
     style?: object;
     virtual?: boolean;
     scroll?: {x?: number;y?: number;rowHeight?: number};
-    pagination?: {showSizeChanger: boolean};
+    pagination?: false | TablePaginationConfig;
 }
+type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
 // ============================ Resize ============================
 const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variableTotalWidth }:
@@ -60,14 +210,51 @@ const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variab
 };
 
 // ============================ virtual ============================
-const getVirtualElement = (dom: Element): [Element | null, Element | null] => {
+const getVirtualElement = (dom: Element, boxRef: React.MutableRefObject<null>, targetRef: React.MutableRefObject<null>):
+[Element | null, Element | null] => {
     const box = dom.querySelector('.ant-table-body');
     const target = dom.querySelector('.ant-table-body table');
+    if (box !== null && target !== null) {
+        (boxRef as any).current = box;
+        (targetRef as any).current = target;
+    }
     return [box, target];
 };
 
+// ============================ pagination ============================
+const showTotal: PaginationProps['showTotal'] = total => `Total ${total} items`;
+const getFullPagination = (pagination?: false | TablePaginationConfig, total?: number): false | TablePaginationConfig => {
+    if (typeof pagination === 'boolean') {
+        return false;
+    }
+    const size: 'default' | 'small' = 'small';
+    const position: TablePaginationPosition[] = ['bottomLeft'];
+    return { size, position, showTotal, total, showQuickJumper: true, showSizeChanger: true, ...pagination ?? {} };
+};
+
+// ============================ expandable ============================
+const getFullExpandable = (expandable?: any): any => {
+    if (expandable === null || expandable === undefined || typeof expandable !== 'object') {
+        return null;
+    }
+    const expandIcon = <T extends {children?: unknown[]}>({ expanded, onExpand, record }:
+    {expanded: boolean;onExpand: (record: T, event: React.MouseEvent<SVGSVGElement>) => void;record: T}): React.ReactNode => {
+        if (record.children !== null && record.children !== undefined && record.children.length > 0) {
+            return expanded
+                ? (<CaretDownIcon onClick={(e): void => onExpand(record, e)} style={{ cursor: 'pointer' }}/>)
+                : <CaretRightIcon onClick={(e): void => onExpand(record, e)} style={{ cursor: 'pointer' }}/>;
+        } else {
+            return <></>;
+        }
+    };
+    return { expandIcon, ...expandable };
+};
+
 function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
-    const { columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false, scroll, dataSource, ...restProps } = prop;
+    const {
+        columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
+        scroll, dataSource, pagination, expandable, ...restProps
+    } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
 
     // ============================ Resize ============================
@@ -92,27 +279,28 @@ function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
     const { data: renderList, boxRef, targetRef } = useWatchVirtualRender(
         { visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 39, dataSource });
     useEffect(() => {
-        if (!virtual || ref.current === null) {
-            return;
-        }
-        const [box, target] = getVirtualElement(ref.current as Element);
-        if (box !== null && target !== null) {
-            (boxRef as any).current = box;
-            (targetRef as any).current = target;
+        if (virtual && ref.current !== null) {
+            getVirtualElement(ref.current as Element, boxRef, targetRef);
         }
     }, []);
 
+    // ============================ pagination ============================
+    const fullPagination = useMemo(() => getFullPagination(pagination, dataSource.length), [pagination]);
+
+    // ============================ expandable ============================
+    const fullExpandable = useMemo(() => getFullExpandable(expandable), [expandable]);
+
     // 出现分页跳转输入框
     useEffect(() => {
-        if (prop.pagination?.showSizeChanger) {
-            limitInput();
-        }
-    }, [prop.pagination]);
+        limitInput();
+    }, [dataSource.length, fullPagination]);
 
     return (
-        <div id={id} style={{ ...style ?? {} }} ref={ref}>
-            <Table
+        <div id={id} style={{ ...(style ?? {}) }} ref={ref}>
+            <StyledTable
                 { ...restProps }
+                pagination={fullPagination}
+                expandable={fullExpandable}
                 scroll={scroll}
                 dataSource={virtual ? renderList : dataSource}
                 className={!variableTotalWidth ? '' : 'variableTotalWidth'}

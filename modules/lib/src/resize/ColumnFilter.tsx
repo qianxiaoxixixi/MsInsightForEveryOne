@@ -62,7 +62,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
             </div>
         ),
         filterIcon: (filtered: boolean) => (
-            <FilterOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
+            <FilterOutlined />
         ),
         onFilter: (value, record) =>
             record[dataIndex]
