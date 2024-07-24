@@ -7,6 +7,8 @@ import { ReactComponent as HelpSvg } from './img/icons_dark_normal_ascendinsight
 import { ReactComponent as PinSvg } from './img/icons_dark_normal_ascendinsight_pin.svg';
 import { ReactComponent as LinePinSvg } from './img/icons_dark_normal_ascendinsight_pin_line.svg';
 import { ReactComponent as StartSvg } from './img/icons_dark_normal_mindstudioinsight_start.svg';
+import { ReactComponent as CaretDownSvg } from './img/caret-down.svg';
+import { ReactComponent as CaretRightSvg } from './img/caret-right.svg';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
     active?: boolean;
@@ -33,7 +35,7 @@ export function Icon({ type = '', svgElement, className = '', color, active, dis
     let colorCss = '';
     if (color !== undefined && color !== null && color !== '') {
         // 替换颜色中的 # ：( ) ， . 空格
-        colorClass = `color-${color.replace(/#|:|\(|\)|,|\.|\s/g, '')}`;
+        colorClass = `color-${color.replace(/[^a-zA-Z0-9]/g, '')}`;
         colorCss = `.svg-icon.${colorClass} path {
           fill: ${color};
         }`;
@@ -41,7 +43,7 @@ export function Icon({ type = '', svgElement, className = '', color, active, dis
 
     return <span className={'icon-box'} style={{ ...(style ?? {}) }}>
         <style>
-            {`${colorCss}`}
+            {colorCss}
         </style>
         <Svg
             width={16}
@@ -62,6 +64,14 @@ export function PinIcon(props: ISVGProps): JSX.Element {
 
 export function LinePinIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'linePin'} active={true} {...props }/>;
+}
+
+export function CaretDownIcon(props: ISVGProps): JSX.Element {
+    return <Icon svgElement={CaretDownSvg} {...props }/>;
+}
+
+export function CaretRightIcon(props: ISVGProps): JSX.Element {
+    return <Icon svgElement={CaretRightSvg} {...props } />;
 }
 
 export function StartIcon(props: ISVGProps): JSX.Element {

@@ -8,7 +8,8 @@ import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import type { PlainLegendComponentOption } from 'echarts';
-import { Col, Row, Table, Empty } from 'antd';
+import { Col, Row, Empty } from 'antd';
+import ResizeTable from 'lib/ResizeTable';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
@@ -30,7 +31,7 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
     };
     return (
         <>
-            <Table
+            <ResizeTable
                 pagination={false}
                 expandable={{ defaultExpandedRowKeys: ['SDMA'] }}
                 columns={useColumns()}
