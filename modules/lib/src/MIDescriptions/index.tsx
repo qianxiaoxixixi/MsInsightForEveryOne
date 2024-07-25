@@ -1,21 +1,59 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import styled from '@emotion/styled';
-import { Descriptions } from 'antd';
 
-export const MIDescriptions = styled(Descriptions)`
+import React, { type ReactNode, type CSSProperties } from 'react';
+import styled from '@emotion/styled';
+
+interface MIDescriptionsProps {
+    title: ReactNode;
+    children: ReactNode;
+    style?: CSSProperties;
+}
+
+interface MIDescriptionsItemProps {
+    label: ReactNode;
+    children: ReactNode;
+    style?: CSSProperties;
+}
+
+const Container = styled.div<Partial<MIDescriptionsProps>>`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+`;
+
+const Item = styled.div<Partial<MIDescriptionsItemProps>>`
     color: ${(props): string => props.theme.textColorPrimary};
-  
-    .ant-descriptions-item-label {
-      color: ${(props): string => props.theme.textColorTertiary};
+    .label{
+        color: ${(props): string => props.theme.textColorTertiary};
+        margin-bottom: 4px;
     }
-    .ant-descriptions-item-content {
-      color: ${(props): string => props.theme.textColorPrimary};
-    }
-    .ant-descriptions-row>td, .ant-descriptions-row>th{
-      padding-bottom: 10px;
+    .content{
+        font-size: 16px;
     }
 `;
+export const MIDescriptions: React.FC<MIDescriptionsProps> = (props): JSX.Element => {
+    const { children } = props;
+
+    return (
+        <Container>
+            {children}
+        </Container>
+    );
+};
+
+export const MIDescriptionsItem: React.FC<MIDescriptionsItemProps> = (props): JSX.Element => {
+    const { label, children } = props;
+
+    return (
+        <Item>
+            <div className="label">{label}:</div>
+            <div className="content">
+                {children}
+            </div>
+        </Item>
+    );
+};
 
 export default MIDescriptions;

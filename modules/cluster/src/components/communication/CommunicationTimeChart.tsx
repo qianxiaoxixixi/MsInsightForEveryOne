@@ -11,6 +11,7 @@ import type { Session } from '../../entity/session';
 import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
+import { chartColors } from 'lib/CommonUtils';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -42,6 +43,7 @@ function wrapData(data: dataType): any {
 }
 
 const baseOption: any = {
+    color: chartColors,
     tooltip: {
         ...commonEchartsOptions.tooltip,
         confine: true,

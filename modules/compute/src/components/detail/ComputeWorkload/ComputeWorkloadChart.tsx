@@ -5,14 +5,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as echarts from 'echarts';
 import { useTranslation } from 'react-i18next';
 import { type IblockData } from './Index';
-import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc } from 'lib/CommonUtils';
+import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc, chartColors } from 'lib/CommonUtils';
 import { LimitHit } from '../../LimitSet';
+
 interface Iprops {
     blockId: string;
     data: IblockData[];
 }
 
 const baseOption = {
+    color: chartColors,
     title: {
         text: 'Pipe Utilization',
         textStyle: { color: COLOR.Grey50 },
@@ -59,7 +61,6 @@ const baseOption = {
             type: 'bar',
             data: [] as unknown[],
             itemStyle: {
-                color: COLOR.LIGHT_BLUE,
                 borderColor: 'white',
             },
             barMaxWidth: 30,
@@ -114,7 +115,7 @@ function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
         });
     }, [showData]);
     return (
-        <div style={{ padding: '20px' }}>
+        <div style={{ marginBottom: '20px' }}>
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${t('Current Count')} (${limit.current})`}/>}
             <div id={chartID} style={{ height: '400px' }} ></div>
         </div>

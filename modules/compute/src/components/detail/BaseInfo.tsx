@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Tooltip } from 'lib/components';
 import { observer } from 'mobx-react';
-import { MIDescriptions } from 'lib/CommonUtils';
+import { MIDescriptions, MIDescriptionsItem } from 'lib/CommonUtils';
 import ResizeTable from 'lib/ResizeTable';
 import { type Session } from '../../entity/session';
 import { queryBaseInfo } from '../RequestUtils';
@@ -184,11 +184,11 @@ const index = observer(({ session }: Iprops): JSX.Element => {
 
     return (
         <CollapsiblePanel title={t('BaseInfo')}>
-            <MIDescriptions column={1}>
+            <MIDescriptions>
                 {
-                    items.map((item, itemIndex) => <MIDescriptions.Item key={itemIndex} label={item.label}>
+                    items.map((item, itemIndex) => <MIDescriptionsItem key={itemIndex} label={item.label}>
                         {item.value}
-                    </MIDescriptions.Item>)
+                    </MIDescriptionsItem>)
                 }
             </MIDescriptions>
         </CollapsiblePanel>

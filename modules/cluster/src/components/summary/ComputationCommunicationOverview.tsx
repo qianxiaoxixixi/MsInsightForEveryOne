@@ -22,6 +22,7 @@ import { HelpIcon } from 'lib/Icon';
 import Layout from 'lib/Layout';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
 import { Tooltip } from 'lib/components';
+import { chartColors } from 'lib/CommonUtils';
 
 interface SummaryDataType {
     [propName: string]: any;
@@ -131,6 +132,7 @@ const baseSeries = [
 ];
 
 const baseOption: any = {
+    color: chartColors,
     tooltip: commonEchartsOptions.tooltip,
     legend: {
         data: [],
@@ -366,7 +368,7 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
                     <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
                     <div id={'overview-chart'} style={{ height: '400px' }} ></div>
                 </div>
-                <div style={{ padding: '0 3rem' }}>
+                <div>
                     <StatisticsTable {...selected} advice={advice} session={session}/>
                 </div>
             </div>

@@ -3,7 +3,7 @@
 */
 import * as React from 'react';
 import BaseContainer from '../container/BaseContainer';
-import { MIDescriptions } from '../MIDescriptions';
+import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
 import { Empty } from '../components/index';
@@ -11,7 +11,7 @@ import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 export { customConsole } from './Console';
 
-export { BaseContainer, MIDescriptions, COLOR, chartVisbilityListener, getResizeEcharts };
+export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts };
 
 export const StyledEmpty = ({ descriptor, style }:
 { descriptor: string; style?: object; translation: any}): JSX.Element => {
@@ -146,3 +146,66 @@ export const adaptDpr = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     ctx.scale(dpr, dpr);
     return { canvasWidth, canvasHeight };
 };
+
+export const chartColors = [
+    '#0062DC',
+    '#279C6E',
+    '#34B1B9',
+    '#6037DB',
+    '#FF5432',
+    '#0077FF',
+    '#FD2F2F',
+    '#D53F78',
+    '#2F9CE0',
+    '#EE891D',
+    '#AA38CE',
+    '#75A105',
+    '#E44222',
+    '#0158C5',
+    '#248B62',
+    '#2F9EA6',
+    '#026AE5',
+    '#E32A2A',
+    '#BF376C',
+    '#2A8CC9',
+    '#5631C4',
+    '#D57B18',
+    '#9831B9',
+    '#699006',
+    '#CB2FOF',
+    '#004EB0',
+    '#1F7C58',
+    '#2A8D93',
+    '#005FCC',
+    '#CA2425',
+    '#AA3260',
+    '#247CB3',
+    '#4C2CAF',
+    '#BE6D17',
+    '#882CA4',
+    '#5D8004',
+    '#FE6E50',
+    '#2679E1',
+    '#48AA82',
+    '#51BCC3',
+    '#278AFF',
+    '#FD4444',
+    '#DB5B8C',
+    '#4CAAE4',
+    '#7754E0',
+    '#F09A3D',
+    '#B655D4',
+    '#89AF2A',
+    '#FF876F',
+    '#4D91E5',
+    '#67B999',
+    '#71C8CE',
+    '#4DA0FF',
+    '#FD5857',
+    '#E178A0',
+    '#6DB9E8',
+    '#9073E5',
+    '#F3AC60',
+    '#C374DC',
+    '#9EBD51',
+];

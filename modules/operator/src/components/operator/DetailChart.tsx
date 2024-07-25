@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { getResizeEcharts, chartVisbilityListener } from 'lib/CommonUtils';
+import { getResizeEcharts, chartVisbilityListener, chartColors } from 'lib/CommonUtils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';
@@ -56,14 +56,14 @@ const getOption = ({ isDark, title }: { isDark: boolean;title: string }): echart
     baseOption.title = {
         ...baseOption.title ?? {},
         text: title,
-        textStyle: isDark ? { color: '#dcdcdc' } : {},
+        textStyle: isDark ? { color: '#ffffff' } : { color: '#4E5865' },
     };
     baseOption.legend = {
         ...baseOption.legend ?? {},
         textStyle: {
             width: 180,
             overflow: 'truncate',
-            color: isDark ? '#dcdcdc' : '#333',
+            color: isDark ? '#8D98AA' : '#4E5865',
         },
         pageTextStyle: isDark ? { color: '#dcdcdc' } : {},
         pageIconColor: isDark ? '#aaa' : '#414141',
@@ -73,6 +73,7 @@ const getOption = ({ isDark, title }: { isDark: boolean;title: string }): echart
 };
 
 const baseOption: echarts.EChartsOption = {
+    color: chartColors,
     title: {
         textStyle: { },
         left: 'left',
@@ -83,7 +84,7 @@ const baseOption: echarts.EChartsOption = {
     },
     legend: {
         orient: 'vertical',
-        left: 'right',
+        left: 'left',
         top: 'middle',
         type: 'scroll',
     },
