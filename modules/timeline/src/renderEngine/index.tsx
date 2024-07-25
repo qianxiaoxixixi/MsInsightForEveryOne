@@ -3,7 +3,7 @@
  */
 
 import { throttle } from 'lodash';
-import { CustomConsole as console } from 'lib/CommonUtils';
+import { customConsole as console } from 'lib/CommonUtils';
 
 type RenderID = number;
 interface Task {

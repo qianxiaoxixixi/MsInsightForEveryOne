@@ -7,7 +7,7 @@ import './index.css';
 import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
-import { CustomConsole as console } from 'lib/CommonUtils';
+import { customConsole as console } from 'lib/CommonUtils';
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {

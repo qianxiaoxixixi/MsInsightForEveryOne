@@ -7,7 +7,7 @@ import type { NotificationHandler } from './defs';
 import { updateData } from '../components/communication/Filter';
 import type { ConditionDataType } from '../components/communication/Filter';
 import i18n from 'lib/i18n';
-import { CustomConsole as console } from 'lib/CommonUtils';
+import { customConsole as console } from 'lib/CommonUtils';
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
