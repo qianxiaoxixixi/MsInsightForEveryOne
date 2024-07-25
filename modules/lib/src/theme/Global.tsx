@@ -1,8 +1,26 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { Global, css, useTheme } from '@emotion/react';
+import { Global, css, useTheme, type Theme, type SerializedStyles } from '@emotion/react';
 import React from 'react';
+
+const antdTooltipCss = (theme: Theme): SerializedStyles => css`
+    .ant-tooltip-arrow-content {
+        --antd-arrow-background-color: ${theme.bgColorLight};
+    }
+    .ant-tooltip-inner {
+        border-radius: 4px;
+        background-color: ${theme.bgColorLight};
+        border-color: ${theme.borderColorLight};
+        color: ${theme.textColorPrimary};
+        box-shadow: ${theme.boxShadow};
+        white-space: 'pre-wrap';
+        padding: 8px;
+        font-size: 12px;
+        max-width: 400px;
+    }
+`;
+
 export const GlobalStyles = (): JSX.Element => {
     const theme = useTheme();
     return <Global
@@ -45,6 +63,7 @@ export const GlobalStyles = (): JSX.Element => {
             .ant-table-filter-dropdown > div {
                 background-color: ${theme.bgColorLight};
             }
+            ${antdTooltipCss(theme)};
         `}
     />;
 };

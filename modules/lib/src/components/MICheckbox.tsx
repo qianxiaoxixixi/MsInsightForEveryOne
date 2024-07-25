@@ -9,5 +9,4 @@ import type { CheckboxProps } from 'antd/lib/checkbox';
 
 export const MICheckbox = styled((props: CheckboxProps & React.RefAttributes<HTMLInputElement>) => <Checkbox {...props} />)`
     color: ${(props): string => props.theme.textColorPrimary};
-    font-size: 12px;
 `;
