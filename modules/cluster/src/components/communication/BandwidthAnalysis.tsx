@@ -15,7 +15,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import { addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
-import { customConsole as console } from 'lib/CommonUtils';
+import { customConsole as console, chartColors } from 'lib/CommonUtils';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
 import styled from '@emotion/styled';
 
@@ -220,6 +220,7 @@ export interface Distribution {
 }
 
 const bandwidthOption: echarts.EChartsOption = {
+    color: chartColors,
     tooltip: {
         ...commonEchartsOptions.tooltip,
         confine: true,

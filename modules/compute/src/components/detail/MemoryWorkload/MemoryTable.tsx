@@ -102,7 +102,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
         setLimit(newLimit);
     }, [data, tDetails]);
     return (
-        <div style={{ padding: '0 20px 20px' }}>
+        <div>
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${tDetails('Memory Workload Table Records')}(${limit.current})`}/>}
             {tablelist.map((item, index) => (

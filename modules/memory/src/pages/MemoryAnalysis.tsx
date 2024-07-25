@@ -40,7 +40,7 @@ const FlexDiv = styled.div`
 `;
 
 const SearchBox = styled(FlexDiv)`
-    margin: 0 24px 20px;
+    margin: 0 0 20px;
     flex-wrap: wrap;
     gap: 24px;
 `;
@@ -404,7 +404,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     return (
         <Layout>
             <div className="mb-30">
-                <SearchBox>
+                <SearchBox style={{ padding: '0 24px' }}>
                     {hostCondition.options.length > 0
                         ? <FlexDiv>
                             <Label name={t('searchCriteria.Host')} />

@@ -9,6 +9,7 @@ import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { convertTime, safeStr, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
+import { chartColors } from 'lib/CommonUtils';
 
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColorTertiary};
@@ -96,18 +97,7 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
     };
     const newOption = {
         ...option,
-        color: [
-            '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
-            '#3ba272', '#865c4b', '#9a60b4', '#ea7ccc', '#6f83a5',
-            '#c86290', '#6aad92', '#d28b5d', '#7a929e', '#b66579',
-            '#69b0ac', '#8d6e6d', '#9db3aa', '#e89e99', '#7397b9',
-            '#cf8191', '#809abc', '#c2a26b', '#75adb6', '#ca87b0',
-            '#78a2bb', '#cc2adf', '#86a087', '#d8a895', '#8c7e6d',
-            '#b3b9c1', '#d39974', '#728eaa', '#d5aa98', '#88a6bc',
-            '#db817a', '#6487a8', '#cd918d', '#a2bce6', '#d19c7d',
-            '#6e97ab', '#c09c8d', '#41f059', '#d29d88', '#5e8c8e',
-            '#c2b5a5', '#07276a', '#f4f0ee', '#7e737f', '#d1a082',
-        ],
+        color: chartColors,
         dataset:
         {
             source: [graph.columns, ...graph.rows],

@@ -130,7 +130,7 @@ const FilterCom = (props: any): JSX.Element => {
             label: t(item.label),
         };
     });
-    return (<div style={ { margin: '0 20px 10px' }}>
+    return (<div style={ { marginBottom: 24 }}>
         {
             !(session.isFullDb)
                 ? <Label name={t('Step')} />
