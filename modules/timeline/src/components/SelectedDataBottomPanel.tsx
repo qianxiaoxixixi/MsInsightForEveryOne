@@ -13,7 +13,7 @@ import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
 import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
 import { Col, Row } from 'antd';
-import { CustomConsole as console } from 'lib/CommonUtils';
+import { customConsole as console } from 'lib/CommonUtils';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;

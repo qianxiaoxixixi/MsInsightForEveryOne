@@ -31,8 +31,8 @@ interface SummaryDataType {
     communicationNotOverLappedTime: number;
     communicationOverLappedTime: number;
     freeTime: number;
-    ComputeTimeRatio?: string | number;
-    CommunicationTimeRatio?: string | number;
+    computeTimeRatio?: string | number;
+    communicationTimeRatio?: string | number;
     pureComputingTime?: string | number;
 }
 
