@@ -861,10 +861,9 @@ bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &
     return true;
 }
 
-void DbSummaryDataBase::ParserEnd(const std::string &token, const std::string &fileId, bool result,
-                                  const std::string &msg)
+void DbSummaryDataBase::ParserEnd(const std::string &fileId, bool result, const std::string &msg)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Error("Failed to get session token for summary callback.");
         return;
@@ -872,14 +871,12 @@ void DbSummaryDataBase::ParserEnd(const std::string &token, const std::string &f
     if (fileId.empty()) {
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::ModuleType::OPERATOR;
-        event->token = token;
         event->result = true;
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
         event->moduleName = Protocol::ModuleType::OPERATOR;
-        event->token = token;
         event->result = true;
         event->data.rankId = fileId;
         event->data.status = result;

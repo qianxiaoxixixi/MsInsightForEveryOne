@@ -17,11 +17,6 @@ using namespace Dic::Server;
 void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SummaryTopRankRequest &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<SummaryTopRankResponse> responsePtr = std::make_unique<SummaryTopRankResponse>();
     SummaryTopRankResponse &response = *responsePtr.get();
     std::vector<std::string> timeFlagVector = {"computingTime", "communicationNotOverLappedTime",
@@ -31,7 +26,7 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         timeFlagVector.end()) {
         request.params.orderBy = "computingTime";
     }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     response.body.collectStartTime =
             Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
     response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;

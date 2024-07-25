@@ -12,67 +12,48 @@ WsSessionManager &WsSessionManager::Instance()
     return instance;
 }
 
-void WsSessionManager::AddSession(const std::string &token, std::unique_ptr<WsSession> session)
+void WsSessionManager::AddSession(std::unique_ptr<WsSession> newSession)
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
-    session->Start();
-    session->WaitForBindToken();
-    sessionMap.emplace(token, std::move(session));
-}
-
-void WsSessionManager::RemoveSession(const std::string &token)
-{
-    std::unique_lock<std::mutex> lock(sessionMutex);
-    sessionMap.erase(token);
+    if (!session) {
+        newSession->Start();
+        session = std::move(newSession);
+    }
 }
 
 void WsSessionManager::ClearSessions()
 {
-    std::unique_lock<std::mutex> lock(sessionMutex);
-    sessionMap.clear();
+    RemoveSession();
 }
 
-WsSession *WsSessionManager::GetSession(const std::string &token)
+void WsSessionManager::RemoveSession()
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
-    if (sessionMap.count(token) == 0) {
-        return nullptr;
-    }
-    return sessionMap.at(token).get();
+    session.release();
+}
+
+WsSession *WsSessionManager::GetSession()
+{
+    std::unique_lock<std::mutex> lock(sessionMutex);
+    return session.get();
 }
 
 WsSession *WsSessionManager::GetSession(const WsChannel *channel)
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
-    WsSession *session = nullptr;
-    for (auto &iter : sessionMap) {
-        if (iter.second->GetChannel() == channel) {
-            session = iter.second.get();
-            break;
-        }
-    }
-    return session;
+    return (session && session->GetChannel() == channel) ? session.get() : nullptr;
 }
 
-bool WsSessionManager::CheckSession(const std::string &token)
+bool WsSessionManager::CheckSession()
 {
-    WsSession *session = GetSession(token);
-    if (session == nullptr) {
-        return false;
-    }
-    if (session->GetStatus() == WsSession::Status::CLOSED) {
-        return false;
-    }
-    return true;
+    return session && session->GetStatus() != WsSession::Status::CLOSED;
 }
 
 void WsSessionManager::OnEventByMainSession(Protocol::Event &event)
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
-    for (auto &iter : sessionMap) {
-        if (!iter.second->IsSubSession()) {
-            iter.second->SendEvent(event);
-        }
+    if (session) {
+        session->SendEvent(event);
     }
 }
 

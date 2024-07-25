@@ -14,16 +14,12 @@ using namespace Dic::Server;
 void QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     EventsViewRequest &request = dynamic_cast<EventsViewRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
 
     std::unique_ptr<EventsViewResponse> responsePtr = std::make_unique<EventsViewResponse>();
     EventsViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);

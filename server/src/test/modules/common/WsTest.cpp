@@ -22,8 +22,7 @@ TEST_F(TestSuit, TestAllRequestHandler)
 {
     WsChannel *ws;
     std::unique_ptr<WsSession> session = std::make_unique<WsSession>(ws);
-    std::string token = "Rd``OTxPVKtcJPt]";
-    WsSessionManager::Instance().AddSession(token, std::move(session));
+    WsSessionManager::Instance().AddSession(std::move(session));
     std::string err = "";
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find_last_of("server");

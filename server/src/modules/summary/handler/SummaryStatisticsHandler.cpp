@@ -17,18 +17,13 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
 {
     Protocol::SummaryStatisticRequest &request =
             dynamic_cast<Protocol::SummaryStatisticRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<Protocol::SummaryStatisticsResponse> responsePtr =
             std::make_unique<Protocol::SummaryStatisticsResponse>();
     SummaryStatisticsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     if (request.params.rankId.empty()) {
         ServerLog::Info("rankId is empty,exit request handler");
         SetResponseResult(response, false, "rank Id is empty");

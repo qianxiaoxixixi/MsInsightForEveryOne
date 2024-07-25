@@ -27,13 +27,14 @@ private:
     void FindTraceFiles(const std::string &path, int depth, std::string &error, std::vector<std::string> &traceFiles);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     bool IsJsonValid(const std::string &fileName);
-    static void ClusterProcess(const std::string &token, const std::string &selectedFolder,
+    static void ClusterProcess(const std::string &selectedFolder,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
-    static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
+    static void ClusterProcessAsyncStep(const std::string &selectedFolder);
 
-    void SetParseCallBack(const std::string token, FileParser &fileParser);
+    void SetParseCallBack(FileParser &fileParser);
 
     bool isSimulation(std::string filePath);
+
     void ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const ImportActionRequest &request);
     std::map<std::string, std::vector<std::string>> GetRankListMap(ImportActionResponse &response,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, std::string &error);

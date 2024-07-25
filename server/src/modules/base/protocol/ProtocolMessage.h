@@ -47,8 +47,7 @@ struct ProtocolMessage {
     ProtocolMessage::Type type = Type::NONE;
     // request: { "moduleName": xxx, "params": { ...} }; response/event {"moduleName": xxx, "body": { ...} }
     ModuleType moduleName = ModuleType::UNKNOWN;
-    // request: { "params": { "token": xxx ...} }; response/event { "body": { "token": xxx ...} }
-    std::string token;
+    // request: { "params": { ... }; response/event { "body": {  ...} }
     std::optional<int> resultCallbackId;
 };
 

@@ -14,41 +14,9 @@
 
 namespace Dic {
 namespace Protocol {
-// token.create
-struct TokenCreateParams {
-    uint32_t deadTime = 0;
-    // when parentToken has value, request must be sent to sub sessions
-    std::optional<std::string> parentToken;
-};
-
-struct TokenCreateRequest : public Request {
-    TokenCreateRequest() : Request(REQ_RES_TOKEN_CREATE) {}
-    TokenCreateParams params;
-};
-
-// security.subAuth
-struct TokenDestroyParams {
-    std::string destroyToken;
-};
-
-struct TokenDestroyRequest : public Request {
-    TokenDestroyRequest() : Request(REQ_RES_TOKEN_DESTROY) {}
-    TokenDestroyParams params;
-};
-
-// token.check
-struct TokenCheckParams {
-    std::string checkedToken;
-};
-
-struct TokenCheckRequest : public Request {
-    TokenCheckRequest() : Request(REQ_RES_TOKEN_CHECK) {}
-    TokenCheckParams params;
-};
-
 // token.heartCheck
-struct TokenHeartCheckRequest : public Request {
-    TokenHeartCheckRequest() : Request(REQ_RES_TOKEN_HEART_CHECK) {}
+struct HeartCheckRequest : public Request {
+    HeartCheckRequest() : Request(REQ_RES_HEART_CHECK) {}
 };
 
 struct FilesGetParams {

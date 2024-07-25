@@ -10,13 +10,13 @@
 
 namespace Dic {
 namespace Module {
-class TokenHeartCheckHandler : public GlobalHandler {
+class HeartCheckHandler : public GlobalHandler {
 public:
-    TokenHeartCheckHandler()
+    HeartCheckHandler()
     {
-        command = REQ_RES_TOKEN_HEART_CHECK;
+        command = REQ_RES_HEART_CHECK;
     }
-    ~TokenHeartCheckHandler() override = default;
+    ~HeartCheckHandler() override = default;
 
     void HandleRequest(std::unique_ptr<Request> requestPtr) override;
 };

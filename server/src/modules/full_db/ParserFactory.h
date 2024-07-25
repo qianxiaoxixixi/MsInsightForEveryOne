@@ -22,23 +22,21 @@ public:
     virtual ~ParserAlloc() = default;
     virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request){};
     virtual ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath){};
-    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
-                                 const std::string &message);
-    static void ParseProgressCallBack(const std::string &token, const std::string &fileId, uint64_t parsedSize,
-        uint64_t totalSize, int progress);
-    static void SendAllParseSuccess(const std::string &token);
+    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
+    static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
+    static void SendAllParseSuccess();
     static void Reset();
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
 
-    static void ParseClusterEndProcess(const std::string token, std::string result);
+    static void ParseClusterEndProcess(std::string result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::string GetFileId(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);
     static bool CheckIsCluster(const std::string &filePath);
-    static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
-    static void SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message);
+    static void SendParseSuccessEvent(const std::string &fileId);
+    static void SendParseFailEvent(const std::string &fileId, const std::string &message);
 
     void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
                                  const std::string &cardPath, std::vector<std::string> dataPath);

@@ -16,17 +16,13 @@ void GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MatrixGroupRequest &request =
             dynamic_cast<MatrixGroupRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<Protocol::MatrixGroupResponse> responsePtr =
             std::make_unique<Protocol::MatrixGroupResponse>();
     MatrixGroupResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetGroups(request.params, response.body)) {

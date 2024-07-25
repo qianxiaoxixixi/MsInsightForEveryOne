@@ -31,7 +31,7 @@ public:
                                                                   currPath + dbPath3);
         Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", currPath + dbPath3, "");
         Timeline::DataBaseManager::Instance().SetDbPathMapping("2", currPath + dbPath3, "");
-        FullDb::FullDbParser::Instance().Parse({"FullDb"}, currPath + dbPath3, "");
+        FullDb::FullDbParser::Instance().Parse({"FullDb"}, currPath + dbPath3);
         while (ParserStatusManager::Instance().GetParserStatus("FullDb") != ParserStatus::FINISH_ALL) {
         }
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(

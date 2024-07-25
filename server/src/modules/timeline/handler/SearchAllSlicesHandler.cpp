@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchAllSlicesRequest &request = dynamic_cast<SearchAllSlicesRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check command=", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<SearchAllSlicesResponse> responsePtr = std::make_unique<SearchAllSlicesResponse>();
     SearchAllSlicesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

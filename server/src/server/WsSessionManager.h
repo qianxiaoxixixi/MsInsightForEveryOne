@@ -18,11 +18,11 @@ class WsSessionManager {
 public:
     static WsSessionManager &Instance();
 
-    void AddSession(const std::string &token, std::unique_ptr<WsSession> session);
-    void RemoveSession(const std::string &token);
-    WsSession *GetSession(const std::string &token);
+    void AddSession(std::unique_ptr<WsSession> newSession);
+    void RemoveSession();
+    WsSession *GetSession();
     WsSession *GetSession(const WsChannel *channel);
-    bool CheckSession(const std::string &token);
+    bool CheckSession();
     void ClearSessions();
     void OnEventByMainSession(Protocol::Event &event);
 
@@ -31,7 +31,7 @@ private:
     ~WsSessionManager() = default;
 
     std::mutex sessionMutex;
-    std::map<std::string, std::unique_ptr<WsSession>> sessionMap;
+    std::unique_ptr<WsSession> session = nullptr;
 };
 } // end of namespace Server
 } // end of namespace Dic

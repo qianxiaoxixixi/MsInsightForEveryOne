@@ -409,14 +409,14 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
     return results;
 }
 
-bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::string &token)
+bool MemoryParse::Parse(const std::vector<std::string> &pathList)
 {
     auto memoryFiles = GetMemoryFiles(pathList);
     if (memoryFiles.empty()) {
         ServerLog::Warn("Memory file is empty.");
         return false;
     }
-    SetParseCallBack(token);
+    SetParseCallBack();
     if (memoryFiles.size() > 1) {
         ParseEndCallBack("", true, "");
     }
@@ -518,10 +518,10 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
     return true;
 }
 
-void MemoryParse::SetParseCallBack(const std::string &token)
+void MemoryParse::SetParseCallBack()
 {
     std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            std::bind(ParseCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     MemoryParse::Instance().SetParseEndCallBack(func);
 }
 
@@ -544,10 +544,9 @@ void MemoryParse::ParseEndCallBack(const std::string &fileId, bool result, const
     }
 }
 
-void MemoryParse::ParseCallBack(const std::string &token, const std::string &fileId, bool result,
-    const std::string &msg)
+void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Error("[Memory]Failed to get session token");
         return;
@@ -558,14 +557,12 @@ void MemoryParse::ParseCallBack(const std::string &token, const std::string &fil
         MemoryParse::Instance().ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::ModuleType::MEMORY;
-        event->token = token;
         event->result = true;
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
         event->moduleName = Protocol::ModuleType::TIMELINE;
-        event->token = token;
         event->result = true;
         event->isCluster = MemoryParse::Instance().isCluster;
         std::vector<Protocol::MemorySuccess> memoryResult;

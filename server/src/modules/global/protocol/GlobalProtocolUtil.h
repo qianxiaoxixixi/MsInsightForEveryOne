@@ -13,9 +13,6 @@ namespace Dic {
 namespace Protocol {
 // response
 template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response);
-template <> std::optional<document_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response);
-template <> std::optional<document_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response);
-template <> std::optional<document_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response);
 template <> std::optional<document_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response);
 template <> std::optional<document_t> ToResponseJson<TokenHeartCheckResponse>(const TokenHeartCheckResponse &response);
 template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoUpdateResponse>(

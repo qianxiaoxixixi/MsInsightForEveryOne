@@ -2,10 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 #include "pch.h"
-#include "TokenCreateHandler.h"
-#include "TokenDestroyHandler.h"
-#include "TokenCheckHandler.h"
-#include "TokenHeartCheckHandler.h"
+#include "HeartCheckHandler.h"
 #include "FilesGetHandler.h"
 #include "UpdateProjectExplorerInfoHandler.h"
 #include "GetProjectExplorerInfoHandler.h"
@@ -30,10 +27,7 @@ GlobalModule::~GlobalModule()
 void GlobalModule::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
-    requestHandlerMap.emplace(REQ_RES_TOKEN_CREATE, std::make_unique<TokenCreateHandler>());
-    requestHandlerMap.emplace(REQ_RES_TOKEN_DESTROY, std::make_unique<TokenDestroyHandler>());
-    requestHandlerMap.emplace(REQ_RES_TOKEN_CHECK, std::make_unique<TokenCheckHandler>());
-    requestHandlerMap.emplace(REQ_RES_TOKEN_HEART_CHECK, std::make_unique<TokenHeartCheckHandler>());
+    requestHandlerMap.emplace(REQ_RES_HEART_CHECK, std::make_unique<HeartCheckHandler>());
     requestHandlerMap.emplace(REQ_RES_FILES_GET, std::make_unique<FilesGetHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE,
                               std::make_unique<UpdateProjectExplorerInfoHandler>());

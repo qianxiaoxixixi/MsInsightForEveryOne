@@ -14,12 +14,7 @@ using namespace Global;
 void UpdateProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoUpdateRequest &>(*requestPtr.get());
-    std::string sessionToken = request.token;
-    if (!WsSessionManager::Instance().CheckSession(sessionToken)) {
-        ServerLog::Error("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(sessionToken);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectExplorerInfoUpdateResponse> responsePtr =
             std::make_unique<ProjectExplorerInfoUpdateResponse>();
     ProjectExplorerInfoUpdateResponse &response = *responsePtr;

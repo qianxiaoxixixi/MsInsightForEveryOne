@@ -30,8 +30,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         ReloadDbPath(projectInfos, request);
         return;
     }
-    std::string token = request.token;
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(token);
+    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -40,11 +39,11 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     std::string error;
     std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(response, projectInfos, error);
     if (!std::empty(error)) {
-        SendParseFailEvent(token, "", error);
+        SendParseFailEvent("", error);
     }
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
-        SetParseCallBack(token, Timeline::TraceFileSimulationParser::Instance());
+        SetParseCallBack(Timeline::TraceFileSimulationParser::Instance());
         ModuleRequestHandler::SetResponseResult(response, true);
         response.body.isSimulation = true;
         session.OnResponse(std::move(responsePtr));
@@ -56,7 +55,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     } else if (projectTypeEnum == ProjectTypeEnum::CLUSTER) {
         DataBaseManager::Instance().curIsCluster = true;
     }
-    SetParseCallBack(token, Timeline::TraceFileParser::Instance());
+    SetParseCallBack(Timeline::TraceFileParser::Instance());
     if (rankListMap.size() >= PENDIND_CRITICAL_VALUE) {
         response.body.isPending = true;
     }
@@ -94,7 +93,6 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(Impor
 void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
     const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
-    std::string token = request.token;
     std::vector<std::string> fileList;
     for (const auto &item : projectInfos) {
         fileList.push_back(item.fileName);
@@ -108,17 +106,17 @@ void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::st
         }
         Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, rankEntry.second[0]);
     }
-    if (!Summary::KernelParse::Instance().Parse(fileList, token)) {
+    if (!Summary::KernelParse::Instance().Parse(fileList)) {
         ServerLog::Warn("Failed to parse kernel files.");
     }
 
-    if (!Memory::MemoryParse::Instance().Parse(fileList, token)) {
+    if (!Memory::MemoryParse::Instance().Parse(fileList)) {
         ServerLog::Warn("Failed to parse memory files.");
     }
 
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token,
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess,
         projectInfos[0].fileName, dataPathToDbMap, projectInfos[0].projectName);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
 void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
@@ -127,7 +125,7 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
     if (projectInfos.empty()) {
         return;
     }
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(request.token);
+    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -147,14 +145,14 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
     for (const auto &item : projectInfos) {
         std::string fileId = FileUtil::PathPreprocess(item.fileName);
         if (item.dbPath.empty()) {
-            ParseEndCallBack(request.token, item.fileName, false,
-                "Failed to get db file. Please delete and upload again.");
+            ParseEndCallBack(item.fileName, false,
+                             "Failed to get db file. Please delete and upload again.");
         }
         if (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, fileId)) {
             return;
         }
         DataBaseManager::Instance().CreatConnectionPool(fileId, item.dbPath[0]);
-        ParseEndCallBack(request.token, item.fileName, true, "");
+        ParseEndCallBack(item.fileName, true, "");
     }
 }
 
@@ -179,21 +177,21 @@ bool ParserJson::isSimulation(std::string filePath)
     return false;
 }
 
-void ParserJson::SetParseCallBack(std::string token, FileParser &fileParser)
+void ParserJson::SetParseCallBack(FileParser &fileParser)
 {
     std::function<void(const std::string, bool, const std::string)> func =
-        std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     fileParser.SetParseEndCallBack(func);
 
     // 复用解析完成回调函数设置逻辑
     std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> progressFunc =
-        std::bind(ParseProgressCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        std::bind(ParseProgressCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
         std::placeholders::_4);
     fileParser.SetParseProgressCallBack(progressFunc);
 }
 
 
-void ParserJson::ClusterProcess(const std::string &token, const std::string &selectedFolder,
+void ParserJson::ClusterProcess(const std::string &selectedFolder,
     std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
@@ -203,19 +201,19 @@ void ParserJson::ClusterProcess(const std::string &token, const std::string &sel
             ServerLog::Info("The cluster file is parsed successfully.");
             parseClusterResult = PARSE_RESULT_OK;
             dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
-            ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep, token,
-                selectedFolder);
+            ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
+                                                                                selectedFolder);
         } else {
             ServerLog::Warn("Failed to parse cluster files.");
             parseClusterResult = PARSE_RESULT_FAIL;
         }
     }
     // send event
-    ParserAlloc::ParseClusterEndProcess(token, parseClusterResult);
+    ParserAlloc::ParseClusterEndProcess(parseClusterResult);
     SaveDbPath(projectName, dataPathToDbMap);
 }
 
-void ParserJson::ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder)
+void ParserJson::ClusterProcessAsyncStep(const std::string &selectedFolder)
 {
     std::string parseClusterResult;
     ClusterFileParser clusterFileParser;
@@ -229,14 +227,13 @@ void ParserJson::ClusterProcessAsyncStep(const std::string &token, const std::st
     }
     // send event
     ServerLog::Info("Parse Cluster File end, send event");
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session token ");
         return;
     }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
     session->OnEvent(std::move(event));

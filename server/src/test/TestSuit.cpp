@@ -40,9 +40,9 @@ public:
         TraceFileParser::Instance().Parse({currPath + refPath1 + "trace_view.json"}, "1", "");
         WaitParseEnd({"1"});
         std::string testDataPath = currPath + R"(/src/test/test_data)";
-        KernelParse::Instance().Parse({testDataPath}, "");
+        KernelParse::Instance().Parse({testDataPath});
         WaitParseEnd({KERNEL_PREFIX + "0", KERNEL_PREFIX + "1"});
-        MemoryParse::Instance().Parse({testDataPath}, "");
+        MemoryParse::Instance().Parse({testDataPath});
         WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
         ClusterFileParser clusterFileParser;

@@ -19,12 +19,7 @@ using namespace Dic::Server;
 void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ResetWindowRequest &request = dynamic_cast<ResetWindowRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ResetWindowResponse> responsePtr = std::make_unique<ResetWindowResponse>();
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

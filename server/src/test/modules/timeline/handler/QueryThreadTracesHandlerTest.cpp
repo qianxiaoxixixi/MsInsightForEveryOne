@@ -12,14 +12,5 @@ TEST_F(HandlerTest, QueryThreadTracesHandlerTestNormal)
 {
     Dic::Module::Timeline::QueryThreadTracesHandler handler;
     std::unique_ptr<Dic::Protocol::Request> requestPtr = std::make_unique<Dic::Protocol::UnitThreadTracesRequest>();
-    requestPtr.get()->token = "hhhhhhhhhhhhh";
-    handler.HandleRequest(std::move(requestPtr));
-}
-
-TEST_F(HandlerTest, QueryThreadTracesHandlerTestTokenIsError)
-{
-    Dic::Module::Timeline::QueryThreadTracesHandler handler;
-    std::unique_ptr<Dic::Protocol::Request> requestPtr = std::make_unique<Dic::Protocol::UnitThreadTracesRequest>();
-    requestPtr.get()->token = "hhhhhhhhhhhhh3";
     handler.HandleRequest(std::move(requestPtr));
 }

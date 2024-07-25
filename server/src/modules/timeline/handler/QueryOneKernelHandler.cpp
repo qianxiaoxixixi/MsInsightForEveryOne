@@ -14,15 +14,11 @@ using namespace Dic::Server;
 void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     KernelRequest &request = dynamic_cast<KernelRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
     std::unique_ptr<OneKernelResponse> responsePtr = std::make_unique<OneKernelResponse>();
     OneKernelResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);

@@ -4,21 +4,16 @@
 
 #include "pch.h"
 #include "WsSessionManager.h"
-#include "TokenHeartCheckHandler.h"
+#include "HeartCheckHandler.h"
 
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
 
-void TokenHeartCheckHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+void HeartCheckHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
-    auto &request = dynamic_cast<TokenHeartCheckRequest &>(*requestPtr.get());
-    std::string sessionToken = request.token;
-    if (!WsSessionManager::Instance().CheckSession(sessionToken)) {
-        ServerLog::Error("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(sessionToken);
+    auto &request = dynamic_cast<HeartCheckRequest &>(*requestPtr.get());
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<TokenHeartCheckResponse> responsePtr = std::make_unique<TokenHeartCheckResponse>();
     TokenHeartCheckResponse &response = *responsePtr;
     SetBaseResponse(request, response);

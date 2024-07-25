@@ -15,12 +15,7 @@ namespace Dic::Module::Operator {
     void QueryOpDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorDetailInfoRequest &request = dynamic_cast<OperatorDetailInfoRequest &>(*requestPtr);
-        std::string token = request.token;
-        if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("[Operator]Failed to check session token of Detail Info, command = ", command);
-            return;
-        }
-        WsSession &session = *WsSessionManager::Instance().GetSession(token);
+        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);

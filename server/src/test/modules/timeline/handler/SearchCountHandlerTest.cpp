@@ -12,14 +12,6 @@ TEST_F(HandlerTest, SearchCountHandlerTestNormal)
 {
     Dic::Module::Timeline::SearchCountHandler handler;
     std::unique_ptr<Dic::Protocol::Request> requestPtr = std::make_unique<Dic::Protocol::SearchCountRequest>();
-    requestPtr.get()->token = "hhhhhhhhhhhhh";
     handler.HandleRequest(std::move(requestPtr));
 }
 
-TEST_F(HandlerTest, SearchCountHandlerTestTokenIsError)
-{
-    Dic::Module::Timeline::SearchCountHandler handler;
-    std::unique_ptr<Dic::Protocol::Request> requestPtr = std::make_unique<Dic::Protocol::SearchCountRequest>();
-    requestPtr.get()->token = "hhhhhhhhhhhhh3";
-    handler.HandleRequest(std::move(requestPtr));
-}

@@ -111,10 +111,12 @@ void WsServer::OnOpenCb(WsChannel *ws)
         ws->end(URL_NULL_CODE, "url is null");
         return;
     }
-
+    if (WsSessionManager::Instance().GetSession() != nullptr) {
+        ServerLog::Error("Not Connect, already connecting");
+        return;
+    }
     std::unique_ptr<WsSession> session = std::make_unique<WsSession>(ws);
-    std::string tokenString = session->GetTokenString();
-    WsSessionManager::Instance().AddSession(tokenString, std::move(session));
+    WsSessionManager::Instance().AddSession(std::move(session));
 }
 
 void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
@@ -126,9 +128,8 @@ void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
     WsSession *session = WsSessionManager::Instance().GetSession(ws);
     if (session != nullptr) {
         session->SetStatus(WsSession::Status::CLOSED);
-        std::string tokenString = session->GetTokenString();
         session->WaitForExit();
-        WsSessionManager::Instance().RemoveSession(tokenString);
+        WsSessionManager::Instance().RemoveSession();
         ServerLog::Info("session remove ok.");
     }
 }

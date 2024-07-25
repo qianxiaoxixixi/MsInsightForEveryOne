@@ -16,12 +16,7 @@ using namespace Dic::Server;
 void QueryDetailsLoadInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceDetailsLoadInfoRequest &>(*requestPtr);
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<DetailsLoadInfoResponse> responsePtr = std::make_unique<DetailsLoadInfoResponse>();
     DetailsLoadInfoResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

@@ -72,7 +72,6 @@ TEST_F(ParamsParserTest, testWsSession)
     int waitTime = 10;
     session->WaitForExit(waitTime);
     session->GetChannel();
-    session->BindToken("token", "testSession1");
     session->GetCreateTime();
     session->GetStartTime();
     session->GetStopTime();
@@ -86,10 +85,7 @@ TEST_F(ParamsParserTest, testWsSession)
     session->SetDeviceKey("deviceKey");
     EXPECT_EQ(session->GetDeviceKey(), "deviceKey");
     session->SendEvent(event1);
-    EXPECT_EQ(session->GetTokenString().empty(), false);
-    EXPECT_EQ(session->GetParentTokenString(), "");
-
-    Dic::Server::WsSessionManager::Instance().AddSession("testSession1", std::move(session));
+    Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     auto getSession = Dic::Server::WsSessionManager::Instance().GetSession(ws);
     Dic::Server::WsSessionManager::Instance().ClearSessions();
     Dic::Protocol::Event event("1");

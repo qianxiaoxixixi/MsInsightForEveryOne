@@ -15,12 +15,7 @@ namespace Memory {
     {
         MemoryStaticOperatorListRequest &request =
                 dynamic_cast<MemoryStaticOperatorListRequest &>(*requestPtr.get());
-        std::string token = request.token;
-        if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("Failed to check session token , command = ", command);
-            return;
-        }
-        WsSession &session = *WsSessionManager::Instance().GetSession(token);
+        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<MemoryStaticOperatorListResponse> responsePtr =
                 std::make_unique<MemoryStaticOperatorListResponse>();
         MemoryStaticOperatorListResponse &response = *responsePtr.get();

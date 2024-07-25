@@ -16,12 +16,7 @@ using namespace Dic::Server;
 void DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     DurationListRequest &request = dynamic_cast<DurationListRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<DurationResponse> responsePtr = std::make_unique<DurationResponse>();
     DurationResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

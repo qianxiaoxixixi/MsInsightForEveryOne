@@ -35,8 +35,7 @@ public:
     bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                   Protocol::StaticOperatorGraphItem &graphItem) override;
     static void ParserEnd(std::string rankId, bool result);
-    static void ParseCallBack(const std::string &token, const std::string &fileId, bool result,
-                              const std::string &msg);
+    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();
     static void Reset();
 private:

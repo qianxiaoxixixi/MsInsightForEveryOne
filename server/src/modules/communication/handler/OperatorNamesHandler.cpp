@@ -17,12 +17,7 @@ using namespace Dic::Server;
 void OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     OperatorNamesRequest &request = dynamic_cast<OperatorNamesRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorNamesResponse> responsePtr = std::make_unique<OperatorNamesResponse>();
     OperatorNamesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

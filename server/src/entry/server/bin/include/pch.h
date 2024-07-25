@@ -51,7 +51,6 @@
 #include <shared_mutex>
 #include <variant>
 #include "WsSession.h"
-#include "TokenBuilder.h"
 #include "SafeQueue.h"
 #include "writer.h"
 #include "stringbuffer.h"

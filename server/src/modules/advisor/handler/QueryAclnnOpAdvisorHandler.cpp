@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void QueryAclnnOpAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session aclnn op");
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<AclnnOperatorResponse> responsePtr = std::make_unique<AclnnOperatorResponse>();
     AclnnOperatorResponse &response = *responsePtr;
     SetBaseResponse(request, response);

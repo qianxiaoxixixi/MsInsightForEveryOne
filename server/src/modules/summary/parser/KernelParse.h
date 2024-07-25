@@ -57,7 +57,7 @@ public:
 
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
-    bool Parse(const std::vector<std::string>& pathList, const std::string& token);
+    bool Parse(const std::vector<std::string>& pathList);
 
 private:
     const int maxThreadNum = 4;
@@ -73,9 +73,9 @@ private:
 
     static bool IsFileValid(const std::vector<std::string>& filePathList, const std::string &fileId,
                             const std::string& statusId, std::string &message);
-    static void SetParseCallBack(const std::string& token);
+    static void SetParseCallBack();
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
-    static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
+    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
 
     static void PreParseTask(const std::vector<std::string>& filePathList, const std::string &fileId);
     static bool ParseTask(const std::vector<std::string>& filePathList, const std::string &fileId,

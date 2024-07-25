@@ -11,53 +11,13 @@ namespace Dic {
 namespace Server {
 using namespace Dic::Protocol;
 using namespace Dic::Module;
-WsSession::WsSession(WsChannel *channel) : channel(channel), tokenString(), status(Status::INIT)
+WsSession::WsSession(WsChannel *channel) : channel(channel), status(Status::INIT)
 {
     loop = uWS::Loop::get();
-    tokenString = TokenBuilder::Instance().Build();
     createTime = TimeUtil::Instance().NowUTC();
     msgBuffer = std::make_unique<ProtocolMessageBuffer>();
 }
 
-WsSession::~WsSession()
-{
-    if (waitForTokenThread != nullptr && waitForTokenThread->joinable()) {
-        waitForTokenThread->join();
-    }
-}
-
-bool WsSession::CheckMessage(ProtocolMessage &msg)
-{
-    if (msg.token.empty()) {
-        if (msg.type != Protocol::ProtocolMessage::Type::REQUEST) {
-            ServerLog::Error("Non-request token is empty, so that message can not be processed.");
-            return false;
-        }
-        try {
-            Request &request = dynamic_cast<Request &>(msg);
-            if (request.command != REQ_RES_TOKEN_CREATE) {
-                ServerLog::Error("Request token is empty, so that message can not be processed.");
-                return false;
-            }
-        } catch (std::exception &e) {
-            ServerLog::Error("The msg is not request. exception:", e.what());
-            return false;
-        }
-
-        if (this->tokenString.empty()) {
-            ServerLog::Error("Message token generate failed, so that message can not be processed.");
-            return false;
-        }
-
-        // first token create request has no token
-        msg.token = this->tokenString;
-    }
-    if (msg.token != this->tokenString) {
-        ServerLog::Error("Message token is invalid, so that message can not be processed.");
-        return false;
-    }
-    return true;
-}
 
 void WsSession::OnHandleMsgBuffer(WsSession &session)
 {
@@ -71,9 +31,6 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
         std::unique_ptr<ProtocolMessage> msg = session.msgBuffer->Pop();
         if (msg == nullptr) {
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-            continue;
-        }
-        if (!session.CheckMessage(*msg.get())) {
             continue;
         }
         if (msg->type == ProtocolMessage::Type::REQUEST) {
@@ -133,35 +90,6 @@ const std::string WsSession::GetMessageHeader(int length) const
 const WsChannel *WsSession::GetChannel() const
 {
     return channel;
-}
-
-bool WsSession::BindToken(const std::string &token, const std::string &parentToken)
-{
-    if (token != tokenString) {
-        ServerLog::Error("Failed to bind token.");
-        return false;
-    }
-    // only bind once
-    if (!hasBindToken) {
-        parentTokenString = parentToken;
-        hasBindToken = true;
-    }
-    return true;
-}
-
-const std::string &WsSession::GetTokenString() const
-{
-    return tokenString;
-}
-
-const std::string &WsSession::GetParentTokenString() const
-{
-    return parentTokenString;
-}
-
-const bool WsSession::IsSubSession() const
-{
-    return !parentTokenString.empty();
 }
 
 const WsSession::Status WsSession::GetStatus() const
@@ -276,8 +204,6 @@ void WsSession::SendResponse(const Protocol::Response &response)
 void WsSession::SendEvent(Protocol::Event &event)
 {
     std::string error;
-    // set event token
-    event.token = tokenString;
     std::optional<document_t> json = ProtocolManager::Instance().ToJson(event, error);
     if (!json.has_value()) {
         ServerLog::Info(error);
@@ -320,32 +246,6 @@ void WsSession::Stop()
         channel = nullptr;
     }
     stopTime = TimeUtil::Instance().NowUTC();
-}
-
-void WsSession::WaitForBindToken(int timeoutSeconds)
-{
-    waitForTokenThread = std::make_unique<std::thread>(
-        [&](int timeout) {
-            uint32_t beginTime = TimeUtil::Instance().NowUTC();
-            uint32_t endTime = beginTime;
-            volatile bool isTimeout = true;
-            const int INTERVAL = 100;
-            while (true) {
-                if ((timeout > 0) && (endTime - beginTime > timeout)) {
-                    break;
-                }
-                if (this->hasBindToken) {
-                    isTimeout = false;
-                    break;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL));
-                endTime = TimeUtil::Instance().NowUTC();
-            }
-            if (isTimeout) {
-                this->Stop();
-            }
-        },
-        timeoutSeconds);
 }
 
 std::string WsSession::GetDeviceKey()
