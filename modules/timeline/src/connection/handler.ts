@@ -269,11 +269,16 @@ export const dragImportSuccessHandler: NotificationHandler = async (data): Promi
             }
             (result.reset as boolean) && (session.units = []);
             session.phase = 'download';
+            session.isPending = result.isPending as boolean;
+            session.isParserLoading = !(result.isPending as boolean);
             session.endTimeAll = undefined;
             result.result.forEach((item: CardInfo) => {
                 const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
                 if (item.result as boolean) {
+                    unit.shouldParse = true;
                     unit.phase = 'analyzing';
+                    unit.progress = 0;
+                    unit.showProgress = true;
                 } else {
                     unit.phase = 'error';
                 }
