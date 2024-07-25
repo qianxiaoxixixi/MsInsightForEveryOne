@@ -90,14 +90,14 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
     return results;
 }
 
-bool KernelParse::Parse(const std::vector<std::string>& pathList, const std::string& token)
+bool KernelParse::Parse(const std::vector<std::string> &pathList)
 {
     auto kernelFiles = GetKernelFiles(pathList);
     if (kernelFiles.empty()) {
         ServerLog::Warn("Kernel file is empty.");
         return false;
     }
-    SetParseCallBack(token);
+    SetParseCallBack();
     if (kernelFiles.size() > 1) {
         // 给前端发消息，清空原有数据
         ParseEndCallBack("", true, "");
@@ -286,10 +286,9 @@ void KernelParse::ParseEndCallBack(const std::string &fileId, bool result, const
     }
 }
 
-void KernelParse::ParseCallBack(const std::string &token, const std::string &fileId, bool result,
-    const std::string &msg)
+void KernelParse::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Error("Failed to get session token for summary callback.");
         return;
@@ -297,14 +296,12 @@ void KernelParse::ParseCallBack(const std::string &token, const std::string &fil
     if (fileId.empty()) {
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::ModuleType::OPERATOR;
-        event->token = token;
         event->result = true;
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
         event->moduleName = Protocol::ModuleType::OPERATOR;
-        event->token = token;
         event->result = true;
         event->data.rankId = fileId;
         event->data.status = result;
@@ -313,10 +310,10 @@ void KernelParse::ParseCallBack(const std::string &token, const std::string &fil
     }
 }
 
-void KernelParse::SetParseCallBack(const std::string& token)
+void KernelParse::SetParseCallBack()
 {
     std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            std::bind(ParseCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     KernelParse::Instance().SetParseEndCallBack(func);
 }
 

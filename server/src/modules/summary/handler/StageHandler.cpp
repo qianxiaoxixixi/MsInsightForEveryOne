@@ -12,11 +12,7 @@ using namespace Dic::Server;
 void StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineStageRequest &request = dynamic_cast<PipelineStageRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineStageResponse> responsePtr = std::make_unique<PipelineStageResponse>();
     PipelineStageResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

@@ -44,7 +44,7 @@ std::optional<document_t> ProtocolUtil::ToJson(const Response &response, std::st
     std::string command = response.command;
     std::optional<ProtocolUtil::ResponseToJsonFunc> func = GetResponseToJsonFunc(command);
     if (!func.has_value()) {
-        error = "Failed to find response target function, token = " + response.token + ", command = " + command;
+        error = "Failed to find response target function, command = " + command;
         return std::nullopt;
     }
     try {
@@ -60,7 +60,7 @@ std::optional<document_t> ProtocolUtil::ToJson(const Event &event, std::string &
     std::string eventString = event.event;
     std::optional<ProtocolUtil::EventToJsonFunc> func = GetEventToJsonFunc(eventString);
     if (!func.has_value()) {
-        error = "Failed to find event target function, token = " + event.token + ", event = " + eventString +
+        error = "Failed to find event target function, event = " + eventString +
             ", module:" + std::to_string(static_cast<int>(event.moduleName));
         return std::nullopt;
     }
@@ -87,7 +87,6 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
     request.type = type.has_value() ? type.value() : ProtocolMessage::Type::NONE;
     auto moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"].GetString());
     request.moduleName = moduleName.has_value() ? moduleName.value() : ModuleType::UNKNOWN;
-    JsonUtil::SetByJsonKeyValue(request.token, json["params"], "token");
     JsonUtil::SetByJsonKeyValue(request.resultCallbackId, json, "resultCallbackId");
     return true;
 }
@@ -108,7 +107,6 @@ void ProtocolUtil::SetResponseJsonBaseInfo(const Response &response, document_t 
         JsonUtil::AddMember(json, "message", response.error.value().message, allocator);
         json.AddMember("error", error, allocator);
     }
-    JsonUtil::AddMember(json, "token", response.token, allocator);
     if (response.resultCallbackId.has_value()) {
         json.AddMember("resultCallbackId", response.resultCallbackId.value(), allocator);
     }
@@ -122,7 +120,6 @@ void ProtocolUtil::SetEventJsonBaseInfo(const Event &event, document_t &json)
     JsonUtil::AddMember(json, "event", event.event, allocator);
     auto moduleName = ENUM_TO_STR(event.moduleName);
     JsonUtil::AddMember(json, "moduleName", moduleName.has_value() ? moduleName.value() : MODULE_UNKNOWN, allocator);
-    JsonUtil::AddMember(json, "token", event.token, allocator);
     if (event.resultCallbackId.has_value()) {
         json.AddMember("resultCallbackId", event.resultCallbackId.value(), allocator);
     }

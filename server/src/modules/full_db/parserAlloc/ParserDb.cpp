@@ -24,8 +24,7 @@ ParserDb::~ParserDb() {
 void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::string path = projectInfos[0].fileName;
-    std::string token = request.token;
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(token);
+    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -46,9 +45,10 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
             }
         }
     }
+
     bool isPendingParse = rankSize >= PENDIND_CRITICAL_VALUE;
     response.body.isPending = isPendingParse;
-    SetParseCallBack(token);
+    SetParseCallBack();
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
@@ -63,35 +63,34 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
                     { ProjectTypeEnum::DB, { ranks.first } });
                 continue;
             }
-            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
+            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first);
         }
     }
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(path, std::regex(clusterDBReg));
     // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
     bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
     // 执行集群数据解析
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path,
-                                                                                  isCluster);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, path, isCluster);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
-void ParserDb::ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster)
+void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster)
 {
     DataBaseManager::Instance().ClearClusterDb();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (isCluster) {
         ServerLog::Info("The cluster file is parsed successfully.");
         parseClusterResult = PARSE_RESULT_OK;
-        ClusterProcessAsyncStep(token, selectedFolder);
+        ClusterProcessAsyncStep(selectedFolder);
     } else {
         ServerLog::Warn("Failed to parse cluster files.");
         parseClusterResult = PARSE_RESULT_FAIL;
     }
     // send event
-    ParserAlloc::ParseClusterEndProcess(token, parseClusterResult);
+    ParserAlloc::ParseClusterEndProcess(parseClusterResult);
 }
 
-void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder)
+void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder)
 {
     std::string parseClusterResult;
     ClusterFileParser clusterFileParser;
@@ -107,14 +106,13 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::stri
     }
     // send event
     ServerLog::Info("Parse cluster file end, send event");
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session token ");
         return;
     }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
     session->OnEvent(std::move(event));
@@ -163,10 +161,10 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::string &path
     return hostMap;
 }
 
-void ParserDb::SetParseCallBack(std::string token)
+void ParserDb::SetParseCallBack()
 {
     std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     FullDb::FullDbParser::Instance().SetParseEndCallBack(func);
 }
 

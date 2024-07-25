@@ -32,15 +32,14 @@ FullDbParser::~FullDbParser()
     threadPool->ShutDown();
 }
 
-bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
-                         const std::string &token)
+bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath)
 {
     ServerLog::Info("start db parse.");
     for (auto id:fileIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::INIT);
     }
     auto &instance = FullDbParser::Instance();
-    instance.threadPool->AddTask(InitOpenDb, filePath, fileIds, token);
+    instance.threadPool->AddTask(InitOpenDb, filePath, fileIds);
     return true;
 }
 
@@ -72,8 +71,7 @@ std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::strin
     return std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
 }
 
-void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds,
-                              const std::string& token)
+void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds)
 {
     auto start = std::chrono::high_resolution_clock::now();
     auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
@@ -93,7 +91,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->UpdateWaitTime(); }));
     futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->GenerateOverlapAnalysis(); }));
 
-    threadPool->AddTask(EndParseTask, rankIds, filePath, futures, token, start);
+    threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
 
     database->UpdateStartTime();
 
@@ -101,26 +99,26 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
-            FullDb::DbMemoryDataBase::ParseCallBack(token, rankId, false, "");
+            FullDb::DbMemoryDataBase::ParseCallBack(rankId, false, "");
         }
         ServerLog::Error("There is no Memory Data in this db file:" + filePath);
     } else {
-        InitMemory(rankIds, filePath, token);
+        InitMemory(rankIds, filePath);
     }
 
     auto realRankIds = database->QueryRankId();
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
         for (const auto& rankId: realRankIds) {
-            FullDb::DbSummaryDataBase::ParserEnd(token, rankId, false, "");
+            FullDb::DbSummaryDataBase::ParserEnd(rankId, false, "");
         }
         ServerLog::Error("There is no Summery Data in this db file:" + filePath);
     } else {
-        InitSummery(realRankIds, filePath, token);
+        InitSummery(realRankIds, filePath);
     }
 }
 
 void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
-    const std::shared_ptr<std::vector<std::future<void>>>& futures, const std::string& token,
+    const std::shared_ptr<std::vector<std::future<void>>>& futures,
     std::chrono::time_point<std::chrono::high_resolution_clock> start)
 {
     for (const auto &future : *futures) {
@@ -139,19 +137,18 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. path:", filePath,
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    SendHostEvent(token, filePath);
+    SendHostEvent(filePath);
 }
 
-void FullDbParser::SendHostEvent(const std::string &token, const std::string &fileId)
+void FullDbParser::SendHostEvent(const std::string &fileId)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        ServerLog::Warn("Failed to get session");
         return;
     }
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.unit.type = "card";
     event->body.isFullDb = true;
@@ -179,32 +176,32 @@ void FullDbParser::ParserCallBack(std::string fileId, bool result)
     }
 }
 
-void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string path, std::string token)
+void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string path)
 {
     for (const std::string& id : rankIds) {
         auto summeryDatabase = dynamic_cast<FullDb::DbSummaryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
         if (summeryDatabase != nullptr && summeryDatabase->OpenDb(path, false)) {
-            FullDb::DbSummaryDataBase::ParserEnd(token, id, true, "");
+            FullDb::DbSummaryDataBase::ParserEnd(id, true, "");
         } else {
-            FullDb::DbSummaryDataBase::ParserEnd(token, id, false, "");
+            FullDb::DbSummaryDataBase::ParserEnd(id, false, "");
             ServerLog::Error("Failed to connect or open SummeryDatabase. rankId:", id);
         }
     }
     ServerLog::Info("Init Summary finish");
 }
 
-void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path, std::string token)
+void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path)
 {
     for (const std::string& id : rankIds) {
         auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
         if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
             FullDb::DbMemoryDataBase::ParserEnd(id, true);
-            FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");
+            FullDb::DbMemoryDataBase::ParseCallBack(id, true, "");
         } else {
             FullDb::DbMemoryDataBase::ParserEnd(id, false);
-            FullDb::DbMemoryDataBase::ParseCallBack(token, id, false, "");
+            FullDb::DbMemoryDataBase::ParseCallBack(id, false, "");
             ServerLog::Error("Failed to connect or open memoryDatabase. rankId:", id);
         }
     }
@@ -225,5 +222,11 @@ bool FullDbParser::FindDevicePaths(const std::string &selectedFolder,
         auto deviceId = folderName.substr(index + 1);
         devicePaths[deviceId] = FileUtil::GetParentPath(folder);
     }
+}
+
+bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
+                         const std::string &selectedFolder)
+{
+    return false;
 }
 }

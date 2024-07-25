@@ -25,7 +25,7 @@ private:
     void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder);
     std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,
         ImportActionResBody &body);
-    static void SetParseCallBack(const std::string &token, FileParser &fileParser);
+    static void SetParseCallBack(FileParser &fileParser);
 };
 } // end of namespace Module
 } // end of namespace Dic

@@ -23,11 +23,11 @@ public:
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 private:
     std::map<std::string, HostInfo> GetReportFiles(const std::string &path, ImportActionResBody &body);
-    void SetParseCallBack(std::string token);
+    void SetParseCallBack();
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
                                         const std::string& host, const std::string& dbFile);
-    static void ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster);
-    static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
+    static void ClusterProcess(const std::string &selectedFolder, bool isCluster);
+    static void ClusterProcessAsyncStep(const std::string &selectedFolder);
 };
 
 } // end of namespace Module

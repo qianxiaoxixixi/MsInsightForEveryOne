@@ -30,8 +30,7 @@ public:
                                  Protocol::OperatorDetailInfoResponse& response);
     bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
                                Protocol::OperatorMoreInfoResponse& response);
-    static void ParserEnd(const std::string &token, const std::string &fileId, bool result,
-                          const std::string &msg);
+    static void ParserEnd(const std::string &fileId, bool result, const std::string &msg);
     static void Reset();
 private:
     bool QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total);

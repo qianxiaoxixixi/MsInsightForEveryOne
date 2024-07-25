@@ -13,14 +13,8 @@ using namespace Dic::Server;
 void FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     FilesGetRequest &request = dynamic_cast<FilesGetRequest &>(*requestPtr.get());
-    std::string sessionToken = request.token;
-    ServerLog::Info("Files get start, token = ", StringUtil::AnonymousString(sessionToken));
-    if (!WsSessionManager::Instance().CheckSession(sessionToken)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(sessionToken),
-                        ", command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(sessionToken);
+    ServerLog::Info("Files get start");
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<FilesGetResponse> responsePtr = std::make_unique<FilesGetResponse>();
     FilesGetResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

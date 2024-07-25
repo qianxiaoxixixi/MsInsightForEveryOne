@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitFlowsRequest &request = dynamic_cast<UnitFlowsRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitFlowsResponse> responsePtr = std::make_unique<UnitFlowsResponse>();
     UnitFlowsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

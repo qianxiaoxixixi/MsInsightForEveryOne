@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     FlowCategoryEventsRequest &request = dynamic_cast<FlowCategoryEventsRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<FlowCategoryEventsResponse> responsePtr = std::make_unique<FlowCategoryEventsResponse>();
     FlowCategoryEventsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

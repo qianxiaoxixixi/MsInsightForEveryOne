@@ -17,12 +17,7 @@ using namespace Dic::Server;
 void MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MatrixSortOpNamesRequest &request = dynamic_cast<MatrixSortOpNamesRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MatrixSortOpNamesResponse> responsePtr = std::make_unique<MatrixSortOpNamesResponse>();
     MatrixSortOpNamesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

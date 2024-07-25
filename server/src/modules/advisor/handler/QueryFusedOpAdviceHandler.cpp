@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void QueryFusedOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<OperatorFusionRequest &>(*requestPtr);
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session fused op");
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorFusionResponse> responsePtr = std::make_unique<OperatorFusionResponse>();
     OperatorFusionResponse &response = *responsePtr;
     SetBaseResponse(request, response);

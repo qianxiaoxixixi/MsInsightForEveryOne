@@ -13,11 +13,6 @@ using namespace Dic::Server;
 void UploadFileHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     UploadFileRequest &request = dynamic_cast<UploadFileRequest &>(*requestPtr.get());
-    std::string sessionToken = request.token;
-    if (!WsSessionManager::Instance().CheckSession(sessionToken)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
     UploadFileParser::Instance().Parse(request);
 }
 } // Timeline

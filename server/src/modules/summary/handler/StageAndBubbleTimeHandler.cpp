@@ -12,11 +12,7 @@ using namespace Dic::Server;
 void StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineStageTimeRequest &request = dynamic_cast<PipelineStageTimeRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineStageTimeResponse> responsePtr = std::make_unique<PipelineStageTimeResponse>();
     PipelineStageTimeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

@@ -13,5 +13,5 @@ TEST_F(TestSuit, KernelParserFileIsEmpty)
     std::string currPath = Dic::FileUtil::GetCurrPath();
 
     Module::Summary::KernelParse &parser = Dic::Module::Summary::KernelParse::Instance();
-    EXPECT_EQ(false, parser.Parse(std::vector<std::string>(), ""));
+    EXPECT_EQ(false, parser.Parse(std::vector<std::string>()));
 }

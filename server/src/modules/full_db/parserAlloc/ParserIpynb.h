@@ -18,8 +18,8 @@ public:
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 private:
     static void IpynbImportResponse(ImportActionRequest &request);
-    static void JupyterProcess(const std::string &token, const std::string &file);
-    static void SendJupyterInfo(const std::string &token, std::string url);
+    static void JupyterProcess(const std::string &file);
+    static void SendJupyterInfo(std::string url);
 };
 }
 }

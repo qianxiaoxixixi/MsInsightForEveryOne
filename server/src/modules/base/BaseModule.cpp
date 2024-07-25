@@ -16,9 +16,7 @@ void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
     static ThreadPool threadPool(maxThreadNum);
     std::string command = request->command;
     if (requestHandlerMap.count(command) == 0) {
-        std::string token = request->token;
-        ServerLog::Error("Failed to find request handler, token = ", StringUtil::AnonymousString(token),
-            ", command = ", command);
+        ServerLog::Error("Failed to find request handler, command = ", command);
         return;
     }
     auto &requestHandler = requestHandlerMap.at(command);

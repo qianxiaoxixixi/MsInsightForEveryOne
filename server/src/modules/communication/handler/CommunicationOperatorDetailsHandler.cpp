@@ -18,18 +18,13 @@ void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
 {
     Protocol::OperatorDetailsRequest &request =
             dynamic_cast<Protocol::OperatorDetailsRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<Protocol::OperatorDetailsResponse> responsePtr =
             std::make_unique<Protocol::OperatorDetailsResponse>();
     OperatorDetailsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryOperatorsCount(request.params, response.body) ||

@@ -9,14 +9,12 @@ public:
     {
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSession>(ws);
-        std::string token = "hhhhhhhhhhhhh";
-        Dic::Server::WsSessionManager::Instance().AddSession(token, std::move(session));
+        Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestCase()
     {
-        std::string token = "hhhhhhhhhhhhh";
-        Dic::Server::WsSessionManager::Instance().GetSession(token)->Stop();
-        Dic::Server::WsSessionManager::Instance().RemoveSession(token);
+        Dic::Server::WsSessionManager::Instance().GetSession()->Stop();
+        Dic::Server::WsSessionManager::Instance().RemoveSession();
     }
     static int Main(int argc, char** argv)
     {

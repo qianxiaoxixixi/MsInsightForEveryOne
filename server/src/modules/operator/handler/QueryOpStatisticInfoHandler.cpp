@@ -16,12 +16,7 @@ namespace Dic::Module::Operator {
     void QueryOpStatisticInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorStatisticInfoRequest &request = dynamic_cast<OperatorStatisticInfoRequest &>(*requestPtr);
-        std::string token = request.token;
-        if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("[Operator]Failed to check session token of Statistic Info, command = ", command);
-            return;
-        }
-        WsSession &session = *WsSessionManager::Instance().GetSession(token);
+        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<OperatorStatisticInfoResponse> responsePtr = std::make_unique<OperatorStatisticInfoResponse>();
         OperatorStatisticInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);

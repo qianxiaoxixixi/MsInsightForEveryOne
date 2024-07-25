@@ -16,12 +16,7 @@ namespace Memory {
     {
         MemoryStaticOperatorGraphRequest &request =
                 dynamic_cast<MemoryStaticOperatorGraphRequest &>(*requestPtr.get());
-        std::string token = request.token;
-        if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("Failed to check session token , command = ", command);
-            return;
-        }
-        WsSession &session = *WsSessionManager::Instance().GetSession(token);
+        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtr =
                 std::make_unique<MemoryStaticOperatorGraphResponse>();
         MemoryStaticOperatorGraphResponse &response = *responsePtr.get();

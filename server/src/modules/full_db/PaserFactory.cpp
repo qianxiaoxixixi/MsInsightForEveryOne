@@ -80,44 +80,41 @@ void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const 
     response.body.result.emplace_back(action);
 }
 
-void ParserAlloc::ParseClusterEndProcess(const std::string token, std::string result)
+void ParserAlloc::ParseClusterEndProcess(std::string result)
 {
     ServerLog::Info("Parse Cluster File end, send event");
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session token ");
+        ServerLog::Warn("Failed to get session when parse cluster end");
         return;
     }
     auto event = std::make_unique<ParseClusterCompletedEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.parseResult = std::move(result);
     session->OnEvent(std::move(event));
 }
 
-void ParserAlloc::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
-    const std::string &message)
+void ParserAlloc::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
-    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    ServerLog::Info("Parse end, fileId:", fileId, ", result:", result);
     if (result) {
-        SendParseSuccessEvent(token, fileId);
+        SendParseSuccessEvent(fileId);
     } else {
-        SendParseFailEvent(token, fileId, message);
+        SendParseFailEvent(fileId, message);
     }
 }
 
-void ParserAlloc::ParseProgressCallBack(const std::string &token, const std::string &fileId, uint64_t parsedSize,
-    uint64_t totalSize, int progress)
+void ParserAlloc::ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize,
+                                        int progress)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        ServerLog::Warn("Failed to get session when parse progress end");
         return;
     }
     auto event = std::make_unique<ParseProgressEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.fileId = fileId;
     event->body.parsedSize = parsedSize;
@@ -126,16 +123,15 @@ void ParserAlloc::ParseProgressCallBack(const std::string &token, const std::str
     session->OnEvent(std::move(event));
 }
 
-void ParserAlloc::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
+void ParserAlloc::SendParseSuccessEvent(const std::string &fileId)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        ServerLog::Warn("Failed to get session when send parse success msg");
         return;
     }
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
@@ -158,16 +154,15 @@ void ParserAlloc::SendParseSuccessEvent(const std::string &token, const std::str
     session->OnEvent(std::move(event));
 }
 
-void ParserAlloc::SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message)
+void ParserAlloc::SendParseFailEvent(const std::string &fileId, const std::string &message)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        ServerLog::Warn("Failed to get session when send parse fail msg");
         return;
     }
     auto event = std::make_unique<ParseFailEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = true;
     event->body.rankId = fileId;
     event->body.error = message;
@@ -266,7 +261,7 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
     body.isCluster = isCluster;
 }
 
-void ParserAlloc::SendAllParseSuccess(const std::string &token)
+void ParserAlloc::SendAllParseSuccess()
 {
     std::string notFinishTask = "";
     while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -275,14 +270,13 @@ void ParserAlloc::SendAllParseSuccess(const std::string &token)
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     }
     ServerLog::Info("Send all parse finished");
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session token ");
         return;
     }
     auto event = std::make_unique<AllSuccessEvent>();
     event->moduleName = ModuleType::MEMORY;
-    event->token = token;
     event->result = true;
     event->body.isAllPageParsed = true;
     session->OnEvent(std::move(event));

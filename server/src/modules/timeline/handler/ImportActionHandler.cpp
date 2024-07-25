@@ -19,13 +19,8 @@ using namespace Dic::Server;
 void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
-    std::string token = request.token;
     ServerLog::Info("Import action request handler start");
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -60,26 +55,20 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 }
 
-void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &message)
+void ImportActionHandler::SendParseFailEvent(const std::string &message)
 {
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session when send parseFailEvent.");
-        return;
-    }
-    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         return;
     }
     auto event = std::make_unique<ParseFailEvent>();
     event->moduleName = ModuleType::TIMELINE;
-    event->token = token;
     event->result = false;
     event->body.error = message;
     session->OnEvent(std::move(event));
 }
 
-void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo,
-                                            std::string token)
+void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo)
 {
     // 拖拽的文件原始文件不会保存在本地，因此不需要对拖拽的文件路径进行校验
     if (!projectExplorerInfo.empty() && projectExplorerInfo[0].importType == "drag") {
@@ -88,7 +77,7 @@ void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExp
     for (auto file: projectExplorerInfo) {
         if (!FileUtil::CheckFilePathExist(file.fileName)) {
             string message = "paths do not exist: " + file.fileName;
-            SendParseFailEvent(token, message);
+            SendParseFailEvent(message);
             ServerLog::Warn(message);
         }
     }
@@ -102,7 +91,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
         ServerLog::Warn("params error, project explorer info is not existed.");
         return false;
     }
-    LogIfFileNotExist(projectExplorerInfo, request.token);
+    LogIfFileNotExist(projectExplorerInfo);
 
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
@@ -132,7 +121,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request)
     if (projectExplorerInfo.empty()) {
         return false;
     }
-    LogIfFileNotExist(projectExplorerInfo, request.token);
+    LogIfFileNotExist(projectExplorerInfo);
     std::vector<std::string> filePathUnderProject;
     for (const auto &item: projectExplorerInfo) {
         filePathUnderProject.push_back(item.fileName);

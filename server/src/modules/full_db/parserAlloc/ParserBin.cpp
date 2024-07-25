@@ -19,9 +19,7 @@ ParserBin::~ParserBin() {}
 
 void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
-    std::string token = request.token;
-
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(token);
+    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -42,10 +40,10 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
         ServerLog::Info("Import file is binary.Start parse source binary file.");
         HandleCompute(response, selectedFolder);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
-        SetParseCallBack(token, Source::SourceFileParser::Instance());
+        SetParseCallBack(Source::SourceFileParser::Instance());
         session.OnResponse(std::move(responsePtr));
     } else {
-        SendParseFailEvent(token, "", "Import file is invalid,path :" + selectedFolder);
+        SendParseFailEvent("", "Import file is invalid,path :" + selectedFolder);
     }
 }
 
@@ -87,15 +85,15 @@ std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFi
     return files;
 }
 
-void ParserBin::SetParseCallBack(const std::string &token, FileParser &fileParser)
+void ParserBin::SetParseCallBack(FileParser &fileParser)
 {
     std::function<void(const std::string, bool, const std::string)> func =
-        std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     fileParser.SetParseEndCallBack(func);
 
     // 复用解析完成回调函数设置逻辑
     std::function<void(const std::string, uint64_t parsedSize, uint64_t totalSize, int progress)> progressFunc =
-        std::bind(ParseProgressCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+        std::bind(ParseProgressCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
         std::placeholders::_4);
     fileParser.SetParseProgressCallBack(progressFunc);
 }

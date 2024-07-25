@@ -23,12 +23,8 @@ public:
         CLOSED
     };
     explicit WsSession(WsChannel *channel);
-    virtual ~WsSession();
+    virtual ~WsSession(){};
     const WsChannel *GetChannel() const;
-    bool BindToken(const std::string &token, const std::string &parentToken);
-    const std::string &GetTokenString() const;
-    const std::string &GetParentTokenString() const;
-    const bool IsSubSession() const;
     const Status GetStatus() const;
     void SetStatus(Status sessionStatus);
     const uint32_t GetCreateTime() const;
@@ -45,7 +41,6 @@ public:
     void SendEvent(Protocol::Event &event);
     void Start();
     void Stop();
-    void WaitForBindToken(int timeoutSeconds = 5);
     void WaitForExit(int milliSeconds = 10000);
     std::string GetDeviceKey();
     void SetDeviceKey(const std::string &device);
@@ -55,7 +50,6 @@ public:
 protected:
     static void OnHandleMsgBuffer(WsSession &session);
     static void OnHandleResponseQueue(WsSession &session);
-    bool CheckMessage(Protocol::ProtocolMessage &msg);
     void OnNotifyExit();
     const std::string GetMessageHeader(int length) const;
 
@@ -66,11 +60,6 @@ protected:
     uint32_t stopTime = 0;
     uint32_t deadTime = 0;
     volatile Status status;
-    std::string parentTokenString = "";
-    std::string tokenString;
-    volatile bool hasBindToken = false;
-    // wait for token
-    std::unique_ptr<std::thread> waitForTokenThread = nullptr;
     // message buffer
     std::unique_ptr<Protocol::ProtocolMessageBuffer> msgBuffer = nullptr;
     std::unique_ptr<std::thread> onHandleMsgThread;

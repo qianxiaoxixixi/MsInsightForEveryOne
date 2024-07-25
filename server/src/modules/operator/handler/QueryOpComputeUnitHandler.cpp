@@ -14,12 +14,7 @@ namespace Dic::Module::Operator {
     void QueryOpComputeUnitHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorComputeUnitInfoRequest &request = dynamic_cast<OperatorComputeUnitInfoRequest &>(*requestPtr);
-        std::string token = request.token;
-        if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("[Operator]Failed to check session token of Compute Unit Info, command = ", command);
-            return;
-        }
-        WsSession &session = *WsSessionManager::Instance().GetSession(token);
+        WsSession &session = *WsSessionManager::Instance().GetSession();
         auto responsePtr = std::make_unique<OperatorComputeUnitInfoResponse>();
         OperatorComputeUnitInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);

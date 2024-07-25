@@ -15,12 +15,7 @@ using namespace Dic::Server;
 void CommunicationOperatorListsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     DurationListRequest &request = dynamic_cast<DurationListRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<OperatorListsResponse> responsePtr = std::make_unique<OperatorListsResponse>();
     OperatorListsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

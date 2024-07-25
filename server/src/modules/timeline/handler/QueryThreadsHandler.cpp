@@ -14,12 +14,7 @@ using namespace Dic::Server;
 void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadsRequest &request = dynamic_cast<UnitThreadsRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitThreadsResponse> responsePtr = std::make_unique<UnitThreadsResponse>();
     UnitThreadsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

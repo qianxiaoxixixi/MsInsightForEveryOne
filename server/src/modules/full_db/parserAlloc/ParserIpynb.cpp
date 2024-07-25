@@ -24,16 +24,15 @@ void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &project
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
             && !jupyterVersionResult.empty()) {
         IpynbImportResponse(request);
-        JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, request.token, path);
+        JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, path);
     } else {
-        SendParseFailEvent(request.token, "", "Jupyter env is not ready.");
+        SendParseFailEvent("", "Jupyter env is not ready.");
     }
 }
 
 void ParserIpynb::IpynbImportResponse(ImportActionRequest &request)
 {
-    std::string token = request.token;
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(token);
+    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -45,7 +44,7 @@ void ParserIpynb::IpynbImportResponse(ImportActionRequest &request)
     session.OnResponse(std::move(responsePtr));
 }
 
-void ParserIpynb::JupyterProcess(const std::string &token, const std::string &file)
+void ParserIpynb::JupyterProcess(const std::string &file)
 {
     std::string url;
     // 从根目录重置服务(如果当前启动目录无法打开文件，则在当前文件根目录下重启Jupyter服务)
@@ -54,20 +53,19 @@ void ParserIpynb::JupyterProcess(const std::string &token, const std::string &fi
         // 重启成功，则获取url内容
         url = server.GetJupyterUrl(file);
     }
-    SendJupyterInfo(token, url);
+    SendJupyterInfo(url);
 }
 
-void ParserIpynb::SendJupyterInfo(const std::string &token, std::string url)
+void ParserIpynb::SendJupyterInfo(std::string url)
 {
     Server::ServerLog::Info("Parse jupyter file end, send event");
-    Server::WsSession *session = Server::WsSessionManager::Instance().GetSession(token);
+    Server::WsSession *session = Server::WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        Server::ServerLog::Warn("Failed to get session token ");
+        Server::ServerLog::Warn("Failed to get session");
         return;
     }
     auto event = std::make_unique<ParseJupyterCompletedEvent>();
     event->moduleName = ModuleType::JUPYTER;
-    event->token = token;
     event->result = true;
     if (url.empty()) {
         event->body.parseResult = PARSE_RESULT_FAIL;

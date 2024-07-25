@@ -18,18 +18,13 @@ void BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
 {
     Protocol::BandwidthDataRequest &request =
             dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<Protocol::BandwidthDataResponse> responsePtr =
             std::make_unique<Protocol::BandwidthDataResponse>();
     BandwidthDataResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
 
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryBandwidthData(request.params, response.body)) {

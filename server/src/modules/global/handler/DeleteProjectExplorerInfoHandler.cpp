@@ -14,12 +14,7 @@ using namespace Global;
 void DeleteProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoDeleteRequest &>(*requestPtr.get());
-    std::string sessionToken = request.token;
-    if (!WsSessionManager::Instance().CheckSession(sessionToken)) {
-        ServerLog::Error("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(sessionToken);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<ProjectExplorerInfoDeleteResponse> responsePtr =
             std::make_unique<ProjectExplorerInfoDeleteResponse>();
     ProjectExplorerInfoDeleteResponse &response = *responsePtr;

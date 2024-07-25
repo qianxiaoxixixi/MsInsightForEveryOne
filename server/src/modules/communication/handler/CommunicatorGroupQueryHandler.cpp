@@ -14,17 +14,12 @@ using namespace Dic::Protocol;
 void CommunicatorGroupQueryHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<Protocol::CommunicatorGroupRequest &>(*requestPtr);
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<Protocol::CommunicatorGroupResponse> responsePtr =
             std::make_unique<Protocol::CommunicatorGroupResponse>();
     CommunicatorGroupResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     SetResponseResult(response, true);
     auto database = Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryCommunicationGroup(response.body)) {

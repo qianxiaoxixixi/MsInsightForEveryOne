@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void QueryAffinityAPIAdvice::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<AffinityAPIRequest &>(*requestPtr);
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session affinity Api");
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<AffinityAPIResponse> responsePtr = std::make_unique<AffinityAPIResponse>();
     AffinityAPIResponse &response = *responsePtr;
     SetBaseResponse(request, response);

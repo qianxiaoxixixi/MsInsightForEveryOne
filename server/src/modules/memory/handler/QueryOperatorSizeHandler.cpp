@@ -12,12 +12,7 @@ using namespace Dic::Server;
 void QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryOperatorSizeRequest &request = dynamic_cast<MemoryOperatorSizeRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MemoryOperatorSizeResponse> responsePtr = std::make_unique<MemoryOperatorSizeResponse>();
     MemoryOperatorSizeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

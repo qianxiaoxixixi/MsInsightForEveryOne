@@ -20,19 +20,13 @@ private:
     void RegisterEventToJsonFuncs() override;
 
     // json to request
-    static std::unique_ptr<Request> ToTokenCreateRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToTokenDestroyRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToTokenCheckRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToFilesGetRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToTokenHeartCheckRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToHeartCheckRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectExplorerUpdateRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectExplorerInfoGetRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectExplorerInfoDeleteRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectConflictCheckRequest(const json_t &json, std::string &error);
     // response to json
-    static std::optional<document_t> ToTokenCreateResponseJson(const Response &response);
-    static std::optional<document_t> ToTokenDestroyResponseJson(const Response &response);
-    static std::optional<document_t> ToTokenCheckResponseJson(const Response &response);
     static std::optional<document_t> ToFilesGetResponseJson(const Response &response);
     static std::optional<document_t> ToTokenHeartCheckResponseJson(const Response &response);
     static std::optional<document_t> ToProjectExplorerInfoUpdateResponseJson(const Response &response);

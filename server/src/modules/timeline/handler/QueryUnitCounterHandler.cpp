@@ -13,12 +13,7 @@ using namespace Dic::Server;
 void QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitCounterRequest &request = dynamic_cast<UnitCounterRequest &>(*requestPtr.get());
-    std::string token = request.token;
-    if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<UnitCounterResponse> responsePtr = std::make_unique<UnitCounterResponse>();
     UnitCounterResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

@@ -12,10 +12,7 @@ namespace Dic {
 namespace Protocol {
 void GlobalProtocol::RegisterJsonToRequestFuncs()
 {
-    jsonToReqFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateRequest);
-    jsonToReqFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyRequest);
-    jsonToReqFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckRequest);
-    jsonToReqFactory.emplace(REQ_RES_TOKEN_HEART_CHECK, ToTokenHeartCheckRequest);
+    jsonToReqFactory.emplace(REQ_RES_HEART_CHECK, ToHeartCheckRequest);
     jsonToReqFactory.emplace(REQ_RES_FILES_GET, ToFilesGetRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE, ToProjectExplorerUpdateRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetRequest);
@@ -25,10 +22,7 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
 
 void GlobalProtocol::RegisterResponseToJsonFuncs()
 {
-    resToJsonFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateResponseJson);
-    resToJsonFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyResponseJson);
-    resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
-    resToJsonFactory.emplace(REQ_RES_TOKEN_HEART_CHECK, ToTokenHeartCheckResponseJson);
+    resToJsonFactory.emplace(REQ_RES_HEART_CHECK, ToTokenHeartCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_FILES_GET, ToFilesGetResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE, ToProjectExplorerInfoUpdateResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetResponseJson);
@@ -41,45 +35,9 @@ void GlobalProtocol::RegisterEventToJsonFuncs()
 }
 
 #pragma region <<Json To Request>>
-std::unique_ptr<Request> GlobalProtocol::ToTokenCreateRequest(const json_t &json, std::string &error)
+std::unique_ptr<Request> GlobalProtocol::ToHeartCheckRequest(const json_t &json, std::string &error)
 {
-    std::unique_ptr<TokenCreateRequest> reqPtr = std::make_unique<TokenCreateRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    if (JsonUtil::IsJsonKeyValid(json, "params")) {
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.deadTime, json["params"], "deadTime");
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.parentToken, json["params"], "parentToken");
-    }
-    return reqPtr;
-}
-
-std::unique_ptr<Request> GlobalProtocol::ToTokenDestroyRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<TokenDestroyRequest> reqPtr = std::make_unique<TokenDestroyRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.destroyToken, json["params"], "destroyToken");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> GlobalProtocol::ToTokenCheckRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<TokenCheckRequest> reqPtr = std::make_unique<TokenCheckRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.checkedToken, json["params"], "checkedToken");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> GlobalProtocol::ToTokenHeartCheckRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<TokenHeartCheckRequest> reqPtr = std::make_unique<TokenHeartCheckRequest>();
+    std::unique_ptr<HeartCheckRequest> reqPtr = std::make_unique<HeartCheckRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
@@ -155,20 +113,6 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectConflictCheckRequest(const jso
 #pragma endregion
 
 #pragma region <<Response To Json>>
-std::optional<document_t> GlobalProtocol::ToTokenCreateResponseJson(const Response &response)
-{
-    return ToResponseJson<TokenCreateResponse>(dynamic_cast<const TokenCreateResponse &>(response));
-}
-
-std::optional<document_t> GlobalProtocol::ToTokenDestroyResponseJson(const Response &response)
-{
-    return ToResponseJson<TokenDestroyResponse>(dynamic_cast<const TokenDestroyResponse &>(response));
-}
-
-std::optional<document_t> GlobalProtocol::ToTokenCheckResponseJson(const Response &response)
-{
-    return ToResponseJson<TokenCheckResponse>(dynamic_cast<const TokenCheckResponse &>(response));
-}
 
 std::optional<document_t> GlobalProtocol::ToTokenHeartCheckResponseJson(const Response &response)
 {

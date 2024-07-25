@@ -138,7 +138,7 @@ void UploadFileParser::ParseSliceData(const UploadFileRequest& request, const st
     // 发送当前解析进度
     std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];
     curFileProgress->AddToParsedSize(1);
-    ParserAlloc::ParseProgressCallBack(request.token, fileId, curFileProgress->GetParsedSize(),
+    ParserAlloc::ParseProgressCallBack(fileId, curFileProgress->GetParsedSize(),
                                        curFileProgress->GetTotalSize(), curFileProgress->GetProgressPercentage());
     bool isLast = request.params.slice.isLast;
     if (isLast) {
@@ -187,13 +187,13 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
     // 发送当前解析进度
     std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];
     curFileProgress->AddToParsedSize(1);
-    ParserAlloc::ParseProgressCallBack(request.token, fileId, curFileProgress->GetParsedSize(),
-        curFileProgress->GetTotalSize(), curFileProgress->GetProgressPercentage());
+    ParserAlloc::ParseProgressCallBack(fileId, curFileProgress->GetParsedSize(),
+                                       curFileProgress->GetTotalSize(), curFileProgress->GetProgressPercentage());
 
     // 根据是否重置发送解析完成消息
     bool reset = singleFileData.reset.load();
     ParseEndSendResp(fileId, request, !reset);
-    ParserAlloc::ParseEndCallBack(request.token, fileId, true, "");
+    ParserAlloc::ParseEndCallBack(fileId, true, "");
 }
 
 std::string UploadFileParser::InitDataBase(std::string fileId)
@@ -234,7 +234,7 @@ void UploadFileParser::ParseEndSendResp(const std::string &fileId, const UploadF
     action.result = result;
     response.body.result.emplace_back(action);
 
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     session.OnResponse(std::move(responsePtr));
 }
 

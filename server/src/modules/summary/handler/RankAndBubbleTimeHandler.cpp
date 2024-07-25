@@ -12,11 +12,7 @@ using namespace Dic::Server;
 void RankAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineRankTimeRequest &request = dynamic_cast<PipelineRankTimeRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Error("Failed to check session token , command = ", command);
-        return;
-    }
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<PipelineRankTimeResponse> responsePtr = std::make_unique<PipelineRankTimeResponse>();
     PipelineRankTimeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

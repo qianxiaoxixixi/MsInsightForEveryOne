@@ -17,17 +17,13 @@ void MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     ServerLog::Info("request to Communication Matrix List");
     MatrixBandwidthRequest &request =
             dynamic_cast<MatrixBandwidthRequest &>(*requestPtr.get());
-    if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Error("Failed to check session token  , command = ", command);
-        return;
-    }
     std::unique_ptr<Protocol::MatrixListResponse> responsePtr =
             std::make_unique<Protocol::MatrixListResponse>();
     MatrixListResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession(request.token);
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryMatrixList(request.params, response.body)) {

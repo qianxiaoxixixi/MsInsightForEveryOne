@@ -23,7 +23,6 @@ void ModuleRequestHandler::SetBaseResponse(const Request &request, Response &res
     response.requestId = request.id;
     response.command = request.command;
     response.moduleName = request.moduleName;
-    response.token = request.token;
     if (request.resultCallbackId.has_value()) {
         response.resultCallbackId = request.resultCallbackId;
     }

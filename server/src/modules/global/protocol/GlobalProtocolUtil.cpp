@@ -16,46 +16,6 @@ template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESP
     return std::nullopt;
 }
 
-template <> std::optional<document_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response)
-{
-    document_t json(kObjectType);
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    auto &allocator = json.GetAllocator();
-    json_t body(kObjectType);
-    JsonUtil::AddMember(body, "createTime", response.body.createTime, allocator);
-    JsonUtil::AddMember(body, "token", response.token, allocator);
-    if (response.body.parentToken.has_value() && !response.body.parentToken.value().empty()) {
-        JsonUtil::AddMember(body, "parentToken", response.body.parentToken.value(), allocator);
-    }
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
-}
-
-template <> std::optional<document_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response)
-{
-    document_t json(kObjectType);
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    auto &allocator = json.GetAllocator();
-    json_t body(kObjectType);
-    JsonUtil::AddMember(body, "destroyTime", response.body.destroyTime, allocator);
-    JsonUtil::AddMember(body, "destroyToken", response.body.destroyToken, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
-}
-
-template <> std::optional<document_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response)
-{
-    document_t json(kObjectType);
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    auto &allocator = json.GetAllocator();
-    json_t body(kObjectType);
-    JsonUtil::AddMember(body, "checkedToken", response.body.checkedToken, allocator);
-    JsonUtil::AddMember(body, "deadTime", response.body.deadTime, allocator);
-    JsonUtil::AddMember(body, "createTime", response.body.createTime, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
-}
-
 template <> std::optional<document_t> ToResponseJson<TokenHeartCheckResponse>(const TokenHeartCheckResponse &response)
 {
     document_t json(kObjectType);

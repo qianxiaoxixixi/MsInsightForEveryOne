@@ -27,7 +27,7 @@ public:
     ~MemoryParse() override;
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
-    bool Parse(const std::vector<std::string>& pathList, const std::string& token);
+    bool Parse(const std::vector<std::string>& pathList);
     void Reset() override;
     bool OperatorParse(const std::string &filePath, const std::string &fileId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
@@ -57,9 +57,9 @@ private:
     std::vector<std::string> GetPeerDirOperatorFile(const std::string& operatorFile, const std::string &reg);
     std::map<std::string, MemoryFilePairs> GetMemoryFiles(const std::vector<std::string>& paths);
     std::vector<std::string> GetMemoryRecordFileLists(const std::vector<std::string>& paths);
-    static void SetParseCallBack(const std::string& token);
+    static void SetParseCallBack();
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &message);
-    static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
+    static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
 
     static void PreParseTask(const MemoryFilePairs& filePair, const std::string& fileId);
     static bool ParseTask(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message);
