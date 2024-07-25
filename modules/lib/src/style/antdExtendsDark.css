@@ -58,7 +58,3 @@
  .theme_dark .ant-progress .ant-progress-text {
     color: #40a9ff;
  }
-
-.theme_dark .ant-tooltip-arrow-content {
-    --antd-arrow-background-color: #404040;
-}

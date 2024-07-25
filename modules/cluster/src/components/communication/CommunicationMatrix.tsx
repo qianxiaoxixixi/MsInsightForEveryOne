@@ -354,11 +354,11 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
     }, [JSON.stringify(range)]);
     return (
         <>
-            <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} />
-            <InputNumber value={minValue} style={{ width: 100, marginRight: 10 }} min={minRange} max={maxRange}
+            <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} style={{ margin: '0 8px 0 24px' }} />
+            <InputNumber value={minValue} size="small" style={{ marginRight: 8 }} min={minRange} max={maxRange}
                 onChange={(value: number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
             ~
-            <InputNumber value={maxValue} style={{ width: 100, margin: '0 10px' }} min={minRange} max={maxRange}
+            <InputNumber value={maxValue} size="small" style={{ margin: '0 32px 0 8px' }} min={minRange} max={maxRange}
                 onChange={(value: number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
             <Button onClick={onConfirm} type="primary" size="middle">{t('Confirm', { ns: 'buttonText' })}</Button>
         </>

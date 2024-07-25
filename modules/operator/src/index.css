@@ -5,9 +5,6 @@
     font-weight: 700;
     color: #7ec1ff;
 }
-.ant-input-number{
-    border-color:var(--grey15);
-}
 
 .container-box{
     padding:0 20px;
@@ -20,21 +17,12 @@
     margin: 0 0 10px 0;
 }
 
-.theme_dark .ant-select-multiple .ant-select-selection-item{
-    background: var(--grey80);
-    border-color: var(--grey60);
-}
-
 .theme_dark .tan-box>div>.bottomC,.tan-box>div {
     background:none;
 }
 
 .theme_dark .rc-virtual-list-scrollbar-thumb{
     background-color:var(--grey60)!important;
-}
-
-.theme_dark .ant-input-number-input{
-    background: var(--grey85);
 }
 #root .ant-table-tbody > tr.ant-table-expanded-row > td .ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
     padding: 8px;

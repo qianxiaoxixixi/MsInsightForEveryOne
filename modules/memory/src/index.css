@@ -5,21 +5,12 @@
     background-color:var(--grey60)!important;
 }
 
-.theme_dark .ant-select-multiple .ant-select-selection-item{
-    background: var(--grey80);
-    border-color: var(--grey60);
-}
-
 .theme_dark .container-header {
     background: var(--grey85);
     color: var(--whiteblue);
 }
 .theme_dark .container-body{
     background: var(--grey95);
-}
-
-.theme_dark .ant-btn:disabled>span{
-    color: rgba(0, 0, 0, 0.25);
 }
 
 .memory-ant-table-row{

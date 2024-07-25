@@ -51,10 +51,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     display: none!important;
 }
 
-.ant-tooltip-arrow-content {
-    --antd-arrow-background-color: #FFFFFF;
-}
-
 .width-auto .ant-tooltip-inner {
     width: auto;
     max-width: none!important;

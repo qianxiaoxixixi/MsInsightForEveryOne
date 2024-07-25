@@ -20,11 +20,12 @@ const sizeOption = {
 };
 export const MIInput = styled((props: InputProps & React.RefAttributes<InputRef>) => {
     const { t } = useTranslation('lib');
+    const { size, ...restProps } = props;
     return (
         <Input
             maxLength={DEFAULT_MAX_LENGTH}
             placeholder={t('Please enter')}
-            {...props}
+            {...restProps}
         />
     );
 })`
@@ -60,13 +61,14 @@ export const MIInputNumber = styled((props: InputNumberProps<ValueType> & {
 } & {
     ref?: React.Ref<HTMLInputElement>;
 }) => {
+    const { size, ...restProps } = props;
     return (
         <InputNumber
             min={DEFAULT_MIN_INPUT_NUMBER}
             max={DEFAULT_MAX_INPUT_NUMBER}
             maxLength={DEFAULT_MAX_LENGTH}
             formatter={(value): string => `${Number(value)}`}
-            {...props}
+            {...restProps}
         />
     );
 })`
