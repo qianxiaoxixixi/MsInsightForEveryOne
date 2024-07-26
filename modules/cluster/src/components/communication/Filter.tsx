@@ -176,6 +176,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                     handleChange('stage', val);
                 }}
                 options={optionMap.stageOptions}
+                showSearch={true}
             />
             )}/>
         <FormItem
