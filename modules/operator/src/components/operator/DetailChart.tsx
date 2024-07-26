@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { getResizeEcharts, chartVisbilityListener, chartColors } from 'lib/CommonUtils';
+import { getResizeEcharts, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';
@@ -63,11 +63,15 @@ const getOption = ({ isDark, title }: { isDark: boolean;title: string }): echart
         textStyle: {
             width: 180,
             overflow: 'truncate',
-            color: isDark ? '#8D98AA' : '#4E5865',
+            color: '#8D98AA',
         },
         pageTextStyle: isDark ? { color: '#dcdcdc' } : {},
         pageIconColor: isDark ? '#aaa' : '#414141',
         pageIconInactiveColor: isDark ? '#414141' : '#aaa',
+    };
+    baseOption.tooltip = {
+        ...baseOption.tooltip,
+        ...getDefaultChartOptions(isDark).tooltip,
     };
     return baseOption;
 };
