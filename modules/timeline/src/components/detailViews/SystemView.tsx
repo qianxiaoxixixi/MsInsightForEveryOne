@@ -111,6 +111,7 @@ export const SystemView = observer((props: any) => {
     useEffect(() => {
         if (props.session.showEvent as boolean) {
             setViewOption(2);
+            setKey(0);
         }
     }, [props.session.showEvent]);
     return (<Container>
