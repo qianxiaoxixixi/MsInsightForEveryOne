@@ -336,7 +336,7 @@ function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
 
 const isShowEventMenu = (session: Session): boolean => {
     const selectUnit = session.selectedUnits[0];
-    if (!selectUnit) {
+    if (!selectUnit || session.isSimulation) {
         return false;
     }
     if (['Empty', 'Card', 'Counter', 'Root'].includes(selectUnit.name)) {
