@@ -5,13 +5,13 @@ import * as React from 'react';
 import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
-import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
+import { chartVisbilityListener, getResizeEcharts, getDefaultChartOptions } from './EchartUtils';
 import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 export { customConsole } from './Console';
 
-export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts };
+export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts, getDefaultChartOptions };
 
 export const StyledEmpty = ({ descriptor, style }:
 { descriptor: string; style?: object; translation: any}): JSX.Element => {

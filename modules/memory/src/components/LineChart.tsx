@@ -9,7 +9,7 @@ import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { convertTime, safeStr, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
-import { chartColors } from 'lib/CommonUtils';
+import { chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
 
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColorTertiary};
@@ -49,6 +49,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
                 }
                 return res;
             },
+            ...getDefaultChartOptions(isDark).tooltip,
         },
         legend: { type: 'scroll' },
         grid: { left: '100', right: '100', bottom: 40 },

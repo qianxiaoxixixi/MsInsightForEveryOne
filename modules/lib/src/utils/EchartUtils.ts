@@ -124,3 +124,16 @@ export function removeResizeEvent(echart?: EChartsTypeExtends): void {
         delete echart.loadFunc;
     }
 }
+
+export const getDefaultChartOptions = (isDark: boolean): any => {
+    return {
+        tooltip: {
+            backgroundColor: isDark ? '#2A2F37' : '#EBEFF6',
+            textStyle: {
+                color: isDark ? '#D2DCE9' : '#4E5865',
+            },
+            borderWidth: 0,
+            padding: 16,
+        },
+    };
+};

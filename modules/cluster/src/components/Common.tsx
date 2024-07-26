@@ -181,8 +181,8 @@ export const checkDomDisplay = (dom: HTMLElement): boolean => {
 export const COLOR = {
     BrightBlue: '#7df7ff',
     Grey20: '#cacaca',
-    Grey40: '#989898',
-    Grey50: '#7b7a7a',
+    Grey40: '#8D98AA',
+    Grey50: '#8D98AA',
     Band0: '#f82d18',
     Band1: '#eac299',
     Band2: '#c7eef5',

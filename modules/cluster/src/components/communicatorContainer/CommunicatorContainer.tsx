@@ -31,13 +31,39 @@ const RankGroupItem = styled.div`
 `;
 
 const RankGroupContainer = styled.div`
+    --gridColor: ${(p): string => p.theme.borderColorLight};
     display: flex;
     flex-wrap: wrap;
     gap: 30px;
     padding: 16px;
     max-height: 240px;
     overflow: auto;
-    background: ${(p): string => p.theme.bgColorLight}
+
+    & > div{
+        position: relative;
+        z-index: 1;
+    }
+
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    &::before {
+        background: linear-gradient(to right, ${(p): string => p.theme.bgColor} 4px, transparent 4px),
+        linear-gradient(to bottom, var(--gridColor) 1px, transparent 1px);
+        background-size: 10px 20px;
+    }
+    &::after {
+        background: linear-gradient(to bottom, ${(p): string => p.theme.bgColor} 4px, transparent 4px),
+        linear-gradient(to right, var(--gridColor) 1px, transparent 1px);
+        background-size: 20px 10px;
+        opacity: 0.5;
+    }
 `;
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {

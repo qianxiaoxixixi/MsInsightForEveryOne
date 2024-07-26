@@ -49,14 +49,10 @@ const baseOption: any = {
         confine: true,
     },
     toolbox: {
-        feature: {
-            dataView: { show: true, readOnly: false },
-            magicType: { show: true, type: ['line', 'bar'] },
-            restore: { show: true },
-        },
-        top: 20,
+        show: false,
     },
     legend: {
+        bottom: 0,
         data: [
             { name: 'Elapse Time', textStyle: { color: COLOR.Grey50 } },
             { name: 'Transit Time', textStyle: { color: COLOR.Grey50 } },
@@ -170,7 +166,8 @@ const baseOption: any = {
         },
     ],
     grid: {
-        top: 80,
+        left: 100,
+        right: 100,
     },
 };
 
