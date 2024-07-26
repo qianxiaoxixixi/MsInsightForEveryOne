@@ -8,7 +8,6 @@ import { ReactComponent as PinSvg } from './img/icons_dark_normal_ascendinsight_
 import { ReactComponent as UnPinSvg } from './img/icons_dark_normal_ascendinsight_pin_line.svg';
 import { ReactComponent as StartSvg } from './img/icons_dark_normal_mindstudioinsight_start.svg';
 import { ReactComponent as CaretDownSvg } from './img/caret-down.svg';
-import { ReactComponent as CaretRightSvg } from './img/caret-right.svg';
 import { ReactComponent as SearchDarkIcon } from './img/search_dark.svg';
 import { ReactComponent as SearchLightIcon } from './img/search_light.svg';
 import { ReactComponent as PlusDarkIcon } from './img/plus_dark.svg';
@@ -24,6 +23,7 @@ import { ReactComponent as LinkLightIcon } from './img/link_light.svg';
 import { ReactComponent as ResetDarkIcon } from './img/reset_dark.svg';
 import { ReactComponent as ResetLightIcon } from './img/reset_light.svg';
 import { themeInstance } from '../theme';
+import CaretRightSvg from './img/caret-right.svg';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
     active?: boolean;
@@ -36,11 +36,19 @@ interface IIconProps extends ISVGProps {
     svgElement?: React.FunctionComponent<React.SVGProps< SVGSVGElement > & { title?: string }>;
 }
 
+interface IIconDivProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
+    type?: string;
+    url?: string;
+    height?: string;
+    width?: string;
+}
+
 const iconMap: Record<string, any> = {
     help: HelpSvg,
     pin: PinSvg,
     linePin: UnPinSvg,
     start: StartSvg,
+    caretRight: CaretRightSvg,
     dark: {
         flag: FlagDarkIcon,
         filter: FilterDarkIcon,
@@ -103,6 +111,24 @@ export function Icon({ type = '', svgElement, className = '', color, active, dis
     </StyledIcon>;
 }
 
+const IconDiv = styled.div<{ type?: string;url?: string;height?: string;width?: string }>`
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+    font-style: normal;
+    line-height: 0;
+    text-align: center;
+    text-transform: none;
+    vertical-align: text-top;
+    text-rendering: optimizelegibility;
+    -webkit-font-smoothing: antialiased;
+    height:16px;
+    width: 16px;
+    background:center no-repeat url('${(p): string =>
+        iconMap[p.type ?? ''] ?? iconMap[themeInstance.getCurrentTheme()][p.type ?? ''] ?? p.url ?? ''}') ;
+    background-size: ${(p): string => `${p.height ?? '16px'} ${p.width ?? '16px'}`};
+`;
+
 export function HelpIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'help'} {...props }/>;
 }
@@ -119,8 +145,8 @@ export function CaretDownIcon(props: ISVGProps): JSX.Element {
     return <Icon svgElement={CaretDownSvg} {...props }/>;
 }
 
-export function CaretRightIcon(props: ISVGProps): JSX.Element {
-    return <Icon svgElement={CaretRightSvg} {...props } />;
+export function CaretRightIcon(props: IIconDivProps): JSX.Element {
+    return <IconDiv type={'caretRight'} {...props } />;
 }
 
 export function FlagIcon(props: ISVGProps): JSX.Element {

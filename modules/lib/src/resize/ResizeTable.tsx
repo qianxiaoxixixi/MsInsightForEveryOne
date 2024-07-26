@@ -202,7 +202,7 @@ interface Iprop<T> {
     virtual?: boolean;
     scroll?: {x?: number;y?: number;rowHeight?: number};
     pagination?: false | TablePaginationConfig;
-    onChange: (...p: any) => void;
+    onChange?: (...p: any) => void;
 }
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
@@ -252,7 +252,7 @@ const getFullExpandable = (expandable?: any): any => {
         return null;
     }
     const expandIcon = <T extends {children?: unknown[]}>({ expanded, onExpand, record }:
-    {expanded: boolean;onExpand: (record: T, event: React.MouseEvent<SVGSVGElement>) => void;record: T}): React.ReactNode => {
+    {expanded: boolean;onExpand: (record: T, event: React.MouseEvent<any>) => void;record: T}): React.ReactNode => {
         if (record.children !== null && record.children !== undefined && record.children.length > 0) {
             return expanded
                 ? (<CaretDownIcon onClick={(e): void => onExpand(record, e)} style={{ cursor: 'pointer' }}/>)
@@ -265,7 +265,7 @@ const getFullExpandable = (expandable?: any): any => {
 };
 
 // ============================ 安全防护 ============================
-const handleChangeSafe = (onChange: (...p: any) => void, ...params: any): void => {
+const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void => {
     const [,,,action] = params;
     if (['paginate', 'filter'].includes(action?.action)) {
         limitInput();
