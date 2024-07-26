@@ -11,7 +11,6 @@ import { SearchIcon } from 'lib/Icon';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import type { Session } from '../entity/session';
 import { CustomButton, PressButton, StyledButton } from './base/StyledButton';
-import { StyledInput } from './base/StyledInput';
 import type { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
@@ -32,9 +31,9 @@ const CustomDiv = styled.div`
     justify-content: space-between;
     border-radius: 18px;
     padding: 1px 7px 1px 10px;
-    min-width: 600px;
+    min-width: 300px;
     height: 32px;
-    background: ${(props): string => props.theme.tooltipBGColor};
+    background: ${(props): string => props.theme.bgColorLight};
     .searchResult {
         color: ${(props): string => props.theme.svgBackgroundColor};
         font-size: 12px;
@@ -42,8 +41,8 @@ const CustomDiv = styled.div`
     }
     button.ant-btn.ant-btn-default.ant-btn-icon-only {
         border: none;
-        background-color: ${(props): string => props.theme.tooltipBGColor};
-        color: ${(props): string => props.theme.svgBackgroundColor};
+        background-color: ${(props): string => props.theme.bgColorLight};
+        color: ${(props): string => props.theme.textColorPrimary};
     }
     button.ant-btn.ant-btn-default.ant-btn-icon-only:hover {
         color: #007aff;
@@ -290,8 +289,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     return (
         <CustomDiv theme={theme} onClick={(e): void => { e.stopPropagation(); }}>
             { contextHolder}
-            <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus} maxLength={200}
-                minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></StyledInput>
+            <Input allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus} maxLength={200}
+                size="large" value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></Input>
             <div className="searchResult">
                 {dom}
             </div>
@@ -301,7 +300,6 @@ const CategorySearchContent = (session: Session): JSX.Element => {
 
 export const CategorySearch = observer(({ session }: { session: Session}): JSX.Element | null => {
     const { t } = useTranslation();
-    const theme = useTheme();
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isDisabled: false,
@@ -320,12 +318,11 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
 
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
+            overlayInnerStyle={{ maxWidth: 800 }}
             title={CategorySearchContent(session)}
             trigger="click"
             placement="right"
             onOpenChange={onTooltipVisibleChange}
-            color={theme.tooltipBGColor}
-            overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [-8, 3] }}>
             <CustomButton tooltip={t('tooltip:search')} icon={SearchIcon} { ...customButtonProps }/>

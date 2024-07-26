@@ -23,10 +23,10 @@ export const StyledButton = styled(Button)`
     width: ${(props): string => props.width !== undefined ? `${props.width}px` : '22px'};
     height: 20px;
     line-height: 20px;
-    color: ${(props): string => props.theme.fontColor} !important;
-    background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
+    color: ${(props): string => props.theme.textColorPrimary};
+    background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.bgColorLight};
     &:hover {
-        background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor};
+        background-color: ${(props): string => props?.style?.backgroundColor ?? props.theme.primaryColorHover};
         cursor: ${(props): string => props.disabled as boolean ? 'not-allowed' : 'pointer'};
     }
 

@@ -21,6 +21,7 @@ export const MITooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle,
                 padding: 8,
                 fontSize: 12,
                 maxWidth: 400,
+                ...overlayInnerStyle,
             }
         }
         mouseEnterDelay={0.3}
