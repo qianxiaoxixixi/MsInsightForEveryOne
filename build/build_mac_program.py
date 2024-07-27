@@ -13,6 +13,7 @@ import logging
 import os
 import shutil
 import sys
+import zipfile
 from enum import Enum
 import threading
 import queue
@@ -25,6 +26,16 @@ SLASH = '/'  # slash for macos
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 ASCEND_INSIGHT = 'Ascend-Insight'
 ZIP_FILE = 'Ascend-Insight.zip'
+EXCLUDE_DIRS = [
+    "dist",
+    "node_modules",
+    "target",
+    "out",
+    ".idea",
+    ".git",
+    "cmake-build-debug-mingw",
+    "output"
+]
 
 MANIFEST_DIR = 'manifest'
 DEPENDENCY_DIR = 'dependency'
@@ -208,7 +219,19 @@ def init_local_workspace():
         shutil.copyfile(ver_config_file, os.path.join(PROJECT_PATH, CONFIG_INI))
     else:
         logging.warning('Can not find config.ini, and use default version configuration.')
-    shutil.make_archive(local_path[:-4], 'zip', PROJECT_PATH)
+
+    with zipfile.ZipFile(local_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(PROJECT_PATH):
+            dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+
+            for file in files:
+                # 用于规避IDE类型检查的warning
+                root_str = str(root)
+                file_str = str(file)
+                project_path_str = str(PROJECT_PATH)
+
+                zip_path = os.path.relpath(os.path.join(root_str, file_str), project_path_str)
+                zipf.write(os.path.join(root_str, file_str), arcname=zip_path)
 
 
 def build_mac(arch, ssh_config, result_queue):
