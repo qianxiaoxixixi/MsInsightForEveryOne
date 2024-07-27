@@ -79,7 +79,6 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         database->QueryExtremumTimestamp(min, max);
         auto threadMap = database->QueryAllThreadMap();
         TraceFileParser::Instance().UpdateTrackIdMap(fileId, threadMap);
-        database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
         ParserStatusManager::Instance().SetFinishStatus(fileId);
         ParseEndCallBack(fileId, true, "");
@@ -161,7 +160,6 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
     database->UpdateParseStatus(FINISH_STATUS);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");

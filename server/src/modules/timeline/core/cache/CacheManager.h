@@ -5,7 +5,6 @@
 #define PROFILER_SERVER_CACHEMANAGER_H
 #include "SimulationSliceCacheManager.h"
 #include "SliceCacheManager.h"
-#include "SliceDepthCacheManager.h"
 #include "SpinLockGuard.h"
 #include "DomainObject.h"
 namespace Dic::Module::Timeline {
@@ -27,7 +26,6 @@ public:
     {
         simulationSliceCacheManager.ClearAll();
         sliceCacheManager.Clear();
-        sliceDepthCacheManager.ClearAllCache();
     }
 
     /**
@@ -37,7 +35,6 @@ public:
     void ClearCacheByFileId(const std::string &fileId)
     {
         simulationSliceCacheManager.ClearCacheByFileId(fileId);
-        sliceDepthCacheManager.ClearCacheByFileId(fileId);
     }
 
 private:
@@ -45,7 +42,6 @@ private:
     ~CacheManager() = default;
     SimulationSliceCacheManager &simulationSliceCacheManager = SimulationSliceCacheManager::Instance();
     SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
-    SliceDepthCacheManager &sliceDepthCacheManager = SliceDepthCacheManager::Instance();
     SpinLock mutex;
 };
 }

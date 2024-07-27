@@ -338,6 +338,10 @@ const updateUnitData = (currentUnit: InsightUnit, threadTraceMaxDepth: number, h
     runInAction(() => {
         if (threadTraceMaxDepth) {
             // 根据该接口返回的最大深度重新渲染泳道高度
+            if (threadTraceMaxDepth > 1 && !currentUnit.collapsible) {
+                currentUnit.collapsible = true;
+                currentUnit.isExpanded = true;
+            }
             if (threadTraceMaxDepth !== config.maxDepth) {
                 currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
                 config.maxDepth = threadTraceMaxDepth;

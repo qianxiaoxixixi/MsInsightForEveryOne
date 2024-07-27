@@ -334,6 +334,7 @@ struct SystemViewResponse : public Response {
 class EventDetail {
 public:
     virtual void Base() {}
+    std::string id;
     std::string name;
     uint64_t startTime = 0;
     uint64_t duration = 0;

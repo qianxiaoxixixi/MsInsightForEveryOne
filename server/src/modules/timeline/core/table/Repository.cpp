@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "SliceTable.h"
+#include "FlowTable.h"
+#include "ThreadTable.h"
 #include "Repository.h"
 namespace Dic::Module::Timeline {
 void Repository::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
@@ -64,6 +66,57 @@ void Repository::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sli
         temp.endTime = item.endTime;
         temp.name = item.name;
         sliceVec.emplace_back(std::move(temp));
+    }
+}
+
+void Repository::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
+{
+    FlowTable flowTable;
+    std::vector<FlowPO> flowPOVec;
+    flowTable.Select(FlowColumn::TYPE, FlowColumn::TIMESTAMP, FlowColumn::FLOW_ID)
+        .GreaterEq(FlowColumn::TIMESTAMP, flowQuery.startTime + flowQuery.minTimestamp)
+        .LessEq(FlowColumn::TIMESTAMP, flowQuery.endTime + flowQuery.minTimestamp)
+        .Eq(FlowColumn::TRACK_ID, flowQuery.trackId)
+        .GroupBy(FlowColumn::FLOW_ID)
+        .ExcuteQuery(flowQuery.db, flowPOVec);
+    for (const auto &item : flowPOVec) {
+        FlowPoint flowPoint;
+        flowPoint.timestamp = item.timestamp;
+        flowPoint.type = item.type;
+        flowPoint.flowId = item.flowId;
+        flowPointVec.emplace_back(std::move(flowPoint));
+    }
+}
+
+void Repository::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
+{
+    FlowTable flowTable;
+    std::vector<FlowPO> flowPOVec;
+    flowTable.Select(FlowColumn::NAME, FlowColumn::CAT, FlowColumn::FLOW_ID)
+        .Select(FlowColumn::TIMESTAMP, FlowColumn::TYPE, FlowColumn::TRACK_ID)
+        .Eq(FlowColumn::FLOW_ID, flowQuery.flowId)
+        .ExcuteQuery(flowQuery.db, flowPOVec);
+    for (const auto &item : flowPOVec) {
+        FlowPoint flowPoint;
+        flowPoint.name = item.name;
+        flowPoint.cat = item.cat;
+        flowPoint.flowId = item.flowId;
+        flowPoint.timestamp = item.timestamp;
+        flowPoint.type = item.type;
+        flowPoint.trackId = item.trackId;
+        flowPointVec.emplace_back(std::move(flowPoint));
+    }
+}
+
+void Repository::QueryAllThreadInfo(const ThreadQuery &threadQuery,
+    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
+{
+    ThreadTable threadTable;
+    std::vector<ThreadPO> threadPOVec;
+    threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::PID, ThreadColumn::TID)
+        .ExcuteQuery(threadQuery.db, threadPOVec);
+    for (const auto &item : threadPOVec) {
+        threadInfo[item.trackId] = {item.pid, item.tid};
     }
 }
 }

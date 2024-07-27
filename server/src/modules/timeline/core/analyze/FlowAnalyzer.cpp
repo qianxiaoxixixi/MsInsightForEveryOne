@@ -3,40 +3,86 @@
  */
 #include "pch.h"
 #include "TraceDatabaseDef.h"
+#include "DomainObject.h"
+#include "DominQuery.h"
+#include "SliceCacheManager.h"
+#include "Repository.h"
 #include "FlowAnalyzer.h"
+
+using namespace Dic::Server;
 namespace Dic::Module::Timeline {
-FlowAnalyzer::FlowAnalyzer() = default;
-std::vector<Protocol::FlowName> FlowAnalyzer::ComputeFlowBySliceVec(const std::vector<Protocol::FlowName> &flowNameVec,
-    std::vector<Protocol::SimpleSlice> &sliceVec)
+FlowAnalyzer::FlowAnalyzer()
 {
-    std::vector<Protocol::FlowName> res;
+    if (repository == nullptr) {
+        repository = std::make_unique<Repository>();
+    }
+}
+
+void FlowAnalyzer::SetRepository(std::unique_ptr<RepositoryInterface> repositoryDependency)
+{
+    repository = std::move(repositoryDependency);
+}
+
+std::vector<FlowPoint> FlowAnalyzer::ComputeAllFlowPointBySliceId(FlowQuery &flowQuery, const std::string &sliceId)
+{
+    std::unordered_set<std::string> onSliceFlowPointSet = ComputeOnSliceFlowPointBySliceId(flowQuery, sliceId);
+    std::vector<FlowPoint> res;
+    if (std::empty(onSliceFlowPointSet)) {
+        return res;
+    }
+    for (const auto &item : onSliceFlowPointSet) {
+        flowQuery.flowId = item;
+        repository->QueryFlowPointByFlowId(flowQuery, res);
+    }
+    return res;
+}
+
+std::unordered_set<std::string> FlowAnalyzer::ComputeOnSliceFlowPointBySliceId(const FlowQuery &flowQuery,
+    const std::string &sliceId)
+{
+    std::unordered_set<std::string> res;
+    std::vector<FlowPoint> flowPointVec;
+    repository->QueryFlowPointByTimeRange(flowQuery, flowPointVec);
+    ServerLog::Info("flowPointVec is: ", flowPointVec.size());
+    auto &instance = SliceCacheManager::Instance();
+    std::vector<SliceDomain> sliceVec = instance.GetSliceDomainVec(std::to_string(flowQuery.trackId));
+    // 此时是前端打开泳道点击算子，缓存中必定存在泳道下所有的算子数据,若不存在说明是异常情况
     if (std::empty(sliceVec)) {
         return res;
     }
-    Protocol::SimpleSlice currentSlice = sliceVec[0];
-    // 移除当前选中的算子
-    sliceVec.erase(sliceVec.begin());
-    bool isEmplace = true;
-    for (const auto &flowItem : flowNameVec) {
-        for (const auto &simpleSliceItem : sliceVec) {
-            // 开始节点和最高的算子对应
-            if (flowItem.type == Protocol::LINE_START && flowItem.timestamp >= simpleSliceItem.timestamp &&
-                flowItem.timestamp <= simpleSliceItem.endTime) {
-                isEmplace = false;
-                break;
-            }
+    for (const auto &item : flowPointVec) {
+        auto it = ComputeSliceByFlowPoint(item, sliceVec);
+        if (it != sliceVec.end() && std::to_string(it->id) == sliceId) {
+            res.emplace(item.flowId);
         }
-        // 结束节点和算子开始时间对应
-        if ((flowItem.type == Protocol::LINE_END || flowItem.type == Protocol::LINE_END_OPTIONAL) &&
-            flowItem.timestamp != currentSlice.timestamp) {
-            isEmplace = false;
-        }
-        if (isEmplace) {
-            res.emplace_back(flowItem);
-        }
-        isEmplace = true;
     }
     return res;
+}
+
+std::vector<SliceDomain>::const_iterator FlowAnalyzer::ComputeSliceByFlowPoint(const FlowPoint &flowPoint,
+    const std::vector<SliceDomain> &sliceVec) const
+{
+    SliceDomain slice;
+    slice.timestamp = flowPoint.timestamp;
+    slice.id = 0;
+    auto it = sliceVec.begin();
+    if (flowPoint.type == Protocol::LINE_START) {
+        it = std::lower_bound(sliceVec.begin(), sliceVec.end(), slice, SliceDomain::CompareTimestampASC);
+        if (it != sliceVec.end() && it->timestamp == flowPoint.timestamp) {
+            return it;
+        }
+
+        if (it != sliceVec.end() && it > sliceVec.begin()) {
+            return (it--);
+        }
+    }
+    if (flowPoint.type == Protocol::LINE_END || flowPoint.type == Protocol::LINE_END_OPTIONAL) {
+        it = std::lower_bound(sliceVec.begin(), sliceVec.end(), slice, SliceDomain::CompareTimestampASC);
+        if (it != sliceVec.end()) {
+            return it;
+        }
+    }
+    return it;
 }
 
 void FlowAnalyzer::ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &flowDetailVec,
@@ -60,44 +106,13 @@ void FlowAnalyzer::ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &f
     unitSingleFlow.from.pid = from.pid;
     unitSingleFlow.from.tid = from.tid;
     unitSingleFlow.from.timestamp = from.timestamp - minTimestamp;
-    unitSingleFlow.from.duration = from.duration;
     unitSingleFlow.from.depth = from.depth;
-    unitSingleFlow.from.name = from.sliceName;
     unitSingleFlow.to.id = to.id;
     unitSingleFlow.to.pid = to.pid;
     unitSingleFlow.to.tid = to.tid;
     unitSingleFlow.to.timestamp = to.timestamp - minTimestamp;
-    unitSingleFlow.to.duration = to.duration;
     unitSingleFlow.to.depth = to.depth;
-    unitSingleFlow.to.name = to.sliceName;
     flowMap[unitSingleFlow.cat].emplace_back(unitSingleFlow);
-}
-
-void FlowAnalyzer::ComputeSingleFlowDetail(const std::vector<Protocol::SimpleSlice> &simpliceVec,
-    FlowDetailDto &flowDetailDto)
-{
-    if (std::empty(simpliceVec)) {
-        Server::ServerLog::Warn("SimpliceVec is Empty");
-        return;
-    }
-    Protocol::SimpleSlice simpleSlice;
-    // 连线开始点取最高，连线结束点取时间相等
-    if (flowDetailDto.type == Protocol::LINE_START) {
-        simpleSlice = simpliceVec.front();
-    }
-    if (flowDetailDto.type == Protocol::LINE_END || flowDetailDto.type == Protocol::LINE_END_OPTIONAL) {
-        for (const auto &tempSlice : simpliceVec) {
-            if (tempSlice.timestamp == flowDetailDto.flowTimestamp) {
-                simpleSlice = tempSlice;
-                break;
-            }
-        }
-    }
-    flowDetailDto.id = std::to_string(simpleSlice.id);
-    flowDetailDto.depth = simpleSlice.depth;
-    flowDetailDto.sliceName = simpleSlice.name;
-    flowDetailDto.duration = simpleSlice.endTime - simpleSlice.timestamp;
-    flowDetailDto.timestamp = simpleSlice.timestamp;
 }
 
 void FlowAnalyzer::SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec)
@@ -289,12 +304,10 @@ bool FlowAnalyzer::CompareFlowIdAndTimestampASC(const FlowCategoryEventsDto &fir
     if (first.type != Protocol::LINE_START && second.type == Protocol::LINE_START) {
         return false;
     }
-    if (first.type != Protocol::LINE_START && second.type != Protocol::LINE_START &&
-        first.id < second.id) {
+    if (first.type != Protocol::LINE_START && second.type != Protocol::LINE_START && first.id < second.id) {
         return true;
     }
-    if (first.type == Protocol::LINE_START && second.type == Protocol::LINE_START &&
-        first.id < second.id) {
+    if (first.type == Protocol::LINE_START && second.type == Protocol::LINE_START && first.id < second.id) {
         return true;
     }
     return false;

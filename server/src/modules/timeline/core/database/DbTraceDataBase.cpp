@@ -594,10 +594,8 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
         responseBody.threadId = resultSet->GetString("tid");
         responseBody.pid = resultSet->GetString("pid");
         responseBody.rankId = QueryHostInfo() + GetRealRankId(params.rankId);
-        return true;
     }
-    ServerLog::Error("Fail to query data to query kernel depth and thread. Please check whether the data is correct.");
-    return false;
+    return true;
 }
 
 LayerStatData DbTraceDataBase::QueryLayerData(const std::string &layer, const std::string &name)

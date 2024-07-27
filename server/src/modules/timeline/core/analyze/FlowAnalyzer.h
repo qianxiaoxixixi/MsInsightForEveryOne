@@ -13,8 +13,6 @@
 #include <unordered_set>
 #include "TimelineProtocolResponse.h"
 #include "TraceDatabaseDef.h"
-#include "ServerLog.h"
-#include "SliceCacheManager.h"
 namespace Dic::Module::Timeline {
 struct FlowPointSampleStruct {
     // 连线去重集合
@@ -36,25 +34,45 @@ struct FlowPointSampleStruct {
     // 结束点所在区间最小时间
     uint64_t curEndStartTime = 0;
 };
-
 class FlowAnalyzer {
 public:
     explicit FlowAnalyzer();
     ~FlowAnalyzer() = default;
-    std::vector<Protocol::FlowName> ComputeFlowBySliceVec(const std::vector<Protocol::FlowName> &flowNameVec,
-        std::vector<Protocol::SimpleSlice> &sliceVec);
+    void SetRepository(std::unique_ptr<RepositoryInterface> repositoryDependency);
+    /* *
+     * 计算选中的算子相关联的所有连线点
+     * @param flowQuery
+     * @param sliceId
+     * @return
+     */
+    std::vector<FlowPoint> ComputeAllFlowPointBySliceId(FlowQuery &flowQuery, const std::string &sliceId);
+    /* *
+     * 根据算子id查询算子上的连线点
+     * @param flowQuery
+     * @param sliceId
+     * @return
+     */
+    std::unordered_set<std::string> ComputeOnSliceFlowPointBySliceId(const FlowQuery &flowQuery,
+        const std::string &sliceId);
     void ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &flowDetailVec,
         std::map<std::string, std::vector<Protocol::UnitSingleFlow>> &flowMap, uint64_t minTimestamp);
-    void ComputeSingleFlowDetail(const std::vector<Protocol::SimpleSlice> &simpliceVec,
-        FlowDetailDto &flowDetailDto);
     void SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec);
     void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec);
     void ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
         uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult);
     void ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
+    /* *
+     * 根据连线点计算点所在的算子
+     * @param flowPoint
+     * @param sliceVec
+     * @return
+     */
+    std::vector<SliceDomain>::const_iterator ComputeSliceByFlowPoint(const FlowPoint &flowPoint,
+        const std::vector<SliceDomain> &sliceVec) const;
 
 private:
+    std::unique_ptr<RepositoryInterface> repository;
     static bool CompareTrackIdASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
     static bool CompareFlowIdAndTimestampASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
     static void GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,

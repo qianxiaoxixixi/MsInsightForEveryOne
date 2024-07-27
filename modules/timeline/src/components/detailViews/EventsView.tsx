@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
-import { eventViewData, getDefaultColumData, getPageData } from './Common';
+import { eventViewData, getDefaultColumData, getPageData, queryOneKernel } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
@@ -17,7 +17,6 @@ import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import i18n from 'lib/i18n';
 import { DETAIL_HEADER_HEIGHT_ETC_PX } from './SystemView';
-
 export interface EventTableData {
     eventDetails: EventDetails[];
     columnList: EventTableColumn[];
@@ -25,6 +24,7 @@ export interface EventTableData {
 }
 
 export interface EventDetails {
+    id: string;
     start: number;
     name: string;
     duration: number;
@@ -161,6 +161,13 @@ const generateEventColumns = (
 
 const handleSelected = async(rowData: any, props: any): Promise<void> => {
     const rankId = props.session.eventUnits[0].metadata.cardId;
+    const res = await queryOneKernel({
+        rankId,
+        name: rowData.name,
+        timestamp: rowData.start,
+        duration: Number((rowData.duration * 1000).toFixed(0)),
+    });
+    const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
@@ -173,11 +180,12 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
+                    id: rowData.id,
                     startTime,
                     name: rowData.name,
                     color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
                     duration: rowData.duration,
-                    depth: rowData.depth,
+                    depth,
                     threadId: rowData.threadId,
                     startRecordTime: props.session.startRecordTime,
                     showDetail: false,

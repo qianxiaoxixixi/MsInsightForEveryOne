@@ -6,7 +6,6 @@
 #define PROFILER_SERVER_SLICEANALYZER_H
 #include <set>
 #include "TimelineProtocolResponse.h"
-#include "SliceDepthCacheManager.h"
 #include "DominQuery.h"
 #include "DomainObject.h"
 #include "Repository.h"
@@ -37,6 +36,14 @@ public:
      * @param depthInfo
      */
     void ComputeDepthInfoByTrackId(const SliceQuery &sliceQuery, std::unordered_map<uint64_t, uint32_t> &depthInfo);
+    /* *
+     * 根据泳道trackId计算泳道下所有简单算子信息
+     * @param trackId
+     * @param depthInfo
+     */
+    void ComputeSliceDomainVecByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec);
+    void ComputeAllThreadInfo(const ThreadQuery &flowQuery,
+                              std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo);
     void SetRepository(std::unique_ptr<RepositoryInterface> repository);
 
 private:

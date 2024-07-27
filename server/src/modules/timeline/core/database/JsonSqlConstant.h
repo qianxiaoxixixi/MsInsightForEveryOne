@@ -58,13 +58,6 @@ const std::string QUERY_SLICE_BY_TRACKID_SQL =
 const std::string QUERY_ALL_TRACKID_SQL = "select track_id as trackId from thread;";
 const std::string QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL =
     "SELECT id, timestamp, end_time FROM " + SLICE_TABLE + " WHERE track_id = ? ";
-const std::string QUERY_UINT_THREAD_SQL = "SELECT id, timestamp, duration, end_time AS endTime, name"
-    " FROM " +
-    SLICE_TABLE + " WHERE track_id = ? AND timestamp <= ? AND endTime >= ?";
-const std::string QUERY_EXTREMETIME_OF_FIRST_DEPTH_SQL =
-    "SELECT min(timestamp) as minTimestamp, max(end_time) AS maxTimestamp"
-    " FROM " +
-    SLICE_TABLE + " WHERE track_id = ? AND timestamp <= ? AND end_time >= ? ;";
 const std::string QUERY_SLICE_DETAIL_SQL = "SELECT id, timestamp, duration, name, track_id, cat, args"
     " FROM " + SLICE_TABLE + " WHERE id = ?";
 const std::string QUERY_DURATION_FROM_SLICE_BY_TIME_RANGE_SQL = "SELECT id, timestamp, duration FROM " + SLICE_TABLE +
@@ -81,12 +74,6 @@ const std::string QUERY_FLOW_BY_FLOWID_SQL = "SELECT name, cat, flow_id as flowI
 const std::string QUERY_ALL_THREAD_SQL = "SELECT track_id as trackId, tid, pid"
     " FROM " +
     THREAD_TABLE + " ;";
-const std::string QUERY_FLOW_BY_TIME_RANGE_SQL = "SELECT name, flow_id as flowId, type, timestamp"
-    " FROM " +
-    FLOW_TABLE + " WHERE timestamp >= ? AND timestamp <= ? AND track_id = ? GROUP BY flowId";
-const std::string QUERY_SLICE_BY_TIME_RANGE_SQL = "SELECT timestamp, end_time as endTime"
-    " FROM " +
-    SLICE_TABLE + " WHERE timestamp >= ? AND endTime <= ? AND track_id = ? order by timestamp";
 const std::string QUERY_SLICE_BY_ID_SQL = "SELECT id, track_id, flag_id"
     " FROM " +
     SLICE_TABLE + " WHERE id = ?";
@@ -115,9 +102,6 @@ const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalM
 const std::string QUERY_FLOWCATEGORY_EVENTS_FAST_SQL =
     "select id,track_id AS trackId,timestamp,flow_id AS flowId ,type from " + FLOW_TABLE +
     " WHERE cat = ? ORDER BY trackId, timestamp;";
-const std::string QUERY_SIMULATION_FLOWCATEGORY_EVENTS_FAST_SQL =
-    "SELECT id, track_id AS trackId, timestamp,type,flow_id as flowId FROM " + FLOW_TABLE +
-    " WHERE flow.cat = ? ORDER BY trackId;";
 const std::string QUERY_FLAG_SLICE_SQL =
     "SELECT id, flag_id AS flagId FROM " + SLICE_TABLE + " WHERE flagId != '' AND track_id = ?";
 const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, args"
@@ -134,7 +118,9 @@ const std::string QUERY_QUERY_TYPE_SQL =
 const std::string QUERY_AFFINITY_API_SQL =
     "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, "
     "s.end_time - ? as endTime, t.pid as pid, t.tid as tid "
-    "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+    "FROM " +
+    SLICE_TABLE + " s JOIN " + THREAD_TABLE +
+    " t on s.track_id = t.track_id "
     "WHERE s.cat = 'cpu_op' AND s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' "
     "ORDER BY s.track_id ASC, s.timestamp ASC";
 
@@ -262,7 +248,7 @@ public:
             "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
             "output_formats AS outputFormats FROM kernel_detail "
             "WHERE 1=1";
-        for (const auto &filter: filters) {
+        for (const auto &filter : filters) {
             if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
                 Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
                 sql.clear();
@@ -313,11 +299,12 @@ public:
         }
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
         std::string sql = "SELECT s.name as name, s.timestamp as timestamp, s.duration as duration,"
-                          " s.track_id as track_id, s.id as id, t.tid as tid, t.pid as pid"
-                          " FROM " +
-                          SLICE_TABLE + " s JOIN " + THREAD_TABLE +
-                          " t on s.track_id = t.track_id "
-                          "WHERE " + nameMatch + orderBy + " limit ? offset ?";
+            " s.track_id as track_id, s.id as id, t.tid as tid, t.pid as pid"
+            " FROM " +
+            SLICE_TABLE + " s JOIN " + THREAD_TABLE +
+            " t on s.track_id = t.track_id "
+            "WHERE " +
+            nameMatch + orderBy + " limit ? offset ?";
         return sql;
     }
 
@@ -363,9 +350,15 @@ public:
             "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, kd.duration as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id, s.id as id, "
             "lower(kd.input_data_types) as input,  lower(kd.output_data_types) as output "
-            "FROM " + KERNEL_DETAIL + " kd "
-            "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
-            "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+            "FROM " +
+            KERNEL_DETAIL +
+            " kd "
+            "JOIN " +
+            SLICE_TABLE +
+            " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+            "JOIN " +
+            THREAD_TABLE +
+            " t ON s.track_id = t.track_id "
             "WHERE kd.accelerator_core='AI_CPU' AND ("
             "    lower(kd.op_type) IN (" +
             StringUtil::Join4SqlGroup(replace) +
@@ -431,9 +424,15 @@ public:
             "SELECT kd.rank_id, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
             "s.duration / 1000 as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
             "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
-            "FROM " + KERNEL_DETAIL + " kd "
-            "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
-            "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+            "FROM " +
+            KERNEL_DETAIL +
+            " kd "
+            "JOIN " +
+            SLICE_TABLE +
+            " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+            "JOIN " +
+            THREAD_TABLE +
+            " t ON s.track_id = t.track_id "
             "WHERE kd.accelerator_core != 'HCCL' ) "
             "SELECT d0.* FROM data d0 ";
         for (int i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
