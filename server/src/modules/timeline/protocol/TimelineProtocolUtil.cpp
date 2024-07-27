@@ -400,6 +400,7 @@ template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const E
     json_t eventsDetailList(kArrayType);
     for (const auto &item: response.body.eventDetailList) {
         json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "id", item->id, allocator);
         JsonUtil::AddMember(itemJson, "name", item->name, allocator);
         JsonUtil::AddMember(itemJson, "start", item->startTime, allocator);
         JsonUtil::AddMember(itemJson, "duration", item->duration, allocator);

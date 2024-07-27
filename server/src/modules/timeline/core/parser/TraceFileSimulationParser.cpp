@@ -138,7 +138,6 @@ void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const st
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
     database->SimulationUpdateProcessSortIndex();
     CacheManager::Instance().ClearCacheByFileId(fileId);
     ServerLog::Info("Update depth completed. ID:", fileId);

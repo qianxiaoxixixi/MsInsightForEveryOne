@@ -839,7 +839,6 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
     // 封装结果
     auto metaType = GetProcessTypeByProcessName(params.processName);
     std::vector<std::unique_ptr<EventDetail>> details;
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API) {
@@ -859,11 +858,7 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
         ptr->threadId = resultSet->GetString("threadId");
         ptr->processId = resultSet->GetString("processId");
         auto track_id = resultSet->GetUint64("track_id");
-        if (depthMap.count(track_id) == 0) {
-            depthMap.emplace(track_id,
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
-        }
-        ptr->depth = depthMap[track_id][resultSet->GetUint64("id")];
+        ptr->id = std::to_string(resultSet->GetUint64("id"));
         details.emplace_back(std::move(ptr));
     }
     body.count = details.size();

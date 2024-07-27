@@ -366,6 +366,9 @@ const showPythonFunction = (session: Session): void => {
         const isFilteredPythonFunction = pythonFunctionConfig?.[`${metadata.cardId}_${metadata.threadName}`] ?? false;
         runInAction(() => {
             session.unitsConfig.filterConfig.pythonFunction = { ...pythonFunctionConfig, [`${metadata.cardId}_${metadata.threadName}`]: !isFilteredPythonFunction };
+            session.linkLines = {};
+            session.singleLinkLine = {};
+            session.renderTrigger = !session.renderTrigger;
         });
     }
     runInAction(() => {
@@ -438,10 +441,10 @@ const haveCollapsedChildren = (_unit: InsightUnit): boolean => {
 
 const isCollapseAllVisible = (session: Session): boolean => {
     const selectedUnit = session.selectedUnits?.[0];
-    if (selectedUnit) {
-        return haveExpandedChildren(selectedUnit);
+    if (selectedUnit === undefined || !selectedUnit.isExpanded) {
+        return false;
     }
-    return false;
+    return haveExpandedChildren(selectedUnit);
 };
 
 const isExpandAllVisible = (session: Session): boolean => {

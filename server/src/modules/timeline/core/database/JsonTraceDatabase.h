@@ -49,7 +49,6 @@ public:
     bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
-    void UpdateSimulationDepthByCodeWithNoOverlap(const std::string &fileId);
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
 
     // search
@@ -171,9 +170,6 @@ private:
     void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);
-    std::vector<uint64_t> QueryAllTrackId();
-
-    void QueryAllSliceByTrackId(const int32_t &trackId, std::vector<Protocol::SimpleSlice> &simpleSliceVec);
 
     uint64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
         std::vector<SliceDto> &sliceDtoVec);
@@ -182,28 +178,21 @@ private:
 
     std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
         std::set<uint64_t> &ids);
-    std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimeRange(uint64_t startTime, uint64_t endTime,
-        uint64_t minTimestamp, int64_t trackId);
-
-    std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
-        int64_t trackId);
+    
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByFlagAndTrackId(const std::string &flagId, uint64_t trackId);
-
-    std::vector<Protocol::FlowName> QueryFlowNameByTimeRange(uint64_t startTime, uint64_t endTime, int64_t trackId);
 
     std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId);
 
     void QueryFlowPointByCategory(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
         std::vector<FlowCategoryEventsDto> &flowEventsVec);
-    void ComputeUintFlowResponse(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
-        std::set<std::string> &flowIdSet);
     bool QuerySliceDtoById(const std::string &sliceId, SliceDto &sliceDto);
-
-    void ComputePosition(uint64_t minTimestamp, std::vector<FlowDetailDto> &flowDetailVec);
 
     void QuerySimulationUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp);
     void QueryAllFlagSlice(std::unordered_map<std::string, uint32_t> &simpleSliceMap, uint64_t trackId);
+
+    static void AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
+             std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap) ;
 };
 } // end of namespace Timeline
 // end of namespace Module

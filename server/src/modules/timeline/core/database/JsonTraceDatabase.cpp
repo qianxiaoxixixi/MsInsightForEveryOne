@@ -4,7 +4,6 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
-#include "SliceDepthCacheManager.h"
 #include "JsonTraceDatabase.h"
 
 namespace Dic::Module::Timeline {
@@ -463,72 +462,9 @@ void JsonTraceDatabase::SimulationUpdateProcessSortIndex()
     }
 }
 
-void JsonTraceDatabase::UpdateSimulationDepthByCodeWithNoOverlap(const std::string &fileId)
-{
-    Timer timer("UpdateSimulationDepthByCodeWithNoOverlap");
-    std::vector<uint64_t> trackIdList = QueryAllTrackId();
-    if (std::empty(trackIdList)) {
-        return;
-    }
-    ServerLog::Info("trackIdList size: ", trackIdList.size());
-    std::vector<Protocol::SimpleSlice> rowThreadTraceVec;
-    for (const auto &item : trackIdList) {
-        rowThreadTraceVec.clear();
-        QueryAllSliceByTrackId(item, rowThreadTraceVec);
-        if (std::empty(rowThreadTraceVec)) {
-            continue;
-        }
-        importActionAnalyzerPtr->UpdateAllSimulationSliceDepthWithNoOverlap(rowThreadTraceVec, item);
-    }
-}
-
-void JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId,
-    std::vector<Protocol::SimpleSlice> &simpleSliceVec)
-{
-    std::string querySliceByTrackId = QUERY_SLICE_BY_TRACKID_SQL;
-    auto sliceStmt = CreatPreparedStatement(querySliceByTrackId);
-    if (sliceStmt == nullptr) {
-        ServerLog::Error("querySliceByTrackId. Failed to prepare sql.", GetLastError());
-        return;
-    }
-    auto sliceResultSet = sliceStmt->ExecuteQuery(trackId);
-    if (sliceResultSet == nullptr) {
-        ServerLog::Error("querySliceByTrackId. Failed to get result set.", sliceStmt->GetErrorMessage());
-        return;
-    }
-    while (sliceResultSet->Next()) {
-        SimpleSlice simpleSlice;
-        simpleSlice.id = sliceResultSet->GetInt64("id");
-        simpleSlice.timestamp = sliceResultSet->GetUint64("timestamp");
-        simpleSlice.endTime = sliceResultSet->GetUint64("endTime");
-        simpleSliceVec.emplace_back(std::move(simpleSlice));
-    }
-}
-
-std::vector<uint64_t> JsonTraceDatabase::QueryAllTrackId()
-{
-    std::vector<uint64_t> trackIdList;
-    std::string allTrackIdSql = QUERY_ALL_TRACKID_SQL;
-    auto stmt = CreatPreparedStatement(allTrackIdSql);
-    if (stmt == nullptr) {
-        ServerLog::Error("allTrackIdSql. Failed to prepare sql.", GetLastError());
-        return trackIdList;
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Error("allTrackIdSql. Failed to get result set.", stmt->GetErrorMessage());
-        return trackIdList;
-    }
-    while (resultSet->Next()) {
-        trackIdList.emplace_back(resultSet->GetInt64("trackId"));
-    }
-    return trackIdList;
-}
-
 bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
     Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
-    Timer timer("JsonTraceDatabase::QuerySliceByCondition");
     SliceQuery sliceQuery;
     sliceQuery.db = db;
     sliceQuery.startTime = requestParams.startTime;
@@ -537,7 +473,6 @@ bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams
     sliceQuery.isFilterPythonFunction = requestParams.isFilterPythonFunction;
     sliceQuery.cat = "python_function";
     sliceQuery.trackId = traceId;
-    sliceQuery.cardId = requestParams.cardId;
     uint64_t maxDepth = 0;
     bool havePythonFunction = false;
     std::set<uint64_t> ids;
@@ -557,7 +492,6 @@ bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams
 std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
     std::set<uint64_t> &ids)
 {
-    Timer timer3("JsonTraceDatabase::QuerySliceByIdList");
     std::vector<RowThreadTrace> ans;
     if (std::empty(ids)) {
         return ans;
@@ -603,8 +537,11 @@ void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vec
         ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(traceId).sliceIdAndDepthMap;
+    SliceQuery sliceQuery;
+    sliceQuery.db = db;
+    sliceQuery.trackId = traceId;
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     while (resultSet->Next()) {
         SliceDomain cacheSlice{};
         cacheSlice.id = resultSet->GetUint64("id");
@@ -617,7 +554,6 @@ void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vec
 bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
-    Timer timer("JsonTraceDatabase::QueryThreadTracesSummary");
     const int64_t maxDataCount = 30000;
     uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
     unitTime = unitTime <= 0 ? 1 : unitTime;
@@ -679,8 +615,6 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
         ServerLog::Error("QueryThreadDetail. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
     std::vector<SliceDto> sliceDtoVec;
     while (resultSet->Next()) {
         SliceDto sliceDto{};
@@ -691,7 +625,6 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
         sliceDto.trackId = resultSet->GetInt64("track_id");
         sliceDto.cat = resultSet->GetString("cat");
         sliceDto.args = resultSet->GetString("args");
-        sliceDto.depth = depthCache[sliceDto.id];
         sliceDtoVec.emplace_back(sliceDto);
     }
     if (sliceDtoVec.empty()) {
@@ -758,8 +691,11 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
         ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+    SliceQuery sliceQuery;
+    sliceQuery.db = db;
+    sliceQuery.trackId = trackId;
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     while (resultSet->Next()) {
         uint64_t id = resultSet->GetUint64("id");
         uint64_t startTime = resultSet->GetUint64("timestamp");
@@ -829,18 +765,6 @@ std::vector<FlowDetailDto> JsonTraceDatabase::QuerySingleFlowDetail(const std::s
     return flowDetailVec;
 }
 
-void JsonTraceDatabase::ComputePosition(uint64_t minTimestamp, std::vector<FlowDetailDto> &flowDetailVec)
-{
-    std::map<uint64_t, std::pair<std::string, std::string>> threadMap = QueryAllThreadMap();
-    for (auto &item : flowDetailVec) {
-        std::vector<SimpleSlice> simpliceVec =
-            QuerySimpleSliceByTimePoint(item.flowTimestamp, minTimestamp, item.trackId);
-        flowAnalyzerPtr->ComputeSingleFlowDetail(simpliceVec, item);
-        item.tid = threadMap[item.trackId].first;
-        item.pid = threadMap[item.trackId].second;
-    }
-}
-
 std::map<uint64_t, std::pair<std::string, std::string>> JsonTraceDatabase::QueryAllThreadMap()
 {
     auto threadStmt = CreatPreparedStatement(QUERY_ALL_THREAD_SQL);
@@ -863,30 +787,6 @@ std::map<uint64_t, std::pair<std::string, std::string>> JsonTraceDatabase::Query
     return threadMap;
 }
 
-std::vector<FlowName> JsonTraceDatabase::QueryFlowNameByTimeRange(uint64_t startTime, uint64_t endTime, int64_t trackId)
-{
-    std::vector<FlowName> flowNameVec;
-    auto stmt = CreatPreparedStatement(QUERY_FLOW_BY_TIME_RANGE_SQL);
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryFlowName. Failed to prepare sql.");
-        return flowNameVec;
-    }
-    auto resultSet = stmt->ExecuteQuery(startTime, endTime, trackId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("QueryFlowName. Failed to get result set.", stmt->GetErrorMessage());
-        return flowNameVec;
-    }
-    while (resultSet->Next()) {
-        FlowName flowName;
-        flowName.title = resultSet->GetString("name");
-        flowName.flowId = resultSet->GetString("flowId");
-        flowName.type = resultSet->GetString("type");
-        flowName.timestamp = resultSet->GetUint64("timestamp");
-        flowNameVec.emplace_back(flowName);
-    }
-    return flowNameVec;
-}
-
 bool JsonTraceDatabase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
 {
@@ -894,18 +794,76 @@ bool JsonTraceDatabase::QueryUintFlows(const Protocol::UnitFlowsParams &requestP
         QuerySimulationUintFlows(requestParams, responseBody, minTimestamp);
         return true;
     }
-    std::set<std::string> flowIdSet;
-    std::vector<FlowName> flowNameVec;
-    flowNameVec =
-        QueryFlowNameByTimeRange(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp, trackId);
-    std::vector<SimpleSlice> simpleSliceVec =
-        QuerySimpleSliceByTimeRange(requestParams.startTime, requestParams.endTime, minTimestamp, trackId);
-    std::vector<FlowName> flowNameRes = flowAnalyzerPtr->ComputeFlowBySliceVec(flowNameVec, simpleSliceVec);
-    for (const auto &item : flowNameRes) {
-        flowIdSet.emplace(item.flowId);
+    FlowQuery flowQuery;
+    flowQuery.db = db;
+    flowQuery.startTime = requestParams.startTime;
+    flowQuery.minTimestamp = minTimestamp;
+    flowQuery.trackId = trackId;
+    flowQuery.endTime = requestParams.endTime;
+    ServerLog::Info("requestParams.id is: ", requestParams.id);
+    std::vector<FlowPoint> flowPointVec = flowAnalyzerPtr->ComputeAllFlowPointBySliceId(flowQuery, requestParams.id);
+    std::unordered_map<std::string, std::vector<FlowPoint>> flowPointMap;
+    ThreadQuery threadQuery;
+    threadQuery.db = db;
+    std::unordered_map<uint64_t, std::pair<std::string, std::string>> threadInfo;
+    sliceAnalyzerPtr->ComputeAllThreadInfo(threadQuery, threadInfo);
+    for (auto &item : flowPointVec) {
+        std::vector<SliceDomain> sliceVec;
+        SliceQuery sliceQuery;
+        sliceQuery.db = db;
+        sliceQuery.trackId = item.trackId;
+        sliceAnalyzerPtr->ComputeSliceDomainVecByTrackId(sliceQuery, sliceVec);
+        auto it = flowAnalyzerPtr->ComputeSliceByFlowPoint(item, sliceVec);
+        if (it != sliceVec.end()) {
+            item.depth = it->depth;
+        }
+        item.pid = threadInfo[item.trackId].first;
+        item.tid = threadInfo[item.trackId].second;
+        flowPointMap[item.flowId].emplace_back(item);
     }
-    ComputeUintFlowResponse(responseBody, minTimestamp, flowIdSet);
+    AssembleUnitFlowsBody(responseBody, minTimestamp, flowPointMap);
     return true;
+}
+
+void JsonTraceDatabase::AssembleUnitFlowsBody(UnitFlowsBody &responseBody, uint64_t minTimestamp,
+    std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap)
+{
+    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
+    for (const auto &item : flowPointMap) {
+        const static int FLOW_COUNT = 2; // from + to
+        if (item.second.size() != FLOW_COUNT) {
+            continue;
+        }
+        UnitSingleFlow unitSingleFlow;
+        unitSingleFlow.title = item.second[0].name;
+        unitSingleFlow.cat = item.second[0].cat;
+        unitSingleFlow.id = item.second[0].flowId;
+        FlowPoint from(item.second[0]);
+        FlowPoint to(item.second[1]);
+        if (from.type != to.type && to.type == LINE_START) {
+            from = item.second[1];
+            to = item.second[0];
+        }
+        unitSingleFlow.from.id = std::to_string(from.id);
+        unitSingleFlow.from.pid = from.pid;
+        unitSingleFlow.from.tid = from.tid;
+        unitSingleFlow.from.timestamp = from.timestamp - minTimestamp;
+        unitSingleFlow.from.depth = from.depth;
+        unitSingleFlow.to.id = std::to_string(to.id);
+        unitSingleFlow.to.pid = to.pid;
+        unitSingleFlow.to.tid = to.tid;
+        unitSingleFlow.to.timestamp = to.timestamp - minTimestamp;
+        unitSingleFlow.to.depth = to.depth;
+        flowMap[unitSingleFlow.cat].emplace_back(unitSingleFlow);
+    }
+    std::vector<UnitCatFlows> unitAllFlow;
+    for (const auto &item : flowMap) {
+        UnitCatFlows unitCatFlows;
+        unitCatFlows.cat = item.first;
+        unitCatFlows.flows = item.second;
+        unitAllFlow.emplace_back(unitCatFlows);
+    }
+    responseBody.unitAllFlows = unitAllFlow;
 }
 
 void JsonTraceDatabase::QuerySimulationUintFlows(const UnitFlowsParams &requestParams, UnitFlowsBody &responseBody,
@@ -941,25 +899,6 @@ void JsonTraceDatabase::QuerySimulationUintFlows(const UnitFlowsParams &requestP
     responseBody.unitAllFlows = unitAllFlow;
 }
 
-void JsonTraceDatabase::ComputeUintFlowResponse(UnitFlowsBody &responseBody, uint64_t minTimestamp,
-    std::set<std::string> &flowIdSet)
-{
-    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
-    std::vector<UnitCatFlows> unitAllFlow;
-    for (const auto &item : flowIdSet) {
-        std::vector<FlowDetailDto> flowDetailVec = QuerySingleFlowDetail(item);
-        ComputePosition(minTimestamp, flowDetailVec);
-        flowAnalyzerPtr->ComputeCategoryAndFlowMap(flowDetailVec, flowMap, minTimestamp);
-    }
-    for (const auto &item : flowMap) {
-        UnitCatFlows unitCatFlows;
-        unitCatFlows.cat = item.first;
-        unitCatFlows.flows = item.second;
-        unitAllFlow.emplace_back(unitCatFlows);
-    }
-    responseBody.unitAllFlows = unitAllFlow;
-}
-
 bool JsonTraceDatabase::QuerySliceDtoById(const std::string &sliceId, SliceDto &sliceDto)
 {
     std::string sliceSql = QUERY_SLICE_BY_ID_SQL;
@@ -982,60 +921,6 @@ bool JsonTraceDatabase::QuerySliceDtoById(const std::string &sliceId, SliceDto &
     return true;
 }
 
-std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimeRange(uint64_t startTime, uint64_t endTime,
-    uint64_t minTimestamp, int64_t trackId)
-{
-    auto sliceStmt = CreatPreparedStatement(QUERY_SLICE_BY_TIME_RANGE_SQL);
-    std::vector<SimpleSlice> simpleSliceVec;
-    if (sliceStmt == nullptr) {
-        ServerLog::Error("QueryFlowName. Failed to prepare sql.");
-        return simpleSliceVec;
-    }
-    auto sliceSet = sliceStmt->ExecuteQuery(startTime + minTimestamp, endTime + minTimestamp, trackId);
-    if (sliceSet == nullptr) {
-        ServerLog::Error("QuerySimpleSliceByTimeRange. Failed to get result set.", sliceStmt->GetErrorMessage());
-        return simpleSliceVec;
-    }
-    while (sliceSet->Next()) {
-        SimpleSlice simpleSlice;
-        simpleSlice.timestamp = sliceSet->GetUint64("timestamp");
-        simpleSlice.endTime = sliceSet->GetUint64("endTime");
-        simpleSliceVec.emplace_back(simpleSlice);
-    }
-    return simpleSliceVec;
-}
-
-std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
-    int64_t trackId)
-{
-    auto sliceStmt = CreatPreparedStatement(QUERY_SLICE_BY_TIME_POINT_SQL);
-    std::vector<SimpleSlice> simpleSliceVec;
-    if (sliceStmt == nullptr) {
-        ServerLog::Error("QueryFlowName. Failed to prepare sql.");
-        return simpleSliceVec;
-    }
-    auto sliceSet = sliceStmt->ExecuteQuery(startTime, startTime, trackId);
-    if (sliceSet == nullptr) {
-        ServerLog::Error("QuerySimpleSliceByTimePoint. Failed to get result set.", sliceStmt->GetErrorMessage());
-        return simpleSliceVec;
-    }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
-    while (sliceSet->Next()) {
-        SimpleSlice simpleSlice;
-        uint64_t id = sliceSet->GetUint64("id");
-        simpleSlice.id = id;
-        simpleSlice.timestamp = sliceSet->GetUint64("timestamp");
-        simpleSlice.endTime = sliceSet->GetUint64("endTime");
-        simpleSlice.name = sliceSet->GetString("name");
-        simpleSlice.depth = depthCache[id];
-        simpleSliceVec.emplace_back(simpleSlice);
-    }
-    std::sort(simpleSliceVec.begin(), simpleSliceVec.end(), std::greater<SimpleSlice>());
-    ServerLog::Info("simpleSliceVec size is: ", simpleSliceVec.size());
-    return simpleSliceVec;
-}
-
 std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByFlagAndTrackId(const std::string &flagId,
     uint64_t trackId)
 {
@@ -1051,8 +936,11 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByFlagAndTrackId(con
         ServerLog::Error("QuerySimpleSliceByFlagAndTrackId. Failed to get result set.", sliceStmt->GetErrorMessage());
         return simpleSliceVec;
     }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+    SliceQuery sliceQuery;
+    sliceQuery.db = db;
+    sliceQuery.trackId = trackId;
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     while (sliceSet->Next()) {
         SimpleSlice simpleSlice;
         uint64_t id = sliceSet->GetUint64("id");
@@ -1090,7 +978,6 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         metaDataDto.name = resultSet->GetString("name");
         metaDataDto.args = resultSet->GetString("args");
         uint64_t trackId = resultSet->GetUint64("trackId");
-        metaDataDto.maxDepth = SliceDepthCacheManager::Instance().QueryMaxDepthByTrackId(trackId);
         metaDataVec.emplace_back(metaDataDto);
     }
     ServerLog::Info("Query units meta data. size:", metaDataVec.size());
@@ -1253,8 +1140,11 @@ bool JsonTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
     responseBody.startTime = resultSet->GetUint64("startTime");
     responseBody.duration = resultSet->GetUint64("duration");
     uint64_t trackId = resultSet->GetInt32("trackId");
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+    SliceQuery sliceQuery;
+    sliceQuery.db = db;
+    sliceQuery.trackId = trackId;
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     responseBody.depth = depthCache[id];
     return true;
 }
@@ -1303,7 +1193,6 @@ std::vector<uint64_t> JsonTraceDatabase::QueryAllTrackIdsByPid(std::string pid)
 bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
     std::vector<std::unique_ptr<UnitSingleFlow>> &flowDetailList)
 {
-    Timer timer("JsonTraceDatabase::QueryFlowCategoryEvents");
     std::vector<FlowCategoryEventsDto> flowPointResult;
     std::vector<FlowCategoryEventsDto> flowEventsVec;
     QueryFlowPointByCategory(params, minTimestamp, flowEventsVec);
@@ -1391,8 +1280,11 @@ void JsonTraceDatabase::QueryAllFlagSlice(std::unordered_map<std::string, uint32
         ServerLog::Error("QueryAllFlagSlice. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+    SliceQuery sliceQuery;
+    sliceQuery.db = db;
+    sliceQuery.trackId = trackId;
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     while (resultSet->Next()) {
         int col = resultStartIndex;
         uint64_t id = resultSet->GetUint64(col++);
@@ -1618,7 +1510,7 @@ uint64_t JsonTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
         "    output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
         "    output_formats AS outputFormats FROM kernel_detail"
         ") subquery WHERE 1=1 ";
-    for (const auto &filter: requestParams.filters) {
+    for (const auto &filter : requestParams.filters) {
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
             Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
             return total;
@@ -1655,7 +1547,7 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         return false;
     }
     std::string sql = JsonSqlConstant::GetKernelDetailSql(requestParams.order, requestParams.orderBy,
-                                                          requestParams.coreType, requestParams.filters);
+        requestParams.coreType, requestParams.filters);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1708,8 +1600,11 @@ bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
     if (resultSet->Next()) {
         uint64_t id = resultSet->GetUint64("id");
         trackId = resultSet->GetUint64("track_id");
-        std::unordered_map<uint64_t, int32_t> depthCache =
-            SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+        SliceQuery sliceQuery;
+        sliceQuery.db = db;
+        sliceQuery.trackId = trackId;
+        std::unordered_map<uint64_t, uint32_t> depthCache;
+        sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
         responseBody.id = std::to_string(id);
         responseBody.depth = depthCache[id];
     }
@@ -1771,8 +1666,11 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
         auto trackId = resultSet->GetUint64("track_id");
-        std::unordered_map<uint64_t, int32_t> depthCache =
-            SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+        SliceQuery sliceQuery;
+        sliceQuery.db = db;
+        sliceQuery.trackId = traceId;
+        std::unordered_map<uint64_t, uint32_t> depthCache;
+        sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
         sameOperatorsDetail.depth = depthCache[std::atoll(sameOperatorsDetail.id.c_str())];
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
@@ -1818,7 +1716,6 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
         ServerLog::Error("Failed to get result set for QueryAffinityOptimizer.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::ThreadTraces one{};
         one.startTime = resultSet->GetUint64("startTime");
@@ -1827,10 +1724,6 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
         one.threadId = resultSet->GetString("tid");
         one.id = resultSet->GetString("pid");
         auto track_id = resultSet->GetUint64("track_id");
-        if (depthMap.count(track_id) == 0) {
-            depthMap.emplace(track_id,
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
-        }
         data.emplace_back(one);
     }
     return true;
@@ -1854,7 +1747,6 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         ServerLog::Error("Failed to get result set for AICpuOpExceedThreshold.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
         one.name = resultSet->GetString("name");
@@ -1864,11 +1756,6 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
         auto track_id = resultSet->GetUint64("track_id");
-        if (depthMap.count(track_id) == 0) {
-            depthMap.emplace(track_id,
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
-        }
-        one.depth = depthMap[track_id][resultSet->GetUint64("id")];
         one.inputType = resultSet->GetString("input");
         one.outputType = resultSet->GetString("output");
         data.emplace_back(one);
@@ -1902,7 +1789,6 @@ bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         ServerLog::Error("SearchAllSlicesDetails. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SearchAllSlices searchAllSlice{};
@@ -1910,12 +1796,7 @@ bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         searchAllSlice.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         searchAllSlice.duration = resultSet->GetUint64(col++);
         auto track_id = resultSet->GetUint64(col++);
-        if (depthMap.count(track_id) == 0) {
-            depthMap.emplace(track_id,
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
-        }
         searchAllSlice.id = resultSet->GetString(col++);
-        searchAllSlice.depth = depthMap[track_id][std::atoi(searchAllSlice.id.c_str())];
         searchAllSlice.tid = resultSet->GetString(col++);
         searchAllSlice.pid = resultSet->GetString(col++);
         searchAllSlice.deviceId = params.rankId;
@@ -1945,7 +1826,6 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
         one.name = resultSet->GetString("name");
@@ -1954,11 +1834,6 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
         auto track_id = resultSet->GetUint64("track_id");
-        if (depthMap.count(track_id) == 0) {
-            depthMap.emplace(track_id,
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
-        }
-        one.depth = depthMap[track_id][resultSet->GetUint64("id")];
         data.emplace_back(one);
     }
     return true;
@@ -2018,7 +1893,6 @@ bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
         return false;
     }
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
         one.name = resultSet->GetString("name");
@@ -2030,11 +1904,6 @@ bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         one.metaType = rule.fusedOp;
         one.id = rule.note;
         auto track_id = resultSet->GetUint64("track_id");
-        if (depthMap.count(track_id) == 0) {
-            depthMap.emplace(track_id,
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
-        }
-        one.depth = depthMap[track_id][resultSet->GetUint64("id")];
         data.emplace_back(one);
     }
     return true;

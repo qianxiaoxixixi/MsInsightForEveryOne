@@ -25,7 +25,7 @@ public:
     ~SliceTable() = default;
 
 protected:
-    std::unordered_map<std::string, assign> &GetAssignMap() override
+    const std::unordered_map<std::string, assign> &GetAssignMap() override
     {
         static std::unordered_map<std::string, assign> assignMap = {
             { SliceColumn::ID, IdHandle },
@@ -41,7 +41,7 @@ protected:
 
         return assignMap;
     }
-    std::string &GetTableName() override
+    const std::string &GetTableName() override
     {
         static std::string tableName = "slice";
         return tableName;

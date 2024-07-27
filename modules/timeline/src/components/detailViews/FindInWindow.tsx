@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Button } from 'lib/components';
 import { runInAction } from 'mobx';
-import { getDefaultColumData, getPageData, searchAllSlices } from './Common';
+import { getDefaultColumData, getPageData, queryOneKernel, searchAllSlices } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import styled from '@emotion/styled';
@@ -224,6 +224,13 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
 
 const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
     const queryName = rowData.name ?? rowData.originOptimizer;
+    const res = await queryOneKernel({
+        rankId: rowData.deviceId,
+        name: queryName,
+        timestamp: rowData.timestamp,
+        duration: rowData.duration,
+    });
+    const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
@@ -240,7 +247,7 @@ const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
                     name: queryName,
                     color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
                     duration: rowData.duration,
-                    depth: rowData.depth,
+                    depth,
                     threadId: rowData.tid,
                     startRecordTime: props.session.startRecordTime,
                     metaType: rowData.pid,

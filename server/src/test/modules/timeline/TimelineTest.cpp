@@ -513,7 +513,6 @@ TEST_F(TestSuit, QueryEventsViewData4Python)
     const uint64_t EXPECT_COUNT = 6614;
     const uint64_t EXPECT_START = 1695115378714485500;
     const uint64_t EXPECT_DURATION = 262400;
-    const uint64_t EXPECT_DEPTH = 2;
 
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Api(body);
@@ -528,7 +527,6 @@ TEST_F(TestSuit, QueryEventsViewData4Python)
     EXPECT_EQ(ptr->pid, "1408366");
     EXPECT_EQ(ptr->processId, "1408366");
     EXPECT_EQ(ptr->threadId, "1408366");
-    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
 }
 
 TEST_F(TestSuit, QueryEventsViewData4PythonThread)
@@ -548,7 +546,6 @@ TEST_F(TestSuit, QueryEventsViewData4PythonThread)
     const uint64_t EXPECT_COUNT = 5644;
     const uint64_t EXPECT_START = 1695115378714532200;
     const uint64_t EXPECT_DURATION = 96310;
-    const uint64_t EXPECT_DEPTH = 3;
 
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Api(body);
@@ -562,7 +559,6 @@ TEST_F(TestSuit, QueryEventsViewData4PythonThread)
     EXPECT_EQ(ptr->pid, "1408366");
     EXPECT_EQ(ptr->processId, "1408366");
     EXPECT_EQ(ptr->threadId, "1408366");
-    EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
 }
 
 TEST_F(TestSuit, QueryEventsViewData4CANN)

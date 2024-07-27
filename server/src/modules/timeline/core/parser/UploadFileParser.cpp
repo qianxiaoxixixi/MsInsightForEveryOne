@@ -181,7 +181,6 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
     CacheManager::Instance().ClearCacheByFileId(fileId);
 
     // 发送当前解析进度

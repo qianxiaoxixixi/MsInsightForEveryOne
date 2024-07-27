@@ -243,6 +243,14 @@ const SelectList = observer((props: any) => {
 
 const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => {
     const queryName = rowData.name ?? rowData.originOptimizer;
+    const nsDuration = Number((rowData.duration * 1000).toFixed(0));
+    const res = await queryOneKernel({
+        rankId: rowData.rankId,
+        name: queryName,
+        timestamp: rowData.startTime,
+        duration: nsDuration,
+    });
+    const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
@@ -251,16 +259,18 @@ const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => 
             },
             onSuccess: (unit: InsightUnit): void => {
                 const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
+                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, nsDuration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
+                    id: res.id,
                     startTime,
                     name: queryName,
                     color: colorPalette[hashToNumber(queryName, colorPalette.length)],
-                    duration: rowData.duration,
+                    duration: nsDuration,
                     threadId: rowData.tid,
                     startRecordTime: props.session.startRecordTime,
                     showDetail: false,
+                    depth,
                 };
             },
         };

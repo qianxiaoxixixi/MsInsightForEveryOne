@@ -29,34 +29,41 @@ public:
         sql = "";
         orderByStr = "";
     }
-    Table &Select(std::string strView)
+    Table &Select(const std::string &str)
     {
-        std::string str{strView};
         if (std::empty(selectStr)) {
             selectStr = "SELECT " + str;
         } else {
             selectStr += "," + str;
         }
-        assignFuncs.emplace_back(GetAssignMap()[str]);
+        auto it = GetAssignMap().find(str);
+        if (it != GetAssignMap().end()) {
+            assignFuncs.emplace_back(it->second);
+        } else {
+            ServerLog::Error("Select column is not exist");
+        }
         return *this;
     }
 
-    template <typename... Args> Table &Select(std::string strView, Args ... args)
+    template <typename... Args> Table &Select(const std::string &str, const Args &... args)
     {
-        std::string str{strView};
         if (std::empty(selectStr)) {
             selectStr = "SELECT " + str;
         } else {
             selectStr += " , " + str;
         }
-        assignFuncs.emplace_back(GetAssignMap()[str]);
+        auto it = GetAssignMap().find(str);
+        if (it != GetAssignMap().end()) {
+            assignFuncs.emplace_back(it->second);
+        } else {
+            ServerLog::Error("Select column is not exist");
+        }
         Select(args...);
         return *this;
     }
 
-    Table &Eq(std::string strView, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Eq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        std::string str{strView};
         conditionStr += " AND " + str + " = ? ";
         values.emplace_back(value);
         return *this;
@@ -76,17 +83,15 @@ public:
         return *this;
     }
 
-    Table &LessEq(std::string strView, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &LessEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        std::string str{strView};
         conditionStr += " AND " + str + " <= ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &Greater(std::string strView, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Greater(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        std::string str{strView};
         conditionStr += " AND " + str + " > ? ";
         values.emplace_back(value);
         return *this;
@@ -99,13 +104,12 @@ public:
         return *this;
     }
 
-    Table &OrderBy(std::string columnName, TableOrder order)
+    Table &OrderBy(const std::string &columnName, TableOrder order)
     {
-        std::string strColumnName{columnName};
         if (std::empty(orderByStr)) {
-            orderByStr = " ORDER BY " + strColumnName;
+            orderByStr = " ORDER BY " + columnName;
         } else {
-            orderByStr += " , " + strColumnName;
+            orderByStr += " , " + columnName;
         }
         if (order == TableOrder::DESC) {
             orderByStr += " DESC ";
@@ -115,9 +119,19 @@ public:
         return *this;
     }
 
+    Table &GroupBy(const std::string &columnName)
+    {
+        if (std::empty(groupByStr)) {
+            groupByStr = " GROUP BY " + columnName;
+        } else {
+            groupByStr += " , " + columnName;
+        }
+        return *this;
+    }
+
     void ExcuteQuery(sqlite3 *db, std::vector<T> &result)
     {
-        sql = selectStr + " FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr + orderByStr;
+        sql = selectStr + " FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr + orderByStr  + groupByStr;
         auto stmt = CreatPreparedStatement(db);
         if (stmt == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to prepare sql.");
@@ -183,6 +197,7 @@ protected:
     std::string selectStr;
     std::string conditionStr;
     std::string orderByStr;
+    std::string groupByStr;
     std::string sql;
     std::vector<std::variant<uint32_t, uint64_t, std::string>> values;
     using assign = std::function<void(T &, const std::unique_ptr<SqliteResultSet> &)>;
@@ -212,10 +227,11 @@ protected:
         conditionStr.clear();
         selectStr.clear();
         orderByStr.clear();
+        groupByStr.clear();
     }
 
-    virtual std::unordered_map<std::string, assign> &GetAssignMap() = 0;
-    virtual std::string &GetTableName() = 0;
+    virtual const std::unordered_map<std::string, assign> &GetAssignMap() = 0;
+    virtual const std::string &GetTableName() = 0;
 };
 }
 

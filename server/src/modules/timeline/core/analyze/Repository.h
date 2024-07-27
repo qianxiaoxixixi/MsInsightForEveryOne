@@ -1,6 +1,4 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- */
+// Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 
 #ifndef PROFILER_SERVER_REPOSITORY_H
 #define PROFILER_SERVER_REPOSITORY_H
@@ -37,6 +35,23 @@ public:
      */
     void QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
         std::vector<CompeteSliceDomain> &sliceVec) override;
+
+    /* *
+     * 查询时间范围内的所有连线点
+     * @param flowQuery
+     * @param flowPointVec
+     */
+    void QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
+
+    /* *
+     * 根据连线点id查询所有连线点
+     * @param flowQuery
+     * @param flowPointVec
+     */
+    void QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
+
+    void QueryAllThreadInfo(const ThreadQuery &flowQuery,
+        std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
 };
 }
 #endif // PROFILER_SERVER_REPOSITORY_H

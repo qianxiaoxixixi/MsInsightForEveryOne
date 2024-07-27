@@ -210,6 +210,7 @@ void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set
     instance.UpdateSliceCache(sliceCacheKey, sliceDomainVec);
 }
 
+
 void SliceAnalyzer::QueryPythonFuncIds(const SliceQuery &sliceQuery, std::vector<uint64_t> &pythonFunctionIds)
 {
     auto &instance = SliceCacheManager::Instance();
@@ -274,6 +275,17 @@ void SliceAnalyzer::ComputeDepthInfoByTrackId(const SliceQuery &sliceQuery,
     }
 }
 
+void SliceAnalyzer::ComputeSliceDomainVecByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
+{
+    SliceCacheManager &sliceCacheManager = SliceCacheManager::Instance();
+    sliceVec = sliceCacheManager.GetSliceDomainVec(std::to_string(sliceQuery.trackId));
+    if (std::empty(sliceVec)) {
+        std::unordered_map<uint64_t, uint32_t> depthInfo;
+        ComputeDepthInfoFromDB(sliceQuery, depthInfo);
+        sliceVec = sliceCacheManager.GetSliceDomainVec(std::to_string(sliceQuery.trackId));
+    }
+}
+
 void SliceAnalyzer::ComputeDepthInfoFromDB(const SliceQuery &sliceQuery,
     std::unordered_map<uint64_t, uint32_t> &depthInfo)
 {
@@ -319,5 +331,11 @@ bool SliceAnalyzer::CompareTimestampASC(const SliceDomain &first, const SliceDom
         return true;
     }
     return false;
+}
+
+void SliceAnalyzer::ComputeAllThreadInfo(const ThreadQuery &flowQuery,
+    std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
+{
+    repository->QueryAllThreadInfo(flowQuery, threadInfo);
 }
 }
