@@ -13,8 +13,12 @@ message(STATUS "[fuzz dir is] ${FUZZ_HOME_DIR}")
 include_directories(${FUZZ_HOME_DIR}/compute)
 aux_source_directory(${FUZZ_HOME_DIR}/compute FUZZ_COMPUTE_TEST)
 
+include_directories(${FUZZ_HOME_DIR}/common)
+aux_source_directory(${FUZZ_HOME_DIR}/common FUZZ_COMMON_TEST)
+
 list(APPEND DIC_TEST_LIST
         ${FUZZ_COMPUTE_TEST}
+        ${FUZZ_COMMON_TEST}
 		${SRC_HOME_DIR}/utils/
         ${U_SOCKETS_SRC_LIST}
         ${DIC_UTILS_SRC}
@@ -64,7 +68,7 @@ target_link_directories(insight_fuzz PUBLIC
 
 
 target_include_directories(insight_fuzz PUBLIC
-	    ${HOME_DIR}/third_party/googletest/googletest/include
+	    ${HOME_DIR}/third_party/googletest/googletest/include/gtest
         ${HOME_DIR}/third_party/secodefuzz/Secodefuzz
 )
 

@@ -5,9 +5,9 @@
 #include <string>
 #include <fstream>
 #include <gtest/gtest.h>
+#include "../FuzzDefs.h"
 #include "ComputeFuzz.h"
 #include "SourceFileParser.h"
-#include "FileUtil.h"
 #include "JsonUtil.h"
 
 using namespace Dic;
@@ -17,10 +17,8 @@ using namespace Source;
 TEST(TestInputFiles, ApiFiles)
 {
     char testApi[] = "test_api_input_file";
-    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
     {
-        printf("fuzzseed is %d \n", fuzzSeed);
-        printf("fuzzi is %d \n", fuzzi);
         std::ofstream apiFile("./visualize_data.bin", std::ios::binary|std::ios::trunc);
         BinaryBlockHeader binaryBlockHeader;
         BinaryBlockHeader4File binaryBlockHeader4File;
@@ -46,7 +44,6 @@ TEST(TestInputFiles, ApiFiles)
         Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
         EXPECT_EQ(true, parser.CheckOperatorBinary(binFilePath));
         std::string fileId = "testFile" + std::to_string(fuzzi);
-        printf("fileId is %s \n", fileId.c_str());
         EXPECT_TRUE(parser.Parse(std::vector<std::string>(), fileId, binFilePath));
     }
     DT_FUZZ_END()
@@ -54,24 +51,15 @@ TEST(TestInputFiles, ApiFiles)
 
 TEST(TestInputFile, CheckJsonFormat)
 {
-    char testApi[] = "test_json_fromat";
-    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+    char testApi[] = "test_json_format";
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
     {
     char* content = DT_SetGetStringNum(&g_Element[0], 2, UINT64_MAX, "a");
-
-    printf("*******json str is %s", content);
-
     char* contentArray = DT_SetGetStringNum(&g_Element[1], 2, UINT64_MAX, "b");
-
-    printf("*******json array is %s", contentArray);
     std::string fullStr = std::string("{\"args\":\"") + content + "\",\"array\":[\"" + contentArray + "\"]}";
-
-    printf("\n Full Str is %s \n", fullStr.c_str());
-
     document_t json;
     EXPECT_EQ(json.Parse(fullStr.c_str()).HasParseError(), false);
     ASSERT_EQ(json.IsObject(), true);
-    printf("*********** IS OBJECT\n");
     EXPECT_FALSE(JsonUtil::IsJsonArray(json, "args"));
     EXPECT_TRUE(JsonUtil::IsJsonArray(json, "array"));
     }
@@ -81,20 +69,14 @@ TEST(TestInputFile, CheckJsonFormat)
 TEST(TestInputFile, JsonParse)
 {
     char testApi[] = "test_json_parse";
-    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
     {
-        printf("fuzz run %d start \n", fuzzi);
-
         std::string errMsg;
-        char* content = DT_SetGetStringNum(&g_Element[1], 2, UINT64_MAX, "x");
+        char* content = DT_SetGetStringNum(&g_Element[0], 2, UINT64_MAX, "0");
         std::string contentStr(content);
         std::string jsonStr = std::string("{\"cat\":") + contentStr + "}";
         const std::optional<document_t> &json = JsonUtil::TryParse(jsonStr, errMsg);
-        printf("\n jsonStr is %s \n", jsonStr.c_str());
         EXPECT_TRUE(json.has_value());
-        printf("\n ERRMSG IS %s \n", errMsg.substr(0, 13).c_str());
-
-        printf("fuzz run %d end \n", fuzzi);
     }
     DT_FUZZ_END()
 }
@@ -102,17 +84,14 @@ TEST(TestInputFile, JsonParse)
 TEST(TestInputFile, JsonParseErr)
 {
     char testApi[] = "test_json_parse_err";
-    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
                 {
-                    printf("fuzz run %d start \n", fuzzi);
                     std::string errMsg;
-                    char* content = DT_SetGetStringNum(&g_Element[1], 2, UINT64_MAX, "x");
+                    char* content = DT_SetGetStringNum(&g_Element[0], 2, UINT64_MAX, "0");
                     std::string contentStr(content);
                     std::string jsonStr = std::string(R"({"cat":")") + contentStr + "\"}, ";
                     JsonUtil::TryParse(jsonStr, errMsg);
-                    printf("\n jsonStr is %s \n", jsonStr.c_str());
-                    EXPECT_EQ(errMsg.substr(0, 13), "Error code:3.");
-                    printf("fuzz run %d end \n", fuzzi);
+                    EXPECT_EQ(errMsg.substr(0, 13), "Error code:2.");
                 }
     DT_FUZZ_END()
 }
@@ -121,10 +100,9 @@ TEST(TestInputFile, JsonParseErr)
 TEST(TestCompute, SourceFileParserCheckPath)
 {
     char testApi[] = "test_source_file_parser_check_path";
-    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
                 {
                     char* filePath = DTSetGetString(&g_Element[0], 5, PATH_MAX, "path", "selectedFile");
-                    printf("file path is %s\n", filePath);
                     std::vector<std::string> filePaths = {};
                     std::string fileId(filePath);
                     SourceFileParser::Instance().Parse(filePaths, fileId, filePath);
@@ -135,13 +113,13 @@ TEST(TestCompute, SourceFileParserCheckPath)
 TEST(TestCompute, SourceFileParserParseRandomContent)
 {
     char testApi[] = "test_source_file_parser_parse_random_content";
-    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
                 {
                     std::string binFilePath = "./test_source_file_parser_parse_random_content_visualize_data.bin";
                     std::ofstream binFile(binFilePath, std::ios::binary | std::ios::trunc);
 
-                    char* fileContent = DT_SetGetBlob(&g_Element[1], 2, UINT32_MAX, "a");
-                    int fileSize = DT_GET_MutatedValueLen(&g_Element[1]);
+                    char* fileContent = DT_SetGetBlob(&g_Element[0], 2, UINT32_MAX, "a");
+                    int fileSize = DT_GET_MutatedValueLen(&g_Element[0]);
                     binFile.write(fileContent, fileSize);
                     binFile.close();
 

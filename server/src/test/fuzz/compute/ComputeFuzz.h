@@ -4,11 +4,6 @@
 
 #ifndef COMPUTE_FUZZ_H
 #define COMPUTE_FUZZ_H
-#include <string>
-#include "../../../../third_party/googletest/googletest/include/gtest/gtest.h"
-#include "../../../../third_party/secodefuzz/Secodefuzz/secodeFuzz.h"
-
-extern int g_fuzzRunTime;
 
 struct BinaryBlockHeader {
     uint64_t contentSize = 0;
