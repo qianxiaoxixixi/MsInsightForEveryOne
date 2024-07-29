@@ -18,7 +18,7 @@ bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Ac
     }
 
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
-                                           .current = params.currentPage, .pageSize = params.pageSize};
+        .current = params.currentPage, .pageSize = params.pageSize, .rankId = params.rankId};
     param.order = params.orderType == "ascend" ? "ASC" : "DESC";
     if (std::count(SINGLE_OP_ORDER_BY_NAME_LIST.begin(), SINGLE_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";

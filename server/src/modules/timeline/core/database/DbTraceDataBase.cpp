@@ -1820,7 +1820,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         "WHERE s1.value IN ("
         "    SELECT str.value FROM " + TABLE_COMPUTE_TASK_INFO + " info "
         "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
-        "    WHERE str.value LIKE 'AscendCL@aclnn%' AND str.value NOT LIKE '%GetWorkspaceSize' "
+        "    WHERE str.value LIKE 'aclnn%' "
         "    GROUP BY str.value HAVING COUNT(str.value) >= ?"
         ") ORDER BY " + params.orderBy + " " + params.order;
     auto stmt = CreatPreparedStatement(sql);

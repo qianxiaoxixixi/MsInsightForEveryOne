@@ -267,6 +267,7 @@ const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => 
                     name: queryName,
                     color: colorPalette[hashToNumber(queryName, colorPalette.length)],
                     duration: nsDuration,
+                    metaType: rowData.pid,
                     threadId: rowData.tid,
                     startRecordTime: props.session.startRecordTime,
                     showDetail: false,
