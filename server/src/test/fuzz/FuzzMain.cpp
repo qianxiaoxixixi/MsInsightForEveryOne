@@ -2,16 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "compute/ComputeFuzz.h"
-
-int g_fuzzRunTime = 100000;
-std::string g_reportPath = "./";
+#include "FuzzDefs.h"
 
 GTEST_API_ int main(int argc, char **argv)
 {
     int singleCaseTimeout = 60; // second
     // 设置报告路径
-    DT_Set_Report_Path(g_reportPath.c_str());
+    DT_Set_Report_Path(REPORT_PATH.c_str());
     // 设置使能fork模式，每个测试用例单独在子进程运行
     DT_SetEnableFork(1);
     // 检测大内存使用，超过2048M使用或者1024M分配则当做bug报错
