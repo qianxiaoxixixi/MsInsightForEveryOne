@@ -316,10 +316,10 @@ public:
             "FROM " +
             SLICE_TABLE + " s JOIN " + THREAD_TABLE +
             " t on s.track_id = t.track_id "
-            "WHERE s.name IN ( "
-            "    SELECT name FROM " +
-            SLICE_TABLE +
-            "    WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
+            "WHERE t.thread_name LIKE 'Stream%' "
+            "AND s.name IN ( "
+            "    SELECT name FROM " + SLICE_TABLE +
+            "    WHERE name LIKE 'aclnn%' "
             "    GROUP BY name HAVING COUNT(name) >= ? "
             ") ORDER BY " +
             params.orderBy + " " + params.order;
