@@ -149,23 +149,19 @@ fn run_script(
                 Ok(a) => a.into(),
                 Err(e) => return Err(wry::Error::Io(e)),
             };
-
-            // TODO: 简洁性有待提升，换成match表达式或者HashMap方式
-            let mimetype = if path.ends_with(".html") || path == "/" {
-                "text/html"
-            } else if path.ends_with(".js") {
-                "text/javascript"
-            } else if path.ends_with(".png") {
-                "image/png"
-            } else if path.ends_with(".wasm") {
-                "application/wasm"
-            } else if path.ends_with(".css") {
-                "text/css"
-            } else if path.ends_with(".svg") {
-                "image/svg+xml"
-            } else {
-                MIMETYPE_HTML
-            };
+            
+            let mut mimetype = MIMETYPE_HTML;
+            if let Some((_, ext)) = path.rsplit_once('.') {
+                mimetype = match ext {
+                    "html" => "text/html",
+                    "js" => "text/javascript",
+                    "css" => "text/css",
+                    "svg" => "image/svg+xml",
+                    "png" => "image/png",
+                    "wasm" => "application/wasm",
+                    _ => MIMETYPE_HTML,
+                }
+            }
 
             Response::builder().header(CONTENT_TYPE, mimetype).body(content).map_err(Into::into)
         })
@@ -354,6 +350,21 @@ fn main() {
         .parent()
         .expect("Failed to get parent path of  current exe")
         .to_path_buf();
+    
+    #[cfg(windows)]
+    {
+        // 当用户安装在C盘时，使用user目录
+        let mut webview_path = cache_path.clone();
+        // 当用户安装在C盘外时，使用安装目录
+        if !eq_prefix(&cache_path, &root_path) {
+            cache_path = root_path.join(".mindstudio_insight");
+            webview_path = cache_path.clone();
+        }
+        if is_admin() {
+            webview_path.push("admin");
+        }
+        env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_path.as_path());
+    }
 
     if !cache_path.exists() {
         #[cfg(windows)]
@@ -370,21 +381,6 @@ fn main() {
                 .create(cache_path.as_path())
                 .expect("no permission to create cache_path");
         }
-    }
-
-    #[cfg(windows)]
-    {
-        // 当用户安装在C盘时，使用user目录
-        let mut webview_path = cache_path.clone();
-        // 当用户安装在C盘外时，使用安装目录
-        if !eq_prefix(&cache_path, &root_path) {
-            cache_path = root_path.join(".mindstudio_insight");
-            webview_path = cache_path.clone();
-        }
-        if is_admin() {
-            webview_path.push("admin");
-        }
-        env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_path.as_path());
     }
 
     if webview_version().is_err() {
