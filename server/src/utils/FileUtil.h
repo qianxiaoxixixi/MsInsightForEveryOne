@@ -80,13 +80,14 @@ public:
     static inline std::string GetRealPath(const std::string &path)
     {
 #ifdef _WIN32
-        char resolvedPath[MAX_PATH] = {0};
-        _fullpath(resolvedPath, path.c_str(), MAX_PATH);
+        wchar_t wResolvedPath[MAX_PATH] = {0}; // windows中文路径需要使用宽字符处理
+        _wfullpath(wResolvedPath, StringUtil::String2WString(path).data(), MAX_PATH);
+        return StringUtil::WString2String(wResolvedPath).data();
 #else
         char resolvedPath[PATH_MAX] = {0};
         realpath(path.c_str(), resolvedPath);
-#endif
         return std::string(resolvedPath);
+#endif
     }
 
     static inline std::string GetFileName(const std::string &path)
