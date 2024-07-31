@@ -138,6 +138,30 @@ public:
     }
 #endif
 
+static inline const std::wstring String2WString(const std::string& s)
+{
+    const size_t buffer_size = s.size() + 1;
+    if (buffer_size > PATH_MAX) { // 超过最大长度返回空字符串
+        return std::wstring();
+    }
+    wchar_t dst_wstr[PATH_MAX] = {0};
+    mbstowcs(dst_wstr, s.c_str(), buffer_size);
+    std::wstring result = dst_wstr;
+    return result;
+}
+
+static inline const std::string WString2String(const std::wstring& ws)
+{
+    size_t buffer_size = ws.size() * 4 + 1;
+    if (ws.size() + 1 > PATH_MAX) {
+        return std::string();
+    }
+    char dst_str[PATH_MAX] = {0};
+    wcstombs(dst_str, ws.c_str(), buffer_size);
+    std::string result = dst_str;
+    return result;
+}
+
     template<typename T>
     static std::string join(std::vector<T> list, std::string separator)
     {
