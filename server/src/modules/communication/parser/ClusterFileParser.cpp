@@ -234,7 +234,7 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
 {
     // 导入前清空cluster databaseWrite
     DataBaseManager::Instance().ClearClusterDb();
-    clusterDbPath = selectedPath + "/cluster.db";
+    clusterDbPath = selectedPath + FILE_SEPARATOR + "cluster.db";
     std::ifstream file(FileUtil::PathPreprocess(clusterDbPath));
     auto databaseWrite = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // 查询单独一个连接
