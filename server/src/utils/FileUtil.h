@@ -36,6 +36,11 @@
 #include <filesystem>
 #include <mach-o/dyld.h>
 #endif
+#ifdef _WIN32
+#define FILE_SEPARATOR '\\'
+#else
+#define FILE_SEPARATOR '/'
+#endif
 
 namespace Dic {
 class FileUtil {
