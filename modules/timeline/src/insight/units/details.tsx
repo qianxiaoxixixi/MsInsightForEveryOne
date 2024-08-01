@@ -15,7 +15,7 @@ import { getTimestamp } from '../../utils/humanReadable';
 import { colorPalette, getTimeOffset } from './utils';
 import { hashToNumber } from '../../utils/colorUtils';
 export const slicesListDetail = detail({
-    name: 'Slices List',
+    name: 'Slice List',
     columns: [
         ['Name', (data): string => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
         ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration as number), 180],

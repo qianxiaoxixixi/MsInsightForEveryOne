@@ -8,15 +8,13 @@ import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
 import React, { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
-import type { BottomPanelRender, TriggerEvent } from '../entity/insight';
+import type { BottomPanelSingleRender, TriggerEvent } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
 import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { SimpleTabularDetail } from './details/SimpleDetail';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { FILTER_HEIGHT } from './FilterContainer';
-import eventBus, { useEventBus } from '../utils/eventBus';
 import { getDetailViewItem } from './detailViews/DetailView';
 import { useFindDetail } from './detailViews/FindInWindow';
 import { StyledTabs } from './base/StyledTabs';
@@ -32,10 +30,16 @@ interface BottomPanelProps {
 interface DataCardType {
     height: number;
     session: Session;
+    type: string;
+    event: TriggerEvent;
 };
 
 export const DETAIL_HEADER_HEIGHT_PX = 36;
 const MORE_HEADER_HEIGHT_PX = 22;
+const enum TriggerType {
+    SELECTED_DATA = 'SELECTED_DATA',
+    SELECTED_RANGE = 'SELECTED_RANGE',
+};
 
 const Container = styled.div`
     display: flex;
@@ -142,7 +146,6 @@ const NoDetail = (): JSX.Element => {
 };
 
 interface BottomPanelReactNodes {
-    detailTitle: ReactNode;
     detail: ReactNode;
     moreTitle: ReactNode;
     more: ReactNode;
@@ -152,51 +155,48 @@ interface BottomPanelReactNodes {
 }
 
 const useTriggerEvent = (session: Session): TriggerEvent => {
-    const [event, setEvent] = React.useState<TriggerEvent>('SELECTED_RANGE');
+    const [event, setEvent] = React.useState<TriggerEvent>(TriggerType.SELECTED_DATA);
     React.useEffect(() => {
-        if (event !== 'SELECTED_RANGE') {
-            setEvent('SELECTED_RANGE');
+        if (event !== TriggerType.SELECTED_RANGE) {
+            setEvent(TriggerType.SELECTED_RANGE);
         }
     }, [session.selectedRange]);
     React.useEffect(() => {
-        if (session.selectedData?.showSelectedData === false) {
+        if (session.selectedData?.showSelectedData === true) {
             return;
         }
-        if (event !== 'SELECTED_DATA') {
-            setEvent('SELECTED_DATA');
+        if (event !== TriggerType.SELECTED_DATA) {
+            setEvent(TriggerType.SELECTED_DATA);
         }
     }, [session.selectedData]);
     return event;
 };
 
-const useBottomPanelReactNodes = (session: Session, height: number): BottomPanelReactNodes => {
+const useBottomPanelReactNodes = (session: Session, height: number, type: string, event: TriggerEvent): BottomPanelReactNodes => {
     const { selectedUnitKeys, selectedUnits: [sessionUnit] } = session;
-    const triggerEvent = useTriggerEvent(session);
     const bottomPanelComponents = React.useMemo(() => {
-        return sessionUnit?.bottomPanelRender?.(session, triggerEvent, sessionUnit?.metadata);
-    }, [session, String(selectedUnitKeys), triggerEvent, session.units.length]);
-    const contentHeight = bottomPanelComponents?.Toolbar !== undefined
+        return sessionUnit?.bottomPanelRender?.(session, sessionUnit?.metadata);
+    }, [session, String(selectedUnitKeys), event, session.units.length]);
+    const bottomPanelComponent = type === TriggerType.SELECTED_DATA ? bottomPanelComponents?.[0] : bottomPanelComponents?.[1];
+    const contentHeight = bottomPanelComponent?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
         : (height - DETAIL_HEADER_HEIGHT_PX);
     const { t } = useTranslation('timeline');
     return React.useMemo(() => {
-        const detailTitle = getDetailTitleContent(session, t, bottomPanelComponents);
-        eventBus.emit('setDetailTitle', detailTitle);
         return {
-            detailTitle,
-            detail: getDetailContent(session, contentHeight, bottomPanelComponents),
-            moreTitle: getMoreTitle(session, bottomPanelComponents),
+            detail: getDetailContent(session, contentHeight, bottomPanelComponent),
+            moreTitle: getMoreTitle(session, bottomPanelComponent),
             // More Container has extra height
-            more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponents),
-            toolbar: getFilterContent(session, bottomPanelComponents),
-            moreWh: bottomPanelComponents?.moreWh ?? 590,
-            open: bottomPanelComponents?.open ?? true,
+            more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponent),
+            toolbar: getFilterContent(session, bottomPanelComponent),
+            moreWh: bottomPanelComponent?.moreWh ?? 590,
+            open: bottomPanelComponent?.open ?? true,
         };
     }, [bottomPanelComponents, height, t]);
 };
 
 /* decide what to put in Detail container */
-const getDetailContent = (session: Session, height: number, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element => {
+const getDetailContent = (session: Session, height: number, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): JSX.Element => {
     if (session.selectedUnitKeys.length === 0) {
         return <div className="emptyContainer"><NoDetail/></div>;
     }
@@ -206,23 +206,15 @@ const getDetailContent = (session: Session, height: number, bottomPanelComponent
 };
 
 /* decide what to put in More container */
-const getMoreContent = (session: Session, height: number, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element | undefined => {
+const getMoreContent = (session: Session, height: number, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): JSX.Element | undefined => {
     if (session.selectedUnitKeys.length === 0) {
         return <NoDetail/>;
     }
     return bottomPanelComponents?.More && <bottomPanelComponents.More session={session} height={height} />;
 };
 
-/* Details head container */
-const getDetailTitleContent = (session: Session, t: TFunction, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element | undefined => {
-    if (typeof bottomPanelComponents?.DetailTitle === 'string') {
-        return <span>{t(bottomPanelComponents?.DetailTitle)}</span>;
-    }
-    return bottomPanelComponents?.DetailTitle && <bottomPanelComponents.DetailTitle session={session} />;
-};
-
 /* More title */
-const getMoreTitle = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element => {
+const getMoreTitle = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): JSX.Element => {
     const Title = bottomPanelComponents?.MoreTitle;
     if (typeof Title === 'string' || Title === undefined) {
         return <span>{Title ?? 'More'}</span>;
@@ -231,12 +223,12 @@ const getMoreTitle = (session: Session, bottomPanelComponents?: ReturnType<Botto
 };
 
 /* Filter container in bottom */
-const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelRender>): (JSX.Element | undefined) => {
+const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): (JSX.Element | undefined) => {
     return bottomPanelComponents?.Toolbar && <bottomPanelComponents.Toolbar session={session} />;
 };
 
-const DataCard = observer(({ session, height }: DataCardType) => {
-    const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height);
+const DataCard = observer(({ session, height, type, event }: DataCardType) => {
+    const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height, type, event);
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: moreWh });
     return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
@@ -278,8 +270,16 @@ const DataCard = observer(({ session, height }: DataCardType) => {
 export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     const { session } = props;
     const [bottomHeight, setBottomHeight] = useState(BOTTOM_HEIGHT);
-    const [item, setItem] = useState< string >('DataCard');
+    const [item, setItem] = useState<string>('SliceDetail');
     const ref = useRef<HTMLDivElement>(null);
+    const triggerEvent = useTriggerEvent(session);
+    const items = [
+        getDataCardItem(bottomHeight, session, TriggerType.SELECTED_DATA, triggerEvent),
+        getDataCardItem(bottomHeight, session, TriggerType.SELECTED_RANGE, triggerEvent),
+        getDetailViewItem(session, bottomHeight),
+        useFindDetail(session, bottomHeight),
+    ];
+
     useEffect(() => {
         const bottomResize = (): void => setBottomHeight(ref.current?.clientHeight ?? BOTTOM_HEIGHT);
         window.addEventListener('resize', bottomResize);
@@ -290,10 +290,15 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         };
     }, [setBottomHeight]);
     useEffect(() => {
-        if (session.selectedData?.showDetail === false) {
+        if (session.selectedData?.showSelectedData === true) {
+            setItem('SliceDetail');
             return;
         }
-        setItem('DataCard');
+        if (session.selectedRange) {
+            setItem('SliceList');
+        } else {
+            setItem('SliceDetail');
+        }
     }, [session.selectedData, session.selectedRange]);
 
     useEffect(() => {
@@ -305,28 +310,27 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         }
     }, [session.doContextSearch, session.showEvent]);
 
-    const items = [
-        getDataCardItem(bottomHeight, session),
-        getDetailViewItem(session, bottomHeight),
-        useFindDetail(session, bottomHeight),
-    ];
-
     return (<Container ref={ref} className="bottomPanelContainer">
         <StyledTabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
     </Container>);
 });
 
-function getDataCardItem(bottomHeight: number, session: Session): any {
+function getDataCardItem(bottomHeight: number, session: Session, triggerType: string, triggerEvent: TriggerEvent): any {
+    if (triggerType === TriggerType.SELECTED_RANGE) {
+        return {
+            label: DataCardTitle('Slice List'),
+            key: 'SliceList',
+            children: <DataCard height={bottomHeight} session={session} type={triggerType} event={triggerEvent}/>,
+        };
+    };
     return {
-        label: <DataCardTitle/>,
-        key: 'DataCard',
-        children: <DataCard height={bottomHeight} session={session}/>,
+        label: DataCardTitle('Slice Detail'),
+        key: 'SliceDetail',
+        children: <DataCard height={bottomHeight} session={session} type={triggerType} event={triggerEvent}/>,
     };
 }
 
-const DataCardTitle = (): JSX.Element => {
+const DataCardTitle = (title: string): JSX.Element => {
     const { t } = useTranslation('timeline');
-    const [detailTitle, setDetailTitle] = useState<JSX.Element | undefined>(undefined);
-    useEventBus('setDetailTitle', (data) => setDetailTitle(data as JSX.Element));
-    return (<div className={'title'}>{detailTitle !== undefined ? detailTitle : <span>{t('Details')}</span>}</div>);
+    return <div className={'title'}>{<span>{t(title)}</span>}</div>;
 };

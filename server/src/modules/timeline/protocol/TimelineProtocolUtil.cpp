@@ -516,6 +516,7 @@ std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const Uni
         JsonUtil::AddMember(itemJson, "timestamp", sameOperators.timestamp, allocator);
         JsonUtil::AddMember(itemJson, "duration", sameOperators.duration, allocator);
         JsonUtil::AddMember(itemJson, "depth", sameOperators.depth, allocator);
+        JsonUtil::AddMember(itemJson, "id", sameOperators.id, allocator);
         sameOperatorsDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "sameOperatorsDetails", sameOperatorsDetails, allocator);

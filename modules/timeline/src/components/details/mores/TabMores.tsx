@@ -7,7 +7,7 @@ import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 import { useTheme } from '@emotion/react';
 import type { Session } from '../../../entity/session';
-import type { BottomPanelRender } from '../../../entity/insight';
+import type { BottomPanelSingleRender } from '../../../entity/insight';
 import { TabTitlesProto, createInteractorProps } from '../base/Tabs';
 import type { TabProto, TabComponentProps, CommonStateProto } from '../base/Tabs';
 
@@ -54,8 +54,8 @@ interface TabMoresProps<T extends object> {
     state?: Record<string, unknown>;
 };
 
-type TabMoresReturn<More extends keyof ReturnType<BottomPanelRender>,
-    Title extends Exclude<keyof ReturnType<BottomPanelRender>, More>> = Pick<ReturnType<BottomPanelRender>, More | Title>;
+type TabMoresReturn<More extends keyof ReturnType<BottomPanelSingleRender>,
+    Title extends Exclude<keyof ReturnType<BottomPanelSingleRender>, More>> = Pick<ReturnType<BottomPanelSingleRender>, More | Title>;
 export const TabMores = function<T extends object, MoreTabsState extends CommonStateProto>({ tabs, state }: TabMoresProps<T>): TabMoresReturn<'More', 'MoreTitle'> {
     const commonState = observable(Object.assign(state ?? {}, { activeKey: 0 })) as MoreTabsState;
     const getProps = (session: Session): TabComponentProps<MoreTabs<T>, MoreTabsState> => {

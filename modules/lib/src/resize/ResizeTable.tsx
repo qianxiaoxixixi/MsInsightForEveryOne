@@ -74,6 +74,10 @@ const StyledTable = styled(Table)`
         cursor: pointer;
     }
 
+    tr.ant-table-row.selected-row > td.ant-table-cell {
+        background: ${(p): string => p.theme.bgColorLight};
+    }
+
     //筛选
     .ant-table-filter-trigger:hover {
         color: ${(p): string => p.theme.textColorPrimary};

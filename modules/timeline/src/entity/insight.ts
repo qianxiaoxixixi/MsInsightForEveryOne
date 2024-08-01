@@ -151,7 +151,7 @@ export function detail<
 
 export type TriggerEvent = 'SELECTED_RANGE' | 'SELECTED_DATA';
 
-export type BottomPanelRender = <Metadata>(session: Session, triggerEvent: TriggerEvent, metadata: Metadata) => {
+export type BottomPanelSingleRender = <Metadata>(session: Session, metadata: Metadata) => {
     DetailTitle?: React.FC<{ session: Session }> | string;
     Detail?: React.FC<{ session: Session; height: number }>;
     More?: React.FC<{ session: Session; height: number }>;
@@ -160,6 +160,16 @@ export type BottomPanelRender = <Metadata>(session: Session, triggerEvent: Trigg
     moreWh?: number;
     open?: boolean;
 };
+
+export type BottomPanelRender = <Metadata>(session: Session, metadata: Metadata) => Array<{
+    DetailTitle?: React.FC<{ session: Session }> | string;
+    Detail?: React.FC<{ session: Session; height: number }>;
+    More?: React.FC<{ session: Session; height: number }>;
+    Toolbar?: React.FC<{ session: Session }>;
+    MoreTitle?: React.FC<{ session: Session }> | string;
+    moreWh?: number;
+    open?: boolean;
+}>;
 
 export interface MenuType {
     value?: string; // 传给服务端的值
