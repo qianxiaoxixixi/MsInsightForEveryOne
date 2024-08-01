@@ -107,12 +107,15 @@ bool JsonMemoryDataBase::InitStmt()
 void JsonMemoryDataBase::ReleaseStmt()
 {
     if (insertOperatorStmt != nullptr) {
+        sqlite3_finalize(insertOperatorStmt);
         insertOperatorStmt = nullptr;
     }
     if (insertRecordStmt != nullptr) {
+        sqlite3_finalize(insertRecordStmt);
         insertRecordStmt = nullptr;
     }
     if (insertStaticOpStmt != nullptr) {
+        sqlite3_finalize(insertStaticOpStmt);
         insertStaticOpStmt = nullptr;
     }
 }
