@@ -111,7 +111,11 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
         }
     };
 
-    React.useEffect(loadData, [selectedUnits, selectedRange, detail, ...trigger, ...depsList, session.language]);
+    React.useEffect(() => {
+        if (session.selectedData?.showSelectedData !== true) {
+            loadData();
+        }
+    }, [selectedUnits, selectedRange, detail, ...trigger, ...depsList, session.language]);
     // 需要进行多选过滤的才会执行下面的代码
     React.useEffect(() =>
         autorun(() => {

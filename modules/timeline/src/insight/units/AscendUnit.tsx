@@ -10,7 +10,7 @@ import {
     UnitHeight,
 } from '../../entity/insight';
 import type {
-    ChartDesc, InsightUnit, LinkDataDesc, LinkLine, LinkLines, MetaData, TriggerEvent, renderFieldsType,
+    ChartDesc, InsightUnit, LinkDataDesc, LinkLine, LinkLines, MetaData, renderFieldsType,
 } from '../../entity/insight';
 import type { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
@@ -303,23 +303,21 @@ export const ThreadUnit = unit<ThreadMetaData>({
             isCollapse: true,
         },
     }),
-    bottomPanelRender: (newSession: Session, triggerEvent: TriggerEvent, metadata) => {
-        if (triggerEvent === 'SELECTED_DATA') {
-            return {
+    bottomPanelRender: (newSession: Session, metadata) => {
+        return [
+            {
                 Detail: ({ session }): JSX.Element => <SelectedDataBottomPanel
                     session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
-                DetailTitle: 'Slice Detail',
                 More: ({ session }): JSX.Element =>
                     <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
-            };
-        }
-        return {
-            Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail
-                session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
-            DetailTitle: 'Slices List',
-            More: (): JSX.Element => <SliceRightOpDetail session={newSession} metadata={metadata} />,
-            moreWh: 320,
-        };
+            },
+            {
+                Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail
+                    session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
+                More: (): JSX.Element => <SliceRightOpDetail session={newSession} metadata={metadata} />,
+                moreWh: 320,
+            },
+        ];
     },
     collapseAction: (insightUnit) => {
         const chartDesc = (insightUnit.chart as ChartDesc<ChartType>);
@@ -630,6 +628,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
     const [sorter, setSorter] = useState(defaultSorter);
     const [isLoading, setLoading] = useState(false);
     const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : JSON.parse(session.selectedMultiSlice), [session.selectedMultiSlice]);
+    const [selectedRowKey, setSelectedRowKey] = useState('');
 
     const jumpTo = async (record: OpData): Promise<void> => {
         if (slice === undefined) {
@@ -655,7 +654,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                         depth: record.depth,
                         threadId: record.tid,
                         startRecordTime: session.startRecordTime,
-                        showSelectedData: false,
+                        showSelectedData: true,
                     };
                 },
                 showDetail: false,
@@ -716,10 +715,13 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                 return {
                     onClick: (): void => {
                         jumpTo(record);
+                        setSelectedRowKey(record.id);
                     },
                 };
             }}
-            rowClassName={'click-able'}
+            rowClassName={(record: OpData): string => {
+                return record.id === selectedRowKey ? 'selected-row' : 'click-able';
+            }}
         />
     </div>;
 });

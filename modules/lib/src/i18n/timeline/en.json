@@ -3,7 +3,7 @@
     "Align to Start": "Align to Start",
     "Timestamp Offset": "Timestamp Offset",
     "Slice Detail": "Slice Detail",
-    "Slices List": "Slice List",
+    "Slice List": "Slice List",
     "Find": "Find",
     "Details": "Details",
     "System View": "System View",
@@ -51,7 +51,7 @@
       "Outgoing flow": "Outgoing flow"
     },
     "sliceList": {
-      "Slices List": "Slice List",
+      "Slice List": "Slice List",
       "Name": "Name",
       "Occurrences": "Occurrences",
       "Wall Duration": "Wall Duration",

@@ -6,7 +6,7 @@ import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import { useTheme } from '@emotion/react';
 import type { Session } from '../../entity/session';
-import type { DetailDescriptor, BottomPanelRender } from '../../entity/insight';
+import type { DetailDescriptor, BottomPanelSingleRender } from '../../entity/insight';
 import { FilterContainer } from '../FilterContainer';
 import { createInteractorProps, TabTitlesProto } from './base/Tabs';
 import type { TabComponentProps, CommonStateProto as DetailTabsState, TabProto } from './base/Tabs';
@@ -98,7 +98,7 @@ const autoClearDetail = (tabs: DetailTabs[], id: number, session: Session): void
     session.selectedDetails = [];
 };
 
-export const TabPanes = ({ tabs, commonBottomPanel, isShowFilter, sharedState }: TabPanesProps): ReturnType<BottomPanelRender> => {
+export const TabPanes = ({ tabs, commonBottomPanel, isShowFilter, sharedState }: TabPanesProps): ReturnType<BottomPanelSingleRender> => {
     const commonState = observable({ activeKey: 0, ...sharedState });
     const tabsPaneProps = {
         commonState,
