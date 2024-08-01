@@ -69,7 +69,6 @@ bool JsonSummaryDataBase::InitStmt()
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertKernelStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert kernel detail statement. error:", sqlite3_errmsg(db));
-        sqlite3_finalize(insertKernelStmt);
         return false;
     }
 
@@ -80,6 +79,7 @@ bool JsonSummaryDataBase::InitStmt()
 void JsonSummaryDataBase::ReleaseStmt()
 {
     if (insertKernelStmt != nullptr) {
+        sqlite3_finalize(insertKernelStmt);
         insertKernelStmt = nullptr;
     }
 }
@@ -157,7 +157,6 @@ sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insert Kernel stat. error:", sqlite3_errmsg(db));
-            sqlite3_finalize(stmt);
             return nullptr;
         }
     }
@@ -180,7 +179,6 @@ uint64_t JsonSummaryDataBase::QueryMinStartTime()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        sqlite3_finalize(stmt);
         ServerLog::Error("Failed to prepare sql for QueryMinStartTime.", sqlite3_errmsg(db));
         return 0;
     }
@@ -209,7 +207,6 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query operator detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -329,7 +326,6 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        sqlite3_finalize(stmt);
         ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
@@ -426,7 +422,6 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
-            sqlite3_finalize(stmt);
             return false;
         }
 
@@ -484,7 +479,6 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
-            sqlite3_finalize(stmt);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -605,7 +599,6 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
-            sqlite3_finalize(stmt);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -663,7 +656,6 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
-            sqlite3_finalize(stmt);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -725,7 +717,6 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
-            sqlite3_finalize(stmt);
             return false;
         }
         int index = bindStartIndex;
@@ -802,11 +793,11 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
-            sqlite3_finalize(stmt);
             return false;
         }
         if (reqParams.current <= 0) {
             ServerLog::Error("The current page is less than or equal to 0");
+            sqlite3_finalize(stmt);
             return false;
         }
         BindSqliteParam(stmt, reqParams);
