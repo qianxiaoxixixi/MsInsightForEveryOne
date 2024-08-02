@@ -163,12 +163,12 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     database->UpdateParseStatus(FINISH_STATUS);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
+    ParserStatusManager::Instance().SetFinishStatus(fileId);
 }
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
     auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
-    ParserStatusManager::Instance().SetFinishStatus(fileId);
     auto &instance = TraceFileParser::Instance();
     if (instance.paserEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
         instance.paserEndCallback(fileId, result, message);

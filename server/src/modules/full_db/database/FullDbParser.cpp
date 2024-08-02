@@ -130,14 +130,14 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
     }
-    for (auto rankId: rankIds) {
-        Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
-    }
 
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. path:", filePath,
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     SendHostEvent(filePath);
+    for (auto rankId: rankIds) {
+        Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
+    }
 }
 
 void FullDbParser::SendHostEvent(const std::string &fileId)
