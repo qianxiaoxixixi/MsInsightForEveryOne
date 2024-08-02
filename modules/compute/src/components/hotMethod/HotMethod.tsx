@@ -398,12 +398,13 @@ const Index = observer(({ session }: { session: Session }) => {
                                 bodyStyle={{ flex: '0 0 30%' }}
                                 left={
                                     <HeaderFixedContainer
+                                        style={{ overflow: 'hidden' }}
                                         header={<div className={'table-header'}>
                                             <div style={{ width: '45px', textAlign: 'right' }}><span>#</span></div>
                                             <div><span>{t('Source')}</span></div>
                                         </div>}
                                         bodyProps={{ id: 'CodeTable' }}
-                                        bodyStyle={{ overflowX: 'scroll' }}
+                                        bodyStyle={{ overflowX: 'scroll', marginRight: '-8px' }}
                                         body={
                                             <CodeViewer
                                                 code={code}
