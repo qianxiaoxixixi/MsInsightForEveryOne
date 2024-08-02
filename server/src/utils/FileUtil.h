@@ -13,7 +13,6 @@
 #include <fstream>
 #include <libgen.h>
 #include <numeric>
-#include <experimental/filesystem>
 #include "regex"
 #include "RegexUtil.h"
 #include "ServerLog.h"
@@ -43,7 +42,6 @@
 #define FILE_SEPARATOR '/'
 #endif
 
-namespace fs = std::experimental::filesystem;
 namespace Dic {
 class FileUtil {
 public:
@@ -526,8 +524,7 @@ public:
             }
             return matchedFiles;
         }
-        fs::path dirPath = fs::path(path);
-        return FileUtil::FindFirstByRegex(dirPath, 0, fileRegex);
+        return FileUtil::FindFirstByRegex(path, 0, fileRegex);
     }
 
     static bool IsSoftLink(const std::string &path);
@@ -549,7 +546,7 @@ public:
                                     const std::regex &dbRegex);
     static int FindDbOrJsonType(const std::string &path, int depth,
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
-    static std::vector<std::string> FindFirstByRegex(const fs::path &path, int depth, const std::regex &fileRegex);
+    static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H
