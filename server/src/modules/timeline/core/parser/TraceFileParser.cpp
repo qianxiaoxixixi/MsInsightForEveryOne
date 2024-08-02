@@ -80,8 +80,8 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         auto threadMap = database->QueryAllThreadMap();
         TraceFileParser::Instance().UpdateTrackIdMap(fileId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
-        ParserStatusManager::Instance().SetFinishStatus(fileId);
         ParseEndCallBack(fileId, true, "");
+        ParserStatusManager::Instance().SetFinishStatus(fileId);
         return true;
     }
     if (!database->DropTable()  || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
