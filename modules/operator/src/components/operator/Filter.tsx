@@ -148,11 +148,11 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
     const { t } = useTranslation('operator', { keyPrefix: 'searchCriteria' });
     const groupOptions = optionMap.groupOptions.map(item => ({
         ...item,
-        label: t(item.label),
+        label: t(item.label as string),
     }));
     const topKOptions = optionMap.topKOptions.map(item => ({
         ...item,
-        label: t(item.label),
+        label: t(item.label as string),
     }));
     return (<div>
         {
