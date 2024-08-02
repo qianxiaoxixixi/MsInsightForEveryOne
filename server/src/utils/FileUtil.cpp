@@ -384,22 +384,31 @@ int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
 
 
 // 递归查找函数
-std::vector<std::string> FileUtil::FindFirstByRegex(const fs::path &path, int depth, const std::regex &fileRegex)
+std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex)
 {
     std::vector<std::string> matchedFiles;
     int maxDepth = 5;
     if (depth > maxDepth) {
         return matchedFiles;
     }
-    for (const auto &entry: fs::directory_iterator(path)) {
-        if (fs::is_directory(entry.path())) {
-            auto foundFiles = FindFirstByRegex(entry, depth + 1, fileRegex);
-            if (!foundFiles.empty()) {
-                matchedFiles.insert(matchedFiles.end(), foundFiles.begin(), foundFiles.end());
-                return matchedFiles;
-            }
-        } else if (std::regex_match(entry.path().filename().string(), fileRegex)) {
-            matchedFiles.push_back(fs::absolute(entry.path()).string());
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(path, folders, files)) {
+        return matchedFiles;
+    }
+    sort(files.begin(), files.end(), std::greater<std::string>());
+    for (const auto &file: files) {
+        if (std::regex_match(file, fileRegex)) {
+            auto aimFile = FileUtil::SplicePath(path, file);
+            matchedFiles.push_back(aimFile);
+            return matchedFiles;
+        }
+    }
+    for (const auto &folder: folders) {
+        std::string tmpPath = FileUtil::SplicePath(path, folder);
+        auto foundFiles = FindFirstByRegex(tmpPath, depth + 1, fileRegex);
+        if (!foundFiles.empty()) {
+            matchedFiles.insert(matchedFiles.end(), foundFiles.begin(), foundFiles.end());
             return matchedFiles;
         }
     }

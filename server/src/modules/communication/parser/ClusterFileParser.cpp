@@ -23,14 +23,15 @@ using namespace Dic::Server;
 using namespace rapidjson;
 bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
-    const std::string &filePath = filePathList[0];
+    const std::string &filePath = FileUtil::PathPreprocess(filePathList[0].c_str());
     SaxParseJsonFile(filePath, 0);
     return true;
 }
 
 void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> &filePathList)
 {
-    const std::string &filePath = filePathList[0];
+    const std::string &filePath = FileUtil::PathPreprocess(filePathList[0].c_str());
+    Server::ServerLog::Info("ParseCommunicationMatrix"+filePath);
     SaxParseJsonFile(filePath, 1);
 }
 
@@ -63,7 +64,7 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
 
 void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &filePathList)
 {
-    const std::string &filePath = filePathList[0];
+    const std::string &filePath = FileUtil::PathPreprocess(filePathList[0].c_str());
     auto start = std::chrono::high_resolution_clock::now();
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return;
@@ -176,7 +177,7 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
     std::string tempFilePath = FileUtil::SplicePath(selectedPath, "tmp_matrix.json");
     // cluster_communication_matrix存在，但cluster_communication不存在时，将matrix文件复制到selectedPath下的临时文件中
     if (!communicationMatrixFileList.empty() && communicationFileList.empty()) {
-        isCopyMatrixFile = FileUtil::CopyFileByPath(communicationMatrixFileList[0],
+        isCopyMatrixFile = FileUtil::CopyFileByPath(FileUtil::PathPreprocess(communicationMatrixFileList[0].c_str()),
                                                     tempFilePath);
         if (!isCopyMatrixFile) {
             ServerLog::Warn("Copy matrix file failed.");
@@ -190,8 +191,8 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
     // 如果发生过文件的复制，则将临时文件复制回cluster_analysis_output文件夹中，并且删除临时文件
     if (isCopyMatrixFile) {
         bool reductionFileRes =
-                FileUtil::CopyFileByPath(tempFilePath, communicationMatrixFileList[0]) &&
-                FileUtil::RemoveFile(tempFilePath);
+                FileUtil::CopyFileByPath(tempFilePath, FileUtil::PathPreprocess(communicationMatrixFileList[0].c_str()))
+                && FileUtil::RemoveFile(tempFilePath);
         if (!reductionFileRes) {
             ServerLog::Warn("Copy and clear matrix temp file failed.");
         }
@@ -277,7 +278,7 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
         ServerLog::Error("Failed to get communicationGroup files");
         return;
     }
-    const std::string &filePath = communicationGroupList[0];
+    const std::string &filePath = FileUtil::PathPreprocess(communicationGroupList[0].c_str());
     auto start = std::chrono::high_resolution_clock::now();
     std::ifstream communicationGroup(filePath, std::ios::binary);
     if (communicationGroup.good()) {
