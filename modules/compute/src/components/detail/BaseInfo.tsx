@@ -33,6 +33,8 @@ interface Ibaseinfo {
     blockDim?: string ;
     blockDetail?: IblockDetail ;
     mixBlockDim?: string ;
+    pid?: string;
+    deviceId?: string;
 
 }
 const getAllLabellist = (t: TFunction): Ilabel[] => {
@@ -59,6 +61,14 @@ const getAllLabellist = (t: TFunction): Ilabel[] => {
             isMix: false,
         },
         {
+            label: t('DeviceId'),
+            key: 'deviceId',
+        },
+        {
+            label: t('Pid'),
+            key: 'pid',
+        },
+        {
             label: t('BlockDetail'),
             key: 'blockDetail',
             isMix: false,
@@ -78,7 +88,13 @@ const getAllLabellist = (t: TFunction): Ilabel[] => {
 
 const getLabellist = (dataObj: Ibaseinfo, t: TFunction): Ilabel[] => {
     const allLabellist = getAllLabellist(t);
-    return allLabellist.filter(label => label.isMix === undefined || label.isMix === (dataObj.opType?.toLowerCase() === 'mix'));
+    return allLabellist.filter(label => {
+        if (label.key === 'pid' && dataObj.pid === '') {
+            return false;
+        } else {
+            return label.isMix === undefined || label.isMix === (dataObj.opType?.toLowerCase() === 'mix');
+        }
+    });
 };
 
 function BlockDetail({ blockDetail = { headerName: [], row: [] }, translate }: Ibaseinfo & {translate: any}): JSX.Element {
@@ -148,6 +164,8 @@ const defaultData: Ibaseinfo = {
     mixBlockDim: '',
     duration: '',
     blockDetail: { headerName: [], row: [] },
+    pid: '',
+    deviceId: '',
 };
 
 const index = observer(({ session }: Iprops): JSX.Element => {

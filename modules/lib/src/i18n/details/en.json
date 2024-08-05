@@ -20,6 +20,8 @@
     "Block Detail Records":"Block Detail Records",
     "All Instruction Records": "All Instruction Records",
     "Memory Workload Table Records": "Memory Workload Table Records",
-    "Current Count": "Current Count"
+    "Current Count": "Current Count",
+    "Pid": "Pid",
+    "DeviceId": "Device Id"
   }
 }
