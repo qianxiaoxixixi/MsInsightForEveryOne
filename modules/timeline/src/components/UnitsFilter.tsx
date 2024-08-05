@@ -171,7 +171,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     useEffect(() => {
         setSelection([]);
         handleChange([]);
-    }, [completeOptions]);
+    }, [completeOptions, session.doReset]);
 
     return (
         <CustomDiv theme={theme}>
