@@ -179,7 +179,7 @@ export const checkDomDisplay = (dom: HTMLElement): boolean => {
 };
 
 export const COLOR = {
-    BrightBlue: '#7df7ff',
+    BRIGHT_BLUE: '#7df7ff',
     Grey20: '#cacaca',
     Grey40: '#8D98AA',
     Grey50: '#8D98AA',
@@ -285,7 +285,7 @@ export const commonEchartsOptions: {
         axisPointer: {
             type: 'cross',
             crossStyle: {
-                color: COLOR.BrightBlue,
+                color: COLOR.BRIGHT_BLUE,
                 type: 'solid',
             },
         },
