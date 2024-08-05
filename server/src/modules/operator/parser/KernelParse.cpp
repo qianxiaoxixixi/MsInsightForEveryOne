@@ -145,7 +145,7 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
     }
     std::string dbPath = FileUtil::GetDbPath(filePathList[0], fileId);
     auto database =
-        dynamic_cast<JsonSummaryDataBase *>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+        dynamic_cast<TextSummaryDataBase *>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     if (database == nullptr) {
         message = "Failed to get summary database, fileId: ." + fileId + " filePath: " + filePathList[0];
         return false;
@@ -219,7 +219,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
     std::map<std::string, size_t> dataMap;
-    auto db = dynamic_cast<JsonSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+    auto db = dynamic_cast<TextSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     bool isHeader = true;
     std::string type;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
@@ -392,7 +392,7 @@ void KernelParse::Reset()
     ServerLog::Info("Summary task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();
     for (auto &db: databaseList) {
-        auto database = dynamic_cast<JsonSummaryDataBase*>(db);
+        auto database = dynamic_cast<TextSummaryDataBase*>(db);
         if (database != nullptr) {
             database->ReleaseStmt();
             database->CloseDb();

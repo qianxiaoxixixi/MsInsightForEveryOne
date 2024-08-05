@@ -333,7 +333,7 @@ TEST_F(TestSuit, QueryKernelShapes)
     sliceDto.timestamp = STARTTIME;
     sliceDtoVec.emplace_back(sliceDto);
 
-    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::JsonTraceDatabase,
+    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::TextTraceDatabase,
     Dic::Module::Timeline::VirtualTraceDatabase>(Dic::Module::Timeline::DataBaseManager::Instance().
     GetTraceDatabase("0"));
     const KernelShapesDataDto &dto = database->QueryKernelShapes(sliceDtoVec);
@@ -465,7 +465,7 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     uint64_t DURATION2 = 35710;
     uint64_t COUNT = 2;
 
-    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::JsonTraceDatabase,
+    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::TextTraceDatabase,
             Dic::Module::Timeline::VirtualTraceDatabase>(Dic::Module::Timeline::DataBaseManager::Instance().
             GetTraceDatabase("0"));
     database->QueryThreadSameOperatorsDetails(requestParam, responseBody, minTimestamp, traceId);

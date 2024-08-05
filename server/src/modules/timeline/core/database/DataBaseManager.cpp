@@ -3,7 +3,7 @@
  */
 
 #include "pch.h"
-#include "JsonMemoryDataBase.h"
+#include "TextMemoryDataBase.h"
 #include "DbTraceDataBase.h"
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
@@ -28,15 +28,15 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         std::unique_ptr<ConnectionPool> conn;
         switch (dataType) {
-            case DataType::FULL_DB:
+            case DataType::DB:
                 conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
                     return new FullDb::DbTraceDataBase(dbMutex);
                 });
                 break;
-            case DataType::JSON:
+            case DataType::TEXT:
             default:
                 conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
-                    return new JsonTraceDatabase(dbMutex);
+                    return new TextTraceDatabase(dbMutex);
                 });
                 break;
         }
@@ -69,9 +69,9 @@ Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::
     std::string fileId = inputId;
     if (summaryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        if (this->dataType == DataType::JSON) {
-            summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::JsonSummaryDataBase>(dbMutex));
-        } else if (this->dataType == DataType::FULL_DB) {
+        if (this->dataType == DataType::TEXT) {
+            summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::TextSummaryDataBase>(dbMutex));
+        } else if (this->dataType == DataType::DB) {
             summaryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
         }
     }
@@ -85,12 +85,12 @@ Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::str
     if (memoryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         switch (dataType) {
-            case DataType::FULL_DB:
+            case DataType::DB:
                 memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
                 break;
-            case DataType::JSON:
+            case DataType::TEXT:
             default:
-                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::JsonMemoryDataBase>(dbMutex));
+                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::TextMemoryDataBase>(dbMutex));
                 break;
         }
     }
@@ -211,9 +211,9 @@ VirtualClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_w") == 0) {
-        if (dataType == DataType::JSON) {
-            clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>(GetDbMutex("cluster_w")));
-        } else if (dataType == DataType::FULL_DB) {
+        if (dataType == DataType::TEXT) {
+            clusterDatabaseMap.emplace("cluster_w", std::make_unique<TextClusterDatabase>(GetDbMutex("cluster_w")));
+        } else if (dataType == DataType::DB) {
             clusterDatabaseMap.emplace("cluster_w", std::make_unique<DbClusterDataBase>(GetDbMutex("cluster_w")));
         }
     }
@@ -224,9 +224,9 @@ VirtualClusterDatabase *DataBaseManager::GetReadClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_r") == 0) {
-        if (dataType == DataType::JSON) {
-            clusterDatabaseMap.emplace("cluster_r", std::make_unique<JsonClusterDatabase>(GetDbMutex("cluster_r")));
-        } else if (dataType == DataType::FULL_DB) {
+        if (dataType == DataType::TEXT) {
+            clusterDatabaseMap.emplace("cluster_r", std::make_unique<TextClusterDatabase>(GetDbMutex("cluster_r")));
+        } else if (dataType == DataType::DB) {
             clusterDatabaseMap.emplace("cluster_r", std::make_unique<DbClusterDataBase>(GetDbMutex("cluster_r")));
         }
     }

@@ -25,7 +25,7 @@ ParserJson::~ParserJson() {}
 
 void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
     if (projectInfos[0].importType == "drag") {
         ReloadDbPath(projectInfos, request);
         return;

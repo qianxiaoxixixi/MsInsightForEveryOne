@@ -72,7 +72,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     std::ifstream stepTraceFileCsv(filePath);
     std::string line;
     std::map<std::string, int> indexMap;
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
             std::getline(stepTraceFileCsv, line)) {
         std::vector<std::string> fields;
@@ -100,7 +100,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             now.time_since_epoch()).count();
     ParseCommunicationGroup(selectedPath, baseInfo);
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     database->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
                     baseInfo.collectStartTime);
@@ -113,7 +113,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         ServerLog::Error("Init cluster database occur an err");
         return false;
     }
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     if (database == nullptr) {
         ServerLog::Error("Can't get cluster database.");
         return false;
@@ -202,7 +202,7 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
 
 bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication)
 {
-    auto database = dynamic_cast<JsonClusterDatabase *>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto database = dynamic_cast<TextClusterDatabase *>(DataBaseManager::Instance().GetWriteClusterDatabase());
     if (database == nullptr) {
         ServerLog::Error("Failed to connect to cluster database.", selectedPath);
         return false;
@@ -238,9 +238,9 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
     DataBaseManager::Instance().ClearClusterDb();
     clusterDbPath = selectedPath + FILE_SEPARATOR + "cluster.db";
     std::ifstream file(FileUtil::PathPreprocess(clusterDbPath));
-    auto databaseWrite = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto databaseWrite = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // 查询单独一个连接
-    auto databaseRead = dynamic_cast<JsonClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
+    auto databaseRead = dynamic_cast<TextClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
     databaseRead->OpenDb(clusterDbPath, false);
     databaseRead->SetConfig();
     if (!file.good()) {

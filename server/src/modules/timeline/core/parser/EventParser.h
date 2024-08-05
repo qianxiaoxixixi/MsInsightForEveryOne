@@ -9,7 +9,7 @@
 #include <map>
 #include <functional>
 #include "GlobalDefs.h"
-#include "JsonTraceDatabase.h"
+#include "TextTraceDatabase.h"
 #include "EventDef.h"
 
 namespace Dic {
@@ -31,7 +31,7 @@ private:
     int parseCount = 0;
     int ignoreCount = 0;
     bool m_isSimulation = false;
-    std::shared_ptr<JsonTraceDatabase> database;
+    std::shared_ptr<TextTraceDatabase> database;
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
     std::string ReadBuffer(int64_t startPosition, int64_t endPosition);

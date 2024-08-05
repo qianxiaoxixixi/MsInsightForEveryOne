@@ -26,7 +26,7 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/msprof_0.db)";
-        DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB);
         Timeline::DataBaseManager::Instance().CreatConnectionPool(currPath + dbPath3,
                                                                   currPath + dbPath3);
         Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", currPath + dbPath3, "");

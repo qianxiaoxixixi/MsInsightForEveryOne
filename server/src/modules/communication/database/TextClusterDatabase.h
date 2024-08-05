@@ -17,10 +17,10 @@
 
 namespace Dic {
 namespace Module {
-class JsonClusterDatabase : public VirtualClusterDatabase {
+class TextClusterDatabase : public VirtualClusterDatabase {
 public:
-    explicit JsonClusterDatabase(std::recursive_mutex &sqlMutex) : VirtualClusterDatabase(sqlMutex) {};
-    ~JsonClusterDatabase() override;
+    explicit TextClusterDatabase(std::recursive_mutex &sqlMutex) : VirtualClusterDatabase(sqlMutex) {};
+    ~TextClusterDatabase() override;
 
     bool SetConfig();
     bool SetDbVersion();

@@ -23,7 +23,7 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, VirtualTraceDatabase>(

@@ -28,7 +28,7 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::FULL_DB);
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
     std::string selectedFolder = FileUtil::GetParentPath(path);
     auto hostInfoMap = GetReportFiles(path, response.body);
     uint32_t rankSize = 0;

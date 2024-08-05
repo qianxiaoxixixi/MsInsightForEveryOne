@@ -17,9 +17,9 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     std::vector<std::string> streams = {};
     DataType type = DataBaseManager::Instance().GetDataType();
     std::string sql = "";
-    if (type == DataType::JSON) {
+    if (type == DataType::TEXT) {
         sql += "SELECT stream FROM " + recordTable + " WHERE stream <> '' Group BY stream ORDER BY timestamp ASC";
-    } else if (type == DataType::FULL_DB) {
+    } else if (type == DataType::DB) {
         FileType fileType = DataBaseManager::Instance().GetFileType();
         if (fileType == FileType::PYTORCH) {
             std::string streamPtrColumnName = isLowCamel ? "streamPtr" : "stream_ptr";

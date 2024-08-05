@@ -13,7 +13,7 @@
 #include <functional>
 #include <utility>
 #include "ServerLog.h"
-#include "JsonTraceDatabase.h"
+#include "TextTraceDatabase.h"
 
 namespace Dic {
 namespace Module {

@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_JSONTABLECOLUM_H
-#define PROFILER_SERVER_JSONTABLECOLUM_H
+#ifndef PROFILER_SERVER_TEXTTABLECOLUM_H
+#define PROFILER_SERVER_TEXTTABLECOLUM_H
 #include <string>
 namespace Dic {
 namespace Module {
@@ -42,4 +42,4 @@ const std::string THREAD_SORT_INDEX = "thread_sort_index";
 }
 }
 }
-#endif // PROFILER_SERVER_JSONTABLECOLUM_H
+#endif // PROFILER_SERVER_TEXTTABLECOLUM_H

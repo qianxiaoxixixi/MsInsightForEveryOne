@@ -4,7 +4,7 @@
 
 #include "pch.h"
 #include "ParserStatusManager.h"
-#include "JsonClusterDatabase.h"
+#include "TextClusterDatabase.h"
 #include "CommunicationMatrixRapidHandler.h"
 
 namespace Dic {
@@ -93,7 +93,7 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     currentDepth--;
     if (currentDepth == ranksDepth) {
         CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);

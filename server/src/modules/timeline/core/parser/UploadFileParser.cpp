@@ -88,7 +88,7 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
         Memory::MemoryParse::Instance().Reset();
         UploadFileParser::Instance().ResetAllFiles();
         Source::SourceFileParser::Instance().Reset();
-        Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+        Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
         Global::ProjectExplorerManager::Instance().SaveProjectExplorer(request.params.fileAttr.path,
                                                                        request.params.fileAttr.path,
                                                                        ProjectTypeEnum::TRACE, "drag",
@@ -179,7 +179,7 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
         ServerLog::Error("Failed to open trace database for parse last. rankId:", fileId);
         return;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
         ServerLog::Error("Failed to convert virtual trace database to json trace database in parse last.");
         return;
@@ -211,7 +211,7 @@ std::string UploadFileParser::InitDataBase(std::string fileId)
         ServerLog::Error("Failed to get connection,fileId:", fileId);
         return "";
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr || !(database->DropAllTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open trace database. fileId:", fileId);
         ParseEndCallBack(fileId, false, "Failed to open db file. Please try again.");

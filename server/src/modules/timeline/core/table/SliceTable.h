@@ -4,7 +4,7 @@
 
 #ifndef PROFILER_SERVER_SLICETABLE_H
 #define PROFILER_SERVER_SLICETABLE_H
-#include "JsonTableColum.h"
+#include "TextTableColum.h"
 #include "Table.h"
 namespace Dic::Module::Timeline {
 struct SlicePO {

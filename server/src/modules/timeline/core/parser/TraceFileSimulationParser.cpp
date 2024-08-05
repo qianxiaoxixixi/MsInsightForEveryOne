@@ -59,8 +59,8 @@ bool TraceFileSimulationParser::InitParser(const std::vector<std::string> &fileP
         ServerLog::Error("Failed to get connection. fileId: ", fileId);
         return false;
     }
-    std::shared_ptr<JsonTraceDatabase> database =
-        std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    std::shared_ptr<TextTraceDatabase> database =
+        std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
         ServerLog::Error("Failed to convert virtual trace database to json trace database in event parser.");
         return false;
@@ -130,7 +130,7 @@ void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const st
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. ID:", fileId,
         " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(
         DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
