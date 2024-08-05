@@ -10,7 +10,7 @@
 #include "ImportActionAnalyzer.h"
 #include "SliceAnalyzer.h"
 #include "FlowAnalyzer.h"
-#include "JsonSqlConstant.h"
+#include "TextSqlConstant.h"
 #include "TimelineProtocolRequest.h"
 
 
@@ -18,10 +18,10 @@ namespace Dic::Module::Timeline {
 /*
  * 解析原始的traceView.json文件以及其他csv文件情况下的数据库处理类
  */
-class JsonTraceDatabase : public VirtualTraceDatabase {
+class TextTraceDatabase : public VirtualTraceDatabase {
 public:
-    explicit JsonTraceDatabase(std::recursive_mutex &sqlMutex);
-    ~JsonTraceDatabase() override;
+    explicit TextTraceDatabase(std::recursive_mutex &sqlMutex);
+    ~TextTraceDatabase() override;
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
 

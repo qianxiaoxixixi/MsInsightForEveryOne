@@ -4,22 +4,22 @@
 #include <gtest/gtest.h>
 #include "DatabaseTest.cpp"
 #include "Database.h"
-#include "JsonTraceDatabase.h"
+#include "TextTraceDatabase.h"
 
-class JsonTraceDatabaseTest : DatabaseTest {
+class TextTraceDatabaseTest : DatabaseTest {
 };
 
 TEST_F(DatabaseTest, OpenDb)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     database.OpenDb("tttt", true);
     database.CloseDb();
 }
 TEST_F(DatabaseTest, InitStmt)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     bool success = database.InitStmt();
     EXPECT_EQ(success, false);
 }
@@ -27,7 +27,7 @@ TEST_F(DatabaseTest, InitStmt)
 TEST_F(DatabaseTest, CreateTable)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     database.CreateTable();
 
     database.OpenDb("tttt", true);
@@ -39,7 +39,7 @@ TEST_F(DatabaseTest, CreateTable)
 TEST_F(DatabaseTest, DropTable)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     bool success = database.DropTable();
     EXPECT_EQ(success, false);
 }
@@ -47,7 +47,7 @@ TEST_F(DatabaseTest, DropTable)
 TEST_F(DatabaseTest, CreateIndex)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     database.CreateIndex();
 
     database.OpenDb("tttt", true);
@@ -60,7 +60,7 @@ TEST_F(DatabaseTest, InsertSlice)
 {
     std::recursive_mutex sqlMutex;
     const int size = 1000;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     bool success = true;
     for (int i = 0; i < size; i++) {
         Dic::Module::Timeline::Trace::Slice event;
@@ -73,7 +73,7 @@ TEST_F(DatabaseTest, InsertSlice)
 TEST_F(DatabaseTest, InsertFlow)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     bool success = true;
     const int size = 1000;
     for (int i = 0; i < size; i++) {
@@ -86,7 +86,7 @@ TEST_F(DatabaseTest, InsertFlow)
 TEST_F(DatabaseTest, InsertCounter)
 {
     std::recursive_mutex sqlMutex;
-    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    Dic::Module::Timeline::TextTraceDatabase database(sqlMutex);
     bool success = true;
     const int size = 1000;
     for (int i = 0; i < size; i++) {

@@ -8,13 +8,13 @@
 #include "TableDefs.h"
 #include "NumDefs.h"
 #include "TraceTime.h"
-#include "JsonClusterDatabase.h"
+#include "TextClusterDatabase.h"
 
 namespace Dic {
 namespace Module {
 using namespace Server;
 using namespace rapidjson;
-JsonClusterDatabase::~JsonClusterDatabase()
+TextClusterDatabase::~TextClusterDatabase()
 {
     SaveLastData();
     if (isInitStmt) {
@@ -22,7 +22,7 @@ JsonClusterDatabase::~JsonClusterDatabase()
     }
 }
 
-bool JsonClusterDatabase::SetConfig()
+bool TextClusterDatabase::SetConfig()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -31,7 +31,7 @@ bool JsonClusterDatabase::SetConfig()
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
-bool JsonClusterDatabase::SetDbVersion()
+bool TextClusterDatabase::SetDbVersion()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set db version. Database is not open.");
@@ -41,7 +41,7 @@ bool JsonClusterDatabase::SetDbVersion()
     return ExecSql(" PRAGMA user_version = " + dbVersion + ";");
 }
 
-bool JsonClusterDatabase::CreateTable()
+bool TextClusterDatabase::CreateTable()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Cluster Database is not open.");
@@ -79,7 +79,7 @@ bool JsonClusterDatabase::CreateTable()
     return ExecSql(sql);
 }
 
-bool JsonClusterDatabase::CreateIndex()
+bool TextClusterDatabase::CreateIndex()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Cluster Database is not open.");
@@ -89,7 +89,7 @@ bool JsonClusterDatabase::CreateIndex()
     return ExecSql(sql);
 }
 
-bool JsonClusterDatabase::CreateTimeIndex()
+bool TextClusterDatabase::CreateTimeIndex()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Cluster Database is not open.");
@@ -100,7 +100,7 @@ bool JsonClusterDatabase::CreateTimeIndex()
     return ExecSql(sql);
 }
 
-bool JsonClusterDatabase::InitStmt()
+bool TextClusterDatabase::InitStmt()
 {
     if (isInitStmt) {
         return true;
@@ -124,7 +124,7 @@ bool JsonClusterDatabase::InitStmt()
     return true;
 }
 
-std::string JsonClusterDatabase::GetTimeInfoStmtSql(int len)
+std::string TextClusterDatabase::GetTimeInfoStmtSql(int len)
 {
     std::string sql = "INSERT INTO " + TABLE_TIME_INFO +
                       " (iteration_id, stage_id, rank_id, op_name, op_suffix, start_time, elapse_time,"
@@ -137,7 +137,7 @@ std::string JsonClusterDatabase::GetTimeInfoStmtSql(int len)
     return sql;
 }
 
-std::string JsonClusterDatabase::GetBandwidthStmtSql(int len)
+std::string TextClusterDatabase::GetBandwidthStmtSql(int len)
 {
     std::string sql = "INSERT INTO " + TABLE_BANDWIDTH +
                       " (iteration_id, stage_id, rank_id, op_name, op_suffix, transport_type,"
@@ -149,7 +149,7 @@ std::string JsonClusterDatabase::GetBandwidthStmtSql(int len)
     return sql;
 }
 
-void JsonClusterDatabase::ReleaseStmt()
+void TextClusterDatabase::ReleaseStmt()
 {
     if (insertTimeInfoStmt != nullptr) {
         sqlite3_finalize(insertTimeInfoStmt);
@@ -165,7 +165,7 @@ void JsonClusterDatabase::ReleaseStmt()
     }
 }
 
-void JsonClusterDatabase::SaveLastData()
+void TextClusterDatabase::SaveLastData()
 {
     ServerLog::Info("Save_Last_Data ");
     if (!timeInfoCache.empty()) {
@@ -182,7 +182,7 @@ void JsonClusterDatabase::SaveLastData()
     }
 }
 
-void JsonClusterDatabase::InsertTimeInfo(CommunicationTimeInfo &timeInfo)
+void TextClusterDatabase::InsertTimeInfo(CommunicationTimeInfo &timeInfo)
 {
     timeInfoCache.emplace_back(timeInfo);
     if (timeInfoCache.size() == TABLE_CACHE_SIZE) {
@@ -191,7 +191,7 @@ void JsonClusterDatabase::InsertTimeInfo(CommunicationTimeInfo &timeInfo)
     }
 }
 
-void JsonClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList)
+void TextClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList)
 {
     if (timeInfoList.empty()) {
         return;
@@ -240,7 +240,7 @@ void JsonClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> 
     }
 }
 
-void JsonClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
+void TextClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
 {
     bandwidthCache.emplace_back(bandWidth);
     if (bandwidthCache.size() == TABLE_CACHE_SIZE) {
@@ -249,7 +249,7 @@ void JsonClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
     }
 }
 
-void JsonClusterDatabase::InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds)
+void TextClusterDatabase::InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds)
 {
     if (groupIds.empty()) {
         ServerLog::Error("Group id is empty");
@@ -278,7 +278,7 @@ void JsonClusterDatabase::InsertGroupId(const std::unordered_map<std::string, in
     }
 }
 
-void JsonClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList)
+void TextClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList)
 {
     if (bandWidthList.empty()) {
         return;
@@ -329,7 +329,7 @@ void JsonClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth
     }
 }
 
-void JsonClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
+void TextClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
 {
     if (stepStmt == nullptr) {
         std::string sql = "INSERT INTO " + TABLE_STEP_TRACE +
@@ -370,7 +370,7 @@ void JsonClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
     }
 }
 
-void JsonClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
+void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
 {
     sqlite3_stmt *stmt;
     std::string sql = "INSERT INTO " + TABLE_BASE_INFO +
@@ -404,7 +404,7 @@ void JsonClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo
     sqlite3_finalize(stmt);
 }
 
-void JsonClusterDatabase::InsertCommunicationMatrix(Dic::Module::CommunicationMatrixInfo &communicationMatrix)
+void TextClusterDatabase::InsertCommunicationMatrix(Dic::Module::CommunicationMatrixInfo &communicationMatrix)
 {
     matrixCache.emplace_back(communicationMatrix);
     if (matrixCache.size() == TABLE_CACHE_SIZE) {
@@ -413,7 +413,7 @@ void JsonClusterDatabase::InsertCommunicationMatrix(Dic::Module::CommunicationMa
     }
 }
 
-void JsonClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo)
+void TextClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo)
 {
     if (communicationMatrixInfo.empty()) {
         return;
@@ -463,7 +463,7 @@ void JsonClusterDatabase::InsertCommunicationMatrixInfo(std::vector<Communicatio
     }
 }
 
-std::string JsonClusterDatabase::GetMatrixStmtSql(int len)
+std::string TextClusterDatabase::GetMatrixStmtSql(int len)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_COMMUNICATION_MATRIX +
@@ -479,27 +479,27 @@ std::string JsonClusterDatabase::GetMatrixStmtSql(int len)
     return sql;
 }
 
-bool JsonClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
+bool TextClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
     Protocol::SummaryTopRankResBody &responseBody)
 {
     std::string sql = BuildCondition(requestParams);
     return ExecuteQuerySummaryData(requestParams, responseBody, sql);
 }
 
-bool JsonClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
+bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
     std::string baseInfoSql = "select ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
     return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
 }
 
-bool JsonClusterDatabase::QueryCommunicationGroup(Document &responseBody)
+bool TextClusterDatabase::QueryCommunicationGroup(Document &responseBody)
 {
     std::string baseInfoSql =
             "select stages, pp_stages from " + TABLE_BASE_INFO;
     return ExecuteQueryCommunicationGroup(responseBody, baseInfoSql);
 }
 
-std::string JsonClusterDatabase::QueryParseClusterStatus()
+std::string TextClusterDatabase::QueryParseClusterStatus()
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;
     std::string baseInfoSql =
@@ -518,7 +518,7 @@ std::string JsonClusterDatabase::QueryParseClusterStatus()
     return parseStatus;
 }
 
-void JsonClusterDatabase::UpdateClusterParseStatus(std::string status)
+void TextClusterDatabase::UpdateClusterParseStatus(std::string status)
 {
     ServerLog::Info("Update_Cluster_Parse_Status status: ", status);
     sqlite3_stmt *stmtBaseInfo = nullptr;
@@ -538,7 +538,7 @@ void JsonClusterDatabase::UpdateClusterParseStatus(std::string status)
     }
 }
 
-bool JsonClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
+bool TextClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
 {
     std::string sql = "select distinct step_id as stepId "
                       "FROM " + TABLE_STEP_TRACE +
@@ -546,7 +546,7 @@ bool JsonClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &resp
     return ExecuteGetStepIdList(responseBody, sql);
 }
 
-bool JsonClusterDatabase::GetStages(Protocol::PipelineStageParam &param,
+bool TextClusterDatabase::GetStages(Protocol::PipelineStageParam &param,
                                     Protocol::PipelineStageResponseBody &responseBody)
 {
     std::string sql = "SELECT DISTINCT stage_id as stageId "
@@ -554,7 +554,7 @@ bool JsonClusterDatabase::GetStages(Protocol::PipelineStageParam &param,
     return ExecuteGetStages(param, responseBody, sql);
 }
 
-bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
+bool TextClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
                                             Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT max(ROUND(stage_time, 4)) as stageTime, "
@@ -567,7 +567,7 @@ bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam &pa
     return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
 }
 
-bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
+bool TextClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
                                            Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT rank_id as rankId, "
@@ -581,14 +581,14 @@ bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &para
     return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
 }
 
-bool JsonClusterDatabase::GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody)
+bool TextClusterDatabase::GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody)
 {
     std::string sql = "SELECT DISTINCT group_id as groupId "
                       "FROM " + TABLE_GROUP_ID;
     return ExecuteGetGroups(param, responseBody, sql);
 }
 
-std::unordered_map<std::string, int64_t> JsonClusterDatabase::GetAllGroupMap()
+std::unordered_map<std::string, int64_t> TextClusterDatabase::GetAllGroupMap()
 {
     std::string sql = "SELECT id, group_id FROM " + TABLE_GROUP_ID;
     sqlite3_stmt *stmt = nullptr;
@@ -608,7 +608,7 @@ std::unordered_map<std::string, int64_t> JsonClusterDatabase::GetAllGroupMap()
     return res;
 }
 
-bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
+bool TextClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                                           Protocol::MatrixListResponseBody &responseBody)
 {
     std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
@@ -623,7 +623,7 @@ bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
     return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
-std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
+std::string TextClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
 {
     std::string stepCondition;
     std::string rankCondition;
@@ -665,14 +665,14 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
     return sql;
 }
 
-bool JsonClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
+bool TextClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
     std::string sql = "SELECT MIN(start_time) as minTime, MAX(start_time) as maxTime "
                       "FROM " + TABLE_TIME_INFO + " WHERE start_time != 0";
     return ExecuteQueryExtremumTimestamp(sql, min, max);
 }
 
-bool JsonClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
+bool TextClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
     std::string sql = "select iteration_id, tg.group_id as stage_id from " + TABLE_TIME_INFO + " t"
@@ -683,7 +683,7 @@ bool JsonClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::KernelPa
         responseBody.group);
 }
 
-bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
+bool TextClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -713,7 +713,7 @@ bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 
-bool JsonClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
+bool TextClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
     std::string sql = "SELECT op_name, count(*) AS nums  from "
@@ -724,8 +724,8 @@ bool JsonClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &pa
     return ExecuteQueryOperatorsCount(param, resBody, sql);
 }
 
-bool JsonClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param,
-    Protocol::BandwidthDataResBody &resBody)
+bool TextClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param,
+                                             Protocol::BandwidthDataResBody &resBody)
 {
     std::string sql = "SELECT transport_type,ROUND(transit_size, 4) as transit_size,"
                       "ROUND(transit_time, 4) as transit_time,"
@@ -737,8 +737,8 @@ bool JsonClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param
     return ExecuteQueryBandwidthData(param, resBody, sql);
 }
 
-bool JsonClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &param,
-    Protocol::DistributionResBody &resBody)
+bool TextClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &param,
+                                                Protocol::DistributionResBody &resBody)
 {
     std::string sql = "SELECT size_distribution FROM "
                       + TABLE_BANDWIDTH + " b"
@@ -751,14 +751,14 @@ bool JsonClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam 
     return ExecuteQueryDistributionData(param, resBody, sql);
 }
 
-bool JsonClusterDatabase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
+bool TextClusterDatabase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     std::string sql = "SELECT ranks FROM " + TABLE_BASE_INFO;
     return ExecuteQueryRanksHandler(responseBody, sql);
 }
 
-bool JsonClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
-    std::vector<Protocol::OperatorNamesObject> &responseBody)
+bool TextClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
+                                             std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql;
@@ -779,8 +779,8 @@ bool JsonClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requ
     return ExecuteQueryOperatorNames(requestParams, responseBody, sql);
 }
 
-bool JsonClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
-    std::vector<Protocol::OperatorNamesObject> &responseBody)
+bool TextClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
+                                                 std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
     std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMMUNICATION_MATRIX + " cm"
             " LEFT JOIN " + TABLE_GROUP_ID + " g ON cm.group_id = g.id"
@@ -790,14 +790,14 @@ bool JsonClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
 }
 
-bool JsonClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
+bool TextClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     std::string sql = "SELECT steps FROM " + TABLE_BASE_INFO;
     return ExecuteQueryIterations(responseBody, sql);
 }
 
-bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
-    Protocol::DurationListsResponseBody &responseBody)
+bool TextClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
+                                            Protocol::DurationListsResponseBody &responseBody)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::string rankSql;
@@ -832,8 +832,8 @@ bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
     return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
 
-bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &requestParams,
-    Protocol::OperatorListsResponseBody &responseBody)
+bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &requestParams,
+                                            Protocol::OperatorListsResponseBody &responseBody)
 {
     std::string sql =
         "SELECT rank_id, op_name,"
@@ -854,7 +854,7 @@ bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
 }
 
-void JsonClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string &sql,
+void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string &sql,
                                             std::vector<std::string> &stageIds)
 {
     stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), '('), stageIdStr.end());

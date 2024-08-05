@@ -45,8 +45,8 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         ServerLog::Error(error);
         return false;
     }
-    std::shared_ptr<JsonTraceDatabase> databasePtr =
-        std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    std::shared_ptr<TextTraceDatabase> databasePtr =
+        std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (databasePtr == nullptr) {
         error = "Failed to open Database";
         ServerLog::Error("Failed to convert virtual trace database to json trace database in event parser.");
@@ -113,7 +113,7 @@ void EventParser::Parse(int sliceIndex, const std::string &fileContent)
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;
     }
-    database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
         ServerLog::Error("Failed to convert virtual trace database to json trace database in parse2 of event parser.");
         return;

@@ -12,7 +12,7 @@ class CommunicationTest : TestSuit {
 
 TEST_F(TestSuit, QueryIterationsData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::JSON);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryIterations(responseBody);
@@ -219,7 +219,7 @@ TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
 
 TEST_F(TestSuit, QueryMatrixSortOpNames)
 {
-    DataBaseManager::Instance().SetDataType(DataType::JSON);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     Dic::Protocol::OperatorNamesParams requestParams;

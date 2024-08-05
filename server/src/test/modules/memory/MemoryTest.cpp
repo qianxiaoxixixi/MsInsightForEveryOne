@@ -13,7 +13,7 @@ class MemoryTest : TestSuit {
 
 TEST_F(TestSuit, QueryMemoryOperatorData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::JSON);
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";

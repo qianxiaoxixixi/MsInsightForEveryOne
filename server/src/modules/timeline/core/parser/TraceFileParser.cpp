@@ -68,7 +68,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ServerLog::Error("Failed to get connection.");
         return false;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
         ServerLog::Error("Failed to open trace database. rankId:", fileId);
         return false;
@@ -154,7 +154,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
         ParserStatusManager::Instance().SetFinishStatus(fileId);
         return;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
         ServerLog::Error("Failed to convert virtual trace database to json trace database in end parse task.");
         return;

@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_JSONSQLCONSTANT_H
-#define PROFILER_SERVER_JSONSQLCONSTANT_H
+#ifndef PROFILER_SERVER_TEXTSQLCONSTANT_H
+#define PROFILER_SERVER_TEXTSQLCONSTANT_H
 #include <string>
 #include "StringUtil.h"
 #include "ServerLog.h"
@@ -124,7 +124,7 @@ const std::string QUERY_AFFINITY_API_SQL =
     "WHERE s.cat = 'cpu_op' AND s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' "
     "ORDER BY s.track_id ASC, s.timestamp ASC";
 
-class JsonSqlConstant {
+class TextSqlConstant {
 public:
     static std::string GetInsertSliceSql()
     {
@@ -492,4 +492,4 @@ private:
 }
 
 
-#endif // PROFILER_SERVER_JSONSQLCONSTANT_H
+#endif // PROFILER_SERVER_TEXTSQLCONSTANT_H

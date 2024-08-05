@@ -24,7 +24,7 @@ void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     DataType type = DataBaseManager::Instance().GetDataType();
-    if (type == DataType::JSON) {
+    if (type == DataType::TEXT) {
         TraceFileParser::Instance().Reset();
         Summary::KernelParse::Instance().Reset();
         Memory::MemoryParse::Instance().Reset();

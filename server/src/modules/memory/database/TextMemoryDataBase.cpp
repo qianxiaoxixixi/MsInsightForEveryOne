@@ -5,16 +5,16 @@
 #include "TraceTime.h"
 #include "VirtualMemoryDataBase.h"
 #include "ConstantDefs.h"
-#include "JsonMemoryDataBase.h"
+#include "TextMemoryDataBase.h"
 
 
 namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Server;
-JsonMemoryDataBase::JsonMemoryDataBase(std::recursive_mutex &sqlMutex) : VirtualMemoryDataBase(sqlMutex) {}
+TextMemoryDataBase::TextMemoryDataBase(std::recursive_mutex &sqlMutex) : VirtualMemoryDataBase(sqlMutex) {}
 
-JsonMemoryDataBase::~JsonMemoryDataBase()
+TextMemoryDataBase::~TextMemoryDataBase()
 {
     if (hasInitStmt) {
         ReleaseStmt();
@@ -23,7 +23,7 @@ JsonMemoryDataBase::~JsonMemoryDataBase()
     CloseDb();
 }
 
-bool JsonMemoryDataBase::SetConfig()
+bool TextMemoryDataBase::SetConfig()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -34,7 +34,7 @@ bool JsonMemoryDataBase::SetConfig()
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
-bool JsonMemoryDataBase::CreateTable()
+bool TextMemoryDataBase::CreateTable()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -56,14 +56,14 @@ bool JsonMemoryDataBase::CreateTable()
     return ExecSql(sql);
 }
 
-bool JsonMemoryDataBase::DropTable()
+bool TextMemoryDataBase::DropTable()
 {
     std::vector<std::string> tables = {operatorTable, recordTable, staticOpTable};
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
-bool JsonMemoryDataBase::InitStmt()
+bool TextMemoryDataBase::InitStmt()
 {
     if (hasInitStmt) {
         return true;
@@ -104,7 +104,7 @@ bool JsonMemoryDataBase::InitStmt()
     return true;
 }
 
-void JsonMemoryDataBase::ReleaseStmt()
+void TextMemoryDataBase::ReleaseStmt()
 {
     if (insertOperatorStmt != nullptr) {
         sqlite3_finalize(insertOperatorStmt);
@@ -120,7 +120,7 @@ void JsonMemoryDataBase::ReleaseStmt()
     }
 }
 
-void JsonMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &eventList)
+void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &eventList)
 {
     sqlite3_stmt *stmt = GetOperatorStmt(eventList.size());
     if (stmt == nullptr) {
@@ -154,7 +154,7 @@ void JsonMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
     }
 }
 
-void JsonMemoryDataBase::insertOperatorDetail(const Operator &event)
+void TextMemoryDataBase::insertOperatorDetail(const Operator &event)
 {
     operatorCache.emplace_back(event);
     if (operatorCache.size() == cacheSize) {
@@ -163,7 +163,7 @@ void JsonMemoryDataBase::insertOperatorDetail(const Operator &event)
     }
 }
 
-void JsonMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList)
+void TextMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList)
 {
     sqlite3_stmt *stmt = GetRecordStmt(eventList.size());
     if (stmt == nullptr) {
@@ -190,7 +190,7 @@ void JsonMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &event
     }
 }
 
-void JsonMemoryDataBase::InsertStaticOpDetailList(const std::vector<StaticOp> &eventList)
+void TextMemoryDataBase::InsertStaticOpDetailList(const std::vector<StaticOp> &eventList)
 {
     sqlite3_stmt *stmt = GetStaticOpStmt(eventList.size());
     if (stmt == nullptr) {
@@ -217,7 +217,7 @@ void JsonMemoryDataBase::InsertStaticOpDetailList(const std::vector<StaticOp> &e
     }
 }
 
-void JsonMemoryDataBase::insertRecordDetail(const Record &event)
+void TextMemoryDataBase::insertRecordDetail(const Record &event)
 {
     recordCache.emplace_back(event);
     if (recordCache.size() == cacheSize) {
@@ -226,7 +226,7 @@ void JsonMemoryDataBase::insertRecordDetail(const Record &event)
     }
 }
 
-void JsonMemoryDataBase::insertStaticOpDetail(const StaticOp &event)
+void TextMemoryDataBase::insertStaticOpDetail(const StaticOp &event)
 {
     staticOpCache.emplace_back(event);
     if (staticOpCache.size() == cacheSize) {
@@ -235,17 +235,17 @@ void JsonMemoryDataBase::insertStaticOpDetail(const StaticOp &event)
     }
 }
 
-bool JsonMemoryDataBase::UpdateParseStatus(const std::string& status)
+bool TextMemoryDataBase::UpdateParseStatus(const std::string& status)
 {
     return UpdateValueIntoStatusInfoTable(memoryParseStatus, status);
 }
 
-bool JsonMemoryDataBase::HasFinishedParseLastTime()
+bool TextMemoryDataBase::HasFinishedParseLastTime()
 {
     return CheckValueFromStatusInfoTable(memoryParseStatus, FINISH_STATUS);
 }
 
-uint64_t JsonMemoryDataBase::QueryMinOperatorAllocationTime()
+uint64_t TextMemoryDataBase::QueryMinOperatorAllocationTime()
 {
     std::string sql = "Select MIN(allocation_time) FROM " + operatorTable + " WHERE allocation_time != 0";
     sqlite3_stmt *stmt = nullptr;
@@ -263,7 +263,7 @@ uint64_t JsonMemoryDataBase::QueryMinOperatorAllocationTime()
     return min;
 }
 
-uint64_t  JsonMemoryDataBase::QueryMinRecordTimestamp()
+uint64_t  TextMemoryDataBase::QueryMinRecordTimestamp()
 {
     std::string sql = "Select MIN(timestamp) FROM " + recordTable + " WHERE timestamp != 0";
     sqlite3_stmt *stmt = nullptr;
@@ -281,7 +281,7 @@ uint64_t  JsonMemoryDataBase::QueryMinRecordTimestamp()
     return min;
 }
 
-std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
+std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql =
@@ -302,7 +302,7 @@ std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
     return sql;
 }
 
-std::string  JsonMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
+std::string  TextMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
 {
     std::string sql =
         "SELECT device_id, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
@@ -312,7 +312,7 @@ std::string  JsonMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorLi
     return sql;
 }
 
-std::string JsonMemoryDataBase::GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams)
+std::string TextMemoryDataBase::GetStaticGraphStartSql(Protocol::StaticOperatorGraphParams &requestParams)
 {
     std::string sql =
             "SELECT node_index_start, size FROM " + staticOpTable +
@@ -324,7 +324,7 @@ std::string JsonMemoryDataBase::GetStaticGraphStartSql(Protocol::StaticOperatorG
     return sql;
 }
 
-std::string JsonMemoryDataBase::GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams)
+std::string TextMemoryDataBase::GetStaticGraphEndSql(Protocol::StaticOperatorGraphParams &requestParams)
 {
     std::string sql =
             "SELECT node_index_end, size FROM " + staticOpTable +
@@ -336,26 +336,26 @@ std::string JsonMemoryDataBase::GetStaticGraphEndSql(Protocol::StaticOperatorGra
     return sql;
 }
 
-bool JsonMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::string> &graphId)
+bool TextMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::string> &graphId)
 {
     return ExecuteMemoryType(graphId, type);
 }
 
-bool JsonMemoryDataBase::QueryMemoryResourceType(std::string &type)
+bool TextMemoryDataBase::QueryMemoryResourceType(std::string &type)
 {
     std::string sql = "SELECT count(*) as nums FROM " + recordTable + " WHERE component = 'MindSpore'";
     return ExecuteMemoryResourceType(type, sql);
 }
 
-bool JsonMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql = GetOperatorSql(requestParams);
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
-bool JsonMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
-    Protocol::MemoryViewData &operatorBody)
+bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
+                                         Protocol::MemoryViewData &operatorBody)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql = "SELECT component, ROUND((timestamp - " + std::to_string(startTime) +
@@ -366,15 +366,15 @@ bool JsonMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &reques
     return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
 }
 
-bool JsonMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
-                                                 std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                                 std::vector<Protocol::StaticOperatorItem> &opDetails)
+bool TextMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
+    std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+    std::vector<Protocol::StaticOperatorItem> &opDetails)
 {
     std::string sql = GetStaticOperatorSql(requestParams);
     return ExecuteStaticOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
-bool JsonMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
+bool TextMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                                   Protocol::StaticOperatorGraphItem &graphItem)
 {
     std::string totalSql = "SELECT size FROM " + staticOpTable +
@@ -387,7 +387,7 @@ bool JsonMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphP
     return ExecuteStaticOperatorGraph(requestParams, graphItem, totalSql, graphStartSql, graphEndSql);
 }
 
-void JsonMemoryDataBase::SaveOperatorDetail()
+void TextMemoryDataBase::SaveOperatorDetail()
 {
     if (operatorCache.size() > 0) {
         InsertOperatorDetailList(operatorCache);
@@ -395,7 +395,7 @@ void JsonMemoryDataBase::SaveOperatorDetail()
     }
 }
 
-void JsonMemoryDataBase::SaveRecordDetail()
+void TextMemoryDataBase::SaveRecordDetail()
 {
     if (recordCache.size() > 0) {
         InsertRecordDetailList(recordCache);
@@ -403,7 +403,7 @@ void JsonMemoryDataBase::SaveRecordDetail()
     }
 }
 
-void JsonMemoryDataBase::SaveStaticOpDetail()
+void TextMemoryDataBase::SaveStaticOpDetail()
 {
     if (staticOpCache.size() > 0) {
         InsertStaticOpDetailList(staticOpCache);
@@ -411,7 +411,7 @@ void JsonMemoryDataBase::SaveStaticOpDetail()
     }
 }
 
-sqlite3_stmt *JsonMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
+sqlite3_stmt *TextMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == 0) {
@@ -438,7 +438,7 @@ sqlite3_stmt *JsonMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
     return stmt;
 }
 
-sqlite3_stmt *JsonMemoryDataBase::GetRecordStmt(uint64_t paramLen)
+sqlite3_stmt *TextMemoryDataBase::GetRecordStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == 0) {
@@ -461,7 +461,7 @@ sqlite3_stmt *JsonMemoryDataBase::GetRecordStmt(uint64_t paramLen)
     return stmt;
 }
 
-sqlite3_stmt *JsonMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
+sqlite3_stmt *TextMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == 0) {
@@ -484,7 +484,7 @@ sqlite3_stmt *JsonMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
     return stmt;
 }
 
-bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
+bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
 
@@ -504,7 +504,7 @@ bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
     return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
 }
 
-bool JsonMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
+bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                                       int64_t &totalNum)
 {
     std::string sql = "SELECT count(*) as nums FROM " + staticOpTable + " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
@@ -529,7 +529,7 @@ bool JsonMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorLi
     return ExecuteStaticOperatorListTotalNum(requestParams, totalNum, sql);
 }
 
-bool JsonMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)
+bool TextMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)
 {
     std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM " + operatorTable;
     return ExecuteOperatorSize(min, max, sql);

@@ -4,7 +4,7 @@
 
 #include "pch.h"
 #include "ParserStatusManager.h"
-#include "JsonClusterDatabase.h"
+#include "TextClusterDatabase.h"
 #include "CommunicationRapidSaxHandler.h"
 
 namespace Dic {
@@ -125,11 +125,11 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
         return false;
     }
     // 获取所有的groupId映射关系
-    auto databaseRead = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetReadClusterDatabase());
+    auto databaseRead = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetReadClusterDatabase());
     if (groupIdsMap.empty()) {
         groupIdsMap = databaseRead->GetAllGroupMap();
     }
-    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
         CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);

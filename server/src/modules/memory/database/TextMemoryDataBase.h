@@ -15,10 +15,10 @@ namespace Module {
 namespace Memory {
 using memoryLines = std::vector<std::vector<std::string>>;
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
-class JsonMemoryDataBase : public VirtualMemoryDataBase {
+class TextMemoryDataBase : public VirtualMemoryDataBase {
 public:
-    explicit JsonMemoryDataBase(std::recursive_mutex &sqlMutex);
-    ~JsonMemoryDataBase() override;
+    explicit TextMemoryDataBase(std::recursive_mutex &sqlMutex);
+    ~TextMemoryDataBase() override;
 
     bool SetConfig();
     bool CreateTable();

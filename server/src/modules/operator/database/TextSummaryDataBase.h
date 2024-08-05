@@ -12,10 +12,10 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Dic::Protocol;
-class JsonSummaryDataBase : public VirtualSummaryDataBase {
+class TextSummaryDataBase : public VirtualSummaryDataBase {
 public:
-    explicit JsonSummaryDataBase(std::recursive_mutex &sqlMutex);
-    ~JsonSummaryDataBase() override;
+    explicit TextSummaryDataBase(std::recursive_mutex &sqlMutex);
+    ~TextSummaryDataBase() override;
 
     bool SetConfig();
     bool CreateTable();

@@ -1754,7 +1754,7 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    std::string sql = JsonSqlConstant::GenerateAICpuQuerySqlDB(replace, params, dataType);
+    std::string sql = TextSqlConstant::GenerateAICpuQuerySqlDB(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for AICpuOpCanBeOptimized.");

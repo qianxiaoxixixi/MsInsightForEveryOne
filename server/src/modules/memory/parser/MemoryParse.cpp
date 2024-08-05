@@ -47,7 +47,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
         return false;
     }
     auto memoryDatabase =
-            dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+            dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -208,7 +208,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
         return false;
     }
     auto database =
-            dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+            dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -257,7 +257,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
         return false;
     }
     auto database =
-            dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+            dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -307,7 +307,7 @@ void MemoryParse::Reset()
     ServerLog::Info("Memory task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemoryDatabase();
     for (auto &item: databaseList) {
-        auto db = dynamic_cast<JsonMemoryDataBase*>(item);
+        auto db = dynamic_cast<TextMemoryDataBase*>(item);
         if (db != nullptr) {
             db->ReleaseStmt();
             db->CloseDb();
@@ -491,7 +491,7 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
         return false;
     }
     std::string dbPath = FileUtil::GetDbPath(*(filePair.recordFiles.begin()), fileId);
-    auto db = dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    auto db = dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     if (!db->OpenDb(dbPath, false)) {
         message = "Failed to open db file. Please delete the file manually: " + dbPath;
         return false;

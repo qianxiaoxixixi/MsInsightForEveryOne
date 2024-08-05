@@ -24,7 +24,7 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
 
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
 
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;

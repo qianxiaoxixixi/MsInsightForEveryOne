@@ -11,7 +11,7 @@
 #include <functional>
 #include "SummaryDef.h"
 #include "ThreadPool.h"
-#include "JsonSummaryDataBase.h"
+#include "TextSummaryDataBase.h"
 #include "FileParser.h"
 #include "ConstantDefs.h"
 

@@ -14,7 +14,7 @@
 #include "EventParser.h"
 #include "TraceTime.h"
 #include "FileUtil.h"
-#include "JsonTraceDatabase.h"
+#include "TextTraceDatabase.h"
 #include "CacheManager.h"
 #include "SourceProtocolResponse.h"
 
@@ -120,7 +120,7 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         ServerLog::Error("Failed to get connection.");
         return false;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr || !(database->DropTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
         return false;
@@ -171,7 +171,7 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
         ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EndParseTask of Source.");
         return;

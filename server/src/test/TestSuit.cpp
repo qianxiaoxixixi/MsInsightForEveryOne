@@ -32,7 +32,7 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string refPath0 = R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
         std::string refPath1 = R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
-        DataBaseManager::Instance().SetDataType(DataType::JSON);
+        DataBaseManager::Instance().SetDataType(DataType::TEXT);
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + refPath0 + "mindstudio_insight_data.db");
         DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPath1 + "mindstudio_insight_data.db");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "");

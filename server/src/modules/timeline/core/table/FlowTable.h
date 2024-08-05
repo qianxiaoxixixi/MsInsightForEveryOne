@@ -4,7 +4,7 @@
 
 #ifndef PROFILER_SERVER_FLOWTABLE_H
 #define PROFILER_SERVER_FLOWTABLE_H
-#include "JsonTableColum.h"
+#include "TextTableColum.h"
 #include "Table.h"
 namespace Dic::Module::Timeline {
 struct FlowPO {

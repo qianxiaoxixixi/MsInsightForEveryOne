@@ -9,9 +9,9 @@
 #include <memory>
 #include <mutex>
 #include "ConnectionPool.h"
-#include "JsonTraceDatabase.h"
+#include "TextTraceDatabase.h"
 #include "DbTraceDataBase.h"
-#include "JsonClusterDatabase.h"
+#include "TextClusterDatabase.h"
 #include "VirtualMemoryDataBase.h"
 #include "KernelParse.h"
 
@@ -24,8 +24,8 @@ enum class DatabaseType {
     MEMORY
 };
 enum class DataType {
-    JSON,
-    FULL_DB
+    TEXT,
+    DB
 };
 enum class FileType {
     MS_PROF,
@@ -78,7 +78,7 @@ private:
     ~DataBaseManager() = default;
 
     std::mutex mutex;
-    DataType dataType = DataType::JSON;
+    DataType dataType = DataType::TEXT;
     FileType fileType = FileType::PYTORCH;
     std::map<std::string, std::recursive_mutex> dbMutexMap;
     std::map<std::string, std::string> dbFilePathMap;

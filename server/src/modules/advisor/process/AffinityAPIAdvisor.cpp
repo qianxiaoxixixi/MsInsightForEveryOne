@@ -45,7 +45,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         auto item = results.at(i);
         Protocol::AffinityAPIData one{};
         one.name = item.name;
-        one.baseInfo.rankId = dbType == Timeline::DataType::JSON ? params.rankId : database->GetDbPath();
+        one.baseInfo.rankId = dbType == Timeline::DataType::TEXT ? params.rankId : database->GetDbPath();
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
         one.baseInfo.startTime = item.timestamp;

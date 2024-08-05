@@ -23,7 +23,7 @@ public:
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
-        DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
+        DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
         auto memoryDatabase =
                 dynamic_cast<DbMemoryDataBase *>(DataBaseManager::Instance().GetMemoryDatabase("0"));
@@ -37,7 +37,7 @@ public:
 
 TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorData)
 {
-    DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
+    DataBaseManager::Instance().SetDataType(DataType::DB);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";

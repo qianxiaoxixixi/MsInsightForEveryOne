@@ -7,13 +7,13 @@
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
 #include "ConstantDefs.h"
-#include "JsonSummaryDataBase.h"
+#include "TextSummaryDataBase.h"
 
 namespace Dic::Module::Summary {
 using namespace Server;
-JsonSummaryDataBase::JsonSummaryDataBase(std::recursive_mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
+TextSummaryDataBase::TextSummaryDataBase(std::recursive_mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
 
-JsonSummaryDataBase::~JsonSummaryDataBase()
+TextSummaryDataBase::~TextSummaryDataBase()
 {
     if (hasInitStmt) {
         ReleaseStmt();
@@ -21,7 +21,7 @@ JsonSummaryDataBase::~JsonSummaryDataBase()
     CloseDb();
 }
 
-bool JsonSummaryDataBase::SetConfig()
+bool TextSummaryDataBase::SetConfig()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -32,7 +32,7 @@ bool JsonSummaryDataBase::SetConfig()
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
-bool JsonSummaryDataBase::CreateTable()
+bool TextSummaryDataBase::CreateTable()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -48,14 +48,14 @@ bool JsonSummaryDataBase::CreateTable()
     return ExecSql(sql);
 }
 
-bool JsonSummaryDataBase::DropTable()
+bool TextSummaryDataBase::DropTable()
 {
     std::vector<std::string> tables = {kernelTable};
     std::lock_guard<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
-bool JsonSummaryDataBase::InitStmt()
+bool TextSummaryDataBase::InitStmt()
 {
     if (hasInitStmt) {
         return true;
@@ -76,7 +76,7 @@ bool JsonSummaryDataBase::InitStmt()
     return true;
 }
 
-void JsonSummaryDataBase::ReleaseStmt()
+void TextSummaryDataBase::ReleaseStmt()
 {
     if (insertKernelStmt != nullptr) {
         sqlite3_finalize(insertKernelStmt);
@@ -84,7 +84,7 @@ void JsonSummaryDataBase::ReleaseStmt()
     }
 }
 
-void JsonSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kernelVec)
+void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kernelVec)
 {
     sqlite3_stmt *stmt = GetKernelStmt(kernelVec.size());
     if (stmt == nullptr) {
@@ -124,7 +124,7 @@ void JsonSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
     }
 }
 
-void JsonSummaryDataBase::InsertKernelDetail(Kernel kernel)
+void TextSummaryDataBase::InsertKernelDetail(Kernel kernel)
 {
     kernelCache.emplace_back(kernel);
     if (kernelCache.size() == cacheSize) {
@@ -133,7 +133,7 @@ void JsonSummaryDataBase::InsertKernelDetail(Kernel kernel)
     }
 }
 
-void JsonSummaryDataBase::SaveKernelDetail()
+void TextSummaryDataBase::SaveKernelDetail()
 {
     if (kernelCache.size() > 0) {
         InsertKernelDetailList(kernelCache);
@@ -141,7 +141,7 @@ void JsonSummaryDataBase::SaveKernelDetail()
     }
 }
 
-sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
+sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == cacheSize) {
@@ -163,17 +163,17 @@ sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
     return stmt;
 }
 
-bool JsonSummaryDataBase::UpdateParseStatus(const std::string& status)
+bool TextSummaryDataBase::UpdateParseStatus(const std::string& status)
 {
     return UpdateValueIntoStatusInfoTable(kernelParseState, status);
 }
 
-bool JsonSummaryDataBase::HasFinishedParseLastTime()
+bool TextSummaryDataBase::HasFinishedParseLastTime()
 {
     return CheckValueFromStatusInfoTable(kernelParseState, FINISH_STATUS);
 }
 
-uint64_t JsonSummaryDataBase::QueryMinStartTime()
+uint64_t TextSummaryDataBase::QueryMinStartTime()
 {
     std::string sql = "Select MIN(start_time) FROM " + kernelTable + " WHERE start_time != 0";
     sqlite3_stmt *stmt = nullptr;
@@ -194,7 +194,7 @@ uint64_t JsonSummaryDataBase::QueryMinStartTime()
     return min;
 }
 
-bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
+bool TextSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                                     std::vector<Protocol::ComputeDetail> &computeDetails)
 {
     std::string sql = GenComputeSql(params);
@@ -237,7 +237,7 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
     return true;
 }
 
-std::string JsonSummaryDataBase::GenSortSql(std::string orderBy, std::string order)
+std::string TextSummaryDataBase::GenSortSql(std::string orderBy, std::string order)
 {
     std::string orderBySql;
     if (!StringUtil::CheckSqlValid(orderBy)) {
@@ -252,7 +252,7 @@ std::string JsonSummaryDataBase::GenSortSql(std::string orderBy, std::string ord
     return orderBySql;
 }
 
-std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
+std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
 {
     std::string orderBy = GenSortSql(request.orderBy, request.order);
     std::string sql;
@@ -276,7 +276,7 @@ std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
     return sql;
 }
 
-bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
+bool TextSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + kernelTable + " WHERE accelerator_core = ?";
@@ -296,7 +296,7 @@ bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
     return true;
 }
 
-std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
+std::string TextSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
 {
     std::string orderBy = GenSortSql(request.orderBy, request.order);
     std::string sql;
@@ -314,7 +314,7 @@ std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams 
     return sql;
 }
 
-bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
+bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
                                                  std::vector<Protocol::CommunicationDetail> &commDetails)
 {
     std::string sql = GetCommSql(params);
@@ -348,7 +348,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
     return true;
 }
 
-    std::string JsonSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
+    std::string TextSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         if (operatorGroup == OperatorGroupConverter::OperatorGroup::UNKNOWN) {
@@ -381,7 +381,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return sql;
     }
 
-    std::string JsonSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::OperatorDurationReqParams &reqParams)
+    std::string TextSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         std::string group;
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
@@ -407,7 +407,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return sql;
     }
 
-    bool JsonSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams,
+    bool TextSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams,
                                                         Protocol::QueryType type,
                                                         std::vector<Protocol::OperatorDurationRes> &datas)
     {
@@ -450,7 +450,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    bool JsonSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
+    bool TextSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
@@ -493,7 +493,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    std::string JsonSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
+    std::string TextSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
@@ -534,7 +534,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return sql;
     }
 
-    bool JsonSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
+    bool TextSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                          Protocol::OperatorStatisticInfoResponse &response)
     {
         if (!QueryStatisticTotalNum(reqParams, response.total)) {
@@ -580,7 +580,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    bool JsonSummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
+    bool TextSummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
         sqlite3_stmt *stmt = nullptr;
@@ -613,7 +613,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    std::string JsonSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
+    std::string TextSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
         std::string sql =
@@ -640,7 +640,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return sql;
     }
 
-    bool JsonSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+    bool TextSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                       Protocol::OperatorDetailInfoResponse &response)
     {
         if (!QueryDetailTotalNum(reqParams, response.total)) {
@@ -693,7 +693,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    bool JsonSummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
+    bool TextSummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         std::string condition;
@@ -737,7 +737,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    std::string JsonSummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
+    std::string TextSummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
     {
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
@@ -776,7 +776,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return sql;
     }
 
-    bool JsonSummaryDataBase::QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
+    bool TextSummaryDataBase::QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
                                                     Protocol::OperatorMoreInfoResponse &response)
     {
         if (!QueryMoreInfoTotalNum(reqParams, response.total)) {
@@ -829,7 +829,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    void JsonSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
+    void TextSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
     {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -849,7 +849,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
     }
 
     template <typename T>
-    bool JsonSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
+    bool TextSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
     {
         if (reqParams.filters.empty()) {
             return true;
@@ -870,7 +870,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    std::set<std::string> JsonSummaryDataBase::QueryRankIds()
+    std::set<std::string> TextSummaryDataBase::QueryRankIds()
     {
         std::set<std::string> rankIds = {};
         std::string sql = "SELECT rank_id FROM " + kernelTable + " GROUP BY rank_id";
@@ -891,7 +891,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return rankIds;
     }
 
-    bool JsonSummaryDataBase::IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup)
+    bool TextSummaryDataBase::IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup)
     {
         return operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
                operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP;
