@@ -44,6 +44,7 @@ class Const:
     NPM = 'npm.cmd' if platform.system() == WINDOWS_OS else 'npm'
     GRADLE = 'gradle.bat' if platform.system() == WINDOWS_OS else 'gradle'
     GRADLEW = 'gradlew.bat' if platform.system() == WINDOWS_OS else 'gradlew'
+    PLUGINS_VERSION_PLACEHOLDER = '{plugins_version}'
 
 
 class ExecError(Exception):
@@ -383,8 +384,33 @@ def build_product_parallel(vscode_version, idea_version, os_name):
     return 0
 
 
+# 替换文件内容，对文件内容中的占位符使用指定内容替换
+def replace_placeholders_in_file(file_path, placeholder, replacement):
+    with os.fdopen(os.open(file_path, os.O_RDWR, stat.S_IWUSR), "r+", encoding='utf-8') as file:
+        # 读取文件内容
+        content = file.read()
+        # 进行占位符替换
+        content = content.replace(placeholder, replacement)
+        # 将文件指针移到开头以便重写文件内容
+        file.seek(0)
+        file.write(content)
+        file.truncate()  # 清除文件指针当前位置后面的内容
+
+
+def update_plugins_version(version):
+    # 替换gradle.properties中的版本信息
+    gradle_properties = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR, 'foundation',
+                                     'ideaplugin', 'gradle.properties')
+    replace_placeholders_in_file(gradle_properties, Const.PLUGINS_VERSION_PLACEHOLDER, version)
+
+    # 替换installer.nsi中的版本信息
+    installer_nsi_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle', 'installer.nsi')
+    replace_placeholders_in_file(installer_nsi_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)
+
+
 def main():
     idea_version = load_version_info('7.0.RC3')
+    update_plugins_version(idea_version)
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
     vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
     init()
