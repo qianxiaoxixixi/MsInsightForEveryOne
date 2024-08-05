@@ -9,7 +9,7 @@ import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight
 import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
 import type { CardInfo } from '../components/ImportSelect';
-import type { Session } from '../entity/session';
+import { Session } from '../entity/session';
 import type { NotificationHandler } from './defs';
 import connector from '../connection/index';
 import { message } from 'antd';
@@ -116,7 +116,10 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
     if (!session) {
         return;
     }
-    (result.reset as boolean) && (session.units = []);
+    if (result.reset as boolean) {
+        removeRemoteHandler({ dataSource });
+    }
+
     session.phase = 'download';
     session.endTimeAll = undefined;
     session.isPending = result.isPending as boolean;
@@ -152,14 +155,6 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
         }
     });
     session.sortUnits();
-    if (result.reset === true) {
-        session.memoryRankIds = [];
-        session.operatorRankIds = [];
-        if (session.eventUnits[0] !== undefined) {
-            session.eventUnits = [];
-        }
-        session.doReset = !session.doReset;
-    }
 };
 
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
@@ -205,6 +200,7 @@ const clearIpynbInfo = (session: Session): void => {
 };
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+    const defaultSessionData = new Session();
     try {
         runInAction(() => {
             const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -244,9 +240,18 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             }
             clearIpynbInfo(session);
             clearTimeMarkerFlags(session);
-            session.doReset = !session.doReset;
-            session.memoryRankIds = [];
-            session.operatorRankIds = [];
+            Object.assign(session, {
+                doReset: !session.doReset,
+                memoryRankIds: [],
+                operatorRankIds: [],
+                expandedUnitKeys: [],
+                contextMenu: defaultSessionData.contextMenu,
+                unitsConfig: defaultSessionData.unitsConfig,
+                scrollTop: 0,
+                selectedDetailKeys: [],
+                selectedDetails: [],
+                searchData: undefined,
+            });
         });
     } catch (error) {
         console.error(error);

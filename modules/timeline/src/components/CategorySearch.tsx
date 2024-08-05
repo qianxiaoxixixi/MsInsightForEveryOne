@@ -315,6 +315,9 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             searchDataRef.current = session.searchData;
         }
     };
+    useEffect(() => {
+        searchDataRef.current = undefined;
+    }, [session.doReset]);
 
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}

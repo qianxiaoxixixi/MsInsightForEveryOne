@@ -204,6 +204,9 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         updateLinkLines();
     };
     React.useEffect(updateLineData, dependencyParam);
+    React.useEffect(() => {
+        setCheckedCategories([]);
+    }, [session.doReset]);
     return (
         <FilterContainer>
             <FilterList>
