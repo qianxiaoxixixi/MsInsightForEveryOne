@@ -3,12 +3,12 @@
 
 !define PRODUCT_PUBLISHER "huawei"
 
-Outfile "MindStudio-Insight_7.0.RC3_win.exe"
+Outfile "MindStudio-Insight_{plugins_version}_win.exe"
 InstallDir "$PROGRAMFILES\MindStudio Insight"
 Caption "MindStudio Insight Setup"
 Name "MindStudio Insight"
 
-!define CURRENT_VERSION "7.0.RC3"
+!define CURRENT_VERSION "{plugins_version}"
 
 !define REGKEY "Software\huawei\MindStudio Insight"
 
