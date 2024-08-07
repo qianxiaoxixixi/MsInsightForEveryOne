@@ -24,9 +24,10 @@ public:
 /* Functions for BbTraceDataBase */
 static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                     const Protocol::UnitFlowsParams &requestParams);
-static std::unique_ptr<SqliteResultSet> QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                          const Protocol::UnitThreadsParams &requestParams,
-                                                          const std::string &rankId, uint64_t minTimestamp);
+
+static std::unique_ptr<SqliteResultSet>
+QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t startTime, uint64_t endTime,
+                  const Dic::Protocol::Metadata &metaData, const std::string &rankId);
 
 static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
       const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId);
@@ -131,6 +132,9 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
                 threads.occurrences = 1;
                 threads.avgWallDuration = cur.duration;
                 threads.selfTime = selfTimeKeyValue.at(cur.name);
+                threads.tid = cur.tid;
+                threads.pid = cur.pid;
+                threads.metaType = cur.metaType;
                 responseBody.data.emplace_back(threads);
             } else {
                 responseBody.data[index].wallDuration += cur.duration;
@@ -161,6 +165,9 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
                 threads.occurrences = 1;
                 threads.avgWallDuration = cur.duration;
                 threads.selfTime = selfTimeKeyValue.at(cur.name);
+                threads.tid = cur.tid;
+                threads.pid = cur.pid;
+                threads.metaType = cur.metaType;
                 responseBody.data.emplace_back(threads);
             } else {
                 responseBody.data[index].wallDuration += cur.duration;

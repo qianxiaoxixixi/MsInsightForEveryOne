@@ -40,6 +40,9 @@ struct CompeteSliceDomain {
     std::string name;
     uint64_t trackId = 0;
     std::string cname;
+    std::string tid;
+    std::string pid;
+    std::string metaType;
     bool operator < (const CompeteSliceDomain &right) const
     {
         if (depth < right.depth) {

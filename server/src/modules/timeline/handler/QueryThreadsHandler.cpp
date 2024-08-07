@@ -25,9 +25,14 @@ void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    int64_t trackId = TraceFileParser::Instance()
-            .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result = database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+    std::vector<uint64_t> trackIdList;
+    trackIdList.reserve(request.params.metadataList.size());
+    for (const auto &metadata: request.params.metadataList) {
+        uint64_t trackId = TraceFileParser::Instance().GetTrackId(request.params.rankId, metadata.pid, metadata.tid);
+        trackIdList.push_back(trackId);
+    }
+    bool result = database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(),
+                                         trackIdList);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

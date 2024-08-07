@@ -476,52 +476,32 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    const Protocol::UnitThreadsParams &requestParams, const std::string &rankId, uint64_t minTimestamp)
+                                                                        uint64_t startTime,
+                                                                        uint64_t endTime,
+                                                                        const Dic::Protocol::Metadata &metaData,
+                                                                        const std::string &rankId)
 {
     std::string sql;
-    auto processType = GetProcessType(requestParams.metaType);
+    auto processType = GetProcessType(metaData.metaType);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            sql = "select startNs,endNs - startNs as duration,endNs,coalesce(c.name, main.taskType) as name, depth "
-                  " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
-                  " c on c.globalTaskId = main.globalTaskId"
-                  " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ?"
-                  " ORDER BY depth ASC, startNs ASC;";
-            return ExecuteQuery(stmt, sql, rankId, requestParams.tid,
-                                requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            return ExecuteQuery(stmt, ASCEND_THREADS_BY_PID, rankId, metaData.tid,
+                                startTime, endTime);
         case PROCESS_TYPE::HCCL:
-            sql = "with sub as ("
-                  "select startNs, endNs-startNs as duration, endNs, info.taskType as name from " + TABLE_TASK + " main"
-                  " join "+ TABLE_COMMUNICATION_TASK_INFO + " info on info.globalTaskId = main.globalTaskId\n"
-                   " where deviceId = ? and planeId = ?\n"
-                   " UNION select startNs,endNs-startNs as duration,endNs,opInfo.opName from COMMUNICATION_OP opInfo"
-                   " where groupName||'group' = ?) select * from sub where sub.endNs >= ? "
-                   " and sub.startNs <= ?;";
-            return ExecuteQuery(stmt, sql, rankId, requestParams.tid, requestParams.tid,
-                                requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            return ExecuteQuery(stmt, HCCL_THREADS_BY_PID, rankId, metaData.tid, metaData.tid,
+                                startTime, endTime);
         case PROCESS_TYPE::CANN_API:
-            sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + requestParams.metaType +
-                  " main where type = ? and globalTid = ? and endNs >= ? AND startNs <= ?"
-                  " ORDER BY depth ASC, startNs ASC;";
-            return ExecuteQuery(stmt, sql, requestParams.tid, requestParams.pid,
-                                requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            return ExecuteQuery(stmt, CANN_API_THREADS_BY_PID, metaData.tid, metaData.pid,
+                                startTime, endTime);
         case PROCESS_TYPE::API:
-            sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + requestParams.metaType +
-                  " main where globalTid = ? and endNs >= ? AND startNs <= ?"
-                  " ORDER BY depth ASC, startNs ASC;";
-            return ExecuteQuery(stmt, sql, requestParams.pid,
-                                requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            return ExecuteQuery(stmt, API_THREADS_BY_PID, metaData.pid,
+                                startTime, endTime);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            sql = "select startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
-                  " 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? and type = ? "
-                  " and endNs >= ? AND startNs <= ? ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, rankId, requestParams.tid,
-                                requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            return ExecuteQuery(stmt, OVERLAP_ANALYSIS_THREAD_BY_PID, rankId, metaData.tid,
+                                startTime, endTime);
         case PROCESS_TYPE::MS_TX:
-            sql = "select startNs, endNs - startNs as duration,endNs,message as name,depth from " + TABLE_MSTX_EVENTS +
-                  " where globalTid = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
-            return ExecuteQuery(stmt, sql, requestParams.pid, requestParams.startTime + minTimestamp,
-                                requestParams.endTime + minTimestamp);
+            return ExecuteQuery(stmt, MS_TX_THREAD_BY_PID, metaData.pid, startTime,
+                                endTime);
         default:
             throw DatabaseException("unsupported type!");
     }

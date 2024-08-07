@@ -79,42 +79,27 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
 }
 
 bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
-    Protocol::UnitThreadsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+                                   Protocol::UnitThreadsBody &responseBody,
+                                   uint64_t minTimestamp,
+                                   const std::vector<uint64_t> &trackIdList)
 {
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
-    auto stmt = CreatPreparedStatement();
-    if (stmt == nullptr) {
-        ServerLog::Error("Query_threads. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
+    // 遍历metadataList,这里不用union all,方便后续返回中拼接pid和tid等信息用于前端过滤
+    std::vector<SimpleSlice> simpleSliceVec;
+    std::map<std::string, uint64_t> selfTimeKeyValue;
+    for (auto &&metadata: requestParams.metadataList) {
+        std::string rankId = GetRealRankId(requestParams.rankId);
+        std::vector<Protocol::SimpleSlice> completeSlice = QueryThreadByPid(metadata, startTime, endTime, rankId,
+                                                                            selfTimeKeyValue);
+        simpleSliceVec.insert(simpleSliceVec.end(), completeSlice.begin(), completeSlice.end());
     }
-    std::vector<Protocol::SimpleSlice> simpleSliceVec;
-    try {
-        auto resultSet = TraceDatabaseHelper::QueryThreadsByPid(stmt, requestParams,
-                                                                GetRealRankId(requestParams.rankId), minTimestamp);
-        while (resultSet->Next()) {
-            int col = resultStartIndex;
-            Protocol::SimpleSlice simpleSlice{};
-            simpleSlice.timestamp = resultSet->GetInt64(col++);
-            simpleSlice.duration = resultSet->GetInt64(col++);
-            simpleSlice.endTime = resultSet->GetInt64(col++);
-            simpleSlice.name = stringsCache.at(path)[resultSet->GetString(col++)];
-            simpleSlice.depth = resultSet->GetInt32(col++);
-            simpleSliceVec.emplace_back(simpleSlice);
-        }
-    } catch (DatabaseException &e) {
-        ServerLog::Error("Query threads failed, ", e.What());
-        return false;
-    }
-
     // process data
     if (simpleSliceVec.empty()) {
         responseBody.emptyFlag = true;
         return true;
     }
 
-    std::map<std::string, uint64_t> selfTimeKeyValue;
-    TraceDatabaseHelper::CalculateSelfTime(simpleSliceVec, selfTimeKeyValue, startTime, endTime);
     std::vector<Protocol::SimpleSlice> nRows =
         TraceDatabaseHelper::ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
     TraceDatabaseHelper::ReduceThread(nRows, selfTimeKeyValue, responseBody);
@@ -1322,6 +1307,7 @@ void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
         }
         auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first, "Thread " + std::to_string(tid),
             ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+        threadUnit->metaData.threadId = std::to_string(tid);
         auto cannApiUnit =
             GenerateBaseUnitTrack("label", path, thread.first, "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
         for (const auto &item : thread.second) {
@@ -1958,5 +1944,43 @@ bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &para
         return false;
     }
     return TraceDatabaseHelper::QueryEventsViewData4Db(stmt, params, body, minTimestamp, GetRealRankId(params.rankId));
+}
+
+std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metadata &metaData,
+                                                                     uint64_t startTime,
+                                                                     uint64_t endTime,
+                                                                     const std::string &rankId,
+                                                                     std::map<std::string, uint64_t> &selfTimeKeyValue)
+{
+    auto stmt = CreatPreparedStatement();
+    if (stmt == nullptr) {
+        ServerLog::Error("Query_threads. Failed to prepare sql.", sqlite3_errmsg(db));
+        return {};
+    }
+    std::vector<Protocol::SimpleSlice> completeSlice;
+    try {
+        auto resultSet = TraceDatabaseHelper::QueryThreadsByPid(stmt, startTime, endTime, metaData, rankId);
+        while (resultSet->Next()) {
+            int col = resultStartIndex;
+            Protocol::SimpleSlice simpleSlice{};
+            simpleSlice.timestamp = resultSet->GetInt64(col++);
+            simpleSlice.duration = resultSet->GetInt64(col++);
+            simpleSlice.endTime = resultSet->GetInt64(col++);
+            simpleSlice.name = stringsCache.at(path)[resultSet->GetString(col++)];
+            simpleSlice.depth = resultSet->GetInt32(col++);
+            simpleSlice.tid = metaData.tid;
+            simpleSlice.pid = metaData.pid;
+            simpleSlice.metaType = metaData.metaType;
+            completeSlice.emplace_back(simpleSlice);
+        }
+    } catch (DatabaseException &e) {
+        ServerLog::Error("Query threads failed, ", e.What());
+        return {};
+    }
+    if (completeSlice.empty()) {
+        return completeSlice;
+    }
+    TraceDatabaseHelper::CalculateSelfTime(completeSlice, selfTimeKeyValue, startTime, endTime);
+    return completeSlice;
 }
 }

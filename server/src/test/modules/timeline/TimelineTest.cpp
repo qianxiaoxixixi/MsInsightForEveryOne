@@ -269,7 +269,6 @@ TEST_F(TestSuit, QueryThreads)
     request.endTime = ENDTIME;
     Dic::Protocol::UnitThreadsBody response;
     uint64_t minTimestamp = 0;
-    int64_t traceId = 30;
 
     // expected data
     int size = 2;
@@ -278,9 +277,14 @@ TEST_F(TestSuit, QueryThreads)
     uint64_t occurrences = 62;
     uint64_t avgWallDuration = 680;
     uint64_t selfTime = 42180;
-
+    Dic::Protocol::Metadata metadata;
+    metadata.tid = "1413063";
+    metadata.pid = "140836602";
+    metadata.metaType.clear();
+    request.metadataList.emplace_back(metadata);
+    request.rankId = "0";
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    database->QueryThreads(request, response, minTimestamp, traceId);
+    database->QueryThreads(request, response, minTimestamp, {30});
 
     EXPECT_EQ(response.emptyFlag, false);
     EXPECT_EQ(response.data.size(), size);

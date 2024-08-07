@@ -22,20 +22,30 @@ struct SliceQuery {
      */
     uint64_t minTimestamp = 0;
     std::string cat;
+    /*
+     * timeline框选时使用
+    */
+    std::string rankId;
+    std::string pid;
+    std::string tid;
+    std::string metaType;
     bool isFilterPythonFunction = false;
-    void QueryThreadsCheck(std::string &error) const
+    bool QueryThreadsCheck(std::string &error) const
     {
+        error.clear();
         if (db == nullptr) {
             error = "database connection is not open";
-            return;
+            return false;
         }
         if (startTime > endTime) {
             error = "start time is bigger than end time";
-            return;
+            return false;
         }
         if (trackId == 0) {
             error = "track id is not correct";
+            return false;
         }
+        return true;
     }
 };
 

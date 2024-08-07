@@ -83,6 +83,9 @@ struct Threads {
     uint64_t occurrences = 0;
     uint64_t avgWallDuration = 0;
     uint64_t selfTime = 0;
+    std::string tid;
+    std::string pid;
+    std::string metaType;
 };
 
 struct UnitThreadsBody {
@@ -214,6 +217,9 @@ struct SimpleSlice {
     uint64_t endTime = 0;
     uint32_t depth = 0;
     std::string name;
+    std::string tid;
+    std::string pid;
+    std::string metaType;
     bool operator < (const SimpleSlice &right) const
     {
         if (depth < right.depth) {

@@ -276,6 +276,45 @@ const static std::string QUERY_DEVICE_LOCATION_SQL =
         " join connectionCats on op.connectionId = connectionCats.connectionId group by opId, connectionCats.cat "
         " order by startTime;";
 
+// QueryThreadsByPid
+const static std::string ASCEND_THREADS_BY_PID =
+            "select startNs,endNs - startNs as duration,endNs,coalesce(c.name, main.taskType) as name, depth "
+            " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
+            " c on c.globalTaskId = main.globalTaskId"
+            " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ?"
+            " ORDER BY depth ASC, startNs ASC;";
+
+const static std::string HCCL_THREADS_BY_PID =
+            "with sub as ("
+            "select startNs, endNs-startNs as duration, endNs, info.taskType as name from " + TABLE_TASK +
+            " main join " + TABLE_COMMUNICATION_TASK_INFO +
+            " info on info.globalTaskId = main.globalTaskId\n"
+            " where deviceId = ? and planeId = ?\n"
+            " UNION select startNs,endNs-startNs as duration,endNs,opInfo.opName"
+            " from COMMUNICATION_OP opInfo"
+            " where groupName||'group' = ?) select * from sub where sub.endNs >= ? "
+            " and sub.startNs <= ?;";
+
+const static std::string CANN_API_THREADS_BY_PID =
+              "select startNs, endNs - startNs as duration, endNs, name, depth from CANN_API"
+              " main where type = ? and globalTid = ? and endNs >= ? AND startNs <= ?"
+              " ORDER BY depth ASC, startNs ASC;";
+
+const static std::string API_THREADS_BY_PID =
+        "select startNs, endNs - startNs as duration, endNs, name, depth from PYTORCH_API "
+        " main where globalTid = ? and endNs >= ? AND startNs <= ?"
+        " ORDER BY depth ASC, startNs ASC;";
+
+const static std::string OVERLAP_ANALYSIS_THREAD_BY_PID =
+        "select startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
+        " 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? and type = ? "
+        " and endNs >= ? AND startNs <= ? ORDER BY startNs;";
+
+const static std::string MS_TX_THREAD_BY_PID =
+        "select startNs, endNs - startNs as duration,endNs,message as name,depth from " +
+        TABLE_MSTX_EVENTS +
+        " where globalTid = ? and endNs >= ? AND startNs <= ? ORDER BY startNs";
+
 class DbSqlDefs {
 public:
 static std::string GetConnectionCatSql()

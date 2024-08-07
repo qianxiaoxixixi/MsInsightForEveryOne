@@ -33,7 +33,7 @@ public:
     virtual bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
                            Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) = 0;
     virtual bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
-                              uint64_t minTimestamp, int64_t traceId) = 0;
+                              uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) = 0;
     virtual bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) = 0;
     virtual bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,

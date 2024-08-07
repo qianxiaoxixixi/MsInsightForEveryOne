@@ -58,7 +58,7 @@ public:
         Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
 
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
-        uint64_t minTimestamp, int64_t traceId) override;
+                      uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) override;
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
         Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) override;
     bool QueryUnitsMetadata(const std::string &fileId,

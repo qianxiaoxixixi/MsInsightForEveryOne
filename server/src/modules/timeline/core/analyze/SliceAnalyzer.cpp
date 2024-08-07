@@ -252,8 +252,12 @@ void SliceAnalyzer::ComputeSliceDomainVecAndSelfTimeByTimeRange(const SliceQuery
             continue;
         }
         item.depth = depthInfo[item.id];
+        item.tid = sliceQuery.tid;
+        item.pid = sliceQuery.pid;
+        item.metaType = sliceQuery.metaType;
         competeSliceVec.emplace_back(std::move(item));
     }
+    // 需要先排序再计算SelfTime
     std::sort(competeSliceVec.begin(), competeSliceVec.end(), std::less<CompeteSliceDomain>());
     CalculateSelfTime(competeSliceVec, selfTimeKeyValue);
     uint64_t end = sliceQuery.endTime + sliceQuery.minTimestamp;

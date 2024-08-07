@@ -239,6 +239,20 @@ private:
         }
     }
 
+    static inline void SetByJsonKeyValueHelper(double &src, const json_t &json, std::string_view  key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].IsNumber()) {
+            src = json[key.data()].GetDouble();
+        }
+    }
+
+    static inline void SetByJsonKeyValueHelper(float &src, const json_t &json, std::string_view key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].IsNumber()) {
+            src = json[key.data()].GetFloat();
+        }
+    }
+
     template <typename T> static inline void AddMemberHelper(json_t &json, std::string_view key, T &&value,
         RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {

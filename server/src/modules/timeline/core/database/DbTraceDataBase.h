@@ -6,6 +6,7 @@
 #ifndef PROFILER_SERVER_DBTRACEDATABASE_H
 #define PROFILER_SERVER_DBTRACEDATABASE_H
 
+#include <TimelineProtocolRequest.h>
 #include "VirtualTraceDatabase.h"
 #include "TraceDatabaseDef.h"
 #include "map"
@@ -55,7 +56,7 @@ public:
     bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
         Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
-                      uint64_t minTimestamp, int64_t traceId) override;
+                      uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) override;
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp,
                            int64_t trackId) override;
@@ -183,6 +184,10 @@ private:
     void QueryFlowLocation(const std::string& sql,
         std::map<std::string, std::map<std::string, Protocol::FlowLocation>>& startFlowLocations,
         std::map<std::string, std::map<std::string, std::vector<Protocol::FlowLocation>>>& endFlowLocations);
+
+    std::vector<Protocol::SimpleSlice>
+    QueryThreadByPid(const Protocol::Metadata &metaData, uint64_t startTime, uint64_t endTime,
+                     const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);
 };
 }
 
