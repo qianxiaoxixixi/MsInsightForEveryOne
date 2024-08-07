@@ -87,6 +87,9 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
     }
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
     std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
+    if (request == nullptr) {
+        return nullptr;
+    }
     auto bodyJson = JsonUtil::TryParse(bodyStr, error).value();
 
     // 增加上传二进制数据的处理
@@ -97,16 +100,12 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
         if (buffer.length() < msgLen + textLen) {
             return nullptr;
         }
-
         auto &uploadFileRequest = dynamic_cast<UploadFileRequest &>(*request);
         uint64_t textPos = bodyPos + bodyLen;
         uploadFileRequest.params.text = buffer.substr(textPos, textLen);
     }
 
     buffer = buffer.substr(bodyPos + bodyLen + textLen); // buffer removes head and body string
-    if (request == nullptr) {
-        return nullptr;
-    }
     return std::unique_ptr<ProtocolMessage>(request.release());
 }
 
