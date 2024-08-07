@@ -127,6 +127,9 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
         JsonUtil::AddMember(threadsJson, "occurrences", threads.occurrences, allocator);
         JsonUtil::AddMember(threadsJson, "avgWallDuration", threads.avgWallDuration, allocator);
         JsonUtil::AddMember(threadsJson, "selfTime", threads.selfTime, allocator);
+        JsonUtil::AddMember(threadsJson, "tid", threads.tid, allocator);
+        JsonUtil::AddMember(threadsJson, "pid", threads.pid, allocator);
+        JsonUtil::AddMember(threadsJson, "metaType", threads.metaType, allocator);
         data.PushBack(threadsJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);

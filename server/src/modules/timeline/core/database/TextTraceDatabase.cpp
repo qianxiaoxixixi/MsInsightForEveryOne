@@ -577,23 +577,34 @@ bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
 }
 
 bool TextTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
-                                     Protocol::UnitThreadsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+                                     Protocol::UnitThreadsBody &responseBody,
+                                     uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList)
 {
     std::vector<CompeteSliceDomain> competeSliceVec;
     std::map<std::string, uint64_t> selfTimeKeyValue;
     SliceQuery sliceQuery;
     sliceQuery.db = db;
+    sliceQuery.rankId = requestParams.rankId;
     sliceQuery.minTimestamp = minTimestamp;
     sliceQuery.startTime = requestParams.startTime;
     sliceQuery.endTime = requestParams.endTime;
-    sliceQuery.trackId = traceId;
-    std::string error;
-    sliceQuery.QueryThreadsCheck(error);
-    if (!std::empty(error)) {
-        ServerLog::Error(error);
-        return false;
+    /*
+     遍历metaDataList,这里不在一个sql里查询出来是为了以后预留pid.tid删选
+    */
+    for (size_t i = 0; i < requestParams.metadataList.size(); i++) {
+        const Dic::Protocol::Metadata& metadata = requestParams.metadataList.at(i);
+        sliceQuery.tid = metadata.tid;
+        sliceQuery.pid = metadata.pid;
+        sliceQuery.metaType = metadata.metaType;
+        sliceQuery.trackId = trackIdList[i];
+        std::string error;
+        if (!sliceQuery.QueryThreadsCheck(error)) {
+            ServerLog::Error(error);
+            continue;
+        }
+        sliceAnalyzerPtr->ComputeSliceDomainVecAndSelfTimeByTimeRange(sliceQuery, competeSliceVec, selfTimeKeyValue);
     }
-    sliceAnalyzerPtr->ComputeSliceDomainVecAndSelfTimeByTimeRange(sliceQuery, competeSliceVec, selfTimeKeyValue);
+
     if (competeSliceVec.empty()) {
         responseBody.emptyFlag = true;
         return true;

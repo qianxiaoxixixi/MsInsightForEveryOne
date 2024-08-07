@@ -41,6 +41,49 @@ TEST(JsonUtil, SetByJsonKeyValue) {
     EXPECT_EQ(age, 18);
 }
 
+TEST(JsonUtil, SetByJsonKeyValueDouble) {
+    document_t json;
+    json.Parse("{\n"
+               "        \"name\": \"X\",\n"
+               "        \"age\": 18,\n"
+               "        \"args\": {}\n"
+               "}");
+    double age = 0;
+    JsonUtil::SetByJsonKeyValue(age, json, "age");
+    EXPECT_EQ(age, 18);
+    json.Parse("{\n"
+               "        \"name\": \"X\",\n"
+               "        \"age\": 18,\n"
+               "        \"score\":65.12,\n"
+               "        \"args\": {}\n"
+               "}");
+    double score = 0;
+    JsonUtil::SetByJsonKeyValue(score, json, "score");
+    EXPECT_FLOAT_EQ(score, 65.12);
+}
+
+TEST(JsonUtil, JsonUtil_SetByJsonKeyValueFloat)
+{
+    document_t json;
+    json.Parse("{\n"
+               "        \"name\": \"X\",\n"
+               "        \"age\": 18,\n"
+               "        \"args\": {}\n"
+               "}");
+    float age = 0;
+    JsonUtil::SetByJsonKeyValue(age, json, "age");
+    EXPECT_EQ(age, 18);
+    json.Parse("{\n"
+               "        \"name\": \"X\",\n"
+               "        \"age\": 18,\n"
+               "        \"score\":65.12,\n"
+               "        \"args\": {}\n"
+               "}");
+    float score = 0;
+    JsonUtil::SetByJsonKeyValue(score, json, "score");
+    EXPECT_FLOAT_EQ(score, 65.12);
+}
+
 TEST(JsonUtil, TryParse) {
     std::string jsonStr;
     std::string errMessage;

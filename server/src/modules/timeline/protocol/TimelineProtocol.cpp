@@ -150,11 +150,18 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsRequest(const json_t &js
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    if (json["params"].HasMember("metadataList") && json["params"]["metadataList"].IsArray()) {
+        for (const auto &metaData: json["params"]["metadataList"].GetArray()) {
+            Metadata data{
+                    .tid = JsonUtil::GetString(metaData, "tid"),
+                    .pid = JsonUtil::GetString(metaData, "pid"),
+                    .metaType = JsonUtil::GetString(metaData, "metaType")
+            };
+            reqPtr->params.metadataList.emplace_back(std::move(data));
+        }
+    }
     return reqPtr;
 }
 

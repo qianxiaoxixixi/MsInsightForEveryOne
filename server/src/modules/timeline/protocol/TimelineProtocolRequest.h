@@ -74,11 +74,15 @@ struct UnitThreadTracesSummaryRequest : public Request {
     UnitThreadTracesSummaryParams params;
 };
 
-struct UnitThreadsParams {
-    std::string rankId;
+struct Metadata {
     std::string tid;
     std::string pid;
     std::string metaType;
+};
+
+struct UnitThreadsParams {
+    std::string rankId;
+    std::vector<Metadata> metadataList;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
 };

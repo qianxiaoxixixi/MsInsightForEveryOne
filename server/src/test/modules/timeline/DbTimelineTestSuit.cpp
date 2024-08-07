@@ -190,41 +190,42 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
 
     Dic::Protocol::UnitThreadsParams params;
     params.startTime = 0;
-    params.rankId = "2";
-    params.pid = "Ascend Hardware";
-    params.metaType = "Ascend Hardware";
-    params.tid = "8";
     params.endTime = 400000000; // endTime = 400000000
-
-    database->QueryThreads(params, body, minTimestamp, 0);
+    params.rankId = "2";
+    Dic::Protocol::Metadata metadata{
+            .tid = "8",
+            .pid = "Ascend Hardware",
+            .metaType = "Ascend Hardware"
+    };
+    params.metadataList.emplace_back(metadata);
+    database->QueryThreads(params, body, minTimestamp, {0});
     EXPECT_EQ(body.data.size(), 1);
     EXPECT_EQ(body.data[0].title, "hcom_allReduce__305_880_1");
     EXPECT_EQ(body.data[0].selfTime, 51121); // selfTime = 51121
     EXPECT_EQ(body.data[0].occurrences, 1);
 
     body.data.clear();
-    params.metaType = "HCCL";
-    params.tid = "1";
-
-    database->QueryThreads(params, body, minTimestamp, 0);
+    params.metadataList[0].tid = "1";
+    params.metadataList[0].metaType = "HCCL";
+    database->QueryThreads(params, body, minTimestamp, {0});
     EXPECT_EQ(body.data.size(), 1);
     EXPECT_EQ(body.data[0].title, "Memcpy");
     EXPECT_EQ(body.data[0].selfTime, 1520); // selfTime = 1520
     EXPECT_EQ(body.data[0].occurrences, 1);
 
     body.data.clear();
-    params.metaType = "CANN_API";
-    params.tid = "20000";
-    params.pid = "11814731181473";
+    params.metadataList[0].metaType = "CANN_API";
+    params.metadataList[0].tid = "20000";
+    params.metadataList[0].pid = "11814731181473";
 
-    database->QueryThreads(params, body, minTimestamp, 0);
+    database->QueryThreads(params, body, minTimestamp, {0});
     EXPECT_EQ(body.data.size(), 3); // size = 3
     EXPECT_EQ(body.data[0].title, "aclrtGetDeviceCount");
     EXPECT_EQ(body.data[0].selfTime, 2560); // selfTime = 2560
     EXPECT_EQ(body.data[0].occurrences, 1);
 
-    params.metaType = "HBM";
-    EXPECT_EQ(database->QueryThreads(params, body, minTimestamp, 0), false);
+    params.metadataList[0].metaType = "HBM";
+    EXPECT_EQ(database->QueryThreads(params, body, minTimestamp, {0}), true);
 }
 
 TEST_F(FullDbTestSuit, FullDb_of_ThreadTraceDetail)
