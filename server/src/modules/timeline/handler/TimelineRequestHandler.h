@@ -4,7 +4,9 @@
 
 #ifndef PROFILER_SERVER_TIMELINE_REQUEST_HANDLER_H
 #define PROFILER_SERVER_TIMELINE_REQUEST_HANDLER_H
+#include <utility>
 
+#include "RenderEngineInterface.h"
 #include "ModuleRequestHandler.h"
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
@@ -19,7 +21,14 @@ public:
         moduleName = Protocol::ModuleType::TIMELINE;
     }
     ~TimelineRequestHandler() override = default;
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override{};
+    void SetRenderEngine(std::shared_ptr<RenderEngineInterface> renderEngineInterface)
+    {
+        renderEngine = std::move(renderEngineInterface);
+    };
+
+protected:
+    std::shared_ptr<RenderEngineInterface> renderEngine = nullptr;
 };
 } // end of namespace Timeline
 } // end of namespace Module

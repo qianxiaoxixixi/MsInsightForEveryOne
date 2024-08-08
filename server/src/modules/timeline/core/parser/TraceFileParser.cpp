@@ -10,6 +10,7 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "EventNotifyThreadPoolExecutor.h"
 #include "CacheManager.h"
+#include "TrackInfoManager.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -78,7 +79,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         uint64_t max = 0;
         database->QueryExtremumTimestamp(min, max);
         auto threadMap = database->QueryAllThreadMap();
-        TraceFileParser::Instance().UpdateTrackIdMap(fileId, threadMap);
+        TrackInfoManager::Instance().UpdateTrackIdMap(fileId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
         ParseEndCallBack(fileId, true, "");
         ParserStatusManager::Instance().SetFinishStatus(fileId);
@@ -215,6 +216,7 @@ void TraceFileParser::Reset()
         conn->Stop();
     }
     trackIdMap.clear();
+    TrackInfoManager::Instance().Reset();
     trackId = 0;
     DataBaseManager::Instance().Clear();
     TraceTime::Instance().Reset();

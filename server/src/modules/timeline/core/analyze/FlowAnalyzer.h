@@ -11,6 +11,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <SliceRepoInterface.h>
 #include "TimelineProtocolResponse.h"
 #include "TraceDatabaseDef.h"
 namespace Dic::Module::Timeline {
@@ -38,7 +39,7 @@ class FlowAnalyzer {
 public:
     explicit FlowAnalyzer();
     ~FlowAnalyzer() = default;
-    void SetRepository(std::unique_ptr<RepositoryInterface> repositoryDependency);
+    void SetRepository(std::unique_ptr<SliceRepoInterface> repositoryDependency);
     /* *
      * 计算选中的算子相关联的所有连线点
      * @param flowQuery
@@ -72,7 +73,7 @@ public:
         const std::vector<SliceDomain> &sliceVec) const;
 
 private:
-    std::unique_ptr<RepositoryInterface> repository;
+    std::unique_ptr<SliceRepoInterface> repository;
     static bool CompareTrackIdASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
     static bool CompareFlowIdAndTimestampASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
     static void GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,

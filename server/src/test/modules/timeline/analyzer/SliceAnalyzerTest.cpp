@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <gtest/gtest.h>
-#include "RepositoryInterface.h"
 #include "SliceAnalyzer_mock_data.h"
 #include "SliceAnalyzer.h"
 #include "CacheManager.h"
@@ -14,7 +13,7 @@ class SliceAnalyzerTest : public ::testing::Test {};
 TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_filter_python_function)
 {
     // 对Repository进行mock数据
-    class RepositoryMock : public Dic::Module::Timeline::Repository {
+    class RepositoryMock : public Dic::Module::Timeline::TextRepository {
     public:
         void QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
             std::vector<CompeteSliceDomain> &sliceVec) override
@@ -22,10 +21,10 @@ TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_filte
             QueryCompeteSliceVecByTimeRangeAndTrackId_mock(sliceQuery, sliceVec);
         }
     };
-    std::unique_ptr<Dic::Module::Timeline::RepositoryInterface> ptr = std::make_unique<RepositoryMock>();
+    std::shared_ptr<Dic::Module::Timeline::TextRepository> ptr = std::make_shared<RepositoryMock>();
     SliceAnalyzer sliceAnalyzer;
-    sliceAnalyzer.SetRepository(std::move(ptr));
-    SliceQuery sliceQuery = { nullptr, 3, 0, 23, 2 };
+    sliceAnalyzer.SetRepository(ptr);
+    SliceQuery sliceQuery = { 3, 0, 23, 2 };
     SliceCacheFliterPythonMock();
     SliceCacheManager::Instance().PutPythonFunctionIdVec(std::to_string(sliceQuery.trackId), { 1 });
     SliceCacheManager::Instance().UpdatePythonFilterSet(std::to_string(sliceQuery.trackId), true);
@@ -48,7 +47,7 @@ TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_filte
 TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_not_filter_python_function)
 {
     // 对Repository进行mock数据
-    class RepositoryMock : public Dic::Module::Timeline::Repository {
+    class RepositoryMock : public Dic::Module::Timeline::TextRepository {
     public:
         void QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
             std::vector<CompeteSliceDomain> &sliceVec) override
@@ -56,10 +55,10 @@ TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_not_f
             QueryCompeteSliceVecByTimeRangeAndTrackId_mock(sliceQuery, sliceVec);
         }
     };
-    std::unique_ptr<Dic::Module::Timeline::RepositoryInterface> ptr = std::make_unique<RepositoryMock>();
+    std::shared_ptr<Dic::Module::Timeline::TextRepository> ptr = std::make_shared<RepositoryMock>();
     SliceAnalyzer sliceAnalyzer;
-    sliceAnalyzer.SetRepository(std::move(ptr));
-    SliceQuery sliceQuery = { nullptr, 3, 0, 23, 2 };
+    sliceAnalyzer.SetRepository(ptr);
+    SliceQuery sliceQuery = {3, 0, 23, 2 };
     SliceCacheNotFliterPythonMock();
     std::vector<CompeteSliceDomain> sliceDomainVec;
     std::map<std::string, uint64_t> selfTimeKeyValue;
@@ -82,7 +81,7 @@ TEST_F(SliceAnalyzerTest, test_ComputeSliceDomainVecAndSelfTimeByTimeRange_not_f
 TEST_F(SliceAnalyzerTest, test_ComputeSelfTimeByTimeRange_cache_isExpire_not_filter_python_function)
 {
     // 对Repository进行mock数据
-    class RepositoryMock : public Dic::Module::Timeline::Repository {
+    class RepositoryMock : public Dic::Module::Timeline::TextRepository {
     public:
         void QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
             std::vector<CompeteSliceDomain> &sliceVec) override
@@ -95,10 +94,10 @@ TEST_F(SliceAnalyzerTest, test_ComputeSelfTimeByTimeRange_cache_isExpire_not_fil
             QuerySimpleSliceWithOutNameByTrackId_mock(sliceQuery, sliceVec);
         }
     };
-    std::unique_ptr<Dic::Module::Timeline::RepositoryInterface> ptr = std::make_unique<RepositoryMock>();
+    std::shared_ptr<Dic::Module::Timeline::TextRepository> ptr = std::make_shared<RepositoryMock>();
     SliceAnalyzer sliceAnalyzer;
-    sliceAnalyzer.SetRepository(std::move(ptr));
-    SliceQuery sliceQuery = { nullptr, 3, 0, 23, 2 };
+    sliceAnalyzer.SetRepository(ptr);
+    SliceQuery sliceQuery = {3, 0, 23, 2 };
     std::vector<CompeteSliceDomain> sliceDomainVec;
     std::map<std::string, uint64_t> selfTimeKeyValue;
     sliceAnalyzer.ComputeSliceDomainVecAndSelfTimeByTimeRange(sliceQuery, sliceDomainVec, selfTimeKeyValue);

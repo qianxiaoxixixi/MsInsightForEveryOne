@@ -5,8 +5,8 @@
 #include "pch.h"
 #include "EventUtil.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
 #include "SourceFileParser.h"
+#include "TrackInfoManager.h"
 #include "ParserStatusManager.h"
 #include "SimulationSliceCacheManager.h"
 #include "EventParser.h"
@@ -366,7 +366,7 @@ int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
     if (trackIdMap.count(str) > 0) {
         return trackIdMap.at(str);
     }
-    int64_t id = TraceFileParser::Instance().GetTrackId(fileId, pid, tid);
+    int64_t id = TrackInfoManager::Instance().GetTrackId(fileId, pid, tid);
     trackIdMap.emplace(str, id);
     return id;
 }

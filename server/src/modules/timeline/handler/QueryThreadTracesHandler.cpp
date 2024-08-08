@@ -3,7 +3,7 @@
 //
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
+#include "TrackInfoManager.h"
 #include "TraceTime.h"
 #include "QueryThreadTracesHandler.h"
 
@@ -18,22 +18,19 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<UnitThreadTracesResponse> responsePtr = std::make_unique<UnitThreadTracesResponse>();
     UnitThreadTracesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.cardId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.cardId);
+    if (renderEngine == nullptr) {
+        ServerLog::Error("Failed to render. fileId:", request.params.cardId);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    int64_t trackId = TraceFileParser::Instance()
-            .GetTrackId(request.params.cardId, request.params.processId, request.params.threadId);
-    bool result =
-        database->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
-    SetResponseResult(response, result);
+    int64_t trackId = TrackInfoManager::Instance().GetTrackId(request.params.cardId, request.params.processId,
+        request.params.threadId);
+
+    renderEngine->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+    SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }
-
 } // Timeline
 } // Module
 } // Dic

@@ -56,6 +56,7 @@ bool TrackInfoManager::GetTrackInfo(uint64_t trackId, TrackInfo &trackInfo)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     if (trackInfoMap.count(trackId) == 0) {
+        Server::ServerLog::Warn("Failed to query track info, track id is: ", trackId);
         return false;
     }
     trackInfo = trackInfoMap.at(trackId);

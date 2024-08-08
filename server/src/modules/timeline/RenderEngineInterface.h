@@ -15,7 +15,7 @@ class RenderEngineInterface {
 public:
     virtual ~RenderEngineInterface() = default;
     virtual void SetDataEngineInterface(std::shared_ptr<DataEngineInterface>) = 0;
-    virtual bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
+    virtual void QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
         Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) = 0;
 };
 }

@@ -10,6 +10,7 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "ParserStatusManager.h"
 #include "EventNotifyThreadPoolExecutor.h"
+#include "TrackInfoManager.h"
 #include "ParserDb.h"
 
 namespace Dic {
@@ -156,6 +157,7 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::string &path
         for (const auto& rank : rankIds) {
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
+            TrackInfoManager::Instance().UpdateHost(host + rank, host);
         }
     }
     return hostMap;

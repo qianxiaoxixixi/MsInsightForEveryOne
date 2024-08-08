@@ -1,0 +1,43 @@
+// Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+#include "pch.h"
+#include "HardWareRepo.h"
+#include "HcclRepo.h"
+#include "OverlapAnsRepo.h"
+#include "CannApiRepo.h"
+#include "PythonApiRepo.h"
+#include "MstxRepo.h"
+#include "TextRepository.h"
+#include "RepositoryFactory.h"
+namespace Dic::Module::Timeline {
+RepositoryFactory::RepositoryFactory()
+{
+    sliceRespoMap.emplace(PROCESS_TYPE::ASCEND_HARDWARE, std::make_unique<HardWareRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::HCCL, std::make_unique<HcclRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::OVERLAP_ANALYSIS, std::make_unique<OverlapAnsRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::CANN_API, std::make_unique<CannApiRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::API, std::make_unique<PythonApiRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::MS_TX, std::make_unique<MstxRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());
+};
+RepositoryFactory::~RepositoryFactory()
+{
+    sliceRespoMap.clear();
+    counterRespoMap.clear();
+}
+
+std::shared_ptr<SliceRepoInterface> RepositoryFactory::GetSliceRespo(PROCESS_TYPE metaType)
+{
+    if (sliceRespoMap.count(metaType) == 0) {
+        return nullptr;
+    }
+    return sliceRespoMap.at(metaType);
+}
+
+std::shared_ptr<CounterRepoInterface> RepositoryFactory::GetCounterRespo(PROCESS_TYPE metaType)
+{
+    if (counterRespoMap.count(metaType) == 0) {
+        return nullptr;
+    }
+    return counterRespoMap.at(metaType);
+};
+}

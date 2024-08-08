@@ -28,7 +28,7 @@ public:
     RenderEngine &operator = (RenderEngine &&) = delete;
     ~RenderEngine() override = default;
     void SetDataEngineInterface(std::shared_ptr<DataEngineInterface>) override;
-    bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
+    void QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
         Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
 
 private:

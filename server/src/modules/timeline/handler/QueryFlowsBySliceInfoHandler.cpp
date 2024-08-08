@@ -3,7 +3,7 @@
 //
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
+#include "TrackInfoManager.h"
 #include "TraceTime.h"
 #include "QueryFlowsBySliceInfoHandler.h"
 namespace Dic {
@@ -24,7 +24,7 @@ void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         return;
     }
     uint64_t trackId =
-        TraceFileParser::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+        TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result;
     try {
         result = database->QueryUintFlows(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);

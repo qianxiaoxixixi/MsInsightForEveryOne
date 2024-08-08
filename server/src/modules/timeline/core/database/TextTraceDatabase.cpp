@@ -462,67 +462,6 @@ void TextTraceDatabase::SimulationUpdateProcessSortIndex()
     }
 }
 
-bool TextTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-    Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
-{
-    SliceQuery sliceQuery;
-    sliceQuery.db = db;
-    sliceQuery.startTime = requestParams.startTime;
-    sliceQuery.endTime = requestParams.endTime;
-    sliceQuery.minTimestamp = minTimestamp;
-    sliceQuery.isFilterPythonFunction = requestParams.isFilterPythonFunction;
-    sliceQuery.cat = "python_function";
-    sliceQuery.trackId = traceId;
-    uint64_t maxDepth = 0;
-    bool havePythonFunction = false;
-    std::set<uint64_t> ids;
-    std::map<uint64_t, int32_t> depthMap;
-    sliceAnalyzerPtr->ComputeScreenSliceIds(sliceQuery, ids, maxDepth, havePythonFunction, depthMap);
-    std::vector<Protocol::RowThreadTrace> rowThreadTraceVec = QuerySliceByIdList(minTimestamp, traceId, ids);
-    std::sort(rowThreadTraceVec.begin(), rowThreadTraceVec.end(), std::less<RowThreadTrace>());
-    for (auto &item : rowThreadTraceVec) {
-        item.depth = depthMap[item.id];
-    }
-    TraceDatabaseHelper::QueryThreadTracesHelper(rowThreadTraceVec, requestParams, responseBody);
-    responseBody.maxDepth = maxDepth;
-    responseBody.havePythonFunction = havePythonFunction;
-    return true;
-}
-
-std::vector<RowThreadTrace> TextTraceDatabase::QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
-                                                                  std::set<uint64_t> &ids)
-{
-    std::vector<RowThreadTrace> ans;
-    if (std::empty(ids)) {
-        return ans;
-    }
-    std::string sliceSql = TextSqlConstant::GetSliceByIdListSql(ids.size());
-    auto sliceStem = CreatPreparedStatement(sliceSql);
-    if (sliceStem == nullptr) {
-        ServerLog::Error("Fail to QuerySliceByIdList.", sqlite3_errmsg(db));
-        return ans;
-    }
-    for (const auto &item : ids) {
-        sliceStem->BindParams(item);
-    }
-    auto sliceResultSet = sliceStem->ExecuteQuery();
-    if (sliceResultSet == nullptr) {
-        ServerLog::Error("QuerySliceByIdList. Failed to get result set.", sliceStem->GetErrorMessage());
-        return ans;
-    }
-    while (sliceResultSet->Next()) {
-        RowThreadTrace rowThreadTrace{};
-        rowThreadTrace.id = sliceResultSet->GetInt64("id");
-        rowThreadTrace.startTime = sliceResultSet->GetUint64("timestamp") - minTimestamp;
-        rowThreadTrace.duration = sliceResultSet->GetUint64("end_time") - rowThreadTrace.startTime - minTimestamp;
-        rowThreadTrace.name = sliceResultSet->GetString("name");
-        rowThreadTrace.traceId = traceId;
-        rowThreadTrace.cname = sliceResultSet->GetString("cname");
-        ans.emplace_back(rowThreadTrace);
-    }
-    return ans;
-}
-
 void TextTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<SliceDomain> &cacheSlices)
 {
     // 此处sql需全部走索引且禁止触发回表
@@ -538,7 +477,6 @@ void TextTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vec
         return;
     }
     SliceQuery sliceQuery;
-    sliceQuery.db = db;
     sliceQuery.trackId = traceId;
     std::unordered_map<uint64_t, uint32_t> depthCache;
     sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
@@ -583,7 +521,6 @@ bool TextTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
     std::vector<CompeteSliceDomain> competeSliceVec;
     std::map<std::string, uint64_t> selfTimeKeyValue;
     SliceQuery sliceQuery;
-    sliceQuery.db = db;
     sliceQuery.rankId = requestParams.rankId;
     sliceQuery.minTimestamp = minTimestamp;
     sliceQuery.startTime = requestParams.startTime;
@@ -595,7 +532,6 @@ bool TextTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
         const Dic::Protocol::Metadata& metadata = requestParams.metadataList.at(i);
         sliceQuery.tid = metadata.tid;
         sliceQuery.pid = metadata.pid;
-        sliceQuery.metaType = metadata.metaType;
         sliceQuery.trackId = trackIdList[i];
         std::string error;
         if (!sliceQuery.QueryThreadsCheck(error)) {
@@ -703,7 +639,6 @@ bool TextTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
         return false;
     }
     SliceQuery sliceQuery;
-    sliceQuery.db = db;
     sliceQuery.trackId = trackId;
     std::unordered_map<uint64_t, uint32_t> depthCache;
     sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
@@ -806,22 +741,21 @@ bool TextTraceDatabase::QueryUintFlows(const Protocol::UnitFlowsParams &requestP
         return true;
     }
     FlowQuery flowQuery;
-    flowQuery.db = db;
     flowQuery.startTime = requestParams.startTime;
     flowQuery.minTimestamp = minTimestamp;
     flowQuery.trackId = trackId;
     flowQuery.endTime = requestParams.endTime;
-    ServerLog::Info("requestParams.id is: ", requestParams.id);
+    flowQuery.fileId = requestParams.rankId;
     std::vector<FlowPoint> flowPointVec = flowAnalyzerPtr->ComputeAllFlowPointBySliceId(flowQuery, requestParams.id);
     std::unordered_map<std::string, std::vector<FlowPoint>> flowPointMap;
     ThreadQuery threadQuery;
-    threadQuery.db = db;
+    threadQuery.fileId = requestParams.rankId;
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> threadInfo;
     sliceAnalyzerPtr->ComputeAllThreadInfo(threadQuery, threadInfo);
     for (auto &item : flowPointVec) {
         std::vector<SliceDomain> sliceVec;
         SliceQuery sliceQuery;
-        sliceQuery.db = db;
+        sliceQuery.rankId = requestParams.rankId;
         sliceQuery.trackId = item.trackId;
         sliceAnalyzerPtr->ComputeSliceDomainVecByTrackId(sliceQuery, sliceVec);
         auto it = flowAnalyzerPtr->ComputeSliceByFlowPoint(item, sliceVec);
@@ -947,7 +881,6 @@ std::vector<SimpleSlice> TextTraceDatabase::QuerySimpleSliceByFlagAndTrackId(con
         return simpleSliceVec;
     }
     SliceQuery sliceQuery;
-    sliceQuery.db = db;
     sliceQuery.trackId = trackId;
     std::unordered_map<uint64_t, uint32_t> depthCache;
     sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
@@ -1012,6 +945,7 @@ void TextTraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaD
             continue;
         }
         std::unique_ptr<Protocol::UnitTrack> thread = std::make_unique<Protocol::UnitTrack>();
+        thread->metaData.metaType = "TEXT";
         if (metaDataDto.name.empty()) { // thread
             thread->type = "thread";
             thread->metaData.cardId = fileId;
@@ -1147,8 +1081,8 @@ bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
     responseBody.duration = resultSet->GetUint64("duration");
     uint64_t trackId = resultSet->GetInt32("trackId");
     SliceQuery sliceQuery;
-    sliceQuery.db = db;
     sliceQuery.trackId = trackId;
+    sliceQuery.rankId = params.rankId;
     std::unordered_map<uint64_t, uint32_t> depthCache;
     sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
     responseBody.depth = depthCache[id];
@@ -1287,7 +1221,6 @@ void TextTraceDatabase::QueryAllFlagSlice(std::unordered_map<std::string, uint32
         return;
     }
     SliceQuery sliceQuery;
-    sliceQuery.db = db;
     sliceQuery.trackId = trackId;
     std::unordered_map<uint64_t, uint32_t> depthCache;
     sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
@@ -1610,7 +1543,7 @@ bool TextTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
         uint64_t id = resultSet->GetUint64("id");
         trackId = resultSet->GetUint64("track_id");
         SliceQuery sliceQuery;
-        sliceQuery.db = db;
+        sliceQuery.rankId = params.rankId;
         sliceQuery.trackId = trackId;
         std::unordered_map<uint64_t, uint32_t> depthCache;
         sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
@@ -1674,7 +1607,7 @@ bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
         SliceQuery sliceQuery;
-        sliceQuery.db = db;
+        sliceQuery.rankId = requestParams.rankId;
         sliceQuery.trackId = traceId;
         std::unordered_map<uint64_t, uint32_t> depthCache;
         sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);

@@ -232,33 +232,6 @@ TEST_F(TestSuit, QueryFlowCategoryList)
     EXPECT_EQ(categories[thirdNumber], "async_task_queue");
 }
 
-TEST_F(TestSuit, QueryThreadTraces)
-{
-    Dic::Protocol::UnitThreadTracesParams request;
-    uint64_t STARTTIME = 1695115378713851200;
-    uint64_t ENDTIME = 1695115378728583500;
-    request.startTime = STARTTIME;
-    request.endTime = ENDTIME;
-    request.threadId = "0";
-    request.timePerPx = 1;
-    Dic::Protocol::UnitThreadTracesBody response;
-    uint64_t minTimestamp = 0;
-    int64_t traceId = 30;
-
-    int expectSize = 25;
-    std::string expectName = "AscendCL@aclDestroyTensorDesc";
-    uint64_t expectDuration = 1900;
-    uint64_t expectStartTime = 1695115378713851200;
-    uint64_t expectEndTime = expectStartTime + expectDuration;
-    int32_t expectDepth = 0;
-    std::string expectThreadId = request.threadId;
-
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    database->QueryThreadTraces(request, response, minTimestamp, traceId);
-
-    EXPECT_EQ(response.data[0].size(), expectSize);
-}
-
 TEST_F(TestSuit, QueryThreads)
 {
     // request parameters
@@ -267,6 +240,7 @@ TEST_F(TestSuit, QueryThreads)
     uint64_t ENDTIME = 1695115378743155968;
     request.startTime = STARTTIME;
     request.endTime = ENDTIME;
+    request.rankId = "0";
     Dic::Protocol::UnitThreadsBody response;
     uint64_t minTimestamp = 0;
 
@@ -426,6 +400,7 @@ TEST_F(TestSuit, SearchSliceName)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::SearchSliceParams params;
+    params.rankId = "0";
     params.searchContent = "Enqueue";
     int index = 0;
     uint64_t minTimestamp = 0;

@@ -13,6 +13,7 @@
 #include "SqlitePreparedStatement.h"
 #include "SqliteResultSet.h"
 #include "sqlite3.h"
+#include "DataBaseManager.h"
 #include "ServerLog.h"
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
@@ -104,6 +105,21 @@ public:
         return *this;
     }
 
+    /* *
+     * 调用此函数需要先校验inputs不为空
+     * @param str
+     * @param inputs
+     * @return
+     */
+    Table &In(std::string_view str, const std::vector<uint64_t> &inputs)
+    {
+        conditionStr += " AND " + std::string(str) + " IN ( ";
+        std::string inputStr = StringUtil::join(inputs, ", ");
+        conditionStr += inputStr;
+        conditionStr += " ) ";
+        return *this;
+    }
+
     Table &OrderBy(std::string_view columnName, TableOrder order)
     {
         if (std::empty(orderByStr)) {
@@ -129,11 +145,19 @@ public:
         return *this;
     }
 
-    void ExcuteQuery(sqlite3 *db, std::vector<T> &result)
+    virtual void ExcuteQuery(const std::string &fileId, std::vector<T> &result)
     {
-        sql = selectStr + " FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr + orderByStr  + groupByStr;
-        auto stmt = CreatPreparedStatement(db);
+        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        if (database == nullptr) {
+            return;
+        }
+        auto stmt = database->CreatPreparedStatement();
         if (stmt == nullptr) {
+            ServerLog::Error(GetTableName() + " Failed to get stmt.");
+            return;
+        }
+        sql = selectStr + " FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr + orderByStr + groupByStr;
+        if (!stmt->Prepare(sql)) {
             ServerLog::Error(GetTableName() + " Failed to prepare sql.");
             return;
         }
@@ -162,13 +186,21 @@ public:
         ClearThreadLocal();
     }
 
-    uint64_t Count(sqlite3 *db)
+    virtual uint64_t Count(const std::string &fileId)
     {
+        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        if (database == nullptr) {
+            return 0;
+        }
+        auto stmt = database->CreatPreparedStatement();
         uint64_t count = 0;
-        sql = "SELECT COUNT(*) AS count FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr;
-        auto stmt = CreatPreparedStatement(db);
         if (stmt == nullptr) {
-            ServerLog::Error(GetTableName() + " Failed to prepare sql.");
+            ServerLog::Error(GetTableName() + " count failed to get stmt.");
+            return count;
+        }
+        sql = "SELECT COUNT(*) AS count FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr;
+        if (!stmt->Prepare(sql)) {
+            ServerLog::Error(GetTableName() + " Failed to prepare count sql.");
             return count;
         }
         for (const auto &item : values) {

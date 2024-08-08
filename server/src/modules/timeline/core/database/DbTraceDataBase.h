@@ -53,8 +53,6 @@ public:
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
 
     // search
-    bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-        Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                       uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) override;
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
@@ -177,7 +175,7 @@ private:
     std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &rankId);
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
-    void GetCounterUnitsAndDataTypes(Protocol::PROCESS_TYPE type, std::vector<std::string> &units,
+    void GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
     std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
                                              const std::string& order, const std::string& orderByField);

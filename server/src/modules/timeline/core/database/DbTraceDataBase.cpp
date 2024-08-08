@@ -1,6 +1,5 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
- */
+// Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+#include "pch.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
@@ -23,59 +22,6 @@ DbTraceDataBase::~DbTraceDataBase()
     insertOverlapStmt = nullptr;
     updateApiDepthStmt = nullptr;
     updateTaskDepthStmt = nullptr;
-}
-
-bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-    Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
-{
-    if (requestParams.timePerPx == 0) {
-        ServerLog::Error("Query_thread_traces. timePerPx is zero.");
-        return false;
-    }
-    auto stmt = CreatPreparedStatement();
-    if (stmt == nullptr) {
-        ServerLog::Error("Query_thread_traces. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    std::unique_ptr<SqliteResultSet> resultSet;
-    // rank = round(time / (totalTime / pixel))
-    try {
-        resultSet = TraceDatabaseHelper::QueryThreadTraces(stmt, requestParams,
-                                                           GetRealRankId(requestParams.cardId), minTimestamp);
-    } catch (DatabaseException &e) {
-        ServerLog::Error("Query thread traces fail, ", e.What());
-        return false;
-    }
-    if (resultSet == nullptr) {
-        ServerLog::Error("Query_thread_traces. Failed to get result set.", stmt->GetErrorMessage());
-        return false;
-    }
-    std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
-    while (resultSet->Next()) {
-        Protocol::RowThreadTrace rowThreadTrace{};
-        rowThreadTrace.id = resultSet->GetInt64("id");
-        rowThreadTrace.startTime = resultSet->GetInt64("start_time");
-        rowThreadTrace.duration = resultSet->GetInt64("duration");
-        rowThreadTrace.name = stringsCache.at(path)[resultSet->GetString("name")];
-        rowThreadTrace.depth = resultSet->GetInt32("depth");
-        rowThreadTraceVec.emplace_back(std::move(rowThreadTrace));
-    }
-    std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
-    for (auto &item : rowThreadTraceVec) {
-        Protocol::ThreadTraces threadTraces{};
-        threadTraces.name = item.name;
-        threadTraces.duration = item.duration;
-        threadTraces.startTime = item.startTime;
-        threadTraces.endTime = item.startTime + item.duration;
-        threadTraces.depth = item.depth;
-        threadTraces.id = std::to_string(item.id);
-        threadTraces.threadId = requestParams.threadId;
-        while (responseBody.data.size() <= item.depth) {
-            responseBody.data.emplace_back();
-        }
-        responseBody.data[item.depth].emplace_back(std::move(threadTraces));
-    }
-    return true;
 }
 
 bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
@@ -1469,7 +1415,7 @@ void DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
     }
 }
 
-void DbTraceDataBase::GetCounterUnitsAndDataTypes(Protocol::PROCESS_TYPE type, std::vector<std::string> &units,
+void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
     std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter)
 {
     switch (type) { // 此处type调用场景固定，不会出现特殊情况

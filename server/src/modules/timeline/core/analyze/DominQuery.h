@@ -4,10 +4,8 @@
 #ifndef PROFILER_SERVER_SLICEQUERY_H
 #define PROFILER_SERVER_SLICEQUERY_H
 #include <string>
-#include "sqlite3.h"
 namespace Dic::Module::Timeline {
 struct SliceQuery {
-    sqlite3 *db;
     uint64_t trackId = 0;
     /* *
      * 界面选取的开始时间
@@ -21,6 +19,7 @@ struct SliceQuery {
      * 泳道在数据库中的最小时间
      */
     uint64_t minTimestamp = 0;
+    PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
     std::string cat;
     /*
      * timeline框选时使用
@@ -28,15 +27,9 @@ struct SliceQuery {
     std::string rankId;
     std::string pid;
     std::string tid;
-    std::string metaType;
     bool isFilterPythonFunction = false;
     bool QueryThreadsCheck(std::string &error) const
     {
-        error.clear();
-        if (db == nullptr) {
-            error = "database connection is not open";
-            return false;
-        }
         if (startTime > endTime) {
             error = "start time is bigger than end time";
             return false;
@@ -50,7 +43,6 @@ struct SliceQuery {
 };
 
 struct FlowQuery {
-    sqlite3 *db = nullptr;
     uint64_t trackId = 0;
     /* *
      * 连线的id
@@ -68,10 +60,13 @@ struct FlowQuery {
      * 泳道在数据库中的最小时间
      */
     uint64_t minTimestamp = 0;
+    std::string fileId;
+    PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
 };
 
 struct ThreadQuery {
-    sqlite3 *db = nullptr;
+    std::string fileId;
+    PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
 };
 }
 #endif // PROFILER_SERVER_SLICEQUERY_H
