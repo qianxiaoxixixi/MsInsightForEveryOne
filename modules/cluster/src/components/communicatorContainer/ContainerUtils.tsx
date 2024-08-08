@@ -54,6 +54,22 @@ export const getAllPpStageIds = (data: communicatorContainerData): string[] => {
     return tmp?.communicators.map(item => item.value as string);
 };
 
+const fillDpCommunicators = (values: {ppSize: number; tpSize: number; dpSize: number}, pipelineCount: number,
+    pipelineSize: number, partitionModes: partitionMode[]): void => {
+    if (values.dpSize <= 1) {
+        return;
+    }
+    for (let i = 0; i < pipelineCount; i++) {
+        for (let j = 0; j < values.tpSize; j++) {
+            partitionModes[2].communicators.push({
+                ranks: _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize),
+                name: `data${(i * values.tpSize) + j}`,
+                value: `(${_.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize).join(', ')}${values.dpSize > 1 ? ')' : ',)'}`,
+            });
+        }
+    }
+};
+
 export const generateCommunicatorData = (values: {ppSize: number; tpSize: number; dpSize: number},
     defaultPPSize: number, rankNum: number): communicatorContainerData => {
     const partitionModes: partitionMode[] = [
@@ -65,27 +81,25 @@ export const generateCommunicatorData = (values: {ppSize: number; tpSize: number
         const pipelineCount = values.ppSize;
         const pipelineSize = rankNum / values.ppSize;
         const modelCount = rankNum / values.tpSize;
-        for (let i = 0; i < pipelineCount; i++) {
-            partitionModes[0].communicators.push({
-                ranks: _.range(i * pipelineSize, (i + 1) * pipelineSize),
-                name: `stage${i}`,
-                value: `(${_.range(i * pipelineSize, (i + 1) * pipelineSize).join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
-            });
-            for (let j = 0; j < values.tpSize; j++) {
-                partitionModes[2].communicators.push({
-                    ranks: _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize),
-                    name: `data${(i * values.tpSize) + j}`,
-                    value: `(${_.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize).join(', ')}${values.dpSize > 1 ? ')' : ',)'}`,
+        if (values.ppSize > 1) {
+            for (let i = 0; i < pipelineSize; i++) {
+                partitionModes[0].communicators.push({
+                    ranks: _.range(i, rankNum, pipelineSize),
+                    name: `pipeline${i}`,
+                    value: `(${_.range(i, rankNum, pipelineSize).join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
                 });
             }
         }
-        for (let i = 0; i < modelCount; i++) {
-            partitionModes[1].communicators.push({
-                ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
-                name: `model${i}`,
-                value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}${values.tpSize > 1 ? ')' : ',)'}`,
-            });
+        if (values.tpSize > 1) {
+            for (let i = 0; i < modelCount; i++) {
+                partitionModes[1].communicators.push({
+                    ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
+                    name: `model${i}`,
+                    value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}${values.tpSize > 1 ? ')' : ',)'}`,
+                });
+            }
         }
+        fillDpCommunicators(values, pipelineCount, pipelineSize, partitionModes);
     }
     return { partitionModes, defaultPPSize };
 };

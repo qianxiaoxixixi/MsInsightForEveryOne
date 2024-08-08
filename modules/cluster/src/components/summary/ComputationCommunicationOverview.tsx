@@ -352,7 +352,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
         : <></>;
 });
 function OverviewCom({ handleFilterChange, dataSource, selected, advice, session, containsPreparing }: any): JSX.Element {
-    const [pipelineVisible, setPipelineVisible] = useState(true);
+    const [pipelineVisible, setPipelineVisible] = useState(false);
     const { t } = useTranslation('summary');
     useEventBus('setActiveTab', (data) => {
         setPipelineVisible(data === 'pp');

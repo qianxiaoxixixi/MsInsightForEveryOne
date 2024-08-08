@@ -9,6 +9,7 @@ import {
     updateSessionHandler,
     locateHCCL,
     switchLanguageHandler,
+    updateCommunicatorDataHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -29,4 +30,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     updateSession: updateSessionHandler,
     locateHCCL,
     switchLanguage: switchLanguageHandler,
+    updateCommunicatorData: updateCommunicatorDataHandler,
 };

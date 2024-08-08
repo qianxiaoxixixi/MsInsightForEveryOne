@@ -12,6 +12,8 @@ import { Label } from '../Common';
 import type { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
+import type { partitionMode } from '../communicatorContainer/ContainerUtils';
+import _ from 'lodash';
 
 export interface ConditionDataType {
     [key: string]: string | string[];
@@ -40,13 +42,13 @@ export function updateData(filterParams: ConditionDataType): void {
     observeCondition.value = filterParams;
 }
 
-const getOptionsAndValue = async (initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):
+const getOptionsAndValue = async (session: Session, initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):
 Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     if (key !== undefined) {
         const condition = { ...initObj, [key]: val };
         const optionMap = initOptionMap;
         if (key === 'iterationId') {
-            const stageOptions: optionDataType[] = await getStageOptions(val);
+            const stageOptions: optionDataType[] = await getStageOptions(val, session);
             const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
             optionMap.stageOptions = stageOptions;
             condition.stage = stage;
@@ -65,7 +67,7 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     const iterationId = getUsableVal(initObj.iterationId, iterationOptions, defaultCondition.iterationId);
 
     // stage
-    const stageOptions: optionDataType[] = await getStageOptions(iterationId);
+    const stageOptions: optionDataType[] = await getStageOptions(iterationId, session);
     const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
 
     // type
@@ -86,10 +88,97 @@ const getiterationOptions = async(): Promise<optionDataType[]> => {
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
-const getStageOptions = async (iterationId: string): Promise<optionDataType[]> => {
+
+// 通过stage获取对应的并行策略，存在多个并行策略时，策略间使用'/'进行分割
+function getParallelStrategyByStage(partitionModes: partitionMode[], stage: string): string {
+    const matchingKeys: string[] = [];
+    partitionModes.forEach((obj) => {
+        const found = obj.communicators.some(communicator => communicator.value === stage);
+        if (found) {
+            matchingKeys.push(obj.mode);
+        }
+    });
+    if (matchingKeys.length === 0) {
+        return '';
+    } else {
+        return matchingKeys.join('/');
+    }
+}
+
+// 从字符串中获取所有数字
+function getAllNumberFromString(str: string): number[] {
+    // 使用正则表达式提取所有数字
+    const matches = str.match(/\d+/g);
+
+    // 如果没有匹配到数字，返回空数组
+    if (!matches) {
+        return [];
+    }
+
+    // 将匹配到的数字字符串转换为数字
+    return matches.map(Number);
+}
+
+// stage中的rank内容可能并没有排序，该方法对rank内容进行从小到大排序处理
+function sortStageNumber(stage: string): string {
+    const numbers = getAllNumberFromString(stage);
+    numbers.sort((a: number, b: number) => a - b);
+    return `(${_.join(numbers, ', ')}${(numbers.length > 1 ? ')' : ',)')}`;
+}
+
+// 对比stage数据，先对长度进行排序（长的排前面），再对内容排序（首数字小的排前面）
+function compareStageInfo(stageA: string, stageB: string): number {
+    const aRankList = getAllNumberFromString(stageA);
+    const bRankList = getAllNumberFromString(stageB);
+    if (aRankList.length !== bRankList.length) {
+        return aRankList.length <= bRankList.length ? 1 : -1;
+    }
+
+    for (let i = 0; i < aRankList.length; ++i) {
+        if (aRankList[i] < bRankList[i]) {
+            return -1;
+        }
+        if (aRankList[i] > bRankList[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+const getStageOptions = async (iterationId: string, session: Session): Promise<optionDataType[]> => {
     const res: {data: string[] } = await queryStages({ iterationId });
     const list = res?.data ?? [];
-    const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
+    const modes = session.communicatorData.partitionModes;
+    const options: optionDataType[] = list
+        .map(item => {
+            const stageAfterSort = sortStageNumber(item);
+            const strategy = getParallelStrategyByStage(modes, stageAfterSort);
+            const label = strategy.length === 0 ? stageAfterSort : `${strategy}:${stageAfterSort}`;
+            return { value: item, strategy, label, stageAfterSort };
+        })
+        .sort((a, b) => {
+            // 存在并行策略的排在前面
+            if (a.strategy && !b.strategy) {
+                return -1;
+            }
+            if (!a.strategy && b.strategy) {
+                return 1;
+            }
+            // 如果都存在并行策略，且策略相同，则按通信域中rank数量进行排序（从大到小），数量相同，则根据数字对位比较排序（小数字排前）
+            if (a.strategy && b.strategy && a.strategy === b.strategy) {
+                return compareStageInfo(a.stageAfterSort, b.stageAfterSort);
+            }
+            // 如果都存在并行策略，但策略不同，则按策略的字母排序
+            if (a.strategy && b.strategy && a.strategy !== b.strategy) {
+                return a.strategy > b.strategy ? 1 : -1;
+            }
+            // 如果都没有并行策略，则按通信域中rank数量进行排序（从大到小），数量相同，则根据数字对位比较排序（小数字排前）
+            if (!a.strategy && !b.strategy) {
+                return compareStageInfo(a.stageAfterSort, b.stageAfterSort);
+            }
+            // 其他情况保持原有顺序
+            return 0;
+        });
     return options;
 };
 const getOperatorOptions = async ({ iterationId, rankList, stage, type }: {iterationId: string;
@@ -121,7 +210,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
             });
             return;
         }
-        const { condition: newCondition, optionMap: newOptionMap } = await getOptionsAndValue(initObj, optionMap, key, val);
+        const { condition: newCondition, optionMap: newOptionMap } = await getOptionsAndValue(session, initObj, optionMap, key, val);
         setCondition(newCondition);
         setOptionMap(newOptionMap);
     };
@@ -133,7 +222,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
     useEffect(() => {
         updateCondition(condition);
-    }, [session.clusterCompleted]);
+    }, [session.clusterCompleted, session.communicatorData.partitionModes]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {
@@ -165,8 +254,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                     handleChange('iterationId', val);
                 }}
                 options={optionMap.iterationOptions}
-            />
-            )}/>
+            />)}/>
         <FormItem
             name={t('searchCriteria.CommunicationGroup')}
             content={(<Select
@@ -175,10 +263,10 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                 onChange={(val: string): void => {
                     handleChange('stage', val);
                 }}
+                filterOption={(input: any, option: any): boolean => (option?.label as string).toLowerCase().includes(input.toLowerCase())}
                 options={optionMap.stageOptions}
                 showSearch={true}
-            />
-            )}/>
+            />)}/>
         <FormItem
             name={t('searchCriteria.OperatorName')}
             content={(

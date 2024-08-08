@@ -16,6 +16,7 @@ import {
     type partitionMode,
     type tabData, titleMap,
 } from './ContainerUtils';
+import connector from '../../connection';
 import styled from '@emotion/styled';
 
 const RankItem = styled.div`
@@ -67,7 +68,7 @@ const RankGroupContainer = styled.div`
 `;
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
-    const [activeTab, setActiveTab] = useState<string>('pp');
+    const [activeTab, setActiveTab] = useState<string>('tpOrDp');
     const [unitCount, setUnitCount] = useState<number>(0);
     const { t } = useTranslation('summary');
     useEffect(() => {
@@ -155,6 +156,8 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
             return;
         }
         session.communicatorData = generateCommunicatorData(values, size, unitCount);
+        // 只有用户手动修改并行策略，才会同步策略信息给通信页面，此处4为通信页面页签的序号
+        connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
         eventBus.emit('activeCommunicator', undefined);
     };
     return (
@@ -208,13 +211,7 @@ export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<Re
         result.partitionModes = [
             {
                 mode: 'pp',
-                communicators: _.map(data.ppGroups, (group, key) => {
-                    return {
-                        name: `stage${key}`,
-                        ranks: group,
-                        value: `(${_.join(group, ', ')}${(group.length > 1 ? ')' : ',)')}`,
-                    } as communicator;
-                }),
+                communicators: [],
             },
             {
                 mode: 'tpOrDp',
@@ -228,8 +225,8 @@ export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<Re
             },
         ];
         result.defaultPPSize = data.defaultPPSize;
-        if (result.partitionModes.length > 0 && result.partitionModes[0].communicators.length > 0) {
-            setUnitCount(data.defaultPPSize * result.partitionModes[0].communicators[0].ranks.length);
+        if (result.partitionModes.length > 0 && data.ppGroups.length > 0) {
+            setUnitCount(data.defaultPPSize * data.ppGroups[0].length);
         }
     }
     return result;
