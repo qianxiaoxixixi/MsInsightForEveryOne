@@ -4,6 +4,8 @@
 
 #ifndef PROFILER_SERVER_SLICEANALYZER_MOCK_DATA_H
 #define PROFILER_SERVER_SLICEANALYZER_MOCK_DATA_H
+
+#include <DominQuery.h>
 #include "SliceCacheManager.h"
 #include "algorithm"
 using namespace Dic::Module::Timeline;

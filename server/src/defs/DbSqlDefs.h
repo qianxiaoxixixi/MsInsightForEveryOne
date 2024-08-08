@@ -176,48 +176,6 @@ const static std::string TASK_UNIT_FLOW_SQL =
       "     deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
       "     where op.connectionId = constValue.connectionId group by opId ";
 
-// sql of timeline threadTraces
-const static std::string ASCEND_THREAD_TRACES =
-        "SELECT main.ROWID as id, startNs - ? as start_time, endNs - startNs as duration,"
-        " coalesce(c.name, main.taskType) as name, depth, ROUND(startNs / ?) as rank FROM " + TABLE_TASK + " main "
-        " left join " + TABLE_COMPUTE_TASK_INFO + " c "
-        " on c.globalTaskId = main.globalTaskId where deviceId = ? and streamId = ?"
-        " and start_time + duration >= ? AND start_time < ?"
-        " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
-
-const static std::string HCCL_THREAD_TRACES =
-        "with tmp as (select main.globalTaskId, startNs, endNs, info.taskType,info.planeId,main.ROWID as id,"
-        " info.opId from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
-        " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-        " sub as (select startNs,endNs-startNs as duration,opName as name,groupName||'group' as tid,endNs,"
-        " ROWID as id from " + TABLE_COMMUNICATION_OP + " where opId in (select opId from tmp group by opId) "
-        " UNION select startNs,endNs-startNs as duration,taskType as name, planeId||'' as tid, endNs, "
-        " id from tmp) select id, startNs-? as start_time,duration, name, 0 as depth, "
-        " ROUND(startNs / ?) as rank from sub "
-        " where tid = ? and start_time + duration >= ? AND start_time < ? "
-        " GROUP BY rank, duration HAVING max(start_time) ORDER BY start_time;";
-
-const static std::string CANN_API_THREAD_TRACES =
-    "select name, ROWID as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
-    " ROUND(startNs / ?) as rank from " + TABLE_CANN_API + " a "
-    " where type = ? and globalTid = ? and start_time + duration >= ? AND start_time < ? "
-    " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
-
-const static std::string PYTORCH_API_THREAD_TRACES =
-    "select name, ROWID as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
-    " ROUND(startNs / ?) as rank from " + TABLE_API + " a "
-    " where globalTid = ? and start_time + duration >= ? AND start_time < ? "
-    " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
-
-const static std::string OVERLAP_THREAD_TRACES =
-    "select 'OVERLAP_ANALYSIS'||type as name, ROWID as id, startNs - ? as start_time,"
-    " endNs - startNs as duration, 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? "
-    " and type = ? and start_time + duration >= ? AND start_time < ? ORDER BY start_time;";
-
-const static std::string MSTX_THREAD_TRACES =
-    "select message as name, mstx.ROWID as id, startNs - ? as start_time, endNs - startNs as duration, "
-    " depth from " + TABLE_MSTX_EVENTS + "  mstx  "
-    "    where globalTid = ? and start_time + duration >= ? AND start_time < ? ORDER BY start_time;";
 
 // sql of timeline threadDetail
 const static std::string ASCEND_THREAD_DETAIL =

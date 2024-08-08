@@ -52,8 +52,6 @@ public:
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
 
     // search
-    bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-        Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
         Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
 
@@ -175,9 +173,6 @@ private:
         std::vector<SliceDto> &sliceDtoVec);
 
     void QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<SliceDomain> &cacheSlices);
-
-    std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
-        std::set<uint64_t> &ids);
     
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByFlagAndTrackId(const std::string &flagId, uint64_t trackId);
 

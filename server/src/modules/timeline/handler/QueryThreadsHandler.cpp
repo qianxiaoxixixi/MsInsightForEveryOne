@@ -3,7 +3,7 @@
 //
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
+#include "TrackInfoManager.h"
 #include "TraceTime.h"
 #include "QueryThreadsHandler.h"
 
@@ -28,7 +28,7 @@ void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::vector<uint64_t> trackIdList;
     trackIdList.reserve(request.params.metadataList.size());
     for (const auto &metadata: request.params.metadataList) {
-        uint64_t trackId = TraceFileParser::Instance().GetTrackId(request.params.rankId, metadata.pid, metadata.tid);
+        uint64_t trackId = TrackInfoManager::Instance().GetTrackId(request.params.rankId, metadata.pid, metadata.tid);
         trackIdList.push_back(trackId);
     }
     bool result = database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(),
@@ -37,7 +37,6 @@ void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }
-
 } // Timeline
 } // Module
 } // Dic

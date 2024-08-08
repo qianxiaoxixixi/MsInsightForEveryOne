@@ -26,30 +26,6 @@ enum class LinkType : int {
     SOCKET = 0,
     WEBSOCKET
 };
-
-enum class PROCESS_TYPE {
-    ASCEND_HARDWARE,
-    HCCL,
-    OVERLAP_ANALYSIS,
-    CANN_API,
-    API,
-    HBM,
-    LLC,
-    DDR,
-    ACC_PMU,
-    STARS_SOC,
-    NPU_MEM,
-    HCCS,
-    PCIE,
-    ROCE,
-    ROH,
-    NIC,
-    SAMPLE_PMU,
-    AI_CORE,
-    MS_TX,
-    NONE,
-};
-
 } // end of namespace Protocol
 } // end if namespace Dic
 

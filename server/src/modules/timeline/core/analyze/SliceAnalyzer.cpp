@@ -7,13 +7,13 @@ namespace Dic::Module::Timeline {
 SliceAnalyzer::SliceAnalyzer()
 {
     if (repository == nullptr) {
-        repository = std::make_unique<Repository>();
+        repository = std::make_shared<TextRepository>();
     }
 };
 
-void SliceAnalyzer::SetRepository(std::unique_ptr<RepositoryInterface> repositoryDependency)
+void SliceAnalyzer::SetRepository(std::shared_ptr<SliceRepoInterface> repositoryDependency)
 {
-    repository = std::move(repositoryDependency);
+    repository = repositoryDependency;
 }
 
 SliceAnalyzer::~SliceAnalyzer()
@@ -254,7 +254,6 @@ void SliceAnalyzer::ComputeSliceDomainVecAndSelfTimeByTimeRange(const SliceQuery
         item.depth = depthInfo[item.id];
         item.tid = sliceQuery.tid;
         item.pid = sliceQuery.pid;
-        item.metaType = sliceQuery.metaType;
         competeSliceVec.emplace_back(std::move(item));
     }
     // 需要先排序再计算SelfTime

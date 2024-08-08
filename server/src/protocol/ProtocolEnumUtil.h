@@ -9,13 +9,15 @@
 #include <map>
 #include <string>
 #include <optional>
-
+#include "DomainObject.h"
 #include "ProtocolDefs.h"
 #include "ProtocolEnum.h"
 #include "ProtocolMessage.h"
 
+
 namespace Dic {
 namespace Protocol {
+using namespace Module::Timeline;
 #pragma region << Enum String Map>>
 
 template <typename ENUM> using EnumStrMap = std::map<ENUM, std::string>;
@@ -56,7 +58,8 @@ const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWA
                                                    { PROCESS_TYPE::NPU_MEM, "NPU_MEM" },
                                                    { PROCESS_TYPE::STARS_SOC, "SOC_BANDWIDTH_LEVEL" },
                                                    { PROCESS_TYPE::MS_TX, "MSTX_EVENTS" },
-                                                   { PROCESS_TYPE::HBM, "HBM" } };
+                                                   { PROCESS_TYPE::HBM, "HBM" },
+                                                   { PROCESS_TYPE::TEXT, "TEXT" }};
 
 #pragma endregion
 

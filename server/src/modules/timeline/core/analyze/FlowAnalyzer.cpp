@@ -6,7 +6,7 @@
 #include "DomainObject.h"
 #include "DominQuery.h"
 #include "SliceCacheManager.h"
-#include "Repository.h"
+#include "TextRepository.h"
 #include "FlowAnalyzer.h"
 
 using namespace Dic::Server;
@@ -14,11 +14,11 @@ namespace Dic::Module::Timeline {
 FlowAnalyzer::FlowAnalyzer()
 {
     if (repository == nullptr) {
-        repository = std::make_unique<Repository>();
+        repository = std::make_unique<TextRepository>();
     }
 }
 
-void FlowAnalyzer::SetRepository(std::unique_ptr<RepositoryInterface> repositoryDependency)
+void FlowAnalyzer::SetRepository(std::unique_ptr<SliceRepoInterface> repositoryDependency)
 {
     repository = std::move(repositoryDependency);
 }

@@ -62,7 +62,31 @@ struct FlowPoint {
     std::string type;
     uint32_t depth = 0;
     std::string tid;
-    std::string  pid;
+    std::string pid;
+};
+
+enum class PROCESS_TYPE {
+    ASCEND_HARDWARE,
+    HCCL,
+    OVERLAP_ANALYSIS,
+    CANN_API,
+    API,
+    HBM,
+    LLC,
+    DDR,
+    ACC_PMU,
+    STARS_SOC,
+    NPU_MEM,
+    HCCS,
+    PCIE,
+    ROCE,
+    ROH,
+    NIC,
+    SAMPLE_PMU,
+    AI_CORE,
+    MS_TX,
+    TEXT,
+    NONE,
 };
 }
 #endif // PROFILER_SERVER_DOMAINOBJECT_H

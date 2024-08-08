@@ -3,7 +3,7 @@
 */
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
-#include "TraceFileParser.h"
+#include "TrackInfoManager.h"
 #include "TraceTime.h"
 #include "QueryThreadsSameOperatorHandler.h"
 
@@ -25,7 +25,7 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    int64_t trackId = TraceFileParser::Instance()
+    int64_t trackId = TrackInfoManager::Instance()
             .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result = db->QueryThreadSameOperatorsDetails(request.params, response.body,
                                                       TraceTime::Instance().GetStartTime(), trackId);

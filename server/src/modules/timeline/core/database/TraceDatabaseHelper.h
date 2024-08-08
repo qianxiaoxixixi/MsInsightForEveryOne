@@ -18,6 +18,7 @@
 
 namespace Dic::Module::Timeline {
 using namespace Protocol;
+using RowThreadMap = std::map<int32_t, std::vector<Protocol::RowThreadTrace>>;
 
 class TraceDatabaseHelper {
 public:
@@ -50,9 +51,6 @@ static bool isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt);
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                             const Protocol::SystemViewParams &requestParams,
                                                             const std::string& rankId);
-static  std::unique_ptr<SqliteResultSet> QueryThreadTraces(
-        std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesParams &requestParams,
-        const std::string& rankId, uint64_t minTimestamp);
 
 static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
         std::unique_ptr<SqlitePreparedStatement> &stmt,
@@ -240,8 +238,6 @@ static bool QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &st
 /* Functions for JsonTraceDataBase */
 static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
-static void QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
-    const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody);
 static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody);
 static void SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,

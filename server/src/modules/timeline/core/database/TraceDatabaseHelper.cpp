@@ -6,12 +6,12 @@
 
 
 namespace Dic::Module::Timeline {
-std::map<std::string, Protocol::PROCESS_TYPE> metaTypeMap = {
-    {"Python", Protocol::PROCESS_TYPE::API},
-    {"CANN", Protocol::PROCESS_TYPE::CANN_API},
-    {"Ascend Hardware", Protocol::PROCESS_TYPE::ASCEND_HARDWARE},
-    {"HCCL", Protocol::PROCESS_TYPE::HCCL},
-    {"Overlap Analysis", Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS},
+std::map<std::string, PROCESS_TYPE> metaTypeMap = {
+    {"Python", PROCESS_TYPE::API},
+    {"CANN", PROCESS_TYPE::CANN_API},
+    {"Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE},
+    {"HCCL", PROCESS_TYPE::HCCL},
+    {"Overlap Analysis", PROCESS_TYPE::OVERLAP_ANALYSIS},
 };
 
 const Protocol::EventsViewColumnAttr columnName = {"Name", "string", "name"};
@@ -31,13 +31,13 @@ std::map<std::string, std::string> analysisType = {
     {"3", "Free"},
 };
 
-std::map<Protocol::PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap = {
-    {Protocol::PROCESS_TYPE::API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
-    {Protocol::PROCESS_TYPE::CANN_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
-    {Protocol::PROCESS_TYPE::ASCEND_HARDWARE,
+std::map<PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap = {
+    {PROCESS_TYPE::API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
+    {PROCESS_TYPE::CANN_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
+    {PROCESS_TYPE::ASCEND_HARDWARE,
         {columnName, columnStart, columnDuration, columnStreamName, columnRankId}},
-    {Protocol::PROCESS_TYPE::HCCL, {columnName, columnStart, columnDuration, columnGroupName, columnRankId}},
-    {Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS,
+    {PROCESS_TYPE::HCCL, {columnName, columnStart, columnDuration, columnGroupName, columnRankId}},
+    {PROCESS_TYPE::OVERLAP_ANALYSIS,
         {columnName, columnStart, columnDuration, columnAnalysisType, columnRankId}},
 };
 
@@ -358,37 +358,6 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
               " where deviceId = ? and type = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
             return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.tid,
                                 requestParams.startTime, requestParams.endTime);
-        default:
-            throw DatabaseException("unsupported type!");
-    }
-}
-
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTraces(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    const Protocol::UnitThreadTracesParams &requestParams, const std::string& rankId, uint64_t minTimestamp)
-{
-    std::string sql;
-    auto processType = GetProcessType(requestParams.metaType);
-    switch (processType) {
-        case PROCESS_TYPE::ASCEND_HARDWARE:
-            Prepare(stmt, ASCEND_THREAD_TRACES)->BindParams(minTimestamp, requestParams.timePerPx,
-                                                            rankId);
-            return Execute(stmt, requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::HCCL:
-            Prepare(stmt, HCCL_THREAD_TRACES)->BindParams(rankId, minTimestamp, requestParams.timePerPx);
-            return Execute(stmt, requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::CANN_API:
-            Prepare(stmt, CANN_API_THREAD_TRACES)->BindParams(minTimestamp, requestParams.timePerPx,
-                                                              requestParams.threadId);
-            return Execute(stmt, requestParams.processId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::API:
-            Prepare(stmt, PYTORCH_API_THREAD_TRACES)->BindParams(minTimestamp, requestParams.timePerPx);
-            return Execute(stmt, requestParams.processId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            Prepare(stmt, OVERLAP_THREAD_TRACES)->BindParams(minTimestamp, rankId);
-            return Execute(stmt, requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::MS_TX:
-            Prepare(stmt, MSTX_THREAD_TRACES)->BindParams(minTimestamp, requestParams.processId);
-            return Execute(stmt, requestParams.startTime, requestParams.endTime);
         default:
             throw DatabaseException("unsupported type!");
     }
@@ -787,7 +756,7 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
 }
 
 /* Functions for JsonTraceDataBase */
-Protocol::PROCESS_TYPE GetProcessTypeByProcessName(const std::string &processName)
+PROCESS_TYPE GetProcessTypeByProcessName(const std::string &processName)
 {
     for (const auto &item: metaTypeMap) {
         if (StringUtil::StartWith(processName, item.first)) {
@@ -802,18 +771,18 @@ std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams
     std::string baseSql;
     auto metaType = GetProcessTypeByProcessName(params.processName);
     switch (metaType) {
-        case Protocol::PROCESS_TYPE::API:
-        case Protocol::PROCESS_TYPE::CANN_API:
+        case PROCESS_TYPE::API:
+        case PROCESS_TYPE::CANN_API:
             baseSql = "SELECT id, name, timestamp AS start, duration, tid, pid, s.track_id, tid AS threadId, "
                       "pid AS processId FROM slice AS s LEFT JOIN thread AS t ON s.track_id = t.track_id ";
             break;
-        case Protocol::PROCESS_TYPE::HCCL:
+        case PROCESS_TYPE::HCCL:
             baseSql = "SELECT id, name, timestamp AS start, duration, thread_name AS threadName, s.track_id, "
                       "tid AS threadId, pid AS processId FROM slice AS s "
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id AND threadName NOT LIKE 'Plane%' ";
             break;
-        case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
-        case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
+        case PROCESS_TYPE::ASCEND_HARDWARE:
+        case PROCESS_TYPE::OVERLAP_ANALYSIS:
             baseSql = "SELECT id, name, timestamp AS start, duration, thread_name AS threadName, s.track_id, "
                       "tid AS threadId, pid AS processId FROM slice AS s "
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
@@ -905,30 +874,6 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
     }
     ResolveEventsViewResultSet(resultSet, params, body, minTimestamp);
     return true;
-}
-
-void TraceDatabaseHelper::QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
-    const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody)
-{
-    for (auto &item : rowThreadTraceVec) {
-        bool isHide = requestParams.isHideFlagEvents && (item.name == "SET_FLAG" || item.name == "WAIT_FLAG");
-        if (isHide) {
-            continue;
-        }
-        Protocol::ThreadTraces threadTraces{};
-        threadTraces.id = std::to_string(item.id);
-        threadTraces.name = item.name;
-        threadTraces.duration = item.duration;
-        threadTraces.startTime = item.startTime;
-        threadTraces.endTime = item.startTime + item.duration;
-        threadTraces.depth = item.depth;
-        threadTraces.threadId = requestParams.threadId;
-        threadTraces.cname = item.cname;
-        while (responseBody.data.size() <= item.depth) {
-            responseBody.data.emplace_back();
-        }
-        responseBody.data[item.depth].emplace_back(threadTraces);
-    }
 }
 
 void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,

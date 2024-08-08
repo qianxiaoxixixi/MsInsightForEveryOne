@@ -8,7 +8,8 @@
 #include "TimelineProtocolResponse.h"
 #include "DominQuery.h"
 #include "DomainObject.h"
-#include "Repository.h"
+#include "TextRepository.h"
+#include "DataEngineInterface.h"
 #include "SliceCacheManager.h"
 namespace Dic::Module::Timeline {
 struct DepthHelper {
@@ -44,10 +45,10 @@ public:
     void ComputeSliceDomainVecByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec);
     void ComputeAllThreadInfo(const ThreadQuery &flowQuery,
                               std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo);
-    void SetRepository(std::unique_ptr<RepositoryInterface> repository);
+    void SetRepository(std::shared_ptr<SliceRepoInterface> repository);
 
 private:
-    std::unique_ptr<RepositoryInterface> repository;
+    std::shared_ptr<SliceRepoInterface> repository;
     static bool CompareTimestampASC(const SliceDomain &first, const SliceDomain &second);
     static void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
         uint64_t tmpSelfTime);

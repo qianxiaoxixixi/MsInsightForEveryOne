@@ -1,8 +1,7 @@
 //
 //  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
 //
-
-#include "TimelineModule.h"
+#include "pch.h"
 #include "QueryThreadTracesHandler.h"
 #include "QueryThreadsHandler.h"
 #include "QueryThreadDetailHandler.h"
@@ -25,6 +24,10 @@
 #include "SearchAllSlicesHandler.h"
 #include "QueryEventsViewHandler.h"
 #include "ParseCardsHandler.h"
+#include "RenderEngine.h"
+#include "DataEngine.h"
+#include "RepositoryFactory.h"
+#include "TimelineModule.h"
 
 namespace Dic {
 namespace Module {
@@ -42,7 +45,15 @@ TimelineModule::~TimelineModule()
 void TimelineModule::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
-    requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES, std::make_unique<QueryThreadTracesHandler>());
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+
+    auto queryThreadTracesHandler = std::make_unique<QueryThreadTracesHandler>();
+    queryThreadTracesHandler->SetRenderEngine(renderEngine);
+    requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES, std::move(queryThreadTracesHandler));
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, std::make_unique<QueryThreadTracesSummaryHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREADS, std::make_unique<QueryThreadsHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_DETAIL, std::make_unique<QueryThreadDetailHandler>());
