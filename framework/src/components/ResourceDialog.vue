@@ -5,6 +5,7 @@ import {computed, onMounted, ref} from 'vue';
 import {isWindows} from '@/utils/is';
 import {ElMessage} from 'element-plus';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
+import {useLoading} from '@/hooks/useLoading';
 
 const props = defineProps<{ showModal: boolean; projectName: string }>();
 const emit=defineEmits(['update:showModal']);
@@ -50,8 +51,10 @@ const addClickProtect = (func: () => void): void => {
 };
 
 const handleConfirm = async () => {
+    useLoading().open({});
     const result = await resourceComp.value.doCheckFileConflict(props.projectName);
     if (result) {
+      useLoading().close();
       dialogCoverVisible.value = true;
     } else {
       const setPathResult = resourceComp.value.doSetCurrentPath(props.projectName, false);

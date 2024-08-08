@@ -7,6 +7,7 @@ import type { NotificationHandler } from './defs';
 import { updateData } from '../components/communication/Filter';
 import type { ConditionDataType } from '../components/communication/Filter';
 import i18n from 'lib/i18n';
+import type { communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
 import { customConsole as console } from 'lib/CommonUtils';
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
@@ -94,4 +95,14 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
         });
     }
     i18n.changeLanguage(lang);
+};
+
+export const updateCommunicatorDataHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.communicatorData = data as unknown as communicatorContainerData;
+    });
 };

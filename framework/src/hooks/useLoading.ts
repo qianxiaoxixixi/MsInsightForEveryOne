@@ -15,8 +15,9 @@ let loadingInstance: LoadingInstance | null = null;
 
 export const useLoading = (): any => {
     const open = (options?: LoadingOptions): void => {
+        // 如果遮罩已存在，则不处理直接返回
         if (loadingInstance) {
-            close();
+            return;
         }
         loadingInstance = ElLoading.service({
             fullscreen: true,
