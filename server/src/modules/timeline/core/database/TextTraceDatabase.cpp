@@ -722,6 +722,7 @@ std::map<uint64_t, std::pair<std::string, std::string>> TextTraceDatabase::Query
     auto threadSet = threadStmt->ExecuteQuery();
     if (threadSet == nullptr) {
         ServerLog::Error("QueryFlowDetail. Failed to get result set.", threadStmt->GetErrorMessage());
+        return threadMap;
     }
 
     while (threadSet->Next()) {
