@@ -6,7 +6,7 @@ import cls from 'classnames';
 import { computed, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 // hooks
 import { useWatchResize } from '../../../utils/useWatchDomResize';
 // support utils/types
@@ -17,7 +17,7 @@ import { getAutoKey } from '../../../utils/dataAutoKey';
 import { traceSingle } from '../../../utils/traceLogger';
 import { Chart } from '../../charts';
 import { isPinned, isSonPinned } from '../unitPin';
-import { useSelectUnit } from './hooks/useSelectUnit';
+import { useSelectUnit, useSelectUnits, useDeselectUnits } from './hooks/useSelectUnit';
 import type { KeyedInsightUnit } from './types';
 import { UnitInfo } from './UnitInfo';
 import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
@@ -27,6 +27,7 @@ import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
+import { CardMetaData, ThreadMetaData } from '../../../entity/data';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     position: relative;
@@ -52,6 +53,8 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
 const VIRTUAL_SCROLL_THRESHOLD = 30;
 const UNIT_SELECTED = 'unit-selected';
 const UNIT_VISIBLE = 'unit-visible';
+const FIRST_SELECTED = 'first-selected';
+const LAST_SELECTED = 'last-selected';
 
 const Splitter = styled.div`
     width: 100%;
@@ -101,10 +104,17 @@ interface UnitProps {
     hasExpandIcon: boolean;
     isPinned: boolean;
     isSonPinned: boolean;
+    isSelecting?: boolean;
+    startPosY?: number;
 }
 
-export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps): JSX.Element => {
-    const isSelected = (session.selectedUnitKeys as string[]).includes(getAutoKey(unit));
+const isSelectable = (unit: KeyedInsightUnit): boolean => {
+    return !['Card', 'Root'].includes(unit?.name);
+};
+
+export const Unit = observer(({ unit, session, isVisible, isSelecting, startPosY, ...props }: UnitProps): JSX.Element => {
+    const unitKey = getAutoKey(unit);
+    const isSelected = session.selectedUnitKeys.includes(unitKey);
     const [chartWidth, ref] = useWatchResize<HTMLDivElement>('width');
     const height = unit.height() + 1; // to support modifying height from outside during runtime, don't useMemo
     const placeholder = React.useMemo(() => {
@@ -112,8 +122,20 @@ export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps)
     }, [chartWidth, height]);
     // to support auto redraw when unit height is modified, don't useMemo
     const chart = <ChartView unit={unit} session={session} width={chartWidth} height={height} />;
+    const mouseEnterClientY = useRef(-1);
+    const isFirstSelected = session.selectedUnitKeys.length > 1 && session.selectedUnitKeys[0] === unitKey;
+    const isLastSelected = session.selectedUnitKeys.length > 1 && session.selectedUnitKeys[session.selectedUnitKeys.length - 1] === unitKey;
+    const clickedUnit = session.selectedUnits[0];
     const selectUnit = useSelectUnit(session);
-    return <Lane className={cls('unit', { [UNIT_SELECTED]: isSelected, [UNIT_VISIBLE]: isVisible })} laneHeight={height}>
+    const selectUnits = useSelectUnits(session);
+    const deSelectUnits = useDeselectUnits(session);
+
+    return <Lane className={cls('unit', {
+        [UNIT_SELECTED]: isSelected,
+        [UNIT_VISIBLE]: isVisible,
+        [FIRST_SELECTED]: isFirstSelected,
+        [LAST_SELECTED]: isLastSelected,
+    })} laneHeight={height}>
         <UnitInfo
             className={unit.name === 'Empty' ? 'empty' : ''}
             height={height}
@@ -125,6 +147,28 @@ export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps)
             onMouseDown={(): void => {
                 selectUnit(unit);
                 traceSingle('selectLane', [unit.name]);
+            }}
+            onMouseEnter={(e): void => {
+                if (startPosY === undefined || startPosY === -1) { return; }
+                const unitMetaData = unit?.metadata as ThreadMetaData;
+                const clickedUnitMetaData = clickedUnit?.metadata as ThreadMetaData;
+                const isSameCard = unitMetaData.cardId === clickedUnitMetaData?.cardId;
+                const parentIsHost = (unit.parent?.metadata as CardMetaData)?.cardName === 'Host';
+                const isSameCardLevel = isSameCard || parentIsHost;
+
+                if (isSelectable(unit) && isSelectable(clickedUnit) && isSameCardLevel) {
+                    mouseEnterClientY.current = e.clientY;
+                    const direction = (startPosY !== undefined && startPosY < e.clientY) ? 'down' : 'up';
+                    selectUnits(unit, direction);
+                }
+            }}
+            onMouseLeave={(e): void => {
+                if (startPosY === undefined || startPosY === -1) { return; }
+                const isMovingUp = startPosY < e.clientY && mouseEnterClientY.current !== -1 && e.clientY < mouseEnterClientY.current; // 鼠标向上移动取消框选
+                const isMovingDown = startPosY > e.clientY && mouseEnterClientY.current !== -1 && e.clientY > mouseEnterClientY.current; // 鼠标向下移动取消框选
+                if (isMovingUp || isMovingDown) {
+                    deSelectUnits(unit);
+                }
             }}
             style={{ flexGrow: 1, minWidth: 0 }}>
             { isVisible ? chart : placeholder }
@@ -223,6 +267,9 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     );
     const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
     const cardIdSet = computeOnScreenCardIdSet(flattenUnits, first, last);
+    const [startPosY, setStartPosY] = useState(-1);
+    const resizorEl = document.querySelector('.topC .resizor');
+
     runInAction(() => {
         updateSession(session, totalHeight, cardIdSet);
     });
@@ -234,7 +281,20 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         }
         return (): void => {};
     }, []);
-    return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView">
+
+    return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView"
+        onMouseDown={(e): void => {
+            setStartPosY(e.clientY);
+        }}
+        onMouseUp={(): void => {
+            setStartPosY(-1);
+        }}
+        onMouseLeave={(e): void => {
+            if (startPosY !== -1 && e.relatedTarget !== resizorEl) {
+                setStartPosY(-1);
+            }
+        }}
+    >
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: headOffset }} />
         {flattenUnits.filter((_, i) => first <= i && i < last).map((unit) => (!isPinned(unit) || unit.pinType === 'copied') &&
             <Unit
@@ -247,6 +307,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
                 isVisible={true}
                 isPinned={isPinned(unit)}
                 isSonPinned={isSonPinned(unit)}
+                startPosY={startPosY}
             />)}
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: tailOffset }} />
     </div>;
@@ -257,6 +318,7 @@ const TableScroller = styled.div`
     overflow-y: overlay;
     overflow-x: hidden;
     border-top: solid 1px ${(props): string => props.theme.tableBorderColor};
+    user-select: none;
 `;
 
 interface ScrollerProps {

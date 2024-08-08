@@ -36,13 +36,19 @@ export const slicesListDetail = detail({
         let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const timestampOffset = getTimeOffset(session, metadata.cardId);
+        const metadataList = session.selectedUnits.map(selectUnit => {
+            const { threadId, processId, metaType } = selectUnit?.metadata as ThreadMetaData ?? {};
+            return {
+                tid: threadId,
+                pid: processId,
+                metaType,
+            };
+        });
         const params = {
             rankId: metadata.cardId,
-            tid: metadata.threadId,
-            pid: metadata.processId,
-            metaType: metadata.metaType,
             startTime: Math.floor(startTime + timestampOffset),
             endTime: Math.ceil(endTime + timestampOffset),
+            metadataList,
         };
         const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
         const res = raw.data;
@@ -56,11 +62,8 @@ export const slicesListDetail = detail({
             totalSelfTime += element.selfTime ?? 0;
             totalOccurrences += element.occurrences ?? 0;
             element.rankId = metadata.cardId;
-            element.tid = metadata.threadId;
-            element.pid = metadata.processId;
             element.startTime = Math.floor(startTime + timestampOffset);
             element.endTime = Math.ceil(endTime + timestampOffset);
-            element.metaType = metadata.metaType;
         });
 
         res.push({

@@ -44,7 +44,7 @@ const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigge
 interface HandleFetchDataParams {
     result: Array<Record<string, unknown>>;
     session: Session;
-    recentUnits: React.MutableRefObject<[InsightUnit] | []>;
+    recentUnits: React.MutableRefObject<InsightUnit[]>;
     recentRange: React.MutableRefObject<[number, number] | undefined>;
     tabState?: TabState;
     selectedUnit?: InsightUnit;
