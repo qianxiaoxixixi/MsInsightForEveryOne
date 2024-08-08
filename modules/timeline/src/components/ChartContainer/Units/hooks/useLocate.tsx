@@ -70,23 +70,31 @@ export interface OrderOptions {
 
 export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], supportJump: boolean,
     orderOptions: OrderOptions, dom: HTMLDivElement | null): void => {
-    function scrollToResult(scrollHResult: number): void {
+    const scrollToResult = (scrollHResult: number): void => {
         requestAnimationFrame(() => {
             dom?.scrollTo(0, scrollHResult);
         });
-    }
+    };
+
+    const handleUnitSelection = (targetUnit: InsightUnit): void => {
+        const unitKey = getAutoKey(targetUnit);
+        if (!session.selectedUnitKeys.includes(unitKey)) {
+            if (session.locateUnit?.showDetail === false) {
+                session.setSelectedUnitKeys([unitKey]);
+            } else {
+                session.selectedUnitKeys = [unitKey];
+            }
+            session.selectedUnits = [targetUnit];
+        }
+    };
+
     React.useEffect(() => autorun(
         () => {
             if (dom === null || !supportJump) { return; }
             if (session.locateUnit === undefined) { return; }
             const targetUnit = getTargetUnit(getRootUnit(session.units), session.locateUnit.target);
             if (targetUnit !== undefined) {
-                if (session.locateUnit?.showDetail === false) {
-                    session.setSelectedUnitKeys([getAutoKey(targetUnit)]);
-                } else {
-                    session.selectedUnitKeys = [getAutoKey(targetUnit)];
-                }
-                session.selectedUnits = [targetUnit];
+                handleUnitSelection(targetUnit);
                 session.locateUnit?.onSuccess(targetUnit);
                 const scrollHResult = getNormalUnitHeight(unitsArea, orderOptions, targetUnit);
                 if (scrollHResult !== undefined) {

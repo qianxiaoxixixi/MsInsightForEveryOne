@@ -208,7 +208,7 @@ const showAllHidedUnits = (session: Session): void => {
     };
 
     const selectUnit = session.selectedUnits[0];
-    if (selectUnit) {
+    if (selectUnit !== undefined) {
         if (selectUnit.name === 'Empty') {
             handleEmptyUnit(selectUnit);
         } else {
@@ -295,7 +295,7 @@ const setChildrenUnitHide = (units: InsightUnit[]): void => {
 };
 
 const isShowHideText = (session: Session): boolean => {
-    if (!session.selectedUnits[0]) {
+    if (session.selectedUnits[0] === undefined) {
         return false;
     }
     if (session.selectedUnits[0].name === 'Empty') {
@@ -312,7 +312,7 @@ const isShowHideText = (session: Session): boolean => {
 };
 
 const isHideText = (session: Session): boolean => {
-    if (!session.selectedUnits[0]) {
+    if (session.selectedUnits[0] === undefined) {
         return false;
     }
     return session.selectedUnits[0].name !== 'Empty';
@@ -336,7 +336,7 @@ function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
 
 const isShowEventMenu = (session: Session): boolean => {
     const selectUnit = session.selectedUnits[0];
-    if (!selectUnit || session.isSimulation) {
+    if (selectUnit === undefined || session.isSimulation) {
         return false;
     }
     if (['Empty', 'Card', 'Counter', 'Root'].includes(selectUnit.name)) {
@@ -357,7 +357,7 @@ const isShowEventMenu = (session: Session): boolean => {
 
 const showPythonFunction = (session: Session): void => {
     const selectedUnit = session.selectedUnits?.[0];
-    if (!selectedUnit) {
+    if (selectedUnit === undefined) {
         return;
     }
     const metadata = selectedUnit.metadata as ThreadMetaData;
@@ -377,7 +377,7 @@ const showPythonFunction = (session: Session): void => {
 };
 const isShowPythonFunction = (session: Session): boolean => {
     const selectedUnit = session.selectedUnits?.[0];
-    if (!selectedUnit) {
+    if (selectedUnit === undefined) {
         return false;
     }
     return selectedUnit.havePythonFunction ?? false;
@@ -386,7 +386,7 @@ const isShowPythonFunction = (session: Session): boolean => {
 const getShowPythonFunctionButtonText = (session: Session, t: TFunction): string => {
     let isFilteredPythonFunction = true;
     const selectedUnit = session.selectedUnits?.[0];
-    if (!selectedUnit) {
+    if (selectedUnit === undefined) {
         return '';
     }
     const metadata = selectedUnit.metadata as ThreadMetaData;
@@ -456,7 +456,7 @@ const haveCollapsedChildren = (_unit: InsightUnit): boolean => {
 
 const isCollapseAllVisible = (session: Session): boolean => {
     const selectedUnit = session.selectedUnits?.[0];
-    if (selectedUnit) {
+    if (selectedUnit !== undefined) {
         return haveExpandedChildren(selectedUnit);
     }
     return false;
@@ -464,7 +464,7 @@ const isCollapseAllVisible = (session: Session): boolean => {
 
 const isExpandAllVisible = (session: Session): boolean => {
     const selectedUnit = session.selectedUnits?.[0];
-    if (selectedUnit) {
+    if (selectedUnit !== undefined) {
         const isCollapsed = selectedUnit.collapsible && !selectedUnit.isExpanded;
         const haveChildUnits = selectedUnit.children && selectedUnit.children.length > 0;
         if (isCollapsed && haveChildUnits) {

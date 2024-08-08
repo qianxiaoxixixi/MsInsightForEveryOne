@@ -71,7 +71,7 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
             return new LabelUnit(meta);
         }
         case 'process': {
-            const meta = generateMetaData(insightMetaData.metadata.cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '');
+            const meta = generateMetaData(insightMetaData.metadata.cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, insightMetaData.metadata.threadId, '');
             meta.dataSource = paramsTree.get(insightMetaData.metadata).dataSource;
             meta.label = insightMetaData.metadata.label;
             meta.metaType = insightMetaData.metadata.metaType;

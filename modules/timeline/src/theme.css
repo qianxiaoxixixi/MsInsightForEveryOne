@@ -90,3 +90,28 @@
 .search_icon_css{
     display: flex;
 }
+
+.laneView{
+    --selectedChartBorderColor: #0959f4;
+}
+
+.theme_dark .laneView{
+    --selectedChartBorderColor: #5391ff;
+}
+
+.laneView .unit-selected.first-selected .chart-selected{
+    box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
+    inset -3px 0 0 0 var(--selectedChartBorderColor),
+    inset 0 3px 0 0 var(--selectedChartBorderColor);
+}
+
+.laneView .unit-selected + .unit-selected .chart-selected{
+    box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
+    inset -3px 0 0 0 var(--selectedChartBorderColor);
+}
+
+.laneView .unit-selected.last-selected .chart-selected{
+    box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
+    inset -3px 0 0 0 var(--selectedChartBorderColor),
+    inset 0 -3px 0 0 var(--selectedChartBorderColor);
+}

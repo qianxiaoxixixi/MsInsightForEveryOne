@@ -173,8 +173,9 @@ const useTriggerEvent = (session: Session): TriggerEvent => {
 };
 
 const useBottomPanelReactNodes = (session: Session, height: number, type: string, event: TriggerEvent): BottomPanelReactNodes => {
-    const { selectedUnitKeys, selectedUnits: [sessionUnit] } = session;
+    const { selectedUnitKeys, selectedUnits } = session;
     const bottomPanelComponents = React.useMemo(() => {
+        const sessionUnit = selectedUnits?.find(unit => unit.bottomPanelRender);
         return sessionUnit?.bottomPanelRender?.(session, sessionUnit?.metadata);
     }, [session, String(selectedUnitKeys), event, session.units.length]);
     const bottomPanelComponent = type === TriggerType.SELECTED_DATA ? bottomPanelComponents?.[0] : bottomPanelComponents?.[1];

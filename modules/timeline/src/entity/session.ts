@@ -95,7 +95,7 @@ export class Session {
     selectedRange?: [ TimeStamp, TimeStamp ];
     scrollTop: number = 0;
     expandedUnitKeys: string[] | [] = [];
-    selectedUnits: [InsightUnit] | [] = []; // redundant for reducing extra computation
+    selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
     selectedDetailKeys: [string] | [] = [];
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: Record<string, Record<string, unknown>> = {};
@@ -126,9 +126,9 @@ export class Session {
     doReset: boolean = false;
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
-    eventUnits: [InsightUnit] | [] = [];
+    eventUnits: InsightUnit[] = [];
     private readonly _domain: Domain;
-    private _selectedUnitKeys: [string] | [] = [];
+    private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
     private _endTimeAll: TimeStamp | undefined;
     private _name: string | null;
@@ -209,7 +209,7 @@ export class Session {
         }
     }
 
-    get selectedUnitKeys(): ([string] | []) {
+    get selectedUnitKeys(): (string[]) {
         return this._selectedUnitKeys;
     }
 
@@ -259,7 +259,7 @@ export class Session {
         this._phase = value;
     }
 
-    set selectedUnitKeys(value: [string] | []) {
+    set selectedUnitKeys(value: string[]) {
         this._selectedUnitKeys = value;
         // 'More' panel should be cleared when selected unit is changed
         runInAction(() => {
