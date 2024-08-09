@@ -106,7 +106,7 @@ function handleTransportType(dataSource: any, option: any, type: any, t: TFuncti
     };
 }
 
-const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL'];
+const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL', 'SIO'];
 const defaultVisualMap = {
     calculable: true,
     orient: 'horizontal',
@@ -254,6 +254,7 @@ const transportTypeOption = {
             { value: 1, label: allTransporType[1], color: COLOR.BAND_1 },
             { value: 2, label: allTransporType[2], color: COLOR.BAND_2 },
             { value: 3, label: allTransporType[3], color: COLOR.BAND_3 },
+            { value: 4, label: allTransporType[4], color: COLOR.BAND_4 },
         ],
         textStyle: { color: COLOR.GREY_40 },
         dimension: 2,
