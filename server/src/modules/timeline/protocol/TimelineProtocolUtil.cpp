@@ -461,6 +461,7 @@ template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(cons
     json_t kernelDetails(kArrayType);
     for (const KernelDetail &detail : response.body.kernelDetails) {
         json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "id", detail.id, allocator);
         JsonUtil::AddMember(itemJson, "name", detail.name, allocator);
         JsonUtil::AddMember(itemJson, "type", detail.type, allocator);
         JsonUtil::AddMember(itemJson, "acceleratorCore", detail.acceleratorCore, allocator);

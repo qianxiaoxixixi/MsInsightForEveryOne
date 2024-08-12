@@ -42,6 +42,7 @@ bool AclnnOpAdvisor::AclnnOpProcess(const std::shared_ptr<Timeline::VirtualTrace
     for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
         auto item = data.at(i);
         Protocol::AclnnOperatorData one{};
+        one.baseInfo.id = item.id;
         one.baseInfo.rankId = param.rankId;
         one.baseInfo.startTime = item.startTime;
         one.baseInfo.duration = item.duration;

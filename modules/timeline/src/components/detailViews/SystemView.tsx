@@ -369,6 +369,9 @@ const BaseSummary = observer((props: any) => {
                 onChange={(pagination: any, filters: any, nwSorter: any): void => {
                     setSorter(nwSorter);
                 }}
+                rowClassName={(record: any): string => {
+                    return record.id === rowData.id ? 'selected-row' : 'click-able';
+                }}
                 pagination={getPageData(page, setPage)}
                 dataSource={dataSource}
                 columns={columns}
@@ -518,6 +521,9 @@ const KernelDetails = observer((props: any) => {
                 dataSource={dataSource}
                 columns={colums}
                 scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
+                rowClassName={(record: any): string => {
+                    return record.id === rowData.id ? 'selected-row' : 'click-able';
+                }}
                 size="small"/>
             : <Loading style={{ marginTop: '10px' }}/>
     );

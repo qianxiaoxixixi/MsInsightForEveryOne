@@ -139,9 +139,10 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
         rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
         FlowLocation location {
             .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-            .metaType = metaType, .rankId = rankId, .depth = resultSet->GetInt32("depth"),
-            .timestamp = resultSet->GetUint64("startTime"), .duration = resultSet->GetUint64("duration"),
-            .pid = resultSet->GetString("pid"), .name = stringsCache.at(path)[resultSet->GetString("name")]
+            .note = resultSet->GetString("note"), .metaType = metaType, .rankId = rankId,
+            .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+            .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
+            .name = stringsCache.at(path)[resultSet->GetString("name")]
         };
         flowLocations.push_back(location);
     }
@@ -364,6 +365,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
     }
     while (resultSet->Next()) {
         Protocol::KernelDetail detail;
+        detail.id = resultSet->GetString("id");
         detail.name = resultSet->GetString("name");
         detail.type = GetStringCacheValue(path, resultSet->GetString("type"));
         detail.acceleratorCore = GetStringCacheValue(path, resultSet->GetString("acceleratorCore"));
@@ -428,14 +430,14 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
     std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
     std::string sql = "with nameIds as (select id, value as realName from STRING_IDS),\n"
       "     main as ("
-      "     select nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
+      "     select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
       "       'HCCL' as taskType, info.startNs, round((info.endNs - info.startNs)/1000.0, 3) as duration,\n"
       " 0 as " + blockDimColumnName + ",round(waitNs/1000.0, 3) as wait_time,'N/A' as inputShapes, 'N/A' as "
       " inputDataTypes,'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats"
       "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
       "       join nameIds on opName = nameIds.id group by info.opName\n"
       "     UNION all"
-      "     select nameIds.realName as name, opType, info.taskType, startNs,"
+      "     select TASK.ROWID, nameIds.realName as name, opType, info.taskType, startNs,"
       "            round((endNs - startNs)/1000.0, 3) as duration,\n"
       "" + blockDimColumnName + ", round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
       "            outputShapes, outputDataTypes, outputFormats  from COMPUTE_TASK_INFO info "
@@ -450,8 +452,8 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
         return sql;
     }
     sql += " )\n"
-      "SELECT total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
-      "       wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
+      "SELECT ROWID as id, total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime,\n"
+      "       duration, wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
       "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats\n"
       "FROM main join total ";
     if (!GetKernelDetailFilterSql(sql, requestParams)) {
@@ -1067,7 +1069,7 @@ void DbTraceDataBase::QueryFlowLocation(const std::string& sql,
         auto rankId = metaType == TABLE_API || metaType == TABLE_CANN_API || metaType == TABLE_MSTX_EVENTS ?
                 path : deviceId;
         FlowLocation location {.tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-                .metaType = metaType, .rankId = rankId,
+                .note = resultSet->GetString("note"), .metaType = metaType, .rankId = rankId,
                 .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
                 .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
                 .name = resultSet->GetString("name"), .deviceId=deviceId};
@@ -1655,7 +1657,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
         ServerLog::Warn("The PYTORCH_API table isn't exist.");
         return false;
     }
-    std::string sql = "SELECT py.startNs - ? as startTime, (py.endNs - py.startNs) / 1000 as duration, "
+    std::string sql = "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) / 1000 as duration, "
         "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
         "WHERE str.value IN (" + optimizers + ") ORDER BY " + params.orderBy + " " + params.order;
@@ -1671,11 +1673,12 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
     }
     while (resultSet->Next()) {
         Protocol::ThreadTraces one{};
+        one.id = resultSet->GetString("id");
         one.startTime = resultSet->GetUint64("startTime");
         one.name = resultSet->GetString("originOptimizer");
         one.duration = resultSet->GetUint64("duration");
         one.threadId = resultSet->GetString("tid");
-        one.id = resultSet->GetString("pid");
+        one.pid = resultSet->GetString("pid");
         one.depth = resultSet->GetUint64("depth");
         data.emplace_back(one);
     }
@@ -1699,6 +1702,7 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
     }
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.type = resultSet->GetString("type");
         one.startTime = resultSet->GetUint64("startTime");
@@ -1749,7 +1753,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
     std::string sql =
-        "SELECT s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
+        "SELECT info.ROWID as id, s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
         "(task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, task.streamId as tid,"
         " task.depth as depth "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
@@ -1774,6 +1778,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
     }
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.startTime = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
@@ -1789,7 +1794,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
 {
-    std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, "
+    std::string sql = "SELECT py.ROWID as id, str.value as name, py.startNs - ? as startTime, "
         "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
         "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' ORDER BY py.globalTid ASC, py.startNs ASC ";
@@ -1807,6 +1812,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
         uint64_t trackId = resultSet->GetUint64("pid");
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.timestamp = resultSet->GetUint64("startTime");
         // Protocol::FlowLocation数据结构中只定义start time和duration，绝大多数场景下也是只用上述两个字段，
@@ -1838,7 +1844,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
 {
     std::string sql =
         "WITH data AS ( "
-        "SELECT task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
+        "SELECT info.ROWID as id, task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
         "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
         "task.streamId as tid, task.depth as depth, "
         "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
@@ -1867,6 +1873,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
 
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.timestamp = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
@@ -1875,7 +1882,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         one.depth = resultSet->GetUint64("depth");
         one.type = StringUtil::join(rule.opList, ", ");
         one.metaType = rule.fusedOp;
-        one.id = rule.note;
+        one.note = rule.note;
         data.emplace_back(one);
     }
 

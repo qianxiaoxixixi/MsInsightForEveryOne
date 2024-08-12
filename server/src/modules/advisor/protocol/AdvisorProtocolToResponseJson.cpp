@@ -26,6 +26,7 @@ template
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "id", item.baseInfo.id, allocator);
         JsonUtil::AddMember(dataJson, "rankId", item.baseInfo.rankId, allocator);
         JsonUtil::AddMember(dataJson, "startTime", item.baseInfo.startTime, allocator);
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
@@ -51,6 +52,7 @@ template <> std::optional<document_t> ToResponseJson<AffinityAPIResponse>(const 
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "id", item.baseInfo.id, allocator);
         JsonUtil::AddMember(dataJson, "rankId", item.baseInfo.rankId, allocator);
         JsonUtil::AddMember(dataJson, "startTime", item.baseInfo.startTime, allocator);
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
@@ -78,6 +80,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorFusionResponse>(con
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "id", item.baseInfo.id, allocator);
         JsonUtil::AddMember(dataJson, "rankId", item.baseInfo.rankId, allocator);
         JsonUtil::AddMember(dataJson, "startTime", item.baseInfo.startTime, allocator);
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
@@ -105,6 +108,7 @@ template <> std::optional<document_t> ToResponseJson<AICpuOperatorResponse>(cons
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "id", item.baseInfo.id, allocator);
         JsonUtil::AddMember(dataJson, "rankId", item.baseInfo.rankId, allocator);
         JsonUtil::AddMember(dataJson, "startTime", item.baseInfo.startTime, allocator);
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
@@ -130,6 +134,7 @@ template <> std::optional<document_t> ToResponseJson<AclnnOperatorResponse>(cons
     json_t dataList(kArrayType);
     for (auto item : response.body.datas) {
         json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "id", item.baseInfo.id, allocator);
         JsonUtil::AddMember(dataJson, "rankId", item.baseInfo.rankId, allocator);
         JsonUtil::AddMember(dataJson, "startTime", item.baseInfo.startTime, allocator);
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
