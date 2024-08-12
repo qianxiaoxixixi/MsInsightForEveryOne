@@ -168,7 +168,7 @@ bool Dic::Module::CheckProjectValidHandler::TraverseFolder(const std::string& fo
     while ((entry = readdir(dir)) != nullptr) {
         if (entry->d_type == DT_REG) {
             // 处理文件
-            if (CheckFileSize(folderPath + "/" + entry->d_name)) {
+            if (!CheckFileSize(folderPath + "/" + entry->d_name)) {
                 closedir(dir);
                 return false;
             }
