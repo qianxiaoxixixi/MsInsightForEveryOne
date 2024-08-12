@@ -1659,11 +1659,12 @@ bool TextTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
     }
     while (resultSet->Next()) {
         Protocol::ThreadTraces one{};
+        one.id = resultSet->GetString("id");
         one.startTime = resultSet->GetUint64("startTime");
         one.name = resultSet->GetString("name");
         one.duration = resultSet->GetUint64("duration");
         one.threadId = resultSet->GetString("tid");
-        one.id = resultSet->GetString("pid");
+        one.pid = resultSet->GetString("pid");
         data.emplace_back(one);
     }
     return true;
@@ -1689,6 +1690,7 @@ bool TextTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
     }
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.type = resultSet->GetString("type");
         one.startTime = resultSet->GetUint64("startTime");
@@ -1766,6 +1768,7 @@ bool TextTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
     }
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.startTime = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
@@ -1794,6 +1797,7 @@ bool TextTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
         uint64_t trackId = resultSet->GetUint64("track");
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.timestamp = resultSet->GetUint64("startTime");
         // Protocol::FlowLocation数据结构中只定义start time和duration，绝大多数场景下也是只用上述两个字段，
@@ -1832,6 +1836,7 @@ bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
     }
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
+        one.id = resultSet->GetString("id");
         one.name = resultSet->GetString("name");
         one.timestamp = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
@@ -1839,7 +1844,7 @@ bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         one.tid = resultSet->GetString("tid");
         one.type = StringUtil::join(rule.opList, ", ");
         one.metaType = rule.fusedOp;
-        one.id = rule.note;
+        one.note = rule.note;
         data.emplace_back(one);
     }
     return true;

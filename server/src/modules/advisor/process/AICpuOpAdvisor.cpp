@@ -32,6 +32,7 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
         auto item = data.at(i);
         Protocol::AICpuOperatorData one{};
+        one.baseInfo.id = item.id;
         one.baseInfo.rankId = params.rankId;
         one.baseInfo.startTime = item.startTime;
         one.baseInfo.duration = item.duration;

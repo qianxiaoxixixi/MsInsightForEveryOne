@@ -114,8 +114,11 @@ export const EventDetail = observer((props: any) => {
                         setSorter(newsorter as typeof sorter);
                     }
                 }}
-                pagination={getPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading} rowClassName={'click-able'}
+                pagination={getPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading}
                 scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
+                rowClassName={(record: any): string => {
+                    return record.id === rowData.id ? 'selected-row' : 'click-able';
+                }}
             />
         </div>
     );
@@ -154,7 +157,11 @@ const generateEventColumns = (
         key: 'click',
         ellipsis: true,
         render: (_: any, record: any) => (
-            <Button type="link" onClick={(): void => setRowData(record)}>{i18n.t('timeline:tableHead.Click')}</Button>
+            <Button type="link" onClick={(): void => {
+                setRowData(record);
+            }}>
+                {i18n.t('timeline:tableHead.Click')}
+            </Button>
         ),
     },
 ];

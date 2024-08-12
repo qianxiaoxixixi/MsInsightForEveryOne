@@ -198,6 +198,9 @@ const FindDetail = observer((props: any) => {
                     setSorter(newsorter as typeof sorter);
                 }
             }}
+            rowClassName={(record: any): string => {
+                return record.id === rowData.id ? 'selected-row' : 'click-able';
+            }}
             pagination={getPageData(page, setPage)}
             dataSource={dataSource}
             columns={columns}

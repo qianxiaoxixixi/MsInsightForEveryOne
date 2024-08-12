@@ -38,6 +38,7 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
     for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
         auto item = data.at(i);
         Protocol::OperatorFusionData one{};
+        one.baseInfo.id = item.id;
         one.baseInfo.rankId = params.rankId;
         one.baseInfo.startTime = item.timestamp;
         one.baseInfo.duration = item.duration;
@@ -47,7 +48,7 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
         one.name = item.name;
         one.originOpList = item.type;
         one.fusedOp = item.metaType;
-        one.note = item.id;
+        one.note = item.note;
         resBody.datas.emplace_back(one);
     }
     resBody.size = data.size();

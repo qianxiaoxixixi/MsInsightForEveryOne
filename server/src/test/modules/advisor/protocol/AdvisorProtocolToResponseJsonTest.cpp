@@ -29,14 +29,14 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAffinityOptimizerResponseTest)
     std::optional<Dic::document_t> jsonOptional = advisorProtocol.ToJson(response, error);
     EXPECT_EQ(jsonOptional.has_value(), true);
     response.body = {.size = refSize, .datas = {
-        {{"0", 1, 1, "pid1", "tid1", 1}, "Optimizer.step#SGD.step", "torch_npu.optim.NpuFusedSGD"},
+        {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Optimizer.step#SGD.step", "torch_npu.optim.NpuFusedSGD"},
         {
-            {"1", 2, 2, "pid2", "tid2", 2}, // rank = 1, depth = 2
+            {"1", "1", 2, 2, "pid2", "tid2", 2}, // rank = 1, depth = 2
             "Optimizer.step#Adadelta.step",
             "torch_npu.optim.NpuFusedAdadelta"
             },
         {
-            {"2", 3, 3, "pid3", "tid3", 3}, // rank = 2, depth = 3
+            {"2", "2", 3, 3, "pid3", "tid3", 3}, // rank = 2, depth = 3
             "Optimizer.step#Lamb.step",
             "torch_npu.optim.NpuFusedLamb"
         }
@@ -73,11 +73,11 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAffinityAPIResponseTest)
         .size = refSize,
         .datas = {
             {
-                {"0", 1, 1, "pid1", "tid1", 1},
+                {"0", "0", 1, 1, "pid1", "tid1", 1},
                 "aten::gelu", "aten::gelu", "torch_npu.fast_gelu", ""
                 },
             {
-                {"1", 2, 2, "pid2", "tid2", 2},
+                {"1", "1", 2, 2, "pid2", "tid2", 2},
                 "aten::linear", "aten::linear", "torch_npu.npu_linear", ""
             }
         }
@@ -113,8 +113,8 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAICpuOperatorResponseTest)
     response.body = {
         .size = refSize,
         .datas = {
-            {{"0", 1, 1, "pid1", "tid1", 1}, "Cast75", ""},
-            {{"1", 2, 2, "pid2", "tid2", 2}, "Add77", ""}
+            {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Cast75", ""},
+            {{"1", "1", 2, 2, "pid2", "tid2", 2}, "Add77", ""}
         }
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
@@ -148,8 +148,8 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToAclnnOperatorResponseTest)
     response.body = {
         .size = refSize,
         .datas = {
-            {{"0", 1, 1, "pid1", "tid1", 1}, "Ascend@aclnnCast", ""},
-            {{"1", 2, 2, "pid2", "tid2", 2}, "Ascend@aclnnAdd", ""}
+            {{"0", "0", 1, 1, "pid1", "tid1", 1}, "Ascend@aclnnCast", ""},
+            {{"1", "1", 2, 2, "pid2", "tid2", 2}, "Ascend@aclnnAdd", ""}
         }
     };
     jsonOptional = advisorProtocol.ToJson(response, error);
@@ -184,11 +184,11 @@ TEST_F(AdvisorProtocolToResponseJsonTest, ToOperatorFusionResponseTest)
         .size = refSize,
         .datas = {
             {
-                {"0", 1, 1, "pid1", "tid1", 1},
+                {"0", "0", 1, 1, "pid1", "tid1", 1},
                 "Cast", "Cast, LayerNorm, Cast", "LayerNorm", ""
             },
             {
-                {"1", 2, 2, "pid2", "tid2", 2},
+                {"1", "1", 2, 2, "pid2", "tid2", 2},
                 "Transpose", "Transpose, Transpose, GatherElement, Transpose", "GatherElements", ""
             }
         }

@@ -48,6 +48,7 @@ struct ThreadTraces {
     uint64_t endTime = 0;
     int32_t depth = 0;
     std::string threadId;
+    std::string pid;
     std::string id;
     std::string cname;
 };
@@ -142,6 +143,7 @@ struct UnitFlowNameResponse : public Response {
 struct FlowLocation {
     std::string tid;
     std::string id;
+    std::string note;
     std::string metaType;
     std::string rankId;
     int32_t depth = 0;
@@ -390,6 +392,7 @@ struct ParseCardsResponse : public Response {
 };
 
 struct KernelDetail {
+    std::string id;
     std::string name;
     std::string type;
     std::string acceleratorCore;
@@ -429,6 +432,7 @@ struct OneKernelBody {
 };
 
 struct KernelBaseInfo {
+    std::string id;
     std::string rankId;
     std::string name;
     std::string type;

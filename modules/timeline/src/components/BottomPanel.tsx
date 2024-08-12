@@ -292,7 +292,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         };
     }, [setBottomHeight]);
     useEffect(() => {
-        if (session.selectedData?.showSelectedData === true) {
+        if (session.selectedData?.showSelectedData === true || session.selectedData?.showDetail === false) {
             setItem('SliceDetail');
             return;
         }

@@ -242,8 +242,8 @@ public:
         if (!coreType.empty()) {
             coreTypes = " AND accelerator_core = ? ";
         }
-        std::string sql = "SELECT name, op_type AS type, accelerator_core AS acceleratorCore, start_time AS startTime, "
-            "duration, wait_time AS waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
+        std::string sql = "SELECT id, name, op_type AS type, accelerator_core AS acceleratorCore, duration, "
+            "start_time AS startTime, wait_time AS waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
             "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
             "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
             "output_formats AS outputFormats FROM kernel_detail "
@@ -393,9 +393,9 @@ public:
         }
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
 
-        std::string sql = "SELECT s2.value as name, s1.value as type, s0.value as unit, t.startNs - ? as startTime, "
-            "(t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, t.streamId as tid, t.depth as depth, "
-            "lower(s3.value) as input, lower(s4.value) as output "
+        std::string sql = "SELECT info.ROWID as id, s2.value as name, s1.value as type, s0.value as unit, "
+            "t.startNs - ? as startTime, (t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "t.streamId as tid, t.depth as depth, lower(s3.value) as input, lower(s4.value) as output "
             "FROM COMPUTE_TASK_INFO info "
             "JOIN STRING_IDS s0 ON info.taskType = s0.id "
             "JOIN TASK t ON info.globalTaskId = t.globalTaskId "

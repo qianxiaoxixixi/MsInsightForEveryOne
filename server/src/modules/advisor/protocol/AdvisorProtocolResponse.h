@@ -11,6 +11,7 @@
 
 namespace Dic::Protocol {
 struct BaseInfo {
+    std::string id;
     std::string rankId;
     uint64_t startTime;
     uint64_t duration;
