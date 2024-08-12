@@ -72,9 +72,13 @@ std::vector<SliceDomain>::const_iterator FlowAnalyzer::ComputeSliceByFlowPoint(c
             return it;
         }
 
-        if (it != sliceVec.end() && it > sliceVec.begin()) {
-            return (it--);
+        while (it != sliceVec.end() && it > sliceVec.begin()) {
+            it--;
+            if (it->timestamp <= flowPoint.timestamp && it->endTime >= flowPoint.timestamp) {
+                break;
+            }
         }
+        return it;
     }
     if (flowPoint.type == Protocol::LINE_END || flowPoint.type == Protocol::LINE_END_OPTIONAL) {
         it = std::lower_bound(sliceVec.begin(), sliceVec.end(), slice, SliceDomain::CompareTimestampASC);

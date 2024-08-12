@@ -130,9 +130,13 @@ uint32_t SliceAnalyzer::ComputeFlowPointDepth(std::vector<SliceDomain> &cacheSli
             return it->depth;
         }
 
-        if (it != cacheSlices.end() && it > cacheSlices.begin()) {
-            return (it--)->depth;
+        while (it != cacheSlices.end() && it > cacheSlices.begin()) {
+            it--;
+            if (it->timestamp <= timestamp && it->endTime >= timestamp) {
+                break;
+            }
         }
+        return it->depth;
     }
     if (type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) {
         auto it = std::lower_bound(cacheSlices.begin(), cacheSlices.end(), cacheSlice, CompareTimestampASC);
