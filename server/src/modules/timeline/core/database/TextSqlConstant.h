@@ -74,7 +74,7 @@ const std::string QUERY_FLOW_BY_FLOWID_SQL = "SELECT name, cat, flow_id as flowI
 const std::string QUERY_ALL_THREAD_SQL = "SELECT track_id as trackId, tid, pid"
     " FROM " +
     THREAD_TABLE + " ;";
-const std::string QUERY_SLICE_BY_ID_SQL = "SELECT id, track_id, flag_id"
+const std::string QUERY_SLICE_BY_ID_SQL = "SELECT track_id, flag_id"
     " FROM " +
     SLICE_TABLE + " WHERE id = ?";
 const std::string QUERY_SLICE_BY_TIME_POINT_SQL = "SELECT id, timestamp, end_time as endTime, name"
