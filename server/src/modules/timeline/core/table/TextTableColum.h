@@ -41,7 +41,7 @@ constexpr std::string_view THREAD_SORT_INDEX = "thread_sort_index";
 }
 
 namespace TaskColumn {
-constexpr std::string_view ROW_ID = "ROWID";
+constexpr std::string_view ROW_ID = "rowid";
 constexpr std::string_view TIMESTAMP = "startNs";
 constexpr std::string_view ENDTIME = "endNs";
 constexpr std::string_view DECICED_ID = "deviceId";
@@ -56,7 +56,7 @@ constexpr std::string_view MODEL_ID = "modelId";
 }
 
 namespace CommucationTaskInfoColumn {
-constexpr std::string_view ROW_ID = "ROWID";
+constexpr std::string_view ROW_ID = "rowid";
 constexpr std::string_view NAME = "name";
 constexpr std::string_view GLOBAL_TASK_ID = "globalTaskId";
 constexpr std::string_view TASK_TYPE = "taskType";

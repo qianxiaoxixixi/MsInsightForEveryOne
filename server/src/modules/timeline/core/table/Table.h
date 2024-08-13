@@ -23,23 +23,17 @@ enum class TableOrder {
 };
 template <typename T> class Table {
 public:
-    Table() noexcept
-    {
-        selectStr = "";
-        conditionStr = "";
-        sql = "";
-        orderByStr = "";
-    }
+    Table() noexcept {}
     Table &Select(std::string_view str)
     {
-        if (std::empty(selectStr)) {
-            selectStr = "SELECT " + std::string(str);
+        if (std::empty(SelectStr())) {
+            SelectStr() = "SELECT " + std::string(str);
         } else {
-            selectStr += "," + std::string(str);
+            SelectStr() += "," + std::string(str);
         }
         auto it = GetAssignMap().find(str);
         if (it != GetAssignMap().end()) {
-            assignFuncs.emplace_back(it->second);
+            AssignFuncs().emplace_back(it->second);
         } else {
             ServerLog::Error("Select column is not exist");
         }
@@ -48,14 +42,14 @@ public:
 
     template <typename... Args> Table &Select(std::string_view str, const Args &... args)
     {
-        if (std::empty(selectStr)) {
-            selectStr = "SELECT " + std::string(str);
+        if (std::empty(SelectStr())) {
+            SelectStr() = "SELECT " + std::string(str);
         } else {
-            selectStr += " , " + std::string(str);
+            SelectStr() += " , " + std::string(str);
         }
         auto it = GetAssignMap().find(str);
         if (it != GetAssignMap().end()) {
-            assignFuncs.emplace_back(it->second);
+            AssignFuncs().emplace_back(it->second);
         } else {
             ServerLog::Error("Select column is not exist");
         }
@@ -65,43 +59,43 @@ public:
 
     Table &Eq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + std::string(str) + " = ? ";
-        values.emplace_back(value);
+        ConditionStr() += " AND " + std::string(str) + " = ? ";
+        Values().emplace_back(value);
         return *this;
     }
 
     Table &NotEq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + std::string(str) + " != ? ";
-        values.emplace_back(value);
+        ConditionStr() += " AND " + std::string(str) + " != ? ";
+        Values().emplace_back(value);
         return *this;
     }
 
     Table &Less(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + std::string(str) + " < ? ";
-        values.emplace_back(value);
+        ConditionStr() += " AND " + std::string(str) + " < ? ";
+        Values().emplace_back(value);
         return *this;
     }
 
     Table &LessEq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + std::string(str) + " <= ? ";
-        values.emplace_back(value);
+        ConditionStr() += " AND " + std::string(str) + " <= ? ";
+        Values().emplace_back(value);
         return *this;
     }
 
     Table &Greater(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + std::string(str) + " > ? ";
-        values.emplace_back(value);
+        ConditionStr() += " AND " + std::string(str) + " > ? ";
+        Values().emplace_back(value);
         return *this;
     }
 
     Table &GreaterEq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + std::string(str) + " >= ? ";
-        values.emplace_back(value);
+        ConditionStr() += " AND " + std::string(str) + " >= ? ";
+        Values().emplace_back(value);
         return *this;
     }
 
@@ -113,34 +107,34 @@ public:
      */
     Table &In(std::string_view str, const std::vector<uint64_t> &inputs)
     {
-        conditionStr += " AND " + std::string(str) + " IN ( ";
+        ConditionStr() += " AND " + std::string(str) + " IN ( ";
         std::string inputStr = StringUtil::join(inputs, ", ");
-        conditionStr += inputStr;
-        conditionStr += " ) ";
+        ConditionStr() += inputStr;
+        ConditionStr() += " ) ";
         return *this;
     }
 
     Table &OrderBy(std::string_view columnName, TableOrder order)
     {
-        if (std::empty(orderByStr)) {
-            orderByStr = " ORDER BY " + std::string(columnName);
+        if (std::empty(OrderByStr())) {
+            OrderByStr() = " ORDER BY " + std::string(columnName);
         } else {
-            orderByStr += " , " + std::string(columnName);
+            OrderByStr() += " , " + std::string(columnName);
         }
         if (order == TableOrder::DESC) {
-            orderByStr += " DESC ";
+            OrderByStr() += " DESC ";
         } else {
-            orderByStr += " ASC ";
+            OrderByStr() += " ASC ";
         }
         return *this;
     }
 
     Table &GroupBy(std::string_view columnName)
     {
-        if (std::empty(groupByStr)) {
-            groupByStr = " GROUP BY " + std::string(columnName);
+        if (std::empty(GroupByStr())) {
+            GroupByStr() = " GROUP BY " + std::string(columnName);
         } else {
-            groupByStr += " , " + std::string(columnName);
+            GroupByStr() += " , " + std::string(columnName);
         }
         return *this;
     }
@@ -151,17 +145,14 @@ public:
         if (database == nullptr) {
             return;
         }
-        auto stmt = database->CreatPreparedStatement();
+        std::string sql =
+            SelectStr() + " FROM " + GetTableName() + " WHERE 1 = 1 " + ConditionStr() + OrderByStr() + GroupByStr();
+        auto stmt = database->CreatPreparedStatement(sql);
         if (stmt == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to get stmt.");
             return;
         }
-        sql = selectStr + " FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr + orderByStr + groupByStr;
-        if (!stmt->Prepare(sql)) {
-            ServerLog::Error(GetTableName() + " Failed to prepare sql.");
-            return;
-        }
-        for (const auto &item : values) {
+        for (const auto &item : Values()) {
             // 访问 variant 中存储的值
             if (std::holds_alternative<uint32_t>(item)) {
                 stmt->BindParams(std::get<uint32_t>(item));
@@ -178,7 +169,7 @@ public:
         }
         while (resultSet->Next()) {
             T t;
-            for (const auto &item : assignFuncs) {
+            for (const auto &item : AssignFuncs()) {
                 item(t, resultSet);
             }
             result.emplace_back(t);
@@ -192,18 +183,14 @@ public:
         if (database == nullptr) {
             return 0;
         }
-        auto stmt = database->CreatPreparedStatement();
         uint64_t count = 0;
+        std::string sql = "SELECT COUNT(*) AS count FROM " + GetTableName() + " WHERE 1 = 1 " + ConditionStr();
+        auto stmt = database->CreatPreparedStatement(sql);
         if (stmt == nullptr) {
-            ServerLog::Error(GetTableName() + " count failed to get stmt.");
+            ServerLog::Error(GetTableName() + " Failed to get stmt.");
             return count;
         }
-        sql = "SELECT COUNT(*) AS count FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr;
-        if (!stmt->Prepare(sql)) {
-            ServerLog::Error(GetTableName() + " Failed to prepare count sql.");
-            return count;
-        }
-        for (const auto &item : values) {
+        for (const auto &item : Values()) {
             // 访问 variant 中存储的值
             if (std::holds_alternative<uint32_t>(item)) {
                 stmt->BindParams(std::get<uint32_t>(item));
@@ -225,27 +212,56 @@ public:
         return count;
     }
 
-protected:
-    std::string selectStr;
-    std::string conditionStr;
-    std::string orderByStr;
-    std::string groupByStr;
-    std::string sql;
-    std::vector<std::variant<uint32_t, uint64_t, std::string>> values;
-    using assign = std::function<void(T &, const std::unique_ptr<SqliteResultSet> &)>;
-    std::vector<assign> assignFuncs;
-    std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(sqlite3 *db)
+    virtual std::string GetDbPath(const std::string &fileId)
     {
-        if (sql.empty()) {
-            ServerLog::Error(GetTableName() + " Failed prepare sql. Database is closed or sql is empty.");
-            return nullptr;
+        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        if (database == nullptr) {
+            std::string empty;
+            return empty;
         }
-        auto stmt = std::make_unique<SqlitePreparedStatement>(db);
-        if (!stmt->Prepare(sql)) {
-            ServerLog::Error(GetTableName() + " Failed prepare sql. ", stmt->GetErrorMessage());
-            return nullptr;
-        }
-        return stmt;
+        const std::string nameKey = database->GetDbPath();
+        return nameKey;
+    }
+
+    virtual ~Table() = default;
+
+protected:
+    using assign = std::function<void(T &, const std::unique_ptr<SqliteResultSet> &)>;
+
+    std::string &SelectStr()
+    {
+        thread_local std::string selectStr;
+        return selectStr;
+    }
+
+    std::string &ConditionStr()
+    {
+        thread_local std::string conditionStr;
+        return conditionStr;
+    }
+
+    std::string &OrderByStr()
+    {
+        thread_local std::string orderByStr;
+        return orderByStr;
+    }
+
+    std::string &GroupByStr()
+    {
+        thread_local std::string groupByStr;
+        return groupByStr;
+    }
+
+    std::vector<std::variant<uint32_t, uint64_t, std::string>> &Values()
+    {
+        thread_local std::vector<std::variant<uint32_t, uint64_t, std::string>> values;
+        return values;
+    }
+
+    std::vector<assign> &AssignFuncs()
+    {
+        thread_local std::vector<assign> assignFuncs;
+        return assignFuncs;
     }
 
     /* *
@@ -253,16 +269,15 @@ protected:
      */
     void ClearThreadLocal()
     {
-        assignFuncs.clear();
-        values.clear();
-        sql.clear();
-        conditionStr.clear();
-        selectStr.clear();
-        orderByStr.clear();
-        groupByStr.clear();
+        AssignFuncs().clear();
+        Values().clear();
+        ConditionStr().clear();
+        SelectStr().clear();
+        OrderByStr().clear();
+        GroupByStr().clear();
     }
 
-    virtual const std::unordered_map<std::string_view, assign>& GetAssignMap() = 0;
+    virtual const std::unordered_map<std::string_view, assign> &GetAssignMap() = 0;
     virtual const std::string &GetTableName() = 0;
 };
 }

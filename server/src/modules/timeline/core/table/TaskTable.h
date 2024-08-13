@@ -23,7 +23,7 @@ struct TaskPO {
 class TaskTable : public Table<TaskPO> {
 public:
     TaskTable() = default;
-    ~TaskTable() = default;
+    virtual ~TaskTable() = default;
 
 protected:
     const std::unordered_map<std::string_view, assign> &GetAssignMap() override

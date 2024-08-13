@@ -393,7 +393,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
 
 std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, std::string key)
 {
-    if (stringsCache.at(path).count(key) == 0) {
+    if (stringsCache.count(path) == 0 || stringsCache.at(path).count(key) == 0) {
         return key;
     }
     return stringsCache.at(path)[key];
