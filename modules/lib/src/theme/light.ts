@@ -176,6 +176,7 @@ export const light: Theme = {
     majorColorLight1: '#FBA25D',
     bgColor: '#FDFEFF',
     bgColorDark: '#EBEFF6',
+    bgColorGrey: '#8D98AA',
     bgColorLight: '#F4F6FA',
     bgColorLighter: '#ffffff',
     bgColorDisabled: '#EBEDF3',

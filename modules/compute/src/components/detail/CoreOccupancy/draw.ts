@@ -3,6 +3,7 @@
 */
 import type { ICore } from './Index';
 import { type ShowAs } from './Filter';
+import type { Theme } from '@emotion/react';
 
 interface DataConfig {
     data: ICore[];
@@ -38,6 +39,7 @@ export const sizeConfig = {
         title: {
             top: 20,
         },
+        border: 1,
     },
     subCore: {
         width: 80,
@@ -46,24 +48,21 @@ export const sizeConfig = {
         top: 35,
     },
     legend: {
-        box: {
-            width: 60,
-            top: 20,
-        },
+        width: 70,
+        height: 300,
+        top: 20,
+        left: 10,
         title: {
             height: 10,
         },
-        width: 30,
-        height: 25,
-    },
-    fontSize: {
-        title: '14px',
-        text: '12px',
+        block: {
+            width: 30,
+            height: 25,
+        },
     },
 };
 
 export const COLOR: Record<string, string> = {
-    0: 'var(--mi-bg-color-grey)',
     1: '#BC2021',
     2: '#D32322',
     3: '#EC2829',
@@ -78,11 +77,17 @@ export const COLOR: Record<string, string> = {
 
 const MAX_TEXT_LENGTH = 50;
 
-const legend = [];
-for (let i = 10; i >= 0; i--) {
-    legend.push({ level: i, color: COLOR[i] });
+export function getLegendData(theme: Theme): Array<{ level: number; color: string}> {
+    const legendData = [];
+    for (let i = 10; i >= 0; i--) {
+        if (i === 0) {
+            legendData.push({ level: i, color: theme.bgColorGrey });
+            continue;
+        }
+        legendData.push({ level: i, color: COLOR[i] });
+    }
+    return legendData;
 }
-export const legendData = legend;
 
 // 画图
 export function getDrawData(config: DataConfig): CoreDrawData[] {
@@ -99,36 +104,37 @@ export function getDrawData(config: DataConfig): CoreDrawData[] {
 // 设置画布尺寸
 function setSize(config: DataConfig): void {
     const { svgWidth, data } = config;
-    const { rowCount, oneRowCount, svgHeight } = computeSize(svgWidth, data.length);
+    const { rowCount, oneRowCount, svgHeight, chartHeight } = computeSize(svgWidth, data.length);
     sizeConfig.svgWidth = svgWidth;
     sizeConfig.oneRowCount = oneRowCount;
     sizeConfig.rowCount = rowCount;
     sizeConfig.svgHeight = svgHeight;
-    let chartHeight;
-    if (svgHeight >= MIN_CHART_HEIGHT && svgHeight <= MAX_CHART_HEIGHT) {
-        chartHeight = svgHeight + 10;
-    } else if (svgHeight < MIN_CHART_HEIGHT) {
-        chartHeight = MIN_CHART_HEIGHT;
-    } else {
-        chartHeight = MAX_CHART_HEIGHT;
-    }
     sizeConfig.chartHeight = chartHeight;
 }
 
 // 计算绘制尺寸
-function computeSize(svgWidth: number, count: number): {rowCount: number;oneRowCount: number;svgHeight: number} {
+function computeSize(svgWidth: number, count: number): Record<string, number> {
     // 一行显示几个
     const oneCoreSize = sizeConfig.core.width + sizeConfig.core.widthSpace;
     const oneRowCount = oneCoreSize <= 0
         ? count
-        : Math.floor((svgWidth - sizeConfig.legend.box.width - sizeConfig.core.width) / oneCoreSize) + 1;
+        : Math.floor((svgWidth - sizeConfig.legend.width - sizeConfig.core.width) / oneCoreSize) + 1;
     // 总共需要多少行
     const rowCount = oneRowCount <= 0 ? 0 : Math.ceil(count / oneRowCount);
     // 画布高度
     const svgHeight = rowCount <= 0
         ? 0
         : ((rowCount - 1) * (sizeConfig.core.height + sizeConfig.core.heightSpace)) + sizeConfig.core.height;
-    return { rowCount, oneRowCount, svgHeight };
+    // 图高度
+    let chartHeight;
+    if (svgHeight >= MIN_CHART_HEIGHT && svgHeight <= MAX_CHART_HEIGHT) {
+        chartHeight = svgHeight + 15;
+    } else if (svgHeight < MIN_CHART_HEIGHT) {
+        chartHeight = MIN_CHART_HEIGHT;
+    } else {
+        chartHeight = MAX_CHART_HEIGHT;
+    }
+    return { rowCount, oneRowCount, svgHeight, chartHeight };
 }
 
 function wrapData({ data: originData, showAs }: DataConfig): CoreDrawData[] {
@@ -136,20 +142,31 @@ function wrapData({ data: originData, showAs }: DataConfig): CoreDrawData[] {
     const data = originData.map(item => ({
         name: `Core${item.coreId}`.slice(0, MAX_TEXT_LENGTH),
         children: subCoreNameList.map(subCoreName => {
-            const subCore = item.coreDetails.find(subCoreItem => subCoreItem.subCoreName === subCoreName)?.[showAs];
+            const subCore = item.subCoreDetails.find(subCoreItem => subCoreItem.subCoreName === subCoreName)?.[showAs];
             return {
                 name: subCoreName,
-                value: (subCore?.value ?? '').slice(0, MAX_TEXT_LENGTH),
-                level: (subCore?.level ?? '').slice(0, MAX_TEXT_LENGTH),
+                value: String(subCore?.value ?? '').slice(0, MAX_TEXT_LENGTH),
+                level: String(subCore?.level ?? '').slice(0, MAX_TEXT_LENGTH),
             };
         }),
     }));
     return data;
 }
 
-export function getCorePosition(index: number): [ number, number] {
-    const { oneRowCount } = sizeConfig;
-    const x = (index % oneRowCount) * (sizeConfig.core.width + sizeConfig.core.widthSpace);
-    const y = oneRowCount <= 0 ? 0 : (Math.ceil((index + 1) / oneRowCount) - 1) * (sizeConfig.core.height + sizeConfig.core.heightSpace);
-    return [x, y];
+export function isLastInRow(index: number): boolean {
+    return sizeConfig.oneRowCount === 0
+        ? false
+        : (index + 1) % sizeConfig.oneRowCount === 0;
+}
+
+export function isInLastRow(index: number): boolean {
+    return sizeConfig.oneRowCount === 0
+        ? false
+        : Math.ceil((index + 1) / sizeConfig.oneRowCount) === sizeConfig.rowCount;
+}
+
+// 颜色
+export function getSubCoreColor(level: string, theme: Theme): string {
+    COLOR[0] = theme.bgColorGrey;
+    return COLOR[level] ?? COLOR[0];
 }
