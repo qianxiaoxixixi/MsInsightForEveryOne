@@ -96,3 +96,36 @@ export const queryMemoryTable = async(param: {blockId: string}): Promise<any> =>
 export const queryMemoryGraph = async(param: {blockId: string}): Promise<any> => {
     return window.requestData('source/details/memoryGraph', param);
 };
+
+/**
+ * 查询内存流量图
+ *
+ * @param {}
+ * @return {
+ * {
+ *     soc:string; // 算子运行平台
+ *     opType:string; // 算子类型：vector, cube, mix
+ *     advice:string; // 专家建议
+ *     opDetails:[{
+ *       coreId:string;  // core
+ *       coreDetails:[{
+ *         subCoreName:string; // sub core名字+序号：cubeX，vectoreX
+ *         "cycles": {
+ *           "value": string, // 时钟周期
+ *           "color": string // 颜色的级别，0~10,0代表没有数据或者数据为0，显示为灰色；1~10代表十种颜色区间
+ *         },
+ *         "throughput": {
+ *           "value": string, // 核吞吐数据 单位：（GB/s）
+ *           "color": string
+ *         },
+ *         "cacheHitRate": {
+ *           "value": string, //  L2cache命中率 单位：(%)
+ *           "color": string
+ *         }
+ *       }]
+ *     }]
+ * }
+ */
+export const queryCoreOccupancy = async(): Promise<any> => {
+    return window.requestData('/source/details/interCoreLoadAnalysis', {});
+};
