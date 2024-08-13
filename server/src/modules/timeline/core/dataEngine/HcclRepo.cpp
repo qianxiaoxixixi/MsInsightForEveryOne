@@ -14,45 +14,85 @@ void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
         return;
     }
     std::string sql;
-    std::string tid;
     const std::string suffix = "group";
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
-    if (database == nullptr) {
-        ServerLog::Warn("hccl open database is failed, rank is: ", sliceQuery.rankId);
-        return;
-    }
     if (StringUtil::EndWith(trackInfo.threadId, suffix)) {
-        sql = "with tmp as (select info.opId from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
-            " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-            " sub as (select startNs,endNs, groupName as tid,ROWID as id from " +
-            TABLE_COMMUNICATION_OP +
-            " where opId in (select opId from tmp group by opId)) "
-            "select id, startNs,endNs from sub where tid = ? order by startNs,id;";
-        tid = trackInfo.threadId.substr(0, trackInfo.threadId.size() - suffix.size());
+        QuerySimpleSliceFromGroupTrack(sliceVec, trackInfo, suffix);
     } else {
-        sql = "select startNs, endNs, info.planeId as tid,main.ROWID as id from " +
-            TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
-            " info on info.globalTaskId = main.globalTaskId where main.deviceId = ? and tid = ? order by startNs,id;";
-        tid = trackInfo.threadId;
+        QuerySimpleSliceFromPlaneTrack(sliceVec, trackInfo);
     }
-    auto stmt = database->CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Warn("hccl query all slice get stmt failed, rank is: ", sliceQuery.rankId);
-        return;
-    }
-    auto resultSet = stmt->ExecuteQuery(trackInfo.rankId, tid);
-    if (resultSet == nullptr) {
-        ServerLog::Warn("Failed to execute query hccl query all slice");
-        return;
-    }
-    while (resultSet->Next()) {
+}
+
+void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec, TrackInfo &trackInfo)
+{
+    std::vector<CommucationTaskInfoPO> commucationTaskInfoPoVec;
+    commucationTaskInfoTable->Select(CommucationTaskInfoColumn::GLOBAL_TASK_ID)
+        .Eq(CommucationTaskInfoColumn::PLANE_ID, trackInfo.threadId)
+        .ExcuteQuery(trackInfo.cardId, commucationTaskInfoPoVec);
+    std::vector<uint64_t> globalTaskIds(commucationTaskInfoPoVec.size());
+    std::transform(commucationTaskInfoPoVec.begin(), commucationTaskInfoPoVec.end(), globalTaskIds.begin(),
+        [](const CommucationTaskInfoPO &item) { return item.globalTaskId; });
+    std::vector<TaskPO> taskPoVec;
+    taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TIMESTAMP)
+        .Select(TaskColumn::ENDTIME)
+        .Eq(TaskColumn::DECICED_ID, trackInfo.rankId)
+        .In(TaskColumn::GLOBAL_TASK_ID, globalTaskIds)
+        .ExcuteQuery(trackInfo.cardId, taskPoVec);
+    for (const auto &item : taskPoVec) {
         SliceDomain sliceDomain;
-        sliceDomain.id = resultSet->GetUint64("id");
-        sliceDomain.timestamp = resultSet->GetUint64("startNs");
-        sliceDomain.endTime = resultSet->GetUint64("endNs");
+        sliceDomain.id = item.id;
+        sliceDomain.timestamp = item.timestamp;
+        sliceDomain.endTime = item.endTime;
         sliceVec.emplace_back(sliceDomain);
     }
 }
+
+void HcclRepo::QuerySimpleSliceFromGroupTrack(std::vector<SliceDomain> &sliceVec, const TrackInfo &trackInfo,
+    const std::string &suffix)
+{
+    std::vector<uint64_t> globalIds = QueryGlobalTaskIdsByRank(trackInfo);
+    std::vector<uint64_t> opIds = QueryOpIdsByGlabalTaskIds(trackInfo, globalIds);
+    std::string tid = trackInfo.threadId.substr(0, trackInfo.threadId.size() - suffix.size());
+    std::vector<CommucationTaskOpPO> commucationTaskOpPOVec;
+    commucationOpTable->Select(CommucationTaskOpColumn::TIMESTAMP, CommucationTaskOpColumn::ENDTIME)
+        .Select(CommucationTaskOpColumn::OP_ID)
+        .Eq(CommucationTaskOpColumn::GROUPNAME, tid)
+        .In(CommucationTaskOpColumn::OP_ID, opIds)
+        .ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
+    for (const auto &item : commucationTaskOpPOVec) {
+        SliceDomain sliceDomain;
+        sliceDomain.id = item.opId;
+        sliceDomain.timestamp = item.timestamp;
+        sliceDomain.endTime = item.endTime;
+        sliceVec.emplace_back(sliceDomain);
+    }
+}
+
+std::vector<uint64_t> HcclRepo::QueryOpIdsByGlabalTaskIds(const TrackInfo &trackInfo,
+    const std::vector<uint64_t> &globalIds)
+{
+    std::vector<CommucationTaskInfoPO> commucationTaskInfoPoVec;
+    commucationTaskInfoTable->Select(CommucationTaskInfoColumn::OP_ID)
+        .In(CommucationTaskInfoColumn::GLOBAL_TASK_ID, globalIds)
+        .GroupBy(CommucationTaskInfoColumn::OP_ID)
+        .ExcuteQuery(trackInfo.cardId, commucationTaskInfoPoVec);
+    std::vector<uint64_t> opIds(commucationTaskInfoPoVec.size());
+    std::transform(commucationTaskInfoPoVec.begin(), commucationTaskInfoPoVec.end(), opIds.begin(),
+        [](const CommucationTaskInfoPO &item) { return item.opId; });
+    return opIds;
+}
+
+std::vector<uint64_t> HcclRepo::QueryGlobalTaskIdsByRank(const TrackInfo &trackInfo)
+{
+    std::vector<TaskPO> taskPoVec;
+    taskTable->Select(TaskColumn::GLOBAL_TASK_ID)
+        .Eq(TaskColumn::DECICED_ID, trackInfo.rankId)
+        .ExcuteQuery(trackInfo.cardId, taskPoVec);
+    std::vector<uint64_t> globalIds(taskPoVec.size());
+    std::transform(taskPoVec.begin(), taskPoVec.end(), globalIds.begin(),
+        [](const TaskPO &item) { return item.globalTaskId; });
+    return globalIds;
+}
+
 void HcclRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds) {}
 uint64_t HcclRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
 {
@@ -78,42 +118,83 @@ void HcclRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::v
     if (!isSuccess) {
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
-    if (database == nullptr) {
-        ServerLog::Warn("hccl open database is failed, rank is: ", sliceQuery.rankId);
-        return;
-    }
-    const std::string nameKey = database->GetDbPath();
-    std::string sql;
     const std::string suffix = "group";
     if (StringUtil::EndWith(trackInfo.threadId, suffix)) {
-        sql = "select ROWID as id, startNs,endNs,opName as name from " + TABLE_COMMUNICATION_OP +
-            " where 1 = 1 and id in (";
+        QueryGroupSliceByIds(sliceIds, competeSliceVec, trackInfo);
     } else {
-        sql = "select startNs, endNs, info.taskType as name,"
-            " main.ROWID as id from " +
-            TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
-            " info on info.globalTaskId = main.globalTaskId where 1 = 1 and id in (";
+        QueryPlaneSliceByIds(sliceIds, competeSliceVec, trackInfo);
     }
-    std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
-    sql += sliceidvecStr + ");";
-    auto stmt = database->CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare hccl query slice by ids, rank is: ", sliceQuery.rankId);
-        return;
+}
+
+void HcclRepo::QueryPlaneSliceByIds(const std::vector<uint64_t> &sliceIds,
+    std::vector<CompeteSliceDomain> &competeSliceVec, const TrackInfo &trackInfo)
+{
+    std::vector<TaskPO> taskPoVec;
+    taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TIMESTAMP)
+        .Select(TaskColumn::ENDTIME, TaskColumn::GLOBAL_TASK_ID)
+        .In(TaskColumn::ROW_ID, sliceIds)
+        .ExcuteQuery(trackInfo.cardId, taskPoVec);
+    std::string nameKey = taskTable->GetDbPath(trackInfo.cardId);
+    std::vector<uint64_t> globalIds(taskPoVec.size());
+    std::transform(taskPoVec.begin(), taskPoVec.end(), globalIds.begin(),
+        [](const TaskPO &item) { return item.globalTaskId; });
+    std::vector<CommucationTaskInfoPO> commucationTaskInfoPoVec;
+    commucationTaskInfoTable->Select(CommucationTaskInfoColumn::GLOBAL_TASK_ID)
+        .Select(CommucationTaskInfoColumn::TASK_TYPE)
+        .In(CommucationTaskInfoColumn::GLOBAL_TASK_ID, globalIds)
+        .ExcuteQuery(trackInfo.cardId, commucationTaskInfoPoVec);
+    std::unordered_map<uint64_t, uint64_t> typeNameMap;
+    for (const auto &item : commucationTaskInfoPoVec) {
+        typeNameMap[item.globalTaskId] = item.taskType;
     }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Warn("Failed to execute query hccl query slice by ids");
-        return;
-    }
-    while (resultSet->Next()) {
+    for (const auto &item : taskPoVec) {
         CompeteSliceDomain competeSliceDomain;
-        competeSliceDomain.id = resultSet->GetUint64("id");
-        competeSliceDomain.timestamp = resultSet->GetUint64("startNs");
-        competeSliceDomain.endTime = resultSet->GetUint64("endNs");
-        competeSliceDomain.name = FullDb::DbTraceDataBase::GetStringCacheValue(nameKey, resultSet->GetString("name"));
+        competeSliceDomain.id = item.id;
+        competeSliceDomain.timestamp = item.timestamp;
+        competeSliceDomain.endTime = item.endTime;
+        competeSliceDomain.name =
+            FullDb::DbTraceDataBase::GetStringCacheValue(nameKey, std::to_string(typeNameMap[item.globalTaskId]));
         competeSliceVec.emplace_back(competeSliceDomain);
+    }
+}
+
+void HcclRepo::QueryGroupSliceByIds(const std::vector<uint64_t> &sliceIds,
+    std::vector<CompeteSliceDomain> &competeSliceVec, const TrackInfo &trackInfo)
+{
+    std::vector<CommucationTaskOpPO> commucationTaskOpPOVec;
+    commucationOpTable->Select(CommucationTaskOpColumn::OP_ID, CommucationTaskOpColumn::TIMESTAMP)
+        .Select(CommucationTaskOpColumn::ENDTIME, CommucationTaskOpColumn::OP_NAME)
+        .In(CommucationTaskOpColumn::OP_ID, sliceIds)
+        .ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
+    std::string nameKey = commucationOpTable->GetDbPath(trackInfo.cardId);
+    for (const auto &item : commucationTaskOpPOVec) {
+        CompeteSliceDomain competeSliceDomain;
+        competeSliceDomain.id = item.opId;
+        competeSliceDomain.timestamp = item.timestamp;
+        competeSliceDomain.endTime = item.endTime;
+        competeSliceDomain.name = FullDb::DbTraceDataBase::GetStringCacheValue(nameKey, std::to_string(item.opName));
+        competeSliceVec.emplace_back(competeSliceDomain);
+    }
+}
+
+void HcclRepo::SetTaskTable(std::unique_ptr<TaskTable> taskTablePtr)
+{
+    if (taskTablePtr != nullptr) {
+        taskTable = std::move(taskTablePtr);
+    }
+}
+
+void HcclRepo::SetCommucationOpTable(std::unique_ptr<CommucationOpTable> commucationOpTablePtr)
+{
+    if (commucationOpTablePtr != nullptr) {
+        commucationOpTable = std::move(commucationOpTablePtr);
+    }
+}
+
+void HcclRepo::SetCommucationTaskInfoTable(std::unique_ptr<CommucationTaskInfoTable> commucationTaskInfoTablePtr)
+{
+    if (commucationTaskInfoTablePtr != nullptr) {
+        commucationTaskInfoTable = std::move(commucationTaskInfoTablePtr);
     }
 }
 }
