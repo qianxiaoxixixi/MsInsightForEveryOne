@@ -18,8 +18,8 @@ export interface ICoreOccupancy {
 }
 
 export interface ICore {
-    coreId: string;
-    coreDetails: ISubCore[];
+    coreId: number;
+    subCoreDetails: ISubCore[];
 }
 export interface ISubCore {
     subCoreName: string;
@@ -29,8 +29,8 @@ export interface ISubCore {
 }
 
 export interface IData {
-    value: string;
-    level: string;
+    value: number;
+    level: number;
 }
 
 const defaultData = {
