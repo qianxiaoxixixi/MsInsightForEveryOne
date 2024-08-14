@@ -12,6 +12,7 @@ export const StyledTabs = styled((props: TabsProps & { fontSize?: number }) => <
     &.ant-tabs-top {
         > .ant-tabs-nav {
             padding: 0 20px;
+            margin: 0;
         }
     }
     .ant-tabs-tab {
