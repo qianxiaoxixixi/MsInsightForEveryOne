@@ -188,7 +188,7 @@ public:
         }
         if (json[key.data()].IsString()) {
             try {
-                return std::stod(json[key.data()].GetString());
+                return std::stof(json[key.data()].GetString());
             } catch (std::exception &e) {
                 return 0;
             }
