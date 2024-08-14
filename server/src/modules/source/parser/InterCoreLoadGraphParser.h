@@ -37,7 +37,7 @@ struct InterCoreLoadAnalysisDetail {
 
     void AddOpDetail(InterCoreOpDetail&& opDetail)
     {
-        opDetails.emplace_back(opDetail);
+        opDetails.emplace_back(std::move(opDetail));
     }
 
     void SetMinCycle(uint64_t cycle)
@@ -49,7 +49,7 @@ struct InterCoreLoadAnalysisDetail {
             minCycle = cycle;
             return;
         }
-        minCycle = (cycle < minCycle ? cycle : minCycle);
+        minCycle = std::min(minCycle, cycle);
     }
 
     void SetMinThroughput(float throughput)
@@ -61,22 +61,21 @@ struct InterCoreLoadAnalysisDetail {
             minThroughput = throughput;
             return;
         }
-        minThroughput = (throughput < minThroughput ? throughput : minThroughput);
+        minThroughput = (NumberUtil::IsGreater(minThroughput, throughput) ? throughput : minThroughput);
     }
 
     void SetMaxHitRate(float hitRate)
     {
-        maxHitRate = (hitRate > maxHitRate ? hitRate : maxHitRate);
+        maxHitRate = (NumberUtil::IsGreater(hitRate, maxHitRate) ? hitRate : maxHitRate);
     }
 };
 
 class InterCoreLoadGraphParser {
 public:
-    bool GetInterCoreLoadAnalysisInfo(std::string& json, Dic::Protocol::DetailsInterCoreLoadGraphBody& body);
+    bool GetInterCoreLoadAnalysisInfo(const std::string& json, Dic::Protocol::DetailsInterCoreLoadGraphBody& body);
 
 private:
-    InterCoreLoadAnalysisDetail ParseInterCoreLoadAnalysisInfo(std::string& json);
-    void CalculateColorLevel();
+    InterCoreLoadAnalysisDetail ParseInterCoreLoadAnalysisInfo(const std::string& json);
 };
 
 } // Dic

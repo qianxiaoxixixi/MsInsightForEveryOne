@@ -177,7 +177,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
 
     void SetCyclesDimension(uint64_t curCycles, uint64_t minCycles)
     {
-        if (minCycles == 0) { // 说明所有的cycles数据都为0
+        if (minCycles == 0 || curCycles < minCycles) { // 说明所有的cycles数据都为0
             return;
         }
         cycles.value = curCycles;
@@ -202,7 +202,8 @@ struct DetailsInterCoreLoadSubCoreDetail {
         throughput.value = curThroughput;
         // 比较当前的throughput和最小的throughput的差值
         float diff = curThroughput - minThroughput;
-        if (diff >= minThroughput) {
+        if (NumberUtil::IsGreater(diff, minThroughput)) {
+            // 如果差值大于一倍, level直接置为1
             throughput.level = 1;
             return;
         }
@@ -226,14 +227,14 @@ struct DetailsInterCoreLoadSubCoreDetail {
         }
     }
 
-    void SetSubCoreName(std::string type, uint8_t id)
+    void SetSubCoreName(const std::string& type, uint8_t id)
     {
         subCoreName = type + std::to_string(id);
     }
 };
 
 struct DetailsInterCoreLoadOpDetail {
-    uint8_t coreId = -1;
+    uint8_t coreId = 0;
     std::vector<DetailsInterCoreLoadSubCoreDetail> subCoreDetails = {};
 
     void AddSubCoreDetail(DetailsInterCoreLoadSubCoreDetail&& subCoreDetail)
