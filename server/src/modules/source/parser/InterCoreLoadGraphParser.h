@@ -75,7 +75,7 @@ public:
     bool GetInterCoreLoadAnalysisInfo(const std::string& json, Dic::Protocol::DetailsInterCoreLoadGraphBody& body);
 
 private:
-    InterCoreLoadAnalysisDetail ParseInterCoreLoadAnalysisInfo(const std::string& json);
+    std::optional<InterCoreLoadAnalysisDetail> ParseInterCoreLoadAnalysisInfo(const std::string& json);
 };
 
 } // Dic

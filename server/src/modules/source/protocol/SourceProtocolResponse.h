@@ -239,7 +239,7 @@ struct DetailsInterCoreLoadOpDetail {
 
     void AddSubCoreDetail(DetailsInterCoreLoadSubCoreDetail&& subCoreDetail)
     {
-        subCoreDetails.emplace_back(subCoreDetail);
+        subCoreDetails.emplace_back(std::move(subCoreDetail));
     }
 };
 
@@ -251,7 +251,7 @@ struct DetailsInterCoreLoadGraphBody {
 
     void AddOpDetail(DetailsInterCoreLoadOpDetail&& opDetail)
     {
-        opDetails.emplace_back(opDetail);
+        opDetails.emplace_back(std::move(opDetail));
     }
 };
 
