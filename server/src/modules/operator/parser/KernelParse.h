@@ -15,10 +15,9 @@
 #include "FileParser.h"
 #include "ConstantDefs.h"
 
-namespace Dic {
-namespace Module {
-namespace Summary {
+namespace Dic::Module::Summary {
 // 表头字段-公共部分
+const std::string FIELD_OP_STATE = "OP State";
 const std::string FIELD_BLOCK_DIM = "Block Dim";
 const std::string FIELD_INPUT_SHAPES = "Input Shapes";
 const std::string FIELD_INPUT_DATA_TYPES = "Input Data Types";
@@ -43,10 +42,20 @@ const std::string FIELD_TASK_START_TIME = "Task Start Time(us)";
 const std::string FIELD_TASK_DURATION = "Task Duration(us)";
 const std::string FIELD_TASK_WAIT_TIME = "Task Wait Time(us)";
 
-const std::string ASCEND_PYTORCH_PROF = "AscendPyTorchprof";
-const std::string MSPROF = "Msprof";
-const std::string L1 = "L1";
-const std::string L0 = "L0";
+const std::vector<std::vector<std::string>> VALID_HEADERS = {
+    {
+        FIELD_ACCELERATOR_CORE, FIELD_BLOCK_DIM, FIELD_DURATION, FIELD_NAME,
+        FIELD_START_TIME, FIELD_TYPE, FIELD_WAIT_TIME
+    }, // pytorch header1
+    {
+        FIELD_ACCELERATOR_CORE, FIELD_BLOCK_DIM, FIELD_DURATION, FIELD_NAME,
+        FIELD_TASK_START_TIME, FIELD_TYPE, FIELD_WAIT_TIME
+    }, // pytorch header2
+    {
+        FIELD_BLOCK_DIM, FIELD_OP_TYPE, FIELD_OP_NAME, FIELD_TASK_DURATION,
+        FIELD_TASK_START_TIME, FIELD_TASK_TYPE, FIELD_TASK_WAIT_TIME,
+    } // msprof header
+};
 
 class KernelParse : public FileParser {
 public:
@@ -59,20 +68,24 @@ public:
                const std::string &selectedFolder) override;
     bool Parse(const std::vector<std::string>& pathList);
 
+protected:
+    static std::map<std::string, std::vector<std::string>> GetKernelFiles(const std::vector<std::string>& paths);
+    static bool ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
+                               std::string &message, std::set<std::string>& devices);
+    static bool CheckHeaderFieldAndFilterParseFunc(std::vector<std::string> rowVector,
+        std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> &parseFuncList);
+
 private:
     const int maxThreadNum = 4;
     std::unique_ptr<ThreadPool> threadPool;
-    std::map<std::string, std::future<void>> futureMap;
-    static std::map<std::string, std::function<void(const std::map<std::string, size_t> &dataMap,
-            const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> kernelParseMap;
+
+    static std::map<std::vector<std::string>, std::function<void(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseFuncMap;
     const std::string kernelDetailReg = R"((kernel_details|op_summary[_\d]*)\.csv$)";
 
-    static void InitkernelParseMap();
+    static void InitKernelParseMap();
 
-    static std::map<std::string, std::vector<std::string>> GetKernelFiles(const std::vector<std::string>& paths);
-
-    static bool IsFileValid(const std::vector<std::string>& filePathList, const std::string &fileId,
-                            const std::string& statusId, std::string &message);
     static void SetParseCallBack();
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
@@ -81,29 +94,26 @@ private:
     static bool ParseTask(const std::vector<std::string>& filePathList, const std::string &fileId,
                           std::string &message);
 
-    static void ParseMsprofKernel(const std::map<std::string, size_t> &dataMap, const std::vector<std::string> &rows,
-                                  const std::string &fileId, Kernel &kernel);
-    static void ParseAscendPyTorchprofKernel(const std::map<std::string, size_t> &dataMap,
-                                             const std::vector<std::string> &rows, const std::string &fileId,
-                                             Kernel &kernel);
-    static void ParseMsprofKernelL0(const std::map<std::string, size_t> &dataMap,
-                                    const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
-    static void ParseAscendPyTorchprofKernelL0(const std::map<std::string, size_t> &dataMap,
-                                               const std::vector<std::string> &rows, const std::string &fileId,
-                                               Kernel &kernel);
-    static void ParsePublicNotL0(const std::map<std::string, size_t> &dataMap, const std::vector<std::string> &rows,
-                                 Kernel &kernel);
-    static bool ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
-                        std::string &message, std::set<std::string>& devices);
-
     static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
                            std::string &message);
     static void PostParseTask(const std::set<std::string> &devices, const std::string &fileId);
-    static bool CheckHeaderField(const std::map<std::string, size_t>& dataMap);
+
+    static void ParsePyTorchOpBaseInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseShapeInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseOpStateInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseMsProfOpBaseInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParsePyTorchStepInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseStartTimeInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseTaskStartTimeInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
 };
 
-} // end of namespace Summary
-} // end of namespace Module
-} // end of namespace Dic
+} // end of namespace Dic::Module::Summary
 
 #endif // PROFILER_SERVER_KERNELPARSE_H

@@ -16,6 +16,7 @@ struct Kernel {
     std::string stepId;
     std::string name;
     std::string type;
+    std::string state;
     std::string acceleratorCore;
     int64_t startTime;
     double duration;
