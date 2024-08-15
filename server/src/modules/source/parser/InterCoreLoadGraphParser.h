@@ -76,6 +76,7 @@ public:
 
 private:
     std::optional<InterCoreLoadAnalysisDetail> ParseInterCoreLoadAnalysisInfo(const std::string& json);
+    void ParseJsonOpDetailArray(InterCoreLoadAnalysisDetail &analysisDetail, const json_t &jsonOpDetailArray) const;
 };
 
 } // Dic
