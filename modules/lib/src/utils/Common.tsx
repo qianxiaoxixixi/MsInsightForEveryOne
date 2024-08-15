@@ -37,6 +37,7 @@ const StyledAdvice = styled.div`
     line-height: 36px;
     font-size: 14px;
     padding: 0 15px;
+    margin-bottom: 5px;
     display: flex;
     flex-direction: row;
     & > div:first-child {
@@ -50,12 +51,13 @@ const StyledAdvice = styled.div`
     & > div:nth-child(2) {
         flex: auto;
         word-break: break-all;
+        white-space: pre;
     }
 `;
 
-export function Advice({ text }: { text: string }): JSX.Element {
+export function Advice({ text, style = {} }: { text: string; style: React.CSSProperties }): JSX.Element {
     const { t } = useTranslation();
-    return <StyledAdvice>
+    return <StyledAdvice style={style}>
         <div>
             <BulbIcon/>
             <span>{t('Advice')}:</span>

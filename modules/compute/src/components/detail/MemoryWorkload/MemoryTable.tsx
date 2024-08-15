@@ -8,7 +8,7 @@ import { type Icondition } from './Filter';
 import { queryMemoryTable } from '../../RequestUtils';
 import { LimitHit } from '../../LimitSet';
 import ResizeTable from 'lib/ResizeTable';
-import { firstLetterUpper } from 'lib/CommonUtils';
+import { firstLetterUpper, Advice } from 'lib/CommonUtils';
 import { type Session } from '../../../entity/session';
 
 interface ItableDetail {
@@ -74,6 +74,7 @@ function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any): { tableli
 const defaultLimit = { overlimit: false, maxSize: 1000, current: 0 };
 const memoryTable = observer(({ condition, session }: {condition: Icondition;session: Session}): JSX.Element => {
     const [data, setData] = useState<ItableDetail[]>([]);
+    const [advice, setAdvice] = useState<string[]>([]);
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
     const [limit, setLimit] = useState<Ilimit>(defaultLimit);
     const { t: tDetails } = useTranslation('details');
@@ -81,7 +82,9 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
     const updateData = async(): Promise<void> => {
         const res = await queryMemoryTable(condition);
         const newData = (res?.memoryTable?.[0]?.tableDetail ?? []) as ItableDetail[];
+        const newAdvice = (res?.memoryTable?.[0]?.advice ?? []) as string[];
         setData(newData);
+        setAdvice(newAdvice);
     };
 
     useEffect(() => {
@@ -115,6 +118,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
                     pagination={false}
                 />
             ))}
+            {advice.length > 0 && (<Advice text={advice.join('\n')} />) }
         </div>
     );
 });
