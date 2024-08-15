@@ -9,7 +9,7 @@ import * as d3 from 'd3';
 import { type Icondition } from './Filter';
 import { queryMemoryGraph } from '../../RequestUtils';
 import { type Session } from '../../../entity/session';
-
+import { Advice } from 'lib/CommonUtils';
 export interface ImemoryData {
     blockId: string;
     blockType: string;
@@ -24,6 +24,7 @@ export interface ImemoryData {
     vector?: Icore;
     vector1?: Icore;
     cube?: Icore;
+    advice: string[];
 }
 
 export interface Icore {
@@ -50,6 +51,7 @@ const defaultData = {
         totalRequest: '',
         hitRatio: '',
     },
+    advice: [],
 };
 
 const chartId = 'memory';
@@ -92,8 +94,11 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
         }
         setStyle(newStyle);
     }, [data]);
-    return <div id={chartId} style={{ ...style, width: '1220px', margin: '10px auto' }}>
-        <svg width={'100%'} height={'100%'}></svg>
+    return <div>
+        <div id={chartId} style={{ ...style, width: '1220px', margin: '10px auto' }}>
+            <svg width={'100%'} height={'100%'}></svg>
+        </div>
+        { data.advice?.length > 0 && (<Advice text={data.advice.join('\n')} />) }
     </div>;
 });
 
