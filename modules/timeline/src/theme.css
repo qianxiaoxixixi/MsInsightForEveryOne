@@ -99,7 +99,7 @@
     --selectedChartBorderColor: #5391ff;
 }
 
-.laneView .unit-selected.first-selected .chart-selected{
+.laneView .unit:not(.unit-selected) + .unit-selected:has(+ .unit-selected) .chart-selected{
     box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
     inset -3px 0 0 0 var(--selectedChartBorderColor),
     inset 0 3px 0 0 var(--selectedChartBorderColor);
@@ -110,7 +110,7 @@
     inset -3px 0 0 0 var(--selectedChartBorderColor);
 }
 
-.laneView .unit-selected.last-selected .chart-selected{
+.laneView .unit-selected + .unit-selected:has(+ .unit:not(.unit-selected)) .chart-selected{
     box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
     inset -3px 0 0 0 var(--selectedChartBorderColor),
     inset 0 -3px 0 0 var(--selectedChartBorderColor);

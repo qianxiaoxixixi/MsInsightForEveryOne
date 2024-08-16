@@ -25,7 +25,7 @@ import { isNil } from 'lodash';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
-const PAGE_PADDING = 16;
+export const PAGE_PADDING = 16;
 
 interface DrawArrowOptions {
     toX: number;
