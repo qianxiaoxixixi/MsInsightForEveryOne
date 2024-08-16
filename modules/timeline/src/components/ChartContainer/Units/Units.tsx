@@ -27,7 +27,8 @@ import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
-import { CardMetaData, ThreadMetaData } from '../../../entity/data';
+import { ThreadMetaData } from '../../../entity/data';
+import { PAGE_PADDING } from '../../charts/ChartInteractor/draw';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     position: relative;
@@ -53,8 +54,6 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
 const VIRTUAL_SCROLL_THRESHOLD = 30;
 const UNIT_SELECTED = 'unit-selected';
 const UNIT_VISIBLE = 'unit-visible';
-const FIRST_SELECTED = 'first-selected';
-const LAST_SELECTED = 'last-selected';
 
 const Splitter = styled.div`
     width: 100%;
@@ -105,14 +104,15 @@ interface UnitProps {
     isPinned: boolean;
     isSonPinned: boolean;
     isSelecting?: boolean;
-    startPosY?: number;
+    isInRange?: boolean;
+    forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
 const isSelectable = (unit: KeyedInsightUnit): boolean => {
     return !['Card', 'Root'].includes(unit?.name);
 };
 
-export const Unit = observer(({ unit, session, isVisible, isSelecting, startPosY, ...props }: UnitProps): JSX.Element => {
+export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, isInRange, forwardedRef, ...props }: UnitProps): JSX.Element => {
     const unitKey = getAutoKey(unit);
     const isSelected = session.selectedUnitKeys.includes(unitKey);
     const [chartWidth, ref] = useWatchResize<HTMLDivElement>('width');
@@ -122,20 +122,31 @@ export const Unit = observer(({ unit, session, isVisible, isSelecting, startPosY
     }, [chartWidth, height]);
     // to support auto redraw when unit height is modified, don't useMemo
     const chart = <ChartView unit={unit} session={session} width={chartWidth} height={height} />;
-    const mouseEnterClientY = useRef(-1);
-    const isFirstSelected = session.selectedUnitKeys.length > 1 && session.selectedUnitKeys[0] === unitKey;
-    const isLastSelected = session.selectedUnitKeys.length > 1 && session.selectedUnitKeys[session.selectedUnitKeys.length - 1] === unitKey;
     const clickedUnit = session.selectedUnits[0];
     const selectUnit = useSelectUnit(session);
     const selectUnits = useSelectUnits(session);
     const deSelectUnits = useDeselectUnits(session);
 
+    const unitMetaData = unit?.metadata as ThreadMetaData;
+    const clickedUnitMetaData = clickedUnit?.metadata as ThreadMetaData;
+    const isSameCard = unitMetaData.cardId === clickedUnitMetaData?.cardId || unitMetaData.cardId?.endsWith('.db');
+
+    useEffect(() => {
+        if (isInRange === undefined || [undefined, false].includes(isSelecting)) { return; }
+        if (isSelectable(unit) && isSelectable(clickedUnit) && isSameCard) {
+            // 限制在卡级别的框选，不能跨卡框选
+            if (isInRange) {
+                selectUnits(unit);
+            } else {
+                deSelectUnits(unit);
+            }
+        }
+    }, [isInRange]);
+
     return <Lane className={cls('unit', {
         [UNIT_SELECTED]: isSelected,
         [UNIT_VISIBLE]: isVisible,
-        [FIRST_SELECTED]: isFirstSelected,
-        [LAST_SELECTED]: isLastSelected,
-    })} laneHeight={height}>
+    })} laneHeight={height} ref={forwardedRef}>
         <UnitInfo
             className={unit.name === 'Empty' ? 'empty' : ''}
             height={height}
@@ -148,33 +159,17 @@ export const Unit = observer(({ unit, session, isVisible, isSelecting, startPosY
                 selectUnit(unit);
                 traceSingle('selectLane', [unit.name]);
             }}
-            onMouseEnter={(e): void => {
-                if (startPosY === undefined || startPosY === -1) { return; }
-                const unitMetaData = unit?.metadata as ThreadMetaData;
-                const clickedUnitMetaData = clickedUnit?.metadata as ThreadMetaData;
-                const isSameCard = unitMetaData.cardId === clickedUnitMetaData?.cardId;
-                const parentIsHost = (unit.parent?.metadata as CardMetaData)?.cardName === 'Host';
-                const isSameCardLevel = isSameCard || parentIsHost;
-
-                if (isSelectable(unit) && isSelectable(clickedUnit) && isSameCardLevel) {
-                    mouseEnterClientY.current = e.clientY;
-                    const direction = (startPosY !== undefined && startPosY < e.clientY) ? 'down' : 'up';
-                    selectUnits(unit, direction);
-                }
-            }}
-            onMouseLeave={(e): void => {
-                if (startPosY === undefined || startPosY === -1) { return; }
-                const isMovingUp = startPosY < e.clientY && mouseEnterClientY.current !== -1 && e.clientY < mouseEnterClientY.current; // 鼠标向上移动取消框选
-                const isMovingDown = startPosY > e.clientY && mouseEnterClientY.current !== -1 && e.clientY > mouseEnterClientY.current; // 鼠标向下移动取消框选
-                if (isMovingUp || isMovingDown) {
-                    deSelectUnits(unit);
-                }
-            }}
             style={{ flexGrow: 1, minWidth: 0 }}>
             { isVisible ? chart : placeholder }
         </div>
     </Lane>;
 });
+
+export const Unit = React.forwardRef((props: UnitProps, ref: React.ForwardedRef<HTMLDivElement>) => {
+    return <UnitObserver {...props} forwardedRef={ref}></UnitObserver>;
+});
+
+Unit.displayName = 'Unit';
 
 export const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: number, scrollTop: number): [ number, number ] => {
     let start = 0;
@@ -267,8 +262,11 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     );
     const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
     const cardIdSet = computeOnScreenCardIdSet(flattenUnits, first, last);
-    const [startPosY, setStartPosY] = useState(-1);
-    const resizorEl = document.querySelector('.topC .resizor');
+
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [selectedUnits, setSelectedUnits] = useState(new Set());
+    const startPoint = useRef({ x: 0, y: 0 });
+    const unitsRefs = useRef(new Map());
 
     runInAction(() => {
         updateSession(session, totalHeight, cardIdSet);
@@ -282,33 +280,77 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         return (): void => {};
     }, []);
 
+    useEffect(() => {
+        const mainContainer = document.getElementById('main-container');
+        mainContainer?.addEventListener('mouseup', handleMouseUp);
+        mainContainer?.addEventListener('mouseleave', handleMouseLeave);
+        return () => {
+            mainContainer?.addEventListener('mouseup', handleMouseUp);
+            mainContainer?.addEventListener('mouseleave', handleMouseLeave);
+        };
+    }, []);
+
+    const handleMouseUp = (e: MouseEvent): void => {
+        setIsSelecting(false);
+    };
+    const handleMouseLeave = (e: MouseEvent): void => {
+        setIsSelecting(false);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent): void => {
+        if (!isSelecting) { return; }
+        const currentPoint = { x: e.clientX, y: e.clientY };
+        const top = Math.min(currentPoint.y, startPoint.current.y);
+        const bottom = Math.max(currentPoint.y, startPoint.current.y);
+        const newSelected = new Set();
+
+        for (const [key, value] of unitsRefs.current) {
+            const rect = value?.getBoundingClientRect();
+
+            if (rect !== undefined && rect.top < bottom && rect.bottom > top) {
+                newSelected.add(key);
+            }
+        }
+
+        setSelectedUnits(newSelected);
+    };
+
     return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView"
         onMouseDown={(e): void => {
-            setStartPosY(e.clientY);
-        }}
-        onMouseUp={(): void => {
-            setStartPosY(-1);
-        }}
-        onMouseLeave={(e): void => {
-            if (startPosY !== -1 && e.relatedTarget !== resizorEl) {
-                setStartPosY(-1);
+            setSelectedUnits(new Set());
+            // 禁止在Unit Info区域触发框选
+            if (e.clientX - PAGE_PADDING > laneInfoWidth) {
+                setIsSelecting(true);
+                startPoint.current = { x: e.clientX, y: e.clientY };
             }
         }}
+        onMouseMove={handleMouseMove}
     >
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: headOffset }} />
-        {flattenUnits.filter((_, i) => first <= i && i < last).map((unit) => (!isPinned(unit) || unit.pinType === 'copied') &&
-            <Unit
-                key={getAutoKey(unit)}
-                laneInfoWidth={laneInfoWidth}
-                unit={unit}
-                session={session}
-                hasPinButton={hasPinButton}
-                hasExpandIcon={true}
-                isVisible={true}
-                isPinned={isPinned(unit)}
-                isSonPinned={isSonPinned(unit)}
-                startPosY={startPosY}
-            />)}
+        {flattenUnits.filter((_, i) => first <= i && i < last).map((unit) => {
+            if (!isPinned(unit) || unit.pinType === 'copied') {
+                const unitKey = getAutoKey(unit);
+                return <Unit
+                    ref={(el): void => {
+                        unitsRefs.current.set(unitKey, el);
+                    }}
+                    key={unitKey}
+                    laneInfoWidth={laneInfoWidth}
+                    unit={unit}
+                    session={session}
+                    hasPinButton={hasPinButton}
+                    hasExpandIcon={true}
+                    isVisible={true}
+                    isPinned={isPinned(unit)}
+                    isSonPinned={isSonPinned(unit)}
+                    isSelecting={isSelecting}
+                    isInRange={selectedUnits.has(unitKey)}
+                />;
+            } else {
+                return false;
+            }
+        },
+        )}
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: tailOffset }} />
     </div>;
 });

@@ -6,8 +6,7 @@ import type { Session } from '../../../../entity/session';
 import { getAutoKey } from '../../../../utils/dataAutoKey';
 import type { KeyedInsightUnit } from '../types';
 
-type SelectUnit = (unit: KeyedInsightUnit, direction?: SelectDirection) => void;
-type SelectDirection = 'up' | 'down';
+type SelectUnit = (unit: KeyedInsightUnit) => void;
 export const useSelectUnit = (session: Session): SelectUnit => {
     return (unit: KeyedInsightUnit): void => runInAction(() => {
         session.selectedData = undefined;
@@ -18,17 +17,12 @@ export const useSelectUnit = (session: Session): SelectUnit => {
 };
 
 export const useSelectUnits = (session: Session): SelectUnit => {
-    return (unit: KeyedInsightUnit, direction?: SelectDirection): void => runInAction(() => {
+    return (unit: KeyedInsightUnit): void => runInAction(() => {
         if (session.selectedUnits.includes(unit)) {
             return;
         }
-        if (direction === 'up') {
-            session.selectedUnitKeys.unshift(getAutoKey(unit));
-            session.selectedUnits.unshift(unit);
-        } else {
-            session.selectedUnitKeys.push(getAutoKey(unit));
-            session.selectedUnits.push(unit);
-        }
+        session.selectedUnitKeys.push(getAutoKey(unit));
+        session.selectedUnits.push(unit);
     });
 };
 
