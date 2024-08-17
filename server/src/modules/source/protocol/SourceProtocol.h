@@ -21,6 +21,8 @@ private:
     void RegisterEventToJsonFuncs() override;
 
     // json to request
+    static std::unique_ptr<Request> ToNoParamsRequest(const json_t &json, std::string &error,
+                                                      const std::string &command);
     static std::unique_ptr<Request> ToCodeFileRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToApiLineRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToApiInstrRequest(const json_t &json, std::string &error);
@@ -28,6 +30,7 @@ private:
     static std::unique_ptr<Request> ToDetailsLoadInfoRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDetailsMemoryGraphRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDetailsMemoryTableRequest(const Dic::json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToDetailsInterCoreLoadGraphRequest(const json_t &json, std::string &error);
 
     // response to json
     static std::optional<document_t> ToCodeFileResponse(const Response &response);
@@ -37,6 +40,7 @@ private:
     static std::optional<document_t> ToDetailsLoadInfoResponse(const Response &response);
     static std::optional<document_t> ToDetailsMemoryGraphResponse(const Response &response);
     static std::optional<document_t> ToDetailsMemoryTableResponse(const Response &response);
+    static std::optional<document_t> ToDetailsInterCoreLoadGraphResponse(const Response &response);
 };
 
 }

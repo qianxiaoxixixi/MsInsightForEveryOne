@@ -19,21 +19,21 @@ const std::string INTER_CORE_LOAD_ANALYSIS_JSON = R"(
                     "cycles": "135938",
                     "subcore_id": "0",
                     "subcore_type": "cube",
-                    "throughput": "46.014137"
+                    "throughput": "256"
                 },
                 {
                     "L2cache_hit_rate": "87.804878",
                     "cycles": "76949",
                     "subcore_id": "0",
                     "subcore_type": "vector",
-                    "throughput": "0.037988"
+                    "throughput": "512"
                 },
                 {
                     "L2cache_hit_rate": "92.682930",
                     "cycles": "130426",
                     "subcore_id": "1",
                     "subcore_type": "vector",
-                    "throughput": "0.037988"
+                    "throughput": "128"
                 }
             ],
             "core_id": 0
@@ -43,6 +43,11 @@ const std::string INTER_CORE_LOAD_ANALYSIS_JSON = R"(
     "soc": "Ascend910B4"
 }
 )";
+
+const std::string INTER_CORE_LOAD_ANALYSIS_RESPONSE_JSON =
+    R"({"type":"response","id":0,"requestId":0,"result":false,"command":"source/details/interCoreLoadAnalysis",)"
+    R"("moduleName":"unknown","body":{"soc":"soc","opType":"optype","advice":"advice",)"
+    R"("opDetails":[{"coreId":0,"subCoreDetails":[{"subCoreName":"cube0",)";
 
 }
 #endif // PROFILER_SERVER_INTERCORELOADTEST_H
