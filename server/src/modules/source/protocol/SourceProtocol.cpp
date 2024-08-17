@@ -40,6 +40,17 @@ void SourceProtocol::RegisterEventToJsonFuncs()
 
 #pragma region <<Json To Request>>
 
+std::unique_ptr<Request> SourceProtocol::ToNoParamsRequest(const Dic::json_t &json, std::string &error,
+    const std::string &command)
+{
+    std::unique_ptr<Request> reqPtr = std::make_unique<Request>(command);
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
 std::unique_ptr<Request> SourceProtocol::ToCodeFileRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<SourceCodeFileRequest> reqPtr = std::make_unique<SourceCodeFileRequest>();
@@ -117,13 +128,7 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryTableRequest(const Dic::
 
 std::unique_ptr<Request> SourceProtocol::ToDetailsInterCoreLoadGraphRequest(const Dic::json_t &json, std::string &error)
 {
-    std::unique_ptr<DetailsInterCoreLoadGraphRequest> reqPtr = std::make_unique<DetailsInterCoreLoadGraphRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-
-    return reqPtr;
+    return ToNoParamsRequest(json, error, REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH);
 }
 #pragma endregion
 

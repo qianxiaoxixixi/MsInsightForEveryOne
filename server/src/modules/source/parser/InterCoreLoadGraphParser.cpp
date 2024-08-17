@@ -122,7 +122,7 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
             subCoreDetail.subCoreIndex = JsonUtil::GetInteger(jsonCoreDetail, "subcore_id");
             subCoreDetail.subCoreType = JsonUtil::GetString(jsonCoreDetail, "subcore_type");
             subCoreDetail.cycles = JsonUtil::GetInteger(jsonCoreDetail, "cycles");
-            subCoreDetail.throughput = JsonUtil::GetFloat(jsonCoreDetail, "throughput");
+            subCoreDetail.throughput = JsonUtil::GetInteger(jsonCoreDetail, "throughput");
             subCoreDetail.hitRate = JsonUtil::GetFloat(jsonCoreDetail, "L2cache_hit_rate");
 
             // 设置最优值

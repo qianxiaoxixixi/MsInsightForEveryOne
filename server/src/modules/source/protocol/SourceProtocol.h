@@ -21,6 +21,8 @@ private:
     void RegisterEventToJsonFuncs() override;
 
     // json to request
+    static std::unique_ptr<Request> ToNoParamsRequest(const json_t &json, std::string &error,
+                                                      const std::string &command);
     static std::unique_ptr<Request> ToCodeFileRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToApiLineRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToApiInstrRequest(const json_t &json, std::string &error);

@@ -19,21 +19,21 @@ const std::string INTER_CORE_LOAD_ANALYSIS_JSON = R"(
                     "cycles": "135938",
                     "subcore_id": "0",
                     "subcore_type": "cube",
-                    "throughput": "46.014137"
+                    "throughput": "256"
                 },
                 {
                     "L2cache_hit_rate": "87.804878",
                     "cycles": "76949",
                     "subcore_id": "0",
                     "subcore_type": "vector",
-                    "throughput": "0.037988"
+                    "throughput": "512"
                 },
                 {
                     "L2cache_hit_rate": "92.682930",
                     "cycles": "130426",
                     "subcore_id": "1",
                     "subcore_type": "vector",
-                    "throughput": "0.037988"
+                    "throughput": "128"
                 }
             ],
             "core_id": 0
