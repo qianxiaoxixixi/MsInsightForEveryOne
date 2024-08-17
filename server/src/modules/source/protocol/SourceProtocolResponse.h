@@ -172,7 +172,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
     static const uint8_t MAX_LEVEL = 10;
     std::string subCoreName;
     DetailsInterCoreLoadDimension<uint64_t> cycles;
-    DetailsInterCoreLoadDimension<float> throughput;
+    DetailsInterCoreLoadDimension<uint64_t> throughput;
     DetailsInterCoreLoadDimension<float> cacheHitRate;
 
     void SetCyclesDimension(uint64_t curCycles, uint64_t minCycles)
@@ -194,15 +194,15 @@ struct DetailsInterCoreLoadSubCoreDetail {
         }
     }
 
-    void SetThroughputDimension(float curThroughput, float minThroughput)
+    void SetThroughputDimension(uint64_t curThroughput, uint64_t minThroughput)
     {
         if (minThroughput == 0) { // 说明所有的throughput数据都为0
             return;
         }
         throughput.value = curThroughput;
         // 比较当前的throughput和最小的throughput的差值
-        float diff = curThroughput - minThroughput;
-        if (NumberUtil::IsGreater(diff, minThroughput)) {
+        uint64_t diff = curThroughput - minThroughput;
+        if (diff > minThroughput) {
             // 如果差值大于一倍, level直接置为1
             throughput.level = 1;
             return;
