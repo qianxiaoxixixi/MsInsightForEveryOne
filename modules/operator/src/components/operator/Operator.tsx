@@ -7,7 +7,7 @@ import './Operator.css';
 import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import DetailChart from './DetailChart';
-import BaseTable from './DetailTable';
+import DetailTable from './DetailTable';
 import { type ConditionType, defaultCondition, type FilterType, defaultFilterType } from './Filter';
 import { Layout } from 'ascend-layout';
 
@@ -32,7 +32,7 @@ const Index = observer(({ session }: { session: Session }) => {
             <Filter session={session} handleFilterChange={handleFilterChange}/>
         </div>
         <DetailChart condition={condition} session={session}/>
-        <BaseTable condition={condition} filterType={filterType} session={session}/>
+        <DetailTable condition={condition} filterType={filterType} session={session}/>
     </Layout>;
 });
 
