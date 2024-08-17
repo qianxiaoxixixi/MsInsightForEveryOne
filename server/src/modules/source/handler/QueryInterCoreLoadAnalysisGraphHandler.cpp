@@ -13,7 +13,7 @@ using namespace Dic::Server;
 
 void QueryInterCoreLoadAnalysisGraphHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<DetailsInterCoreLoadGraphRequest &>(*requestPtr);
+    auto &request = *requestPtr;
     WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<DetailsInterCoreLoadGraphResponse> responsePtr =
         std::make_unique<DetailsInterCoreLoadGraphResponse>();
