@@ -465,16 +465,12 @@ void TextClusterDatabase::InsertCommunicationMatrixInfo(std::vector<Communicatio
 
 std::string TextClusterDatabase::GetMatrixStmtSql(int len)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_COMMUNICATION_MATRIX +
                       " (group_id, iteration_id, op_name, op_sort, group_name, src_rank, "
                       "dst_rank, transport_type, transit_size, transit_time, bandwidth) "
                       "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     for (int i = 0; i < len - 1; i++) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?)");
-    }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare matrix table statement. error:", sqlite3_errmsg(db));
     }
     return sql;
 }
