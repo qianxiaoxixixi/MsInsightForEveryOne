@@ -143,6 +143,7 @@ public:
     {
         auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
         if (database == nullptr) {
+            ClearThreadLocal();
             return;
         }
         std::string sql =
@@ -150,6 +151,7 @@ public:
         auto stmt = database->CreatPreparedStatement(sql);
         if (stmt == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to get stmt.");
+            ClearThreadLocal();
             return;
         }
         for (const auto &item : Values()) {
@@ -165,6 +167,7 @@ public:
         auto resultSet = stmt->ExecuteQuery();
         if (resultSet == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
+            ClearThreadLocal();
             return;
         }
         while (resultSet->Next()) {
@@ -181,6 +184,7 @@ public:
     {
         auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
         if (database == nullptr) {
+            ClearThreadLocal();
             return 0;
         }
         uint64_t count = 0;
@@ -188,6 +192,7 @@ public:
         auto stmt = database->CreatPreparedStatement(sql);
         if (stmt == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to get stmt.");
+            ClearThreadLocal();
             return count;
         }
         for (const auto &item : Values()) {
@@ -203,6 +208,7 @@ public:
         auto resultSet = stmt->ExecuteQuery();
         if (resultSet == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
+            ClearThreadLocal();
             return count;
         }
         if (resultSet->Next()) {
@@ -228,25 +234,25 @@ public:
 protected:
     using assign = std::function<void(T &, const std::unique_ptr<SqliteResultSet> &)>;
 
-    std::string &SelectStr()
+    inline std::string &SelectStr()
     {
         thread_local std::string selectStr;
         return selectStr;
     }
 
-    std::string &ConditionStr()
+    inline std::string &ConditionStr()
     {
         thread_local std::string conditionStr;
         return conditionStr;
     }
 
-    std::string &OrderByStr()
+    inline std::string &OrderByStr()
     {
         thread_local std::string orderByStr;
         return orderByStr;
     }
 
-    std::string &GroupByStr()
+    inline std::string &GroupByStr()
     {
         thread_local std::string groupByStr;
         return groupByStr;
