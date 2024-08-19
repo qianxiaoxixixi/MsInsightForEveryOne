@@ -21,9 +21,15 @@ enum class TableOrder {
     ASC,
     DESC,
 };
+struct SqlStruct {
+    std::string conditionStr;
+    std::string orderByStr;
+    std::string groupByStr;
+    std::string selectStr;
+};
 template <typename T> class Table {
 public:
-    Table() noexcept {}
+    Table() noexcept = default;
     Table &Select(std::string_view str)
     {
         if (std::empty(SelectStr())) {
@@ -236,26 +242,28 @@ protected:
 
     inline std::string &SelectStr()
     {
-        thread_local std::string selectStr;
-        return selectStr;
+        return GetSqlStruct().selectStr;
     }
 
     inline std::string &ConditionStr()
     {
-        thread_local std::string conditionStr;
-        return conditionStr;
+        return GetSqlStruct().conditionStr;
     }
 
     inline std::string &OrderByStr()
     {
-        thread_local std::string orderByStr;
-        return orderByStr;
+        return GetSqlStruct().orderByStr;
     }
 
     inline std::string &GroupByStr()
     {
-        thread_local std::string groupByStr;
-        return groupByStr;
+        return GetSqlStruct().groupByStr;
+    }
+
+    inline SqlStruct &GetSqlStruct()
+    {
+        thread_local SqlStruct sqlStruct;
+        return sqlStruct;
     }
 
     std::vector<std::variant<uint32_t, uint64_t, std::string>> &Values()
