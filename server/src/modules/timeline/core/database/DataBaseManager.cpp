@@ -170,6 +170,7 @@ void DataBaseManager::Clear()
     traceDatabaseMap.clear();
     memoryDatabaseMap.clear();
     summaryDatabaseMap.clear();
+    clusterDatabaseMap.clear();
     dbMutexMap.clear();
     dbFilePathMap.clear();
     host2DbPath.clear();
