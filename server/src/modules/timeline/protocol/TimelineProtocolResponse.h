@@ -143,7 +143,6 @@ struct UnitFlowNameResponse : public Response {
 struct FlowLocation {
     std::string tid;
     std::string id;
-    std::string note;
     std::string metaType;
     std::string rankId;
     int32_t depth = 0;
@@ -153,6 +152,7 @@ struct FlowLocation {
     std::string name; // slice name
     std::string deviceId;
     std::string type;
+    std::string note;
 };
 
 struct UnitSingleFlow {
