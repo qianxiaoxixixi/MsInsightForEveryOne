@@ -317,7 +317,6 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
 
     return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView"
         onMouseDown={(e): void => {
-            setSelectedUnits(new Set());
             // 禁止在Unit Info区域触发框选
             if (e.clientX - PAGE_PADDING > laneInfoWidth) {
                 setIsSelecting(true);

@@ -149,8 +149,6 @@ export function detail<
     } as unknown as DetailDescriptor<MetaData>;
 }
 
-export type TriggerEvent = 'SELECTED_RANGE' | 'SELECTED_DATA';
-
 export type BottomPanelSingleRender = <Metadata>(session: Session, metadata: Metadata) => {
     DetailTitle?: React.FC<{ session: Session }> | string;
     Detail?: React.FC<{ session: Session; height: number }>;
