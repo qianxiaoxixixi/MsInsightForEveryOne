@@ -8,7 +8,7 @@ import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
 import React, { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BottomPanelSingleRender, TriggerEvent } from '../entity/insight';
+import type { BottomPanelSingleRender, InsightUnit } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
 import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
@@ -30,7 +30,6 @@ interface DataCardType {
     height: number;
     session: Session;
     type: string;
-    event: TriggerEvent;
 };
 
 const FILTER_HEIGHT = 31;
@@ -154,31 +153,28 @@ interface BottomPanelReactNodes {
     open?: boolean;
 }
 
-const useTriggerEvent = (session: Session): TriggerEvent => {
-    const [event, setEvent] = React.useState<TriggerEvent>(TriggerType.SELECTED_DATA);
-    React.useEffect(() => {
-        if (event !== TriggerType.SELECTED_RANGE) {
-            setEvent(TriggerType.SELECTED_RANGE);
+const useSliceListTrigger = (session: Session): boolean => {
+    const [sliceListTrigger, setSliceListTrigger] = React.useState(false);
+    const [prevSelectedUnits, setPrevSelectedUnits] = useState<InsightUnit[]>([]);
+
+    useEffect(() => {
+        if (!prevSelectedUnits.find(unit => unit?.bottomPanelRender)) {
+            setSliceListTrigger(!sliceListTrigger);
         }
-    }, [session.selectedRange]);
-    React.useEffect(() => {
-        if (session.selectedData?.showSelectedData === true) {
-            return;
-        }
-        if (event !== TriggerType.SELECTED_DATA) {
-            setEvent(TriggerType.SELECTED_DATA);
-        }
-    }, [session.selectedData]);
-    return event;
+        setPrevSelectedUnits(session.selectedUnits);
+    }, [session.selectedUnits]);
+
+    return sliceListTrigger;
 };
 
-const useBottomPanelReactNodes = (session: Session, height: number, type: string, event: TriggerEvent): BottomPanelReactNodes => {
+const useBottomPanelReactNodes = (session: Session, height: number, type: string): BottomPanelReactNodes => {
     const isSliceDetail = type === TriggerType.SELECTED_DATA;
     const { selectedUnitKeys, selectedUnits } = session;
+    const sliceListTrigger = useSliceListTrigger(session);
     const bottomPanelComponents = React.useMemo(() => {
         const sessionUnit = selectedUnits?.find(unit => unit.bottomPanelRender);
         return sessionUnit?.bottomPanelRender?.(session, sessionUnit?.metadata);
-    }, [session, event, session.units.length, isSliceDetail ? String(selectedUnitKeys) : '']);
+    }, [session, session.units.length, isSliceDetail ? String(selectedUnitKeys) : sliceListTrigger]);
     const bottomPanelComponent = isSliceDetail ? bottomPanelComponents?.[0] : bottomPanelComponents?.[1];
     const contentHeight = bottomPanelComponent?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
@@ -229,8 +225,8 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
     return bottomPanelComponents?.Toolbar && <bottomPanelComponents.Toolbar session={session} />;
 };
 
-const DataCard = observer(({ session, height, type, event }: DataCardType) => {
-    const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height, type, event);
+const DataCard = observer(({ session, height, type }: DataCardType) => {
+    const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height, type);
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: moreWh });
     return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
@@ -274,10 +270,9 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     const [bottomHeight, setBottomHeight] = useState(BOTTOM_HEIGHT);
     const [item, setItem] = useState<string>('SliceDetail');
     const ref = useRef<HTMLDivElement>(null);
-    const triggerEvent = useTriggerEvent(session);
     const items = [
-        getDataCardItem(bottomHeight, session, TriggerType.SELECTED_DATA, triggerEvent),
-        getDataCardItem(bottomHeight, session, TriggerType.SELECTED_RANGE, triggerEvent),
+        getDataCardItem(bottomHeight, session, TriggerType.SELECTED_DATA),
+        getDataCardItem(bottomHeight, session, TriggerType.SELECTED_RANGE),
         getDetailViewItem(session, bottomHeight),
         useFindDetail(session, bottomHeight),
     ];
@@ -317,18 +312,18 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     </Container>);
 });
 
-function getDataCardItem(bottomHeight: number, session: Session, triggerType: string, triggerEvent: TriggerEvent): any {
+function getDataCardItem(bottomHeight: number, session: Session, triggerType: string): any {
     if (triggerType === TriggerType.SELECTED_RANGE) {
         return {
             label: DataCardTitle('Slice List'),
             key: 'SliceList',
-            children: <DataCard height={bottomHeight} session={session} type={triggerType} event={triggerEvent}/>,
+            children: <DataCard height={bottomHeight} session={session} type={triggerType} />,
         };
     };
     return {
         label: DataCardTitle('Slice Detail'),
         key: 'SliceDetail',
-        children: <DataCard height={bottomHeight} session={session} type={triggerType} event={triggerEvent}/>,
+        children: <DataCard height={bottomHeight} session={session} type={triggerType} />,
     };
 }
 
