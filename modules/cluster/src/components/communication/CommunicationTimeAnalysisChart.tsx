@@ -4,7 +4,7 @@
 import * as echarts from 'echarts';
 
 import type { Session } from '../../entity/session';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { addResizeEvent, Loading, safeStr } from '../Common';
@@ -135,6 +135,7 @@ const option: any = {
         {
             type: 'inside',
             filterMode: 'weakFilter',
+            zoomOnMouseWheel: 'ctrl',
         },
     ],
     grid: {
@@ -278,11 +279,29 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDropDownVisible] = useState(false);
     const menuItems = useMenuItems();
+    const chartRef = useRef<HTMLDivElement>(null);
+    const scrollContainer = document.querySelector('.mi-page-content');
+
+    // 修复echarts的dataZoom开启鼠标滚轮缩放时，页面不滚动的问题
+    const syncScroll = (e: WheelEvent): void => {
+        if (!e.ctrlKey) {
+            scrollContainer?.scrollBy(0, e.deltaY);
+        }
+    };
+
     useEffect(() => {
         setTimeout(() => {
             setChartHeight(getChartHeight(dataSource));
             InitCharts(dataSource, session, setDropDownVisible);
+
+            const canvasEl = chartRef.current?.querySelector('canvas');
+            canvasEl?.addEventListener('wheel', syncScroll);
         });
+
+        return (): void => {
+            const canvasEl = chartRef.current?.querySelector('canvas');
+            canvasEl?.removeEventListener('wheel', syncScroll);
+        };
     }, [dataSource]);
 
     return <CollapsiblePanel title={'HCCL'}>
@@ -303,7 +322,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                 open={dropDownVisible}
                 autoFocus
             >
-                <div id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
+                <div ref={chartRef} id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
             </Dropdown>
             : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div>}
     </CollapsiblePanel>;
