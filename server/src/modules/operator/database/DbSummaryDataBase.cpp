@@ -176,7 +176,7 @@ bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticRe
     }
     auto resultSet =
         stmt->ExecuteQuery(reqParams.topK, reqParams.pageSize, reqParams.pageSize * (reqParams.current - 1));
-    std::vector<Protocol::OperatorStatisticInfoRes> res;
+    std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
     while (resultSet->Next()) {
         Protocol::OperatorStatisticInfoRes one{};
         one.opType = resultSet->GetString("op_type");
@@ -188,7 +188,9 @@ bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticRe
         one.avgTime = resultSet->GetDouble("avg_time");
         one.maxTime = resultSet->GetDouble("max_time");
         one.minTime = resultSet->GetDouble("min_time");
-        res.emplace_back(one);
+        OperatorStatisticCmpInfoRes tmpInfo;
+        tmpInfo.compare = one;
+        res.emplace_back(tmpInfo);
     }
     response.datas = res;
     return true;
@@ -911,4 +913,9 @@ void DbSummaryDataBase::Reset()
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::SUMMARY);
 }
 
+bool DbSummaryDataBase::QueryAllOperatorStatisticInfo(int64_t &total, Protocol::OperatorStatisticReqParams &reqParams,
+                                                      std::vector<Protocol::OperatorStatisticInfoRes> &res)
+{
+    return true;
+}
 }

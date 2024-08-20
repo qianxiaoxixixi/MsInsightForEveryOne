@@ -495,6 +495,22 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     std::string TextSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
+        std::string sql = GetQueryBaseStaticSql(reqParams);
+        if (sql.empty()) {
+            return "";
+        }
+        if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
+            sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
+        }
+
+        sql += " LIMIT ? OFFSET ?";
+        return sql;
+    }
+
+    std::string TextSummaryDataBase::GetQueryBaseStaticSql(Protocol::OperatorStatisticReqParams &reqParams)
+    {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
 
@@ -507,8 +523,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             group = R"(name || input_shapes || accelerator_core)";
             name = "name";
         }
-
-        std::string sql =
+        std::string limitSql =
                 " SELECT * FROM ("
                 "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
                 "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
@@ -520,18 +535,40 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
+
+        std::string noLimitsql =
+                " SELECT * FROM ("
+                "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
+                "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
+                "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
+                "     ROUND(max(duration), 2) as max_time,"
+                "     ROUND(min(duration), 2) as min_time"
+                "     FROM " + kernelTable +
+                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     GROUP by " + group +
+                " )";
+
+        std::string sql(limitSql);
+        if (reqParams.isCompare) {
+            sql = noLimitsql;
+        }
         if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
             return "";
         }
+        return sql;
+    }
 
-        if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
-        } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
-            sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
+    bool TextSummaryDataBase::QueryAllOperatorStatisticInfo(int64_t &total,
+                                                            Protocol::OperatorStatisticReqParams &reqParams,
+                                                            std::vector<Protocol::OperatorStatisticInfoRes> &res)
+    {
+        if (!QueryStatisticTotalNum(reqParams, total)) {
+            ServerLog::Error("[Operator]Failed to query total num of statistic info.");
+            return false;
         }
 
-        sql += " LIMIT ? OFFSET ?";
-        return sql;
+        std::string sql = GetQueryBaseStaticSql(reqParams);
+        return ExecSqlGetStaticInfo(sql, reqParams, res);
     }
 
     bool TextSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
@@ -541,8 +578,25 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             ServerLog::Error("[Operator]Failed to query total num of statistic info.");
             return false;
         }
-
         std::string sql = GenerateQueryStatisticSql(reqParams);
+        std::vector<Protocol::OperatorStatisticInfoRes> res;
+        if (!ExecSqlGetStaticInfo(sql, reqParams, res)) {
+            return false;
+        }
+
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> cmpRes;
+        for (auto &data : res) {
+            OperatorStatisticCmpInfoRes tmpInfo;
+            tmpInfo.compare = data;
+            cmpRes.emplace_back(tmpInfo);
+        }
+        response.datas = cmpRes;
+        return true;
+    }
+
+    bool TextSummaryDataBase::ExecSqlGetStaticInfo(const std::string &sql,
+        Protocol::OperatorStatisticReqParams &reqParams, std::vector<Protocol::OperatorStatisticInfoRes> &res)
+    {
         if (sql.empty()) {
             ServerLog::Error("Failed to generate query statistic sql.");
             return false;
@@ -560,7 +614,6 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
 
-        std::vector<Protocol::OperatorStatisticInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
             Protocol::OperatorStatisticInfoRes one{};
@@ -575,7 +628,6 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             one.minTime = sqlite3_column_double(stmt, col++);
             res.emplace_back(one);
         }
-        response.datas = res;
         sqlite3_finalize(stmt);
         return true;
     }

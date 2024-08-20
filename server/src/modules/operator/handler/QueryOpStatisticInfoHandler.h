@@ -8,8 +8,11 @@
 #include "ModuleRequestHandler.h"
 #include "OperatorRequestHandler.h"
 #include "OperatorProtocolRequest.h"
+#include "OperatorProtocolResponse.h"
 
 namespace Dic::Module::Operator {
+    using OpStaticResVec = std::vector<Protocol::OperatorStatisticInfoRes>;
+
     class QueryOpStatisticInfoHandler : public OperatorRequestHandler {
     public:
         QueryOpStatisticInfoHandler()
@@ -20,6 +23,22 @@ namespace Dic::Module::Operator {
         ~QueryOpStatisticInfoHandler() override = default;
 
         void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    private:
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> CalCompareInfo(
+            Protocol::OperatorStatisticReqParams &reqParams, OpStaticResVec &base, OpStaticResVec &cmp);
+        std::string GetGroup(const std::string &paramsGroup, OperatorStatisticInfoRes &data);
+        bool HandleCompareDataRequest(OperatorStatisticInfoRequest &request, OperatorStatisticInfoResponse &response);
+        bool HandleStatisticcDataRequest(OperatorStatisticInfoRequest &request,
+                                         OperatorStatisticInfoResponse &response);
+        void GroupingData(const std::string &paramsGroup, OpStaticResVec &datFromDb,
+                          std::map<std::string, Protocol::OperatorStatisticCmpInfoRes> &groupMap,
+                          bool isBaselineData);
+        void SetOpInputShapeGroupData(OperatorStatisticCmpInfoRes &data);
+        void SetOpOrHcclTypeGroupData(OperatorStatisticCmpInfoRes &data);
+        void SetCommonDataByGroup(const std::string &paramsGroup, OperatorStatisticCmpInfoRes &data);
+        void CalDiffData(const std::string &paramsGroup,
+                         std::map<std::string, Protocol::OperatorStatisticCmpInfoRes> &groupMap,
+                         std::vector<Protocol::OperatorStatisticCmpInfoRes> &cmpRes);
     };
 }
 #endif // PROFILER_SERVER_QUERYOPSTATISTICINFOHANDLER_H

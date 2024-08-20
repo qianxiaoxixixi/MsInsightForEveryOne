@@ -93,8 +93,8 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoRequestTest)
         {"id": 4, "moduleName": "operator", "type": "request", "command": "operator/statistic", "resultCallbackId": 0,
         "params": {"rankId": "2", "group": "Input Shape", "topK": -1, "current": 2, "pageSize": 20,
         "orderBy": "avg_time", "order": "Asc", "filters": [{"columnName": "name", "value": "MatMul"}]}})";
-    OperatorStatisticReqParams expect = {false, "2", "Input Shape", -1, 2, 20,
-                                         "avg_time", "Asc", {{"name", "MatMul"}}};
+    OperatorStatisticReqParams expect = {false, "2", "Input Shape", -1, 2, 20, "avg_time",  "Asc",
+                                         {{"name", "MatMul"}}};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -113,8 +113,8 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestTest)
     std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/details",
         "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": 100, "current": 3,
         "pageSize": 50, "orderBy": "cnt", "order": "Desc", "filters": [{"columnName": "opType", "value": "MatMul"}]}})";
-    OperatorStatisticReqParams expect = {false, "2", "Operator Type", 100, 3, 50,
-                                         "cnt", "Desc", {{"op_type", "MatMul"}}};
+    OperatorStatisticReqParams expect = {false, "2", "Operator Type", 100, 3, 50, "cnt",  "Desc",
+                                         {{"op_type", "MatMul"}}};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -221,8 +221,11 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoResponseTest)
     EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
     // valid data
     response.datas = {
+        {
             {"FlashAttentionScore", "FlashAttentionScore", "1;;1;2", "MIX_AIC", 28179.4, 4, 7044.8, 7111.4, 6982.4},
-            {"MatMul", "MatMul", "16384,2560;5120,2560", "AI_CORE", 5992.7, 4, 1498.1, 1505.9, 1486.9}
+            {"FlashAttentionScore", "FlashAttentionScore", "1;;1;2", "MIX_AIC", 28179.4, 4, 7044.8, 7111.4, 6982.4},
+            {"FlashAttentionScore", "FlashAttentionScore", "1;;1;2", "MIX_AIC", 28179.4, 4, 7044.8, 7111.4, 6982.4}
+        }
     };
     response.total = response.datas.size();
     jsonOptional = operatorProtocol.ToJson(response, err);
@@ -231,15 +234,17 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoResponseTest)
     EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
     int i = 0;
     for (const auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
-        EXPECT_EQ(item.HasMember("opType"), true);
-        EXPECT_EQ(item["opType"].GetString(), response.datas[i].opType);
-        EXPECT_EQ(item.HasMember("accCore"), true);
-        EXPECT_EQ(item["accCore"].GetString(), response.datas[i].accCore);
-        EXPECT_EQ(item.HasMember("totalTime"), true);
-        EXPECT_EQ(item["totalTime"].GetDouble(), response.datas[i].totalTime);
-        EXPECT_EQ(item.HasMember("maxTime"), true);
-        EXPECT_EQ(item["maxTime"].GetDouble(), response.datas[i++].maxTime);
-        EXPECT_EQ(item.MemberCount(), 9); // 9, name and duration
+        EXPECT_EQ(item.HasMember("diff"), true);
+        EXPECT_EQ(item["diff"].HasMember("opType"), true);
+        EXPECT_EQ(item["diff"]["opType"].GetString(), response.datas[i].compare.opType);
+        EXPECT_EQ(item["diff"].HasMember("accCore"), true);
+        EXPECT_EQ(item["diff"]["accCore"].GetString(), response.datas[i].compare.accCore);
+        EXPECT_EQ(item["diff"].HasMember("totalTime"), true);
+        EXPECT_EQ(item["diff"]["totalTime"].GetDouble(), response.datas[i].compare.totalTime);
+        EXPECT_EQ(item["diff"].HasMember("maxTime"), true);
+        EXPECT_EQ(item["diff"]["maxTime"].GetDouble(), response.datas[i++].compare.maxTime);
+        EXPECT_EQ(item.MemberCount(), 3); // 3, diff compare and baseline
+        EXPECT_EQ(item["diff"].MemberCount(), 9); // 9, name and duration
     }
 }
 
