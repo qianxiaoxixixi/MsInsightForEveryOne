@@ -24,9 +24,3 @@
 .theme_dark .rc-virtual-list-scrollbar-thumb{
     background-color:var(--grey60)!important;
 }
-#root .ant-table-tbody > tr.ant-table-expanded-row > td .ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
-    padding: 8px;
-}
-#root .ant-table.ant-table-small .ant-table-tbody > tr > td {
-    padding: 16px;
-}
