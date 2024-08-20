@@ -64,7 +64,8 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
 bool Dic::Module::CheckProjectValidHandler::IsFile(const std::string& path)
 {
 #ifdef _WIN32
-    DWORD attrib = GetFileAttributes(path.c_str());
+    std::string tmpPath = FileUtil::PathPreprocess(path);
+    DWORD attrib = GetFileAttributes(tmpPath.c_str());
     return (attrib != INVALID_FILE_ATTRIBUTES) && !(attrib & FILE_ATTRIBUTE_DIRECTORY);
 #else
     struct stat fileStat;
@@ -112,8 +113,9 @@ bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const std::string& fil
         return true;
     }
 #ifdef _WIN32
+    std::string tmpFilePath = FileUtil::PathPreprocess(filePath);
     WIN32_FILE_ATTRIBUTE_DATA fileData;
-    if (GetFileAttributesEx(filePath.c_str(), GetFileExInfoStandard, &fileData)) {
+    if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
         if (fileSize > FILE_MAX_SIZE[sufix]) {
@@ -139,7 +141,8 @@ bool Dic::Module::CheckProjectValidHandler::TraverseFolder(const std::string& fo
     }
 #ifdef _WIN32
     WIN32_FIND_DATA findData;
-    HANDLE hFind = FindFirstFile((folderPath + "\\*").c_str(), &findData);
+    std::string tmpFolderPath = FileUtil::PathPreprocess(folderPath + "\\*");
+    HANDLE hFind = FindFirstFile(tmpFolderPath.c_str(), &findData);
     if (hFind == INVALID_HANDLE_VALUE) {
         Server::ServerLog::Warn("Unable to open folder.", folderPath);
         return true;
