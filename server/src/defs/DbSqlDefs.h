@@ -179,9 +179,11 @@ const static std::string TASK_UNIT_FLOW_SQL =
 
 // sql of timeline threadDetail
 const static std::string ASCEND_THREAD_DETAIL =
-        "SELECT main.ROWID as id, startNs, endNs - startNs as duration, streamId as tid, 'Ascend Hardware' as pid, "
-        " depth, coalesce(CTI.name, main.taskType) as name FROM " + TABLE_TASK + " main "
+        "SELECT main.ROWID as id, main.startNs, main.endNs - main.startNs as duration, streamId as tid, "
+        " 'Ascend Hardware' as pid,main.depth, coalesce(CTI.name, MSX.message, main.taskType) as name "
+        " FROM " + TABLE_TASK + " main "
         " left join " + TABLE_COMPUTE_TASK_INFO + " CTI on CTI.globalTaskId = main.globalTaskId"
+        " left join " + TABLE_MSTX_EVENTS + " MSX on MSX.connectionId = main.connectionId"
         " WHERE main.ROWID = ?";
 
 const static std::string HCCL_THREAD_DETAIL =
@@ -236,11 +238,13 @@ const static std::string QUERY_DEVICE_LOCATION_SQL =
 
 // QueryThreadsByPid
 const static std::string ASCEND_THREADS_BY_PID =
-            "select startNs,endNs - startNs as duration,endNs,coalesce(c.name, main.taskType) as name, depth "
+            "select main.startNs,main.endNs - main.startNs as duration,main.endNs, "
+            " coalesce(c.name, m.message, main.taskType) as name, main.depth "
             " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
-            " c on c.globalTaskId = main.globalTaskId"
-            " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ?"
-            " ORDER BY depth ASC, startNs ASC;";
+            " c on c.globalTaskId = main.globalTaskId "
+            " left join " + TABLE_MSTX_EVENTS + " m on m.connectionId = main.connectionId "
+            " where deviceId = ? and streamId = ? and main.endNs >= ? AND main.startNs <= ?"
+            " ORDER BY main.depth ASC, main.startNs ASC;";
 
 const static std::string HCCL_THREADS_BY_PID =
             "with sub as ("
