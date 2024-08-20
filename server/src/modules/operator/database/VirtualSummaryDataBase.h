@@ -45,6 +45,8 @@ public:
 
     virtual bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
                                Protocol::OperatorMoreInfoResponse& response) = 0;
+    virtual bool QueryAllOperatorStatisticInfo(int64_t &total, Protocol::OperatorStatisticReqParams &reqParams,
+                                               std::vector<Protocol::OperatorStatisticInfoRes> &res) = 0;
 
     uint64_t QueryMinStartTime();
     static inline std::string GetFileIdFromCombinationId(const std::string& str)

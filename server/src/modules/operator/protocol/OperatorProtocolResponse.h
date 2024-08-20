@@ -24,11 +24,11 @@ namespace Dic::Protocol {
         std::string opName;
         std::string inputShape;
         std::string accCore;
-        double totalTime;
-        int64_t count;
-        double avgTime;
-        double maxTime;
-        double minTime;
+        double totalTime{INT_MIN_VALUE};
+        int64_t count{INT_MIN_VALUE};
+        double avgTime{DOUBLE_MIN_VALUE};
+        double maxTime{DOUBLE_MIN_VALUE};
+        double minTime{DOUBLE_MIN_VALUE};
     };
 
     // 按Operator展示算子详细信息，和See More响应
@@ -48,6 +48,12 @@ namespace Dic::Protocol {
         std::string outputShape;
         std::string outputType;
         std::string outputFormat;
+    };
+
+    struct OperatorStatisticCmpInfoRes {
+        OperatorStatisticInfoRes diff;
+        OperatorStatisticInfoRes baseline;
+        OperatorStatisticInfoRes compare;
     };
 
     struct OperatorDetailCmpInfoRes {
@@ -72,12 +78,20 @@ namespace Dic::Protocol {
     struct OperatorStatisticInfoResponse : public Response {
         OperatorStatisticInfoResponse() : Response(REQ_RES_OPERATOR_STATISTIC_INFO) {};
         int64_t total;
-        std::vector<OperatorStatisticInfoRes> datas;
+        std::vector<OperatorStatisticCmpInfoRes> datas;
     };
 
     // 获取按算子详情信息以填充表格的响应
     struct OperatorDetailInfoResponse : public Response {
         OperatorDetailInfoResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
+        int64_t total;
+        std::string level; // l0, l1, l2
+        std::vector<OperatorDetailCmpInfoRes> datas;
+    };
+
+    // 获取按算子详情信息以填充表格的响应
+    struct OperatorDetailInfoCmpResponse : public Response {
+        OperatorDetailInfoCmpResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
         int64_t total;
         std::string level; // l0, l1, l2
         std::vector<OperatorDetailCmpInfoRes> datas;

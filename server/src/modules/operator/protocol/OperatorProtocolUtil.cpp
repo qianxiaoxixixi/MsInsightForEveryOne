@@ -45,6 +45,22 @@ std::optional<document_t> ToResponseJson<OperatorComputeUnitInfoResponse>(const 
     return std::move(json);
 }
 
+void AddMemberWithLabel(rapidjson::Value& parent, const char* label, const OperatorStatisticInfoRes& ele,
+                        rapidjson::Document::AllocatorType& allocator)
+{
+    rapidjson::Value dataJson(rapidjson::kObjectType);
+    JsonUtil::AddMember(dataJson, "opType", ele.opType, allocator);
+    JsonUtil::AddMember(dataJson, "opName", ele.opName, allocator);
+    JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
+    JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
+    JsonUtil::AddMember(dataJson, "totalTime", ele.totalTime, allocator);
+    JsonUtil::AddMember(dataJson, "count", ele.count, allocator);
+    JsonUtil::AddMember(dataJson, "avgTime", ele.avgTime, allocator);
+    JsonUtil::AddMember(dataJson, "maxTime", ele.maxTime, allocator);
+    JsonUtil::AddMember(dataJson, "minTime", ele.minTime, allocator);
+    parent.AddMember(rapidjson::Value(label, allocator).Move(), dataJson, allocator);
+}
+
 template<>
 std::optional<document_t> ToResponseJson<OperatorStatisticInfoResponse>(const OperatorStatisticInfoResponse &res)
 {
@@ -53,19 +69,15 @@ std::optional<document_t> ToResponseJson<OperatorStatisticInfoResponse>(const Op
     ProtocolUtil::SetResponseJsonBaseInfo(res, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "total", res.total, allocator);
-    json_t data(kArrayType);
-    for (const OperatorStatisticInfoRes& ele : res.datas) {
-        json_t dataJson(kObjectType);
-        JsonUtil::AddMember(dataJson, "opType", ele.opType, allocator);
-        JsonUtil::AddMember(dataJson, "opName", ele.opName, allocator);
-        JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
-        JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
-        JsonUtil::AddMember(dataJson, "totalTime", ele.totalTime, allocator);
-        JsonUtil::AddMember(dataJson, "count", ele.count, allocator);
-        JsonUtil::AddMember(dataJson, "avgTime", ele.avgTime, allocator);
-        JsonUtil::AddMember(dataJson, "maxTime", ele.maxTime, allocator);
-        JsonUtil::AddMember(dataJson, "minTime", ele.minTime, allocator);
-        data.PushBack(dataJson, allocator);
+
+    rapidjson::Document data;
+    data.SetArray();
+    for (const OperatorStatisticCmpInfoRes& eles : res.datas) {
+        rapidjson::Value cmpResJson(rapidjson::kObjectType);
+        AddMemberWithLabel(cmpResJson, "diff", eles.diff, allocator);
+        AddMemberWithLabel(cmpResJson, "baseline", eles.baseline, allocator);
+        AddMemberWithLabel(cmpResJson, "compare", eles.compare, allocator);
+        data.PushBack(cmpResJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);

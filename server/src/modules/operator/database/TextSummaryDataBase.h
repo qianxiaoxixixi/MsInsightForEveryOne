@@ -47,6 +47,8 @@ public:
 
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
+    bool QueryAllOperatorStatisticInfo(int64_t &total, OperatorStatisticReqParams &reqParams,
+                                       std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
 
 private:
     const std::string kernelTable = "kernel_detail";
@@ -68,6 +70,9 @@ private:
     std::string GenerateQueryComputeUnitDurationSql(OperatorDurationReqParams &reqParams);
 
     std::string GenerateQueryStatisticSql(OperatorStatisticReqParams &reqParams);
+    std::string GetQueryBaseStaticSql(Protocol::OperatorStatisticReqParams &reqParams);
+    bool ExecSqlGetStaticInfo(const std::string &sql, Protocol::OperatorStatisticReqParams &reqParams,
+        std::vector<Protocol::OperatorStatisticInfoRes> &res);
 
     std::string GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams);
 

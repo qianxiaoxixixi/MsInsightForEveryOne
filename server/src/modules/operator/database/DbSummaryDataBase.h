@@ -26,6 +26,8 @@ public:
                                    std::vector<Protocol::OperatorDurationRes> &datas);
     bool QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                     Protocol::OperatorStatisticInfoResponse &response);
+    bool QueryAllOperatorStatisticInfo(int64_t &total, OperatorStatisticReqParams &reqParams,
+                                       std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
     bool QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                  Protocol::OperatorDetailInfoResponse& response);
     bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
