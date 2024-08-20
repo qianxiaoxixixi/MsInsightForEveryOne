@@ -128,7 +128,7 @@ const handleOrginData = (group: string, pageSize: number, current: number, data:
             item.compare.rowKey = group + String((pageSize * current) + index) + diff;
             realData.push(item.compare);
         } else {
-            item.rowKey = String((pageSize * current) + index);
+            item.rowKey = group + String((pageSize * current) + index);
             realData.push(item);
         };
     });
