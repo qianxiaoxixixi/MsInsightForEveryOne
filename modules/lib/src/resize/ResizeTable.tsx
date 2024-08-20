@@ -32,7 +32,7 @@ const StyledTable = styled(Table)`
     }
 
     .ant-table-thead > tr > th, .ant-table tfoot > tr > th，.ant-table.ant-table-small .ant-table-thead > tr > th{
-        padding: 8px 8px 8px 16px;
+        padding: 8px;
         line-height: 16px;
         height: 32px;
     }
@@ -62,7 +62,7 @@ const StyledTable = styled(Table)`
     }
 
     .ant-table-tbody > tr > td, .ant-table tfoot > tr > td {
-        padding: 16px 16px;
+        padding: 8px;
         line-height: 16px;
     }
     .ant-empty-normal{

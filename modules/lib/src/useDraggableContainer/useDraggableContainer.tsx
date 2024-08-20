@@ -172,6 +172,7 @@ const ContainerRight = styled(ContainerBase)`
             z-index: 2;
             transform: rotate(-90deg);
             left: -33px;
+            opacity: 0.8;
         }
         & > .caret {
             position: absolute;
