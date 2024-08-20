@@ -139,7 +139,7 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
         rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
         FlowLocation location {
             .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-            .note = resultSet->GetString("note"), .metaType = metaType, .rankId = rankId,
+            .metaType = metaType, .rankId = rankId,
             .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
             .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
             .name = stringsCache.at(path)[resultSet->GetString("name")]
@@ -1071,7 +1071,7 @@ void DbTraceDataBase::QueryFlowLocation(const std::string& sql,
         auto rankId = metaType == TABLE_API || metaType == TABLE_CANN_API || metaType == TABLE_MSTX_EVENTS ?
                 path : deviceId;
         FlowLocation location {.tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-                .note = resultSet->GetString("note"), .metaType = metaType, .rankId = rankId,
+                .metaType = metaType, .rankId = rankId,
                 .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
                 .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
                 .name = resultSet->GetString("name"), .deviceId=deviceId};
