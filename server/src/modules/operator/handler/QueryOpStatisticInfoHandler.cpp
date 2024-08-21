@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 #include <unordered_map>
+#include <algorithm>
 #include "pch.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
@@ -193,7 +194,7 @@ namespace Dic::Module::Operator {
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator start = cmpRes.begin() + offset;
         std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator end = cmpRes.begin() +
-            std::min(offset + pageSize - 1, cmpRes.size() - 1);
+            std::min(offset + pageSize - 1, static_cast<uint64_t>(cmpRes.size() - 1));
         std::vector<Protocol::OperatorStatisticCmpInfoRes> result;
         result.assign(start, end);
         return result;
