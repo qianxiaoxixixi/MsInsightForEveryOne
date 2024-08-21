@@ -89,6 +89,11 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
                 session.communicatorData = value;
             });
         }
+        session.communicatorData.partitionModes.forEach((value: partitionMode): void => {
+            if (value.mode.includes('tp')) {
+                setActiveTab(value.mode);
+            }
+        });
     }, [session.communicatorData]);
     const items = useMemo(() => {
         return _.map(session.communicatorData.partitionModes, (value: partitionMode): tabData => {
