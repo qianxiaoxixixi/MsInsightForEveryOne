@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
-import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
+import type { DataRequest, ModuleName, DataSource, ProjectActionEnum } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
 import connector from '@/connection';
 import { useLoading } from '@/hooks/useLoading';
@@ -44,13 +44,13 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
     return true;
 };
 
-export const addDataPath = function(dataSource: DataSource, result?: any): void {
+export const addDataPath = function(dataSource: DataSource, action: ProjectActionEnum, isConflict: boolean): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {
         useLoading().open({});
         connector.send({
             event: 'remote/import',
-            body: { dataSource },
+            body: { dataSource, isConflict, action },
         });
     }
 };

@@ -23,14 +23,14 @@ void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &project
     std::string jupyterVersionResult;
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
             && !jupyterVersionResult.empty()) {
-        IpynbImportResponse(request);
+        IpynbImportResponse(request, path);
         JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, path);
     } else {
         SendParseFailEvent("", "Jupyter env is not ready.");
     }
 }
 
-void ParserIpynb::IpynbImportResponse(ImportActionRequest &request)
+void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::string &fileName)
 {
     Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
@@ -40,6 +40,7 @@ void ParserIpynb::IpynbImportResponse(ImportActionRequest &request)
     response.moduleName = Protocol::ModuleType::TIMELINE;
     response.body.isIpynb = true;
     response.body.reset = true;
+    response.body.subdirectoryList.push_back(fileName);
     ModuleRequestHandler::SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
 }

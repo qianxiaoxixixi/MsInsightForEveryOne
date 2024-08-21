@@ -1,7 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "pch.h"
+#include <algorithm>
+#include "ParserFactory.h"
 #include "ParserBin.h"
 #include "ParserJson.h"
 #include "ParserIpynb.h"
@@ -15,7 +16,6 @@
 #include "FullDbParser.h"
 #include "ProjectExplorerManager.h"
 #include "ParserStatusManager.h"
-#include "ParserFactory.h"
 
 namespace Dic {
 namespace Module {
@@ -77,6 +77,8 @@ void ParserFactory::Reset()
 void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
     const std::string &cardPath, std::vector<std::string> dataPath)
 {
+    response.body.subdirectoryList.insert(response.body.subdirectoryList.end(), dataPath.begin(),
+                                          dataPath.end());
     Action action;
     action.cardName = rankId;
     action.rankId = rankId;
@@ -246,30 +248,6 @@ std::string ParserAlloc::GetDbPath(const std::string &filePath, const int index)
         path.append(suffix);
     }
     return path;
-}
-
-bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb)
-{
-    bool isCluster = (filesSize > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(path);
-    bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb ||
-        DataBaseManager::Instance().curIsBin;
-    ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", DataBaseManager::Instance().curIsCluster,
-        ", reset:", reset);
-    if (reset) {
-        if (isDb) {
-            FullDb::FullDbParser::Instance().Reset();
-        } else {
-            TraceFileParser::Instance().Reset();
-            Summary::KernelParse::Instance().Reset();
-            Memory::MemoryParse::Instance().Reset();
-        }
-        body.reset = true;
-    }
-    DataBaseManager::Instance().curIsCluster = isCluster;
-    DataBaseManager::Instance().curIsDb = isDb;
-    DataBaseManager::Instance().curIsBin = false;
-    body.isCluster = isCluster;
-    return true;
 }
 
 void ParserAlloc::SendAllParseSuccess()

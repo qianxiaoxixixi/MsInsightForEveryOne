@@ -44,7 +44,6 @@ SourceFileParser::~SourceFileParser()
 bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
     const std::string &selectedFile)
 {
-    DataBaseManager::Instance().curIsBin = true;
     if (!FileUtil::CheckFilePathLength(selectedFile)) {
         ServerLog::Error("File path length check failed.");
         return false;

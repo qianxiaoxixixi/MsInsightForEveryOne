@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { console } from '@/utils/console';
-import {INTERCEPTOR_HANDLERS} from '@/connection/interceptor';
+import { INTERCEPTOR_HANDLERS, type ResponseType } from '@/connection/interceptor';
 
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
@@ -133,7 +133,7 @@ class ServerConnector extends BaseConnector {
         // 判断是否对该命令的返回内容进行了拦截配置，如果有配置，则先执行拦截方法逻辑
         const callback = INTERCEPTOR_HANDLERS[event.data.args.command];
         if (callback) {
-            callback(res);
+            callback(event, res as unknown as ResponseType);
         }
         this.send({
             event: 'request',

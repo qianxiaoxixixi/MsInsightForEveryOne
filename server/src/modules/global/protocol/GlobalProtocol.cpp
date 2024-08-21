@@ -18,6 +18,8 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE, ToProjectExplorerInfoDeleteRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckRequest);
+    jsonToReqFactory.emplace(REQ_RES_PROJECT_SET_BASELINE, ToSetBaselineRequest);
+    jsonToReqFactory.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, ToCancelBaselineRequest);
 }
 
 void GlobalProtocol::RegisterResponseToJsonFuncs()
@@ -28,6 +30,8 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE, ToProjectExplorerInfoDeleteResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckResponseJson);
+    resToJsonFactory.emplace(REQ_RES_PROJECT_SET_BASELINE, ToSetBaselineResponseJson);
+    resToJsonFactory.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, ToCancelBaselineResponseJson);
 }
 
 void GlobalProtocol::RegisterEventToJsonFuncs()
@@ -110,6 +114,28 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectValidCheckRequest(const json_t
     return reqPtr;
 }
 
+std::unique_ptr<Request> GlobalProtocol::ToSetBaselineRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<BaselineSettingRequest> reqPtr = std::make_unique<BaselineSettingRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request project explorer delete info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> GlobalProtocol::ToCancelBaselineRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<BaselineCancelRequest> reqPtr = std::make_unique<BaselineCancelRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request project explorer delete info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -145,6 +171,17 @@ std::optional<document_t> GlobalProtocol::ToProjectValidCheckResponseJson(const 
 {
     return ToResponseJson<ProjectCheckValidResponse>(
             dynamic_cast<const ProjectCheckValidResponse &>(response));
+}
+
+std::optional<document_t> GlobalProtocol::ToSetBaselineResponseJson(const Response &response)
+{
+    return ToResponseJson<BaselineSettingResponse>(
+            dynamic_cast<const BaselineSettingResponse &>(response));
+}
+
+std::optional<document_t> GlobalProtocol::ToCancelBaselineResponseJson(const Response &response)
+{
+    return ToResponseJson<BaselineCancelResponse>(dynamic_cast<const BaselineCancelResponse &>(response));
 }
 #pragma endregion
 

@@ -95,7 +95,7 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
         ServerLog::Info("Kernel file: ", file, ", FileId: ", tempId);
         std::string dbPath = FileUtil::GetDbPath(file, tempId);
         Timeline::DataBaseManager::Instance().GetSummaryDatabase(tempId)->SetDbPath(dbPath);
-        results[fileId].push_back(file);
+        results[tempId].push_back(file);
     }
     return results;
 }

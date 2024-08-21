@@ -15,19 +15,36 @@
 
 namespace Dic {
 namespace Protocol {
+enum class ProjectActionEnum {
+    TRANSFER_PROJECT = 0,
+    ADD_FILE,
+    UNKNOWN
+};
+
 struct ImportActionParams {
     std::string projectName;
     std::vector<std::string> path;
+    ProjectActionEnum projectAction;
+    bool isConflict;
     bool CommonCheck(std::string &errorMsg)
     {
         if (this->projectName.empty()) {
             errorMsg = "Import project is empty.";
             return false;
         }
+        if (this->projectAction == ProjectActionEnum::UNKNOWN) {
+            errorMsg = "Unknown operator.";
+            return false;
+        }
         return true;
     }
     bool ConvertToRealPath(std::string &errorMsg)
     {
+        // 导入新文件时验证，路径不允许为空
+        if (this->path.empty()) {
+            errorMsg = "Import file path is empty.";
+            return false;
+        }
         return FileUtil::ConvertToRealPath(errorMsg, this->path);
     }
 };

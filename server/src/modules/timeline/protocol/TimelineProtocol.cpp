@@ -88,6 +88,8 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
+    reqPtr->params.projectAction = static_cast<ProjectActionEnum>(json["params"]["projectAction"].GetInt());
+    reqPtr->params.isConflict = json["params"]["isConflict"].GetBool();
     return reqPtr;
 }
 

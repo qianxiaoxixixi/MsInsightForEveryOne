@@ -51,7 +51,10 @@ bool BaselineManager::InitBaselineData(const std::string &projectName, const std
 
     // 只有部分数据类型支持设置对比，如果非预期数据类型，则直接给前端返回错误提示
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerList[0].projectType);
-    // todo-yqs 将类型判断加回来
+    if (!IsBaseLineConfigurableType(projectTypeEnum)) {
+        errorMsg = "Not supported to set the project type for baseline!";
+        return false;
+    }
     parseFileId = projectExplorerList[0].parseFilePathInfos[0].id;
     rankId = baselineMark + std::to_string(parseFileId);
     // 获取解析类型（以进一步调用对应解析类）

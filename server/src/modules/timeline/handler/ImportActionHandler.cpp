@@ -32,21 +32,13 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
 
-    std::shared_ptr<ParserAlloc> factory;
-    if (!request.params.path.empty()) {
-        // 如果入参的文件内容不为空，则为导入新的文件
-        if (!request.params.ConvertToRealPath(warnMsg)) {
+    if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
+        if (!request.params.ConvertToRealPath(warnMsg) || !ImportFile(request, warnMsg)) {
             SetResponseResult(response, false, warnMsg);
             session.OnResponse(std::move(responsePtr));
             return;
         }
-        if (!ImportFile(request)) {
-            SetResponseResult(response, false);
-            session.OnResponse(std::move(responsePtr));
-            return;
-        }
-    } else {
-        // 如果入参的文件内容为空，则为项目切换
+    } else if (request.params.projectAction == ProjectActionEnum::TRANSFER_PROJECT) {
         if (!TransferProject(request)) {
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
@@ -85,6 +77,7 @@ void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExp
 
 bool ImportActionHandler::TransferProject(ImportActionRequest &request)
 {
+    // 切换项目时，会对一级目录下所有内容进行加载
     std::vector<Global::ProjectExplorerInfo> projectExplorerInfo = Global::ProjectExplorerManager::Instance()
             .QueryProjectExplorer(request.params.projectName, std::vector<std::string>());
     if (projectExplorerInfo.empty()) {
@@ -101,7 +94,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
     return true;
 }
 
-bool ImportActionHandler::ImportFile(ImportActionRequest &request)
+bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &warnMsg)
 {
     // 如果入参的文件内容不为空，则通过文件判断文件类型获取工厂
     std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(request.params.path);
@@ -109,25 +102,37 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request)
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
     // 路径列表不为空，需要进行文件目录的新增、覆盖
     ProjectTypeEnum projectType = factory->GetProjectType(request.params.path);
-    if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(request.params.projectName,
-                                                                        request.params.path[0], projectType,
-                                                                        "import", std::vector<std::string>())) {
-        ServerLog::Warn("Save file path failed.");
+    std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
+
+    // 获取文件列表
+    for (const auto &item: request.params.path) {
+        std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(item, projectType, warnMsg);
+        if (!warnMsg.empty()) {
+            return false;
+        }
+        Global::ProjectExplorerInfo projectExplorerInfo;
+        projectExplorerInfo.fileName = item;
+        projectExplorerInfo.projectName = request.params.projectName;
+        projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
+        projectExplorerInfo.importType = "import";
+        for (const auto &parseFile: parseFileList) {
+            Global::ParseFileInfo parseFileInfo;
+            parseFileInfo.parseFilePath = parseFile;
+            projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+        }
+        projectExplorerInfoList.push_back(projectExplorerInfo);
+    }
+    if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(projectExplorerInfoList,
+                                                                        request.params.isConflict)) {
         return false;
     }
 
-    std::vector<Global::ProjectExplorerInfo> projectExplorerInfo = Global::ProjectExplorerManager::Instance()
-            .QueryProjectExplorer(request.params.projectName, std::vector<std::string>());
-    if (projectExplorerInfo.empty()) {
-        return false;
+    LogIfFileNotExist(projectExplorerInfoList);
+    // 以下情况需要对当前导入内容进行重置：1.导入数据和原来数据有冲突；2.无冲突，但是当前选中项目与目标项目不一致；
+    if (allocType != ParserType::JSON) {
+        ParserFactory::Reset();
     }
-    LogIfFileNotExist(projectExplorerInfo);
-    std::vector<std::string> filePathUnderProject;
-    for (const auto &item: projectExplorerInfo) {
-        filePathUnderProject.push_back(item.fileName);
-    }
-    ParserFactory::Reset();
-    factory->Parser(projectExplorerInfo, request);
+    factory->Parser(projectExplorerInfoList, request);
     return true;
 }
 

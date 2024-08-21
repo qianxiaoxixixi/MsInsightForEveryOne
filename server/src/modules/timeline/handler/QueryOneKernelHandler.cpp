@@ -1,10 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 */
+#include "QueryOneKernelHandler.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ProjectExplorerManager.h"
 #include "TraceTime.h"
-#include "QueryOneKernelHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -19,6 +20,11 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    if (request.projectName.empty()) {
+        ServerLog::Error("project name is empty");
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
@@ -33,7 +39,8 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         ServerLog::Error("Failed to query the operator response data.");
     }
 
-    if (!DataBaseManager::Instance().curIsCluster) {
+    // 判断是否具备集群数据并且包含集群文件
+    if (!Global::ProjectExplorerManager::Instance().IsClusterData(request.projectName)) {
         session.OnResponse(std::move(responsePtr));
         return;
     }

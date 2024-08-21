@@ -49,7 +49,6 @@ protected:
 
     void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
                                  const std::string &cardPath, std::vector<std::string> dataPath);
-    bool CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb);
     static void SaveDbPath(const std::string &curProjectName,
                            std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 };

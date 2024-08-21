@@ -30,8 +30,13 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
-    std::string selectedFolder = FileUtil::GetParentPath(path);
-    auto hostInfoMap = GetReportFiles(path, response.body);
+    std::vector<std::string> reportFiles = {};
+    for (const auto &projectInfo: projectInfos) {
+        for (const auto &item: projectInfo.parseFilePathInfos) {
+            reportFiles.push_back(item.parseFilePath);
+        }
+    }
+    auto hostInfoMap = GetReportFiles(reportFiles);
     uint32_t rankSize = 0;
     for (auto &hostInfo : hostInfoMap) {
         if (!hostInfo.second.empty()) {
@@ -46,19 +51,17 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
             }
         }
     }
-
     bool isPendingParse = rankSize >= PENDIND_CRITICAL_VALUE;
     response.body.isPending = isPendingParse;
+    response.body.subdirectoryList = reportFiles;
     SetParseCallBack();
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    int rankCount = 0;
     for (const auto &hostInfo : hostInfoMap) {
         for (const auto &ranks : hostInfo.second) {
-            rankCount += ranks.second.size();
             if (isPendingParse) {
                 ParserStatusManager::Instance().SetPendingStatus(ranks.second[0],
                     { ProjectTypeEnum::DB, { ranks.first } });
@@ -67,42 +70,43 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
             FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first);
         }
     }
-    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(path, std::regex(clusterDBReg));
-    // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
-    bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
+    response.body.isCluster = static_cast<ProjectTypeEnum>(projectInfos[0].projectType) == ProjectTypeEnum::DB_CLUSTER;
     // 执行集群数据解析
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, path, isCluster);
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, path,
+        response.body.isCluster, dataPathToDbMap, projectInfos[0].projectName);
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
-void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster)
+void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
+    std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
 {
     DataBaseManager::Instance().ClearClusterDb();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (isCluster) {
         ServerLog::Info("The cluster file is parsed successfully.");
         parseClusterResult = PARSE_RESULT_OK;
-        ClusterProcessAsyncStep(selectedFolder);
+        ClusterProcessAsyncStep(selectedFolder, dataPathToDbMap);
     } else {
         ServerLog::Warn("Failed to parse cluster files.");
         parseClusterResult = PARSE_RESULT_FAIL;
     }
+    SaveDbPath(projectName, dataPathToDbMap);
     // send event
     ParserAlloc::ParseClusterEndProcess(parseClusterResult);
 }
 
-void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder)
+void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
+                                       std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
 {
     std::string parseClusterResult;
     ClusterFileParser clusterFileParser;
     if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
         clusterFileParser.ParserClusterOfDb(selectedFolder)) {
         ServerLog::Info("The cluster db file is parsed successfully.");
-        DataBaseManager::Instance().curIsCluster = true;
+        dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
         parseClusterResult = PARSE_RESULT_OK;
     } else {
         ServerLog::Warn("Failed to parse cluster db files");
-        DataBaseManager::Instance().curIsCluster = false;
         parseClusterResult = PARSE_RESULT_FAIL;
     }
     // send event
@@ -119,28 +123,24 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder)
     session->OnEvent(std::move(event));
 }
 
-std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::string &path, ImportActionResBody &body)
+std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
 {
-    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(path, std::regex(pytorchDBReg));
-    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(path, std::regex(msprofDBReg));
-    CheckIfClusterAndReset(path, pytorchFiles.size(), body, true);
-    if (pytorchFiles.empty() && msprofFiles.empty()) {
-        Server::ServerLog::Warn("Failed to find db file.");
-        return {};
-    }
-    std::vector<std::string> reportFiles = {};
-    if (!pytorchFiles.empty()) {
-        reportFiles = pytorchFiles;
-        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
-    } else if (!msprofFiles.empty()) {
-        reportFiles = msprofFiles;
-        DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+    std::vector<std::string> dbFiles = {};
+    for (const auto &file: reportFiles) {
+        if (!FileUtil::IsFolder(file)) {
+            dbFiles.push_back(file);
+            continue;
+        }
+        std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(file, std::regex(pytorchDBReg));
+        std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(file, std::regex(msprofDBReg));
+        dbFiles.insert(dbFiles.end(), pytorchFiles.begin(), pytorchFiles.end());
+        dbFiles.insert(dbFiles.end(), msprofFiles.begin(), msprofFiles.end());
     }
     // 只解析找到的第一个report文件
     std::map<std::string, HostInfo> hostMap;
-    for (const auto& file: reportFiles) {
+    for (const auto& file: dbFiles) {
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
-            ServerLog::Error("Failed to create connection pool. ", reportFiles[0]);
+            ServerLog::Error("Failed to create connection pool. ", dbFiles[0]);
         }
         auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(file);
         if (db == nullptr) {
@@ -180,13 +180,73 @@ void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std
     action.result = true;
     if (!dbFile.empty()) {
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(dbFile);
+        action.dataPathList.push_back(FileUtil::GetParentPath(dbFile));
     }
     response.body.result.emplace_back(action);
 }
 
 ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPath)
 {
-    return ProjectTypeEnum::DB;
+    if (dataPath.empty()) {
+        return ProjectTypeEnum::DB;
+    }
+    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(pytorchDBReg));
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(msprofDBReg));
+    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(clusterDBReg));
+    int rankCount = pytorchFiles.size() + msprofFiles.size();
+    // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
+    bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
+    return isCluster ? ProjectTypeEnum::DB_CLUSTER : ProjectTypeEnum::DB;
+}
+
+std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &importFile,
+                                                            ProjectTypeEnum projectTypeEnum, std::string &error)
+{
+    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(msprofDBReg));
+    if (pytorchFiles.empty() && msprofFiles.empty()) {
+        error = "Failed to find db file.";
+        return {};
+    }
+    std::vector<std::string> reportFiles = {};
+    if (!pytorchFiles.empty()) {
+        reportFiles = pytorchFiles;
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    } else if (!msprofFiles.empty()) {
+        reportFiles = msprofFiles;
+        DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+    }
+    std::vector<std::string> res;
+    for (const auto &item: reportFiles) {
+        res.push_back(FileUtil::GetParentPath(item));
+    }
+    return res;
+}
+
+void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId)
+{
+    if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
+        return;
+    }
+    std::string parseFilePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
+    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(msprofDBReg));
+    if (pytorchFiles.empty() && msprofFiles.empty()) {
+        return;
+    }
+    std::string file;
+    if (!pytorchFiles.empty()) {
+        DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
+        file = pytorchFiles[0];
+    } else {
+        DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
+        file = msprofFiles[0];
+    }
+
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(rankId, file)) {
+        ServerLog::Error("Failed to create baseline connection pool. ");
+    }
+    FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{rankId}, file);
 }
 } // Module
 } // Dic

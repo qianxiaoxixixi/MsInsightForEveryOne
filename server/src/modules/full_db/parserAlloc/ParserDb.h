@@ -20,14 +20,19 @@ public:
     virtual ~ParserDb();
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
+    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
+                                                      ProjectTypeEnum projectTypeEnum, std::string &error) final;
 private:
-    std::map<std::string, HostInfo> GetReportFiles(const std::string &path, ImportActionResBody &body);
+    std::map<std::string, HostInfo> GetReportFiles(const std::vector<std::string> &reportFiles);
     void SetParseCallBack();
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
                                         const std::string& host, const std::string& dbFile);
-    static void ClusterProcess(const std::string &selectedFolder, bool isCluster);
-    static void ClusterProcessAsyncStep(const std::string &selectedFolder);
+    static void ClusterProcess(const std::string &selectedFolder, bool isCluster,
+        std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
+    static void ClusterProcessAsyncStep(const std::string &selectedFolder,
+                                        std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 };
 
 } // end of namespace Module

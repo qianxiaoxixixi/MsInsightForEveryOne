@@ -10,6 +10,7 @@
 #include "document.h"
 #include "writer.h"
 #include "stringbuffer.h"
+#include <algorithm>
 
 namespace Dic {
 using json_t = rapidjson::Value;
@@ -28,14 +29,43 @@ enum class ProjectTypeEnum {
     DB = 0,
     BIN = 1,
     IPYNB = 2,
-    CLUSTER = 3,
+    TEXT_CLUSTER = 3,
     SIMULATION = 4,
     TRACE = 5,
+    DB_CLUSTER = 6,
+};
+
+inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
+    ProjectTypeEnum::DB,
+    ProjectTypeEnum::TEXT_CLUSTER,
+    ProjectTypeEnum::SIMULATION,
+    ProjectTypeEnum::TRACE,
+    ProjectTypeEnum::DB_CLUSTER,
+};
+
+static inline bool IsBaseLineConfigurableType(ProjectTypeEnum projectTypeEnum)
+{
+    auto it = std::find(projectTypeSupportCompare.begin(), projectTypeSupportCompare.end(),
+                        projectTypeEnum);
+    if (it != projectTypeSupportCompare.end()) {
+        return true;
+    }
+    return false;
+}
+
+inline std::unordered_map<ProjectTypeEnum, uint8_t> projectTypeGroup = {
+    {ProjectTypeEnum::DB, 1},
+    {ProjectTypeEnum::TEXT_CLUSTER, 2},
+    {ProjectTypeEnum::SIMULATION, 3},
+    {ProjectTypeEnum::TRACE, 2},
+    {ProjectTypeEnum::DB_CLUSTER, 1},
 };
 
 static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTypeEnum)
 {
     switch (projectTypeEnum) {
+        case ProjectTypeEnum::DB_CLUSTER:
+            return ParserType::DB;
         case ProjectTypeEnum::DB:
             return ParserType::DB;
         case ProjectTypeEnum::BIN:
@@ -47,9 +77,15 @@ static inline ParserType coverProjectTypeToParserType(ProjectTypeEnum projectTyp
     }
 }
 
-static inline bool isCoverProjectType(ProjectTypeEnum projectTypeEnum)
+static inline bool isFileConflict(ProjectTypeEnum oldProjectType, ProjectTypeEnum newProjectType)
 {
-    return !(projectTypeEnum == ProjectTypeEnum::SIMULATION || projectTypeEnum == ProjectTypeEnum::TRACE);
+    if (projectTypeGroup.count(oldProjectType) == 0 || projectTypeGroup.count(newProjectType) == 0) {
+        return true;
+    }
+    if (projectTypeGroup[oldProjectType] == projectTypeGroup[newProjectType]) {
+        return false;
+    }
+    return true;
 }
 } // end of namespace Dic
 
