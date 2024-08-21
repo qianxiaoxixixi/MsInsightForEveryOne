@@ -98,7 +98,7 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
         <div id={chartId} style={{ ...style, width: '1220px', margin: '10px auto' }}>
             <svg width={'100%'} height={'100%'}></svg>
         </div>
-        { data.advice?.length > 0 && (<Advice text={data.advice.join('\n')} />) }
+        { data.advice?.length > 0 && (<Advice text={data.advice} />) }
     </div>;
 });
 
