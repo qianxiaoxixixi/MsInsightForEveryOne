@@ -8,7 +8,7 @@ import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
 import React, { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BottomPanelSingleRender, InsightUnit } from '../entity/insight';
+import type { BottomPanelSingleRender } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
 import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
@@ -153,28 +153,13 @@ interface BottomPanelReactNodes {
     open?: boolean;
 }
 
-const useSliceListTrigger = (session: Session): boolean => {
-    const [sliceListTrigger, setSliceListTrigger] = React.useState(false);
-    const [prevSelectedUnits, setPrevSelectedUnits] = useState<InsightUnit[]>([]);
-
-    useEffect(() => {
-        if (!prevSelectedUnits.find(unit => unit?.bottomPanelRender)) {
-            setSliceListTrigger(!sliceListTrigger);
-        }
-        setPrevSelectedUnits(session.selectedUnits);
-    }, [session.selectedUnits]);
-
-    return sliceListTrigger;
-};
-
 const useBottomPanelReactNodes = (session: Session, height: number, type: string): BottomPanelReactNodes => {
     const isSliceDetail = type === TriggerType.SELECTED_DATA;
     const { selectedUnitKeys, selectedUnits } = session;
-    const sliceListTrigger = useSliceListTrigger(session);
     const bottomPanelComponents = React.useMemo(() => {
         const sessionUnit = selectedUnits?.find(unit => unit.bottomPanelRender);
         return sessionUnit?.bottomPanelRender?.(session, sessionUnit?.metadata);
-    }, [session, session.units.length, isSliceDetail ? String(selectedUnitKeys) : sliceListTrigger]);
+    }, [session, session.units.length, isSliceDetail ? String(selectedUnitKeys) : session.selectedRange]);
     const bottomPanelComponent = isSliceDetail ? bottomPanelComponents?.[0] : bottomPanelComponents?.[1];
     const contentHeight = bottomPanelComponent?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
