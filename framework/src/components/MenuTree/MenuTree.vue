@@ -5,17 +5,64 @@ import DeletePopConfirm from '@/components/MenuTree/DeletePopConfirm.vue';
 import EditableText from '@/components/MenuTree/EditableText.vue';
 import AddLightIcon from '@/components/icons/add_light_icon.vue';
 import AddDarkIcon from '@/components/icons/add_dark_icon.vue';
-import {ref, watch} from 'vue';
+import {onMounted, ref, watch} from 'vue';
 import {useDataSources} from '@/stores/dataSource';
-import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { LOCAL_HOST, PORT, ProjectActionEnum, type DataSource } from '@/centralServer/websocket/defs';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import ResourceDialog from '@/components/ResourceDialog.vue';
 import {useSession} from '@/stores/session';
+import ContextMenu from '@/components/ContextMenu.vue';
+import {t} from '@/i18n';
+import { useCompareConfig } from '@/stores/compareConfig';
 
 const { session } = useSession();
 const showModal = ref(false);
 const projectName = ref('');
 const activateNodeId = ref(0);
+
+const selectProjectExplorerInfo = ref({ projectName: '', fileName: '' });
+const setBaseLineData = (): void => {
+  useCompareConfig().setBaselineData(selectProjectExplorerInfo.value.projectName, selectProjectExplorerInfo.value.fileName);
+};
+
+const setCompareData = (): void => {
+  useCompareConfig().setCompareData(selectProjectExplorerInfo.value.projectName, selectProjectExplorerInfo.value.fileName);
+};
+
+const menuVisible = ref(false);
+const menuItems = ref([
+  { label: t('Set Baseline Data') as string, action: setBaseLineData },
+  { label: t('Set Compare Data') as string, action: setCompareData },
+]);
+const menuPosition = ref({
+  top: '0px',
+  left: '0px',
+});
+const contextMenu = ref();
+
+onMounted(() => {
+  window.addEventListener('click', (event: MouseEvent) => {
+    // 如果菜单不可见，则不处理
+    if (!menuVisible.value) {
+      return;
+    }
+    // 如果dom元素不存在，则直接返回
+    const menuRect = document.getElementById('right-click-menu')?.getBoundingClientRect();
+    if (!menuRect) {
+      return;
+    }
+    // 判断鼠标点击位置是否在菜单外
+    const clickInsideMenu =
+        event.clientX >= menuRect.left &&
+        event.clientX <= menuRect.right &&
+        event.clientY >= menuRect.top &&
+        event.clientY <= menuRect.bottom;
+    // 如果点击不在菜单内，则隐藏菜单
+    if (!clickInsideMenu) {
+      menuVisible.value = false;
+    }
+  });
+});
 
 
 const [DeleteAll, DeleteItem, Cancel, Confirm, ImportData] = useWatchTranslation(['Delete All', 'Delete Item', 'Cancel', 'Confirm', 'Import Data']);
@@ -31,16 +78,35 @@ watch(
         activateNodeId.value = -1;
         return;
       }
+
       const project = props.dataSource[idx];
-      activateNodeId.value = project.id;
+      if (useDataSources().lastDataSource?.dataPath.length === 0) {
+        activateNodeId.value = project.id;
+        return;
+      }
+
+      if (!project.children) {
+        activateNodeId.value = -1;
+        return;
+      }
+      const subdirectoryIdx = project.children.findIndex((item) => item.label === useDataSources().lastDataSource.dataPath[0]);
+      if (subdirectoryIdx === -1) {
+        activateNodeId.value = -1;
+        return;
+      }
+      activateNodeId.value = project.children[subdirectoryIdx].id;
     }
 );
 
 const handleNodeClick = (data:any, node: any) => {
+  let dataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] } as DataSource;
   if (node.level === 1) {
-    const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: data.label, dataPath: [] };
-    useDataSources().confirm(dataSource, false);
+    dataSource.projectName = data.label;
+  } else {
+    dataSource.projectName = data.projectName;
+    dataSource.dataPath.push(data.label);
   }
+  useDataSources().confirm(dataSource, false, ProjectActionEnum.TRANSFER_PROJECT);
 };
 
 function addRemoteUnderProject(node:any, e: MouseEvent) {
@@ -48,6 +114,25 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
   projectName.value = node.data.label;
   showModal.value = true;
 }
+
+const handleRightClick = (event: MouseEvent, data:any) => {
+  selectProjectExplorerInfo.value.projectName = data.projectName;
+  selectProjectExplorerInfo.value.fileName = data.label;
+  menuPosition.value.top = `${event.clientY}px`;
+  menuPosition.value.left = `${event.clientX}px`;
+  menuVisible.value = true;
+};
+
+const getToolTip = (data:any, node: any): string => {
+  if (node.level === 1) {
+    return data.label;
+  }
+  const rankId = useCompareConfig().getRankIdByProjectInfo(data.projectName, data.label);
+  if (rankId === '') {
+    return data.label;
+  }
+  return rankId + ' : ' + data.label;
+};
 
 </script>
 <template>
@@ -57,9 +142,9 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
                 <div :class="['content-node', {'activate-node':data.id === activateNodeId}]">
                     <span class="content-body">
                         <LocalIcon v-if="node.level === 1" style="flex: none"/>
-                        <el-tooltip :content="node.label" effect="light" :show-after="200">
+                        <el-tooltip :content="getToolTip(data, node)" effect="light" :show-after="200">
                             <EditableText  v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"></EditableText>
-                            <span v-else class="content-node-text">{{ node.label }} </span>
+                            <span v-else class="content-node-text" @contextmenu.prevent="handleRightClick($event, data)">{{ node.label }} </span>
                         </el-tooltip>
                     </span>
 
@@ -81,6 +166,7 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
             </template>
         </el-tree>
         <ResourceDialog v-model:showModal=showModal :project-name="projectName"></ResourceDialog>
+        <ContextMenu id="right-click-menu" ref="contextMenu" v-model:menuVisible=menuVisible :menu-items="menuItems" :position="menuPosition"/>
     </div>
 </template>
 <style scoped>

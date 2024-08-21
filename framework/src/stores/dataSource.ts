@@ -1,18 +1,26 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { ref, computed, type Ref } from 'vue';
-import { defineStore } from 'pinia';
-import { type DataSource, LOCAL_HOST, PORT, type ProjectDirectory } from '@/centralServer/websocket/defs';
-import type { TreeNodeType } from '@/components/MenuTree/types';
+import {computed, ref, type Ref} from 'vue';
+import {defineStore} from 'pinia';
+import {
+    type DataSource,
+    LOCAL_HOST,
+    PORT,
+    ProjectActionEnum,
+    type ProjectDirectory
+} from '@/centralServer/websocket/defs';
+import type {TreeNodeType} from '@/components/MenuTree/types';
 import {addDataPath, connectRemote, disconnectRemote, isExistedRemote, request} from '@/centralServer/server';
 import connector from '@/connection';
-import { useSession } from './session';
+import {useSession} from './session';
 import {ElMessage} from 'element-plus';
-import { console } from '@/utils/console';
-import { t } from '@/i18n';
-import { ProjectErrorType } from '@/utils/enmus';
-import { useLoading } from '@/hooks/useLoading';
+import {console} from '@/utils/console';
+import {t} from '@/i18n';
+import {ProjectErrorType} from '@/utils/enmus';
+import {useLoading} from '@/hooks/useLoading';
+import {type UpdateProjectExplorerParam} from '@/stores/resourceComp';
+import {useCompareConfig} from '@/stores/compareConfig';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
     const idx = dataSources.value.findIndex((item) =>
@@ -27,6 +35,7 @@ const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource,
         dataSources.value[idx].dataPath = dataSource.dataPath;
         return true;
     }
+
     const dataPathIdx = dataSource.dataPath.findIndex(path =>
         dataSources.value[idx].dataPath.includes(path));
     if (dataPathIdx === -1) {
@@ -47,9 +56,14 @@ const checkExistedDataSource = (dataSources: Ref<DataSource[]>, dataSource: Data
     return dataPathIdx !== -1;
 };
 
+function arraysEqual<T>(a: T[], b: T[]): boolean {
+    return a.length === b.length && a.every((value) => b.includes(value));
+}
+
 export const useDataSources = defineStore('dataSources', () => {
     const { session } = useSession();
     const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }]);
+    // 当前选中数据，projectName为选中一级目录，dataPath为二级目录，为空时表示选中的是一级目录，不为空则表示选中的是二级目录
     const lastDataSource = ref<DataSource>({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     function checkExistedServer(dataSource: DataSource, importMethod?: 'drag', result?: any): boolean {
         if (session.isReset) {
@@ -81,27 +95,32 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     };
 
-    const confirm = async (dataSource: DataSource, isConflict: boolean): Promise<void> => {
-        if (dataSource.projectName === lastDataSource.value?.projectName && dataSource.dataPath.length === 0) {
+    const confirm = async (dataSource: DataSource, isConflict: boolean, action: ProjectActionEnum): Promise<void> => {
+        // 如果目标内容就是当前选中内容，则不做任何处理直接返回
+        if (dataSource.projectName === lastDataSource.value.projectName && arraysEqual(dataSource.dataPath, lastDataSource.value.dataPath)) {
+            return;
+        }
+        // 如果是只是切换二级目录，则只修改当前选中内容
+        if (action === ProjectActionEnum.TRANSFER_PROJECT && dataSource.projectName === lastDataSource.value.projectName) {
+            lastDataSource.value = dataSource;
+            useCompareConfig().cancelCompareData();
             return;
         }
         if (checkExistedServer(dataSource)) {
-            return; 
+            return;
         }
-        mergeDataSource(dataSources, dataSource, isConflict);
         if (isExistedRemote(dataSource)) {
-            addDataPath(dataSource);
+            addDataPath(dataSource, action, isConflict);
         } else {
             const isSuccess = await connectRemote(dataSource);
             if (isSuccess) {
                 useLoading().open({});
                 connector.send({
                     event: 'remote/import',
-                    body: { dataSource },
+                    body: { dataSource, isConflict, action },
                 });
             }
         }
-        lastDataSource.value = dataSource;
     };
 
     const menuTree = computed<TreeNodeType[]>(() => {
@@ -187,6 +206,7 @@ export const useDataSources = defineStore('dataSources', () => {
                     newProjectName,
                 },
             });
+            useCompareConfig().updateProjectName(oldProjectName, newProjectName);
             const idx = dataSources.value.findIndex((item) =>
                 item.projectName === oldProjectName);
             if (idx !== -1) {
@@ -202,6 +222,32 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     };
 
+    const updateProjectExplorer = (param: UpdateProjectExplorerParam): void => {
+        try {
+            // 更新dataSource
+            const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: param.projectName, dataPath: param.subdirectoryForUpdate };
+            if (param.projectAction === ProjectActionEnum.ADD_FILE) {
+                mergeDataSource(dataSources, dataSource, param.isConflict);
+                // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
+                if (param.isConflict || param.subdirectoryForUpdate.length > 1) {
+                    lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: param.projectName, dataPath: [] };
+                    return;
+                }
+                // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
+                if (lastDataSource.value.projectName !== dataSource.projectName || lastDataSource.value.dataPath.length > 0) {
+                    lastDataSource.value = dataSource;
+                    return;
+                }
+            }
+            // 切换项目时，以请求内容为准
+            if (param.projectAction === ProjectActionEnum.TRANSFER_PROJECT) {
+                lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: param.projectName, dataPath: param.subdirectory };
+            }
+        } catch {
+            ElMessage.warning(t('Update Project Explorer Failed') as string);
+        }
+    };
+
     const initProjectName = async (projectDirectoryList: ProjectDirectory[]): Promise<void> => {
         dataSources.value = [];
         projectDirectoryList.forEach(item => {
@@ -212,5 +258,5 @@ export const useDataSources = defineStore('dataSources', () => {
         });
     };
 
-    return { menuTree, remove, confirm, removeSingle, lastDataSource, updateProjectName, initProjectName, checkProjectValid };
+    return { menuTree, remove, confirm, removeSingle, lastDataSource, updateProjectName, initProjectName, checkProjectValid, updateProjectExplorer };
 });

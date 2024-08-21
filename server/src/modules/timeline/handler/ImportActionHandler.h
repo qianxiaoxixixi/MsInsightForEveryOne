@@ -28,7 +28,7 @@ private:
     static void SendParseFailEvent(const std::string &message);
     static void LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo);
     static bool TransferProject(ImportActionRequest &request);
-    static bool ImportFile(ImportActionRequest &request);
+    static bool ImportFile(ImportActionRequest &request, std::string &warnMsg);
 };
 } // end of namespace Timeline
 } // end of namespace Module

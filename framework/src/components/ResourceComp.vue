@@ -5,7 +5,7 @@ import FolderIcon from '@/components/icons/folder_icon.vue';
 import FileIcon from '@/components/icons/file_icon.vue';
 import RefreshIcon from '@/components/icons/refresh.vue';
 import { useResource, type ResourceItem } from '@/stores/resourceComp';
-import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import {LOCAL_HOST, PORT, ProjectActionEnum} from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import { console } from '@/utils/console';
@@ -269,7 +269,7 @@ const doSetCurrentPath = (projectName: string, isConflict: boolean) => {
         setCurrentPath(currentkey);
         const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [currentkey] };
         try {
-          confirm(dataSource, isConflict);
+          confirm(dataSource, isConflict, ProjectActionEnum.ADD_FILE);
           return true;
         } catch {
           console.log('doSetCurrentPath error.');

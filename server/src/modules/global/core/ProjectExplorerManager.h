@@ -24,19 +24,22 @@ public:
     bool UpdateProjectName(const std::string& oldProjectName, const std::string& newProjectName);
     std::vector<ProjectExplorerInfo> QueryProjectExplorer(const std::string &projectName,
                                                           const std::vector<std::string> &dataPathList);
-    bool SaveProjectExplorer(const std::string &projectName, const std::string &filePath, ProjectTypeEnum projectType,
-                             const std::string& importType, const std::vector<std::string> &dbPath);
+    bool SaveProjectExplorer(std::vector<ProjectExplorerInfo> &projectExplorerInfos, bool isConflict);
     bool DeleteProjectAndFilePath(const std::string &projectName, const std::vector<std::string>& filePathList);
     bool CheckProjectConflict(const std::string &projectName, const std::vector<std::string>& filePathList);
     void UpdateProjectDbPath(const std::string &projectName,
                              const std::map<std::string, std::vector<std::string>>& dataPathToDbMap);
     void InitSystemMemoryDbPath(const std::string &filePath);
+    bool IsClusterData(const std::string &projectName);
 
 private:
     std::string systemMemoryDbPath;
     std::recursive_mutex mutex;
-    bool InitSystemMemoryDb();
     std::unique_ptr<Global::SystemMemoryDatabase> db;
+
+    bool InitSystemMemoryDb();
+    bool SaveProjectExplorerToDb(const std::string &projectName,
+                                 std::vector<ProjectExplorerInfo> &projectExplorerInfos);
 };
 }
 }

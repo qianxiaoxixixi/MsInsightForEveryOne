@@ -30,8 +30,10 @@ bool SystemMemoryDatabase::CreateTable()
         return true;
     }
     std::string sql = "CREATE TABLE " + projectExplorerTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                                               "projectName TEXT, fileName TEXT, projectType INTEGER, "
-                                                               "importType TEXT, dbPath Text );";
+         "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, dbPath Text, "
+         "UNIQUE (projectName, fileName) );"
+         "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
+         "projectExplorerId INTEGER, parseFilePath TEXT, dbPath Text, UNIQUE (projectExplorerId, parseFilePath));";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -43,27 +45,66 @@ bool SystemMemoryDatabase::DropTable()
     return DropSomeTables(tables);
 }
 
-bool SystemMemoryDatabase::SaveProjectExplorerData(ProjectExplorerInfo projectExplorerInfo)
+bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplorerInfo> projectExplorerInfos)
 {
-    if (projectExplorerInfo.projectName.empty() || projectExplorerInfo.fileName.empty()) {
-        ServerLog::Error("Failed to save FileMenuData, params is invalid.");
-        return false;
+    for (const auto &item: projectExplorerInfos) {
+        if (item.projectName.empty() || item.fileName.empty()) {
+            ServerLog::Error("Failed to save FileMenuData, params is invalid.");
+            return false;
+        }
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + projectExplorerTable + "(projectName, fileName, projectType, importType, dbPath)"
-                                                              " VALUES(?, ?, ?, ?, ?);";
+                                                              " VALUES(?, ?, ?, ?, ?)";
+    for (size_t i = 1; i < projectExplorerInfos.size(); ++i) {
+        sql += ",(?, ?, ?, ?, ?)";
+    }
+    sql += " ON CONFLICT(projectName, fileName) DO UPDATE SET"
+           " projectType = EXCLUDED.projectType,"
+           " importType = EXCLUDED.importType,"
+           " dbPath = EXCLUDED.dbPath;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Failed to save FileMenuData, prepared statement failed: projectName=",
-                         projectExplorerInfo.projectName, ", fileName=", projectExplorerInfo.fileName);
+        ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");
         return false;
     }
-    std::string dbPath = StringUtil::join(projectExplorerInfo.dbPath, ",");
-    stmt->BindParams(projectExplorerInfo.projectName, projectExplorerInfo.fileName,
-                     projectExplorerInfo.projectType, projectExplorerInfo.importType, dbPath);
+    for (const auto &item: projectExplorerInfos) {
+        std::string dbPath = StringUtil::join(item.dbPath, ",");
+        stmt->BindParams(item.projectName, item.fileName, item.projectType, item.importType, dbPath);
+    }
     if (!stmt->Execute()) {
-        ServerLog::Error("Failed to save FileMenuData, stmt execute failed: projectName=",
-                         projectExplorerInfo.projectName, ", fileName=", projectExplorerInfo.fileName);
+        ServerLog::Error("Failed to save FileMenuData, stmt execute failed.");
+        return false;
+    }
+    return true;
+}
+
+bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(std::vector<ParseFileInfo> ParseFileInfoList)
+{
+    for (const auto &item: ParseFileInfoList) {
+        if (item.projectExplorerId == 0 || item.parseFilePath.empty()) {
+            ServerLog::Error("Failed to save FileMenuData, params is invalid.");
+            return false;
+        }
+    }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string sql = "INSERT INTO " + parseFileInfoTable + "(projectExplorerId, parseFilePath, dbPath)"
+                                                              " VALUES(?, ?, ?)";
+    for (size_t i = 1; i < ParseFileInfoList.size(); ++i) {
+        sql += ",(?, ?, ?)";
+    }
+    sql += " ON CONFLICT(projectExplorerId, parseFilePath) DO UPDATE SET"
+           " dbPath = EXCLUDED.dbPath;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");
+        return false;
+    }
+    for (const auto &item: ParseFileInfoList) {
+        stmt->BindParams(item.projectExplorerId, item.parseFilePath, item.dbPath);
+    }
+    if (!stmt->Execute()) {
+        ServerLog::Error("Failed to save FileMenuData, stmt execute failed.");
         return false;
     }
     return true;
@@ -100,7 +141,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
     const std::string &projectName, const std::vector<std::string>& fileNameList)
 {
     std::vector<ProjectExplorerInfo> res;
-    std::string sql = "SELECT projectName, fileName, projectType, importType, dbPath FROM " + projectExplorerTable +
+    std::string sql = "SELECT id, projectName, fileName, projectType, importType, dbPath FROM " + projectExplorerTable +
             " WHERE 1 = 1";
     if (!projectName.empty()) {
         sql += " and projectName = ?";
@@ -126,6 +167,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         ProjectExplorerInfo info{};
+        info.id = sqlite3_column_int64(stmt, col++);
         info.projectName = sqlite3_column_string(stmt, col++);
         info.fileName = sqlite3_column_string(stmt, col++);
         info.projectType = sqlite3_column_int64(stmt, col++);
@@ -171,6 +213,31 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
     return true;
 }
 
+bool SystemMemoryDatabase::DeleteParsedFile(const std::vector<int64_t> &projectIdList,
+                                            const std::vector<int64_t> &idList)
+{
+    std::string sql = "DELETE FROM " + parseFileInfoTable + " WHERE 1 = 1";
+    if (!projectIdList.empty()) {
+        std::string projectListStr = StringUtil::join(projectIdList, ",");
+        sql += " And projectExplorerId IN (" + projectListStr + ")";
+    }
+    if (!idList.empty()) {
+        std::string parsePathListStr = StringUtil::join(idList, ",");
+        sql += " And id IN (" + parsePathListStr + ")";
+    }
+    sql += ";";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to delete parsed file");
+        return false;
+    }
+    if (!stmt->Execute()) {
+        ServerLog::Error("Failed to delete parsed file");
+        return false;
+    }
+    return true;
+}
+
 bool SystemMemoryDatabase::UpdateProjectDbPath(const std::string &projectName, const std::string &fileName,
                                                const std::string &dbPath)
 {
@@ -197,6 +264,44 @@ bool SystemMemoryDatabase::UpdateProjectDbPath(const std::string &projectName, c
     }
     return true;
 }
+
+std::map<int64_t, std::vector<ParseFileInfo>> SystemMemoryDatabase::QueryParseFileInfo(
+    const std::vector<int64_t>& projectExplorerIdList, const std::vector<std::string>& parsePathList)
+{
+    std::map<int64_t, std::vector<ParseFileInfo>> res;
+    if (projectExplorerIdList.empty()) {
+        return res;
+    }
+    std::string projectExplorerIdListStr = StringUtil::join(projectExplorerIdList, ", ");
+    std::string sql = "SELECT id, projectExplorerId, parseFilePath, dbPath FROM " + parseFileInfoTable +
+                      " WHERE projectExplorerId IN (" + projectExplorerIdListStr + ")";
+    if (!parsePathList.empty()) {
+        std::string parsePathListStr = StringUtil::Join4SqlGroup(parsePathList);
+        sql += " AND parseFilePath IN (" + parsePathListStr + ")";
+    }
+    sql += ";";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to create prepared stmt for query parse file info.");
+        return res;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query parse file info.", stmt->GetErrorMessage());
+        return res;
+    }
+
+    while (resultSet->Next()) {
+        ParseFileInfo info{};
+        info.id = resultSet->GetUint64("id");
+        info.projectExplorerId = resultSet->GetUint64("projectExplorerId");
+        info.parseFilePath = resultSet->GetString("parseFilePath");
+        info.dbPath = resultSet->GetString("dbPath");
+        res[info.projectExplorerId].push_back(info);
+    }
+    return res;
+}
+
 }
 }
 }

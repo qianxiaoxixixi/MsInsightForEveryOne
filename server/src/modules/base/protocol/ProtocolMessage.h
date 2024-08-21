@@ -58,6 +58,7 @@ struct Request : public ProtocolMessage {
     }
 
     ~Request() override = default;
+    // 当前选中项目名，如果没有选中的话，内容为空
     std::string projectName;
     std::string command;
     // arguments will be placed into specified request

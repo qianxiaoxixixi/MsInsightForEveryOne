@@ -12,7 +12,7 @@ import Modules from './views/ModulesView.vue';
 import Resizor from '@/utils/Resizor.vue';
 import { useSession } from '@/stores/session';
 import connection from '@/connection';
-import {LOCAL_HOST, PORT} from '@/centralServer/websocket/defs';
+import {LOCAL_HOST, PORT, ProjectActionEnum} from '@/centralServer/websocket/defs';
 import {LocalStorageKeys, localStorageService} from '@/utils/local-storage';
 import { useDataSources } from '@/stores/dataSource';
 import { useLoading } from "@/hooks/useLoading";
@@ -70,7 +70,7 @@ onMounted(() => {
             showClose: false,
           });
         } else {
-          await confirm(dataSource, false);
+          await confirm(dataSource, false, ProjectActionEnum.ADD_FILE);
         }
       },
       writable: true,

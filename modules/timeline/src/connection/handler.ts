@@ -163,9 +163,11 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+        const projectAction = getPropFromData(data, 'action');
+        const isConflict = getPropFromData(data, 'isConflict');
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
-        const result = await window.request(dataSource, { command: 'import/action', params: { projectName: dataSource.projectName, path: dataSource.dataPath } });
+        const result = await window.request(dataSource, { command: 'import/action', params: { projectName: dataSource.projectName, path: dataSource.dataPath, projectAction, isConflict } });
         runInAction(() => {
             initUnitInfo(session, result, dataSource);
         });

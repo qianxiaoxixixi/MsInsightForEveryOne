@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "pch.h"
 #include "WsSessionManager.h"
 #include "ProjectExplorerManager.h"
 #include "GetProjectExplorerInfoHandler.h"
@@ -22,8 +21,10 @@ void GetProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> reque
             .QueryProjectExplorer("", std::vector<std::string>());
 
     std::map<std::string, std::vector<std::string>> res;
-    for (auto &item : infos) {
-        res[item.projectName].push_back(item.fileName);
+    for (auto &info : infos) {
+        for (const auto &item: info.parseFilePathInfos) {
+            res[info.projectName].push_back(item.parseFilePath);
+        }
     }
     for (const auto &item : res) {
         Protocol::ProjectDirectoryInfo temp;

@@ -12,6 +12,9 @@ namespace Dic {
     const static std::string MSPROF_PREFIX = "[MSPROF]";
     const static std::string MSPROF_CONNECT = "__";
 
+    const std::string memoryOperatorReg = R"(operator_memory(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
+    const std::string memoryRecordReg = R"(memory_record(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
+    const std::string staticOpMemReg = R"(static_op_mem(_[0-9]{1,14})?.csv$)";
     const static std::string KERNEL_DETAIL_REG =
             R"((kernel_details|op_summary_(slice_[0-9]{1,4}_)?[0-9]{1,14}).csv$)";
     const std::string traceViewReg =

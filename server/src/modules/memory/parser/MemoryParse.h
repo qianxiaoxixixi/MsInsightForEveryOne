@@ -32,11 +32,6 @@ public:
     bool OperatorParse(const std::string &filePath, const std::string &fileId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
     bool StaticOpParse(const std::string &filePath, const std::string &fileId);
-
-    const std::string memoryOperatorReg = R"(operator_memory(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
-    const std::string memoryRecordReg = R"(memory_record(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
-    const std::string staticOpMemReg = R"(static_op_mem(_[0-9]{1,14})?.csv$)";
-
 private:
     const uint32_t maxThreadNum = 4;
     const uint32_t operatorTableNum = 5;

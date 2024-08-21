@@ -22,10 +22,26 @@ public:
 
 protected:
     static std::string curServerPath;
+    ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
+                                          const std::string &importType, Dic::ProjectTypeEnum projectType,
+                                          const std::vector<std::string> dbPath)
+    {
+        ProjectExplorerInfo info;
+        info.projectName = projectName;
+        info.fileName = fileName;
+        info.importType = importType;
+        info.projectType = static_cast<int64_t>(projectType);
+        info.dbPath = dbPath;
+        return info;
+    }
     void InitProjectExplorerData()
     {
-        ProjectExplorerManager::Instance().SaveProjectExplorer("testProject", "projectFilePath",
-            Dic::ProjectTypeEnum::CLUSTER, "import", std::vector<std::string>());
+        std::vector<ProjectExplorerInfo> infos;
+        ProjectExplorerInfo info = CreateProjectData("testProject", "projectFilePath",
+                                                     "import", Dic::ProjectTypeEnum::TEXT_CLUSTER,
+                                                     std::vector<std::string>());
+        infos.push_back(info);
+        ProjectExplorerManager::Instance().SaveProjectExplorer(infos, false);
     }
 
     void ClearProjectExplorerData()
@@ -50,7 +66,7 @@ TEST_F(ProjectExplorerManagerTest, UpdateProjectNameSuccess)
     EXPECT_EQ(res.size(), 1);
     EXPECT_EQ(res[0].importType, "import");
     EXPECT_EQ(res[0].fileName, "projectFilePath");
-    EXPECT_EQ(static_cast<Dic::ProjectTypeEnum>(res[0].projectType), Dic::ProjectTypeEnum::CLUSTER);
+    EXPECT_EQ(static_cast<Dic::ProjectTypeEnum>(res[0].projectType), Dic::ProjectTypeEnum::TEXT_CLUSTER);
     ClearProjectExplorerData();
 }
 
@@ -64,18 +80,21 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find_last_of("server");
     std::string filePath =
-            currPath.substr(0, index + 1) + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT";
+            currPath.substr(0, index + 1) + "/src/test/test_data/data.bin";
     filePathList.push_back(filePath);
     bool result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName, filePathList);
     EXPECT_EQ(result, true);
-    bool res = ProjectExplorerManager::Instance().SaveProjectExplorer(projectName, filePathList[0],
-        Dic::ProjectTypeEnum::TRACE, "import", std::vector<std::string>());
+    std::vector<ProjectExplorerInfo> infos;
+    ProjectExplorerInfo info = CreateProjectData(projectName, filePathList[0], "import",
+                                                 Dic::ProjectTypeEnum::BIN, std::vector<std::string>());
+    infos.push_back(info);
+    bool res = ProjectExplorerManager::Instance().SaveProjectExplorer(infos, true);
     EXPECT_EQ(res, true);
     std::vector<ProjectExplorerInfo> queryRes = ProjectExplorerManager::Instance()
             .QueryProjectExplorer(projectName, std::vector<std::string>());
     EXPECT_EQ(queryRes.size(), 1);
     EXPECT_EQ(queryRes[0].importType, "import");
     EXPECT_EQ(queryRes[0].fileName, filePath);
-    EXPECT_EQ(static_cast<Dic::ProjectTypeEnum>(queryRes[0].projectType), Dic::ProjectTypeEnum::TRACE);
+    EXPECT_EQ(static_cast<Dic::ProjectTypeEnum>(queryRes[0].projectType), Dic::ProjectTypeEnum::BIN);
     ClearProjectExplorerData();
 }

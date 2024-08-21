@@ -17,17 +17,19 @@ public:
     virtual ~ParserJson();
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
+    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
+                                                      ProjectTypeEnum projectTypeEnum, std::string &error) final;
 
 private:
-    std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::string &path, ImportActionResBody &body,
-        std::string &error);
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);
     std::vector<std::string> FindTraceFile(const std::string &path, std::string &error);
     void FindTraceFiles(const std::string &path, int depth, std::string &error, std::vector<std::string> &traceFiles);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     bool IsJsonValid(const std::string &fileName);
-    static void ClusterProcess(const std::string &selectedFolder,
+    static bool IsNeedReset(const ImportActionRequest &request);
+    static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
     static void ClusterProcessAsyncStep(const std::string &selectedFolder);
 
@@ -37,7 +39,8 @@ private:
 
     void ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const ImportActionRequest &request);
     std::map<std::string, std::vector<std::string>> GetRankListMap(ImportActionResponse &response,
-        const std::vector<Global::ProjectExplorerInfo> &projectInfos, std::string &error);
+        const std::vector<Global::ProjectExplorerInfo> &projectInfos);
+    std::string GetJsonFileUnderFolder(const std::string &path);
     void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request);
 };

@@ -30,6 +30,7 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
     response.body.reset = true;
+    response.body.subdirectoryList.push_back(projectInfos[0].fileName);
 
     std::string selectedFolder = projectInfos[0].fileName;
 
