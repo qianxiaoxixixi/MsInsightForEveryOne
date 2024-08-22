@@ -503,6 +503,7 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     if (!Memory::MemoryParse::Instance().Parse(std::vector<std::string>(), rankId, filePath)) {
         ServerLog::Warn("Failed to parse baseline memory files.");
     }
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
 } // Module

@@ -30,6 +30,8 @@ declare global {
         port: number;
         projectName: string;
         dataPath: string[];
+        isBaseLine?: boolean;
+        baseLineCardId?: string;
     }
 
     interface RequestParams {
