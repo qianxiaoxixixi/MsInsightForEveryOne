@@ -246,8 +246,8 @@ namespace Dic::Module::Operator {
             data.diff.name = data.compare.name;
             data.diff.type = data.compare.type + "->" + data.baseline.type;
             data.diff.accCore = data.compare.accCore + "->" + data.baseline.accCore;
-            data.diff.startTime = std::to_string(StringUtil::StringToDouble(data.compare.startTime) -
-                                  StringUtil::StringToDouble(data.baseline.startTime));
+            data.diff.startTime = std::to_string(NumberUtil::StringToDouble(data.compare.startTime) -
+                                  NumberUtil::StringToDouble(data.baseline.startTime));
             data.diff.duration = data.compare.duration - data.baseline.duration;
             data.diff.waitTime = data.compare.waitTime - data.baseline.waitTime;
             data.diff.blockDim = data.compare.blockDim - data.baseline.blockDim;
@@ -270,10 +270,11 @@ namespace Dic::Module::Operator {
         for (auto &data: datailData) {
             FromatDatailData(data);
         }
+        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(orderBy);
         // 对差值排序
-        std::sort(datailData.begin(), datailData.end(), [&order, &orderBy](Protocol::OperatorDetailCmpInfoRes &a,
+        std::sort(datailData.begin(), datailData.end(), [&order, &dbOrderBy](Protocol::OperatorDetailCmpInfoRes &a,
                                                                            Protocol::OperatorDetailCmpInfoRes &b) {
-            return StaticCmp(a, b, order, orderBy);
+            return StaticCmp(a, b, order, dbOrderBy);
         });
 
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pageSize 默认是10条，此处防止除零操作
@@ -285,7 +286,7 @@ namespace Dic::Module::Operator {
         }
         std::vector<Protocol::OperatorDetailCmpInfoRes>::const_iterator start = datailData.begin() + offset;
         std::vector<Protocol::OperatorDetailCmpInfoRes>::const_iterator end = datailData.begin() +
-            std::min(offset + pageSize - 1, static_cast<uint64_t>(datailData.size() - 1));
+            std::min(offset + pageSize, static_cast<uint64_t>(datailData.size()));
         std::vector<Protocol::OperatorDetailCmpInfoRes> result;
         result.assign(start, end);
         return result;
