@@ -36,6 +36,11 @@ public:
     virtual bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) = 0;
 
     virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
+    virtual bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
+                                          std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId) = 0;
+    virtual bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
+                                                std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
+                                                std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
 protected:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
@@ -114,6 +119,9 @@ protected:
     bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
         std::string sql);
+    bool ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                         std::vector<Protocol::MemoryOperator> &opDetails, const std::string &sql,
+                                         const std::string rankId);
     bool ExecuteStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                     Protocol::StaticOperatorGraphItem &graphItem, const std::string& totalSql,
                                     const std::string& graphStartSql, const std::string& graphEndSql);
@@ -127,6 +135,9 @@ protected:
                                     int64_t &maxIndex);
 
     bool ExecuteStaticOperatorDetail(Protocol::StaticOperatorListParams &requestParams,
+        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::StaticOperatorItem> &opDetails,
+        const std::string& sql);
+    bool ExecuteQueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::StaticOperatorItem> &opDetails,
         const std::string& sql);
     void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);

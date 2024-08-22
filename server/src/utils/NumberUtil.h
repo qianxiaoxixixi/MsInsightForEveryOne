@@ -130,6 +130,14 @@ public:
         }
     }
 
+    static inline std::string StringDoubleMinus(const std::string &str1, const std::string &str2)
+    {
+        long double num1 = StringToLongDouble(str1);
+        long double num2 = StringToLongDouble(str2);
+        long double difference = num1 - num2;
+        return std::to_string(difference);
+    }
+
     // 只处理1~6位小数位的截尾
     static inline double DoubleReservedNDigits(double data, int n)
     {

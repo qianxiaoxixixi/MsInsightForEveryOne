@@ -279,6 +279,48 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     return true;
 }
 
+bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                                            std::vector<Protocol::MemoryOperator> &opDetails,
+                                                            const std::string &sql, const std::string rankId)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query entire operator table. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    std::vector<Protocol::MemoryOperator> &operatorDtoVec = opDetails;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::MemoryOperator operatorDto{};
+        operatorDto.name = sqlite3_column_string(stmt, col++);
+        operatorDto.size = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
+        operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.duration = sqlite3_column_double(stmt, col++);
+        operatorDto.activeReleaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.activeDuration = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationAllocated = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationReserved = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationActive = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseAllocated = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseReserved = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseActive = sqlite3_column_double(stmt, col++);
+        operatorDto.streamId = sqlite3_column_string(stmt, col++);
+        operatorDtoVec.emplace_back(operatorDto);
+    }
+    sqlite3_finalize(stmt);
+    std::vector<std::string> streams = GetStreamLists(rankId);
+    std::vector<std::string> columns = activeRelatedColumn;
+    for (const auto& column : tableColumnAttr) {
+        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
+            continue;
+        }
+        columnAttr.emplace_back(column);
+    }
+    return true;
+}
+
 bool VirtualMemoryDataBase::ExecuteStaticGraphTotalSize(Protocol::StaticOperatorGraphParams &requestParams,
                                                         const std::string& totalSql, double &totalSize)
 {
@@ -443,6 +485,41 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
     }
     sqlite3_bind_int64(stmt, index++, pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
+    std::vector<Protocol::StaticOperatorItem> operatorDtoVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::StaticOperatorItem operatorDto{};
+        operatorDto.deviceId = sqlite3_column_string(stmt, col++);
+        operatorDto.opName = sqlite3_column_string(stmt, col++);
+        operatorDto.nodeIndexStart = sqlite3_column_int64(stmt, col++);
+        operatorDto.nodeIndexEnd = sqlite3_column_int64(stmt, col++);
+        operatorDto.size = sqlite3_column_double(stmt, col++);
+        operatorDtoVec.emplace_back(operatorDto);
+    }
+    sqlite3_finalize(stmt);
+    opDetails = operatorDtoVec;
+    for (const auto& column : staticOpTableColumnAttr) {
+        columnAttr.emplace_back(column);
+    }
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteQueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
+                                                                  std::vector<Protocol::MemoryTableColumnAttr>&
+                                                                  columnAttr,
+                                                                  std::vector<Protocol::StaticOperatorItem>& opDetails,
+                                                                  const std::string& sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query entire static operator table. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    if (!requestParams.graphId.empty()) {
+        sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
+    }
     std::vector<Protocol::StaticOperatorItem> operatorDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;

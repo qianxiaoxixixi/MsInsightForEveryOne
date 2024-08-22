@@ -70,6 +70,34 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
+bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
+                                                std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId)
+{
+    std::string sql = "";
+    FileType type = DataBaseManager::Instance().GetFileType();
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    if (type == FileType::PYTORCH) {
+        sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
+               " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
+            "ROUND((allocation_time - " + std::to_string(startTime) +
+            ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
+            "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
+            ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
+            "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
+            std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+            "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
+            "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
+            " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
+            "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
+            " ROUND(release_total_allocated / (1024.0 * 1024.0), 2) as release_allocated, "
+            "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
+            "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
+        sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
+        sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name";
+    }
+    return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
+}
+
 bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                        Protocol::MemoryViewData &operatorBody)
 {
@@ -162,6 +190,13 @@ bool DbMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorList
 bool DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
                                                std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                                std::vector<Protocol::StaticOperatorItem> &opDetails)
+{
+    return false;
+}
+
+bool DbMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
+                                                      std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
+                                                      std::vector<Protocol::StaticOperatorItem>& opDetails)
 {
     return false;
 }

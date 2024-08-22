@@ -10,8 +10,8 @@ namespace Dic {
 namespace Protocol {
 using namespace rapidjson;
 #pragma region <<Response to json>>
-
-template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(const MemoryOperatorResponse &response)
+template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonResponse>(
+    const MemoryOperatorComparisonResponse &response)
 {
     document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
@@ -29,35 +29,48 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
             hasStream = true;
         }
     }
-    json_t operatorDetail(kArrayType);
-    for (const MemoryOperator& anOperator : response.operatorDetails) {
+    json_t operatorDiffDetail(kArrayType);
+    for (const MemoryOperatorComparison& anOperator : response.operatorDiffDetails) {
         json_t basicJson = json_t(kObjectType);
-        if (anOperator.name.empty()) {
-            JsonUtil::AddMember(basicJson, "name", "Unknown", allocator);
-        } else {
-            JsonUtil::AddMember(basicJson, "name", anOperator.name, allocator);
-        }
-        JsonUtil::AddMember(basicJson, "size", anOperator.size, allocator);
-        JsonUtil::AddMember(basicJson, "allocationTime", anOperator.allocationTime, allocator);
-        JsonUtil::AddMember(basicJson, "releaseTime", anOperator.releaseTime, allocator);
-        JsonUtil::AddMember(basicJson, "duration", anOperator.duration, allocator);
-        JsonUtil::AddMember(basicJson, "allocationAllocated", anOperator.allocationAllocated, allocator);
-        JsonUtil::AddMember(basicJson, "allocationReserved", anOperator.allocationReserved, allocator);
-        JsonUtil::AddMember(basicJson, "releaseAllocated", anOperator.releaseAllocated, allocator);
-        JsonUtil::AddMember(basicJson, "releaseReserved", anOperator.releaseReserved, allocator);
-        if (hasStream) {
-            JsonUtil::AddMember(basicJson, "activeReleaseTime", anOperator.activeReleaseTime, allocator);
-            JsonUtil::AddMember(basicJson, "activeDuration", anOperator.activeDuration, allocator);
-            JsonUtil::AddMember(basicJson, "allocationActive", anOperator.allocationActive, allocator);
-            JsonUtil::AddMember(basicJson, "releaseActive", anOperator.releaseActive, allocator);
-            JsonUtil::AddMember(basicJson, "streamId", anOperator.streamId, allocator);
-        }
-        operatorDetail.PushBack(basicJson, allocator);
+        document_t jsonCompare = ToMemoryOperatorJson(anOperator.compare, hasStream, allocator).value();
+        document_t jsonBaseline = ToMemoryOperatorJson(anOperator.baseline, hasStream, allocator).value();
+        document_t jsonDiff = ToMemoryOperatorJson(anOperator.diff, hasStream, allocator).value();
+        JsonUtil::AddMember(basicJson, "compare", jsonCompare, allocator);
+        JsonUtil::AddMember(basicJson, "baseline", jsonBaseline, allocator);
+        JsonUtil::AddMember(basicJson, "diff", jsonDiff, allocator);
+        operatorDiffDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
-    JsonUtil::AddMember(body, "operatorDetail", operatorDetail, allocator);
+    JsonUtil::AddMember(body, "operatorDetail", operatorDiffDetail, allocator);
     JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool hasStream,
+    Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    if (op.name.empty()) {
+        JsonUtil::AddMember(json, "name", "Unknown", allocator);
+    } else {
+        JsonUtil::AddMember(json, "name", op.name, allocator);
+    }
+    JsonUtil::AddMember(json, "size", op.size, allocator);
+    JsonUtil::AddMember(json, "allocationTime", op.allocationTime, allocator);
+    JsonUtil::AddMember(json, "releaseTime", op.releaseTime, allocator);
+    JsonUtil::AddMember(json, "duration", op.duration, allocator);
+    JsonUtil::AddMember(json, "allocationAllocated", op.allocationAllocated, allocator);
+    JsonUtil::AddMember(json, "allocationReserved", op.allocationReserved, allocator);
+    JsonUtil::AddMember(json, "releaseAllocated", op.releaseAllocated, allocator);
+    JsonUtil::AddMember(json, "releaseReserved", op.releaseReserved, allocator);
+    if (hasStream) {
+        JsonUtil::AddMember(json, "activeReleaseTime", op.activeReleaseTime, allocator);
+        JsonUtil::AddMember(json, "activeDuration", op.activeDuration, allocator);
+        JsonUtil::AddMember(json, "allocationActive", op.allocationActive, allocator);
+        JsonUtil::AddMember(json, "releaseActive", op.releaseActive, allocator);
+        JsonUtil::AddMember(json, "streamId", op.streamId, allocator);
+    }
     return std::move(json);
 }
 
@@ -156,8 +169,8 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
 }
 
 template<>
-std::optional<document_t> ToResponseJson<MemoryStaticOperatorListResponse>
-        (const MemoryStaticOperatorListResponse &response)
+std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
+        (const MemoryStaticOperatorListCompResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
@@ -171,23 +184,35 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorListResponse>
         JsonUtil::AddMember(attrJson, "key", attr.key, allocator);
         columnAttr.PushBack(attrJson, allocator);
     }
-    json_t operatorDetail(kArrayType);
-    for (const StaticOperatorItem& anOperator : response.operatorDetails) {
+    json_t operatorDiffDetail(kArrayType);
+    for (const StaticOperatorCompItem& anOperator : response.operatorDiffDetails) {
         json_t basicJson = json_t(kObjectType);
-        JsonUtil::AddMember(basicJson, "deviceId", anOperator.deviceId, allocator);
-        JsonUtil::AddMember(basicJson, "opName", anOperator.opName, allocator);
-        JsonUtil::AddMember(basicJson, "nodeIndexStart", anOperator.nodeIndexStart, allocator);
-        JsonUtil::AddMember(basicJson, "nodeIndexEnd", anOperator.nodeIndexEnd, allocator);
-        JsonUtil::AddMember(basicJson, "size", anOperator.size, allocator);
-        operatorDetail.PushBack(basicJson, allocator);
+        document_t jsonCompare = ToMemoryStaticOperatorJson(anOperator.compare, allocator).value();
+        document_t jsonBaseline = ToMemoryStaticOperatorJson(anOperator.baseline, allocator).value();
+        document_t jsonDiff = ToMemoryStaticOperatorJson(anOperator.diff, allocator).value();
+        JsonUtil::AddMember(basicJson, "compare", jsonCompare, allocator);
+        JsonUtil::AddMember(basicJson, "baseline", jsonBaseline, allocator);
+        JsonUtil::AddMember(basicJson, "diff", jsonDiff, allocator);
+        operatorDiffDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
-    JsonUtil::AddMember(body, "staticOperatorListDetail", operatorDetail, allocator);
+    JsonUtil::AddMember(body, "staticOperatorListDetail", operatorDiffDetail, allocator);
     JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
 
+std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &op,
+    Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    JsonUtil::AddMember(json, "deviceId", op.deviceId, allocator);
+    JsonUtil::AddMember(json, "opName", op.opName, allocator);
+    JsonUtil::AddMember(json, "nodeIndexStart", op.nodeIndexStart, allocator);
+    JsonUtil::AddMember(json, "nodeIndexEnd", op.nodeIndexEnd, allocator);
+    JsonUtil::AddMember(json, "size", op.size, allocator);
+    return std::move(json);
+}
 
 #pragma endregion
 } // end of namespace Protocol

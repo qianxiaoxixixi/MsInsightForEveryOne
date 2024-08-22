@@ -4,6 +4,7 @@
 
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "BaselineManager.h"
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocolRespose.h"
 #include "NumberUtil.h"
@@ -31,7 +32,8 @@ void QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
             return;
         }
     } else {
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseBaseline();
+        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to connect to database of baseline.");
