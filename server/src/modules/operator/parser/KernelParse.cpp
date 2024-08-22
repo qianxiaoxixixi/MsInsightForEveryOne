@@ -404,7 +404,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
     // 初始化解析状态
     Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + fileId,
                                                               Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, filePaths, fileId);
+    threadPool->AddTask(PreParseTask, kernelFile, fileId);
     return true;
 }
 
