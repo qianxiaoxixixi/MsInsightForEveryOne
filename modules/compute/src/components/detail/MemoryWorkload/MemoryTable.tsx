@@ -118,7 +118,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
                     pagination={false}
                 />
             ))}
-            {advice.length > 0 && (<Advice text={advice.join('\n')} />) }
+            {advice.length > 0 && (<Advice text={advice} />) }
         </div>
     );
 });
