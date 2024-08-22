@@ -13,7 +13,9 @@ const std::string TO_INTER_CORE_LOAD_GRAPH_JSON = R"(
   "id": 288,
   "moduleName": "source",
   "type": "request",
-  "command": "source/details/interCoreLoadAnalysis"
+  "command": "source/details/interCoreLoadAnalysis",
+  "params": {
+  }
 }
 )";
 const std::string TO_MEMORY_TABLE_REQ_JSON = R"(
@@ -45,7 +47,9 @@ const std::string TO_LOAD_INFO_REQ_JSON = R"(
   "id": 286,
   "moduleName": "source",
   "type": "request",
-  "command": "source/details/computeworkload"
+  "command": "source/details/computeworkload",
+  "params": {
+  }
 }
 )";
 const std::string TO_BASE_INFO_REQ_JSON = R"(
@@ -53,7 +57,9 @@ const std::string TO_BASE_INFO_REQ_JSON = R"(
   "id": 281,
   "moduleName": "source",
   "type": "request",
-  "command": "source/details/baseInfo"
+  "command": "source/details/baseInfo",
+  "params": {
+  }
 }
 )";
 const std::string TO_API_INSTR_REQ_JSON = R"(
@@ -61,7 +67,9 @@ const std::string TO_API_INSTR_REQ_JSON = R"(
   "id": 4777,
   "moduleName": "source",
   "type": "request",
-  "command": "source/api/instructions"
+  "command": "source/api/instructions",
+  "params": {
+  }
 }
 )";
 const std::string TO_API_LINE_REQ_JSON = R"(

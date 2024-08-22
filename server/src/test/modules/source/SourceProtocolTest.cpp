@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "ProtocolManager.h"
+#include "SourceProtocolResponse.h"
 #include "SourceProtocolTest.h"
 
 using namespace Dic::Protocol;
@@ -22,40 +23,104 @@ protected:
 
 TEST_F(SourceProtocolTest, ToCodeFileRequest)
 {
-    manager->FromJson(TO_CODE_FILE_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_CODE_FILE_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToApiLineRequest)
 {
-    manager->FromJson(TO_API_LINE_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_API_LINE_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToApiInstrRequest)
 {
-    manager->FromJson(TO_API_INSTR_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_API_INSTR_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsBaseInfoRequest)
 {
-    manager->FromJson(TO_BASE_INFO_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_BASE_INFO_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsLoadInfoRequest)
 {
-    manager->FromJson(TO_LOAD_INFO_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_LOAD_INFO_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsMemoryGraphRequest)
 {
-    manager->FromJson(TO_MEMORY_GRAPH_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_MEMORY_GRAPH_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsMemoryTableRequest)
 {
-    manager->FromJson(TO_MEMORY_TABLE_REQ_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_MEMORY_TABLE_REQ_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphRequest)
 {
-    manager->FromJson(TO_INTER_CORE_LOAD_GRAPH_JSON, error);
+    const std::unique_ptr<Request> &ptr = manager->FromJson(TO_INTER_CORE_LOAD_GRAPH_JSON, error);
+    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+}
+
+TEST_F(SourceProtocolTest, ToCodeFileResponse)
+{
+    SourceCodeFileResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToApiLineResponse)
+{
+    SourceApiLineResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToApiInstrResponse)
+{
+    SourceApiInstrResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsBaseInfoResponse)
+{
+    DetailsBaseInfoResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsLoadInfoResponse)
+{
+    DetailsLoadInfoResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsMemoryGraphResponse)
+{
+    DetailsMemoryGraphResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsMemoryTableResponse)
+{
+    DetailsMemoryTableResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphResponse)
+{
+    DetailsInterCoreLoadGraphResponse response;
+    response.moduleName = ModuleType::SOURCE;
+    manager->ToJson(response, error);
 }
