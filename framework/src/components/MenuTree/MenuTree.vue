@@ -23,13 +23,15 @@ interface TreeData {
 }
 
 const { session } = useSession();
-const { confirm } = useDataSources();
+const dataSourcesStore = useDataSources();
+const { confirm } = dataSourcesStore;
+const { lastDataSource } = storeToRefs(dataSourcesStore);
 const showModal = ref(false);
 const projectName = ref('');
 
-const compareConfigstore = useCompareConfig();
-const { setBaselineData, setCompareData, cancelBaselineData, cancelCompareData } = compareConfigstore;
-const { baselineDataInfo, compareDataInfo } = storeToRefs(compareConfigstore);
+const compareConfigStore = useCompareConfig();
+const { setBaselineData, setCompareData, cancelBaselineData, cancelCompareData } = compareConfigStore;
+const { baselineDataInfo, compareDataInfo } = storeToRefs(compareConfigStore);
 
 const selectProjectExplorerInfo = ref({ projectName: '', fileName: '' });
 
@@ -77,7 +79,7 @@ const props = defineProps<{
     dataSource: TreeNodeType[];
 }>();
 
-const activateNode = ref({ projectName: '', filePath: '' });
+const activateNode = computed(() => ({ projectName: lastDataSource.value.projectName, filePath: lastDataSource.value.dataPath[0] }));
 
 const isActiveNode = (node: Node, data: TreeData): boolean => {
     if (node.level === 1) {
@@ -95,11 +97,6 @@ const handleNodeClick = (data: any, node: any) => {
         dataSource.dataPath.push(data.label);
     }
     confirm(dataSource, false, ProjectActionEnum.TRANSFER_PROJECT);
-
-    activateNode.value = {
-        projectName: data.projectName,
-        filePath: data.label,
-    };
 };
 
 function addRemoteUnderProject(node: any, e: MouseEvent) {
