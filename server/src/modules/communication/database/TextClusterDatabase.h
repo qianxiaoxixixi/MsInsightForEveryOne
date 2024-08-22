@@ -73,7 +73,7 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryIterationAndCommunicationGroup(Protocol::KernelParams &params, Protocol::OneKernelBody &responseBody,
         uint64_t minTimestamp) override;
-    bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config) override;
+    bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config, std::string &level) override;
     bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) override;
     bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) override;

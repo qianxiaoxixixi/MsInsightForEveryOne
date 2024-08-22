@@ -756,7 +756,8 @@ bool VirtualClusterDatabase::ExecuteSetParallelStrategyConfig(std::string &sql,
     return true;
 }
 
-bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &sql, ParallelStrategyConfig &config)
+bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &sql,
+    ParallelStrategyConfig &config, std::string &level)
 {
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -772,6 +773,11 @@ bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &
         config.tpSize = sqlite3_column_int64(stmt, col++);
     }
     sqlite3_finalize(stmt);
+    if (config.dpSize <= 1 && config.ppSize <= 1 && config.tpSize <= 1) {
+        level = PARALLEL_CONFIG_LEVEL_UNDEFINED;
+    } else {
+        level = PARALLEL_CONFIG_LEVEL_COLLECTED;
+    }
     return true;
 }
 

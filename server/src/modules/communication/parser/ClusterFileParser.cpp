@@ -101,11 +101,9 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     ParseCommunicationGroup(selectedPath, baseInfo);
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    bool result = database->GetParallelConfigFromStepTrace(baseInfo.config);
+    bool result = database->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     if (!result || (baseInfo.config.dpSize == 1 && baseInfo.config.ppSize == 1 && baseInfo.config.tpSize == 1)) {
-        baseInfo.level = PARALLEL_CONFIG_LEVEL_UNDEFINED;
-    } else {
-        baseInfo.level = PARALLEL_CONFIG_LEVEL_COLLECTED;
+        ServerLog::Error("Failed to get parallel config from step trace.");
     }
     database->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
@@ -444,7 +442,7 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
     }
 
     ClusterBaseInfo baseInfo;
-    clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config);
+    clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     clusterDatabase->InsertClusterBaseInfo(baseInfo);
 
     clusterDatabase->UpdatesClusterParseStatus(FINISH_STATUS);

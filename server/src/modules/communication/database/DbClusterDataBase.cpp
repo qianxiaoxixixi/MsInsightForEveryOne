@@ -486,7 +486,7 @@ bool DbClusterDataBase::UpdateParallelStrategyConfig(const ParallelStrategyConfi
     return ExecuteSetParallelStrategyConfig(sql, config, level);
 }
 
-bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &config)
+bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &config, std::string &level)
 {
     static const std::vector<std::string> validHeads = {"dp_index", "pp_index", "tp_index"};
     for (auto &item : validHeads) {
@@ -497,7 +497,7 @@ bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &c
     }
     std::string sql = "select max(dp_index) + 1 as dp_size, max(pp_index) + 1 as pp_size, max(tp_index) + 1 as tp_size "
                       " from " + TABLE_STEP_TRACE_TIME + " where type = 'rank'";
-    return ExecuteGetParallelConfigFromStepTrace(sql, config);
+    return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
 }
 }
