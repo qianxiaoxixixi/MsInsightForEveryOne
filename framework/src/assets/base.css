@@ -73,7 +73,9 @@ body {
     --mi-border-color-extra-light: #b3bfd3;
     --mi-mask-color: rgba(0, 0, 0, 0.8);
     --mi-mask-color-extra-light: rgba(0, 0, 0, 0.3);
+    --mi-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08);
     --header-height: 36px;
+    --menu-bg-color: var(--mi-bg-color-dark);
 }
 
 html.dark {
@@ -91,4 +93,6 @@ html.dark {
     --mi-border-color-light: #3e4551;
     --mi-border-color-lighter: #576372;
     --mi-border-color-extra-light: #fffefe;
+    --mi-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
+    --menu-bg-color: var(--mi-bg-color-light);
 }
