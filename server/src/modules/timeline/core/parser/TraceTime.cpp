@@ -42,8 +42,12 @@ uint64_t TraceTime::GetStartTime()
 uint64_t TraceTime::GetDuration()
 {
     std::unique_lock<std::mutex> lock(mutex);
+    uint64_t maxOffset = 0;
+    for (const auto &item: cardMinTimeMap) {
+        maxOffset = std::max(maxOffset, item.second - minTimestamp);
+    }
     if (maxTimestamp >= minTimestamp) {
-        return maxTimestamp - minTimestamp;
+        return maxTimestamp - minTimestamp - maxOffset;
     } else {
         Server::ServerLog::Warn("Max timestamp is less than min timestamp. Max timestamp:", maxTimestamp,
             ", min timestamp:", minTimestamp);
