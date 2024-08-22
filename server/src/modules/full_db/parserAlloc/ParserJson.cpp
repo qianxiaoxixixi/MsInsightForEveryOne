@@ -35,6 +35,13 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
+    std::vector<std::string> subdirectoryList = {};
+    for (const auto &projectInfo: projectInfos) {
+        for (const auto &item: projectInfo.parseFilePathInfos) {
+            subdirectoryList.push_back(item.parseFilePath);
+        }
+    }
+    response.body.subdirectoryList = subdirectoryList;
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
     response.body.reset = IsNeedReset(request);
@@ -91,6 +98,9 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(Impor
     for (const auto &project: projectInfos) {
         for (const auto &parseFileInfo: project.parseFilePathInfos) {
             std::string jsonFile = GetJsonFileUnderFolder(parseFileInfo.parseFilePath);
+            if (jsonFile.empty()) {
+                continue;
+            }
             std::string fileId = GetFileId(jsonFile, parseFileInfo.parseFilePath);
             rankToFoldersMap[fileId].push_back(parseFileInfo.parseFilePath);
             rankToTraceMap[fileId].push_back(jsonFile);
@@ -449,6 +459,10 @@ std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string 
     }
     for (const auto &item: memoryFiles) {
         resultSet.insert(FileUtil::GetParentPath(item));
+    }
+
+    if (resultSet.empty()) {
+        return {importFile};
     }
     // 转换成vector返回
     std::vector<std::string> result(resultSet.begin(), resultSet.end());

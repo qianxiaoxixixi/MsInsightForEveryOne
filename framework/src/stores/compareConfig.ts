@@ -57,6 +57,8 @@ export const useCompareConfig = defineStore('compareConfig', () => {
      * @param filePath 路径
      */
     const setBaselineData = async (projectName: string, filePath: string): Promise<void> => {
+        // 取消对比数据的设置
+        cancelCompareData();
         baselineDataInfo.value = { projectName, filePath, rankId: 'baseline' };
         const result: any = await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
             command: 'global/setBaseline',

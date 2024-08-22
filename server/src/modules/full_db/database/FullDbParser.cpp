@@ -187,13 +187,16 @@ void FullDbParser::ParserCallBack(std::string fileId, bool result)
 void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string path)
 {
     for (const std::string& id : rankIds) {
+        bool result = false;
         auto summeryDatabase = dynamic_cast<FullDb::DbSummaryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
         if (summeryDatabase != nullptr && summeryDatabase->OpenDb(path, false)) {
-            FullDb::DbSummaryDataBase::ParserEnd(id, true, "");
+            result = true;
         } else {
-            FullDb::DbSummaryDataBase::ParserEnd(id, false, "");
             ServerLog::Error("Failed to connect or open SummeryDatabase. rankId:", id);
+        }
+        if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
+            FullDb::DbSummaryDataBase::ParserEnd(id, result, "");
         }
     }
     ServerLog::Info("Init Summary finish");
@@ -202,15 +205,18 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
 void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path)
 {
     for (const std::string& id : rankIds) {
+        bool result = false;
         auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
         if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
             FullDb::DbMemoryDataBase::ParserEnd(id, true);
-            FullDb::DbMemoryDataBase::ParseCallBack(id, true, "");
+            result = true;
         } else {
             FullDb::DbMemoryDataBase::ParserEnd(id, false);
-            FullDb::DbMemoryDataBase::ParseCallBack(id, false, "");
             ServerLog::Error("Failed to connect or open memoryDatabase. rankId:", id);
+        }
+        if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
+            FullDb::DbMemoryDataBase::ParseCallBack(id, result, "");
         }
     }
     ServerLog::Info("Init Memory finish");

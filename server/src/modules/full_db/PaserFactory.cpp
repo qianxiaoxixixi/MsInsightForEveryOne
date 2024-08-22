@@ -77,8 +77,6 @@ void ParserFactory::Reset()
 void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
     const std::string &cardPath, std::vector<std::string> dataPath)
 {
-    response.body.subdirectoryList.insert(response.body.subdirectoryList.end(), dataPath.begin(),
-                                          dataPath.end());
     Action action;
     action.cardName = rankId;
     action.rankId = rankId;
