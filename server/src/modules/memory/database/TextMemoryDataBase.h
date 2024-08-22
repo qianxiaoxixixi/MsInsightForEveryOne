@@ -55,6 +55,11 @@ public:
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
+    bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
+                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId) override;
+    bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
+                                        std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
+                                        std::vector<Protocol::StaticOperatorItem>& opDetails) override;
     uint64_t QueryMinOperatorAllocationTime();
     uint64_t QueryMinRecordTimestamp();
 

@@ -25,6 +25,10 @@ namespace Protocol {
             (const MemoryStaticOperatorListResponse &response);
     template<>
     std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response);
+    std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool hasStream,
+        Document::AllocatorType& allocator);
+    std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &op,
+        Document::AllocatorType& allocator);
 
 } // end of namespace Protocol
 } // end of namespace Dic

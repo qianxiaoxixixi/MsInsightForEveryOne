@@ -25,6 +25,7 @@ struct MemoryOperatorParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
+    bool isCompare = false;
 };
 
 struct StaticOperatorListParams {
@@ -41,6 +42,7 @@ struct StaticOperatorListParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
+    bool isCompare = false;
 };
 
 struct StaticOperatorGraphParams {

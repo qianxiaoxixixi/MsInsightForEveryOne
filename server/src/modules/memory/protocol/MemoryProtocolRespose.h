@@ -32,12 +32,24 @@ struct MemoryOperator {
     std::string deviceType;
 };
 
+struct MemoryOperatorComparison {
+    MemoryOperator compare;
+    MemoryOperator baseline;
+    MemoryOperator diff;
+};
+
 struct StaticOperatorItem {
     std::string deviceId;
     std::string opName;
     int64_t nodeIndexStart;
     int64_t nodeIndexEnd;
     double size;
+};
+
+struct StaticOperatorCompItem {
+    StaticOperatorItem compare;
+    StaticOperatorItem baseline;
+    StaticOperatorItem diff;
 };
 
 struct StaticOperatorGraphItem {
@@ -75,6 +87,13 @@ struct MemoryOperatorResponse : public Response {
     int64_t totalNum = 0;
 };
 
+struct MemoryOperatorComparisonResponse : public Response {
+    MemoryOperatorComparisonResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
+    std::vector<MemoryTableColumnAttr> columnAttr;
+    std::vector<MemoryOperatorComparison> operatorDiffDetails;
+    int64_t totalNum = 0;
+};
+
 struct MemoryViewResponse : public Response {
     MemoryViewResponse() : Response(REQ_RES_MEMORY_VIEW) {}
     MemoryViewData data;
@@ -99,6 +118,13 @@ struct MemoryStaticOperatorListResponse : public Response {
     MemoryStaticOperatorListResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
     std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<StaticOperatorItem> operatorDetails;
+    int64_t totalNum = 0;
+};
+
+struct MemoryStaticOperatorListCompResponse : public Response {
+    MemoryStaticOperatorListCompResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
+    std::vector<MemoryTableColumnAttr> columnAttr;
+    std::vector<StaticOperatorCompItem> operatorDiffDetails;
     int64_t totalNum = 0;
 };
 

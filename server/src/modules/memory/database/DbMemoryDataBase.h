@@ -34,6 +34,13 @@ public:
 
     bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                   Protocol::StaticOperatorGraphItem &graphItem) override;
+
+    bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
+                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId) override;
+    bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
+                                                std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
+                                                std::vector<Protocol::StaticOperatorItem>& opDetails) override;
+
     static void ParserEnd(std::string rankId, bool result);
     static void ParseCallBack(const std::string &fileId, bool result, const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();

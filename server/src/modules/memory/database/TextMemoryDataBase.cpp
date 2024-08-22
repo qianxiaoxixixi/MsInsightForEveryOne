@@ -354,6 +354,27 @@ bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &req
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
+bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
+                                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId)
+{
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::string sql =
+        "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
+        "ROUND((allocation_time - " +
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
+        "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+        "END AS releaseTimestamp, ROUND(duration / 1000.0, 3) as duration, "
+        "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+        "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 3) as active_duration, "
+        "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
+        "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
+        "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
+        "stream FROM " + operatorTable;
+    return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
+}
+
 bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                          Protocol::MemoryViewData &operatorBody)
 {
@@ -377,6 +398,20 @@ bool TextMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListPar
 {
     std::string sql = GetStaticOperatorSql(requestParams);
     return ExecuteStaticOperatorDetail(requestParams, columnAttr, opDetails, sql);
+}
+
+bool TextMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
+                                                        std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
+                                                        std::vector<Protocol::StaticOperatorItem>& opDetails)
+{
+    std::string sql =
+        "SELECT device_id, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
+        " FROM " + staticOpTable +
+        " WHERE op_name <> 'TOTAL'";
+    if (!requestParams.graphId.empty()) {
+        sql += " AND graph_id = ?" ;
+    }
+    return ExecuteQueryEntireStaticOperatorTable(requestParams, columnAttr, opDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,

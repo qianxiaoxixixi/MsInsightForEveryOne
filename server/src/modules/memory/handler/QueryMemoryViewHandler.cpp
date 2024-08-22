@@ -3,6 +3,7 @@
  */
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "BaselineManager.h"
 #include "NumberUtil.h"
 #include "QueryMemoryViewHandler.h"
 
@@ -26,7 +27,14 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             return;
         }
     } else {
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseBaseline();
+        if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Memory comparing does not support request type Stream.");
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
+        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to connect to database of baseline.");
@@ -46,12 +54,6 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data)) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to query memory view baseline data.");
-            session.OnResponse(std::move(responsePtr));
-            return;
-        }
-        if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Memory comparing does not support request type Stream.");
             session.OnResponse(std::move(responsePtr));
             return;
         }

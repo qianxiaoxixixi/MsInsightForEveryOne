@@ -97,6 +97,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
         reqPtr->params.maxSize = -1;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 
@@ -176,6 +177,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryStaticOperatorListRequest(const
         reqPtr->params.maxSize = -1;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 
@@ -195,7 +197,8 @@ std::optional<document_t> MemoryProtocol::ToMemoryResourceTypeResponseJson(const
 
 std::optional<document_t> MemoryProtocol::ToMemoryOperatorResponseJson(const Response &response)
 {
-    return ToResponseJson<MemoryOperatorResponse>(dynamic_cast<const MemoryOperatorResponse &>(response));
+    return ToResponseJson<MemoryOperatorComparisonResponse>(
+        dynamic_cast<const MemoryOperatorComparisonResponse &>(response));
 }
 
 std::optional<document_t> MemoryProtocol::ToMemoryViewResponseJson(const Response &response)
@@ -216,8 +219,8 @@ std::optional<document_t> MemoryProtocol::ToMemoryStaticOperatorGraphResponseJso
 
 std::optional<document_t> MemoryProtocol::ToMemoryStaticOperatorListResponseJson(const Response &response)
 {
-    return ToResponseJson<MemoryStaticOperatorListResponse>
-            (dynamic_cast<const MemoryStaticOperatorListResponse &>(response));
+    return ToResponseJson<MemoryStaticOperatorListCompResponse>
+            (dynamic_cast<const MemoryStaticOperatorListCompResponse &>(response));
 }
 #pragma endregion
 } // end of namespace Protocol
