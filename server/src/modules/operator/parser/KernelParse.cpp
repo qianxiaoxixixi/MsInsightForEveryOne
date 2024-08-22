@@ -108,10 +108,6 @@ bool KernelParse::Parse(const std::vector<std::string> &pathList)
         return false;
     }
     SetParseCallBack();
-    if (kernelFiles.size() > 1) {
-        // 给前端发消息，清空原有数据
-        ParseEndCallBack("", true, "");
-    }
     for (const auto& kernelFile : kernelFiles) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + kernelFile.first,
                                                                   Timeline::ParserStatus::INIT);

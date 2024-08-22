@@ -205,8 +205,7 @@ std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &i
     std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(msprofDBReg));
     if (pytorchFiles.empty() && msprofFiles.empty()) {
-        error = "Failed to find db file.";
-        return {};
+        return {importFile};
     }
     std::vector<std::string> reportFiles = {};
     if (!pytorchFiles.empty()) {

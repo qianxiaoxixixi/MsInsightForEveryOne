@@ -129,9 +129,10 @@ watch(
       } else {
         curRankId = compareConfig.getRankIdByProjectInfo(projectName, filePathList[0]);
       }
+      const realRankId = curRankId?.split(' ').pop() ?? '';
       connector.send({
         event: 'switchDirectory',
-        body: { rankId: curRankId, isCompare: compareConfig.isCompareStatus },
+        body: { rankId: realRankId, isCompare: compareConfig.isCompareStatus },
       });
     }
 );
