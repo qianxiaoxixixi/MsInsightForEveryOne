@@ -73,28 +73,34 @@ interface parallelStrategyType {
 };
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
-    const [unitCount, setUnitCount] = useState<number>(0);
-    getDefaultCommunicatorData(setUnitCount);
+    const { t } = useTranslation('summary');
+    const [showRank, setShowRank] = useState(true);
     return (
         <div style={{ marginBottom: 24 }}>
-            {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize} unitCount={unitCount}></CommunicatorHeader>}
-            {<CommunicatorContent session={session} ranksData={session.ranksData}/>}
+            {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize}
+                unitCount={session.unitcount} setShowRank={setShowRank}></CommunicatorHeader>}
+            {<CommunicatorContent session={session} ranksData={session.ranksData} showRank={showRank}/>}
+            { !showRank && <div className={'noDataTip'}>{t('NoDataTip')}</div> }
         </div>
     );
 });
 
-const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { session: Session; defaultPPSize: number; unitCount: number }) => {
+const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setShowRank }:
+{ session: Session; defaultPPSize: number; unitCount: number; setShowRank: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const [form, setForm] = useState({} as FormInstance<any>);
     const [disabled, setDisabled] = useState(false);
     const init = async (): Promise<void> => {
         const { dpSize, tpSize, ppSize, level } = (await getParallelStrategy()) as unknown as parallelStrategyType;
+        const equal = dpSize === 1 && tpSize === 1 && tpSize === 1;
         form.setFieldsValue({ dpSize, tpSize, ppSize });
         if (level === 'collected') {
             setDisabled(true);
+        } else if (level === 'undefined' || equal) {
+            setShowRank(false);
         } else {
             setDisabled(false);
         }
-        session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, defaultPPSize);
+        session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, unitCount, defaultPPSize);
         session.ranksData = getRankData({ dpSize, tpSize, ppSize });
         connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
         eventBus.emit('activeCommunicator', undefined);
@@ -109,8 +115,9 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
             return;
         }
         setParallelStrategy({ ...values });
-        session.communicatorData = generateCommunicatorData(values, size);
+        session.communicatorData = generateCommunicatorData(values, unitCount, size);
         session.ranksData = getRankData(values);
+        setShowRank(true);
         // 只有用户手动修改并行策略，才会同步策略信息给通信页面，此处4为通信页面页签的序号
         connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
         eventBus.emit('activeCommunicator', undefined);
@@ -155,7 +162,7 @@ const FormDom = ({ unitCount, disabled, defaultPPSize, onClick, getForm }:
     );
 };
 
-export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<React.SetStateAction<number>>): Promise<communicatorContainerData> {
+export async function getDefaultCommunicatorData(): Promise<communicatorContainerData> {
     const result = {
         partitionModes: [
             {
@@ -188,14 +195,11 @@ export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<Re
             },
         ];
         result.defaultPPSize = data.defaultPPSize;
-        if (result.partitionModes.length > 0 && data.ppGroups.length > 0) {
-            setUnitCount(data.defaultPPSize * data.ppGroups[0].length);
-        }
     }
     return result;
 }
 
-const CommunicatorContent = observer(({ session, ranksData }: { session: Session; ranksData: ppData[] }) => {
+const CommunicatorContent = observer(({ session, ranksData, showRank }: { session: Session; ranksData: ppData[]; showRank: boolean }) => {
     const svg = select('#parallelDrawLineSVG');
     drawLineSVG(svg, ranksData, session.communicatorData.partitionModes);
     const onClick = (e: React.MouseEvent<any>): void => {
@@ -225,16 +229,19 @@ const CommunicatorContent = observer(({ session, ranksData }: { session: Session
     });
     return (
         <>
-            { ranksData.length > 0 && <ParallelSwitch session={session} onChange={onChange}/> }
+            { (showRank && ranksData.length > 0) && <ParallelSwitch session={session} onChange={onChange}/> }
             <RankContainer onClick={(e): void => onClick(e)} >
                 <svg id='parallelDrawLineSVG' style={{ position: 'absolute', pointerEvents: 'none', zIndex: 10 }}></svg>
-                <div style={{ paddingBottom: '40px' }}>
-                    {
-                        ranksData.map(item => (
-                            <Pp key={item.key} ppData={item.values} session={session}></Pp>
-                        ))
-                    }
-                </div>
+                {
+                    showRank &&
+                    <div style={{ paddingBottom: '40px' }}>
+                        {
+                            ranksData.map(item => (
+                                <Pp key={item.key} ppData={item.values} session={session}></Pp>
+                            ))
+                        }
+                    </div>
+                }
             </RankContainer>
         </>
     );
@@ -329,7 +336,7 @@ const Rank = ({ session, rank }: { session: Session; rank: rankItem }): JSX.Elem
 };
 
 const getParallelStrategy = async (): Promise<string[]> => {
-    return await window.requestData('summary/query/parallelStrategy', {}, 'summary');
+    return await window.requestData('summary/query/parallelStrategy', {}, 'summary') ?? {};
 };
 
 const setParallelStrategy = async (params: { algorithm: string; ppSize: number; tpSize: number; dpSize: number }): Promise<void> => {

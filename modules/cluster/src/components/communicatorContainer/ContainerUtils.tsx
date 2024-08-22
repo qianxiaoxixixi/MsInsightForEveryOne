@@ -61,7 +61,7 @@ const fillDpCommunicators = (values: {ppSize: number; tpSize: number; dpSize: nu
     }
     for (let i = 0; i < pipelineCount; i++) {
         for (let j = 0; j < values.tpSize; j++) {
-            partitionModes[2].communicators.push({
+            partitionModes[3].communicators.push({
                 ranks: _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize),
                 name: `data${(i * values.tpSize) + j}`,
                 value: `(${_.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize).join(', ')}${values.dpSize > 1 ? ')' : ',)'}`,
@@ -71,20 +71,23 @@ const fillDpCommunicators = (values: {ppSize: number; tpSize: number; dpSize: nu
 };
 
 export const generateCommunicatorData = (values: {ppSize: number; tpSize: number; dpSize: number},
-    defaultPPSize: number = 1): communicatorContainerData => {
+    rankNum: number, defaultPPSize: number = 1): communicatorContainerData => {
     const partitionModes: partitionMode[] = [
+        { mode: 'all', communicators: [] },
         { mode: 'pp', communicators: [] },
         { mode: 'tp', communicators: [] },
         { mode: 'dp', communicators: [] },
     ];
-    const rankNum = values.ppSize * values.tpSize * values.dpSize;
+    if (rankNum === 0) {
+        return { partitionModes, defaultPPSize };
+    }
     if (values.ppSize !== 0 && values.tpSize !== 0) {
         const pipelineCount = values.ppSize;
         const pipelineSize = rankNum / values.ppSize;
         const modelCount = rankNum / values.tpSize;
         if (values.ppSize > 1) {
             for (let i = 0; i < pipelineSize; i++) {
-                partitionModes[0].communicators.push({
+                partitionModes[1].communicators.push({
                     ranks: _.range(i, rankNum, pipelineSize),
                     name: `pipeline${i}`,
                     value: `(${_.range(i, rankNum, pipelineSize).join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
@@ -93,7 +96,7 @@ export const generateCommunicatorData = (values: {ppSize: number; tpSize: number
         }
         if (values.tpSize > 1) {
             for (let i = 0; i < modelCount; i++) {
-                partitionModes[1].communicators.push({
+                partitionModes[2].communicators.push({
                     ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
                     name: `model${i}`,
                     value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}${values.tpSize > 1 ? ')' : ',)'}`,
@@ -101,6 +104,11 @@ export const generateCommunicatorData = (values: {ppSize: number; tpSize: number
             }
         }
         fillDpCommunicators(values, pipelineCount, pipelineSize, partitionModes);
+        partitionModes[0].communicators.push({
+            ranks: _.range(0, rankNum, 1),
+            name: 'All',
+            value: `(${_.range(0, rankNum, 1)})`,
+        });
     }
     return { partitionModes, defaultPPSize };
 };
