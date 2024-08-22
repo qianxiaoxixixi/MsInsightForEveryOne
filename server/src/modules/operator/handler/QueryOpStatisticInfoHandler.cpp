@@ -262,10 +262,11 @@ namespace Dic::Module::Operator {
         std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData, const int64_t paraPageSize,
         const int64_t current, const std::string &order, const std::string &orderBy)
     {
+        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(orderBy);
         // 对差值排序
-        std::sort(statisticData.begin(), statisticData.end(), [&order, &orderBy](OperatorStatisticCmpInfoRes &a,
+        std::sort(statisticData.begin(), statisticData.end(), [&order, &dbOrderBy](OperatorStatisticCmpInfoRes &a,
                                                                            OperatorStatisticCmpInfoRes &b) {
-            return StaticCmp(a, b, order, orderBy);
+            return StaticCmp(a, b, order, dbOrderBy);
         });
         int total = statisticData.size();
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pagesize 默认是10条
@@ -276,7 +277,7 @@ namespace Dic::Module::Operator {
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator start = statisticData.begin() + offset;
         std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator end = statisticData.begin() +
-            std::min(offset + pageSize - 1, static_cast<uint64_t>(statisticData.size() - 1));
+            std::min(offset + pageSize, static_cast<uint64_t>(statisticData.size()));
         std::vector<Protocol::OperatorStatisticCmpInfoRes> result;
         result.assign(start, end);
         return result;
