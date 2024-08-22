@@ -15,6 +15,7 @@ export { customConsole } from './Console';
 
 export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts, getDefaultChartOptions };
 
+const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 export const StyledEmpty = ({ descriptor, style }:
 { descriptor?: string; style?: object; translation?: any}): JSX.Element => {
     const theme = useTheme();
@@ -51,18 +52,24 @@ const StyledAdvice = styled.div`
     & > div:nth-child(2) {
         flex: auto;
         word-break: break-all;
-        white-space: pre;
     }
 `;
 
-export function Advice({ text, style = {} }: { text: string; style?: React.CSSProperties }): JSX.Element {
+export function Advice({ text, style = {} }: { text: React.ReactNode | React.ReactNode[]; style?: React.CSSProperties }): JSX.Element {
     const { t } = useTranslation();
+    const splitText = (str: React.ReactNode): React.ReactNode => {
+        if (typeof str !== 'string') {
+            return str;
+        }
+        const list = str.split(BREAK_LINE_REGEXP);
+        return list.map(item => (<div>{item}</div>));
+    };
     return <StyledAdvice style={style}>
         <div>
             <BulbIcon/>
             <span>{t('Advice')}:</span>
         </div>
-        <div>{text}</div>
+        <div>{Array.isArray(text) ? text.map(item => (<div>{splitText(item)}</div>)) : splitText(text)}</div>
     </StyledAdvice>;
 }
 
