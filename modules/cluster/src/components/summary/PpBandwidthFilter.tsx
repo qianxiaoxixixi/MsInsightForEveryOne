@@ -54,7 +54,7 @@ const Filter = observer((props: any) => {
 
     useEffect(() => {
         const name = props.session.activeCommunicator?.name as string;
-        if (name?.startsWith('stage')) {
+        if (name?.startsWith('pipeline')) {
             props.setConditions({ ...props.conditions, stage: props.session.activeCommunicator?.value });
         }
     }, [props.session.activeCommunicator]);

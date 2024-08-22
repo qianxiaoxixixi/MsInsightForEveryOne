@@ -71,12 +71,13 @@ const fillDpCommunicators = (values: {ppSize: number; tpSize: number; dpSize: nu
 };
 
 export const generateCommunicatorData = (values: {ppSize: number; tpSize: number; dpSize: number},
-    defaultPPSize: number, rankNum: number): communicatorContainerData => {
+    defaultPPSize: number = 1): communicatorContainerData => {
     const partitionModes: partitionMode[] = [
         { mode: 'pp', communicators: [] },
         { mode: 'tp', communicators: [] },
         { mode: 'dp', communicators: [] },
     ];
+    const rankNum = values.ppSize * values.tpSize * values.dpSize;
     if (values.ppSize !== 0 && values.tpSize !== 0) {
         const pipelineCount = values.ppSize;
         const pipelineSize = rankNum / values.ppSize;
@@ -102,4 +103,66 @@ export const generateCommunicatorData = (values: {ppSize: number; tpSize: number
         fillDpCommunicators(values, pipelineCount, pipelineSize, partitionModes);
     }
     return { partitionModes, defaultPPSize };
+};
+
+export interface rankItem {
+    value: number;
+    site: number[];
+};
+export interface tpData {
+    name: string;
+    key: string;
+    values: rankItem[];
+};
+
+export interface dpData {
+    name: string;
+    key: string;
+    values: tpData[];
+};
+
+export interface ppData {
+    name: string;
+    key: string;
+    values: dpData[];
+};
+
+export const getRankData = (values: {ppSize: number; tpSize: number; dpSize: number}): ppData[] => {
+    const ranksData: ppData[] = [];
+    const rankNum = values.ppSize * values.tpSize * values.dpSize;
+    if (values.ppSize > 0 && values.tpSize > 0 && values.dpSize > 0) {
+        const pipelineSize = rankNum / values.ppSize;
+        const dataSize = pipelineSize / values.dpSize;
+        const tensorSize = dataSize / values.tpSize;
+        for (let i = 0; i < values.ppSize; i++) {
+            const ppValue: number[] = _.range(pipelineSize * i, pipelineSize * (i + 1), 1);
+            const dpValue: dpData[] = [];
+            for (let j = 0; j < values.dpSize; j++) {
+                const dpData: number[] = ppValue.slice(dataSize * j, dataSize * (j + 1));
+                const tpValue: tpData[] = [];
+                for (let n = 0; n < tensorSize; n++) {
+                    const rank = dpData.slice(values.tpSize * n, values.tpSize * (n + 1)).map((item, index) => ({
+                        value: item,
+                        site: [i, j, n, index],
+                    }));
+                    tpValue.push({
+                        name: `tp${n}`,
+                        key: `tp${n}`,
+                        values: rank,
+                    });
+                }
+                dpValue.push({
+                    name: `DP ${j}`,
+                    key: `dp${j}`,
+                    values: tpValue,
+                });
+            }
+            ranksData.push({
+                name: `PP Stage ${i}`,
+                key: `pp${i}`,
+                values: dpValue,
+            });
+        }
+    }
+    return ranksData;
 };
