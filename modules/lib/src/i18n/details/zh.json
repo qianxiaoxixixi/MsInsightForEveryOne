@@ -47,6 +47,7 @@
     "Cache Hit Rate(%)": "Cache命中率(%)",
     "Pid": "进程号",
     "DeviceId": "设备号",
-    "Level": "等级"
+    "Level": "等级",
+    "Core Occupancy": "核间负载分析"
   }
 }
