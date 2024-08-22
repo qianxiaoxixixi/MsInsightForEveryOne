@@ -1,41 +1,67 @@
-<script setup lang="ts">
-import { ref } from 'vue';
-const props = defineProps<{ menuVisible: boolean, menuItems: { label: string; action: () => void }[], position: { top: string, left: string} }>();
-const emit = defineEmits(['update:menuVisible']);
+<!--
+  - Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+  -->
 
+<script setup lang="ts">
+import { useContextMenu } from '@/hooks/useContextMenu';
+import { ref } from 'vue';
+import { t } from '@/i18n';
+
+interface MenuItem {
+    label: string;
+    key: string;
+    action?: (...args: any[]) => void;
+}
+defineProps<{ menuItems: MenuItem[] }>();
+const emit = defineEmits(['select']);
+
+const containerRef = ref<HTMLElement>();
+const { x, y, visible, setVisible } = useContextMenu(containerRef.value, '.can-right-click');
+
+function clickMenuItem(item: MenuItem): void {
+    setVisible(false);
+    emit('select', item);
+    if (item?.action && typeof item.action === 'function') {
+        item.action();
+    }
+}
 </script>
 
 <template>
-  <div v-if="menuVisible" class="context-menu" :style="position" @click="emit('update:menuVisible', false)">
-    <ul>
-      <li v-for="(item, index) in menuItems" :key="index" @click="() => item.action && item.action()">
-        {{ item.label }}
-      </li>
-    </ul>
-  </div>
+    <div class="container" ref="containerRef">
+        <slot></slot>
+        <Teleport to="body">
+            <div class="context-menu" v-if="visible" :style="{ left: `${x}px`, top: `${y}px` }">
+                <div class="context-menu-item" v-for="item in menuItems" :key="item.label" @mousedown.stop @click="clickMenuItem(item)">
+                    {{ t(item.label) }}
+                </div>
+            </div>
+        </Teleport>
+    </div>
 </template>
+
 <style scoped>
 .context-menu {
-  min-width: 200px;
-  border: 1px solid #ccc;
-  position: fixed;
-  z-index: 99999;
-  background-color: blue;
-  transition: all .1s ease;
+    z-index: 99999;
+    position: fixed;
+    min-width: 150px;
+    padding: 4px 0;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--mi-text-color-primary);
+    border-radius: var(--mi-border-radius-base);
+    background-color: var(--menu-bg-color);
+    box-shadow: var(--mi-box-shadow);
+    transition: all 0.1s ease;
 }
 
-.context-menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.context-menu-item {
+    padding: 8px 12px;
+    user-select: none;
 }
 
-.context-menu ul li {
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.context-menu ul li:hover {
-  background-color: #a2a2a9;
+.context-menu-item:hover {
+    background-color: var(--mi-color-primary);
+    color: #ffffff;
 }
 </style>

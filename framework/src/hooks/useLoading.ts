@@ -34,9 +34,5 @@ export const useLoading = (): any => {
         }
     };
 
-    onUnmounted(() => {
-        close();
-    });
-
     return { open, close };
 };

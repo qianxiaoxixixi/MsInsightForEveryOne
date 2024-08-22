@@ -27,8 +27,10 @@
         "Update Project Name Failed": "Update project name failed",
         "Loading": "Loading...",
         "Set as Baseline Data": "Set as Baseline Data",
-        "Set as Compare Data": "Set as Compare Data",
-        "Set Compare Data Out Of Range": "Set Compare Data Out Of Range!",
+        "Set as Comparison Data": "Set as Comparison Data",
+        "Unset as Baseline Data": "Unset as Baseline Data",
+        "Unset as Comparison Data": "Unset as Comparison Data",
+        "Set Comparison Data Out Of Range": "Set Comparison Data Out Of Range!",
         "Set baseline first": "Please set baseline first!",
         "Baseline Conflict": "Can't set baseline and comparison data to be the same"
     },

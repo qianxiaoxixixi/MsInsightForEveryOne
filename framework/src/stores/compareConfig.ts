@@ -107,7 +107,7 @@ export const useCompareConfig = defineStore('compareConfig', () => {
         const key = getUniqueKeyByProjectInfo(projectName, filePath);
         // 必须被包含在当前选中目录中
         if (!dataInfoMap.value.has(key)) {
-            ElMessage.warning(t('Set Compare Data Out Of Range') as string);
+            ElMessage.warning(t('Set Comparison Data Out Of Range') as string);
             return;
         }
         if (dataInfoMap.value.get(key)?.rankId === baselineDataInfo.value.rankId) {
