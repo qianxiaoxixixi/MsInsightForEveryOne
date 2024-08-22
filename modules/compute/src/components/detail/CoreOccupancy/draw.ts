@@ -98,11 +98,14 @@ export function getDrawData({ data: originData, showAs }: DataConfig): CoreDrawD
 }
 
 function getSubCoreValue(showAs: ShowAs, value?: number): string | number {
+    if (value === undefined || value === null) {
+        return '';
+    }
     switch (showAs) {
         case 'throughput':
             return formatThroughput(value);
         case 'cacheHitRate':
-            return value !== undefined ? Number((value).toFixed(2)) : '';
+            return Number(Number(value).toFixed(2));
         case 'cycles':
             return String(value);
         default:
