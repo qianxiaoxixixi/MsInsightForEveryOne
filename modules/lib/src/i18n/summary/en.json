@@ -67,6 +67,7 @@
       "Bubble Time: Total time consumed by the receive operator"
     ],
     "Timeline not fully parsed": "Timeline not fully parsed",
-    "ProhibitConfiguration": "The data collected by the system cannot be manually configured"
+    "ProhibitConfiguration": "The data collected by the system cannot be manually configured",
+    "NoDataTip": "The original collected data doesn't contain the parallelism strategy configuration parameters. Please configure the parameters"
   }
 }
