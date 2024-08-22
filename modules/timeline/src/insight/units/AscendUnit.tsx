@@ -188,7 +188,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 threadId: threadMetaData.threadId,
                 metaType: threadMetaData.metaType,
                 startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
-                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
+                endTime: Math.ceil(session.domainRange.domainEnd + timestampOffset),
                 dataSource: threadMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
                 isFilterPythonFunction,
@@ -478,7 +478,7 @@ export const CounterUnit = unit<CounterMetaData>({
                 threadId: countMetaData.threadId,
                 metaType: countMetaData.metaType,
                 startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
-                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
+                endTime: Math.ceil(session.domainRange.domainEnd + timestampOffset),
                 dataSource: countMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
             };
