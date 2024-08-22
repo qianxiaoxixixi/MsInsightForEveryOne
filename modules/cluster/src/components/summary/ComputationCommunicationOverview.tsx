@@ -17,6 +17,7 @@ import StatisticsTable from './StatisticsTable';
 import BaseInfo from './BaseInfo';
 import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
+import { communicator } from '../communicatorContainer/ContainerUtils';
 import i18n from 'ascend-i18n';
 import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
@@ -352,10 +353,10 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
         : <></>;
 });
 function OverviewCom({ handleFilterChange, dataSource, selected, advice, session, containsPreparing }: any): JSX.Element {
-    const [pipelineVisible, setPipelineVisible] = useState(false);
+    const [pipelineVisible, setPipelineVisible] = useState(true);
     const { t } = useTranslation('summary');
-    useEventBus('setActiveTab', (data) => {
-        setPipelineVisible(data === 'pp');
+    useEventBus('activeCommunicator', (data) => {
+        setPipelineVisible((data as communicator)?.name.includes('pipeline'));
     });
     return <Layout>
         <BaseInfo session={session}/>
