@@ -5,6 +5,7 @@ import type { DataRequest, ModuleName, DataSource, ProjectActionEnum } from './w
 import { Connection } from '@/centralServer/websocket/connection';
 import connector from '@/connection';
 import { useLoading } from '@/hooks/useLoading';
+import type {DataInfo, TimelineCardInfo} from '@/stores/compareConfig';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -51,6 +52,16 @@ export const addDataPath = function(dataSource: DataSource, action: ProjectActio
         connector.send({
             event: 'remote/import',
             body: { dataSource, isConflict, action },
+        });
+    }
+};
+
+export const sendDaseLineInfo = function(dataSource: DataSource, baseLine: TimelineCardInfo[]): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    if (connection) {
+        connector.send({
+            event: 'baseline/add',
+            body: { dataSource, baseLine },
         });
     }
 };

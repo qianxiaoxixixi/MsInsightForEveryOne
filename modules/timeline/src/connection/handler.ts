@@ -160,6 +160,41 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
     session.sortUnits();
 };
 
+const createBaselineCard = (session: Session | undefined, result: any, dataSource: DataSource): void => {
+    if (!session) {
+        return;
+    }
+    session.phase = 'download';
+    const hostInfo = groupBy(result, (item: CardInfo) => item.host ?? '');
+    forEach(hostInfo, (cards, host) => {
+        const unit = isEmpty(host) ? undefined : new ROOT_UNIT({ dataSource, host });
+        const cardUnits: InsightUnit[] = [];
+        forEach(cards, (item: CardInfo) => {
+            const curDataSource = cloneDeep(dataSource);
+            curDataSource.dataPath = item.dataPathList;
+            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
+            if (item.result as boolean) {
+                cardUnit.shouldParse = true;
+                cardUnit.phase = 'analyzing';
+                cardUnit.progress = 0;
+                cardUnit.showProgress = true;
+            } else {
+                cardUnit.phase = 'error';
+            }
+            if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
+                cardUnit.isExpanded = true;
+            }
+            cardUnits.push(cardUnit);
+            session.units.push(cardUnit);
+        });
+        if (unit) {
+            unit.isExpanded = cardUnits.length > 0 ? cardUnits[0].isExpanded : false;
+            unit.children = cardUnits;
+        }
+    });
+    session.sortUnits();
+};
+
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -172,6 +207,20 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             initUnitInfo(session, result, dataSource);
         });
         sendSessionUpdate(result, session);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const baselineAddHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+        const baseLineInfo = getPropFromData(data, 'baseLine');
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            createBaselineCard(session, baseLineInfo, dataSource);
+        });
     } catch (error) {
         console.error(error);
     }

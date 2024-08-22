@@ -69,6 +69,8 @@ export interface DataSource {
     port: number;
     projectName: string;
     dataPath: string[];
+    isBaseLine?: boolean;
+    baseLineCardId?: string;
 };
 
 export interface ProjectDirectory {

@@ -7,13 +7,23 @@ import { LOCAL_HOST, PORT, ProjectActionEnum } from '@/centralServer/websocket/d
 import { useDataSources } from '@/stores/dataSource';
 import { ElMessage } from 'element-plus';
 import { t } from '@/i18n';
-import { request } from '@/centralServer/server';
+import {request, sendDaseLineInfo} from '@/centralServer/server';
 
 const UNDERLINE: string = '_';
 export interface DataInfo {
     projectName: string;
     filePath: string;
     rankId: string;
+    host?: string;
+    cardName?: string;
+}
+
+export interface TimelineCardInfo {
+    cardName: string;
+    cardPath: string;
+    host: string;
+    rankId: string;
+    result: boolean;
 }
 
 const getUniqueKeyByProjectInfo = (projectName: string, filePath: string): string => {
@@ -60,14 +70,24 @@ export const useCompareConfig = defineStore('compareConfig', () => {
         // 取消对比数据的设置
         cancelCompareData();
         baselineDataInfo.value = { projectName, filePath, rankId: 'baseline' };
-        const result: any = await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+        const datasource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+        const result: any = await request(datasource, 'global', {
             command: 'global/setBaseline',
             params: { projectName, filePath },
         });
-        if (result.errorMessage as string) {
-            ElMessage.warning(result.errorMessage as string);
+        if (result.error as string) {
+            ElMessage.warning(result.error as string);
         } else {
             baselineDataInfo.value.rankId = result.rankId;
+            const timelineCardInfos = [] as TimelineCardInfo[];
+            const timelineCardInfo = {} as TimelineCardInfo;
+            timelineCardInfo.result = true;
+            timelineCardInfo.cardName = baselineDataInfo.value.rankId;
+            timelineCardInfo.host = baselineDataInfo.value.host ?? '';
+            timelineCardInfo.rankId = baselineDataInfo.value.rankId;
+            timelineCardInfo.cardPath = baselineDataInfo.value.projectName;
+            timelineCardInfos.push(timelineCardInfo);
+            sendDaseLineInfo(datasource, timelineCardInfos);
         }
     };
 
