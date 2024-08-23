@@ -72,18 +72,27 @@ const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend }:
             }
             return colMap[group];
         case OperatorGroup.HCCL_OPERATOR_TYPE:
-            if (columnLevel === undefined) {
-                return [...colMap[group].l0 ?? [], btnCol];
-            }
-            if (isCompare && !isExpend) {
-                return [...colMap[group][columnLevel], btnCol];
-            }
-            return colMap[group][columnLevel];
+            return getHcclOperatorTypeCols({ group, columnLevel, btnCol, colMap, isCompare, isExpend });
         default:
             if (isCompare && isExpend) {
                 return [...colMap[group] ?? []];
             }
             return [...colMap[group] ?? [], btnCol];
+    }
+};
+
+const getHcclOperatorTypeCols = ({ group, columnLevel, btnCol, colMap, isCompare, isExpend }:
+{group: string;columnLevel: string;btnCol: any;colMap: any;isCompare: boolean;isExpend: boolean}): any[] => {
+    if (columnLevel === undefined) {
+        if (isCompare && isExpend) {
+            return [...colMap[group].l0 ?? []];
+        }
+        return [...colMap[group].l0 ?? [], btnCol];
+    } else {
+        if (isCompare && !isExpend) {
+            return [...colMap[group][columnLevel], btnCol];
+        }
+        return colMap[group][columnLevel];
     }
 };
 
@@ -300,7 +309,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         loading={loading}
         columns={cols}
         dataSource={tableData}
-        pagination={getPageConfigWithPageData(page, setPage)}
+        pagination={isCompare && compInfo !== undefined ? false : getPageConfigWithPageData(page, setPage)}
         onChange={(pagination: any, newFilters: any, newSorter: any, extra: any): void => {
             if (extra.action === 'sort') {
                 setSorter(newSorter.order === undefined ? { field: '', order: '' } : newSorter);
