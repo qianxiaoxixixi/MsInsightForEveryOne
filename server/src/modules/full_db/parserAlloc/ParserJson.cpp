@@ -36,8 +36,8 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     std::vector<std::string> subdirectoryList = {};
-    for (const auto &projectInfo: projectInfos) {
-        for (const auto &item: projectInfo.parseFilePathInfos) {
+    for (const auto &projectInfo : projectInfos) {
+        for (const auto &item : projectInfo.parseFilePathInfos) {
             subdirectoryList.push_back(item.parseFilePath);
         }
     }
@@ -95,8 +95,8 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(Impor
     // 获取单卡文件，并根据单卡所在目录获取其单卡信息
     std::map<std::string, std::vector<std::string>> rankToFoldersMap;
     std::map<std::string, std::vector<std::string>> rankToTraceMap;
-    for (const auto &project: projectInfos) {
-        for (const auto &parseFileInfo: project.parseFilePathInfos) {
+    for (const auto &project : projectInfos) {
+        for (const auto &parseFileInfo : project.parseFilePathInfos) {
             std::string jsonFile = GetJsonFileUnderFolder(parseFileInfo.parseFilePath);
             if (jsonFile.empty()) {
                 continue;
@@ -129,7 +129,7 @@ std::string ParserJson::GetJsonFileUnderFolder(const std::string &path)
     if (!FileUtil::FindFolders(path, folders, files)) {
         return "";
     }
-    for (const auto &file: files) {
+    for (const auto &file : files) {
         if (IsJsonValid(file)) {
             return FileUtil::SplicePath(path, file);
         }
@@ -193,8 +193,7 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
     for (const auto &item : projectInfos) {
         std::string fileId = FileUtil::PathPreprocess(item.fileName);
         if (item.dbPath.empty()) {
-            ParseEndCallBack(item.fileName, false,
-                             "Failed to get db file. Please delete and upload again.");
+            ParseEndCallBack(item.fileName, false, "Failed to get db file. Please delete and upload again.");
         }
         if (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, fileId)) {
             return;
@@ -242,9 +241,8 @@ void ParserJson::SetParseCallBack(FileParser &fileParser)
 }
 
 
-void ParserJson::ClusterProcess(const std::string &selectedFolder,
-    ProjectTypeEnum projectType, std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
-    const std::string &projectName)
+void ParserJson::ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType,
+    std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (projectType == ProjectTypeEnum::TEXT_CLUSTER) {
@@ -254,7 +252,7 @@ void ParserJson::ClusterProcess(const std::string &selectedFolder,
             parseClusterResult = PARSE_RESULT_OK;
             dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
             ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
-                                                                                selectedFolder);
+                selectedFolder);
         } else {
             ServerLog::Warn("Failed to parse cluster files.");
             parseClusterResult = PARSE_RESULT_FAIL;
@@ -438,11 +436,11 @@ ProjectTypeEnum ParserJson::GetProjectType(const std::vector<std::string> &dataP
 }
 
 std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string &importFile,
-                                                              ProjectTypeEnum projectTypeEnum, std::string &error)
+    ProjectTypeEnum projectTypeEnum, std::string &error)
 {
     // 如果是文件，直接返回
     if (!FileUtil::IsFolder(importFile)) {
-        return {importFile};
+        return { importFile };
     }
     // 分别获取trace、operator、memory文件
     auto traceFiles = FindAllTraceFile(importFile, error);
@@ -451,18 +449,18 @@ std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string 
 
     // 将所有文件的父目录放到一个set集合中（利用set进行去重）
     std::set<std::string> resultSet;
-    for (const auto &item: traceFiles) {
+    for (const auto &item : traceFiles) {
         resultSet.insert(FileUtil::GetParentPath(item));
     }
-    for (const auto &item: opFiles) {
+    for (const auto &item : opFiles) {
         resultSet.insert(FileUtil::GetParentPath(item));
     }
-    for (const auto &item: memoryFiles) {
+    for (const auto &item : memoryFiles) {
         resultSet.insert(FileUtil::GetParentPath(item));
     }
 
     if (resultSet.empty()) {
-        return {importFile};
+        return { importFile };
     }
     // 转换成vector返回
     std::vector<std::string> result(resultSet.begin(), resultSet.end());
@@ -481,18 +479,19 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     // 创建db连接池
     std::string dbPath = FileUtil::GetDbPath(jsonFile, rankId);
-    if (!DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
+    bool isParseTimeline = !DataBaseManager::Instance().IsContainDatabasePath(dbPath);
+    if (isParseTimeline && !DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", rankId, ". path:", dbPath);
     }
 
-    if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
-        Timeline::TraceFileSimulationParser::Instance().Parse(std::vector<std::string>{jsonFile}, rankId,
-                                                              filePath);
+    if (isParseTimeline && projectTypeEnum == ProjectTypeEnum::SIMULATION) {
+        Timeline::TraceFileSimulationParser::Instance().Parse(std::vector<std::string>{ jsonFile }, rankId, filePath);
         return;
     }
 
     // 如果是系统调优数据，分别解析trace、kernel和memory数据
-    if (!Timeline::TraceFileParser::Instance().Parse(std::vector<std::string>{jsonFile}, rankId, filePath)) {
+    if (isParseTimeline &&
+        !Timeline::TraceFileParser::Instance().Parse(std::vector<std::string>{ jsonFile }, rankId, filePath)) {
         ServerLog::Warn("Failed to parse baseline trace files.");
     }
 
@@ -505,6 +504,5 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     }
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
-
 } // Module
 } // Dic

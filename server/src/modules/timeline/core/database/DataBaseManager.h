@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <unordered_set>
 #include "ConnectionPool.h"
 #include "TextTraceDatabase.h"
 #include "DbTraceDataBase.h"
@@ -68,6 +69,7 @@ public:
     void SetBaselineFileType(FileType type);
     bool ResetBaseline();
     void SetDbPathMapping(const std::string& rankId, const std::string& filePath, const std::string& hostId);
+    bool IsContainDatabasePath(const std::string& databasePath);
     inline std::vector<std::string> GetDbPathByHost(const std::string& id)
     {
         return host2DbPath[id];
@@ -84,6 +86,7 @@ private:
     std::map<std::string, std::recursive_mutex> dbMutexMap;
     std::map<std::string, std::string> dbFilePathMap;
     std::map<std::string, std::vector<std::string>> host2DbPath;
+    std::unordered_set<std::string> databasePathSet;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
