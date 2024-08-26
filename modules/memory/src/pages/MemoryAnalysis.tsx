@@ -37,6 +37,7 @@ interface ConditionType {
 
 const COMPARE_MIN_INPUT_NUMBER = -2147483648;
 const MAX_INPUT_NUMBER = 4294967295;
+const DEFAULT_SIZE_CONDITION = 1000000;
 
 const FlexDiv = styled.div`
     display: flex;
@@ -93,8 +94,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     const [selectedRange, setSelectedRange] = useState<SelectedRange | undefined>();
     const [searchEventOperatorName, setSearchEventOperatorName] = useState<string>('');
     const [minSize, setMinSize] = useState<number>(0);
-    // 最大内存范围，默认1000000KB
-    const [maxSize, setMaxSize] = useState<number>(1000000);
+    // 最大内存范围，默认DEFAULT_SIZE_CONDITION KB
+    const [maxSize, setMaxSize] = useState<number>(DEFAULT_SIZE_CONDITION);
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
     const [staticCurveSpin, setStaticCurveSping] = useState<boolean>(false);
     const [tableSpin, setTableSpin] = useState<boolean>(false);
@@ -285,8 +286,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         setSearchEventOperatorName('');
         setCurrent(1);
         setPageSize(10);
-        setMinSize(0);
-        setMaxSize(1000000);
+        setMinSize(isCompare ? -DEFAULT_SIZE_CONDITION : 0);
+        setMaxSize(DEFAULT_SIZE_CONDITION);
     };
 
     const onRankIdChanged = (value: string): void => {
@@ -301,14 +302,14 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
 
     const onReset = (): void => {
         setSearchEventOperatorName('');
-        setMinSize(0);
-        setMaxSize(1000000);
+        setMinSize(isCompare ? -DEFAULT_SIZE_CONDITION : 0);
+        setMaxSize(DEFAULT_SIZE_CONDITION);
         switch (memoryType) {
             case memoryGraphType.dynamic:
-                onSearch('', 0, 1000000);
+                onSearch('', 0, DEFAULT_SIZE_CONDITION);
                 break;
             case memoryGraphType.static:
-                onStaticSearch('', 0, 1000000);
+                onStaticSearch('', 0, DEFAULT_SIZE_CONDITION);
                 break;
             default:
                 break;
@@ -359,7 +360,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             default:
                 break;
         }
-    }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t]);
+    }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy,
+        session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t, isCompare]);
 
     useEffect(() => {
         if (rankIdCondition.value === undefined || rankIdCondition.value === '') {
@@ -387,7 +389,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankIdCondition.value, groupId, t]);
+    }, [rankIdCondition.value, groupId, t, isCompare]);
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
