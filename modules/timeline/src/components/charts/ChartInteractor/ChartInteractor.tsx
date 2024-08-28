@@ -100,10 +100,13 @@ export interface InteractorMouseState {
     wheelEvent?: { ctrlKey: boolean; deltaY: number };
 };
 
+export type XReverseScaleRef = React.MutableRefObject<d3.ScaleLinear<number, number>>;
+
 export interface InteractorParams {
     normalCanvas: React.RefObject<HTMLCanvasElement>;
     hoverCanvas: React.RefObject<HTMLCanvasElement>;
     xReverseScale: (x: number) => number;
+    xReverseScaleRef: XReverseScaleRef;
     xScale: (x: number) => number;
     isNsMode: boolean;
     session: Session;
@@ -116,21 +119,21 @@ export const INTERACTOR_WIDTH = 1153;
 interface InteractorEventParams {
     interactorParams: InteractorParams;
     session: Session;
-    xReverseScale: d3.ScaleLinear<number, number>;
+    xReverseScaleRef: XReverseScaleRef;
     splitLineRef: React.RefObject<HTMLDivElement>;
     accumulativeZoomRef: React.MutableRefObject<number>;
     point?: number;
 }
 
 const handleInteractorEvent = ({
-    interactorParams, session, xReverseScale, splitLineRef, accumulativeZoomRef, point,
+    interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef, point,
 }: InteractorEventParams): any => {
     return () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
             mouseMoveAction(interactorParams, interactorMouseState, e);
         },
         mouseDownAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent) =>
-            mouseDownAction(session, xReverseScale, interactorMouseState, e, splitLineRef),
+            mouseDownAction(session, xReverseScaleRef, interactorMouseState, e, splitLineRef),
         mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
             mouseUpAction(interactorParams, interactorMouseState, e);
         },
@@ -162,7 +165,17 @@ const Interactor = ({
         , [normalRect?.width, session.domain.timePerPx, domainStart, domainEnd]);
     const xReverseScaleRef = React.useRef(xReverseScale);
     xReverseScaleRef.current = xReverseScale;
-    const interactorParams: InteractorParams = { normalCanvas, hoverCanvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
+    const interactorParams: InteractorParams = {
+        normalCanvas,
+        hoverCanvas,
+        xReverseScale,
+        xReverseScaleRef,
+        xScale,
+        isNsMode,
+        session,
+        customRenderers,
+        theme,
+    };
 
     function getDrawArgs(): DrawCanvasArgs | null {
         if (!normalCanvas.current) { return null; }
@@ -170,7 +183,7 @@ const Interactor = ({
             ctx: normalCanvas.current.getContext('2d'),
             width: normalCanvas.current.clientWidth,
             height: normalCanvas.current.clientHeight,
-            xReverseScale,
+            xReverseScaleRef,
             xScale,
             interactorMouseState,
             selectedRange: session.selectedRange,
@@ -192,8 +205,7 @@ const Interactor = ({
         draw(drawArgs);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
-    }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, normalRect,
-        scrollTop, renderTrigger, ...customRenderTriggers]);
+    }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, scrollTop, renderTrigger, ...customRenderTriggers]);
 
     useEffect(() => {
         const drawArgs = getDrawArgs();
@@ -207,7 +219,7 @@ const Interactor = ({
     const point = interactorMouseState.lastPos?.current?.x !== undefined
         ? xScale(interactorMouseState.lastPos?.current?.x)
         : undefined;
-    useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScale, splitLineRef, accumulativeZoomRef, point }));
+    useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef, point }));
     return <>
         <Overlay ref={normalCanvas} />
         <Overlay ref={hoverCanvas} />

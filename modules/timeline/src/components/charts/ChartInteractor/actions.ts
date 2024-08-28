@@ -7,7 +7,7 @@ import { runInAction } from 'mobx';
 import type React from 'react';
 import type { Session } from '../../../entity/session';
 import { traceStart } from '../../../utils/traceLogger';
-import type { InteractorMouseState, InteractorParams } from './ChartInteractor';
+import type { InteractorMouseState, InteractorParams, XReverseScaleRef } from './ChartInteractor';
 import { INTERACTOR_WIDTH } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
 import type { Pos } from './common';
@@ -56,7 +56,7 @@ const updateSessionStatus = (e: MouseEvent, session: Session, newSelected: [numb
 };
 
 export const mouseUpAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
-    const { normalCanvas: canvas, hoverCanvas, session, xReverseScale, xScale, isNsMode, customRenderers, theme } = interactorParams;
+    const { normalCanvas: canvas, hoverCanvas, session, xReverseScaleRef, xScale, isNsMode, customRenderers, theme } = interactorParams;
     const clickPos = interactorMouseState.clickPos.current;
     const lastPos = interactorMouseState.lastPos.current;
     resetDragInitData();
@@ -91,7 +91,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         ctx: canvas.current.getContext('2d'),
         width: canvas.current.clientWidth,
         height: canvas.current.clientHeight,
-        xReverseScale,
+        xReverseScaleRef,
         xScale,
         interactorMouseState,
         selectedRange: session.selectedRange,
@@ -105,7 +105,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
 
 interface GetDrawOnMoveArgs {
     canvas: React.RefObject<HTMLCanvasElement>;
-    xReverseScale: (tx: number) => number;
+    xReverseScaleRef: XReverseScaleRef;
     xScale: (pos: number) => number;
     session: Session;
     interactorMouseState: InteractorMouseState;
@@ -134,7 +134,7 @@ const getDrawOnMoveArgs = ({
 };
 
 export const mouseLeaveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState): void => {
-    const { hoverCanvas: canvas, session, xReverseScale, xScale, theme } = interactorParams;
+    const { hoverCanvas: canvas, session, xReverseScaleRef, xScale, theme } = interactorParams;
     if (canvas.current === null || session.endTimeAll === undefined) { return; }
     const clickPos = interactorMouseState.clickPos.current;
     const lastPos = interactorMouseState.lastPos.current;
@@ -155,7 +155,7 @@ export const mouseLeaveAction = (interactorParams: InteractorParams, interactorM
         }
     }
     interactorMouseState.clickPos.current = undefined; interactorMouseState.lastPos.current = undefined;
-    drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScale, xScale, interactorMouseState }));
+    drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScaleRef, xScale, interactorMouseState }));
 };
 
 export enum MouseDownActionResult {
@@ -189,14 +189,14 @@ const isInSplitLineY = (offsetY: number, splitLineRef: React.RefObject<HTMLDivEl
 };
 
 // 点击放置框选标记按钮则屏蔽mouseDownAction，避免当前框选丢失
-const shouldIgnoreRangeMarkerButton = (session: Session, lastPos: Pos, xReverseScale: (x: number) => number): boolean => {
+const shouldIgnoreRangeMarkerButton = (session: Session, lastPos: Pos, xReverseScale: XReverseScaleRef): boolean => {
     const rangeButtonCanvasHeight = 30;
     const offsetX = lastPos.x;
 
     if (session.selectedRange !== undefined && lastPos.y <= rangeButtonCanvasHeight) {
         const rangeMarkerButtonWidth = 18;
         const rangeEndTimestamp = session.selectedRange[0] > session.selectedRange[1] ? session.selectedRange[0] : session.selectedRange[1];
-        const rangeEndOffsetX = xReverseScale(rangeEndTimestamp);
+        const rangeEndOffsetX = xReverseScale.current(rangeEndTimestamp);
         if (offsetX >= rangeEndOffsetX - rangeMarkerButtonWidth && offsetX <= rangeEndOffsetX) {
             return true;
         }
@@ -205,7 +205,13 @@ const shouldIgnoreRangeMarkerButton = (session: Session, lastPos: Pos, xReverseS
     return false;
 };
 
-export const mouseDownAction = (session: Session, xReverseScale: (x: number) => number, interactorMouseState: InteractorMouseState,
+const isSingleLine = (session: Session): boolean => {
+    return Object.values(session.linkLines).some(linkLine =>
+        linkLine?.some(item => Boolean(item.cat)),
+    );
+};
+
+export const mouseDownAction = (session: Session, xReverseScaleRef: XReverseScaleRef, interactorMouseState: InteractorMouseState,
     e: React.MouseEvent, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
     const lastPos = interactorMouseState.lastPos.current;
     const isPressingKey = (isMac && e.metaKey) || (!isMac && e.ctrlKey);
@@ -217,23 +223,17 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
         return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
 
-    if (rightClickOrNoLastPos || shouldIgnoreRangeMarkerButton(session, lastPos, xReverseScale) || contextMenuVisible) {
+    if (rightClickOrNoLastPos || shouldIgnoreRangeMarkerButton(session, lastPos, xReverseScaleRef) || contextMenuVisible) {
         return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
 
     const offsetX = lastPos.x;
     const offsetY = lastPos.y;
-    if (offsetX > xReverseScale(session.endTimeAll as number)) {
+    if (offsetX > xReverseScaleRef.current(session.endTimeAll as number)) {
         runInAction(() => {
-            let isSingleLine = false;
-            Object.values(session.linkLines).forEach((linkLine) => {
-                linkLine?.forEach(item => {
-                    if (!isSingleLine) {
-                        isSingleLine = Boolean(item.cat);
-                    }
-                });
-            });
-            isSingleLine && (session.linkLines = {});
+            if (isSingleLine(session)) {
+                session.linkLines = {};
+            }
             session.selectedRange = undefined;
             session.timelineMaker.oldMarkedRange = undefined;
         });
@@ -243,10 +243,13 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
         return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
     let needDragOneSide = false;
-    if (session.selectedRange !== undefined && isOnSideline(lastPos, session.selectedRange, xReverseScale)) {
-        const isOnLeftSide = offsetX <= xReverseScale(session.selectedRange[0]) + SINGLE_DRAG_OFFSET &&
-            offsetX >= xReverseScale(session.selectedRange[0]) - SINGLE_DRAG_OFFSET;
-        interactorMouseState.clickPos.current = { x: xReverseScale(isOnLeftSide ? session.selectedRange[1] : session.selectedRange[0]), y: lastPos.y };
+    if (session.selectedRange !== undefined && isOnSideline(lastPos, session.selectedRange, xReverseScaleRef)) {
+        const isOnLeftSide = offsetX <= xReverseScaleRef.current(session.selectedRange[0]) + SINGLE_DRAG_OFFSET &&
+            offsetX >= xReverseScaleRef.current(session.selectedRange[0]) - SINGLE_DRAG_OFFSET;
+        interactorMouseState.clickPos.current = {
+            x: xReverseScaleRef.current(isOnLeftSide ? session.selectedRange[1] : session.selectedRange[0]),
+            y: lastPos.y,
+        };
         needDragOneSide = true;
     } else {
         interactorMouseState.clickPos.current = { x: offsetX, y: lastPos.y };
@@ -257,7 +260,7 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
 };
 
 export const mouseMoveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
-    const { hoverCanvas: canvas, session, xReverseScale, xScale, theme } = interactorParams;
+    const { hoverCanvas: canvas, session, xReverseScaleRef, xScale, theme } = interactorParams;
     if (canvas.current === null) { return; }
     const lastPos = interactorMouseState.lastPos.current;
     const canDrag = ((isMac && e.metaKey) || (!isMac && e.ctrlKey)) && dragData.isDragging;
@@ -267,12 +270,12 @@ export const mouseMoveAction = (interactorParams: InteractorParams, interactorMo
         canvas.current.style.pointerEvents = 'initial';
         return;
     }
-    if (isOnSideline(lastPos, session.selectedRange, xReverseScale)) {
+    if (isOnSideline(lastPos, session.selectedRange, xReverseScaleRef)) {
         canvas.current.style.cursor = 'e-resize';
     } else {
         canvas.current.style.cursor = 'default';
     }
-    drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScale, xScale, interactorMouseState }));
+    drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScaleRef, xScale, interactorMouseState }));
 };
 
 const handleZoom = throttle((session: Session, accumulativeZoomRef: React.MutableRefObject<number>, zoomPoint: number | undefined): void => {

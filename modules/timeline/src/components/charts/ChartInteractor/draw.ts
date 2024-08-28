@@ -8,10 +8,9 @@ import type { Session } from '../../../entity/session';
 import { getTimeDifference } from './common';
 import type { Pos } from './common';
 import { drawRoundedRect } from '../common';
-import type { InteractorMouseState } from './ChartInteractor';
+import type { InteractorMouseState, XReverseScaleRef } from './ChartInteractor';
 import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
-import type { Scale } from '../../../entity/chart';
 import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
 import type { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { hashToNumber } from '../../../utils/colorUtils';
@@ -185,21 +184,21 @@ export const drawTimeDiffText = (ctx: CanvasRenderingContext2D, timeString: stri
     }
 };
 
-const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: Session['selectedRange'], xScale: (posX: number) => number): void => {
+const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: Session['selectedRange'], xReverseScaleRef: XReverseScaleRef): void => {
     if (ctx !== null && selectedRange !== undefined) {
         ctx.beginPath();
-        ctx.moveTo(xScale(selectedRange[0]), 0);
+        ctx.moveTo(xReverseScaleRef.current(selectedRange[0]), 0);
         ctx.setLineDash([4, 2]);
         ctx.strokeStyle = '#5291FF';
-        ctx.lineTo(xScale(selectedRange[0]), 9999);
+        ctx.lineTo(xReverseScaleRef.current(selectedRange[0]), 9999);
         ctx.stroke();
         ctx.setLineDash([]);
 
         ctx.beginPath();
-        ctx.moveTo(xScale(selectedRange[1]), 0);
+        ctx.moveTo(xReverseScaleRef.current(selectedRange[1]), 0);
         ctx.setLineDash([4, 2]);
         ctx.strokeStyle = '#5291FF';
-        ctx.lineTo(xScale(selectedRange[1]), 9999);
+        ctx.lineTo(xReverseScaleRef.current(selectedRange[1]), 9999);
         ctx.stroke();
         ctx.setLineDash([]);
     }
@@ -218,7 +217,7 @@ const getParentNodeByClassName = (el: Element, parentClassName: string): Element
 };
 
 const drawMaskRange = ({
-    ctx, width, height, xReverseScale, xScale, interactorMouseState: {
+    ctx, width, height, xReverseScaleRef, xScale, interactorMouseState: {
         clickPos: { current: clickPos },
         lastPos: { current: mousePosNow },
     }, selectedRange, isNsMode, session, theme,
@@ -231,7 +230,7 @@ const drawMaskRange = ({
     } else if (selectedRange !== undefined) {
         // 2nd priority
         // not brushing now but has selected range
-        maskRange = [xReverseScale(selectedRange[0]), xReverseScale(selectedRange[1])];
+        maskRange = [xReverseScaleRef.current(selectedRange[0]), xReverseScaleRef.current(selectedRange[1])];
     } else {
         maskRange = undefined;
     }
@@ -268,7 +267,7 @@ export interface DrawArgs {
     ctx: CanvasRenderingContext2D | null;
     width: number;
     height: number;
-    xReverseScale: (ts: number) => number;
+    xReverseScaleRef: XReverseScaleRef;
     xScale: (posX: number) => number;
     interactorMouseState: InteractorMouseState;
     selectedRange?: [number, number];
@@ -277,7 +276,7 @@ export interface DrawArgs {
     theme: Theme;
 }
 export const drawOnMove = ({
-    ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme,
+    ctx, width, height, xReverseScaleRef, xScale, interactorMouseState, selectedRange, isNsMode, session, theme,
 }: DrawArgs): void => {
     if (ctx === null) { return; }
     const { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } } = interactorMouseState;
@@ -290,9 +289,9 @@ export const drawOnMove = ({
     // draw mask
     // 因为拖动结束时normal canvas也会绘制mask，避免绘制双层mask，这里限制只有在拖动过程中才hover canvas才绘制mask
     if (clickPos !== undefined) {
-        drawMaskRange({ ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
+        drawMaskRange({ ctx, width, height, xReverseScaleRef, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
         // should filter on data type
-        drawSelectedRange(ctx, selectedRange, xReverseScale);
+        drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
     }
 
     // draw hoverline and timeaxis highlight
@@ -371,13 +370,12 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
     const rootUnits = Array.from(new Set<InsightUnit>(session.units.flatMap(unit => unit.parent ?? unit)));
     computeUnitHeight({ units: rootUnits, height });
 };
-let lastTime = 0;
-const FRAME_TIME = 16;
+
 export interface DrawCanvasArgs {
     ctx: CanvasRenderingContext2D | null;
     width: number;
     height: number;
-    xReverseScale: (ts: number) => number;
+    xReverseScaleRef: XReverseScaleRef;
     xScale: (posX: number) => number;
     interactorMouseState: InteractorMouseState;
     selectedRange?: [number, number];
@@ -389,23 +387,18 @@ export interface DrawCanvasArgs {
 export const draw = (props: DrawCanvasArgs): void => {
     const {
         ctx, width, height,
-        xReverseScale, xScale,
+        xReverseScaleRef, xScale,
         interactorMouseState, selectedRange, isNsMode,
         session, theme,
     } = props;
-    const now = new Date().valueOf();
-    // 如果距离上次渲染的时间小于一帧的时间就不渲染
-    if (now - lastTime < FRAME_TIME) {
-        return;
-    }
-    lastTime = now;
+
     if (ctx === null) { return; }
     // clear all
     ctx.clearRect(0, 0, width, height);
-    drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScale, xScale, selectedRange, session, isNsMode, theme });
+    drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScaleRef, xScale, selectedRange, session, isNsMode, theme });
 
     // should filter on data type
-    drawSelectedRange(ctx, selectedRange, xReverseScale);
+    drawSelectedRange(ctx, selectedRange, xReverseScaleRef);
 
     heightMap.clear();
     threadIsCol.clear();
@@ -414,7 +407,7 @@ export const draw = (props: DrawCanvasArgs): void => {
     const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
     const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
-    drawLinkLines(ctx, session, xReverseScale, theme, pinnedAreaHeight);
+    drawLinkLines(ctx, session, theme, pinnedAreaHeight);
 };
 
 const UNDRAW_HEIGHT = 45;
@@ -512,7 +505,7 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     }
 }
 
-const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
+const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: Theme, pinnedAreaHeight: number): void => {
     ctx.save();
     ctx.beginPath();
     const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
