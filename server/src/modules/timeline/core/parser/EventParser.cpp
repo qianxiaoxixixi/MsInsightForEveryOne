@@ -35,6 +35,7 @@ void EventParser::InitEventHandle()
     eventHandleMap.emplace("SE", std::bind(&EventParser::SimulationEndEventHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("Ss", std::bind(&EventParser::SimulationFlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("St", std::bind(&EventParser::SimulationFlowEventsHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("SM", std::bind(&EventParser::MetaDataHandle, this, std::placeholders::_1));
 }
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
@@ -285,8 +286,8 @@ void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
         ServerLog::Error("processName or threadName is empty");
         return;
     }
-    event.pid = std::to_string(GetPid(event.processName));
-    event.tid = std::to_string(GetTid(event.processName, event.threadName));
+    event.pid = event.processName;
+    event.tid = event.threadName;
     event.trackId = GetTrackId(event.pid, event.tid);
     event.end = event.ts + event.dur;
     ThreadEvent threadEvent;
@@ -323,8 +324,6 @@ void EventParser::SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> event
     auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
     std::string processName = event.pid;
     std::string threadName = event.tid;
-    event.pid = std::to_string(GetPid(processName));
-    event.tid = std::to_string(GetTid(processName, threadName));
     event.trackId = GetTrackId(event.pid, event.tid);
     ThreadEvent threadEvent;
     threadEvent.trackId = event.trackId;

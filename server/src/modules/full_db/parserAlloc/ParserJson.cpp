@@ -15,6 +15,8 @@
 #include "ParserStatusManager.h"
 #include "EventNotifyThreadPoolExecutor.h"
 #include "ProjectExplorerManager.h"
+#include "TraceTime.h"
+#include "ParserJson.h"
 
 namespace Dic {
 namespace Module {
@@ -61,6 +63,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
                 rankEntry.second[0]);
         }
+        TraceTime::Instance().SetIsSimulation(true);
         return;
     } else if (projectTypeEnum == ProjectTypeEnum::TEXT_CLUSTER) {
         response.body.isCluster = true;

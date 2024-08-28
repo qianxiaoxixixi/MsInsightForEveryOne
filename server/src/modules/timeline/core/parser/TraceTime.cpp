@@ -19,6 +19,7 @@ void TraceTime::Reset()
     maxTimestamp = 0;
     minTimestamp = UINT64_MAX;
     cardMinTimeMap.clear();
+    isSimulation = false;
 }
 
 TraceTime::TraceTime()
@@ -85,6 +86,18 @@ uint64_t TraceTime::GetOffsetByFileId(const std::string &fileId)
         return (cardMinTime - minTimestamp);
     }
     return 0;
+}
+
+void TraceTime::SetIsSimulation(bool simulation)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    isSimulation = simulation;
+}
+
+bool TraceTime::GetIsSimulation()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return isSimulation;
 }
 } // end of namespace Timeline
 } // end of namespace Module
