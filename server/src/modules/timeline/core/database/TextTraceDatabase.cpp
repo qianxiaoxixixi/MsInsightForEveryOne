@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
+#include "TraceTime.h"
 #include "TextTraceDatabase.h"
 
 namespace Dic::Module::Timeline {
@@ -77,9 +78,12 @@ bool TextTraceDatabase::InitProcessThreadStmt()
     updateThreadSortIndexStmt = CreatPreparedStatement(sql);
     sql = SIMULATION_UPDATE_THREAD_NAME_SQL;
     simulationInsertThreadNameStmt = CreatPreparedStatement(sql);
+    sql = SIMULATION_UPDATE_PROCESS_NAME_SQL;
+    simulationInsertProcessNameStmt = CreatPreparedStatement(sql);
     if (updateProcessNameStmt == nullptr || updateProcessLabelStmt == nullptr ||
         updateProcessSortIndexStmt == nullptr || updateThreadInfoStmt == nullptr || updateThreadNameStmt == nullptr ||
-        updateThreadSortIndexStmt == nullptr || simulationInsertThreadNameStmt == nullptr) {
+        updateThreadSortIndexStmt == nullptr || simulationInsertThreadNameStmt == nullptr ||
+        simulationInsertProcessNameStmt == nullptr) {
         ServerLog::Error("Failed to prepare process and thread statement.");
         return false;
     }
@@ -103,6 +107,7 @@ void TextTraceDatabase::ReleaseStmt()
     insertFlowStmt = nullptr;
     insertCounterStmt = nullptr;
     simulationInsertThreadNameStmt = nullptr;
+    simulationInsertProcessNameStmt = nullptr;
 }
 
 bool TextTraceDatabase::SetConfig()
@@ -292,15 +297,15 @@ bool TextTraceDatabase::InsertSimulationThreadList()
 
 bool TextTraceDatabase::InsertSimulationProcessList()
 {
-    if (updateProcessNameStmt == nullptr) {
+    if (simulationInsertProcessNameStmt == nullptr) {
         ServerLog::Error("Update process info fail. ");
         return false;
     }
     for (const auto &item : simulationProcessInfoCache) {
-        updateProcessNameStmt->Reset();
+        simulationInsertProcessNameStmt->Reset();
         std::unique_lock<std::recursive_mutex> lock(mutex);
-        if (!updateProcessNameStmt->Execute(item.pid, item.processName)) {
-            ServerLog::Error("Update process info fail. ", updateProcessNameStmt->GetErrorMessage());
+        if (!simulationInsertProcessNameStmt->Execute(item.pid, item.processName)) {
+            ServerLog::Error("Update process info fail. ", simulationInsertProcessNameStmt->GetErrorMessage());
             return false;
         }
     }
@@ -914,7 +919,11 @@ bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     while (resultSet->Next()) {
         MetaDataDto metaDataDto;
         metaDataDto.pid = resultSet->GetString("pid");
-        metaDataDto.processName = resultSet->GetString("processName") + " (" + metaDataDto.pid + ")";
+        if (TraceTime::Instance().GetIsSimulation()) {
+            metaDataDto.processName = resultSet->GetString("processName");
+        } else {
+            metaDataDto.processName = resultSet->GetString("processName") + " (" + metaDataDto.pid + ")";
+        }
         metaDataDto.label = resultSet->GetString("label");
         metaDataDto.threadId = resultSet->GetString("tid");
         metaDataDto.threadName = resultSet->GetString("threadName");

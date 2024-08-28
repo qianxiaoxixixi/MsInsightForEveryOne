@@ -144,6 +144,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> simulationInsertThreadNameStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> simulationInsertProcessNameStmt = nullptr;
 
     std::vector<Trace::Slice> sliceCache;
     std::list<Protocol::SimpleSlice> sliceDepthHelper;

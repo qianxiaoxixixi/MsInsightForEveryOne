@@ -28,6 +28,7 @@ void EventUtil::Register()
     jsonToEventFactory.emplace("SE", ToSimulationEndSliceEvent);
     jsonToEventFactory.emplace("Ss", ToFlowEvent);
     jsonToEventFactory.emplace("St", ToFlowEvent);
+    jsonToEventFactory.emplace("SM", ToMetaDataEvent);
     jsonToEventFactory.emplace("s", ToFlowEvent);
     jsonToEventFactory.emplace("f", ToFlowEvent);
     jsonToEventFactory.emplace("t", ToFlowEvent);

@@ -8,6 +8,7 @@
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
+#include "TraceTime.h"
 #include "ParserBin.h"
 
 namespace Dic {
@@ -23,7 +24,12 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
-
+    if (std::empty(projectInfos)) {
+        SendParseFailEvent("", "Project explorer info is not existed.");
+        // 这里需要返回一个true应答,否则前端会陷入不停loading中
+        responsePtr->result = true;
+        session.OnResponse(std::move(responsePtr));
+    }
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
 
     ModuleRequestHandler::SetResponseResult(response, true);
@@ -39,6 +45,7 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
         Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
         ServerLog::Info("Import file is binary.Start parse source binary file.");
         HandleCompute(response, selectedFolder);
+        TraceTime::Instance().SetIsSimulation(true);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
         SetParseCallBack(Source::SourceFileParser::Instance());
         session.OnResponse(std::move(responsePtr));

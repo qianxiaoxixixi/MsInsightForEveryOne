@@ -23,6 +23,9 @@ const std::string KERNEL_DETAIL = "kernel_detail";
 
 const std::string UPDATE_PROCESS_NAME_SQL = "INSERT INTO  process  (pid, process_name) VALUES (?, ?) ON CONFLICT (pid) "
     "DO UPDATE SET process_name = excluded.process_name;";
+const std::string SIMULATION_UPDATE_PROCESS_NAME_SQL =
+    "INSERT INTO  process  (pid, process_name) VALUES (?, ?) ON CONFLICT (pid) "
+    "DO NOTHING";
 const std::string UPDATE_PROCESS_LABLE_SQL =
     "INSERT INTO process (pid, label) VALUES (?, ?) ON CONFLICT (pid) DO UPDATE SET label = excluded.label;";
 const std::string UPDATE_PROCESS_SORTINDEX_SQL = "INSERT INTO process (pid, process_sort_index) VALUES (?, ?) ON "
@@ -38,8 +41,7 @@ const std::string UPDATE_THREAD_SORTINDEX_SQL = "INSERT INTO thread (track_id, t
     "excluded.thread_sort_index;";
 const std::string SIMULATION_UPDATE_THREAD_NAME_SQL = "INSERT INTO thread"
     " (track_id, tid, pid, thread_name, thread_sort_index) VALUES (?, ?, ?, ?, ?)"
-    " ON CONFLICT (track_id) DO UPDATE "
-    " SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name;";
+    " ON CONFLICT (track_id) DO NOTHING ";
 const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
     " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
     " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT, end_time INTEGER, flag_id TEXT);" +
@@ -59,7 +61,8 @@ const std::string QUERY_ALL_TRACKID_SQL = "select track_id as trackId from threa
 const std::string QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL =
     "SELECT id, timestamp, end_time FROM " + SLICE_TABLE + " WHERE track_id = ? ";
 const std::string QUERY_SLICE_DETAIL_SQL = "SELECT id, timestamp, duration, name, track_id, cat, args"
-    " FROM " + SLICE_TABLE + " WHERE id = ?";
+    " FROM " +
+    SLICE_TABLE + " WHERE id = ?";
 const std::string QUERY_DURATION_FROM_SLICE_BY_TIME_RANGE_SQL = "SELECT id, timestamp, duration FROM " + SLICE_TABLE +
     " WHERE end_time <= ? AND timestamp >= ? AND track_id = ? Order by timestamp";
 const std::string QUERY_KERNAL_SHAPE_SQL =
@@ -318,7 +321,8 @@ public:
             " t on s.track_id = t.track_id "
             "WHERE t.thread_name LIKE 'Stream%' "
             "AND s.name IN ( "
-            "    SELECT name FROM " + SLICE_TABLE +
+            "    SELECT name FROM " +
+            SLICE_TABLE +
             "    WHERE name LIKE 'aclnn%' "
             "    GROUP BY name HAVING COUNT(name) >= ? "
             ") ORDER BY " +

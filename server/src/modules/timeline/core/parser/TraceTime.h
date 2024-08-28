@@ -23,6 +23,8 @@ public:
     uint64_t GetOffsetByFileId(const std::string &fileId);
     uint64_t GetStartTime();
     uint64_t GetDuration();
+    void SetIsSimulation(bool isSimulation);
+    bool GetIsSimulation();
 
 private:
     TraceTime();
@@ -31,6 +33,7 @@ private:
     uint64_t maxTimestamp{};
     uint64_t minTimestamp{};
     std::unordered_map<std::string, uint64_t> cardMinTimeMap;
+    bool isSimulation = false;
 };
 } // end of namespace Timeline
 } // end of namespace Module
