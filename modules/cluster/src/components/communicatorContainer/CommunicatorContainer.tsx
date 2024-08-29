@@ -256,16 +256,16 @@ const ParallelSwitch = ({ onChange, session }: { session: Session; onChange: (na
     const [form] = Form.useForm();
     const options = [
         {
-            name: 'dataParallel',
-            title: 'Data Parallel',
+            name: 'pipelineParallel',
+            title: 'Pipeline Parallel',
         },
         {
             name: 'tensorParallel',
             title: 'Tensor Parallel',
         },
         {
-            name: 'pipelineParallel',
-            title: 'Pipeline Parallel',
+            name: 'dataParallel',
+            title: 'Data Parallel',
         },
     ];
     useEffect(() => {
