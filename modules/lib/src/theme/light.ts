@@ -42,7 +42,7 @@ export const light: Theme = {
     backIconBackgroundColor: 'rgb(0, 0, 0)',
     arrowUnexpandedBgColor: 'rgb(0, 0, 0, 0.5)',
     insightHeaderButtonBackgroundColor: 'rgb(217, 218, 220)',
-    timelineAxisColor: 'rgb(217, 217, 220)',
+    timelineAxisColor: '#C3CEDF',
     searchInputCaretColor: '#0A59F7',
     allSessionHeadBgColor: 'rgba(0, 0, 0, 0.05)',
     deviceProcessActiveBackgroundColor: '#FFFFFF', // 设备和进程下拉框选中范围的背景颜色
@@ -217,4 +217,6 @@ export const light: Theme = {
     tableTextColor: '#000000',
     radioSelectedColor: '#007AFF',
     rankBackgroudColor: 'rgb(172 177 185)',
+    contextMenuBgColor: '#EBEFF6',
+    summaryChartBgColor: '#BFC7D7',
 };

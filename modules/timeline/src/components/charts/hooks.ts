@@ -8,6 +8,7 @@ import type { Session } from '../../entity/session';
 import { logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
 import type { InsightUnit } from '../../entity/insight';
+import { useTheme } from '@emotion/react';
 
 export interface Pos {
     x: number;
@@ -40,13 +41,14 @@ export const useData = <T extends ChartType>({ session, mapFunc, unit, metadata,
     const { endTimeAll } = session;
     const [datasState, setDatasState] = useState<ChartData<T>>([]);
     const requestedWidth = useRef(0);
+    const theme = useTheme();
     useEffect(() => {
         if (width === 0) {
             setDatasState([]);
             return;
         }
         requestedWidth.current = width;
-        mapFunc(session, metadata, unit).then(datas => {
+        mapFunc(session, metadata, unit, theme).then(datas => {
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
                 return;

@@ -10,7 +10,7 @@ import { ResetIcon, PlusIcon as Add, MinusIcon as Del } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';
-import { StyledTooltip } from './base/StyledTooltip';
+import { Tooltip } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 
 const TEXT_WIDTH = 50;
@@ -20,7 +20,6 @@ const Container = styled.div`
     align-items: center;
     text-align: center;
     font-size: ${FONT_SIZE}px;
-    margin-right: 1em;
     line-height: 20px;
     height:32px;
     svg {
@@ -32,51 +31,60 @@ const Percentage = styled.span`
     text-overflow: ellipsis;
     width: ${TEXT_WIDTH}px;
 `;
+const Controller = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: center;
+  background: ${(props): string => props.theme.bgColorLight};
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 8px;
+`;
 
 export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
     const { t } = useTranslation();
-    const { zoom, isLowerBound, isUpperBound, shouldResetDisable } = React.useMemo(() => ({
+    const { zoom, isLowerBound, isUpperBound, isResetDisabled } = React.useMemo(() => ({
         zoom: getDuration(session.domain.duration, { precision: session.isNsMode ? 'ns' : 'ms', maxChars: TEXT_WIDTH / FONT_SIZE }),
         isLowerBound: session.domain.isLowerBound,
         isUpperBound: session.domain.isUpperBound,
-        shouldResetDisable: session.endTimeAll === undefined,
+        isResetDisabled: session.endTimeAll === undefined,
     }), [session.domain.duration, session.endTimeAll]);
     return <Container>
-        <Container>
-            <StyledTooltip title={t('tooltip:reset')}><ResetIcon
-                disabled={shouldResetDisable}
-                onClick={(): void => {
-                    runInAction(() => {
-                        session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
-                        session.contextMenu.zoomHistory = [];
-                    });
-                }}
-            /></StyledTooltip>
-        </Container>
-        <StyledTooltip title={t('tooltip:del')}>
-            <Del
-                disabled={isUpperBound}
-                onClick={(): void => {
-                    runInAction(() => {
-                        traceStart('zoomProportion', { action: 'zoomProportion' });
-                        session.zoom = { zoomCount: 1 };
-                    });
-                }}
-            />
-        </StyledTooltip>
-        <StyledTooltip title={zoom}>
-            <Percentage>{zoom}</Percentage>
-        </StyledTooltip>
-        <StyledTooltip title={t('tooltip:add')}>
-            <Add
-                disabled={isLowerBound}
-                onClick={(): void => {
-                    runInAction(() => {
-                        traceStart('zoomProportion', { action: 'zoomProportion' });
-                        session.zoom = { zoomCount: -1 };
-                    });
-                }}
-            />
-        </StyledTooltip>
+        <Tooltip title={t('tooltip:reset')}><ResetIcon
+            disabled={isResetDisabled}
+            onClick={(): void => {
+                runInAction(() => {
+                    session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+                    session.contextMenu.zoomHistory = [];
+                });
+            }}
+        /></Tooltip>
+        <Controller>
+            <Tooltip title={t('tooltip:del')}>
+                <Del
+                    disabled={isUpperBound}
+                    onClick={(): void => {
+                        runInAction(() => {
+                            traceStart('zoomProportion', { action: 'zoomProportion' });
+                            session.zoom = { zoomCount: 1 };
+                        });
+                    }}
+                />
+            </Tooltip>
+            <Tooltip title={zoom}>
+                <Percentage>{zoom}</Percentage>
+            </Tooltip>
+            <Tooltip title={t('tooltip:add')}>
+                <Add
+                    disabled={isLowerBound}
+                    onClick={(): void => {
+                        runInAction(() => {
+                            traceStart('zoomProportion', { action: 'zoomProportion' });
+                            session.zoom = { zoomCount: -1 };
+                        });
+                    }}
+                />
+            </Tooltip>
+        </Controller>
     </Container>;
 });

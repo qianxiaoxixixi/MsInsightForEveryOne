@@ -36,16 +36,13 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
     box-sizing: border-box;
     flex-direction: row;
     height: ${(props): number => props.laneHeight}px;
-    border-bottom: solid 1px ${(props): string => props.theme.tableBorderColor};
+    border-bottom: solid 1px ${(props): string => props.theme.borderColor};
     .unit-info {
         background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.contentBackgroundColor};
         div svg g use {
             fill: ${(props): string => props.theme.fontColor};
         }
     }
-    .empty.unit-info{
-        background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.buttonBackgroundColor};
-     }
     .chart-selected {
         box-shadow: 0 0 0 3px ${(props): string => props.theme.selectedChartBorderColor} inset;
     }
@@ -58,7 +55,7 @@ const UNIT_VISIBLE = 'unit-visible';
 const Splitter = styled.div`
     width: 100%;
     height: 1px;
-    background-color: ${(props): string => props.theme.tableBorderColor};
+    background-color: ${(props): string => props.theme.borderColor};
 `;
 
 const Join = (props: { joiner: React.FC; children: JSX.Element[] }): JSX.Element => (
@@ -151,6 +148,7 @@ export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, i
             height={height}
             session={session}
             unit={unit}
+            isSelected={isSelected}
             {...props}
         />
         <div className={isSelected ? 'chart-selected' : 'chart'} ref={ref}
@@ -362,7 +360,7 @@ const TableScroller = styled.div`
     flex-grow: 1;
     overflow-y: overlay;
     overflow-x: hidden;
-    border-top: solid 1px ${(props): string => props.theme.tableBorderColor};
+    border-top: solid 1px ${(props): string => props.theme.borderColor};
     user-select: none;
 `;
 

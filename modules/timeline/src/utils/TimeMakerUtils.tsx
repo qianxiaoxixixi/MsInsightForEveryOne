@@ -22,7 +22,6 @@ import type { TFunction } from 'i18next';
 import { StyledButton } from '../components/base/StyledButton';
 import { runInAction } from 'mobx';
 import { getTimestamp } from './humanReadable';
-import { StyledTooltip } from '../components/base/StyledTooltip';
 
 export interface TimeLineMakerProps {
     session: Session;
@@ -427,10 +426,16 @@ const TimeMakerListElement = observer((props: TimeLineMakerProps): JSX.Element =
             setSelectFlag={setSelectFlag} setFlagColor={setFlagColor} setDeleteSignal={setDeleteSignal} deleteSignal={deleteSignal}/>
         <MarkerListText>
             <div id={'bottomActionGroup'} style={{ color: theme.svgPlayBackgroundColor, display: 'flex' }} >
-                <div style={{ paddingTop: '5%', width: props.session.timelineMaker.selectedFlag ? '70%' : '60%' }}><DeleteIcon style={{ cursor: 'pointer', width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }} onClick={(): void => deleteAll(props)}></DeleteIcon><text style={{ cursor: 'pointer', paddingLeft: '10px' }} onClick={(): void => deleteAll(props)}>{t('timelineMarker:clear')}</text></div>
-                <StyledTooltip title={t('timelineMarker:markerDiff')} placement={'bottom'}>
-                    <div style={{ paddingTop: '5%' }}><TimeDiffIcon style={{ width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }}></TimeDiffIcon><text id={ 'timeDiffDisplay' } style={{ paddingLeft: '5px' }}>{timeDiff}</text></div>
-                </StyledTooltip>
+                <div style={{ paddingTop: '5%', width: props.session.timelineMaker.selectedFlag ? '70%' : '60%' }}>
+                    <DeleteIcon style={{ cursor: 'pointer', width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }} onClick={(): void => deleteAll(props)}></DeleteIcon>
+                    <text style={{ cursor: 'pointer', paddingLeft: '10px' }} onClick={(): void => deleteAll(props)}>{t('timelineMarker:clear')}</text>
+                </div>
+                <Tooltip title={t('timelineMarker:markerDiff')} placement={'bottom'}>
+                    <div style={{ paddingTop: '5%' }}>
+                        <TimeDiffIcon style={{ width: '20px', height: '20px', fill: theme.svgPlayBackgroundColor, verticalAlign: 'bottom' }}></TimeDiffIcon>
+                        <text id={ 'timeDiffDisplay' } style={{ paddingLeft: '5px' }}>{timeDiff}</text>
+                    </div>
+                </Tooltip>
             </div>
         </MarkerListText>
     </MarkerListBody>

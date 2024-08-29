@@ -117,7 +117,7 @@ export const renderRadiusBorder = ({ topLeft, topRight, bottomRight, bottomLeft,
     const height = Math.floor(bottomLeft - halfLine - 1);
     const beginX = topLeft;
     const beginY = topRight + (((halfLine * 2) + height) * depth);
-    const radius = width >= 8 ? 4 : width / 2;
+    const radius = width >= 2 ? 1 : width / 2;
     if (radius < 1) {
         ctx.strokeRect(beginX, beginY, bottomRight, Math.floor(bottomLeft - halfLine - 1));
     } else {

@@ -42,7 +42,7 @@ export const dark: Theme = {
     backIconBackgroundColor: 'rgb(255, 255, 255)', // all sessions页面返回按钮背景色
     arrowUnexpandedBgColor: 'rgb(255, 255, 255, 0.5)', // Detail表格未展开时小三角背景色
     insightHeaderButtonBackgroundColor: 'rgb(48, 48, 48)',
-    timelineAxisColor: 'rgb(76, 76, 76)',
+    timelineAxisColor: '#3e4551',
     searchInputCaretColor: '#317AF7', // 搜索输入框光标颜色
     allSessionHeadBgColor: 'rgba(255, 255, 255, 0.05)', // session列表页头部背景色
     deviceProcessActiveBackgroundColor: '#313131', // 设备和进程下拉框选中范围的背景颜色
@@ -217,5 +217,7 @@ export const dark: Theme = {
     tableTextColor: '#8D98AA',
     radioSelectedColor: '#007AFF',
     rankBackgroudColor: 'rgb(62, 69, 81)',
+    contextMenuBgColor: '#2a2f37',
+    summaryChartBgColor: '#576372',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

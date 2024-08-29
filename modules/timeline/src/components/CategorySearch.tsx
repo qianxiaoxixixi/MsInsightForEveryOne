@@ -19,7 +19,6 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { ThreadMetaData } from '../entity/data';
 import { generateFlowParam } from '../insight/units/details';
 import { getTimeOffset } from '../insight/units/utils';
-import { StyledTooltip } from './base/StyledTooltip';
 
 const CloseIcon = AntdCloseIcon as SvgType;
 
@@ -265,17 +264,17 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     } else {
         if (searchIconVisible) {
             dom = <div className={'search_icon_css'}>
-                <StyledTooltip title={t('Match case', { ns: 'tooltip' })}>
+                <Tooltip title={t('Match case', { ns: 'tooltip' })}>
                     <StyledButton icon={isMatchCase
                         ? <div className={'icon_selected_case_match'}/>
                         : <div className={'icon_case_match'}/>}
                     onClick={(): void => changeMatchCaseStatus()}></StyledButton>
-                </StyledTooltip>
-                <StyledTooltip title={t('Words', { ns: 'tooltip' })}>
+                </Tooltip>
+                <Tooltip title={t('Words', { ns: 'tooltip' })}>
                     <StyledButton icon={isMatchExact
                         ? <div className={'icon_selected_exact_match'}/>
                         : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton>
-                </StyledTooltip>
+                </Tooltip>
                 <CustomButton icon={SearchIcon as any} onClick={onInputPressEnter}></CustomButton>
             </div>;
         } else {

@@ -27,7 +27,7 @@ import { createCounterParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
-import { generateFlowParam, generateLinkDetail, slicesListDetail } from './details';
+import { generateFlowParam, slicesListDetail } from './details';
 import { colorPalette, getTimeOffset } from './utils';
 import React, { useEffect, useState, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
@@ -38,7 +38,7 @@ import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
-import { StyledTooltip } from '../../components/base/StyledTooltip';
+import { Tooltip } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
@@ -243,7 +243,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                         return;
                     }
                     // 来自本泳道点击的数据，给数据描边+画线
-                    ctx.strokeStyle = theme.fontColor;
+                    ctx.strokeStyle = theme.textColorPrimary;
                     const duration = selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration;
                     const bottomRight = xScale(duration) - xScale(selectedData.startTime);
                     renderRadiusBorder({
@@ -311,8 +311,6 @@ export const ThreadUnit = unit<ThreadMetaData>({
             {
                 Detail: ({ session }): JSX.Element => <SelectedDataBottomPanel
                     session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
-                More: ({ session }): JSX.Element =>
-                    <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             },
             {
                 Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail
@@ -409,7 +407,7 @@ const SummaryChart = chart({
                     duration: data.duration,
                     name: '',
                     type: '',
-                    color: '#7d7d7d',
+                    color: '',
                 });
             });
             return res;
@@ -446,7 +444,11 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) => <StyledTooltip placement="leftBottom" title={metadata.cardPath}><span style={{ marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{metadata.cardName}</span></StyledTooltip>,
+    renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) => <Tooltip placement="leftBottom" title={metadata.cardPath}>
+        <span style={{ marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {metadata.cardName}
+        </span>
+    </Tooltip>,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {

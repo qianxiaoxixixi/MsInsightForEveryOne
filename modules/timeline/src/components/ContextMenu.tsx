@@ -15,7 +15,7 @@ import type { ThreadTrace, ThreadMetaData, CardMetaData } from '../entity/data';
 import type { TimeStamp } from '../entity/common';
 import connector from '../connection';
 import { type ChartDesc, type InsightUnit, unit } from '../entity/insight';
-import { StyledTooltip } from './base/StyledTooltip';
+import { Tooltip } from 'ascend-components';
 import type { StackStatusConfig } from '../entity/chart';
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
@@ -39,25 +39,27 @@ interface MenuItemModel {
 }
 
 const MenuContainer = styled.div`
+    padding: 3px 0;
     min-width: 200px;
-    border: 1px solid #ccc;
-    background-color:  ${(props): string => props.theme.contentBackgroundColor};
+    border-radius: ${(props): string => props.theme.borderRadiusBase};
+    background-color:  ${(props): string => props.theme.contextMenuBgColor};
     position: fixed;
     z-index: 99999;
     transition: all .1s ease;
+    box-shadow: ${(props): string => props.theme.boxShadowLight};
+    user-select: none;
 `;
 
 const MenuItem = styled.div`
-    padding: 4px 20px;
-    color: ${(props): string => props.theme.fontColor};
-    text-align: left;
+    padding: 4px 16px;
+    color: ${(props): string => props.theme.textColorPrimary};
 
     &:not(.disabled):hover{
-      background: ${(props): string => props.theme.selectedChartBorderColor};
+      background: ${(props): string => props.theme.primaryColorHover};
       color: #ffffff;
     }
     &.disabled{
-      color: ${(props): string => props.theme.disabledFontColor};
+        color: ${(props): string => props.theme.textColorDisabled};
     }
 `;
 
@@ -220,7 +222,11 @@ const showAllHidedUnits = (session: Session): void => {
 export const EmptyUnit = unit<EmptyMetaData>({
     name: 'Empty',
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { count: number}) => <StyledTooltip placement="leftBottom"><span style={{ marginLeft: 3, overflow: 'hidden', fontSize: 14, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{metadata.count}{' units hidden'}</span></StyledTooltip>,
+    renderInfo: (session: Session, metadata: { count: number}) => <Tooltip placement="leftBottom">
+        <span style={{ marginLeft: 3, overflow: 'hidden', fontSize: 14, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {metadata.count}{' units hidden'}
+        </span>
+    </Tooltip>,
 });
 
 interface EmptyMetaData {

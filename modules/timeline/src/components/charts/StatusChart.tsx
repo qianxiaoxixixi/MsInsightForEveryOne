@@ -13,6 +13,14 @@ import { useBatchedRender, useClick, useData, useHoverPosX, useRangeAndDomain } 
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 
 type StatusChartProps = ChartProps<'status'>;
+interface DrawParams {
+    ctx: CanvasRenderingContext2D | null;
+    datas: StatusData[];
+    xScale: Scale;
+    yScale: Scale;
+    theme: Theme;
+    startY: number;
+}
 
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D): [ string, number ] => {
     if (ctx.measureText(text).width <= maxWidth) { return [text, ctx.measureText(text).width]; }
@@ -31,21 +39,21 @@ const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2
     return [`${text.slice(0, mid)}...`, ctx.measureText(`${text.slice(0, mid)}...`).width];
 };
 
-const draw = (ctx: CanvasRenderingContext2D | null, datas: StatusData[], xScale: Scale, yScale: Scale, theme: Theme): void => {
+const draw = ({ ctx, datas, xScale, yScale, theme, startY }: DrawParams): void => {
     if (!ctx) { return; }
     ctx.textAlign = 'start';
     ctx.textBaseline = 'top';
     const minTextWidth = ctx.measureText('...').width + 8;
     datas.forEach(data => {
-        ctx.fillStyle = data.color;
+        ctx.fillStyle = theme.summaryChartBgColor;
         let width = xScale(data.startTime + data.duration) - xScale(data.startTime);
         width = Math.max(1, Math.floor(width));
         const height = yScale(1) - yScale(0);
-        const radius = width >= 8 ? 4 : width / 2;
+        const radius = width >= 2 ? 1 : width / 2;
         if (radius < 1) {
-            ctx.fillRect(Math.floor(xScale(data.startTime)), 1, width, height - 2);
+            ctx.fillRect(Math.floor(xScale(data.startTime)), startY, width, height - 2);
         } else {
-            drawRoundedRect([Math.floor(xScale(data.startTime)), 1, width, height - 2], ctx, radius);
+            drawRoundedRect([Math.floor(xScale(data.startTime)), startY, width, height - 2], ctx, radius);
             ctx.fill();
         }
         if (width < minTextWidth) { return; }
@@ -125,11 +133,12 @@ export const StatusChart = observer(({
         const ctx = canvas.current.getContext('2d');
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
         const yScale = (n: number): number => n * rowHeight;
+        const startY = ((height - rowHeight) / 2) + 1;
         ctx?.clearRect(0, 0, width, height);
-        draw(ctx, datasState, xScale, yScale, theme);
+        draw({ ctx, datas: datasState, xScale, yScale, theme, startY });
         drawExt({
             context: ctx,
-            draw: (data, scaleX, scaleY) => draw(ctx, data, scaleX, scaleY, theme),
+            draw: (data, scaleX, scaleY) => draw({ ctx, datas: data, xScale: scaleX, yScale: scaleY, theme, startY }),
             findAll: (condition) => datasState.filter(condition),
         }, xScale, yScale, theme);
     }, [datasState, rangeAndDomain, ...triggers, theme]);
