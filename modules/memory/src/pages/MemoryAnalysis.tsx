@@ -389,7 +389,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankIdCondition.value, groupId, t, isCompare]);
+    }, [rankIdCondition.value, groupId, t, isCompare, session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
@@ -424,14 +424,26 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     }, [rankIdCondition.value, session.isClusterMemoryCompletedSwitch, memoryGraphId, t]);
 
     useEffect(() => {
-        // 只对RandId为数字做排序，不能转为数字的字符串则不排序
-        const rankIdOptions = JSON.parse(JSON.stringify(hostCondition.ranks?.get(hostCondition.value) ?? [])).sort((a: any, b: any) => Number(a) - Number(b));
-        setRankIdCondition({ options: rankIdOptions, value: rankIdOptions[0] });
+        // 只对RankId为数字做排序，不能转为数字的字符串则不排序
+        const rankIdOptions: string[] = JSON.parse(JSON.stringify(hostCondition.ranks?.get(hostCondition.value) ?? []))
+            .sort((a: any, b: any) => Number(a) - Number(b));
+        if (rankIdOptions.length === 0) {
+            setRankIdCondition({ options: [], value: '' });
+            return;
+        }
+        const rankIdValue = (rankIdCondition.value === undefined || rankIdCondition.value === '') ? rankIdOptions[0] : rankIdCondition.value;
+        setRankIdCondition({ options: rankIdOptions, value: rankIdValue });
     }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
 
     useEffect(() => {
-        onRankIdChanged(session.compareRank.rankId);
-    }, [JSON.stringify(session.compareRank)]);
+        setRankIdCondition({ options: rankIdCondition.options, value: rankIdCondition.options[0] });
+    }, [session.isClusterMemoryCompletedSwitch]);
+
+    useEffect(() => {
+        if (session.memoryRankIds.includes(session.compareRank.rankId)) {
+            onRankIdChanged(session.compareRank.rankId);
+        }
+    }, [JSON.stringify(session.compareRank), JSON.stringify(session.memoryRankIds)]);
 
     return (
         <Layout>
