@@ -146,16 +146,15 @@ const handleOrginData = (group: string, pageSize: number, current: number, data:
 
 const handleDiffData = (group: string, pageSize: number, current: number, data: any[]): any => {
     const realData: any[] = [];
-    const detailData = new Map();
     data.forEach((item: any, index: number) => {
         if (item.diff !== null && item.diff !== undefined) {
             item.diff.rowKey = group + String((pageSize * current) + index);
             item.diff.source = 'Difference';
+            item.diff.compInfo = [item.baseline, item.compare];
             realData.push(item.diff);
-            detailData.set(item.diff.rowKey, [item.baseline, item.compare]);
         };
     });
-    return { realData, detailData };
+    return realData;
 };
 
 const handleCompareData = (data: any): any[] => {
@@ -184,7 +183,6 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const [fullCondition, setFullCondition] = useState<FullConditionType>({
         current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
     });
-    const [compareDetailData, setCompareDetailData] = useState(new Map());
     const [compareColumnLevel, setCompareColumnLevel] = useState<string>();
     const btnCol = {
         title: t('Details'),
@@ -226,13 +224,11 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         }
         const { data, total, level } = res;
         let realData = [];
-        let detailData = new Map();
         if (isCompare) {
             if (isExpend) {
                 realData = handleCompareData(data);
             } else {
-                ({ realData, detailData } = handleDiffData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data));
-                setCompareDetailData(detailData);
+                realData = handleDiffData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data);
                 setCompareColumnLevel(level);
             }
         } else {
@@ -333,7 +329,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                         isCompare
                             ? {
                                 level: compareColumnLevel,
-                                detailData: compareDetailData.get(expandedRowKeys[0]) ?? [],
+                                detailData: record.compInfo ?? [],
                             } as CompInfo
                             : undefined
                     }
