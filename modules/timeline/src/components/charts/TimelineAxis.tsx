@@ -352,19 +352,20 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
                 domain: [session.domainRange.domainStart, session.domainRange.domainEnd],
                 spaceX: margin,
                 fontColor: theme.fontColor,
+                fontFamily: theme.fontFamily,
                 lineColor: theme.timelineAxisColor,
                 textParser: getTextParser(session.isNsMode),
                 timePerPx: session.domain.timePerPx,
             });
         }
-    }, []);
+    }, [theme]);
     const renderEngine = useRenderEngine();
     React.useEffect(() => {
         const renderID = renderEngine.addTask(draw);
         return () => {
             renderEngine.deleteTask(renderID);
         };
-    }, []);
+    }, [theme]);
     return <CanvasContainer ref={ref} className={TIME_LINE_AXIS_CLASSNAME}>
         <canvas
             ref={canvas}

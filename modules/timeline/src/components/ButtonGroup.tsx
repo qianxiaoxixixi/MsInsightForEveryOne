@@ -15,7 +15,7 @@ const Container = styled.div`
     align-items: center;
     text-align: center;
     font-size: 12px;
-    margin-right: 1em;
+    margin-right: 3px;
     svg {
         cursor: pointer;
     }

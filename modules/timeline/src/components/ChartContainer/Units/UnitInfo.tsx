@@ -26,7 +26,7 @@ import { traceSingle } from '../../../utils/traceLogger';
 import { isPinned, switchPinned } from '../unitPin';
 import { useSelectUnit } from './hooks';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
-import { StyledTooltip } from '../../base/StyledTooltip';
+import { Tooltip } from 'ascend-components';
 import { CardUnit } from '../../../insight/units/AscendUnit';
 import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
 import { UnitProgress } from '../../charts/UnitProgress';
@@ -83,6 +83,7 @@ interface DefaultInfoProps {
     isHovered: boolean;
     hasPinButton: boolean;
     name: string;
+    isSelected: boolean;
 }
 
 const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
@@ -93,13 +94,13 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
             className={cls('insight-lane-info-header', { expandable: unit.children && unit.children.length > 0 }) }
         >
             <div className={cls('insight-lane-info-outer-name', { noTag: isEmpty(tag) })}>
-                <StyledTooltip title={name}>
+                <Tooltip title={name}>
                     <span className="insight-lane-info-name">{name}</span>
-                </StyledTooltip>
+                </Tooltip>
                 { [...unit.notifications ?? []]?.map((item, index) => {
                     const notifyRes = item(unit.metadata);
                     if (notifyRes !== false) {
-                        return <StyledTooltip key={index} title={notifyRes}><Supported style={{ marginLeft: 8 }}/></StyledTooltip>;
+                        return <Tooltip key={index} title={notifyRes}><Supported style={{ marginLeft: 8 }}/></Tooltip>;
                     }
                     return null;
                 })}
@@ -129,7 +130,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
     const placeholder = <StyledButton style={style} icon={<StickyIcon fill="transparent" />} />;
     return <>
         {shouldDisplayStickyButton(session, isHovered, hasPinButton, isPinned)
-            ? <StyledTooltip title={t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
+            ? <Tooltip title={t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
                 <StyledButton
                     style={style}
                     icon={isPinned ? <PinIcon/> : <UnPinIcon/>}
@@ -156,7 +157,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
                         });
                     }}
                 />
-            </StyledTooltip>
+            </Tooltip>
             : placeholder}
     </>;
 });
@@ -166,14 +167,15 @@ interface ConfigBarProps {
     unit: KeyedInsightUnit;
     isHovered: boolean;
     hasPinButton: boolean;
+    isSelected: boolean;
 }
-const ConfigBar = observer(({ session, unit, isHovered, hasPinButton }: ConfigBarProps): JSX.Element => {
+const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected }: ConfigBarProps): JSX.Element => {
     return <div className="insight-lane-configbar">
         <div style={{ display: 'flex', marginLeft: 5 }} onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
             e.preventDefault();
-        }} >
-            {unit.configBar?.(session, unit.metadata)}
+        }}>
+            {(isHovered || isSelected) && unit.configBar?.(session, unit.metadata)}
             <PinButton
                 session={session}
                 unit={unit}
@@ -191,6 +193,7 @@ interface UnitInfoContentProps {
     isHovered: boolean;
     hasPinButton: boolean;
     isPinned: boolean;
+    isSelected: boolean;
 }
 
 const InsightLaneInfoContainer = styled.div`
@@ -249,7 +252,7 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
             : <></> }
         { getParserVisiable(unit)
             ? <div>
-                <StyledButton style={{ backgroundColor: 'transparent' }}
+                <StyledButton transparent
                     icon={<StartIcon height={14} width={14}/>}
                     loading={loading} onClick={(): void => handleStartClick()}/>
             </div>
@@ -283,6 +286,7 @@ interface UnitInfoProps {
     isPinned: boolean;
     height: number;
     className: string;
+    isSelected: boolean;
 }
 
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, className, ...props }: UnitInfoProps): JSX.Element => {

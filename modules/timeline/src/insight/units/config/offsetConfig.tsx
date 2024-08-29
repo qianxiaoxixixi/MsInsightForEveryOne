@@ -9,10 +9,9 @@ import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import type { Session } from '../../../entity/session';
 import styled from '@emotion/styled';
-import { StyledTooltip } from '../../../components/base/StyledTooltip';
+import { Tooltip } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { useTheme } from '@emotion/react';
 import type { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
 import { getTimeOffset } from '../utils';
 import { CustomButton } from '../../../components/base/StyledButton';
@@ -27,6 +26,11 @@ const inputBorderColor = '#1890ff';
 const invalidBorderColor = '#C61E37FF';
 const inputBorderShadow = '0 0 0 2px rgba(24, 144, 255, 0.2)';
 const invalidBorderShadow = '0 0 0 2px rgba(255, 0, 0, 0.2)';
+
+const OffsetButton = styled.div`
+    color: ${(props): string => props.theme.primaryColor};
+    cursor: pointer;
+`;
 
 // Changing the border color of the input box when the input value is invalid
 const onChange = ({ e, session, setOffset, setVisible, setTitle, t }: {
@@ -132,7 +136,7 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
     useEffect(() => {
         setOffset(String(timestampOffset));
     }, [timestampOffset]);
-    return <StyledTooltip
+    return <Tooltip
         trigger={'click'}
         placement={'bottom'}
         title={
@@ -151,9 +155,9 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
                     <CustomButton tooltip={t('Align to Start', { ns: 'timeline' })} icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
                 </InputDiv>
             </InputContainer>}
-        overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
-        <div style={{ cursor: 'pointer' }}>{t('Offset', { ns: 'timeline' })}</div>
-    </StyledTooltip>
+        overlayInnerStyle={{ borderRadius: 2 }}>
+        <OffsetButton>{t('Offset', { ns: 'timeline' })}</OffsetButton>
+    </Tooltip>
     ;
 });
 

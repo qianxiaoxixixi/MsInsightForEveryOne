@@ -21,7 +21,7 @@ const ChartRowContainer = styled.div`
     display: flex;
     align-items: center;
     height: 15px;
-    border-top: solid 1px ${(props): string => props.theme.tableBorderColor};
+    border-top: solid 1px ${(props): string => props.theme.borderColor};
 `;
 
 const StartParseButton = styled(Button)`

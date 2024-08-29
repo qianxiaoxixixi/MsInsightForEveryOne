@@ -19,7 +19,6 @@ const HeaderToolbar = styled.div<{ width?: number }>`
     padding-left: 10px;
     padding-right: 10px;
     width: ${(props): number | undefined => props.width}px;
-    margin-top: 4px;
     .title {
         font-size: 12px;
     }

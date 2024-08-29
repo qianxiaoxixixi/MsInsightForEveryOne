@@ -20,8 +20,8 @@ type DrawTextType = Array<StackStatusData & {width: number} >;
 
 const FONT_SIZE = 12;
 const DFT_PADDING = 8;
-const MIN_WIDTH = 8;
-const MAX_RADIUS = 4;
+const MIN_WIDTH = 2;
+const MAX_RADIUS = 1;
 const DOTTED_RANGE = 6;
 
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D, overflow: OverflowType): string => {

@@ -222,5 +222,7 @@ declare module '@emotion/react' {
         tableTextColor: string; // 表格颜色
         radioSelectedColor: string; // 单选框选中填充颜色
         rankBackgroudColor: string;
+        contextMenuBgColor: string;
+        summaryChartBgColor: string;
     }
 }

@@ -30,8 +30,10 @@ import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
 import { Resizor } from 'ascend-resize';
 
+const DEFAULT_LANE_INFO_WIDTH = 250;
+const DEFAULT_LANE_CHART_WIDTH = 100;
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;
-const LANE_INFO_WIDTH_PX = observable({ value: 250 });
+const LANE_INFO_WIDTH_PX = observable({ value: DEFAULT_LANE_INFO_WIDTH });
 export const CHARTINTERACTOR_NAME = 'chartInteractor';
 
 const Container = styled.div`
@@ -117,7 +119,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
         <Overlay leftOffset={LANE_INFO_WIDTH_PX.value} rightAreaName={CHARTINTERACTOR_NAME}>
             <><Resizor style={{ width: '10px', right: '1px', pointerEvents: 'all' }} onResize={(deltaX: number, width: number, nextWidth?: number): void => {
                 runInAction(() => {
-                    if (width > 150 && nextWidth != null && nextWidth > 100) {
+                    if (width > DEFAULT_LANE_INFO_WIDTH && nextWidth != null && nextWidth > DEFAULT_LANE_CHART_WIDTH) {
                         LANE_INFO_WIDTH_PX.value = width;
                     }
                 });
