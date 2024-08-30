@@ -30,7 +30,7 @@ namespace Dic::Protocol {
         bool isCompare{false};
         std::string rankId;
         std::string group; // Operator、Operator Type、Input Shape
-        int64_t topK;
+        int64_t topK{-1};
         int64_t current;
         int64_t pageSize;
         std::string orderBy;
@@ -38,6 +38,10 @@ namespace Dic::Protocol {
         std::vector<std::pair<std::string, std::string>> filters;
         bool CommonCheck(std::string &errorMsg)
         {
+            if (this->topK == 0 || this->topK < -1) {
+                errorMsg = "[Operator]Failed to check topK in Query Op Statistic Info.";
+                return false;
+            }
             if (!CheckPageValid(this->pageSize, this->current, errorMsg)) {
                 return false;
             }
