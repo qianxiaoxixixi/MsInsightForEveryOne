@@ -30,8 +30,8 @@ namespace Dic::Module::Operator {
             std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
             std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
         std::vector<Protocol::OperatorDetailCmpInfoRes> GetFixNumDiffCmpData(
-            std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t pageSize,
-            const int64_t current, const std::string &order, const std::string &orderBy);
+            std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData,
+            Protocol::OperatorStatisticReqParams &reqParams, const int64_t total);
         void SortDataBynameAndStartTime(std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
                                 std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
         void FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data);

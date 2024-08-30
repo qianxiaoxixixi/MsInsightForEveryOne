@@ -129,9 +129,12 @@ namespace Dic::Module::Operator {
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
         res = GetCmpDataVec(request.params.group, baselineRes, compareRes);
-        response.total = res.size();
-        response.datas = GetFixNumDiffCmpData(res, request.params.pageSize, request.params.current,
-                                              request.params.order, request.params.orderBy);
+        if (request.params.topK > 0) {
+            response.total = request.params.topK >= res.size() ? res.size() : request.params.topK;
+        } else {
+            response.total = res.size();
+        }
+        response.datas = GetFixNumDiffCmpData(res, request.params, response.total);
         return true;
     }
 
@@ -259,25 +262,31 @@ namespace Dic::Module::Operator {
     }
 
     std::vector<Protocol::OperatorStatisticCmpInfoRes> QueryOpStatisticInfoHandler::GetFixNumDiffCmpData(
-        std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData, const int64_t paraPageSize,
-        const int64_t current, const std::string &order, const std::string &orderBy)
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData,
+        Protocol::OperatorStatisticReqParams &reqParams,
+        const int64_t total)
     {
-        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(orderBy);
+        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(reqParams.orderBy);
         // 对差值排序
+        const std::string order = reqParams.order;
         std::sort(statisticData.begin(), statisticData.end(), [&order, &dbOrderBy](OperatorStatisticCmpInfoRes &a,
                                                                            OperatorStatisticCmpInfoRes &b) {
             return StaticCmp(a, b, order, dbOrderBy);
         });
-        int total = statisticData.size();
+
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> topKStatisticData(statisticData.begin(),
+                                                                             statisticData.begin() + total);
+
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pagesize 默认是10条
-        uint64_t pageSize = (paraPageSize == 0 ? 10 : paraPageSize); // pageSize 默认是10条，此处防止除零操作
-        uint64_t offset = pageSize * (current - 1);
-        if (offset >= total) {
-            offset = total - ((total % pageSize) == 0 ? pageSize : (total % pageSize));
+        uint64_t dataSize = topKStatisticData.size();
+        uint64_t pageSize = (reqParams.pageSize == 0 ? 10 : reqParams.pageSize); // pageSize 默认是10条，此处防止除零操作
+        uint64_t offset = pageSize * (reqParams.current - 1);
+        if (offset >= dataSize) {
+            offset = dataSize - ((dataSize % pageSize) == 0 ? pageSize : (dataSize % pageSize));
         }
-        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator start = statisticData.begin() + offset;
-        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator end = statisticData.begin() +
-            std::min(offset + pageSize, static_cast<uint64_t>(statisticData.size()));
+        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator start = topKStatisticData.begin() + offset;
+        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator end = topKStatisticData.begin() +
+            std::min(offset + pageSize, dataSize);
         std::vector<Protocol::OperatorStatisticCmpInfoRes> result;
         result.assign(start, end);
         return result;

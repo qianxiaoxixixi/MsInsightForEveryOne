@@ -147,9 +147,12 @@ namespace Dic::Module::Operator {
         }
         std::vector<Protocol::OperatorDetailCmpInfoRes> fullCmpData;
         fullCmpData = GetCmpDataVec(baselineRes, cmpRes);
-        response.total = fullCmpData.size();
-        response.datas = GetFixNumDiffCmpData(fullCmpData, request.params.pageSize, request.params.current,
-                                              request.params.order, request.params.orderBy);
+        if (request.params.topK > 0) {
+            response.total = request.params.topK >= fullCmpData.size() ? fullCmpData.size() : request.params.topK;
+        } else {
+            response.total = fullCmpData.size();
+        }
+        response.datas = GetFixNumDiffCmpData(fullCmpData, request.params, response.total);
         return true;
     }
 
@@ -264,8 +267,9 @@ namespace Dic::Module::Operator {
     }
 
     std::vector<Protocol::OperatorDetailCmpInfoRes> QueryOpDetailInfoHandler::GetFixNumDiffCmpData(
-        std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t paraPageSize,
-        const int64_t current, const std::string &order, const std::string &orderBy)
+        std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData,
+        Protocol::OperatorStatisticReqParams &reqParams,
+        const int64_t total)
     {
         if (datailData.empty()) {
             return datailData;
@@ -273,23 +277,28 @@ namespace Dic::Module::Operator {
         for (auto &data: datailData) {
             FromatDatailData(data);
         }
-        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(orderBy);
+        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(reqParams.orderBy);
         // 对差值排序
+        const std::string order = reqParams.order;
         std::sort(datailData.begin(), datailData.end(), [&order, &dbOrderBy](Protocol::OperatorDetailCmpInfoRes &a,
                                                                            Protocol::OperatorDetailCmpInfoRes &b) {
             return StaticCmp(a, b, order, dbOrderBy);
         });
 
+        std::vector<Protocol::OperatorDetailCmpInfoRes> topKDetailData;
+        topKDetailData.assign(datailData.begin(), datailData.begin() + total);
+
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pageSize 默认是10条，此处防止除零操作
-        uint64_t pageSize = (paraPageSize == 0 ? 10 : paraPageSize);
-        uint64_t offset = pageSize * (current - 1);
-        if (offset >= datailData.size()) {
-            offset = datailData.size() -
-                     ((datailData.size() % pageSize) == 0 ? pageSize : (datailData.size() % pageSize));
+        uint64_t dataSize = topKDetailData.size();
+        uint64_t pageSize = (reqParams.pageSize == 0 ? 10 : reqParams.pageSize);
+        uint64_t offset = pageSize * (reqParams.current - 1);
+        if (offset >= dataSize) {
+            offset = dataSize -
+                     ((dataSize % pageSize) == 0 ? pageSize : (dataSize % pageSize));
         }
-        std::vector<Protocol::OperatorDetailCmpInfoRes>::const_iterator start = datailData.begin() + offset;
-        std::vector<Protocol::OperatorDetailCmpInfoRes>::const_iterator end = datailData.begin() +
-            std::min(offset + pageSize, static_cast<uint64_t>(datailData.size()));
+        std::vector<Protocol::OperatorDetailCmpInfoRes>::const_iterator start = topKDetailData.begin() + offset;
+        std::vector<Protocol::OperatorDetailCmpInfoRes>::const_iterator end = topKDetailData.begin() +
+            std::min(offset + pageSize, dataSize);
         std::vector<Protocol::OperatorDetailCmpInfoRes> result;
         result.assign(start, end);
         return result;

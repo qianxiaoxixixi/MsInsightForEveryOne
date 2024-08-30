@@ -38,7 +38,8 @@ namespace Dic::Module::Operator {
         void CalDiffDataByGroup(const std::string &paramsGroup, OperatorStatisticCmpInfoRes &data);
         std::vector<Protocol::OperatorStatisticCmpInfoRes> GetFixNumDiffCmpData(
             std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData,
-            const int64_t pageSize, const int64_t current, const std::string &order, const std::string &orderBy);
+            Protocol::OperatorStatisticReqParams &reqParams,
+            const int64_t total);
     };
 }
 #endif // PROFILER_SERVER_QUERYOPSTATISTICINFOHANDLER_H
