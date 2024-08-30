@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_QUERY_MEMORY_COMPONENT_HANDLER_H
 #define PROFILER_SERVER_QUERY_MEMORY_COMPONENT_HANDLER_H
 
+#include "WsSession.h"
 #include "MemoryRequestHandler.h"
 #include "MemoryProtocolRespose.h"
 
@@ -20,6 +21,8 @@ public:
     ~QueryMemoryViewHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
+    bool GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
+        MemoryViewRequest &request, std::unique_ptr<MemoryViewResponse> &responsePtr, Server::WsSession &session);
     void GetCompareGraphLines(const Protocol::MemoryViewData &compareData,
                               const Protocol::MemoryViewData &baselineData,
                               Protocol::MemoryViewData &resultData);

@@ -46,8 +46,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
@@ -68,8 +68,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorWithTime)
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = 0;
     requestParams.endTime = 1695120000000; // end time = 1695120000000
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
@@ -112,8 +112,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorByStreamExceptZero)
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = 0;
     requestParams.endTime = -1;
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
@@ -134,8 +134,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorByStreamExceptSeveral)
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
@@ -153,8 +153,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNum)
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "";
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = -1;
     requestParams.endTime = -1;
     int64_t totalNum;
@@ -189,8 +189,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumWithTime)
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "aten::empty_strided";
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = 0;
     requestParams.endTime = 1695120000000; // end time = 1695120000000
     int64_t totalNum;
@@ -206,8 +206,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumByStreamExpectZero)
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.searchName = "aten::empty_stridedss";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = -1;
     requestParams.endTime = -1; // end time = 1695120000000
     int64_t totalNum;
@@ -223,8 +223,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumByStreamExpectSeveral)
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
-    requestParams.minSize = -1;
-    requestParams.maxSize = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
     requestParams.startTime = -1;
     requestParams.endTime = -1; // end time = 1695120000000
     int64_t totalNum;
@@ -241,7 +241,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewData)
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
-    auto result = database->QueryMemoryView(requestParams, responseBody);
+    uint64_t offsetTime = 0;
+    auto result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
     EXPECT_EQ(result, true);
     int expectSize = 8401;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
@@ -254,7 +255,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewDataByStreamExpectSeveral)
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
-    auto result = database->QueryMemoryView(requestParams, responseBody);
+    uint64_t offsetTime = 0;
+    auto result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
     EXPECT_EQ(result, true);
     int expectSize = 806;
     EXPECT_EQ(responseBody.lines.size(), expectSize);

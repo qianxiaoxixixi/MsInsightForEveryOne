@@ -184,15 +184,15 @@ bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
     return true;
 }
 
-bool QueryMemoryStaticOperatorListHandler::IsSelected(MemoryStaticOperatorListRequest& request,
-                                                      const StaticOperatorCompItem& op)
+bool QueryMemoryStaticOperatorListHandler::IsSelected(MemoryStaticOperatorListRequest &request,
+                                                      const StaticOperatorCompItem &op)
 {
     bool filter = true;
     filter = filter && (op.diff.opName.find(request.params.searchName) != std::string::npos);
-    if (request.params.minSize != -1) {
+    if (request.params.minSize != std::numeric_limits<int64_t>::min()) {
         filter = filter && (op.diff.size >= request.params.minSize);
     }
-    if (request.params.maxSize != -1) {
+    if (request.params.maxSize != std::numeric_limits<int64_t>::max()) {
         filter = filter && (op.diff.size <= request.params.maxSize);
     }
     if (request.params.startNodeIndex != -1 && request.params.endNodeIndex != -1) {
@@ -210,8 +210,8 @@ bool QueryMemoryStaticOperatorListHandler::IsSelected(MemoryStaticOperatorListRe
     return filter;
 }
 
-void QueryMemoryStaticOperatorListHandler::SortResult(MemoryStaticOperatorListRequest& request,
-    MemoryStaticOperatorListCompResponse& result)
+void QueryMemoryStaticOperatorListHandler::SortResult(MemoryStaticOperatorListRequest &request,
+    MemoryStaticOperatorListCompResponse &result)
 {
     if (request.params.orderBy.empty() || request.params.order.empty()) {
         return;
@@ -223,7 +223,7 @@ void QueryMemoryStaticOperatorListHandler::SortResult(MemoryStaticOperatorListRe
     }
 }
 
-void QueryMemoryStaticOperatorListHandler::SortAscend(MemoryStaticOperatorListRequest& request,
+void QueryMemoryStaticOperatorListHandler::SortAscend(MemoryStaticOperatorListRequest &request,
     MemoryStaticOperatorListCompResponse &result)
 {
     std::map<std::string, bool (*)(StaticOperatorCompItem &, StaticOperatorCompItem &)> compFunc = {
@@ -243,7 +243,7 @@ void QueryMemoryStaticOperatorListHandler::SortAscend(MemoryStaticOperatorListRe
     }
 }
 
-void QueryMemoryStaticOperatorListHandler::SortDescend(MemoryStaticOperatorListRequest& request,
+void QueryMemoryStaticOperatorListHandler::SortDescend(MemoryStaticOperatorListRequest &request,
     MemoryStaticOperatorListCompResponse &result)
 {
     std::map<std::string, bool (*)(StaticOperatorCompItem &, StaticOperatorCompItem &)> compFunc = {

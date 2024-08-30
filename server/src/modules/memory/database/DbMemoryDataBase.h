@@ -23,7 +23,8 @@ public:
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails);
-    bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody);
+    bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
+        uint64_t offsetTime);
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
@@ -36,7 +37,8 @@ public:
                                   Protocol::StaticOperatorGraphItem &graphItem) override;
 
     bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId) override;
+                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
+                                  uint64_t offsetTime) override;
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) override;

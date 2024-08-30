@@ -39,7 +39,7 @@ public:
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails) override;
     bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
-                         Protocol::MemoryViewData &operatorBody) override;
+                         Protocol::MemoryViewData &operatorBody, uint64_t offsetTime) override;
 
     bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
@@ -56,7 +56,8 @@ public:
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
     bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId) override;
+                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
+                                  uint64_t offsetTime) override;
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                         std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                         std::vector<Protocol::StaticOperatorItem>& opDetails) override;

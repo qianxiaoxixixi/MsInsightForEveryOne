@@ -24,7 +24,8 @@ public:
                                      std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                      std::vector<Protocol::MemoryOperator> &opDetails) = 0;
     virtual bool
-    QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody) = 0;
+    QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
+        uint64_t offsetTime) = 0;
     virtual bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
                                          std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                          std::vector<Protocol::StaticOperatorItem> &opDetails) = 0;
@@ -37,7 +38,8 @@ public:
 
     virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
     virtual bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                          std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId) = 0;
+                                          std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
+                                          uint64_t offsetTime) = 0;
     virtual bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
