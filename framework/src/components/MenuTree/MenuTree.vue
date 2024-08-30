@@ -189,9 +189,14 @@ const customNodeClass = (data: TreeData) => {
         </div>
     </ContextMenu>
 </template>
+
 <style scoped>
 .menu-tree {
     padding: 0.5rem 0.8rem;
+}
+
+.menu-tree .el-tree{
+    --el-tree-node-hover-bg-color: var(--mi-tree-bg-color-light);
 }
 
 .content-node {
