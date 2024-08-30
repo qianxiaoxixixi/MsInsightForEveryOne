@@ -117,12 +117,12 @@ void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const
     } else {
         JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
     }
-    if (ele.duration == DOUBLE_MIN_VALUE) {
+    if (ele.waitTime == DOUBLE_MIN_VALUE) {
         JsonUtil::AddMember(dataJson, "waitTime", "-", allocator);
     } else {
         JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
     }
-    if (ele.duration == INT_MIN_VALUE) {
+    if (ele.blockDim == INT_MIN_VALUE) {
         JsonUtil::AddMember(dataJson, "blockDim", "-", allocator);
     } else {
         JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
