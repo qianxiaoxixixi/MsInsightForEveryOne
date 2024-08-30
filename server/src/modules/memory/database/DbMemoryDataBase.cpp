@@ -39,12 +39,24 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    // 单位转换， KB -> B
-    if (requestParams.minSize > 0) {
-        requestParams.minSize *= KB_SIZE;
+    // 单位转换， KB -> B，并作溢出防护。
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
+        if (requestParams.minSize > 0 && requestParams.minSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
+            requestParams.minSize = std::numeric_limits<int64_t>::max();
+        } else if (requestParams.minSize < 0 && requestParams.minSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
+            requestParams.minSize = std::numeric_limits<int64_t>::min();
+        } else {
+            requestParams.minSize *= KB_SIZE;
+        }
     }
-    if (requestParams.maxSize > 0) {
-        requestParams.maxSize *= KB_SIZE;
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
+        if (requestParams.maxSize > 0 && requestParams.maxSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
+            requestParams.maxSize = std::numeric_limits<int64_t>::max();
+        } else if (requestParams.maxSize < 0 && requestParams.maxSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
+            requestParams.maxSize = std::numeric_limits<int64_t>::min();
+        } else {
+            requestParams.maxSize *= KB_SIZE;
+        }
     }
     if (type == FileType::PYTORCH) {
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
@@ -71,7 +83,8 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
 }
 
 bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                                std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId)
+                                                std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
+                                                uint64_t offsetTime)
 {
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -79,12 +92,13 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTabl
     if (type == FileType::PYTORCH) {
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-            "ROUND((allocation_time - " + std::to_string(startTime) +
+            "ROUND((allocation_time - " + std::to_string(startTime) + " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
             "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
+            " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-            std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+            std::to_string(startTime) + " - " + std::to_string(offsetTime) + ") / (1000.0 * 1000.0), 3) "
             "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
             "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
             " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
@@ -99,7 +113,7 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTabl
 }
 
 bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
-                                       Protocol::MemoryViewData &operatorBody)
+                                       Protocol::MemoryViewData &operatorBody, uint64_t offsetTime)
 {
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -108,6 +122,7 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
         sql += "select * from ( ";
         sql += "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
+            " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) as timestamp, "
             "ROUND(total_allocated / (1024.0 * 1024.0), 2) as total_allocated, "
             " ROUND(total_reserved / (1024.0 * 1024.0), 2) as total_reserve, "
@@ -131,12 +146,24 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
 
 bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
-    // 单位转换， KB -> B
-    if (requestParams.minSize > 0) {
-        requestParams.minSize *= KB_SIZE;
+    // 单位转换， KB -> B，并作溢出防护。
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
+        if (requestParams.minSize > 0 && requestParams.minSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
+            requestParams.minSize = std::numeric_limits<int64_t>::max();
+        } else if (requestParams.minSize < 0 && requestParams.minSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
+            requestParams.minSize = std::numeric_limits<int64_t>::min();
+        } else {
+            requestParams.minSize *= KB_SIZE;
+        }
     }
-    if (requestParams.maxSize > 0) {
-        requestParams.maxSize *= KB_SIZE;
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
+        if (requestParams.maxSize > 0 && requestParams.maxSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
+            requestParams.maxSize = std::numeric_limits<int64_t>::max();
+        } else if (requestParams.maxSize < 0 && requestParams.maxSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
+            requestParams.maxSize = std::numeric_limits<int64_t>::min();
+        } else {
+            requestParams.maxSize *= KB_SIZE;
+        }
     }
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -161,10 +188,10 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql.append(" OR ROUND((").append(isLowCamel ? "releaseTime" : "release_time")
                 .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?) ");
     }
-    if (requestParams.minSize != -1) {
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND realSize >= ? ";
     }
-    if (requestParams.maxSize != -1) {
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sql += " AND realSize <= ? ";
     }
     return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);

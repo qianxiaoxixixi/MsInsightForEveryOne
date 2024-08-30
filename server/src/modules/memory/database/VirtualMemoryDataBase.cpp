@@ -122,10 +122,10 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
     }
 
-    if (requestParams.minSize != -1) {
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sqlite3_bind_double(stmt, index++, requestParams.minSize);
     }
-    if (requestParams.maxSize != -1) {
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sqlite3_bind_double(stmt, index++, requestParams.maxSize);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -155,10 +155,10 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
         std::string modelName = "%" + requestParams.modelName + "%";
         sqlite3_bind_text(stmt, index++, modelName.c_str(), modelName.length(), nullptr);
     }
-    if (requestParams.minSize >= 0) {
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sqlite3_bind_int64(stmt, index++, requestParams.minSize);
     }
-    if (requestParams.maxSize >= 0) {
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sqlite3_bind_int64(stmt, index++, requestParams.maxSize);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -557,10 +557,10 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
                " AND " + std::to_string(requestParams.endTime) + ")";
     }
 
-    if (requestParams.minSize != -1) {
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND size >= " + std::to_string(requestParams.minSize);
     }
-    if (requestParams.maxSize != -1) {
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sql += " AND size <= " + std::to_string(requestParams.maxSize);
     }
     if (!requestParams.orderBy.empty()) {
@@ -590,10 +590,10 @@ void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListPar
                 " AND " + std::to_string(requestParams.endNodeIndex) +")";
     }
 
-    if (requestParams.minSize >= 0) {
+    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND size >= " + std::to_string(requestParams.minSize);
     }
-    if (requestParams.maxSize >= 0) {
+    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sql += " AND size <= " + std::to_string(requestParams.maxSize);
     }
     if (!requestParams.orderBy.empty()) {

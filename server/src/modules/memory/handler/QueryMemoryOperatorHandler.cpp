@@ -7,6 +7,7 @@
 #include "BaselineManager.h"
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocolRespose.h"
+#include "TraceTime.h"
 #include "NumberUtil.h"
 #include "QueryMemoryOperatorHandler.h"
 
@@ -67,8 +68,9 @@ bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database
     MemoryOperatorComparisonResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryOperatorResponse> responsePtrCompare = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &responseCompare = *responsePtrCompare.get();
+    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
     if (!database->QueryEntireOperatorTable(responseCompare.columnAttr, responseCompare.operatorDetails,
-                                            request.params.rankId)) {
+                                            request.params.rankId, offsetTimeCompare)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query memory operator compare data.");
         session.OnResponse(std::move(responsePtr));
@@ -77,8 +79,10 @@ bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database
     responseCompare.totalNum = responseCompare.operatorDetails.size();
     std::unique_ptr<MemoryOperatorResponse> responsePtrBaseline = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &responseBaseline = *responsePtrBaseline.get();
+    std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryEntireOperatorTable(responseBaseline.columnAttr, responseBaseline.operatorDetails,
-                                                    request.params.rankId)) {
+                                                    request.params.rankId, offsetTimeBaseline)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query memory operator baseline data.");
         session.OnResponse(std::move(responsePtr));
@@ -216,10 +220,10 @@ bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, cons
 {
     bool filter = true;
     filter = filter && (op.diff.name.find(request.params.searchName) != std::string::npos);
-    if (request.params.minSize != -1) {
+    if (request.params.minSize != std::numeric_limits<int64_t>::min()) {
         filter = filter && (op.diff.size >= request.params.minSize);
     }
-    if (request.params.maxSize != -1) {
+    if (request.params.maxSize != std::numeric_limits<int64_t>::max()) {
         filter = filter && (op.diff.size <= request.params.maxSize);
     }
     if (op.compare.allocationTime == "" || op.compare.releaseTime == "" ||
@@ -241,7 +245,7 @@ bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, cons
     return filter;
 }
 
-void QueryMemoryOperatorHandler::SortResult(MemoryOperatorRequest& request, MemoryOperatorComparisonResponse& result)
+void QueryMemoryOperatorHandler::SortResult(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result)
 {
     if (request.params.orderBy.empty() || request.params.order.empty()) {
         return;
@@ -253,7 +257,7 @@ void QueryMemoryOperatorHandler::SortResult(MemoryOperatorRequest& request, Memo
     }
 }
 
-void QueryMemoryOperatorHandler::SortAscend(MemoryOperatorRequest& request, MemoryOperatorComparisonResponse &result)
+void QueryMemoryOperatorHandler::SortAscend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result)
 {
     std::map<std::string, bool (*)(MemoryOperatorComparison &, MemoryOperatorComparison &)> compFunc = {
         {"name", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
@@ -295,7 +299,7 @@ void QueryMemoryOperatorHandler::SortAscend(MemoryOperatorRequest& request, Memo
     }
 }
 
-void QueryMemoryOperatorHandler::SortDescend(MemoryOperatorRequest& request, MemoryOperatorComparisonResponse &result)
+void QueryMemoryOperatorHandler::SortDescend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result)
 {
     std::map<std::string, bool (*)(MemoryOperatorComparison &, MemoryOperatorComparison &)> compFunc = {
         {"name", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
@@ -335,15 +339,6 @@ void QueryMemoryOperatorHandler::SortDescend(MemoryOperatorRequest& request, Mem
         std::sort(result.operatorDiffDetails.begin(), result.operatorDiffDetails.end(),
             compFunc[request.params.orderBy]);
     }
-}
-
-void QueryMemoryOperatorHandler::SendFailureMessage(MemoryOperatorResponse &response,
-                                                    std::unique_ptr<MemoryOperatorResponse> &responsePtr,
-                                                    WsSession &session, const std::string &&message)
-{
-    SetResponseResult(response, false);
-    ServerLog::Error(message);
-    session.OnResponse(std::move(responsePtr));
 }
 } // end of namespace Memory
 } // end of namespace Module

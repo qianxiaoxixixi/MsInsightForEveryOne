@@ -4,6 +4,7 @@
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "BaselineManager.h"
+#include "TraceTime.h"
 #include "NumberUtil.h"
 #include "QueryMemoryViewHandler.h"
 
@@ -20,7 +21,8 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
-        if (!database->QueryMemoryView(request.params, response.data)) {
+        uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
+        if (!database->QueryMemoryView(request.params, response.data, offsetTime)) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to query memory view data.");
             session.OnResponse(std::move(responsePtr));
@@ -41,28 +43,41 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             session.OnResponse(std::move(responsePtr));
             return;
         }
-        std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();
-        MemoryViewResponse &responseCompare = *responsePtrCompare.get();
-        if (!database->QueryMemoryView(request.params, responseCompare.data)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory view compare data.");
-            session.OnResponse(std::move(responsePtr));
+        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
             return;
         }
-        std::unique_ptr<MemoryViewResponse> responsePtrBaseline = std::make_unique<MemoryViewResponse>();
-        MemoryViewResponse &responseBaseline = *responsePtrBaseline.get();
-        if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory view baseline data.");
-            session.OnResponse(std::move(responsePtr));
-            return;
-        }
-        GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);
-        GetCompareGraphLines(responseCompare.data, responseBaseline.data, response.data);
     }
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+}
+
+bool QueryMemoryViewHandler::GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
+    MemoryViewRequest &request, std::unique_ptr<MemoryViewResponse> &responsePtr, WsSession &session)
+{
+    MemoryViewResponse &response = *responsePtr.get();
+    std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();
+    MemoryViewResponse &responseCompare = *responsePtrCompare.get();
+    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
+    if (!database->QueryMemoryView(request.params, responseCompare.data, offsetTimeCompare)) {
+        SetResponseResult(response, false);
+        ServerLog::Error("Failed to query memory view compare data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
+    }
+    std::unique_ptr<MemoryViewResponse> responsePtrBaseline = std::make_unique<MemoryViewResponse>();
+    MemoryViewResponse &responseBaseline = *responsePtrBaseline.get();
+    std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
+    if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data, offsetTimeBaseline)) {
+        SetResponseResult(response, false);
+        ServerLog::Error("Failed to query memory view baseline data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
+    }
+    GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);
+    GetCompareGraphLines(responseCompare.data, responseBaseline.data, response.data);
+    return true;
 }
 
 void QueryMemoryViewHandler::GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,
@@ -83,9 +98,9 @@ void QueryMemoryViewHandler::GetCompareGraphLegends(const Protocol::MemoryViewDa
     }
 }
 
-void QueryMemoryViewHandler::GetCompareGraphLines(const Protocol::MemoryViewData& compareData,
-                                                  const Protocol::MemoryViewData& baselineData,
-                                                  Protocol::MemoryViewData& resultData)
+void QueryMemoryViewHandler::GetCompareGraphLines(const Protocol::MemoryViewData &compareData,
+                                                  const Protocol::MemoryViewData &baselineData,
+                                                  Protocol::MemoryViewData &resultData)
 {
     // compareData.lines和baselineData.lines都已经按照时间排好序，接下来将两个有序表进行归并。
     size_t indexCompare = 0;

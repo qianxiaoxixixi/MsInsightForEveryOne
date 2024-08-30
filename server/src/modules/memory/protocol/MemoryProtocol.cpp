@@ -89,12 +89,12 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
     if (json["params"].HasMember("minSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, json["params"], "minSize");
     } else {
-        reqPtr->params.minSize = -1;
+        reqPtr->params.minSize = std::numeric_limits<int64_t>::min();
     }
     if (json["params"].HasMember("maxSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.maxSize, json["params"], "maxSize");
     } else {
-        reqPtr->params.maxSize = -1;
+        reqPtr->params.maxSize = std::numeric_limits<int64_t>::max();
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
@@ -169,12 +169,12 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryStaticOperatorListRequest(const
     if (json["params"].HasMember("minSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, json["params"], "minSize");
     } else {
-        reqPtr->params.minSize = -1;
+        reqPtr->params.minSize = std::numeric_limits<int64_t>::min();
     }
     if (json["params"].HasMember("maxSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.maxSize, json["params"], "maxSize");
     } else {
-        reqPtr->params.maxSize = -1;
+        reqPtr->params.maxSize = std::numeric_limits<int64_t>::max();
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");

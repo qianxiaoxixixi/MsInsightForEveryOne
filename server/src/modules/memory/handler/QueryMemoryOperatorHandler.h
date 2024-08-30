@@ -36,8 +36,6 @@ private:
     void SortResult(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
     void SortAscend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
     void SortDescend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
-    void SendFailureMessage(MemoryOperatorResponse &response, std::unique_ptr<MemoryOperatorResponse> &responsePtr,
-                            Server::WsSession &session, const std::string &&message);
     const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
         {"Name", "string", "name"},
         {"Size(KB)", "number", "size"},
