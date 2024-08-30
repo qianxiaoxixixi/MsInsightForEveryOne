@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { makeAutoObservable } from 'mobx';
-import type { communicator, communicatorContainerData, ppData } from '../components/communicatorContainer/ContainerUtils';
+import type { communicator, communicatorContainerData, ppData, summaryListItem } from '../components/communicatorContainer/ContainerUtils';
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     parseCompleted: boolean = false;
@@ -20,6 +20,7 @@ export class Session {
     activeCommunicator: communicator | undefined;
     ranksData: ppData[] = [];
     rankCount: number = 0;
+    summaryList: summaryListItem[] = []; // 所有rank的数据信息
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this);

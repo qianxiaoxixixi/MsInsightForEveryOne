@@ -16,6 +16,7 @@ interface relatedRankType {
     pp: partitionModeItem[];
     tp: partitionModeItem[];
     dp: partitionModeItem[];
+    dpRect: partitionModeItem[];
 };
 
 const rankSize = {
@@ -49,6 +50,7 @@ const relatedRank: relatedRankType = {
     pp: [],
     tp: [],
     dp: [],
+    dpRect: [],
 };
 
 const drawLineSVG = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ppData[], communicatorData: partitionMode[]): void => {
@@ -244,7 +246,13 @@ const drawDpRect = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): 
             .attr('fill', 'none')
             .style('pointer-events', 'visibleStroke')
             .style('cursor', 'pointer')
-            .on('click', (d) => {
+            .on('click', () => {
+                const rankGroup = {
+                    name: `dataRect${i}`,
+                    ranks: relatedRank.pp[i].ranks,
+                    value: relatedRank.pp[i].value,
+                };
+                eventBus.emit('activeCommunicator', rankGroup);
             });
         x = x + width + 5;
     }

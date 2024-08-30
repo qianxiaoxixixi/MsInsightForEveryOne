@@ -18,6 +18,9 @@ import {
     type dpData,
     type tpData,
     type rankItem,
+    getOpacity,
+    computeOpacity,
+    getRankDataById,
 } from './ContainerUtils';
 import connector from '../../connection';
 import styled from '@emotion/styled';
@@ -25,19 +28,35 @@ import { displayRect, drawLineSVG, hideLine, transformLine } from './draw';
 import { select } from 'd3';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { FormInstance } from 'antd/lib/form';
+import { runInAction } from 'mobx';
 
 const RankContainer = styled.div`
     position: relative;
     max-height: 700px;
     overflow: auto;
+    margin-top: 40px;
 `;
 
 const RankItem = styled.div`
     text-align: center;
-    .rank{
+    &::before {
+        display: block;
+        height: 33px;
+        width: 33px;
+        content: "";
+        margin: 1px 21px;
+        border-radius: 2px;
+        position: absolute;
+        background: rgb(255, 255, 255);
+    }
+    .rankBase{
         height: 35px;
         width: 35px;
         margin: 0 20px;
+        position: relative;
+    }
+    .rankDyeing {
+        background-color: #ff0000;
     }
 `;
 
@@ -85,6 +104,16 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     );
 });
 
+const updateRankData = (session: Session, values: {ppSize: number; tpSize: number; dpSize: number; algorithm: string},
+    unitCount: number, defaultPPSize: number): void => {
+    runInAction(() => {
+        session.communicatorData = generateCommunicatorData(values, unitCount, defaultPPSize);
+        session.ranksData = getRankData(values);
+    });
+    connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
+    eventBus.emit('activeCommunicator', undefined);
+};
+
 const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setShowRank }:
 { session: Session; defaultPPSize: number; unitCount: number; setShowRank: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const [form, setForm] = useState({} as FormInstance<any>);
@@ -95,7 +124,7 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
                 init();
             });
         } else {
-            const { dpSize, tpSize, ppSize, level } = (await getParallelStrategy()) as unknown as parallelStrategyType;
+            const { dpSize, tpSize, ppSize, level, algorithm } = (await getParallelStrategy()) as unknown as parallelStrategyType;
             const equal = dpSize === 1 && tpSize === 1 && tpSize === 1;
             if (level === 'collected') {
                 setDisabled(true);
@@ -107,11 +136,8 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
             } else {
                 setShowRank(true);
             }
-            session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, unitCount, defaultPPSize);
-            session.ranksData = getRankData({ dpSize, tpSize, ppSize });
-            form.setFieldsValue({ dpSize, tpSize, ppSize });
-            connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
-            eventBus.emit('activeCommunicator', undefined);
+            updateRankData(session, { dpSize, tpSize, ppSize, algorithm }, unitCount, defaultPPSize);
+            form.setFieldsValue({ dpSize, tpSize, ppSize, algorithm });
         }
     };
     useEffect(() => {
@@ -124,12 +150,8 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
             return;
         }
         setParallelStrategy({ ...values });
-        session.communicatorData = generateCommunicatorData(values, unitCount, size);
-        session.ranksData = getRankData(values);
+        updateRankData(session, values, unitCount, size);
         setShowRank(true);
-        // 只有用户手动修改并行策略，才会同步策略信息给通信页面，此处4为通信页面页签的序号
-        connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
-        eventBus.emit('activeCommunicator', undefined);
     };
     return (
         <FormDom unitCount={unitCount} disabled={disabled} defaultPPSize={defaultPPSize} onClick={onClick} getForm={setForm}/>
@@ -140,13 +162,16 @@ const FormDom = ({ unitCount, disabled, defaultPPSize, onClick, getForm }:
 { unitCount: number; disabled: boolean; defaultPPSize: number; onClick: (size: number) => () => void;
     getForm: (dom: FormInstance<any>) => void; }): JSX.Element => {
     const { t } = useTranslation('summary');
+    const selectOptions = [
+        { value: 'Megatron-LM(tp-dp-pp)', label: 'Megatron-LM(tp-dp-pp)' },
+        { value: 'Megatron-LM(tp-pp-dp)', label: 'Megatron-LM(tp-pp-dp)' },
+    ];
     const [form] = Form.useForm();
     getForm(form);
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
             <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 24px 10px 0' }} initialValue={'Megatron-LM(tp-dp-pp)'}>
-                <Select defaultValue="Megatron-LM(tp-dp-pp)" style={{ width: '120px' }} options={[
-                    { value: 'Megatron-LM(tp-dp-pp)', label: 'Megatron-LM(tp-dp-pp)' }]}/>
+                <Select defaultValue="Megatron-LM(tp-dp-pp)" style={{ width: '120px' }} options={selectOptions}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={t('PPSize')} style={{ margin: '10px 24px 10px 0' }}>
                 <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
@@ -204,12 +229,12 @@ export async function getDefaultCommunicatorData(): Promise<communicatorContaine
 }
 
 const CommunicatorContent = observer(({ session, ranksData, showRank }: { session: Session; ranksData: ppData[]; showRank: boolean }) => {
+    const [dyeingMode, setDyeingMode] = useState('Unstained');
     const svg = select('#parallelDrawLineSVG');
-    drawLineSVG(svg, ranksData, session.communicatorData.partitionModes);
     const onClick = (e: React.MouseEvent<any>): void => {
         e.stopPropagation();
         const target = e.target as HTMLElement;
-        if (target.className === 'rank') {
+        if (target.nodeName === 'DIV' && target.className.includes('rankBase')) {
             const site = target.getAttribute('site')?.split(' ').map(Number);
             if (site !== undefined) {
                 transformLine(svg, site);
@@ -224,16 +249,17 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
         displayRect(svg, name, checked);
     };
     useEventBus('activeCommunicator', (data) => {
-        if (data === undefined) {
-            session.activeCommunicator = data;
-        } else {
-            const selectCommunicator = data as communicator;
+        const selectCommunicator = data as communicator | undefined;
+        runInAction(() => {
             session.activeCommunicator = selectCommunicator;
-        }
+        });
     });
+    useEffect(() => {
+        drawLineSVG(svg, ranksData, session.communicatorData.partitionModes);
+    }, [ranksData]);
     return (
         <>
-            { (showRank && ranksData.length > 0) && <ParallelSwitch session={session} onChange={onChange}/> }
+            { (showRank && ranksData.length > 0) && <ParallelSwitch session={session} onChange={onChange} setDyeingMode={setDyeingMode}/> }
             <RankContainer onClick={(e): void => onClick(e)} >
                 <svg id='parallelDrawLineSVG' style={{ position: 'absolute', pointerEvents: 'none', zIndex: 10 }}></svg>
                 {
@@ -241,7 +267,7 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
                     <div style={{ paddingBottom: '40px' }}>
                         {
                             ranksData.map(item => (
-                                <Pp key={item.key} ppData={item.values} session={session}></Pp>
+                                <Pp key={item.key} ppData={item.values} session={session} dyeingMode={dyeingMode}></Pp>
                             ))
                         }
                     </div>
@@ -251,90 +277,129 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
     );
 });
 
-const ParallelSwitch = ({ onChange, session }: { session: Session; onChange: (name: string, checked: boolean) => void }): JSX.Element => {
+const RankFloatContainer = ({ rankId, session }: { rankId: number; session: Session }): JSX.Element => {
+    const { t } = useTranslation('summary');
+    const order = [{ value: 'prepareTime', title: 'Preparing', unit: 'μs' },
+        { value: 'computingTime', title: 'Total Computing', unit: 'μs' },
+        { value: 'pureComputingTime', title: 'Pure Computing', unit: 'μs' },
+        { value: 'communicationOverLappedTime', title: 'Communication(Not Overlapped)', unit: 'μs' },
+        { value: 'communicationNotOverLappedTime', title: 'Communication(Overlapped)', unit: 'μs' },
+        { value: 'freeTime', title: 'Free', unit: 'μs' },
+        { value: 'computeTimeRatio', title: 'Total Computing Ratio', unit: '%' },
+        { value: 'communicationTimeRatio', title: 'Communication Ratio', unit: '%' }];
+    const rankData = getRankDataById(rankId, session.summaryList);
+    return (
+        <>
+            {
+                rankData !== undefined &&
+                <div className='rankData'>
+                    <div className='rankId'>rank {rankData.rankId}</div>
+                    {
+                        order.map(item => (
+                            rankData[item.value] !== 0 &&
+                            <div className='rankDataItem' key={item.value}>
+                                <div className='title'>{t(item.title)}</div>
+                                <div className='value'>{rankData[item.value]} {item.unit}</div>
+                            </div>
+                        ))
+                    }
+                </div>
+            }
+        </>
+    );
+};
+
+const ParallelSwitch = ({ onChange, session, setDyeingMode }: { onChange: (name: string, checked: boolean) => void;
+    setDyeingMode: (value: string) => void; session: Session; }): JSX.Element => {
     const { t } = useTranslation('summary');
     const [form] = Form.useForm();
-    const options = [
-        {
-            name: 'pipelineParallel',
-            title: 'Pipeline Parallel',
-        },
-        {
-            name: 'tensorParallel',
-            title: 'Tensor Parallel',
-        },
-        {
-            name: 'dataParallel',
-            title: 'Data Parallel',
-        },
+    const checkboxOptions = [
+        { name: 'pipelineParallel', title: 'Pipeline Parallel' },
+        { name: 'tensorParallel', title: 'Tensor Parallel' },
+        { name: 'dataParallel', title: 'Data Parallel' },
+    ];
+    const selectOptions = [
+        { value: 'None', label: t('None') },
+        { value: 'TotalComputingTime', label: t('Total Computing Ratio') },
+        { value: 'CommunicationTime', label: t('Communication Ratio') },
     ];
     useEffect(() => {
         form.setFieldsValue({
             dataParallel: false,
             tensorParallel: false,
             pipelineParallel: false,
+            dataType: 'None',
         });
+        setDyeingMode('None');
+        computeOpacity(session.summaryList);
     }, [session.ranksData]);
     return (
         <Form form={form} layout="inline">
             {
-                options.map(item => (
-                    <Form.Item name={item.name} label={t(item.title)} key={item.name} valuePropName='checked'>
+                checkboxOptions.map(item => (
+                    <Form.Item name={item.name} label={t(item.title)} key={item.name} valuePropName='checked' style={{ marginRight: '40px' }}>
                         <Checkbox onChange={(e: CheckboxChangeEvent): void => { onChange(item.title, e.target.checked); }}></Checkbox>
                     </Form.Item>
                 ))
             }
+            <Form.Item name={'dataType'} label={t('Data Type')} style={{ marginRight: '40px' }} initialValue={'None'}>
+                <Select defaultValue="" style={{ width: '120px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={selectOptions}/>
+            </Form.Item>
         </Form>
     );
 };
 
-const Pp = ({ session, ppData }: { session: Session; ppData: dpData[] }): JSX.Element => {
+const Pp = ({ session, ppData, dyeingMode }: { session: Session; ppData: dpData[]; dyeingMode: string }): JSX.Element => {
     return (
         <PpContainer id={'PpContainer'}>
             {
                 ppData.map(item => (
-                    <Dp key={item.key} dpData={item.values} session={session}></Dp>
+                    <Dp key={item.key} dpData={item.values} session={session} dyeingMode={dyeingMode}></Dp>
                 ))
             }
         </PpContainer>
     );
 };
 
-const Dp = ({ session, dpData }: { session: Session; dpData: tpData[] }): JSX.Element => {
+const Dp = ({ session, dpData, dyeingMode }: { session: Session; dpData: tpData[]; dyeingMode: string }): JSX.Element => {
     return (
         <DpContainer>
             {
                 dpData.map(item => (
-                    <Tp key={item.key} tpData={item.values} session={session}></Tp>
+                    <Tp key={item.key} tpData={item.values} session={session} dyeingMode={dyeingMode}></Tp>
                 ))
             }
         </DpContainer>
     );
 };
 
-const Tp = ({ session, tpData }: { session: Session; tpData: rankItem[] }): JSX.Element => {
+const Tp = ({ session, tpData, dyeingMode }: { session: Session; tpData: rankItem[]; dyeingMode: string }): JSX.Element => {
     return (
         <TpContainer style={{ border: '2px white solid' }}>
             {
                 tpData.map(item => (
-                    <Rank key={item.value} rank={item} session={session}></Rank>
+                    <Rank key={item.value} rank={item} session={session} dyeingMode={dyeingMode}></Rank>
                 ))
             }
         </TpContainer>
     );
 };
 
-const Rank = ({ session, rank }: { session: Session; rank: rankItem }): JSX.Element => {
+const Rank = ({ session, rank, dyeingMode }: { session: Session; rank: rankItem; dyeingMode: string }): JSX.Element => {
     const ref = useRef(null);
     useEffect(() => {
         if (ref.current !== null) {
             (ref.current as HTMLElement).setAttribute('site', rank.site.join(' '));
+            (ref.current as HTMLElement).setAttribute('rank-id', rank.value.toString());
         }
     }, [session.ranksData]);
     return (
         <RankItem>
-            <div className={'rank'} ref={ref}></div>
-            <div style={{ fontSize: '16px', width: '70px', overflow: 'hide', height: '18.84px' }} title={`rank ${rank.value}`}>rank {rank.value}</div>
+            <Tooltip title={(<RankFloatContainer rankId={rank.value} session={session}/>)} placement="bottom">
+                <div className={`rankBase ${dyeingMode === 'None' ? 'rank' : 'rankDyeing'}`} ref={ref}
+                    style={{ opacity: getOpacity(rank.value, dyeingMode) }}/>
+                <div style={{ fontSize: '16px', width: '70px', overflow: 'hide', height: '18.84px' }}>rank {rank.value}</div>
+            </Tooltip>
         </RankItem>
     );
 };

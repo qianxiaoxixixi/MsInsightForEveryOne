@@ -19,3 +19,21 @@
 .theme_dark .rank{
     background:center/cover url('./assets/images/rank_dark.png');
 }
+
+.rankData {
+    font-size: 16px;
+    .rankId {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .rankDataItem {
+        display: flex;
+        .title{
+            width: 270px;
+        }
+        .value{
+            flex: 1;
+            text-align: end;
+        }
+    }
+}

@@ -101,6 +101,7 @@ const initBaseInfo = async (setData: any, session: Session): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
     const resObj = res ?? {};
     session.rankCount = res.rankCount;
+    session.summaryList = res.summaryList;
     setData({
         ...resObj,
         collectDuration: formateTime(Number(resObj.collectDuration)),
