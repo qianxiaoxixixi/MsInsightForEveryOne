@@ -3,6 +3,7 @@
  */
 
 import _ from 'lodash';
+import { notZero } from '../Common';
 
 export interface communicatorContainerData {
     partitionModes: partitionMode[];
@@ -24,6 +25,21 @@ export interface tabData {
     label: string;
     key: string;
     children: JSX.Element;
+};
+
+interface formFieldsValue {
+    ppSize: number;
+    tpSize: number;
+    dpSize: number;
+    algorithm: string;
+};
+
+interface fillCommunicatorsType {
+    values: formFieldsValue;
+    partitionModes: partitionMode[];
+    pipelineSize: number;
+    rankNum?: number;
+    modelCount?: number;
 };
 
 export const titleMap = new Map([
@@ -54,61 +70,141 @@ export const getAllPpStageIds = (data: communicatorContainerData): string[] => {
     return tmp?.communicators.map(item => item.value as string);
 };
 
-const fillDpCommunicators = (values: {ppSize: number; tpSize: number; dpSize: number}, pipelineCount: number,
-    pipelineSize: number, partitionModes: partitionMode[]): void => {
-    if (values.dpSize <= 1) {
+const fillPpCommunicators = ({ values, rankNum, pipelineSize, partitionModes }: fillCommunicatorsType): void => {
+    if (values.ppSize < 1) {
         return;
     }
-    for (let i = 0; i < pipelineCount; i++) {
+    const communicators = getCommunicators(partitionModes, 'pp');
+    let ranks: number[] = [];
+    for (let i = 0; i < pipelineSize; i++) {
+        switch (values.algorithm) {
+            case 'Megatron-LM(tp-dp-pp)':
+                ranks = _.range(i, rankNum, pipelineSize);
+                break;
+            case 'Megatron-LM(tp-pp-dp)':
+                ranks = _.range(i * values.ppSize, (i + 1) * values.ppSize, 1);
+                break;
+            default:
+                break;
+        }
+        communicators.push({
+            ranks,
+            name: `pipeline${i}`,
+            value: `(${ranks.join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
+        });
+    }
+};
+
+const fillTpCommunicators = ({ values, modelCount, partitionModes }: fillCommunicatorsType): void => {
+    if (values.tpSize < 1 || modelCount === undefined) {
+        return;
+    }
+    const communicators = getCommunicators(partitionModes, 'tp');
+    let ranks: number[] = [];
+    let start = 0;
+    for (let i = 0; i < modelCount; i++) {
+        switch (values.algorithm) {
+            case 'Megatron-LM(tp-dp-pp)':
+                ranks = _.range(i * values.tpSize, (i + 1) * values.tpSize);
+                break;
+            case 'Megatron-LM(tp-pp-dp)':
+                start = Math.floor(i / values.dpSize) + ((i % values.dpSize) * (values.ppSize * values.tpSize));
+                ranks = _.range(start, start + (values.ppSize * values.tpSize), values.ppSize);
+                break;
+            default:
+                break;
+        }
+        communicators.push({
+            ranks,
+            name: `model${i}`,
+            value: `(${ranks.join(', ')}${values.tpSize > 1 ? ')' : ',)'}`,
+        });
+    }
+};
+
+const fillDpCommunicators = ({ values, rankNum, pipelineSize, partitionModes }: fillCommunicatorsType): void => {
+    if (values.dpSize < 1 || rankNum === undefined) {
+        return;
+    }
+    const communicators = getCommunicators(partitionModes, 'dp');
+    let ranks: number[] = [];
+    for (let i = 0; i < values.ppSize; i++) {
         for (let j = 0; j < values.tpSize; j++) {
-            partitionModes[3].communicators.push({
-                ranks: _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize),
+            switch (values.algorithm) {
+                case 'Megatron-LM(tp-dp-pp)':
+                    ranks = _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize);
+                    break;
+                case 'Megatron-LM(tp-pp-dp)':
+                    ranks = _.range(i + (j * values.ppSize), rankNum - (values.ppSize - i - 1), values.tpSize * values.ppSize);
+                    break;
+                default:
+                    break;
+            }
+            communicators.push({
+                ranks,
                 name: `data${(i * values.tpSize) + j}`,
-                value: `(${_.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize).join(', ')}${values.dpSize > 1 ? ')' : ',)'}`,
+                value: `(${ranks.join(', ')}${values.dpSize > 1 ? ')' : ',)'}`,
             });
         }
     }
 };
 
-export const generateCommunicatorData = (values: {ppSize: number; tpSize: number; dpSize: number},
-    rankNum: number, defaultPPSize: number = 1): communicatorContainerData => {
+const fillDpRectCommunicators = ({ values, pipelineSize, partitionModes }: fillCommunicatorsType): void => {
+    if (values.dpSize < 1 || values.ppSize < 1) {
+        return;
+    }
+    const communicators = getCommunicators(partitionModes, 'dpRect');
+    let ranks: number[] = [];
+    for (let i = 0; i < values.dpSize; i++) {
+        switch (values.algorithm) {
+            case 'Megatron-LM(tp-dp-pp)':
+                ranks = [];
+                for (let j = 0; j < values.ppSize; j++) {
+                    ranks.push(..._.range((j * pipelineSize) + (i * values.tpSize), (j * pipelineSize) + ((i + 1) * values.tpSize), 1));
+                }
+                break;
+            case 'Megatron-LM(tp-pp-dp)':
+                ranks = _.range(i * (values.ppSize * values.tpSize), (i + 1) * (values.ppSize * values.tpSize), 1);
+                break;
+            default:
+                break;
+        }
+        communicators.push({
+            ranks,
+            name: `dataRect${i}`,
+            value: `(${ranks.join(', ')})`,
+        });
+    }
+};
+
+const getCommunicators = (partitionModes: partitionMode[], key: string): communicator[] => {
+    return partitionModes.find(item => item.mode === key)?.communicators ?? [];
+};
+
+export const generateCommunicatorData = (values: formFieldsValue, rankNum: number, defaultPPSize: number = 1): communicatorContainerData => {
     const partitionModes: partitionMode[] = [
         { mode: 'all', communicators: [] },
         { mode: 'pp', communicators: [] },
         { mode: 'tp', communicators: [] },
         { mode: 'dp', communicators: [] },
+        { mode: 'dpRect', communicators: [] },
     ];
     if (rankNum === 0) {
         return { partitionModes, defaultPPSize };
     }
     if (values.ppSize !== 0 && values.tpSize !== 0) {
-        const pipelineCount = values.ppSize;
         const pipelineSize = rankNum / values.ppSize;
         const modelCount = rankNum / values.tpSize;
-        if (values.ppSize > 1) {
-            for (let i = 0; i < pipelineSize; i++) {
-                partitionModes[1].communicators.push({
-                    ranks: _.range(i, rankNum, pipelineSize),
-                    name: `pipeline${i}`,
-                    value: `(${_.range(i, rankNum, pipelineSize).join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
-                });
-            }
-        }
-        if (values.tpSize > 1) {
-            for (let i = 0; i < modelCount; i++) {
-                partitionModes[2].communicators.push({
-                    ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
-                    name: `model${i}`,
-                    value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}${values.tpSize > 1 ? ')' : ',)'}`,
-                });
-            }
-        }
-        fillDpCommunicators(values, pipelineCount, pipelineSize, partitionModes);
+
         partitionModes[0].communicators.push({
             ranks: _.range(0, rankNum, 1),
             name: 'All',
-            value: `(${_.range(0, rankNum, 1)})`,
+            value: 'All',
         });
+        fillPpCommunicators({ values, rankNum, pipelineSize, partitionModes });
+        fillTpCommunicators({ values, modelCount, pipelineSize, partitionModes });
+        fillDpCommunicators({ values, rankNum, pipelineSize, partitionModes });
+        fillDpRectCommunicators({ values, pipelineSize, partitionModes });
     }
     return { partitionModes, defaultPPSize };
 };
@@ -135,42 +231,117 @@ export interface ppData {
     values: dpData[];
 };
 
-export const getRankData = (values: {ppSize: number; tpSize: number; dpSize: number}): ppData[] => {
+export const getRankData = (values: formFieldsValue): ppData[] => {
     const ranksData: ppData[] = [];
     const rankNum = values.ppSize * values.tpSize * values.dpSize;
-    if (values.ppSize > 0 && values.tpSize > 0 && values.dpSize > 0) {
-        const pipelineSize = rankNum / values.ppSize;
-        const dataSize = pipelineSize / values.dpSize;
-        const tensorSize = dataSize / values.tpSize;
-        for (let i = 0; i < values.ppSize; i++) {
-            const ppValue: number[] = _.range(pipelineSize * i, pipelineSize * (i + 1), 1);
-            const dpValue: dpData[] = [];
-            for (let j = 0; j < values.dpSize; j++) {
-                const dpData: number[] = ppValue.slice(dataSize * j, dataSize * (j + 1));
-                const tpValue: tpData[] = [];
-                for (let n = 0; n < tensorSize; n++) {
-                    const rank = dpData.slice(values.tpSize * n, values.tpSize * (n + 1)).map((item, index) => ({
-                        value: item,
-                        site: [i, j, n, index],
-                    }));
-                    tpValue.push({
-                        name: `tp${n}`,
-                        key: `tp${n}`,
-                        values: rank,
-                    });
-                }
-                dpValue.push({
-                    name: `DP ${j}`,
-                    key: `dp${j}`,
-                    values: tpValue,
+    if (values.ppSize < 1 || values.tpSize < 1 || values.dpSize < 1) {
+        return ranksData;
+    }
+    const pipelineSize = rankNum / values.ppSize;
+    const dataSize = pipelineSize / values.dpSize;
+    const tensorSize = dataSize / values.tpSize;
+    for (let i = 0; i < values.ppSize; i++) {
+        let ppValue: number[] = [];
+        switch (values.algorithm) {
+            case 'Megatron-LM(tp-dp-pp)':
+                ppValue = _.range(pipelineSize * i, pipelineSize * (i + 1), 1);
+                break;
+            case 'Megatron-LM(tp-pp-dp)':
+                ppValue = _.range(i, rankNum, values.ppSize);
+                break;
+            default:
+                break;
+        }
+        const dpValue: dpData[] = [];
+        for (let j = 0; j < values.dpSize; j++) {
+            const dpData: number[] = ppValue.slice(dataSize * j, dataSize * (j + 1));
+            const tpValue: tpData[] = [];
+            for (let n = 0; n < tensorSize; n++) {
+                const rank = dpData.slice(values.tpSize * n, values.tpSize * (n + 1)).map((item, index) => ({
+                    value: item,
+                    site: [i, j, n, index],
+                }));
+                tpValue.push({
+                    name: `tp${n}`,
+                    key: `tp${n}`,
+                    values: rank,
                 });
             }
-            ranksData.push({
-                name: `PP Stage ${i}`,
-                key: `pp${i}`,
-                values: dpValue,
+            dpValue.push({
+                name: `DP ${j}`,
+                key: `dp${j}`,
+                values: tpValue,
             });
         }
+        ranksData.push({
+            name: `PP Stage ${i}`,
+            key: `pp${i}`,
+            values: dpValue,
+        });
     }
     return ranksData;
+};
+
+export interface summaryListItem {
+    [key: string]: any;
+    communicationNotOverLappedTime: number;
+    communicationOverLappedTime: number;
+    computingTime: number;
+    freeTime: number;
+    prepareTime: number;
+    rankId: string;
+    totalTime: number;
+};
+
+interface opacityListItem {
+    rankId: string;
+    totalComputingOpacity: number;
+    communicationOpacity: number;
+};
+
+let opacityList: opacityListItem[] = [];
+
+export const computeOpacity = (summaryList: summaryListItem[]): void => {
+    let totalTime = 0;
+    opacityList = summaryList.map(item => {
+        if (item.prepareTime < 0) {
+            item.prepareTime = 0;
+        }
+        totalTime = item.communicationNotOverLappedTime + item.computingTime + item.freeTime + item.prepareTime;
+        return {
+            rankId: item.rankId,
+            totalComputingOpacity: Number((item.computingTime / notZero(totalTime)).toFixed(4)),
+            communicationOpacity: Number((item.communicationNotOverLappedTime / notZero(totalTime)).toFixed(4)),
+        };
+    });
+};
+
+export const getOpacity = (rankId: number, dyeingMode: string): number => {
+    const opacity = opacityList.find(item => item.rankId === rankId.toString());
+    if (opacity === undefined) {
+        return 1;
+    }
+    if (dyeingMode === 'TotalComputingTime') {
+        return opacity.totalComputingOpacity;
+    } else if (dyeingMode === 'CommunicationTime') {
+        return opacity.communicationOpacity;
+    } else {
+        return 1;
+    }
+};
+
+export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):
+(summaryListItem & { pureComputingTime: number; computeTimeRatio: number; communicationTimeRatio: number }) | undefined => {
+    const rank = summaryList.find(item => item.rankId === rankId.toString());
+    if (rank === undefined) {
+        return undefined;
+    }
+    const opacity = opacityList.find(item => item.rankId === rankId.toString());
+    const pureComputingTime = Number((rank.computingTime - rank.communicationOverLappedTime).toFixed(2));
+    return {
+        ...rank,
+        pureComputingTime,
+        computeTimeRatio: opacity ? Number((opacity.totalComputingOpacity * 100).toFixed(2)) : 0,
+        communicationTimeRatio: opacity ? Number((opacity.communicationOpacity * 100).toFixed(2)) : 0,
+    };
 };
