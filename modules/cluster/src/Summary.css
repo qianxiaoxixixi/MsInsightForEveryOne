@@ -22,18 +22,18 @@
 
 .rankData {
     font-size: 16px;
-    .rankId {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    .rankDataItem {
-        display: flex;
-        .title{
-            width: 270px;
-        }
-        .value{
-            flex: 1;
-            text-align: end;
-        }
-    }
+}
+.rankData .rankId {
+    text-align: center;
+    margin-bottom: 10px;
+}
+.rankData .rankDataItem {
+    display: flex;
+}
+.rankData .rankDataItem .title {
+    width: 270px;
+}
+.rankData .rankDataItem .value {
+    flex: 1;
+    text-align: end;
 }
