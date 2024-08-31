@@ -8,7 +8,7 @@ import { AntTableChart } from '../AntTableChart';
 
 // AntTableChart组件测试，通过构造模拟数据和指定配置项进行测试
 describe('test Table in memory', () => {
-    const testTable = <AntTableChart tableData={tableData} {...tableConfig} />;
+    const testTable = <AntTableChart tableData={tableData} isCompare={false} {...tableConfig} />;
     beforeAll(() => {
         // To fix the error 'TypeError: window.matchMedia is not a function'
         Object.defineProperty(window, 'matchMedia', {
