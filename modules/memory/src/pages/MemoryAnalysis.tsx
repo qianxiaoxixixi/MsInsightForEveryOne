@@ -197,8 +197,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                 if (item.diff === undefined || item.diff === null) {
                     return item;
                 }
-                item.diff.source = 'Difference';
-                item.diff.children = [{ ...item.baseline, source: 'Baseline' }, { ...item.compare, source: 'Compare' }];
+                item.diff.source = t('Difference');
+                item.diff.children = [{ ...item.baseline, source: t('Baseline') }, { ...item.compare, source: t('Comparison') }];
                 return item.diff;
             })
             : operatorDetails.map(item => item.compare);
@@ -440,6 +440,9 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     }, [session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
+        if (session.compareRank.rankId === rankIdCondition.value) {
+            return;
+        }
         if (session.memoryRankIds.includes(session.compareRank.rankId)) {
             onRankIdChanged(session.compareRank.rankId);
         }

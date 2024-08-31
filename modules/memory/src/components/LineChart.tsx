@@ -26,7 +26,28 @@ interface IProps {
     isStatic: boolean;
 }
 
-const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean): echarts.EChartsOption => {
+const _getLegendData = (data: string[]): string[] => {
+    const tempData = [...data];
+    // 去除表示横轴的column列
+    tempData.shift();
+    if (tempData.length < 2) {
+        return tempData;
+    }
+    for (let i = 1; i < tempData.length; i++) {
+        // 遍历到基线卡即可根据上一个图例是否包含比对信息而决定是否需要换行
+        if ((tempData[i].endsWith('Baseline') || tempData[i].startsWith('基线'))) {
+            if ((tempData[i - 1].endsWith('Comparison') || tempData[i - 1].startsWith('比对'))) {
+                tempData.splice(i, 0, '');
+            }
+            return tempData;
+        }
+    }
+    return tempData;
+};
+
+// eslint-disable-next-line max-lines-per-function
+const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean, graph: Graph): echarts.EChartsOption => {
+    const legendDatas = _getLegendData(graph.columns);
     return {
         title: {
             text: '',
@@ -51,7 +72,10 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
             },
             ...getDefaultChartOptions(isDark).tooltip,
         },
-        legend: { type: 'scroll', itemGap: 20 },
+        legend: {
+            itemGap: 20,
+            data: legendDatas,
+        },
         grid: { left: '100', right: '100', bottom: 40 },
         xAxis: {
             type: 'category',
@@ -113,7 +137,7 @@ const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefOb
     props: IProps, isDark: boolean, isStatic: boolean): void => {
     const { graph, hAxisTitle, vAxisTitle, onSelectionChanged } = props;
 
-    let option = _getOriginOption(hAxisTitle, vAxisTitle, isDark, isStatic);
+    let option = _getOriginOption(hAxisTitle, vAxisTitle, isDark, isStatic, graph);
     option = _handleOption(option, graph);
 
     myChart.setOption(option, true);

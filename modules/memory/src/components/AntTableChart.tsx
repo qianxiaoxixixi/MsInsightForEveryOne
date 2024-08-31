@@ -79,20 +79,16 @@ const CompareDiv = styled.div`
     word-break: keep-all;
 `;
 
-const getCompareRows = (data: string | number, isCompare: boolean, theme: Theme, source?: string): JSX.Element | number | string => {
-    if (isCompare && source === 'Difference') {
-        const dataNum = Number(data);
-        if (isNaN(dataNum)) {
-            return data;
-        }
-        return <CompareDiv style={{ color: dataNum >= 0 ? theme.successColor : theme.dangerColor }} title={`${data}`}>{data}</CompareDiv>;
-    } else {
+const getCompareRows = (data: string | number, theme: Theme): JSX.Element | number | string => {
+    const dataNum = Number(data);
+    if (isNaN(dataNum)) {
         return data;
     }
+    return <CompareDiv style={{ color: dataNum >= 0 ? theme.successColor : theme.dangerColor }} title={`${data}`}>{data}</CompareDiv>;
 };
 
 const renderExpandColomn = (record: OperatorDetail, t: TFunction, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): JSX.Element => {
-    return record.source === 'Difference'
+    return record.source === t('Difference')
         ? (<Button type="link"
             onClick={(): void => {
                 setExpandedKeys((pre: any) => {
@@ -126,7 +122,7 @@ const getTableColumns = function (
             showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
                 ? true
                 : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
-            render: (data: string | number, record: OperatorDetail) => getCompareRows(data, isCompare, theme, record.source),
+            render: (data: string | number, record: OperatorDetail) => (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data,
         };
     });
     if (isCompare) {
