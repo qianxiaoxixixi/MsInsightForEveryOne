@@ -24,11 +24,7 @@ TextClusterDatabase::~TextClusterDatabase()
 
 bool TextClusterDatabase::SetConfig()
 {
-    if (!isOpen) {
-        ServerLog::Error("Failed to set config. Database is not open.");
-        return false;
-    }
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+    return Database::SetConfig();
 }
 
 bool TextClusterDatabase::SetDbVersion()

@@ -25,13 +25,7 @@ TextMemoryDataBase::~TextMemoryDataBase()
 
 bool TextMemoryDataBase::SetConfig()
 {
-    if (!isOpen) {
-        ServerLog::Error("Failed to set config. Database is not open.");
-        return false;
-    }
-    std::string dbVersion = GetDataBaseVersion();
-    std::unique_lock<std::recursive_mutex> lock(mutex);
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
+    return Database::SetConfig();
 }
 
 bool TextMemoryDataBase::CreateTable()
