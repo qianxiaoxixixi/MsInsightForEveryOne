@@ -369,12 +369,14 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::s
         switchCommand = " && " + selectedPath.substr(0, INT_TWO);
     }
     command += "\"" + switchCommand + " && \"" + analysisPath + "\" -d .";
-#elifdef __APPLE__
+#else
+    #ifdef __APPLE__
     std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis");
     command += "\" && \"" + analysisPath + "\" -d .";
-#else
+    #else
     std::string analysisPath = currPath + FILE_SEPARATOR + "cluster_analyse" + FILE_SEPARATOR + "cluster_analysis.py";
     command += "\" && python3 \"" + analysisPath + "\" -d .";
+    #endif
 #endif
 
     if (!FileUtil::CheckFilePathExist(analysisPath)) {
