@@ -23,7 +23,7 @@ public:
     uint64_t GetOffsetByFileId(const std::string &fileId);
     uint64_t GetStartTime();
     uint64_t GetDuration();
-    void SetIsSimulation(bool isSimulation);
+    void SetIsSimulation(bool simulation);
     bool GetIsSimulation();
 
 private:
