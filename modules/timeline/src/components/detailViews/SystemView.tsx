@@ -4,15 +4,13 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Divider } from 'antd/lib/index';
 import styled from '@emotion/styled';
-import { Button, Select } from 'ascend-components';
+import { Button, Select, FormItem } from 'ascend-components';
 import {
     getColumnSearchProps,
     getDefaultColumData,
     getPageData,
     useKernelDetails,
-    Loading,
     pythonApiSummaryColumns,
     queryKernelDetails,
     queryOneKernel,
@@ -34,7 +32,7 @@ import {
     eventViewData,
 } from './Common';
 import { ResizeTable } from 'ascend-resize';
-import { limitInput, GroupRankIdsByHost, FormItem } from 'ascend-utils';
+import { limitInput, GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
 import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
@@ -52,6 +50,7 @@ const Container = styled.div`
     display: flex;
     flex-flow: nowrap;
     user-select:text;
+    background-color: ${(p): string => p.theme.bgColorDark};
     .ant-tree {
         width: 280px;
         height: 100%;
@@ -67,22 +66,45 @@ const Container = styled.div`
     }
 `;
 
-const SelectContainer = styled.div`
-    width: calc(100% - 270px);
+const AsideSelectContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    padding: 8px 16px;
+    margin-right: 8px;
+    border-radius: 4px;
+    background-color: ${(p): string => p.theme.bgColor};
+
+  .view-select{
+    margin-bottom: 8px;
+    flex: none;
+  }
+  .rank-filter{
+    margin-bottom: 8px;
+    flex: none;
+    color: ${(p): string => p.theme.textColorSecondary};
+  }
+`;
+
+const SelectContentContainer = styled.div`
+    flex: 1;
     height: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: ${(p): string => p.theme.bgColor};
     .ant-table-wrapper {
         height: 100%;
     }
 `;
 
 const AsideSelectList = styled.div`
-    padding: 5px 15px;
-
+    flex: 1;
+    overflow: auto;
     & .aside-select-item {
         cursor: pointer;
-        color: ${(props): string => props.theme.textColorPrimary};
+        color: ${(props): string => props.theme.textColorSecondary};
         + .aside-select-item {
-            margin-top: 4px;
+            margin-top: 8px;
         }
         &.selected{
             color: ${(props): string => props.theme.primaryColor};
@@ -115,13 +137,16 @@ export const SystemView = observer((props: any) => {
         }
     }, [props.session.showEvent]);
     return (<Container>
-        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'auto', width: '250px' }}>
+        <AsideSelectContainer>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
             <SelectList viewOption={viewOption} selectKey={key} setKey={setKey}></SelectList>
-        </div>
-        <Divider type="vertical" />
-        <ChartErrorBoundary><SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}></SelectContent></SelectContainer></ChartErrorBoundary>
+        </AsideSelectContainer>
+        <ChartErrorBoundary>
+            <SelectContentContainer>
+                <SelectContent key={key} rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}></SelectContent>
+            </SelectContentContainer>
+        </ChartErrorBoundary>
     </Container>);
 });
 
@@ -130,8 +155,8 @@ const ViewSelect = observer((props: any) => {
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
     const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
-        <div className={'systemViewSelect'}>
-            <Select width={180} value={viewOption} onChange={handleViewChange} options={options}/>
+        <div className={'view-select'}>
+            <Select width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
         </div>
     );
 });
@@ -167,28 +192,22 @@ export const RankFilter = observer((props: any): JSX.Element => {
     const onRankIdChanged = (value: string): void => {
         setRankIdCondition({ ...rankIdCondition, value });
     };
-    return (<div className={'systemViewRank'} >
+    return (<div className={'rank-filter'} >
         {hostCondition.options.length > 0
-            ? <FormItem
-                name={t('Host')}
-                nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
-                style={{ margin: '0px 10px 10px 0px' }}
-                content={(<Select
+            ? <FormItem label={t('Host')} contentStyle={{ flex: 1 }}>
+                <Select
                     value={hostCondition.value}
-                    width={120}
+                    width={'100%'}
                     onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
                     options={hostCondition.options.map((host) => ({ value: host, label: host }))}
                 />
-                )}/>
-            : <div></div>
+            </FormItem>
+            : <></>
         }
-        <FormItem
-            name={t('Rank ID')}
-            nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
-            style={{ margin: '0px 10px 10px 0px' }}
-            content={(<Select
+        <FormItem label={t('Rank ID')} contentStyle={{ flex: 1 }}>
+            <Select
                 value={rankIdCondition.value}
-                width={120}
+                width={'100%'}
                 onChange={onRankIdChanged}
                 options={rankIdCondition.options.map((rankId) => {
                     return {
@@ -198,7 +217,7 @@ export const RankFilter = observer((props: any): JSX.Element => {
                 })}
                 showSearch={true}
             />
-            )}/>
+        </FormItem>
     </div>);
 });
 
@@ -378,7 +397,9 @@ const BaseSummary = observer((props: any) => {
                 size="small"
                 scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
                 loading = {isLoading}/>
-            : <Loading style={{ marginTop: '10px' }}/>
+            : <div style={{ display: 'flex', height: '100%' }}>
+                <StyledEmpty style={{ margin: 'auto' }}/>
+            </div>
     );
 });
 
@@ -525,7 +546,9 @@ const KernelDetails = observer((props: any) => {
                     return record.id === rowData.id ? 'selected-row' : 'click-able';
                 }}
                 size="small"/>
-            : <Loading style={{ marginTop: '10px' }}/>
+            : <div style={{ display: 'flex', height: '100%' }}>
+                <StyledEmpty style={{ margin: 'auto' }}/>
+            </div>
     );
 });
 

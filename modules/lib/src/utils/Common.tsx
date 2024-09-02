@@ -224,7 +224,7 @@ export const chartColors = [
     '#D57B18',
     '#9831B9',
     '#699006',
-    '#CB2FOF',
+    '#CB2F0F',
     '#004EB0',
     '#1F7C58',
     '#2A8D93',

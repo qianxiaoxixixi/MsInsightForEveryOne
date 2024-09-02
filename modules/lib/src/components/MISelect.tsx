@@ -34,7 +34,7 @@ const StyledRemoveIcon = styled.div`
     background-size: cover;
 `;
 
-export const MISelect = styled((props: SelectProps & { width?: number; height?: number; name?: string }): JSX.Element => {
+export const MISelect = styled((props: SelectProps & { width?: number | string; height?: number; name?: string }): JSX.Element => {
     const { t } = useTranslation('lib');
     const { size, ...restProps } = props;
     return <Select
@@ -47,7 +47,16 @@ export const MISelect = styled((props: SelectProps & { width?: number; height?: 
     />;
 })`
     height: ${(props): number => props.height ?? 32}px;
-    width: ${(props): number => props.width ?? (props.size && sizeOption[props.size]) ?? sizeOption.middle}px;
+    width: ${(props): string => {
+        if (typeof props.width === 'string') {
+            if (!isNaN(Number(props.width))) {
+                return `${props.width}px`;
+            }
+            return props.width;
+        }
+        return `${props.width ?? (props.size && sizeOption[props.size]) ?? sizeOption.middle}px`;
+    }
+};
     color: ${(props): string => props.theme.textColorPrimary};
     font-size: 12px;
 
