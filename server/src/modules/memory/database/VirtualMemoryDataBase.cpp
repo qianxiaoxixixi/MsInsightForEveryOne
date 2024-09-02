@@ -113,11 +113,12 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     std::string orderName = "%" + requestParams.searchName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_int64(stmt, index++, startTime + offsetTime);
         sqlite3_bind_double(stmt, index++, requestParams.startTime);
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
-        sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_int64(stmt, index++, startTime + offsetTime);
         sqlite3_bind_double(stmt, index++, requestParams.startTime);
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
     }

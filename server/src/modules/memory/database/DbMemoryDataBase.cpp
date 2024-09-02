@@ -58,15 +58,18 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             requestParams.maxSize *= KB_SIZE;
         }
     }
+    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     if (type == FileType::PYTORCH) {
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-            "ROUND((allocation_time - " + std::to_string(startTime) +
+            "ROUND((allocation_time - " + std::to_string(startTime) + " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
             "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
+            " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-            std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+            std::to_string(startTime) + " - " + std::to_string(offsetTime) +
+            ") / (1000.0 * 1000.0), 3) "
             "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
             "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
             " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "

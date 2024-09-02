@@ -284,15 +284,19 @@ uint64_t  TextMemoryDataBase::QueryMinRecordTimestamp()
 std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     std::string sql =
         "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
         "ROUND((allocation_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
+        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
+        ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
         "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
+        ") / (1000.0 * 1000.0), 3) "
         "END AS releaseTimestamp, ROUND(duration / 1000.0, 3) as duration, "
         "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+        std::to_string(startTime) + " - " + std::to_string(offsetTime) +
+        ") / (1000.0 * 1000.0), 3) "
         "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 3) as active_duration, "
         "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
         "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
