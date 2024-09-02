@@ -194,8 +194,16 @@ const Interactor = ({
         };
     }
     useEffect(() => {
+        const normalCanvasCtx = normalCanvas.current?.getContext('2d');
+        const hoverCanvasCtx = hoverCanvas.current?.getContext('2d');
+
         resetCanvasSize(normalCanvas, normalRect);
         resetCanvasSize(hoverCanvas, hoverRect);
+
+        normalCanvasCtx?.setTransform(1, 0, 0, 1, 0, 0);
+        hoverCanvasCtx?.setTransform(1, 0, 0, 1, 0, 0);
+        normalCanvasCtx?.scale(devicePixelRatio, devicePixelRatio);
+        hoverCanvasCtx?.scale(devicePixelRatio, devicePixelRatio);
     },
     [normalRect, hoverRect]);
 
