@@ -8,6 +8,7 @@ export { MIButton as Button } from './MIButton';
 export { MITooltip as Tooltip } from './MITooltip';
 export { MIPagination as Pagination } from './MIPagination';
 export { MICheckbox as Checkbox } from './MICheckbox';
+export { MIFormItem as FormItem } from './MIFormItem';
 export {
     Col,
     Row,

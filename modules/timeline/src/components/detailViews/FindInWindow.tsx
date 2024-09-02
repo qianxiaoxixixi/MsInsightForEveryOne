@@ -13,7 +13,6 @@ import { ResizeTable } from 'ascend-resize';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import styled from '@emotion/styled';
 import { RankFilter } from './SystemView';
-import { Space } from 'antd/lib/index';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import type { InsightUnit } from '../../entity/insight';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
@@ -23,9 +22,24 @@ import { calculateDomainRange } from '../CategorySearch';
 
 const CONTAINER = styled.div`
     height: calc(100% - 50px);
-    padding: 5px 5px 15px 5px;
+
     .ant-table-wrapper {
         height: 100%;
+    }
+`;
+
+const FindDetailContainer = styled.div`
+    padding: 8px 16px;
+
+    .rank-filter {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+
+      .content {
+        flex: none;
+        width: 160px;
+      }
     }
 `;
 export interface SearchTableData {
@@ -119,11 +133,12 @@ export const FindDetailView = observer((props: any) => {
         setConditions({ rankId });
     };
     return (
-        <><Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+        <FindDetailContainer>
             <RankFilter session={props.session} handleChange={handleChange}></RankFilter>
-        </Space>
-        <ChartErrorBoundary><FindDetail rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}>
-        </FindDetail></ChartErrorBoundary></>
+            <ChartErrorBoundary>
+                <FindDetail rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}></FindDetail>
+            </ChartErrorBoundary>
+        </FindDetailContainer>
     );
 });
 

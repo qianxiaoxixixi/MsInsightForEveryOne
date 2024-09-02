@@ -34,11 +34,25 @@ interface DataCardType {
 
 const FILTER_HEIGHT = 31;
 export const DETAIL_HEADER_HEIGHT_PX = 36;
+const BOTTOM_PANEL_PADDING_X = 16; // 底部面板上下padding
 const MORE_HEADER_HEIGHT_PX = 22;
 const enum TriggerType {
     SELECTED_DATA = 'SELECTED_DATA',
     SELECTED_RANGE = 'SELECTED_RANGE',
 };
+
+const BottomTabs = styled(StyledTabs)`
+    .ant-tabs-content-holder{
+      padding: 8px 16px;
+      background: ${(props): string => props.theme.bgColorDark};
+
+      .ant-tabs-content{
+        border-radius: 4px;
+        overflow: hidden;
+        background: ${(props): string => props.theme.bgColor};
+      }
+    }
+`;
 
 const Container = styled.div`
     display: flex;
@@ -162,8 +176,8 @@ const useBottomPanelReactNodes = (session: Session, height: number, type: string
     }, [session, session.units.length, isSliceDetail ? String(selectedUnitKeys) : session.selectedRange]);
     const bottomPanelComponent = isSliceDetail ? bottomPanelComponents?.[0] : bottomPanelComponents?.[1];
     const contentHeight = bottomPanelComponent?.Toolbar !== undefined
-        ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
-        : (height - DETAIL_HEADER_HEIGHT_PX);
+        ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT - BOTTOM_PANEL_PADDING_X)
+        : (height - DETAIL_HEADER_HEIGHT_PX - BOTTOM_PANEL_PADDING_X);
     const { t } = useTranslation('timeline');
     return React.useMemo(() => {
         return {
@@ -293,7 +307,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     }, [session.doContextSearch, session.showEvent]);
 
     return (<Container ref={ref} className="bottomPanelContainer">
-        <StyledTabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
+        <BottomTabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
     </Container>);
 });
 
