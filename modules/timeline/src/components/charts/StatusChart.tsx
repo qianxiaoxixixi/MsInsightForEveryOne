@@ -134,6 +134,8 @@ export const StatusChart = observer(({
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
         const yScale = (n: number): number => n * rowHeight;
         const startY = ((height - rowHeight) / 2) + 1;
+        ctx?.setTransform(1, 0, 0, 1, 0, 0);
+        ctx?.scale(devicePixelRatio, devicePixelRatio);
         ctx?.clearRect(0, 0, width, height);
         if (unit.isExpanded) { return; }
         draw({ ctx, datas: datasState, xScale, yScale, theme, startY });
@@ -156,6 +158,6 @@ export const StatusChart = observer(({
 
     return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height}>
         <TooltipComponent {...tooltipProp} />
-        <Canvas className={'drawCanvas'} ref={canvas} width={width} height={height}/>
+        <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
     </CanvasContainer>;
 });

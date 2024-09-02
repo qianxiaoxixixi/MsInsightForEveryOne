@@ -18,7 +18,6 @@ import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
-import { adaptDpr } from 'ascend-utils';
 
 const dragInitData = {
     isDragging: false,
@@ -34,8 +33,8 @@ function resetDragInitData(): void {
 
 export const resetCanvasSize = (canvas: React.RefObject<HTMLCanvasElement>, rect: DOMRectReadOnly | null): void => {
     if (!canvas.current) { return; }
-    canvas.current.width = rect?.width ?? 0;
-    canvas.current.height = rect?.height ?? 0;
+    canvas.current.width = (rect?.width ?? 0) * devicePixelRatio;
+    canvas.current.height = (rect?.height ?? 0) * devicePixelRatio;
 };
 
 const updateSessionStatus = (e: MouseEvent, session: Session, newSelected: [number, number]): void => {
@@ -121,11 +120,10 @@ const getDrawOnMoveArgs = ({
     if (!ctx) {
         throw Error('Failed to get CanvasRenderingContext2D');
     }
-    const { canvasWidth, canvasHeight } = adaptDpr(canvas.current, ctx);
     return {
         ctx,
-        width: canvasWidth,
-        height: canvasHeight,
+        width: canvas.current.clientWidth,
+        height: canvas.current.clientHeight,
         isNsMode: session.isNsMode,
         selectedRange: session.selectedRange,
         session,

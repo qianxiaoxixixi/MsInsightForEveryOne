@@ -213,6 +213,8 @@ export const FilledLineChart = observer(({
             return;
         }
         const ctx = canvas.current.getContext('2d');
+        ctx?.setTransform(1, 0, 0, 1, 0, 0);
+        ctx?.scale(devicePixelRatio, devicePixelRatio);
         ctx?.clearRect(0, 0, width, height);
         draw({ ctx, datas: dataState, width, height, palette: colorPalette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat });
     }, [dataState, rangeAndDomain, theme, valueRange, hideLayer, colorPalette]);
@@ -228,7 +230,7 @@ export const FilledLineChart = observer(({
     };
     return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height}>
         <TooltipComponent {...tooltipProp} />
-        <Canvas className={'drawCanvas'} ref={canvas} width={width} height={height}/>
+        <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
         <LegendJSX legend={legend} palette={colorPalette} hideLayer={hideLayer} setHideLayer={setHideLayer}/>
     </CanvasContainer>;
 });

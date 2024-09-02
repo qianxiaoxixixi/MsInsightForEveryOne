@@ -155,6 +155,8 @@ export const CanvasContainer = styled.div<{ width: number; height: number }>`
 `;
 
 export const Canvas = styled.canvas`
+    width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
 `;

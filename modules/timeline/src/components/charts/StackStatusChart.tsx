@@ -292,6 +292,8 @@ export const StackStatusChart = observer(({
         }
         const ctx = canvas.current.getContext('2d', { willReadFrequently: true });
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
+        ctx?.setTransform(1, 0, 0, 1, 0, 0);
+        ctx?.scale(devicePixelRatio, devicePixelRatio);
         ctx?.clearRect(0, 0, width, height);
         draw({ ctx, datas: datasState, xScale, yScale, theme, right: session.endTimeAll ?? 0, isSimulation: session.isSimulation, textConfig });
         drawExt({
@@ -322,6 +324,6 @@ export const StackStatusChart = observer(({
 
     return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height} style={{ pointerEvents: `${isCollapse ? 'none' : 'auto'}` }}>
         { !isCollapse && <TooltipComponent {...tooltipProp} /> }
-        <Canvas className={'drawCanvas'} ref={canvas} width={width} height={height}/>
+        <Canvas className={'drawCanvas'} ref={canvas} width={width * devicePixelRatio} height={height * devicePixelRatio}/>
     </CanvasContainer>;
 });
