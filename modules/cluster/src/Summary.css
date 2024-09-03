@@ -38,3 +38,16 @@
     text-align: end;
     white-space: nowrap;
 }
+
+#parallelDrawLineSVG > g > rect:hover {
+    opacity: 0.6;
+}
+#parallelDrawLineSVG > .horizontalLine:hover {
+    opacity: 0.6;
+}
+#parallelDrawLineSVG > .verticalLine:hover {
+    opacity: 0.6;
+}
+#parallelDrawLineSVG > .dpLine:hover {
+    opacity: 0.6;
+}
