@@ -1160,8 +1160,8 @@ bool DbTraceDataBase::InitStmt()
 
 bool DbTraceDataBase::SetConfig()
 {
-    if (!isOpen) {
-        ServerLog::Error("Failed to set config. Database is not open.");
+    auto isVersionChange = IsDatabaseVersionChange();
+    if (!Database::SetConfig()) {
         return false;
     }
 
@@ -1177,13 +1177,7 @@ bool DbTraceDataBase::SetConfig()
     }
     QueryRankId();
 
-    if (IsDatabaseVersionChange()) {
-        UpdateValueIntoStatusInfoTable(CONFIG_STATUS, NOT_FINISH_STATUS);
-        UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, NOT_FINISH_STATUS);
-        UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, NOT_FINISH_STATUS);
-    }
-
-    if (!CheckValueFromStatusInfoTable(CONFIG_STATUS, FINISH_STATUS)) {
+    if (isVersionChange) {
         if (CheckTableExist(TABLE_TASK)) {
             ExecSql("alter table TASK add depth integer;");
             ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -1204,10 +1198,10 @@ bool DbTraceDataBase::SetConfig()
         if (CheckTableExist(TABLE_COMMUNICATION_OP)) {
             ExecSql("alter table COMMUNICATION_OP add column waitNs INTEGER;");
         }
-        UpdateValueIntoStatusInfoTable(CONFIG_STATUS, FINISH_STATUS);
+        UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, NOT_FINISH_STATUS);
+        UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, NOT_FINISH_STATUS);
     }
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA case_sensitive_like=1; PRAGMA journal_mode = MEMORY;"
-                   " PRAGMA user_version = " + GetDataBaseVersion() + ";");
+    return ExecSql("PRAGMA case_sensitive_like=1;");
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)

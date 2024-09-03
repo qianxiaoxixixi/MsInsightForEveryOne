@@ -439,6 +439,7 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
     } catch (error) {
         console.error(error);
     }
+    connector.send({ event: 'updateSession', body: { loading: false } });
 };
 
 const getRemoveUnits = (session: Session, dataSource: DataSource, singleDataPath: string): InsightUnit[] => {

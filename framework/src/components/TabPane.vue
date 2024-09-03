@@ -252,7 +252,6 @@ function registerEventListeners() {
     });
     connector.addListener('deleteRank', (e) => {
         const receiver = e.data.body;
-        session.loading = false;
         if (!receiver) {
             console.warn('data.body is undefined, please check your params');
             return;

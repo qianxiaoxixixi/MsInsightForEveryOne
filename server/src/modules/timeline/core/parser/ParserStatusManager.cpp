@@ -89,7 +89,7 @@ ParserStatus ParserStatusManager::SetTerminateStatus(const std::string &fileId)
         return ParserStatus::UN_KNOW;
     }
     auto oldStatus = statusMap[fileId];
-    if (oldStatus != ParserStatus::FINISH) {
+    if (oldStatus != ParserStatus::FINISH && oldStatus != ParserStatus::FINISH_ALL) {
         statusMap[fileId] = ParserStatus::TERMINATE;
     }
     return oldStatus;
@@ -100,7 +100,7 @@ void ParserStatusManager::SetAllTerminateStatus()
     std::unique_lock<std::mutex> lock(mutex);
     pendingRankAndFilePathMap.clear();
     for (auto &statu : statusMap) {
-        if (statu.second != ParserStatus::FINISH) {
+        if (statu.second != ParserStatus::FINISH && statu.second != ParserStatus::FINISH_ALL) {
             statu.second = ParserStatus::TERMINATE;
         }
     }
@@ -136,7 +136,8 @@ bool ParserStatusManager::IsAllFinished(std::string &notFinishTask)
 
 bool ParserStatusManager::IsFinished(const std::string &fileId)
 {
-    return statusMap.count(fileId) == 0 || statusMap[fileId] == ParserStatus::FINISH;
+    return statusMap.count(fileId) == 0 || statusMap[fileId] == ParserStatus::FINISH ||
+        statusMap[fileId] == ParserStatus::FINISH_ALL;
 }
 
 void ParserStatusManager::WaitAllFinished(const std::vector<std::string> &fileIds)

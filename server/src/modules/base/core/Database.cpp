@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "Database.h"
+#include "ConstantDefs.h"
 
 namespace Dic {
 namespace Module {
@@ -463,6 +464,21 @@ std::string Database::GetLastError()
         return "";
     }
     return sqlite3_errmsg(db);
+}
+
+bool Database::SetConfig()
+{
+    if (!isOpen) {
+        ServerLog::Error("Failed to set config. Database is not open.");
+        return false;
+    }
+    std::string dbVersion = GetDataBaseVersion();
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (IsDatabaseVersionChange()) {
+        return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;"
+                       " PRAGMA user_version = " + dbVersion + ";");
+    }
+    return true;
 }
 } // end of namespace Module
 } // end of namespace Dic
