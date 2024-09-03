@@ -67,7 +67,7 @@ std::optional<InterCoreLoadAnalysisDetail> InterCoreLoadGraphParser::ParseInterC
     const std::string &json)
 {
     if (json.empty()) {
-        ServerLog::Warn("Parse inter core load analysis info failed cause json is empty.");
+        ServerLog::Warn("Inter core load analysis json string is empty.");
         return std::nullopt;
     }
     // 解析json并统计每个维度指标的最优值
@@ -76,7 +76,7 @@ std::optional<InterCoreLoadAnalysisDetail> InterCoreLoadGraphParser::ParseInterC
         std::string errorStr;
         const std::optional<document_t> &jsonInfo = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(json, errorStr);
         if (!errorStr.empty() || !jsonInfo.has_value()) {
-            ServerLog::Error("Parse inter core load analysis info failed, error is ", errorStr);
+            ServerLog::Error("Try to parse inter core load analysis json string failed, error is ", errorStr);
             return std::nullopt;
         }
         const document_t &jsonInfoDoc = jsonInfo.value();
@@ -86,13 +86,13 @@ std::optional<InterCoreLoadAnalysisDetail> InterCoreLoadGraphParser::ParseInterC
 
         // 解析op detail数组
         if (!JsonUtil::IsJsonArray(jsonInfoDoc, "op_detail")) {
-            ServerLog::Warn("Op detail is not an array.");
+            ServerLog::Warn("Try to parse inter core load analysis json failed cause op detail is not an array.");
             return std::nullopt;
         }
         const json_t &jsonOpDetailArray = jsonInfoDoc["op_detail"];
         ParseJsonOpDetailArray(analysisDetail, jsonOpDetailArray);
     } catch (const std::exception &e) {
-        ServerLog::Error("Parse inter core load analysis info failed, exception is ", e.what());
+        ServerLog::Error("Try to parse inter core load analysis json failed, exception is ", e.what());
         return std::nullopt;
     }
     
@@ -109,7 +109,7 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
 
         // 解析sub core detail数组
         if (!JsonUtil::IsJsonArray(jsonOpDetail, "core_detail")) {
-            ServerLog::Warn("Core detail is not an array.");
+            ServerLog::Warn("Sub core detail is not an array.");
             analysisDetail.AddOpDetail(std::move(opDetail));
             analysisDetail.opDetails.emplace_back(opDetail);
             analysisDetail.opDetails.emplace_back(std::move(opDetail));
