@@ -112,16 +112,8 @@ void TextTraceDatabase::ReleaseStmt()
 
 bool TextTraceDatabase::SetConfig()
 {
-    if (!isOpen) {
-        ServerLog::Error("Failed to set config. Database is not open.");
-        return false;
-    }
-    std::string dbVersion = GetDataBaseVersion();
-    std::unique_lock<std::recursive_mutex> lock(mutex);
-    // PRAGMA case_sensitive_like=1; 设置数据库大小写敏感。
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; "
-        "PRAGMA case_sensitive_like=1; PRAGMA user_version = " +
-        dbVersion + ";");
+    // PRAGMA case_sensitive_like=1; 设置数据库大小写敏感。 不会写入数据库的配置，不会造成死锁
+    return Database::SetConfig() && ExecSql("PRAGMA case_sensitive_like=1;");
 }
 
 bool TextTraceDatabase::CreateTable()
