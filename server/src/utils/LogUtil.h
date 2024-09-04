@@ -189,6 +189,22 @@ public:
     }
 
 private:
+    bool IsSoftLink(const std::string &path)
+    {
+    #ifdef _WIN32
+        std::wstring widePath(path.begin(), path.end());
+        DWORD attributes = GetFileAttributesW(widePath.c_str());
+        return (attributes != INVALID_FILE_ATTRIBUTES) &&
+            (attributes & FILE_ATTRIBUTE_REPARSE_POINT);
+    #else
+        struct stat fileStat;
+        if (lstat(path.c_str(), &fileStat) != 0) {
+            return false;
+        }
+        return S_ISLNK(fileStat.st_mode);
+    #endif
+    }
+
     void Initialize()
     {
         // read the last write log file and the count
@@ -296,6 +312,9 @@ private:
         if (outType == LogOutType::BOTH || outType == LogOutType::FILE) {
             if (CheckRotating()) {
                 RotatingLogFile();
+            }
+            if (IsSoftLink(filePath)) {
+                return;
             }
             // ensure the prev log write into disk
             Flush();
