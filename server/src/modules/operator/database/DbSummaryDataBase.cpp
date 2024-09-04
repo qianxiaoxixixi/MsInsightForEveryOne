@@ -353,7 +353,7 @@ bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticRe
                                                    std::vector<Protocol::OperatorDetailInfoRes> &res,
                                                    std::string &level)
 {
-    std::string sql = GenerateQueryDetailSql(reqParams);
+    std::string sql = GenerateAllQueryDetailSql(reqParams);
     if (!ExecSqlGetDetailInfo(sql, reqParams, res)) {
         ServerLog::Error("Failed to exec query detail sql.");
         return false;
@@ -382,8 +382,10 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     sqlite3_bind_int64(stmt, index++, startTime);
 
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
-    sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
-    sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+    if (!reqParams.isCompare) {
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+        sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+    }
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = 0;
@@ -734,7 +736,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     return true;
 }
 
-std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams)
+std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqParams &reqParams)
 {
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
     std::string sql;
@@ -773,6 +775,15 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
+    }
+    return sql;
+}
+
+std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams)
+{
+    std::string sql = GenerateAllQueryDetailSql(reqParams);
+    if (std::empty(sql)) {
+        return sql;
     }
     sql += " LIMIT ? OFFSET ?";
     return sql;

@@ -43,6 +43,7 @@ private:
     static std::string GenerateQueryCategoryDurationSql(OperatorDurationReqParams &reqParams);
     static std::string GenerateQueryComputeUnitDurationSql(OperatorDurationReqParams &reqParams);
     bool QueryDetailTotalNum(OperatorStatisticReqParams &reqParams, int64_t &total);
+    std::string GenerateAllQueryDetailSql(OperatorStatisticReqParams &reqParams);
     std::string GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams);
     bool QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total);
     std::string GenerateQueryMoreInfoSql(OperatorMoreInfoReqParams &reqParams);
