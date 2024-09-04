@@ -229,11 +229,16 @@ const updateSession = (session: Session, totalHeight: number, cardIdSet: Set<str
     }
 };
 
+interface CardId {
+    cardId: string;
+}
+
 const computeOnScreenCardIdSet = (flattenUnits: InsightUnit[], first: number, last: number): Set<string> => {
-    return new Set(flattenUnits.filter((_, i) => first <= i && i < last).map(insightUnit => {
-        const { cardId } = insightUnit.metadata as { cardId: string };
-        return cardId;
-    }));
+    return new Set(
+        flattenUnits
+            .map(unit => (unit?.metadata as CardId)?.cardId)
+            .filter((id, i) => first <= i && i < last && id !== undefined && !id.endsWith('Host')),
+    );
 };
 
 const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, eventType }: FlattenUnitsProps): JSX.Element => {

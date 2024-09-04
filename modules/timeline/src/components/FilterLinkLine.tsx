@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import styled from '@emotion/styled';
-import { Tooltip, Button, Checkbox } from 'ascend-components';
+import { Button, Checkbox, Tooltip } from 'ascend-components';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
 import { LinkIcon } from 'ascend-icon';
@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { StyledEmpty } from './base/StyledEmpty';
 import { runInAction } from 'mobx';
 import type { InsightUnit, LinkLines } from '../entity/insight';
-import { CardUnit } from '../insight/units/AscendUnit';
+import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
 import { type HostMetaData } from '../entity/data';
@@ -73,6 +73,20 @@ const getCardUnits = (units: InsightUnit[]): InsightUnit[] => {
     });
 };
 
+const getHostChildUnitCardId = (units: InsightUnit[], viewedCardIdSet: Set<string>): string[] => {
+    return units.flatMap(unit => {
+        const res: string[] = [];
+        if (unit instanceof ThreadUnit) {
+            const { cardId } = unit.metadata as { cardId: string };
+            res.push(cardId);
+        }
+        if (unit.isExpanded && unit.children) {
+            res.push(...getHostChildUnitCardId(unit.children, viewedCardIdSet));
+        }
+        return res;
+    });
+};
+
 export interface DataBlock {
     pid: number;
     tid: number;
@@ -108,7 +122,13 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 if (!unit.isExpanded) {
                     continue;
                 }
-                const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
+                let { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
+                if (cardId.endsWith('Host')) {
+                    const hostUnits: InsightUnit[] = [];
+                    hostUnits.push(unit);
+                    const hostThreadCardIds = getHostChildUnitCardId(hostUnits, viewedCardIdSet);
+                    cardId = hostThreadCardIds[0];
+                }
                 // 如果不在可视范围内就不查询
                 if (!viewedCardIdSet.has(cardId)) {
                     continue;
