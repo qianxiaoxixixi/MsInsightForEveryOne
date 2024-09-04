@@ -14,6 +14,7 @@ export class Session {
     unitcount = 0;
     memoryRankIds: string[] = [];
     isCluster: boolean = false;
+    shouldRefresh: boolean = true;
     isClusterMemoryCompletedSwitch: boolean = false;
     curRankIdsCount = 0;
     compareRank: ICompareRankInfo = { rankId: '', isCompare: false };
