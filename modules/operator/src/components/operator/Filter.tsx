@@ -128,7 +128,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
             condition.rankId = session.dirInfo.rankId !== '' ? session.dirInfo.rankId : optionMap.rankIdOptions[0]?.value as string ?? '';
             condition.isCompare = session.dirInfo.isCompare ?? false;
         });
-        handleFilterChange(condition);
+        handleFilterChange({ ...condition, topK: condition.topK !== 0 ? condition.topK : condition.custom });
     }, [session.dirInfo]);
 
     useEffect(() => {
