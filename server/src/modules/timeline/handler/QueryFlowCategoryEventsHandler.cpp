@@ -19,11 +19,7 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     SetBaseResponse(request, response);
     bool result = false;
     std::vector<std::string> fileIdList;
-    if (request.params.rankId.empty() || !DataBaseManager::Instance().GetDbPathByHost(request.params.rankId).empty()) {
-        fileIdList = DataBaseManager::Instance().GetDbPathByHost(request.params.rankId);
-    } else {
-        fileIdList.emplace_back(request.params.rankId);
-    }
+    fileIdList.emplace_back(request.params.rankId);
     for (const auto &fileId : fileIdList) {
         auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
         if (database != nullptr) {

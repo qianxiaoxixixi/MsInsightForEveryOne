@@ -225,12 +225,9 @@ bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams
     std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList)
 {
     std::vector<std::string> deviceIds;
-    if (params.rankId.empty() || !DataBaseManager::Instance().GetDbPathByHost(params.rankId).empty()) {
-        for (const auto &rankId: rankIds) {
-            deviceIds.emplace_back(QueryHostInfo() + rankId);
-        }
-    } else {
-        deviceIds.emplace_back(params.rankId);
+    std::string deviceHost = QueryHostInfo();
+    for (const auto &rankId: rankIds) {
+        deviceIds.emplace_back(deviceHost + rankId);
     }
     for (const auto &rankId: deviceIds) {
         auto flowCache = CommonCacheManager::Instance().GetFlowCache(rankId, params.category);
