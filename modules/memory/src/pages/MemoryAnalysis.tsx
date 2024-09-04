@@ -389,7 +389,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankIdCondition.value, groupId, t, isCompare, session.isClusterMemoryCompletedSwitch]);
+    }, [rankIdCondition.value, groupId, t, session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
@@ -446,7 +446,11 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         if (session.memoryRankIds.includes(session.compareRank.rankId)) {
             onRankIdChanged(session.compareRank.rankId);
         }
-    }, [JSON.stringify(session.compareRank), JSON.stringify(session.memoryRankIds)]);
+    }, [session.compareRank.rankId, JSON.stringify(session.memoryRankIds)]);
+
+    useEffect(() => {
+        onBaseChanged();
+    }, [session.compareRank.isCompare]);
 
     return (
         <Layout>

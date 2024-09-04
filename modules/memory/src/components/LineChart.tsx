@@ -45,7 +45,6 @@ const _getLegendData = (data: string[]): string[] => {
     return tempData;
 };
 
-// eslint-disable-next-line max-lines-per-function
 const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean, graph: Graph): echarts.EChartsOption => {
     const legendDatas = _getLegendData(graph.columns);
     return {
@@ -72,10 +71,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
             },
             ...getDefaultChartOptions(isDark).tooltip,
         },
-        legend: {
-            itemGap: 20,
-            data: legendDatas,
-        },
+        legend: { itemGap: 20, data: legendDatas },
         grid: { left: '100', right: '100', bottom: 40 },
         xAxis: {
             type: 'category',
