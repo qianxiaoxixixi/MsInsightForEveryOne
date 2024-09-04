@@ -11,6 +11,7 @@
 #include "QueryDetailsMemoryGraphHandler.h"
 #include "QueryDetailsMemoryTableHandler.h"
 #include "QueryInterCoreLoadAnalysisGraphHandler.h"
+#include "QueryDetailsRooflineHandler.h"
 #include "SourceProtocolRequest.h"
 #include "WsSessionManager.h"
 #include "../../TestSuit.cpp"
@@ -91,5 +92,12 @@ TEST_F(SourceHandleTest, QueryInterCoreLoadAnalysisGraphHandler)
 {
     Dic::Module::Source::QueryInterCoreLoadAnalysisGraphHandler handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<Request>(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH);
+    handler.HandleRequest(std::move(requestPtr));
+}
+
+TEST_F(SourceHandleTest, QueryDetailsRooflineHandler)
+{
+    Dic::Module::Source::QueryDetailsRooflineHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<DetailsRooflineRequest>();
     handler.HandleRequest(std::move(requestPtr));
 }

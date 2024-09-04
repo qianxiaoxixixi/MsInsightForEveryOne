@@ -31,6 +31,7 @@ private:
     static std::unique_ptr<Request> ToDetailsMemoryGraphRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDetailsMemoryTableRequest(const Dic::json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDetailsInterCoreLoadGraphRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToDetailsRooflineRequest(const json_t &json, std::string &error);
 
     // response to json
     static std::optional<document_t> ToCodeFileResponse(const Response &response);
@@ -41,6 +42,7 @@ private:
     static std::optional<document_t> ToDetailsMemoryGraphResponse(const Response &response);
     static std::optional<document_t> ToDetailsMemoryTableResponse(const Response &response);
     static std::optional<document_t> ToDetailsInterCoreLoadGraphResponse(const Response &response);
+    static std::optional<document_t> ToDetailsRooflineResponse(const Response &response);
 };
 
 }

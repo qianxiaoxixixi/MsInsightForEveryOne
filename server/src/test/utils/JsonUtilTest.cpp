@@ -195,3 +195,16 @@ TEST(TestUtil, GetDumpString) {
     EXPECT_EQ(name, "contiguous_d_Reshape");
     EXPECT_EQ(cat, "cpu_op");
 }
+
+TEST(TestUtil, GetVectorFloat) {
+    rapidjson::Document d;
+    d.Parse(R"(
+        {
+            "data":[ 3.4, 6.153, 6]
+        }
+    )");
+    auto data = JsonUtil::GetVector<float>(d, "data");
+    EXPECT_FLOAT_EQ(data[0], 3.4);
+    EXPECT_FLOAT_EQ(data[1], 6.153);
+    EXPECT_FLOAT_EQ(data[2], 6);
+}

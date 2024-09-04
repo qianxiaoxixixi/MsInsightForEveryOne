@@ -16,6 +16,7 @@ protected:
     std::string loadData;
     std::string memoryData;
     std::string baseInfo;
+    std::string rooflineDataFile;
 
 protected:
 
@@ -28,6 +29,7 @@ protected:
         memoryData = currPath + R"(/src/test/test_data/memory_data.bin)";
         baseInfo = currPath + R"(/src/test/test_data/base_info.bin)";
         loadData = currPath + R"(/src/test/test_data/load_data.bin)";
+        rooflineDataFile = currPath + R"(/src/test/test_data/roofline_data.bin)";
     }
 };
 
@@ -210,5 +212,23 @@ TEST_F(SourceTest, GetDetailsMemoryTable)
     res = parser.GetDetailsMemoryTable("0", resBody);
     EXPECT_EQ(true, res);
     EXPECT_EQ(1, resBody.memoryTable.size());
+    parser.Reset();
+}
+
+TEST_F(SourceTest, GetRoofline)
+{
+    auto &parser = InitParser(rooflineDataFile);
+    Protocol::DetailsRooflineBody resBody;
+    bool res = parser.GetDetailsRoofline(resBody);
+    EXPECT_EQ(true, res);
+    EXPECT_EQ(resBody.soc, "Ascend910B4");
+    int dataSize = 7;
+    EXPECT_EQ(resBody.data.size(), dataSize);
+    auto item = resBody.data[0];
+    EXPECT_EQ(item.title, "Memory Unit(Cube)");
+    int rooflineSize = 6;
+    EXPECT_EQ(item.rooflines.size(), rooflineSize);
+    std::string expect = "18.44";
+    EXPECT_EQ(item.rooflines[0].bw, expect);
     parser.Reset();
 }

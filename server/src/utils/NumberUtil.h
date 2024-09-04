@@ -18,6 +18,7 @@ const int HEXADECIMAL = 16;
 const std::string THOUSAND_SUFFIX = "000";
 const int THOUSAND = 1000;
 const int64_t MAX = pow(10, 12);
+constexpr int MAX_RESERVED_DIGITS = 6;
 class NumberUtil {
 public:
     static inline int TryParseInt(const std::string &intStr)
@@ -144,7 +145,7 @@ public:
     // 只处理1~6位小数位的截尾
     static inline double DoubleReservedNDigits(double data, int n = 6)
     {
-        if (n <= 0 || n > 6) { // 最多处理6位小数位
+        if (n <= 0 || n > MAX_RESERVED_DIGITS) { // 最多处理6位小数位
             return data;
         }
 
@@ -159,6 +160,18 @@ public:
     static inline double Sub(double a, double b)
     {
         return DoubleReservedNDigits(DoubleReservedNDigits(a) - DoubleReservedNDigits(b));
+    }
+
+    static inline std::string StrReservedNDigits(const std::string& data, int n)
+    {
+        if (n <= 0 || n > MAX_RESERVED_DIGITS) {
+            return data;
+        }
+        auto pos  = data.find_last_of('.');
+        if (pos != std::string::npos) {
+            return data.substr(0, pos + n + 1);
+        }
+        return data;
     }
 
     static inline bool IsGreater(float a, float b, float epsilon = 1e-9)

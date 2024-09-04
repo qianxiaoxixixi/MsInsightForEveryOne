@@ -67,6 +67,14 @@ struct DetailsMemoryTableRequest: public Request {
     DetailsMemoryInfoParams params;
 };
 
+struct DetailsRooflineParams {
+};
+
+struct DetailsRooflineRequest: public Request {
+    DetailsRooflineRequest(): Request(REQ_RES_DETAILS_ROOFLINE) {};
+    DetailsRooflineParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -12,9 +12,9 @@
 #include "QueryDetailsMemoryGraphHandler.h"
 #include "QueryDetailsMemoryTableHandler.h"
 #include "QueryInterCoreLoadAnalysisGraphHandler.h"
+#include "QueryDetailsRooflineHandler.h"
 
-namespace Dic {
-namespace Module {
+namespace Dic::Module {
 using namespace Dic::Module::Source;
 SourceModule::SourceModule() : BaseModule()
 {
@@ -40,11 +40,12 @@ void SourceModule::RegisterRequestHandlers()
                               std::make_unique<QueryDetailsMemoryTableHandler>());
     requestHandlerMap.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH,
                               std::make_unique<QueryInterCoreLoadAnalysisGraphHandler>());
+    requestHandlerMap.emplace(std::string(REQ_RES_DETAILS_ROOFLINE),
+                              std::make_unique<QueryDetailsRooflineHandler>());
 }
 
 void SourceModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {
     BaseModule::OnRequest(std::move(request));
-};
+}
 } // end of namespace Module
-} // end of namespace Dic
