@@ -18,6 +18,7 @@
 #include "TextTraceDatabase.h"
 #include "CacheManager.h"
 #include "SourceProtocolResponse.h"
+#include "RooflineParser.h"
 
 namespace Dic {
 namespace Module {
@@ -25,6 +26,13 @@ namespace Source {
 using namespace Dic;
 using namespace Dic::Server;
 using namespace Dic::Module::FullDb;
+
+static inline std::map<int64_t, std::string> unitTypeMapping = {
+    {0, "Duration(μs)"},
+    {1, "Instructions"},
+    {2, "Data Volume(byte)"},
+    {3, "PRE"}
+};
 
 SourceFileParser &SourceFileParser::Instance()
 {
@@ -917,21 +925,25 @@ std::optional<Protocol::SubBlockData> SourceFileParser::ConvertStrToSubBlockData
         }
         blockData.advice = JsonUtil::GetVector<std::string>(d.value(), "advice");
         Value &blockDetails = d.value()["subblock_detail"];
-        for (auto &item : blockDetails.GetArray()) {
-            Protocol::SubBlockUnitData unitData;
-            unitData.blockId = JsonUtil::GetString(item, "block_id");
-            unitData.blockType = JsonUtil::GetString(item, "block_type");
-            unitData.name = JsonUtil::GetString(item, "name");
-            unitData.unit = GetUnitType(JsonUtil::GetInteger(item, "unit"));
-            unitData.value = JsonUtil::GetString(item, "value");
-            unitData.originValue = JsonUtil::GetString(item, "origin_value");
-            blockData.detailDataList.emplace_back(unitData);
-        }
+        std::transform(blockDetails.GetArray().begin(), blockDetails.GetArray().end(),
+                       std::back_inserter(blockData.detailDataList), SourceFileParser::ParseSubBlockUnitData);
     } catch (const std::exception &e) {
         ServerLog::Error("Can't convert string to sub block data.Error is ", e.what());
         return std::nullopt;
     }
     return blockData;
+}
+
+Protocol::SubBlockUnitData SourceFileParser::ParseSubBlockUnitData(const json_t &item)
+{
+    Protocol::SubBlockUnitData unitData;
+    unitData.blockId = JsonUtil::GetString(item, "block_id");
+    unitData.blockType = JsonUtil::GetString(item, "block_type");
+    unitData.name = JsonUtil::GetString(item, "name");
+    unitData.unit = GetUnitType(JsonUtil::GetInteger(item, "unit"));
+    unitData.value = JsonUtil::GetString(item, "value");
+    unitData.originValue = JsonUtil::GetString(item, "origin_value");
+    return unitData;
 }
 
 std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const
@@ -981,8 +993,26 @@ bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInt
         ServerLog::Warn("Json for inter core load analysis in bin file is empty.");
         return false;
     }
-
     return parser.GetInterCoreLoadAnalysisInfo(json, responseBody);
+}
+
+bool SourceFileParser::GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody)
+{
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
+    if (!file.is_open()) {
+        return false;
+    }
+    std::string error;
+    std::string baseInfo = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_BASE_INFO);
+    auto baseInfoJson = JsonUtil::TryParse(baseInfo, error);
+    if (!error.empty()) {
+        ServerLog::Error("Illegal base info data,can't parse jinto json");
+        return false;
+    }
+    responseBody.soc = JsonUtil::GetString(*baseInfoJson, "soc");
+    std::string jsonStr = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_ROOFLINE);
+    RooflineParser parser;
+    return parser.GetDetailsRoofline(jsonStr, responseBody);
 }
 } // end of namespace Memory
 } // end of namespace Module

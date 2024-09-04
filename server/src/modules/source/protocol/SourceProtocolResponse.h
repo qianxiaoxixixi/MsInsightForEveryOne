@@ -89,6 +89,26 @@ struct SubBlockUnitData {
     std::string originValue;
 };
 
+struct Roofline {
+    std::string bw;   // 理论带宽
+    std::string bwName;
+    std::string computility;  // 屋顶算力
+    std::string computilityName;    // 算力名称
+    std::vector<std::string> point;  // 坐标
+    std::string ratio;      // 百分比
+};
+
+struct RooflineGraph {
+    // 标题
+    std::string title;
+    std::vector<Roofline> rooflines;
+};
+
+struct RooflineData {
+    std::string advice;
+    std::vector<RooflineGraph> multipleRooflines;
+};
+
 struct SubBlockData {
     std::vector<SubBlockUnitData> detailDataList;
     std::vector<std::string> advice;
@@ -258,6 +278,17 @@ struct DetailsInterCoreLoadGraphBody {
 struct DetailsInterCoreLoadGraphResponse : public Response {
     DetailsInterCoreLoadGraphResponse() : Response(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH) {};
     DetailsInterCoreLoadGraphBody body;
+};
+
+struct DetailsRooflineBody {
+    std::string soc;
+    std::string advice;
+    std::vector<RooflineGraph> data;
+};
+
+struct DetailsRooflineResponse : public Response {
+    DetailsRooflineResponse() : Response(std::string(REQ_RES_DETAILS_ROOFLINE)) {};
+    DetailsRooflineBody body;
 };
 
 } // end of namespace Protocol

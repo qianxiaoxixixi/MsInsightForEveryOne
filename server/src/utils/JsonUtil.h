@@ -97,6 +97,8 @@ public:
                 vec.push_back(item.GetDouble());
             } else if constexpr (std::is_same_v<T, std::string>) {
                 vec.push_back(item.GetString());
+            } else if constexpr (std::is_same_v<T, float>) {
+                vec.push_back(item.GetFloat());
             } else {
                 Server::ServerLog::Error("Get vector from json error: unsupported type!");
             }

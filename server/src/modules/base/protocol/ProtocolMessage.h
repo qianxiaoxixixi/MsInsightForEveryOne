@@ -57,6 +57,11 @@ struct Request : public ProtocolMessage {
         type = ProtocolMessage::Type::REQUEST;
     }
 
+    explicit Request(std::string_view command) : command(std::string(command))
+    {
+        type = ProtocolMessage::Type::REQUEST;
+    }
+
     ~Request() override = default;
     // 当前选中项目名，如果没有选中的话，内容为空
     std::string projectName;

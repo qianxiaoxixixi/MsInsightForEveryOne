@@ -20,6 +20,7 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH, ToDetailsInterCoreLoadGraphRequest);
+    jsonToReqFactory.emplace(std::string(REQ_RES_DETAILS_ROOFLINE), ToDetailsRooflineRequest);
 }
 
 void SourceProtocol::RegisterResponseToJsonFuncs()
@@ -32,6 +33,7 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH, ToDetailsInterCoreLoadGraphResponse);
+    resToJsonFactory.emplace(std::string(REQ_RES_DETAILS_ROOFLINE), ToDetailsRooflineResponse);
 }
 
 void SourceProtocol::RegisterEventToJsonFuncs()
@@ -130,6 +132,17 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsInterCoreLoadGraphRequest(cons
 {
     return ToNoParamsRequest(json, error, REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH);
 }
+
+std::unique_ptr<Request> SourceProtocol::ToDetailsRooflineRequest(const Dic::json_t &json, std::string &error)
+{
+    auto reqPtr = std::make_unique<DetailsRooflineRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Reponse To Json>>
@@ -173,6 +186,11 @@ std::optional<document_t> SourceProtocol::ToDetailsInterCoreLoadGraphResponse(co
 {
     return ToResponseJson<DetailsInterCoreLoadGraphResponse>(
             dynamic_cast<const DetailsInterCoreLoadGraphResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToDetailsRooflineResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<DetailsRooflineResponse>(dynamic_cast<const DetailsRooflineResponse &>(response));
 }
 #pragma endregion
 

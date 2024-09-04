@@ -306,6 +306,38 @@ template<> std::optional<document_t> ToResponseJson<DetailsInterCoreLoadGraphRes
 
     return std::move(json);
 }
+
+template<>
+std::optional<document_t> ToResponseJson<DetailsRooflineResponse>(const DetailsRooflineResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "soc", response.body.soc, allocator);
+    JsonUtil::AddMember(body, "advice", response.body.advice, allocator);
+    json_t data(kArrayType);
+    for (auto &item: response.body.data) {
+        json_t rooflineGraph(kObjectType);
+        JsonUtil::AddMember(rooflineGraph, "title", item.title, allocator);
+        json_t rooflineList(kArrayType);
+        for (auto &roofline: item.rooflines) {
+            json_t jsonRoofline(kObjectType);
+            JsonUtil::AddMember(jsonRoofline, "bw", roofline.bw, allocator);
+            JsonUtil::AddMember(jsonRoofline, "bwName", roofline.bwName, allocator);
+            JsonUtil::AddMember(jsonRoofline, "computility", roofline.computility, allocator);
+            JsonUtil::AddMember(jsonRoofline, "computilityName", roofline.computilityName, allocator);
+            JsonUtil::AddMember(jsonRoofline, "point", roofline.point, allocator);
+            JsonUtil::AddMember(jsonRoofline, "ratio", roofline.ratio, allocator);
+            rooflineList.PushBack(jsonRoofline, allocator);
+        }
+        JsonUtil::AddMember(rooflineGraph, "rooflines", rooflineList, allocator);
+        data.PushBack(rooflineGraph, allocator);
+    }
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

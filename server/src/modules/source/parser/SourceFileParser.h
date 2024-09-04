@@ -35,6 +35,7 @@ enum class DataTypeEnum : int {
     DETAILS_MEMORY_GRAPH = 8,
     DETAILS_MEMORY_TABLE = 9,
     DETAILS_INTER_CORE_LOAD_GRAPH = 12,
+    DETAILS_ROOFLINE = 13
 };
 
 class SourceFileParser : public FileParser {
@@ -71,6 +72,7 @@ public:
     int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
     int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
     bool GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody& responseBody);
+    bool GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody);
 
 private:
     std::string filePath;
@@ -89,7 +91,7 @@ private:
     std::string GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum);
     std::optional<Protocol::SubBlockData> ConvertStrToSubBlockData(const std::string& str);
     std::string GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const;
-    std::string GetUnitType(int64_t unitTypeNumber);
+    static std::string GetUnitType(int64_t unitTypeNumber);
     bool IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t upperLimit) const;
     static Protocol::MemoryGraph ParseJsonToMemoryGraph(const json_t &json);
     static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
@@ -107,12 +109,8 @@ private:
     int64_t trackId = 0;
     int64_t pid = 0;
     int64_t tid = 0;
-    std::map<int64_t, std::string> unitTypeMapping = {
-        {0, "Duration(μs)"},
-        {1, "Instructions"},
-        {2, "Data Volume(byte)"},
-        {3, "PRE"}
-    };
+
+    static Protocol::SubBlockUnitData ParseSubBlockUnitData(const json_t &item);
 };
 } // end of namespace Summary
 } // end of namespace Module
