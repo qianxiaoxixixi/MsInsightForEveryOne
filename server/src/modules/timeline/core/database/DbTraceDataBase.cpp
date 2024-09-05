@@ -597,7 +597,7 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
     std::string sql = "SELECT startTimeNs, endTimeNs FROM " + TABLE_SESSION_TIME_INFO;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to Update Start Time. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        Server::ServerLog::Error("Failed to Update Start Time. Msg: ", sqlite3_errmsg(db), " ", result);
         sqlite3_finalize(stmt);
         return;
     }
