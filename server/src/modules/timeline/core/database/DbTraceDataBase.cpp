@@ -885,7 +885,7 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
     }
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        Server::ServerLog::Error("Failed to get Statistic Num. Msg: ", sqlite3_errmsg(db), " ", result);
         sqlite3_finalize(stmt);
         return rankIds;
     }
@@ -907,7 +907,7 @@ bool DbTraceDataBase::CheckTableDataInvalid(std::string tableName)
     std::string sql = "  SELECT COUNT(*) FROM " + tableName;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to get Memory Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        Server::ServerLog::Error("Failed to get Memory Data. Msg: ", sqlite3_errmsg(db), " ", result);
         sqlite3_finalize(stmt);
         return false;
     }
@@ -929,7 +929,7 @@ bool DbTraceDataBase::NeedUpdateDepth(const std::string &table)
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("NeedUpdateDepth. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Need update depth. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     return resultSet->GetErrorCode() == SQLITE_OK && resultSet->Next() && resultSet->GetInt64(resultStartIndex) > 0;
@@ -967,12 +967,12 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
 {
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr || updateStmt == nullptr) {
-        ServerLog::Error("UpdateDepth. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Update depth. Failed to prepare sql.", sqlite3_errmsg(db));
         return;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("UpdateDepth. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Update depth. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
     std::map<std::string, std::vector<TASK_INFO>> data;
@@ -1000,14 +1000,14 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
             }
             taskDepthCache.emplace_back(task);
             if (taskDepthCache.size() == cacheSize && !UpdateDepthList(updateStmt)) {
-                ServerLog::Error("UpdateDepth. Failed to update data.");
+                ServerLog::Error("Update depth. Failed to update data.");
                 return;
             }
         }
         endList.clear();
     }
     if (!UpdateDepthList(updateStmt)) {
-        ServerLog::Error("UpdateDepth. Failed to update last data.");
+        ServerLog::Error("Update depth. Failed to update last data.");
     }
 }
 
@@ -1023,7 +1023,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
         stmt->Reset();
         stmt->BindParams(item.depth, item.id);
         if (!stmt->Execute()) {
-            ServerLog::Error("Failed to updateDepth");
+            ServerLog::Error("Failed to update depth");
             result = false;
             break;
         }
@@ -1109,12 +1109,12 @@ void DbTraceDataBase::InitStringsCache()
     auto sql = "select id, value from STRING_IDS";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("InitStringsCache. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Init strings cache. Failed to prepare sql.", sqlite3_errmsg(db));
         return;
     }
     auto result = stmt->ExecuteQuery();
     if (result == nullptr) {
-        ServerLog::Error("InitStringsCache. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Init strings cache. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
     while (result->Next()) {
@@ -1338,7 +1338,7 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                 process->children.emplace_back(std::move(thread));
             }
         } catch (DatabaseException &e) {
-            ServerLog::Error("QueryOperateMetadata, MetaType: ", metaType, " reason: ", e.What());
+            ServerLog::Error("Query operate metadata, MetaType: ", metaType, " reason: ", e.What());
             return false;
         }
         if (!process->children.empty()) {
@@ -1356,7 +1356,7 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
     for (const auto &type : types) {
         auto tableName = ENUM_TO_STR(type).value_or("");
         if (!CheckTableExist(tableName)) {
-            ServerLog::Info("QueryCounterMetadata failed, table ", tableName, " Not Exist.");
+            ServerLog::Info("Query counter metadata failed, table ", tableName, " Not Exist.");
             continue;
         }
         std::string sql;
@@ -1381,12 +1381,12 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
         auto counter = GenerateBaseUnitTrack("label", fileId, tableName, tableName, tableName);
         auto stmt = CreatPreparedStatement(sql);
         if (stmt == nullptr) {
-            ServerLog::Error("QueryCounterMetadata failed!.");
+            ServerLog::Error("Query counter metadata failed!.");
             return false;
         }
         auto resultSet = stmt->ExecuteQuery(GetRealRankId(fileId));
         if (resultSet == nullptr) {
-            ServerLog::Error("QueryCounterMetadata. Failed to get result set.", stmt->GetErrorMessage());
+            ServerLog::Error("Query counter metadata. Failed to get result set.", stmt->GetErrorMessage());
             return false;
         }
         while (resultSet->Next()) {
@@ -1409,7 +1409,7 @@ void DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
     for (const auto &type : types) {
         auto typeName = ENUM_TO_STR(type).value_or("");
         if (!CheckTableExist(typeName)) {
-            ServerLog::Info("GenerateCounterMetadata failed, table ", typeName, " Not Exist.");
+            ServerLog::Info("Generate counter metadata failed, table ", typeName, " Not Exist.");
             continue;
         }
         auto counter = GenerateBaseUnitTrack("label", fileId, typeName, typeName, typeName);
@@ -1555,13 +1555,13 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
                                                           params.order, params.orderBy);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QuerySliceName failed!.");
+        ServerLog::Error("Query slice name failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(params.searchContent, minTimestamp, GetRealRankId(params.rankId),
                                         params.pageSize, offset);
     if (resultSet == nullptr) {
-        ServerLog::Error("SearchAllSlicesDetails. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("search All slices details. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1721,7 +1721,7 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
         resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams,
             GetRealRankId(requestParams.rankId), minTimestamp, orderBy);
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryThreadSameOperatorsDetails Fail, ", e.What());
+        ServerLog::Error("Query thread same operators details fail, ", e.What());
         return false;
     }
     while (resultSet->Next()) {
