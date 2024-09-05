@@ -12,7 +12,7 @@ import styled from '@emotion/styled';
 import { chartColors, getDefaultChartOptions } from 'ascend-utils';
 
 const ChartDesc = styled.div`
-    color: ${(props): string => props.theme.textColorTertiary};
+    color: ${(props): string => props.theme.textColor};
     margin-bottom: 24px;
 `;
 
