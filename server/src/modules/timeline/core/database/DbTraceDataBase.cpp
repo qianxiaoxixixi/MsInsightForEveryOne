@@ -617,11 +617,11 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
 void DbTraceDataBase::GenerateOverlapAnalysis()
 {
     if (!CheckTableExist(TABLE_OVERLAP_ANALYSIS)) {
-        Server::ServerLog::Error("GenerateOverlapAnalysis:Table OVERLAP_ANALYSIS is not exist.");
+        Server::ServerLog::Error("Generate overlap analysis:Table OVERLAP_ANALYSIS is not exist.");
         return;
     }
     if (CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS)) {
-        Server::ServerLog::Info("GenerateOverlapAnalysis already finish. skip");
+        Server::ServerLog::Info("Generate overlap analysis already finish. skip");
         return;
     }
     {
@@ -657,9 +657,9 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
             }
         }
         if (InsertOverlapAnalysisInfo(timeInfoList, rankId) && InsertOverlapAnalysisInfo(overlapInfoList, rankId)) {
-            Server::ServerLog::Info("GenerateOverlapAnalysis success");
+            Server::ServerLog::Info("Generate overlap analysis success");
         } else {
-            Server::ServerLog::Error("GenerateOverlapAnalysis fail");
+            Server::ServerLog::Error("Generate overlap analysis fail");
             return;
         }
     }
