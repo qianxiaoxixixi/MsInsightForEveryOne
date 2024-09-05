@@ -344,6 +344,24 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         label: t(`searchCriteria.${item.label}`),
     }));
 
+    const onMemoryCurveGet = (): void => {
+        setCurveSpin(true);
+        memoryCurveGet({ rankId: rankIdCondition.value, type: isCompare ? 'Overall' : groupId, isCompare }).then((resp) => {
+            // Reset the select range to null when rankId changes
+            setSelectedRange(undefined);
+            setMemoryCurveData(resp);
+            setLineChartData({
+                title: resp.title,
+                columns: resp.legends?.map(legend => t(legend)),
+                rows: resp.lines,
+            });
+        }).catch(err => {
+            console.error(err);
+        }).finally(() => {
+            setCurveSpin(false);
+        });
+    };
+
     useEffect(() => {
         fetchMemoryType(rankIdCondition.value);
         fetchResourceType(rankIdCondition.value);
@@ -361,7 +379,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                 break;
         }
     }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy,
-        session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t, isCompare]);
+        session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t, isCompare, memoryType]);
 
     useEffect(() => {
         if (rankIdCondition.value === undefined || rankIdCondition.value === '') {
@@ -374,22 +392,13 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             setPageSize(10);
             return;
         }
-        setCurveSpin(true);
-        memoryCurveGet({ rankId: rankIdCondition.value, type: isCompare ? 'Overall' : groupId, isCompare }).then((resp) => {
-            // Reset the select range to null when rankId changes
-            setSelectedRange(undefined);
-            setMemoryCurveData(resp);
-            setLineChartData({
-                title: resp.title,
-                columns: resp.legends?.map(legend => t(legend)),
-                rows: resp.lines,
-            });
-        }).catch(err => {
-            console.error(err);
-        }).finally(() => {
-            setCurveSpin(false);
-        });
-    }, [rankIdCondition.value, groupId, t, session.isClusterMemoryCompletedSwitch]);
+        onMemoryCurveGet();
+    }, [rankIdCondition.value, groupId, t, isCompare, session.isClusterMemoryCompletedSwitch]);
+
+    useEffect(() => {
+        onBaseChanged();
+        onMemoryCurveGet();
+    }, [isCompare]);
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
@@ -447,10 +456,6 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             onRankIdChanged(session.compareRank.rankId);
         }
     }, [session.compareRank.rankId, JSON.stringify(session.memoryRankIds)]);
-
-    useEffect(() => {
-        onBaseChanged();
-    }, [session.compareRank.isCompare]);
 
     return (
         <Layout>
