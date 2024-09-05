@@ -270,13 +270,13 @@ const doSetCurrentPath = (projectName: string, isConflict: boolean) => {
         const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [currentkey] };
         try {
           confirm(dataSource, isConflict, ProjectActionEnum.ADD_FILE);
-          return true;
+          return { result: true };
         } catch {
           console.log('doSetCurrentPath error.');
-          return false;
+          return { result: false, inputPath: state.inputPath };
         }
     } else {
-        return false;
+        return { result: false, inputPath: state.inputPath };
     }
 };
 
