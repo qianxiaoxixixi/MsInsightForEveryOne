@@ -111,19 +111,13 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     } else {
         InitMemory(rankIds, filePath);
     }
-    std::vector<std::string> realRankIds;
-    if (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) {
-        realRankIds = rankIds;
-    } else {
-        realRankIds = database->QueryRankId();
-    }
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
-        for (const auto& rankId: realRankIds) {
+        for (const auto& rankId: rankIds) {
             FullDb::DbSummaryDataBase::ParserEnd(rankId, false, "");
         }
         ServerLog::Error("There is no Summery Data in this db file");
     } else {
-        InitSummery(realRankIds, filePath);
+        InitSummary(rankIds, filePath);
     }
 }
 
@@ -190,7 +184,7 @@ void FullDbParser::ParserCallBack(std::string fileId, bool result)
     }
 }
 
-void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string path)
+void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const std::string &path)
 {
     for (const std::string& id : rankIds) {
         bool result = false;
@@ -208,7 +202,7 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
     ServerLog::Info("Init Summary finish");
 }
 
-void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path)
+void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std::string &path)
 {
     for (const std::string& id : rankIds) {
         bool result = false;
