@@ -11,8 +11,8 @@ import { ResizeTable } from 'ascend-resize';
 import { firstLetterUpper, Hit } from 'ascend-utils';
 import { type Session } from '../../../entity/session';
 import { CompareData } from '../../../utils/interface';
-import { DownOutlined } from '@ant-design/icons';
-import { Button } from 'ascend-components';
+import { type Theme, useTheme } from '@emotion/react';
+import { getContextElement, renderExpandColumn } from '../../Common';
 
 interface ItableDetail {
     tableName: string;
@@ -36,31 +36,15 @@ interface Ilimit {
     current: number;
 }
 
-const renderExpandColomn = (record: any, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): JSX.Element => {
-    return record.source === 'Difference'
-        ? (<Button type="link"
-            onClick={(): void => {
-                setExpandedKeys((pre: any) => {
-                    const list = [...pre];
-                    const keyIndex = list.indexOf(record.key);
-                    if (keyIndex === -1) {
-                        list.push(record.key);
-                    } else {
-                        list.splice(keyIndex, 1);
-                    }
-                    return list;
-                });
-            }}>see more<DownOutlined/></Button>)
-        : <></>;
-};
-
-function getFullCols(headerName: string[], tDetails: any, isCompared: boolean, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): any[] {
+function getFullCols({ headerName, tDetails, isCompared, setExpandedKeys, theme }: { headerName: string[]; tDetails: any;
+    isCompared: boolean; setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>; theme: Theme; }): any[] {
     const dataColumns: any[] = headerName.map((item, index) => (
         {
             key: item,
             title: index === 0 ? item : tDetails(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
+            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme),
         }
     ));
     if (isCompared) {
@@ -71,7 +55,7 @@ function getFullCols(headerName: string[], tDetails: any, isCompared: boolean, s
             ellipsis: true,
             fixed: 'right',
             render: (_: any, record: any): JSX.Element => {
-                return renderExpandColomn(record, setExpandedKeys);
+                return renderExpandColumn(record, setExpandedKeys, tDetails);
             },
         });
         dataColumns.splice(1, 0, {
@@ -93,8 +77,9 @@ function covertRowToRecord(row: RowDetail, headerName: string[]): Record<string,
     return obj;
 }
 
-function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any, isCompared: boolean,
-    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): { tablelist: ItableConfig[] ;limit: Ilimit} {
+function wrapData({ data, limit, tDetails, isCompared, setExpandedKeys, theme }: { data: ItableDetail[]; limit: Ilimit;
+    tDetails: any; isCompared: boolean; setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>; theme: Theme; }):
+    { tablelist: ItableConfig[] ;limit: Ilimit} {
     let count = 0;
     const tablelist = data.reduce<ItableConfig[]>((pre, tableDetail) => {
         if (count > limit.maxSize) {
@@ -103,7 +88,7 @@ function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any, isCompared
         }
         const { headerName = [], row = [], tableName = '' } = tableDetail ?? {};
         headerName[0] = tableName;
-        const cols = getFullCols(headerName, tDetails, isCompared, setExpandedKeys);
+        const cols = getFullCols({ headerName, tDetails, isCompared, setExpandedKeys, theme });
         let dataset = row.map(item => {
             const compare: Record<string, string> = covertRowToRecord(item.compare, headerName);
             if (!isCompared) {
@@ -136,7 +121,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
     const [limit, setLimit] = useState<Ilimit>(defaultLimit);
     const { t: tDetails } = useTranslation('details');
     const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
-
+    const theme = useTheme();
     const updateData = async(): Promise<void> => {
         const res = await queryMemoryTable(condition);
         const newData = (res?.memoryTable?.[0]?.tableDetail ?? []) as ItableDetail[];
@@ -158,7 +143,8 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
         updateData();
     }, [condition, session.parseStatus]);
     useEffect(() => {
-        const { tablelist: newTablelist, limit: newLimit } = wrapData(data, limit, tDetails, session.dirInfo.isCompare, setExpandedKeys);
+        const { tablelist: newTablelist, limit: newLimit } =
+            wrapData({ data, limit, tDetails, isCompared: session.dirInfo.isCompare, setExpandedKeys, theme });
         setTablelist(newTablelist);
         setLimit(newLimit);
     }, [data, tDetails]);

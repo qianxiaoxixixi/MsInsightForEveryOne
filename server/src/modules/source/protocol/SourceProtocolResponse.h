@@ -61,6 +61,15 @@ struct SourceApiInstrResponse : public Response {
 struct TableRow {
     std::string name;
     std::vector<std::string> value;
+
+    void BaseInfoClone(const TableRow &row)
+    {
+        name = row.name;
+        value.clear();
+        for (size_t i = 0; i < row.value.size(); ++i) {
+            value.emplace_back("-");
+        }
+    }
 };
 
 template<typename R>
@@ -94,8 +103,15 @@ struct SubBlockUnitData {
     std::string blockType;
     std::string name;
     std::string unit;
-    std::string value;
-    std::string originValue;
+    std::string value = "-";
+    std::string originValue = "-";
+    void BaseInfoClone(const SubBlockUnitData &origin)
+    {
+        blockId = origin.blockId;
+        blockType = origin.blockType;
+        name = origin.name;
+        unit = origin.unit;
+    }
 };
 
 struct Roofline {
@@ -172,6 +188,18 @@ struct MemoryTable {
     std::string tableOpType;
     std::vector<TableDetail<CompareData<TableRow>>> tableDetail;
     std::vector<std::string> advice;
+
+    void FillBaseInfoFromCompare()
+    {
+        for (auto &item: tableDetail) {
+            for (auto &row: item.row) {
+                TableRow &baseline = row.baseline;
+                baseline.BaseInfoClone(row.compare);
+                TableRow &diff = row.diff;
+                diff.BaseInfoClone(row.compare);
+            }
+        }
+    }
 };
 struct DetailsMemoryGraphResBody {
     std::vector<MemoryGraph> coreMemory;
