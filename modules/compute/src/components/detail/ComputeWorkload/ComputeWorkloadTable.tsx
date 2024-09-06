@@ -10,8 +10,8 @@ import { getSet, firstLetterUpper } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
 import { CompareData } from '../../../utils/interface';
 import { Icondition } from './Filter';
-import { Button } from 'ascend-components';
-import { DownOutlined } from '@ant-design/icons';
+import { type Theme, useTheme } from '@emotion/react';
+import { getContextElement, renderExpandColumn } from '../../Common';
 
 interface Iprops {
     condition: Icondition;
@@ -28,26 +28,9 @@ interface ItableConfig {
     dataset: Iobj[];
 }
 
-const renderExpandColomn = (record: any, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): JSX.Element => {
-    return record.source === 'Difference'
-        ? (<Button type="link"
-            onClick={(): void => {
-                setExpandedKeys((pre: any) => {
-                    const list = [...pre];
-                    const keyIndex = list.indexOf(record.key);
-                    if (keyIndex === -1) {
-                        list.push(record.key);
-                    } else {
-                        list.splice(keyIndex, 1);
-                    }
-                    return list;
-                });
-            }}>see more<DownOutlined/></Button>)
-        : <></>;
-};
-
-function getFullCols(blockType: string, blockTypeData: Array<CompareData<IblockData>>, t: TFunction,
-    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>, isCompared: boolean): any[] {
+function getFullCols({ blockType, blockTypeData, t, setExpandedKeys, isCompared, theme }: {blockType: string;
+    blockTypeData: Array<CompareData<IblockData>>; t: TFunction; setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>;
+    isCompared: boolean; theme: Theme;}): any[] {
     const firstCol = {
         title: blockType?.toUpperCase(),
         dataIndex: 'name',
@@ -60,7 +43,7 @@ function getFullCols(blockType: string, blockTypeData: Array<CompareData<IblockD
             title: t(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
-            render: (text: string, record: any): JSX.Element => <div>{(isNaN(Number(text)) ? text : Number(text))}</div>,
+            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme),
         }
     ));
     if (isCompared) {
@@ -69,7 +52,7 @@ function getFullCols(blockType: string, blockTypeData: Array<CompareData<IblockD
             dataIndex: 'action',
             ellipsis: true,
             render: (text: string, record: any): JSX.Element => {
-                return renderExpandColomn(record, setExpandedKeys);
+                return renderExpandColumn(record, setExpandedKeys, t);
             },
         });
         restCols.splice(0, 0, {
@@ -95,6 +78,7 @@ function Index({ condition, data }: Iprops): JSX.Element {
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
     const [limit, setLimit] = useState({ overlimit: false, maxSize: 5000, current: 0 });
     const { t } = useTranslation('details');
+    const theme = useTheme();
     const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
 
     const updateTable = (): void => {
@@ -105,7 +89,8 @@ function Index({ condition, data }: Iprops): JSX.Element {
         const blockTypeSet = getSet(getSet(showData, 'compare') as IblockData[], 'blockType') as string[];
         const dataGroupByBlockType = blockTypeSet.map(blockType => {
             const blockTypeData = showData.filter(item => item.compare.blockType === blockType);
-            const cols = getFullCols(blockType, blockTypeData, t, setExpandedKeys, condition.isCompared);
+            const cols = getFullCols(
+                { blockType, blockTypeData, t, setExpandedKeys, isCompared: condition.isCompared, theme });
             const dataset: Iobj[] = blockTypeData.map(item => {
                 const compare: Iobj = getRowBaseData(item.compare);
                 if (!condition.isCompared) {
