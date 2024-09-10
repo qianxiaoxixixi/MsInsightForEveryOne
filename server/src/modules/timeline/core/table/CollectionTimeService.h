@@ -35,8 +35,7 @@ public:
                 continue;
             }
             mark++;
-            bool isOverLap = (startTime <= item.endTime && startTime >= item.startTime) ||
-                ((endTime <= item.endTime && endTime >= item.startTime));
+            bool isOverLap = !((startTime > item.endTime) || (endTime < item.startTime));
             if (isOverLap) {
                 isAddHostTime = false;
                 mark = item.mark;
