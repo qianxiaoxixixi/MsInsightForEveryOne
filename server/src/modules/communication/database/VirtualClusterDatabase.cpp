@@ -14,7 +14,7 @@ bool VirtualClusterDatabase::ExecuteQueryCommunicationGroup(rapidjson::Document 
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int baseInfoResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
-        ServerLog::Error("Failed to Query CommunicationGroup info statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query communication group info statement. error:", sqlite3_errmsg(db));
         return false;
     }
     responseBody.SetObject();
@@ -67,7 +67,7 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare BuildCondition statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare build condition statement. error:", sqlite3_errmsg(db));
         return false;
     }
     for (const auto &item: requestParams.stepIdList) {
@@ -141,7 +141,7 @@ bool VirtualClusterDatabase::ExecuteGetStepIdList(Protocol::PipelineStepResponse
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetStepIdList statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare get step id list statement. error:", sqlite3_errmsg(db));
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -159,7 +159,7 @@ bool VirtualClusterDatabase::ExecuteGetStages(Protocol::PipelineStageParam param
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetStages statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare get stages statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
@@ -180,7 +180,7 @@ bool VirtualClusterDatabase::ExecuteGetStageAndBubble(Protocol::PipelineStageTim
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare get stage and bubble statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
@@ -207,7 +207,7 @@ bool VirtualClusterDatabase::ExecuteGetRankAndBubble(const Protocol::PipelineRan
     int index = bindStartIndex;
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetRankAndBubble statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare get rank and bubble statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
@@ -232,7 +232,7 @@ bool VirtualClusterDatabase::ExecuteGetGroups(Protocol::MatrixGroupParam param,
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetGroups statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare get groups statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
@@ -251,7 +251,7 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthPar
     int index = bindStartIndex;
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryMatrixList statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query matrix list statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
@@ -273,11 +273,11 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthPar
     return true;
 }
 
-    bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max)
+bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max)
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare querying ExtremumTimestamp statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query extremum timestamp statement. error:", sqlite3_errmsg(db));
         return false;
     }
 
@@ -295,7 +295,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterationAndCommunicationGroup(std::str
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare Querying IterationAndCommunicationGroup statement. error:",
+        ServerLog::Error("Failed to prepare query iteration and communication group statement. error:",
             sqlite3_errmsg(db));
         return false;
     }
@@ -328,7 +328,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
     std::string order = !param.order.empty() && std::strcmp(param.order.c_str(), "ascend") == 0 ? "ASC" : "DESC";
     sql +=  orderBy + " " + order + " LIMIT ?, ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryAllOperators statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query all operators statement. error:", sqlite3_errmsg(db));
         return false;
     }
     int index = bindStartIndex;
@@ -377,7 +377,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorsCount(Protocol::OperatorDetail
     }
     sql.append(" group by op_name");
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryOperatorsCount statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query operators count statement. error:", sqlite3_errmsg(db));
         return false;
     }
     if (!param.iterationId.empty()) {
@@ -408,7 +408,7 @@ bool VirtualClusterDatabase::ExecuteQueryBandwidthData(Protocol::BandwidthDataPa
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryBandwidthData statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query bandwidth data statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
@@ -435,7 +435,7 @@ bool VirtualClusterDatabase::ExecuteQueryDistributionData(Protocol::Distribution
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryDistributionData statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare distribution data statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);
@@ -457,7 +457,7 @@ bool VirtualClusterDatabase::ExecuteQueryRanksHandler(std::vector<Protocol::Iter
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryRanksHandler statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query ranks statement. error:", sqlite3_errmsg(db));
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -478,7 +478,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorNames(Protocol::OperatorNamesPa
     std::string stage = requestParams.stage;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryOperatorNames statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query operator names statement. error:", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
@@ -499,7 +499,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryIterations statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare query iterations statement. error:", sqlite3_errmsg(db));
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -674,7 +674,7 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixSortOpNames(Protocol::OperatorNam
     std::string stage = requestParams.stage;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryMatrixSortOpNames statement. error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare Query Matrix Sort OpNames statement. error: ", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
