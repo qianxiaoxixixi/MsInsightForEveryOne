@@ -91,7 +91,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       " WHERE TASKTYPE.value = ? ";
 
     if (!StringUtil::CheckSqlValid(request.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy to generate compute sql.");
     } else if (!request.orderBy.empty() && !request.order.empty()) {
         sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
     }
@@ -265,7 +265,8 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
     }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                         "to generate query statistic sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -480,7 +481,8 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
     }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                         "to generate query more info sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -606,7 +608,7 @@ std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& reque
                       " ) subquery ";
 
     if (!StringUtil::CheckSqlValid(request.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy to get common sql.");
     } else if (!request.orderBy.empty() && !request.order.empty()) {
         sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
     }
@@ -772,7 +774,8 @@ std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqPar
     }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                         "to generate all query detail sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -907,8 +910,8 @@ bool DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
     for (size_t index = 0; index < reqParams.filters.size(); index++) {
         std::pair<std::string, std::string> filter = reqParams.filters[index];
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                             filter.first, ", ", filter.second, ")");
+            ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                             "to generate query filter sql.");
             return false;
         }
         if (index != 0) {
@@ -923,8 +926,8 @@ bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &
 {
     for (const auto &filter: reqParams.filters) {
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                             filter.first, ", ", filter.second, ")");
+            ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                             "to generate query more info filters.");
             return false;
         }
         sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";

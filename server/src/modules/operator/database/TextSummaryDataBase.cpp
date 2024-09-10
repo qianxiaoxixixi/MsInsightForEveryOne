@@ -235,7 +235,7 @@ std::string TextSummaryDataBase::GenSortSql(std::string orderBy, std::string ord
 {
     std::string orderBySql;
     if (!StringUtil::CheckSqlValid(orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy to generate sort sql.");
         return orderBySql;
     }
     if (order == "descend") {
@@ -494,7 +494,8 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             return "";
         }
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                             "to generate query statistic sql.");
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
@@ -734,7 +735,8 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         }
 
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                             "to generate query detail sql.");
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
@@ -889,15 +891,16 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         for (const auto &filter: reqParams.filters) {
             if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-                ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                                 filter.first, ", ", filter.second, ")");
+                ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                                 "to generate query more info sql.");
                 return "";
             }
             sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";
         }
 
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                             "to generate query more info sql.");
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
@@ -988,8 +991,8 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         for (uint64_t index = 0; index < reqParams.filters.size(); index++) {
             std::pair<std::string, std::string> filter = reqParams.filters[index];
             if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-                ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                                 filter.first, ", ", filter.second, ")");
+                ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                                 "to generate query filters sql.");
                 return false;
             }
             if (index != 0) {
