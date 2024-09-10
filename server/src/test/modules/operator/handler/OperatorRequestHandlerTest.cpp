@@ -13,16 +13,20 @@
 
 class OperatorRequestHandlerTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Dic::Server::WsChannel *ws;
         std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSession>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
-    static void TearDownTestCase()
+    static void TearDownTestSuite()
     {
-        Dic::Server::WsSessionManager::Instance().GetSession()->Stop();
-        Dic::Server::WsSessionManager::Instance().RemoveSession();
+        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
+        if (session != nullptr) {
+            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
+            session->WaitForExit();
+            Dic::Server::WsSessionManager::Instance().RemoveSession();
+        }
     }
 };
 

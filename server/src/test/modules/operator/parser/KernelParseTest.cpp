@@ -16,7 +16,7 @@ static std::vector<std::string> tmpFiles = {
 };
 class KernelParseTest : public KernelParse, public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
         std::ofstream outfile;
@@ -25,7 +25,7 @@ public:
             outfile.close();
         }
     }
-    static void TearDownTestCase()
+    static void TearDownTestSuite()
     {
         for (const auto& item : tmpFiles) {
             std::remove((Dic::FileUtil::GetCurrPath() + item).c_str());

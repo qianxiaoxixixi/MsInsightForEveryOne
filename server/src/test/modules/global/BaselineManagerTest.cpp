@@ -12,14 +12,14 @@
 using namespace Dic::Module::Global;
 class BaselineManagerTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string systemDbPath = currPath.substr(0, index + 1) + R"(/src/test/test_data/)";
         ProjectExplorerManager::Instance().InitSystemMemoryDbPath(systemDbPath);
         InitProjectExplorerData();
     }
 
-    static void TearDownTestCase()
+    static void TearDownTestSuite()
     {
         ClearProjectExplorerData();
     }

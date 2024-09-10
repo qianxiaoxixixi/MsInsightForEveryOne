@@ -23,7 +23,7 @@ using namespace Dic::Module::Memory;
 
 class TestSuit : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
@@ -72,7 +72,7 @@ public:
         }
     }
 
-    static void TearDownTestCase()
+    static void TearDownTestSuite()
     {
         KernelParse::Instance().Reset();
         TraceFileParser::Instance().DeleteParseFiles({"0", "1"});

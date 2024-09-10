@@ -15,7 +15,7 @@ using namespace Dic::Module::FullDb;
 
 class DbMemoryTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
@@ -32,7 +32,7 @@ public:
         TraceTime::Instance().UpdateTime(1734230739709945000, 1734230739709945000);
     }
 
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 };
 
 TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorData)
