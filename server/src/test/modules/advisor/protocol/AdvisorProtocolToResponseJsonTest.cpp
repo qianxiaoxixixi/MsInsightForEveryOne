@@ -10,9 +10,9 @@
 
 class AdvisorProtocolToResponseJsonTest : public ::testing::Test {
 public:
-    static void SetUpTestCase() {}
+    static void SetUpTestSuite() {}
 
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 
 protected:
     uint32_t refSize = 15;

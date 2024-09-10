@@ -46,6 +46,12 @@ TEST_F(TestSuit, TestAllRequestHandler)
     file.close();
     int size = 134;
     EXPECT_EQ(count, size);
+    auto curSession = Server::WsSessionManager::Instance().GetSession();
+    if (curSession != nullptr) {
+        curSession->SetStatus(WsSession::Status::CLOSED);
+        curSession->WaitForExit();
+        Server::WsSessionManager::Instance().RemoveSession();
+    }
 }
 
 TEST_F(TestSuit, TestAllRequestSessionErr)

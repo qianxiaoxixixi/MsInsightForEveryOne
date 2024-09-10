@@ -10,7 +10,7 @@
 using namespace Dic::Module::Global;
 class ProjectExplorerManagerTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         int index = currPath.find_last_of("server");
@@ -18,7 +18,7 @@ public:
         ProjectExplorerManager::Instance().InitSystemMemoryDbPath(systemDbPath);
     }
 
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 
 protected:
     static std::string curServerPath;

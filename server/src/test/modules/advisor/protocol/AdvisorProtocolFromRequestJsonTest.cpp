@@ -11,9 +11,9 @@
 using namespace Dic::Protocol;
 class AdvisorProtocolFromRequestJsonTest : public ::testing::Test {
 public:
-    static void SetUpTestCase() {}
+    static void SetUpTestSuite() {}
 
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 
 protected:
     Dic::document_t GenerateRequestJson(const Dic::Protocol::APITypeParams &param, const std::string& command)

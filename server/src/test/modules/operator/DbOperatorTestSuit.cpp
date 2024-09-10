@@ -17,7 +17,7 @@ using namespace Dic::Module::FullDb;
 
 class DbOperatorTestSuit : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
@@ -31,7 +31,7 @@ public:
         summeryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
     }
 
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 };
 
 const std::string GROUP_OPERATOR = "Operator";

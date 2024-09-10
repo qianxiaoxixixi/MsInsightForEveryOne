@@ -19,16 +19,20 @@ using namespace Dic::Module::Advisor;
 
 class AdvisorHandleTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         Server::WsChannel *ws;
         std::unique_ptr<Server::WsSession> session = std::make_unique<Server::WsSession>(ws);
         Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
-    static void TearDownTestCase()
+    static void TearDownTestSuite()
     {
-        Server::WsSessionManager::Instance().GetSession()->Stop();
-        Server::WsSessionManager::Instance().RemoveSession();
+        auto session = Server::WsSessionManager::Instance().GetSession();
+        if (session != nullptr) {
+            session->SetStatus(WsSession::Status::CLOSED);
+            session->WaitForExit();
+            Server::WsSessionManager::Instance().RemoveSession();
+        }
     }
     static int Main(int argc, char** argv)
     {

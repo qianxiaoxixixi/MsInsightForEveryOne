@@ -29,7 +29,7 @@ void WsSessionManager::ClearSessions()
 void WsSessionManager::RemoveSession()
 {
     std::unique_lock<std::mutex> lock(sessionMutex);
-    session.release();
+    session.reset();
 }
 
 WsSession *WsSessionManager::GetSession()

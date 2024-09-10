@@ -19,7 +19,7 @@ using namespace Dic::Module;
 
 class FullDbTestSuit : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         FullDb::FullDbParser::Instance().Reset();
         std::string currPath = Dic::FileUtil::GetCurrPath();
@@ -62,7 +62,7 @@ public:
         }
     }
 
-    static void TearDownTestCase()
+    static void TearDownTestSuite()
     {
         auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
         for (auto &conn : connList) {
@@ -71,5 +71,11 @@ public:
         Timeline::DataBaseManager::Instance().Clear();
         Timeline::TraceTime::Instance().Reset();
         Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
+        auto session = Dic::Server::WsSessionManager::Instance().GetSession();
+        if (session != nullptr) {
+            session->SetStatus(Dic::Server::WsSession::Status::CLOSED);
+            session->WaitForExit();
+            Dic::Server::WsSessionManager::Instance().RemoveSession();
+        }
     }
 };

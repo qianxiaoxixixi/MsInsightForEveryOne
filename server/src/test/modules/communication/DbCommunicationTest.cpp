@@ -15,7 +15,7 @@ using namespace Dic::Module::FullDb;
 
 class DbCommunicationTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
@@ -29,7 +29,7 @@ public:
                 dynamic_cast<DbClusterDataBase *>(DataBaseManager::Instance().GetReadClusterDatabase());
         culsterDatabase->OpenDb(currPath + dbPath3 + "cluster_analysis.db", false);
     }
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 };
 
 TEST_F(DbCommunicationTest, QueryIterationsData)

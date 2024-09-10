@@ -15,7 +15,7 @@ using namespace Dic::Module::FullDb;
 
 class DbSummaryTest : public ::testing::Test {
 public:
-    static void SetUpTestCase()
+    static void SetUpTestSuite()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
@@ -33,7 +33,7 @@ public:
                 dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("0"));
         summaryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
     }
-    static void TearDownTestCase() {}
+    static void TearDownTestSuite() {}
 };
 
 TEST_F(DbSummaryTest, QueryComputeStatisticsData)
