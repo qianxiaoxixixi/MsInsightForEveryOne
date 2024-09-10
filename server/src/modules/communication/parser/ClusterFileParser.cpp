@@ -391,13 +391,14 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
         if (dataType == AttDataType::DB) {
             command.append(" --data_simplification");
         }
-        ServerLog::Info("Start execute command: ", command);
+        ServerLog::Info("Start execute command, selected path:", selectedPath, " ,model: ", model);
         int result = std::system(command.c_str());
         if (result != 0) {
-            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command: ", command);
+            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, selected path:",
+                            selectedPath, " ,model: ", model);
             return false;
         }
-        ServerLog::Info("Execute cluster analysis success, command:", command);
+        ServerLog::Info("Execute cluster analysis success, selected path:", selectedPath, " ,model: ", model);
     }
     return true;
 }

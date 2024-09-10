@@ -34,7 +34,7 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
         if (database == nullptr) {
-            ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+            ServerLog::Error("Failed to get connection for get summary statistics.");
             return;
         }
     }

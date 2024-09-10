@@ -52,7 +52,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorDetailsRequest(const j
 {
     std::unique_ptr<OperatorDetailsRequest> reqPtr = std::make_unique<OperatorDetailsRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of operator details.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
@@ -69,7 +69,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToDistributionRequest(const json
 {
     std::unique_ptr<DistributionDataRequest> reqPtr = std::make_unique<DistributionDataRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of distribution request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
@@ -85,7 +85,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
 {
     std::unique_ptr<BandwidthDataRequest> reqPtr = std::make_unique<BandwidthDataRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of bandwidth data request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
@@ -100,7 +100,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorRequest(const Dic:
 {
     std::unique_ptr<CommunicatorGroupRequest> reqPtr = std::make_unique<CommunicatorGroupRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of communicator request.";
         return nullptr;
     }
     return reqPtr;
@@ -110,7 +110,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixGroupRequest(const json_
 {
     std::unique_ptr<MatrixGroupRequest> reqPtr = std::make_unique<MatrixGroupRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of matrix group request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
@@ -121,7 +121,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixListRequest(const json_t
 {
     std::unique_ptr<MatrixBandwidthRequest> reqPtr = std::make_unique<MatrixBandwidthRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info to matrix list request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
@@ -134,7 +134,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToIterationsRequest(const json_t
 {
     std::unique_ptr<IterationsRequest> reqPtr = std::make_unique<IterationsRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of iterations request.";
         return nullptr;
     }
     return reqPtr;
@@ -144,7 +144,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
 {
     std::unique_ptr<DurationListRequest> reqPtr = std::make_unique<DurationListRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of duration request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
@@ -163,7 +163,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToRanksRequest(const json_t &jso
 {
     std::unique_ptr<RanksRequest> reqPtr = std::make_unique<RanksRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of ranks request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
@@ -175,7 +175,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
 {
     std::unique_ptr<OperatorNamesRequest> reqPtr = std::make_unique<OperatorNamesRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of operator names request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
@@ -193,7 +193,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const jso
 {
     std::unique_ptr<MatrixSortOpNamesRequest> reqPtr = std::make_unique<MatrixSortOpNamesRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of matrix op names request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");

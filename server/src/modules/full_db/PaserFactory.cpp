@@ -220,7 +220,7 @@ bool ParserAlloc::CheckIsCluster(const std::string &filePath)
 {
     std::vector<std::string> folders;
     std::vector<std::string> files;
-    if (filePath.find("cluster_analysis_output") != std::string::npos) {
+    if (filePath.find(CLUSTER_ANALYSIS_OUTPUT) != std::string::npos) {
         ServerLog::Info("this folder is cluster_analysis_output, Check_Is_Cluster is true");
         return true;
     }
@@ -229,7 +229,7 @@ bool ParserAlloc::CheckIsCluster(const std::string &filePath)
         return false;
     }
     return std::any_of(folders.begin(), folders.end(),
-        [](std::string &folder) { return folder == "cluster_analysis_output"; });
+        [](std::string &folder) { return folder == CLUSTER_ANALYSIS_OUTPUT; });
 }
 
 std::string ParserAlloc::GetDbPath(const std::string &filePath, const int index)
