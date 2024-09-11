@@ -42,11 +42,11 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (!FileUtil::CheckFilePathLength(dbPath)) {
-        ServerLog::Error("This db path is illegal");
+        ServerLog::Error("This db path is illegal.Db path:", dbPath);
         return false;
     }
     if (!Database::CreateDbIfNotExist(dbPath)) {
-        ServerLog::Error("Create db fail.");
+        ServerLog::Error("Create db failed.Db path:", dbPath);
         return false;
     }
     if (isOpen) {

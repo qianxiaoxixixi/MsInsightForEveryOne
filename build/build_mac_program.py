@@ -24,8 +24,8 @@ from paramiko.ssh_exception import SSHException
 SLASH = '/'  # slash for macos
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-ASCEND_INSIGHT = 'Ascend-Insight'
-ZIP_FILE = 'Ascend-Insight.zip'
+MINDSTUDIO_INSIGHT = 'MindStudio-Insight'
+ZIP_FILE = 'MindStudio-Insight.zip'
 EXCLUDE_DIRS = [
     "dist",
     "node_modules",
@@ -151,13 +151,13 @@ def transfer_remote_and_unzip(ssh_client, workspace):
     sftp.put(local_path, remote_path)
     sftp.close()
     logging.info('Copy local file %s to remote %s', local_path, remote_path)
-    cmd = 'unzip -d ' + workspace + SLASH + ASCEND_INSIGHT + ' ' + remote_path + ' || return 0'
+    cmd = 'unzip -d ' + workspace + SLASH + MINDSTUDIO_INSIGHT + ' ' + remote_path + ' || return 0'
     execute_cmd(ssh_client, cmd)
     # 拷贝manifest下的config.ini文件，参见 @init_local_workspace 函数
     ver_config_file = os.path.join(os.path.dirname(PROJECT_PATH), VERSION_CONFIG_FILE)
     if os.path.exists(ver_config_file):
         dependency_path = workspace + SLASH + MANIFEST_DIR + SLASH + DEPENDENCY_DIR
-        config_file_path = workspace + SLASH + ASCEND_INSIGHT + SLASH + CONFIG_INI
+        config_file_path = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + CONFIG_INI
         cmd = 'mkdir -p ' + dependency_path + ' && cp ' + config_file_path + ' ' + dependency_path
         execute_cmd(ssh_client, cmd)
 
@@ -180,9 +180,9 @@ def clean_remote_workspace(ssh_client, workspace):
 
 def build_project(ssh_client, workspace):
     """
-    在执行机上构建Ascend Insight
+    在执行机上构建MindStudio-Insight
     """
-    build_dir = workspace + SLASH + ASCEND_INSIGHT + SLASH + 'build'
+    build_dir = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + 'build'
     cmd = 'cd ' + build_dir + '&& source ~/.bash_profile && python3 build.py'
     execute_cmd(ssh_client, cmd)
 
@@ -192,7 +192,7 @@ def copy_file_back(ssh_client, workspace):
     构建完成后将构建结果拷贝回本地
     """
     local_dir = os.path.join(PROJECT_PATH, 'out')
-    output_dir = workspace + SLASH + ASCEND_INSIGHT + SLASH + 'out'
+    output_dir = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + 'out'
     sftp = ssh_client.open_sftp()
     for file in sftp.listdir(output_dir):
         remote_path = output_dir + SLASH + file

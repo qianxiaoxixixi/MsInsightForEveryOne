@@ -1,6 +1,6 @@
 # Intellij_Based
 
-ascend-insight intellij插件仓
+mindstudio-insight intellij插件仓
 
 ## 目录结构
 ```
