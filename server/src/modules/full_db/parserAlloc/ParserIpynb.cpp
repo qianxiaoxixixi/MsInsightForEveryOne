@@ -8,7 +8,9 @@
 #include "WsSessionManager.h"
 #include "ConstantDefs.h"
 #include "JupyterProtocolEvent.h"
+#include "ParamsParser.h"
 #include "ParserIpynb.h"
+
 namespace Dic {
 namespace Module {
 using namespace Jupyter;
@@ -18,6 +20,9 @@ ParserIpynb::~ParserIpynb() = default;
 
 void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
+    // 初始化jupyter落盘日志信息
+    const Server::ParamsOption &option = Server::ParamsParser::Instance().GetOption();
+    Dic::Module::Jupyter::JupyterServerManager::Instance().InitJupyterLogPath(option.logPath);
     std::string path = projectInfos[0].fileName;
     // 检查jupyter服务是否存在
     std::string jupyterVersionResult;
