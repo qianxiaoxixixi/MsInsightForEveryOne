@@ -363,7 +363,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
 
 const TableScroller = styled.div`
     flex-grow: 1;
-    overflow-y: overlay;
+    overflow-y: scroll;
     overflow-x: hidden;
     border-top: solid 1px ${(props): string => props.theme.borderColor};
     user-select: none;

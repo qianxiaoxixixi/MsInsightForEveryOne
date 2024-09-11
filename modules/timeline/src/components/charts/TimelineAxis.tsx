@@ -291,6 +291,7 @@ const drawTimelineAxis = (canvas: HTMLCanvasElement, {
 
 const CanvasContainer = styled.div`
     width: 100%;
+    overflow-y: scroll;
 `;
 
 interface TimelineAxisProps {
