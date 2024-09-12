@@ -121,24 +121,30 @@ const handleClick = async (data: ResourceItem, node: Node) => {
 };
 
 let findFile = false;
+const maxDepth = 20;
+// searchPath方法递归深度
+let curDepth = 0;
 let errorAlert = ref(false);
 const [FileSearchDescribe, FileNotFundDescribe, RefreshDirectory] = useWatchTranslation(['FileSearchDescribe', 'FileNotFundDescribe', 'RefreshDirectory']);
 const inputErrorText = computed(() => errorAlert.value ? FileNotFundDescribe.value : FileSearchDescribe.value);
 
 const searchPath = async () => {
+  curDepth++;
   if (!state.inputPath) {
     props.changeConfirmButtonState(false);
     findFile = false;
+    curDepth = 0;
     return;
   }
   const exist = await fileExist(state.inputPath);
-  if (!exist) {
+  if (curDepth >= maxDepth || !exist) {
     props.changeConfirmButtonState(false);
     findFile = false;
     errorAlert.value = true;
     for (let i = 0; i < treeRef.value.store._getAllNodes().length; i++) {
       treeRef.value.store._getAllNodes()[i].expanded = false;
     }
+    curDepth = 0;
     return;
   }
   if (findFile) {
@@ -150,6 +156,7 @@ const searchPath = async () => {
         });
       }
     },500);
+    curDepth = 0;
     return;
   }
   if (exist && treeRef.value.getCurrentKey !== state.inputPath) {
@@ -159,6 +166,7 @@ const searchPath = async () => {
     }
   }
   findFile = false;
+  curDepth = 0;
 };
 
 
