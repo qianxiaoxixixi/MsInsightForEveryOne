@@ -28,11 +28,9 @@ const CustomDiv = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-radius: 18px;
     padding: 1px 7px 1px 10px;
     min-width: 300px;
     height: 32px;
-    background: ${(props): string => props.theme.bgColorLight};
     .searchResult {
         font-size: 12px;
         white-space: nowrap;

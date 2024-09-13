@@ -10,7 +10,7 @@ import { useTheme } from '@emotion/react';
 export const MITooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle, ...props }: TooltipProps) => {
     const theme = useTheme();
     return <Tooltip
-        color={theme.bgColorLight}
+        color={theme.bgColorCommon}
         overlayInnerStyle={
             {
                 borderRadius: 4,

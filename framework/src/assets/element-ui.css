@@ -54,14 +54,14 @@ html.dark {
 .el-popper.is-light,
 .el-popper.is-dark,
 .el-popover.el-popper {
-    background: var(--mi-bg-color-light);
+    background: var(--mi-bg-color-common);
     color: var(--el-text-color);
-    border-color: var(--el-border-color);
+    border-color: var(--el-border-color-light);
 }
 .el-popper.is-light .el-popper__arrow::before,
 .el-popper.is-dark .el-popper__arrow::before {
-    border: 1px solid var(--el-border-color);
-    background: var(--mi-bg-color-light);
+    border: 1px solid var(--el-border-color-light);
+    background: var(--mi-bg-color-common);
 }
 
 .el-tree {
