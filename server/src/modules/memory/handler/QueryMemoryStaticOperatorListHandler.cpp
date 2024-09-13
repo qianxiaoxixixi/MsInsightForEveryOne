@@ -159,11 +159,10 @@ bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
         }
     }
     SortResult(request, filteredDiffResult);
-    const int defaultPageSize = 10;
-    int64_t pageSize = request.params.pageSize == 0 ? defaultPageSize : request.params.pageSize;
-    int64_t currentPage = request.params.currentPage - 1;
-    currentPage = currentPage < 0 ? 0 : currentPage;
-    int64_t offset = currentPage * pageSize;
+    const uint64_t defaultPageSize = 10;
+    uint64_t pageSize = request.params.pageSize <= 0 ? defaultPageSize : request.params.pageSize;
+    uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
+    uint64_t offset = currentPage * pageSize;
     MemoryStaticOperatorListCompResponse &response = *responsePtr.get();
     if (offset >= filteredDiffResult.operatorDiffDetails.size()) {
         response.operatorDiffDetails.clear();
