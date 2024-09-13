@@ -282,7 +282,7 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
     const onClick = (e: React.MouseEvent<any>): void => {
         e.stopPropagation();
         const target = e.target as HTMLElement;
-        if (target.className.includes('rank') || target.className.includes('rankDyeing')) {
+        if (typeof target.className === 'string' && (target.className.includes('rank') || target.className.includes('rankDyeing'))) {
             const site = target.getAttribute('site')?.split(' ').map(Number);
             if (site !== undefined) {
                 transformLine(svg, site);
