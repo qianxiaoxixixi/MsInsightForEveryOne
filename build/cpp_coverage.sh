@@ -14,7 +14,7 @@ python3 build.py test
 COV_DIR=${TOP_DIR}/build_llt/output/cpp_coverage
 BUILD_DIR=${TOP_DIR}/server/build
 
-if [ ! -d ${COV_DIR} ] ; then
+if [ ! -d "${COV_DIR}" ] ; then
     mkdir -p ${COV_DIR}
 fi
 

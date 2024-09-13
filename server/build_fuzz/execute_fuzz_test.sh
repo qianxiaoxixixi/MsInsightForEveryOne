@@ -10,7 +10,7 @@ cd ${dir_build_fuzz}/../third_party/secodefuzz
 bash build.sh gcc
 
 cd ${dir_build_fuzz}
-if [ -d ${dir_build_fuzz}/output ]; then
+if [ -d "${dir_build_fuzz}/output" ]; then
   rm -rf ${dir_build_fuzz}/output
 fi
 mkdir ${dir_build_fuzz}/output
@@ -23,7 +23,7 @@ make -j${cpu_number}
 echo "*************** MAKE  FINISH "
 
 cd ${dir_build_fuzz}
-if [ -d ${dir_build_fuzz}/report ]; then
+if [ -d "${dir_build_fuzz}/report" ]; then
   rm -rf ${dir_build_fuzz}/report
 fi
 mkdir ${dir_build_fuzz}/report
