@@ -283,7 +283,7 @@ const drawTimelineAxis = (canvas: HTMLCanvasElement, {
         if (line.beginY !== 0) {
             drawVerticalLine(ctx, { color: lineColor, lineWidth, ...line });
         }
-        if (text !== null) {
+        if (text !== null && rest.beginX > 0) {
             drawText(ctx, { fontFamily, fontSize, color: fontColor, text, ...rest });
         }
     });

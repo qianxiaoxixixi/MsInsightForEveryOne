@@ -34,7 +34,6 @@ const CustomDiv = styled.div`
     align-items: center;
     border-radius: 2px;
     padding: 0 8px;
-    background: ${(props): string => props.theme.bgColorLight};
     .chooseResult {
         display: flex;
         margin-bottom: 0;
