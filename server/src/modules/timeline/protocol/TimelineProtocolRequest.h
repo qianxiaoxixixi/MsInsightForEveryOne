@@ -71,6 +71,18 @@ struct UnitThreadTracesParams {
     double timePerPx = 0; // totalTime / pixel
     bool isFilterPythonFunction = false;
     bool isHideFlagEvents = false;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "unit thread traces start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "unit thread traces end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct UnitThreadTracesRequest : public Request {
@@ -84,6 +96,18 @@ struct UnitThreadTracesSummaryParams {
     std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "unit threads start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "unit threads end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct UnitThreadTracesSummaryRequest : public Request {
@@ -102,6 +126,18 @@ struct UnitThreadsParams {
     std::vector<Metadata> metadataList;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "unit threads start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "unit threads end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct UnitThreadsRequest : public Request {
@@ -148,6 +184,18 @@ struct UnitFlowsParams {
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     bool isSimulation = false;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "unit flows start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "unit flows end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct UnitFlowsRequest : public Request {
@@ -227,6 +275,18 @@ struct FlowCategoryEventsParams {
     uint64_t endTime = 0;
     double timePerPx = 0;
     bool isSimulation = false;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "flow category events start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "flow category events end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct FlowCategoryEventsRequest : public Request {
@@ -242,6 +302,18 @@ struct UnitCounterParams {
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     std::string metaType;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "unit counter start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "unit counter end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct UnitCounterRequest : public Request {
@@ -252,11 +324,11 @@ struct UnitCounterRequest : public Request {
 struct SystemViewParams {
     std::string orderBy;
     std::string order;
-    uint64_t current;
-    uint64_t pageSize;
+    uint64_t current = 0;
+    uint64_t pageSize = 0;
     std::string type;
     std::string rankId;
-    uint64_t endTime;
+    uint64_t endTime = 0;
     bool isQueryTotal = false;
     std::string layer;
     std::string searchName;
@@ -270,8 +342,8 @@ struct SystemViewRequest : public Request {
 struct EventsViewParams {
     std::string orderBy;
     std::string order;
-    uint64_t currentPage;
-    uint64_t pageSize;
+    uint64_t currentPage = 0;
+    uint64_t pageSize = 0;
     std::string rankId;
     std::string pid;
     std::string processName;
@@ -315,8 +387,16 @@ struct KernelDetailsRequest : public Request {
 struct KernelParams {
     std::string rankId;
     std::string name;
-    uint64_t timestamp;
-    uint64_t duration;
+    uint64_t timestamp = 0;
+    uint64_t duration = 0;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (timestamp > UINT64_MAX - minTime) {
+            warnMsg = "kernel time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct KernelRequest : public Request {
@@ -334,8 +414,20 @@ struct UnitThreadsOperatorsParams {
     std::string name;
     std::string orderBy;
     std::string order;
-    uint64_t current;
-    uint64_t pageSize;
+    uint64_t current = 0;
+    uint64_t pageSize = 0;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        if (startTime > endTime) {
+            warnMsg = "unit threads operators start time is bigger than end time";
+            return false;
+        }
+        if (endTime > UINT64_MAX - minTime) {
+            warnMsg = "unit threads operators end time is invalid";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct UnitThreadsOperatorsRequest : public Request {
@@ -350,8 +442,8 @@ struct SearchAllSliceParams {
     std::string searchContent;
     std::string orderBy;
     std::string order;
-    uint64_t current;
-    uint64_t pageSize;
+    uint64_t current = 0;
+    uint64_t pageSize = 0;
 };
 
 struct SearchAllSlicesRequest : public Request {

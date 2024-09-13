@@ -18,7 +18,14 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::unique_ptr<UnitThreadsOperatorsResponse> responsePtr = std::make_unique<UnitThreadsOperatorsResponse>();
     UnitThreadsOperatorsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string warnMsg;
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto db = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (db == nullptr) {
         ServerLog::Error("Query threads same operator failed to get connection.");
@@ -28,7 +35,7 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     int64_t trackId = TrackInfoManager::Instance()
             .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result = db->QueryThreadSameOperatorsDetails(request.params, response.body,
-                                                      TraceTime::Instance().GetStartTime(), trackId);
+                                                      minTimestamp, trackId);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

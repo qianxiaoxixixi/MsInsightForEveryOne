@@ -18,6 +18,14 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<UnitThreadTracesResponse> responsePtr = std::make_unique<UnitThreadTracesResponse>();
     UnitThreadTracesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string warnMsg;
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query thread traces Failed to render.");
         session.OnResponse(std::move(responsePtr));
@@ -26,7 +34,7 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     int64_t trackId = TrackInfoManager::Instance().GetTrackId(request.params.cardId, request.params.processId,
         request.params.threadId);
 
-    renderEngine->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+    renderEngine->QueryThreadTraces(request.params, response.body, minTimestamp, trackId);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

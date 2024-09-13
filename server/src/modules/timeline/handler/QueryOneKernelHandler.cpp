@@ -17,9 +17,17 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     KernelRequest &request = dynamic_cast<KernelRequest &>(*requestPtr.get());
     std::unique_ptr<OneKernelResponse> responsePtr = std::make_unique<OneKernelResponse>();
     OneKernelResponse &response = *responsePtr.get();
-    SetBaseResponse(request, response);
-    SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    SetBaseResponse(request, response);
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string warnMsg;
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
+    SetResponseResult(response, true);
     if (request.projectName.empty()) {
         ServerLog::Error("project name is empty");
         session.OnResponse(std::move(responsePtr));
