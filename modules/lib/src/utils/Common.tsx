@@ -152,7 +152,7 @@ export function sortFunc<T>(a: T, b: T, sorter = 'asc'): number {
         return sorter === 'asc' ? (aNum - bNum) : (bNum - aNum);
     }
 }
-export function formatDeicimal(val: number | string, fixed = 2): number {
+export function formatDecimal(val: number | string, fixed = 2): number {
     const num = Number(val);
     if (isNaN(num) || num === 0) {
         return num;
