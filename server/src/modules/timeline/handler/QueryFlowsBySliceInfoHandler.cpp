@@ -17,6 +17,14 @@ void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     std::unique_ptr<UnitFlowsResponse> responsePtr = std::make_unique<UnitFlowsResponse>();
     UnitFlowsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string warnMsg;
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query flows by slice info failed to get connection. ");
@@ -27,7 +35,7 @@ void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result;
     try {
-        result = database->QueryUintFlows(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+        result = database->QueryUintFlows(request.params, response.body, minTimestamp, trackId);
     }  catch (DatabaseException &e) {
         e.Log("Query flows by slice info Fail, ");
         result = false;

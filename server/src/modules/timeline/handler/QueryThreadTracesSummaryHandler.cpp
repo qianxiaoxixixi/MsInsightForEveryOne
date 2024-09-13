@@ -17,7 +17,14 @@ void QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::unique_ptr<UnitThreadTracesSummaryResponse> responsePtr = std::make_unique<UnitThreadTracesSummaryResponse>();
     UnitThreadTracesSummaryResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string warnMsg;
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.cardId);
     if (database == nullptr) {
         ServerLog::Error("Query thread traces summary failed to get connection.");
@@ -25,7 +32,7 @@ void QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
         return;
     }
     bool result = database->QueryThreadTracesSummary(request.params, response.body,
-                                                     TraceTime::Instance().GetStartTime());
+                                                     minTimestamp);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

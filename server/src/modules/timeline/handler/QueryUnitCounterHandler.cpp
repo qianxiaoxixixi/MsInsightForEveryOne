@@ -17,13 +17,21 @@ void QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
     std::unique_ptr<UnitCounterResponse> responsePtr = std::make_unique<UnitCounterResponse>();
     UnitCounterResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::string warnMsg;
+    if (!request.params.CheckParams(minTimestamp, warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query unit counter failed to get connection.");
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    bool result = database->QueryUnitCounter(request.params, TraceTime::Instance().GetStartTime(), response.body.data);
+    bool result = database->QueryUnitCounter(request.params, minTimestamp, response.body.data);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
