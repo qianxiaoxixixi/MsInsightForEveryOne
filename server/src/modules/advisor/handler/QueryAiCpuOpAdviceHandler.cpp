@@ -21,13 +21,13 @@ void QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     std::string error;
     request.params.Check(error);
     if (!std::empty(error)) {
-        ServerLog::Warn(error);
+        ServerLog::Error(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
         return;
     }
     if (!AICpuOpAdvisor::Process(request.params, response.body)) {
-        ServerLog::Warn("Failed to Query AI CPU Operator Advice");
+        ServerLog::Error("Failed to Query AI CPU Operator Advice");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

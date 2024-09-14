@@ -20,13 +20,13 @@ void QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Reque
     std::string error;
     request.params.Check(error);
     if (!std::empty(error)) {
-        ServerLog::Warn(error);
+        ServerLog::Error(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
         return;
     }
     if (!AffinityOptimizerAdvisor::Process(request.params, response.body)) {
-        ServerLog::Warn("Failed to Query Affinity Optimizer Advice");
+        ServerLog::Error("Failed to Query Affinity Optimizer Advice");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
