@@ -19,6 +19,13 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     std::unique_ptr<MemoryViewResponse> responsePtr = std::make_unique<MemoryViewResponse>();
     MemoryViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    std::string errorMsg;
+    if (!request.params.CommonCheck(errorMsg)) {
+        SetResponseResult(response, false);
+        ServerLog::Error(errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);

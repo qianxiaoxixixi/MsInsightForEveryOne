@@ -6,6 +6,7 @@
 #ifndef PROFILER_SERVER_QUERY_MEMORY_STATIC_OPERATOR_GRAPH_HANDLER_H
 #define PROFILER_SERVER_QUERY_MEMORY_STATIC_OPERATOR_GRAPH_HANDLER_H
 
+#include "WsSession.h"
 #include "MemoryRequestHandler.h"
 
 namespace Dic {
@@ -20,6 +21,9 @@ public:
     ~QueryMemoryStaticOperatorGraphHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
+    bool GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
+        MemoryStaticOperatorGraphRequest &request, std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr,
+        Server::WsSession &session);
     void GetCompareGraphLines(const Protocol::StaticOperatorGraphItem &compareData,
                          const Protocol::StaticOperatorGraphItem &baselineData,
                          Protocol::StaticOperatorGraphItem &resultData);

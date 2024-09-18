@@ -23,6 +23,14 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         std::make_unique<MemoryOperatorComparisonResponse>();
     MemoryOperatorComparisonResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    uint64_t minTimeStamp = Timeline::TraceTime::Instance().GetStartTime();
+    std::string errorMsg;
+    if (!request.params.CommonCheck(errorMsg, minTimeStamp)) {
+        SetResponseResult(response, false);
+        ServerLog::Error(errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         std::vector<MemoryOperator> opDetails;

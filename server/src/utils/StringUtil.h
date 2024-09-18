@@ -251,12 +251,23 @@ static inline const std::string WString2String(const std::wstring& ws)
         if (path.empty()) {
             return false;
         }
-#ifdef _WIN32
-        char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};
-#else
-        char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n'};
-#endif
         for (const auto &ch: path) {
+            if (std::find(std::begin(injectList), std::end(injectList), ch) != std::end(injectList)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 校验字符串类型参数
+     * 和ValidateCommandFilePathParam函数不同，该函数认为空字符串是合法的
+     * @param str 字符串
+     * @return true / false
+     */
+    static bool ValidateStringParam(const std::string& str)
+    {
+        for (const auto &ch: str) {
             if (std::find(std::begin(injectList), std::end(injectList), ch) != std::end(injectList)) {
                 return false;
             }
@@ -330,6 +341,22 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
     stream << std::fixed << std::setprecision(2) << value; // 保留有效位数为2，四舍五入
     return stream.str();
 }
+
+static std::string GetIllegalCharacter()
+{
+    std::string illegalCharacter;
+    for (const auto ch: injectList) {
+        illegalCharacter.push_back(ch);
+    }
+    illegalCharacter.pop_back();
+    return illegalCharacter;
+}
+private:
+#ifdef _WIN32
+    static constexpr char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};
+#else
+    static constexpr char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n'};
+#endif
 };
 }
 

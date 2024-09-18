@@ -16,6 +16,13 @@ void QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<MemoryOperatorSizeResponse> responsePtr = std::make_unique<MemoryOperatorSizeResponse>();
     MemoryOperatorSizeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    std::string errorMsg;
+    if (!request.params.CommonCheck(errorMsg)) {
+        SetResponseResult(response, false);
+        ServerLog::Error(errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorSize(response.size.minSize, response.size.maxSize, request.params.rankId)) {
         SetResponseResult(response, false);
