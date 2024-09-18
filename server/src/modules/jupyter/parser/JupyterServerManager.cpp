@@ -23,6 +23,11 @@ bool JupyterServerManager::Close()
         return false;
     }
 
+    if (StringUtil::IsAllDigits(pid)) {
+        ServerLog::Warn("Invalid pid!");
+        return false;
+    }
+
     // 根据pid杀死进程
     if (!KillProcessByPid(pid)) {
         ServerLog::Warn("Failed to kill process!");
@@ -34,6 +39,7 @@ bool JupyterServerManager::Close()
 
 std::string JupyterServerManager::GetPidByPort(std::string& port)
 {
+    // 端口号由正则匹配获取，必为数字
 #ifdef WIN32
     std::string queryPidCmd = "for /f \"tokens=5 delims= \" %a in ('netstat -ano^|findstr 127.0.0.1:" +
                               port + "^| findstr LISTENING') do @echo %a";
@@ -83,6 +89,10 @@ bool JupyterServerManager::Start(const std::string& path)
     // 如果jupyter文件存在，则清空jupyter日志，防止启动过程中，程序读取了老日志
     if (FileUtil::CheckDirAccess(jupyterLogPath, 0) && !FileUtil::RemoveFile(jupyterLogPath)) {
         ServerLog::Error("Failed to remove jupyter log file. ");
+        return false;
+    }
+    if (!StringUtil::ValidateCommandFilePathParam(path)) {
+        ServerLog::Error("Fail to start jupyter server, invalid file path: ", path);
         return false;
     }
     // 获取路径的根目录，在根目录下启动

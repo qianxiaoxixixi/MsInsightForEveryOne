@@ -96,6 +96,11 @@ public:
         return true;
     }
 
+    static inline bool IsAllDigits(const std::string &str)
+    {
+        return std::all_of(str.begin(), str.end(), ::isdigit);
+    }
+
     static inline std::string AnonymousString(const std::string &str)
     {
         static const size_t MIN_LEN = 3;
