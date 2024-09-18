@@ -43,12 +43,12 @@ function getFullCols({ blockType, blockTypeData, t, setExpandedKeys, isCompared,
             title: t(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
-            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme),
+            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme, t),
         }
     ));
     if (isCompared) {
         restCols.push({
-            title: 'Details',
+            title: t('Details'),
             dataIndex: 'action',
             ellipsis: true,
             render: (text: string, record: any): JSX.Element => {
@@ -56,7 +56,7 @@ function getFullCols({ blockType, blockTypeData, t, setExpandedKeys, isCompared,
             },
         });
         restCols.splice(0, 0, {
-            title: 'Source',
+            title: t(firstLetterUpper('source')),
             dataIndex: 'source',
             ellipsis: true,
             render: (text: string, record: any): JSX.Element => <div>{text}</div>,
@@ -96,11 +96,11 @@ function Index({ condition, data }: Iprops): JSX.Element {
                 if (!condition.isCompared) {
                     return compare;
                 }
-                compare.source = 'Compare';
+                compare.source = t('Comparison');
                 const diff = getRowBaseData(item.diff);
                 const baseline = getRowBaseData(item.baseline);
-                diff.source = 'Difference';
-                baseline.source = 'Baseline';
+                diff.source = t('Difference');
+                baseline.source = t('Baseline');
                 diff.children = [compare, baseline] as Iobj[];
                 return diff;
             });

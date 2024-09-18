@@ -233,11 +233,11 @@ export const getFormatNumReturnEmpty = (str?: string | number): number | string 
     return getFormatNum(str);
 };
 
-export const getContextElement = (text: string, record: any, theme: Theme): JSX.Element => {
+export const getContextElement = (text: string, record: any, theme: Theme, t: TFunction): JSX.Element => {
     if (isNaN(Number(text))) {
         return <div>{text}</div>;
     }
-    if (record.source === 'Difference') {
+    if (record.source === t('Difference')) {
         return <div style={{ color: Number(text) >= 0 ? theme.successColor : theme.dangerColor }}>{text}</div>;
     } else {
         return <div>{Number(text)}</div>;
@@ -245,7 +245,7 @@ export const getContextElement = (text: string, record: any, theme: Theme): JSX.
 };
 
 export const renderExpandColumn = (record: any, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>, t: TFunction): JSX.Element => {
-    return record.source === 'Difference'
+    return record.source === t('Difference')
         ? (<Button type="link"
             onClick={(): void => {
                 setExpandedKeys((pre: any) => {
