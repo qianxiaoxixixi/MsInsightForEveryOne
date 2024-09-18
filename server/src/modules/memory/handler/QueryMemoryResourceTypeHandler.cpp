@@ -20,7 +20,7 @@ namespace Memory {
         auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.rankId);
         if (!database->QueryMemoryResourceType(response.type)) {
             SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory type data.");
+            ServerLog::Error("Failed to query memory resource type data.");
             session.OnResponse(std::move(responsePtr));
             return;
         }

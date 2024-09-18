@@ -8,19 +8,19 @@
 #include "MemoryRequestHandler.h"
 
 namespace Dic {
-    namespace Module {
-        namespace Memory {
-            class QueryMemoryTypeHandler : public MemoryRequestHandler {
-            public:
-                QueryMemoryTypeHandler()
-                {
-                    command = Protocol::REQ_RES_MEMORY_TYPE;
-                };
-                ~QueryMemoryTypeHandler() override = default;
-                void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-            };
-        } // end of namespace Memory
-    } // end of namespace Module
+namespace Module {
+namespace Memory {
+class QueryMemoryTypeHandler : public MemoryRequestHandler {
+public:
+    QueryMemoryTypeHandler()
+    {
+        command = Protocol::REQ_RES_MEMORY_TYPE;
+    };
+    ~QueryMemoryTypeHandler() override = default;
+    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+};
+} // end of namespace Memory
+} // end of namespace Module
 } // end of namespace Dic
 
 #endif // PROFILER_SERVER_QUERY_MEMORY_TYPE_HANDLER_H

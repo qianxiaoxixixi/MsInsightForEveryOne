@@ -9,15 +9,15 @@
 namespace Dic {
 namespace Module {
 namespace Memory {
-    class QueryMemoryResourceTypeHandler : public MemoryRequestHandler {
-    public:
-        QueryMemoryResourceTypeHandler()
-        {
-            command = Protocol::REQ_RES_MEMORY_TYPE;
-        };
-        ~QueryMemoryResourceTypeHandler() override = default;
-        void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+class QueryMemoryResourceTypeHandler : public MemoryRequestHandler {
+public:
+    QueryMemoryResourceTypeHandler()
+    {
+        command = Protocol::REQ_RES_MEMORY_RESOURCE_TYPE;
     };
+    ~QueryMemoryResourceTypeHandler() override = default;
+    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+};
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic
