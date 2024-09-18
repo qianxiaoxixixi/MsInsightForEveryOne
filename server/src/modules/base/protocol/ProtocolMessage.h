@@ -74,16 +74,34 @@ struct Request : public ProtocolMessage {
     }
 };
 // arguments will be placed into specified request
-static inline bool CheckStrParamVaild(const std::string &param,
-                                      std::string &errorMsg)
+static bool CheckStrParamValid(const std::string &param,
+    std::string &errorMsg)
 {
     constexpr unsigned MAX_STR_LENGTH = 500;
     if (param.size() > MAX_STR_LENGTH) {
-        errorMsg = "Parameter length exceeds the upper limit";
+        errorMsg = "Parameter length exceeds the upper limit " + std::to_string(MAX_STR_LENGTH) + ".";
         return false;
     }
     if (!StringUtil::ValidateCommandFilePathParam(param)) {
-        errorMsg = "Parameter contains illegel character";
+        errorMsg = "Parameter contains illegal character. Illegal characters are: " +
+            StringUtil::GetIllegalCharacter() + " and newline character.";
+        return false;
+    }
+    return true;
+}
+
+// 和CheckStrParamVaild不同，该函数认为空字符串是合法的
+static bool CheckStrParamValidEmptyAllowed(const std::string &param,
+    std::string &errorMsg)
+{
+    constexpr unsigned MAX_STR_LENGTH = 500;
+    if (param.size() > MAX_STR_LENGTH) {
+        errorMsg = "Parameter length exceeds the upper limit " + std::to_string(MAX_STR_LENGTH) + ".";
+        return false;
+    }
+    if (!StringUtil::ValidateStringParam(param)) {
+        errorMsg = "Parameter contains illegal character. Illegal characters are: " +
+            StringUtil::GetIllegalCharacter() + " and newline character.";
         return false;
     }
     return true;

@@ -21,6 +21,13 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
             std::make_unique<MemoryStaticOperatorListCompResponse>();
     MemoryStaticOperatorListCompResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    std::string errorMsg;
+    if (!request.params.CommonCheck(errorMsg)) {
+        SetResponseResult(response, false);
+        ServerLog::Error(errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         std::vector<StaticOperatorItem> opDetails;

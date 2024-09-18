@@ -19,7 +19,7 @@ struct SourceCodeFileParams {
     std::tuple<bool, std::string> Vaild()
     {
         std::string errMsg;
-        bool res = CheckStrParamVaild(sourceName, errMsg);
+        bool res = CheckStrParamValid(sourceName, errMsg);
         return {res, errMsg};
     }
 };
@@ -35,11 +35,11 @@ struct SourceApiLineParams {
     std::tuple<bool, std::string> Vaild()
     {
         std::string errMsg;
-        bool res = CheckStrParamVaild(coreName, errMsg);
+        bool res = CheckStrParamValid(coreName, errMsg);
         if (!res) {
             return {res, errMsg};
         }
-        res = CheckStrParamVaild(sourceName, errMsg);
+        res = CheckStrParamValid(sourceName, errMsg);
         return {res, errMsg};
     }
 };
@@ -77,7 +77,7 @@ struct DetailsMemoryInfoParams {
     std::tuple<bool, std::string> Vaild()
     {
         std::string errMsg;
-        bool res = CheckStrParamVaild(blockId, errMsg);
+        bool res = CheckStrParamValid(blockId, errMsg);
         return {res, errMsg};
     }
 };

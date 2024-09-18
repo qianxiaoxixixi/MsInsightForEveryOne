@@ -17,6 +17,13 @@ namespace Memory {
         std::unique_ptr<MemoryResourceTypeResponse> responsePtr = std::make_unique<MemoryResourceTypeResponse>();
         MemoryResourceTypeResponse &response = *responsePtr.get();
         SetBaseResponse(request, response);
+        std::string errorMsg;
+        if (!CheckStrParamValid(request.rankId, errorMsg)) {
+            SetResponseResult(response, false);
+            ServerLog::Error(errorMsg);
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
         auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.rankId);
         if (!database->QueryMemoryResourceType(response.type)) {
             SetResponseResult(response, false);

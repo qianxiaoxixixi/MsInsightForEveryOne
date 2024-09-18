@@ -20,15 +20,15 @@ struct APITypeParams {
             return false;
         }
         std::string paramError;
-        if (!CheckStrParamVaild(this->rankId, paramError)) {
+        if (!CheckStrParamValid(this->rankId, paramError)) {
             errorMsg = "[Advisor] Failed to check rankId." + paramError;
             return false;
         }
-        if (!CheckStrParamVaild(this->orderBy, paramError)) {
+        if (!CheckStrParamValid(this->orderBy, paramError)) {
             errorMsg = "[Advisor] Failed to check orderBy." + paramError;
             return false;
         }
-        if (!CheckStrParamVaild(this->orderType, paramError)) {
+        if (!CheckStrParamValid(this->orderType, paramError)) {
             errorMsg = "[Advisor] Failed to check OrderType." + paramError;
             return false;
         }

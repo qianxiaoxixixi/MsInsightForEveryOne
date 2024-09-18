@@ -13,6 +13,17 @@
 namespace Dic {
 namespace Protocol {
 
+const std::string MEMORY_OVERALL_GROUP = "Overall";
+const std::string MEMORY_STREAM_GROUP = "Stream";
+const std::vector<std::string> operatorTableColumn = {
+    "name", "size", "allocation_time", "release_time", "duration", "active_release_time", "active_duration",
+    "allocation_allocated", "allocation_reserve", "allocation_active", "release_allocated", "release_reserve",
+    "release_active", "stream", "device_type"
+};
+const std::vector<std::string> staticOperatorTableColumn = {
+    "device_id", "op_name", "node_index_start", "node_index_end", "size"
+};
+
 struct MemoryOperatorParams {
     std::string rankId;
     std::string type;
@@ -26,6 +37,44 @@ struct MemoryOperatorParams {
     std::string orderBy;
     std::string order;
     bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg, uint64_t minTimeStamp)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP) {
+            errorMsg = "Group By parameter should be Overall or Stream.";
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(searchName, errorMsg)) {
+            return false;
+        }
+        if (minSize > maxSize) {
+            errorMsg = "Min Size should be smaller or equal to Max Size.";
+            return false;
+        }
+        if (startTime > endTime) {
+            errorMsg = "Start Time should be smaller or equal to End Time.";
+            return false;
+        }
+        if (endTime > std::numeric_limits<uint64_t>::max() - minTimeStamp) {
+            errorMsg = "End Time is invalid.";
+            return false;
+        }
+        if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
+            return false;
+        }
+        if (!order.empty() && order != "ascend" && order != "descend") {
+            errorMsg = "Order parameter is not legal";
+            return false;
+        }
+        if (!orderBy.empty() && std::find(operatorTableColumn.begin(), operatorTableColumn.end(), orderBy) ==
+            operatorTableColumn.end()) {
+            errorMsg = "Order By parameter is not legal.";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct StaticOperatorListParams {
@@ -43,6 +92,45 @@ struct StaticOperatorListParams {
     std::string orderBy;
     std::string order;
     bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(modelName, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(graphId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(searchName, errorMsg)) {
+            return false;
+        }
+        if (minSize > maxSize) {
+            errorMsg = "Min Size should be smaller or equal to Max Size.";
+            return false;
+        }
+        if (startNodeIndex > endNodeIndex) {
+            errorMsg = "Start Node Index should be smaller or equal to End Node Index.";
+            return false;
+        }
+        if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
+            return false;
+        }
+        if (!order.empty() && order != "ascend" && order != "descend") {
+            errorMsg = "Order parameter is not legal";
+            return false;
+        }
+        if (!orderBy.empty() && std::find(staticOperatorTableColumn.begin(), staticOperatorTableColumn.end(),
+            orderBy) == operatorTableColumn.end()) {
+            errorMsg = "Order By parameter is not legal.";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct StaticOperatorGraphParams {
@@ -50,6 +138,19 @@ struct StaticOperatorGraphParams {
     std::string modelName;
     std::string graphId;
     bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(modelName, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(graphId, errorMsg)) {
+            return false;
+        }
+        return true;
+    }
 };
 
 struct MemoryTypeRequest : public Request {
@@ -67,13 +168,21 @@ struct MemoryOperatorRequest : public Request {
     MemoryOperatorParams params;
 };
 
-const std::string MEMORY_OVERALL_GROUP = "Overall";
-const std::string MEMORY_STREAM_GROUP = "Stream";
-
 struct MemoryComponentParams {
     std::string rankId;
     std::string type; // Overall, Stream
     bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP) {
+            errorMsg = "Group By parameter should be Overall or Stream.";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct MemoryViewRequest : public Request {
