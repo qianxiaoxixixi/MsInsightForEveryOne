@@ -44,13 +44,13 @@ function getFullCols({ headerName, tDetails, isCompared, setExpandedKeys, theme 
             title: index === 0 ? item : tDetails(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
-            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme),
+            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme, tDetails),
         }
     ));
     if (isCompared) {
         dataColumns.push({
             key: 'action',
-            title: 'Details',
+            title: tDetails('Details'),
             dataIndex: 'action',
             ellipsis: true,
             fixed: 'right',
@@ -60,7 +60,7 @@ function getFullCols({ headerName, tDetails, isCompared, setExpandedKeys, theme 
         });
         dataColumns.splice(1, 0, {
             key: 'source',
-            title: 'Source',
+            title: tDetails('Source'),
             dataIndex: 'source',
             ellipsis: true,
         });
@@ -95,10 +95,10 @@ function wrapData({ data, limit, tDetails, isCompared, setExpandedKeys, theme }:
                 return compare;
             }
             const res: Record<string, string | Array<Record<string, string>>> = covertRowToRecord(item.diff, headerName);
-            res.source = 'Difference';
-            compare.source = 'Compare';
+            res.source = tDetails('Difference');
+            compare.source = tDetails('Comparison');
             const baseline: Record<string, string> = covertRowToRecord(item.baseline, headerName);
-            baseline.source = 'Baseline';
+            baseline.source = tDetails('Baseline');
             res.children = [compare, baseline] as Array<Record<string, string>>;
             return res;
         });

@@ -31,6 +31,11 @@
     "Performance Ratio": "Performance Ratio",
     "Intensity": "Arithmetic Intensity",
     "See More": "See more",
-    "Roofline Data": "Roofline Data"
+    "Roofline Data": "Roofline Data",
+    "Source": "Source",
+    "Difference": "Difference",
+    "Baseline": "Baseline",
+    "Comparison": "Comparison",
+    "Details": "Details"
   }
 }
