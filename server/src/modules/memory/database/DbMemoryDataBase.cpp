@@ -243,7 +243,7 @@ void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
         return;
     }
 
-    Server::ServerLog::Info("[Memory] ParserEnd, RankId: ", rankId);
+    Server::ServerLog::Info("[Memory]Parser ends, Rank ID: ", rankId);
     if (ranks.count(rankId) == 0) {
         Protocol::MemorySuccess success;
         success.rankId = rankId;
@@ -261,7 +261,7 @@ void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, con
 {
     Server::WsSession *session = Server::WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        Server::ServerLog::Error("[Memory]Failed to get session token");
+        Server::ServerLog::Error("[Memory]Failed to get session.");
         return;
     }
 

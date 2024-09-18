@@ -70,7 +70,7 @@ bool TextMemoryDataBase::InitStmt()
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertOperatorStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insert Operator statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare insert Operator statement. Error: ", sqlite3_errmsg(db));
         return false;
     }
     sql = "INSERT INTO " + recordTable +
@@ -80,7 +80,7 @@ bool TextMemoryDataBase::InitStmt()
         sql.append(",(?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertRecordStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insert Record statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare insert Record statement. Error: ", sqlite3_errmsg(db));
         return false;
     }
     sql = "INSERT INTO " + staticOpTable +
@@ -90,7 +90,7 @@ bool TextMemoryDataBase::InitStmt()
         sql.append(",(?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertStaticOpStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insert Static Op statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare insert Static Op statement. Error: ", sqlite3_errmsg(db));
         return false;
     }
 
@@ -144,7 +144,7 @@ void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
-        ServerLog::Error("Insert operator fail. ", sqlite3_errmsg(db));
+        ServerLog::Error("Insert operator fail. Error: ", sqlite3_errmsg(db));
     }
 }
 
@@ -180,7 +180,7 @@ void TextMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &event
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
-        ServerLog::Error("Insert operator fail. ", sqlite3_errmsg(db));
+        ServerLog::Error("Insert operator fail. Error: ", sqlite3_errmsg(db));
     }
 }
 
@@ -207,7 +207,7 @@ void TextMemoryDataBase::InsertStaticOpDetailList(const std::vector<StaticOp> &e
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
-        ServerLog::Error("Insert StaticOp fail. ", sqlite3_errmsg(db));
+        ServerLog::Error("Insert StaticOp fail. Error: ", sqlite3_errmsg(db));
     }
 }
 
@@ -245,7 +245,7 @@ uint64_t TextMemoryDataBase::QueryMinOperatorAllocationTime()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for query min operator allocation time.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for query min operator allocation time. Error: ", sqlite3_errmsg(db));
         return 0;
     }
     uint64_t min = 0;
@@ -263,7 +263,7 @@ uint64_t  TextMemoryDataBase::QueryMinRecordTimestamp()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for query min record timestamp.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for query min record timestamp. Error: ", sqlite3_errmsg(db));
         return 0;
     }
     uint64_t min  = 0;
@@ -473,7 +473,7 @@ sqlite3_stmt *TextMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
             sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to prepare insertOperator stat. Error: ", sqlite3_errmsg(db));
             return nullptr;
         }
     }
@@ -496,7 +496,7 @@ sqlite3_stmt *TextMemoryDataBase::GetRecordStmt(uint64_t paramLen)
             sql.append(",(?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to prepare insertOperator stat. Error: ", sqlite3_errmsg(db));
             return nullptr;
         }
     }
@@ -519,7 +519,7 @@ sqlite3_stmt *TextMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
             sql.append(",(?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to prepare insertOperator stat. Error: ", sqlite3_errmsg(db));
             return nullptr;
         }
     }

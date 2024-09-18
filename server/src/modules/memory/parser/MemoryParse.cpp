@@ -50,7 +50,7 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::st
 bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Start parse Operator Memory: ", filePath, ", FileId: ", fileId);
+    ServerLog::Info("Start parsing Operator Memory: ", filePath, ", FileId: ", fileId);
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
@@ -90,7 +90,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     // 读取剩下的数据并插入到operator内
     memoryDatabase->SaveOperatorDetail();
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("End parse Operator Memory: ", filePath, ", cost time: ",
+    ServerLog::Info("End parsing Operator Memory: ", filePath, ", cost time: ",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minStartTime = memoryDatabase->QueryMinOperatorAllocationTime();
     Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
@@ -211,7 +211,7 @@ StaticOp MemoryParse::mapperToStaticOpDetail(std::map<std::string, size_t> dataM
 bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Start parse Memory Record: ", filePath, ", FileId: ", fileId);
+    ServerLog::Info("Start parsing Memory Record: ", filePath, ", FileId: ", fileId);
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
@@ -249,7 +249,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     // 读取剩下的数据并插入到record内
     database->SaveRecordDetail();
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("End parse Memory Record: ", filePath, ", cost time:",
+    ServerLog::Info("End parsing Memory Record: ", filePath, ", cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minTimestamp = database->QueryMinRecordTimestamp();
     Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
@@ -260,7 +260,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
 bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &fileId)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Start parse Memory Static Operator: ", filePath, ", FileId: ", fileId);
+    ServerLog::Info("Start parsing Memory Static Operator: ", filePath, ", FileId: ", fileId);
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
@@ -298,7 +298,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     // 读取剩下的数据并插入到record内
     database->SaveStaticOpDetail();
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("End parse Memory Record: ", filePath, ", cost time:",
+    ServerLog::Info("End parsing Memory Record: ", filePath, ", cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minTimestamp = database->QueryMinRecordTimestamp();
     Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
@@ -455,7 +455,7 @@ void MemoryParse::PreParseTask(const MemoryFilePairs& filePair, const std::strin
 {
     std::string message;
     if (!InitParser(filePair, fileId, message)) {
-        ServerLog::Error("Failed to parse memory files for fileId:", fileId, "reason: ", message);
+        ServerLog::Error("Failed to parse memory files for fileId:", fileId, ", reason: ", message);
         ParseEndCallBack(fileId, false, message);
     }
 }
@@ -571,7 +571,7 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
 {
     WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Error("[Memory]Failed to get session token");
+        ServerLog::Error("[Memory]Failed to get session.");
         return;
     }
 
