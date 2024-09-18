@@ -72,6 +72,8 @@ protected:
     std::condition_variable responseQueueCv;
     std::string deviceKey;
     std::string bundleName;
+
+    static void BatchHandleMsg(WsSession &session);
 };
 } // end of namespace Server
 } // end of namespace Dic
