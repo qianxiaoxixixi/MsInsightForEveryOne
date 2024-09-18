@@ -28,9 +28,19 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
             session.msgBuffer->Clear();
             break;
         }
+        BatchHandleMsg(session);
+        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+    }
+    ServerLog::Info("Handle message buffer thread has exited.");
+    session.OnNotifyExit();
+}
+
+void WsSession::BatchHandleMsg(WsSession &session)
+{
+    const uint8_t batchSize = 20;
+    for (uint8_t i = 0; i < batchSize; i++) {
         std::unique_ptr<ProtocolMessage> msg = session.msgBuffer->Pop();
         if (msg == nullptr) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
             continue;
         }
         if (msg->type == ProtocolMessage::Type::REQUEST) {
@@ -41,10 +51,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
                 ServerLog::Info("Request is not supported");
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
     }
-    ServerLog::Info("Handle message buffer thread has exited.");
-    session.OnNotifyExit();
 }
 
 void WsSession::OnHandleResponseQueue(WsSession &session)
