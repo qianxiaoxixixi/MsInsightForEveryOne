@@ -82,8 +82,10 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
     std::string filePath =
             currPath.substr(0, index + 1) + "/src/test/test_data/data.bin";
     filePathList.push_back(filePath);
-    bool result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName, filePathList);
-    EXPECT_EQ(result, true);
+    Dic::Protocol::ProjectErrorType result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName,
+                                                                                                     filePathList);
+    bool isConflict = (result == Dic::Protocol::ProjectErrorType::PROJECT_NAME_CONFLICT);
+    EXPECT_EQ(isConflict, true);
     std::vector<ProjectExplorerInfo> infos;
     ProjectExplorerInfo info = CreateProjectData(projectName, filePathList[0], "import",
                                                  Dic::ProjectTypeEnum::BIN, std::vector<std::string>());

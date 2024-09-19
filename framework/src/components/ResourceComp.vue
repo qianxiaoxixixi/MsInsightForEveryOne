@@ -11,11 +11,12 @@ import useWatchTranslation from '@/hooks/useWatchTranslation';
 import { console } from '@/utils/console';
 import { ProjectErrorType } from '@/utils/enmus';
 import {LocalStorageKeys, localStorageService} from '@/utils/local-storage';
+import type { DataSource } from '@/centralServer/websocket/defs';
 
 const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void, show: boolean }>();
 const emit = defineEmits(['input-change']);
 
-const { confirm, checkProjectValid } = useDataSources();
+const { menuTree, confirm, checkProjectValid } = useDataSources();
 
 const treeRef = ref();
 
@@ -283,14 +284,23 @@ const doCheckFileVallid = async (projectName: string) => {
     }
 };
 
-const doSetCurrentPath = (projectName: string, isConflict: boolean) => {
+const doSetCurrentPath = (projectName: string, isConflict: boolean, projectAction: ProjectActionEnum = ProjectActionEnum.ADD_FILE) => {
     const currentkey = treeRef.value.getCurrentKey().replace(/[^\\/][\\/]+$/, (match: string) => match.substr(0,1));
     const curProjectName = projectName === '' ? currentkey : projectName;
     if (currentkey && currentkey === state.inputPath) {
         setCurrentPath(currentkey);
-        const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [currentkey] };
+        let dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [] } as DataSource;
+        if (projectAction === ProjectActionEnum.ADD_FILE) {
+          dataSource.dataPath.push(currentkey);
+        } else {
+          const index = menuTree.findIndex(node => node.label === curProjectName);
+          const firstDataPath = menuTree[index].children?.[0].label;
+          if (firstDataPath) {
+            dataSource.dataPath.push(firstDataPath);
+          }
+        }
         try {
-          confirm(dataSource, isConflict, ProjectActionEnum.ADD_FILE);
+          confirm(dataSource, isConflict, projectAction);
           return { result: true };
         } catch {
           console.log('doSetCurrentPath error.');

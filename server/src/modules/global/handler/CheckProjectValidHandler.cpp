@@ -52,10 +52,9 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
         return false;
     }
 
-    bool isConflict = ProjectExplorerManager::Instance().CheckProjectConflict(params.projectName,
+    error = ProjectExplorerManager::Instance().CheckProjectConflict(params.projectName,
         params.dataPath);
-    if (isConflict) {
-        error = ProjectErrorType::PROJECT_NAME_CONFLICT;
+    if (error != ProjectErrorType::NO_ERRORS) {
         return false;
     }
     return true;
