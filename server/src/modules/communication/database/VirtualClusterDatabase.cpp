@@ -765,19 +765,41 @@ bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &
         ServerLog::Error("Failed to prepare get parallel config statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    bool flag = false;
+    int64_t ppSize{};
+    int64_t dpSize{};
+    int64_t prePpIndex{};
+    int64_t preDpIndex{};
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        config.algorithm = MEGATRON_LM_TP_DP_PP_ALG;
-        config.dpSize = sqlite3_column_int64(stmt, col++);
-        config.ppSize = sqlite3_column_int64(stmt, col++);
-        config.tpSize = sqlite3_column_int64(stmt, col++);
+        dpSize = sqlite3_column_int64(stmt, col++);
+        ppSize = sqlite3_column_int64(stmt, col++);
+        config.tpSize = std::max(config.tpSize, (int64_t)sqlite3_column_int64(stmt, col++));
+        config.dpSize = std::max(config.dpSize, dpSize);
+        config.ppSize = std::max(config.ppSize, ppSize);
+        // 通过判断dp和pp哪个先增加，来判断tp-dp-pp还是tp-pp-dp
+        if (!flag) {
+            if (dpSize > preDpIndex) {
+                config.algorithm = MEGATRON_LM_TP_DP_PP_ALG;
+                flag = true;
+            } else if (ppSize > prePpIndex) {
+                config.algorithm = MEGATRON_LM_TP_PP_DP_ALG;
+                flag = true;
+            }
+            preDpIndex = dpSize;
+            prePpIndex = ppSize;
+        }
     }
-    sqlite3_finalize(stmt);
-    if (config.dpSize <= 1 && config.ppSize <= 1 && config.tpSize <= 1) {
+    if (config.dpSize <= 0 && config.ppSize <= 0 && config.tpSize <= 0) {
         level = PARALLEL_CONFIG_LEVEL_UNDEFINED;
     } else {
         level = PARALLEL_CONFIG_LEVEL_COLLECTED;
     }
+    // 索引从0开始，转化为实际大小时需要+1
+    config.dpSize++;
+    config.ppSize++;
+    config.tpSize++;
+    sqlite3_finalize(stmt);
     return true;
 }
 
