@@ -736,7 +736,6 @@ registerCrossUnitRenderer({
 });
 
 const CanvasContainer = styled.div`
-    overflow-y: scroll;
     width: 100%;
 `;
 

@@ -223,4 +223,5 @@ export const light: Theme = {
     summaryChartBgColor: '#BFC7D7',
     rankContainerBackgroudColor: '#EBEFF6',
     unitInfoTextColor: '#4E5865',
+    scrollBarWidth: 7,
 };

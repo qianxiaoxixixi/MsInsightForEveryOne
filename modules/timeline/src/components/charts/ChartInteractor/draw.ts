@@ -458,7 +458,7 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     if (category !== checkedCategory) {
         return;
     }
-    const li = d3.scaleLinear().range([0, ctx.canvas.width]).domain([session.domainRange.domainStart, session.domainRange.domainEnd]);
+    const li = d3.scaleLinear().range([0, ctx.canvas.clientWidth]).domain([session.domainRange.domainStart, session.domainRange.domainEnd]);
     const [targetCardId, sourceCardId] = [handlerEmptyString(to.rankId ?? '', cardId), handlerEmptyString(from.rankId ?? '', cardId)];
     const [targetX, targetY] = [li(to.timestamp - getTimeOffset(session, targetCardId)), getHeight(session, to, targetCardId)];
     const [sourceX, sourceY] = [li(from.timestamp - getTimeOffset(session, sourceCardId)), getHeight(session, from, sourceCardId)];
