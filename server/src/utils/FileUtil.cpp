@@ -151,13 +151,15 @@ bool FileUtil::CheckFilePathExist(const std::string& filePath)
 
 bool FileUtil::CheckFilePath(const std::string& filePath)
 {
-    if (access(filePath.c_str(), R_OK) == -1) {
-        Server::ServerLog::Error("Check file path cannot read file path");
+    // 文件基础校验：校验文件最小权限、软连接、长度、特殊字符
+    if (!CheckPathValid(filePath)) {
+        Server::ServerLog::Error("Invalid file path.There may be issues with file permissions, soft link, length,"
+                                 " or special characters");
         return false;
     }
     std::ifstream file(filePath);
     if (!file.good()) {
-        Server::ServerLog::Error("Check file path cannot get file path");
+        Server::ServerLog::Error("Fail to open file path");
         return false;
     }
     file.close();
