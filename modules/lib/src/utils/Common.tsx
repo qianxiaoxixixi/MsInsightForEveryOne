@@ -241,6 +241,20 @@ export const safeJSONParse = (str: any, defaultValue: any = null): any => {
     }
 };
 
+export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = []):void => {
+    document.addEventListener('keydown', (e) => {
+        const defaultForbiddenComboKeys = ['f', 'p', 'g', 'j', 'r'];
+        const defaultForbiddenSingleKeys = ['F3', 'F5', 'F7'];
+        const comboKeys = forbiddenComboKeys.length ? forbiddenComboKeys : defaultForbiddenComboKeys;
+        const singleKeys = forbiddenSingleKeys.length ? forbiddenSingleKeys : defaultForbiddenSingleKeys;
+        const isCtrlCombo = (e.ctrlKey || e.metaKey) && comboKeys.includes(e.key.toLowerCase());
+
+        if (isCtrlCombo || singleKeys.includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+};
+
 export const chartColors = [
     '#0062DC',
     '#279C6E',

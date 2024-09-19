@@ -30,6 +30,7 @@ const Percentage = styled.span`
     margin: 0 .5em;
     text-overflow: ellipsis;
     width: ${TEXT_WIDTH}px;
+    user-select: none;
 `;
 const Controller = styled.div`
   display: flex;

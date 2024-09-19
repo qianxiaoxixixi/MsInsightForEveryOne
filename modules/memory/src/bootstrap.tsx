@@ -11,6 +11,7 @@ import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
 import 'ascend-i18n';
+import { disableShortcuts } from 'ascend-utils';
 
 interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
@@ -36,7 +37,7 @@ declare global {
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;
-document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+disableShortcuts();
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(

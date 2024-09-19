@@ -7,7 +7,7 @@ import './index.css';
 import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console, disableShortcuts } from 'ascend-utils';
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
@@ -22,7 +22,7 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;
-document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+disableShortcuts();
 
 interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
