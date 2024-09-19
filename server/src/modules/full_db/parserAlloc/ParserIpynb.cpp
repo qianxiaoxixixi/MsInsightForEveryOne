@@ -24,6 +24,10 @@ void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &project
     const Server::ParamsOption &option = Server::ParamsParser::Instance().GetOption();
     Dic::Module::Jupyter::JupyterServerManager::Instance().InitJupyterLogPath(option.logPath);
     std::string path = projectInfos[0].fileName;
+    if (!FileUtil::CheckPathValid(path)) {
+        SendParseFailEvent("", "Invalid ipynb file.");
+        return;
+    }
     // 检查jupyter服务是否存在
     std::string jupyterVersionResult;
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
