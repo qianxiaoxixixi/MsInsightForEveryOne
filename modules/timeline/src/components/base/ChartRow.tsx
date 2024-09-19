@@ -30,6 +30,7 @@ export const ChartRowRight = styled.div<ChartRowRightProps>`
     width: ${(props): string => props?.width !== undefined ? `${props.width}` : 'unset'};
     height: 100%;
     position: relative;
+    margin-right: ${(props): string => `${props.theme.scrollBarWidth}px`};
 `;
 
 export interface ChartRowProps extends RowProps {

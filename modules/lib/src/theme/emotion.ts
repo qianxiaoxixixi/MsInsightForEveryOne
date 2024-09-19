@@ -224,9 +224,10 @@ declare module '@emotion/react' {
         tableTextColor: string; // 表格颜色
         radioSelectedColor: string; // 单选框选中填充颜色
         rankBackgroudColor: string;
-        contextMenuBgColor: string;
-        summaryChartBgColor: string;
+        contextMenuBgColor: string; // 右键菜单背景色
+        summaryChartBgColor: string; // 泳道预览图颜色
         rankContainerBackgroudColor: string;
         unitInfoTextColor: string;
+        scrollBarWidth: number; // 滚动条宽度
     }
 }
