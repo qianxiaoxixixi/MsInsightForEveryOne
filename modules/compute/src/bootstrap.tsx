@@ -11,6 +11,11 @@ import App from './App';
 import connector from './connection';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
+import { disableShortcuts } from 'ascend-utils';
+
+// 禁用右键刷新以及F5、Ctrl+R刷新
+document.oncontextmenu = (): boolean => false;
+disableShortcuts();
 
 export function init(page?: string): void {
     const root = createRoot(document.getElementById('root') as HTMLElement);

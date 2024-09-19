@@ -15,7 +15,7 @@ interface CefQueryType {
     request: string;
     onSuccess: (response: string) => void;
     onFailure: (errorCode: number, errorMessage: string) => void;
-};
+}
 const app = createApp(App);
 
 app.use(createPinia());
@@ -26,7 +26,16 @@ app.mount('#app');
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;
-document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+
+document.addEventListener('keydown', (e) => {
+    const forbiddenComboKeys = ['f', 'p', 'g', 'j', 'r'];
+    const forbiddenSingleKeys = ['F3', 'F5', 'F7'];
+    const isCtrlCombo = (e.ctrlKey || e.metaKey) && forbiddenComboKeys.includes(e.key.toLowerCase());
+
+    if (isCtrlCombo || forbiddenSingleKeys.includes(e.key)) {
+        e.preventDefault();
+    }
+});
 
 declare global {
     interface Window {

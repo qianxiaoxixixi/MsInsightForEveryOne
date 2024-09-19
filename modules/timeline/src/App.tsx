@@ -14,8 +14,8 @@ import { SessionPage } from './pages/SessionPage';
 import { platform } from './platforms';
 import { themeInstance, GlobalStyles } from 'ascend-theme';
 import type { ThemeItem } from 'ascend-theme';
-import eventBus, { EventType } from './utils/eventBus';
 import connector from './connection';
+import { disableShortcuts } from 'ascend-utils';
 
 const Window = styled.div`
     height: 100vh;
@@ -25,12 +25,7 @@ const Window = styled.div`
     color: ${(props): string => props.theme.textColor};
 `;
 
-// 全局新增监听搜索快捷键输入
-document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
-        eventBus.emit(EventType.GLOBALSEARCH);
-    }
-});
+disableShortcuts();
 
 const ImgWithFallback = ({
     className = '',
