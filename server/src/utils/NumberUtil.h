@@ -143,6 +143,36 @@ public:
     }
 
     /**
+     * double字符串减法，保留小鼠点后有效数字
+     * @param str1 double字符串1
+     * @param str2 double字符串2
+     * @param precision 有效数字保留位数
+     * @return 减法结果
+     */
+    static inline std::string StringDoubleMinusKeepSf(const std::string &str1, const std::string &str2,
+                                                      int precision = 3)
+    {
+        long double num1 = StringToLongDouble(str1);
+        long double num2 = StringToLongDouble(str2);
+        long double difference = num1 - num2;
+        std::stringstream sstream;
+        // 获取差值的整数部分，如果是正数则向下取整，如果是负数则向上取整
+        long double diffRound = difference > 0 ? std::floor(difference) : std::ceil(difference);
+        // 获取差值小数部分
+        long double decimal = difference - diffRound;
+        int finalPrecision = precision;
+        // 如果小数部分存在，则重新计算保留小数位
+        if (decimal != 0.0) {
+            // 获取差值的小数部分，取绝对值，再取对数
+            int zeroNumber = (int)std::log10(std::abs(decimal));
+            // 重新计算需要保留的位数：如果对数小于等于0，说明小数点后面存在0，则保留位数加上0的个数
+            finalPrecision = zeroNumber >= 0 ? finalPrecision : finalPrecision - zeroNumber;
+        }
+        sstream << std::fixed << std::setprecision(finalPrecision) << difference;
+        return sstream.str();
+    }
+
+    /**
      * 去除浮点数字符串后缀0
      * @param numStr 浮点数字符串
      * @return 去除后缀0的结果
@@ -180,7 +210,7 @@ public:
         if (str1.empty() || str2.empty()) {
             return "";
         }
-        std::string minusRes =  StringDoubleMinus(str1, str2, maxPrecision);
+        std::string minusRes =  StringDoubleMinusKeepSf(str1, str2, maxPrecision);
         return RemoveTrailingZerosAndDecimal(minusRes);
     }
 
