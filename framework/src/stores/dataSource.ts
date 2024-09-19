@@ -67,6 +67,7 @@ export const useDataSources = defineStore('dataSources', () => {
     // 当前选中数据，projectName为选中一级目录，dataPath为二级目录，为空时表示选中的是一级目录，不为空则表示选中的是二级目录
     const lastDataSource = ref<DataSource>({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     const compareConfig = useCompareConfig();
+    const loadingMask = useLoading();
     function checkExistedServer(dataSource: DataSource, importMethod?: 'drag', result?: any): boolean {
         if (session.isReset) {
             session.reset();
@@ -100,15 +101,18 @@ export const useDataSources = defineStore('dataSources', () => {
     const confirm = async (dataSource: DataSource, isConflict: boolean, action: ProjectActionEnum): Promise<void> => {
         // 如果目标内容就是当前选中内容，则不做任何处理直接返回
         if (dataSource.projectName === lastDataSource.value.projectName && arraysEqual(dataSource.dataPath, lastDataSource.value.dataPath)) {
+            loadingMask.close();
             return;
         }
         // 如果是只是切换二级目录，则只修改当前选中内容
         if (action === ProjectActionEnum.TRANSFER_PROJECT && dataSource.projectName === lastDataSource.value.projectName) {
             lastDataSource.value = dataSource;
             compareConfig.cancelCompareData();
+            loadingMask.close();
             return;
         }
         if (checkExistedServer(dataSource)) {
+            loadingMask.close();
             return;
         }
         await compareConfig.cancelBaselineData();
@@ -120,7 +124,7 @@ export const useDataSources = defineStore('dataSources', () => {
         } else {
             const isSuccess = await connectRemote(dataSource);
             if (isSuccess) {
-                useLoading().open({});
+                loadingMask.open({});
                 connector.send({
                     event: 'remote/import',
                     body: { dataSource, isConflict, action },

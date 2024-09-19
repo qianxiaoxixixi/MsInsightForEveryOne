@@ -7,5 +7,6 @@ export enum ProjectErrorType {
     PROJECT_NAME_CONFLICT = 1,
     IS_UNSAFE_PATH = 2,
     EXISTING_LARGE_FILES = 3,
+    TRANSFER_PROJECT = 4,
     OTHER = -1
 }

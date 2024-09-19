@@ -26,7 +26,8 @@ public:
                                                           const std::vector<std::string> &dataPathList);
     bool SaveProjectExplorer(std::vector<ProjectExplorerInfo> &projectExplorerInfos, bool isConflict);
     bool DeleteProjectAndFilePath(const std::string &projectName, const std::vector<std::string>& filePathList);
-    bool CheckProjectConflict(const std::string &projectName, const std::vector<std::string>& filePathList);
+    Dic::Protocol::ProjectErrorType CheckProjectConflict(const std::string &projectName,
+                                                         const std::vector<std::string>& filePathList);
     void UpdateProjectDbPath(const std::string &projectName,
                              const std::map<std::string, std::vector<std::string>>& dataPathToDbMap);
     void InitSystemMemoryDbPath(const std::string &filePath);

@@ -8,6 +8,7 @@ import {ElMessage} from 'element-plus';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
 import {useLoading} from '@/hooks/useLoading';
 import i18n from '@/i18n';
+import {ProjectActionEnum} from '@/centralServer/websocket/defs';
 
 const props = defineProps<{ showModal: boolean; projectName: string }>();
 const emit=defineEmits(['update:showModal']);
@@ -59,12 +60,13 @@ const addClickProtect = (func: () => void): void => {
 const handleConfirm = async () => {
     loadingMask.open({});
     const result = await resourceComp.value.doCheckFileVallid(props.projectName);
-    if (result !== ProjectErrorType.NO_ERRORS) {
+    if (result !== ProjectErrorType.NO_ERRORS && result !== ProjectErrorType.TRANSFER_PROJECT) {
       loadingMask.close();
       dialogCoverVisible.value = true;
       projectCheckResult.value = result;
     } else {
-      const { result: setPathResult, inputPath } = resourceComp.value.doSetCurrentPath(props.projectName, false);
+      const action = result === ProjectErrorType.TRANSFER_PROJECT ? ProjectActionEnum.TRANSFER_PROJECT : ProjectActionEnum.ADD_FILE;
+      const { result: setPathResult, inputPath } = resourceComp.value.doSetCurrentPath(props.projectName, false, action);
       if(setPathResult) {
         emit('update:showModal', false);
       } else {

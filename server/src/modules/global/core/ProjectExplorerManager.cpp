@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <unordered_map>
+#include <algorithm>
 #include "pch.h"
 #include "SystemMemoryDatabase.h"
 #include "SystemMemoryDatabaseDef.h"
@@ -187,11 +188,11 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
     return true;
 }
 
-bool ProjectExplorerManager::CheckProjectConflict(const std::string &projectName,
-                                                  const std::vector<std::string>& filePathList)
+ProjectErrorType ProjectExplorerManager::CheckProjectConflict(const std::string &projectName,
+                                                              const std::vector<std::string>& filePathList)
 {
     if (projectName.empty() || filePathList.empty()) {
-        return false;
+        return ProjectErrorType::OTHER;
     }
 
     std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(filePathList);
@@ -201,13 +202,29 @@ bool ProjectExplorerManager::CheckProjectConflict(const std::string &projectName
 
     if (!InitSystemMemoryDb()) {
         Server::ServerLog::Error("Failed to open database. path:", systemMemoryDbPath);
-        return false;
+        return ProjectErrorType::OTHER;
     }
     std::vector<ProjectExplorerInfo> infos =
             db->QueryProjectExplorerData(projectName, std::vector<std::string>());
 
-    return !infos.empty() && (infos[0].importType == "drag" ||
+    // 校验是否导入的数据是否是历史导入过的
+    std::vector<std::string> curFilePathList;
+    for (const auto &item: infos) {
+        curFilePathList.push_back(item.fileName);
+    }
+    std::vector<std::string> diff;
+    std::set_difference(filePathList.begin(), filePathList.end(), curFilePathList.begin(),
+                        curFilePathList.end(), std::back_inserter(diff));
+    if (diff.empty()) {
+        return ProjectErrorType::TRANSFER_PROJECT;
+    }
+
+    bool isConflict = !infos.empty() && (infos[0].importType == "drag" ||
             isFileConflict(projectTypeEnum, static_cast<ProjectTypeEnum>(infos[0].projectType)));
+    if (isConflict) {
+        return ProjectErrorType::PROJECT_NAME_CONFLICT;
+    }
+    return ProjectErrorType::NO_ERRORS;
 }
 
 void ProjectExplorerManager::UpdateProjectDbPath(const std::string &projectName,
