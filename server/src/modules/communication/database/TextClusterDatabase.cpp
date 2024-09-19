@@ -875,8 +875,9 @@ bool TextClusterDatabase::UpdateParallelStrategyConfig(const ParallelStrategyCon
 
 bool TextClusterDatabase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &config, std::string &level)
 {
-    std::string sql = "select max(dp_index) + 1 as dp_size, max(pp_index) + 1 as pp_size, max(tp_index) + 1 as tp_size "
-                      " from " + TABLE_STEP_TRACE + " where rank_id != ''";
+    std::string sql = "select dp_index, pp_index, tp_index from " + TABLE_STEP_TRACE + " "
+        "where rank_id != '' and step_id = (select DISTINCT step_id FROM " + TABLE_STEP_TRACE + " limit 1) "
+        "order by step_id asc, CAST(rank_id AS INTEGER) asc";
     return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
 } // end of namespace Module

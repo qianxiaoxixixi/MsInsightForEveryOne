@@ -59,11 +59,20 @@ struct StepStatistic {
     int64_t tpIndex = 0;
 };
 
+const std::string PARALLEL_CONFIG_LEVEL_COLLECTED = "collected";
+const std::string PARALLEL_CONFIG_LEVEL_PREDICTED = "predicted";
+const std::string PARALLEL_CONFIG_LEVEL_CONFIRMED = "confirmed";
+const std::string PARALLEL_CONFIG_LEVEL_CONFIGURED = "configured";
+const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
+
+const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
+const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
+
 struct ParallelStrategyConfig {
-    std::string algorithm; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
-    int64_t ppSize = 1;
-    int64_t tpSize = 1;
-    int64_t dpSize = 1;
+    std::string algorithm = MEGATRON_LM_TP_DP_PP_ALG; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
+    int64_t ppSize{};
+    int64_t tpSize{};
+    int64_t dpSize{};
 };
 
 struct ClusterBaseInfo {
@@ -92,17 +101,6 @@ struct CommunicationMatrixInfo {
     double transitTime;
     double bandwidth;
 };
-
-const std::string PARALLEL_CONFIG_LEVEL_COLLECTED = "collected";
-const std::string PARALLEL_CONFIG_LEVEL_PREDICTED = "predicted";
-const std::string PARALLEL_CONFIG_LEVEL_CONFIRMED = "confirmed";
-const std::string PARALLEL_CONFIG_LEVEL_CONFIGURED = "configured";
-const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
-
-const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
-const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
-
-
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

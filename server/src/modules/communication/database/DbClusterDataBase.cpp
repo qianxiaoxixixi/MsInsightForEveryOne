@@ -511,8 +511,9 @@ bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &c
             return false;
         }
     }
-    std::string sql = "select max(dp_index) + 1 as dp_size, max(pp_index) + 1 as pp_size, max(tp_index) + 1 as tp_size "
-                      " from " + TABLE_STEP_TRACE_TIME + " where type = 'rank'";
+    std::string sql = "select dp_index, pp_index, tp_index from " + TABLE_STEP_TRACE_TIME + " "
+          "where type = 'rank' and step = (select DISTINCT step FROM " + TABLE_STEP_TRACE_TIME + " limit 1) "
+          "order by step asc, CAST(`index` AS INTEGER) asc" ;
     return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
 }
