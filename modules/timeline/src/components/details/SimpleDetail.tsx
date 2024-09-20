@@ -20,9 +20,6 @@ function Support<T extends CommonStateProto>(
     const unit = session.selectedUnits[0];
     return <ResizeTable
         {...state}
-        rowSelection={{
-            selectedRowKeys: session.selectedDetailKeys,
-        }}
         expandable={{ onExpand: state.onExpand, showExpandColumn: isTree }}
         onRow={(row): {onClick: () => void; onDoubleClick: () => void} => ({
             onClick: (): void => {

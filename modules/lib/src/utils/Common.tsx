@@ -33,6 +33,7 @@ export const StyledEmpty = ({ descriptor, style }:
         <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             style={style}
+            imageStyle={{ height: 30 }}
             description={
                 <span style={{ color: theme.fontColor }}>
                     {t(descriptor ?? 'No Data')}
