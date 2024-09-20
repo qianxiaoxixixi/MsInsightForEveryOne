@@ -168,7 +168,7 @@ const customNodeClass = (data: TreeData) => {
                             <el-tooltip :content="getToolTip(data, node)" effect="light" :show-after="400">
                                 <EditableText v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"></EditableText>
                                 <span v-else class="content-node-text can-right-click" @contextmenu.prevent="handleRightClick(data)">
-                                    {{ node.label }}
+                                    {{ getToolTip(data, node) }}
                                 </span>
                             </el-tooltip>
                         </span>
