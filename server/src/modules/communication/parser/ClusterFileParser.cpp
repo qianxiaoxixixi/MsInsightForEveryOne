@@ -10,7 +10,6 @@
 #include "ConstantDefs.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
-#include "NumDefs.h"
 #include "DbClusterDataBase.h"
 #include "TraceTime.h"
 #include "FileUtil.h"
@@ -116,7 +115,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     }
     bool result = database->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     if (!result || (baseInfo.config.dpSize == 1 && baseInfo.config.ppSize == 1 && baseInfo.config.tpSize == 1)) {
-        ServerLog::Error("Failed to get parallel config from step trace.");
+        ServerLog::Warn("Get initial parallel config from step trace.");
     }
     database->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
