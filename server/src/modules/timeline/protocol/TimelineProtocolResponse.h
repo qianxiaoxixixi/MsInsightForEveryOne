@@ -403,7 +403,7 @@ struct KernelDetailsResponse : public Response {
 
 struct OneKernelBody {
     std::string id;
-    uint64_t depth;
+    uint64_t depth = {0};
     std::string threadId;
     std::string pid;
     std::string step;
