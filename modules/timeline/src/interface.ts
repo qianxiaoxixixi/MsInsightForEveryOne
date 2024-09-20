@@ -20,6 +20,7 @@ import {
     parseMemorySuccessHandler,
     baselineAddHandler,
     removeBaselineHandler,
+    updateProjectNameHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -65,4 +66,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
     locateUnit: locateUnitHandler,
     switchLanguage: switchLanguageHandler,
+    updateProjectName: updateProjectNameHandler,
 };

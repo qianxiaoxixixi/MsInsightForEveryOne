@@ -127,6 +127,8 @@ export class Session {
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
     eventUnits: InsightUnit[] = [];
+    projectName?: string;
+    pageSetting: Record<string, any> = {};
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
