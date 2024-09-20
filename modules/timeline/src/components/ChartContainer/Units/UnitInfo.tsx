@@ -298,6 +298,11 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         if (!expandable) {
             return;
         }
+        // 清理历史记录
+        delete _unit.onceExpand;
+        _unit.children?.forEach(item => {
+            delete item.onceExpand;
+        });
         const spreadUnits = _unit.spreadUnits;
         if (spreadUnits?.phase === 'expand') {
             await spreadUnits.action?.(_unit, session);
