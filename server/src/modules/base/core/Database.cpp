@@ -397,7 +397,7 @@ std::string Database::GetValueFromStatusInfoTable(const std::string& key)
 {
     std::string value;
     if (!CheckTableExist(infoTable)) {
-        ServerLog::Warn("Failed to get value from info table because table is not exist.");
+        ServerLog::Warn("Get empty value from info table because table is not exist.");
         return value;
     }
 

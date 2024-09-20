@@ -291,9 +291,14 @@ static std::vector<std::string> StringSplit(const std::string& str)
             count = 0;
         } else if (ch == '\"') {
             count++;
+        } else if (ch == '\r' || ch == '\n') {
+            break;
         } else {
             subStr += ch;
         }
+    }
+    if (subStr.empty()) {
+        return result;
     }
     result.push_back(subStr);
     return result;
