@@ -8,7 +8,7 @@
     "Packet Number": "包数量",
     "Bandwidth(GB/s)": "带宽(GB/s)",
     "Packet Size(MB)": "包大小(MB)",
-    "Find in Timeline": "跳转至时间线页面",
+    "Find in Timeline": "跳转至时间线视图",
     "sessionTitle": {
       "MatrixModel": "通信矩阵",
       "VisualizedCommunicationTime": "通信时长",

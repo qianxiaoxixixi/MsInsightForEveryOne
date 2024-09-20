@@ -80,6 +80,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
+    const { t } = useTranslation('communication');
 
     useEffect(() => {
         updateData(page, sorter);
@@ -99,7 +100,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     };
 
     const columns: TableColumnsType<DataType> = [
-        { title: 'Operator Name', dataIndex: 'operatorName', key: 'operatorName', sorter: true, ellipsis: true },
+        { title: t('tableHead.Operator Name'), dataIndex: 'operatorName', key: 'operatorName', sorter: true, ellipsis: true },
         ...useCommonColumns().map(item => {
             return { ...item, sorter: true };
         }),
