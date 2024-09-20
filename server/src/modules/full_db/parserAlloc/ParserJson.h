@@ -42,7 +42,7 @@ private:
     std::map<std::string, std::vector<std::string>> GetRankListMap(
         const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::map<std::string, std::vector<std::string>> &rankToFoldersMap);
-    std::string GetJsonFileUnderFolder(const std::string &path);
+    std::vector<std::string> GetJsonFileUnderFolder(const std::string &path);
     void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request);
 

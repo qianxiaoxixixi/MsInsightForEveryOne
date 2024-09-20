@@ -117,34 +117,37 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
     std::map<std::string, std::vector<std::string>> rankToTraceMap;
     for (const auto &project : projectInfos) {
         for (const auto &parseFileInfo : project.parseFilePathInfos) {
-            std::string jsonFile = GetJsonFileUnderFolder(parseFileInfo.parseFilePath);
-            if (jsonFile.empty()) {
+            std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(parseFileInfo.parseFilePath);
+            if (jsonFiles.empty()) {
                 continue;
             }
-            std::string fileId = GetFileId(jsonFile, parseFileInfo.parseFilePath);
+            std::string fileId = GetFileId(jsonFiles[0], parseFileInfo.parseFilePath);
             rankToFoldersMap[fileId].push_back(parseFileInfo.parseFilePath);
-            rankToTraceMap[fileId].push_back(jsonFile);
+            rankToTraceMap[fileId] = jsonFiles;
         }
     }
     return rankToTraceMap;
 }
 
-std::string ParserJson::GetJsonFileUnderFolder(const std::string &path)
+std::vector<std::string> ParserJson::GetJsonFileUnderFolder(const std::string &path)
 {
+    std::vector<std::string> jsonFiles;
     if (!FileUtil::IsFolder(path)) {
-        return path;
+        jsonFiles.emplace_back(path);
+        return jsonFiles;
     }
     std::vector<std::string> folders;
     std::vector<std::string> files;
     if (!FileUtil::FindFolders(path, folders, files)) {
-        return "";
+        return jsonFiles;
     }
     for (const auto &file : files) {
         if (IsJsonValid(file)) {
-            return FileUtil::SplicePath(path, file);
+            std::string jsonFile = FileUtil::SplicePath(path, file);
+            jsonFiles.emplace_back(jsonFile);
         }
     }
-    return "";
+    return jsonFiles;
 }
 
 void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
@@ -483,11 +486,14 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     }
     // 当前只处理单卡情况
     std::string filePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
-    std::string jsonFile = GetJsonFileUnderFolder(filePath);
+    std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(filePath);
+    if (std::empty(jsonFiles)) {
+        return;
+    }
     // 判断项目类型，如果是算子调优数据，则直接解析
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     // 创建db连接池
-    std::string dbPath = FileUtil::GetDbPath(jsonFile);
+    std::string dbPath = FileUtil::GetDbPath(jsonFiles[0]);
     std::map<std::string, std::vector<std::string>> rankToFoldersMap;
     std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
     if (std::empty(rankListMap)) {
@@ -505,13 +511,13 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     }
 
     if (!isParsed && projectTypeEnum == ProjectTypeEnum::SIMULATION) {
-        Timeline::TraceFileSimulationParser::Instance().Parse(std::vector<std::string>{ jsonFile }, rankId, filePath);
+        Timeline::TraceFileSimulationParser::Instance().Parse(jsonFiles, rankId, filePath);
         return;
     }
 
     // 如果是系统调优数据，分别解析trace、kernel和memory数据
     if (!isParsed &&
-        !Timeline::TraceFileParser::Instance().Parse(std::vector<std::string>{ jsonFile }, rankId, filePath)) {
+        !Timeline::TraceFileParser::Instance().Parse(jsonFiles, rankId, filePath)) {
         ServerLog::Warn("Failed to parse baseline trace files.");
     }
 
