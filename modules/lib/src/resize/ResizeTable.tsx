@@ -8,7 +8,7 @@ import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/tab
 import { isArray } from 'lodash';
 import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
-import { limitInput } from '../utils/Common';
+import { limitInput, StyledEmpty } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
 import { CaretDownIcon, CaretRightIcon } from '../icon/Icon';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
@@ -63,6 +63,10 @@ const StyledTable = styled(Support)`
     .ant-table-tbody > tr > td {
         box-shadow: inset 0 -1px 0 0 ${(p): string => p.theme.borderColorLight};
         border-bottom: none;
+    }
+    
+    .ant-table-tbody > tr > td:has(.ant-empty) {
+        box-shadow: none;
     }
 
     .ant-table-cell-scrollbar:not([rowspan]) {
@@ -286,12 +290,14 @@ const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void 
     }
 };
 
+const EMPTY_VIEW_HEIGHT = 60;
 export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): EmotionJSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
+    const marginTop = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
 
     // ============================ Resize ============================
     useEffect(() => {
@@ -343,6 +349,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
                 className={!variableTotalWidth ? '' : 'variableTotalWidth'}
                 columns={mergeColumns}
                 components={{ header: { cell: resizableTitle } }}
+                locale={ { emptyText: () => prop.loading ? null : <StyledEmpty style={{ marginTop }}></StyledEmpty> } }
             />
         </div>
     );

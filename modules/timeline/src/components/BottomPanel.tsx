@@ -12,7 +12,6 @@ import type { BottomPanelSingleRender } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
 import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
-import { SimpleTabularDetail } from './details/SimpleDetail';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { getDetailViewItem } from './detailViews/DetailView';
 import { useFindDetail } from './detailViews/FindInWindow';
@@ -195,12 +194,10 @@ const useBottomPanelReactNodes = (session: Session, height: number, type: string
 
 /* decide what to put in Detail container */
 const getDetailContent = (session: Session, height: number, bottomPanelComponents?: ReturnType<BottomPanelSingleRender>): JSX.Element => {
-    if (session.selectedUnitKeys.length === 0) {
+    if (session.selectedUnitKeys.length === 0 || !bottomPanelComponents?.Detail) {
         return <div className="emptyContainer"><NoDetail/></div>;
     }
-    return bottomPanelComponents?.Detail
-        ? <bottomPanelComponents.Detail session={session} height={height} />
-        : <SimpleTabularDetail detail={session.selectedUnits[0]?.detail} session={session} height={height}/>;
+    return <bottomPanelComponents.Detail session={session} height={height} />;
 };
 
 /* decide what to put in More container */
