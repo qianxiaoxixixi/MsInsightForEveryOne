@@ -356,7 +356,7 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
     const [pipelineVisible, setPipelineVisible] = useState(true);
     const { t } = useTranslation('summary');
     useEventBus('activeCommunicator', (data) => {
-        setPipelineVisible((data as communicator)?.name.includes('pipeline'));
+        setPipelineVisible((data as communicator)?.name.startsWith('pipeline'));
     });
     return <Layout>
         <BaseInfo session={session}/>
