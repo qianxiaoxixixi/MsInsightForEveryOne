@@ -51,11 +51,14 @@ namespace Dic::Protocol {
                 return false;
             }
             if (!this->orderBy.empty()) {
-                if (OperatorProtocol::GetStatisticColumName(this->orderBy).empty()) {
+                if (OperatorProtocol::GetStatisticColumName(this->orderBy).empty() &&
+                    OperatorProtocol::GetDetailColumName(this->orderBy).empty()) {
                     errorMsg = "[Operator]Failed to check orderBy in Query Op Statistic Info.";
                     return false;
                 }
-                this->orderBy = OperatorProtocol::GetStatisticColumName(this->orderBy);
+                this->orderBy = OperatorProtocol::GetStatisticColumName(this->orderBy) != "" ?
+                                OperatorProtocol::GetStatisticColumName(this->orderBy) :
+                                OperatorProtocol::GetDetailColumName(this->orderBy);
             }
             return true;
         }
