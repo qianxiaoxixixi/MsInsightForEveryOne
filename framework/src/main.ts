@@ -10,6 +10,7 @@ import 'element-plus/theme-chalk/dark/css-vars.css';
 import router from './router';
 import '@/i18n';
 import '@/assets/main.css';
+import directives from './directives';
 
 interface CefQueryType {
     request: string;
@@ -21,6 +22,10 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(ElementPlus, { size: 'small' });
+
+Object.keys(directives).forEach((key) => {
+    app.directive(key, directives[key]);
+});
 
 app.mount('#app');
 
