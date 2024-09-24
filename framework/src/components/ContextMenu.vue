@@ -4,8 +4,9 @@
 
 <script setup lang="ts">
 import { useContextMenu } from '@/hooks/useContextMenu';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { t } from '@/i18n';
+import { useViewport } from '@/hooks/useViewport';
 
 interface MenuItem {
     label: string;
@@ -17,6 +18,21 @@ const emit = defineEmits(['select']);
 
 const containerRef = ref<HTMLElement>();
 const { x, y, visible, setVisible } = useContextMenu(containerRef.value, '.can-right-click');
+const { vw, vh } = useViewport();
+const menuWidth = ref(0);
+const menuHeight = ref(0);
+
+const pos = computed(() => {
+    let posX = x.value;
+    let posY = y.value;
+    if (posX > vw.value - menuWidth.value) {
+        posX -= menuWidth.value;
+    }
+    if (posY > vh.value - menuHeight.value) {
+        posY = vh.value - menuHeight.value;
+    }
+    return { posX, posY };
+});
 
 function clickMenuItem(item: MenuItem): void {
     setVisible(false);
@@ -25,13 +41,18 @@ function clickMenuItem(item: MenuItem): void {
         item.action();
     }
 }
+
+function handleSizeChange({ width, height }: { width: number; height: number }) {
+    menuWidth.value = width;
+    menuHeight.value = height;
+}
 </script>
 
 <template>
     <div class="container" ref="containerRef">
         <slot></slot>
         <Teleport to="body">
-            <div class="context-menu" v-if="visible" :style="{ left: `${x}px`, top: `${y}px` }">
+            <div class="context-menu" v-if="visible" v-size-ob="handleSizeChange" :style="{ left: `${pos.posX}px`, top: `${pos.posY}px` }">
                 <div class="context-menu-item" v-for="item in menuItems" :key="item.label" @mousedown.stop @click="clickMenuItem(item)">
                     {{ t(item.label) }}
                 </div>
