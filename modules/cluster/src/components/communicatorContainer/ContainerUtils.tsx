@@ -346,7 +346,7 @@ export const getOpacity = (rankId: number, dyeingMode: string, step: number): Ra
     const level = Math.ceil(ratio / step);
     return level < 5
         ? { backgroundColor: '#24AB36', opacity: (5 - level) * 0.2 }
-        : { backgroundColor: '#E32020', opacity: (level - 5) * 0.2 };
+        : { backgroundColor: '#E32020', opacity: (level - 4) * 0.2 };
 };
 
 export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):

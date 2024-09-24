@@ -123,7 +123,7 @@ const ColorScaleContainer = styled.div`
     color: ${(props): string => props.theme.svgPlayBackgroundColor};
     .colorScale {
         width: 150px;
-        background-image: linear-gradient(to right, #24AB36, #ffffff, #E32020);
+        background-image: linear-gradient(to right, #24AB36, #d3eed7 45%, #f9d2d2 55%, #E32020);
     }
     .colorScaleNum {
         margin: 0 5px;
