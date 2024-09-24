@@ -7,6 +7,9 @@
 *::after {
     box-sizing: border-box;
 }
+html, body {
+    overscroll-behavior: none; /* 禁用边界的回弹效果 */
+}
 
 ::-webkit-scrollbar {
     width: 7px;
