@@ -132,12 +132,11 @@ const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefOb
     // 数据量大时，切换主题时setOption会阻塞整体界面主题切换，使用 requestAnimationFrame 优化
     requestAnimationFrame(() => {
         myChart.setOption(option, { notMerge: true, lazyUpdate: true });
-    });
-
-    myChart.dispatchAction({
-        type: 'takeGlobalCursor',
-        key: 'dataZoomSelect',
-        dataZoomSelectActive: true,
+        myChart.dispatchAction({
+            type: 'takeGlobalCursor',
+            key: 'dataZoomSelect',
+            dataZoomSelectActive: true,
+        });
     });
 
     myChart.on('dataZoom', (param: any) => {

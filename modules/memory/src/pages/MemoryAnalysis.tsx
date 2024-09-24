@@ -92,6 +92,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     // 内存曲线绘制数据
     const [lineChartData, setLineChartData] = useState<Graph | undefined>(undefined);
     const [selectedRange, setSelectedRange] = useState<SelectedRange | undefined>();
+    const [staticSelectedRange, setStaticSelectedRange] = useState<SelectedRange | undefined>();
     const [searchEventOperatorName, setSearchEventOperatorName] = useState<string>('');
     const [minSize, setMinSize] = useState<number>(0);
     // 最大内存范围，默认DEFAULT_SIZE_CONDITION KB
@@ -262,8 +263,9 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             maxSize: maximumSize,
             isCompare,
         };
-        if (selectedRange) {
-            param.startNodeIndex = selectedRange.startTs; param.endNodeIndex = selectedRange.endTs;
+        if (staticSelectedRange) {
+            param.startNodeIndex = staticSelectedRange.startTs;
+            param.endNodeIndex = staticSelectedRange.endTs;
         }
         param = setParamOtherCondition(param);
         staticOpMemoryListGet(param).then((resp) => {
@@ -321,11 +323,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             setSelectedRange(undefined);
             return;
         }
-        const curveData = memoryType === memoryGraphType.dynamic ? memoryCurveData : memoryStaticCurveData;
-        if (curveData === undefined) {
-            return;
-        }
-        const allDataSet = new Set(curveData.lines
+        const allDataSet = new Set(memoryCurveData.lines
             .map(item => {
                 return parseFloat(item[0] as string);
             }).sort((a, b) => a - b));
@@ -335,6 +333,25 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         }
         const allDatas = Array.from(allDataSet);
         setSelectedRange({ startTs: allDatas[start], endTs: allDatas[end] });
+        setCurrent(1);
+        setPageSize(10);
+    };
+
+    const onStaticSelectedRangeChanged = (start: number, end: number): void => {
+        if (start > end || !memoryStaticCurveData) {
+            setStaticSelectedRange(undefined);
+            return;
+        }
+        const allDataSet = new Set(memoryStaticCurveData.lines
+            .map(item => {
+                return parseFloat(item[0] as string);
+            }).sort((a, b) => a - b));
+        if (allDataSet.size <= 1) {
+            setStaticSelectedRange(undefined);
+            return;
+        }
+        const allDatas = Array.from(allDataSet);
+        setStaticSelectedRange({ startTs: allDatas[start], endTs: allDatas[end] });
         setCurrent(1);
         setPageSize(10);
     };
@@ -378,7 +395,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             default:
                 break;
         }
-    }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy,
+    }, [selectedRange, staticSelectedRange, rankIdCondition.value, current, pageSize, order, orderBy,
         session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t, isCompare, memoryType]);
 
     useEffect(() => {
@@ -550,7 +567,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                 hAxisTitle={t('Node Index')}
                                 vAxisTitle={t('Memory Usage (MB)')}
                                 graph={staticLineChartData}
-                                onSelectionChanged={onSelectedRangeChanged}
+                                onSelectionChanged={onStaticSelectedRangeChanged}
                                 record={selectedStaticRecord}
                                 isDark={isDark}
                                 isStatic={true}
