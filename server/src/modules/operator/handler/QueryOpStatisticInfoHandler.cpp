@@ -268,7 +268,7 @@ namespace Dic::Module::Operator {
         Protocol::OperatorStatisticReqParams &reqParams,
         const int64_t total)
     {
-        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(reqParams.orderBy);
+        std::string dbOrderBy = reqParams.orderBy;
         // 对差值排序
         const std::string order = reqParams.order;
         std::sort(statisticData.begin(), statisticData.end(), [&order, &dbOrderBy](OperatorStatisticCmpInfoRes &a,

@@ -282,7 +282,7 @@ namespace Dic::Module::Operator {
         for (auto &data: datailData) {
             FromatDatailData(data);
         }
-        std::string dbOrderBy = OperatorProtocol::GetStatisticColumName(reqParams.orderBy);
+        std::string dbOrderBy = reqParams.orderBy;
         // 对差值排序
         const std::string order = reqParams.order;
         std::sort(datailData.begin(), datailData.end(), [&order, &dbOrderBy](Protocol::OperatorDetailCmpInfoRes &a,
