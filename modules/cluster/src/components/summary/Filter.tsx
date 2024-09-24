@@ -12,9 +12,9 @@ import { queryTopSummary } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
 
 export interface ConditionDataType {
-    step: string ;
+    step: string;
     rankIds: string[];
-    orderBy: string ;
+    orderBy: string;
     top: number;
     group?: string;
 }
@@ -22,7 +22,7 @@ export interface ConditionDataType {
 interface optionDataType {
     key?: string;
     label: React.ReactNode;
-    value: string | number ;
+    value: string | number;
     data?: string[];
 }
 
@@ -85,7 +85,7 @@ const Filter = observer((props: any) => {
         props.handleFilterChange(conditions, false);
     }, [conditions.top]);
     useEffect(() => {
-        const find = _.find(options.groupOptions, item => item.key === props.session.activeCommunicator?.name);
+        const find = _.find(options.groupOptions, item => item.key === props.session.activeCommunicator?.value);
         if (find !== undefined) {
             setConditions({ ...conditions, group: find.value as string });
         }
@@ -95,8 +95,8 @@ const Filter = observer((props: any) => {
         const summaryRes: any = await queryTopSummary(conditions);
         const rankList = summaryRes?.rankList ?? [];
         const communicators: communicator[] = [];
-        _.filter(props.session.communicatorData.partitionModes, data => data.mode !== 'pp')
-            .map(data => data.communicators).forEach((item) => {
+        props.session.communicatorData.partitionModes.map((data: any) => data.communicators)
+            .forEach((item: any) => {
                 _.forEach(item, tmp => {
                     communicators.push(tmp);
                 });
@@ -105,8 +105,8 @@ const Filter = observer((props: any) => {
             value: value.value as string,
             label: value.value,
             data: value.ranks.map(item => item.toString()),
-            key: value.name,
-        }));
+            key: value.value,
+        })).filter((item, index, self) => self.findIndex(el => el.key === item.key) === index);
         const group = groupOptions.length > 0 ? groupOptions[0].value as string : '';
         const topOptions = getTopOptions(rankList.length);
         setOptions({ stepOptions, topOptions, groupOptions, orderOptions });
@@ -130,7 +130,7 @@ const FilterCom = (props: any): JSX.Element => {
             label: t(item.label),
         };
     });
-    return (<div style={ { marginBottom: 24 }}>
+    return (<div style={{ marginBottom: 24 }}>
         {
             !(session.isFullDb)
                 ? <Label name={t('Step')} />

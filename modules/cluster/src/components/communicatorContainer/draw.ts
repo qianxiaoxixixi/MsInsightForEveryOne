@@ -284,7 +284,7 @@ const drawPpRect = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): 
                 .on('click', () => {
                     const index = (i * parallelSize.tpSize * parallelSize.preTpCount) + j;
                     const rankGroup = {
-                        name: `pipeline${index}`,
+                        name: `overviewPipeline${index}`,
                         ranks: relatedRank.pp[index].ranks,
                         value: relatedRank.pp[index].value,
                     };
