@@ -342,6 +342,11 @@ const updateUnitData = (currentUnit: InsightUnit, threadTraceMaxDepth: number, h
                 currentUnit.collapsible = true;
                 currentUnit.isExpanded = true;
             }
+            if (currentUnit.onceExpand === false) {
+                currentUnit.isExpanded = false;
+                config.isCollapse = true;
+                delete currentUnit.onceExpand;
+            }
             if (threadTraceMaxDepth !== config.maxDepth) {
                 currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
                 config.maxDepth = threadTraceMaxDepth;
