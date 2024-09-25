@@ -214,7 +214,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
         const isConflict = getPropFromData(data, 'isConflict');
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
-        if (session === undefined) {
+        if (!session) {
             return;
         }
         // 导入新Remote前，保存当前页面

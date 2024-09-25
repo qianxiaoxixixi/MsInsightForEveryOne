@@ -19,7 +19,7 @@ export function savePageSetting(): void {
     session.pageSetting[session.projectName] = setting;
 }
 
-interface InsightUnitSet {
+export interface InsightUnitSet {
     isExpanded: boolean;
     children: InsightUnitSet[];
 }
@@ -72,6 +72,9 @@ export function recoverPageSetting(): void {
     const { pageSetting, projectName } = session;
     if (projectName !== undefined && pageSetting[projectName] !== undefined) {
         const setting = session.pageSetting[projectName];
+        if (!setting) {
+            return;
+        }
         const { domainRange, units } = setting;
         // 时间范围
         session.domainRange = domainRange;
@@ -105,7 +108,7 @@ export function updatePageSetting({ type, data }: {type: string;data: any}): voi
                 const { singleDataPath, dataSource } = (data ?? {}) as SingleDataPath;
                 const index = dataSource?.dataPath?.findIndex(path => path === singleDataPath);
                 if (index >= 0 && session.pageSetting[dataSource.projectName] !== undefined) {
-                    session.pageSetting[dataSource.projectName].units?.splice(index, 1);
+                    session.pageSetting[dataSource.projectName]?.units?.splice(index, 1);
                 }
             }
             break;
