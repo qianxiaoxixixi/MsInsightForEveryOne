@@ -25,8 +25,16 @@ void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
 void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec, TrackInfo &trackInfo)
 {
     std::vector<CommucationTaskInfoPO> commucationTaskInfoPoVec;
+    std::string groupName = trackInfo.threadId;
+    std::string threadId = trackInfo.threadId;
+    size_t pos = trackInfo.threadId.find_last_of("_");
+    if (pos != std::string::npos && trackInfo.threadId.size() > pos) {
+        threadId = trackInfo.threadId.substr(pos + 1);
+        groupName = trackInfo.threadId.substr(0, pos);
+    }
     commucationTaskInfoTable->Select(CommucationTaskInfoColumn::GLOBAL_TASK_ID)
-        .Eq(CommucationTaskInfoColumn::PLANE_ID, trackInfo.threadId)
+        .Eq(CommucationTaskInfoColumn::GROUPNAME, groupName)
+        .Eq(CommucationTaskInfoColumn::PLANE_ID, threadId)
         .ExcuteQuery(trackInfo.cardId, commucationTaskInfoPoVec);
     std::vector<uint64_t> globalTaskIds(commucationTaskInfoPoVec.size());
     std::transform(commucationTaskInfoPoVec.begin(), commucationTaskInfoPoVec.end(), globalTaskIds.begin(),

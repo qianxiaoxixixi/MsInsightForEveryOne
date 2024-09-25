@@ -153,7 +153,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
     EXPECT_EQ(body.data[0].occurrences, 1);
 
     body.data.clear();
-    params.metadataList[0].tid = "1";
+    params.metadataList[0].tid = "1315_1";
     params.metadataList[0].metaType = "HCCL";
     database->QueryThreads(params, body, minTimestamp, {0});
     EXPECT_EQ(body.data.size(), 1);
@@ -195,7 +195,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTraceDetail)
     EXPECT_EQ(body.data.duration, 612092); // duration = 612092
 
     params.metaType = "HCCL";
-    params.tid = "1";
+    params.tid = "1315_1";
     params.id = "46919";
     params.startTime = 175902293; // startTime = 175902293
 

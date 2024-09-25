@@ -142,7 +142,8 @@ const static std::string HCCL_SAME_NAME_DETAIL_SQL =
     "                  ? as tid from STRING_IDS where value = ?) "
     "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth,c.ROWID as id from  TASK main "
     "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.taskType = id "
-    " where deviceId=rankId and planeId=tid and timestamp+duration >= startTime AND timestamp <= endTime "
+    " where deviceId=rankId and groupName || '_' || planeId=tid "
+    " and timestamp+duration >= startTime AND timestamp <= endTime "
     " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
     " op.ROWID as id from COMMUNICATION_OP op join TASK CA on op.connectionId = CA.connectionId "
     " join  nameIds on op.opName = id where deviceId = rankId and op.groupName||'group' = tid "
@@ -190,10 +191,11 @@ const static std::string ASCEND_THREAD_DETAIL =
 
 const static std::string HCCL_THREAD_DETAIL =
         "select ROWID as id,startNs,endNs-startNs as duration,opName as name, 'HCCL' as pid, 0 as depth, "
-        "       groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP + " where id = ? and tid = ? "
-        "UNION select main.ROWID as id,startNs,endNs-startNs as duration, info.taskType as name, 0 as depth, "
-        "   planeId as tid, 'HCCL' as pid, endNs from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
-        "    info on info.globalTaskId = main.globalTaskId where id = ? and tid = ?";
+        " groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP + " where id = ? and tid = ? "
+        " UNION select main.ROWID as id,startNs,endNs-startNs as duration, info.taskType as name, 0 as depth, "
+        " groupName || '_' || planeId as tid, 'HCCL' as pid, endNs from " + TABLE_TASK +
+        " main join " + TABLE_COMMUNICATION_TASK_INFO +
+        " info on info.globalTaskId = main.globalTaskId where id = ? and tid = ?";
 
 const static std::string CANN_API_THREAD_DETAIL =
         "select ROWID as id, startNs, endNs-startNs as duration, depth, name, type as tid, globalTid as pid "
@@ -253,7 +255,7 @@ const static std::string HCCL_THREADS_BY_PID =
             "select startNs, endNs-startNs as duration, endNs, info.taskType as name from " + TABLE_TASK +
             " main join " + TABLE_COMMUNICATION_TASK_INFO +
             " info on info.globalTaskId = main.globalTaskId\n"
-            " where deviceId = ? and planeId = ?\n"
+            " where deviceId = ? and groupName || '_' || planeId = ?\n"
             " UNION select startNs,endNs-startNs as duration,endNs,opInfo.opName"
             " from COMMUNICATION_OP opInfo"
             " where groupName||'group' = ?) select * from sub where sub.endNs >= ? "

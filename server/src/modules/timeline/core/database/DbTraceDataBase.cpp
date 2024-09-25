@@ -1345,11 +1345,13 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                 break;
             case PROCESS_TYPE::HCCL:
                 sql = "with main as (select planeId, op.groupName from " + TABLE_COMMUNICATION_TASK_INFO +
-                      " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
-                      " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?) "
-                      " select 'Plane ' || planeId as name, planeId as tid, 0 as maxDepth  from main group by planeId "
-                      " union select 'Group ' || row_number() over () || ' Communication' as name, "
-                      " groupName||'group' as tid, 0 as maxDepth from main group by groupName";
+                    " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
+                    " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?) "
+                    " select 'Plane ' || planeId as name, groupName || '_' || planeId as tid, 0 as maxDepth, "
+                    " groupName, planeId  from main group by planeId, groupName "
+                    " union select 'Group ' || row_number() over () || ' Communication' as name, "
+                    " groupName || 'group' as tid, 0 as maxDepth, groupName, -1 as planeId from main "
+                    " group by groupName order by groupName ASC, planeId ASC";
                 break;
             default:
                 break;
