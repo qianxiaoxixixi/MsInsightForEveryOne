@@ -234,6 +234,10 @@ export const useDataSources = defineStore('dataSources', () => {
             if (lastDataSource.value.projectName === oldProjectName) {
                 lastDataSource.value.projectName = newProjectName;
             }
+            connector.send({
+                event: 'updateProjectName',
+                body: { oldProjectName, newProjectName },
+            });
             return true;
         } catch {
             ElMessage.warning(t('Update Project Name Failed') as string);

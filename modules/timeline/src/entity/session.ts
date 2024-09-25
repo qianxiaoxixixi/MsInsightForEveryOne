@@ -14,6 +14,7 @@ import { platform } from '../platforms';
 import i18n from 'ascend-i18n';
 import { type Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
+import { InsightUnitSet } from '../utils/PageSetting';
 
 export interface SelectedParams {
     baseRawId?: number;
@@ -127,6 +128,12 @@ export class Session {
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
     eventUnits: InsightUnit[] = [];
+    projectName?: string;
+    pageSetting: Record<string, {
+        domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp };
+        units: InsightUnitSet[];
+    } | undefined> = {};
+
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
