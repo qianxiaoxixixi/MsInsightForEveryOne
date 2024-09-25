@@ -595,7 +595,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqliteP
         "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
         "groupName||'group' as threadId, ? AS threadName, ? AS rankId from sub WHERE groupName||'group' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
-        params.rankId, params.threadName, rankId, params.tid);
+        rankId, params.threadName, rankId, params.tid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,

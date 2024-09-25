@@ -28,7 +28,7 @@ namespace Dic {
     const std::string computeBinSuffix = ".bin";
     const std::string ipynbSuffix = ".ipynb";
 
-    const static std::vector<std::string> CANN_APIS = {"acl", "runtime", "model", "node"};
+    const static std::vector<std::string> CANN_APIS = {"acl", "runtime", "model", "node", "hccl"};
     const static std::vector<std::string> OVERLAP_TYPES = {"Computing", "Communication",
                                                            "Communication(Not Overlapped)", "Free"};
 }
