@@ -121,12 +121,15 @@ export function firstLetterUpper(word: string): string {
     return list.map(item => item.charAt(0).toUpperCase() + item.slice(1)).join(' ');
 }
 
-export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T): T {
+export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T, func?: (inputArray: Array<{value: T}>) => T): T {
     if (options.length === 0) {
         return defaultVal;
     }
     if (options.find(item => item.value === val)) {
         return val;
+    }
+    if (func !== undefined) {
+        return func(options);
     }
     return options[0].value;
 };
