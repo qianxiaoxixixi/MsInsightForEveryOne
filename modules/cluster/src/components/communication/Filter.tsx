@@ -42,6 +42,19 @@ export function updateData(filterParams: ConditionDataType): void {
     observeCondition.value = filterParams;
 }
 
+function getDefaultStage(inputArray: Array<{value: string | number}>): string | number {
+    if (inputArray.length === 0) {
+        return '';
+    }
+    // 寻找第一个通信域非单个的情况
+    const result = inputArray.find(item =>
+        getAllNumberFromString(item.value as string).length > 1 || !isNumberPairsFormat(item.value as string));
+    if (!result) {
+        return inputArray[0].value;
+    }
+    return result.value;
+}
+
 const getOptionsAndValue = async (session: Session, initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):
 Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     if (key !== undefined) {
@@ -49,7 +62,7 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
         const optionMap = initOptionMap;
         if (key === 'iterationId') {
             const stageOptions: optionDataType[] = await getStageOptions(val, session);
-            const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
+            const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage);
             optionMap.stageOptions = stageOptions;
             condition.stage = stage.toString();
         }
@@ -68,7 +81,7 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
 
     // stage
     const stageOptions: optionDataType[] = await getStageOptions(iterationId, session);
-    const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage).toString();
+    const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage).toString();
 
     // type
     const type = initObj.type ?? 'CommunicationMatrix';
@@ -89,12 +102,22 @@ const getiterationOptions = async(): Promise<optionDataType[]> => {
     return options;
 };
 
+/**
+ * 校验字符串是否为(1, 2, 3.....)格式
+ * @param str
+ */
+function isNumberPairsFormat(str: string): boolean {
+    const pattern: RegExp = /^\(\s*\d+(?:\s*,\s*\d+)*(?:\s*,)?\s*\)$/;
+    return pattern.test(str);
+}
+
 // 通过stage获取对应的并行策略，存在多个并行策略时，策略间使用'/'进行分割
 function getParallelStrategyByStage(partitionModes: partitionMode[], stage: string): string {
+    const strategyList: string[] = ['pp', 'tp', 'dp', 'tpOrDp'];
     const matchingKeys: string[] = [];
     partitionModes.forEach((obj) => {
         const found = obj.communicators.some(communicator => communicator.value === stage);
-        if (found) {
+        if (found && strategyList.includes(obj.mode)) {
             matchingKeys.push(obj.mode);
         }
     });
@@ -151,7 +174,8 @@ const getStageOptions = async (iterationId: string, session: Session): Promise<o
     const modes = session.communicatorData.partitionModes;
     const options: optionDataType[] = list
         .map(item => {
-            const stageAfterSort = sortStageNumber(item);
+            // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
+            const stageAfterSort = isNumberPairsFormat(item) ? sortStageNumber(item) : item;
             const strategy = getParallelStrategyByStage(modes, stageAfterSort);
             const label = strategy.length === 0 ? stageAfterSort : `${strategy}:${stageAfterSort}`;
             return { value: item, strategy, label, stageAfterSort };
