@@ -17,10 +17,16 @@ export const customDebounce = function<T extends unknown[], K>(callback: Callbac
             waitingTask?.then((res) => {
                 if (resolve !== taskQueue[taskQueue.length - 1]) {
                     resolve(res);
+                    taskQueue.shift();
                     return;
                 }
                 waitingTask = curTask?.(...args) ?? null;
-                waitingTask?.then(resolve);
+                waitingTask?.then((finalRes) => {
+                    resolve(finalRes);
+                    taskQueue.shift();
+                    waitingTask = null;
+                    curTask = null;
+                }).catch(e => reject(e));
             })
                 .catch(e => reject(e));
         });
