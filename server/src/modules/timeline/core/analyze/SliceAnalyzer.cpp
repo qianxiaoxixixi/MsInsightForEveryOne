@@ -185,7 +185,11 @@ void SliceAnalyzer::CalculateSelfTime(std::vector<CompeteSliceDomain> &rows,
                 offset = j;
                 break;
             }
-            selfTime = selfTime - rows[j].duration;
+            if (selfTime >= rows[j].duration) {
+                selfTime = selfTime - rows[j].duration;
+            } else {
+                selfTime = 0;
+            }
             offset = j;
         }
         AddData(selfTimeKeyValue, rows[i].name, selfTime);
@@ -194,7 +198,7 @@ void SliceAnalyzer::CalculateSelfTime(std::vector<CompeteSliceDomain> &rows,
 
 
 void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set<uint64_t> &ids, uint64_t &maxDepth,
-    bool &havePythonFunction, std::map<uint64_t, int32_t> &depthMap)
+    bool &havePythonFunction, std::map<uint64_t, uint32_t> &depthMap)
 {
     std::string sliceCacheKey = std::to_string(sliceQuery.trackId);
     auto &instance = SliceCacheManager::Instance();

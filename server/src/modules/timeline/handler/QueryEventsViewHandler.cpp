@@ -17,9 +17,16 @@ void QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 
     std::unique_ptr<EventsViewResponse> responsePtr = std::make_unique<EventsViewResponse>();
     EventsViewResponse &response = *responsePtr.get();
-    SetBaseResponse(request, response);
-    SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    SetBaseResponse(request, response);
+    std::string warnMsg;
+    if (!request.params.CheckParams(warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
+    SetResponseResult(response, true);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query events view failed to get connection.");

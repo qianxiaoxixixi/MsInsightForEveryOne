@@ -663,7 +663,11 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
         // 父类指针，填充公共数据
         ptr->id = resultSet->GetString("id");
         ptr->name = resultSet->GetString("name");
-        ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
+        uint64_t tempStartTime = resultSet->GetUint64("start");
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        ptr->startTime = tempStartTime - minTimestamp;
         ptr->duration = resultSet->GetUint64("duration");
         ptr->depth = resultSet->GetUint64("depth");
         ptr->threadId = resultSet->GetString("threadId");
@@ -818,7 +822,11 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
             ptr = std::move(devicePtr);
         }
         ptr->name = resultSet->GetString("name");
-        ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
+        uint64_t tempStartTime = resultSet->GetUint64("start");
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        ptr->startTime = tempStartTime - minTimestamp;
         ptr->duration = resultSet->GetUint64("duration");
         ptr->threadId = resultSet->GetString("threadId");
         ptr->processId = resultSet->GetString("processId");
@@ -894,8 +902,8 @@ void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<Sq
             continue;
         }
         ThreadTracesSummary summary;
-        summary.startTime = tempStartTime - minTimestamp;
-        summary.duration = tempEndTime - tempStartTime;
+        summary.startTime = tempStartTime >= minTimestamp ? tempStartTime - minTimestamp : 0;
+        summary.duration = tempEndTime >= tempStartTime ? tempEndTime - tempStartTime : 0;
         tempStartTime = curStartTime;
         tempEndTime = curEndTime;
         responseBody.data.emplace_back(summary);
@@ -916,7 +924,11 @@ void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet
         detail.name = resultSet->GetString("name");
         detail.type = resultSet->GetString("type");
         detail.acceleratorCore = resultSet->GetString("acceleratorCore");
-        detail.startTime = resultSet->GetUint64("startTime") - minTimestamp;
+        uint64_t tempStartTime = resultSet->GetUint64("startTime");
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        detail.startTime = tempStartTime - minTimestamp;
         detail.duration = resultSet->GetDouble("duration");
         detail.waitTime = resultSet->GetDouble("waitTime");
         detail.blockDim = resultSet->GetUint64("blockDim");

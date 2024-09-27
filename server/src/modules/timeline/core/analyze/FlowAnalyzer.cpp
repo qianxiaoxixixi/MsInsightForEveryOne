@@ -109,6 +109,9 @@ void FlowAnalyzer::ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &f
     unitSingleFlow.from.id = from.id;
     unitSingleFlow.from.pid = from.pid;
     unitSingleFlow.from.tid = from.tid;
+    if (from.timestamp < minTimestamp || to.timestamp < minTimestamp) {
+        return;
+    }
     unitSingleFlow.from.timestamp = from.timestamp - minTimestamp;
     unitSingleFlow.from.depth = from.depth;
     unitSingleFlow.to.id = to.id;

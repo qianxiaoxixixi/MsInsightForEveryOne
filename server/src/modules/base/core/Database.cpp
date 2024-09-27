@@ -348,7 +348,7 @@ bool Database::CheckTableContainData(const std::string& tableName)
     }
     auto result = stmt->ExecuteQuery(tableName);
     if (result != nullptr && result->Next()) {
-        if (result->GetInt64("count(*)") > 0) {
+        if (result->GetUint64("count(*)") > 0) {
             sql = "SELECT count(*) FROM " + tableName + ";";
             stmt = CreatPreparedStatement(sql);
             if (stmt == nullptr) {
@@ -357,7 +357,7 @@ bool Database::CheckTableContainData(const std::string& tableName)
             }
             result = stmt->ExecuteQuery();
             if (result != nullptr && result->Next()) {
-                return result->GetInt64("count(*)") > 0;
+                return result->GetUint64("count(*)") > 0;
             }
         }
     }

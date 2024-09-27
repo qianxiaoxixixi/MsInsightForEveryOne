@@ -17,7 +17,13 @@ void SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     std::unique_ptr<SearchAllSlicesResponse> responsePtr = std::make_unique<SearchAllSlicesResponse>();
     SearchAllSlicesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
+    std::string warnMsg;
+    if (!request.params.CheckParams(warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get search all slices  connection.");

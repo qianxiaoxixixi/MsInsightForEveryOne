@@ -15,10 +15,17 @@ void QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     SystemViewRequest &request = dynamic_cast<SystemViewRequest &>(*requestPtr.get());
 
     std::unique_ptr<SystemViewResponse> responsePtr = std::make_unique<SystemViewResponse>();
+    WsSession &session = *WsSessionManager::Instance().GetSession();
     SystemViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    std::string warnMsg;
+    if (!request.params.CheckParams(warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     SetResponseResult(response, true);
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query system view failed to get connection.");

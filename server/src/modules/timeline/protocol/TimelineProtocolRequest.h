@@ -303,6 +303,10 @@ struct SystemViewParams {
     bool isQueryTotal = false;
     std::string layer;
     std::string searchName;
+    bool CheckParams(std::string &warnMsg) const
+    {
+        return CheckUnsignPageValid(pageSize, current, warnMsg);
+    }
 };
 
 struct SystemViewRequest : public Request {
@@ -321,6 +325,10 @@ struct EventsViewParams {
     std::string tid;
     std::string threadName;
     std::string metaType;
+    bool CheckParams(std::string &warnMsg) const
+    {
+        return CheckUnsignPageValid(pageSize, currentPage, warnMsg);
+    }
 };
 
 struct EventsViewRequest : public Request {
@@ -397,7 +405,7 @@ struct UnitThreadsOperatorsParams {
             warnMsg = "unit threads operators end time is invalid";
             return false;
         }
-        return true;
+        return CheckUnsignPageValid(pageSize, current, warnMsg);
     }
 };
 
@@ -415,6 +423,10 @@ struct SearchAllSliceParams {
     std::string order;
     uint64_t current = 0;
     uint64_t pageSize = 0;
+    bool CheckParams(std::string &warnMsg) const
+    {
+        return CheckUnsignPageValid(pageSize, current, warnMsg);
+    }
 };
 
 struct SearchAllSlicesRequest : public Request {
