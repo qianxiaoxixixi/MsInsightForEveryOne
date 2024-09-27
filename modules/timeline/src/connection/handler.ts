@@ -152,7 +152,7 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
                 cardUnit.isExpanded = true;
             }
             cardUnits.push(cardUnit);
-            session.units.push(cardUnit);
+            session.units = session.units.concat([cardUnit]);
         });
         if (unit) {
             unit.isExpanded = cardUnits.length > 0 ? cardUnits[0].isExpanded : false;
