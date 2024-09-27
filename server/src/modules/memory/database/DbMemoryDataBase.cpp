@@ -149,25 +149,6 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
 
 bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
-    // 单位转换， KB -> B，并作溢出防护。
-    if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        if (requestParams.minSize > 0 && requestParams.minSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
-            requestParams.minSize = std::numeric_limits<int64_t>::max();
-        } else if (requestParams.minSize < 0 && requestParams.minSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
-            requestParams.minSize = std::numeric_limits<int64_t>::min();
-        } else {
-            requestParams.minSize *= KB_SIZE;
-        }
-    }
-    if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        if (requestParams.maxSize > 0 && requestParams.maxSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
-            requestParams.maxSize = std::numeric_limits<int64_t>::max();
-        } else if (requestParams.maxSize < 0 && requestParams.maxSize < std::numeric_limits<int64_t>::min() / KB_SIZE) {
-            requestParams.maxSize = std::numeric_limits<int64_t>::min();
-        } else {
-            requestParams.maxSize *= KB_SIZE;
-        }
-    }
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::PYTORCH) {
