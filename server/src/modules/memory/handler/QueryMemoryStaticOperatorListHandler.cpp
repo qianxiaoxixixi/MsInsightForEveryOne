@@ -61,7 +61,6 @@ bool QueryMemoryStaticOperatorListHandler::CompareOperator(VirtualMemoryDataBase
     VirtualMemoryDataBase *databaseBaseline, MemoryStaticOperatorListRequest &request,
     std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr, Server::WsSession &session)
 {
-    MemoryStaticOperatorListCompResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryStaticOperatorListResponse> responsePtrCompare =
         std::make_unique<MemoryStaticOperatorListResponse>();
     MemoryStaticOperatorListResponse &responseCompare = *responsePtrCompare.get();
@@ -124,28 +123,36 @@ void QueryMemoryStaticOperatorListHandler::GetOperatorDiff(const MemoryStaticOpe
 void QueryMemoryStaticOperatorListHandler::VectorMerge(std::vector<StaticOperatorItem> &compareVec,
     std::vector<StaticOperatorItem> &baselineVec, MemoryStaticOperatorListCompResponse &diffData)
 {
-    const StaticOperatorItem emptyDiff = {"", "", std::numeric_limits<long long>::lowest(),
-        std::numeric_limits<long long>::lowest(), std::numeric_limits<double>::lowest()};
+    const StaticOperatorItem emptyStaticOp = {"", "", 0, 0, 0};
     for (size_t i = 0; i < std::min(compareVec.size(), baselineVec.size()); ++i) {
         StaticOperatorCompItem element = {compareVec[i], baselineVec[i], {}};
-        const int precision = 3;
-        element.diff.deviceId = "host";
-        element.diff.opName = compareVec[i].opName;
-        element.diff.nodeIndexStart = compareVec[i].nodeIndexStart - baselineVec[i].nodeIndexStart;
-        element.diff.nodeIndexEnd = compareVec[i].nodeIndexEnd - baselineVec[i].nodeIndexEnd;
-        element.diff.size = NumberUtil::DoubleReservedNDigits(compareVec[i].size - baselineVec[i].size, precision);
+        Subtract(element);
         diffData.operatorDiffDetails.emplace_back(element);
     }
     for (size_t i = compareVec.size(); i < baselineVec.size(); ++i) {
-        StaticOperatorCompItem element = {{}, baselineVec[i], emptyDiff};
-        element.diff.opName = baselineVec[i].opName;
+        StaticOperatorCompItem element = {emptyStaticOp, baselineVec[i], {}};
+        Subtract(element);
         diffData.operatorDiffDetails.emplace_back(element);
     }
     for (size_t i = baselineVec.size(); i < compareVec.size(); ++i) {
-        StaticOperatorCompItem element = {compareVec[i], {}, emptyDiff};
-        element.diff.opName = compareVec[i].opName;
+        StaticOperatorCompItem element = {compareVec[i], emptyStaticOp, {}};
+        Subtract(element);
         diffData.operatorDiffDetails.emplace_back(element);
     }
+}
+
+void QueryMemoryStaticOperatorListHandler::Subtract(Dic::Protocol::StaticOperatorCompItem &element)
+{
+    const int precision = 3;
+    element.diff.deviceId = element.compare.deviceId;
+    if (!element.compare.opName.empty()) {
+        element.diff.opName = element.compare.opName;
+    } else {
+        element.diff.opName = element.baseline.opName;
+    }
+    element.diff.nodeIndexStart = element.compare.nodeIndexStart - element.baseline.nodeIndexStart;
+    element.diff.nodeIndexEnd = element.compare.nodeIndexEnd - element.baseline.nodeIndexEnd;
+    element.diff.size = NumberUtil::DoubleReservedNDigits(element.compare.size - element.baseline.size, precision);
 }
 
 bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperatorListRequest &request,

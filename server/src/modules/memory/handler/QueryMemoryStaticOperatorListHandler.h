@@ -27,6 +27,7 @@ private:
                          Protocol::MemoryStaticOperatorListCompResponse &resultData);
     void VectorMerge(std::vector<StaticOperatorItem> &compareVec, std::vector<StaticOperatorItem> &baselineVec,
                      MemoryStaticOperatorListCompResponse &diffData);
+    void Subtract(StaticOperatorCompItem &element);
     bool SelectDiffResult(MemoryStaticOperatorListRequest &request,
                           std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
                           MemoryStaticOperatorListCompResponse &fullDiffResult, Server::WsSession &session);
