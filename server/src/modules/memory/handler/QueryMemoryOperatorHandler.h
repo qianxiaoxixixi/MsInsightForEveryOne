@@ -29,6 +29,7 @@ private:
                          Protocol::MemoryOperatorComparisonResponse &resultData);
     void VectorMerge(std::vector<MemoryOperator> &compareVec, std::vector<MemoryOperator> &baselineVec,
                      MemoryOperatorComparisonResponse &diffData);
+    void Subtract(MemoryOperatorComparison &element);
     bool SelectDiffResult(MemoryOperatorRequest &request,
                           std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
                           MemoryOperatorComparisonResponse &fullDiffResult, Server::WsSession &session);

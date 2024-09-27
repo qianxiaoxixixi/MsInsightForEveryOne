@@ -68,7 +68,6 @@ bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database
     VirtualMemoryDataBase *databaseBaseline,
     MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, WsSession &session)
 {
-    MemoryOperatorComparisonResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryOperatorResponse> responsePtrCompare = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &responseCompare = *responsePtrCompare.get();
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
@@ -136,51 +135,57 @@ void QueryMemoryOperatorHandler::GetOperatorDiff(const MemoryOperatorResponse &c
 void QueryMemoryOperatorHandler::VectorMerge(std::vector<MemoryOperator> &compareVec,
     std::vector<MemoryOperator> &baselineVec, MemoryOperatorComparisonResponse &diffData)
 {
-    const MemoryOperator emptyDiff = {"", std::numeric_limits<double>::lowest(), "", "",
-        std::numeric_limits<double>::lowest(), "", std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), "", ""};
+    const MemoryOperator emptyOperator = {"", 0, "NA", "NA", 0, "NA", 0, 0, 0, 0, 0, 0, 0, "", ""};
     for (size_t i = 0; i < std::min(compareVec.size(), baselineVec.size()); ++i) {
         MemoryOperatorComparison element = {compareVec[i], baselineVec[i], {}};
-        const int precision = 3;
-        element.diff.name = compareVec[i].name;
-        element.diff.size = NumberUtil::DoubleReservedNDigits(compareVec[i].size - baselineVec[i].size, precision);
-        element.diff.allocationTime = NumberUtil::StringDoubleMinus(compareVec[i].allocationTime,
-                                                                    baselineVec[i].allocationTime);
-        element.diff.releaseTime = NumberUtil::StringDoubleMinus(compareVec[i].releaseTime, baselineVec[i].releaseTime);
-        element.diff.duration = NumberUtil::DoubleReservedNDigits(compareVec[i].duration - baselineVec[i].duration,
-                                                                  precision);
-        element.diff.activeReleaseTime = NumberUtil::StringDoubleMinus(compareVec[i].activeReleaseTime,
-                                                                       baselineVec[i].activeReleaseTime);
-        element.diff.activeDuration = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].activeDuration - baselineVec[i].activeDuration, precision);
-        element.diff.allocationAllocated = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].allocationAllocated - baselineVec[i].allocationAllocated, precision);
-        element.diff.allocationReserved = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].allocationReserved - baselineVec[i].allocationReserved, precision);
-        element.diff.allocationActive = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].allocationActive - baselineVec[i].allocationActive, precision);
-        element.diff.releaseAllocated = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].releaseAllocated - baselineVec[i].releaseAllocated, precision);
-        element.diff.releaseReserved = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].releaseReserved - baselineVec[i].releaseReserved, precision);
-        element.diff.releaseActive = NumberUtil::DoubleReservedNDigits(
-            compareVec[i].releaseActive - baselineVec[i].releaseActive, precision);
-        element.diff.streamId = "";
-        element.diff.deviceType = "";
+        Subtract(element);
         diffData.operatorDiffDetails.emplace_back(element);
     }
     for (size_t i = compareVec.size(); i < baselineVec.size(); ++i) {
-        MemoryOperatorComparison element = {{}, baselineVec[i], emptyDiff};
-        element.diff.name = baselineVec[i].name;
+        MemoryOperatorComparison element = {emptyOperator, baselineVec[i], {}};
+        Subtract(element);
         diffData.operatorDiffDetails.emplace_back(element);
     }
     for (size_t i = baselineVec.size(); i < compareVec.size(); ++i) {
-        MemoryOperatorComparison element = {compareVec[i], {}, emptyDiff};
-        element.diff.name = compareVec[i].name;
+        MemoryOperatorComparison element = {compareVec[i], emptyOperator, {}};
+        Subtract(element);
         diffData.operatorDiffDetails.emplace_back(element);
     }
+}
+
+void QueryMemoryOperatorHandler::Subtract(Dic::Protocol::MemoryOperatorComparison &element)
+{
+    const int precision = 3;
+    if (!element.compare.name.empty()) {
+        element.diff.name = element.compare.name;
+    } else {
+        element.diff.name = element.baseline.name;
+    }
+    element.diff.size = NumberUtil::DoubleReservedNDigits(element.compare.size - element.baseline.size, precision);
+    element.diff.allocationTime = NumberUtil::StringDoubleMinus(element.compare.allocationTime,
+                                                                element.baseline.allocationTime);
+    element.diff.releaseTime =
+        NumberUtil::StringDoubleMinus(element.compare.releaseTime, element.baseline.releaseTime);
+    element.diff.duration = NumberUtil::DoubleReservedNDigits(element.compare.duration - element.baseline.duration,
+                                                              precision);
+    element.diff.activeReleaseTime = NumberUtil::StringDoubleMinus(element.compare.activeReleaseTime,
+                                                                   element.baseline.activeReleaseTime);
+    element.diff.activeDuration = NumberUtil::DoubleReservedNDigits(
+        element.compare.activeDuration - element.baseline.activeDuration, precision);
+    element.diff.allocationAllocated = NumberUtil::DoubleReservedNDigits(
+        element.compare.allocationAllocated - element.baseline.allocationAllocated, precision);
+    element.diff.allocationReserved = NumberUtil::DoubleReservedNDigits(
+        element.compare.allocationReserved - element.baseline.allocationReserved, precision);
+    element.diff.allocationActive = NumberUtil::DoubleReservedNDigits(
+        element.compare.allocationActive - element.baseline.allocationActive, precision);
+    element.diff.releaseAllocated = NumberUtil::DoubleReservedNDigits(
+        element.compare.releaseAllocated - element.baseline.releaseAllocated, precision);
+    element.diff.releaseReserved = NumberUtil::DoubleReservedNDigits(
+        element.compare.releaseReserved - element.baseline.releaseReserved, precision);
+    element.diff.releaseActive = NumberUtil::DoubleReservedNDigits(
+        element.compare.releaseActive - element.baseline.releaseActive, precision);
+    element.diff.streamId = "";
+    element.diff.deviceType = "";
 }
 
 bool QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request,
