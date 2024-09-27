@@ -96,6 +96,13 @@ function handleChange<T>(key: keyof ConditionType, val: T): void {
     });
 };
 
+function checkRankId(rankId: string): boolean {
+    if (rankId !== '' && optionMap.rankIdOptions.some((item) => rankId === item.value as string)) {
+        return true;
+    }
+    return false;
+};
+
 const Filter = observer(({ session, handleFilterChange }: {session: Session;handleFilterChange: VoidFunction}) => {
     // 初始化
     useEffect(() => {
@@ -125,7 +132,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
 
     useEffect(() => {
         runInAction(() => {
-            condition.rankId = session.dirInfo.rankId !== '' ? session.dirInfo.rankId : optionMap.rankIdOptions[0]?.value as string ?? '';
+            condition.rankId = checkRankId(session.dirInfo.rankId) ? session.dirInfo.rankId : optionMap.rankIdOptions[0]?.value as string ?? '';
             condition.isCompare = session.dirInfo.isCompare ?? false;
         });
         handleFilterChange({ ...condition, topK: condition.topK !== 0 ? condition.topK : condition.custom });
