@@ -58,12 +58,20 @@ public:
 
     inline uint32_t GetUint32(const int index) const
     {
-        return sqlite3_column_int(stmt, index);
+        int32_t temp = sqlite3_column_int(stmt, index);
+        if (temp < 0) {
+            return 0;
+        }
+        return temp;
     }
 
     inline uint64_t GetUint64(const int index) const
     {
-        return sqlite3_column_int64(stmt, index);
+        int64_t temp = sqlite3_column_int64(stmt, index);
+        if (temp < 0) {
+            return 0;
+        }
+        return temp;
     }
 
     inline double GetDouble(const int index) const

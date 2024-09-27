@@ -25,7 +25,7 @@ public:
     static void SortByTimestampASC(std::vector<SliceDomain> &cacheSlices);
     static uint32_t ComputeFlowPointDepth(std::vector<SliceDomain> &cacheSlices, std::string &type, uint64_t timestamp);
     void ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set<uint64_t> &ids, uint64_t &maxDepth,
-        bool &havePythonFunction, std::map<uint64_t, int32_t> &depthMap);
+        bool &havePythonFunction, std::map<uint64_t, uint32_t> &depthMap);
     /* *
      * 计算在时间范围内和与时间范围相交的算子信息
      */

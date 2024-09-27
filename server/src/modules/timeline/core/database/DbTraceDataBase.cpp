@@ -140,7 +140,7 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
         FlowLocation location {
             .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
             .metaType = metaType, .rankId = rankId,
-            .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+            .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
             .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
             .name = stringsCache.at(path)[resultSet->GetString("name")]
         };
@@ -279,7 +279,7 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
     }
     while (resultSet->Next()) {
         Protocol::UnitCounterData unitCounterData;
-        unitCounterData.timestamp = resultSet->GetInt64("startTime");
+        unitCounterData.timestamp = resultSet->GetUint64("startTime");
         unitCounterData.valueJsonStr = resultSet->GetString("args");
         dataList.emplace_back(unitCounterData);
     }
@@ -353,7 +353,7 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
         systemViewDetail.min = resultSet->GetDouble(col++);
         systemViewDetail.max = resultSet->GetDouble(col++);
         if (responseBody.total == 0) {
-            responseBody.total = resultSet->GetInt64(col++);
+            responseBody.total = resultSet->GetUint64(col++);
         }
         responseBody.systemViewDetail.emplace_back(systemViewDetail);
     }
@@ -384,10 +384,14 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         detail.name = resultSet->GetString("name");
         detail.type = GetStringCacheValue(path, resultSet->GetString("type"));
         detail.acceleratorCore = GetStringCacheValue(path, resultSet->GetString("acceleratorCore"));
-        detail.startTime = resultSet->GetInt64("startTime") - minTimestamp;
+        uint64_t tempStartTime = resultSet->GetUint64("startTime");
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        detail.startTime = tempStartTime - minTimestamp;
         detail.duration = resultSet->GetDouble("duration");
         detail.waitTime = resultSet->GetDouble("waitTime");
-        detail.blockDim = resultSet->GetInt64("blockDim");
+        detail.blockDim = resultSet->GetUint64("blockDim");
         detail.inputShapes = GetStringCacheValue(path, resultSet->GetString("inputShapes"));
         detail.inputDataTypes = GetStringCacheValue(path, resultSet->GetString("inputDataTypes"));
         detail.inputFormats = GetStringCacheValue(path, resultSet->GetString("inputFormats"));
@@ -395,7 +399,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         detail.outputDataTypes = GetStringCacheValue(path, resultSet->GetString("outputDataTypes"));
         detail.outputFormats = GetStringCacheValue(path, resultSet->GetString("outputFormats"));
         if (responseBody.count == 0) {
-            responseBody.count = resultSet->GetInt64("num");
+            responseBody.count = resultSet->GetUint64("num");
         }
         responseBody.kernelDetails.emplace_back(detail);
     }
@@ -506,7 +510,7 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &
     }
     uint64_t total = 0;
     if (resultSet->Next()) {
-        total = resultSet->GetInt64("num");
+        total = resultSet->GetUint64("num");
     }
     return total;
 }
@@ -536,7 +540,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     }
     if (resultSet->Next()) {
         responseBody.id = resultSet->GetString("id");
-        responseBody.depth = resultSet->GetInt64("depth");
+        responseBody.depth = resultSet->GetUint64("depth");
         responseBody.threadId = resultSet->GetString("tid");
         responseBody.pid = resultSet->GetString("pid");
         responseBody.rankId = QueryHostInfo() + GetRealRankId(params.rankId);
@@ -599,10 +603,10 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
     uint64_t maxTime = 0;
     while (resultSet->Next()) {
         Protocol::ThreadTracesSummary summary;
-        uint64_t endTime = resultSet->GetInt64("end_time");
+        uint64_t endTime = resultSet->GetUint64("end_time");
         if (endTime > maxTime) {
-            summary.startTime = resultSet->GetInt64("start_time");
-            summary.duration = resultSet->GetInt64("duration");
+            summary.startTime = resultSet->GetUint64("start_time");
+            summary.duration = resultSet->GetUint64("duration");
             responseBody.data.emplace_back(summary);
             maxTime = endTime;
         }
@@ -624,6 +628,9 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
         int col = resultStartIndex;
         int64_t startTime = sqlite3_column_int64(stmt, col++);
         int64_t endTime = sqlite3_column_int64(stmt, col++);
+        if (startTime < 0 || endTime < 0) {
+            continue;
+        }
         TraceTime::Instance().UpdateTime(startTime, endTime);
         TraceTime::Instance().UpdateCardMinTime(fileId, startTime);
         TraceTime::Instance().UpdateCardMinTime(QueryHostInfo()+"Host", startTime);
@@ -778,7 +785,7 @@ void DbTraceDataBase::UpdateWaitTime()
         ServerLog::Error("Update wait time. failed to get result set.", stmt->GetErrorMessage());
         return;
     }
-    std::map<int32_t, int64_t> prevTime;
+    std::map<int64_t, int64_t> prevTime;
     std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     while (resultSet->Next()) {
         std::string type = resultSet->GetString("type");
@@ -1115,7 +1122,7 @@ void DbTraceDataBase::QueryFlowLocation(const std::string& sql,
                 path : deviceId;
         FlowLocation location {.tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
                 .metaType = metaType, .rankId = rankId,
-                .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
+                .depth = resultSet->GetUint32("depth"), .timestamp = resultSet->GetUint64("startTime"),
                 .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
                 .name = resultSet->GetString("name"), .deviceId=deviceId};
         if (startFlowLocations[cat].count(connectionId) == 0) {
@@ -1936,9 +1943,9 @@ std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metad
         while (resultSet->Next()) {
             int col = resultStartIndex;
             Protocol::SimpleSlice simpleSlice{};
-            simpleSlice.timestamp = resultSet->GetInt64(col++);
-            simpleSlice.duration = resultSet->GetInt64(col++);
-            simpleSlice.endTime = resultSet->GetInt64(col++);
+            simpleSlice.timestamp = resultSet->GetUint64(col++);
+            simpleSlice.duration = resultSet->GetUint64(col++);
+            simpleSlice.endTime = resultSet->GetUint64(col++);
             simpleSlice.name = stringsCache.at(path)[resultSet->GetString(col++)];
             simpleSlice.depth = resultSet->GetInt32(col++);
             simpleSlice.tid = metaData.tid;

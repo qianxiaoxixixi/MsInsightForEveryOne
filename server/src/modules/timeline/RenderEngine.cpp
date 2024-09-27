@@ -26,7 +26,7 @@ void RenderEngine::QueryThreadTraces(const Protocol::UnitThreadTracesParams &req
     uint64_t maxDepth = 0;
     bool havePythonFunction = false;
     std::set<uint64_t> ids;
-    std::map<uint64_t, int32_t> depthMap;
+    std::map<uint64_t, uint32_t> depthMap;
     sliceAnalyzerPtr->SetRepository(dataEngine);
     sliceAnalyzerPtr->ComputeScreenSliceIds(sliceQuery, ids, maxDepth, havePythonFunction, depthMap);
     std::vector<CompeteSliceDomain> competeSliceVec;
@@ -44,6 +44,9 @@ void RenderEngine::QueryThreadTraces(const Protocol::UnitThreadTracesParams &req
         Protocol::ThreadTraces threadTraces{};
         threadTraces.id = std::to_string(item.id);
         threadTraces.name = item.name;
+        if (!(item.endTime >= item.timestamp && item.timestamp >= minTimestamp && item.endTime >= minTimestamp)) {
+            continue;
+        }
         threadTraces.duration = item.endTime - item.timestamp;
         threadTraces.startTime = item.timestamp - minTimestamp;
         threadTraces.endTime = item.endTime - minTimestamp;

@@ -787,6 +787,9 @@ void TextTraceDatabase::AssembleUnitFlowsBody(UnitFlowsBody &responseBody, uint6
         unitSingleFlow.from.id = std::to_string(from.id);
         unitSingleFlow.from.pid = from.pid;
         unitSingleFlow.from.tid = from.tid;
+        if (from.timestamp < minTimestamp || to.timestamp < minTimestamp) {
+            continue;
+        }
         unitSingleFlow.from.timestamp = from.timestamp - minTimestamp;
         unitSingleFlow.from.depth = from.depth;
         unitSingleFlow.to.id = std::to_string(to.id);
@@ -1197,9 +1200,13 @@ void TextTraceDatabase::QueryFlowPointByCategory(FlowCategoryEventsParams &param
     while (resultSet->Next()) {
         int col = resultStartIndex;
         FlowCategoryEventsDto flowCategoryEventsDto;
-        flowCategoryEventsDto.id = resultSet->GetInt64(col++);
-        flowCategoryEventsDto.trackId = resultSet->GetInt64(col++);
-        flowCategoryEventsDto.timestamp = resultSet->GetInt64(col++) - minTimestamp;
+        flowCategoryEventsDto.id = resultSet->GetUint64(col++);
+        flowCategoryEventsDto.trackId = resultSet->GetUint64(col++);
+        uint64_t tempStartTime = resultSet->GetUint64(col++);
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        flowCategoryEventsDto.timestamp = tempStartTime - minTimestamp;
         flowCategoryEventsDto.flowId = resultSet->GetString(col++);
         flowCategoryEventsDto.type = resultSet->GetString(col++);
         flowEventsVec.emplace_back(flowCategoryEventsDto);
@@ -1268,7 +1275,7 @@ bool TextTraceDatabase::QueryComputeStatisticsData(const Protocol::SummaryStatis
         sqlite3_finalize(stmt);
         return false;
     }
-    if (!requestParams.stepId.empty() && requestParams.stepId != "ALL") {
+    if (!requestParams.stepId.empty() && requestParams.stepId != "ALL" && requestParams.stepId.length() <= INT_MAX) {
         sqlite3_bind_text(stmt, index, requestParams.stepId.c_str(), requestParams.stepId.length(), SQLITE_TRANSIENT);
     }
     double totalDuration = 0;
@@ -1343,8 +1350,12 @@ bool TextTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &m
     sqlite3_bind_text(stmt, index++, profileName.c_str(), -1, SQLITE_STATIC);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        min = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        max = min + static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        int64_t tempMin = sqlite3_column_int64(stmt, col++);
+        int64_t tempDur = sqlite3_column_int64(stmt, col++);
+        if (tempMin >= 0 && tempDur >= 0) {
+            min = tempMin;
+            max = min + tempDur;
+        }
     }
     sqlite3_finalize(stmt);
     return true;
@@ -1603,7 +1614,11 @@ bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
-        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++) - minTimestamp;
+        uint64_t tempStartTime = resultSet->GetUint64(col++);
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        sameOperatorsDetail.timestamp = tempStartTime - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
         SliceQuery sliceQuery;
@@ -1733,7 +1748,11 @@ bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         int col = resultStartIndex;
         Protocol::SearchAllSlices searchAllSlice{};
         searchAllSlice.name = resultSet->GetString(col++);
-        searchAllSlice.timestamp = resultSet->GetUint64(col++) - minTimestamp;
+        uint64_t tempStartTime = resultSet->GetUint64(col++);
+        if (tempStartTime < minTimestamp) {
+            continue;
+        }
+        searchAllSlice.timestamp = tempStartTime - minTimestamp;
         searchAllSlice.duration = resultSet->GetUint64(col++);
         searchAllSlice.id = resultSet->GetString(col++);
         searchAllSlice.tid = resultSet->GetString(col++);

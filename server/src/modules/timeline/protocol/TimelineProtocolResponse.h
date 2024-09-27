@@ -47,7 +47,7 @@ struct ThreadTraces {
     uint64_t duration = 0;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     std::string threadId;
     std::string pid;
     std::string id;
@@ -130,7 +130,7 @@ struct FlowLocation {
     std::string id;
     std::string metaType;
     std::string rankId;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     uint64_t timestamp = 0;
     uint64_t duration = 0; // slice duration
     std::string pid;
@@ -310,8 +310,8 @@ struct SystemViewDetail {
 struct SystemViewBody {
     std::vector<SystemViewDetail> systemViewDetail;
     uint64_t total = 0;
-    uint64_t pageSize;
-    uint64_t currentPage;
+    uint64_t pageSize{};
+    uint64_t currentPage{};
 };
 
 struct SystemViewResponse : public Response {
@@ -321,6 +321,7 @@ struct SystemViewResponse : public Response {
 
 class EventDetail {
 public:
+    virtual ~EventDetail() = default;
     virtual void Base() {}
     std::string id;
     std::string name;
@@ -352,9 +353,9 @@ struct EventsViewColumnAttr {
 struct EventsViewBody {
     std::vector<EventsViewColumnAttr> columnList;
     std::vector<std::unique_ptr<EventDetail>> eventDetailList;
-    uint64_t count;
-    uint64_t pageSize;
-    uint64_t currentPage;
+    uint64_t count{};
+    uint64_t pageSize{};
+    uint64_t currentPage{};
 };
 
 struct EventsViewResponse : public Response {
@@ -392,8 +393,8 @@ struct KernelDetailsBody {
     std::vector<std::string> acceleratorCoreList;
     std::vector<KernelDetail> kernelDetails;
     uint64_t count = 0;
-    uint64_t pageSize;
-    uint64_t currentPage;
+    uint64_t pageSize{};
+    uint64_t currentPage{};
 };
 
 struct KernelDetailsResponse : public Response {
@@ -440,9 +441,9 @@ struct SameOperatorsDetails {
 
 struct UnitThreadsOperatorsBody {
     std::vector<SameOperatorsDetails> sameOperatorsDetails;
-    uint64_t count;
-    uint64_t pageSize;
-    uint64_t currentPage;
+    uint64_t count{};
+    uint64_t pageSize{};
+    uint64_t currentPage{};
 };
 
 struct UnitThreadsOperatorsResponse : public Response {
@@ -463,9 +464,9 @@ struct SearchAllSlices {
 
 struct SearchAllSlicesBody {
     std::vector<SearchAllSlices> searchAllSlices;
-    uint64_t count;
-    uint64_t pageSize;
-    uint64_t currentPage;
+    uint64_t count{};
+    uint64_t pageSize{};
+    uint64_t currentPage{};
 };
 
 struct SearchAllSlicesResponse : public Response {

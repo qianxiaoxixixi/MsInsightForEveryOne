@@ -30,6 +30,15 @@ inline bool CheckPageValid(int64_t pageSize, int64_t currentPage, std::string &e
     return true;
 }
 
+inline bool CheckUnsignPageValid(uint64_t pageSize, uint64_t currentPage, std::string &errorMsg)
+{
+    if (pageSize > INT64_MAX || currentPage > INT64_MAX) {
+        errorMsg = "page size or current page is too big";
+        return false;
+    }
+    return CheckPageValid(pageSize, currentPage, errorMsg);
+}
+
 struct ErrorMessage {
     int code = 0;
     std::string message;
