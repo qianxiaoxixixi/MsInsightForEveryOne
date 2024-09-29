@@ -4,53 +4,55 @@
 
 import styled from '@emotion/styled';
 
-// rect: [x, y, width, height]
-export const drawRoundedRect = (rect: number[], context: CanvasRenderingContext2D, bottomRouned: number, topRounded?: number): void => {
-    const points = [
-        [rect[0] + (topRounded ?? bottomRouned), rect[1]],
-        [rect[0] + rect[2], rect[1]],
-        [rect[0] + rect[2], rect[1] + rect[3]],
-        [rect[0], rect[1] + rect[3]],
-        [rect[0], rect[1]],
-    ];
+export const drawRoundedRect = (
+    [x, y, width, height]: number[],
+    context: CanvasRenderingContext2D,
+    radius: number,
+    topRadius?: number,
+): void => {
+    const tr = topRadius ?? radius;
+
     context.beginPath();
-    context.moveTo(points[0][0], points[0][1]);
-    // draw top-right
-    context.arcTo(points[1][0], points[1][1], points[2][0], points[2][1], topRounded ?? bottomRouned);
-    // draw bottom-right
-    context.arcTo(points[2][0], points[2][1], points[3][0], points[3][1], bottomRouned);
-    // draw bottom-left
-    context.arcTo(points[3][0], points[3][1], points[4][0], points[4][1], bottomRouned);
-    // draw top-left
-    context.arcTo(points[4][0], points[4][1], points[0][0], points[0][1], topRounded ?? bottomRouned);
+    context.moveTo(x + tr, y);
+    context.lineTo(x + width - tr, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + tr);
+    context.lineTo(x + width, y + height - radius);
+    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    context.lineTo(x + radius, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - radius);
+    context.lineTo(x, y + tr);
+    context.quadraticCurveTo(x, y, x + tr, y);
     context.closePath();
 };
 
-export const drawMultiBgRoundedRect = (rect: number[], context: CanvasRenderingContext2D, radius: number, order: number): void => {
-    let points;
-    if (order === 0) {
-        // 左边圆弧，右边直角，初始点右上角
-        points = [
-            [rect[0] + rect[2], rect[1]],
-            [rect[0], rect[1]],
-            [rect[0], rect[1] + rect[3]],
-            [rect[0] + rect[2], rect[1] + rect[3]],
-        ];
-    } else {
-        // 右边圆弧，左边直角，初始点左上角
-        points = [
-            [rect[0], rect[1]],
-            [rect[0] + rect[2], rect[1]],
-            [rect[0] + rect[2], rect[1] + rect[3]],
-            [rect[0], rect[1] + rect[3]],
-        ];
-    }
+export const drawMultiBgRoundedRect = (
+    [x, y, width, height]: number[],
+    context: CanvasRenderingContext2D,
+    radius: number,
+    order: number,
+): void => {
     context.beginPath();
-    context.moveTo(points[0][0], points[0][1]);
-    context.arcTo(points[1][0], points[1][1], points[2][0], points[2][1], radius);
-    context.arcTo(points[2][0], points[2][1], points[3][0], points[3][1], radius);
-    context.lineTo(points[3][0], points[3][1]);
-    context.lineTo(points[0][0], points[0][1]);
+
+    if (order === 0) {
+        // 左边圆角，右边直角
+        context.moveTo(x + radius, y);
+        context.lineTo(x + width, y);
+        context.lineTo(x + width, y + height);
+        context.lineTo(x + radius, y + height);
+        context.quadraticCurveTo(x, y + height, x, y + height - radius);
+        context.lineTo(x, y + radius);
+        context.quadraticCurveTo(x, y, x + radius, y);
+    } else {
+        // 左边直角，右边圆角
+        context.moveTo(x, y);
+        context.lineTo(x + width - radius, y);
+        context.quadraticCurveTo(x + width, y, x + width, y + radius);
+        context.lineTo(x + width, y + height - radius);
+        context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        context.lineTo(x, y + height);
+        context.lineTo(x, y);
+    }
+
     context.closePath();
 };
 
