@@ -944,13 +944,13 @@ void DbSummaryDataBase::ParserEnd(const std::string &fileId, bool result, const 
     }
     if (fileId.empty()) {
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
-        event->moduleName = Protocol::ModuleType::OPERATOR;
+        event->moduleName = MODULE_OPERATOR;
         event->result = true;
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
-        event->moduleName = Protocol::ModuleType::OPERATOR;
+        event->moduleName = MODULE_OPERATOR;
         event->result = true;
         event->data.rankId = fileId;
         event->data.status = result;

@@ -19,7 +19,7 @@ namespace Module {
 using namespace Dic::Module::Summary;
 SummaryModule::SummaryModule() : BaseModule()
 {
-    moduleName = ModuleType::SUMMARY;
+    moduleName = MODULE_SUMMARY;
 }
 
 SummaryModule::~SummaryModule()

@@ -14,7 +14,7 @@ class SummaryRequestHandler : public ModuleRequestHandler {
 public:
     SummaryRequestHandler()
     {
-        moduleName = Protocol::ModuleType::SUMMARY;
+        moduleName = MODULE_SUMMARY;
         async = false;
     }
     ~SummaryRequestHandler() override = default;

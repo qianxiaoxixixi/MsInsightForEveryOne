@@ -26,17 +26,6 @@ const EnumStrMap<ProtocolMessage::Type> PROTOCOL_MESSAGE_TYPE_ES = { { ProtocolM
                                                                      { ProtocolMessage::Type::RESPONSE, RESPONSE_NAME },
                                                                      { ProtocolMessage::Type::EVENT, EVENT_NAME } };
 
-const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::UNKNOWN,  MODULE_UNKNOWN },
-                                                         {Protocol::ModuleType::GLOBAL,   MODULE_GLOBAL },
-                                                         {Protocol::ModuleType::TIMELINE, MODULE_TIMELINE },
-                                                         {Protocol::ModuleType::SUMMARY, MODULE_SUMMARY },
-                                                         {Protocol::ModuleType::COMMUNICATION, MODULE_COMMUNICATION },
-                                                         {Protocol::ModuleType::MEMORY, MODULE_MEMORY },
-                                                         {Protocol::ModuleType::OPERATOR, MODULE_OPERATOR },
-                                                         {Protocol::ModuleType::SOURCE, MODULE_SOURCE },
-                                                         {Protocol::ModuleType::ADVISOR, MODULE_ADVISOR },
-                                                         {Protocol::ModuleType::JUPYTER, MODULE_JUPYTER}};
-
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };
 
@@ -97,20 +86,6 @@ template <> inline std::optional<std::string> ENUM_TO_STR<ProtocolMessage::Type>
 template <> inline std::optional<ProtocolMessage::Type> STR_TO_ENUM<ProtocolMessage::Type>(const std::string &s)
 {
     return TryGetEnum<ProtocolMessage::Type>(PROTOCOL_MESSAGE_TYPE_ES, s);
-}
-
-// Protocol::ModuleType
-template <> inline std::optional<std::string> ENUM_TO_STR<Protocol::ModuleType>(const Protocol::ModuleType &e)
-{
-    if (MODULE_TYPE_ES.count(e) == 0) {
-        return std::nullopt;
-    }
-    return MODULE_TYPE_ES.at(e);
-}
-
-template <> inline std::optional<Protocol::ModuleType> STR_TO_ENUM<Protocol::ModuleType>(const std::string &s)
-{
-    return TryGetEnum<Protocol::ModuleType>(MODULE_TYPE_ES, s);
 }
 
 // Protocol::LinkType

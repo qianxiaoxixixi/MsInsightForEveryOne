@@ -55,15 +55,15 @@ void ModuleManager::Register()
     sourceModule->RegisterRequestHandlers();
     advisorModule->RegisterRequestHandlers();
     jupyterModule->RegisterRequestHandlers();
-    moduleMap.emplace(ModuleType::GLOBAL, std::move(global));
-    moduleMap.emplace(ModuleType::TIMELINE, std::move(timelineModule));
-    moduleMap.emplace(ModuleType::SUMMARY, std::move(summaryModule));
-    moduleMap.emplace(ModuleType::MEMORY, std::move(memoryModule));
-    moduleMap.emplace(ModuleType::COMMUNICATION, std::move(communicationModule));
-    moduleMap.emplace(ModuleType::OPERATOR, std::move(operatorModule));
-    moduleMap.emplace(ModuleType::SOURCE, std::move(sourceModule));
-    moduleMap.emplace(ModuleType::ADVISOR, std::move(advisorModule));
-    moduleMap.emplace(ModuleType::JUPYTER, std::move(jupyterModule));
+    moduleMap.emplace(MODULE_GLOBAL, std::move(global));
+    moduleMap.emplace(MODULE_TIMELINE, std::move(timelineModule));
+    moduleMap.emplace(MODULE_SUMMARY, std::move(summaryModule));
+    moduleMap.emplace(MODULE_MEMORY, std::move(memoryModule));
+    moduleMap.emplace(MODULE_COMMUNICATION, std::move(communicationModule));
+    moduleMap.emplace(MODULE_OPERATOR, std::move(operatorModule));
+    moduleMap.emplace(MODULE_SOURCE, std::move(sourceModule));
+    moduleMap.emplace(MODULE_ADVISOR, std::move(advisorModule));
+    moduleMap.emplace(MODULE_JUPYTER, std::move(jupyterModule));
 }
 
 void ModuleManager::UnRegister()
@@ -83,7 +83,7 @@ void ModuleManager::OnDispatchModuleRequest(std::unique_ptr<Request> request)
         ServerLog::Error("Invalid session found when dispatch");
         return;
     }
-    ServerLog::Info("Dispatch to module, module = ", ENUM_TO_STR(moduleName).value(),
+    ServerLog::Info("Dispatch to module, module = ", moduleName,
                     ", command = ", request->command, ", request id = ", request->id);
     moduleMap.at(moduleName)->OnRequest(std::move(request));
 }

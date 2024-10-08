@@ -14,7 +14,7 @@ namespace Dic::Module {
 
     OperatorModule::OperatorModule()
     {
-        moduleName = ModuleType::OPERATOR;
+        moduleName = MODULE_OPERATOR;
     }
 
     OperatorModule::~OperatorModule()

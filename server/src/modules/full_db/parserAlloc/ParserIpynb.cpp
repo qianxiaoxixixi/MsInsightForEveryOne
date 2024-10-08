@@ -46,7 +46,7 @@ void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::s
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = Protocol::ModuleType::TIMELINE;
+    response.moduleName = MODULE_TIMELINE;
     response.body.isIpynb = true;
     response.body.reset = true;
     response.body.subdirectoryList.push_back(fileName);
@@ -75,7 +75,7 @@ void ParserIpynb::SendJupyterInfo(std::string url)
         return;
     }
     auto event = std::make_unique<ParseJupyterCompletedEvent>();
-    event->moduleName = ModuleType::JUPYTER;
+    event->moduleName = MODULE_JUPYTER;
     event->result = true;
     if (url.empty()) {
         event->body.parseResult = PARSE_RESULT_FAIL;

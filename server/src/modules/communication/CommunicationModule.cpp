@@ -21,7 +21,7 @@ namespace Module {
 using namespace Communication;
 CommunicationModule::CommunicationModule() : BaseModule()
 {
-    moduleName = ModuleType::COMMUNICATION;
+    moduleName = MODULE_COMMUNICATION;
 }
 
 CommunicationModule::~CommunicationModule()

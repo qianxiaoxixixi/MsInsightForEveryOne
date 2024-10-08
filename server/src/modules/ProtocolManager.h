@@ -38,7 +38,7 @@ private:
     void UnRegister();
 
     std::mutex mutex;
-    std::map<Dic::Protocol::ModuleType, std::unique_ptr<ProtocolUtil>> protocolMap;
+    std::map<std::string, std::unique_ptr<ProtocolUtil>> protocolMap;
 };
 } // namespace Protocol
 } // namespace Dic

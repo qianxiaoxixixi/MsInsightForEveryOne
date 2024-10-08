@@ -35,7 +35,7 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
 
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = Protocol::ModuleType::TIMELINE;
+    response.moduleName = MODULE_TIMELINE;
     response.body.reset = true;
     response.body.subdirectoryList.push_back(projectInfos[0].fileName);
 

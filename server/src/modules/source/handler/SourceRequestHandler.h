@@ -14,7 +14,7 @@ class SourceRequestHandler : public ModuleRequestHandler {
 public:
     SourceRequestHandler()
     {
-        moduleName = Protocol::ModuleType::SOURCE;
+        moduleName = MODULE_SOURCE;
         async = false;
     }
     ~SourceRequestHandler() override = default;

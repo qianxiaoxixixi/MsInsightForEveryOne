@@ -8,20 +8,6 @@
 
 namespace Dic {
 namespace Protocol {
-// 每次左移一位
-enum class ModuleType : int {
-    UNKNOWN = -1,
-    GLOBAL = 1,
-    TIMELINE = 2,
-    SUMMARY = 3,
-    MEMORY = 4,
-    COMMUNICATION = 5,
-    OPERATOR = 6,
-    SOURCE = 7,
-    ADVISOR = 8,
-    JUPYTER = 9,
-};
-
 enum class LinkType : int {
     SOCKET = 0,
     WEBSOCKET

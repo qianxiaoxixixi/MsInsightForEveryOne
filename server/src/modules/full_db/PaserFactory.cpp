@@ -97,7 +97,7 @@ void ParserAlloc::ParseClusterEndProcess(std::string result)
         return;
     }
     auto event = std::make_unique<ParseClusterCompletedEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(result);
     session->OnEvent(std::move(event));
@@ -122,7 +122,7 @@ void ParserAlloc::ParseProgressCallBack(const std::string &fileId, uint64_t pars
         return;
     }
     auto event = std::make_unique<ParseProgressEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.fileId = fileId;
     event->body.parsedSize = parsedSize;
@@ -139,7 +139,7 @@ void ParserAlloc::SendParseSuccessEvent(const std::string &fileId)
         return;
     }
     auto event = std::make_unique<ParseSuccessEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
@@ -172,7 +172,7 @@ void ParserAlloc::SendParseFailEvent(const std::string &fileId, const std::strin
         return;
     }
     auto event = std::make_unique<ParseFailEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.rankId = fileId;
     event->body.error = message;
@@ -276,7 +276,7 @@ void ParserAlloc::SendAllParseSuccess()
         return;
     }
     auto event = std::make_unique<AllSuccessEvent>();
-    event->moduleName = ModuleType::MEMORY;
+    event->moduleName = MODULE_MEMORY;
     event->result = true;
     event->body.isAllPageParsed = true;
     for (const auto &item : TraceTime::Instance().ComputeCardMinTimeInfo()) {

@@ -18,7 +18,7 @@ class TimelineRequestHandler : public ModuleRequestHandler {
 public:
     TimelineRequestHandler()
     {
-        moduleName = Protocol::ModuleType::TIMELINE;
+        moduleName = MODULE_TIMELINE;
     }
     ~TimelineRequestHandler() override = default;
     void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override{};

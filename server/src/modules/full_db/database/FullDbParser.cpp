@@ -157,7 +157,7 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
         return;
     }
     auto event = std::make_unique<ParseSuccessEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.unit.type = "card";
     event->body.isFullDb = true;

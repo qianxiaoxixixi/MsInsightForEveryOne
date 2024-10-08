@@ -28,7 +28,7 @@ public:
 protected:
     std::string command;
     std::string error;
-    ModuleType moduleName = ModuleType::UNKNOWN;
+    std::string moduleName = MODULE_UNKNOWN;
     bool async = true;
 };
 } // end of namespace Module

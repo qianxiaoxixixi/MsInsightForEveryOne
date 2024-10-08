@@ -18,7 +18,7 @@ namespace Dic::Module {
 using namespace Dic::Module::Source;
 SourceModule::SourceModule() : BaseModule()
 {
-    moduleName = ModuleType::SOURCE;
+    moduleName = MODULE_SOURCE;
 }
 
 SourceModule::~SourceModule()

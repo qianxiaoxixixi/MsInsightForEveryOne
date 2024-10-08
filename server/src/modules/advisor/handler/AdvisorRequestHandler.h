@@ -12,7 +12,7 @@ class AdvisorRequestHandler : public ModuleRequestHandler {
 public:
     AdvisorRequestHandler()
     {
-        moduleName = Protocol::ModuleType::ADVISOR;
+        moduleName = MODULE_ADVISOR;
         async = false;
     }
     ~AdvisorRequestHandler() override = default;

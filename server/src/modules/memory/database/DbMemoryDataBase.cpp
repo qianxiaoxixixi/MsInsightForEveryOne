@@ -6,6 +6,7 @@
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "DataBaseManager.h"
+#include "ProtocolDefs.h"
 #include "DbMemoryDataBase.h"
 
 namespace Dic {
@@ -249,13 +250,13 @@ void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, con
     if (fileId.empty()) {
         ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
-        event->moduleName = Protocol::ModuleType::MEMORY;
+        event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
-        event->moduleName = Protocol::ModuleType::TIMELINE;
+        event->moduleName = Protocol::MODULE_TIMELINE;
         event->result = result;
         event->isCluster = true;
         std::vector<Protocol::MemorySuccess> memoryResult;

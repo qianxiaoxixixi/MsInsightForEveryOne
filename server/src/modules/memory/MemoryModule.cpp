@@ -15,7 +15,7 @@ namespace Module {
 using namespace Memory;
 MemoryModule::MemoryModule()
 {
-    moduleName = ModuleType::MEMORY;
+    moduleName = MODULE_MEMORY;
 }
 
 MemoryModule::~MemoryModule()

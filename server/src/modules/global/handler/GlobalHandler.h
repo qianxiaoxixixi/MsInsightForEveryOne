@@ -15,7 +15,7 @@ class GlobalHandler : public ModuleRequestHandler {
 public:
     GlobalHandler()
     {
-        moduleName = Protocol::ModuleType::GLOBAL;
+        moduleName = MODULE_GLOBAL;
     }
     ~GlobalHandler() override = default;
     void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}

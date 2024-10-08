@@ -12,7 +12,7 @@ namespace Dic::Module::Operator {
     public:
         OperatorRequestHandler()
         {
-            moduleName = Protocol::ModuleType::OPERATOR;
+            moduleName = MODULE_OPERATOR;
             async = false;
         }
 

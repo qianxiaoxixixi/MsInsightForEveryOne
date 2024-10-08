@@ -42,7 +42,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ComputeSubirectoryList(projectInfos, subdirectoryList);
     response.body.subdirectoryList = subdirectoryList;
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = Protocol::ModuleType::TIMELINE;
+    response.moduleName = MODULE_TIMELINE;
     response.body.reset = IsNeedReset(request);
     if (response.body.reset) {
         ParserFactory::Reset();
@@ -186,7 +186,7 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = Protocol::ModuleType::TIMELINE;
+    response.moduleName = MODULE_TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
     for (const auto &item : projectInfos) {
@@ -281,7 +281,7 @@ void ParserJson::ClusterProcessAsyncStep(const std::string &selectedFolder)
         return;
     }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
     session->OnEvent(std::move(event));
