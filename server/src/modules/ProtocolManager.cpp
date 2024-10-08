@@ -49,15 +49,15 @@ void ProtocolManager::Register()
     advisorProtocol->Register();
     auto jupyterProtocol = std::make_unique<JupyterProtocol>();
     jupyterProtocol->Register();
-    protocolMap.emplace(ModuleType::GLOBAL, std::move(globalProtocol));
-    protocolMap.emplace(ModuleType::TIMELINE, std::move(timelineProtocol));
-    protocolMap.emplace(ModuleType::MEMORY, std::move(memoryProtocol));
-    protocolMap.emplace(ModuleType::SUMMARY, std::move(summaryProtocol));
-    protocolMap.emplace(ModuleType::COMMUNICATION, std::move(communicationProtocol));
-    protocolMap.emplace(ModuleType::OPERATOR, std::move(operatorProtocol));
-    protocolMap.emplace(ModuleType::SOURCE, std::move(sourceProtocol));
-    protocolMap.emplace(ModuleType::ADVISOR, std::move(advisorProtocol));
-    protocolMap.emplace(ModuleType::JUPYTER, std::move(jupyterProtocol));
+    protocolMap.emplace(MODULE_GLOBAL, std::move(globalProtocol));
+    protocolMap.emplace(MODULE_TIMELINE, std::move(timelineProtocol));
+    protocolMap.emplace(MODULE_MEMORY, std::move(memoryProtocol));
+    protocolMap.emplace(MODULE_SUMMARY, std::move(summaryProtocol));
+    protocolMap.emplace(MODULE_COMMUNICATION, std::move(communicationProtocol));
+    protocolMap.emplace(MODULE_OPERATOR, std::move(operatorProtocol));
+    protocolMap.emplace(MODULE_SOURCE, std::move(sourceProtocol));
+    protocolMap.emplace(MODULE_ADVISOR, std::move(advisorProtocol));
+    protocolMap.emplace(MODULE_JUPYTER, std::move(jupyterProtocol));
 }
 
 void ProtocolManager::UnRegister()
@@ -74,20 +74,20 @@ std::unique_ptr<Request> ProtocolManager::FromJson(const std::string &requestStr
         return nullptr;
     }
     if (!JsonUtil::IsJsonKeyValid(requestJson.value(), "moduleName")) {
-        ServerLog::Warn(R"(Json Key "moduleName" is invaild, request=)", requestStr);
+        ServerLog::Warn(R"(Json Key "moduleName" is invalid, request=)", requestStr);
         return nullptr;
     }
-    auto moduleName = STR_TO_ENUM<ModuleType>(JsonUtil::GetString(requestJson.value(), "moduleName"));
-    if (!moduleName.has_value()) {
+    std::string moduleName = JsonUtil::GetString(requestJson.value(), "moduleName");
+    if (moduleName.empty()) {
         ServerLog::Warn("Unknown module name, request=", requestStr);
         return nullptr;
     }
     std::unique_lock<std::mutex> lock(mutex);
-    if (protocolMap.count(moduleName.value()) == 0) {
-        ServerLog::Warn("Failed to get request module protocol. module type:", static_cast<int>(moduleName.value()));
+    if (protocolMap.count(moduleName) == 0) {
+        ServerLog::Warn("Failed to get request module protocol. module type:", moduleName);
         return nullptr;
     }
-    return protocolMap.at(moduleName.value())->FromJson(requestJson.value(), error);
+    return protocolMap.at(moduleName)->FromJson(requestJson.value(), error);
 }
 
 std::optional<document_t> ProtocolManager::ToJson(const Response &response, std::string &error)
@@ -95,7 +95,7 @@ std::optional<document_t> ProtocolManager::ToJson(const Response &response, std:
     auto moduleName = response.moduleName;
     std::unique_lock<std::mutex> lock(mutex);
     if (protocolMap.count(moduleName) == 0) {
-        ServerLog::Warn("Failed to get response module protocol. module type:", static_cast<int>(moduleName));
+        ServerLog::Warn("Failed to get response module protocol. module type:", moduleName);
         return std::nullopt;
     }
     return protocolMap.at(moduleName)->ToJson(response, error);
@@ -106,7 +106,7 @@ std::optional<document_t> ProtocolManager::ToJson(const Event &event, std::strin
     auto moduleName = event.moduleName;
     std::unique_lock<std::mutex> lock(mutex);
     if (protocolMap.count(moduleName) == 0) {
-        ServerLog::Warn("Failed to get event module protocol. module type:", static_cast<int>(moduleName));
+        ServerLog::Warn("Failed to get event module protocol. module type:", moduleName);
         return std::nullopt;
     }
     return protocolMap.at(moduleName)->ToJson(event, error);

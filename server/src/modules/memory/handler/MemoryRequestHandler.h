@@ -14,7 +14,7 @@ class MemoryRequestHandler : public ModuleRequestHandler {
 public:
     MemoryRequestHandler()
     {
-        moduleName = Protocol::ModuleType::MEMORY;
+        moduleName = MODULE_MEMORY;
         async = false;
     }
     ~MemoryRequestHandler() override = default;

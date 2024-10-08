@@ -32,7 +32,7 @@ namespace Module {
 using namespace Dic::Module::Timeline;
 TimelineModule::TimelineModule() : BaseModule()
 {
-    moduleName = ModuleType::TIMELINE;
+    moduleName = MODULE_TIMELINE;
 }
 
 TimelineModule::~TimelineModule()

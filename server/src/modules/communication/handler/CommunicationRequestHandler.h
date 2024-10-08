@@ -14,7 +14,7 @@ class CommunicationRequestHandler : public ModuleRequestHandler {
 public:
     CommunicationRequestHandler()
     {
-        moduleName = Protocol::ModuleType::COMMUNICATION;
+        moduleName = MODULE_COMMUNICATION;
         async = false;
     }
     ~CommunicationRequestHandler() override = default;

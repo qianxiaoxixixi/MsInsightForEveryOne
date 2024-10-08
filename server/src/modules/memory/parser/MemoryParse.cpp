@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
+#include "ProtocolDefs.h"
 #include "DataBaseManager.h"
 #include "FileDef.h"
 #include "WsSession.h"
@@ -579,13 +580,13 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
     if (fileId.empty()) {
         MemoryParse::Instance().ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
-        event->moduleName = Protocol::ModuleType::MEMORY;
+        event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
         event->reset = true;
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
-        event->moduleName = Protocol::ModuleType::TIMELINE;
+        event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
         event->isCluster = MemoryParse::Instance().isCluster;
         std::vector<Protocol::MemorySuccess> memoryResult;

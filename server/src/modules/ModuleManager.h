@@ -25,7 +25,7 @@ private:
     void UnRegister();
 
     std::mutex mutex;
-    std::map<Dic::Protocol::ModuleType, std::unique_ptr<BaseModule>> moduleMap;
+    std::map<std::string, std::unique_ptr<BaseModule>> moduleMap;
 };
 } // end of namespace Module
 } // end of namespace Dic

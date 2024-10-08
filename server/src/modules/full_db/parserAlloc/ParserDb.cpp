@@ -45,7 +45,7 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     SetParseCallBack();
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = Protocol::ModuleType::TIMELINE;
+    response.moduleName = MODULE_TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
     for (const auto &hostInfo : hostInfoMap) {
@@ -125,7 +125,7 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
         return;
     }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
     session->OnEvent(std::move(event));

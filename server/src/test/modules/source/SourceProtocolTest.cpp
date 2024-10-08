@@ -24,55 +24,55 @@ protected:
 TEST_F(SourceProtocolTest, ToCodeFileRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_CODE_FILE_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToApiLineRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_API_LINE_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToApiInstrRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_API_INSTR_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsBaseInfoRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_BASE_INFO_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsLoadInfoRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_LOAD_INFO_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsMemoryGraphRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_MEMORY_GRAPH_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsMemoryTableRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_MEMORY_TABLE_REQ_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphRequest)
 {
     const std::unique_ptr<Request> &ptr = manager->FromJson(TO_INTER_CORE_LOAD_GRAPH_JSON, error);
-    EXPECT_EQ(ptr->moduleName, ModuleType::SOURCE);
+    EXPECT_EQ(ptr->moduleName, MODULE_SOURCE);
 }
 
 TEST_F(SourceProtocolTest, ToCodeFileResponse)
 {
     SourceCodeFileResponse response;
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
@@ -83,21 +83,21 @@ TEST_F(SourceProtocolTest, ToApiLineResponse)
     std::pair<std::string, std::string> pair = {"1", "10"};
     lineRes.addressRange.emplace_back(pair);
     response.body.lines.emplace_back(lineRes);
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
 TEST_F(SourceProtocolTest, ToApiInstrResponse)
 {
     SourceApiInstrResponse response;
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
 TEST_F(SourceProtocolTest, ToDetailsBaseInfoResponse)
 {
     DetailsBaseInfoResponse response;
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
@@ -109,7 +109,7 @@ TEST_F(SourceProtocolTest, ToDetailsLoadInfoResponse)
     blockCompareData.compare = subBlockUnitData;
     response.body.chartData.detailDataList.emplace_back(blockCompareData);
     response.body.tableData.detailDataList.emplace_back(blockCompareData);
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
@@ -122,7 +122,7 @@ TEST_F(SourceProtocolTest, ToDetailsMemoryGraphResponse)
     memoryCompareData.compare = memoryUnit;
     memoryGraph.memoryUnit.emplace_back(memoryCompareData);
     response.body.coreMemory.emplace_back(memoryGraph);
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
@@ -137,7 +137,7 @@ TEST_F(SourceProtocolTest, ToDetailsMemoryTableResponse)
     tableDetail.row.emplace_back(tableRowCompare);
     memoryTable.tableDetail.emplace_back(tableDetail);
     response.body.memoryTable.emplace_back(memoryTable);
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }
 
@@ -159,6 +159,6 @@ TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphResponse)
     subCoreDetail.SetSubCoreName("cube", subCoreIndex);
     opDetail.AddSubCoreDetail(std::move(subCoreDetail));
     response.body.opDetails.emplace_back(opDetail);
-    response.moduleName = ModuleType::SOURCE;
+    response.moduleName = MODULE_SOURCE;
     manager->ToJson(response, error);
 }

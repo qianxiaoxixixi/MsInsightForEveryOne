@@ -55,7 +55,7 @@ struct ProtocolMessage {
     unsigned int id = 0;
     ProtocolMessage::Type type = Type::NONE;
     // request: { "moduleName": xxx, "params": { ...} }; response/event {"moduleName": xxx, "body": { ...} }
-    ModuleType moduleName = ModuleType::UNKNOWN;
+    std::string moduleName = MODULE_UNKNOWN;
     // request: { "params": { ... }; response/event { "body": {  ...} }
     std::optional<int> resultCallbackId;
 };

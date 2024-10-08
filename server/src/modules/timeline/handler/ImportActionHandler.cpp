@@ -54,7 +54,7 @@ void ImportActionHandler::SendParseFailEvent(const std::string &message)
         return;
     }
     auto event = std::make_unique<ParseFailEvent>();
-    event->moduleName = ModuleType::TIMELINE;
+    event->moduleName = MODULE_TIMELINE;
     event->result = false;
     event->body.error = message;
     session->OnEvent(std::move(event));

@@ -8,7 +8,7 @@ namespace Dic {
 namespace Module {
 JupyterModule::JupyterModule() : BaseModule()
 {
-    moduleName = ModuleType::JUPYTER;
+    moduleName = MODULE_JUPYTER;
 }
 
 JupyterModule::~JupyterModule()

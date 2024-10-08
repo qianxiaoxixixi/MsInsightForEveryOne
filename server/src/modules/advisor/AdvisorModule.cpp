@@ -13,7 +13,7 @@ namespace Dic::Module {
 using namespace Dic::Module::Advisor;
 AdvisorModule::AdvisorModule()
 {
-    moduleName = ModuleType::ADVISOR;
+    moduleName = MODULE_ADVISOR;
 }
 AdvisorModule::~AdvisorModule()
 {

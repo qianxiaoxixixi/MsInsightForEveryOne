@@ -18,7 +18,7 @@ using namespace Dic::Server;
 using namespace Dic::Module::Global;
 GlobalModule::GlobalModule() : BaseModule()
 {
-    moduleName = ModuleType::GLOBAL;
+    moduleName = MODULE_GLOBAL;
 }
 
 GlobalModule::~GlobalModule()
