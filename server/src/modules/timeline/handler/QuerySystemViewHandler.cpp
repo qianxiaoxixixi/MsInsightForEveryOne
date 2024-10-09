@@ -36,6 +36,13 @@ void QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get timeline table response data.");
     }
+    if (request.params.layer == "Python" && std::empty(response.body.systemViewDetail)) {
+        request.params.layer = "MindSpore";
+        if (!database->QuerySystemViewData(request.params, response.body)) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Failed to get timeline table response data.");
+        }
+    }
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }
