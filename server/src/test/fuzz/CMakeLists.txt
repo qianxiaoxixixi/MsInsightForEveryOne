@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(insight_fuzz)
 
-
-set(SRC_HOME_DIR ${HOME_DIR}/src)
 set(FUZZ_HOME_DIR ${HOME_DIR}/src/test/fuzz)
-
 
 message("fuzz start")
 
@@ -21,7 +18,7 @@ aux_source_directory(${FUZZ_HOME_DIR}/compute FUZZ_COMPUTE_TEST)
 include_directories(${FUZZ_HOME_DIR}/common)
 aux_source_directory(${FUZZ_HOME_DIR}/common FUZZ_COMMON_TEST)
 
-list(APPEND DIC_TEST_LIST
+list(APPEND DIC_FUZZ_TEST_LIST
 		${FUZZ_TIMELINE_TEST}
         ${FUZZ_COMPUTE_TEST}
         ${FUZZ_COMMON_TEST}
@@ -34,9 +31,11 @@ list(APPEND DIC_TEST_LIST
         ${DIC_CHANNEL_SRC}
 )
 
-
-add_executable(insight_fuzz  FuzzMain.cpp ${DIC_TEST_LIST})
-
+add_executable(insight_fuzz  FuzzMain.cpp ${DIC_FUZZ_TEST_LIST})
+# 添加预编译头文件到目标
+target_precompile_headers(insight_fuzz PRIVATE ${SRC_HOME_DIR}/entry/server/bin/include/pch.h)
+# U_SOCKETS_SRC_LIST无法使用预编译头文件，故排除
+set_source_files_properties(${U_SOCKETS_SRC_LIST} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 add_compile_options(
         -g
         -fPIC
