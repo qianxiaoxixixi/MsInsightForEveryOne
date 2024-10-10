@@ -72,7 +72,10 @@ public:
     bool IsContainDatabasePath(const std::string& databasePath);
     inline std::vector<std::string> GetDbPathByHost(const std::string& id)
     {
-        return host2DbPath[id];
+        if (host2DbPath.find(id) != host2DbPath.end()) {
+            return host2DbPath[id];
+        }
+        return {};
     }
 
 private:
