@@ -250,8 +250,8 @@ const drawDpRect = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): 
             .on('click', () => {
                 const rankGroup = {
                     name: `dataRect${i}`,
-                    ranks: relatedRank.pp[i].ranks,
-                    value: relatedRank.pp[i].value,
+                    ranks: relatedRank.dpRect[i].ranks,
+                    value: relatedRank.dpRect[i].value,
                 };
                 eventBus.emit('activeCommunicator', rankGroup);
             });
