@@ -226,18 +226,15 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
     std::string sql;
     if (isHccl) {
-        sql = " SELECT * FROM ("
-            " SELECT SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type, NAME.value as name ,"
+        sql = " SELECT * FROM (SELECT SUBSTR(NAME.value, 1, INSTR(NAME.value, '__')) as op_type, NAME.value as name,"
             " NULL AS input_shapes,NULL as accelerator_core,"
             " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as total_time, COUNT(0) as cnt,"
             " ROUND(SUM(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0 / COUNT(0), 2) as avg_time,"
             " ROUND(max(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as max_time,"
             " ROUND(min(COMMUNICATION_OP.endNs - COMMUNICATION_OP.startNs) / 1000.0, 2) as min_time "
-            " FROM COMMUNICATION_OP "
-            " JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
+            " FROM COMMUNICATION_OP JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName "
             " GROUP BY SUBSTR(NAME.value, 1, INSTR(NAME.value, '__'))"
-            " ORDER by total_time DESC LIMIT ?"
-            " ) subquery ";
+            " ORDER by total_time DESC LIMIT ?) subquery ";
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
             "op_type || accelerator_core" :
@@ -256,8 +253,7 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     WHERE accelerator_core <> 'HCCL'"
-            "     GROUP BY " + group +
-            "     ORDER by total_time DESC LIMIT ?"
+            "     GROUP BY " + group + " ORDER by total_time DESC LIMIT ? "
             "     ) subquery ";
     }
     if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {

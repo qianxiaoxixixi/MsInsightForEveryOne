@@ -60,6 +60,14 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         SetBaseActionOfResponse(response, rankEntry.first, cardPath, folders);
     }
     // 解析内容
+    ParseContentByProjectType(projectInfos, response, rankListMap, session, responsePtr);
+    ParserTraceData(rankListMap, projectInfos, request);
+}
+
+void ParserJson::ParseContentByProjectType(const std::vector<Global::ProjectExplorerInfo>& projectInfos,
+    ImportActionResponse& response, const std::map<std::string, std::vector<std::string>>& rankListMap,
+    Server::WsSession& session, std::unique_ptr<ImportActionResponse>& responsePtr)
+{
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         SetParseCallBack(Timeline::TraceFileSimulationParser::Instance());
@@ -82,7 +90,6 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ModuleRequestHandler::SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    ParserTraceData(rankListMap, projectInfos, request);
 }
 
 void ParserJson::ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,

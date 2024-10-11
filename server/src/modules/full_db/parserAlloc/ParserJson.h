@@ -45,6 +45,10 @@ private:
     void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request);
 
+    void ParseContentByProjectType(const std::vector<Global::ProjectExplorerInfo>& projectInfos,
+        ImportActionResponse& response, const std::map<std::string, std::vector<std::string>>& rankListMap,
+        Server::WsSession& session, std::unique_ptr<ImportActionResponse>& responsePtr);
+
     static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::vector<std::string> &subdirectoryList);
 };
