@@ -641,11 +641,9 @@ std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <S
     return nullptr;
 }
 
-void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
-    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+void GetEventsViewResultSet4DbDetails(std::unique_ptr<SqliteResultSet>& resultSet, PROCESS_TYPE metaType,
+                                      uint64_t minTimestamp, std::vector<std::unique_ptr<EventDetail>>& details)
 {
-    auto metaType = TraceDatabaseHelper::GetProcessType(params.metaType);
-    std::vector<std::unique_ptr<EventDetail>> details;
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         // 根据泳道类型，创建对应子类对象的指针，填充特有数据
@@ -674,6 +672,14 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
         ptr->processId = resultSet->GetString("processId");
         details.emplace_back(std::move(ptr));
     }
+}
+
+void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+{
+    auto metaType = TraceDatabaseHelper::GetProcessType(params.metaType);
+    std::vector<std::unique_ptr<EventDetail>> details;
+    GetEventsViewResultSet4DbDetails(resultSet, metaType, minTimestamp, details);
     body.count = details.size();
     body.currentPage = params.currentPage;
     body.pageSize = params.pageSize;

@@ -248,6 +248,20 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
+    opDetails = QueryOperatorDetail(stmt);
+    std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
+    std::vector<std::string> columns = activeRelatedColumn;
+    for (const auto& column : tableColumnAttr) {
+        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
+            continue;
+        }
+        columnAttr.emplace_back(column);
+    }
+    return true;
+}
+
+std::vector<Protocol::MemoryOperator> VirtualMemoryDataBase::QueryOperatorDetail(sqlite3_stmt *stmt)
+{
     std::vector<Protocol::MemoryOperator> operatorDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -269,16 +283,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
         operatorDtoVec.emplace_back(operatorDto);
     }
     sqlite3_finalize(stmt);
-    opDetails = operatorDtoVec;
-    std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
-    std::vector<std::string> columns = activeRelatedColumn;
-    for (const auto& column : tableColumnAttr) {
-        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
-            continue;
-        }
-        columnAttr.emplace_back(column);
-    }
-    return true;
+    return operatorDtoVec;
 }
 
 bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,

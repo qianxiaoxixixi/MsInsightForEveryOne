@@ -156,6 +156,7 @@ private:
     void GetStreamLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
                         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                         const std::vector<std::string> &streams);
+    std::vector<Protocol::MemoryOperator> QueryOperatorDetail(sqlite3_stmt *stmt);
 };
 
 }; // end of namespace Memory
