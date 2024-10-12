@@ -75,6 +75,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
             }
             if (dataMap.size() < operatorTableNum) {
                 ServerLog::Error("The header of the file is incorrect or incomplete. The file path is: " + filePath);
+                file.close();
                 return false;
             }
             GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
@@ -235,6 +236,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
             }
             if (dataMap.size() < recordTableNum) {
                 ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + filePath);
+                file.close();
                 return false;
             }
             GetMapValid((row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF), dataMap);
@@ -284,6 +286,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
             }
             if (dataMap.size() < staticOpTableNum) {
                 ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + filePath);
+                file.close();
                 return false;
             }
             GetMapValid(STATIC_OP_MEM_CSV, dataMap);

@@ -251,7 +251,12 @@ uint64_t TextMemoryDataBase::QueryMinOperatorAllocationTime()
     uint64_t min = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        min = sqlite3_column_int64(stmt, col++);
+        int64_t result = sqlite3_column_int64(stmt, col++);
+        if (result < 0) {
+            min = 0;
+        } else {
+            min = result;
+        }
     }
     sqlite3_finalize(stmt);
     return min;
@@ -269,7 +274,12 @@ uint64_t  TextMemoryDataBase::QueryMinRecordTimestamp()
     uint64_t min  = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        min = sqlite3_column_int64(stmt, col++);
+        int64_t result = sqlite3_column_int64(stmt, col++);
+        if (result < 0) {
+            min = 0;
+        } else {
+            min = result;
+        }
     }
     sqlite3_finalize(stmt);
     return min;
