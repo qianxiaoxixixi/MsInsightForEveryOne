@@ -375,7 +375,11 @@ bool VirtualMemoryDataBase::ExecuteStaticGraphStartIndex(Protocol::StaticOperato
         } else {
             graphSizeMap.insert({nodeIndex, size});
         }
-        maxIndex = nodeIndex;
+        if (nodeIndex >= maxUnsignedInt) {
+            maxIndex = maxUnsignedInt;
+        } else if (nodeIndex > maxIndex) {
+            maxIndex = nodeIndex;
+        }
     }
     sqlite3_finalize(startStmt);
     return true;
@@ -401,7 +405,9 @@ bool VirtualMemoryDataBase::ExecuteStaticGraphEndIndex(Protocol::StaticOperatorG
         int col = resultStartIndex;
         int64_t nodeIndex = sqlite3_column_int64(endStmt, col++);
         double size = sqlite3_column_double(endStmt, col++);
-        if (nodeIndex != maxUnsignedInt && nodeIndex > maxIndex) { // 无符号最大INT值，表示最终释放时终止,这里直接跳过
+        if (nodeIndex >= maxUnsignedInt) {
+            maxIndex = maxUnsignedInt;
+        } else if (nodeIndex > maxIndex) {
             maxIndex = nodeIndex;
         }
         if (graphSizeMap.find(nodeIndex) != graphSizeMap.end()) {
@@ -447,7 +453,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorGraph(Protocol::StaticOperatorG
     for (auto it = graphSizeMap.begin(); it != graphSizeMap.end(); ++it) {
         std::vector<std::string> points = {};
         size += it->second; // 遍历有序map，逐点计算总需分配内存
-        if (it->first != maxUnsignedInt) {
+        if (it->first < maxUnsignedInt) {
             points.emplace_back(std::to_string(it->first)); // 正常的Node Index
         } else {
             points.emplace_back(std::to_string(maxIndex + 1)); // 存储值为maxUnsignedInt时，Node Index = maxIndex + 1

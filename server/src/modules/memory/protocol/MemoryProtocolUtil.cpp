@@ -32,12 +32,18 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonRes
     json_t operatorDiffDetail(kArrayType);
     for (const MemoryOperatorComparison& anOperator : response.operatorDiffDetails) {
         json_t basicJson = json_t(kObjectType);
-        document_t jsonCompare = ToMemoryOperatorJson(anOperator.compare, hasStream, allocator).value();
-        document_t jsonBaseline = ToMemoryOperatorJson(anOperator.baseline, hasStream, allocator).value();
-        document_t jsonDiff = ToMemoryOperatorJson(anOperator.diff, hasStream, allocator).value();
-        JsonUtil::AddMember(basicJson, "compare", jsonCompare, allocator);
-        JsonUtil::AddMember(basicJson, "baseline", jsonBaseline, allocator);
-        JsonUtil::AddMember(basicJson, "diff", jsonDiff, allocator);
+        std::optional<document_t> jsonCompare = ToMemoryOperatorJson(anOperator.compare, hasStream, allocator);
+        std::optional<document_t> jsonBaseline = ToMemoryOperatorJson(anOperator.baseline, hasStream, allocator);
+        std::optional<document_t> jsonDiff = ToMemoryOperatorJson(anOperator.diff, hasStream, allocator);
+        if (jsonCompare.has_value()) {
+            JsonUtil::AddMember(basicJson, "compare", jsonCompare.value(), allocator);
+        }
+        if (jsonBaseline.has_value()) {
+            JsonUtil::AddMember(basicJson, "baseline", jsonBaseline.value(), allocator);
+        }
+        if (jsonDiff.has_value()) {
+            JsonUtil::AddMember(basicJson, "diff", jsonDiff.value(), allocator);
+        }
         operatorDiffDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
@@ -187,12 +193,18 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
     json_t operatorDiffDetail(kArrayType);
     for (const StaticOperatorCompItem& anOperator : response.operatorDiffDetails) {
         json_t basicJson = json_t(kObjectType);
-        document_t jsonCompare = ToMemoryStaticOperatorJson(anOperator.compare, allocator).value();
-        document_t jsonBaseline = ToMemoryStaticOperatorJson(anOperator.baseline, allocator).value();
-        document_t jsonDiff = ToMemoryStaticOperatorJson(anOperator.diff, allocator).value();
-        JsonUtil::AddMember(basicJson, "compare", jsonCompare, allocator);
-        JsonUtil::AddMember(basicJson, "baseline", jsonBaseline, allocator);
-        JsonUtil::AddMember(basicJson, "diff", jsonDiff, allocator);
+        std::optional<document_t> jsonCompare = ToMemoryStaticOperatorJson(anOperator.compare, allocator);
+        std::optional<document_t> jsonBaseline = ToMemoryStaticOperatorJson(anOperator.baseline, allocator);
+        std::optional<document_t> jsonDiff = ToMemoryStaticOperatorJson(anOperator.diff, allocator);
+        if (jsonCompare.has_value()) {
+            JsonUtil::AddMember(basicJson, "compare", jsonCompare.value(), allocator);
+        }
+        if (jsonBaseline.has_value()) {
+            JsonUtil::AddMember(basicJson, "baseline", jsonBaseline.value(), allocator);
+        }
+        if (jsonDiff.has_value()) {
+            JsonUtil::AddMember(basicJson, "diff", jsonDiff.value(), allocator);
+        }
         operatorDiffDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
