@@ -8,7 +8,7 @@ import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { ChartProps, Scale, StatusData } from '../../entity/chart';
-import { Canvas, CanvasContainer, drawRoundedRect, zipStatusData } from './common';
+import { Canvas, CanvasContainer, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPosX, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 import type { ThreadMetaData } from '../../entity/data';
@@ -51,13 +51,7 @@ const draw = ({ ctx, datas, xScale, yScale, theme, startY }: DrawParams): void =
         let width = xScale(data.startTime + data.duration) - xScale(data.startTime);
         width = Math.max(1, Math.floor(width));
         const height = yScale(1) - yScale(0);
-        const radius = width >= 2 ? 1 : width / 2;
-        if (radius < 1) {
-            ctx.fillRect(Math.floor(xScale(data.startTime)), startY, width, height - 2);
-        } else {
-            drawRoundedRect([Math.floor(xScale(data.startTime)), startY, width, height - 2], ctx, radius);
-            ctx.fill();
-        }
+        ctx.fillRect(Math.floor(xScale(data.startTime)), startY, width, height - 2);
         if (width < minTextWidth) { return; }
         ctx.fillStyle = theme.fontColor;
         const xOffset = (textWidth: number): number => {

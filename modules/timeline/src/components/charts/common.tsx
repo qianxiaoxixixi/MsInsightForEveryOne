@@ -4,58 +4,6 @@
 
 import styled from '@emotion/styled';
 
-export const drawRoundedRect = (
-    [x, y, width, height]: number[],
-    context: CanvasRenderingContext2D,
-    radius: number,
-    topRadius?: number,
-): void => {
-    const tr = topRadius ?? radius;
-
-    context.beginPath();
-    context.moveTo(x + tr, y);
-    context.lineTo(x + width - tr, y);
-    context.quadraticCurveTo(x + width, y, x + width, y + tr);
-    context.lineTo(x + width, y + height - radius);
-    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    context.lineTo(x + radius, y + height);
-    context.quadraticCurveTo(x, y + height, x, y + height - radius);
-    context.lineTo(x, y + tr);
-    context.quadraticCurveTo(x, y, x + tr, y);
-    context.closePath();
-};
-
-export const drawMultiBgRoundedRect = (
-    [x, y, width, height]: number[],
-    context: CanvasRenderingContext2D,
-    radius: number,
-    order: number,
-): void => {
-    context.beginPath();
-
-    if (order === 0) {
-        // 左边圆角，右边直角
-        context.moveTo(x + radius, y);
-        context.lineTo(x + width, y);
-        context.lineTo(x + width, y + height);
-        context.lineTo(x + radius, y + height);
-        context.quadraticCurveTo(x, y + height, x, y + height - radius);
-        context.lineTo(x, y + radius);
-        context.quadraticCurveTo(x, y, x + radius, y);
-    } else {
-        // 左边直角，右边圆角
-        context.moveTo(x, y);
-        context.lineTo(x + width - radius, y);
-        context.quadraticCurveTo(x + width, y, x + width, y + radius);
-        context.lineTo(x + width, y + height - radius);
-        context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        context.lineTo(x, y + height);
-        context.lineTo(x, y);
-    }
-
-    context.closePath();
-};
-
 /**
  * Limits the data size to make sure that every data held in the chart are actually drawn, ie. no wasted rendering
  *
