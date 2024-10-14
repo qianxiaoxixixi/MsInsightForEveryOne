@@ -7,7 +7,6 @@ import type { CustomCrossRenderer } from './custom';
 import type { Session } from '../../../entity/session';
 import { getTimeDifference } from './common';
 import type { Pos } from './common';
-import { drawRoundedRect } from '../common';
 import type { InteractorMouseState, XReverseScaleRef } from './ChartInteractor';
 import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
@@ -111,28 +110,24 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
     const textLength = ctx.measureText(displayText).width;
     const roundRectWidth = textLength + 10;
     const roundRectHeight = 16;
-    const rounded = 4;
     ctx.fillStyle = '#3778ED';
     if (mousePosNow.x < 0 || mousePosNow.x > ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
         return;
     }
     if (mousePosNow.x <= roundRectWidth / 2) {
-        drawRoundedRect([0, 0, roundRectWidth, roundRectHeight], ctx, rounded);
-        ctx.fill();
+        ctx.fillRect(0, 0, roundRectWidth, roundRectHeight);
         ctx.fillStyle = 'white';
         ctx.fillText(displayText, roundRectWidth / 2, 3);
         return;
     }
 
     if (mousePosNow.x >= width - (roundRectWidth / 2) && mousePosNow.x <= ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
-        drawRoundedRect([width - roundRectWidth, 0, roundRectWidth, roundRectHeight], ctx, rounded);
-        ctx.fill();
+        ctx.fillRect(width - roundRectWidth, 0, roundRectWidth, roundRectHeight);
         ctx.fillStyle = 'white';
         ctx.fillText(displayText, width - (roundRectWidth / 2), 3);
         return;
     }
-    drawRoundedRect([mousePosNow.x - (roundRectWidth / 2), 0, roundRectWidth, roundRectHeight], ctx, rounded);
-    ctx.fill();
+    ctx.fillRect(mousePosNow.x - (roundRectWidth / 2), 0, roundRectWidth, roundRectHeight);
     ctx.fillStyle = 'white';
     ctx.fillText(displayText, mousePosNow.x, 3);
 };

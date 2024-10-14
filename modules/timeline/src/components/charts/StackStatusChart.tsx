@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import type { ChartProps, ChartReaction, Scale, StackStatusData, TextConfig } from '../../entity/chart';
 import { UnitHeight } from '../../entity/insight';
 import type { Session } from '../../entity/session';
-import { Canvas, CanvasContainer, drawMultiBgRoundedRect, drawRoundedRect, zipStatusData } from './common';
+import { Canvas, CanvasContainer, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 
@@ -20,8 +20,6 @@ type DrawTextType = Array<StackStatusData & {width: number} >;
 
 const FONT_SIZE = 12;
 const DFT_PADDING = 8;
-const MIN_WIDTH = 2;
-const MAX_RADIUS = 1;
 const DOTTED_RANGE = 6;
 
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D, overflow: OverflowType): string => {
@@ -50,7 +48,6 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
     const { height, right, xScale, yScale, overflow, minTextWidth, order } = config;
     let startTime = xScale(data.startTime);
     let width = Math.max(1, xScale(data.duration < 0 ? right : (data.startTime + data.duration)) - startTime);
-    const radius = width >= MIN_WIDTH ? MAX_RADIUS : width / 2;
     const minWidth = overflow === 'ellipsis' ? minTextWidth : ctx.measureText(data.type).width + DFT_PADDING;
     if (width >= minWidth) {
         textToDraw.push({ ...data, width });
@@ -80,15 +77,7 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
             return;
         }
     }
-    // leave 1px space in both top and bottom
-    if (radius < 1) {
-        ctx.fillRect(startTime, yScale(data.depth) + 1, width, height - 2);
-    } else {
-        order === undefined
-            ? drawRoundedRect([startTime, yScale(data.depth) + 1, width, height - 2], ctx, radius)
-            : drawMultiBgRoundedRect([startTime, yScale(data.depth) + 1, width, height - 2], ctx, radius, order);
-        ctx.fill();
-    }
+    ctx.fillRect(startTime, yScale(data.depth) + 1, width, height - 2);
 };
 
 function dealDataColor(theme: Theme, dataColor: Map<keyof Theme['colorPalette'], StackStatusData[]>,

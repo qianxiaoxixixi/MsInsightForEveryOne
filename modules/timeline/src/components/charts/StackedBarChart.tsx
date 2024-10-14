@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useRef } from 'react';
 import type { ChartProps, Scale, ScaleType } from '../../entity/chart';
-import { Canvas, CanvasContainer, drawRoundedRect } from './common';
+import { Canvas, CanvasContainer } from './common';
 import { useBatchedRender, useData, useHoverPosX, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
 import { useTheme } from '@emotion/react';
@@ -93,22 +93,15 @@ const drawArea = ({
             // setting chart transparency 1 -> totally nontransparent
             ctx.globalAlpha = 1;
             const thisDrawHeight = yScale(minHeight) - yScale(curHeight);
-            const thisDrawLess = Math.min(thisDrawHeight, thisDrawWidth);
-            const thisRadius = thisDrawLess < 2 * radius ? thisDrawLess / 2 : radius;
-            const bottomRouned = idx === 0 ? thisRadius : 0;
-            const lastNonEmptyIndex = allHeights.length - 1 - allHeights.slice().reverse().findIndex((height) => height !== 0);
-            const validLastNonEmptyIndex = lastNonEmptyIndex === -1 ? allHeights.length - 1 : lastNonEmptyIndex;
-            const topRounded = idx === validLastNonEmptyIndex ? thisRadius : 0;
             const startDrawWidth = xScale(data.timestamp) - (thisDrawWidth / 2);
             const startDrawHeight = thisDrawHeight > 1 ? yScale(accumulativeHeight) : ctx.canvas.height - 1;
             // when draw height < 1px, draw 1px.
-            drawRoundedRect([
+            ctx.fillRect(
                 startDrawWidth,
                 startDrawHeight,
                 thisDrawWidth,
                 thisDrawHeight > 1 ? thisDrawHeight : 1,
-            ], ctx, bottomRouned, topRounded);
-            ctx.fill();
+            );
         };
         getTotalHeight(data, palette.length - 1, drawRect);
     });
