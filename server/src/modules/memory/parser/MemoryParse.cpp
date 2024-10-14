@@ -589,7 +589,7 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
         session->OnEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
-        event->moduleName = Protocol::MODULE_MEMORY;
+        event->moduleName = Protocol::MODULE_TIMELINE;
         event->result = true;
         event->isCluster = MemoryParse::Instance().isCluster;
         std::vector<Protocol::MemorySuccess> memoryResult;
