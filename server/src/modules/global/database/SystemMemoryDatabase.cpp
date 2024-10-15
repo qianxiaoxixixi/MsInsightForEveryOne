@@ -158,6 +158,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
         std::string fileNameStr = StringUtil::join(fileNameList, ", ");
         sqlite3_bind_text(stmt, index, fileNameStr.c_str(), fileNameStr.length(), nullptr);
     }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         ProjectExplorerInfo info{};
@@ -213,6 +214,7 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
 bool SystemMemoryDatabase::DeleteParsedFile(const std::vector<int64_t> &projectIdList,
                                             const std::vector<int64_t> &idList)
 {
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "DELETE FROM " + parseFileInfoTable + " WHERE 1 = 1";
     if (!projectIdList.empty()) {
         std::string projectListStr = StringUtil::join(projectIdList, ",");
@@ -265,6 +267,7 @@ bool SystemMemoryDatabase::UpdateProjectDbPath(const std::string &projectName, c
 std::map<int64_t, std::vector<ParseFileInfo>> SystemMemoryDatabase::QueryParseFileInfo(
     const std::vector<int64_t>& projectExplorerIdList, const std::vector<std::string>& parsePathList)
 {
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     std::map<int64_t, std::vector<ParseFileInfo>> res;
     if (projectExplorerIdList.empty()) {
         return res;
