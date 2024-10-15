@@ -41,7 +41,7 @@ public:
         if (it != GetAssignMap().end()) {
             AssignFuncs().emplace_back(it->second);
         } else {
-            ServerLog::Error("Select column is not exist");
+            ServerLog::Warn("Select column is not exist");
         }
         return *this;
     }
@@ -57,7 +57,7 @@ public:
         if (it != GetAssignMap().end()) {
             AssignFuncs().emplace_back(it->second);
         } else {
-            ServerLog::Error("Select column is not exist");
+            ServerLog::Warn("Select column is not exist");
         }
         Select(args...);
         return *this;
@@ -156,7 +156,7 @@ public:
             SelectStr() + " FROM " + GetTableName() + " WHERE 1 = 1 " + ConditionStr() + OrderByStr() + GroupByStr();
         auto stmt = database->CreatPreparedStatement(sql);
         if (stmt == nullptr) {
-            ServerLog::Error(GetTableName() + " Failed to get stmt.");
+            ServerLog::Warn(GetTableName() + " Failed to get stmt.");
             ClearThreadLocal();
             return;
         }
@@ -172,7 +172,48 @@ public:
         }
         auto resultSet = stmt->ExecuteQuery();
         if (resultSet == nullptr) {
-            ServerLog::Error(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
+            ServerLog::Warn(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
+            ClearThreadLocal();
+            return;
+        }
+        while (resultSet->Next()) {
+            T t;
+            for (const auto &item : AssignFuncs()) {
+                item(t, resultSet);
+            }
+            result.emplace_back(t);
+        }
+        ClearThreadLocal();
+    }
+
+    virtual void ExcuteQuery(sqlite3 *db, std::vector<T> &result)
+    {
+        auto stmt = std::make_unique<SqlitePreparedStatement>(db);
+        if (stmt == nullptr) {
+            ServerLog::Warn(GetTableName() + " Failed to get stmt.");
+            ClearThreadLocal();
+            return;
+        }
+        std::string sql =
+            SelectStr() + " FROM " + GetTableName() + " WHERE 1 = 1 " + ConditionStr() + OrderByStr() + GroupByStr();
+        if (!stmt->Prepare(sql)) {
+            ServerLog::Error("Failed prepare sql. ", stmt->GetErrorMessage());
+            ClearThreadLocal();
+            return;
+        }
+        for (const auto &item : Values()) {
+            // 访问 variant 中存储的值
+            if (std::holds_alternative<uint32_t>(item)) {
+                stmt->BindParams(std::get<uint32_t>(item));
+            } else if (std::holds_alternative<uint64_t>(item)) {
+                stmt->BindParams(std::get<uint64_t>(item));
+            } else if (std::holds_alternative<std::string>(item)) {
+                stmt->BindParams(std::get<std::string>(item));
+            }
+        }
+        auto resultSet = stmt->ExecuteQuery();
+        if (resultSet == nullptr) {
+            ServerLog::Warn(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
             ClearThreadLocal();
             return;
         }
@@ -197,7 +238,7 @@ public:
         std::string sql = "SELECT COUNT(*) AS count FROM " + GetTableName() + " WHERE 1 = 1 " + ConditionStr();
         auto stmt = database->CreatPreparedStatement(sql);
         if (stmt == nullptr) {
-            ServerLog::Error(GetTableName() + " Failed to get stmt.");
+            ServerLog::Warn(GetTableName() + " Failed to get stmt.");
             ClearThreadLocal();
             return count;
         }
@@ -213,7 +254,7 @@ public:
         }
         auto resultSet = stmt->ExecuteQuery();
         if (resultSet == nullptr) {
-            ServerLog::Error(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
+            ServerLog::Warn(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
             ClearThreadLocal();
             return count;
         }
