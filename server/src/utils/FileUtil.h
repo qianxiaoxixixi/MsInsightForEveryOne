@@ -120,7 +120,8 @@ public:
     {
         // long type will crash when use wingw11 compile in windows11
         long long hFile = 0;
-        struct _finddata_t fileInfo{};
+        const uint64_t fileCountLimit = 100000;
+        struct _finddata_t fileInfo {};
         std::string tmpPath;
         if (StringUtil::IsUtf8String(path)) {
             tmpPath = StringUtil::Utf8ToGbk(path.c_str());
@@ -135,10 +136,19 @@ public:
             if (std::string(fileInfo.name) == ".." || std::string(fileInfo.name) == ".") {
                 continue;
             }
+            if (!CheckPathValid(SplicePath(path, fileInfo.name))) {
+                continue;
+            }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
                 folders.emplace_back(StringUtil::GbkToUtf8(fileInfo.name));
             } else {
                 files.emplace_back(StringUtil::GbkToUtf8(fileInfo.name));
+            }
+            if (folders.size() + files.size() > fileCountLimit) {
+                Server::ServerLog::Warn("There are too many sub files in the folder");
+                folders.clear();
+                files.clear();
+                break;
             }
         } while (_findnext(hFile, &fileInfo) == 0);
         _findclose(hFile);
@@ -160,6 +170,7 @@ public:
         if (pDir == nullptr) {
             return false;
         }
+        const uint64_t fileCountLimit = 100000;
         while ((pDirent = readdir(pDir)) != nullptr) {
             if (std::string(pDirent->d_name) == ".." || std::string(pDirent->d_name) == ".") {
                 continue;
@@ -168,13 +179,21 @@ public:
             if (stat(fullPath.c_str(), &pathStat) != 0) {
                 continue;
             }
-
+            if (!CheckPathValid(fullPath)) {
+                continue;
+            }
             if (S_ISDIR(pathStat.st_mode)) {
                 folders.emplace_back(pDirent->d_name);
             } else if (S_ISREG(pathStat.st_mode)) {
                 files.emplace_back(pDirent->d_name);
             } else {
                 Server::ServerLog::Info("Other type : [", pathStat.st_mode, "] : [", pDirent->d_name);
+            }
+            if (folders.size() + files.size() > fileCountLimit) {
+                Server::ServerLog::Warn("There are too many sub files in the folder");
+                folders.clear();
+                files.clear();
+                break;
             }
         }
         closedir(pDir);
@@ -366,49 +385,6 @@ public:
 
     static void CalculateDirSize(const std::string &path, long long &size, int depth);
 
-    static inline std::vector<std::string> FindFilesAndFoldersByRegex(const std::string &path,
-                                                                      const std::regex &fileRegex, bool needFolder)
-    {
-        std::vector<std::string> matchedFiles;
-        if (needFolder || !FileUtil::IsFolder(path)) {
-            if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
-                matchedFiles.emplace_back(PathPreprocess(path));
-            }
-            return matchedFiles;
-        }
-        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex, needFolder](
-                const std::string &path, int depth) {
-            if (depth > 5) {
-                return;
-            }
-            if (needFolder && std::regex_match(GetFileName(path), fileRegex)) {
-                matchedFiles.emplace_back(PathPreprocess(path));
-            }
-            std::vector<std::string> folders;
-            std::vector<std::string> files;
-            if (!FileUtil::FindFolders(path, folders, files)) {
-                return;
-            }
-            for (const auto &folder: folders) {
-                std::string tmpPath = FileUtil::SplicePath(path, folder);
-                find(tmpPath, depth + 1);
-            }
-            for (const auto &file: files) {
-                std::string tmpPath = FileUtil::SplicePath(path, file);
-                if (std::regex_match(file, fileRegex)) {
-                    matchedFiles.push_back(PathPreprocess(tmpPath));
-                }
-            }
-        };
-        find(path, 0);
-        return matchedFiles;
-    }
-
-    static inline std::vector<std::string> FindFilesByRegex(const std::string &path, const std::regex &fileRegex)
-    {
-        return FindFilesAndFoldersByRegex(path, fileRegex, false);
-    }
-
     // 遍历目录，最大不超过5层，优先遍历ASCEND_PROFILER_OUTPUT/mindstudio_profiler_output目录，其存在则跳过其他文件夹
     static inline std::vector<std::string> FindFilesWithFilter(const std::string &path, const std::regex &fileRegex)
     {
@@ -419,9 +395,13 @@ public:
             }
             return matchedFiles;
         }
-        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex](
-                const std::string &path, int depth) {
-            if (depth > 5) {
+        std::string error;
+        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex,
+            &error](const std::string &path, int depth) {
+            if (!std::empty(error)) {
+                return;
+            }
+            if (!FileRecursionCheck(matchedFiles, depth, error)) {
                 return;
             }
             std::vector<std::string> folders;
@@ -446,21 +426,45 @@ public:
                 std::string tmpPath = FileUtil::SplicePath(path, folder);
                 find(tmpPath, depth + 1);
             }
-            sort(files.begin(), files.end(), std::greater<std::string>());
-            for (const auto &file: files) {
-                std::string tmpPath = FileUtil::SplicePath(path, file);
-                if (!std::regex_match(file, fileRegex)) {
-                    continue;
-                }
-                matchedFiles.push_back(tmpPath);
-                if (!RegexUtil::RegexSearch(file, SLICE_STR).has_value()) {
-                    // 对于分片文件，需要找到所有的带有slice的文件；其他文件，则只找最新的一个
-                    break;
-                }
-            }
+            CollectMatchdFiles(fileRegex, matchedFiles, path, files);
         };
         find(path, 0);
+        if (!std::empty(error)) {
+            Server::ServerLog::Warn(StringUtil::GetPrintAbleString(path), " warn is: ", error);
+        }
         return matchedFiles;
+    }
+
+    static void CollectMatchdFiles(const std::regex &fileRegex, std::vector<std::string> &matchedFiles,
+        const std::string &path, std::vector<std::string> &files)
+    {
+        sort(files.begin(), files.end(), std::greater<std::string>());
+        for (const auto &file : files) {
+            std::string tmpPath = SplicePath(path, file);
+            if (!std::regex_match(file, fileRegex)) {
+                continue;
+            }
+            matchedFiles.push_back(tmpPath);
+            if (!RegexUtil::RegexSearch(file, SLICE_STR).has_value()) {
+                // 对于分片文件，需要找到所有的带有slice的文件；其他文件，则只找最新的一个
+                break;
+            }
+        }
+    }
+
+    static inline bool FileRecursionCheck(const std::vector<std::string> &files, int depth, std::string &error)
+    {
+        const int depthLimit = 8;
+        const size_t fileSizeLimit = 100000;
+        if (depth > depthLimit) {
+            error = "Too many levels of file nesting";
+            return false;
+        }
+        if (files.size() > fileSizeLimit) {
+            error = "Too many files matching the requirements";
+            return false;
+        }
+        return true;
     }
 
     // 寻找目录下的第一份符合条件的文件
