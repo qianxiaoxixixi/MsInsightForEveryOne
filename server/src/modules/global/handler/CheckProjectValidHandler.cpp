@@ -15,7 +15,7 @@ using namespace Global;
 namespace {
 constexpr unsigned long long CSV_SIZE = 2ULL * 1024 * 1024 * 1024;
 constexpr unsigned long long JSON_AND_BIN_SIZE = 10ULL * 1024 * 1024 * 1024;
-constexpr int MAX_DEPTH = 13;
+constexpr int MAX_DEPTH = 8;
 std::unordered_map<std::string, unsigned long long> FILE_MAX_SIZE = {
     {".csv", CSV_SIZE},
     {"json", JSON_AND_BIN_SIZE},

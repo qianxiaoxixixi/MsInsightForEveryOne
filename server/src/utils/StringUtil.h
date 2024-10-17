@@ -347,15 +347,29 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
     return stream.str();
 }
 
-static std::string GetIllegalCharacter()
-{
-    std::string illegalCharacter;
-    for (const auto ch: injectList) {
-        illegalCharacter.push_back(ch);
+    static std::string GetIllegalCharacter()
+    {
+        std::string illegalCharacter;
+        for (const auto ch : injectList) {
+            illegalCharacter.push_back(ch);
+        }
+        illegalCharacter.pop_back();
+        return illegalCharacter;
     }
-    illegalCharacter.pop_back();
-    return illegalCharacter;
-}
+
+    static std::string GetPrintAbleString(const std::string &input)
+    {
+        std::string sanitized;
+        for (const auto &item : input) {
+            if (isprint(item)) {
+                sanitized += item;
+            } else {
+                sanitized += "_";
+            }
+        }
+        return sanitized;
+    }
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};

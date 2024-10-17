@@ -313,7 +313,7 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path, std:
     std::vector<std::string> traceFiles = {};
     if (!FileUtil::CheckFilePathLength(path)) {
         error = " File path length is limit " + std::to_string(FileUtil::GetFilePathLengthLimit()) +
-            ",please shorten it: " + path;
+            ",please shorten it!";
         return traceFiles;
     }
     if (!FileUtil::IsFolder(path)) {
@@ -330,16 +330,10 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path, std:
 void ParserJson::FindTraceFiles(const std::string &path, int depth, std::string &error,
     std::vector<std::string> &traceFiles)
 {
-    const int maxDepth = 5;
-    if (depth > maxDepth) {
-        return;
-    }
     if (!std::empty(error)) {
         return;
     }
-    if (!FileUtil::CheckFilePathLength(path)) {
-        error = " File path length is limit " + std::to_string(FileUtil::GetFilePathLengthLimit()) +
-            ",please shorten it: " + path;
+    if (!FileUtil::FileRecursionCheck(traceFiles, depth, error)) {
         return;
     }
     std::vector<std::string> folders;
@@ -388,9 +382,13 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
         traceFiles.emplace_back(traceFilePath);
         return;
     }
-    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](const std::string &path,
+    std::string error;
+    std::function<void(const std::string &, int)> find = [&find, this, &traceFiles, &error](const std::string &path,
         int depth) {
-        if (depth > 5) {
+        if (!std::empty(error)) {
+            return;
+        }
+        if (!FileUtil::FileRecursionCheck(traceFiles, depth, error)) {
             return;
         }
         std::vector<std::string> folders;
@@ -421,6 +419,9 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
         std::string tmpPath = FileUtil::SplicePath(path, folder);
         find(tmpPath, 0);
         break;
+    }
+    if (!std::empty(error)) {
+        ServerLog::Warn(StringUtil::GetPrintAbleString(path), " warn is: ", error);
     }
 }
 
