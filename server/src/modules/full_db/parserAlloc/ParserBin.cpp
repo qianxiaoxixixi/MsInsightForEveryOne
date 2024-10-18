@@ -67,9 +67,16 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     sourceFileParser.Reset();
     std::vector<std::string> empty;
     auto files = GetSimulationTraceFiles(selectedFolder, response.body);
+    std::string fileId = "";
+    if (!files.empty()) {
+        fileId = files.front().second;
+    } else {
+        fileId = selectedFolder;
+        ServerLog::Error("Simulation trace files is empty.");
+    }
     response.body.isSimulation = true;
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    sourceFileParser.Parse(empty, files.front().second, selectedFolder);
+    sourceFileParser.Parse(empty, fileId, selectedFolder);
     sourceFileParser.ConvertToData();
     for (const auto &rankEntry : rankListMap) {
         if (rankEntry.second.empty()) {
