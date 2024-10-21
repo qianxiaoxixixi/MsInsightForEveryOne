@@ -367,9 +367,22 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryCurveData(resp);
+            let columns: string[] = [];
+            if (groupId === 'Stream') {
+                columns = resp.legends?.map(legend => {
+                    const index = legend.lastIndexOf(' ');
+                    if (index > -1) {
+                        return t(legend.slice(0, index), { stream: legend.slice(index + 1) });
+                    } else {
+                        return t(legend);
+                    }
+                });
+            } else {
+                columns = resp.legends?.map(legend => t(legend));
+            }
             setLineChartData({
                 title: resp.title,
-                columns: resp.legends?.map(legend => t(legend)),
+                columns,
                 rows: resp.lines,
             });
         }).catch(err => {
