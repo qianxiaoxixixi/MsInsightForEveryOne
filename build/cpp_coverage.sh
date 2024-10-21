@@ -6,7 +6,7 @@ set -e
 CUR_DIR=$(dirname $(readlink -f $0))
 TOP_DIR=${CUR_DIR}/..
 cd ${TOP_DIR}/server/build
-export LD_LIBRARY_PATH=${TOP_DIR}'/server/output/linux-x86_64/bin:${LD_LIBRARY_PATH}'
+export LD_LIBRARY_PATH=${TOP_DIR}'/server/output/linux-x86_64/bin':${LD_LIBRARY_PATH}
 python3 preprocess_third_party.py
 python3 build.py test
 
