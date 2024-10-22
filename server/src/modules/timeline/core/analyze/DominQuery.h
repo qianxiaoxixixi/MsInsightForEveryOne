@@ -4,6 +4,7 @@
 #ifndef PROFILER_SERVER_SLICEQUERY_H
 #define PROFILER_SERVER_SLICEQUERY_H
 #include <string>
+#include "DomainObject.h"
 namespace Dic::Module::Timeline {
 struct SliceQuery {
     uint64_t trackId = 0;

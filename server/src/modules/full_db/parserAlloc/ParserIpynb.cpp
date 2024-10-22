@@ -4,8 +4,6 @@
 #include "pch.h"
 #include "JupyterServerManager.h"
 #include "JupyterFileParser.h"
-#include "WsSession.h"
-#include "WsSessionManager.h"
 #include "ConstantDefs.h"
 #include "JupyterProtocolEvent.h"
 #include "ParamsParser.h"
@@ -43,7 +41,6 @@ void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &project
 
 void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::string &fileName, bool isDisplay)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -52,8 +49,7 @@ void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::s
     response.body.isIpynb = isDisplay;
     response.body.reset = true;
     response.body.subdirectoryList.push_back(fileName);
-    ModuleRequestHandler::SetResponseResult(response, true);
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
 }
 
 void ParserIpynb::JupyterProcess(const std::string &file)
@@ -71,11 +67,6 @@ void ParserIpynb::JupyterProcess(const std::string &file)
 void ParserIpynb::SendJupyterInfo(std::string url)
 {
     Server::ServerLog::Info("Parse jupyter file end, send event");
-    Server::WsSession *session = Server::WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        Server::ServerLog::Warn("Failed to get session");
-        return;
-    }
     auto event = std::make_unique<ParseJupyterCompletedEvent>();
     event->moduleName = MODULE_JUPYTER;
     event->result = true;
@@ -85,7 +76,7 @@ void ParserIpynb::SendJupyterInfo(std::string url)
         event->body.parseResult = PARSE_RESULT_OK;
     }
     event->body.url = std::move(url);
-    session->OnEvent(std::move(event));
+    SendEvent(std::move(event));
 }
 
 ProjectTypeEnum ParserIpynb::GetProjectType(const std::vector<std::string> &dataPath)

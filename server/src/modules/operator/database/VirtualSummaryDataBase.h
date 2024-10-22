@@ -6,7 +6,7 @@
 #define PROFILER_SERVER_SUMMARY_DATABASE_H
 
 #include "Database.h"
-#include "Protocol.h"
+#include "ProtocolMessage.h"
 #include "SummaryDef.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+#include "pch.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "StageAndBubbleTimeHandler.h"

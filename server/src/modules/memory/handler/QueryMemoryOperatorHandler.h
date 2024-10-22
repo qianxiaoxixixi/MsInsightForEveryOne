@@ -7,7 +7,6 @@
 
 #include "MemoryRequestHandler.h"
 #include "VirtualMemoryDataBase.h"
-#include "WsSession.h"
 
 namespace Dic {
 namespace Module {

@@ -13,6 +13,7 @@
 #include "QueryParallelStrategyConfigHandler.h"
 #include "SetParallelStrategyConfigHandler.h"
 #include "QueryFwdBwdTimelineHandler.h"
+#include "ProtocolDefs.h"
 #include "SummaryModule.h"
 
 namespace Dic {

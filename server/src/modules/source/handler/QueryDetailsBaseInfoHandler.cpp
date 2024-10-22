@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
-#include "WsSessionManager.h"
 #include "SourceProtocolRequest.h"
 #include "SourceProtocolResponse.h"
 #include "SourceFileParser.h"
@@ -21,7 +20,7 @@ bool QueryDetailsBaseInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     SetBaseResponse(request, response);
     bool compareDataRes = SourceFileParser::Instance().GetDetailsBaseInfo(response.body.compare, false);
     if (!compareDataRes) {
-        SendResponse(std::move(responsePtr), false, "Get detail base info error", ErrorCode::UNKNOW_ERROR);
+        SendResponse(std::move(responsePtr), false, "Get detail base info error", UNKNOW_ERROR);
         return false;
     }
 

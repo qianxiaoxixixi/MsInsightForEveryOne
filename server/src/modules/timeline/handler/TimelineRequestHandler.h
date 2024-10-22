@@ -10,6 +10,7 @@
 #include "ModuleRequestHandler.h"
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
+#include "ProtocolDefs.h"
 
 namespace Dic {
 namespace Module {

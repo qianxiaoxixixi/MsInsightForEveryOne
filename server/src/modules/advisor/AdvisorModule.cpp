@@ -7,6 +7,7 @@
 #include "QueryAiCpuOpAdviceHandler.h"
 #include "QueryAclnnOpAdvisorHandler.h"
 #include "QueryFusedOpAdviceHandler.h"
+#include "ProtocolDefs.h"
 #include "AdvisorModule.h"
 
 namespace Dic::Module {

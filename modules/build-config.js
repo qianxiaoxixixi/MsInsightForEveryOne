@@ -63,9 +63,8 @@ const htmllist = [
 
 const webpackCfg = {
   timelineConfigure: (webpackConfig) => {
-    // Because CEF has issues with loading source maps properly atm,
-    // lets use the best we can get in line with `inline-source-map`
-    webpackConfig.devtool = 'inline-source-map';
+    // 设置devtool = false，关闭构建代码映射的生成，减小前端构建产物的大小
+    webpackConfig.devtool = false;
     return webpackConfig;
   },
   clusterConfigure: (webpackConfig) => {

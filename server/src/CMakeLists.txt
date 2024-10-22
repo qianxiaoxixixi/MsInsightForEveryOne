@@ -5,6 +5,10 @@ add_compile_definitions("LIBUS_NO_SSL")
 add_compile_definitions("UWS_NO_ZLIB")
 add_compile_definitions("LIBUS_USE_LIBUV")
 
+include_directories(${SRC_HOME_DIR}/../msinsight/src)
+include_directories(${SRC_HOME_DIR}/../msinsight/src/utils)
+include_directories(${SRC_HOME_DIR}/../msinsight/src/base)
+
 # src defs
 include_directories(${SRC_HOME_DIR}/defs)
 
@@ -27,7 +31,9 @@ aux_source_directory(${SRC_HOME_DIR}/protocol DIC_PROTOCOL_SRC)
 # src modules
 include_directories(${SRC_HOME_DIR}/modules)
 include_directories(${SRC_HOME_DIR}/modules/base)
+include_directories(${SRC_HOME_DIR}/modules/defs)
 include_directories(${SRC_HOME_DIR}/modules/base/core)
+include_directories(${SRC_HOME_DIR}/modules/base/utils)
 include_directories(${SRC_HOME_DIR}/modules/base/handler)
 include_directories(${SRC_HOME_DIR}/modules/base/protocol)
 include_directories(${SRC_HOME_DIR}/modules/global)
@@ -208,7 +214,6 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SOURCE_CORE_SRC}
         ${DIC_MODULES_ADVISOR_SRC} ${DIC_MODULES_ADVISOR_HANDLER_SRC}
         ${DIC_MODULES_ADVISOR_PROTOCOL_SRC} ${DIC_MODULES_ADVISOR_PROCESS_SRC})
-include_directories(${SRC_HOME_DIR}/entry/server/bin/include)
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test")
     enable_testing()

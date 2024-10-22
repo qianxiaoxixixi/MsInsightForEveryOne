@@ -9,6 +9,7 @@
 #include "QueryOperatorSizeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
 #include "QueryMemoryStaticOperatorListHandler.h"
+#include "ProtocolDefs.h"
 #include "MemoryModule.h"
 
 namespace Dic {

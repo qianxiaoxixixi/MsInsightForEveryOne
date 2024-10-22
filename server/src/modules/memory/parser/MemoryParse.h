@@ -14,6 +14,7 @@
 #include "MemoryDef.h"
 #include "FileParser.h"
 #include "ConstantDefs.h"
+#include "TimelineProtocolEvent.h"
 
 namespace Dic {
 namespace Module {

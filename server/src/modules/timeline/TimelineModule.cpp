@@ -2,6 +2,7 @@
 //  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
 //
 #include "pch.h"
+#include "ProtocolDefs.h"
 #include "QueryThreadTracesHandler.h"
 #include "QueryThreadsHandler.h"
 #include "QueryThreadDetailHandler.h"

@@ -68,7 +68,7 @@ TEST_F(ParamsParserTest, testServerStart)
 TEST_F(ParamsParserTest, testWsSession)
 {
     Dic::Server::WsChannel *ws;
-    std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSession>(ws);
+    std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
     int waitTime = 10;
     session->WaitForExit(waitTime);
     session->GetChannel();
@@ -86,9 +86,8 @@ TEST_F(ParamsParserTest, testWsSession)
     EXPECT_EQ(session->GetDeviceKey(), "deviceKey");
     session->SendEvent(event1);
     Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
-    auto getSession = Dic::Server::WsSessionManager::Instance().GetSession(ws);
+    auto getSession = Dic::Server::WsSessionManager::Instance().GetSession();
     Dic::Protocol::Event event("1");
-    Dic::Server::WsSessionManager::Instance().OnEventByMainSession(event);
     EXPECT_EQ(getSession == nullptr, false);
     auto curSession = Dic::Server::WsSessionManager::Instance().GetSession();
     if (curSession != nullptr) {

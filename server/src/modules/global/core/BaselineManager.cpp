@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <string>
+#include "pch.h"
 #include "ParserStatusManager.h"
 #include "BaselineManager.h"
 namespace Dic::Module::Global {
@@ -22,7 +23,7 @@ std::string BaselineManager::GetBaselineId()
         {
             std::shared_lock<std::shared_mutex> sharedLock(sharedMutex);
             if (!std::empty(baselineRankId) &&
-                Protocol::ParserStatusManager::Instance().IsKernelAndMemoryFinished(baselineRankId)) {
+                Timeline::ParserStatusManager::Instance().IsKernelAndMemoryFinished(baselineRankId)) {
                 return baselineRankId;
             }
         }

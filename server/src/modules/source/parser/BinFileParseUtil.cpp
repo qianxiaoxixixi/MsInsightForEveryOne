@@ -4,6 +4,7 @@
 
 #include "BinFileParseUtil.h"
 #include "ServerLog.h"
+#include "FileUtil.h"
 
 namespace Dic::Module::Source {
 using namespace Dic::Server;

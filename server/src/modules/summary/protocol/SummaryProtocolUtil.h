@@ -6,7 +6,6 @@
 #define PROFILER_SERVER_SUMMARY_PROTOCOL_UTIL_H
 
 #include <optional>
-#include "GlobalDefs.h"
 #include "SummaryProtocolResponse.h"
 
 namespace Dic {

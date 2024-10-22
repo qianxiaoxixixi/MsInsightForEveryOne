@@ -10,6 +10,7 @@
 using namespace Dic::Protocol;
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Memory;
+using namespace Dic;
 
 class MemoryParserTest : public ::testing::Test {
 public:

@@ -1,0 +1,76 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Description: Protocol enum utility declaration
+ */
+
+#ifndef DIC_PROTOCOL_ENUM_UTIL_H
+#define DIC_PROTOCOL_ENUM_UTIL_H
+
+#include <map>
+#include <string>
+#include <optional>
+#include "DomainObject.h"
+#include "ProtocolDefs.h"
+
+namespace Dic {
+namespace Protocol {
+using namespace Module::Timeline;
+template <typename ENUM> using EnumStrMap = std::map<ENUM, std::string>;
+const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWARE, "Ascend Hardware" },
+                                                   { PROCESS_TYPE::HCCL, "HCCL" },
+                                                   { PROCESS_TYPE::OVERLAP_ANALYSIS, "OVERLAP_ANALYSIS"},
+                                                   { PROCESS_TYPE::CANN_API, "CANN_API" },
+                                                   { PROCESS_TYPE::API, "PYTORCH_API" },
+                                                   { PROCESS_TYPE::LLC, "LLC" },
+                                                   { PROCESS_TYPE::PCIE, "PCIE" },
+                                                   { PROCESS_TYPE::ROCE, "RoCE" },
+                                                   { PROCESS_TYPE::ROH, "RoH" },
+                                                   { PROCESS_TYPE::NIC, "NIC" },
+                                                   { PROCESS_TYPE::SAMPLE_PMU, "SAMPLE_PMU_TIMELINE" },
+                                                   { PROCESS_TYPE::HCCS, "HCCS" },
+                                                   { PROCESS_TYPE::DDR, "DDR" },
+                                                   { PROCESS_TYPE::ACC_PMU, "ACC_PMU" },
+                                                   { PROCESS_TYPE::AI_CORE, "AICORE_FREQ" },
+                                                   { PROCESS_TYPE::NPU_MEM, "NPU_MEM" },
+                                                   { PROCESS_TYPE::STARS_SOC, "SOC_BANDWIDTH_LEVEL" },
+                                                   { PROCESS_TYPE::MS_TX, "MSTX_EVENTS" },
+                                                   { PROCESS_TYPE::HBM, "HBM" },
+                                                   { PROCESS_TYPE::TEXT, "TEXT" }};
+
+template <typename E> std::optional<std::string> ENUM_TO_STR(const E &e)
+{
+    return std::nullopt;
+}
+
+template <typename E> std::optional<E> STR_TO_ENUM(const std::string &s)
+{
+    return std::nullopt;
+}
+
+template <typename E, typename M> std::optional<E> TryGetEnum(const M &map, const std::string &s)
+{
+    for (const auto &iter : map) {
+        if (iter.second == s) {
+            return iter.first;
+        }
+    }
+    return std::nullopt;
+}
+
+template <> inline std::optional<std::string> ENUM_TO_STR<PROCESS_TYPE>(const PROCESS_TYPE &e)
+{
+    if (PROCESS_TYPE_ES.count(e) == 0) {
+        return std::nullopt;
+    }
+    return PROCESS_TYPE_ES.at(e);
+}
+
+template <> inline std::optional<PROCESS_TYPE> STR_TO_ENUM<PROCESS_TYPE>(const std::string &s)
+{
+    return TryGetEnum<PROCESS_TYPE>(PROCESS_TYPE_ES, s);
+}
+#pragma endregion
+} // end of namespace Protocol
+} // end of namespace Dic
+
+#endif // DIC_PROTOCOL_ENUM_UTIL_H

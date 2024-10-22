@@ -60,7 +60,7 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
             continue;
         }
         if (fs::is_directory(filePath)) {
-            if (TraverseFolder(params, path, fileCount, error)) {
+            if (TraverseFolder(params, filePath, fileCount, error)) {
                 continue;
             }
             return false;
@@ -91,22 +91,26 @@ bool Dic::Module::CheckProjectValidHandler::CheckProjectFile(ProjectCheckParams 
 
 bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePath)
 {
-    if (fs::file_size(filePath) > FILE_MAX_SIZE[filePath.extension().string()]) {
+    try {
+        if (fs::file_size(filePath) > FILE_MAX_SIZE[filePath.extension().string()]) {
+            return false;
+        }
+    } catch (fs::filesystem_error& e) {
+        ServerLog::Error("Get File Size Failed! path: ", filePath.string(), ", reason: ", e.what());
         return false;
     }
     return true;
 }
 
-bool CheckProjectValidHandler::TraverseFolder(ProjectCheckParams &params, const std::string& folderPath,
+bool CheckProjectValidHandler::TraverseFolder(ProjectCheckParams &params, const fs::path &filePath,
                                               uint64_t &fileCount, ProjectErrorType &error)
 {
-    for (auto &file : fs::directory_iterator(fs::u8path(folderPath))) {
+    for (auto &file : fs::directory_iterator(filePath)) {
         if (++fileCount > FILE_COUNT_LIMIT) {
             break;
         }
-        auto path = file.path().string();
         if (fs::is_directory(file)) {
-            if (TraverseFolder(params, path, fileCount, error)) {
+            if (TraverseFolder(params, file, fileCount, error)) {
                 continue;
             }
             return false;

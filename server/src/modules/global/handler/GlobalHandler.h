@@ -8,6 +8,7 @@
 #include "ModuleRequestHandler.h"
 #include "GlobalProtocolRequest.h"
 #include "GlobalProtocolResponse.h"
+#include "ProtocolDefs.h"
 
 namespace Dic {
 namespace Module {
