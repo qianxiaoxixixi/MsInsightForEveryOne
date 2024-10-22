@@ -6,7 +6,7 @@
 #ifndef PROFILER_SERVER_ADVISORPROTOCOLUTIL_H
 #define PROFILER_SERVER_ADVISORPROTOCOLUTIL_H
 
-#include "ProtocolUtil.h"
+#include "ProtocolMessage.h"
 
 namespace Dic::Protocol {
 class AdvisorProtocolUtil : public ProtocolUtil {

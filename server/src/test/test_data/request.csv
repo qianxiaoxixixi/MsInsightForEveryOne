@@ -120,9 +120,9 @@
 {"id":312,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"compute","rankId":"0","stepId":"2"}}
 {"id":313,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","stage":"p2p","currentPage":1,"pageSize":10}}
 {"id":314,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","stage":"p2p","currentPage":1,"pageSize":10}}
-{"id":315,"moduleName":"communication","type":"request","command":"communication/matrix/sortOpNames","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankList":{},"stage":"p2p"}}
+{"id":315,"moduleName":"communication","type":"request","command":"communication/matrix/sortOpNames","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankList":[],"stage":"p2p"}}
 {"id":316,"moduleName":"communication","type":"request","command":"communication/matrix/sortOpNames","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":317,"moduleName":"timeline","type":"request","command":"import/action","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":317,"moduleName":"timeline","type":"request","command":"import/action","params":{"token":"Rd``OTxPVKtcJPt]", "projectAction": 0, "isConflict": false}}
 {"id":318,"moduleName":"timeline","type":"request","command":"parse/cards","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":321,"moduleName":"timeline","type":"request","command":"unit/flows","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
 {"id":322,"moduleName":"timeline","type":"request","command":"remote/reset","params":{"token":"Rd``OTxPVKtcJPt]"}}

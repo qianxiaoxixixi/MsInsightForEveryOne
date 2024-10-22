@@ -6,6 +6,7 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "WsDefs.h"
+#include "PluginsManager.h"
 #include "WsServer.h"
 
 namespace Dic {
@@ -15,6 +16,7 @@ WsServer::WsServer(const std::string &host, int port, const std::string &sid) : 
 bool WsServer::Start()
 {
     listenStart = false;
+    Dic::Core::PluginsManager::LoadPlugins();
     listenThreadPtr = std::make_unique<std::thread>(WsServer::ListenThreadFunc, std::ref(*this));
     if (listenThreadPtr == nullptr) {
         return false;
@@ -122,7 +124,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
         ServerLog::Error("Not Connect, already connecting");
         return;
     }
-    std::unique_ptr<WsSession> session = std::make_unique<WsSession>(ws);
+    std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
     WsSessionManager::Instance().AddSession(std::move(session));
 }
 
@@ -132,9 +134,9 @@ void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
     if (ws == nullptr) {
         return;
     }
-    WsSession *session = WsSessionManager::Instance().GetSession(ws);
+    WsSessionImpl *session = dynamic_cast<WsSessionImpl *>(WsSessionManager::Instance().GetSession());
     if (session != nullptr) {
-        session->SetStatus(WsSession::Status::CLOSED);
+        session->SetStatus(WsSessionImpl::Status::CLOSED);
         session->WaitForExit();
         WsSessionManager::Instance().RemoveSession();
         ServerLog::Info("Session remove ok.");
@@ -146,7 +148,7 @@ void WsServer::OnMessageCb(WsChannel *ws, std::string_view message, uWS::OpCode 
     if (ws == nullptr) {
         return;
     }
-    WsSession *session = WsSessionManager::Instance().GetSession(ws);
+    WsSessionImpl *session = dynamic_cast<WsSessionImpl *>(WsSessionManager::Instance().GetSession());
     if (session == nullptr) {
         ServerLog::Error("Session is not valid, it will be closed at server.");
         return;

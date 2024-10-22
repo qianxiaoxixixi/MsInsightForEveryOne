@@ -1,11 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-#include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "BaselineManager.h"
 #include "TraceTime.h"
-#include "NumberUtil.h"
 #include "QueryMemoryViewHandler.h"
 
 namespace Dic {
@@ -15,7 +13,6 @@ using namespace Dic::Server;
 bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryViewRequest &request = dynamic_cast<MemoryViewRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MemoryViewResponse> responsePtr = std::make_unique<MemoryViewResponse>();
     MemoryViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
@@ -41,7 +38,7 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
             return false;
         }
-        auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;

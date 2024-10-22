@@ -4,9 +4,8 @@
  */
 
 #include "pch.h"
-#include "ProtocolDefs.h"
+#include "ProtocolEnumUtil.h"
 #include "ProtocolManager.h"
-#include "TimelineProtocolRequest.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {

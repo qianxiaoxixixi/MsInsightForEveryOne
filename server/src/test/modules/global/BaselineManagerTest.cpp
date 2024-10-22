@@ -82,7 +82,7 @@ TEST_F(BaselineManagerTest, TestText)
     bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo);
     std::string notFinishTask = "";
     int index = 0;
-    while (index < retry && !Dic::Protocol::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
+    while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
         const int sleepTime = 2000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         index++;
@@ -101,7 +101,7 @@ TEST_F(BaselineManagerTest, TestDb)
     bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo);
     std::string notFinishTask = "";
     int index = 0;
-    while (index < retry && !Dic::Protocol::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
+    while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
         const int sleepTime = 2000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         index++;

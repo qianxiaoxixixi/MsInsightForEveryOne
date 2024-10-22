@@ -7,8 +7,7 @@
 #include "ProtocolDefs.h"
 #include "DataBaseManager.h"
 #include "FileDef.h"
-#include "WsSession.h"
-#include "WsSessionManager.h"
+#include "WsSender.h"
 #include "TraceTime.h"
 #include "MemoryParse.h"
 
@@ -571,12 +570,6 @@ void MemoryParse::ParseEndCallBack(const std::string &fileId, bool result, const
 
 void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        ServerLog::Error("[Memory]Failed to get session.");
-        return;
-    }
-
     // 如果输入fileId
     if (fileId.empty()) {
         MemoryParse::Instance().ranks.clear();
@@ -584,7 +577,7 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
         event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
         event->reset = true;
-        session->OnEvent(std::move(event));
+        SendEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
         event->moduleName = Protocol::MODULE_TIMELINE;
@@ -595,7 +588,7 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
             memoryResult.push_back(pair.second);
         }
         event->memoryResult = memoryResult;
-        session->OnEvent(std::move(event));
+        SendEvent(std::move(event));
     }
 }
 

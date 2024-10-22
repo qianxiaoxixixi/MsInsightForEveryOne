@@ -6,7 +6,6 @@
 #define PROFILER_SERVER_COMMUNICATION_PROTOCOL_UTIL_H
 
 #include <optional>
-#include "GlobalDefs.h"
 #include "CommunicationProtocolResponse.h"
 
 namespace Dic {

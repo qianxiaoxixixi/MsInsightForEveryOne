@@ -9,13 +9,12 @@
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolResponse.h"
 #include "OperatorGroupConverter.h"
-#include "WsSessionManager.h"
 #include "OperatorProtocol.h"
 #include "QueryOpStatisticInfoHandler.h"
 
 namespace {
     using namespace Dic::Server;
-    using StatisticCmpRes = Protocol::OperatorStatisticCmpInfoRes;
+    using StatisticCmpRes = Dic::Protocol::OperatorStatisticCmpInfoRes;
 
     using StatisticCmpFun = std::function<bool(const StatisticCmpRes&, const StatisticCmpRes&)>;
     std::unordered_map<std::string, StatisticCmpFun> StatisticDescCompareFunctions = {
@@ -91,7 +90,6 @@ namespace Dic::Module::Operator {
     bool QueryOpStatisticInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorStatisticInfoRequest &request = dynamic_cast<OperatorStatisticInfoRequest &>(*requestPtr);
-        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<OperatorStatisticInfoResponse> responsePtr = std::make_unique<OperatorStatisticInfoResponse>();
         OperatorStatisticInfoResponse &response = *responsePtr;
 
@@ -104,8 +102,7 @@ namespace Dic::Module::Operator {
                 HandleStatisticcDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr));
         }
         SetBaseResponse(request, response);
-        SetResponseResult(response, rst);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), rst);
         return rst;
     }
 
@@ -124,7 +121,7 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get baseline id.");
             return false;
         }
-        auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabase(baselineId);
         std::vector<Protocol::OperatorStatisticInfoRes> baselineRes;
         request.params.rankId = "";
         if (!databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {

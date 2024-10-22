@@ -2,12 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "BaselineManager.h"
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocolRespose.h"
-#include "NumberUtil.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
 
 namespace Dic {
@@ -18,7 +16,6 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
 {
     MemoryStaticOperatorGraphRequest &request =
             dynamic_cast<MemoryStaticOperatorGraphRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtr =
             std::make_unique<MemoryStaticOperatorGraphResponse>();
     MemoryStaticOperatorGraphResponse &response = *responsePtr.get();
@@ -40,7 +37,7 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
             return false;
         }
-        auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;

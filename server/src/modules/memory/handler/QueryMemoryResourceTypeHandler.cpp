@@ -1,6 +1,5 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 
-#include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocolRespose.h"
@@ -13,7 +12,6 @@ namespace Memory {
     bool QueryMemoryResourceTypeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         MemoryResourceTypeRequest &request = dynamic_cast<MemoryResourceTypeRequest &>(*requestPtr.get());
-        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<MemoryResourceTypeResponse> responsePtr = std::make_unique<MemoryResourceTypeResponse>();
         MemoryResourceTypeResponse &response = *responsePtr.get();
         SetBaseResponse(request, response);

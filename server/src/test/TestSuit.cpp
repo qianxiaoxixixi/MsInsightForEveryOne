@@ -12,11 +12,13 @@
 #include "ParserStatusManager.h"
 #include "KernelParse.h"
 #include "MemoryParse.h"
+#include "WsSessionImpl.h"
 
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Summary;
 using namespace Dic::Module::Memory;
+using namespace Dic;
 
 class TestSuit : public ::testing::Test {
 public:

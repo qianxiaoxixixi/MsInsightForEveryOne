@@ -8,7 +8,7 @@
 #include <set>
 #include "Database.h"
 #include "ClusterDef.h"
-#include "Protocol.h"
+#include "ProtocolMessage.h"
 #include "SummaryProtocolResponse.h"
 #include "TimelineProtocolResponse.h"
 #include "TimelineProtocolRequest.h"

@@ -11,7 +11,6 @@
 #include <mutex>
 #include "GlobalProtocolResponse.h"
 #include "SystemMemoryDatabase.h"
-#include "ParamsParser.h"
 
 namespace Dic {
 namespace Module {

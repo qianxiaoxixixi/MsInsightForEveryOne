@@ -8,7 +8,6 @@
 #include "FileParser.h"
 #include "ThreadPool.h"
 #include "map"
-#include "WsSessionManager.h"
 #include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {

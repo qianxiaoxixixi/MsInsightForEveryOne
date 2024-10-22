@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_OPERATORREQUESTHANDLER_H
 
 #include "ModuleRequestHandler.h"
+#include "ProtocolDefs.h"
 
 namespace Dic::Module::Operator {
     class OperatorRequestHandler : public ModuleRequestHandler {

@@ -80,18 +80,6 @@ TEST(TimeUtil, NowUTC) {
     EXPECT_GE(currentTime, expectedTime);
 }
 
-TEST(TimeUtil, MsToNs) {
-    int64_t milliseconds = 100;
-    int64_t expectedNanoseconds = 100000000;
-    assert(TimeUtil::Instance().MsToNs(milliseconds) == expectedNanoseconds);
-}
-
-TEST(TimeUtil, NsToMs) {
-    int64_t nanoseconds = 100000000;
-    int64_t expectedMilliseconds = 100;
-    assert(TimeUtil::Instance().NsToMs(nanoseconds) == expectedMilliseconds);
-}
-
 TEST(TimeUtil, NowStr) {
     std::string withMillisec = TimeUtil::Instance().NowStr(TimeStyle::WITH_MILLI_SEC);
     EXPECT_EQ(withMillisec.size(), 23);

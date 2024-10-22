@@ -7,6 +7,9 @@
 #define PROFILER_SERVER_TESTCASEDATABASEUTIL_H
 #include <sqlite3.h>
 #include <string>
+namespace Dic::Protocol {
+    using namespace Dic::Module::Timeline;
+}
 namespace Dic::TimeLine::TestCaseUtil {
 class TestCaseDatabaseUtil {
 public:

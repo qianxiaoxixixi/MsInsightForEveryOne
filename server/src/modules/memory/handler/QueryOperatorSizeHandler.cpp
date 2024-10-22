@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-#include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "QueryOperatorSizeHandler.h"
 
@@ -12,7 +11,6 @@ using namespace Dic::Server;
 bool QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryOperatorSizeRequest &request = dynamic_cast<MemoryOperatorSizeRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MemoryOperatorSizeResponse> responsePtr = std::make_unique<MemoryOperatorSizeResponse>();
     MemoryOperatorSizeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);

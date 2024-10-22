@@ -14,14 +14,14 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "ParamsParser.h"
 #include "WsServer.h"
-#include "ProtocolMessage.h"
+#include "ProtocolUtil.h"
 
 using namespace Dic;
 
 TEST_F(TestSuit, TestAllRequestHandler)
 {
     WsChannel *ws;
-    std::unique_ptr<WsSession> session = std::make_unique<WsSession>(ws);
+    std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
     WsSessionManager::Instance().AddSession(std::move(session));
     std::string err = "";
     std::string currPath = Dic::FileUtil::GetCurrPath();

@@ -15,6 +15,7 @@
 #include "RanksHandler.h"
 #include "GroupHandler.h"
 #include "MatrixListHandler.h"
+#include "ProtocolDefs.h"
 
 namespace Dic {
 namespace Module {

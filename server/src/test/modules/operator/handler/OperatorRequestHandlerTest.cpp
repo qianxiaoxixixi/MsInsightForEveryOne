@@ -10,13 +10,15 @@
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
 #include "QueryOpMoreInfoHandler.h"
+#include "WsSessionImpl.h"
 
+using namespace Dic::Server;
 class OperatorRequestHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
         Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSession>(ws);
+        std::unique_ptr<WsSessionImpl> session = std::make_unique<WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestSuite()

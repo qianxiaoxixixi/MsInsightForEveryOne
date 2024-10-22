@@ -6,6 +6,7 @@
 #ifndef PROFILER_SERVER_CLUSTERFILEPARSER_H
 #define PROFILER_SERVER_CLUSTERFILEPARSER_H
 
+#include "pch.h"
 #include <string>
 #include <vector>
 #include "ClusterDef.h"

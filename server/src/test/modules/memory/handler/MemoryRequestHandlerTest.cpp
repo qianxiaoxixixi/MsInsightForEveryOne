@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <WsSessionManager.h>
+#include "WsSessionImpl.h"
 #include "QueryMemoryOperatorHandler.h"
 #include "QueryMemoryResourceTypeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
@@ -15,19 +16,19 @@
 #include "DataBaseManager.h"
 #include "DbMemoryDataBase.h"
 #include "TraceTime.h"
-#include "FileUtil.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Memory;
 using namespace Dic::Protocol;
 using namespace Dic::Module::FullDb;
+using namespace Dic;
 
 class MemoryRequestHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
         Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSession>(ws);
+        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
         std::string currPath = Dic::FileUtil::GetCurrPath();
         int index = currPath.find("server");

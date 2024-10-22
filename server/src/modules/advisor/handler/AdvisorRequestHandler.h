@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_ADVISORREQUESTHANDLER_H
 
 #include "ModuleRequestHandler.h"
+#include "ProtocolDefs.h"
 
 namespace Dic::Module::Advisor {
 class AdvisorRequestHandler : public ModuleRequestHandler {
