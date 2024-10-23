@@ -167,6 +167,16 @@ task copyExeToSandbox() {
         copy {
             from "${rootDir}/../../server/output/build/server"
             into "${project.buildDir}/idea-sandbox/plugins/mindstudio-insight/tools/"
+            eachFile { file ->
+                if (file.isDirectory()) {
+                    file.mode = 0750
+                } else {
+                    file.mode = 0640
+                    if (file.name == "profiler_server") {
+                        file.mode = 0550
+                    }
+                }
+            }
         }
     }
 }

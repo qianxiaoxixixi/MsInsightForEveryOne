@@ -119,7 +119,6 @@ public class ServerHelper {
                 serverProcess = execute.orElse(null);
                 return;
             }
-            Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER);
             Process scanProcess = Runtime.getRuntime().exec(pluginsPath + lineSeparator
                     + CmdConstants.PROFILER_SERVER + ' ' + CmdConstants.SCAN_PREFIX + CmdConstants.WS_BASE_PORT);
 
