@@ -125,7 +125,7 @@ function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setVa
     inputRef?.current?.focus();
 }
 
-const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
+export const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
     const cardId = (metaData as ThreadTraceRequest).cardId;
     const timestampOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0;
     const [offset, setOffset] = useState(String(timestampOffset));
@@ -152,7 +152,7 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
                         />
                         {visible && <div>{title}</div>}
                     </div>
-                    <CustomButton tooltip={t('Align to Start', { ns: 'timeline' })} icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
+                    <CustomButton aria-label="align to start" tooltip={t('Align to Start', { ns: 'timeline' })} icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
                 </InputDiv>
             </InputContainer>}
         overlayInnerStyle={{ borderRadius: 2 }}>
