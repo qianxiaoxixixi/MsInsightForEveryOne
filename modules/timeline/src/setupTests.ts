@@ -5,6 +5,7 @@ import { Session } from './entity/session';
 import { cleanup as reactCleanup } from '@testing-library/react';
 import { cleanup as reactHooksCleanup } from '@testing-library/react-hooks';
 import { customConsole as console } from 'ascend-utils';
+import '@testing-library/jest-dom';
 
 declare global {
     const session: Session;
