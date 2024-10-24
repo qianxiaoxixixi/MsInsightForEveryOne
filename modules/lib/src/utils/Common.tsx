@@ -169,17 +169,28 @@ export function formatDecimal(val: number | string, fixed = 2): number {
     }
 }
 
+const htmlEscapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    '\'': '&#39;',
+    '/': '&#x2F;',
+};
+
+const escapeHTML = (input: string): string => {
+    return input.replace(/[&<>"'/]/g, match => htmlEscapeMap[match as keyof typeof htmlEscapeMap]);
+};
+
+
 export const safeStr = (val: string | number, ignore?: string): string => {
-    if (val === undefined || val === null) {
-        return val;
+    if (typeof val !== 'string') {
+        return '';
     }
-    const str = String(val);
-    if (ignore !== undefined && ignore !== null && ignore !== '') {
-        const list = str.split(ignore);
-        const safelist = list.map(item => item.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-        return safelist.join(ignore);
+    if (ignore) {
+        return val.split(ignore).map(item => escapeHTML(item)).join(ignore);
     }
-    return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return escapeHTML(val);
 };
 
 export function FormItem({ name, style, content, nameStyle }:

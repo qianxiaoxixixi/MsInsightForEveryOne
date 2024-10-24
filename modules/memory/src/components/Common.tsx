@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpIcon } from 'ascend-icon';
 import { Tooltip } from 'ascend-components';
+import { safeStr } from 'ascend-utils';
 
 const HOUR_TO_MICROSECOND = 1000 * 1000 * 60 * 60;
 const MINUTE_TO_MICROSECOND = 1000 * 1000 * 60;
@@ -41,18 +42,6 @@ export const useChartCharacter = (): React.ReactElement => {
     }>
         <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
     </Tooltip>;
-};
-
-export const safeStr = (str: string, ignore?: string): string => {
-    if (str === undefined || str === null) {
-        return str;
-    }
-    if (ignore !== undefined && ignore !== null && ignore !== '') {
-        const list = str.split(ignore);
-        const safelist = list.map(item => item.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-        return safelist.join(ignore);
-    }
-    return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
 export const convertTime = (time: any): string => {

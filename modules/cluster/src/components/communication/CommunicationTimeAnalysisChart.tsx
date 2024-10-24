@@ -7,7 +7,7 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
-import { Loading, safeStr } from '../Common';
+import { Loading } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'ascend-components';
 import type { MenuProps } from 'antd';
@@ -15,7 +15,7 @@ import connector from '../../connection';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
-import { disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
+import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;

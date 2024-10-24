@@ -9,14 +9,14 @@ import type { TFunction } from 'i18next';
 import { Select, Checkbox, InputNumber, Button } from 'ascend-components';
 import { message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { Label, COLOR, getDecimalCount, safeStr } from '../Common';
+import { Label, COLOR, getDecimalCount } from '../Common';
 import type { ConditionDataType } from './Filter';
 import type { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
+import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
 
 interface FilterInfos {
     min: number;
