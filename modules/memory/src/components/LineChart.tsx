@@ -7,9 +7,9 @@ import type { TFunction } from 'i18next';
 import type { Graph } from '../entity/memory';
 import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
-import { convertTime, safeStr, useChartCharacter } from './Common';
+import { convertTime, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
-import { chartColors, getDefaultChartOptions } from 'ascend-utils';
+import { chartColors, getDefaultChartOptions, safeStr } from 'ascend-utils';
 
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColor};
