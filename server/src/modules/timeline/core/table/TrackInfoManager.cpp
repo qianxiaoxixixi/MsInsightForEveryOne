@@ -16,8 +16,9 @@ uint64_t TrackInfoManager::GetTrackId(const std::string &cardId, const std::stri
     }
     trackIdMap[cardId].emplace(item, ++maxTrackId);
     std::string rankId = GetRankId(cardId);
+    std::string deviceId = GetDeviceId(cardId);
     std::string host = GetHost(cardId);
-    trackInfoMap[maxTrackId] = {host, cardId, rankId, pid, tid, maxTrackId};
+    trackInfoMap[maxTrackId] = {host, cardId, rankId, deviceId, pid, tid, maxTrackId};
     return maxTrackId;
 }
 
@@ -28,6 +29,7 @@ void TrackInfoManager::Reset()
     hostMap.clear();
     trackInfoMap.clear();
     maxTrackId = 0;
+    deviceMap.clear();
 }
 
 void TrackInfoManager::UpdateHost(const std::string &cardId, const std::string &host)
@@ -42,6 +44,18 @@ std::string TrackInfoManager::GetRankId(const std::string &cardId)
         return cardId;
     }
     return cardId.substr(hostMap.at(cardId).length());
+}
+
+std::string TrackInfoManager::GetDeviceId(const std::string &cardId)
+{
+    std::string rankId = GetRankId(cardId);
+    if (deviceMap.count(cardId) == 0) {
+        return rankId;
+    }
+    if (deviceMap.at(cardId).count(rankId) == 0) {
+        return rankId;
+    }
+    return deviceMap.at(cardId).at(rankId);
 }
 
 std::string TrackInfoManager::GetHost(const std::string &cardId)
@@ -71,9 +85,17 @@ void TrackInfoManager::UpdateTrackIdMap(const std::string &fileId,
         std::pair<std::string, std::string> tmp = { item.second, item.first };
         trackIdMap[fileId].emplace(tmp, key);
         std::string rankId = GetRankId(fileId);
+        std::string deviceId = GetDeviceId(fileId);
         std::string host = GetHost(fileId);
-        trackInfoMap[key] = {host, fileId, rankId, item.second, item.first, key};
+        trackInfoMap[key] = {host, fileId, rankId, deviceId, item.second, item.first, key};
         maxTrackId = std::max(maxTrackId, key);
     }
+}
+
+void TrackInfoManager::UpdateDeviceMap(const std::string &cardId,
+    const std::unordered_map<std::string, std::string> rankAndDeviceMap)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    deviceMap[cardId] = rankAndDeviceMap;
 }
 }

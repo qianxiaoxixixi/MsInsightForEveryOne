@@ -163,11 +163,13 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
             continue;
         }
         std::vector<std::string> rankIds = database->QueryRankId();
+        std::unordered_map<std::string, std::string> rankAndDeviceMap = database->QueryRankIdAndDeviceMap();
         auto host = database->QueryHostInfo();
         for (const auto &rank : rankIds) {
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
+            TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankAndDeviceMap);
         }
     }
     return hostMap;

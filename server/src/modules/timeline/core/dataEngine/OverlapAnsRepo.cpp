@@ -26,7 +26,7 @@ void OverlapAnsRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
         ServerLog::Warn("Failed to parpare overlap query all slice");
         return;
     }
-    stmt->BindParams(trackInfo.rankId, trackInfo.threadId);
+    stmt->BindParams(trackInfo.deviceId, trackInfo.threadId);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query overlap query all slice");

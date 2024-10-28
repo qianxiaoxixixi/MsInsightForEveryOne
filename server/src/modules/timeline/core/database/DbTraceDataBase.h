@@ -97,7 +97,8 @@ public:
 
     std::vector<std::string> QueryRankId();
     std::string QueryHostInfo() override;
-    std::string GetRealRankId(const std::string& fileId);
+    std::string GetDeviceId(const std::string& fileId);
+    std::unordered_map<std::string, std::string> QueryRankIdAndDeviceMap();
 
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
