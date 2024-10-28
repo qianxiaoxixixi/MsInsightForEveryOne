@@ -41,7 +41,7 @@ void HcclRepo::QuerySimpleSliceFromPlaneTrack(std::vector<SliceDomain> &sliceVec
     std::vector<TaskPO> taskPoVec;
     taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TIMESTAMP)
         .Select(TaskColumn::ENDTIME)
-        .Eq(TaskColumn::DECICED_ID, trackInfo.rankId)
+        .Eq(TaskColumn::DECICED_ID, trackInfo.deviceId)
         .In(TaskColumn::GLOBAL_TASK_ID, globalTaskIds)
         .ExcuteQuery(trackInfo.cardId, taskPoVec);
     for (const auto &item : taskPoVec) {
@@ -92,7 +92,7 @@ std::vector<uint64_t> HcclRepo::QueryGlobalTaskIdsByRank(const TrackInfo &trackI
 {
     std::vector<TaskPO> taskPoVec;
     taskTable->Select(TaskColumn::GLOBAL_TASK_ID)
-        .Eq(TaskColumn::DECICED_ID, trackInfo.rankId)
+        .Eq(TaskColumn::DECICED_ID, trackInfo.deviceId)
         .ExcuteQuery(trackInfo.cardId, taskPoVec);
     std::vector<uint64_t> globalIds(taskPoVec.size());
     std::transform(taskPoVec.begin(), taskPoVec.end(), globalIds.begin(),

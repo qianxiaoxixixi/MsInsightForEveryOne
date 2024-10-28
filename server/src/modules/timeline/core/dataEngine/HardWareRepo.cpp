@@ -26,7 +26,7 @@ void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
         ServerLog::Warn("Failed to parpare hardWare query all slice");
         return;
     }
-    stmt->BindParams(trackInfo.rankId, trackInfo.threadId);
+    stmt->BindParams(trackInfo.deviceId, trackInfo.threadId);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query hardWare query all slice");

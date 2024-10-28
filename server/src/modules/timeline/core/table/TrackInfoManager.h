@@ -19,9 +19,13 @@ struct TrackInfo {
      */
     std::string cardId;
     /* *
-     * 显卡设备id
+     * 显卡设备全局id
      */
     std::string rankId;
+    /* *
+     * 单机显卡设备id
+     */
+    std::string deviceId;
     /* *
      * 进程信息
      */
@@ -49,6 +53,7 @@ public:
     uint64_t GetTrackId(const std::string &cardId, const std::string &pid, const std::string &tid);
     bool GetTrackInfo(uint64_t trackId, TrackInfo &trackInfo);
     void UpdateHost(const std::string &cardId, const std::string &host);
+    void UpdateDeviceMap(const std::string &cardId, const std::unordered_map<std::string, std::string> deviceMap);
     void UpdateTrackIdMap(const std::string &fileId,
         const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap);
     void Reset();
@@ -66,11 +71,16 @@ private:
      */
     std::unordered_map<std::string, std::string> hostMap;
     /* *
+     * 键是cardID,数据库db文件路径唯一标识，值是rankId和deviceId的对应关系
+     */
+    std::unordered_map<std::string, std::unordered_map<std::string, std::string>> deviceMap;
+    /* *
      * 键是trackId
      */
     std::unordered_map<uint64_t, TrackInfo> trackInfoMap;
     uint64_t maxTrackId = 0;
     std::string GetRankId(const std::string &cardId);
+    std::string GetDeviceId(const std::string &cardId);
     std::string GetHost(const std::string &cardId);
 };
 }
