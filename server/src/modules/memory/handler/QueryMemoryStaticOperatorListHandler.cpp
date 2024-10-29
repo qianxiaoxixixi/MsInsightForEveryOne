@@ -58,8 +58,8 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
     return true;
 }
 
-bool QueryMemoryStaticOperatorListHandler::CompareOperator(VirtualMemoryDataBase *database,
-    VirtualMemoryDataBase *databaseBaseline, MemoryStaticOperatorListRequest &request,
+bool QueryMemoryStaticOperatorListHandler::CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
+    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorListRequest &request,
     std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr, Server::WsSession &session)
 {
     std::unique_ptr<MemoryStaticOperatorListResponse> responsePtrCompare =

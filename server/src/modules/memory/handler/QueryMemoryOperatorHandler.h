@@ -21,9 +21,9 @@ public:
     ~QueryMemoryOperatorHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    bool CompareOperator(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
-        MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
-        Server::WsSession &session);
+    bool CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryOperatorRequest &request,
+        std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, Server::WsSession &session);
     void GetOperatorDiff(const MemoryOperatorResponse &compareData,
                          const MemoryOperatorResponse &baselineData,
                          Protocol::MemoryOperatorComparisonResponse &resultData);

@@ -55,8 +55,9 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     return true;
 }
 
-bool QueryMemoryViewHandler::GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
-    MemoryViewRequest &request, std::unique_ptr<MemoryViewResponse> &responsePtr, WsSession &session)
+bool QueryMemoryViewHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
+    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryViewRequest &request,
+    std::unique_ptr<MemoryViewResponse> &responsePtr, WsSession &session)
 {
     MemoryViewResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();

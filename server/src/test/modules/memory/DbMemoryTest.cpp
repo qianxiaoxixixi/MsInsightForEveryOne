@@ -26,7 +26,8 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
         auto memoryDatabase =
-                dynamic_cast<DbMemoryDataBase *>(DataBaseManager::Instance().GetMemoryDatabase("0"));
+            std::dynamic_pointer_cast<DbMemoryDataBase, Dic::Module::Memory::VirtualMemoryDataBase>(
+                DataBaseManager::Instance().GetMemoryDatabase("0"));
         memoryDatabase->OpenDb(currPath + dbPath3 + "ascend_pytorch_profiler.db", false);
         // minTime = 1734230739709945000, maxTime = 1734230739709945000
         TraceTime::Instance().UpdateTime(1734230739709945000, 1734230739709945000);

@@ -30,7 +30,8 @@ public:
             DataBaseManager::Instance().GetTraceDatabase("0"));
         database->UpdateStartTime("0");
         auto summaryDatabase =
-                dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("0"));
+            std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
+                DataBaseManager::Instance().GetSummaryDatabase("0"));
         summaryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
     }
     static void TearDownTestSuite() {}

@@ -52,10 +52,10 @@ public:
     VirtualClusterDatabase *GetWriteClusterDatabase();
     VirtualClusterDatabase *GetReadClusterDatabase();
 
-    Memory::VirtualMemoryDataBase *GetMemoryDatabase(const std::string &fileId);
+    std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabase(const std::string &fileId);
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
-    Summary::VirtualSummaryDataBase *GetSummaryDatabase(const std::string &fileId);
+    std::shared_ptr<Summary::VirtualSummaryDataBase> GetSummaryDatabase(const std::string &fileId);
     std::vector<Summary::VirtualSummaryDataBase *> GetAllSummaryDatabase();
 
     std::string GetDbPath(const std::string &fileId);
@@ -92,13 +92,13 @@ private:
     std::unordered_set<std::string> databasePathSet;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
-    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
-    std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
+    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
+    std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     FileType baselineFileType = FileType::PYTORCH;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceBaselineDatabaseMap;
-    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
-    std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
+    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
+    std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
 
     std::recursive_mutex &GetDbMutex(const std::string &fileId);
 };

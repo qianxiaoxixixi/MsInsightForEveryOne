@@ -65,8 +65,8 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     return true;
 }
 
-bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database,
-    VirtualMemoryDataBase *databaseBaseline,
+bool QueryMemoryOperatorHandler::CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
+    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
     MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, WsSession &session)
 {
     std::unique_ptr<MemoryOperatorResponse> responsePtrCompare = std::make_unique<MemoryOperatorResponse>();

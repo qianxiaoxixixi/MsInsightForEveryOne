@@ -21,9 +21,9 @@ public:
     ~QueryMemoryStaticOperatorGraphHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    bool GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
-        MemoryStaticOperatorGraphRequest &request, std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr,
-        Server::WsSession &session);
+    bool GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorGraphRequest &request,
+        std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr, Server::WsSession &session);
     void GetCompareGraphLines(const Protocol::StaticOperatorGraphItem &compareData,
                          const Protocol::StaticOperatorGraphItem &baselineData,
                          Protocol::StaticOperatorGraphItem &resultData);

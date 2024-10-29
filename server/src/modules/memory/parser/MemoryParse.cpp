@@ -55,8 +55,8 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
-    auto memoryDatabase =
-            dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -222,8 +222,8 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
-    auto database =
-            dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -276,8 +276,8 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
-    auto database =
-            dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -531,7 +531,8 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
         return false;
     }
     std::string dbPath = FileUtil::GetDbPath(*(filePair.recordFiles.begin()), fileId);
-    auto db = dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    auto db = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     if (!db->OpenDb(dbPath, false)) {
         message = "Failed to open db file. Please delete the file manually: " + dbPath;
         return false;

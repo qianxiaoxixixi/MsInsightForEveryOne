@@ -53,8 +53,8 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
     return true;
 }
 
-bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(VirtualMemoryDataBase *database,
-    VirtualMemoryDataBase *databaseBaseline, MemoryStaticOperatorGraphRequest &request,
+bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
+    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorGraphRequest &request,
     std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr, Server::WsSession &session)
 {
     MemoryStaticOperatorGraphResponse &response = *responsePtr.get();
