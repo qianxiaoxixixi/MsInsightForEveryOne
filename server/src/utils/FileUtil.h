@@ -86,11 +86,16 @@ public:
     {
 #ifdef _WIN32
         wchar_t wResolvedPath[MAX_PATH] = {0}; // windows中文路径需要使用宽字符处理
-        _wfullpath(wResolvedPath, StringUtil::String2WString(path).data(), MAX_PATH);
+        if (_wfullpath(wResolvedPath, StringUtil::String2WString(path).data(),
+                       MAX_PATH) == nullptr) {
+            return "";
+        }
         return StringUtil::WString2String(wResolvedPath).data();
 #else
         char resolvedPath[PATH_MAX] = {0};
-        realpath(path.c_str(), resolvedPath);
+        if (realpath(path.c_str(), resolvedPath) == nullptr) {
+            return "";
+        }
         return std::string(resolvedPath);
 #endif
     }
@@ -330,6 +335,9 @@ public:
     {
         const int fileIdPosition = 3; // 上上层目录
         std::string path = FileUtil::GetRealPath(filePath);
+        if (path.empty()) {
+            return "";
+        }
         auto pos = path.find_first_of('\\');
         while (pos != std::string::npos) {
             path.replace(pos, 1, "/");

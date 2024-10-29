@@ -357,3 +357,24 @@ TEST(TestUtil, CheckFileSizeFailedWhenFileIsExistButIsEmpty)
     EXPECT_EQ(FileUtil::CheckFileSize(srcPath), false);
     EXPECT_EQ(std::remove(srcPath), 0);
 }
+
+TEST(TestUtil, GetRealPathSuccessWhenFileIsExistAndIsNotEmpty)
+{
+    // 源文件路径
+    const char* srcPath = ".//example.txt";
+    std::ofstream file(srcPath);
+    file.close();
+    EXPECT_NE(FileUtil::GetRealPath(srcPath), "");
+    EXPECT_EQ(std::remove(srcPath), 0);
+}
+
+TEST(TestUtil, GetRealPathFailedWhenFileIsNotExist)
+{
+#ifdef _WIN32
+    std::string filePath = "D:\\test\\test1\\example.txt";
+    EXPECT_EQ(FileUtil::GetRealPath(filePath), filePath);
+#else
+    std::string filePath = "D://test/test1/example.txt";
+    EXPECT_EQ(FileUtil::GetRealPath(filePath), "");
+#endif
+}
