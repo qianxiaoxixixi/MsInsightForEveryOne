@@ -27,7 +27,8 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         auto summeryDatabase =
-                dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("2"));
+            std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
+                DataBaseManager::Instance().GetSummaryDatabase("2"));
         summeryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
     }
 

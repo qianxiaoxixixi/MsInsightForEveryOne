@@ -157,8 +157,8 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
         return false;
     }
     std::string dbPath = FileUtil::GetDbPath(filePathList[0], fileId);
-    auto database =
-        dynamic_cast<TextSummaryDataBase *>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+    auto database = std::dynamic_pointer_cast<TextSummaryDataBase, VirtualSummaryDataBase>(
+        Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     if (database == nullptr) {
         message = "Failed to get summary database, fileId: ." + fileId + " filePath: " + filePathList[0];
         return false;
@@ -308,7 +308,8 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
-    auto db = dynamic_cast<TextSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+    auto db = std::dynamic_pointer_cast<TextSummaryDataBase, VirtualSummaryDataBase>(
+        Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;

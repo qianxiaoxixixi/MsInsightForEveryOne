@@ -186,8 +186,8 @@ void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const st
 {
     for (const std::string& id : rankIds) {
         bool result = false;
-        auto summeryDatabase = dynamic_cast<FullDb::DbSummaryDataBase *>(
-                Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
+        auto summeryDatabase = std::dynamic_pointer_cast<FullDb::DbSummaryDataBase, Summary::VirtualSummaryDataBase>(
+            Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
         if (summeryDatabase != nullptr && summeryDatabase->OpenDb(path, false)) {
             result = true;
         } else {
@@ -204,8 +204,8 @@ void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std
 {
     for (const std::string& id : rankIds) {
         bool result = false;
-        auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
-                Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
+        auto memoryDatabase = std::dynamic_pointer_cast<FullDb::DbMemoryDataBase, Memory::VirtualMemoryDataBase>(
+            Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
         if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
             FullDb::DbMemoryDataBase::ParserEnd(id, true);
             result = true;

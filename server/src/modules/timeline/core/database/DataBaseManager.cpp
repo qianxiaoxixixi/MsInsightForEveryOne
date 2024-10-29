@@ -70,26 +70,27 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
     return it->second->GetConnection();
 }
 
-Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &inputId)
+std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
     // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
-    std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
+    std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
         isBaseline ? summaryBaselineDatabaseMap : summaryDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
-    auto func = [&curSummaryDbMap, this, &curDataType](const std::string &inputId) -> Summary::VirtualSummaryDataBase* {
+    auto func = [&curSummaryDbMap, this, &curDataType](const std::string &inputId) ->
+        std::shared_ptr<Summary::VirtualSummaryDataBase> {
         if (curSummaryDbMap.count(inputId) == 0) {
             std::recursive_mutex &dbMutex = GetDbMutex(inputId);
             if (curDataType == DataType::TEXT) {
-                curSummaryDbMap.emplace(inputId, std::make_unique<Summary::TextSummaryDataBase>(dbMutex));
+                curSummaryDbMap.emplace(inputId, std::make_shared<Summary::TextSummaryDataBase>(dbMutex));
             } else if (curDataType == DataType::DB) {
-                curSummaryDbMap.emplace(inputId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
+                curSummaryDbMap.emplace(inputId, std::make_shared<FullDb::DbSummaryDataBase>(dbMutex));
             }
         }
-        return curSummaryDbMap[inputId].get();
+        return curSummaryDbMap[inputId];
     };
-    Summary::VirtualSummaryDataBase* db = nullptr;
+    std::shared_ptr<Summary::VirtualSummaryDataBase> db;
     std::vector<std::string> ids;
     for (const auto &hostInfo : host2DbPath) {
         auto host = StringUtil::ReplaceFirst(hostInfo.first, "Host", "");
@@ -109,12 +110,12 @@ Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::
     return db;
 }
 
-Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &inputId)
+std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
     // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
-    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap = memoryDatabaseMap;
+    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap = memoryDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = inputId;
     if (curMemoryDbMap.count(fileId) == 0) {
@@ -129,7 +130,7 @@ Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::str
                 break;
         }
     }
-    return curMemoryDbMap[fileId].get();
+    return curMemoryDbMap[fileId];
 }
 
 void DataBaseManager::ReleaseDatabase(const std::string &fileId)
