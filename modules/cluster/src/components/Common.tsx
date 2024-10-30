@@ -259,6 +259,23 @@ export const safeStr = (str: string, ignore?: string): string => {
     return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
+// 从字符串中获取所有数字
+export function getAllNumberFromString(str: string): number[] {
+    // 使用正则表达式提取所有数字
+    return (str.match(/\d+/g) ?? []).map(Number);
+};
+
+// stage中的rank内容可能并没有排序，该方法对rank内容进行从小到大排序处理
+export function toSortedStage(stage: string): string {
+    const numbers = getAllNumberFromString(stage);
+    numbers.sort((a: number, b: number) => a - b);
+    return `(${numbers.join(', ')})`;
+};
+
+export function clamp(value: number, max: number): number {
+    return value > max ? max : value;
+}
+
 export const commonEchartsOptions: {
     tooltip: any;
     splitLineY: any;

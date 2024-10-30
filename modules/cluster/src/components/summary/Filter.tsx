@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { Select } from 'ascend-components';
 import { Label } from '../Common';
 import _ from 'lodash';
-import type { communicator } from '../communicatorContainer/ContainerUtils';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
+import type { communicator } from '../communicatorContainer/ContainerUtils';
 
 export interface ConditionDataType {
     step: string;
@@ -61,6 +61,25 @@ const getStepOptions = async(): Promise<optionDataType[]> => {
     return options;
 };
 
+const filterGroupOptions = async (communicators: communicator[], rankList: string[]): Promise<optionDataType[]> => {
+    const groupOptions: optionDataType[] = communicators.map((communicator) => {
+        const data: string[] = (communicator.value === 'All' ? rankList : communicator.ranks).map(item => item.toString());
+        return {
+            value: communicator.value as string,
+            label: communicator.value,
+            data,
+            key: communicator.value,
+        };
+    }).filter((item, index, self) => {
+        // 判断是否重复，true代表没重复
+        const isUnique: boolean = self.findIndex(el => el.key === item.key) === index;
+        // 判断当前所有rank与选中通信域列表是否存在交集
+        const isInteraction: boolean = item.data.some((rank: string) => rankList.includes(rank));
+        return isUnique && isInteraction;
+    });
+    return groupOptions;
+};
+
 // eslint-disable-next-line max-lines-per-function
 const Filter = observer((props: any) => {
     const session: Session = props.session;
@@ -85,6 +104,7 @@ const Filter = observer((props: any) => {
         props.handleFilterChange(conditions, false);
     }, [conditions.top]);
     useEffect(() => {
+        // 鼠标点击并行策略图中的线时触发，跳转对应通信组
         const find = _.find(options.groupOptions, item => item.key === props.session.activeCommunicator?.value);
         if (find !== undefined) {
             setConditions({ ...conditions, group: find.value as string });
@@ -101,16 +121,12 @@ const Filter = observer((props: any) => {
                     communicators.push(tmp);
                 });
             });
-        const groupOptions: optionDataType[] = _.map(communicators, value => ({
-            value: value.value as string,
-            label: value.value,
-            data: value.ranks.map(item => item.toString()),
-            key: value.value,
-        })).filter((item, index, self) => self.findIndex(el => el.key === item.key) === index);
+        const groupOptions = await filterGroupOptions(communicators, rankList);
         const group = groupOptions.length > 0 ? groupOptions[0].value as string : '';
-        const topOptions = getTopOptions(rankList.length);
+        const rankNum = Math.max(props.session.rankCountAfterCal, rankList.length);
+        const topOptions = getTopOptions(rankNum);
         setOptions({ stepOptions, topOptions, groupOptions, orderOptions });
-        setConditions({ ...conditions, top: rankList.length, group });
+        setConditions({ ...conditions, top: rankNum, group });
     };
 
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {

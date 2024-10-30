@@ -174,7 +174,7 @@ const fillDpRectCommunicators = ({ values, pipelineSize, partitionModes }: fillC
         communicators.push({
             ranks,
             name: `dataRect${i}`,
-            value: `(${ranks.join(', ')})`,
+            value: `(${ranks.join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
         });
     }
 };

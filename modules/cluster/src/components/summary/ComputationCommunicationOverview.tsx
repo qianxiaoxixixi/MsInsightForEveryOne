@@ -285,15 +285,34 @@ export const useHit = (containsPreparing: boolean): React.ReactElement => {
     </Tooltip>);
 };
 
+function FillSummaryListInfo(rankIdList: string[], summaryList: SummaryDataType[]): void {
+    rankIdList.forEach((rank: string) => {
+        if (!summaryList.some(item => item.rankId === rank)) {
+            summaryList.push({
+                rankId: rank,
+                prepareTime: 0,
+                computingTime: 0,
+                communicationNotOverLappedTime: 0,
+                communicationOverLappedTime: 0,
+                freeTime: 0,
+            });
+        }
+    });
+};
+
 async function GetTopSummary(conditions: ConditionDataType): Promise<AdviceAndSummary> {
     const res: any = await queryTopSummary({
         ...conditions,
         orderBy: conditions.orderBy === 'pureComputingTime' ? 'computingTime' : conditions.orderBy,
     });
     const { advice = {}, summaryList = [] } = res ?? {};
+    FillSummaryListInfo(conditions.rankIds, summaryList);
     if (conditions.orderBy === 'pureComputingTime') {
         summaryList.sort((a: any, b: any) =>
             b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);
+    }
+    if (conditions.orderBy === 'rankId') {
+        summaryList.sort((a: any, b: any) => a.rankId - b.rankId);
     }
     return { advice, summaryList };
 };
