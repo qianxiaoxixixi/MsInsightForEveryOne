@@ -5,7 +5,7 @@
 
 #ifndef PROFILER_SERVER_DBSQLDEFS_H
 #define PROFILER_SERVER_DBSQLDEFS_H
-
+#include "ConstantDefs.h"
 #include <string>
 
 namespace Dic {
@@ -170,10 +170,12 @@ const static std::string TASK_UNIT_FLOW_SQL =
       "     endNs - startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, name, "
       "     deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
       "     on task.globalTaskId = CTI.globalTaskId where task.connectionId = constValue.connectionId "
+      " and task.connectionId != " + WRONG_DATA + " "
       " union all select task.ROWID as id, streamId as tid, task.depth,task.startNs - constValue.minTime as startTime, "
       " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, taskType, "
       "         deviceId from TASK task join constValue join MSTX_EVENTS CTI "
       "         on task.connectionId = CTI.connectionId where task.connectionId = constValue.connectionId  "
+      " and task.connectionId != " + WRONG_DATA + " "
       "union all select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
       "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
       "     deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
@@ -186,7 +188,8 @@ const static std::string ASCEND_THREAD_DETAIL =
         " 'Ascend Hardware' as pid,main.depth, coalesce(CTI.name, MSX.message, main.taskType) as name "
         " FROM " + TABLE_TASK + " main "
         " left join " + TABLE_COMPUTE_TASK_INFO + " CTI on CTI.globalTaskId = main.globalTaskId"
-        " left join " + TABLE_MSTX_EVENTS + " MSX on MSX.connectionId = main.connectionId"
+        " left join " + TABLE_MSTX_EVENTS + " MSX on "
+        " (MSX.connectionId = main.connectionId and main.connectionId != " + WRONG_DATA + " ) "
         " WHERE main.ROWID = ?";
 
 const static std::string HCCL_THREAD_DETAIL =
@@ -227,7 +230,8 @@ const static std::string ASCEND_THREADS_BY_PID =
             " coalesce(c.name, m.message, main.taskType) as name, main.depth "
             " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
             " c on c.globalTaskId = main.globalTaskId "
-            " left join " + TABLE_MSTX_EVENTS + " m on m.connectionId = main.connectionId "
+            " left join " + TABLE_MSTX_EVENTS + " m on "
+            " (m.connectionId = main.connectionId and main.connectionId != " + WRONG_DATA + " ) "
             " where deviceId = ? and streamId = ? and main.endNs >= ? AND main.startNs <= ?"
             " ORDER BY main.depth ASC, main.startNs ASC;";
 

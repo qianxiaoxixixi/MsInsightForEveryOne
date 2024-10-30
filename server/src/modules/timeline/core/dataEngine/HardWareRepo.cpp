@@ -67,7 +67,8 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
     std::string sql = "SELECT main.ROWID as id, main.startNs, main.endNs,"
         " coalesce(c.name, m.message, main.taskType) as name FROM " + TABLE_TASK + " main "
         " left join " + TABLE_COMPUTE_TASK_INFO + " c on c.globalTaskId = main.globalTaskId "
-        " left join " + TABLE_MSTX_EVENTS + " m on m.connectionId = main.connectionId "
+        " left join " + TABLE_MSTX_EVENTS + " m on "
+        " (m.connectionId = main.connectionId and  m.connectionId != " + WRONG_DATA + " )"
         " where 1 = 1 and id in (";
     std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
     sql += sliceidvecStr + ");";

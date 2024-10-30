@@ -204,6 +204,7 @@ std::vector<uint64_t> HostFlowRepo::AddMstxFlowPoint(const FlowQuery &flowQuery,
     std::vector<MstxEventsPO> mstxPOs;
     mstxEventsTable->Select(MstxEventsColumn::ID, MstxEventsColumn::CONNECTION_ID)
         .Select(MstxEventsColumn::GLOBAL_TID, MstxEventsColumn::TIMESTAMP)
+        .NotEq(MstxEventsColumn::CONNECTION_ID, WRONG_DATA)
         .ExcuteQuery(flowQuery.fileId, mstxPOs);
     std::vector<uint64_t> connectionIds;
     auto &instance = TrackInfoManager::Instance();
