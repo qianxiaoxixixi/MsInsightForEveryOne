@@ -20,6 +20,7 @@ export class Session {
     activeCommunicator: communicator | undefined;
     ranksData: ppData[] = [];
     rankCount: number = 0;
+    rankCountAfterCal: number = 0;
     summaryList: summaryListItem[] = []; // 所有rank的数据信息
 
     constructor(conf?: Partial<Session>) {

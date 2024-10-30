@@ -8,12 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { Select, Radio } from 'ascend-components';
 import type { RadioChangeEvent } from 'antd';
 import { getUsableVal, delayExecute } from 'ascend-utils';
-import { Label } from '../Common';
+import { Label, toSortedStage, getAllNumberFromString } from '../Common';
 import type { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
 import type { partitionMode } from '../communicatorContainer/ContainerUtils';
-import _ from 'lodash';
 
 export interface ConditionDataType {
     [key: string]: string | string[];
@@ -128,27 +127,6 @@ function getParallelStrategyByStage(partitionModes: partitionMode[], stage: stri
     }
 }
 
-// 从字符串中获取所有数字
-function getAllNumberFromString(str: string): number[] {
-    // 使用正则表达式提取所有数字
-    const matches = str.match(/\d+/g);
-
-    // 如果没有匹配到数字，返回空数组
-    if (!matches) {
-        return [];
-    }
-
-    // 将匹配到的数字字符串转换为数字
-    return matches.map(Number);
-}
-
-// stage中的rank内容可能并没有排序，该方法对rank内容进行从小到大排序处理
-function sortStageNumber(stage: string): string {
-    const numbers = getAllNumberFromString(stage);
-    numbers.sort((a: number, b: number) => a - b);
-    return `(${_.join(numbers, ', ')}${(numbers.length > 1 ? ')' : ',)')}`;
-}
-
 // 对比stage数据，先对长度进行排序（长的排前面），再对内容排序（首数字小的排前面）
 function compareStageInfo(stageA: string, stageB: string): number {
     const aRankList = getAllNumberFromString(stageA);
@@ -175,7 +153,7 @@ const getStageOptions = async (iterationId: string, session: Session): Promise<o
     const options: optionDataType[] = list
         .map(item => {
             // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
-            const stageAfterSort = isNumberPairsFormat(item) ? sortStageNumber(item) : item;
+            const stageAfterSort = isNumberPairsFormat(item) ? toSortedStage(item) : item;
             const strategy = getParallelStrategyByStage(modes, stageAfterSort);
             const label = strategy.length === 0 ? stageAfterSort : `${strategy}:${stageAfterSort}`;
             return { value: item, strategy, label, stageAfterSort };

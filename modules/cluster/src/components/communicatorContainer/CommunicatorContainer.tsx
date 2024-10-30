@@ -31,6 +31,7 @@ import { select } from 'd3';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { FormInstance } from 'antd/lib/form';
 import { runInAction } from 'mobx';
+import { clamp } from '../Common';
 
 const RankContainer = styled.div`
     position: relative;
@@ -156,6 +157,7 @@ const updateRankData = (session: Session, values: {ppSize: number; tpSize: numbe
     runInAction(() => {
         session.communicatorData = generateCommunicatorData(values, unitCount, defaultPPSize);
         session.ranksData = getRankData(values);
+        session.rankCountAfterCal = unitCount;
     });
     connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
     eventBus.emit('activeCommunicator', undefined);
@@ -171,8 +173,13 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
                 init();
             });
         } else {
-            const { dpSize, tpSize, ppSize, level, algorithm } = (await getParallelStrategy()) as unknown as parallelStrategyType;
+            let { dpSize, tpSize, ppSize, level, algorithm } = (await getParallelStrategy()) as unknown as parallelStrategyType;
             const equal = dpSize === 1 && tpSize === 1 && tpSize === 1;
+            // 限制数据最多设置为255，如果大于255，则直接使用255
+            dpSize = clamp(dpSize, 255);
+            tpSize = clamp(tpSize, 255);
+            ppSize = clamp(ppSize, 255);
+            const totalCount = dpSize * tpSize * ppSize;
             if (level === 'collected') {
                 setDisabled(true);
             } else {
@@ -183,7 +190,7 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
             } else {
                 setShowRank(true);
             }
-            updateRankData(session, { dpSize, tpSize, ppSize, algorithm }, unitCount, defaultPPSize);
+            updateRankData(session, { dpSize, tpSize, ppSize, algorithm }, totalCount, defaultPPSize);
             form.setFieldsValue({ dpSize, tpSize, ppSize, algorithm });
         }
     };
@@ -192,18 +199,21 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
     }, [session.renderId, session.rankCount]);
     const onClick = (size: number) => (): void => {
         const values: { ppSize: number; tpSize: number; dpSize: number; algorithm: string } = form.getFieldsValue();
-        if (values.dpSize * values.tpSize * values.ppSize !== unitCount) {
+        // 设置的并行策略乘积需要>=导入的卡数
+        if (values.dpSize * values.tpSize * values.ppSize < unitCount) {
             message.error('The parameter is incorrect.');
             return;
         }
         setParallelStrategy({ ...values });
-        updateRankData(session, values, unitCount, size);
+        updateRankData(session, values, values.dpSize * values.tpSize * values.ppSize, size);
         setShowRank(true);
     };
     return (
         <FormDom unitCount={unitCount} disabled={disabled} defaultPPSize={defaultPPSize} onClick={onClick} getForm={setForm}/>
     );
 });
+
+const PARALLEL_STRATEGY_INPUT_PROPS = { min: 0, max: 255, style: { width: '120px' }, maxLength: 200 };
 
 const FormDom = ({ unitCount, disabled, defaultPPSize, onClick, getForm }:
 { unitCount: number; disabled: boolean; defaultPPSize: number; onClick: (size: number) => () => void;
@@ -221,13 +231,13 @@ const FormDom = ({ unitCount, disabled, defaultPPSize, onClick, getForm }:
                 <Select defaultValue="Megatron-LM(tp-dp-pp)" style={{ width: '120px' }} options={selectOptions}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={t('PPSize')} style={{ margin: '10px 24px 10px 0' }}>
-                <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
+                <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
             </Form.Item>
             <Form.Item name={'tpSize'} label={t('TPSize')} style={{ margin: '10px 24px 10px 0' }}>
-                <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
+                <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
             </Form.Item>
             <Form.Item name={'dpSize'} label={t('DPSize')} style={{ margin: '10px 24px 10px 0' }}>
-                <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
+                <InputNumber {...PARALLEL_STRATEGY_INPUT_PROPS}/>
             </Form.Item>
             <Tooltip placement="right" title={disabled ? t('ProhibitConfiguration') : ''}>
                 <div style={{ width: '70px' }}>
