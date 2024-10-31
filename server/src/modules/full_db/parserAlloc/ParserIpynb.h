@@ -17,7 +17,7 @@ public:
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 private:
-    static void IpynbImportResponse(ImportActionRequest &request, const std::string &fileName);
+    static void IpynbImportResponse(ImportActionRequest &request, const std::string &fileName, bool isDisplay);
     static void JupyterProcess(const std::string &file);
     static void SendJupyterInfo(std::string url);
 };
