@@ -26,20 +26,22 @@ void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &project
     std::string path = projectInfos[0].fileName;
     if (!FileUtil::CheckDirValid(path)) {
         SendParseFailEvent("", "Invalid ipynb file.");
+        IpynbImportResponse(request, "", false);
         return;
     }
     // 检查jupyter服务是否存在
     std::string jupyterVersionResult;
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
             && !jupyterVersionResult.empty()) {
-        IpynbImportResponse(request, path);
+        IpynbImportResponse(request, path, true);
         JupyterFileParser::Instance().GetThreadPool()->AddTask(JupyterProcess, path);
     } else {
         SendParseFailEvent("", "Jupyter env is not ready.");
+        IpynbImportResponse(request, "", false);
     }
 }
 
-void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::string &fileName)
+void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::string &fileName, bool isDisplay)
 {
     Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
@@ -47,7 +49,7 @@ void ParserIpynb::IpynbImportResponse(ImportActionRequest &request, const std::s
     ModuleRequestHandler::SetBaseResponse(request, response);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
-    response.body.isIpynb = true;
+    response.body.isIpynb = isDisplay;
     response.body.reset = true;
     response.body.subdirectoryList.push_back(fileName);
     ModuleRequestHandler::SetResponseResult(response, true);
