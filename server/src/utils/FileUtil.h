@@ -241,9 +241,26 @@ public:
         }
         return RemoveFile(path);
     }
-
+    /**
+     * 根据文件路径复制文件。
+     * @param sourceFilePath 源文件路径
+     * @param targetFilePath 目标文件路径（需保证目标文件父目录存在，无需目标文件本身存在。）
+     * @return
+     */
     static inline bool CopyFileByPath(const std::string &sourceFilePath, const std::string &targetFilePath)
     {
+        // 检查 源文件路径 合法性，包括文件最小权限、软连接、长度、特殊字符
+        if (!CheckFilePath(sourceFilePath)) {
+            Server::ServerLog::Error("Source file path is invalid when copy file.");
+            return false;
+        }
+        // 目标文件目录
+        std::string targetDirPath = GetParentPath(targetFilePath);
+        // 检查 目标文件目录 合法性、是否可写
+        if (!CheckDirValid(targetDirPath) || !CheckDirAccess(targetDirPath, W_OK)) {
+            Server::ServerLog::Error("Target directory is invalid or not writable when copy file.");
+            return false;
+        }
 #ifdef _WIN32
         std::string tmpSourcePath(sourceFilePath);
         std::string tmpTargetPath(targetFilePath);

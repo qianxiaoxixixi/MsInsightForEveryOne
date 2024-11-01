@@ -183,7 +183,7 @@ bool FileUtil::CheckFilePath(const std::string& filePath)
 {
     // 文件基础校验：校验文件最小权限、软连接、长度、特殊字符
     if (!CheckDirValid(filePath)) {
-        Server::ServerLog::Error("Invalid file path.There may be issues with file permissions, soft link, length,"
+        Server::ServerLog::Error("Invalid file path. There may be issues with file permissions, soft link, length,"
                                  " or special characters");
         return false;
     }
