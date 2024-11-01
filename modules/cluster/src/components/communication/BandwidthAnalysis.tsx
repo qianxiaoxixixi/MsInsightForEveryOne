@@ -88,7 +88,7 @@ function wrapData(data: any): any {
         hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE' || item.transportType === 'SIO');
     }
     const rdma = data.find((item: any) => item.transportType === 'RDMA');
-    return [{ ...sdma, children: hp }, rdma];
+    return rdma !== undefined ? [{ ...sdma, children: hp }, rdma] : [{ ...sdma, children: hp }];
 }
 
 const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string;
