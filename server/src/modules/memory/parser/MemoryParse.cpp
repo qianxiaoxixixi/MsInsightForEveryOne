@@ -57,7 +57,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     }
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
+    std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
@@ -224,7 +224,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     }
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
+    std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
@@ -278,7 +278,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     }
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
+    std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
