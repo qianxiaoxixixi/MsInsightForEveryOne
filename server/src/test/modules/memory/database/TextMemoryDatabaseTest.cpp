@@ -6,11 +6,9 @@
 #include "MemoryProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
-#include "../../TestSuit.cpp"
+#include "../../../TestSuit.cpp"
 
 using namespace Dic::Module::Timeline;
-class MemoryTest : TestSuit {
-};
 
 TEST_F(TestSuit, QueryMemoryOperatorData)
 {
@@ -27,9 +25,10 @@ TEST_F(TestSuit, QueryMemoryOperatorData)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
     int expectColumnSize = 9;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -48,9 +47,10 @@ TEST_F(TestSuit, QueryMemoryOperatorWithTime)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 28;
     int expectColumnSize = 9;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -76,10 +76,26 @@ TEST_F(TestSuit, QueryMemoryOperatorWithLimitedTime)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 1;
     int expectColumnSize = 9;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(TestSuit, QueryMemoryEntireOperatorTable)
+{
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
+    std::string rankId = "0";
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Protocol::MemoryOperator> opDetails;
+    bool result = database->QueryEntireOperatorTable(columnAttr, opDetails, rankId, offsetTime);
+    int expectSize = 28;
+    int expectColumnSize = 9;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(opDetails.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
@@ -88,8 +104,9 @@ TEST_F(TestSuit, QueryMemoryTypeDynamic)
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
     std::string type = Module::Memory::MEMORY_TYPE_STATIC;
     std::vector<std::string> graphId;
-    database->QueryMemoryType(type, graphId);
+    bool result = database->QueryMemoryType(type, graphId);
     int expectSize = 0;
+    EXPECT_TRUE(result);
     EXPECT_EQ(type, Module::Memory::MEMORY_TYPE_DYNAMIC);
     EXPECT_EQ(graphId.size(), expectSize);
 }
@@ -99,8 +116,9 @@ TEST_F(TestSuit, QueryMemoryTypeStatic)
     auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
     std::string type = Module::Memory::MEMORY_TYPE_DYNAMIC;
     std::vector<std::string> graphId;
-    database->QueryMemoryType(type, graphId);
+    bool result = database->QueryMemoryType(type, graphId);
     int expectSize = 2;
+    EXPECT_TRUE(result);
     EXPECT_EQ(type, Module::Memory::MEMORY_TYPE_STATIC);
     EXPECT_EQ(graphId.size(), expectSize);
 }
@@ -109,7 +127,8 @@ TEST_F(TestSuit, QueryMemoryResourceTypePytorch)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
     std::string type = Module::Memory::MEMORY_RESOURCE_TYPE_MIND_SPORE;
-    database->QueryMemoryResourceType(type);
+    bool result = database->QueryMemoryResourceType(type);
+    EXPECT_TRUE(result);
     EXPECT_EQ(type, Module::Memory::MEMORY_RESOURCE_TYPE_PYTORCH);
 }
 
@@ -126,9 +145,10 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsException)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
     int expectSize = 0;
     int expectColumnSize = 5; // 该场景下表头数据正常返回，表格数据无内容
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -146,9 +166,10 @@ TEST_F(TestSuit, QueryStaticOperatorListParams)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
     int expectSize = 7;
     int expectColumnSize = 5;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -165,8 +186,9 @@ TEST_F(TestSuit, QueryStaticOperatorListTotal)
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     int64_t number;
-    database->QueryStaticOperatorsTotalNum(requestParams, number);
+    bool result = database->QueryStaticOperatorsTotalNum(requestParams, number);
     int expectNumber = 27;
+    EXPECT_TRUE(result);
     EXPECT_EQ(number, expectNumber);
 }
 
@@ -184,9 +206,10 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithNodeIndex)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
     int expectSize = 16;
     int expectColumnSize = 5;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -205,8 +228,9 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithSizeFileter)
     requestParams.maxSize = 3000; // 筛选 max Size = 3000
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
     int expectSize = 4;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
 }
 
@@ -227,8 +251,9 @@ TEST_F(TestSuit, QueryStaticOperatorListParamsWithAllFilter)
     requestParams.maxSize = 3000; // 筛选 max Size = 3000
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::StaticOperatorItem> responseBody;
-    database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
+    bool result = database->QueryStaticOperatorList(requestParams, columnAttr, responseBody);
     int expectSize = 4;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].opName, "reducemax_03");
 }
@@ -247,8 +272,9 @@ TEST_F(TestSuit, QueryStaticOperatorListTotalWithAllFilter)
     requestParams.minSize = 600; // 筛选 min Size = 600
     requestParams.maxSize = 3000; // 筛选 max Size = 3000
     int64_t number;
-    database->QueryStaticOperatorsTotalNum(requestParams, number);
+    bool result = database->QueryStaticOperatorsTotalNum(requestParams, number);
     int expectNumber = 4;
+    EXPECT_TRUE(result);
     EXPECT_EQ(number, expectNumber);
 }
 
@@ -265,9 +291,31 @@ TEST_F(TestSuit, QueryStaticOperatorListTotalWithNodeIndex)
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     int64_t number;
-    database->QueryStaticOperatorsTotalNum(requestParams, number);
+    bool result = database->QueryStaticOperatorsTotalNum(requestParams, number);
     int expectNumber = 16;
+    EXPECT_TRUE(result);
     EXPECT_EQ(number, expectNumber);
+}
+
+TEST_F(TestSuit, QueryEntireStaticOperatorTable)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::StaticOperatorListParams requestParams;
+    requestParams.rankId = "1";
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 0;
+    requestParams.startNodeIndex = -1;
+    requestParams.endNodeIndex = -1;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Protocol::StaticOperatorItem> opDetails;
+    bool result = database->QueryEntireStaticOperatorTable(requestParams, columnAttr, opDetails);
+    int expectSize = 54;
+    int expectColumnSize = 5;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(opDetails.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(TestSuit, QueryStaticOperatorGraph)
@@ -277,11 +325,12 @@ TEST_F(TestSuit, QueryStaticOperatorGraph)
     requestParams.rankId = "1";
     requestParams.graphId = "0";
     StaticOperatorGraphItem data;
-    database->QueryStaticOperatorGraph(requestParams, data);
+    bool result = database->QueryStaticOperatorGraph(requestParams, data);
     int expectSize = 3;
     int expectColumnSize = 24;
     int pickedIndex = 5;
     string exceptPickedData = "4.35";
+    EXPECT_TRUE(result);
     EXPECT_EQ(data.legends.size(), expectSize);
     EXPECT_EQ(data.lines.size(), expectColumnSize);
     EXPECT_EQ(data.lines[pickedIndex][1], exceptPickedData);
@@ -294,10 +343,11 @@ TEST_F(TestSuit, QueryStaticOperatorGraphWithGraphId)
     requestParams.rankId = "1";
     requestParams.graphId = "1";
     StaticOperatorGraphItem data;
-    database->QueryStaticOperatorGraph(requestParams, data);
+    bool result = database->QueryStaticOperatorGraph(requestParams, data);
     int expectColumnSize = 26;
     string exceptPickedData = "4.48";
     int pickedIndex = 19;
+    EXPECT_TRUE(result);
     EXPECT_EQ(data.lines.size(), expectColumnSize);
     EXPECT_EQ(data.lines[pickedIndex][1], exceptPickedData);
 }
@@ -316,9 +366,10 @@ TEST_F(TestSuit, QueryMemoryOperatorWithSize)
     requestParams.maxSize = 100; // min size = 100
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
     int expectColumnSize = 9;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -337,9 +388,10 @@ TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptZero)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 0;
     int expectColumnSize = 9;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -358,9 +410,10 @@ TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptSeveral)
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
-    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 21;
     int expectColumnSize = 14;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -377,8 +430,9 @@ TEST_F(TestSuit, QueryOperatorsTotalNum)
     requestParams.startTime = -1;
     requestParams.endTime = -1;
     int64_t totalNum;
-    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    bool result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     int expectSize = 28;
+    EXPECT_TRUE(result);
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -394,8 +448,9 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithSize)
     requestParams.startTime = -1;
     requestParams.endTime = -1;
     int64_t totalNum;
-    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    bool result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     int expectSize = 15;
+    EXPECT_TRUE(result);
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -411,8 +466,9 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithTime)
     requestParams.startTime = 0;
     requestParams.endTime = 1695120000000; // end time = 1695120000000
     int64_t totalNum;
-    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    bool result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     int expectSize = 28;
+    EXPECT_TRUE(result);
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -435,8 +491,9 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithLimitedTime)
     requestParams.endTime = NumberUtil::DoubleReservedNDigits(
         (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
     int64_t totalNum;
-    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    bool result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     int expectSize = 1;
+    EXPECT_TRUE(result);
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -451,8 +508,9 @@ TEST_F(TestSuit, QueryOperatorsTotalNumByStreamExpectZero)
     requestParams.startTime = -1;
     requestParams.endTime = -1; // end time = 1695120000000
     int64_t totalNum;
-    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    bool result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     int expectSize = 0;
+    EXPECT_TRUE(result);
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -467,8 +525,9 @@ TEST_F(TestSuit, QueryOperatorsTotalNumByStreamExpectSeveral)
     requestParams.startTime = -1;
     requestParams.endTime = -1; // end time = 1695120000000
     int64_t totalNum;
-    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    bool result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     int expectSize = 21;
+    EXPECT_TRUE(result);
     EXPECT_EQ(totalNum, expectSize);
 }
 
@@ -480,8 +539,9 @@ TEST_F(TestSuit, QueryMemoryViewData)
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = 0;
-    database->QueryMemoryView(requestParams, responseBody, offsetTime);
+    bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
     int expectSize = 5;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
@@ -493,8 +553,9 @@ TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectZero)
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = 0;
-    database->QueryMemoryView(requestParams, responseBody, offsetTime);
+    bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
     int expectSize = 0;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
@@ -506,8 +567,9 @@ TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectSeveral)
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     uint64_t offsetTime = 0;
-    database->QueryMemoryView(requestParams, responseBody, offsetTime);
+    bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
     int expectSize = 1;
+    EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
@@ -516,9 +578,10 @@ TEST_F(TestSuit, QueryOperatorSizeData)
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
     double min;
     double max;
-    database->QueryOperatorSize(min, max, "");
+    bool result = database->QueryOperatorSize(min, max, "");
     int expectMin = 64;
     int expectMax = 81984;
+    EXPECT_TRUE(result);
     EXPECT_EQ(min, expectMin);
     EXPECT_EQ(max, expectMax);
 }

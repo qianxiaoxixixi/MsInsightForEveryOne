@@ -20,21 +20,21 @@ public:
     };
     ~QueryMemoryOperatorHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-private:
-    bool CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
-        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryOperatorRequest &request,
-        std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, Server::WsSession &session);
     void GetOperatorDiff(const MemoryOperatorResponse &compareData,
                          const MemoryOperatorResponse &baselineData,
                          Protocol::MemoryOperatorComparisonResponse &resultData);
+    bool SelectDiffResult(MemoryOperatorRequest &request,
+                          std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
+                          MemoryOperatorComparisonResponse &fullDiffResult);
+    void SortResult(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
+private:
+    bool CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
+        MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr);
     void VectorMerge(std::vector<MemoryOperator> &compareVec, std::vector<MemoryOperator> &baselineVec,
                      MemoryOperatorComparisonResponse &diffData);
     void Subtract(MemoryOperatorComparison &element);
-    bool SelectDiffResult(MemoryOperatorRequest &request,
-                          std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
-                          MemoryOperatorComparisonResponse &fullDiffResult, Server::WsSession &session);
     bool IsSelected(MemoryOperatorRequest &request, const MemoryOperatorComparison &op);
-    void SortResult(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
     void SortAscend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
     void SortDescend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
     const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
