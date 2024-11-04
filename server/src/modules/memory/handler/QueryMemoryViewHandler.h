@@ -23,7 +23,7 @@ public:
 private:
     bool GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
         std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryViewRequest &request,
-        std::unique_ptr<MemoryViewResponse> &responsePtr, Server::WsSession &session);
+        std::unique_ptr<MemoryViewResponse> &responsePtr);
     void GetCompareGraphLines(const Protocol::MemoryViewData &compareData,
                               const Protocol::MemoryViewData &baselineData,
                               Protocol::MemoryViewData &resultData);

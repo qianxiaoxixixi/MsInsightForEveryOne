@@ -21,7 +21,7 @@ public:
 private:
     bool CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
         std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorListRequest &request,
-        std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr, Server::WsSession &session);
+        std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr);
     void GetOperatorDiff(const MemoryStaticOperatorListResponse &compareData,
                          const MemoryStaticOperatorListResponse &baselineData,
                          Protocol::MemoryStaticOperatorListCompResponse &resultData);
@@ -30,7 +30,7 @@ private:
     void Subtract(StaticOperatorCompItem &element);
     bool SelectDiffResult(MemoryStaticOperatorListRequest &request,
                           std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
-                          MemoryStaticOperatorListCompResponse &fullDiffResult, Server::WsSession &session);
+                          MemoryStaticOperatorListCompResponse &fullDiffResult);
     bool IsSelected(MemoryStaticOperatorListRequest &request, const StaticOperatorCompItem &op);
     void SortResult(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
     void SortAscend(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);

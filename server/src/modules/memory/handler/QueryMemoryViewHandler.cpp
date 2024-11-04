@@ -46,7 +46,7 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
+        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr)) {
             SendResponse(std::move(responsePtr), false, "Failed to get compare graph.");
             return false;
         }
@@ -57,7 +57,7 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 
 bool QueryMemoryViewHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryViewRequest &request,
-    std::unique_ptr<MemoryViewResponse> &responsePtr, WsSession &session)
+    std::unique_ptr<MemoryViewResponse> &responsePtr)
 {
     MemoryViewResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();

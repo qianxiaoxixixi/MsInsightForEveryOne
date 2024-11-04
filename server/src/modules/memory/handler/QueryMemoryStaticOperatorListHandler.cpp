@@ -49,7 +49,7 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!CompareOperator(database, databaseBaseline, request, responsePtr, session)) {
+        if (!CompareOperator(database, databaseBaseline, request, responsePtr)) {
             SendResponse(std::move(responsePtr), false, "Failed to compare operator.");
             return false;
         }
@@ -60,7 +60,7 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
 
 bool QueryMemoryStaticOperatorListHandler::CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorListRequest &request,
-    std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr, Server::WsSession &session)
+    std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr)
 {
     std::unique_ptr<MemoryStaticOperatorListResponse> responsePtrCompare =
         std::make_unique<MemoryStaticOperatorListResponse>();
@@ -84,7 +84,7 @@ bool QueryMemoryStaticOperatorListHandler::CompareOperator(std::shared_ptr<Virtu
         std::make_unique<MemoryStaticOperatorListCompResponse>();
     MemoryStaticOperatorListCompResponse &responseDiffResult = *responsePtrDiffResult.get();
     GetOperatorDiff(responseCompare, responseBaseline, responseDiffResult);
-    return SelectDiffResult(request, responsePtr, responseDiffResult, session);
+    return SelectDiffResult(request, responsePtr, responseDiffResult);
 }
 
 void QueryMemoryStaticOperatorListHandler::GetOperatorDiff(const MemoryStaticOperatorListResponse &compareData,
@@ -158,7 +158,7 @@ void QueryMemoryStaticOperatorListHandler::Subtract(Dic::Protocol::StaticOperato
 
 bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperatorListRequest &request,
     std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
-    MemoryStaticOperatorListCompResponse &fullDiffResult, Server::WsSession &session)
+    MemoryStaticOperatorListCompResponse &fullDiffResult)
 {
     MemoryStaticOperatorListCompResponse filteredDiffResult;
     for (const auto &item: fullDiffResult.operatorDiffDetails) {

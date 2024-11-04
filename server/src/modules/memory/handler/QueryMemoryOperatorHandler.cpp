@@ -56,7 +56,7 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!CompareOperator(database, databaseBaseline, request, responsePtr, session)) {
+        if (!CompareOperator(database, databaseBaseline, request, responsePtr)) {
             return false;
         }
     }
@@ -67,7 +67,7 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
 
 bool QueryMemoryOperatorHandler::CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-    MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, WsSession &session)
+    MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr)
 {
     std::unique_ptr<MemoryOperatorResponse> responsePtrCompare = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &responseCompare = *responsePtrCompare.get();
@@ -96,7 +96,7 @@ bool QueryMemoryOperatorHandler::CompareOperator(std::shared_ptr<VirtualMemoryDa
         std::make_unique<MemoryOperatorComparisonResponse>();
     MemoryOperatorComparisonResponse &responseDiffResult = *responsePtrDiffResult.get();
     GetOperatorDiff(responseCompare, responseBaseline, responseDiffResult);
-    return SelectDiffResult(request, responsePtr, responseDiffResult, session);
+    return SelectDiffResult(request, responsePtr, responseDiffResult);
 }
 
 void QueryMemoryOperatorHandler::GetOperatorDiff(const MemoryOperatorResponse &compareData,
@@ -190,8 +190,7 @@ void QueryMemoryOperatorHandler::Subtract(Dic::Protocol::MemoryOperatorCompariso
 }
 
 bool QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request,
-    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, MemoryOperatorComparisonResponse &fullDiffResult,
-    WsSession &session)
+    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, MemoryOperatorComparisonResponse &fullDiffResult)
 {
     MemoryOperatorComparisonResponse filteredDiffResult;
     for (const auto &item: fullDiffResult.operatorDiffDetails) {
@@ -235,7 +234,7 @@ bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, cons
         filter = filter && (op.diff.size <= request.params.maxSize);
     }
     if (request.params.startTime != -1 && request.params.endTime != -1) {
-        // 要求compare对象的开始和结束时间有一个在startTime endTime内，且baseline对象的开始和结束时间也有一个在startTime endTime内。
+        // 要求compare对象的开始和结束时间有一个在startTime endTime内或在这段时间一直存在，且baseline对象的开始和结束时间也有一个在startTime endTime内或在这段时间一直存在。
         long double compareAlloTime = NumberUtil::StringToLongDouble(op.compare.allocationTime);
         long double compareReleTime = NumberUtil::StringToLongDouble(op.compare.releaseTime);
         long double baselineAlloTime = NumberUtil::StringToLongDouble(op.baseline.allocationTime);

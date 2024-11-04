@@ -45,7 +45,7 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
+        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr)) {
             return false;
         }
     }
@@ -55,7 +55,7 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
 
 bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorGraphRequest &request,
-    std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr, Server::WsSession &session)
+    std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr)
 {
     MemoryStaticOperatorGraphResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtrCompare =
