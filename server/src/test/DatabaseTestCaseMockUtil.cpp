@@ -27,6 +27,16 @@ public:
         }
     }
 
+    static void ExecuteSql(sqlite3 *&db, const std::string &sql)
+    {
+        int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr);
+        if (rc != SQLITE_OK) {
+            std::cout << "Execute sql is failed" << std::endl;
+            sqlite3_free(nullptr);
+            sqlite3_close(db);
+        }
+    }
+
     static void OpenDBAndCreateTable(sqlite3 *&db, const std::string &sql)
     {
         OpenDB(db);
