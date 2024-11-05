@@ -40,6 +40,22 @@ constexpr std::string_view THREAD_NAME = "thread_name";
 constexpr std::string_view THREAD_SORT_INDEX = "thread_sort_index";
 }
 
+namespace ProcessColumn {
+constexpr std::string_view PID = "pid";
+constexpr std::string_view PROCESS_NAME = "process_name";
+constexpr std::string_view LABEL = "label";
+constexpr std::string_view PROCESS_SORT_INDEX = "process_sort_index";
+}
+
+namespace CounterColumn {
+constexpr std::string_view ID = "id";
+constexpr std::string_view NAME = "name";
+constexpr std::string_view PID = "pid";
+constexpr std::string_view TIMESTAMP = "timestamp";
+constexpr std::string_view CAT = "cat";
+constexpr std::string_view ARGS = "args";
+}
+
 namespace TaskColumn {
 constexpr std::string_view ROW_ID = "rowid";
 constexpr std::string_view TIMESTAMP = "startNs";
