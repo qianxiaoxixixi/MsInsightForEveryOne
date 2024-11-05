@@ -21,7 +21,7 @@ public:
     {
         int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr);
         if (rc != SQLITE_OK) {
-            std::cout << "insert bd is failed" << std::endl;
+            std::cout << "Create table is failed" << std::endl;
             sqlite3_free(nullptr);
             sqlite3_close(db);
         }
@@ -47,7 +47,7 @@ public:
     {
         int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr);
         if (rc != SQLITE_OK) {
-            std::cout << "create table is failed" << std::endl;
+            std::cout << "Insert data is failed" << std::endl;
             sqlite3_free(nullptr);
             sqlite3_close(db);
             return;

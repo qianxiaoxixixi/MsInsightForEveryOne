@@ -19,6 +19,16 @@ protected:
         "CREATE TABLE COMMUNICATION_OP (opName INTEGER,startNs INTEGER,endNs INTEGER,connectionId INTEGER,groupName "
         "INTEGER,opId INTEGER PRIMARY KEY,relay INTEGER,retry INTEGER,dataType INTEGER,algType INTEGER,count "
         "NUMERIC,opType INTEGER, waitNs INTEGER);";
+    const std::string pytorchApiSql =
+        "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, connectionId INTEGER, name INTEGER, "
+        "sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, inputShapes INTEGER, callchainId INTEGER, "
+        "type INTEGER, depth integer);";
+    const std::string canSql = "CREATE TABLE CANN_API (startNs INTEGER,endNs INTEGER,type INTEGER,globalTid "
+        "INTEGER,connectionId INTEGER PRIMARY KEY,name INTEGER, depth integer);";
+    const std::string mstxSql = "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
+        "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
+        "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
+    const std::string enumApiType = "CREATE TABLE ENUM_API_TYPE (id INTEGER PRIMARY KEY,name TEXT);";
 };
 class MockDatabase : public Dic::Module::FullDb::DbTraceDataBase {
 public:
@@ -175,4 +185,101 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrong)
     EXPECT_EQ(metaData.size(), expectProcessCount);
     EXPECT_EQ(metaData[second]->children.size(), second);
     EXPECT_EQ(metaData[second]->children[first]->metaData.threadName, expectGroupName);
+}
+
+/**
+ * 测试pytorch，cann，mstx都存在的情况下的泳道信息
+ */
+TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenAllHostExistThenhaveThreeTrack)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchApiSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
+    std::string pytorchDataSql =
+        "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
+        "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"depth\") VALUES "
+        "('1718180918997274130', '1718180918997289000', 8785587534247538, 0, 268435456, NULL, NULL, NULL, NULL, NULL, "
+        "8);";
+    std::string cannDataSql = "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", "
+        "\"connectionId\", \"name\", \"depth\") VALUES (1729478236911261506, "
+        "1729478236911265550, 20000, 1237912654215057, 250011, 5413, 0);";
+    std::string mstxDataSql = "INSERT INTO \"main\".\"MSTX_EVENTS\" (\"startNs\", \"endNs\", \"eventType\", "
+        "\"rangeId\", \"category\", \"message\", \"globalTid\", \"endGlobalTid\", \"domainId\", "
+        "\"connectionId\", \"depth\") VALUES (947741767895850870, 947741768895903230, 2, "
+        "4294967295, 4294967295, 8, 16884049020452276, 16884049020452276, 65535, 4000000001, 0);";
+    std::string numeApiDataSql = "INSERT INTO \"main\".\"ENUM_API_TYPE\" (\"id\", \"name\") VALUES (20000, 'acl');";
+    DatabaseTestCaseMockUtil::InsertData(db, pytorchDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    database.QueryHostMetadata(metaData);
+    const uint64_t expectSize = 3;
+    const uint64_t first = 0;
+    const uint64_t second = 1;
+    const uint64_t third = 2;
+    EXPECT_EQ(metaData.size(), expectSize);
+    EXPECT_EQ(metaData[first]->metaData.processName, "process 288224");
+    EXPECT_EQ(metaData[first]->children[first]->metaData.metaType, "CANN_API");
+    EXPECT_EQ(metaData[first]->children[first]->metaData.threadId, "292753");
+    EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.threadId, "");
+    EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.processId, "1237912654215057");
+    EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
+    EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
+    EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "MsTx");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.processId, "16884049020452276");
+    EXPECT_EQ(metaData[third]->metaData.processName, "process 2045554");
+    EXPECT_EQ(metaData[third]->children[first]->metaData.metaType, "CANN_API");
+    EXPECT_EQ(metaData[third]->children[first]->metaData.threadId, "2045554");
+    EXPECT_EQ(metaData[third]->children[first]->children[first]->metaData.threadId, "pytorch");
+    EXPECT_EQ(metaData[third]->children[first]->children[first]->metaData.processId, "8785587534247538");
+}
+
+/**
+ * 测试cann，mstx都存在但pytorch不存在的情况下的泳道信息
+ */
+TEST_F(DbDatabaseTest2, TestQueryHostMetadataWhenPytorchNotExistThenhaveTwoTrack)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    database.SetDbPtr(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, canSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, enumApiType);
+    std::string cannDataSql = "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", "
+        "\"connectionId\", \"name\", \"depth\") VALUES (1729478236911261506, "
+        "1729478236911265550, 20000, 1237912654215057, 250011, 5413, 0);";
+    std::string mstxDataSql = "INSERT INTO \"main\".\"MSTX_EVENTS\" (\"startNs\", \"endNs\", \"eventType\", "
+        "\"rangeId\", \"category\", \"message\", \"globalTid\", \"endGlobalTid\", \"domainId\", "
+        "\"connectionId\", \"depth\") VALUES (947741767895850870, 947741768895903230, 2, "
+        "4294967295, 4294967295, 8, 16884049020452276, 16884049020452276, 65535, 4000000001, 0);";
+    std::string numeApiDataSql = "INSERT INTO \"main\".\"ENUM_API_TYPE\" (\"id\", \"name\") VALUES (20000, 'acl');";
+    DatabaseTestCaseMockUtil::InsertData(db, cannDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, mstxDataSql);
+    DatabaseTestCaseMockUtil::InsertData(db, numeApiDataSql);
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    database.QueryHostMetadata(metaData);
+    const uint64_t expectSize = 2;
+    const uint64_t first = 0;
+    const uint64_t second = 1;
+    EXPECT_EQ(metaData.size(), expectSize);
+    EXPECT_EQ(metaData[first]->metaData.processName, "process 288224");
+    EXPECT_EQ(metaData[first]->children[first]->metaData.metaType, "CANN_API");
+    EXPECT_EQ(metaData[first]->children[first]->metaData.threadId, "292753");
+    EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.threadId, "");
+    EXPECT_EQ(metaData[first]->children[first]->children[first]->metaData.processId, "1237912654215057");
+    EXPECT_EQ(metaData[second]->metaData.processName, "process 3931124");
+    EXPECT_EQ(metaData[second]->children[first]->metaData.metaType, "CANN_API");
+    EXPECT_EQ(metaData[second]->children[first]->metaData.threadId, "3931572");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.threadId, "MsTx");
+    EXPECT_EQ(metaData[second]->children[first]->children[first]->metaData.processId, "16884049020452276");
 }
