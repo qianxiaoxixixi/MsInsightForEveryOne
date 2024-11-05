@@ -1214,8 +1214,7 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
                 threadMap[metadata.pid].emplace_back(metadata);
             }
         } catch (DatabaseException &e) {
-            ServerLog::Error("QueryHostMetadata, MetaType: ", typeName, " reason: ", e.What());
-            return false;
+            ServerLog::Error("Failed to query host metadata, MetaType: ", typeName, " reason: ", e.What());
         }
     }
     DealHostMetadata(metaData, threadMap);
