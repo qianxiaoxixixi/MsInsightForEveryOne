@@ -12,13 +12,18 @@ namespace Dic {
     const static std::string MSPROF_PREFIX = "[MSPROF]";
     const static std::string MSPROF_CONNECT = "__";
 
-    const std::string memoryOperatorReg = R"(operator_memory(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
-    const std::string memoryRecordReg = R"(memory_record(_slice_[0-9]{1,4})?(_[0-9]{1,14})?.csv$)";
-    const std::string staticOpMemReg = R"(static_op_mem(_[0-9]{1,14})?.csv$)";
+    // PyTorch训练数据无分片且无时间戳，msprof离线推理数据一定有时间戳，可能有分片
+    const std::string memoryOperatorReg =
+        R"((operator_memory|operator_memory(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
+    const std::string memoryRecordReg =
+        R"((memory_record|memory_record(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
+    const std::string staticOpMemReg =
+        R"((static_op_mem|static_op_mem(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
     const static std::string KERNEL_DETAIL_REG =
-            R"((kernel_details|op_summary_(slice_[0-9]{1,4}_)?[0-9]{1,14}).csv$)";
+        R"((kernel_details|op_summary(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
     const std::string traceViewReg =
-    R"((((trace_view|msprof(_slice)?(_[0-9]{1,15}){1,4})\.json)|(operator_memory|operator_memory_[0-9]{1,14})\.csv)$)";
+    R"((((trace_view|msprof(_slice_[0-9]{1,2})?_[0-9]{1,14})\.json)|)"
+    R"((operator_memory|operator_memory(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv)$)";
     const std::string clusterReg = R"(cluster_analysis_output$)";
     const std::string DBReg =
             R"((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis)\.db$)";
