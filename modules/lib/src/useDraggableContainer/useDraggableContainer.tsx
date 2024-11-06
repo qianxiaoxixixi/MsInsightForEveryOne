@@ -507,7 +507,7 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
             <div className={'topC'}> {viewProps.mainContainer} </div>
             <div className={'bottomC'} ref={draggable}>
                 <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{viewProps.draggableContainer}</div>
-                <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} theme={themeInstance.getCurrentTheme()}/>
+                <DrawerButton data-testid={'drawer-btn'} className={'buttonShow'} onClick={(): void => showDraggable()} theme={themeInstance.getCurrentTheme()}/>
                 <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
             </div>
             {viewProps.slot}

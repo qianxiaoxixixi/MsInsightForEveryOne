@@ -156,7 +156,7 @@ export const InputOption = observer(({ session, metaData }: { session: Session; 
                 </InputDiv>
             </InputContainer>}
         overlayInnerStyle={{ borderRadius: 2 }}>
-        <OffsetButton>{t('Offset', { ns: 'timeline' })}</OffsetButton>
+        <OffsetButton data-testid={'offset-btn'}>{t('Offset', { ns: 'timeline' })}</OffsetButton>
     </Tooltip>
     ;
 });

@@ -368,13 +368,13 @@ function handleToggleLang(): void {
             <div class="right-tool-box">
                 <SwitchTheme class="tool-item" />
                 <el-tooltip content="中文/English" effect="light">
-                    <el-icon class="tool-item" @click="handleToggleLang">
+                    <el-icon class="tool-item" data-testid="switch-lng" @click="handleToggleLang">
                         <LangZhIcon class="icon" v-if="isChinese" />
                         <LangEnIcon class="icon" v-else />
                     </el-icon>
                 </el-tooltip>
 
-                <el-icon class="tool-item" @click="questionIconClickHandler">
+                <el-icon class="tool-item" data-testid="help-icon" @click="questionIconClickHandler">
                     <HelpIcon class="icon" />
                 </el-icon>
             </div>

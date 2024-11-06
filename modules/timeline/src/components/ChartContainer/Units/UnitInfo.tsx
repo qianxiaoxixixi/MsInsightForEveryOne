@@ -132,6 +132,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
         {shouldDisplayStickyButton(session, isHovered, hasPinButton, isPinned)
             ? <Tooltip title={t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
                 <StyledButton
+                    data-testid={'pin-btn'}
                     style={style}
                     icon={isPinned ? <PinIcon/> : <UnPinIcon/>}
                     onClick={(e: React.MouseEvent): void => {
@@ -262,7 +263,7 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
 
 const ExpandIcon = observer(({ unit }: { unit: KeyedInsightUnit }): JSX.Element => {
     return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}>
-        <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
+        <Arrow data-testid={'expand-btn'} style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
             className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
     </div>;
 });
