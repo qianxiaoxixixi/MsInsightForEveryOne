@@ -273,6 +273,9 @@ namespace Dic::Module::Operator {
         Protocol::OperatorStatisticReqParams &reqParams,
         const int64_t total)
     {
+        if (statisticData.empty()) {
+            return statisticData;
+        }
         std::string dbOrderBy = reqParams.orderBy;
         // 对差值排序
         const std::string order = reqParams.order;
