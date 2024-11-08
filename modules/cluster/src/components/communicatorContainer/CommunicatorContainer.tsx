@@ -445,7 +445,7 @@ const ParallelSwitch = ({ onChange, session, setDyeingMode, dyeingMode, setDyein
     }, [session.ranksData]);
     useEffect(() => { initSelectOptions(); }, [session.language]);
     return (
-        <Form form={form} layout="inline">
+        <Form form={form} layout="inline" data-testid="parallelSwitch">
             {
                 checkboxOptions.map(item => (
                     <Form.Item name={item.name} label={t(item.title)} key={item.name} valuePropName="checked" style={{ marginRight: '40px' }}>

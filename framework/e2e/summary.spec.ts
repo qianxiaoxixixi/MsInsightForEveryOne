@@ -42,7 +42,7 @@ test.describe('Summary', () => {
 
     // 配置并行策略
     test('configure parallel strategy', async ({ page, summaryPage }) => {
-        const { summaryFrame, btnGenerate, configureParallel } = summaryPage;
+        const { summaryFrame, btnGenerate, configureParallel, configureParallelSwitch } = summaryPage;
 
         if (await btnGenerate.isDisabled()) {
         } else {
@@ -53,6 +53,19 @@ test.describe('Summary', () => {
             );
             await page.mouse.move(0, 0);
             await expect(summaryFrame.getByTestId('parallelRankContainer')).toHaveScreenshot('parallelRank.png');
+
+            await configureParallelSwitch(
+                page,
+                summaryFrame,
+                {
+                    pipelineParallel: true,
+                    tensorParallel: true,
+                    dataParallel: true,
+                    dataType: 'Preparing',
+                    dyeingStep: 0.05,
+                });
+            await page.mouse.move(0, 0);
+            await expect(summaryFrame.getByTestId('parallelRankContainer')).toHaveScreenshot('parallelRank2.png');
         }
     });
 

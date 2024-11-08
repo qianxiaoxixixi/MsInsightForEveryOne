@@ -4,6 +4,7 @@
 
 import type { FrameLocator, Page, Locator } from '@playwright/test';
 import { FrameworkPage } from './framework';
+import { CheckboxHelpers, SelectHelpers } from '../components';
 
 
 interface ParallelValue {
@@ -11,6 +12,14 @@ interface ParallelValue {
     ppSize: number;
     tpSize: number;
     dpSize: number;
+};
+
+interface ParallelSwitchValue {
+    pipelineParallel: boolean;
+    tensorParallel: boolean;
+    dataParallel: boolean;
+    dataType: string;
+    dyeingStep?: number;
 };
 
 export class SummaryPage {
@@ -22,7 +31,7 @@ export class SummaryPage {
     constructor(page: Page) {
         this.page = page;
         this.summaryFrame = page.frameLocator('#Summary');
-        this.fullmask = this.summaryFrame.locator('fullmask');
+        this.fullmask = this.summaryFrame.locator('.fullmask');
         this.btnGenerate = this.summaryFrame.locator('button').first();
     }
 
@@ -42,6 +51,46 @@ export class SummaryPage {
         await dpSizeInput.fill(`${value.dpSize}`);
 
         await btnGenerate.click();
+    }
+
+    async configureParallelSwitch(page: Page, summaryFrame: FrameLocator, value: ParallelSwitchValue): Promise<void> {
+        const config = summaryFrame.getByTestId('parallelSwitch');
+        
+        if (value.pipelineParallel) {
+            const pipelineParallelCheckbox = new CheckboxHelpers(
+                page,
+                config.locator('#pipelineParallel'),
+                summaryFrame,
+            );
+            await pipelineParallelCheckbox.click();
+        }
+
+        if (value.tensorParallel) {
+            const tensorParallelCheckbox = new CheckboxHelpers(
+                page,
+                config.locator('#tensorParallel'),
+                summaryFrame,
+            );
+            await tensorParallelCheckbox.click();
+        }
+
+        if (value.dataParallel) {
+            const dataParallelCheckbox = new CheckboxHelpers(
+                page,
+                config.locator('#dataParallel'),
+                summaryFrame,
+            );
+            await dataParallelCheckbox.click();
+        }
+
+        const dataTypeSelect = new SelectHelpers(page, config.locator('#dataType'), summaryFrame);
+        await dataTypeSelect.open();
+        await dataTypeSelect.selectOption(value.dataType);
+
+        if (value.dataType !== 'None') {
+            const dyeingStepInput = config.locator('#dyeingStep');
+            await dyeingStepInput.fill(`${value.dyeingStep}`);
+        }
     }
 
     async goto(): Promise<void> {

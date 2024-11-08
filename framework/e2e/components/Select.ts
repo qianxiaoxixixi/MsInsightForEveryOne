@@ -13,11 +13,11 @@ export class SelectHelpers extends Component {
 
     async selectOption(optionText: string): Promise<void> {
         const _page = this.framePage ?? this.page;
-        const optionsDropdown = _page.locator('.ant-select-dropdown');
-        await optionsDropdown.waitFor();
         const selectorId = await this.locator.getAttribute('id');
-        const optionLocator = _page.locator(`#${selectorId}_list + div .ant-select-item-option`);
-        const option = optionLocator.getByText(optionText);
+
+        const selectOptions = _page.locator(`#${selectorId}_list + div`);
+        await selectOptions.waitFor();
+        const option = selectOptions.locator(`.ant-select-item-option[title='${optionText}']`);
 
         await option.click();
     }
