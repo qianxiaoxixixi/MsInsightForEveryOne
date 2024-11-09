@@ -17,12 +17,6 @@ TEST(StringUtil, IntToString) {
     EXPECT_EQ(StringUtil::IntToString(100, 2), "100");
 }
 
-TEST(StringUtil, ToCamelCase) {
-    EXPECT_EQ(StringUtil::ToCamelCase("rank_id"), "rankId");
-    EXPECT_EQ(StringUtil::ToCamelCase("rank_id, device_Id"), "rankId, deviceId");
-    EXPECT_EQ(StringUtil::ToCamelCase("rank__id, device_Id"), "rankId, deviceId");
-}
-
 TEST(StringUtil, Split) {
     EXPECT_EQ(StringUtil::Split("a,a", ",")[0], "a");
     EXPECT_EQ(StringUtil::Split("a,a", ",")[1], "a");
@@ -46,6 +40,13 @@ TEST(StringUtil, IsUtf8String) {
     EXPECT_EQ(StringUtil::IsUtf8String("\xD6\xD0"), false);
 }
 
+TEST(StringUtil, IsAllDigitsWithNormalInput) {
+    EXPECT_EQ(StringUtil::IsAllDigits("123"), true);
+    EXPECT_EQ(StringUtil::IsAllDigits("1"), true);
+    EXPECT_EQ(StringUtil::IsAllDigits("1+2"), false);
+    EXPECT_EQ(StringUtil::IsAllDigits("-2"), false);
+}
+
 TEST(StringUtil, AnonymousString) {
     EXPECT_EQ(StringUtil::AnonymousString("a"), "a");
     EXPECT_EQ(StringUtil::AnonymousString("ab"), "ab");
@@ -67,6 +68,7 @@ TEST(StringUtil, Trim) {
     EXPECT_EQ(StringUtil::Trim(str4), "");
 }
 
+
 #ifdef _WIN32
 TEST(StringUtil, GbkToUtf8) {
     EXPECT_EQ(StringUtil::GbkToUtf8(nullptr), "");
@@ -84,6 +86,7 @@ TEST(StringUtil, Utf8ToGbk) {
 
 #endif
 
+
 TEST(StringUtil, join) {
     std::vector<std::string> list1 = {"a", "b", "c"};
     EXPECT_EQ(StringUtil::join(list1, "1"), "a1b1c");
@@ -98,9 +101,41 @@ TEST(StringUtil, StartWith) {
     EXPECT_EQ(StringUtil::StartWith(" xd", " "), true);
 }
 
+TEST(StringUtil, EndWith) {
+    EXPECT_EQ(StringUtil::EndWith("aaaa", "aa"), true);
+    EXPECT_EQ(StringUtil::EndWith("xdw", "w"), true);
+    EXPECT_EQ(StringUtil::EndWith("xa", " "), false);
+    EXPECT_EQ(StringUtil::EndWith(" xd ", " "), true);
+}
+
 TEST(StringUtil, Contains) {
     EXPECT_EQ(StringUtil::Contains(" xdw", "x"), true);
     EXPECT_EQ(StringUtil::Contains(" xdw", " "), true);
     EXPECT_EQ(StringUtil::Contains("xdw", "d"), true);
     EXPECT_EQ(StringUtil::Contains("xdw", "ad"), false);
+}
+
+TEST(StringUtil, ReplaceFirstWithNormalInput) {
+    EXPECT_EQ(StringUtil::ReplaceFirst("xdw", "x", "y"), "ydw");
+    EXPECT_EQ(StringUtil::ReplaceFirst(" xdw", " ", ""), "xdw");
+    EXPECT_EQ(StringUtil::ReplaceFirst(" xdw ", " ", ""), "xdw ");
+    EXPECT_EQ(StringUtil::ReplaceFirst("aaa ", "b", "c"), "aaa ");
+}
+
+TEST(StringUtil, ValidateCommandFilePathParamWithNormalInput) {
+#ifdef _WIN32
+    EXPECT_EQ(StringUtil::ValidateCommandFilePathParam(""), false);
+#else
+    EXPECT_EQ(StringUtil::ValidateCommandFilePathParam(""), false);
+    EXPECT_EQ(StringUtil::ValidateCommandFilePathParam("/"), true);
+    EXPECT_EQ(StringUtil::ValidateCommandFilePathParam("/home/xxx/a|b"), false);
+    EXPECT_EQ(StringUtil::ValidateCommandFilePathParam("/home/xxx/${a}"), false);
+    EXPECT_EQ(StringUtil::ValidateCommandFilePathParam("/home/xxx/cc;mkdir d"), false);
+#endif
+}
+
+TEST(StringUtil, ToCamelCaseWithNormalInput) {
+    EXPECT_EQ(StringUtil::ToCamelCase("rank_id"), "rankId");
+    EXPECT_EQ(StringUtil::ToCamelCase("rank_id, device_Id"), "rankId, deviceId");
+    EXPECT_EQ(StringUtil::ToCamelCase("rank__id, device_Id"), "rankId, deviceId");
 }

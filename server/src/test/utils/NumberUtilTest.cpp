@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 #include <gtest/gtest.h>
@@ -8,68 +8,209 @@
 
 using namespace Dic;
 
-TEST(NumberUtil, TryParseInt) {
-    EXPECT_EQ(NumberUtil::TryParseInt("1"), 1);
-    EXPECT_EQ(NumberUtil::TryParseInt("129"), 129);
-    EXPECT_EQ(NumberUtil::TryParseInt("1024"), 1024);
-    EXPECT_EQ(NumberUtil::TryParseInt("A"), INVALID_NUMBER);
-    EXPECT_EQ(NumberUtil::TryParseInt("99999999999999999999"), INVALID_NUMBER);
+TEST(NumberUtil, TryParseIntWithNormalNumberReturnValid) {
+    EXPECT_EQ(NumberUtil::TryParseInt("0"), 0);
+    EXPECT_EQ(NumberUtil::TryParseInt("001"), 1);
+    EXPECT_EQ(NumberUtil::TryParseInt("2147483647"), INT32_MAX);
+    EXPECT_EQ(NumberUtil::TryParseInt("-1"), -1);
+    EXPECT_EQ(NumberUtil::TryParseInt("-2147483648"), INT32_MIN);
+
+    // Please notice
+    EXPECT_EQ(NumberUtil::TryParseInt("0+1"), 0);
+    EXPECT_EQ(NumberUtil::TryParseInt("55-2"), 55);
+    EXPECT_EQ(NumberUtil::TryParseInt("+55"), 55);
+    EXPECT_EQ(NumberUtil::TryParseInt("--1"), -1);
+    EXPECT_EQ(NumberUtil::TryParseInt("---1"), -1);
 }
 
-TEST(NumberUtil, Uint64ToHexString) {
-    EXPECT_EQ(NumberUtil::Uint64ToHexString(1), "0x1");
-    EXPECT_EQ(NumberUtil::Uint64ToHexString(2), "0x2");
-    EXPECT_EQ(NumberUtil::Uint64ToHexString(10), "0xa");
-    EXPECT_EQ(NumberUtil::Uint64ToHexString(11), "0xb");
+TEST(NumberUtil, TryParseIntWithAbnormalNumberReturnInvalid) {
+    EXPECT_EQ(NumberUtil::TryParseInt("-"), INVALID_NUMBER);
+    EXPECT_EQ(NumberUtil::TryParseInt("A"), INVALID_NUMBER);
+    EXPECT_EQ(NumberUtil::TryParseInt("2147483648"), INVALID_NUMBER);
+}
+
+TEST(NumberUtil, TryParseUnsignedLongLongWithNormalNumberReturnValid) {
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("0"), 0);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("001"), 1);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("18446744073709551615"), UINT64_MAX);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("-1"), UINT64_MAX);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("--1"), UINT64_MAX);
+
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("0+1"), 0);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("55-2"), 55);
+    EXPECT_EQ(NumberUtil::TryParseUnsignedLongLong("+55"), 55);
+}
+
+TEST(NumberUtil, TryParseUnsignedLongLongWithAbnormalNumberReturnInvalid) {
+    EXPECT_EQ(NumberUtil::TryParseInt("-"), INVALID_NUMBER);
+    EXPECT_EQ(NumberUtil::TryParseInt("A"), INVALID_NUMBER);
+    EXPECT_EQ(NumberUtil::TryParseInt("18446744073709551616"), INVALID_NUMBER);
+}
+
+TEST(NumberUtil, Uint64ToHexStringWithNormalNumberReturnValid) {
+    EXPECT_EQ(NumberUtil::Uint64ToHexString(0), "0x0");
+    EXPECT_EQ(NumberUtil::Uint64ToHexString(15), "0xf");
+    EXPECT_EQ(NumberUtil::Uint64ToHexString(16), "0x10");
     EXPECT_EQ(NumberUtil::Uint64ToHexString(999999999), "0x3b9ac9ff");
     EXPECT_EQ(NumberUtil::Uint64ToHexString(99999999999999), "0x5af3107a3fff");
+    EXPECT_EQ(NumberUtil::Uint64ToHexString(-1), "0xffffffffffffffff");
 }
 
-TEST(NumberUtil, HexadecimalStrToDecimalInt) {
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x1"), 1);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x2"), 2);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xa"), 10);
-    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xb"), 11);
+TEST(NumberUtil, HexadecimalStrToDecimalIntWithNormalNumberReturnValid) {
+    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x0"), 0);
+    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xf"), 15);
+    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x10"), 16);
     EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0x3b9ac9ff"), 999999999);
+    EXPECT_EQ(NumberUtil::HexadecimalStrToDecimalInt("0xffffffffffffffff"), UINT64_MAX);
 }
 
-TEST(NumberUtil, TimestampUsToNs) {
+TEST(NumberUtil, TimestampUsToNsWithLongDoubleWithNormalInputReturnValid) {
     double a = stod("1695297849996490.053");
     EXPECT_EQ(1695297849996489984, llround(a * 1000));
+
     EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNs(stold("1695297849996490.053011100000")));
     EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs(1695297849996490));
 }
 
-TEST(NumberUtil, DoubleReservedNDigits) {
+TEST(NumberUtil, TimestampUsToNsWithStringWithNormalInputReturnValid) {
+    double a = stod("1695297849996490.053");
+    EXPECT_EQ(1695297849996489984, llround(a * 1000));
+
+    EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs("1695297849996490"));
+}
+
+TEST(NumberUtil, StringToDoubleWithNormalStringReturnValidNumber) {
+    EXPECT_EQ(NumberUtil::StringToDouble("0"), 0.0);
+    EXPECT_EQ(NumberUtil::StringToDouble("490.053"), 490.053);
+    EXPECT_EQ(NumberUtil::StringToDouble("0xffff"), 65535);
+    EXPECT_TRUE(abs(NumberUtil::StringToDouble("1695297849996490.053") - 1695297849996490.053) < 0.00000001);
+}
+
+TEST(NumberUtil, StringToDoubleWithAbnormalStringReturnInvalidNumber) {
+    EXPECT_EQ(NumberUtil::StringToDouble(""), 0);
+    EXPECT_EQ(NumberUtil::StringToDouble("a+b"), 0);
+}
+
+TEST(NumberUtil, StringToLongDoubleWithNormalStringReturnValidNumber) {
+    EXPECT_EQ(NumberUtil::StringToDouble("0"), 0.0);
+    EXPECT_EQ(NumberUtil::StringToDouble("490.053"), 490.053);
+    EXPECT_EQ(NumberUtil::StringToDouble("0xffff"), 65535);
+    EXPECT_TRUE(abs(NumberUtil::StringToDouble("1695297849996490.053") - 1695297849996490.053) < 0.00000001);
+}
+
+TEST(NumberUtil, StringToLongDoubleWithAbnormalStringReturnInvalidNumber) {
+    EXPECT_EQ(NumberUtil::StringToLongDouble(""), 0);
+    EXPECT_EQ(NumberUtil::StringToLongDouble("a+b"), 0);
+}
+
+TEST(NumberUtil, StringToLongWithNormalStringReturnValidNumber) {
+    EXPECT_EQ(NumberUtil::TryParseInt("0"), 0);
+    EXPECT_EQ(NumberUtil::TryParseInt("001"), 1);
+    EXPECT_EQ(NumberUtil::TryParseInt("2147483647"), INT32_MAX);
+    EXPECT_EQ(NumberUtil::TryParseInt("-1"), -1);
+    EXPECT_EQ(NumberUtil::TryParseInt("-2147483648"), INT32_MIN);
+
+    // Please notice
+    EXPECT_EQ(NumberUtil::TryParseInt("0+1"), 0);
+    EXPECT_EQ(NumberUtil::TryParseInt("55-2"), 55);
+    EXPECT_EQ(NumberUtil::TryParseInt("+55"), 55);
+    EXPECT_EQ(NumberUtil::TryParseInt("--1"), -1);
+    EXPECT_EQ(NumberUtil::TryParseInt("---1"), -1);
+}
+
+TEST(NumberUtil, StringToLongWithAbnormalStringReturnInalidNumber) {
+    EXPECT_EQ(NumberUtil::TryParseInt("-"), INVALID_NUMBER);
+    EXPECT_EQ(NumberUtil::TryParseInt("A"), INVALID_NUMBER);
+    EXPECT_EQ(NumberUtil::TryParseInt("2147483648"), INVALID_NUMBER);
+}
+
+TEST(NumberUtil, StringDoubleMinusWithNormalStringReturnValid) {
+    EXPECT_EQ(NumberUtil::StringDoubleMinus("111111.555555", "0.555555"), "111111.000");
+    EXPECT_EQ(NumberUtil::StringDoubleMinus("111111.555555", "0.555555", 2), "111111.00");
+    EXPECT_EQ(NumberUtil::StringDoubleMinus("111111.555555", "0.555550", 2), "111111.00");
+}
+
+TEST(NumberUtil, StringDoubleMinusKeepSfWithNormalStringReturnValid) {
+    EXPECT_EQ(NumberUtil::StringDoubleMinusKeepSf("111111.555555", "0.555555"), "111111.000");
+    EXPECT_EQ(NumberUtil::StringDoubleMinusKeepSf("111111.555555", "0.555555", 2), "111111.00");
+    // please notice
+    EXPECT_EQ(NumberUtil::StringDoubleMinusKeepSf("111111.555555", "0.555550", 2), "111111.0000050");
+}
+
+TEST(NumberUtil, RemoveTrailingZerosAndDecimalWithNormalStringReturnValidString) {
+    EXPECT_EQ(NumberUtil::RemoveTrailingZerosAndDecimal("111111.55555500"), "111111.555555");
+    EXPECT_EQ(NumberUtil::RemoveTrailingZerosAndDecimal("111111.00555555"), "111111.00555555");
+}
+
+TEST(NumberUtil, RemoveTrailingZerosAndDecimalWithAbnormalStringReturnInvalidString) {
+    // please notice !!!
+    EXPECT_EQ(NumberUtil::RemoveTrailingZerosAndDecimal("11111100"), "111111");
+    EXPECT_EQ(NumberUtil::RemoveTrailingZerosAndDecimal("11111100.00"), "11111100");
+    EXPECT_EQ(NumberUtil::RemoveTrailingZerosAndDecimal("00"), "0");
+    EXPECT_EQ(NumberUtil::RemoveTrailingZerosAndDecimal("00.00"), "00");
+}
+
+TEST(NumberUtil, StringDoubleMinusWithoutTrailingZeroWithNormalStringReturnValidString) {
+    EXPECT_EQ(NumberUtil::StringDoubleMinusWithoutTrailingZero("111111.555555", "0.555555"), "111111");
+    EXPECT_EQ(NumberUtil::StringDoubleMinusWithoutTrailingZero("111111.555555", "0.555555", 2), "111111");
+    // please notice
+    EXPECT_EQ(NumberUtil::StringDoubleMinusWithoutTrailingZero("111111.555555", "0.555550", 2), "111111.000005");
+}
+
+TEST(NumberUtil, StringDoubleMinusWithoutTrailingZeroWithAbnormalStringReturnInvalidString) {
+    EXPECT_EQ(NumberUtil::StringDoubleMinusWithoutTrailingZero("", ""), "");
+    EXPECT_EQ(NumberUtil::StringDoubleMinusWithoutTrailingZero("aa", ""), "");
+    EXPECT_EQ(NumberUtil::StringDoubleMinusWithoutTrailingZero("", "aa"), "");
+}
+
+TEST(NumberUtil, DoubleReservedNDigitsWithNormalStringReturnInvalidNumber) {
     double a = stod("490.053849996");
-    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 0), a);
-    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 7), a);
     EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 5), stod("490.05385"));
 }
 
-TEST(NumberUtil, StringToDouble) {
-    EXPECT_EQ(NumberUtil::StringToDouble(""), 0);
-    EXPECT_EQ(NumberUtil::StringToDouble("xxx"), 0);
-    EXPECT_EQ(NumberUtil::StringToDouble("490.053"), 490.053); // 490.053
+TEST(NumberUtil, DoubleReservedNDigitsWithAbnormalStringReturnInvalidNumber) {
+    double a = stod("490.053849996");
+    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 0), a);
+    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 7), a);
 }
 
-TEST(NumberUtil, StringToLongDouble) {
-    EXPECT_EQ(NumberUtil::StringToLongDouble(""), 0);
-    EXPECT_EQ(NumberUtil::StringToLongDouble("xxx"), 0);
-    EXPECT_EQ(NumberUtil::StringToLongDouble("490.053"), std::stold("490.053")); // 490.053
+TEST(NumberUtil, SubWithNormalStringReturnInvalidNumber) {
+    double a = stod("490.053849996");
+    double b = stod("489.1234685");
+    EXPECT_EQ(NumberUtil::Sub(a, b), 0.930381);
+    EXPECT_EQ(NumberUtil::Sub(b, a), -0.930381);
 }
 
-TEST(NumberUtil, StringToLong) {
-    EXPECT_EQ(NumberUtil::StringToLong(""), 0);
-    EXPECT_EQ(NumberUtil::StringToLong("xxx"), 0);
-    EXPECT_EQ(NumberUtil::StringToLong("490"), 490); // 490
+TEST(NumberUtil, SubWithAbnormalStringReturnInvalidNumber) {
+    double a = stod("490.053849996");
+    EXPECT_EQ(NumberUtil::Sub(a, a), 0);
 }
 
-TEST(NumberUtil, StringRservedNDigits)
+TEST(NumberUtil, StringRservedNDigitsWithNormalInputReturnValidString)
 {
     EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1415", 2), "3.14");
     EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1", 2), "3.1");
     EXPECT_EQ(NumberUtil::StrReservedNDigits("31", 2), "31");
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("3.000", 2), "3.00");
     EXPECT_EQ(NumberUtil::StrReservedNDigits("0.0002", 2), "0.0002");
     EXPECT_EQ(NumberUtil::StrReservedNDigits("0.0002", 3), "0.0002");
+}
+
+TEST(NumberUtil, StringRservedNDigitsWithAbnormalStringReturnInvalidNumber)
+{
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1415", 0), "3.1415");
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1415", 7), "3.1415");
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1415", 5), "3.1415");
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("0.00", 2), "0.00");
+}
+
+TEST(NumberUtil, IsGreaterWithNormalInputReturnValidString)
+{
+    EXPECT_EQ(NumberUtil::IsGreater(3.1415, 3.1416), false);
+    EXPECT_EQ(NumberUtil::IsGreater(3.1415, 3.1415), false);
+    EXPECT_FALSE(NumberUtil::IsGreater(3.1416, 3.1415, 0.001));
+    EXPECT_FALSE(NumberUtil::IsGreater(3.141, 3.1415, 0.00001));
+
+    EXPECT_EQ(NumberUtil::IsGreater(-3.1415, -3.1416), true);
+    EXPECT_EQ(NumberUtil::IsGreater(-3.1415, -3.1415), false);
 }
