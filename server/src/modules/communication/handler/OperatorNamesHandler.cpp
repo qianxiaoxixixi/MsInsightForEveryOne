@@ -21,6 +21,12 @@ bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     std::unique_ptr<OperatorNamesResponse> responsePtr = std::make_unique<OperatorNamesResponse>();
     OperatorNamesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryOperatorNames(request.params, response.body)) {
         SetResponseResult(response, false);

@@ -27,6 +27,12 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         request.params.orderBy = "computingTime";
     }
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     response.body.collectStartTime =
             Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
     response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;

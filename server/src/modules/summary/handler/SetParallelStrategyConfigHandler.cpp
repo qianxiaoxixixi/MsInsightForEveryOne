@@ -18,6 +18,12 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    // check request parameters
+    std::string errorMsg;
+    if (!request.config.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     std::string level = PARALLEL_CONFIG_LEVEL_CONFIGURED;
     if (!database->UpdateParallelStrategyConfig(request.config, level, response.msg)) {

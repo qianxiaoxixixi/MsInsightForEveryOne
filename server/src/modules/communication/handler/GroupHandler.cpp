@@ -21,6 +21,12 @@ bool GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetGroups(request.params, response.body)) {
         SetResponseResult(response, false);

@@ -20,6 +20,12 @@ bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::unique_ptr<DurationResponse> responsePtr = std::make_unique<DurationResponse>();
     DurationResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryDurationList(request.params, response.body)) {
         SetResponseResult(response, false);

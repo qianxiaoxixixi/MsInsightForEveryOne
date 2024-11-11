@@ -67,12 +67,37 @@ const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
 
 const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
 const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
+const int64_t MAX_PARALLEL_SIZE = 255;
+const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
 struct ParallelStrategyConfig {
     std::string algorithm = MEGATRON_LM_TP_DP_PP_ALG; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
     int64_t ppSize{};
     int64_t tpSize{};
     int64_t dpSize{};
+    bool CheckParams(std::string &errorMsg) const
+    {
+        // 检查ppSize, tpSize, dpSize的范围
+        if (ppSize <= 0 || ppSize > MAX_PARALLEL_SIZE) {
+            errorMsg = "[Summary] PP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
+            return false;
+        }
+        if (tpSize <= 0 || tpSize > MAX_PARALLEL_SIZE) {
+            errorMsg = "[Summary] TP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
+            return false;
+        }
+        if (dpSize <= 0 || dpSize > MAX_PARALLEL_SIZE) {
+            errorMsg = "[Summary] DP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
+            return false;
+        }
+        // 检查三个数的乘积是否小于MAX_PARALLEL_PRODUCT_SIZE(25万)
+        if (ppSize * tpSize * dpSize > MAX_PARALLEL_PRODUCT_SIZE) {
+            errorMsg = "[Summary] The product of PP size, TP size, and DP size must be less than " +
+                       std::to_string(MAX_PARALLEL_PRODUCT_SIZE);
+            return false;
+        }
+        return true;
+    }
 };
 
 struct ClusterBaseInfo {

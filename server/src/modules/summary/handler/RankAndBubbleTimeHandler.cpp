@@ -17,6 +17,12 @@ bool RankAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     PipelineRankTimeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetRankAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);

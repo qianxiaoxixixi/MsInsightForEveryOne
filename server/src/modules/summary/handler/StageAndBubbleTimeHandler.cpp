@@ -17,6 +17,12 @@ bool StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     PipelineStageTimeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->GetStageAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);
