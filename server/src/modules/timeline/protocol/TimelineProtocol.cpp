@@ -30,6 +30,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_EVENTS_VIEW, ToEventsViewRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_KERNEL_DETAIL, ToCommunicationKernelRequest);
     jsonToReqFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesRequest);
 }
@@ -53,6 +54,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_EVENTS_VIEW, ToEventsViewResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelResponseJson);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_KERNEL_DETAIL, ToCommunicationKernelResponseJson);
     resToJsonFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesResponseJson);
     resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
@@ -363,6 +365,19 @@ std::unique_ptr<Request> TimelineProtocol::ToKernelDetailRequest(const json_t &j
     return reqPtr;
 }
 
+std::unique_ptr<Request> TimelineProtocol::ToCommunicationKernelRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<CommunicationKernelRequest> reqPtr = std::make_unique<CommunicationKernelRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
+    return reqPtr;
+}
+
+
 std::unique_ptr<Request> TimelineProtocol::ToOneKernelRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<KernelRequest> reqPtr = std::make_unique<KernelRequest>();
@@ -503,6 +518,11 @@ std::optional<document_t> TimelineProtocol::ToKernelDetailResponseJson(const Dic
 std::optional<document_t> TimelineProtocol::ToOneKernelResponseJson(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<OneKernelResponse>(dynamic_cast<const OneKernelResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToCommunicationKernelResponseJson(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<CommunicationKernelResponse>(dynamic_cast<const CommunicationKernelResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToUnitThreadsOperatorsResponseJson(const Dic::Protocol::Response &response)

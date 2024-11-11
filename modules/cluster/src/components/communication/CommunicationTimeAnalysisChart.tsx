@@ -238,13 +238,12 @@ async function redirectToTimeline(): Promise<void> {
     if (selectedOpDetail === null) {
         return;
     }
-    const { name, rankId, timestamp, duration } = selectedOpDetail;
+    const { name, rankId, duration } = selectedOpDetail;
     const params = {
         name,
         rankId: rankId.toString(),
-        timestamp,
     };
-    const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
+    const res = await window.requestData('unit/kernelDetail', params, 'timeline');
     const resObj = res ?? {};
     connector.send({
         event: 'switchModule',
@@ -255,7 +254,7 @@ async function redirectToTimeline(): Promise<void> {
                 ...resObj,
                 ...params,
                 processId: resObj.pid,
-                startTime: timestamp,
+                startTime: resObj.startTime,
                 rankId: resObj.rankId,
                 duration,
             },

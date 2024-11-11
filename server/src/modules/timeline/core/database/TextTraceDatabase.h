@@ -86,6 +86,8 @@ public:
 
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params, Protocol::OneKernelBody &responseBody,
         uint64_t minTimestamp) override;
+    bool QueryCommunicationKernelInfo(const std::string &name, const std::string &rankId,
+                                      Protocol::CommunicationKernelBody &body) override;
     OneKernelData QueryKernelTid(const uint64_t trackId) override;
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,

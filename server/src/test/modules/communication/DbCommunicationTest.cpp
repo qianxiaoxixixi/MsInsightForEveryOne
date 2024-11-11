@@ -147,6 +147,18 @@ TEST_F(DbCommunicationTest, QueryBandwidthData)
     EXPECT_EQ(responseBody.items[0].transportType, "HCCS");
 }
 
+TEST_F(DbCommunicationTest, QueryIterationAndCommunicationGroupDBSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    Dic::Protocol::CommunicationKernelParams requestParams;
+    requestParams.name = "hcom_broadcast__293_0_1";
+    requestParams.rankId = "0";
+    Dic::Protocol::CommunicationKernelBody responseBody;
+    database->QueryIterationAndCommunicationGroup(requestParams, responseBody);
+    EXPECT_EQ(responseBody.step, "1");
+    EXPECT_EQ(responseBody.group, "(0,1,2,3,4,5,6,7)");
+}
+
 TEST_F(DbCommunicationTest, QueryBandwidthDataWithErrorParamReturnExpectSize0)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();

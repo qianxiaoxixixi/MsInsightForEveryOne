@@ -169,6 +169,19 @@ TEST_F(TestSuit, QueryKernelDepthAndThread)
     EXPECT_EQ(responseBody.pid, pid);
 }
 
+TEST_F(TestSuit, QueryCommunicationKernelInfoSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    Dic::Protocol::CommunicationKernelBody responseBody;
+    database->QueryCommunicationKernelInfo("trans_Cast_15", "0", responseBody);
+    uint64_t depth = 0;
+    std::string tid = "17";
+    std::string pid = "300";
+    EXPECT_EQ(responseBody.depth, depth);
+    EXPECT_EQ(responseBody.threadId, tid);
+    EXPECT_EQ(responseBody.pid, pid);
+}
+
 TEST_F(TestSuit, QueryCommunicationStatisticsData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");

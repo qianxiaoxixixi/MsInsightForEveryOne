@@ -480,6 +480,38 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &
     return total;
 }
 
+bool DbTraceDataBase::QueryCommunicationKernelInfo(const std::string &name, const std::string &rankId,
+                                                   CommunicationKernelBody &body)
+{
+    std::string sql = "SELECT info.ROWID as id, info.groupName||'group' as tid, info.opName as name, 'HCCL' as pid, "
+                      "0 as depth, info.startNs from COMMUNICATION_OP info "
+                      "LEFT JOIN COMMUNICATION_TASK_INFO taskInfo ON info.opId = taskInfo.opId "
+                      "LEFT JOIN TASK ON TASK.globalTaskId = taskInfo.globalTaskId "
+                      " where name = (select id from STRING_IDS where value = ?) and TASK.deviceId = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql to query kernel depth and thread.");
+        return false;
+    }
+    std::string deviceId = GetDeviceId(rankId);
+    std::unique_ptr<SqliteResultSet> resultSet = stmt->ExecuteQuery(name, deviceId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
+        return false;
+    }
+    if (resultSet->Next()) {
+        body.id = resultSet->GetString("id");
+        body.depth = resultSet->GetUint64("depth");
+        body.threadId = resultSet->GetString("tid");
+        body.pid = resultSet->GetString("pid");
+        body.rankId = QueryHostInfo() + rankId;
+        body.startTime = resultSet->GetUint64("startNs");
+        body.startTime = body.startTime > Timeline::TraceTime::Instance().GetStartTime() ?
+                         body.startTime - Timeline::TraceTime::Instance().GetStartTime() : body.startTime;
+    }
+    return true;
+}
+
 bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {

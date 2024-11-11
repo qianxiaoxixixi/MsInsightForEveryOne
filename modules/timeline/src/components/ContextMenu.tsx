@@ -96,13 +96,12 @@ async function findInCommunication(session: Session): Promise<void> {
     if (!session.selectedData) {
         return;
     }
-    const { originalStartTime: timestamp, name, cardId: rankId } = session.selectedData;
+    const { name, cardId: rankId } = session.selectedData;
     const params = {
         rankId,
         name,
-        timestamp,
     };
-    const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
+    const res = await window.requestData('unit/kernelDetail', params, 'timeline');
     connector.send({
         event: 'switchModule',
         body: {

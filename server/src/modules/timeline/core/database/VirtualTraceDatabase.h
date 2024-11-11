@@ -62,6 +62,8 @@ public:
     virtual uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams) = 0;
     virtual bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) = 0;
+    virtual bool QueryCommunicationKernelInfo(const std::string &name, const std::string &rankId,
+                                              Protocol::CommunicationKernelBody &body) = 0;
     virtual OneKernelData QueryKernelTid(uint64_t trackId) = 0;
     virtual bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
                                         Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp) = 0;
