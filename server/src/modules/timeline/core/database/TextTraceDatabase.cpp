@@ -1391,6 +1391,43 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     return true;
 }
 
+bool TextTraceDatabase::QueryCommunicationKernelInfo(const std::string &name, const std::string &rankId,
+                                                     CommunicationKernelBody &body)
+{
+    std::string sql = "SELECT id, track_id, timestamp FROM " + sliceTable + " WHERE name = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to query communication kernel info, prepare sql fail.");
+        return false;
+    }
+    std::unique_ptr<SqliteResultSet> resultSet;
+    resultSet = stmt->ExecuteQuery(name);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Fail to query communication kernel info, get result set fail.", stmt->GetErrorMessage());
+        return false;
+    }
+    uint64_t trackId = 0;
+    if (resultSet->Next()) {
+        uint64_t id = resultSet->GetUint64("id");
+        trackId = resultSet->GetUint64("track_id");
+        uint64_t startTime = resultSet->GetUint64("timestamp");
+        SliceQuery sliceQuery;
+        sliceQuery.rankId = rankId;
+        sliceQuery.trackId = trackId;
+        std::unordered_map<uint64_t, uint32_t> depthCache;
+        sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
+        body.id = std::to_string(id);
+        body.depth = depthCache[id];
+        body.startTime = startTime > Timeline::TraceTime::Instance().GetStartTime() ?
+                startTime - Timeline::TraceTime::Instance().GetStartTime() : startTime;
+    }
+    const OneKernelData &data = QueryKernelTid(trackId);
+    body.threadId = data.threadId;
+    body.pid = data.pid;
+    body.rankId = rankId;
+    return true;
+}
+
 bool TextTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                                   Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {

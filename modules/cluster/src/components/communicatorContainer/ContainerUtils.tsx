@@ -351,7 +351,7 @@ interface RankDyeingStyle {
 export const getOpacity = (rankId: number, dyeingMode: string, step: number): RankDyeingStyle => {
     const rankData = rankDataList.find(item => item.rankId === rankId.toString()) ?? {} as summaryListItem & { pureComputingTime: number };
     if (!Object.keys(rankData).includes(dyeingMode)) {
-        return {};
+        return { backgroundColor: '#c2c2c5', opacity: 1 };
     }
     const ratio = (rankData[dyeingMode] - rankDyeingData[dyeingMode].min) / notZero(rankDyeingData[dyeingMode].min);
     const level = Math.ceil(ratio / step);

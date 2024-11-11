@@ -595,6 +595,17 @@ TEST_F(FullDbTestSuit, QueryKernelDepthAndThread)
     EXPECT_EQ(responseBody.id, EXPECT_ID);
 }
 
+TEST_F(FullDbTestSuit, QueryCommunicationKernelInfoDbSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    Protocol::KernelParams params;
+    Dic::Protocol::CommunicationKernelBody responseBody;
+
+    database->QueryCommunicationKernelInfo("aclnnInplaceZero_ZerosLikeAiCore_ZerosLike", "FullDb", responseBody);
+    EXPECT_EQ(responseBody.id, "");
+}
+
 TEST_F(FullDbTestSuit, SearchAllSlicesDetails)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");

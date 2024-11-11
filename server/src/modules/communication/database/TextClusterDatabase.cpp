@@ -650,14 +650,13 @@ bool TextClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     return ExecuteQueryExtremumTimestamp(sql, min, max);
 }
 
-bool TextClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
-    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
+bool TextClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,
+                                                              Protocol::CommunicationKernelBody &responseBody)
 {
     std::string sql = "select iteration_id, tg.group_id as stage_id from " + TABLE_TIME_INFO + " t"
         " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
-        " where op_name = ? and abs(start_time - ? ) <= 500";
-    uint64_t reallyStartTime = params.timestamp + minTimestamp;
-    return ExecuteQueryIterationAndCommunicationGroup(sql, params.name, reallyStartTime, responseBody.step,
+        " where op_name = ? and rank_id = ?";
+    return ExecuteQueryIterationAndCommunicationGroup(sql, params.name, params.rankId, responseBody.step,
         responseBody.group);
 }
 

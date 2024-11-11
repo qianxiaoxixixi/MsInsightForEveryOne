@@ -36,6 +36,18 @@ TEST_F(TestSuit, QueryOperatorNameData)
     EXPECT_EQ(responseBody[1].operatorName, "hcom_send__822_0");
 }
 
+TEST_F(TestSuit, QueryIterationAndCommunicationGroupSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
+    Dic::Protocol::CommunicationKernelParams requestParams;
+    requestParams.name = "hcom_broadcast__483_0";
+    requestParams.rankId = "0";
+    Dic::Protocol::CommunicationKernelBody responseBody;
+    database->QueryIterationAndCommunicationGroup(requestParams, responseBody);
+    EXPECT_EQ(responseBody.step, "2");
+    EXPECT_EQ(responseBody.group, "(0, 1, 2, 3, 4, 5, 6, 7)");
+}
+
 TEST_F(TestSuit, QueryOperatorNameDataWithRank)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();

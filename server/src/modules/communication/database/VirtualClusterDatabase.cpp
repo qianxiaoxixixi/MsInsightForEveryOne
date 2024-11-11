@@ -291,7 +291,7 @@ bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uin
 }
 
 bool VirtualClusterDatabase::ExecuteQueryIterationAndCommunicationGroup(std::string &sql,
-    std::string &opName, uint64_t &startTime, std::string &iteration, std::string &communicationGroup)
+    std::string &opName, const std::string &rankId, std::string &iteration, std::string &communicationGroup)
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -301,7 +301,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterationAndCommunicationGroup(std::str
     }
     int index = bindStartIndex;
     sqlite3_bind_text(stmt, index++, opName.c_str(), opName.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, index, startTime);
+    sqlite3_bind_text(stmt, index, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;

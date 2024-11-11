@@ -49,7 +49,7 @@ const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher['target']): In
 };
 
 const getNormalUnitHeight = (unitsArea: InsightUnit[], orderOptions: OrderOptions, targetUnit: InsightUnit): number | undefined => {
-    const flattenUnits = orderOptions.preOrderFlatten(unitsArea, 0, orderOptions.options);
+    const flattenUnits = orderOptions.preOrderFlatten(getRootUnit(unitsArea), 0, orderOptions.options).filter(unit => unit.isUnitVisible);
     let findResult = false;
     let height = 0;
     for (const unit of flattenUnits) {

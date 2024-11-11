@@ -432,6 +432,15 @@ struct OneKernelResponse : public Response {
     OneKernelBody body;
 };
 
+struct CommunicationKernelBody : public OneKernelBody {
+    uint64_t startTime;
+};
+
+struct CommunicationKernelResponse : public Response {
+    CommunicationKernelResponse() : Response(REQ_RES_COMMUNICATION_KERNEL_DETAIL) {}
+    CommunicationKernelBody body;
+};
+
 struct SameOperatorsDetails {
     uint64_t timestamp = 0;
     uint64_t duration = 0;

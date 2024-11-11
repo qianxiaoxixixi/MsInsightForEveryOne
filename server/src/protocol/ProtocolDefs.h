@@ -73,6 +73,7 @@ const std::string REQ_RES_UNIT_SYSTEM_VIEW = "unit/systemView";
 const std::string REQ_RES_UNIT_EVENTS_VIEW = "unit/eventView";
 const std::string REQ_RES_UNIT_KERNEL_DETAILS = "unit/kernelDetails";
 const std::string REQ_RES_ONE_KERNEL_DETAILS = "unit/one/kernelDetail";
+const std::string REQ_RES_COMMUNICATION_KERNEL_DETAIL = "unit/kernelDetail";
 const std::string REQ_RES_SEARCH_COUNT = "search/count";
 const std::string REQ_RES_SEARCH_SLICE = "search/slice";
 const std::string REQ_RES_SEARCH_ALL_SLICES = "search/all/slices";

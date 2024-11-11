@@ -60,8 +60,8 @@ public:
     virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
         std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
-    virtual bool QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
-        Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) = 0;
+    virtual bool QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,
+        Protocol::CommunicationKernelBody &responseBody) = 0;
     virtual bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config, std::string &level) = 0;
     virtual bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) = 0;
     virtual bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
@@ -110,7 +110,7 @@ protected:
 
     bool ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max);
     bool ExecuteQueryIterationAndCommunicationGroup(std::string &sql,
-        std::string &opName, uint64_t &startTime, std::string &iteration, std::string &communicationGroup);
+        std::string &opName, const std::string &rankId, std::string &iteration, std::string &communicationGroup);
     bool ExecuteGetParallelConfigFromStepTrace(std::string &sql, ParallelStrategyConfig &config, std::string &level);
     bool ExecuteQueryParallelStrategyConfig(std::string &sql, ParallelStrategyConfig &config, std::string &level);
     bool ExecuteSetParallelStrategyConfig(std::string &sql, const ParallelStrategyConfig &config, std::string &level);

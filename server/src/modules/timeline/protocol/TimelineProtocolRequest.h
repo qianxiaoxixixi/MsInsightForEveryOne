@@ -383,6 +383,16 @@ struct KernelRequest : public Request {
     KernelParams params;
 };
 
+struct CommunicationKernelParams {
+    std::string rankId;
+    std::string name;
+};
+
+struct CommunicationKernelRequest : public Request {
+    CommunicationKernelRequest() : Request(REQ_RES_COMMUNICATION_KERNEL_DETAIL){};
+    CommunicationKernelParams params;
+};
+
 struct UnitThreadsOperatorsParams {
     std::string rankId;
     std::string tid;
