@@ -24,6 +24,12 @@ bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     SetResponseResult(response, true);
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     // query data
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryMatrixList(request.params, response.body)) {

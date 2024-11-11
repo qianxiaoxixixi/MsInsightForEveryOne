@@ -20,6 +20,12 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
             dynamic_cast<Protocol::OperatorDetailsRequest &>(*requestPtr.get());
     std::unique_ptr<Protocol::OperatorDetailsResponse> responsePtr =
             std::make_unique<Protocol::OperatorDetailsResponse>();
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     OperatorDetailsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);

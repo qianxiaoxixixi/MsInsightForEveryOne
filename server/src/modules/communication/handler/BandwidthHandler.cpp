@@ -19,11 +19,16 @@ bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     Protocol::BandwidthDataRequest &request = dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr.get());
     std::unique_ptr<Protocol::BandwidthDataResponse> responsePtr =
             std::make_unique<Protocol::BandwidthDataResponse>();
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     BandwidthDataResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
-
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryBandwidthData(request.params, response.body)) {
         SetResponseResult(response, false);

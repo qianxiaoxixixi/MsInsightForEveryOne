@@ -24,10 +24,10 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetResponseResult(response, true);
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
-    if (request.params.rankId.empty()) {
-        ServerLog::Info("rankId is empty,exit request handler");
-        SetResponseResult(response, false, "rank Id is empty");
-        session.OnResponse(std::move(responsePtr));
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);

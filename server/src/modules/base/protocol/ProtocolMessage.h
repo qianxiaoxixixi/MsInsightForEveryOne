@@ -82,6 +82,22 @@ struct Request : public ProtocolMessage {
         return {true, ""};
     }
 };
+// 和CheckStrParamValid不同，该函数不做参数长度限制
+inline bool CheckStrParamValidWithoutLenLimit(const std::string &param,
+                                              std::string &errorMsg)
+{
+    if (param.empty()) {
+        errorMsg = "Parameter is empty.";
+        return false;
+    }
+    if (!StringUtil::ValidateStringParam(param)) {
+        errorMsg = "Parameter contains illegal character. Illegal characters are: " +
+                   StringUtil::GetIllegalCharacter() + " and newline character.";
+        return false;
+    }
+    return true;
+}
+
 // arguments will be placed into specified request
 inline bool CheckStrParamValid(const std::string &param,
     std::string &errorMsg)
@@ -91,9 +107,13 @@ inline bool CheckStrParamValid(const std::string &param,
         errorMsg = "Parameter length exceeds the upper limit " + std::to_string(maxStrLength) + ".";
         return false;
     }
-    if (!StringUtil::ValidateCommandFilePathParam(param)) {
+    if (param.empty()) {
+        errorMsg = "Parameter is empty.";
+        return false;
+    }
+    if (!StringUtil::ValidateStringParam(param)) {
         errorMsg = "Parameter contains illegal character. Illegal characters are: " +
-            StringUtil::GetIllegalCharacter() + " and newline character.";
+                   StringUtil::GetIllegalCharacter() + " and newline character.";
         return false;
     }
     return true;

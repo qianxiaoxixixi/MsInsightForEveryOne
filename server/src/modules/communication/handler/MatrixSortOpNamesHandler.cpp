@@ -21,6 +21,12 @@ bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<MatrixSortOpNamesResponse> responsePtr = std::make_unique<MatrixSortOpNamesResponse>();
     MatrixSortOpNamesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    // check request parameters
+    std::string errorMsg;
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryMatrixSortOpNames(request.params, response.body)) {
         SetResponseResult(response, false);

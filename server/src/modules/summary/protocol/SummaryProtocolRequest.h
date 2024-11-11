@@ -19,6 +19,15 @@ struct SummaryTopRankParams {
     std::vector<std::string> stepIdList;
     std::vector<std::string> rankIdList;
     std::string orderBy;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValid(this->orderBy, paramError)) {
+            errorMsg = "[Summary] Failed to check orderBy." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct SummaryTopRankRequest : public Request {
@@ -30,6 +39,23 @@ struct SummaryStatisticParams {
     std::string rankId;
     std::string timeFlag;
     std::string stepId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValid(this->rankId, paramError)) {
+            errorMsg = "[Summary] Failed to check rank id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->timeFlag, paramError)) {
+            errorMsg = "[Summary] Failed to check time flag." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->stepId, paramError)) {
+            errorMsg = "[Summary] Failed to check step id." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct SummaryStatisticRequest : public Request {
@@ -47,6 +73,15 @@ struct PipelineStepRequest : public Request {
 
 struct PipelineStageParam {
     std::string stepId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->stepId, paramError)) {
+            errorMsg = "[Summary] Failed to check step id." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct PipelineStageRequest : public Request {
@@ -57,6 +92,19 @@ struct PipelineStageRequest : public Request {
 struct PipelineStageTimeParam {
     std::string stepId;
     std::string stageId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->stepId, paramError)) {
+            errorMsg = "[Summary] Failed to check step id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stageId, paramError)) {
+            errorMsg = "[Summary] Failed to check stage id." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct PipelineStageTimeRequest : public Request {
@@ -67,6 +115,19 @@ struct PipelineStageTimeRequest : public Request {
 struct PipelineRankTimeParam {
     std::string stepId;
     std::string stageId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->stepId, paramError)) {
+            errorMsg = "[Summary] Failed to check step id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stageId, paramError)) {
+            errorMsg = "[Summary] Failed to check stage id." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct PipelineRankTimeRequest : public Request {
@@ -81,9 +142,25 @@ struct ComputeDetailParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
-    bool CommonCheck(std::string &errorMsg)
+    bool CheckParams(std::string &errorMsg) const
     {
-        return CheckPageValid(this->pageSize, this->currentPage, errorMsg);
+        if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {
+            return false;
+        }
+        std::string paramError;
+        if (!CheckStrParamValid(this->timeFlag, paramError)) {
+            errorMsg = "[Summary] Failed to check time flag." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->orderBy, paramError)) {
+            errorMsg = "[Summary] Failed to check orderBy." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->order, paramError)) {
+            errorMsg = "[Summary] Failed to check order." + paramError;
+            return false;
+        }
+        return true;
     }
 };
 
@@ -99,9 +176,29 @@ struct CommunicationDetailParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
-    bool CommonCheck(std::string &errorMsg)
+    bool CheckParams(std::string &errorMsg) const
     {
-        return CheckPageValid(this->pageSize, this->currentPage, errorMsg);
+        if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {
+            return false;
+        }
+        std::string paramError;
+        if (!CheckStrParamValid(this->rankId, paramError)) {
+            errorMsg = "[Summary] Failed to check time flag." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->timeFlag, paramError)) {
+            errorMsg = "[Summary] Failed to check rank id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->orderBy, paramError)) {
+            errorMsg = "[Summary] Failed to check orderBy." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->order, paramError)) {
+            errorMsg = "[Summary] Failed to check order." + paramError;
+            return false;
+        }
+        return true;
     }
 };
 

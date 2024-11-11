@@ -16,12 +16,10 @@ bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     std::unique_ptr<ComputeDetailResponse> responsePtr = std::make_unique<ComputeDetailResponse>();
     ComputeDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
+    // check request parameters
     std::string errorMsg;
-    if (!request.params.CommonCheck(errorMsg)) {
-        ServerLog::Error("[Operator]Failed to check request parameter.", errorMsg);
-        SetResponseResult(response, false, errorMsg);
-        session.OnResponse(std::move(responsePtr));
+    if (!request.params.CheckParams(errorMsg)) {
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);

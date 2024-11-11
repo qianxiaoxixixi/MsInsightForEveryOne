@@ -20,6 +20,12 @@ bool RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         std::unique_ptr<RanksResponse> responsePtr = std::make_unique<RanksResponse>();
         RanksResponse &response = *responsePtr.get();
         SetBaseResponse(request, response);
+        // check request parameters
+        std::string errorMsg;
+        if (!request.params.CheckParams(errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
+            return false;
+        }
         auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
         if (!database->QueryRanksHandler(response.body)) {
             SetResponseResult(response, false);

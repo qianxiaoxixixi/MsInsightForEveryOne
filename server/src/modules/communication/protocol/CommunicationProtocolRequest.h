@@ -19,8 +19,32 @@ struct OperatorDetailsParam {
     std::string orderBy;
     std::string order;
     std::string stage;
-    int pageSize;
-    int currentPage;
+    int pageSize{};
+    int currentPage{};
+    bool CheckParams(std::string &errorMsg) const
+    {
+        if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {
+            return false;
+        }
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->orderBy, paramError)) {
+            errorMsg = "[Communication] Failed to check orderBy." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->order, paramError)) {
+            errorMsg = "[Communication] Failed to check order type." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
+            errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct OperatorDetailsRequest : public Request {
@@ -34,6 +58,23 @@ struct BandwidthDataParam {
     std::string rankId;
     std::string operatorName;
     std::string stage;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->operatorName, paramError)) {
+            errorMsg = "[Communication] Failed to operator name." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
+            errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct BandwidthDataRequest : public Request {
@@ -48,6 +89,27 @@ struct DistributionDataParam {
     std::string operatorName;
     std::string transportType;
     std::string stage;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->operatorName, paramError)) {
+            errorMsg = "[Communication] Failed to operator name." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->transportType, paramError)) {
+            errorMsg = "[Communication] Failed to transport type." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
+            errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct DistributionDataRequest : public Request {
@@ -62,6 +124,15 @@ struct CommunicatorGroupRequest : public Request {
 struct RanksParams {
     std::string dbIndex;
     std::string iterationId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct RanksRequest  : public Request {
@@ -82,6 +153,19 @@ struct OperatorNamesParams {
     std::string iterationId;
     std::vector<std::string> rankList = {};
     std::string stage;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
+            errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct OperatorNamesRequest  : public Request {
@@ -100,6 +184,23 @@ struct DurationListParams {
     std::vector<std::string> rankList = {};
     std::string operatorName;
     std::string stage;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->operatorName, paramError)) {
+            errorMsg = "[Communication] Failed to operator name." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
+            errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct DurationListRequest  : public Request {
@@ -109,6 +210,15 @@ struct DurationListRequest  : public Request {
 
 struct MatrixGroupParam {
     std::string iterationId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct MatrixGroupRequest : public Request {
@@ -120,6 +230,23 @@ struct MatrixBandwidthParam {
     std::string stage;
     std::string operatorName;
     std::string iterationId;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->operatorName, paramError)) {
+            errorMsg = "[Communication] Failed to operator name." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
+            errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct MatrixBandwidthRequest : public Request {
