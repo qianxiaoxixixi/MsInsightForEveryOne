@@ -127,6 +127,8 @@ public:
     void GenerateOverlapAnalysis();
     static std::string GetStringCacheValue(const std::string& path, std::string key);
     static void Reset();
+    bool QueryFwdBwdDataByFlow(int64_t offset,
+                               const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
 
 private:
     const uint32_t cacheSize = 5000;

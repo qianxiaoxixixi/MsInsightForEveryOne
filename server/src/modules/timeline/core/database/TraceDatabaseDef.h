@@ -40,6 +40,19 @@ struct FlowDetailDto {
     std::string type;
     int64_t trackId = 0;
 };
+// flow连接着两个界面元素，s标识flow的起点元素块，f标识flow的终点元素块，它们分别都有起始时间和结束时间
+// 下面是flow的起点元素块
+// -----|***********************|--------------------
+// -----^sStartTime-------------^sEndTime------------
+// 下面是flow的终点元素块
+//--------------------|***************|--------------
+//--------------------^fStartTime-----^fEndTime------
+struct FlowStartAndEndTime {
+    uint64_t sStartTime = 0;
+    uint64_t sEndTime = 0;
+    uint64_t fStartTime = 0;
+    uint64_t fEndTime = 0;
+};
 
 struct MetaDataDto {
     std::string pid;

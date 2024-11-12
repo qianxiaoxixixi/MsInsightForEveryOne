@@ -41,6 +41,7 @@ namespace Dic {
     const static std::string TABLE_OVERLAP_ANALYSIS = "OVERLAP_ANALYSIS";
     const static std::string TABLE_META_DATA = "META_DATA";
     const static std::string TABLE_CONNECTION_IDS = "CONNECTION_IDS";
+    const static std::string TABLE_CONNECTION_CATS = "connectionCats";
     const static std::string TABLE_ENUM_API_TYPE = "ENUM_API_TYPE";
     const static std::string TABLE_HOST_INFO = "HOST_INFO";
 

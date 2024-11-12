@@ -122,6 +122,8 @@ public:
     bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) override;
     std::string QueryHostInfo() override;
+    bool QueryFwdBwdDataByFlow(int64_t offset,
+                               const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
 
 private:
     const std::string sliceTable = "slice";

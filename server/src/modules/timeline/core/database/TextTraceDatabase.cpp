@@ -1776,6 +1776,17 @@ std::string TextTraceDatabase::QueryHostInfo()
     std::string host;
     return host;
 }
+
+bool TextTraceDatabase::QueryFwdBwdDataByFlow(int64_t offset, const std::string &rankId,
+                                              std::vector<Protocol::ThreadTraces> &fwdBwdData)
+{
+    auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_TEXT_SQL);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query fwd/bwd data by flow in the TEXT scenario.");
+        return false;
+    }
+    return TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::move(stmt), offset, rankId, fwdBwdData);
+}
 } // end of namespace Timeline
   // end of namespace Module
   // end of namespace Dic

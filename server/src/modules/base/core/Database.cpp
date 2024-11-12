@@ -402,6 +402,30 @@ bool Database::CheckTableExist(const std::string& tableName)
     return false;
 }
 
+bool Database::CheckTablesExist(const std::vector<std::string> &tablesName)
+{
+    if (tablesName.empty()) {
+        ServerLog::Error("Failed to check tables due to empty table name.");
+        return false;
+    }
+    if ((!isOpen)) {
+        ServerLog::Error("Failed to check tables due to closed database.");
+        return false;
+    }
+    std::vector<std::string> tableLists{};
+    if (!GetTableList(tableLists)) {
+        ServerLog::Error("Failed to check tables. Failed to get table list.");
+        return false;
+    }
+    for (const auto& item : tablesName) {
+        if (std::find(tableLists.begin(), tableLists.end(), item) == tableLists.end()) {
+            ServerLog::Error("Failed to check tables due to no table: ", item);
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Database::CreateStatusInfoTable()
 {
     if (CheckTableExist(infoTable)) {
