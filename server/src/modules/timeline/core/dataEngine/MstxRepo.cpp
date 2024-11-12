@@ -90,4 +90,32 @@ void MstxRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::v
         competeSliceVec.emplace_back(competeSlice);
     }
 }
+
+bool MstxRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    std::vector<MstxEventsPO> mstxPOs;
+    mstxEventsTable->Select(MstxEventsColumn::ID, MstxEventsColumn::TIMESTAMP)
+        .Select(MstxEventsColumn::ENDTIME, MstxEventsColumn::MESSAGE)
+        .Select(MstxEventsColumn::EVENT_TYPE)
+        .Eq(MstxEventsColumn::ID, sliceQuery.sliceId)
+        .ExcuteQuery(sliceQuery.rankId, mstxPOs);
+    if (std::empty(mstxPOs)) {
+        ServerLog::Warn("Failed to query mstx slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    competeSliceDomain.id = mstxPOs[0].id;
+    competeSliceDomain.timestamp = mstxPOs[0].timestamp;
+    competeSliceDomain.endTime = mstxPOs[0].endTime;
+    std::unordered_map<uint64_t, std::string> strMap =
+        stringIdsTable->QueryStrMap({ mstxPOs[0].message }, sliceQuery.rankId);
+    competeSliceDomain.name = strMap[mstxPOs[0].message];
+    std::unordered_map<uint64_t, std::string> mstxTypeMap =
+        enumMstxEventTypeTable->QueryStrMap({ mstxPOs[0].eventType }, sliceQuery.rankId);
+    const std::string typeName = mstxTypeMap[mstxPOs[0].eventType];
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddConstMember(json, MstxEventsColumn::EVENT_TYPE, typeName, allocator);
+    competeSliceDomain.args = JsonUtil::JsonDump(json);
+    return true;
+}
 }
