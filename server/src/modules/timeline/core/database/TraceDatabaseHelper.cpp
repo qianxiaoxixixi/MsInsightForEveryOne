@@ -974,4 +974,192 @@ void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> 
         index++;
     }
 }
+
+
+void TraceDatabaseHelper::CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &start, const FlowStartAndEndTime &end,
+    uint8_t index, const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData)
+{
+    if (end.sEndTime < start.sStartTime || start.fEndTime < end.fStartTime) {
+        Server::ServerLog::Warn("Invalid fwd/bwd data. Start flow: start ", start.sStartTime, ", end ", end.sEndTime,
+                                ", End flow: start ", end.fStartTime, ", end", start.fEndTime);
+        return;
+    }
+    Protocol::ThreadTraces fwdTrace = {
+        .name = std::to_string(index), .duration = end.sEndTime - start.sStartTime, // no overflow occurs
+        .startTime = start.sStartTime, .endTime = end.sEndTime, .depth = 0,
+        .threadId = "FWDBWD", .pid = rankId,  .id = "", .cname = "FWD"
+    };
+    Protocol::ThreadTraces bwdTrace = {
+        .name = std::to_string(index), .duration = start.fEndTime - end.fStartTime, // no overflow occurs
+        .startTime = end.fStartTime, .endTime = start.fEndTime, .depth = 0,
+        .threadId = "FWDBWD", .pid = rankId,  .id = "", .cname = "BWD"
+    };
+    fwdBwdData.push_back(fwdTrace);
+    fwdBwdData.push_back(bwdTrace);
+}
+
+// 使用sql命令查询前反向连线(fwdbwd)，并拼接同一条连线，按前向的start time升序排序，查询形成每一条连线FlowStartAndEndTime结构体
+// 遍历所有的连线，对于同一个前反向内的数据，前向的start time越来越大，后向的start time越来越小
+// 当不满足前面的条件时，表明开始了一个新的前反向，即tmp.fStartTime > first.fStartTime，此时根据第一个连线和上一个连线，计算前反向的时长
+// 前向的起点应该是first中前向开始时间sStartTime，终点应该是last中前向的结束时间sEndTime
+// 反向的起点应该是last中反向开始世家fStartTime，终点应该是first中反向的结束时间fEndTime
+// 计算完成后tmp变成新的first，即开始新的前反向
+bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement> stmt, uint64_t offset,
+    const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData)
+{
+    auto resultSet = stmt->ExecuteQuery(offset, offset, offset, offset);
+    if (resultSet == nullptr) {
+        Server::ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
+        return false;
+    }
+    uint8_t index = 0;
+    FlowStartAndEndTime first{};
+    FlowStartAndEndTime last{}; // for last piece
+    // 查询数据格式, sStartTime, sEndTime, fStartTime, fEndTime，并按sStartTime升序排列
+    while (resultSet->Next()) {
+        FlowStartAndEndTime tmp = {
+            .sStartTime = resultSet->GetUint64("sStartTime"),
+            .sEndTime = resultSet->GetUint64("sEndTime"),
+            .fStartTime = resultSet->GetUint64("fStartTime"),
+            .fEndTime = resultSet->GetUint64("fEndTime")
+        };
+        // 如果start未初始化，先初始化它
+        if (first.sEndTime == 0) {
+            first = tmp;
+        }
+        // 对于同一次前反向内前向的start越来越大，反向的start越来越小，如果反向的start大于上一次的start，则表示开始新一轮的前反向
+        if (tmp.fStartTime > first.fStartTime) {
+            CalculateFwdBwdDataByFlow(first, last, index, rankId, fwdBwdData);
+            index++;
+            first = tmp;
+            last = tmp;
+            continue;
+        } else {
+            last = tmp;
+        }
+    }
+    // 处理遗留的尾片
+    if (first.sEndTime != 0) {
+        CalculateFwdBwdDataByFlow(first, last, index, rankId, fwdBwdData);
+    }
+
+    return true;
+}
+
+void TraceDatabaseHelper::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
+    std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime)
+{
+    if (rows.empty()) {
+        Server::ServerLog::Error("simpleSlice array size is zero!");
+        return;
+    }
+    uint64_t tmpSelfTime = rows.at(0).duration;
+    size_t i = 0;
+    size_t j = 0;
+    while (i < rows.size()) {
+        // j滑完直接滑完所有i
+        if (j == rows.size()) {
+            // 处理当前tmpSelfTime
+            AddData(selfTimeKeyValue, rows.at(i).name, tmpSelfTime);
+            // 处理剩余元素
+            DealLastData(rows, selfTimeKeyValue, startTime, endTime, i);
+            break;
+        }
+        Protocol::SimpleSlice rowI = rows.at(i);
+        Protocol::SimpleSlice rowJ = rows.at(j);
+        // 层数相等 or 同一元素, j右移
+        if (rowI.depth == rowJ.depth || i >= j) {
+            j++;
+            continue;
+        }
+        // rows[i]不属于框选范围内，跳过
+        if (rows.at(i).timestamp > endTime || rows.at(i).endTime < startTime) {
+            if (i + 1 == rows.size()) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows.at(i).duration;
+            continue;
+        }
+        // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
+        if (rowJ.endTime > rowI.endTime || rowI.depth + 1 < rowJ.depth) {
+            AddData(selfTimeKeyValue, rowI.name, tmpSelfTime);
+            if (i + 1 == rows.size()) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows.at(i).duration;
+            continue;
+        }
+        // 符合要求的元素
+        if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime) {
+            tmpSelfTime -= rowJ.duration;
+        }
+        j++;
+    }
+}
+
+void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
+    const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody)
+{
+    for (auto &cur : rows) {
+        size_t index = 0;
+        bool find = false;
+        for (; index < responseBody.data.size(); index++) {
+            if (responseBody.data[index].title == cur.name) {
+                find = true;
+                break;
+            }
+        }
+        if (!find) {
+            Protocol::Threads threads {};
+            threads.title = cur.name;
+            threads.wallDuration = cur.duration;
+            threads.occurrences = 1;
+            threads.avgWallDuration = cur.duration;
+            threads.selfTime = selfTimeKeyValue.at(cur.name);
+            threads.tid = cur.tid;
+            threads.pid = cur.pid;
+            threads.metaType = cur.metaType;
+            responseBody.data.emplace_back(threads);
+        } else {
+            responseBody.data[index].wallDuration += cur.duration;
+            responseBody.data[index].occurrences += 1;
+            responseBody.data[index].avgWallDuration =
+                    responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+        }
+    }
+}
+
+void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &rows,
+    const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody)
+{
+    for (auto &cur : rows) {
+        size_t index = 0;
+        bool find = false;
+        for (; index < responseBody.data.size(); index++) {
+            if (responseBody.data[index].title == cur.name) {
+                find = true;
+                break;
+            }
+        }
+        if (!find) {
+            Protocol::Threads threads {};
+            threads.title = cur.name;
+            threads.wallDuration = cur.duration;
+            threads.occurrences = 1;
+            threads.avgWallDuration = cur.duration;
+            threads.selfTime = selfTimeKeyValue.at(cur.name);
+            threads.tid = cur.tid;
+            threads.pid = cur.pid;
+            threads.metaType = cur.metaType;
+            responseBody.data.emplace_back(threads);
+        } else {
+            responseBody.data[index].wallDuration += cur.duration;
+            responseBody.data[index].occurrences += 1;
+            responseBody.data[index].avgWallDuration =
+                    responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+        }
+    }
+}
 }

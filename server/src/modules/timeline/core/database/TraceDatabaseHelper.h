@@ -18,7 +18,29 @@
 
 namespace Dic::Module::Timeline {
 using namespace Protocol;
-using RowThreadMap = std::map<int32_t, std::vector<Protocol::RowThreadTrace>>;
+const std::string QUERY_FWDBWD_FLOW_DATA_TEXT_SQL =
+    "WITH data as ("
+    "    SELECT s.timestamp as start, s.end_time as end, f.flow_id, f.type FROM " + FLOW_TABLE + " f "
+    "    JOIN " + SLICE_TABLE + " s "
+    "    ON f.cat = 'fwdbwd' AND s.cat = 'cpu_op' AND f.track_id = s.track_id AND f.timestamp = s.timestamp "
+    ") "
+    "SELECT s.start - ? as sStartTime, s.end - ? as sEndTime, f.start - ? as fStartTime, f.end - ? as fEndTime "
+    "FROM data s JOIN data f ON s.type = 's' AND f.type = 'f' AND s.flow_id = f.flow_id AND s.start < f.start "
+    "ORDER BY s.start ASC";
+
+const std::string QUERY_FWDBWD_FLOW_DATA_DB_SQL =
+    "WITH data as ("
+    "    SELECT startNs, endNs, flow.connectionId FROM " + TABLE_API + " api "
+    "    JOIN ( "
+    "        SELECT id.id as flowId, ids.connectionId as connectionId FROM " + TABLE_CONNECTION_CATS + " cats "
+    "        JOIN " + TABLE_CONNECTION_IDS + " ids ON cats.cat = 'fwdbwd' AND cats.connectionId = ids.connectionId "
+    "    ) flow ON api.type in (SELECT id FROM " + TABLE_ENUM_API_TYPE + " WHERE name = 'op') "
+    "    AND api.connectionId = flow.flowId "
+    "    ORDER BY flow.connectionId, startNs ASC "
+    ") "
+    "SELECT s.startNs - ? as sStartTime, s.endNs - ? as sEndTime, f.startNs - ? as fStartTime, f.endNs - ? as fEndTime "
+    "FROM data s JOIN data f ON s.startNs < f.startNs AND s.connectionId = f.connectionId "
+    "ORDER BY s.startNs ASC";
 
 class TraceDatabaseHelper {
 public:
@@ -52,183 +74,71 @@ static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<Sqli
                                                             const Protocol::SystemViewParams &requestParams,
                                                             const std::string& rankId);
 
-static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
-        std::unique_ptr<SqlitePreparedStatement> &stmt,
+static std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
 
-    static  void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
-                                   std::map<std::string, uint64_t> &selfTimeKeyValue,
-                                   uint64_t startTime, uint64_t endTime)
-    {
-        size_t i = 0;
-        size_t j = 0;
-        if (rows.empty()) {
-            Server::ServerLog::Error("simpleSlice array size is zero!");
-            return;
-        }
-        uint64_t tmpSelfTime = rows.at(0).duration;
-        while (i < rows.size()) {
-            // j滑完直接滑完所有i
-            if (j == rows.size()) {
-                // 处理当前tmpSelfTime
-                AddData(selfTimeKeyValue, rows.at(i).name, tmpSelfTime);
-                // 处理剩余元素
-                DealLastData(rows, selfTimeKeyValue, startTime, endTime, i);
-                break;
-            }
-            Protocol::SimpleSlice rowI = rows.at(i);
-            Protocol::SimpleSlice rowJ = rows.at(j);
-            // 层数相等 or 同一元素, j右移
-            if (rowI.depth == rowJ.depth || i >= j) {
-                j++;
-                continue;
-            }
-            // rows[i]不属于框选范围内，跳过
-            if (rows.at(i).timestamp > endTime || rows.at(i).endTime < startTime) {
-                if (i + 1 == rows.size()) { // i滑完结束
-                    break;
-                }
-                i++;
-                tmpSelfTime = rows.at(i).duration;
-                continue;
-            }
-            // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
-            if (rowJ.endTime > rowI.endTime || rowI.depth + 1 < rowJ.depth) {
-                AddData(selfTimeKeyValue, rowI.name, tmpSelfTime);
-                if (i + 1 == rows.size()) { // i滑完结束
-                    break;
-                }
-                i++;
-                tmpSelfTime = rows.at(i).duration;
-                continue;
-            }
-            // 符合要求的元素
-            if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime) {
-                tmpSelfTime -= rowJ.duration;
-            }
-            j++;
+static void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
+    std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime);
+
+static void ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
+const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
+
+static void ReduceThread(const std::vector<CompeteSliceDomain> &rows,
+    const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
+
+static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(
+        const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
+{
+    std::vector<Protocol::SimpleSlice> nRows;
+    for (auto &row : simpleSliceVec) {
+        if (row.timestamp <= endTime && row.endTime >= startTime) {
+            nRows.emplace_back(row);
         }
     }
+    return nRows;
+}
 
-    static  void ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
-                             const std::map<std::string, uint64_t> &selfTimeKeyValue,
-                             Protocol::UnitThreadsBody &responseBody)
-    {
-        for (auto &cur : rows) {
-            size_t index = 0;
-            bool find = false;
-            for (; index < responseBody.data.size(); index++) {
-                if (responseBody.data[index].title == cur.name) {
-                    find = true;
-                    break;
-                }
-            }
-            if (!find) {
-                Protocol::Threads threads {};
-                threads.title = cur.name;
-                threads.wallDuration = cur.duration;
-                threads.occurrences = 1;
-                threads.avgWallDuration = cur.duration;
-                threads.selfTime = selfTimeKeyValue.at(cur.name);
-                threads.tid = cur.tid;
-                threads.pid = cur.pid;
-                threads.metaType = cur.metaType;
-                responseBody.data.emplace_back(threads);
-            } else {
-                responseBody.data[index].wallDuration += cur.duration;
-                responseBody.data[index].occurrences += 1;
-                responseBody.data[index].avgWallDuration =
-                        responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
-            }
-        }
+template <typename... Args>
+static inline std::unique_ptr<SqliteResultSet> Execute(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                       Args&&... args)
+{
+    stmt->BindParams(std::forward<Args>(args)...);
+    auto result = stmt->ExecuteQuery();
+    if (result == nullptr) {
+        throw DatabaseException("Failed to ExecuteQuery.");
     }
+    return result;
+};
 
-    static  void ReduceThread(const std::vector<CompeteSliceDomain> &rows,
-                              const std::map<std::string, uint64_t> &selfTimeKeyValue,
-                              Protocol::UnitThreadsBody &responseBody)
-    {
-        for (auto &cur : rows) {
-            size_t index = 0;
-            bool find = false;
-            for (; index < responseBody.data.size(); index++) {
-                if (responseBody.data[index].title == cur.name) {
-                    find = true;
-                    break;
-                }
-            }
-            if (!find) {
-                Protocol::Threads threads {};
-                threads.title = cur.name;
-                threads.wallDuration = cur.duration;
-                threads.occurrences = 1;
-                threads.avgWallDuration = cur.duration;
-                threads.selfTime = selfTimeKeyValue.at(cur.name);
-                threads.tid = cur.tid;
-                threads.pid = cur.pid;
-                threads.metaType = cur.metaType;
-                responseBody.data.emplace_back(threads);
-            } else {
-                responseBody.data[index].wallDuration += cur.duration;
-                responseBody.data[index].occurrences += 1;
-                responseBody.data[index].avgWallDuration =
-                        responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
-            }
-        }
+template <typename... Args>
+static inline std::unique_ptr<SqliteResultSet> ExecuteQuery(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                            const std::string &sql, Args&&... args)
+{
+    Prepare(stmt, sql);
+    return Execute(stmt, std::forward<Args>(args)...);
+};
+
+static inline std::unique_ptr<SqlitePreparedStatement>& Prepare(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                               const std::string &sql)
+{
+    if (stmt == nullptr) {
+        throw DatabaseException("Failed to prepare sql.");
     }
-
-    static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(
-            const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
-    {
-        std::vector<Protocol::SimpleSlice> nRows;
-        for (auto &row : simpleSliceVec) {
-            if (row.timestamp <= endTime && row.endTime >= startTime) {
-                nRows.emplace_back(row);
-            }
-        }
-        return nRows;
+    if (!stmt->Prepare(sql)) {
+        throw DatabaseException("Failed to prepare sql.");
     }
+    stmt->Reset();
+    return stmt;
+};
 
-    template <typename... Args>
-    static inline std::unique_ptr<SqliteResultSet> Execute(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                           Args&&... args)
-    {
-        stmt->BindParams(std::forward<Args>(args)...);
-        auto result = stmt->ExecuteQuery();
-        if (result == nullptr) {
-            throw DatabaseException("Failed to ExecuteQuery.");
-        }
-        return result;
-    };
-
-    template <typename... Args>
-    static inline std::unique_ptr<SqliteResultSet> ExecuteQuery(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                                const std::string &sql, Args&&... args)
-    {
-        Prepare(stmt, sql);
-        return Execute(stmt, std::forward<Args>(args)...);
-    };
-
-    static inline std::unique_ptr<SqlitePreparedStatement>& Prepare(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                                   const std::string &sql)
-    {
-        if (stmt == nullptr) {
-            throw DatabaseException("Failed to prepare sql.");
-        }
-        if (!stmt->Prepare(sql)) {
-            throw DatabaseException("Failed to prepare sql.");
-        }
-        stmt->Reset();
-        return stmt;
-    };
-
-    static inline PROCESS_TYPE GetProcessType(const std::string &metaType)
-    {
-        auto processType = STR_TO_ENUM<PROCESS_TYPE>(metaType);
-        if (!processType.has_value()) {
-            return static_cast<PROCESS_TYPE>(atoi(metaType.c_str()));
-        }
-        return processType.value();
+static inline PROCESS_TYPE GetProcessType(const std::string &metaType)
+{
+    auto processType = STR_TO_ENUM<PROCESS_TYPE>(metaType);
+    if (!processType.has_value()) {
+        return static_cast<PROCESS_TYPE>(atoi(metaType.c_str()));
     }
+    return processType.value();
+}
 static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::unique_ptr<SqlitePreparedStatement> &stmt,
      const Protocol::UnitThreadsOperatorsParams &requestParams, const std::string& rankId,
      uint64_t minTimestamp, const std::string& orderBy);
@@ -244,6 +154,9 @@ static void SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, u
                             Protocol::KernelDetailsBody &responseBody);
 static void FilterTopLevelApi(std::vector<Protocol::FlowLocation> &originData, const std::set<std::string> &pattern,
     std::vector<Protocol::FlowLocation> &filterData, std::vector<uint32_t> &indexes);
+// 内部接口不对外，调用处保证stmt不为空
+static bool ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement> stmt, uint64_t offset,
+    const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData);
 
 private:
 /* Functions for BbTraceDataBase */
@@ -269,7 +182,9 @@ private:
     }
 
     static std::string GetOrderByCondition(const EventsViewParams &params);
+    static inline void CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &start, const FlowStartAndEndTime &end,
+        uint8_t index, const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData);
 };
-}
+};
 
 #endif // PROFILER_SERVER_TRACEDATABASEHELPER_H

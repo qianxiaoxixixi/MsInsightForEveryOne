@@ -85,6 +85,8 @@ public:
     virtual bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) = 0;
     virtual std::string QueryHostInfo() = 0;
+    virtual bool QueryFwdBwdDataByFlow(int64_t offset,
+        const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData) = 0;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H
