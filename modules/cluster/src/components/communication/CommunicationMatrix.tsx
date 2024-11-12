@@ -381,11 +381,13 @@ const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, 
                 }}
                 options={useOptions()}
                 value={switchCondition.type}
+                id={'communicationMatrixType-select'}
             />
             <Checkbox checked={switchCondition.showInner}
                 onChange={(e: CheckboxChangeEvent): void => {
                     handleChange('showInner', e.target.checked);
                 }}
+                data-testid={'showInnerCommunication'}
             >{t('searchCriteria.ShowInnerCommunication')}</Checkbox>
             {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
         </div>
