@@ -69,4 +69,34 @@ void CannApiRepo::SetCannApiTable(std::unique_ptr<CannApiTable> cannApiTablePtr)
         cannApiTable = std::move(cannApiTablePtr);
     }
 }
+
+bool CannApiRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    std::vector<CannApiPO> cannApipoVec;
+    cannApiTable->Select(CannApiColumn::ID, CannApiColumn::TIMESTAMP)
+        .Select(CannApiColumn::ENDTIME, CannApiColumn::NAME)
+        .Select(CannApiColumn::GLOBAL_TID, CannApiColumn::TYPE)
+        .Eq(CannApiColumn::ID, sliceQuery.sliceId)
+        .ExcuteQuery(sliceQuery.rankId, cannApipoVec);
+    if (std::empty(cannApipoVec)) {
+        ServerLog::Warn("Failed to query CANN slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    CannApiPO target = cannApipoVec[0];
+    competeSliceDomain.id = target.id;
+    competeSliceDomain.timestamp = target.timestamp;
+    competeSliceDomain.endTime = target.endTime;
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap({ target.name }, sliceQuery.rankId);
+    competeSliceDomain.name = strMap[target.name];
+    std::unordered_map<uint64_t, std::string> levelMap = apiTypeTable->QueryStrMap({ target.type }, sliceQuery.rankId);
+    std::string level = levelMap[target.type];
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddConstMember(json, CannApiColumn::GLOBAL_TID, std::to_string(target.globalTid), allocator);
+    JsonUtil::AddConstMember(json, CannApiColumn::TYPE, level, allocator);
+    JsonUtil::AddConstMember(json, CannApiColumn::NAME, competeSliceDomain.name, allocator);
+    JsonUtil::AddConstMember(json, CannApiColumn::ID, std::to_string(target.id), allocator);
+    competeSliceDomain.args = JsonUtil::JsonDump(json);
+    return true;
+}
 }
