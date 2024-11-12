@@ -4,6 +4,9 @@
 
 #ifndef PROFILER_SERVER_MSTXREPO_H
 #define PROFILER_SERVER_MSTXREPO_H
+#include "MstxEventsTable.h"
+#include "EnumMstxEventTypeTable.h"
+#include "StringIdsTable.h"
 #include "SliceRepoInterface.h"
 namespace Dic::Module::Timeline {
 class MstxRepo : public SliceRepoInterface {
@@ -18,6 +21,11 @@ public:
         std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
+    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
+protected:
+    std::unique_ptr<MstxEventsTable> mstxEventsTable = std::make_unique<MstxEventsTable>();
+    std::unique_ptr<EnumMstxEventTypeTable> enumMstxEventTypeTable = std::make_unique<EnumMstxEventTypeTable>();
+    std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();
 };
 }
 #endif // PROFILER_SERVER_MSTXREPO_H

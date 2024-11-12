@@ -13,7 +13,8 @@
 #include "EnumHcclTransportTypeTable.h"
 #include "EnumHcclRdmaTypeTable.h"
 #include "EnumHcclDataTypeTable.h"
-
+#include "MstxEventsTable.h"
+#include "EnumMstxEventTypeTable.h"
 using namespace Dic::Module::Timeline;
 namespace Dic::TimeLine::Table::Default::Mock {
 class TableDefaultMock {
@@ -106,7 +107,35 @@ protected:
         ClearThreadLocal();
     }
 };
+class MstxEventsTableMock : public MstxEventsTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<MstxEventsPO> &result) override
+    {
+        MstxEventsTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
+class EnumMstxEventTypeTableMock : public EnumMstxEventTypeTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<EnumMstxEventTypePO> &result) override
+    {
+        EnumMstxEventTypeTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
 
+struct CannDependency {
+    std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();
+    std::unique_ptr<CannApiTableMock> cannApiTableMock = std::make_unique<CannApiTableMock>();
+    std::unique_ptr<EnumApiTypeTableMock> enumApiTypeTableMock = std::make_unique<EnumApiTypeTableMock>();
+};
+
+struct MstxDependency {
+    std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();
+    std::unique_ptr<MstxEventsTableMock> mstxEventsTableMock = std::make_unique<MstxEventsTableMock>();
+    std::unique_ptr<EnumMstxEventTypeTableMock> enumMstxEventTypeTableMock =
+        std::make_unique<EnumMstxEventTypeTableMock>();
+};
 
 struct HcclDependency {
     std::unique_ptr<CommucationOpTableMock> commucationOpTableMock = std::make_unique<CommucationOpTableMock>();
