@@ -24,6 +24,9 @@ struct SliceDomain {
         if (first.timestamp < second.timestamp) {
             return true;
         }
+        if (first.timestamp > second.timestamp) {
+            return false;
+        }
         if (first.timestamp == second.timestamp && first.id < second.id) {
             return true;
         }
