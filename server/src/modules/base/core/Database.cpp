@@ -78,7 +78,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         sqlite3_busy_timeout(db, timeoutMs);
         return true;
     }
-    ServerLog::Error("Faild when open existed Db.");
+    ServerLog::Error("Failed when open existed Db.");
     return false;
 }
 

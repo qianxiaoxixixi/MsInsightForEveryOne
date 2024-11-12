@@ -24,8 +24,8 @@ void FileParser::SetParseProgressCallBack(
 void FileParser::Reset()
 {
     error.clear();
-    paserEndCallback == nullptr;
-    paserProgressCallback == nullptr;
+    paserEndCallback = nullptr;
+    paserProgressCallback = nullptr;
     fileProgressMap.clear();
 }
 } // end of namespace Module

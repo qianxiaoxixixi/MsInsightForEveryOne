@@ -20,7 +20,7 @@ std::optional <document_t> ToEventJson(const EVENT &event)
 
 template<>
 std::optional <document_t> ToEventJson<ParseJupyterCompletedEvent>(const ParseJupyterCompletedEvent &event)
-        {
+{
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
