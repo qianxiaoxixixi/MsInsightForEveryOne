@@ -15,6 +15,7 @@ class StringIdsTable : public Table<StringIdsPO> {
 public:
     StringIdsTable() = default;
     ~StringIdsTable() override = default;
+    std::unordered_map<uint64_t, std::string> QueryStrMap(const std::vector<uint64_t> &ids, const std::string &fileId);
 
 protected:
     const std::unordered_map<std::string_view, assign> &GetAssignMap() override

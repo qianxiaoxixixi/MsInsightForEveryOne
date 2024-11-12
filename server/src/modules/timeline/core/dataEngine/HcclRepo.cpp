@@ -12,10 +12,8 @@ void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
         ServerLog::Warn("hccl query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
     }
-    std::string sql;
-    const std::string suffix = "group";
-    if (StringUtil::EndWith(trackInfo.threadId, suffix)) {
-        QuerySimpleSliceFromGroupTrack(sliceVec, trackInfo, suffix);
+    if (StringUtil::EndWith(trackInfo.threadId, groupSuffix)) {
+        QuerySimpleSliceFromGroupTrack(sliceVec, trackInfo, groupSuffix);
     } else {
         QuerySimpleSliceFromPlaneTrack(sliceVec, trackInfo);
     }
@@ -202,5 +200,177 @@ void HcclRepo::SetCommucationTaskInfoTable(std::unique_ptr<CommucationTaskInfoTa
     if (commucationTaskInfoTablePtr != nullptr) {
         commucationTaskInfoTable = std::move(commucationTaskInfoTablePtr);
     }
+}
+
+bool HcclRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    TrackInfo trackInfo;
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    if (!isSuccess) {
+        ServerLog::Warn("Failed to query hccl slice detail info track info, track is: ", sliceQuery.trackId);
+        return false;
+    }
+    if (StringUtil::EndWith(trackInfo.threadId, groupSuffix)) {
+        return QueryGroupSliceDetailInfo(sliceQuery, competeSliceDomain, trackInfo);
+    } else {
+        return QueryPlaneSliceDetailInfo(sliceQuery, competeSliceDomain);
+    }
+}
+
+bool HcclRepo::QueryPlaneSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    std::vector<TaskPO> taskPOs;
+    taskTable->Select(TaskColumn::ROW_ID, TaskColumn::TASK_TYPE)
+        .Select(TaskColumn::TIMESTAMP, TaskColumn::ENDTIME)
+        .Select(TaskColumn::STREAM_ID, TaskColumn::TASK_ID)
+        .Select(TaskColumn::CONTEXT_ID, TaskColumn::GLOBAL_TASK_ID)
+        .Eq(TaskColumn::ROW_ID, sliceQuery.sliceId)
+        .ExcuteQuery(sliceQuery.rankId, taskPOs);
+    if (std::empty(taskPOs)) {
+        ServerLog::Warn("Failed to query plane slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    TaskPO targetPO = taskPOs[0];
+    competeSliceDomain.id = targetPO.id;
+    competeSliceDomain.timestamp = targetPO.timestamp;
+    competeSliceDomain.endTime = targetPO.endTime;
+    std::vector<uint64_t> strIds = { targetPO.taskType };
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(strIds, sliceQuery.rankId);
+    competeSliceDomain.name = strMap[targetPO.taskType];
+    SetPlaneSliceArgs(sliceQuery, competeSliceDomain, targetPO);
+    return true;
+}
+
+void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+    const TaskPO &targetPO)
+{
+    const uint64_t globalTaskId = targetPO.globalTaskId;
+    std::vector<CommucationTaskInfoPO> commucationTaskInfoPOs;
+    commucationTaskInfoTable->Select(CommucationTaskInfoColumn::SRC_RANK)
+        .Select(CommucationTaskInfoColumn::DST_RANK, CommucationTaskInfoColumn::TRANSPORT_TYPE)
+        .Select(CommucationTaskInfoColumn::SIZE, CommucationTaskInfoColumn::DATA_TYPE)
+        .Select(CommucationTaskInfoColumn::LINK_TYPE, CommucationTaskInfoColumn::RDMA_TYPE)
+        .Eq(CommucationTaskInfoColumn::GLOBAL_TASK_ID, globalTaskId)
+        .ExcuteQuery(sliceQuery.rankId, commucationTaskInfoPOs);
+    if (std::empty(commucationTaskInfoPOs)) {
+        return;
+    }
+    CommucationTaskInfoPO targetTaskInfo = commucationTaskInfoPOs[0];
+    std::string notifyId = std::to_string(targetTaskInfo.notifyId);
+    std::string streamId = std::to_string(targetPO.streamId);
+    std::string taskId = std::to_string(targetPO.taskId);
+    std::string contextId = std::to_string(targetPO.contextId);
+    std::string taskType = competeSliceDomain.name;
+    std::string srcRank = std::to_string(targetTaskInfo.srcRank);
+    std::string dstRank = std::to_string(targetTaskInfo.dstRank);
+    std::string transPortName = QueryTransportName(sliceQuery, targetTaskInfo);
+    std::string size = std::to_string(targetTaskInfo.size);
+    std::string dataTypeName = QueryDataTypeName(sliceQuery, targetTaskInfo);
+    std::string linkTypeName = QueryLinkTypeName(sliceQuery, targetTaskInfo);
+    std::string rdmaTypeName = QueryRdmaTypeName(sliceQuery, targetTaskInfo);
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::NOTIFY_ID, notifyId, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::STREAM_ID, streamId, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::TASK_ID, taskId, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::CONTEXT_ID, contextId, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::TASK_TYPE, taskType, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::SRC_RANK, srcRank, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::DST_RANK, dstRank, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::TRANSPORT_TYPE, transPortName, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::SIZE, size, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::DATA_TYPE, dataTypeName, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::LINK_TYPE, linkTypeName, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::RDMA_TYPE, rdmaTypeName, allocator);
+    competeSliceDomain.args = JsonUtil::JsonDump(json);
+}
+
+std::string HcclRepo::QueryRdmaTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo)
+{
+    std::vector<EnumHcclRdmaTypePO> rdmaTypes = enumHcclRdmaTypeTable->Select(EnumHcclRdmaTypeClumn::NAME)
+                                                    .Eq(EnumHcclRdmaTypeClumn::ID, targetTaskInfo.rdmaType)
+                                                    .ExcuteQuery(sliceQuery.rankId);
+    std::string ramaTypeName;
+    if (!std::empty(rdmaTypes)) {
+        ramaTypeName = rdmaTypes[0].name;
+    }
+    return ramaTypeName;
+}
+
+std::string HcclRepo::QueryLinkTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo)
+{
+    std::vector<EnumHcclLinkTypePO> linkTypes = enumHcclLinkTypeTable->Select(EnumHcclLinkTypeClumn::NAME)
+                                                    .Eq(EnumHcclLinkTypeClumn::ID, targetTaskInfo.linkType)
+                                                    .ExcuteQuery(sliceQuery.rankId);
+    std::string linkTypeName;
+    if (!std::empty(linkTypes)) {
+        linkTypeName = linkTypes[0].name;
+    }
+    return linkTypeName;
+}
+
+std::string HcclRepo::QueryDataTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo)
+{
+    std::vector<EnumHcclDataTypePO> dataTypes = enumHcclDataTypeTable->Select(EnumHcclDataTypeClumn::NAME)
+                                                    .Eq(EnumHcclDataTypeClumn::ID, targetTaskInfo.dataType)
+                                                    .ExcuteQuery(sliceQuery.rankId);
+    std::string dataTypeName;
+    if (!std::empty(dataTypes)) {
+        dataTypeName = dataTypes[0].name;
+    }
+    return dataTypeName;
+}
+
+std::string HcclRepo::QueryTransportName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo)
+{
+    std::vector<EnumHcclTransportTypePO> transportTypes =
+        enumHcclTransportTypeTable->Select(EnumHcclTransportTypeClumn::NAME)
+            .Eq(EnumHcclTransportTypeClumn::ID, targetTaskInfo.transportType)
+            .ExcuteQuery(sliceQuery.rankId);
+    std::string transportName;
+    if (!std::empty(transportTypes)) {
+        transportName = transportTypes[0].name;
+    }
+    return transportName;
+}
+
+bool HcclRepo::QueryGroupSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+    const TrackInfo &trackInfo)
+{
+    std::vector<CommucationTaskOpPO> commucationTaskOpPOVec;
+    commucationOpTable->Select(CommucationTaskOpColumn::TIMESTAMP, CommucationTaskOpColumn::ENDTIME)
+        .Select(CommucationTaskOpColumn::OP_NAME, CommucationTaskOpColumn::CONNECTION_ID)
+        .Select(CommucationTaskOpColumn::DATA_TYPE, CommucationTaskOpColumn::ALG_TYPE)
+        .Select(CommucationTaskOpColumn::COUNT, CommucationTaskOpColumn::OP_ID)
+        .Eq(CommucationTaskOpColumn::OP_ID, sliceQuery.sliceId)
+        .ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
+    if (std::empty(commucationTaskOpPOVec)) {
+        ServerLog::Warn("Failed to query group slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    competeSliceDomain.id = commucationTaskOpPOVec[0].opId;
+    competeSliceDomain.timestamp = commucationTaskOpPOVec[0].timestamp;
+    competeSliceDomain.endTime = commucationTaskOpPOVec[0].endTime;
+    std::vector<uint64_t> stringIds;
+    stringIds.emplace_back(commucationTaskOpPOVec[0].algType);
+    stringIds.emplace_back(commucationTaskOpPOVec[0].opName);
+    std::vector<uint64_t> dataTypeIds;
+    dataTypeIds.emplace_back(commucationTaskOpPOVec[0].dataType);
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(stringIds, sliceQuery.rankId);
+    std::unordered_map<uint64_t, std::string> dataTypeMap =
+        enumHcclDataTypeTable->QueryStrMap(dataTypeIds, sliceQuery.rankId);
+    competeSliceDomain.name = strMap[commucationTaskOpPOVec[0].opName];
+    const std::string connectionId = std::to_string(commucationTaskOpPOVec[0].connectionId);
+    const std::string dataType = dataTypeMap[commucationTaskOpPOVec[0].dataType];
+    const std::string algType = strMap[commucationTaskOpPOVec[0].algType];
+    const std::string count = std::to_string(commucationTaskOpPOVec[0].count);
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddConstMember(json, CommucationTaskOpColumn::CONNECTION_ID, connectionId, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskOpColumn::DATA_TYPE, dataType, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskOpColumn::ALG_TYPE, algType, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskOpColumn::COUNT, count, allocator);
+    competeSliceDomain.args = JsonUtil::JsonDump(json);
+    return true;
 }
 }

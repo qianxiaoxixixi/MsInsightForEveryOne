@@ -27,6 +27,7 @@ struct SliceQuery {
     std::string rankId;
     std::string pid;
     std::string tid;
+    std::string sliceId;
     bool isFilterPythonFunction = false;
     bool QueryThreadsCheck(std::string &error) const
     {

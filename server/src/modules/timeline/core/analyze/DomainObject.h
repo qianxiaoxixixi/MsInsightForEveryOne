@@ -31,6 +31,16 @@ struct SliceDomain {
     }
 };
 
+struct SliceShape {
+    std::string inputShapes;
+    std::string inputDataTypes;
+    std::string inputFormats;
+    std::string outputShapes;
+    std::string outputDataTypes;
+    std::string outputFormats;
+    std::string attrInfo;
+};
+
 struct CompeteSliceDomain {
     uint64_t id = 0;
     uint64_t timestamp = 0;
@@ -44,6 +54,8 @@ struct CompeteSliceDomain {
     std::string pid;
     std::string metaType;
     std::string flagId;
+    SliceShape sliceShape;
+    std::string args;
     bool operator < (const CompeteSliceDomain &right) const
     {
         if (depth < right.depth) {

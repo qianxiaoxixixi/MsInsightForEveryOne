@@ -145,6 +145,13 @@ public:
         return *this;
     }
 
+    virtual std::vector<T> ExcuteQuery(const std::string &fileId)
+    {
+        std::vector<T> result;
+        ExcuteQuery(fileId, result);
+        return result;
+    }
+
     virtual void ExcuteQuery(const std::string &fileId, std::vector<T> &result)
     {
         auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
