@@ -104,8 +104,16 @@ const queryDataCount = async (session: Session, searchContent: string, isMatchCa
     return totalCnt;
 };
 
+interface JumpSliceParams {
+    session: Session;
+    searchContent: string;
+    index: number;
+    isMatchCase: boolean;
+    isMatchExact: boolean;
+    setIsSearching: (val: boolean) => void;
+}
 // 跳转函数
-const jumpSlice = async (session: Session, searchContent: string, index: number, isMatchCase: boolean, isMatchExact: boolean): Promise<void> => {
+const jumpSlice = async ({ session, searchContent, index, isMatchExact, isMatchCase, setIsSearching }: JumpSliceParams): Promise<void> => {
     let finalDataSource;
     let finalRankId;
     let flag = false;
@@ -124,7 +132,11 @@ const jumpSlice = async (session: Session, searchContent: string, index: number,
             currentIndex -= rankCount.count;
         }
     }
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact } });
+    setIsSearching(true);
+    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact } })
+        .finally(() => {
+            setIsSearching(false);
+        });
     doJumpSlice(session, slice, currentIndex === 0);
 };
 
@@ -195,18 +207,23 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     // paginationData记录了当前搜索的算子的下标以及一共搜索到多少个算子、默认搜索第1个算子
     const [paginationData, updatePaginationData] = useState({ current: 1, total: 0 });
     const [searchIconVisible, setSearchIconVisible] = useState(true);
-    const [searchContent, setSearchContent] = useState('');
+    const [searchContent, setSearchContent] = useState(''); // trim处理后的实际使用值
+    const [inputSearchContent, setInputSearchContent] = useState(''); // 输入框中的值
     const [searchingStatus, setSearchingStatus] = useState(false);
     const [isMatchCase, setIsMatchCase] = useState(false);
     const [isMatchExact, setIsMatchExact] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(action(() => {
-        setSearchIconVisible(true); setSearchContent(''); setIsMatchCase(false); setIsMatchExact(false);
+        setSearchIconVisible(true); setSearchContent(''); setInputSearchContent(''); setIsMatchCase(false); setIsMatchExact(false);
         updatePaginationData({ current: 1, total: 0 }); session.searchData = undefined;
     }), [session, session.units]);
     const onPageChange = (current: number): void => {
+        if (isSearching) {
+            return;
+        }
         updatePaginationData(prevState => ({ current, total: prevState.total }));
-        jumpSlice(session, searchContent, current, isMatchCase, isMatchExact);
+        jumpSlice({ session, searchContent, index: current, isMatchCase, isMatchExact, setIsSearching });
     };
     const onInputPressEnter = async (): Promise<void> => {
         if (searchContent === '') { return; }
@@ -214,7 +231,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         const totalCnt = await queryDataCount(session, searchContent, isMatchCase, isMatchExact);
         if (totalCnt > 0) {
             updatePaginationData({ current: 1, total: totalCnt });
-            jumpSlice(session, searchContent, 1, isMatchCase, isMatchExact);
+            jumpSlice({ session, searchContent, index: 1, isMatchCase, isMatchExact, setIsSearching });
             setSearchIconVisible(false);
         } else {
             messageApi.warning(t('notify:SearchEmpty'));
@@ -223,9 +240,11 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     };
     const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
-        setSearchContent(inputContent);
+        const trimmedValue = inputContent.trim();
+        setSearchContent(trimmedValue);
+        setInputSearchContent(inputContent);
         setSearchIconVisible(true);
-        session.searchData = { content: inputContent, isMatchCase, isMatchExact };
+        session.searchData = { content: trimmedValue, isMatchCase, isMatchExact };
     });
 
     function changeMatchCaseStatus(): void {
@@ -282,7 +301,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
             </SearchContainer>;
         } else {
             dom = <SearchContainer>
-                <StylePagination {...paginationData} onChange={onPageChange} />
+                <StylePagination {...paginationData} isSearching={isSearching} onChange={onPageChange} />
                 <Button type={'primary'} size="small" onClick={doSearchList}>{t('Open in Find Window', { ns: 'buttonText' })}</Button>
             </SearchContainer>;
         }
@@ -291,8 +310,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     return (
         <CustomDiv theme={theme} onClick={(e): void => { e.stopPropagation(); }}>
             { contextHolder}
-            <Input allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus} maxLength={200}
-                size="large" value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></Input>
+            <Input allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus || isSearching} maxLength={200}
+                size="large" value={inputSearchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></Input>
             <div className="searchResult">
                 {dom}
             </div>
@@ -338,8 +357,9 @@ interface Props {
     onChange: (current: number) => void;
     current: number;
     total: number;
+    isSearching: boolean;
 }
-const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
+const StylePagination = ({ onChange, current, total, isSearching }: Props): JSX.Element => {
     const [searchNumber, setSearchNumber] = useState(1);
     const [currentValue, setCurrentValue] = useState<string | number>(current);
     const handleSearch = (inputNumber: number): void => {
@@ -349,26 +369,30 @@ const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
     useEffect(() => {
         setCurrentValue(current);
     }, [current]);
-    return (<div>
+    return (<div className={'flex items-center'} style={{ marginRight: 10 }}>
         <Button size="middle" disabled={current === 1} icon={<LeftOutlined />} style={{ minWidth: 'auto' }} onClick={(): void => onChange(current - 1) }/>
-        <span><Input
-            size="small"
-            value={currentValue}
-            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-                const val = event.target.value.replace(/\D/g, '');
-                if (val === '') {
-                    setCurrentValue(val);
-                    setSearchNumber(1);
-                    return;
-                }
-                if (Number(val) > total || Number(val) < 1) {
-                    return;
-                }
-                setCurrentValue(Number(val));
-                setSearchNumber(Number(val));
-            }}
-            onPressEnter={(): void => handleSearch(searchNumber)}
-        /></span> / <span>{total}</span>
+        <div className={'flex items-center'}>
+            <Input
+                size="small"
+                value={currentValue}
+                onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+                    const val = event.target.value.replace(/\D/g, '');
+                    if (val === '') {
+                        setCurrentValue(val);
+                        setSearchNumber(1);
+                        return;
+                    }
+                    if (Number(val) > total || Number(val) < 1) {
+                        return;
+                    }
+                    setCurrentValue(Number(val));
+                    setSearchNumber(Number(val));
+                }}
+                onPressEnter={(): void => handleSearch(searchNumber)}
+            />
+            <div style={{ marginLeft: 5 }}>/ {total}</div>
+        </div>
         <Button size="middle" disabled={current === total} icon={<RightOutlined />} style={{ minWidth: 'auto' }} onClick={(): void => onChange(current + 1) }/>
+        {isSearching && <ImgWithFallback className={'loading'} />}
     </div>);
 };
