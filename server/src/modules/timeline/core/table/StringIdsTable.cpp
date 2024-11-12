@@ -12,4 +12,16 @@ void StringIdsTable::SetValue(StringIdsPO &stringIdsPO, const std::unique_ptr<Sq
 {
     stringIdsPO.value = resultSet->GetString(StringIdsColumn::VALUE);
 }
+
+std::unordered_map<uint64_t, std::string> StringIdsTable::QueryStrMap(const std::vector<uint64_t> &ids,
+    const std::string &fileId)
+{
+    std::unordered_map<uint64_t, std::string> res;
+    std::vector<StringIdsPO> stringIdsPOs;
+    Select(StringIdsColumn::ID, StringIdsColumn::VALUE).In(StringIdsColumn::ID, ids).ExcuteQuery(fileId, stringIdsPOs);
+    for (const auto &item : stringIdsPOs) {
+        res[item.id] = item.value;
+    }
+    return res;
+}
 }
