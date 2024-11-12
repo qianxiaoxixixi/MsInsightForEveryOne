@@ -250,6 +250,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
         <FormItem
             name={t('searchCriteria.Step')}
             content={(<Select
+                id={'step-select'}
                 value={condition.iterationId}
                 style={{ width: 120 }}
                 onChange={(val: string): void => {
@@ -260,6 +261,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
         <FormItem
             name={t('searchCriteria.CommunicationGroup')}
             content={(<Select
+                id={'communicationGroup-select'}
                 value={condition.stage}
                 style={{ width: 200 }}
                 onChange={(val: string): void => {
@@ -273,6 +275,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
             name={t('searchCriteria.OperatorName')}
             content={(
                 <Select
+                    id={'operatorName-select'}
                     value={condition.operatorName}
                     style={{ width: 300 }}
                     onChange={(val: string): void => {
