@@ -65,10 +65,18 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
     }
     const std::string nameKey = database->GetDbPath();
     std::string sql = "SELECT main.ROWID as id, main.startNs, main.endNs,"
-        " coalesce(c.name, m.message, main.taskType) as name FROM " + TABLE_TASK + " main "
-        " left join " + TABLE_COMPUTE_TASK_INFO + " c on c.globalTaskId = main.globalTaskId "
-        " left join " + TABLE_MSTX_EVENTS + " m on "
-        " (m.connectionId = main.connectionId and  m.connectionId != " + WRONG_DATA + " )"
+        " coalesce(c.name, m.message, main.taskType) as name FROM " +
+        TABLE_TASK +
+        " main "
+        " left join " +
+        TABLE_COMPUTE_TASK_INFO +
+        " c on c.globalTaskId = main.globalTaskId "
+        " left join " +
+        TABLE_MSTX_EVENTS +
+        " m on "
+        " (m.connectionId = main.connectionId and  m.connectionId != " +
+        WRONG_DATA +
+        " )"
         " where 1 = 1 and id in (";
     std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
     sql += sliceidvecStr + ");";
@@ -90,5 +98,85 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
         competeSlice.name = FullDb::DbTraceDataBase::GetStringCacheValue(nameKey, resultSet->GetString("name"));
         competeSliceVec.emplace_back(competeSlice);
     }
+}
+
+bool HardWareRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    std::vector<TaskPO> taskPOS;
+    taskTable->Select(TaskColumn::ROW_ID, TaskColumn::MODEL_ID)
+        .Select(TaskColumn::TASK_TYPE, TaskColumn::STREAM_ID)
+        .Select(TaskColumn::TASK_ID, TaskColumn::CONNECTION_ID)
+        .Select(TaskColumn::GLOBAL_TASK_ID, TaskColumn::TIMESTAMP)
+        .Select(TaskColumn::ENDTIME)
+        .Eq(TaskColumn::ROW_ID, sliceQuery.sliceId)
+        .ExcuteQuery(sliceQuery.rankId, taskPOS);
+    if (std::empty(taskPOS)) {
+        ServerLog::Warn("Failed to query hard ware slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    const TaskPO targetTask = taskPOS[0];
+    std::vector<CompeteSliceDomain> competeSliceVec;
+    QueryCompeteSliceByIds(sliceQuery, { targetTask.id }, competeSliceVec);
+    if (std::empty(competeSliceVec)) {
+        competeSliceDomain.name = std::to_string(targetTask.taskType);
+        competeSliceDomain.timestamp = targetTask.timestamp;
+        competeSliceDomain.endTime = targetTask.endTime;
+    } else {
+        competeSliceDomain = std::move(competeSliceVec[0]);
+    }
+    QuerySliceArgs(sliceQuery, competeSliceDomain, targetTask);
+    QuerySliceShape(sliceQuery, competeSliceDomain, targetTask);
+    return true;
+}
+
+void HardWareRepo::QuerySliceShape(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+    const TaskPO &targetTask)
+{
+    std::vector<ComputeTaskInfoPO> computePOS;
+    computeTaskInfoTable->Select(ComputeTaskInfoColumn::INPUT_SHAPES)
+        .Select(ComputeTaskInfoColumn::INPUT_DATA_TYPES, ComputeTaskInfoColumn::INPUT_FORMATS)
+        .Select(ComputeTaskInfoColumn::OUTPUT_SHAPES, ComputeTaskInfoColumn::OUTPUT_DATA_TYPES)
+        .Select(ComputeTaskInfoColumn::OUTOUT_FORMATS, ComputeTaskInfoColumn::ATTRINFO)
+        .Eq(ComputeTaskInfoColumn::GLOBAL_TASK_ID, targetTask.globalTaskId)
+        .ExcuteQuery(sliceQuery.rankId, computePOS);
+    if (!std::empty(computePOS)) {
+        const ComputeTaskInfoPO targetCompute = computePOS[0];
+        std::vector<uint64_t> stringIds;
+        stringIds.emplace_back(targetCompute.outputShapes);
+        stringIds.emplace_back(targetCompute.outputDataTypes);
+        stringIds.emplace_back(targetCompute.outputFormats);
+        stringIds.emplace_back(targetCompute.inputShapes);
+        stringIds.emplace_back(targetCompute.inputDataTypes);
+        stringIds.emplace_back(targetCompute.inputFormats);
+        stringIds.emplace_back(targetCompute.attrInfo);
+        std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(stringIds, sliceQuery.rankId);
+        competeSliceDomain.sliceShape.inputFormats = strMap[targetCompute.inputFormats];
+        competeSliceDomain.sliceShape.inputDataTypes = strMap[targetCompute.inputDataTypes];
+        competeSliceDomain.sliceShape.inputShapes = strMap[targetCompute.inputShapes];
+        competeSliceDomain.sliceShape.outputFormats = strMap[targetCompute.outputFormats];
+        competeSliceDomain.sliceShape.outputDataTypes = strMap[targetCompute.outputDataTypes];
+        competeSliceDomain.sliceShape.outputShapes = strMap[targetCompute.outputShapes];
+        competeSliceDomain.sliceShape.attrInfo = strMap[targetCompute.attrInfo];
+    }
+}
+
+void HardWareRepo::QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+    const TaskPO &targetTask)
+{
+    std::string modelIdName = std::to_string(targetTask.modelId);
+    std::unordered_map<uint64_t, std::string> strMap =
+        stringIdsTable->QueryStrMap({ targetTask.taskType }, sliceQuery.rankId);
+    std::string taskTypeName = strMap[targetTask.taskType];
+    std::string streamId = std::to_string(targetTask.streamId);
+    std::string taskId = std::to_string(targetTask.taskId);
+    std::string connectionId = std::to_string(targetTask.connectionId);
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddConstMember(json, TaskColumn::MODEL_ID, modelIdName, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::TASK_TYPE, taskTypeName, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::STREAM_ID, streamId, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::TASK_ID, taskId, allocator);
+    JsonUtil::AddConstMember(json, TaskColumn::CONNECTION_ID, connectionId, allocator);
+    competeSliceDomain.args = JsonUtil::JsonDump(json);
 }
 }

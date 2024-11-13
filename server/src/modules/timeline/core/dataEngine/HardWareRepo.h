@@ -3,6 +3,9 @@
 //
 #ifndef PROFILER_SERVER_HARDWAREREPO_H
 #define PROFILER_SERVER_HARDWAREREPO_H
+#include "TaskTable.h"
+#include "ComputeTaskInfoTable.h"
+#include "StringIdsTable.h"
 #include "SliceRepoInterface.h"
 namespace Dic::Module::Timeline {
 class HardWareRepo : public SliceRepoInterface {
@@ -17,6 +20,16 @@ public:
         std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
+    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
+protected:
+    std::unique_ptr<TaskTable> taskTable = std::make_unique<TaskTable>();
+    std::unique_ptr<ComputeTaskInfoTable> computeTaskInfoTable = std::make_unique<ComputeTaskInfoTable>();
+    std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();
+
+    void QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain, const TaskPO &targetTask);
+
+    void
+    QuerySliceShape(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain, const TaskPO &targetTask);
 };
 }
 #endif // PROFILER_SERVER_HARDWAREREPO_H

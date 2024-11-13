@@ -15,6 +15,9 @@
 #include "EnumHcclDataTypeTable.h"
 #include "MstxEventsTable.h"
 #include "EnumMstxEventTypeTable.h"
+#include "ComputeTaskInfoTable.h"
+#include "PytorchApiTable.h"
+#include "PytorchCallchainsTable.h"
 using namespace Dic::Module::Timeline;
 namespace Dic::TimeLine::Table::Default::Mock {
 class TableDefaultMock {
@@ -122,6 +125,47 @@ protected:
         EnumMstxEventTypeTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+};
+
+class ComputeTaskInfoTableMock : public ComputeTaskInfoTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<ComputeTaskInfoPO> &result) override
+    {
+        ComputeTaskInfoTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
+
+class PytorchApiTableMock : public PytorchApiTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<PytorchApiPO> &result) override
+    {
+        PytorchApiTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
+
+
+class PytorchCallchainsTableMock : public PytorchCallchainsTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<PytorchCallchainsPO> &result) override
+    {
+        PytorchCallchainsTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
+
+struct PytorchApiDependency {
+    std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();
+    std::unique_ptr<PytorchApiTableMock> pytorchApiTableMock = std::make_unique<PytorchApiTableMock>();
+    std::unique_ptr<PytorchCallchainsTableMock> pytorchCallchainsTableMock =
+        std::make_unique<PytorchCallchainsTableMock>();
+};
+
+struct HardWareDependency {
+    std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();
+    std::unique_ptr<TaskTableMock> taskTableMock = std::make_unique<TaskTableMock>();
+    std::unique_ptr<ComputeTaskInfoTableMock> computeTaskInfoTableMock = std::make_unique<ComputeTaskInfoTableMock>();
 };
 
 struct CannDependency {

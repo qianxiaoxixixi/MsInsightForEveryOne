@@ -89,4 +89,17 @@ void OverlapAnsRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
         competeSliceVec.emplace_back(competeSlice);
     }
 }
+
+bool OverlapAnsRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    const uint64_t sliceId = NumberUtil::TryParseUnsignedLongLong(sliceQuery.sliceId);
+    std::vector<CompeteSliceDomain> sliceVec;
+    QueryCompeteSliceByIds(sliceQuery, { sliceId }, sliceVec);
+    if (std::empty(sliceVec)) {
+        ServerLog::Warn("Failed to query overlap slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    competeSliceDomain = std::move(sliceVec[0]);
+    return true;
+}
 }

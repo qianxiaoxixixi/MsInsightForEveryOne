@@ -6,6 +6,8 @@
 #define PROFILER_SERVER_PYTHONAPIREPO_H
 #include "SliceRepoInterface.h"
 #include "PytorchApiTable.h"
+#include "PytorchCallchainsTable.h"
+#include "StringIdsTable.h"
 namespace Dic::Module::Timeline {
 class PythonApiRepo : public SliceRepoInterface {
 public:
@@ -19,8 +21,17 @@ public:
         std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
-private:
+    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
+
+protected:
     std::unique_ptr<PytorchApiTable> pytorchApiTable = std::make_unique<PytorchApiTable>();
+    std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();
+    std::unique_ptr<PytorchCallchainsTable> pytorchCallchainsTable = std::make_unique<PytorchCallchainsTable>();
+
+    std::string QuerySliceCallStack(const SliceQuery &sliceQuery, const PytorchApiPO &target);
+
+    void
+    QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain, const PytorchApiPO &target);
 };
 }
 #endif // PROFILER_SERVER_PYTHONAPIREPO_H

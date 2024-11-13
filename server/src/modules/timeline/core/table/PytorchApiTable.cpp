@@ -35,27 +35,27 @@ void PytorchApiTable::SetName(PytorchApiPO &pytorchApiPO, const std::unique_ptr<
 
 void PytorchApiTable::SetSequenceNumber(PytorchApiPO &pytorchApiPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    pytorchApiPO.sequenceNumber = resultSet->GetUint64(PytorchApiColumn::SEQUENCE_NUMBER);
+    pytorchApiPO.sequenceNumber = resultSet->GetString(PytorchApiColumn::SEQUENCE_NUMBER);
 }
 
 void PytorchApiTable::SetFwdThreadId(PytorchApiPO &pytorchApiPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    pytorchApiPO.fwdThreadId = resultSet->GetUint64(PytorchApiColumn::FWD_THREAD_ID);
+    pytorchApiPO.fwdThreadId = resultSet->GetString(PytorchApiColumn::FWD_THREAD_ID);
 }
 
 void PytorchApiTable::SetInputDtypes(PytorchApiPO &pytorchApiPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    pytorchApiPO.inputDtypes = resultSet->GetUint64(PytorchApiColumn::INPUT_DTYPES);
+    pytorchApiPO.inputDtypes = resultSet->GetString(PytorchApiColumn::INPUT_DTYPES);
 }
 
 void PytorchApiTable::SetInputShapes(PytorchApiPO &pytorchApiPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    pytorchApiPO.inputShapes = resultSet->GetUint64(PytorchApiColumn::INPUT_SHAPES);
+    pytorchApiPO.inputShapes = resultSet->GetString(PytorchApiColumn::INPUT_SHAPES);
 }
 
 void PytorchApiTable::SetCallchainId(PytorchApiPO &pytorchApiPO, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    pytorchApiPO.callchainId = resultSet->GetUint64(PytorchApiColumn::CALL_CHAIN_ID);
+    pytorchApiPO.callchainId = resultSet->GetString(PytorchApiColumn::CALL_CHAIN_ID);
 }
 
 void PytorchApiTable::SetType(PytorchApiPO &pytorchApiPO, const std::unique_ptr<SqliteResultSet> &resultSet)
