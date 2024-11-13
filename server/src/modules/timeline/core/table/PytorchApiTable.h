@@ -14,11 +14,11 @@ struct PytorchApiPO {
     uint64_t globalTid = 0;
     uint64_t connectionId = 0;
     uint64_t name = 0;
-    uint64_t sequenceNumber = 0;
-    uint64_t fwdThreadId = 0;
-    uint64_t inputDtypes = 0;
-    uint64_t inputShapes = 0;
-    uint64_t callchainId = 0;
+    std::string sequenceNumber;
+    std::string fwdThreadId;
+    std::string inputDtypes;
+    std::string inputShapes;
+    std::string callchainId;
     uint64_t type = 0;
 };
 class PytorchApiTable : public Table<PytorchApiPO> {

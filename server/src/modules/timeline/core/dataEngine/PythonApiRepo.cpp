@@ -145,4 +145,90 @@ void PythonApiRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const s
         competeSliceVec.emplace_back(competeSlice);
     }
 }
+
+bool PythonApiRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    std::vector<PytorchApiPO> apiPOs;
+    pytorchApiTable->Select(PytorchApiColumn::ID, PytorchApiColumn::TIMESTAMP)
+        .Select(PytorchApiColumn::ENDTIME, PytorchApiColumn::NAME)
+        .Select(PytorchApiColumn::SEQUENCE_NUMBER, PytorchApiColumn::FWD_THREAD_ID)
+        .Select(PytorchApiColumn::INPUT_DTYPES, PytorchApiColumn::INPUT_SHAPES)
+        .Select(PytorchApiColumn::CALL_CHAIN_ID, PytorchApiColumn::CONNECTIONID)
+        .Eq(PytorchApiColumn::ID, sliceQuery.sliceId)
+        .ExcuteQuery(sliceQuery.rankId, apiPOs);
+    if (std::empty(apiPOs)) {
+        ServerLog::Warn("Failed to query pytorch api slice detail by id. id is: ", sliceQuery.sliceId);
+        return false;
+    }
+    const PytorchApiPO target = apiPOs[0];
+    competeSliceDomain.id = target.id;
+    competeSliceDomain.timestamp = target.timestamp;
+    competeSliceDomain.endTime = target.endTime;
+    QuerySliceArgs(sliceQuery, competeSliceDomain, target);
+    return true;
+}
+
+void PythonApiRepo::QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+    const PytorchApiPO &target)
+{
+    std::vector<uint64_t> strIds;
+    strIds.emplace_back(target.name);
+    if (!std::empty(target.inputShapes)) {
+        strIds.emplace_back(NumberUtil::TryParseInt(target.inputShapes));
+    }
+    if (!std::empty(target.inputDtypes)) {
+        strIds.emplace_back(NumberUtil::TryParseInt(target.inputDtypes));
+    }
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(strIds, sliceQuery.rankId);
+    const std::string correlationId = std::to_string(target.connectionId);
+    const std::string inputShapeName = strMap[NumberUtil::TryParseInt(target.inputShapes)];
+    const std::string inputTypeName = strMap[NumberUtil::TryParseInt(target.inputDtypes)];
+    competeSliceDomain.name = strMap[target.name];
+    std::string callStack = QuerySliceCallStack(sliceQuery, target);
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    if (!std::empty(target.sequenceNumber)) {
+        JsonUtil::AddConstMember(json, PytorchApiColumn::SEQUENCE_NUMBER, target.sequenceNumber, allocator);
+    }
+    if (!std::empty(target.fwdThreadId)) {
+        JsonUtil::AddConstMember(json, PytorchApiColumn::FWD_THREAD_ID, target.fwdThreadId, allocator);
+    }
+    if (!std::empty(correlationId)) {
+        JsonUtil::AddConstMember(json, PytorchApiColumn::CONNECTIONID, correlationId, allocator);
+    }
+    if (!std::empty(inputShapeName)) {
+        JsonUtil::AddConstMember(json, PytorchApiColumn::INPUT_SHAPES, inputShapeName, allocator);
+    }
+    if (!std::empty(inputTypeName)) {
+        JsonUtil::AddConstMember(json, PytorchApiColumn::INPUT_DTYPES, inputTypeName, allocator);
+    }
+    if (!std::empty(callStack)) {
+        JsonUtil::AddConstMember(json, "Call stack", callStack, allocator);
+    }
+    competeSliceDomain.args = JsonUtil::JsonDump(json);
+}
+
+std::string PythonApiRepo::QuerySliceCallStack(const SliceQuery &sliceQuery, const PytorchApiPO &target)
+{
+    std::string callStack;
+    if (!std::empty(target.callchainId)) {
+        std::vector<PytorchCallchainsPO> chainPOs;
+        pytorchCallchainsTable->Select(PytorchCallchainsColumn::STACK)
+            .Eq(PytorchCallchainsColumn::ID, target.callchainId)
+            .OrderBy(PytorchCallchainsColumn::STACK_DEPTH, TableOrder::ASC)
+            .ExcuteQuery(sliceQuery.rankId, chainPOs);
+        std::vector<uint64_t> callStrIds;
+        callStrIds.reserve(chainPOs.size());
+        for (const auto &item : chainPOs) {
+            callStrIds.emplace_back(item.stack);
+        }
+        std::unordered_map<uint64_t, std::string> callStrMap =
+            stringIdsTable->QueryStrMap(callStrIds, sliceQuery.rankId);
+        for (const auto &item : chainPOs) {
+            callStack += callStrMap[item.stack];
+            callStack += ";\n";
+        }
+    }
+    return callStack;
+}
 }

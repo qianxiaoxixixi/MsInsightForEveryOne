@@ -27,7 +27,7 @@ TEST_F(PythonApiTableTest, testPytorchApiTableColumnMaping)
     TestCaseDatabaseUtil::CreateDatabse(db, sql);
     std::string sqlInsert =
         "INSERT INTO PYTORCH_API (startNs, endNs,globalTid, connectionId,name, sequenceNumber,fwdThreadId, "
-        "inputDtypes,inputShapes, callchainId,type) VALUES (1, 2,3,4,5,6,7,8,9,10,11);";
+        "inputDtypes,inputShapes, callchainId,type) VALUES (1, 2,3,4,5,'6','7','8','9','10',11);";
     TestCaseDatabaseUtil::InsertData(db, sqlInsert);
     std::vector<PytorchApiPO> pytorchApiPOs;
     Dic::Protocol::PytorchApiTable pytorchApiTable;
@@ -42,6 +42,7 @@ TEST_F(PythonApiTableTest, testPytorchApiTableColumnMaping)
         .Select(PytorchApiColumn::INPUT_DTYPES, PytorchApiColumn::INPUT_SHAPES)
         .Select(PytorchApiColumn::CALL_CHAIN_ID, PytorchApiColumn::TYPE)
         .ExcuteQuery(db, pytorchApiPOs);
+    const uint64_t expectType = 11;
     EXPECT_EQ(pytorchApiPOs.size(), expectSize);
     EXPECT_EQ(pytorchApiPOs[index].id, expectId);
     EXPECT_EQ(pytorchApiPOs[index].timestamp, initInt++);
@@ -49,10 +50,10 @@ TEST_F(PythonApiTableTest, testPytorchApiTableColumnMaping)
     EXPECT_EQ(pytorchApiPOs[index].globalTid, initInt++);
     EXPECT_EQ(pytorchApiPOs[index].connectionId, initInt++);
     EXPECT_EQ(pytorchApiPOs[index].name, initInt++);
-    EXPECT_EQ(pytorchApiPOs[index].sequenceNumber, initInt++);
-    EXPECT_EQ(pytorchApiPOs[index].fwdThreadId, initInt++);
-    EXPECT_EQ(pytorchApiPOs[index].inputDtypes, initInt++);
-    EXPECT_EQ(pytorchApiPOs[index].inputShapes, initInt++);
-    EXPECT_EQ(pytorchApiPOs[index].callchainId, initInt++);
-    EXPECT_EQ(pytorchApiPOs[index].type, initInt++);
+    EXPECT_EQ(pytorchApiPOs[index].sequenceNumber, "6");
+    EXPECT_EQ(pytorchApiPOs[index].fwdThreadId, "7");
+    EXPECT_EQ(pytorchApiPOs[index].inputDtypes, "8");
+    EXPECT_EQ(pytorchApiPOs[index].inputShapes, "9");
+    EXPECT_EQ(pytorchApiPOs[index].callchainId, "10");
+    EXPECT_EQ(pytorchApiPOs[index].type, expectType);
 }
