@@ -65,6 +65,7 @@ void RenderEngine::QueryThreadTraces(const Protocol::UnitThreadTracesParams &req
         responseBody.data[item.depth].emplace_back(threadTraces);
     }
     responseBody.maxDepth = maxDepth;
+    responseBody.currentMaxDepth = responseBody.data.size();
     responseBody.havePythonFunction = havePythonFunction;
 }
 

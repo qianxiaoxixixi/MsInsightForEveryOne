@@ -92,6 +92,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
         data.PushBack(threadTracesArray, allocator);
     }
     JsonUtil::AddMember(body, "maxDepth", response.body.maxDepth, allocator);
+    JsonUtil::AddMember(body, "currentMaxDepth", response.body.currentMaxDepth, allocator);
     JsonUtil::AddMember(body, "havePythonFunction", response.body.havePythonFunction, allocator);
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
