@@ -56,6 +56,7 @@ struct ThreadTraces {
 
 struct UnitThreadTracesBody {
     uint64_t maxDepth = 0;
+    uint64_t currentMaxDepth = 0;
     bool havePythonFunction = false;
     std::vector<std::vector<ThreadTraces>> data;
 };
