@@ -63,13 +63,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
             Timeline::ParserStatus::RUNNING && getline(file, line)) {
-        std::stringstream ss(line);
-        std::vector<std::string> row;
-        std::string cell;
-
-        while (getline(ss, cell, ',')) {
-            row.push_back(cell);
-        }
+        std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of operator_memory.csv is not header.");
@@ -230,12 +224,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {
-        std::stringstream ss(line);
-        std::vector<std::string> row;
-        std::string cell;
-        while (getline(ss, cell, ',')) {
-            row.push_back(cell);
-        }
+        std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of memory_record.csv is not header.");
@@ -284,12 +273,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
     Timeline::ParserStatus::RUNNING && getline(file, line)) {
-        std::stringstream ss(line);
-        std::vector<std::string> row;
-        std::string cell;
-        while (getline(ss, cell, ',')) {
-            row.push_back(cell);
-        }
+        std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of static_op_mem.csv is not header.");
