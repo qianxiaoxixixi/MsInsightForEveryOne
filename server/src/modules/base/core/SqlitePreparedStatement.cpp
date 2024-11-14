@@ -63,6 +63,9 @@ void SqlitePreparedStatement::BindParam(int index, uint32_t value)
 
 void SqlitePreparedStatement::BindParam(int index, uint64_t value)
 {
+    if (value > INT64_MAX) {
+        value = INT64_MAX;
+    }
     lastErrorCode = sqlite3_bind_int64(stmt, index, static_cast<int64_t>(value));
 }
 
