@@ -26,7 +26,8 @@ bool DbSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams param
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t startTime = NumberUtil::CeilingClamp(Timeline::TraceTime::Instance().GetStartTime(),
+                                                  (uint64_t)INT64_MAX);
     double offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -381,7 +382,7 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
 
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
     if (!reqParams.isCompare) {
@@ -538,7 +539,7 @@ void DbSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMo
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
     if (!isHccl) {
@@ -572,7 +573,7 @@ bool DbSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDetail
         ServerLog::Error("Query common detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
     sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
     sqlite3_bind_double(stmt, index++, params.pageSize);
     sqlite3_bind_double(stmt, index++, offset);
