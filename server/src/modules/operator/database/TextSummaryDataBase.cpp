@@ -93,7 +93,6 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.acceleratorCore.c_str(), event.acceleratorCore.length(), SQLITE_TRANSIENT);
-
         sqlite3_bind_int64(stmt, idx++, event.startTime);
         sqlite3_bind_double(stmt, idx++, event.duration);
         sqlite3_bind_double(stmt, idx++, event.waitTime);
@@ -194,7 +193,8 @@ bool TextSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams par
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t startTime = NumberUtil::CeilingClamp(Timeline::TraceTime::Instance().GetStartTime(),
+                                                  (uint64_t)INT64_MAX);
     int64_t offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -324,7 +324,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         ServerLog::Error("Query common detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
     sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, params.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
@@ -763,7 +763,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
-        sqlite3_bind_int64(stmt, index++, Timeline::TraceTime::Instance().GetStartTime());
+        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
+            Timeline::TraceTime::Instance().GetStartTime(), (uint64_t)INT64_MAX));
         if (!reqParams.rankId.empty()) {
             sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         }
@@ -969,7 +970,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
-        sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
         sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), reqParams.accCore.length(), SQLITE_TRANSIENT);
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);

@@ -1042,8 +1042,8 @@ bool TextTraceDatabase::QueryCommunicationStatisticsData(const Protocol::Summary
         return false;
     }
     if (!requestParams.stepId.empty()) {
-        sqlite3_bind_int64(stmt, index++, min);
-        sqlite3_bind_int64(stmt, index, max);
+        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(min, (uint64_t)INT64_MAX));
+        sqlite3_bind_int64(stmt, index, NumberUtil::CeilingClamp(max, (uint64_t)INT64_MAX));
     }
     double communicationTime = 0;
     double notOverlapTime = 0;

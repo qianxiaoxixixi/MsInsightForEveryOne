@@ -219,7 +219,7 @@ void TextClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> 
         sqlite3_bind_text(stmt, idx++, timeInfo.opName.c_str(), timeInfo.opName.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, timeInfo.opSuffix.c_str(), timeInfo.opSuffix.length(),
                           SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, timeInfo.startTime);
+        sqlite3_bind_int64(stmt, idx++, NumberUtil::CeilingClamp(timeInfo.startTime, (uint64_t)INT64_MAX));
         sqlite3_bind_double(stmt, idx++, timeInfo.elapseTime);
         sqlite3_bind_double(stmt, idx++, timeInfo.synchronizationTimeRatio);
         sqlite3_bind_double(stmt, idx++, timeInfo.synchronizationTime);

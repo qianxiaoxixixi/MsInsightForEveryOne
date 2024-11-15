@@ -257,6 +257,19 @@ public:
             return a > b;
         }
     }
+
+    template <typename T>
+    static inline T CeilingClamp(T value, T bound = std::numeric_limits<T>::max())
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        __builtin_expect(bound > value, 1);
+#endif
+        if (bound > value) {
+            return value;
+        } else {
+            return bound;
+        }
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_NUMBER_UTIL_H
