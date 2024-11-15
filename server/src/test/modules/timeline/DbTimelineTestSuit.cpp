@@ -6,6 +6,7 @@
 #include "TimelineTestUtil.h"
 #include "RenderEngine.h"
 #include "DataEngine.h"
+#include "TrackInfoManager.h"
 #include "RepositoryFactory.h"
 
 class DbTimelineTestSuit : FullDbTestSuit {
@@ -177,47 +178,6 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
 
     params.metadataList[0].metaType = "HBM";
     EXPECT_EQ(database->QueryThreads(params, body, minTimestamp, {0}), true);
-}
-
-TEST_F(FullDbTestSuit, FullDb_of_ThreadTraceDetail)
-{
-    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    Dic::Protocol::UnitThreadDetailBody body;
-
-    Dic::Protocol::ThreadDetailParams params;
-    params.startTime = 39828694; // startTime = 39828694
-    params.rankId = "2";
-    params.pid = "Ascend Hardware";
-    params.metaType = "Ascend Hardware";
-    params.tid = "8";
-    params.id = "0";
-
-    database->QueryThreadDetail(params, body, minTimestamp, 0);
-    EXPECT_EQ(body.data.title, "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike");
-    EXPECT_EQ(body.data.duration, 612092); // duration = 612092
-
-    params.metaType = "HCCL";
-    params.tid = "1315_1";
-    params.id = "46919";
-    params.startTime = 175902293; // startTime = 175902293
-
-    database->QueryThreadDetail(params, body, minTimestamp, 0);
-    EXPECT_EQ(body.data.title, "Memcpy");
-    EXPECT_EQ(body.data.duration, 1520); // duration = 1520
-
-    params.metaType = "CANN_API";
-    params.tid = "20000";
-    params.pid = "11814731181473";
-    params.id = "4";
-    params.startTime = 39374331; // startTime = 39374331
-
-    database->QueryThreadDetail(params, body, minTimestamp, 0);
-    EXPECT_EQ(body.data.title, "aclrtMemcpy");
-    EXPECT_EQ(body.data.duration, 379); // duration = 379
-
-    params.metaType = "HBM";
-    EXPECT_EQ(database->QueryThreadDetail(params, body, minTimestamp, 0), false);
 }
 
 TEST_F(FullDbTestSuit, FullDb_of_UnitMetaData)

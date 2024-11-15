@@ -19,6 +19,8 @@ public:
         Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) = 0;
     virtual bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
+    virtual void QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
+        Protocol::UnitThreadDetailBody &responseBody, uint64_t trackId) = 0;
 };
 }
 }

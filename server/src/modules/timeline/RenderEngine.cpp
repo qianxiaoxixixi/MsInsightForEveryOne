@@ -145,4 +145,48 @@ void RenderEngine::ComputeSimulationFlows(const FlowCategoryEventsParams &params
     flowAnalyzerPtr->ComputeUintFlows(flowPointResult, params.category, flowDetailList);
     ServerLog::Info("Query Simulation flow category events. size:", flowDetailList.size());
 }
+
+void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, UnitThreadDetailBody &responseBody,
+    uint64_t trackId)
+{
+    CompeteSliceDomain competeSliceDomain;
+    SliceQuery sliceQuery;
+    sliceQuery.trackId = trackId;
+    sliceQuery.rankId = requestParams.rankId;
+    sliceQuery.sliceId = requestParams.id;
+    sliceQuery.metaType = Protocol::STR_TO_ENUM<PROCESS_TYPE>(requestParams.metaType).value();
+    dataEngine->QuerySliceDetailInfo(sliceQuery, competeSliceDomain);
+    responseBody.data.selfTime = 0;
+    responseBody.data.args = competeSliceDomain.args;
+    responseBody.data.title = competeSliceDomain.name;
+    responseBody.data.duration = competeSliceDomain.endTime - competeSliceDomain.timestamp;
+    responseBody.data.inputShapes = competeSliceDomain.sliceShape.inputShapes;
+    responseBody.data.inputDataTypes = competeSliceDomain.sliceShape.inputDataTypes;
+    responseBody.data.inputFormats = competeSliceDomain.sliceShape.inputFormats;
+    responseBody.data.outputShapes = competeSliceDomain.sliceShape.outputShapes;
+    responseBody.data.outputDataTypes = competeSliceDomain.sliceShape.outputDataTypes;
+    responseBody.data.outputFormats = competeSliceDomain.sliceShape.outputFormats;
+    SliceAnalyzer sliceAnalyzer;
+    std::vector<SliceDomain> sliceVec;
+    sliceAnalyzer.ComputeSliceDomainVecByTrackId(sliceQuery, sliceVec);
+    SliceDomain target;
+    target.id = competeSliceDomain.id;
+    target.timestamp = competeSliceDomain.timestamp;
+    auto it = std::lower_bound(sliceVec.begin(), sliceVec.end(), target, SliceDomain::CompareTimestampASC);
+    if (it == sliceVec.end()) {
+        return;
+    }
+    const uint32_t targetDepth = it->depth + 1;
+    const uint64_t targetTimestamp = competeSliceDomain.timestamp;
+    const uint64_t targetEndTime = competeSliceDomain.endTime;
+    uint64_t nextDepthTime = 0;
+    for (auto item = it; item != sliceVec.end(); ++item) {
+        if (item->timestamp >= targetTimestamp && item->endTime <= targetEndTime && item->depth == targetDepth) {
+            nextDepthTime += item->endTime - item->timestamp;
+        }
+    }
+    if (nextDepthTime > 0 && nextDepthTime <= responseBody.data.duration) {
+        responseBody.data.selfTime = responseBody.data.duration - nextDepthTime;
+    }
+}
 }

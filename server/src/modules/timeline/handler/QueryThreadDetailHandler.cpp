@@ -18,22 +18,19 @@ bool QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<UnitThreadDetailResponse> responsePtr = std::make_unique<UnitThreadDetailResponse>();
     UnitThreadDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (database == nullptr) {
+    if (renderEngine == nullptr) {
         ServerLog::Error("Query thread detail failed to get connection.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;
     }
-    int64_t trackId = TrackInfoManager::Instance()
-        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result = database->QueryThreadDetail(request.params, response.body, TraceTime::Instance().GetStartTime(),
-                                              trackId);
-    SetResponseResult(response, result);
+    uint64_t trackId =
+        TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+    renderEngine->QueryThreadDetail(request.params, response.body, trackId);
+    SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
-    return result;
+    return true;
 }
-
 } // Timeline
 } // Module
 } // Dic

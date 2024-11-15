@@ -56,8 +56,6 @@ public:
 
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                       uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) override;
-    bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
-        Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) override;
     bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
@@ -92,8 +90,6 @@ public:
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
         uint64_t minTimestamp) override;
-
-    KernelShapesDataDto QueryKernelShapes(const std::vector<SliceDto> &rows);
 
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
@@ -164,15 +160,9 @@ private:
     std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetFlowStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetCounterStmt(uint64_t paramLen);
-    bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
-        const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult,
-        int64_t trackId);
     void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);
-
-    uint64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
-        std::vector<SliceDto> &sliceDtoVec);
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByFlagAndTrackId(const std::string &flagId, uint64_t trackId);
 
     std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId);

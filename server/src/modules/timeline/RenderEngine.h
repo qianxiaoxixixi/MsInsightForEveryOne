@@ -25,10 +25,12 @@ public:
         Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
+    void QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
+        Protocol::UnitThreadDetailBody &responseBody, uint64_t trackId) override;
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;
-    const std::unordered_set<std::string> hideAbleNameSet = {"SET_FLAG", "WAIT_FLAG", "set_event", "wait_event"};
+    const std::unordered_set<std::string> hideAbleNameSet = { "SET_FLAG", "WAIT_FLAG", "set_event", "wait_event" };
 
     void ComputeSimulationFlows(const Protocol::FlowCategoryEventsParams &params,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList,

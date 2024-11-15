@@ -36,6 +36,7 @@ public:
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
     void QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
     void QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &competeSliceDomain) override;
+    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 
 private:
     std::shared_ptr<RepositoryFactoryInterface> respotoryFactory = nullptr;

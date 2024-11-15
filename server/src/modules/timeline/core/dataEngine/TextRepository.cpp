@@ -2,6 +2,7 @@
 #include "SliceTable.h"
 #include "FlowTable.h"
 #include "ThreadTable.h"
+#include "KernelDetailTable.h"
 #include "TrackInfoManager.h"
 #include "TextRepository.h"
 namespace Dic::Module::Timeline {
@@ -218,5 +219,59 @@ void TextRepository::QueryAllFlagSlice(const SliceQuery &sliceQuery,
         competeSliceDomain.flagId = item.flagId;
         competeSliceDomainVec.emplace_back(competeSliceDomain);
     }
+}
+
+bool TextRepository::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    bool success = QuerySliceDetailById(sliceQuery, competeSliceDomain);
+    if (success) {
+        QueryShapeInfoBySlice(sliceQuery, competeSliceDomain);
+    }
+    return success;
+}
+
+bool TextRepository::QuerySliceDetailById(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) const
+{
+    SliceTable sliceTable;
+    std::vector<SlicePO> slicePOVec;
+    sliceTable.Select(SliceColumn::ID, SliceColumn::TIMESTAMP)
+        .Select(SliceColumn::ENDTIME, SliceColumn::NAME)
+        .Select(SliceColumn::ARGS)
+        .Eq(SliceColumn::ID, sliceQuery.sliceId)
+        .ExcuteQuery(sliceQuery.rankId, slicePOVec);
+    if (std::empty(slicePOVec)) {
+        ServerLog::Warn("Failed to query text slice by id in text scene!");
+        return false;
+    }
+    const SlicePO &slicePo = slicePOVec[0];
+    competeSliceDomain.id = slicePo.id;
+    competeSliceDomain.name = slicePo.name;
+    competeSliceDomain.endTime = slicePo.endTime;
+    competeSliceDomain.timestamp = slicePo.timestamp;
+    competeSliceDomain.args = slicePo.args;
+    return true;
+}
+
+void TextRepository::QueryShapeInfoBySlice(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) const
+{
+    KernelDetailTable kernelDetailTable;
+    std::vector<KernelDetailPO> kernelDetailPOs;
+    kernelDetailTable.Select(KernelDetailColumn::OUTPUT_FORMATS, KernelDetailColumn::INPUT_SHAPES)
+        .Select(KernelDetailColumn::INPUT_DATA_TYPES, KernelDetailColumn::INPUT_FORMATS)
+        .Select(KernelDetailColumn::OUTPUT_SHAPES, KernelDetailColumn::OUTPUT_DATA_TYPES)
+        .Eq(KernelDetailColumn::START_TIME, competeSliceDomain.timestamp)
+        .Eq(KernelDetailColumn::NAME, competeSliceDomain.name)
+        .NotEq(KernelDetailColumn::ACCELERATOR_CORE, hccl)
+        .ExcuteQuery(sliceQuery.rankId, kernelDetailPOs);
+    if (std::empty(kernelDetailPOs)) {
+        return;
+    }
+    const KernelDetailPO &kernelDetailPo = kernelDetailPOs[0];
+    competeSliceDomain.sliceShape.outputFormats = kernelDetailPo.outputFormats;
+    competeSliceDomain.sliceShape.outputDataTypes = kernelDetailPo.outputDataTypes;
+    competeSliceDomain.sliceShape.outputShapes = kernelDetailPo.outputShapes;
+    competeSliceDomain.sliceShape.inputFormats = kernelDetailPo.inputFormats;
+    competeSliceDomain.sliceShape.inputDataTypes = kernelDetailPo.inputDataTypes;
+    competeSliceDomain.sliceShape.inputShapes = kernelDetailPo.inputShapes;
 }
 }

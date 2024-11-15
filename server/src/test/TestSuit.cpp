@@ -12,9 +12,6 @@
 #include "ParserStatusManager.h"
 #include "KernelParse.h"
 #include "MemoryParse.h"
-#include "FullDbParser.h"
-#include "DbMemoryDataBase.h"
-#include "DbSummaryDataBase.h"
 
 
 using namespace Dic::Module::Timeline;
