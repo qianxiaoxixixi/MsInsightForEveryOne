@@ -55,17 +55,6 @@ const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
 const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
     " (track_id, timestamp, end_time);" + "CREATE INDEX " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
     " (track_id, cat);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
-const std::string QUERY_SLICE_DETAIL_SQL = "SELECT id, timestamp, duration, name, track_id, cat, args"
-    " FROM " +
-    SLICE_TABLE + " WHERE id = ?";
-const std::string QUERY_DURATION_FROM_SLICE_BY_TIME_RANGE_SQL = "SELECT id, timestamp, duration FROM " + SLICE_TABLE +
-    " WHERE end_time <= ? AND timestamp >= ? AND track_id = ? Order by timestamp";
-const std::string QUERY_KERNAL_SHAPE_SQL =
-    "SELECT accelerator_core, input_shapes AS inputShapes, input_data_types AS inputDataTypes, "
-    "input_formats AS inputFormats, output_shapes AS outputShapes, "
-    "output_data_types AS outputDataTypes, output_formats AS outputFormats "
-    "FROM " +
-    KERNEL_DETAIL + " WHERE name = ? AND start_time = ?";
 const std::string QUERY_FLOW_BY_FLOWID_SQL = "SELECT name, cat, flow_id as flowId, timestamp, type, track_id as trackId"
     " FROM " +
     FLOW_TABLE + " WHERE flow_id = ?";

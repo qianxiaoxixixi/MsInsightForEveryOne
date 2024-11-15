@@ -15,6 +15,10 @@ void DataEngine::SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface
  */
 void DataEngine::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query simple slice.Data engine not assembly");
+        return;
+    }
     auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
     if (sliceRespo == nullptr) {
         return;
@@ -24,6 +28,10 @@ void DataEngine::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQue
 
 void DataEngine::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query slice ids.Data engine not assembly");
+        return;
+    }
     auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
     if (sliceRespo == nullptr) {
         return;
@@ -33,6 +41,10 @@ void DataEngine::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<ui
 
 uint64_t DataEngine::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query python function.Data engine not assembly");
+        return 0;
+    }
     auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
     if (sliceRespo == nullptr) {
         return 0;
@@ -44,6 +56,10 @@ uint64_t DataEngine::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQu
 void DataEngine::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
     std::vector<CompeteSliceDomain> &sliceVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query compete slice by range.Data engine not assembly");
+        return;
+    }
     auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
     if (sliceRespo == nullptr) {
         return;
@@ -53,6 +69,10 @@ void DataEngine::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sli
 
 void DataEngine::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query flow point by range.Data engine not assembly");
+        return;
+    }
     auto flowRespo = respotoryFactory->GetFlowRespo(flowQuery.metaType);
     if (flowRespo == nullptr) {
         return;
@@ -62,6 +82,10 @@ void DataEngine::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vect
 
 void DataEngine::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query flow point by flow id.Data engine not assembly");
+        return;
+    }
     auto flowRespo = respotoryFactory->GetFlowRespo(flowQuery.metaType);
     if (flowRespo == nullptr) {
         return;
@@ -72,6 +96,10 @@ void DataEngine::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<
 void DataEngine::QueryAllThreadInfo(const ThreadQuery &threadQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query thread info.Data engine not assembly");
+        return;
+    }
     auto sliceRespo = respotoryFactory->GetSliceRespo(threadQuery.metaType);
     if (sliceRespo == nullptr) {
         return;
@@ -88,6 +116,10 @@ void DataEngine::QueryAllThreadInfo(const ThreadQuery &threadQuery,
 void DataEngine::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
     std::vector<CompeteSliceDomain> &competeSliceVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query compete slice.Data engine not assembly");
+        return;
+    }
     auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
     if (sliceRespo == nullptr) {
         return;
@@ -97,6 +129,10 @@ void DataEngine::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std:
 
 void DataEngine::QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query flow point.Data engine not assembly");
+        return;
+    }
     auto textFlowRespo = respotoryFactory->GetFlowRespo(PROCESS_TYPE::TEXT);
     textFlowRespo->QueryFlowPointByCategory(flowQuery, flowPointVec);
     if (!std::empty(flowPointVec)) {
@@ -108,7 +144,24 @@ void DataEngine::QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vecto
 
 void DataEngine::QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &competeSliceDomainVec)
 {
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query slice flag.Data engine not assembly");
+        return;
+    }
     auto textRepo = respotoryFactory->GetSimulationSliceRespo(PROCESS_TYPE::TEXT);
     textRepo->QueryAllFlagSlice(sliceQuery, competeSliceDomainVec);
+}
+
+bool DataEngine::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query slice detail.Data engine not assembly");
+        return false;
+    }
+    auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
+    if (sliceRespo == nullptr) {
+        return false;
+    }
+    return sliceRespo->QuerySliceDetailInfo(sliceQuery, competeSliceDomain);
 }
 }

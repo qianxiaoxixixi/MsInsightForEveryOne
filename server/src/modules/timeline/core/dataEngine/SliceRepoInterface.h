@@ -54,6 +54,13 @@ public:
      */
     virtual void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) = 0;
+
+    /**
+     * 根据Id查询算子的shape和args信息
+     * @param sliceQuery
+     * @param competeSliceDomain
+     */
+    virtual bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) = 0;
 };
 }
 #endif // PROFILER_SERVER_SLICERESPOTERFACE_H

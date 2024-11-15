@@ -52,7 +52,7 @@ public:
      */
     void QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
 
-    /**
+    /* *
      * 根据连线类别查询所有连线
      * @param flowQuery
      * @param flowPointVec
@@ -72,6 +72,26 @@ public:
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
 
     void QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &competeSliceDomain) override;
+
+    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+
+private:
+    const std::string hccl = "HCCL";
+
+    /* *
+     * 根据算子信息查询算子的shape信息
+     * @param sliceQuery
+     * @param competeSliceDomain
+     */
+    void QueryShapeInfoBySlice(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) const;
+
+    /* *
+     * 根据算子id查询算子详情，包括开始时间，名字，duration，args
+     * @param sliceQuery
+     * @param competeSliceDomain
+     * @return
+     */
+    bool QuerySliceDetailById(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) const;
 };
 }
 #endif // PROFILER_SERVER_TEXTREPOSITORY_H

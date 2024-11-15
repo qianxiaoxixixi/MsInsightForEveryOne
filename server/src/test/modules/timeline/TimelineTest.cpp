@@ -12,8 +12,7 @@
 #include "DataEngine.h"
 #include "RepositoryFactory.h"
 
-class TimelineTest : TestSuit {
-};
+class TimelineTest : TestSuit {};
 
 TEST_F(TestSuit, QuerySystemViewData)
 {
@@ -203,7 +202,7 @@ TEST_F(TestSuit, QueryUnitCounterData)
     requestParams.startTime = STARTTIME;
     requestParams.endTime = ENDTIME;
     database->QueryUnitCounter(requestParams, 0, unitData);
-    EXPECT_EQ(unitData.size(), 2); // unit data size = 2
+    EXPECT_EQ(unitData.size(), 2);                         // unit data size = 2
     EXPECT_EQ(unitData[0].timestamp, 1695115378653323500); // timestamp = 1695115378653323500
 }
 
@@ -234,7 +233,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     EXPECT_EQ(flowDetailList[0]->from.timestamp, expectFromTimestamp); // timestamp = 1695115378722143800
     EXPECT_EQ(flowDetailList[0]->from.pid, "140836602");
     EXPECT_EQ(flowDetailList[0]->from.depth, 0);
-    EXPECT_EQ(flowDetailList[0]->from.tid, EXPECT_FROM_TID); // from.tid = 1408366
+    EXPECT_EQ(flowDetailList[0]->from.tid, EXPECT_FROM_TID);       // from.tid = 1408366
     EXPECT_EQ(flowDetailList[0]->to.timestamp, expectToTimestamp); // to.timestamp = 1695115378722392500
     EXPECT_EQ(flowDetailList[0]->to.pid, "14083661400");
     EXPECT_EQ(flowDetailList[0]->to.depth, 0);
@@ -279,7 +278,7 @@ TEST_F(TestSuit, QueryThreads)
     request.metadataList.emplace_back(metadata);
     request.rankId = "0";
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    database->QueryThreads(request, response, minTimestamp, {30});
+    database->QueryThreads(request, response, minTimestamp, { 30 });
 
     EXPECT_EQ(response.emptyFlag, false);
     EXPECT_EQ(response.data.size(), size);
@@ -292,6 +291,11 @@ TEST_F(TestSuit, QueryThreads)
 
 TEST_F(TestSuit, QueryThreadDetail)
 {
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
     // request parameters
     uint64_t STARTTIME = 1695115378728277500;
     uint32_t DEPTH = 7;
@@ -309,49 +313,53 @@ TEST_F(TestSuit, QueryThreadDetail)
     std::string args = "{\"correlation_id\":\"2684\"}";
     std::string title = "Enqueue";
     std::string cat = "enqueue";
-
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::UnitThreadDetailBody response;
-    database->QueryThreadDetail(request, response, minTimestamp, traceId);
+    request.metaType = "TEXT";
+    request.rankId = "0";
+    renderEngine->QueryThreadDetail(request, response, traceId);
 
     EXPECT_EQ(response.emptyFlag, false);
     EXPECT_EQ(response.data.selfTime, selfTime);
     EXPECT_EQ(response.data.duration, duration);
     EXPECT_EQ(response.data.args, args);
     EXPECT_EQ(response.data.title, title);
-    EXPECT_EQ(response.data.cat, cat);
 }
 
-TEST_F(TestSuit, QueryKernelShapes)
+TEST_F(TestSuit, QueryThreadDetailWithShape)
 {
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
     // request parameters
-    std::vector<SliceDto> sliceDtoVec;
-    SliceDto sliceDto;
     uint64_t STARTTIME = 1695115378713661000;
-    sliceDto.name = "ZerosLike";
-    sliceDto.timestamp = STARTTIME;
-    sliceDtoVec.emplace_back(sliceDto);
-
-    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::TextTraceDatabase,
-    Dic::Module::Timeline::VirtualTraceDatabase>(Dic::Module::Timeline::DataBaseManager::Instance().
-    GetTraceDatabase("0"));
-    const KernelShapesDataDto &dto = database->QueryKernelShapes(sliceDtoVec);
-    EXPECT_EQ(dto.inputShapes, "\"232138240\"");
-    EXPECT_EQ(dto.inputFormats, "FORMAT_ND");
-    EXPECT_EQ(dto.inputDataTypes, "FLOAT");
-    EXPECT_EQ(dto.outputShapes, "\"232138240\"");
-    EXPECT_EQ(dto.outputDataTypes, "FLOAT");
-    EXPECT_EQ(dto.outputFormats, "FORMAT_ND");
-}
-
-void assertFlowLocationEqual(Dic::Protocol::FlowLocation &location, Dic::Protocol::FlowLocation &other)
-{
-    EXPECT_EQ(location.duration, other.duration);
-    EXPECT_EQ(location.depth, other.depth);
-    EXPECT_EQ(location.tid, other.tid);
-    EXPECT_EQ(location.pid, other.pid);
-    EXPECT_EQ(location.name, other.name);
-    EXPECT_EQ(location.timestamp, other.timestamp);
+    Dic::Protocol::ThreadDetailParams request;
+    uint64_t id = 8;
+    request.id = std::to_string(id);
+    request.startTime = STARTTIME;
+    uint64_t minTimestamp = 0;
+    int64_t traceId = 41;
+    // expected data
+    uint64_t selfTime = 469541;
+    uint64_t duration = 496851;
+    std::string args = "{\"Task Type\":\"AI_CORE\",\"Stream Id\":\"16\",\"Task Id\":\"2451\",\"Batch "
+                       "Id\":\"0\",\"Subtask Id\":\"4294967295\",\"connection_id\":\"5\"}";
+    std::string title = "ZerosLike";
+    Dic::Protocol::UnitThreadDetailBody response;
+    request.metaType = "TEXT";
+    request.rankId = "0";
+    renderEngine->QueryThreadDetail(request, response, traceId);
+    EXPECT_EQ(response.data.selfTime, selfTime);
+    EXPECT_EQ(response.data.duration, duration);
+    EXPECT_EQ(response.data.args, args);
+    EXPECT_EQ(response.data.title, title);
+    EXPECT_EQ(response.data.inputShapes, "\"232138240\"");
+    EXPECT_EQ(response.data.inputFormats, "FORMAT_ND");
+    EXPECT_EQ(response.data.inputDataTypes, "FLOAT");
+    EXPECT_EQ(response.data.outputShapes, "\"232138240\"");
+    EXPECT_EQ(response.data.outputDataTypes, "FLOAT");
+    EXPECT_EQ(response.data.outputFormats, "FORMAT_ND");
 }
 
 TEST_F(TestSuit, QueryExtremumTimestamp)
@@ -466,8 +474,8 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     uint64_t COUNT = 2;
 
     auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::TextTraceDatabase,
-            Dic::Module::Timeline::VirtualTraceDatabase>(Dic::Module::Timeline::DataBaseManager::Instance().
-            GetTraceDatabase("0"));
+        Dic::Module::Timeline::VirtualTraceDatabase>(
+        Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0"));
     database->QueryThreadSameOperatorsDetails(requestParam, responseBody, minTimestamp, traceId);
     EXPECT_EQ(responseBody.sameOperatorsDetails[0].timestamp, TIMESTAMP1);
     EXPECT_EQ(responseBody.sameOperatorsDetails[0].duration, DURATION1);
@@ -518,7 +526,7 @@ TEST_F(TestSuit, QueryEventsViewData4Python)
     CheckEventsViewColumns4Api(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
 
-    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<HostEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "aten::_to_copy");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -550,7 +558,7 @@ TEST_F(TestSuit, QueryEventsViewData4PythonThread)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Api(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<HostEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "aten::empty_strided");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -580,7 +588,7 @@ TEST_F(TestSuit, QueryEventsViewData4CANN)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Api(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<HostEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "AscendCL@aclrtDestroyEvent");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -613,7 +621,7 @@ TEST_F(TestSuit, QueryEventsViewData4CANNThread)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Api(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<HostEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<HostEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "AscendCL@hcom_broadcast_");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -644,7 +652,7 @@ TEST_F(TestSuit, QueryEventsViewData4Hardware)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Hardware(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "Notify Wait");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -677,7 +685,7 @@ TEST_F(TestSuit, QueryEventsViewData4HardwareStream)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Hardware(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "Tril");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -710,7 +718,7 @@ TEST_F(TestSuit, QueryEventsViewData4HCCL)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Group(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "hcom_allReduce__459_0");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -745,7 +753,7 @@ TEST_F(TestSuit, QueryEventsViewData4HCCLGroup)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Group(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "hcom_broadcast__483_0");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -778,7 +786,7 @@ TEST_F(TestSuit, QueryEventsViewData4Overlap)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Overlap(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "Communication");
     EXPECT_EQ(ptr->startTime, EXPECT_START);
@@ -813,7 +821,7 @@ TEST_F(TestSuit, QueryEventsViewData4OverlapComputing)
     EXPECT_EQ(body.count, EXPECT_COUNT);
     CheckEventsViewColumns4Overlap(body);
     EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
-    auto ptr = dynamic_cast<DeviceEventDetail*>(body.eventDetailList.at(0).get());
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
     EXPECT_TRUE(ptr != nullptr);
     EXPECT_EQ(ptr->name, "Computing");
     EXPECT_EQ(ptr->startTime, EXPECT_START);

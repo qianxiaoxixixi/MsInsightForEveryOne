@@ -55,7 +55,11 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES, std::move(queryThreadTracesHandler));
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, std::make_unique<QueryThreadTracesSummaryHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREADS, std::make_unique<QueryThreadsHandler>());
-    requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_DETAIL, std::make_unique<QueryThreadDetailHandler>());
+
+    auto queryThreadDetailHandler = std::make_unique<QueryThreadDetailHandler>();
+    queryThreadDetailHandler->SetRenderEngine(renderEngine);
+    requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_DETAIL, std::move(queryThreadDetailHandler));
+
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOWS, std::make_unique<QueryFlowsBySliceInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());

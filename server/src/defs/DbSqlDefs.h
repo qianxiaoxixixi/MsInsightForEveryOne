@@ -182,41 +182,6 @@ const static std::string TASK_UNIT_FLOW_SQL =
       "     where op.connectionId = constValue.connectionId group by opId ";
 
 
-// sql of timeline threadDetail
-const static std::string ASCEND_THREAD_DETAIL =
-        "SELECT main.ROWID as id, main.startNs, main.endNs - main.startNs as duration, streamId as tid, "
-        " 'Ascend Hardware' as pid,main.depth, coalesce(CTI.name, MSX.message, main.taskType) as name "
-        " FROM " + TABLE_TASK + " main "
-        " left join " + TABLE_COMPUTE_TASK_INFO + " CTI on CTI.globalTaskId = main.globalTaskId"
-        " left join " + TABLE_MSTX_EVENTS + " MSX on "
-        " (MSX.connectionId = main.connectionId and main.connectionId != " + WRONG_DATA + " ) "
-        " WHERE main.ROWID = ?";
-
-const static std::string HCCL_THREAD_DETAIL =
-        "select ROWID as id,startNs,endNs-startNs as duration,opName as name, 'HCCL' as pid, 0 as depth, "
-        " groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP + " where id = ? and tid = ? "
-        " UNION select main.ROWID as id,startNs,endNs-startNs as duration, info.taskType as name, 0 as depth, "
-        " groupName || '_' || planeId as tid, 'HCCL' as pid, endNs from " + TABLE_TASK +
-        " main join " + TABLE_COMMUNICATION_TASK_INFO +
-        " info on info.globalTaskId = main.globalTaskId where id = ? and tid = ?";
-
-const static std::string CANN_API_THREAD_DETAIL =
-        "select ROWID as id, startNs, endNs-startNs as duration, depth, name, type as tid, globalTid as pid "
-        " from " + TABLE_CANN_API + " where ROWID = ?";
-
-const static std::string PYTORCH_API_THREAD_DETAIL =
-        "select ROWID as id, startNs, endNs-startNs as duration, depth, name, 'pytorch' as tid, globalTid as pid "
-        " from " + TABLE_API + " where ROWID = ?";
-
-const static std::string OVERLAP_THREAD_DETAIL =
-        "select id, startNs, endNs - startNs as duration, 0 as depth, type as tid, 'OVERLAP_ANALYSIS' as pid, "
-        " 'OVERLAP_ANALYSIS'||type as name from " + TABLE_OVERLAP_ANALYSIS + " where id = ?;";
-
-const static std::string MSTX_THREAD_DETAIL =
-        "select ROWID as id, startNs, endNs - startNs as duration, depth, message as name, "
-        " 'MsTx' as tid, globalTid as pid from " + TABLE_MSTX_EVENTS +
-        " mstx where ROWID = ?;";
-
 // full_db_update_wait_time
 const static std::string FULL_DB_UPDATE_TIME =
         "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "

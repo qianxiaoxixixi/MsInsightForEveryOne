@@ -48,37 +48,6 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
     return true;
 }
 
-bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
-    Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId)
-{
-    auto stmt = CreatPreparedStatement();
-    if (stmt == nullptr) {
-        ServerLog::Error("Query thread detailed. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    std::optional<SliceDto> sliceDto;
-    try {
-        sliceDto = TraceDatabaseHelper::QueryThreadDetail(stmt, requestParams);
-    } catch (DatabaseException &e) {
-        ServerLog::Error("Query thread detail failed, ", e.What());
-        return false;
-    }
-
-    if (!sliceDto.has_value()) {
-        ServerLog::Error("select slice error!");
-        return false;
-    }
-    responseBody.data.title = sliceDto->name;
-    responseBody.data.duration = sliceDto->duration;
-    if (requestParams.metaType == TABLE_OVERLAP_ANALYSIS) {
-        return true;
-    }
-    responseBody.emptyFlag = false;
-    responseBody.data.cat = sliceDto->cat;
-    TraceDatabaseHelper::QueryTaskInfoById(stmt, requestParams, responseBody, stringsCache.at(path), metaVersion);
-    return true;
-}
-
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {

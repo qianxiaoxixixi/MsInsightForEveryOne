@@ -32,8 +32,6 @@ public:
     // search
     virtual bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                               uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) = 0;
-    virtual bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
-                           Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) = 0;
     virtual bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) = 0;
     virtual bool QueryUnitsMetadata(const std::string &fileId,
