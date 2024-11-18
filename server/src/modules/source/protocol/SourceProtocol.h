@@ -45,6 +45,26 @@ private:
     static std::optional<document_t> ToDetailsRooflineResponse(const Response &response);
 };
 
-}
-}
+} // Protocol
+namespace Module::Source {
+enum class DataTypeEnum : int {
+    SOURCE = 1,
+    TRACE = 2,
+    API_FILE = 3,
+    API_INSTR = 4,
+    DETAILS_BASE_INFO = 5,
+    DETAILS_COMPUTE_LOAD_GRAPH = 6,
+    DETAILS_COMPUTE_LOAD_TABLE = 7,
+    DETAILS_MEMORY_GRAPH = 8,
+    DETAILS_MEMORY_TABLE = 9,
+    DETAILS_INTER_CORE_LOAD_GRAPH = 12,
+    DETAILS_ROOFLINE = 13
+};
+
+struct Position {
+    int64_t startPos;
+    int64_t endPos;
+};
+} // Module::Source
+} // Dic
 #endif // PROFILER_SERVER_SOURCE_PROTOCOL_H

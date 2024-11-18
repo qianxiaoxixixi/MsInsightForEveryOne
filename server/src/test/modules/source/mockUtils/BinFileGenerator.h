@@ -22,6 +22,7 @@ public:
     }
 
     void Generate(const std::string &outputPath);
+    bool RemoveFile(const std::string &path);
 
 private:
     std::vector<std::unique_ptr<DataBlock>> dataBlocks;

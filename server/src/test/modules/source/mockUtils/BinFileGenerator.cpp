@@ -16,6 +16,16 @@ void BinFileGenerator::Generate(const std::string& outputPath)
     }
     outFile.close();
 }
+bool BinFileGenerator::RemoveFile(const std::string& path)
+{
+    if (std::remove(path.c_str()) != 0) {
+        std::cout << "remove bin file failed: " + path << std::endl;
+        return false;
+    } else {
+        std::cout << "remove bin file successfully: " + path << std::endl;
+        return true;
+    }
+}
 
 }
 
