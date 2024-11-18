@@ -278,6 +278,9 @@ export const drawOnMove = ({
     if (mousePosNow !== undefined && clickPos !== undefined && Math.abs(mousePosNow.x - clickPos.x) < MIN_BRUSH_SIZE) {
         return;
     }
+    if (session.mKeyRender) {
+        return;
+    }
     // clear all
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -388,6 +391,9 @@ export const draw = (props: DrawCanvasArgs): void => {
     } = props;
 
     if (ctx === null) { return; }
+    if (session.mKeyRender) {
+        return;
+    }
     // clear all
     ctx.clearRect(0, 0, width, height);
     drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScaleRef, xScale, selectedRange, session, isNsMode, theme });
@@ -403,6 +409,32 @@ export const draw = (props: DrawCanvasArgs): void => {
     const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
     drawLinkLines(ctx, session, theme, pinnedAreaHeight);
+};
+
+/**
+ *
+ * @param props
+ */
+export const drawMEventMask = (props: DrawCanvasArgs): void => {
+    const {
+        ctx, width, height,
+        xReverseScaleRef, xScale,
+        selectedRange, isNsMode,
+        session, theme,
+    } = props;
+    if (ctx === null) { return; }
+    // clear all
+    ctx.clearRect(0, 0, width, height);
+    if (session.mKeyRender) {
+        session.mMaskRange.sort((a, b) => a - b);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        const start = xReverseScaleRef.current(session.mMaskRange[0]);
+        const end = xReverseScaleRef.current(session.mMaskRange[1]);
+        const maskRange = [start, end];
+        ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
+        ctx.fillRect(maskRange[1], TIME_LINE_AXIS_HEIGHT_PX, width - maskRange[1], height);
+        drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
+    }
 };
 
 const UNDRAW_HEIGHT = 45;

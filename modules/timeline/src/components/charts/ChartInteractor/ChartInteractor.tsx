@@ -15,7 +15,7 @@ import { traceEnd } from '../../../utils/traceLogger';
 import { useWatchDomResize } from '../../../utils/useWatchDomResize';
 import { type CustomCrossRenderer, registerCrossUnitRenderer, useCustomRenderers } from './custom';
 import type { Pos } from './common';
-import { draw } from './draw';
+import { draw, drawMEventMask } from './draw';
 import type { DrawCanvasArgs } from './draw';
 import {
     resetCanvasSize,
@@ -207,6 +207,11 @@ const Interactor = ({
     },
     [normalRect, hoverRect]);
 
+    useEffect(() => {
+        const drawArgs = getDrawArgs();
+        if (!drawArgs) { return; }
+        drawMEventMask(drawArgs);
+    }, [domainStart, domainEnd, endTimeAll, theme, scrollTop, session.mKeyRender, session.mMaskRange, renderTrigger, ...customRenderTriggers]);
     useEffect(() => {
         const drawArgs = getDrawArgs();
         if (!drawArgs) { return; }

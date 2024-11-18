@@ -18,6 +18,7 @@ import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
+import { ThreadTrace } from '../../../entity/data';
 
 const dragInitData = {
     isDragging: false,
@@ -337,6 +338,44 @@ const zoomOrMoveDirection = {
     downOrLeft: -1,
 };
 
+const processMKeyEvent = (session: Session): void => {
+    let render = false;
+    let range: number[] = [];
+    if (!session.mKeyRender && session.selectedData === undefined) {
+        // 页面无遮罩，无选中算子，点击m，页面无遮罩
+        render = false;
+        range = [];
+    } else if (!session.mKeyRender && session.selectedData !== undefined) {
+        // 页面无遮罩，选中算子，点击m，页面出现遮罩
+        const selectedData = session.selectedData as ThreadTrace;
+        range = [selectedData.startTime, selectedData.startTime + selectedData.duration];
+        render = true;
+    } else if (session.mKeyRender && session.selectedData === undefined) {
+        // 页面有遮罩，无选中算子，点击m，页面无遮罩
+        render = false;
+        range = [];
+    } else if (session.mKeyRender && session.selectedData !== undefined) {
+        const selectedData = session.selectedData as ThreadTrace;
+        const tempRange = [selectedData.startTime, selectedData.startTime + selectedData.duration];
+        if (session.mMaskRange[0] === tempRange[0] && session.mMaskRange[1] === tempRange[1]) {
+            // 页面有遮罩，有选中算子，但是同一个范围，点击m，页面无遮罩
+            render = false;
+            range = [];
+        } else {
+            // 页面有遮罩，有选中算子，但不是同一个范围，点击m，页面更换遮罩
+            render = true;
+            range = tempRange;
+        }
+    } else {
+        render = session.mKeyRender;
+        range = session.mMaskRange;
+    }
+    runInAction(() => {
+        session.mKeyRender = render;
+        session.mMaskRange = range;
+    });
+};
+
 export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
     if (key === 'w' || key === 'W') {
         zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
@@ -346,6 +385,8 @@ export const keyDownAction = (key: string, session: Session, zoomPoint: number |
         moveDomain(session, zoomOrMoveDirection.downOrLeft);
     } else if (key === 'd' || key === 'D') {
         moveDomain(session, zoomOrMoveDirection.upOrRight);
+    } else if (key === 'm' || key === 'M') {
+        processMKeyEvent(session);
     } else {
         // handle other keys
     }

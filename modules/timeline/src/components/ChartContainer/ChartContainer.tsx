@@ -86,6 +86,7 @@ interface ChartBodyProps {
     interactive?: boolean;
     interactorMouseState: InteractorMouseState;
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
+    mKeyRange: number[];
 }
 
 const ChartBody = observer((props: ChartBodyProps) => {
@@ -189,7 +190,8 @@ export const ChartContainer = observer((props: Props) => {
                 timelineHeight={TIME_LINE_AXIS_HEIGHT_PX}
                 showRecommendation={!props.interactive}
             />
-            <ChartBody session={session} interactive={props.interactive} interactorMouseState={interactorMouseState} chartInteractorRef={chartInteractorRef}/>
+            <ChartBody session={session} interactive={props.interactive} interactorMouseState={interactorMouseState}
+                chartInteractorRef={chartInteractorRef} mKeyRange = {session.mMaskRange}/>
         </RenderEngineContext.Provider>
         <HorizontalScroller
             session={session}

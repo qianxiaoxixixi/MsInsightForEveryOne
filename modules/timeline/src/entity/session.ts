@@ -108,6 +108,14 @@ export class Session {
 
     totalHeight: number = 0;
     renderTrigger: boolean = true;
+    /**
+     * 页面是否有m快捷键的遮罩m
+     */
+    mKeyRender: boolean = false;
+    /**
+     * m快捷键遮罩范围
+     */
+    mMaskRange: number[] = [];
 
     linkFlow?: Record<string, unknown>;
     linkDetail?: LinkDataDesc<Record<string, unknown>>;
