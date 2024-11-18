@@ -14,6 +14,7 @@
 #include "ThreadPool.h"
 #include "SourceProtocolResponse.h"
 #include "JsonFileProcess.h"
+#include "SourceProtocol.h"
 
 namespace Dic {
 namespace Module {
@@ -23,25 +24,6 @@ struct SourceFileLine {
     std::vector<float> cycles;
     std::vector<int> instructionsExecuted;
     std::vector<std::pair<std::string, std::string>> addressRange;
-};
-
-enum class DataTypeEnum : int {
-    SOURCE = 1,
-    TRACE = 2,
-    API_FILE = 3,
-    API_INSTR = 4,
-    DETAILS_BASE_INFO = 5,
-    DETAILS_COMPUTE_LOAD_GRAPH = 6,
-    DETAILS_COMPUTE_LOAD_TABLE = 7,
-    DETAILS_MEMORY_GRAPH = 8,
-    DETAILS_MEMORY_TABLE = 9,
-    DETAILS_INTER_CORE_LOAD_GRAPH = 12,
-    DETAILS_ROOFLINE = 13
-};
-
-struct Position {
-    int64_t startPos;
-    int64_t endPos;
 };
 
 class SourceFileParser : public FileParser {
@@ -101,16 +83,7 @@ private:
     void ConvertApiFile(const std::string &jsonStr);
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
-    std::string GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum,
-                                              bool isBaseline = false);
-    std::optional<Protocol::SubBlockData> ConvertStrToSubBlockData(const std::string& str);
-    std::string GetContentStr(std::ifstream &file, const Position &position) const;
-    static std::string GetUnitType(int64_t unitTypeNumber);
-    bool IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t upperLimit) const;
-    static Protocol::MemoryGraph ParseJsonToMemoryGraph(const json_t &json);
-    static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
-    static Protocol::UtilizationRate ParseJsonToUtilizationRate(const json_t &json);
-    static Protocol::DetailsBaseInfoResBody ParseJsonToBaseInfo(const document_t &json);
+
     static uint64_t CalculateTotalSize(std::vector<std::pair<int64_t, int64_t>> &filePos);
 
     std::unique_ptr<ThreadPool> threadPool;
@@ -127,7 +100,6 @@ private:
     int64_t pid = 0;
     int64_t tid = 0;
 
-    static Protocol::CompareData<Protocol::SubBlockUnitData> ParseSubBlockUnitData(const json_t &item);
     const int dataSizeLen = 8; // 数据类型字段距离数据大小字段的偏移
     const int dataTypeLen = 1; // 填充长度字段距离数据类型字段的偏移
     const int paddingLen = 1;  // 填充长度字段距离数据类型字段的偏移
