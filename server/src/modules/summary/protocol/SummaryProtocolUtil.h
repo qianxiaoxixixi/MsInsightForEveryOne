@@ -29,6 +29,9 @@ template <>
 std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const QueryParallelStrategyResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<SetParallelStrategyResponse>(const SetParallelStrategyResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(
+    const PipelineFwdBwdTimelineResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

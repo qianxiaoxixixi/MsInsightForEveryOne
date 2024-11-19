@@ -236,6 +236,52 @@ std::optional<document_t> ToResponseJson<SetParallelStrategyResponse>(const SetP
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::move(json);
 }
+
+template <>
+std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(const PipelineFwdBwdTimelineResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "minTime", response.body.minTime, allocator);
+    JsonUtil::AddMember(body, "maxTime", response.body.maxTime, allocator);
+    json_t rankDetailList(kArrayType);
+    if (response.body.rankDataList.empty()) {
+        JsonUtil::AddMember(body, "rankList", rankDetailList, allocator);
+        JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+        return std::move(json);
+    }
+
+    for (const PipelineFwdBwdTimelineByRank &rankItem : response.body.rankDataList) {
+        json_t rankArrayJson(kObjectType);
+        JsonUtil::AddMember(rankArrayJson, "rank", rankItem.rankId, allocator);
+        json_t componentsDetailList(kArrayType);
+        for (const PipelineFwdBwdTimelineByComponent &componentItem : rankItem.componentDataList) {
+            json_t componentJson(kObjectType);
+            JsonUtil::AddMember(componentJson, "component", componentItem.component, allocator);
+            json_t tracesDetailList(kArrayType);
+            for (const Protocol::ThreadTraces &traceItem : componentItem.traceList) {
+                json_t traceJson(kObjectType);
+                JsonUtil::AddMember(traceJson, "name", traceItem.name, allocator);
+                JsonUtil::AddMember(traceJson, "start", traceItem.startTime, allocator);
+                JsonUtil::AddMember(traceJson, "duration", traceItem.duration, allocator);
+                JsonUtil::AddMember(traceJson, "pid", traceItem.pid, allocator);
+                JsonUtil::AddMember(traceJson, "tid", traceItem.threadId, allocator);
+                JsonUtil::AddMember(traceJson, "id", traceItem.id, allocator);
+                JsonUtil::AddMember(traceJson, "cname", traceItem.cname, allocator);
+                tracesDetailList.PushBack(traceJson, allocator);
+            }
+            JsonUtil::AddMember(componentJson, "traceList", tracesDetailList, allocator);
+            componentsDetailList.PushBack(componentJson, allocator);
+        }
+        JsonUtil::AddMember(rankArrayJson, "componentList", componentsDetailList, allocator);
+        rankDetailList.PushBack(rankArrayJson, allocator);
+    }
+    JsonUtil::AddMember(body, "rankList", rankDetailList, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

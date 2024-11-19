@@ -108,6 +108,7 @@ const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllS
 const std::string REQ_RES_PIPELINE_GET_ALL_STAGES = "parallelism/pipeline/getAllStages";
 const std::string REQ_RES_PIPELINE_STAGE_BUBBLE = "parallelism/pipeline/stageAndBubbleTime";
 const std::string REQ_RES_PIPELINE_RANK_BUBBLE = "parallelism/pipeline/rankAndBubbleTime";
+const std::string REQ_RES_PIPELINE_FWD_BWD_TIMELINE = "parallelism/pipeline/fwdBwdTimeline";
 
 // matrix
 const std::string REQ_RES_COMMUNICATION_MATRIX_GROUP = "communication/matrix/group";
