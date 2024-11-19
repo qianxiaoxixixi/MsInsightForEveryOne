@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import type { FrameLocator, Page, Locator } from '@playwright/test';
+import { type FrameLocator, type Page, type Locator, expect } from '@playwright/test';
 import { FrameworkPage } from './framework';
 
 export class CommunicationPage {
@@ -14,6 +14,10 @@ export class CommunicationPage {
     readonly durationAnalysisRadio: Locator;
     readonly communicationMatrixRadio: Locator;
     readonly communicationMatrixTypeSelector: Locator;
+    readonly fullmask: Locator;
+    readonly communicationMatrixMinRangeInput: Locator;
+    readonly communicationMatrixMaxRangeInput: Locator;
+    readonly matrixChart: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -24,10 +28,20 @@ export class CommunicationPage {
         this.communicationMatrixRadio = this.communicationFrame.locator('input[type="radio"][value="CommunicationMatrix"]'); // 通信矩阵
         this.durationAnalysisRadio = this.communicationFrame.locator('input[type="radio"][value="CommunicationDurationAnalysis"]'); // 通信耗时分析
         this.communicationMatrixTypeSelector = this.communicationFrame.locator('#communicationMatrixType-select'); // 通信矩阵类型
+        this.fullmask = this.communicationFrame.locator('.fullmask');
+        this.communicationMatrixMinRangeInput = this.communicationFrame.getByTestId('communicationMatrixMinRangeInput');
+        this.communicationMatrixMaxRangeInput = this.communicationFrame.getByTestId('communicationMatrixMaxRangeInput');
+        this.matrixChart = this.communicationFrame.locator('#matrixchart');
     }
 
     async goto(): Promise<void> {
         const frameworkPage = new FrameworkPage(this.page);
         await frameworkPage.clickTab('communication');
+    }
+
+    // 切换到通信耗时分析
+    async switchDurationAnalysis(communicationMatrixRadio: Locator, durationAnalysisRadio: Locator): Promise<void> {
+        await communicationMatrixRadio.click();
+        await durationAnalysisRadio.click();
     }
 }

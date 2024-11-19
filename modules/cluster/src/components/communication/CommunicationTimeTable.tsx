@@ -194,6 +194,7 @@ const CommunicationTimeTable = observer((props:
     }, [props.dataSource]);
     return (<CollapsiblePanel title={t('sessionTitle.DataAnalysisCommunicationTime')}>
         <ResizeTable
+            data-testid={'dataAnalysisTable'}
             loading={!props.session.durationFileCompleted}
             dataSource={dataSource}
             columns={columns}
