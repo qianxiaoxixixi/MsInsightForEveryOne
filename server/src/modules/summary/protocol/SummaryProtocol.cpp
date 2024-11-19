@@ -22,6 +22,7 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyRequest);
+    jsonToReqFactory.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, ToQueryFwdBwdTimelineRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -36,6 +37,7 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyResponse);
+    resToJsonFactory.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, ToQueryFwdBwdTimelineResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -187,6 +189,22 @@ std::unique_ptr<Request> SummaryProtocol::ToSetParallelStrategyRequest(const jso
     return reqPtr;
 }
 
+std::unique_ptr<Request> SummaryProtocol::ToQueryFwdBwdTimelineRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<PipelineFwdBwdTimelineRequest> reqPtr = std::make_unique<PipelineFwdBwdTimelineRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of query fwd/bwd timeline request.";
+        return nullptr;
+    }
+    if (!json.HasMember("params") || !json["params"].HasMember("stepId") || !json["params"].HasMember("stageId")) {
+        error = "Failed to set request parameter of query fwd/bwd timeline request due to missing parameter.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -239,6 +257,12 @@ std::optional<document_t> SummaryProtocol::ToQueryParallelStrategyResponse(const
 std::optional<document_t> SummaryProtocol::ToSetParallelStrategyResponse(const Response &response)
 {
     return ToResponseJson<SetParallelStrategyResponse>(dynamic_cast<const SetParallelStrategyResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToQueryFwdBwdTimelineResponse(const Response &response)
+{
+    return ToResponseJson<PipelineFwdBwdTimelineResponse>(
+        dynamic_cast<const PipelineFwdBwdTimelineResponse &>(response));
 }
 #pragma endregion
 } // namespace Protocol

@@ -30,7 +30,9 @@ private:
     static std::unique_ptr<Request> ToCommunicationRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToQueryParallelStrategyRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSetParallelStrategyRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToQueryFwdBwdTimelineRequest(const json_t &json, std::string &error);
 
+    // response to json
     static std::optional<document_t> ToTopNResponse(const Response &response);
     static std::optional<document_t> ToStatisticsResponse(const Response &response);
     static std::optional<document_t> ToComputeDetailResponse(const Response &response);
@@ -41,7 +43,7 @@ private:
     static std::optional<document_t> ToCommunicationResponse(const Response &response);
     static std::optional<document_t> ToQueryParallelStrategyResponse(const Response &response);
     static std::optional<document_t> ToSetParallelStrategyResponse(const Response &response);
-    // response to json
+    static std::optional<document_t> ToQueryFwdBwdTimelineResponse(const Response &response);
 };
 } // namespace Protocol
 } // namespace Dic

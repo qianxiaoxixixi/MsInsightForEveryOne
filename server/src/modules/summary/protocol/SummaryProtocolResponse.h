@@ -11,6 +11,7 @@
 #include "ClusterDef.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "TimelineProtocolResponse.h"
 
 namespace Dic {
 namespace Protocol {
@@ -100,6 +101,29 @@ struct PipelineRankTimeResponse : public Response {
     PipelineRankTimeResponse() : Response(REQ_RES_PIPELINE_RANK_BUBBLE) {}
 
     PipelineStageOrRankTimeResponseBody body;
+};
+
+struct PipelineFwdBwdTimelineByComponent {
+    std::string component; // FWD/BWD, P2P
+    std::vector<Protocol::ThreadTraces> traceList;
+};
+
+struct PipelineFwdBwdTimelineByRank {
+    std::string rankId;
+    std::vector<std::string> componentList; // FWD/BWD, P2P
+    std::vector<PipelineFwdBwdTimelineByComponent> componentDataList;
+};
+
+struct PipelineFwdBwdTimelineResponseBody {
+    uint64_t minTime = UINT64_MAX;
+    uint64_t maxTime = 0;
+    std::vector<std::string> rankLists;
+    std::vector<PipelineFwdBwdTimelineByRank> rankDataList;
+};
+
+struct PipelineFwdBwdTimelineResponse : public Response {
+    PipelineFwdBwdTimelineResponse() : Response(REQ_RES_PIPELINE_FWD_BWD_TIMELINE) {}
+    PipelineFwdBwdTimelineResponseBody body;
 };
 
 struct SummaryStatisticsResponse : public Response {

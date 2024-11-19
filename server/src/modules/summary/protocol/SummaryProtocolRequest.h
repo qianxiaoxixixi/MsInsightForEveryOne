@@ -135,6 +135,11 @@ struct PipelineRankTimeRequest : public Request {
     PipelineRankTimeParam params;
 };
 
+struct PipelineFwdBwdTimelineRequest : public Request {
+    PipelineFwdBwdTimelineRequest() : Request(REQ_RES_PIPELINE_FWD_BWD_TIMELINE) {};
+    PipelineRankTimeParam params;
+};
+
 struct ComputeDetailParams {
     std::string rankId;
     std::string timeFlag;
