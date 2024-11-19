@@ -178,7 +178,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
         overAllText += t('MoreFocus', { type: sdmaData.time >= rdmaData.time ? sdmaData.type : rdmaData.type });
     }
     return (
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '20px' }} data-testid={'communicationAdvice'}>
             <CollapsiblePanel title={<div>
                 {t('Advice')}
                 <Tooltip title={

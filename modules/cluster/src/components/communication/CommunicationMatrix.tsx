@@ -359,10 +359,10 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
         <>
             <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} style={{ margin: '0 8px 0 24px' }} />
             <InputNumber value={minValue} size="small" style={{ marginRight: 8 }} min={minRange} max={maxRange}
-                onChange={(value: string | number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
+                onChange={(value: string | number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} data-testid={'communicationMatrixMinRangeInput'} />
             ~
             <InputNumber value={maxValue} size="small" style={{ margin: '0 32px 0 8px' }} min={minRange} max={maxRange}
-                onChange={(value: string | number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
+                onChange={(value: string | number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} data-testid={'communicationMatrixMaxRangeInput'} />
             <Button onClick={onConfirm} type="primary" size="middle">{t('Confirm', { ns: 'buttonText' })}</Button>
         </>
     );

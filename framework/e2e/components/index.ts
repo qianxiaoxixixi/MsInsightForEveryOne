@@ -5,3 +5,4 @@
 export { InputHelpers } from './Input';
 export { SelectHelpers } from './Select';
 export { CheckboxHelpers } from './Checkbox';
+export { TableHelpers } from './Table';
