@@ -12,6 +12,7 @@
 #include "QueryCommunicationDetailHandler.h"
 #include "QueryParallelStrategyConfigHandler.h"
 #include "SetParallelStrategyConfigHandler.h"
+#include "QueryFwdBwdTimelineHandler.h"
 #include "SummaryModule.h"
 
 namespace Dic {
@@ -42,6 +43,7 @@ void SummaryModule::RegisterRequestHandlers()
                               std::make_unique<QueryParallelStrategyConfigHandler>());
     requestHandlerMap.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY,
                               std::make_unique<SetParallelStrategyConfigHandler>());
+    requestHandlerMap.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, std::make_unique<QueryFwdBwdTimelineHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

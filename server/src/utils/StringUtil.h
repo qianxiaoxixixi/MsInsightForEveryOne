@@ -370,6 +370,26 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
         return sanitized;
     }
 
+// 分隔用圆括号括起来的用逗号分割的字符串，如"(a, b, c, d)"，生成由a,b,c,d组成的数组,字符前后的空格会被删除
+static std::vector<std::string> SplitStringWithParenthesesByComma(std::string str)
+{
+    std::vector<std::string> subStr{};
+    if (str.empty()) {
+        return subStr;
+    }
+
+    str.erase(std::remove(str.begin(), str.end(), '('), str.end());
+    str.erase(std::remove(str.begin(), str.end(), ')'), str.end());
+    std::vector<std::string> tmpList = Split(str, ",");
+    for (auto item : tmpList) {
+        std::string tmpStr = Trim(item);
+        if (!tmpStr.empty()) {
+            subStr.push_back(tmpStr);
+        }
+    }
+    return subStr;
+}
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {
