@@ -1,0 +1,27 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_QUERYFWDBWDTIMELINEHANDLER_H
+#define PROFILER_SERVER_QUERYFWDBWDTIMELINEHANDLER_H
+
+#include "SummaryProtocolResponse.h"
+#include "SummaryRequestHandler.h"
+namespace Dic::Module::Summary {
+
+class QueryFwdBwdTimelineHandler : public SummaryRequestHandler {
+public:
+    QueryFwdBwdTimelineHandler()
+    {
+        command = Protocol::REQ_RES_PIPELINE_FWD_BWD_TIMELINE;
+    }
+    ~QueryFwdBwdTimelineHandler() = default;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+private:
+    bool QueryFwdBwdTimelineByRank(const std::string& rankId, PipelineFwdBwdTimelineByRank &data,
+        PipelineFwdBwdTimelineResponseBody &responseBody);
+};
+
+} // Dic::Module::Summary
+
+#endif // PROFILER_SERVER_QUERYFWDBWDTIMELINEHANDLER_H

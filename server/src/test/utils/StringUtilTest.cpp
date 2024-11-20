@@ -139,3 +139,15 @@ TEST(StringUtil, ToCamelCaseWithNormalInput) {
     EXPECT_EQ(StringUtil::ToCamelCase("rank_id, device_Id"), "rankId, deviceId");
     EXPECT_EQ(StringUtil::ToCamelCase("rank__id, device_Id"), "rankId, deviceId");
 }
+
+TEST(StringUtil, SplitStringWithParenthesesByCommaTestReturnEmptyWhenEmptyInput)
+{
+    EXPECT_EQ(StringUtil::SplitStringWithParenthesesByComma("").size(), 0);
+}
+
+TEST(StringUtil, SplitStringWithParenthesesByCommaTestReturnNormalWhenInputWithSpace)
+{
+    auto result = StringUtil::SplitStringWithParenthesesByComma("( a ,b,  c d, )");
+    EXPECT_EQ(result.size(), 3); // 3, a, b, c
+    EXPECT_EQ(result.at(result.size() - 1), "c d");
+}
