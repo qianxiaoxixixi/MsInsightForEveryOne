@@ -121,9 +121,9 @@ TEST_F(SummaryProtocolUtilTest, ToQueryFwdBwdTimelineResponseTestWillReturnWhenE
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.has_value(), true);
     EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
-    EXPECT_EQ(jsonOptional.value()["body"].GetObject().HasMember("minTime"), true);
-    EXPECT_EQ(jsonOptional.value()["body"].GetObject().HasMember("minTime"), true);
-    EXPECT_EQ(jsonOptional.value()["body"].GetObject().HasMember("rankList"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("minTime"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("minTime"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("rankList"), true);
     EXPECT_EQ(jsonOptional.value()["body"]["rankList"].GetArray().Size(), 0);
 }
 
@@ -155,9 +155,9 @@ TEST_F(SummaryProtocolUtilTest, ToQueryFwdBwdTimelineResponseTestWillReturnWhenN
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.has_value(), true);
     EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
-    EXPECT_EQ(jsonOptional.value()["body"].GetObject().HasMember("minTime"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("minTime"), true);
     EXPECT_EQ(jsonOptional.value()["body"]["minTime"], response.body.minTime);
-    EXPECT_EQ(jsonOptional.value()["body"].GetObject().HasMember("rankList"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("rankList"), true);
     EXPECT_EQ(jsonOptional.value()["body"]["rankList"].GetArray().Size(), response.body.rankDataList.size());
     int i = 0;
     for (const auto &item : jsonOptional.value()["body"]["rankList"].GetArray()) {

@@ -72,6 +72,76 @@ public:
         }
     }
 
+    /**
+     * 将微秒格式的字符串转化为整型纳秒，四舍五入处理,负数字符串或者溢出字符串返回0
+     * @param usString
+     * @return
+     */
+    static inline int64_t ConvertUsStrToNanoseconds(const std::string& usString)
+    {
+        const char* str = usString.c_str();
+        const char* p = str;
+        // 检查字符串是否为空或负数
+        if (*p == '-' || *p == '\0') {
+            return 0;  // 如果是负数或空字符串，返回0
+        }
+        int64_t integerPart = 0;
+        int64_t fractionalPart = 0;
+        int fractionalLength = 0;
+        int roundingDigit = 0;
+        // 十分位
+        constexpr static int64_t tenthPlace = 10;
+        // 千分位
+        constexpr static int64_t thousandthPlace = 1000;
+        // 小数位数
+        constexpr static int64_t decimalPlaces = 3;
+        // 四舍五入分界点
+        constexpr static int64_t roundingDigitMark = 5;
+        // 整数部分余量
+        constexpr static int64_t integerMargin = 1;
+        constexpr static int64_t integerPartLimit = INT64_MAX / thousandthPlace - integerMargin;
+        // 解析整数部分
+        while (*p >= '0' && *p <= '9') {
+            if (integerPart > integerPartLimit) {
+                return 0;
+            }
+            integerPart = integerPart * tenthPlace + (*p - '0');
+            ++p;
+        }
+        // 如果遇到小数点，解析小数部分
+        if (*p == '.') {
+            ++p;  // 跳过小数点
+            while (*p >= '0' && *p <= '9' && fractionalLength < decimalPlaces) {
+                fractionalPart = fractionalPart * tenthPlace + (*p - '0');
+                ++p;
+                ++fractionalLength;
+            }
+
+            // 检查第四位，用于四舍五入
+            if (*p >= '0' && *p <= '9') {
+                roundingDigit = *p - '0';
+            }
+        }
+        // 如果小数部分不足 3 位，用 0 补齐
+        while (fractionalLength < decimalPlaces) {
+            fractionalPart *= tenthPlace;
+            ++fractionalLength;
+        }
+        // 四舍五入
+        if (roundingDigit >= roundingDigitMark) {
+            ++fractionalPart;
+        }
+        // 检查是否有非法字符（不是数字或小数点）
+        if (*p != '\0' && (*p < '0' || *p > '9')) {
+            return 0;  // 如果遇到非数字或小数点字符，返回 0
+        }
+        if (integerPart > integerPartLimit) {
+            return 0;
+        }
+        // 转换为纳秒
+        return integerPart * thousandthPlace + fractionalPart;
+    }
+
     static inline int64_t TimestampUsToNs(long double us)
     {
         // 当数字非常大时使用乘法，部分数字会损失精度，故改为字符串操作

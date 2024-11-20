@@ -72,8 +72,8 @@ std::unique_ptr<Event> EventUtil::ToSliceEvent(const json_t &json)
 {
     std::unique_ptr<Slice> event = std::make_unique<Slice>();
     event->type = Type(json);
-    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
-    event->dur = NumberUtil::TimestampUsToNs(JsonUtil::GetDouble(json, "dur"));
+    event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
+    event->dur = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "dur"));
     event->name = JsonUtil::GetString(json, "name");
     event->tid = JsonUtil::GetDumpString(json, "tid");
     event->pid = JsonUtil::GetDumpString(json, "pid");
@@ -139,7 +139,7 @@ std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
 {
     std::unique_ptr<Flow> event = std::make_unique<Flow>();
     event->type = Type(json);
-    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
+    event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
     event->tid = JsonUtil::GetDumpString(json, "tid");
     event->pid = JsonUtil::GetDumpString(json, "pid");
     event->flowId = JsonUtil::GetDumpString(json, "id");
@@ -158,7 +158,7 @@ std::unique_ptr<Event> EventUtil::ToCounterEvent(const json_t &json)
         event->name = JsonUtil::GetString(json, "name");
     }
     event->pid = JsonUtil::GetDumpString(json, "pid");
-    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
+    event->ts = NumberUtil::ConvertUsStrToNanoseconds(JsonUtil::GetDumpString(json, "ts"));
     event->cat = JsonUtil::GetOptionalString(json, "cat");
     event->args = JsonUtil::GetDumpString(json, "args");
     return event;
