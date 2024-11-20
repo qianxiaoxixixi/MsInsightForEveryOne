@@ -70,11 +70,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithAscend)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
     const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Ascend Hardware", "%%");
-#ifdef WIN32
     int expectSize = 842011262;
-#else
-    int expectSize = 842011261;
-#endif
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
     EXPECT_EQ(data.total, 57); // total operator = 57
 }
@@ -84,11 +80,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithHCCL)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
     const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("HCCL", "%%");
-#ifdef WIN32
     int expectSize = 449202040;
-#else
-    int expectSize = 449202038;
-#endif
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
 
@@ -97,11 +89,7 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithOverlap)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
 
     const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Overlap Analysis", "%%");
-#ifdef WIN32
-    int expectSize = 292195067;
-#else
-    int expectSize = 292195067;
-#endif
+    int expectSize = 292195068;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
 
