@@ -36,6 +36,7 @@ class Const:
     CONFIG_INI = 'config.ini'
     VSCODE_PLUGINS_DIR = os.path.join('plugins', 'vscode')
     INTELLIJ_PLUGINS_DIR = os.path.join('plugins', 'intellij')
+    JUPYTERLAB_PLUGINS_DIR = os.path.join('plugins', 'jupyterlab')
     ASCEND_INSIGHT_PREFIX = 'MindStudio-Insight'
     ASCEND_INSIGHT = 'MindStudio_Insight'
     BIN_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else ''
@@ -44,6 +45,7 @@ class Const:
     NPM = 'npm.cmd' if platform.system() == WINDOWS_OS else 'npm'
     GRADLE = 'gradle.bat' if platform.system() == WINDOWS_OS else 'gradle'
     GRADLEW = 'gradlew.bat' if platform.system() == WINDOWS_OS else 'gradlew'
+    JUPYTER = 'jupyter'
     PLUGINS_VERSION_PLACEHOLDER = '{plugins_version}'
 
 
@@ -140,18 +142,22 @@ def build_frontend():
     return 0
 
 
-def build_vscode(vscode_version, os_name):
-    # Linux和MacOS上默认不编译vscode插件
-    if platform.system() != Const.WINDOWS_OS and os.getenv('NO_BUILD_VSCODE'):
-        logging.info('The VSCode plugin is not compiled because NO_BUILD_VSCODE is set.')
-        return 0
-
+def set_npm_config():
     os.putenv('npm_config_build_from_source', 'true')
     os.putenv('npm_config_audit', 'false')
     os.putenv('npm_config_strict_ssl', 'false')
     os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
+
+
+def build_vscode(vscode_version, os_name):
+    # Linux和MacOS上默认不编译vscode插件
+    if platform.system() != Const.WINDOWS_OS and os.getenv('NO_BUILD_VSCODE'):
+        logging.info('The VSCode plugin is not compiled because NO_BUILD_VSCODE is set.')
+        return 0
+
+    set_npm_config()
 
     plugin_path = os.path.join(PROJECT_PATH, Const.VSCODE_PLUGINS_DIR)
     result = exec_command([Const.NPM, 'install', '--force'], plugin_path, 'vscode_plugin')
@@ -216,6 +222,34 @@ def build_intellij(idea_version, os_name):
     for file in os.listdir(distributions_path):
         if file.endswith('.zip'):
             shutil.copy(os.path.join(distributions_path, file), dst_file)
+
+    return 0
+
+
+def build_jupyterlab(jupyterlab_version, os_name):
+    # 设置环境变量暂时不构建jupyterlab
+    if not os.getenv('BUILD_JUPYTERLAB'):
+        logging.info('The JupyterLab extension is not compiled because BUILD_JUPYTERLAB is not set.')
+        return 0
+
+    plugin_path = os.path.join(PROJECT_PATH, Const.JUPYTERLAB_PLUGINS_DIR)
+    # 1. 清理jupyterlab环境
+    result = exec_command([Const.JUPYTER, 'lab', 'clean'], plugin_path, 'jupyterlab_plugin')
+    if result != 0:
+        return 1
+    # 2. 构建whl包
+    setup_path, output_path = 'setup.py', 'output'
+    result = exec_command([Const.PYTHON, setup_path, 'bdist_wheel', '--dist-dir', output_path],
+                          plugin_path, 'jupyterlab_plugin')
+    if result != 0:
+        return 1
+
+    # copy jupyterlab plugin to out directory
+    plugin_name = 'mindstudio-insight-extension_' + jupyterlab_version + '_' + os_name + '.whl'
+    dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
+    for file in os.listdir(plugin_path):
+        if file.endswith('.whl'):
+            shutil.copy(os.path.join(plugin_path, file), dst_file)
 
     return 0
 
@@ -365,14 +399,15 @@ def create_version_info_file(version, modify_time):
 
 def build_product_parallel(vscode_version, idea_version, os_name):
     logging.info('Start to build products')
-    funcs = [build_vscode, build_intellij, build_light_package, build_huaweicloud_package]
+    funcs = [build_vscode, build_intellij, build_light_package, build_huaweicloud_package, build_jupyterlab]
     args_list = [
         (vscode_version, os_name),
         (idea_version, os_name),
         (idea_version, os_name),
-        (vscode_version, os_name)
+        (vscode_version, os_name),
+        (idea_version, os_name)
     ]
-    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
+    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 5))
     results = []
     for func, args in zip(funcs, args_list):
         results.append(pool.apply_async(func, args))
