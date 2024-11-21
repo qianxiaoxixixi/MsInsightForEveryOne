@@ -3,8 +3,6 @@
  */
 #include "ParserJson.h"
 #include "TimelineRequestHandler.h"
-#include "WsSession.h"
-#include "WsSessionManager.h"
 #include "ModuleRequestHandler.h"
 #include "TraceFileParser.h"
 #include "TraceFileSimulationParser.h"
@@ -38,7 +36,6 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         return;
     }
     // 基础信息填充
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     FillBaseResponseInfo(request, response, projectInfos);
@@ -59,9 +56,8 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         SetParseCallBack(Timeline::TraceFileSimulationParser::Instance());
-        ModuleRequestHandler::SetResponseResult(response, true);
         response.body.isSimulation = true;
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
         for (const auto &rankEntry : rankListMap) {
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
                                                                   rankEntry.second[0]);
@@ -77,7 +73,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     ParserTraceData(rankListMap, projectInfos, request);
 }
 
@@ -127,7 +123,7 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
 }
 
 bool ParserJson::CheckParseFileInfoSize(const Global::ParseFileInfo &parseFileInfo,
-    vector<std::string> &jsonFiles) const
+    std::vector<std::string> &jsonFiles) const
 {
     if (jsonFiles.empty()) {
         return false;
@@ -208,7 +204,6 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
     if (projectInfos.empty()) {
         return;
     }
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -220,11 +215,10 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
         // 拖拽文件不存在文件路径信息，因此cardPath直接使用rankId
         SetBaseActionOfResponse(response, rankEntry.first, rankEntry.first, rankEntry.second);
     }
-    ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     for (const auto &item : projectInfos) {
         std::string fileId = FileUtil::PathPreprocess(item.fileName);
         if (item.dbPath.empty()) {
@@ -311,16 +305,11 @@ void ParserJson::ClusterProcessAsyncStep(const std::string &selectedFolder)
     }
     // send event
     ServerLog::Info("Parse Cluster File end, send event");
-    WsSession *session = WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        ServerLog::Warn("Failed to get session");
-        return;
-    }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
-    session->OnEvent(std::move(event));
+    SendEvent(std::move(event));
 }
 
 std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path, std::string &error)

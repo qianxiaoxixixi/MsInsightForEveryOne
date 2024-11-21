@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include "ProtocolUtil.h"
+#include "ProtocolMessage.h"
 #include "JsonUtil.h"
 #include "MemoryProtocolUtil.h"
 

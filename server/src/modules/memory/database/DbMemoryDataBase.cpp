@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
-#include "WsSessionManager.h"
+#include "WsSender.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "DataBaseManager.h"
@@ -257,19 +257,13 @@ void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
 // 输入rankId为空时，会清空历史结果
 void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    Server::WsSession *session = Server::WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        Server::ServerLog::Error("[Memory]Failed to get session.");
-        return;
-    }
-
     if (fileId.empty()) {
         ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::MODULE_MEMORY;
         event->result = true;
         event->reset = true;
-        session->OnEvent(std::move(event));
+        SendEvent(std::move(event));
     } else {
         auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
         event->moduleName = Protocol::MODULE_TIMELINE;
@@ -280,7 +274,7 @@ void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, con
             memoryResult.push_back(pair.second);
         }
         event->memoryResult = memoryResult;
-        session->OnEvent(std::move(event));
+        SendEvent(std::move(event));
     }
 }
 

@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
+#include "WsSender.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
@@ -148,11 +149,6 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
 
 void FullDbParser::SendHostEvent(const std::string &fileId)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        ServerLog::Warn("Failed to get session");
-        return;
-    }
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
@@ -171,7 +167,7 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
     event->body.unit.metadata.cardId = database->QueryHostInfo()+"Host";
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     database->QueryHostMetadata(event->body.unit.children);
-    session->OnEvent(std::move(event));
+    SendEvent(std::move(event));
 }
 
 void FullDbParser::ParserCallBack(std::string fileId, bool result)

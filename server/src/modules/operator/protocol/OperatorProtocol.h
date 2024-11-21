@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_OPERATORPROTOCOL_H
 #define PROFILER_SERVER_OPERATORPROTOCOL_H
 
-#include "ProtocolUtil.h"
+#include "ProtocolMessage.h"
 
 namespace Dic::Protocol {
 

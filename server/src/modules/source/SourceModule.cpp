@@ -3,6 +3,7 @@
  */
 
 #include "SourceModule.h"
+#include "ProtocolDefs.h"
 #include "SourceRequestHandler.h"
 #include "QueryCodeFileHandler.h"
 #include "QueryApiLineHandler.h"

@@ -1,0 +1,406 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Description: String Utility declaration
+ */
+
+#ifndef DATA_INSIGHT_CORE_STRING_UTIL_H
+#define DATA_INSIGHT_CORE_STRING_UTIL_H
+
+#include <string>
+#include <regex>
+#include <cstdint>
+#include <memory>
+#include <iostream>
+#include <sstream>
+#include <chrono>
+#include "algorithm"
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#else
+#include <linux/limits.h>
+#endif
+#include <map>
+#include <iomanip>
+
+namespace Dic {
+class StringUtil {
+public:
+    static inline double StringToDouble(std::string numStr)
+    {
+        try {
+            double num = std::stod(numStr);
+            return num;
+        } catch (const std::invalid_argument& e) {
+            return 0;
+        }
+    }
+
+    static inline const std::string IntToString(int number, size_t length)
+    {
+        std::string s = std::to_string(number);
+        if (length > s.size()) {
+            s.insert(0, length - s.size(), '0');
+        }
+        return s;
+    }
+
+    static inline const std::vector<std::string> Split(const std::string &str, const std::string &regexStr)
+    {
+        std::regex regexz(regexStr);
+        std::vector<std::string> list(std::sregex_token_iterator(str.begin(), str.end(), regexz, -1),
+            std::sregex_token_iterator());
+        return list;
+    }
+
+    static std::uint8_t ByteNum(const std::uint8_t &byte)
+    {
+        const static std::map<std::uint8_t, std::uint8_t> MAP_BYTES = { { 0xE0, 0xC0 },
+                                                                        { 0xF0, 0xE0 },
+                                                                        { 0xF8, 0xF0 },
+                                                                        { 0xFC, 0xF8 },
+                                                                        { 0xFE, 0xFC } };
+        uint8_t index = 0;
+        uint8_t byteNum = 0;
+        for (auto kv : MAP_BYTES) {
+            index++;
+            if ((byte & kv.first) == kv.second) {
+                byteNum = index;
+                break;
+            }
+        }
+        return byteNum;
+    }
+
+    static bool IsUtf8String(const std::string &str)
+    {
+        std::uint32_t byteNum = 0;
+        std::uint8_t byte;
+        for (char c : str) {
+            byte = static_cast<std::uint8_t>(c);
+            // ASCII
+            if ((byteNum == 0) && ((byte & 0x80) == 0)) {
+                continue;
+            }
+            // UTF8 first byte
+            if (byteNum == 0) {
+                byteNum = ByteNum(byte);
+                if (byteNum == 0) {
+                    return false;
+                }
+            } else { // UTF8 other bytes
+                if ((byte & 0xC0) != 0x80) {
+                    return false;
+                }
+                byteNum--;
+            }
+        }
+        return true;
+    }
+
+    static inline bool IsAllDigits(const std::string &str)
+    {
+        return std::all_of(str.begin(), str.end(), ::isdigit);
+    }
+
+    static inline std::string AnonymousString(const std::string &str)
+    {
+        static const size_t MIN_LEN = 3;
+        if (str.length() < MIN_LEN) {
+            return str;
+        }
+        std::string res(str);
+        int pos = res.length() / MIN_LEN;
+        res.replace(pos, pos, pos, '*');
+        return res;
+    }
+
+    static inline std::string Trim(std::string &str)
+    {
+        if (str.empty()) {
+            return str;
+        }
+        str.erase(0, str.find_first_not_of(" "));
+        str.erase(str.find_last_not_of(" ") + 1);
+        return str;
+    }
+
+#ifdef _WIN32
+    static std::string GbkToUtf8(const char *srcStr)
+    {
+        if (srcStr == nullptr) {
+            return "";
+        }
+        int len = MultiByteToWideChar(CP_ACP, 0, srcStr, -1, nullptr, 0);
+        std::unique_ptr<wchar_t[]> wstr = std::make_unique<wchar_t[]>(len + 1);
+        MultiByteToWideChar(CP_ACP, 0, srcStr, -1, wstr.get(), len);
+        len = WideCharToMultiByte(CP_UTF8, 0, wstr.get(), -1, nullptr, 0, nullptr, nullptr);
+        std::unique_ptr<char[]> str = std::make_unique<char[]>(len + 1);
+        WideCharToMultiByte(CP_UTF8, 0, wstr.get(), -1, str.get(), len, nullptr, nullptr);
+        return std::string(str.get());
+    }
+    static std::string Utf8ToGbk(const char *srcStr)
+    {
+        if (srcStr == nullptr) {
+            return "";
+        }
+        int len = MultiByteToWideChar(CP_UTF8, 0, srcStr, -1, nullptr, 0);
+        std::unique_ptr<wchar_t[]> wstr = std::make_unique<wchar_t[]>(len + 1);
+        MultiByteToWideChar(CP_UTF8, 0, srcStr, -1, wstr.get(), len);
+        len = WideCharToMultiByte(CP_ACP, 0, wstr.get(), -1, nullptr, 0, nullptr, nullptr);
+        std::unique_ptr<char[]> str = std::make_unique<char[]>(len + 1);
+        WideCharToMultiByte(CP_ACP, 0, wstr.get(), -1, str.get(), len, nullptr, nullptr);
+        return std::string(str.get());
+    }
+#endif
+
+static inline const std::wstring String2WString(const std::string& s)
+{
+    const size_t bufferSize = s.size() + 1;
+    if (bufferSize > PATH_MAX) { // 超过最大长度返回空字符串
+        return std::wstring();
+    }
+    wchar_t dstWstr[PATH_MAX] = {0};
+    mbstowcs(dstWstr, s.c_str(), bufferSize);
+    std::wstring result = dstWstr;
+    return result;
+}
+
+static inline const std::string WString2String(const std::wstring& ws)
+{
+    size_t bufferSize = ws.size() * 4 + 1;
+    if (ws.size() + 1 > PATH_MAX) {
+        return std::string();
+    }
+    char dstStr[PATH_MAX] = {0};
+    wcstombs(dstStr, ws.c_str(), bufferSize);
+    std::string result = dstStr;
+    return result;
+}
+
+    template<typename T>
+    static std::string join(std::vector<T> list, std::string separator)
+    {
+        std::stringstream ss;
+        for (size_t i = 0; i < list.size(); i++) {
+            if (i != 0) {
+                ss << separator;
+            }
+            ss << list.at(i);
+        }
+        return ss.str();
+    }
+
+    static std::string Join4SqlGroup(std::vector<std::string> list)
+    {
+        std::stringstream ss;
+        for (size_t i = 0; i < list.size(); i++) {
+            if (list.at(i).empty()) {
+                continue;
+            }
+            if (i != 0) {
+                ss << ",";
+            }
+            ss << ("'" + list.at(i) + "'");
+        }
+        return ss.str();
+    }
+
+    static bool StartWith(const std::string& str, const std::string& start)
+    {
+        size_t srcLen = str.size();
+        size_t startLen = start.size();
+        return srcLen >= startLen && str.substr(0, startLen) == start;
+    }
+
+    static bool EndWith(const std::string& str, const std::string& suffix)
+    {
+        if (str.length() < suffix.length()) {
+            return false;
+        }
+        return str.substr(str.length() - suffix.length()) == suffix;
+    }
+
+    static bool Contains(const std::string& str, const std::string& subStr)
+    {
+        return str.find(subStr) != std::string::npos;
+    }
+
+    /**
+     * 替换第一个对应的字符串
+     * @param target 目标字符串
+     * @param replaceStr 被替换的字符串
+     * @param subStr 用于替换的字符串
+     * @return true / false
+     */
+    static std::string ReplaceFirst(const std::string& target, const std::string& replaceStr, const std::string& subStr)
+    {
+        auto result = std::string(target);
+        auto index = target.find(replaceStr);
+        if (index == std::string::npos) {
+            return result;
+        }
+        return result.replace(index, replaceStr.length(), subStr);
+    }
+
+    /**
+     * 校验命令行路径参数
+     * @param path 路径
+     * @return true / false
+     */
+    static bool ValidateCommandFilePathParam(const std::string& path)
+    {
+        if (path.empty()) {
+            return false;
+        }
+        for (const auto &ch: path) {
+            if (std::find(std::begin(injectList), std::end(injectList), ch) != std::end(injectList)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 校验字符串类型参数
+     * 和ValidateCommandFilePathParam函数不同，该函数认为空字符串是合法的
+     * @param str 字符串
+     * @return true / false
+     */
+    static bool ValidateStringParam(const std::string& str)
+    {
+        for (const auto &ch: str) {
+            if (std::find(std::begin(injectList), std::end(injectList), ch) != std::end(injectList)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+static std::vector<std::string> StringSplit(const std::string& str)
+{
+    std::vector<std::string> result;
+    std::string subStr = "";
+    int count = 0;
+    for (char ch : str) {
+        // 根据字符串内 ” 的数量来判断是否是一个完整的字符串，count % 2 = 0 为偶数个，满足要求
+        if (ch == ',' and count % 2 == 0) {
+            if (count != 0) {
+                subStr = '\"' + subStr + '\"';
+            }
+            result.push_back(subStr);
+            subStr = "";
+            count = 0;
+        } else if (ch == '\"') {
+            count++;
+        } else if (ch == '\r' || ch == '\n') {
+            break;
+        } else {
+            subStr += ch;
+        }
+    }
+    if (subStr.empty()) {
+        return result;
+    }
+    result.push_back(subStr);
+    return result;
+}
+
+static std::string ToCamelCase(const std::string& str)
+{
+    std::string res;
+    if (str.empty()) {
+        return res;
+    }
+    // 将字符串使用“_”进行分割
+    std::vector<std::string> strList = StringUtil::Split(str, "_");
+    if (strList.empty()) {
+        return res;
+    }
+    res = strList[0];
+    // 对第二个子串开始，如果子串不为空，则将子串的首字母变成大写
+    for (size_t i = 1; i < strList.size(); ++i) {
+        if (!strList[i].empty()) {
+            strList[i][0] = std::toupper(strList[i][0]);
+            res += strList[i];
+        }
+    }
+    return res;
+}
+
+static bool CheckSqlValid(const std::string& input)
+{
+    std::string pattern = "[a-zA-Z0-9_-]";
+    std::regex regex(pattern);
+    // 该方法用于处理SQL参数，当前只验证字母数字下划线中划线，后续可以兼容扩展
+    std::string result;
+    for (char c : input) {
+        if (!std::regex_match(std::string(1, c), regex)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
+{
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(2) << value; // 保留有效位数为2，四舍五入
+    return stream.str();
+}
+
+    static std::string GetIllegalCharacter()
+    {
+        std::string illegalCharacter;
+        for (const auto ch : injectList) {
+            illegalCharacter.push_back(ch);
+        }
+        illegalCharacter.pop_back();
+        return illegalCharacter;
+    }
+
+    static std::string GetPrintAbleString(const std::string &input)
+    {
+        std::string sanitized;
+        for (const auto &item : input) {
+            if (isprint(item)) {
+                sanitized += item;
+            } else {
+                sanitized += "_";
+            }
+        }
+        return sanitized;
+    }
+
+// 分隔用圆括号括起来的用逗号分割的字符串，如"(a, b, c, d)"，生成由a,b,c,d组成的数组,字符前后的空格会被删除
+static std::vector<std::string> SplitStringWithParenthesesByComma(std::string str)
+{
+    std::vector<std::string> subStr{};
+    if (str.empty()) {
+        return subStr;
+    }
+
+    str.erase(std::remove(str.begin(), str.end(), '('), str.end());
+    str.erase(std::remove(str.begin(), str.end(), ')'), str.end());
+    std::vector<std::string> tmpList = Split(str, ",");
+    for (auto item : tmpList) {
+        std::string tmpStr = Trim(item);
+        if (!tmpStr.empty()) {
+            subStr.push_back(tmpStr);
+        }
+    }
+    return subStr;
+}
+
+private:
+#ifdef _WIN32
+    static inline char injectList[] = {
+        '|', ';', '&', '$', '>', '<', '`', '!', '\n', '\"', '\'', '\t', '\r', '\f', '\u0000'};
+#else
+    static inline char injectList[] = {
+        '|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n', '\"', '\'', '\t', '\r', '\f', '\u0000'};
+#endif
+};
+}
+
+#endif // DATA_INSIGHT_CORE_STRING_UTIL_H

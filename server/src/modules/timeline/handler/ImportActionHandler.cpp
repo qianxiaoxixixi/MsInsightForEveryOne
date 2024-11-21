@@ -50,15 +50,11 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 
 void ImportActionHandler::SendParseFailEvent(const std::string &message)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        return;
-    }
     auto event = std::make_unique<ParseFailEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = false;
     event->body.error = message;
-    session->OnEvent(std::move(event));
+    SendEvent(std::move(event));
 }
 
 void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo)
@@ -69,7 +65,7 @@ void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExp
     }
     for (auto file: projectExplorerInfo) {
         if (!FileUtil::CheckFilePathExist(file.fileName)) {
-            string message = "paths do not exist: " + file.fileName;
+            std::string message = "paths do not exist: " + file.fileName;
             SendParseFailEvent(message);
             ServerLog::Warn(message);
         }

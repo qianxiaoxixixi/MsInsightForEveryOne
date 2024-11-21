@@ -2,16 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 #include "pch.h"
-#include "GlobalProtocol.h"
-#include "TimelineProtocol.h"
-#include "ProtocolEnumUtil.h"
-#include "MemoryProtocol.h"
-#include "SummaryProtocol.h"
-#include "CommunicationProtocol.h"
-#include "OperatorProtocol.h"
-#include "SourceProtocol.h"
-#include "AdvisorProtocolUtil.h"
-#include "JupyterProtocol.h"
+#include "PluginsManager.h"
 #include "ProtocolManager.h"
 
 namespace Dic {
@@ -31,33 +22,14 @@ void ProtocolManager::Register()
 {
     std::unique_lock<std::mutex> lock(mutex);
     protocolMap.clear();
-    auto globalProtocol = std::make_unique<GlobalProtocol>();
-    globalProtocol->Register();
-    auto timelineProtocol = std::make_unique<TimelineProtocol>();
-    timelineProtocol->Register();
-    auto memoryProtocol = std::make_unique<MemoryProtocol>();
-    memoryProtocol->Register();
-    auto summaryProtocol = std::make_unique<SummaryProtocol>();
-    summaryProtocol->Register();
-    auto communicationProtocol = std::make_unique<CommunicationProtocol>();
-    communicationProtocol->Register();
-    auto operatorProtocol = std::make_unique<OperatorProtocol>();
-    operatorProtocol->Register();
-    auto sourceProtocol = std::make_unique<SourceProtocol>();
-    sourceProtocol->Register();
-    auto advisorProtocol = std::make_unique<AdvisorProtocolUtil>();
-    advisorProtocol->Register();
-    auto jupyterProtocol = std::make_unique<JupyterProtocol>();
-    jupyterProtocol->Register();
-    protocolMap.emplace(MODULE_GLOBAL, std::move(globalProtocol));
-    protocolMap.emplace(MODULE_TIMELINE, std::move(timelineProtocol));
-    protocolMap.emplace(MODULE_MEMORY, std::move(memoryProtocol));
-    protocolMap.emplace(MODULE_SUMMARY, std::move(summaryProtocol));
-    protocolMap.emplace(MODULE_COMMUNICATION, std::move(communicationProtocol));
-    protocolMap.emplace(MODULE_OPERATOR, std::move(operatorProtocol));
-    protocolMap.emplace(MODULE_SOURCE, std::move(sourceProtocol));
-    protocolMap.emplace(MODULE_ADVISOR, std::move(advisorProtocol));
-    protocolMap.emplace(MODULE_JUPYTER, std::move(jupyterProtocol));
+    auto& manager = Core::PluginsManager::Instance();
+    for (const auto &[moduleName, plugin]: manager.GetAllPlugins()) {
+        auto protocol = plugin->GetProtocolUtil();
+        if (protocol != nullptr) {
+            protocol->Register();
+            protocolMap.emplace(moduleName, std::move(protocol));
+        }
+    }
 }
 
 void ProtocolManager::UnRegister()

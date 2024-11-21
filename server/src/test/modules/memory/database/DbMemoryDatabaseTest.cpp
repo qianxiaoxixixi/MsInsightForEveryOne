@@ -9,9 +9,11 @@
 #include "ParamsParser.h"
 #include "FileUtil.h"
 #include "TraceTime.h"
+#include "NumberUtil.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
+using namespace Dic;
 
 class DbMemoryDatabaseTest : public ::testing::Test {
 public:

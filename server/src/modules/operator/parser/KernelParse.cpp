@@ -6,7 +6,6 @@
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
 #include "CommonDefs.h"
-#include "WsSession.h"
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
 #include "TraceTime.h"
@@ -371,7 +370,7 @@ void KernelParse::ParseEndCallBack(const std::string &fileId, bool result, const
 
 void KernelParse::ParseCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    WsSession *session = WsSessionManager::Instance().GetSession();
+    auto *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
         ServerLog::Error("Failed to get session for summary callback.");
         return;

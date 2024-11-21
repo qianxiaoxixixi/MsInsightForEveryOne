@@ -10,7 +10,7 @@
 #include "QueryFusedOpAdviceHandler.h"
 #include "AdvisorProtocolRequest.h"
 #include "WsSessionManager.h"
-#include "WsSession.h"
+#include "WsSessionImpl.h"
 #include "../../TestSuit.cpp"
 
 using namespace Dic::Server;
@@ -22,7 +22,7 @@ public:
     static void SetUpTestSuite()
     {
         Server::WsChannel *ws;
-        std::unique_ptr<Server::WsSession> session = std::make_unique<Server::WsSession>(ws);
+        std::unique_ptr<Server::WsSessionImpl> session = std::make_unique<Server::WsSessionImpl>(ws);
         Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestSuite()

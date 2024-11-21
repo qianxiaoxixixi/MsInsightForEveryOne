@@ -3,13 +3,14 @@
  */
 
 #include "DataBaseManager.h"
+#include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
 #include "SetParallelStrategyConfigHandler.h"
 
 namespace Dic::Module::Summary {
-
+using namespace Dic::Server;
 bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SetParallelStrategyRequest &>(*requestPtr);

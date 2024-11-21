@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_JUPYTERMODULE_H
 
 #include "BaseModule.h"
+#include "ProtocolDefs.h"
 
 namespace Dic {
 namespace Module {

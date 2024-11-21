@@ -6,13 +6,12 @@
 #include "BaselineManager.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
-#include "WsSessionManager.h"
 #include "OperatorProtocol.h"
 #include "QueryOpDetailInfoHandler.h"
 
 namespace {
     using namespace Dic::Server;
-    using DetailCmpRes = Protocol::OperatorDetailCmpInfoRes;
+    using DetailCmpRes = Dic::Protocol::OperatorDetailCmpInfoRes;
     using DetailCmpFun = std::function<bool(const DetailCmpRes&, const DetailCmpRes&)>;
     static std::unordered_map<std::string, DetailCmpFun> DetailDescCompareFunctions = {
         {"rank_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
@@ -111,7 +110,6 @@ namespace Dic::Module::Operator {
     bool QueryOpDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorDetailInfoRequest &request = dynamic_cast<OperatorDetailInfoRequest &>(*requestPtr);
-        WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &response = *responsePtr;
         bool rst = true;
@@ -123,7 +121,7 @@ namespace Dic::Module::Operator {
         }
         SetBaseResponse(request, response);
         SetResponseResult(response, rst);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), rst);
         return rst;
     }
 
@@ -145,7 +143,7 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to get baseline id.");
             return false;
         }
-        auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabase(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
         request.params.rankId = "";
         if (!databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {

@@ -11,6 +11,7 @@
 #include "TraceDatabaseDef.h"
 #include "map"
 #include "TimelineProtocolRequest.h"
+#include "DomainObject.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Module::Timeline;

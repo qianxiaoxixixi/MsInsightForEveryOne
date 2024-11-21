@@ -3,7 +3,7 @@
  */
 #include "pch.h"
 #include "AdvisorProtocolRequest.h"
-#include "ProtocolUtil.h"
+#include "ProtocolMessage.h"
 #include "AdvisorProtocolFromRequestJson.h"
 
 namespace Dic::Protocol {

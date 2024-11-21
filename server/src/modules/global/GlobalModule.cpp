@@ -12,6 +12,7 @@
 #include "SetBaselineHandler.h"
 #include "CancelBaselineHandler.h"
 #include "ClearProjectExplorerHandler.h"
+#include "ProtocolDefs.h"
 
 namespace Dic {
 namespace Module {

@@ -12,6 +12,7 @@
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
+using namespace Dic;
 
 class DbCommunicationTest : public ::testing::Test {
 public:

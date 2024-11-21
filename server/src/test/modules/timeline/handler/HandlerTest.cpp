@@ -2,13 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <gtest/gtest.h>
+#include "WsSessionImpl.h"
 #include "WsSessionManager.h"
 class HandlerTest : public ::testing::Test {
 public:
     static void SetUpTestSuite()
     {
         Dic::Server::WsChannel *ws;
-        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSession>(ws);
+        std::unique_ptr<Dic::Server::WsSessionImpl> session = std::make_unique<Dic::Server::WsSessionImpl>(ws);
         Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     }
     static void TearDownTestSuite()

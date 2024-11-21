@@ -2,7 +2,6 @@
 // * Copyright (c) Huawei Technologies Co., Ltd. 2012-2023. All rights reserved.
 //
 #include "WsSessionManager.h"
-#include "DataBaseManager.h"
 #include "TrackInfoManager.h"
 #include "TraceTime.h"
 #include "QueryThreadTracesHandler.h"

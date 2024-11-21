@@ -8,7 +8,7 @@
 #include <set>
 #include "VirtualClusterDatabase.h"
 #include "ClusterDef.h"
-#include "Protocol.h"
+#include "ProtocolMessage.h"
 #include "SummaryProtocolResponse.h"
 #include "TimelineProtocolResponse.h"
 #include "SummaryProtocolRequest.h"

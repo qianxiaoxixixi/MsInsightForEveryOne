@@ -7,6 +7,7 @@
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
 #include "QueryOpMoreInfoHandler.h"
+#include "ProtocolDefs.h"
 #include "OperatorModule.h"
 
 namespace Dic::Module {

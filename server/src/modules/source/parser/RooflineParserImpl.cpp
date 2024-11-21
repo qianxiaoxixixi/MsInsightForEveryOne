@@ -1,7 +1,8 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 
-#include "RooflineParserImpl.h"
+#include "pch.h"
 #include "SourceFileParser.h"
+#include "RooflineParserImpl.h"
 namespace Dic::Module::Source {
 using namespace Server;
 using namespace Protocol;

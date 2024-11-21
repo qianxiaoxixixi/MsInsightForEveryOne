@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 #include "pch.h"
-#include "ProtocolUtil.h"
+#include "ProtocolMessage.h"
 #include "OperatorProtocolUtil.h"
 
 namespace Dic::Protocol {

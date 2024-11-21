@@ -13,6 +13,7 @@
 #include "GlobalDefs.h"
 #include "IFileReader.h"
 #include "SystemMemoryDatabaseDef.h"
+#include "TimelineProtocolEvent.h"
 
 namespace Dic {
 namespace Module {
