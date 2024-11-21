@@ -529,12 +529,23 @@ long long FileUtil::GetFileSize(const char *fileName)
     if (strcmp(fileName, "") == 0) {
         return 0;
     }
-    try {
-        return fs::file_size(fs::u8path(fileName));
-    } catch (fs::filesystem_error& e) {
-        Server::ServerLog::Error("Get File Size Failed! path: ", fileName, ", reason: ", e.what());
-        return 0;
+#ifdef _WIN32
+    std::string tmpFilePath = FileUtil::PathPreprocess(fileName);
+    WIN32_FILE_ATTRIBUTE_DATA fileData;
+    if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
+        // 获取文件大小
+        uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
+        return fileSize;
     }
+    return 0;
+#else
+    struct stat st;
+        long long size = 0;
+        if (stat(fileName, &st) == 0) {
+            size = st.st_size;
+        }
+        return size;
+#endif
 }
 
 std::string FileUtil::GetDbPath(const std::string &filePath)
