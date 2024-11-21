@@ -4,6 +4,7 @@
 
 import { type FrameLocator, type Page, type Locator, expect } from '@playwright/test';
 import { FrameworkPage } from './framework';
+import { TableHelpers } from '../components';
 
 export class CommunicationPage {
     readonly page: Page;
@@ -43,5 +44,16 @@ export class CommunicationPage {
     async switchDurationAnalysis(communicationMatrixRadio: Locator, durationAnalysisRadio: Locator): Promise<void> {
         await communicationMatrixRadio.click();
         await durationAnalysisRadio.click();
+    }
+
+    /**
+     * 定位到表格查看详情按钮并跳转到带宽分析页
+     */
+    async toOperatorpage(page: Page, communicationFrame: FrameLocator): Promise<void> {
+        const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table').first();
+        const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
+        const td = await dataAnalysisTable.getCell(1, 12);
+        const linkBtn = td.locator('button');
+        await linkBtn.click();
     }
 }
