@@ -3,6 +3,7 @@
  */
 
 #include <unordered_map>
+#include <cstring>
 #include "FileUtil.h"
 
 namespace Dic {
@@ -152,14 +153,9 @@ bool FileUtil::CheckDirValid(const std::string &path)
     if (!CheckFilePathLength(dir)) {
         return false;
     }
- 
-    for (auto &item: INVALID_CHAR) {
-        if (dir.find(item.first) != std::string::npos) {
-            Server::ServerLog::Error("The path: % contains invalid character: %.", dir, item.second);
+    if (CheckPathInvalidChar(dir)) {
             return false;
-        }
     }
- 
     if (!CheckDirAccess(dir, 0)) {
         Server::ServerLog::Error("The directory path not exists. path: %.", dir);
         return false;
@@ -468,6 +464,34 @@ std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int
     return matchedFiles;
 }
 
+std::ifstream FileUtil::OpenWriteFileSafely(const std::string &path, std::ios::openmode mode)
+{
+    return OpenFileStreamSafely(path, mode | std::ios::out);
+}
+
+std::ifstream FileUtil::OpenFileStreamSafely(const std::string &path, std::ios::openmode mode)
+{
+    std::ifstream res;
+    res.setstate(std::ifstream::badbit);
+    std::string tmpPath = PathPreprocess(path);
+    tmpPath = GetAbsPath(tmpPath);
+    std::string filePath = tmpPath;
+    if ((mode & std::ios::out) != 0 && !fs::exists(filePath)) {
+        filePath = fs::path(tmpPath).parent_path().string();
+    }
+    // 读取文件和写入文件校验不同
+    if (!CheckPathBasic(filePath, (mode & std::ios::out) == 0 ? fs::perms::owner_read : fs::perms::owner_write)) {
+        return res;
+    }
+    if ((mode & std::ios::in) != 0) {
+        if (!CheckFileSize(filePath)) {
+            return res;
+        }
+    }
+    res.open(tmpPath, mode);
+    return res;
+}
+
 bool FileUtil::CheckFileSize(const std::string &filePath)
 {
     constexpr size_t fileMinSize = 0;
@@ -574,5 +598,115 @@ std::string FileUtil::GetDbPath(const std::string &filePath)
 
     return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
 }
+bool FileUtil::CheckPathInvalidChar(const std::string &filePath)
+{
+    for (auto &item : INVALID_CHAR) {
+        if (filePath.find(item.first) != std::string::npos) {
+            Server::ServerLog::Error("The path: % contains invalid character: %.", filePath, item.second);
+            return true;
+        }
+    }
+    return false;
+}
+bool FileUtil::CheckPathBasic(const std::string &filePath, fs::perms permission)
+{
+    if (filePath.empty()) {
+        Server::ServerLog::Error("The path is empty. ");
+        return false;
+    }
+    std::string absPath = GetAbsPath(filePath);
+    if (absPath.empty()) {
+        Server::ServerLog::Error("Failed to retrieve the absolute path.");
+        return false;
+    }
+    if (!CheckFilePathLength(absPath)) {
+        return false;
+    }
+    if (CheckPathInvalidChar(absPath)) {
+        return false;
+    }
+    if (!fs::exists(absPath)) {
+        return false;
+    }
+    if (IsSoftLink(absPath)) {
+        return false;
+    }
+    if (!CheckPathOwner(absPath)) {
+        return false;
+    }
+    if (!fs::is_directory(absPath) && !IsRegularFile(absPath)) {
+        return false;
+    }
+    if (permission != fs::perms::none) {
+        return CheckPathPermission(absPath, permission);
+    }
+    return true;
+}
 
+bool FileUtil::CheckPathOwner(const std::string &filePath)
+{
+#ifdef _WIN32
+    PSECURITY_DESCRIPTOR pSD = nullptr;
+    PSID pOwner = nullptr;
+    if (GetNamedSecurityInfoA(filePath.c_str(), SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION, &pOwner, nullptr, nullptr,
+                              nullptr, &pSD) != ERROR_SUCCESS) {
+        Server::ServerLog::Warn("Get file owner failed");
+        return false;
+    }
+    HANDLE tokenHandle;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &tokenHandle)) {
+        Server::ServerLog::Warn("Get current owner failed");
+        return false;
+    }
+    DWORD tokenInfoLength = 0;
+    GetTokenInformation(tokenHandle, TokenUser, nullptr, 0, &tokenInfoLength);
+    TOKEN_USER *tokenUser = (TOKEN_USER *) malloc(tokenInfoLength);
+    if (!GetTokenInformation(tokenHandle, TokenUser, tokenUser, tokenInfoLength, &tokenInfoLength)) {
+        free(tokenUser);
+        CloseHandle(tokenHandle);
+        if (pSD) {
+            LocalFree(pSD);
+        }
+        return false;
+    }
+    bool isOwner = EqualSid(pOwner, tokenUser->User.Sid);
+    free(tokenUser);
+    CloseHandle(tokenHandle);
+    if (pSD) {
+        LocalFree(pSD);
+    }
+    return isOwner;
+#else
+    struct stat fileStat{};
+    if (stat(filePath.c_str(), &fileStat) != 0) {
+        Server::ServerLog::Warn("Get file info failed when check owner");
+        return false;
+    }
+    uid_t fileOwner = fileStat.st_uid;
+    uid_t currentUser = geteuid();
+    return fileOwner == currentUser;
+#endif
+}
+
+bool FileUtil::CheckPathPermission(const std::string &filePath, fs::perms permission)
+{
+    if (filePath.empty()) {
+        return false;
+    }
+    if (!fs::exists(filePath)) {
+        return false;
+    }
+    try {
+        auto perms = fs::status(filePath).permissions();
+        if ((perms & permission) != fs::perms::none) {
+            return true;
+        } else {
+            Server::ServerLog::Error("File permission check failed");
+            return false;
+        }
+    } catch (const fs::filesystem_error &e) {
+        Server::ServerLog::Error("Get file permission failed, error:", e.what());
+        return false;
+    }
+}
 } // Dic
