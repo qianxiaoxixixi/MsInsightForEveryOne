@@ -8,6 +8,7 @@
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
     {"Python", PROCESS_TYPE::API},
+    {"MindSpore", PROCESS_TYPE::API},
     {"CANN", PROCESS_TYPE::CANN_API},
     {"Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE},
     {"HCCL", PROCESS_TYPE::HCCL},
