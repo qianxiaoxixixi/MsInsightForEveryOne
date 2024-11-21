@@ -2,8 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "TimelineRequestHandler.h"
-#include "WsSession.h"
-#include "WsSessionManager.h"
 #include "ModuleRequestHandler.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
@@ -21,15 +19,13 @@ ParserBin::~ParserBin() {}
 
 void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     if (std::empty(projectInfos)) {
         SendParseFailEvent("", "Project explorer info is not existed.");
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
-        responsePtr->result = true;
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
         return;
     }
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
@@ -48,15 +44,14 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
         ServerLog::Info("Import file is binary.Start parse source binary file.");
         Source::SourceFileParser::Instance().SetFilePath(selectedFolder);
         HandleCompute(response, selectedFolder);
-        TraceTime::Instance().SetIsSimulation(true);
+        Timeline::TraceTime::Instance().SetIsSimulation(true);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
         SetParseCallBack(Source::SourceFileParser::Instance());
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
     } else {
         SendParseFailEvent("", "Import file is invalid,path :" + selectedFolder);
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
-        responsePtr->result = true;
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
     }
 }
 
@@ -135,7 +130,7 @@ void ParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &p
     baselineInfo.rankId = fileId;
     baselineInfo.cardName = "baseline" + fileId;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    if (!DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath)) {
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath)) {
         ServerLog::Error("Fail to create connection pool, fileId:", fileId, ", path:", dbPath, '.');
         return;
     }

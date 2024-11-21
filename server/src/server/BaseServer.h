@@ -6,7 +6,7 @@
 #define DATA_INSIGHT_CORE_BASE_SERVER_H
 
 #include <string>
-#include "WsSession.h"
+#include "WsSessionImpl.h"
 
 namespace Dic {
 namespace Server {

@@ -7,6 +7,9 @@
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
 class DbTraceDatabaseTest : public ::testing::Test {};
+namespace Dic::Protocol {
+    using namespace Dic::Module::Timeline;
+}
 
 /**
  * RANK_DEVICE_MAP表和NPU_INFO都不存在的情况

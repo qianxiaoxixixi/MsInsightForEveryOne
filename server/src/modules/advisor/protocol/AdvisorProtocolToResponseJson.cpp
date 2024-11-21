@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
+#include "ProtocolMessage.h"
 #include "JsonUtil.h"
 #include "AdvisorProtocolToResponseJson.h"
 

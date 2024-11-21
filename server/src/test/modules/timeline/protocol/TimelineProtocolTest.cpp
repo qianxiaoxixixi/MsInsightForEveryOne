@@ -26,6 +26,8 @@ TEST_F(ProtocolTest, ToImportActionRequestTest)
     Dic::json_t path(Dic::kArrayType);
     path.PushBack("kkkkkk", allocator);
     Dic::JsonUtil::AddMember(params, "path", path, allocator);
+    Dic::JsonUtil::AddMember(params, "projectAction", 0, allocator);
+    Dic::JsonUtil::AddMember(params, "isConflict", false, allocator);
     Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
     Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
     Dic::JsonUtil::AddMember(json, "params", params, allocator);

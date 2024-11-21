@@ -3,6 +3,7 @@
  */
 #include <unordered_map>
 #include <algorithm>
+#include "ParamsParser.h"
 #include "pch.h"
 #include "SystemMemoryDatabase.h"
 #include "SystemMemoryDatabaseDef.h"
@@ -125,6 +126,7 @@ bool ProjectExplorerManager::SaveProjectExplorerToDb(const std::string &projectN
 bool ProjectExplorerManager::InitSystemMemoryDb()
 {
     if (!db) {
+        InitSystemMemoryDbPath(Server::ParamsParser::Instance().GetOption().logPath);
         db = std::make_unique<SystemMemoryDatabase>(mutex);
     }
     // 如果db已经打开，则直接返回

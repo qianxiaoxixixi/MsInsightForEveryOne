@@ -4,7 +4,7 @@
 
 #ifndef PROFILER_SERVER_MEMORY_DATABASE_H
 #define PROFILER_SERVER_MEMORY_DATABASE_H
-#include "Protocol.h"
+#include "ProtocolMessage.h"
 #include "VirtualMemoryDataBase.h"
 #include "MemoryProtocolRespose.h"
 #include "MemoryProtocolRequest.h"

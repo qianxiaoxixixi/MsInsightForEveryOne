@@ -24,7 +24,6 @@ ParserDb::~ParserDb() {}
 void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::string path = projectInfos[0].fileName;
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -43,14 +42,13 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     SetHostInfo(hostInfoMap, response);
     response.body.subdirectoryList = reportFiles;
     SetParseCallBack();
-    ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
     response.body.isCluster = static_cast<ProjectTypeEnum>(projectInfos[0].projectType) == ProjectTypeEnum::DB_CLUSTER;
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     for (const auto &hostInfo : hostInfoMap) {
         for (const auto &ranks : hostInfo.second) {
             if (isPending) {
@@ -121,16 +119,11 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
     }
     // send event
     ServerLog::Info("Parse cluster file end, send event");
-    WsSession *session = WsSessionManager::Instance().GetSession();
-    if (session == nullptr) {
-        ServerLog::Warn("Failed to get session");
-        return;
-    }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(parseClusterResult);
-    session->OnEvent(std::move(event));
+    SendEvent(std::move(event));
 }
 
 std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)

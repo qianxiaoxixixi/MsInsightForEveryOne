@@ -6,7 +6,6 @@
 #define PROFILER_SERVER_TIMELINE_PROTOCOL_UTIL_H
 
 #include <optional>
-#include "GlobalDefs.h"
 #include "TimelineProtocolResponse.h"
 #include "TimelineProtocolEvent.h"
 

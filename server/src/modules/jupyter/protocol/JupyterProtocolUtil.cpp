@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
-#include "ProtocolEnumUtil.h"
 #include "JupyterProtocol.h"
 #include "JupyterProtocolUtil.h"
 

@@ -12,9 +12,7 @@
 #include <mutex>
 #include <optional>
 #include <memory>
-#include "GlobalDefs.h"
 #include "ProtocolMessage.h"
-#include "ProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {

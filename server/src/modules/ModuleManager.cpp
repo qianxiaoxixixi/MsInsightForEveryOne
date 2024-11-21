@@ -1,17 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
-#include "pch.h"
-#include "GlobalModule.h"
-#include "TimelineModule.h"
-#include "SummaryModule.h"
-#include "MemoryModule.h"
-#include "CommunicationModule.h"
-#include "OperatorModule.h"
-#include "SourceModule.h"
-#include "AdvisorModule.h"
-#include "JupyterModule.h"
+#include "ServerLog.h"
 #include "WsSessionManager.h"
+#include "PluginsManager.h"
 #include "ModuleManager.h"
 
 namespace Dic {
@@ -37,33 +29,14 @@ void ModuleManager::Register()
 {
     std::unique_lock<std::mutex> lock(mutex);
     moduleMap.clear();
-    std::unique_ptr<GlobalModule> global = std::make_unique<GlobalModule>();
-    std::unique_ptr<TimelineModule> timelineModule = std::make_unique<TimelineModule>();
-    std::unique_ptr<SummaryModule> summaryModule = std::make_unique<SummaryModule>();
-    std::unique_ptr<MemoryModule> memoryModule = std::make_unique<MemoryModule>();
-    std::unique_ptr<CommunicationModule> communicationModule = std::make_unique<CommunicationModule>();
-    std::unique_ptr<OperatorModule> operatorModule = std::make_unique<OperatorModule>();
-    std::unique_ptr<SourceModule> sourceModule = std::make_unique<SourceModule>();
-    std::unique_ptr<AdvisorModule> advisorModule = std::make_unique<AdvisorModule>();
-    std::unique_ptr<JupyterModule> jupyterModule = std::make_unique<JupyterModule>();
-    global->RegisterRequestHandlers();
-    timelineModule->RegisterRequestHandlers();
-    memoryModule->RegisterRequestHandlers();
-    summaryModule->RegisterRequestHandlers();
-    communicationModule->RegisterRequestHandlers();
-    operatorModule->RegisterRequestHandlers();
-    sourceModule->RegisterRequestHandlers();
-    advisorModule->RegisterRequestHandlers();
-    jupyterModule->RegisterRequestHandlers();
-    moduleMap.emplace(MODULE_GLOBAL, std::move(global));
-    moduleMap.emplace(MODULE_TIMELINE, std::move(timelineModule));
-    moduleMap.emplace(MODULE_SUMMARY, std::move(summaryModule));
-    moduleMap.emplace(MODULE_MEMORY, std::move(memoryModule));
-    moduleMap.emplace(MODULE_COMMUNICATION, std::move(communicationModule));
-    moduleMap.emplace(MODULE_OPERATOR, std::move(operatorModule));
-    moduleMap.emplace(MODULE_SOURCE, std::move(sourceModule));
-    moduleMap.emplace(MODULE_ADVISOR, std::move(advisorModule));
-    moduleMap.emplace(MODULE_JUPYTER, std::move(jupyterModule));
+    auto& manager = Core::PluginsManager::Instance();
+    for (const auto &[moduleName, plugin]: manager.GetAllPlugins()) {
+        auto module = plugin->GetModule();
+        if (module != nullptr) {
+            module->RegisterRequestHandlers();
+            moduleMap.emplace(moduleName, std::move(module));
+        }
+    }
 }
 
 void ModuleManager::UnRegister()

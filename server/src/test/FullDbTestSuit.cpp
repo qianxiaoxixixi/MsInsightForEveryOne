@@ -11,11 +11,13 @@
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "ParserFactory.h"
-#include "modules/full_db/Mock/MockSession.h"
+#include "WsSessionManager.h"
+#include "WsSessionImpl.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
 using namespace Dic::Module;
+using namespace Dic;
 
 class FullDbTestSuit : public ::testing::Test {
 public:
@@ -25,7 +27,7 @@ public:
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
-        std::unique_ptr<MockSession> session = std::make_unique<MockSession>();
+        std::unique_ptr<Dic::Server::WsSession> session = std::make_unique<Dic::Server::WsSessionImpl>(nullptr);
         WsSessionManager::Instance().AddSession(std::move(session));
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
@@ -64,13 +66,7 @@ public:
 
     static void TearDownTestSuite()
     {
-        auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
-        for (auto &conn : connList) {
-            conn->Stop();
-        }
-        Timeline::DataBaseManager::Instance().Clear();
-        Timeline::TraceTime::Instance().Reset();
-        Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
+        FullDbParser::Instance().Reset();
         auto session = Dic::Server::WsSessionManager::Instance().GetSession();
         if (session != nullptr) {
             session->SetStatus(Dic::Server::WsSession::Status::CLOSED);

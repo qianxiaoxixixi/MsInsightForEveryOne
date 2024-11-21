@@ -22,7 +22,7 @@ bool QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     SetBaseResponse(request, response);
     if (auto [isVaild, errMsg] = request.params.Vaild(); isVaild == false) {
         ServerLog::Error("Parameter of command ", request.command, "is invaild, error:", errMsg);
-        SetResponseResult(response, false, errMsg, ErrorCode::REQUEST_PARAMS_ERROR);
+        SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
         session.OnResponse(std::move(responsePtr));
         return false;
     }

@@ -3,6 +3,7 @@
  */
 #ifndef PROFILER_SERVER_PARSERJSON_MOCK_DATA_H
 #define PROFILER_SERVER_PARSERJSON_MOCK_DATA_H
+#include "FileDef.h"
 namespace Dic::Module::ParserJsonMock {
 int64_t CheckParseFileInfoSizeWhenOneFileIs20GThenReturnFalseMock(const std::string &filePath)
 {

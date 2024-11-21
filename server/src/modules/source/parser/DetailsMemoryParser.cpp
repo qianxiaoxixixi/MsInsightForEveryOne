@@ -2,11 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "DetailsMemoryParser.h"
+#include "unordered_map"
+#include "unordered_set"
 #include "SourceProtocolResponse.h"
 #include "SourceProtocol.h"
 #include "BinFileParseUtil.h"
+#include "JsonUtil.h"
 #include "SafeFile.h"
+#include "DetailsMemoryParser.h"
 
 namespace Dic::Module::Source {
 using namespace Dic;

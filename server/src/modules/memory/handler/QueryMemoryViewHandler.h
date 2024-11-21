@@ -5,7 +5,6 @@
 #ifndef PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H
 #define PROFILER_SERVER_QUERY_MEMORY_VIEW_HANDLER_H
 
-#include "WsSession.h"
 #include "MemoryRequestHandler.h"
 #include "MemoryProtocolRespose.h"
 

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include "pch.h"
 #include "SourceProtocolResponse.h"
 
 namespace Dic {

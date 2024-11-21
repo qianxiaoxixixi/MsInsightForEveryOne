@@ -6,6 +6,8 @@
 #define PROFILER_SERVER_MEMORY_REQUEST_HANDLER_H
 
 #include "ModuleRequestHandler.h"
+#include "ProtocolDefs.h"
+#include "NumberUtil.h"
 
 namespace Dic {
 namespace Module {

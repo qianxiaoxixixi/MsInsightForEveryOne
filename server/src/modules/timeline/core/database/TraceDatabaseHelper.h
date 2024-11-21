@@ -9,7 +9,7 @@
 #include "SqlitePreparedStatement.h"
 #include "VirtualTraceDatabase.h"
 #include "NumberUtil.h"
-#include "ProtocolEnumUtil.h"
+#include "FullDbEnumUtil.h"
 #include "CommonDefs.h"
 #include "DbSqlDefs.h"
 #include "JsonUtil.h"

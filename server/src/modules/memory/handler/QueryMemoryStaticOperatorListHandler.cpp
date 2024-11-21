@@ -16,7 +16,6 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
 {
     MemoryStaticOperatorListRequest &request =
             dynamic_cast<MemoryStaticOperatorListRequest &>(*requestPtr.get());
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
             std::make_unique<MemoryStaticOperatorListCompResponse>();
     MemoryStaticOperatorListCompResponse &response = *responsePtr.get();
@@ -44,7 +43,7 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
             return false;
         }
-        auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;

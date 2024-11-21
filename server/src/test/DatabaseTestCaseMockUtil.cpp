@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
+#include <iostream>
 #include <sqlite3.h>
 #include <string>
 namespace Dic::Global::PROFILER::MockUtil {
