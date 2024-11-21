@@ -59,7 +59,9 @@ list(APPEND DIC_PERFORMANCE_TEST_LIST
 
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
         FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp modules/timeline/protocol/ProtocolTest.cpp
-        modules/timeline/database/DatabaseTest.cpp)
+        modules/timeline/database/DatabaseTest.cpp
+        ../utils/NumberSafeUtil.h
+        utils/NumberSafeUtilTest.cpp)
 add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
 target_link_libraries(insight_test msinsight)
 target_link_libraries(insight_performance msinsight)

@@ -7,7 +7,9 @@
 
 #include <string>
 #include <unordered_map>
+#include <stdint.h>
 #include "sqlite3.h"
+
 
 namespace Dic {
 namespace Module {

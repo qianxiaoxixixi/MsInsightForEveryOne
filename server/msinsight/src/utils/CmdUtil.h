@@ -7,10 +7,19 @@
 
 #include <string>
 #include "ServerLog.h"
+#include "FileUtil.h"
+#include "StringUtil.h"
 
 namespace Dic {
 class CmdUtil {
 public:
+    CmdUtil() = default;
+
+    CmdUtil(std::string execPath)
+    {
+        this->Command(std::move(execPath));
+    }
+
     static inline bool ExecuteCmdWithResult(const std::string &cmd, std::string &result)
     {
         FILE *pipe = popen(cmd.c_str(), "r");
@@ -33,8 +42,54 @@ public:
         }
     }
 
+    CmdUtil &Command(std::string exec)
+    {
+        if (exec.empty()) {
+            badFlag = true;
+            return *this;
+        }
+        if (!FileUtil::CheckDirValid(exec) || !StringUtil::ValidateCommandFilePathParam(exec)) {
+            Server::ServerLog::Error("Cmd not valid");
+            badFlag = true;
+            return *this;
+        }
+        if (!FileUtil::CheckPathPermission(exec, fs::perms::owner_exec)) {
+            Server::ServerLog::Error("Cmd not have execute permission");
+            badFlag = true;
+            return *this;
+        }
+        this->exec = std::move(exec);
+        return *this;
+    }
+
+    CmdUtil &Args(std::string arg)
+    {
+        if (arg.empty()) {
+            return *this;
+        }
+        // 检查args中是否包含非法字符
+        if (!StringUtil::ValidateStringParam(arg)) {
+            return *this;
+        }
+        args.emplace_back(std::move(arg));
+        return *this;
+    }
+
+    bool ExecuteWithResult(std::string &result)
+    {
+        // 组装请求
+        if (badFlag) {
+            return false;
+        }
+        std::string command = exec + " " + StringUtil::join(args, " ");
+        return ExecuteCmdWithResult(command, result);
+    }
+
 private:
     static const int bufferSize = 100;
+    std::string exec;
+    std::vector<std::string> args;
+    bool badFlag{false};
 };
 }
 #endif // PROFILER_SERVER_CMDUTIL_H

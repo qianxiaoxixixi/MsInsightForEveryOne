@@ -7,6 +7,7 @@
 
 #include <string>
 #include <list>
+#include <stdint.h>
 
 namespace Dic {
 static const std::string FINISH_STATUS = "FINISH";
