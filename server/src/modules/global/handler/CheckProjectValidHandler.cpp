@@ -91,12 +91,7 @@ bool Dic::Module::CheckProjectValidHandler::CheckProjectFile(ProjectCheckParams 
 
 bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePath)
 {
-    try {
-        if (fs::file_size(filePath) > FILE_MAX_SIZE[filePath.extension().string()]) {
-            return false;
-        }
-    } catch (fs::filesystem_error& e) {
-        ServerLog::Error("Get File Size Failed! path: ", filePath.string(), ", reason: ", e.what());
+    if (FileUtil::GetFileSize(filePath.u8string().c_str()) > FILE_MAX_SIZE[filePath.extension().string()]) {
         return false;
     }
     return true;

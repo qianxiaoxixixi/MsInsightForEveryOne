@@ -19,7 +19,8 @@ import zipfile
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 WORKSPACE_PATH = os.getenv("OCTOPUS_WORKSPACE")
-PLUGIN_INSTALL_TMP_PATH = os.path.join(WORKSPACE_PATH, "PluginInstallCache")
+if WORKSPACE_PATH is not None:
+    PLUGIN_INSTALL_TMP_PATH = os.path.join(WORKSPACE_PATH, "PluginInstallCache")
 
 
 class Const:
