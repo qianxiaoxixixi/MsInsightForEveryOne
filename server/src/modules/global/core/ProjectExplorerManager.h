@@ -41,6 +41,7 @@ private:
     bool InitSystemMemoryDb();
     bool SaveProjectExplorerToDb(const std::string &projectName,
                                  std::vector<ProjectExplorerInfo> &projectExplorerInfos);
+    std::string eventDir;
 };
 }
 }
