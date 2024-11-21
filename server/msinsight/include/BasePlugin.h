@@ -1,6 +1,7 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 #ifndef MSINSIGHT_BASEPLUGIN_H
 #define MSINSIGHT_BASEPLUGIN_H
+#include <vector>
 #include "BaseModule.h"
 #include "ProtocolUtil.h"
 #include "ApiHandler.h"

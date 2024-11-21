@@ -39,6 +39,7 @@ protected:
     void AddPostHandler(const std::string& key, std::shared_ptr<Core::ApiHandler> handler);
     void AddGetHandler(const std::string& key, std::shared_ptr<Core::ApiHandler> handler);
 
+    static void PreLoadEventDir();
     std::unique_ptr<uWS::App> wsApp = nullptr;
     volatile bool listenStart = false;
     std::unique_ptr<std::thread> listenThreadPtr;

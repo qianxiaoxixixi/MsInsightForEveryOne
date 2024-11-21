@@ -7,7 +7,10 @@
 #include "WsSessionManager.h"
 #include "WsDefs.h"
 #include "PluginsManager.h"
+#include "ParamsParser.h"
+#include "ProjectExplorerManager.h"
 #include "WsServer.h"
+
 
 namespace Dic {
 namespace Server {
@@ -17,6 +20,7 @@ bool WsServer::Start()
 {
     listenStart = false;
     Dic::Core::PluginsManager::LoadPlugins();
+    PreLoadEventDir();
     listenThreadPtr = std::make_unique<std::thread>(WsServer::ListenThreadFunc, std::ref(*this));
     if (listenThreadPtr == nullptr) {
         return false;
@@ -205,6 +209,30 @@ void WsServer::AddPostHandler(const std::string& key, std::shared_ptr<Core::ApiH
             }
         });
     });
+}
+
+void WsServer::PreLoadEventDir()
+{
+    const auto& opt = ParamsParser::Instance().GetOption();
+    std::string eventDir = opt.eventDir;
+    if (eventDir.empty()) {
+        return;
+    }
+    if (!FileUtil::IsFolder(eventDir) ||  !FileUtil::CheckDirValid(eventDir)) {
+        return;
+    }
+    std::vector<Dic::Module::Global::ProjectExplorerInfo> projectExplorerInfos;
+    Dic::Module::Global::ProjectExplorerInfo projectExplorerInfo;
+    projectExplorerInfo.fileName = eventDir;
+    projectExplorerInfo.projectName = eventDir;
+    projectExplorerInfo.projectType = 0;
+    projectExplorerInfo.importType = "import";
+    Dic::Module::Global::ParseFileInfo fileInfo;
+    fileInfo.dbPath = "";
+    fileInfo.parseFilePath = eventDir;
+    projectExplorerInfo.parseFilePathInfos.emplace_back(fileInfo);
+    projectExplorerInfos.emplace_back(std::move(projectExplorerInfo));
+    Dic::Module::Global::ProjectExplorerManager::Instance().SaveProjectExplorer(projectExplorerInfos, false);
 }
 } // end of namespace Server
 } // end of namespace Dic
