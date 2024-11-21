@@ -55,14 +55,14 @@ const BreadcrumbBox = styled.div`
 const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
     const { t } = useTranslation('communication');
     return (
-        <FixedBox>
+        <FixedBox data-testid={'operators'}>
             <BreadcrumbBox>
                 <div className={'btn-back'} onClick={returnHome}>
                     <ArrowLeftOutlined />
                     <div>{t('Back')}</div>
                 </div>
                 <div className="delimiter">|</div>
-                <div>{operatorName}(RankId {rankId})</div>
+                <div data-testid={'operatorRankId'}>{operatorName}(RankId {rankId})</div>
             </BreadcrumbBox>
             <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage}/>
         </FixedBox>
