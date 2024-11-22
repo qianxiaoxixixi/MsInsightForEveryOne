@@ -189,7 +189,7 @@ export class ServerConnector extends BaseConnector {
         this._getInterceptorHandlers = getInterceptorHandlers;
     }
 
-    resigsterAwaitFetch(callback: Response): void {
+    registerAwaitFetch(callback: Response): void {
         this._responseForFetch = callback;
     }
 

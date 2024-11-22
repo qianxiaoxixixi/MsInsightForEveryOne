@@ -1,0 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+/*弹窗对话框*/
+.ant-modal-footer{
+  text-align: center;
+  padding: 0px 16px 24px;
+}
