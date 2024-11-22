@@ -10,6 +10,7 @@ import shutil
 import stat
 import tarfile
 import urllib.request
+import subprocess
 
 from build import init_log
 
@@ -55,6 +56,16 @@ def log(info):
     LOG.info(BUILD_TITLE + info)
 
 
+def exec_command(command, path):
+    process = subprocess.Popen(command, cwd=path, stdout=subprocess.PIPE)
+    for line in iter(process.stdout.readline, b''):
+        log(line.decode('utf-8').strip())
+    process.communicate(timeout=600)
+    if process.returncode != 0:
+        log('Failed to execute '.join(command))
+    return process.returncode
+
+
 def prepare_sqlite_src():
     log('start to prepare sqlite src')
     if platform.system() == "Windows":
@@ -72,9 +83,13 @@ def prepare_sqlite_src():
         os.mkdir(build_path)
         config_cmd = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR, 'configure')
         os.chmod(config_cmd, stat.S_IXUSR | stat.S_IRUSR)
-        ret = os.system("cd " + build_path + " && ../configure && make sqlite3.c")
+        os.chdir(build_path)
+        ret = exec_command(["../configure"], build_path)
         if ret != 0:
-            LOG.error('Failed to make sqlite3.c ')
+            LOG.error('Failed to configure parameter for sqlite')
+        ret = exec_command(["make", "sqlite3.c"], build_path)
+        if ret != 0:
+            LOG.error('Failed to make sqlite3.c')
 
     log('finish to prepare sqlite3 src')
 
