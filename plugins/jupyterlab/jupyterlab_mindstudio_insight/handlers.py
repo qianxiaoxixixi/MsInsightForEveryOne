@@ -18,7 +18,7 @@ class RouteHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
         self.finish(json.dumps({
-            "data": "This is /jupyterlab-mindstudio-insight/get_example endpoint!"
+            "data": "This is jupyterlab-mindstudio-insight get_example endpoint!"
         }))
 
 
