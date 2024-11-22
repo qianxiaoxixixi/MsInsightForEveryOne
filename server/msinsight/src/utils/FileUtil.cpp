@@ -517,11 +517,16 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
     // 获取文件大小
     struct stat fileStat;
     if (stat(filePath.c_str(), &fileStat) == 0) {
-        if (fileStat.st_size <= fileMinSize) {
+        if (fileStat.st_size < 0) {
+            Server::ServerLog::Error("Size of this file is smaller than 0.");
+            return false;
+        }
+        size_t fileSize = static_cast<size_t>(fileStat.st_size);
+        if (fileSize <= fileMinSize) {
             Server::ServerLog::Error("This file % is an empty file.", filePath);
             return false;
         }
-        if (fileStat.st_size > fileMaxSize) {
+        if (fileSize > fileMaxSize) {
             Server::ServerLog::Error("The size limit for the file located at % has been exceeded.",
                                      filePath);
             return false;
