@@ -40,9 +40,9 @@ const App = observer(() => {
 
     useEffect(() => {
         if (currentTheme === 'dark') {
-            document.documentElement.classList.add('dark');
+            document.documentElement.getElementsByTagName('body')[0]?.classList.add('theme_dark');
         } else {
-            document.documentElement.classList.remove('dark');
+            document.documentElement.getElementsByTagName('body')[0]?.classList.remove('theme_dark');
         }
     }, [currentTheme]);
 

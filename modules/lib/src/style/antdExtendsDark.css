@@ -58,3 +58,18 @@
  .theme_dark .ant-progress .ant-progress-text {
     color: #40a9ff;
  }
+
+/*弹窗对话框*/
+.ant-modal-content{
+    background: var(--mi-bg-color);
+    color: var(--mi-text-color-primary);
+}
+.ant-modal-header{
+    background: none;
+}
+.ant-modal-title{
+    color: var(--mi-text-color-primary);
+}
+.ant-modal-close{
+    color: var(--mi-text-color-primary);
+}

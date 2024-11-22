@@ -88,7 +88,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
             addDataPath(dataSource, action, false);
             // 校验告警
         } else {
-            console.log(validRes);
+            console.error(validRes);
         }
         handleOk();
     };

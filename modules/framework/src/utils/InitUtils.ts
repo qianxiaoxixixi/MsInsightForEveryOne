@@ -7,19 +7,19 @@ import { request } from '@/centralServer/server';
 
 type ListenerCallback = (res: MessageEvent) => void;
 
-const listenterMap: Record<string, ListenerCallback> = {};
+const listenerMap: Record<string, ListenerCallback> = {};
 function registerEventListeners(): void {
     const session = store.sessionStore.activeSession;
     if (!session) {
         return;
     }
 
-    connector.resigsterAwaitFetch(async (e) => {
+    connector.registerAwaitFetch(async (e) => {
         const { remote, args, module, voidResponse } = e.data;
         const result = await request(remote, module, args, voidResponse);
         return { dataSource: remote, body: result };
     });
-    Object.entries(listenterMap).forEach(([event, callback]) => {
+    Object.entries(listenerMap).forEach(([event, callback]) => {
         connector.addListener(event, callback);
     });
 }
