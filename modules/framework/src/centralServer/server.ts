@@ -8,7 +8,7 @@ import { ProjectAction } from '@/utils/enum';
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
 const getConnectionMapKey = (dataSource: DataSource): string => {
-    return `${dataSource.remote}:${dataSource.port}`;
+    return `${dataSource?.remote}:${dataSource?.port}`;
 };
 
 export const connectRemote = async function (dataSource: DataSource): Promise<boolean> {

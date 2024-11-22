@@ -53,7 +53,7 @@ export const updateTreeData = (list: TreeDataNode[], key: React.Key, children: T
 
 // 文件/文件夹是否存在
 export const fileExist = async (path: string): Promise<boolean> => {
-    if (path === undefined) {
+    if (path == null || path === undefined || path === '') {
         return false;
     }
     const result = await getFiles(path) as ResourceItem;
