@@ -333,7 +333,6 @@ static bool CheckSqlValid(const std::string& input)
     std::string pattern = "[a-zA-Z0-9_-]";
     std::regex regex(pattern);
     // 该方法用于处理SQL参数，当前只验证字母数字下划线中划线，后续可以兼容扩展
-    std::string result;
     for (char c : input) {
         if (!std::regex_match(std::string(1, c), regex)) {
             return false;

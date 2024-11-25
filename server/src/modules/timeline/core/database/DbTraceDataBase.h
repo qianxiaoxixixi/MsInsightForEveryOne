@@ -183,6 +183,9 @@ private:
 
     void ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process, std::unique_ptr<SqliteResultSet> &resultSet,
                            std::unique_ptr<Protocol::UnitTrack> &thread, const std::string &threadId) const;
+    bool ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
+        const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
+        uint64_t minTimestamp);
 };
 }
 

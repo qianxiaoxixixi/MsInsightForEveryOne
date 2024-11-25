@@ -1240,7 +1240,10 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
     }
-    std::string searchName = "%" + requestParams.searchName + "%";
+    for (const auto& filter : requestParams.filters) {
+        std::string bindFilter = "%" + filter.second + "%";
+        stmt->BindParams(bindFilter);
+    }
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("Query kernel detail data. Failed to get result set.", stmt->GetErrorMessage());
