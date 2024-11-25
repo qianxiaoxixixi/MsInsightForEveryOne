@@ -437,6 +437,20 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByStreamExpectSeveral)
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
+TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByComponentExpectSeveral)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_COMPONENT_GROUP;
+    Dic::Protocol::MemoryViewData responseBody;
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    auto result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
+    EXPECT_EQ(result, true);
+    int expectSize = 8401;
+    EXPECT_EQ(responseBody.lines.size(), expectSize);
+}
+
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorSizeData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");

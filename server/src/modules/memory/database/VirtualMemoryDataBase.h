@@ -59,6 +59,16 @@ protected:
         "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
     };
 
+    const std::vector<std::string> componentTimeLegends = {
+        "Time (ms)"
+    };
+    const std::vector<std::string> componentPtaLegends = {
+        "PTA Allocated", "PTA Activated", "PTA Reserved"
+    };
+    const std::vector<std::string> componentGeLegends = {
+        "GE Allocated", "GE Activated", "GE Reserved"
+    };
+
     const std::vector<std::string> staticGraphLegends = {
         "Node Index", "Size", "Total Size"
     };
@@ -153,6 +163,12 @@ private:
         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
         const std::vector<std::string> &streams);
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
+    void GetComponentLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
+    void GetComponentLinesLegends(const componentDtoVector &componentDtoVec,
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
+    void InsertSize(std::vector<std::string> &points, const Protocol::ComponentDto &item);
+    void InsertStringNull(std::vector<std::string> &points, const int times);
     void GetStreamLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
                         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                         const std::vector<std::string> &streams);

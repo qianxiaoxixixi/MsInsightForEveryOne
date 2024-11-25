@@ -573,6 +573,20 @@ TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectSeveral)
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
+TEST_F(TestSuit, QueryMemoryViewDataByComponentExpectSeveral)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::MemoryViewParams requestParams;
+    requestParams.rankId = "1";
+    requestParams.type = Protocol::MEMORY_COMPONENT_GROUP;
+    Dic::Protocol::MemoryViewData responseBody;
+    uint64_t offsetTime = 0;
+    bool result = database->QueryMemoryView(requestParams, responseBody, offsetTime);
+    int expectSize = 29;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(responseBody.lines.size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryOperatorSizeData)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");

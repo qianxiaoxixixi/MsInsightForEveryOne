@@ -7,6 +7,7 @@
 #include "MemoryProtocolRequest.h"
 #include "MemoryProtocol.h"
 
+using namespace Dic;
 using namespace Dic::Protocol;
 class MemoryProtocolTest : public ::testing::Test {
 protected:
@@ -19,10 +20,170 @@ protected:
     {
         memoryProtocol.UnRegister();
     }
+
+    void CheckResponseBaseStruct(const std::optional<document_t> &jsonOptional)
+    {
+        ASSERT_TRUE(jsonOptional.has_value());
+        ASSERT_TRUE(jsonOptional.value().HasMember("body"));
+    }
+
+    void CheckOperatorEqual(const json_t &data, const MemoryOperator &expectData)
+    {
+        if (expectData.name.empty()) {
+            EXPECT_EQ(data["name"].GetString(), "Unknown");
+        } else {
+            EXPECT_EQ(data["name"].GetString(), expectData.name);
+        }
+        EXPECT_EQ(data["size"].GetDouble(), expectData.size);
+        EXPECT_EQ(data["allocationTime"].GetString(), expectData.allocationTime);
+        EXPECT_EQ(data["releaseTime"].GetString(), expectData.releaseTime);
+        EXPECT_EQ(data["duration"].GetDouble(), expectData.duration);
+        EXPECT_EQ(data["activeReleaseTime"].GetString(), expectData.activeReleaseTime);
+        EXPECT_EQ(data["activeDuration"].GetDouble(), expectData.activeDuration);
+        EXPECT_EQ(data["allocationAllocated"].GetDouble(), expectData.allocationAllocated);
+        EXPECT_EQ(data["allocationReserved"].GetDouble(), expectData.allocationReserved);
+        EXPECT_EQ(data["allocationActive"].GetDouble(), expectData.allocationActive);
+        EXPECT_EQ(data["releaseAllocated"].GetDouble(), expectData.releaseAllocated);
+        EXPECT_EQ(data["releaseReserved"].GetDouble(), expectData.releaseReserved);
+        EXPECT_EQ(data["releaseActive"].GetDouble(), expectData.releaseActive);
+        EXPECT_EQ(data["streamId"].GetString(), expectData.streamId);
+    }
+    void CheckOperatorResponseStruct(const std::optional<document_t> &jsonOptional,
+        const MemoryOperatorComparisonResponse &response)
+    {
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("columnAttr"));
+        ASSERT_TRUE(jsonOptional.value()["body"]["columnAttr"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["columnAttr"].Size(), response.columnAttr.size());
+        for (size_t i = 0; i < response.columnAttr.size(); ++i) {
+            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["name"].GetString(), response.columnAttr[i].name);
+            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["type"].GetString(), response.columnAttr[i].type);
+            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["key"].GetString(), response.columnAttr[i].key);
+        }
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("operatorDetail"));
+        ASSERT_TRUE(jsonOptional.value()["body"]["operatorDetail"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["operatorDetail"].Size(), response.operatorDiffDetails.size());
+        for (size_t i = 0; i < response.operatorDiffDetails.size(); ++i) {
+            CheckOperatorEqual(jsonOptional.value()["body"]["operatorDetail"][i]["compare"],
+                response.operatorDiffDetails[i].compare);
+            CheckOperatorEqual(jsonOptional.value()["body"]["operatorDetail"][i]["baseline"],
+                response.operatorDiffDetails[i].baseline);
+            CheckOperatorEqual(jsonOptional.value()["body"]["operatorDetail"][i]["diff"],
+                response.operatorDiffDetails[i].diff);
+        }
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("totalNum"));
+        EXPECT_EQ(jsonOptional.value()["body"]["totalNum"].GetInt64(), response.totalNum);
+    }
+
+    void CheckStaticOperatorGraphResponseStruct(const std::optional<document_t> &jsonOptional,
+        const MemoryStaticOperatorGraphResponse &response)
+    {
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("legends"));
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("lines"));
+        ASSERT_TRUE(jsonOptional.value()["body"]["legends"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["legends"].Size(), response.data.legends.size());
+        for (size_t i = 0; i < response.data.legends.size(); ++i) {
+            EXPECT_EQ(jsonOptional.value()["body"]["legends"][i].GetString(), response.data.legends[i]);
+        }
+        ASSERT_TRUE(jsonOptional.value()["body"]["lines"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["lines"].Size(), response.data.lines.size());
+        for (size_t i = 0; i < response.data.lines.size(); ++i) {
+            ASSERT_TRUE(jsonOptional.value()["body"]["lines"][i].IsArray());
+            ASSERT_EQ(jsonOptional.value()["body"]["lines"][i].Size(), response.data.lines[i].size());
+            for (size_t j = 0; j < response.data.lines[i].size(); ++j) {
+                EXPECT_EQ(jsonOptional.value()["body"]["lines"][i][j].GetString(), response.data.lines[i][j]);
+            }
+        }
+    }
+
+    void CheckStaticOperatorEqual(const json_t &data, const StaticOperatorItem &expectData)
+    {
+        EXPECT_EQ(data["deviceId"].GetString(), expectData.deviceId);
+        EXPECT_EQ(data["opName"].GetString(), expectData.opName);
+        EXPECT_EQ(data["nodeIndexStart"].GetInt64(), expectData.nodeIndexStart);
+        EXPECT_EQ(data["nodeIndexEnd"].GetInt64(), expectData.nodeIndexEnd);
+        EXPECT_EQ(data["size"].GetDouble(), expectData.size);
+    }
+    void CheckStaticOperatorListResponseStruct(const std::optional<document_t> &jsonOptional,
+        const MemoryStaticOperatorListCompResponse &response)
+    {
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("columnAttr"));
+        ASSERT_TRUE(jsonOptional.value()["body"]["columnAttr"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["columnAttr"].Size(), response.columnAttr.size());
+        for (size_t i = 0; i < response.columnAttr.size(); ++i) {
+            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["name"].GetString(), response.columnAttr[i].name);
+            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["type"].GetString(), response.columnAttr[i].type);
+            EXPECT_EQ(jsonOptional.value()["body"]["columnAttr"][i]["key"].GetString(), response.columnAttr[i].key);
+        }
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("operatorDetail"));
+        ASSERT_TRUE(jsonOptional.value()["body"]["operatorDetail"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["operatorDetail"].Size(), response.operatorDiffDetails.size());
+        for (size_t i = 0; i < response.operatorDiffDetails.size(); ++i) {
+            CheckStaticOperatorEqual(jsonOptional.value()["body"]["operatorDetail"][i]["compare"],
+                response.operatorDiffDetails[i].compare);
+            CheckStaticOperatorEqual(jsonOptional.value()["body"]["operatorDetail"][i]["baseline"],
+                response.operatorDiffDetails[i].baseline);
+            CheckStaticOperatorEqual(jsonOptional.value()["body"]["operatorDetail"][i]["diff"],
+                response.operatorDiffDetails[i].diff);
+        }
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("totalNum"));
+        EXPECT_EQ(jsonOptional.value()["body"]["totalNum"].GetInt64(), response.totalNum);
+    }
+
+    void CheckViewResponseStruct(const std::optional<document_t> &jsonOptional, const MemoryViewResponse &response)
+    {
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("title"));
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("legends"));
+        ASSERT_TRUE(jsonOptional.value()["body"].HasMember("lines"));
+        EXPECT_EQ(jsonOptional.value()["body"]["title"].GetString(), response.data.title);
+        ASSERT_TRUE(jsonOptional.value()["body"]["legends"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["legends"].Size(), response.data.legends.size());
+        for (size_t i = 0; i < response.data.legends.size(); ++i) {
+            EXPECT_EQ(jsonOptional.value()["body"]["legends"][i].GetString(), response.data.legends[i]);
+        }
+        ASSERT_TRUE(jsonOptional.value()["body"]["lines"].IsArray());
+        ASSERT_EQ(jsonOptional.value()["body"]["lines"].Size(), response.data.lines.size());
+        for (size_t i = 0; i < response.data.lines.size(); ++i) {
+            ASSERT_TRUE(jsonOptional.value()["body"]["lines"][i].IsArray());
+            ASSERT_EQ(jsonOptional.value()["body"]["lines"][i].Size(), response.data.lines[i].size());
+            for (size_t j = 0; j < response.data.lines[i].size(); ++j) {
+                EXPECT_EQ(jsonOptional.value()["body"]["lines"][i][j].GetString(), response.data.lines[i][j]);
+            }
+        }
+    }
+
     Dic::Protocol::MemoryProtocol memoryProtocol;
+    const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
+        {"Name", "string", "name"},
+        {"Size(KB)", "number", "size"},
+        {"Allocation Time(ms)", "number", "allocationTime"},
+        {"Release Time(ms)", "number", "releaseTime"},
+        {"Duration(ms)", "number", "duration"},
+        {"Active Release Time(ms)", "number", "activeReleaseTime"},
+        {"Active Duration(ms)", "number", "activeDuration"},
+        {"Allocation Total Allocated(MB)", "number", "allocationAllocated"},
+        {"Allocation Total Reserved(MB)", "number", "allocationReserved"},
+        {"Allocation Total Active(MB)", "number", "allocationActive"},
+        {"Release Total Allocated(MB)", "number", "releaseAllocated"},
+        {"Release Total Reserved(MB)", "number", "releaseReserved"},
+        {"Release Total Active(MB)", "number", "releaseActive"},
+        {"Stream", "string", "streamId"}
+    };
+    const std::vector<Protocol::MemoryTableColumnAttr> staticOpTableColumnAttr = {
+        {"Device ID", "string", "deviceId"},
+        {"Name", "string", "opName"},
+        {"Node Index Start", "number", "nodeIndexStart"},
+        {"Node Index End", "number", "nodeIndexEnd"},
+        {"Size(MB)", "number", "size"}
+    };
+    const std::vector<std::string> graphLegends = {
+        "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
+    };
+    const std::vector<std::string> staticGraphLegends = {
+        "Node Index", "Size", "Total Size"
+    };
 };
 
-TEST_F(MemoryProtocolTest, ToMemoryComponentRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryComponentRequestNormalTest)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/component", "params": {"rankId": "2", "currentPage": 1, "pageSize": 100,
@@ -40,7 +201,7 @@ TEST_F(MemoryProtocolTest, ToMemoryComponentRequestTestReturnNormal)
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryComponentRequestTestLackRankId)
+TEST_F(MemoryProtocolTest, ToMemoryComponentRequestLackRankIdTest)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/component", "params": {"orderBy": "component", "order": "ascend"}})";
@@ -52,7 +213,7 @@ TEST_F(MemoryProtocolTest, ToMemoryComponentRequestTestLackRankId)
     EXPECT_EQ(err, "Request json lacks member rankId.");
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestNormalTest)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/operator", "params": {"rankId": "3", "type": "Stream", "searchName": "aten::add",
@@ -78,7 +239,7 @@ TEST_F(MemoryProtocolTest, ToMemoryOpeatorRequestTestReturnNormal)
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryResourceTypeRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryResourceTypeRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "command": "Memory/view/resourceType",
         "resultCallbackId": 0, "params": {"rankId": "0"}})";
@@ -90,7 +251,7 @@ TEST_F(MemoryProtocolTest, ToMemoryResourceTypeRequestTestReturnNormal)
     EXPECT_EQ(result, expect);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorGraphRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorGraphRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request",
         "command": "Memory/view/staticOpMemoryGraph", "resultCallbackId": 0,
@@ -106,7 +267,7 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorGraphRequestTestReturnNormal)
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestNormalTest)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "deviceId": "host", "modelName": "0",
@@ -135,7 +296,7 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestTestReturnNormal)
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryTypeRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryTypeRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "command": "Memory/view/type",
         "resultCallbackId": 0, "params": {"rankId": "15"}})";
@@ -147,7 +308,7 @@ TEST_F(MemoryProtocolTest, ToMemoryTypeRequestTestReturnNormal)
     EXPECT_EQ(result, expect);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryViewRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryViewRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "command": "Memory/view/memoryUsage",
         "resultCallbackId": 0, "params": {"rankId": "1", "type": "Overall", "isCompare": false}})";
@@ -161,7 +322,7 @@ TEST_F(MemoryProtocolTest, ToMemoryViewRequestTestReturnNormal)
     EXPECT_EQ(result.isCompare, expect.isCompare);
 }
 
-TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestTestReturnNormal)
+TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
         "command": "Memory/view/operator/size", "params": {"rankId": "1", "type": "Overall"}})";
@@ -173,4 +334,203 @@ TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestTestReturnNormal)
     EXPECT_EQ(result.rankId, expect.rankId);
     EXPECT_EQ(result.type, expect.type);
     EXPECT_EQ(result.isCompare, expect.isCompare);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryOperatorResponseEmptyDataTest)
+{
+    MemoryOperatorComparisonResponse response;
+    std::string err;
+    response.columnAttr.clear();
+    response.operatorDiffDetails.clear();
+    response.totalNum = 0;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryOperatorResponseNoComparisonDataTest)
+{
+    MemoryOperatorComparisonResponse response;
+    std::string err;
+    response.columnAttr = tableColumnAttr;
+    response.operatorDiffDetails = {
+        {{"aten::add", 211.627, "113.791", "299.928", 186.137, "297.805", 184.014,
+            147.956, 157.988, 201.017, 47.231, 56.338, 94.215, "14789652333", "NPU:0"}, {}, {}},
+        {{"aten::matmul", 21.004, "119.791", "298.928", 179.137, "293.805", 174.014,
+            25.346, 21.054, 20.337, 19.687, 15.276, 9.417, "14789652333277", "NPU:2"}, {}, {}},
+    };
+    response.totalNum = response.operatorDiffDetails.size();
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    CheckOperatorResponseStruct(jsonOptional, response);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryResourceTypeResponseEmptyDataTest)
+{
+    MemoryResourceTypeResponse response;
+    std::string err;
+    response.type = "";
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryResourceTypeResponsePyTorchDataTest)
+{
+    MemoryResourceTypeResponse response;
+    std::string err;
+    response.type = Module::Memory::MEMORY_RESOURCE_TYPE_PYTORCH;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("type"));
+    EXPECT_EQ(jsonOptional.value()["body"]["type"].GetString(), response.type);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryResourceTypeResponseMindSporeDataTest)
+{
+    MemoryResourceTypeResponse response;
+    std::string err;
+    response.type = Module::Memory::MEMORY_RESOURCE_TYPE_MIND_SPORE;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("type"));
+    EXPECT_EQ(jsonOptional.value()["body"]["type"].GetString(), response.type);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorGraphResponseEmptyDataTest)
+{
+    MemoryStaticOperatorGraphResponse response;
+    std::string err;
+    response.data.legends.clear();
+    response.data.lines.clear();
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorGraphResponseNoComparisonDataTest)
+{
+    MemoryStaticOperatorGraphResponse response;
+    std::string err;
+    response.data.legends = staticGraphLegends;
+    response.data.lines = {
+        {"310", "4300.19", "122446.02"},
+        {"1116", "3760.18", "122446.02"},
+        {"2435", "88.58", "122446.02"}
+    };
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    CheckStaticOperatorGraphResponseStruct(jsonOptional, response);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListResponseEmptyDataTest)
+{
+    MemoryStaticOperatorListCompResponse response;
+    std::string err;
+    response.columnAttr.clear();
+    response.operatorDiffDetails.clear();
+    response.totalNum = 0;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListResponseNoComparisonDataTest)
+{
+    MemoryStaticOperatorListCompResponse response;
+    std::string err;
+    response.columnAttr = staticOpTableColumnAttr;
+    response.operatorDiffDetails = {
+        {{"host", "MatMul-op129", 1034, 2517, 200.7}, {}, {}},
+        {{"host", "Cast-op32", 1, 967, 20000.478}, {}, {}},
+    };
+    response.totalNum = response.operatorDiffDetails.size();
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    CheckStaticOperatorListResponseStruct(jsonOptional, response);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryTypeResponseEmptyDataTest)
+{
+    MemoryTypeResponse response;
+    std::string err;
+    response.type = "";
+    response.graphId.clear();
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryTypeResponseDynamicComputationalGraphDataTest)
+{
+    MemoryTypeResponse response;
+    std::string err;
+    response.type = Module::Memory::MEMORY_TYPE_DYNAMIC;
+    response.graphId = {};
+    std::optional<document_t > jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("type"));
+    EXPECT_EQ(jsonOptional.value()["body"]["type"].GetString(), response.type);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryTypeResponseStaticComputationalGraphDataTest)
+{
+    MemoryTypeResponse response;
+    std::string err;
+    response.type = Module::Memory::MEMORY_TYPE_STATIC;
+    response.graphId = {"1", "2"};
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("type"));
+    EXPECT_EQ(jsonOptional.value()["body"]["type"].GetString(), response.type);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("graphId"));
+    ASSERT_TRUE(jsonOptional.value()["body"]["graphId"].IsArray());
+    ASSERT_EQ(jsonOptional.value()["body"]["graphId"].Size(), response.graphId.size());
+    EXPECT_EQ(jsonOptional.value()["body"]["graphId"][0].GetString(), response.graphId[0]);
+    EXPECT_EQ(jsonOptional.value()["body"]["graphId"][1].GetString(), response.graphId[1]);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryViewResponseEmptyDataTest)
+{
+    MemoryViewResponse response;
+    std::string err;
+    response.data.title.clear();
+    response.data.legends.clear();
+    response.data.lines.clear();
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryViewResponseNoComparisonDataTest)
+{
+    MemoryViewResponse response;
+    std::string err;
+    response.data.title = "Peak Memory Usage: Operators Allocated: 25531.52MB | Operators Activated: 25621.52MB |"
+                          " Operators Reserved: 26370.00MB | APP Reserved: 27743.03MB";
+    response.data.legends = graphLegends;
+    response.data.lines = {
+        {"126.550", "18182.40", "18182.40", "25750.00", "NULL"},
+        {"181.221", "18859.86", "18859.86", "25750.00", "NULL"},
+        {"740.047", "NULL", "NULL", "NULL", "26742.36"}
+    };
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    CheckViewResponseStruct(jsonOptional, response);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeResponseEmptyDataTest)
+{
+    MemoryOperatorSizeResponse response;
+    std::string err;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeResponseValidDataTest)
+{
+    MemoryOperatorSizeResponse response;
+    std::string err;
+    response.size.minSize = -1.0;
+    response.size.maxSize = 1.0;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("minSize"));
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("maxSize"));
+    EXPECT_EQ(jsonOptional.value()["body"]["minSize"].GetDouble(), response.size.minSize);
+    EXPECT_EQ(jsonOptional.value()["body"]["maxSize"].GetDouble(), response.size.maxSize);
 }

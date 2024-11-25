@@ -220,8 +220,11 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewP
     if (requestParams.type == Protocol::MEMORY_OVERALL_GROUP) {
         GetOverallLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
         operatorBody.title = GetPeakMemory(peak, streams);
-    } else {
+    } else if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+    } else {
+        GetComponentLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        operatorBody.title = GetPeakMemory(peak, streams);
     }
     return true;
 }
@@ -708,6 +711,109 @@ void VirtualMemoryDataBase::GetOverallLinesLegends(const componentDtoVector &com
     }
 }
 
+void VirtualMemoryDataBase::GetComponentLines(const Dic::Module::Memory::componentDtoVector &componentDtoVec,
+                                              std::vector<std::vector<std::string>> &lines,
+                                              std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+                                              const std::vector<std::string> &streams)
+{
+    GetComponentLinesLegends(componentDtoVec, legends, peak);
+
+    // 3表示无PTA数据或无GE数据插入3个NULL
+    const int sizeMembers = 3;
+    for (auto &item: componentDtoVec) {
+        std::vector<std::string> points = {};
+        if (item.component == COMPONENT_PTA) {
+            peak.ptaAllocated = std::max(peak.ptaAllocated, item.totalAllocated);
+            peak.ptaReserved = std::max(peak.ptaReserved, item.totalReserved);
+            peak.ptaActivated = std::max(peak.ptaActivated, item.totalActivated);
+
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            InsertSize(points, item);
+            if (peak.hasGe) {
+                InsertStringNull(points, sizeMembers);
+            }
+            if (peak.hasApp) {
+                InsertStringNull(points, 1);
+            }
+            lines.emplace_back(points);
+        } else if (item.component == COMPONENT_GE) {
+            peak.geAllocated = std::max(peak.geAllocated, item.totalAllocated);
+            peak.geReserved = std::max(peak.geReserved, item.totalReserved);
+            peak.geActivated = std::max(peak.geActivated, item.totalActivated);
+
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            if (peak.hasPta) {
+                InsertStringNull(points, sizeMembers);
+            }
+            InsertSize(points, item);
+            if (peak.hasApp) {
+                InsertStringNull(points, 1);
+            }
+            lines.emplace_back(points);
+        } else if (item.component == COMPONENT_APP) {
+            peak.appReserved = std::max(peak.appReserved, item.totalReserved);
+
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            if (peak.hasPta) {
+                InsertStringNull(points, sizeMembers);
+            }
+            if (peak.hasGe) {
+                InsertStringNull(points, sizeMembers);
+            }
+            std::string reserved = std::to_string(item.totalReserved);
+            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            lines.emplace_back(points);
+        }
+    }
+}
+
+void VirtualMemoryDataBase::InsertSize(std::vector<std::string> &points, const Protocol::ComponentDto &item)
+{
+    std::string allocated = std::to_string(item.totalAllocated);
+    points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+    std::string activated = std::to_string(item.totalActivated);
+    points.emplace_back(activated.substr(0, activated.length() - exLength));
+    std::string reserved = std::to_string(item.totalReserved);
+    points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+}
+
+void VirtualMemoryDataBase::InsertStringNull(std::vector<std::string> &points, const int times)
+{
+    const std::string stringNull = "NULL";
+    for (int i = 0; i < times; ++i) {
+        points.emplace_back(stringNull);
+    }
+}
+
+void VirtualMemoryDataBase::GetComponentLinesLegends(const Dic::Module::Memory::componentDtoVector &componentDtoVec,
+                                                     std::vector<std::string> &legends, Protocol::MemoryPeak &peak)
+{
+    for (auto &item: componentDtoVec) {
+        if (item.component == COMPONENT_PTA) {
+            peak.hasPta = true;
+        } else if (item.component == COMPONENT_GE) {
+            peak.hasGe = true;
+        } else if (item.component == COMPONENT_APP) {
+            peak.hasApp = true;
+        }
+    }
+
+    legends = componentTimeLegends;
+    if (peak.hasPta) {
+        legends.insert(legends.end(), componentPtaLegends.begin(), componentPtaLegends.end());
+    }
+    if (peak.hasGe) {
+        legends.insert(legends.end(), componentGeLegends.begin(), componentGeLegends.end());
+    }
+
+    if (peak.hasApp) {
+        legends.emplace_back(appLegend);
+    }
+}
+
 void VirtualMemoryDataBase::GetStreamLines(const componentDtoVector &componentDtoVec,
     std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
     const std::vector<std::string> &streams)
@@ -767,6 +873,28 @@ std::string VirtualMemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak &pea
         std::string ptaGeRe = std::to_string(peak.ptaGeReserved);
         ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - decimalPlacesNum);
         peakMemory.append(" | Operator Reserved: ").append(ptaGeRe).append("MB");
+    }
+    if (peak.hasPta) {
+        std::string ptaAllo = std::to_string(peak.ptaAllocated);
+        ptaAllo = ptaAllo.substr(0, ptaAllo.length() - decimalPlacesNum);
+        peakMemory.append("PTA Allocated: ").append(ptaAllo).append("MB");
+        std::string ptaActi = std::to_string(peak.ptaActivated);
+        ptaActi = ptaActi.substr(0, ptaActi.length() - decimalPlacesNum);
+        peakMemory.append(" | PTA Activated: ").append(ptaActi).append("MB");
+        std::string ptaRes = std::to_string(peak.ptaReserved);
+        ptaRes = ptaRes.substr(0, ptaRes.length() - decimalPlacesNum);
+        peakMemory.append(" | PTA Reserved: ").append(ptaRes).append("MB");
+    }
+    if (peak.hasGe) {
+        std::string geAllo = std::to_string(peak.geAllocated);
+        geAllo = geAllo.substr(0, geAllo.length() - decimalPlacesNum);
+        peakMemory.append(" | GE Allocated: ").append(geAllo).append("MB");
+        std::string geActi = std::to_string(peak.geActivated);
+        geActi = geActi.substr(0, geActi.length() - decimalPlacesNum);
+        peakMemory.append(" | GE Activated: ").append(geActi).append("MB");
+        std::string geRes = std::to_string(peak.geReserved);
+        geRes = geRes.substr(0, geRes.length() - decimalPlacesNum);
+        peakMemory.append(" | GE Reserved: ").append(geRes).append("MB");
     }
     if (peak.hasApp) {
         std::string appAllo = std::to_string(peak.appReserved);
