@@ -11,12 +11,13 @@ import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
-import type { ThreadTrace, ThreadMetaData, CardMetaData } from '../entity/data';
+import type { ThreadTrace, ThreadMetaData, CardMetaData, ThreadTraceRequest } from '../entity/data';
 import type { TimeStamp } from '../entity/common';
 import connector from '../connection';
 import { type ChartDesc, type InsightUnit, unit } from '../entity/insight';
 import { Tooltip } from 'ascend-components';
 import type { StackStatusConfig } from '../entity/chart';
+import { getTimeOffsetKey } from '../insight/units/utils';
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
     left: string;
@@ -442,6 +443,37 @@ const hideOrShowFlagEvents = (session: Session, menuItem?: MenuItemModel): void 
     });
 };
 
+const setUpUintOffset = (session: Session, insightUint: InsightUnit, offsetValue: number): void => {
+    const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
+    if (insightUint.children !== undefined && insightUint.children.length > 0) {
+        for (const item of insightUint.children) {
+            const key = getTimeOffsetKey(session, item.metadata as ThreadTraceRequest);
+            session.unitsConfig.offsetConfig.timestampOffset[key] = offsetValue;
+        }
+    }
+    session.unitsConfig.offsetConfig.timestampOffset = {
+        ...prevObj,
+        [(insightUint.metadata as CardMetaData).cardId]: (offsetValue),
+    };
+};
+
+const clearOrRecoverCardDefaultOffset = (session: Session, menuItem?: MenuItemModel): void => {
+    runInAction(() => {
+        session.isDefaultOffsetClear = !session.isDefaultOffsetClear;
+        if (session.isDefaultOffsetClear) {
+            session.units.forEach((insightUint) => {
+                setUpUintOffset(session, insightUint, 0);
+            });
+        } else {
+            session.units.forEach((insightUint) => {
+                const offsetValue = insightUint.alignStartTimestamp as number;
+                setUpUintOffset(session, insightUint, offsetValue);
+            });
+        }
+        session.contextMenu.isVisible = false;
+    });
+};
+
 const toggleAutoUnitHeight = (session: Session): void => {
     runInAction(() => {
         session.autoAdjustUnitHeight = !session.autoAdjustUnitHeight;
@@ -494,7 +526,6 @@ const isShowFlagEventsVisible = (session: Session): boolean => {
 const isHideFlagEventsVisible = (session: Session): boolean => {
     return session.isSimulation && !session.areFlagEventsHidden;
 };
-
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
     setPosition: (_: Position) => void;
@@ -534,6 +565,8 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Hide flag events'), key: 'hideFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isHideFlagEventsVisible(session) },
         { name: t('Show flag events'), key: 'showFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isShowFlagEventsVisible(session) },
         { name: getAutoUnitHeightButtonText(session, t), key: 'autoUnitHeight', event: toggleAutoUnitHeight, visible: true },
+        { name: t('Clear cards default offset'), key: 'clearDefaultOffset', event: clearOrRecoverCardDefaultOffset, visible: !session.isDefaultOffsetClear },
+        { name: t('Set up cards default offset'), key: 'recoverDefaultOffset', event: clearOrRecoverCardDefaultOffset, visible: session.isDefaultOffsetClear },
     ];
 
     return <>

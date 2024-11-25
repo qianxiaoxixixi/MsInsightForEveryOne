@@ -23,6 +23,10 @@ const mockMetaData = {
     cardId: 'cardId1',
 };
 
+const mockMetaData2 = {
+    cardId: 'cardId2',
+};
+
 beforeEach((): void => {
     session.unitsConfig.offsetConfig.timestampOffset = {
         cardId1: 100,
@@ -34,6 +38,14 @@ beforeEach((): void => {
 });
 
 describe('Timestamp Offset Component', () => {
+    // 无offset输入框初始值验证
+    it('renders InputOption component without initial value', () => {
+        render(<InputOption session={session} metaData={mockMetaData2} />);
+        const btnOffset = screen.getByText('Offset');
+        fireEvent.click(btnOffset);
+        const inputElement = screen.getByDisplayValue('0');
+        expect(inputElement).toBeInTheDocument();
+    });
     // 输入框初始值验证
     it('renders InputOption component with initial value', () => {
         render(<InputOption session={session} metaData={mockMetaData} />);
