@@ -299,14 +299,37 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
-    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     std::string sql = GetKernelDetailSql(requestParams);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         Server::ServerLog::Error("Fail to prepare sql to query kernel detail data.");
         return false;
     }
-    stmt->BindParams(GetDeviceId(requestParams.rankId));
+    if (!requestParams.rankId.empty()) {
+        stmt->BindParams(GetDeviceId(requestParams.rankId));
+    }
+    for (const auto& filter : requestParams.filters) {  // 第一次绑定filter
+        std::string bindFilter = "%" + filter.second + "%";
+        stmt->BindParams(bindFilter);
+    }
+    for (const auto& filter : requestParams.filters) {  // 第二次绑定filter
+        std::string bindFilter = "%" + filter.second + "%";
+        stmt->BindParams(bindFilter);
+    }
+    if (!ExcecuteQueryKernelDetailData(stmt, requestParams, responseBody, minTimestamp)) {
+        return false;
+    }
+    responseBody.pageSize = requestParams.pageSize;
+    responseBody.currentPage = requestParams.current;
+    responseBody.acceleratorCoreList = QueryCoreType();
+    return true;
+}
+
+bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
+    uint64_t minTimestamp)
+{
+    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel detail data.", stmt->GetErrorMessage());
@@ -337,10 +360,6 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         }
         responseBody.kernelDetails.emplace_back(detail);
     }
-    responseBody.pageSize = requestParams.pageSize;
-    responseBody.currentPage = requestParams.current;
-    const std::vector<std::string> cores = QueryCoreType();
-    responseBody.acceleratorCoreList = cores;
     return true;
 }
 
@@ -359,7 +378,7 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
     }
     for (uint64_t index = 0; index < requestParams.filters.size(); index++) {
         std::pair<std::string, std::string> filter = requestParams.filters[index];
-        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+        if (!StringUtil::CheckSqlValid(filter.first)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
             sql.clear();
             return false;
@@ -368,10 +387,10 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
             sql += " AND ";
         }
         if (filter.first == "name") {
-            sql += " lower(" + filter.first + ") LIKE lower('%" + filter.second + "%') ";
+            sql += " lower(" + filter.first + ") LIKE lower(?) ";  // 绑定filter.second
         } else {
             sql += filter.first + " IN ("
-                   "    SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower('%" + filter.second + "%')"
+                   "    SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower(?)"
                    ")";
         }
     }
@@ -401,7 +420,7 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
       "        wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
       "        inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats FROM main"
       "    ) subquery ";
-    if (!GetKernelDetailFilterSql(sql, requestParams)) {
+    if (!GetKernelDetailFilterSql(sql, requestParams)) {  // 第一次绑定filter.second占位
         return sql;
     }
     sql += " )\n"
@@ -409,7 +428,7 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
       "       duration, wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
       "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats\n"
       "FROM main join total ";
-    if (!GetKernelDetailFilterSql(sql, requestParams)) {
+    if (!GetKernelDetailFilterSql(sql, requestParams)) {  // 第二次绑定filter.second占位
         return sql;
     }
 

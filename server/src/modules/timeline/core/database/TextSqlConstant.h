@@ -220,12 +220,12 @@ public:
             "output_formats AS outputFormats FROM kernel_detail "
             "WHERE 1=1";
         for (const auto &filter : filters) {
-            if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+            if (!StringUtil::CheckSqlValid(filter.first)) {
                 Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
                 sql.clear();
                 return sql;
             }
-            sql += " AND lower(" + filter.first + ") LIKE lower('%" + filter.second + "%') ";
+            sql += " AND lower(" + filter.first + ") LIKE lower(?) ";
         }
         sql += coreTypes + orderBy + " limit ? offset ?";
         return sql;
