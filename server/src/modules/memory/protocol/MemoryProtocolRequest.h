@@ -15,6 +15,7 @@ namespace Protocol {
 
 const std::string MEMORY_OVERALL_GROUP = "Overall";
 const std::string MEMORY_STREAM_GROUP = "Stream";
+const std::string MEMORY_COMPONENT_GROUP = "Component";
 const std::vector<std::string> operatorTableColumn = {
     "name", "size", "allocation_time", "release_time", "duration", "active_release_time", "active_duration",
     "allocation_allocated", "allocation_reserve", "allocation_active", "release_allocated", "release_reserve",
@@ -215,8 +216,8 @@ struct MemoryViewParams {
         if (!CheckStrParamValid(rankId, errorMsg)) {
             return false;
         }
-        if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP) {
-            errorMsg = "Group By parameter should be Overall or Stream.";
+        if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP && type != MEMORY_COMPONENT_GROUP) {
+            errorMsg = "Group By parameter should be Overall or Stream or Component.";
             return false;
         }
         return true;

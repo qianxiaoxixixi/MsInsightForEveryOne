@@ -166,10 +166,18 @@ struct ComponentDto {
 
 struct MemoryPeak {
     bool hasPtaGe = false;
+    bool hasPta = false;
+    bool hasGe = false;
     bool hasApp = false;
     double ptaGeAllocated = 0;
     double ptaGeReserved = 0;
     double ptaGeActivated = 0;
+    double ptaAllocated = 0;
+    double ptaReserved = 0;
+    double ptaActivated = 0;
+    double geAllocated = 0;
+    double geReserved = 0;
+    double geActivated = 0;
     double appReserved = 0;
 };
 } // end of namespace Protocol
