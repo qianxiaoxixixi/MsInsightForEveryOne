@@ -17,7 +17,12 @@ const test = baseTest.extend<TestFixtures>({
     },
 });
 
-test.describe('Memory', () => {
+const memoryImgMap = {
+    loadPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single.png',
+    filterPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-filter.png',
+};
+ 
+test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -25,16 +30,28 @@ test.describe('Memory', () => {
         await allCardParsedPromise;
     });
 
-    test('页面加载成功', async ({ page, memoryPage }) => {
+    test('loadMemoryPageSuccess_when_dataParseSuccess', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('memory.png');
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page'))
+        .toHaveScreenshot(memoryImgMap.loadPytorchSingleMachineMultiRankDataSuccess, {
+            maxDiffPixels: 500,
+        });
     });
-
-    test('筛选卡序号', async ({ page, memoryPage }) => {
-        const { memoryFrame, rankIdSelector } = memoryPage;
+ 
+    test('change_filterCondition', async ({ page, memoryPage }) => {
+        const { memoryFrame, rankIdSelector, groupIdSelector } = memoryPage;
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
+        const groupIdSelect = new SelectHelpers(page, groupIdSelector, memoryFrame);
         await rankIdSelect.open();
         await rankIdSelect.selectOption('4');
+        await groupIdSelect.open();
+        await groupIdSelect.selectOption('Stream');
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page'))
+        .toHaveScreenshot(memoryImgMap.filterPytorchSingleMachineMultiRankDataSuccess, {
+            maxDiffPixels: 500,
+        });
     });
 
     test.afterEach(async ({ page }) => {

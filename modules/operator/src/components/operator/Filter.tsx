@@ -189,6 +189,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
         <FormItem
             name={t('Group By')}
             content={(<Select
+                id={'select-groupId'}
                 value={condition.group}
                 style={{ width: 250 }}
                 onChange={(val: string): void => handleChange('group', val)}
@@ -198,6 +199,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
         <FormItem
             name={t('Rank ID')}
             content={(<Select
+                id={'select-rankId'}
                 value={condition.rankId}
                 style={{ width: 200 }}
                 onChange={(val: string): void => handleChange('rankId', val)}
@@ -209,6 +211,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
         <FormItem
             name={t('Top')}
             content={(<><Select
+                id={'select-top'}
                 value={condition.topK}
                 style={{ width: 100 }}
                 onChange={(val: string): void => handleChange('topK', val)}

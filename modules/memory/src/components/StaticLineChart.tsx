@@ -89,6 +89,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
                 <div className="flex items-center">
                     <Label name={t('searchCriteria.GraphId')} />
                     <Select
+                        id={'select-graphId'}
                         value={memorySession.memoryGraphId}
                         size="middle"
                         onChange={onMemoryGraphIdChanged}

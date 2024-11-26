@@ -8,14 +8,18 @@ import { FrameworkPage } from './framework';
 export class MemoryPage {
     readonly page: Page;
     readonly memoryFrame: FrameLocator;
+    readonly hostSelector: Locator;
     readonly rankIdSelector: Locator;
     readonly groupIdSelector: Locator;
+    readonly graphIdSelector: Locator;
 
     constructor(page: Page) {
         this.page = page;
         this.memoryFrame = page.frameLocator('#Memory');
+        this.hostSelector = this.memoryFrame.locator('#select-host');
         this.rankIdSelector = this.memoryFrame.locator('#select-rankId');
         this.groupIdSelector = this.memoryFrame.locator('#select-groupId');
+        this.graphIdSelector = this.memoryFrame.locator('#select-graphId');
     }
 
     async goto(): Promise<void> {

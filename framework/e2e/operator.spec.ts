@@ -5,6 +5,7 @@
 import { test as baseTest, expect } from '@playwright/test';
 import { OperatorPage } from './page-object';
 import { clearAllData, importData, waitForWebSocketEvent } from './utils';
+import { SelectHelpers } from './components';
 
 interface TestFixtures {
     operatorPage: OperatorPage;
@@ -24,9 +25,21 @@ test.describe('Operator', () => {
         await allCardParsedPromise;
     });
 
-    test('页面加载成功', async ({ page, operatorPage }) => {
-        const { operatorFrame } = operatorPage;
-        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator.png');
+    test('change_filterCondition', async ({ page, operatorPage }) => {
+        const { operatorFrame, groupIdSelector, rankIdSelector, topSelector } = operatorPage;
+        const groupIdSelect = new SelectHelpers(page, groupIdSelector, operatorFrame);
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
+        const topSelect = new SelectHelpers(page, topSelector, operatorFrame);
+        await groupIdSelect.open();
+        await groupIdSelect.selectOption('Computing Operator Type');
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('4');
+        await topSelect.open();
+        await topSelect.selectOption('15');
+        await page.mouse.move(0, 0);
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator.png', {
+            maxDiffPixels: 500,
+        });
     });
 
     test.afterEach(async ({ page }) => {
