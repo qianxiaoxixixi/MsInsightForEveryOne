@@ -31,8 +31,6 @@ const std::string UPDATE_PROCESS_LABLE_SQL =
 const std::string UPDATE_PROCESS_SORTINDEX_SQL = "INSERT INTO process (pid, process_sort_index) VALUES (?, ?) ON "
     "CONFLICT (pid) DO UPDATE SET process_sort_index = "
     "excluded.process_sort_index;";
-const std::string UPDATE_THREAD_INFO_SQL = "INSERT INTO thread (track_id, tid, pid) VALUES (?, ?, ?) ON CONFLICT "
-    "(track_id) DO UPDATE SET tid = excluded.tid, pid = excluded.pid;";
 const std::string UPDATE_THREAD_NAME_SQL = "INSERT INTO thread (track_id, tid, pid, thread_name) VALUES (?, ?, ?, "
     "?) ON CONFLICT (track_id) DO UPDATE SET tid "
     "= excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name;";

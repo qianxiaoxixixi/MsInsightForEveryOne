@@ -66,8 +66,6 @@ bool TextTraceDatabase::InitProcessThreadStmt()
     updateProcessLabelStmt = CreatPreparedStatement(sql);
     sql = UPDATE_PROCESS_SORTINDEX_SQL;
     updateProcessSortIndexStmt = CreatPreparedStatement(sql);
-    sql = UPDATE_THREAD_INFO_SQL;
-    updateThreadInfoStmt = CreatPreparedStatement(sql);
     sql = UPDATE_THREAD_NAME_SQL;
     updateThreadNameStmt = CreatPreparedStatement(sql);
     sql = UPDATE_THREAD_SORTINDEX_SQL;
@@ -77,7 +75,7 @@ bool TextTraceDatabase::InitProcessThreadStmt()
     sql = SIMULATION_UPDATE_PROCESS_NAME_SQL;
     simulationInsertProcessNameStmt = CreatPreparedStatement(sql);
     if (updateProcessNameStmt == nullptr || updateProcessLabelStmt == nullptr ||
-        updateProcessSortIndexStmt == nullptr || updateThreadInfoStmt == nullptr || updateThreadNameStmt == nullptr ||
+        updateProcessSortIndexStmt == nullptr || updateThreadNameStmt == nullptr ||
         updateThreadSortIndexStmt == nullptr || simulationInsertThreadNameStmt == nullptr ||
         simulationInsertProcessNameStmt == nullptr) {
         ServerLog::Error("Failed to prepare process and thread statement.");
@@ -97,7 +95,6 @@ void TextTraceDatabase::ReleaseStmt()
     updateProcessNameStmt = nullptr;
     updateProcessLabelStmt = nullptr;
     updateProcessSortIndexStmt = nullptr;
-    updateThreadInfoStmt = nullptr;
     updateThreadNameStmt = nullptr;
     updateThreadSortIndexStmt = nullptr;
     insertFlowStmt = nullptr;
@@ -236,12 +233,6 @@ bool TextTraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
     return true;
 }
 
-bool TextTraceDatabase::AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo)
-{
-    threadInfoCache.insert(threadInfo);
-    return true;
-}
-
 bool TextTraceDatabase::AddSimulationThreadCache(const Trace::ThreadEvent &event)
 {
     simulationThreadInfoCache.insert(event);
@@ -251,17 +242,6 @@ bool TextTraceDatabase::AddSimulationThreadCache(const Trace::ThreadEvent &event
 bool TextTraceDatabase::AddSimulationProcessCache(const Trace::ProcessEvent &event)
 {
     simulationProcessInfoCache.insert(event);
-    return true;
-}
-
-bool TextTraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList)
-{
-    for (const auto &item : threadList) {
-        if (!UpdateThreadInfo(item)) {
-            ServerLog::Error("Insert thread name fail.");
-            return false;
-        }
-    }
     return true;
 }
 
@@ -296,21 +276,6 @@ bool TextTraceDatabase::InsertSimulationProcessList()
             ServerLog::Error("Update process info fail. ", simulationInsertProcessNameStmt->GetErrorMessage());
             return false;
         }
-    }
-    return true;
-}
-
-bool TextTraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread)
-{
-    if (updateThreadInfoStmt == nullptr) {
-        ServerLog::Error("Update thread info fail. ");
-        return false;
-    }
-    updateThreadInfoStmt->Reset();
-    std::unique_lock<std::recursive_mutex> lock(mutex);
-    if (!updateThreadInfoStmt->Execute(std::get<0>(thread), std::get<1>(thread), std::get<2>(thread))) { // 第2个
-        ServerLog::Error("Update thread info fail. ", updateThreadInfoStmt->GetErrorMessage());
-        return false;
     }
     return true;
 }
@@ -861,10 +826,6 @@ void TextTraceDatabase::CommitData()
     if (!counterCache.empty()) {
         InsertCounterList(counterCache);
         counterCache.clear();
-    }
-    if (!threadInfoCache.empty()) {
-        InsertThreadList(threadInfoCache);
-        threadInfoCache.clear();
     }
     if (!simulationThreadInfoCache.empty()) {
         InsertSimulationThreadList();
