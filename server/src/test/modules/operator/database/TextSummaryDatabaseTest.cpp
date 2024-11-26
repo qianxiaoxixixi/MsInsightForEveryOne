@@ -107,7 +107,7 @@ TEST_F(TextSummaryDatabaseTest, SaveKernelDetailAndCheckSuccess)
 
 TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
 {
-    for (int i = 0; i < 1000 / 2; ++i) { // 1000 is cacheSize, 2 is half of cacheSize
+    for (int i = 0; i < 800 / 2; ++i) { // 800 is cacheSize, 2 is half of cacheSize
         Kernel kernel = {
             "rank" + std::to_string(i), "step" + std::to_string(i), "name" + std::to_string(i),
             "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
@@ -119,7 +119,7 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
     bool result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
     EXPECT_EQ(num, 0);
-    for (int i = 0; i < 1000; ++i) { // 1000 is cacheSize, 2 is half of cacheSize
+    for (int i = 0; i < 800; ++i) { // 800 is cacheSize, 2 is half of cacheSize
         Kernel kernel = {
             "rank" + std::to_string(i), "step" + std::to_string(i), "name" + std::to_string(i),
             "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
@@ -129,7 +129,7 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
     }
     result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
-    EXPECT_EQ(num, 1000); // 1000 is cacheSize
+    EXPECT_EQ(num, 800); // 800 is cacheSize
     g_testDataBase.SaveKernelDetail({});
 }
 
