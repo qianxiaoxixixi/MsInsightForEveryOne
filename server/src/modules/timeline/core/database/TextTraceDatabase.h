@@ -30,16 +30,13 @@ public:
     bool InitStmt();
     void ReleaseStmt();
     bool InsertSlice(const Trace::Slice &event);
-    bool AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo);
     bool AddSimulationThreadCache(const Trace::ThreadEvent &event);
     bool AddSimulationProcessCache(const Trace::ProcessEvent &event);
-    bool InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList);
     bool InsertSimulationThreadList();
     bool InsertSimulationProcessList();
     bool UpdateProcessName(const Trace::MetaData &event);
     bool UpdateProcessLabel(const Trace::MetaData &event);
     bool UpdateProcessSortIndex(const Trace::MetaData &event);
-    bool UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread);
     bool UpdateThreadName(const Trace::MetaData &event);
     bool UpdateThreadSortIndex(const Trace::MetaData &event);
     bool InsertFlow(const Trace::Flow &event);
@@ -136,7 +133,6 @@ private:
     std::unique_ptr<SqlitePreparedStatement> updateProcessNameStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessLabelStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessSortIndexStmt = nullptr;
-    std::unique_ptr<SqlitePreparedStatement> updateThreadInfoStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateThreadNameStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateThreadSortIndexStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
@@ -148,7 +144,6 @@ private:
     std::list<Protocol::SimpleSlice> sliceDepthHelper;
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
-    std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
     std::set<Trace::ThreadEvent> simulationThreadInfoCache;
     std::set<Trace::ProcessEvent> simulationProcessInfoCache;
     std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = nullptr;

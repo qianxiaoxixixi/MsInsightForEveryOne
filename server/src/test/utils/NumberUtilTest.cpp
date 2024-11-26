@@ -87,6 +87,9 @@ TEST(NumberUtil, TestConvetUsStrToNanoseconds) {
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("123.7a899"));
     EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("12b3.7899"));
     EXPECT_EQ(1695297849996491000, NumberUtil::ConvertUsStrToNanoseconds("1695297849996490.9995"));
+    EXPECT_EQ(1732274952602387700, NumberUtil::ConvertUsStrToNanoseconds("1.7322749526023877e+15"));
+    EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("-1.7322749526023877e+15"));
+    EXPECT_EQ(0, NumberUtil::ConvertUsStrToNanoseconds("null"));
 }
 
 TEST(NumberUtil, TimestampUsToNsWithStringWithNormalInputReturnValid) {

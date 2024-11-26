@@ -73,19 +73,8 @@ public:
         }
     }
 
-    /**
-     * 将微秒格式的字符串转化为整型纳秒，四舍五入处理,负数字符串或者溢出字符串返回0
-     * @param usString
-     * @return
-     */
-    static inline int64_t ConvertUsStrToNanoseconds(const std::string& usString)
+    static inline int64_t ConvertNumberUsStrToNanoseconds(const std::string& usString, const char* p)
     {
-        const char* str = usString.c_str();
-        const char* p = str;
-        // 检查字符串是否为空或负数
-        if (*p == '-' || *p == '\0') {
-            return 0;  // 如果是负数或空字符串，返回0
-        }
         int64_t integerPart = 0;
         int64_t fractionalPart = 0;
         int fractionalLength = 0;
@@ -141,6 +130,32 @@ public:
         }
         // 转换为纳秒
         return integerPart * thousandthPlace + fractionalPart;
+    }
+
+    /**
+     * 将微秒格式的字符串转化为整型纳秒，四舍五入处理,负数字符串或者溢出字符串返回0
+     * @param usString
+     * @return
+     */
+    static inline int64_t ConvertUsStrToNanoseconds(const std::string& usString)
+    {
+        const char* str = usString.c_str();
+        const char* p = str;
+        // 检查字符串是否为空或负数
+        if (*p == '-' || *p == '\0') {
+            return 0;  // 如果是负数或空字符串，返回0
+        }
+        size_t ePos = usString.find_first_of("eE");
+        if (ePos == std::string::npos) {
+            return ConvertNumberUsStrToNanoseconds(usString, p);
+        } else {
+            // 科学计数法，含有e或者E
+            try {
+                return TimestampUsToNs(std::stold(usString));
+            } catch (std::exception &e) {
+                return 0;
+            }
+        }
     }
 
     static inline int64_t TimestampUsToNs(long double us)

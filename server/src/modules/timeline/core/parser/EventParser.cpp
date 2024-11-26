@@ -138,8 +138,16 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
     event.end = event.ts + event.dur;
-    std::tuple<int64_t, std::string, std::string> thread = { event.trackId, event.tid, event.pid };
-    database->AddThreadCache(thread);
+    ProcessEvent processEvent;
+    processEvent.pid = event.pid;
+    processEvent.processName = event.pid;
+    ThreadEvent threadEvent;
+    threadEvent.trackId = event.trackId;
+    threadEvent.tid = event.tid;
+    threadEvent.pid = event.pid;
+    threadEvent.threadName = event.tid;
+    database->AddSimulationProcessCache(processEvent);
+    database->AddSimulationThreadCache(threadEvent);
     database->InsertSlice(event);
 }
 
@@ -243,8 +251,16 @@ void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
     auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
-    std::tuple<int64_t, std::string, std::string> thread = { event.trackId, event.tid, event.pid };
-    database->AddThreadCache(thread);
+    ThreadEvent threadEvent;
+    threadEvent.trackId = event.trackId;
+    threadEvent.tid = event.tid;
+    threadEvent.pid = event.pid;
+    threadEvent.threadName = event.tid;
+    ProcessEvent processEvent;
+    processEvent.pid = event.pid;
+    processEvent.processName = event.pid;
+    database->AddSimulationProcessCache(processEvent);
+    database->AddSimulationThreadCache(threadEvent);
     database->InsertFlow(event);
 }
 
@@ -266,9 +282,9 @@ void EventParser::SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> event
     ProcessEvent processEvent;
     processEvent.pid = event.pid;
     processEvent.processName = processName;
-    database->InsertFlow(event);
     database->AddSimulationProcessCache(processEvent);
     database->AddSimulationThreadCache(threadEvent);
+    database->InsertFlow(event);
 }
 
 void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)

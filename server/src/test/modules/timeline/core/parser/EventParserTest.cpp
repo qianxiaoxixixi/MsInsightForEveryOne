@@ -10,6 +10,8 @@
 #include "SliceTable.h"
 #include "ParserStatusManager.h"
 #include "SimulationSliceCacheManager.h"
+#include "ThreadTable.h"
+#include "ProcessTable.h"
 #include "TrackInfoManager.h"
 using ::testing::ByMove;
 using ::testing::Return;
@@ -104,4 +106,162 @@ TEST_F(EventParserTest, TestSliceParse)
     EXPECT_EQ(slicePOs[first].trackId, exceptTrackId);
     EXPECT_EQ(slicePOs[first].endTime, exceptTime + exceptDuration);
     EXPECT_EQ(slicePOs[first].args.empty(), false);
+}
+
+/**
+ * 测试解析type为s的json,无ph为M的数据,正常生成线程和进程信息
+ */
+TEST_F(EventParserTest, TestSliceParseWithoutPhIsMThenCheckThreadAndProcess)
+{
+    std::string jsonContent = "[{\"name\": \"PROFILING_DISABLE\", \"pid\": 2094647552, \"tid\": 8, \"ts\": "
+        "\"1718180920003154.317\", \"dur\": "
+        "0, \"args\": {\"Model Id\": 4294967295, \"Task Type\": \"PLACE_HOLDER_SQE\", \"Physic Stream Id\": 0, \"Task "
+        "Id\": 17, \"Batch Id\": 0, \"Subtask Id\": 4294967295, \"connection_id\": -1}, \"ph\": \"X\"}]";
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::RUNNING);
+    EXPECT_CALL(*mockFileReader, ReadJsonArray(filePath, startPosition, endPosition)).WillOnce(Return(jsonContent));
+    sqlite3 *dbPtr = nullptr;
+    Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    mockDatabase->SetDbPtr(dbPtr);
+    mockDatabase->CreateTable();
+    EventParserMock eventParserMock(filePath, fileId, mockDatabase);
+    eventParserMock.SetFileReaderAndDatabase(std::move(mockFileReader));
+    eventParserMock.Parse(startPosition, endPosition);
+    Dic::Module::Timeline::ThreadTable threadTable;
+    std::vector<ThreadPO> threadPOS;
+    threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
+        .Select(ThreadColumn::PID, ThreadColumn::THREAD_NAME)
+        .ExcuteQuery(dbPtr, threadPOS);
+    const uint64_t expectSize = 1;
+    const uint64_t first = 0;
+    EXPECT_EQ(threadPOS.size(), expectSize);
+    EXPECT_EQ(1, threadPOS[first].trackId);
+    EXPECT_EQ("8", threadPOS[first].tid);
+    EXPECT_EQ("8", threadPOS[first].threadName);
+    EXPECT_EQ("2094647552", threadPOS[first].pid);
+    Dic::Module::Timeline::ProcessTable processTable;
+    std::vector<ProcessPO> processPOS;
+    processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME).ExcuteQuery(dbPtr, processPOS);
+    EXPECT_EQ(processPOS.size(), expectSize);
+    EXPECT_EQ("2094647552", processPOS[first].pid);
+    EXPECT_EQ("2094647552", processPOS[first].processName);
+}
+
+/**
+ * 测试解析type为s的json,有ph为M的数据,但没有tid信息
+ */
+TEST_F(EventParserTest, TestSliceParseWithoutTidThenCheckThreadAndProcess)
+{
+    std::string jsonContent =
+        "[{\"name\": \"process_name\", \"pid\": 2094647552, \"tid\": 0, \"args\": {\"name\": \"LLLL\"}, \"ph\": "
+        "\"M\"},{\"name\": \"PROFILING_DISABLE\", \"pid\": 2094647552, \"tid\": 8, \"ts\": "
+        "\"1718180920003154.317\", \"dur\": "
+        "0, \"args\": {\"Model Id\": 4294967295, \"Task Type\": \"PLACE_HOLDER_SQE\", \"Physic Stream Id\": 0, \"Task "
+        "Id\": 17, \"Batch Id\": 0, \"Subtask Id\": 4294967295, \"connection_id\": -1}, \"ph\": \"X\"}]";
+    sqlite3 *dbPtr = nullptr;
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::RUNNING);
+    EXPECT_CALL(*mockFileReader, ReadJsonArray(filePath, startPosition, endPosition)).WillOnce(Return(jsonContent));
+    Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    mockDatabase->SetDbPtr(dbPtr);
+    mockDatabase->CreateTable();
+    EventParserMock eventParserMock(filePath, fileId, mockDatabase);
+    eventParserMock.SetFileReaderAndDatabase(std::move(mockFileReader));
+    eventParserMock.Parse(startPosition, endPosition);
+    Dic::Module::Timeline::ThreadTable threadTable;
+    std::vector<ThreadPO> threadPOS;
+    threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
+        .Select(ThreadColumn::PID, ThreadColumn::THREAD_NAME)
+        .ExcuteQuery(dbPtr, threadPOS);
+    const uint64_t expectSize = 1;
+    const uint64_t first = 0;
+    EXPECT_EQ(threadPOS.size(), expectSize);
+    EXPECT_EQ(1, threadPOS[first].trackId);
+    EXPECT_EQ("8", threadPOS[first].tid);
+    EXPECT_EQ("8", threadPOS[first].threadName);
+    EXPECT_EQ("2094647552", threadPOS[first].pid);
+    Dic::Module::Timeline::ProcessTable processTable;
+    std::vector<ProcessPO> processPOS;
+    processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME).ExcuteQuery(dbPtr, processPOS);
+    EXPECT_EQ(processPOS.size(), expectSize);
+    EXPECT_EQ("2094647552", processPOS[first].pid);
+    EXPECT_EQ("LLLL", processPOS[first].processName);
+}
+
+/**
+ * 测试解析type为s的json,有ph为M的数据,但没有pid信息
+ */
+TEST_F(EventParserTest, TestSliceParseWithoutPidThenCheckThreadAndProcess)
+{
+    std::string jsonContent = "[{\"name\": \"PROFILING_DISABLE\", \"pid\": 2094647552, \"tid\": 8, \"ts\": "
+        "\"1718180920003154.317\", \"dur\": "
+        "0, \"args\": {\"Model Id\": 4294967295, \"Task Type\": \"PLACE_HOLDER_SQE\", \"Physic Stream Id\": 0, \"Task "
+        "Id\": 17, \"Batch Id\": 0, \"Subtask Id\": 4294967295, \"connection_id\": -1}, \"ph\": \"X\"},{\"name\": "
+        "\"thread_name\", \"pid\": 2094647552, \"tid\": 8, \"args\": {\"name\": \"Stream 20\"}, \"ph\": \"M\"}]";
+    sqlite3 *dbPtr = nullptr;
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::RUNNING);
+    EXPECT_CALL(*mockFileReader, ReadJsonArray(filePath, startPosition, endPosition)).WillOnce(Return(jsonContent));
+    Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    mockDatabase->SetDbPtr(dbPtr);
+    mockDatabase->CreateTable();
+    EventParserMock eventParserMock(filePath, fileId, mockDatabase);
+    eventParserMock.SetFileReaderAndDatabase(std::move(mockFileReader));
+    eventParserMock.Parse(startPosition, endPosition);
+    Dic::Module::Timeline::ThreadTable threadTable;
+    std::vector<ThreadPO> threadPOS;
+    threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
+        .Select(ThreadColumn::PID, ThreadColumn::THREAD_NAME)
+        .ExcuteQuery(dbPtr, threadPOS);
+    const uint64_t expectSize = 1;
+    const uint64_t first = 0;
+    EXPECT_EQ(threadPOS.size(), expectSize);
+    EXPECT_EQ(1, threadPOS[first].trackId);
+    EXPECT_EQ("8", threadPOS[first].tid);
+    EXPECT_EQ("Stream 20", threadPOS[first].threadName);
+    EXPECT_EQ("2094647552", threadPOS[first].pid);
+    Dic::Module::Timeline::ProcessTable processTable;
+    std::vector<ProcessPO> processPOS;
+    processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME).ExcuteQuery(dbPtr, processPOS);
+    EXPECT_EQ(processPOS.size(), expectSize);
+    EXPECT_EQ("2094647552", processPOS[first].pid);
+    EXPECT_EQ("2094647552", processPOS[first].processName);
+}
+
+/**
+ * 测试解析type为s的json,pid和tid信息都有
+ */
+TEST_F(EventParserTest, TestSliceParseWithPidAndTidThenCheckThreadAndProcess)
+{
+    std::string jsonContent =
+        "[{\"name\": \"process_name\", \"pid\": 2094647552, \"tid\": 8, \"args\": {\"name\": \"HCCL\"}, \"ph\": "
+        "\"M\"},{\"name\": \"PROFILING_DISABLE\", \"pid\": 2094647552, \"tid\": 8, \"ts\": "
+        "\"1718180920003154.317\", \"dur\": "
+        "0, \"args\": {\"Model Id\": 4294967295, \"Task Type\": \"PLACE_HOLDER_SQE\", \"Physic Stream Id\": 0, \"Task "
+        "Id\": 17, \"Batch Id\": 0, \"Subtask Id\": 4294967295, \"connection_id\": -1}, \"ph\": \"X\"},{\"name\": "
+        "\"thread_name\", \"pid\": 2094647552, \"tid\": 8, \"args\": {\"name\": \"Stream 20\"}, \"ph\": \"M\"}]";
+    sqlite3 *dbPtr = nullptr;
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::RUNNING);
+    EXPECT_CALL(*mockFileReader, ReadJsonArray(filePath, startPosition, endPosition)).WillOnce(Return(jsonContent));
+    Dic::Global::PROFILER::MockUtil::DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    mockDatabase->SetDbPtr(dbPtr);
+    mockDatabase->CreateTable();
+    EventParserMock eventParserMock(filePath, fileId, mockDatabase);
+    eventParserMock.SetFileReaderAndDatabase(std::move(mockFileReader));
+    eventParserMock.Parse(startPosition, endPosition);
+    Dic::Module::Timeline::ThreadTable threadTable;
+    std::vector<ThreadPO> threadPOS;
+    threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
+        .Select(ThreadColumn::PID, ThreadColumn::THREAD_NAME)
+        .ExcuteQuery(dbPtr, threadPOS);
+    const uint64_t expectSize = 1;
+    const uint64_t first = 0;
+    EXPECT_EQ(threadPOS.size(), expectSize);
+    EXPECT_EQ(1, threadPOS[first].trackId);
+    EXPECT_EQ("8", threadPOS[first].tid);
+    EXPECT_EQ("Stream 20", threadPOS[first].threadName);
+    EXPECT_EQ("2094647552", threadPOS[first].pid);
+    Dic::Module::Timeline::ProcessTable processTable;
+    std::vector<ProcessPO> processPOS;
+    processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME).ExcuteQuery(dbPtr, processPOS);
+    EXPECT_EQ(processPOS.size(), expectSize);
+    EXPECT_EQ("2094647552", processPOS[first].pid);
+    EXPECT_EQ("HCCL", processPOS[first].processName);
 }
