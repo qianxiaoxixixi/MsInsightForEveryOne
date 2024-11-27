@@ -65,6 +65,7 @@
     "CommunicationAdvice": "{{type}} bandwidth(GB/s): the average is {{avg}}GB/s, while the maximum is {{max}}GB/s and the minimum is {{min}}GB/s. The difference is {{diff}}GB/s. {{issue}}, please pay attention to the Bandwidth Analysis column in the table above.",
     "BandwidthIssue": "Bandwidth is the bottleneck",
     "CommunicationIssue": "Communication efficiency is low",
-    "Back": "Back"
+    "Back": "Back",
+    "Tooltip": "If the cluster data already includes the cluster_analysis_output folder, it will not be overwritten; if there is a mismatch between the cluster data and the single-card data, please delete the original cluster_analysis_output folder and the cluster.db file and re-import the data."
   }
 }
