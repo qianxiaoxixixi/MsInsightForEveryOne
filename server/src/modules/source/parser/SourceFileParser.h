@@ -106,7 +106,8 @@ private:
     const int reserveLen = 2;  // 实际数据距离填充长度字段的偏移
     const int filePathLen = 4096;
 
-    bool ParseDataBlocks(std::ifstream &file, std::map<int, std::vector<Position>> &curDataBlockMap);
+    bool ParseDataBlocks(std::ifstream &file, long long fileSize,
+                         std::map<int, std::vector<Position>> &curDataBlockMap);
 };
 } // end of namespace Summary
 } // end of namespace Module
