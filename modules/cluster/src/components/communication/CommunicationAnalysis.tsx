@@ -214,6 +214,7 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
         session, handleFilterChange, showData, active, showOperator,
         setShowData, conditions, isShow, rankId, returnHome,
     } = props;
+    const { t } = useTranslation('communication');
     return (
         <Layout>
             {/* 筛选条件 */}
@@ -236,6 +237,19 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
             { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
                 session={session} returnHome={returnHome}
                 operatorName={conditions.operatorName} stage={conditions.stage} /> }
+            <div style={{ position: 'absolute', top: '15px', right: '20px' }}>
+                <Tooltip
+                    placement="left"
+                    title={
+                        (
+                            <div style={{ padding: '10px' }}>
+                                {t('Tooltip')}
+                            </div>
+                        )
+                    }>
+                    <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
+                </Tooltip>
+            </div>
         </Layout>
     );
 };
