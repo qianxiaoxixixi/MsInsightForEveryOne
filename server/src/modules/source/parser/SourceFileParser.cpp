@@ -61,8 +61,12 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     // 获取目标数据对象的应用，下面对数据进行改动时会影响
     auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         baselineDataBlockMap : dataBlockMap;
-
-    bool success = ParseDataBlocks(file, curDataBlockMap);
+    auto fileSize = FileUtil::GetFileSize(selectedFile.c_str());
+    if (fileSize <= 0) {
+        ServerLog::Error("Check size of bin file failed when parse data blocks, the size is ", fileSize);
+        return false;
+    }
+    bool success = ParseDataBlocks(file, fileSize, curDataBlockMap);
     if (!success) {
         return false;
     }
@@ -72,18 +76,14 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     return true;
 }
 
-bool SourceFileParser::ParseDataBlocks(std::ifstream &file, std::map<int, std::vector<Position>> &curDataBlockMap)
+bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
+                                       std::map<int, std::vector<Position>> &curDataBlockMap)
 {
     while (!file.eof()) {
         uint64_t dataSize;
         uint8_t dataType;
         uint8_t paddingLength;
 
-        auto fileSize = FileUtil::GetFileSize(filePath.c_str());
-        if (fileSize <= 0) {
-            ServerLog::Error("Get bin file size failed : ", fileSize);
-            return false;
-        }
         file.read(reinterpret_cast<char *>(&dataSize), dataSizeLen);
         if (dataSize > static_cast<uint64_t>(fileSize)) {
             ServerLog::Error("The size of data block is greater than bin file size : ", dataSize);
