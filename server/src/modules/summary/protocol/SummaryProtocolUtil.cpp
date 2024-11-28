@@ -220,6 +220,8 @@ std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const Qu
     JsonUtil::AddMember(body, KEY_TP_SIZE, response.config.tpSize, allocator);
     JsonUtil::AddMember(body, KEY_PP_SIZE, response.config.ppSize, allocator);
     JsonUtil::AddMember(body, KEY_DP_SIZE, response.config.dpSize, allocator);
+    JsonUtil::AddMember(body, KEY_CP_SIZE, response.config.cpSize, allocator);
+    JsonUtil::AddMember(body, KEY_EP_SIZE, response.config.epSize, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::move(json);
 }

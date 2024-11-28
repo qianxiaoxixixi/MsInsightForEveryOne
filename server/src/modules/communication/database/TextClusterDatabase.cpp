@@ -59,7 +59,8 @@ bool TextClusterDatabase::CreateTable()
             "CREATE TABLE " + TABLE_BASE_INFO +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path VARCHAR(500), ranks json,steps json,"
             " collect_start_time DATETIME, collect_duration double, data_size double, stages json, pp_stages json, "
-            "algorithm VARCHAR(50), dp_size INTEGER, pp_size INTEGER, tp_size INTEGER, level VARCHAR(10), "
+            "algorithm VARCHAR(50), dp_size INTEGER, pp_size INTEGER, tp_size INTEGER, cp_size INTEGER, "
+            "ep_size INTEGER, level VARCHAR(10), "
             "parse_status VARCHAR(10)); "
             "CREATE TABLE " + TABLE_STEP_TRACE +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
@@ -880,7 +881,7 @@ void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string
 
 bool TextClusterDatabase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
 {
-    std::string sql = "select algorithm, dp_size, pp_size, tp_size, level from " + TABLE_BASE_INFO;
+    std::string sql = "select algorithm, dp_size, pp_size, tp_size, cp_size, ep_size, level from " + TABLE_BASE_INFO;
     return ExecuteQueryParallelStrategyConfig(sql, config, level);
 }
 
@@ -888,7 +889,7 @@ bool TextClusterDatabase::UpdateParallelStrategyConfig(const ParallelStrategyCon
     std::string &level, std::string &msg)
 {
     std::string sql = "update " + TABLE_BASE_INFO +
-        " set algorithm = ?, dp_size = ?, pp_size = ?, tp_size = ?, level = ? WHERE id = '1'";
+        " set algorithm = ?, dp_size = ?, pp_size = ?, tp_size = ?, cp_size = ?, ep_size = ?, level = ? WHERE id = '1'";
     return ExecuteSetParallelStrategyConfig(sql, config, level);
 }
 
