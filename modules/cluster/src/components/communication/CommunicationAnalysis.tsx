@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Tooltip } from 'ascend-components';
 import type { Session } from '../../entity/session';
-import Filter from './Filter';
+import Filter, { AnalysisType } from './Filter';
 import type { ConditionDataType } from './Filter';
 import CommunicationTimeTable from './CommunicationTimeTable';
 import type { DataType, DataType as tableDataType } from './CommunicationTimeTable';
@@ -117,13 +117,16 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         adviceData: [],
     });
     const [conditions, setConditions] = useState<ConditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationMatrix', stage: '' });
+        { iterationId: '', rankIds: [], operatorName: '', type: AnalysisType.COMMUNICATION_MATRIX, stage: '' });
     const showOperator = (newRankId: string): void => {
         setRankId(newRankId);
     };
     const returnHome = (): void => { setRankId(''); };
     const handleFilterChange = async(newConditions: ConditionDataType): Promise<void> => {
         setConditions({ ...conditions, ...newConditions });
+        if (newConditions.type !== AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
+            return;
+        }
         const res = await searchData(newConditions);
         setShowData(res);
     };
@@ -143,7 +146,7 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
             search();
         }
         async function search(): Promise<void> {
-            if (showData.tableData.length === 0 && conditions.type === 'CommunicationDurationAnalysis') {
+            if (showData.tableData.length === 0 && conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
                 const res = await searchData(conditions);
                 setShowData(res);
             }
@@ -214,12 +217,13 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
         session, handleFilterChange, showData, active, showOperator,
         setShowData, conditions, isShow, rankId, returnHome,
     } = props;
+    const { t } = useTranslation('communication');
     return (
         <Layout>
             {/* 筛选条件 */}
             <Filter handleFilterChange={handleFilterChange} session={session} />
             {/* 通信用时分析 */}
-            <div className={'communication'} style={{ display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}>
+            <div className={'communication'} style={{ display: isShow(AnalysisType.COMMUNICATION_DURATION_ANALYSIS) ? 'block' : 'none' }}>
                 <div>
                     <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
@@ -236,6 +240,19 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
             { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
                 session={session} returnHome={returnHome}
                 operatorName={conditions.operatorName} stage={conditions.stage} /> }
+            <div style={{ position: 'absolute', top: '15px', right: '20px' }}>
+                <Tooltip
+                    placement="left"
+                    title={
+                        (
+                            <div style={{ padding: '10px' }}>
+                                {t('Tooltip')}
+                            </div>
+                        )
+                    }>
+                    <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
+                </Tooltip>
+            </div>
         </Layout>
     );
 };
