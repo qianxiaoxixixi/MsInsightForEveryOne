@@ -8,7 +8,7 @@
         "Delete All": "Delete All",
         "Delete Item": "Delete Item",
         "DeleteAllConfirmDescribe": "Are you sure to delete all projects?",
-        "DeleteConfirmDescribe": "Are you sure to delete these projects?",
+        "DeleteConfirmDescribe": "Are you sure to delete the selected projects?",
         "DeleteProjectConfirmDescribe": "Are you sure to delete this project?",
         "DeleteItemConfirmDescribe": "Are you sure to delete this item?",
         "File Explorer": "File Explorer",

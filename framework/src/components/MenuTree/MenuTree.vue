@@ -330,6 +330,7 @@ const handleDeleteChecked = () => {
 
 .btn-delete.disabled {
   cursor: default;
+  pointer-events: none;
   color: var(--mi-text-color-disabled);
 }
 

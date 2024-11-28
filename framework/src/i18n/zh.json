@@ -8,7 +8,7 @@
         "Delete All": "全部删除",
         "Delete Item": "删除项目",
         "DeleteAllConfirmDescribe": "您确认要删除全部工程吗?",
-        "DeleteConfirmDescribe": "您确认要删除这些工程吗?",
+        "DeleteConfirmDescribe": "您确认要删除选中的工程吗?",
         "DeleteProjectConfirmDescribe": "您确认要删除该工程吗?",
         "DeleteItemConfirmDescribe": "您确认要删除该项吗？",
         "File Explorer": "文件资源管理器",
