@@ -102,3 +102,17 @@ TEST_F(DetailsServerTest, QueryMemoryTableWithBaseline)
     EXPECT_EQ(compareData.row.size(), NUMBER_TWO);
     EXPECT_EQ(compareData.tableName, "Vector Core1");
 }
+
+TEST_F(DetailsServerTest, QueryCoreLoadAnalysisGraphWithBaseline)
+{
+    InitParser(filePath, "");
+    InitParser(filePath, "baseline");
+    Dic::Protocol::DetailsInterCoreLoadGraphRequest request;
+    request.params.isCompared = true;
+    Dic::Protocol::DetailsInterCoreLoadGraphResponse response;
+    bool res = Dic::Module::Source::DetailsService::QueryCoreLoadAnalysisGraph(request, response);
+    EXPECT_TRUE(res);
+    EXPECT_EQ(response.body.opType, "mix");
+    EXPECT_EQ(response.body.soc, "Ascend910B4");
+    EXPECT_EQ(response.body.opDetails.size(), NUMBER_TWO);
+}
