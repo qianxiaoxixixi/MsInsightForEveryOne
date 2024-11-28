@@ -186,6 +186,12 @@ std::unique_ptr<Request> SummaryProtocol::ToSetParallelStrategyRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->config.tpSize, json["params"], KEY_TP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->config.ppSize, json["params"], KEY_PP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->config.dpSize, json["params"], KEY_DP_SIZE);
+    if (json["params"].HasMember(KEY_CP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->config.cpSize, json["params"], KEY_CP_SIZE);
+    }
+    if (json["params"].HasMember(KEY_EP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->config.epSize, json["params"], KEY_EP_SIZE);
+    }
     return reqPtr;
 }
 

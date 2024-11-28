@@ -20,7 +20,8 @@ bool DbClusterDataBase::CreateTable()
     }
     std::string sql = "CREATE TABLE " + TABLE_CLUSTER_BASE_INFO + " (id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "ranks json, steps json, collect_start_time DATETIME, collect_duration double, "
-        "algorithm VARCHAR(50), dp_size INTEGER, pp_size INTEGER, tp_size INTEGER, level VARCHAR(10)); ";
+        "algorithm VARCHAR(50), dp_size INTEGER, pp_size INTEGER, tp_size INTEGER, cp_size INTEGER, "
+        "ep_size INTEGER, level VARCHAR(10)); ";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -489,7 +490,8 @@ void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
 
 bool DbClusterDataBase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
 {
-    std::string sql = "select algorithm, dp_size, pp_size, tp_size, level from " + TABLE_CLUSTER_BASE_INFO;
+    std::string sql = "select algorithm, dp_size, pp_size, tp_size,cp_size, "
+                      "ep_size, level from " + TABLE_CLUSTER_BASE_INFO;
     return ExecuteQueryParallelStrategyConfig(sql, config, level);
 }
 
@@ -497,7 +499,8 @@ bool DbClusterDataBase::UpdateParallelStrategyConfig(const ParallelStrategyConfi
     std::string &level, std::string &msg)
 {
     std::string sql = "update " + TABLE_CLUSTER_BASE_INFO +
-                      " set algorithm = ?, dp_size = ?, pp_size = ?, tp_size = ?, level = ? WHERE id = '1'";
+                      " set algorithm = ?, dp_size = ?, pp_size = ?, tp_size = ?, "
+                      "cp_size = ?, ep_size = ?, level = ? WHERE id = '1'";
     return ExecuteSetParallelStrategyConfig(sql, config, level);
 }
 

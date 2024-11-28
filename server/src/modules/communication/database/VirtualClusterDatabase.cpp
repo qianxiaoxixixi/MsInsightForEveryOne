@@ -727,6 +727,8 @@ bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql
         config.dpSize = sqlite3_column_int64(stmt, col++);
         config.ppSize = sqlite3_column_int64(stmt, col++);
         config.tpSize = sqlite3_column_int64(stmt, col++);
+        config.cpSize = sqlite3_column_int64(stmt, col++);
+        config.epSize = sqlite3_column_int64(stmt, col++);
         level = sqlite3_column_string(stmt, col++);
     }
     sqlite3_finalize(stmt);
@@ -747,6 +749,8 @@ bool VirtualClusterDatabase::ExecuteSetParallelStrategyConfig(std::string &sql,
     sqlite3_bind_int64(stmt, index++, config.dpSize);
     sqlite3_bind_int64(stmt, index++, config.ppSize);
     sqlite3_bind_int64(stmt, index++, config.tpSize);
+    sqlite3_bind_int64(stmt, index++, config.cpSize);
+    sqlite3_bind_int64(stmt, index++, config.epSize);
     sqlite3_bind_text(stmt, index++, level.c_str(), level.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
