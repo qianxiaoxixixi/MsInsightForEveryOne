@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <WsSessionManager.h>
 #include "WsSessionImpl.h"
+#include "QueryMemoryComponentHandler.h"
 #include "QueryMemoryOperatorHandler.h"
 #include "QueryMemoryResourceTypeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
@@ -53,6 +54,190 @@ public:
         DataBaseManager::Instance().Clear();
     }
 };
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerNormalTest)
+{
+    const int64_t defaultPageSize = 10;
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryComponentRequest> requestPtr =
+        std::make_unique<Dic::Protocol::MemoryComponentRequest>();
+    requestPtr.get()->params.rankId = "0";
+    requestPtr.get()->params.currentPage = 1;
+    requestPtr.get()->params.pageSize = defaultPageSize;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_TRUE(result);
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerInvalidParamTest)
+{
+    const int64_t defaultPageSize = 10;
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryComponentRequest> requestPtr =
+            std::make_unique<Dic::Protocol::MemoryComponentRequest>();
+    requestPtr.get()->params.rankId = "0";
+    requestPtr.get()->params.currentPage = 1;
+    requestPtr.get()->params.pageSize = defaultPageSize;
+    requestPtr.get()->params.order = "ascend";
+    requestPtr.get()->params.orderBy = "name";
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerGetComponentDiffCompareEmptyTest)
+{
+    const std::vector<MemoryComponent> compareData;
+    const std::vector<MemoryComponent> baselineData = {
+        {"SLOG", "196.327", 259.36, ""}, {"TSYNC", "12.789", 10.65, ""}
+    };
+    std::vector<MemoryComponentComparison> diffData;
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryComponentRequest> requestPtr =
+        std::make_unique<Dic::Protocol::MemoryComponentRequest>();
+    handler.GetComponentDiff(compareData, baselineData, diffData);
+    ASSERT_EQ(diffData.size(), baselineData.size());
+    for (size_t i = 0; i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.component, baselineData[i].component);
+        EXPECT_EQ(diffData[i].diff.timestamp, "-" + baselineData[i].timestamp);
+        EXPECT_EQ(diffData[i].diff.totalReserved, -baselineData[i].totalReserved);
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerGetComponentDiffBaselineEmptyTest)
+{
+    const std::vector<MemoryComponent> compareData = {
+        {"SLOG", "196.327", 259.36, ""}, {"TSYNC", "12.789", 10.65, ""}
+    };
+    const std::vector<MemoryComponent> baselineData;
+    std::vector<MemoryComponentComparison> diffData;
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryComponentRequest> requestPtr =
+            std::make_unique<Dic::Protocol::MemoryComponentRequest>();
+    handler.GetComponentDiff(compareData, baselineData, diffData);
+    ASSERT_EQ(diffData.size(), compareData.size());
+    for (size_t i = 0; i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.component, compareData[i].component);
+        EXPECT_EQ(diffData[i].diff.timestamp, compareData[i].timestamp);
+        EXPECT_EQ(diffData[i].diff.totalReserved, compareData[i].totalReserved);
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerGetComponentDiffBothNotEmptyTest)
+{
+    const int precision = 3;
+    const std::vector<MemoryComponent> compareData = {
+        {"SLOG", "196.327", 259.36, ""}, {"TSYNC", "12.789", 10.65, ""}
+    };
+    const std::vector<MemoryComponent> baselineData = {
+        {"SLOG", "25.397", 1285.27, ""}, {"TSYNC", "21.569", 22.67, ""}
+    };
+    std::vector<MemoryComponentComparison> diffData;
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryComponentRequest> requestPtr =
+            std::make_unique<Dic::Protocol::MemoryComponentRequest>();
+    handler.GetComponentDiff(compareData, baselineData, diffData);
+    ASSERT_EQ(diffData.size(), compareData.size());
+    ASSERT_EQ(diffData.size(), baselineData.size());
+    for (size_t i = 0; i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.component, compareData[i].component);
+        EXPECT_EQ(diffData[i].diff.component, baselineData[i].component);
+        EXPECT_EQ(diffData[i].diff.timestamp, NumberUtil::StringDoubleMinus(compareData[i].timestamp,
+            baselineData[i].timestamp));
+        EXPECT_EQ(diffData[i].diff.totalReserved, NumberUtil::DoubleReservedNDigits(
+            compareData[i].totalReserved - baselineData[i].totalReserved, precision));
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerSelectResultEmptyTest)
+{
+    std::vector<MemoryComponentComparison> fullDiffResult(10, {{}, {}, {"TSYNC", "125.697", 45.98, ""}});
+    MemoryComponentRequest request;
+    request.params.pageSize = 10; // page size = 10
+    request.params.currentPage = 2; // current page = 2
+    std::unique_ptr<MemoryComponentComparisonResponse> responsePtr =
+        std::make_unique<MemoryComponentComparisonResponse>();
+    QueryMemoryComponentHandler handler;
+    handler.SelectResult(request, responsePtr, fullDiffResult);
+    int expectNum = fullDiffResult.size();
+    int expectSize = 0;
+    EXPECT_EQ(responsePtr.get()->totalNum, expectNum);
+    EXPECT_EQ(responsePtr.get()->componentDiffDetails.size(), expectSize);
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerSelectResultNotEmptyTest)
+{
+    std::vector<MemoryComponentComparison> fullDiffResult(135, {{}, {}, {"TSYNC", "125.697", 45.98, ""}});
+    MemoryComponentRequest request;
+    request.params.pageSize = 10; // page size = 10
+    request.params.currentPage = 14; // current page = 14
+    std::unique_ptr<MemoryComponentComparisonResponse> responsePtr =
+        std::make_unique<MemoryComponentComparisonResponse>();
+    QueryMemoryComponentHandler handler;
+    handler.SelectResult(request, responsePtr, fullDiffResult);
+    int expectNum = fullDiffResult.size();
+    int expectSize = 5;
+    EXPECT_EQ(responsePtr.get()->totalNum, expectNum);
+    EXPECT_EQ(responsePtr.get()->componentDiffDetails.size(), expectSize);
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerSortResultAscendTest)
+{
+    std::vector<MemoryComponentComparison> result;
+    MemoryComponent componentFirst = {"SLOG", "189.657", 29.67, ""};
+    MemoryComponent componentSecond = {"APP", "29.301", 89.14, ""};
+    MemoryComponent componentThird = {"PTA", "350.417", 125.99, ""};
+    result.push_back({{}, {}, componentFirst});
+    result.push_back({{}, {}, componentSecond});
+    result.push_back({{}, {}, componentThird});
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    MemoryComponentRequest request;
+    const size_t second = 2;
+    request.params.order = "ascend";
+    request.params.orderBy = "component";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result[0].diff.component, "APP");
+    EXPECT_EQ(result[1].diff.component, "PTA");
+    EXPECT_EQ(result[second].diff.component, "SLOG");
+    request.params.orderBy = "timestamp";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result[0].diff.component, "APP");
+    EXPECT_EQ(result[1].diff.component, "SLOG");
+    EXPECT_EQ(result[second].diff.component, "PTA");
+    request.params.orderBy = "totalReserved";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result[0].diff.component, "SLOG");
+    EXPECT_EQ(result[1].diff.component, "APP");
+    EXPECT_EQ(result[second].diff.component, "PTA");
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerSortResultDescendTest)
+{
+    std::vector<MemoryComponentComparison> result;
+    MemoryComponent componentFirst = {"SLOG", "189.657", 29.67, ""};
+    MemoryComponent componentSecond = {"APP", "29.301", 89.14, ""};
+    MemoryComponent componentThird = {"PTA", "350.417", 125.99, ""};
+    result.push_back({{}, {}, componentFirst});
+    result.push_back({{}, {}, componentSecond});
+    result.push_back({{}, {}, componentThird});
+    Dic::Module::Memory::QueryMemoryComponentHandler handler;
+    MemoryComponentRequest request;
+    const size_t second = 2;
+    request.params.order = "descend";
+    request.params.orderBy = "component";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result[0].diff.component, "SLOG");
+    EXPECT_EQ(result[1].diff.component, "PTA");
+    EXPECT_EQ(result[second].diff.component, "APP");
+    request.params.orderBy = "timestamp";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result[0].diff.component, "PTA");
+    EXPECT_EQ(result[1].diff.component, "SLOG");
+    EXPECT_EQ(result[second].diff.component, "APP");
+    request.params.orderBy = "totalReserved";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result[0].diff.component, "PTA");
+    EXPECT_EQ(result[1].diff.component, "APP");
+    EXPECT_EQ(result[second].diff.component, "SLOG");
+}
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerNormalTest)
 {

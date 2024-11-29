@@ -196,8 +196,7 @@ bool QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request
         }
     }
     SortResult(request, filteredDiffResult);
-    const uint64_t defaultPageSize = 10;
-    uint64_t pageSize = request.params.pageSize <= 0 ? defaultPageSize : request.params.pageSize;
+    uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : request.params.pageSize;
     uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
     uint64_t offset = currentPage * pageSize;
     MemoryOperatorComparisonResponse &response = *responsePtr.get();

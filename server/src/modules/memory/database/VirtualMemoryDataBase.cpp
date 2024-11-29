@@ -139,6 +139,22 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     return true;
 }
 
+bool VirtualMemoryDataBase::ExecuteComponentTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum,
+                                                     std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                                               int64_t &totalNum,
                                                               std::string sql)
@@ -330,6 +346,64 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol
         }
         columnAttr.emplace_back(column);
     }
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteComponentDetail(Protocol::MemoryComponentParams &requestParams,
+                                                   std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                                   std::vector<Protocol::MemoryComponent> &componentDetails,
+                                                   std::string &sql)
+{
+    int64_t pageSize = requestParams.pageSize == 0 ? defaultPageSize : requestParams.pageSize;
+    int64_t currentPage = requestParams.currentPage - 1;
+    currentPage = currentPage < 0 ? 0 : currentPage;
+    if (pageSize > maxPageSize || currentPage > maxCurrentPage) {
+        ServerLog::Error("Error param: pageSize or currentPage");
+        return false;
+    }
+    int64_t offset = currentPage * pageSize;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query component detail. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::MemoryComponent componentElement;
+        componentElement.component = sqlite3_column_string(stmt, col++);
+        componentElement.totalReserved = sqlite3_column_double(stmt, col++);
+        componentElement.timestamp = sqlite3_column_string(stmt, col++);
+        componentDetails.emplace_back(componentElement);
+    }
+    sqlite3_finalize(stmt);
+    for (const auto &column : componentTableColumnAttr) {
+        columnAttr.emplace_back(column);
+    }
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteQueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
+                                                             std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query entire component table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::MemoryComponent componentElement;
+        componentElement.component = sqlite3_column_string(stmt, col++);
+        componentElement.totalReserved = sqlite3_column_double(stmt, col++);
+        componentElement.timestamp = sqlite3_column_string(stmt, col++);
+        componentDetails.emplace_back(componentElement);
+    }
+    sqlite3_finalize(stmt);
     return true;
 }
 
