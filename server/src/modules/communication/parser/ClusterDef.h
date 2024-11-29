@@ -75,6 +75,8 @@ struct ParallelStrategyConfig {
     int64_t ppSize{};
     int64_t tpSize{};
     int64_t dpSize{};
+    int64_t cpSize = 1;
+    int64_t epSize = 1;
     bool CheckParams(std::string &errorMsg) const
     {
         // 检查ppSize, tpSize, dpSize的范围
@@ -90,9 +92,17 @@ struct ParallelStrategyConfig {
             errorMsg = "[Summary] DP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
             return false;
         }
+        if (cpSize <= 0 || cpSize > MAX_PARALLEL_SIZE) {
+            errorMsg = "[Summary] CP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
+            return false;
+        }
+        if (epSize <= 0 || epSize > MAX_PARALLEL_SIZE) {
+            errorMsg = "[Summary] EP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
+            return false;
+        }
         // 检查三个数的乘积是否小于MAX_PARALLEL_PRODUCT_SIZE(25万)
-        if (ppSize * tpSize * dpSize > MAX_PARALLEL_PRODUCT_SIZE) {
-            errorMsg = "[Summary] The product of PP size, TP size, and DP size must be less than " +
+        if (ppSize * tpSize * dpSize * cpSize > MAX_PARALLEL_PRODUCT_SIZE) {
+            errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
                        std::to_string(MAX_PARALLEL_PRODUCT_SIZE);
             return false;
         }

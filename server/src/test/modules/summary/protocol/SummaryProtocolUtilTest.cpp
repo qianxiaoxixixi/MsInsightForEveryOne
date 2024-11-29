@@ -57,6 +57,28 @@ TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyRequestTest)
     EXPECT_EQ(result.config.tpSize, 2); // tp = 2
     EXPECT_EQ(result.config.ppSize, 3); // pp = 3
     EXPECT_EQ(result.config.dpSize, 4); // dp = 4
+    EXPECT_EQ(result.config.cpSize, 1); // pp = 3
+    EXPECT_EQ(result.config.epSize, 1); // dp = 4
+}
+
+TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyRequestWithCpAndTpTest)
+{
+    Dic::document_t json;
+    std::string err;
+    std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "summary/set/parallelStrategy", "resultCallbackId": 0, "params":
+        {"algorithm": "test", "tpSize": 2, "ppSize": 3, "dpSize": 4, "cpSize": 5, "epSize": 6}})";
+    json.Parse(reqJson.c_str());
+    auto result = dynamic_cast<SetParallelStrategyRequest &>(*(protocol.FromJson(json, err)));
+    const int64_t expectCp = 5;
+    const int64_t expectEp = 6;
+    EXPECT_EQ(result.command, REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY);
+    EXPECT_EQ(result.config.algorithm, "test");
+    EXPECT_EQ(result.config.tpSize, 2); // tp = 2
+    EXPECT_EQ(result.config.ppSize, 3); // pp = 3
+    EXPECT_EQ(result.config.dpSize, 4); // dp = 4
+    EXPECT_EQ(result.config.cpSize, expectCp);
+    EXPECT_EQ(result.config.epSize, expectEp);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToQueryParallelStrategyResponseTest)
@@ -64,14 +86,20 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelStrategyResponseTest)
     Dic::Protocol::QueryParallelStrategyResponse response;
     std::string err;
     response.config.algorithm = "megatron-lm";
+    const int64_t expectCp = 7;
+    const int64_t expectEp = 9;
     response.config.tpSize = 8; // tp = 8
     response.config.ppSize = 4; // pp = 4
     response.config.dpSize = 2; // dp = 2
+    response.config.cpSize = expectCp; // dp = 2
+    response.config.epSize = expectEp; // dp = 2
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_ALGORITHM.c_str()], response.config.algorithm.c_str());
     EXPECT_EQ(jsonOptional.value()["body"][KEY_TP_SIZE.c_str()], response.config.tpSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_PP_SIZE.c_str()], response.config.ppSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_DP_SIZE.c_str()], response.config.dpSize);
+    EXPECT_EQ(jsonOptional.value()["body"][KEY_CP_SIZE.c_str()], response.config.cpSize);
+    EXPECT_EQ(jsonOptional.value()["body"][KEY_EP_SIZE.c_str()], response.config.epSize);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyResponseTest)

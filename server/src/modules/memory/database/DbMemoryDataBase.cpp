@@ -122,6 +122,66 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTabl
     return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
 }
 
+bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
+                                            std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                            std::vector<Protocol::MemoryComponent> &componentDetails)
+{
+    std::string sql;
+    FileType type = DataBaseManager::Instance().GetFileType();
+    if (type == FileType::PYTORCH) {
+        uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+        uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+        // 最内层SQL根据组件编号分组取出内存占用峰值大于100M的那些组件编号
+        // 中间层SQL和最内层SQL的查询结果根据组件编号和内存占用值做一次连接
+        // 做分组的原因是可能有多个时刻内存占用为峰值，只需要时刻最小的那个
+        // 最外层SQL根据组件编号和组件名做一次连接
+        sql = "SELECT t4.name AS componentColumn, ROUND(t3.size / 1024.0, 2) AS totalReservedColumn,"
+            " t3.timestamp_maxsize AS timestampColumn FROM "
+            "(SELECT t1.moduleId AS id, t1.totalReserved AS size, MIN(ROUND((t1.timestampNs - " +
+            std::to_string(startTime + offsetTime) +
+            ") / (1000.0 * 1000.0), 3)) AS timestamp_maxsize FROM " + TABLE_NPU_MODULE_MEM + " AS t1 JOIN " +
+            "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
+            " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdKb) +
+            ") AS t2 ON t1.moduleId = t2.moduleId AND t1.totalReserved = t2.max_total_reserved "
+            "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id";
+        if (!requestParams.order.empty() && !requestParams.orderBy.empty()) {
+            sql += " ORDER BY " + requestParams.orderBy + "Column";
+            if (requestParams.order == "ascend") {
+                sql += " ASC ";
+            } else {
+                sql += " DESC ";
+            }
+        }
+        sql += " LIMIT ? OFFSET ? ";
+    } else {
+        ServerLog::Error("Failed to query component detail: Memory tab does not support msprof data.");
+        return false;
+    }
+    return ExecuteComponentDetail(requestParams, columnAttr, componentDetails, sql);
+}
+
+bool DbMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
+                                                 uint64_t offsetTime)
+{
+    std::string sql;
+    FileType type = DataBaseManager::Instance().GetFileType();
+    if (type == FileType::PYTORCH) {
+        uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+        sql = "SELECT t4.name, ROUND(t3.size / 1024.0, 2), t3.timestamp_maxsize FROM "
+              "(SELECT t1.moduleId AS id, t1.totalReserved AS size, MIN(ROUND((t1.timestampNs - " +
+              std::to_string(startTime + offsetTime) +
+              ") / (1000.0 * 1000.0), 3)) AS timestamp_maxsize FROM " + TABLE_NPU_MODULE_MEM + " AS t1 JOIN " +
+              "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
+              " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdKb) +
+              ") AS t2 ON t1.moduleId = t2.moduleId AND t1.totalReserved = t2.max_total_reserved "
+              "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id";
+    } else {
+        ServerLog::Error("Failed to query entire component table: Memory tab does not support msprof data.");
+        return false;
+    }
+    return ExecuteQueryEntireComponentTable(componentDetails, sql);
+}
+
 bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams,
                                        Protocol::MemoryViewData &operatorBody, uint64_t offsetTime)
 {
@@ -193,6 +253,21 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql += " AND realSize <= ? ";
     }
     return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
+}
+
+bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum)
+{
+    std::string sql;
+    FileType type = DataBaseManager::Instance().GetFileType();
+    if (type == FileType::PYTORCH) {
+        sql = "SELECT count(*) FROM (SELECT t2.name FROM " + TABLE_NPU_MODULE_MEM +
+            " AS t1 JOIN ENUM_MODULE AS t2 ON t1.moduleId = t2.id GROUP BY t2.name HAVING MAX(t1.totalReserved) >= " +
+            std::to_string(componentThresholdKb) + ") AS t3";
+    } else {
+        ServerLog::Error("Failed to query components total num: Memory tab does not support msprof data.");
+        return false;
+    }
+    return ExecuteComponentTotalNum(requestParams, totalNum, sql);
 }
 
 bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)
