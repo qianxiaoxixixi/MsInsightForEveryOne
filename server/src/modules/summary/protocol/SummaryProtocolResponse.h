@@ -173,6 +173,8 @@ const std::string KEY_WORLD_SIZE = "worldSize";
 const std::string KEY_TP_SIZE = "tpSize";
 const std::string KEY_PP_SIZE = "ppSize";
 const std::string KEY_DP_SIZE = "dpSize";
+const std::string KEY_CP_SIZE = "cpSize";
+const std::string KEY_EP_SIZE = "epSize";
 const std::string KEY_RESULT = "result";
 const std::string KEY_MSG = "msg";
 

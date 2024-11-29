@@ -15,6 +15,7 @@ struct MemoryFilePairs {
     std::set<std::string> operatorFiles;
     std::set<std::string> recordFiles;
     std::set<std::string> staticOpFiles;
+    std::set<std::string> componentFiles;
 };
 
 struct Record {
@@ -53,6 +54,13 @@ struct StaticOp {
     int64_t nodeIndexStart;
     int64_t nodeIndexEnd;
     double size;
+};
+
+struct Component {
+    std::string component;
+    int64_t timestamp;
+    double totalReserved;
+    std::string device;
 };
 
 // Type类型字段
@@ -108,6 +116,10 @@ const std::vector<std::string> STATIC_OP_MEM_CSV = {
     DEVICE_ID, OP_NAME, MODEL_NAME, GRAPH_ID, NODE_INDEX_START, NODE_INDEX_END, SIZE_KB
 };
 
+// field in npu_module_mem
+const std::vector<std::string> NPU_MODULE_MEM_CSV = {
+    COMPONENT, TIMESTAMP, TOTAL_RESERVED_MB, DEVICE
+};
 
 // table header
 const std::vector<std::string> MEMORY_RECORD_HEADER = {
@@ -119,6 +131,9 @@ const std::vector<std::string> OPERATOR_MEMORY_HEADER = {
     RELEASE_ALLOCATED_MB, RELEASE_RESERVED_MB, RELEASE_ACTIVE_MB,
     STREAM_PTR, DEVICETYPE
 };
+
+// default page size
+const uint64_t DEFAULT_PAGE_SIZE = 10;
 } // end of namespace Dic::Module::Memory
 
 #endif // PROFILER_SERVER_MEMORYDEF_H

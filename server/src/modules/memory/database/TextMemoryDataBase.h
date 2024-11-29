@@ -27,17 +27,22 @@ public:
     void ReleaseStmt();
 
     void InsertOperatorDetailList(const std::vector<Operator> &eventList);
-    void insertOperatorDetail(const Operator &event);
+    void InsertOperatorDetail(const Operator &event);
     void InsertRecordDetailList(const std::vector<Record> &eventList);
-    void insertRecordDetail(const Record &event);
+    void InsertRecordDetail(const Record &event);
     void InsertStaticOpDetailList(const std::vector<StaticOp> &eventList);
-    void insertStaticOpDetail(const StaticOp &event);
+    void InsertStaticOpDetail(const StaticOp &event);
+    void InsertComponentDetailList(const std::vector<Component> &eventList);
+    void InsertComponentDetail(const Component &event);
 
     bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
     bool QueryMemoryResourceType(std::string &type) override;
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails) override;
+    bool QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
+                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                              std::vector<Protocol::MemoryComponent> &componentDetails) override;
     bool QueryMemoryView(Protocol::MemoryViewParams &requestParams,
                          Protocol::MemoryViewData &operatorBody, uint64_t offsetTime) override;
 
@@ -51,26 +56,36 @@ public:
     void SaveRecordDetail();
     void SaveOperatorDetail();
     void SaveStaticOpDetail();
+    void SaveComponentDetail();
 
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
+    bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
     bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
                                   std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
                                   uint64_t offsetTime) override;
+    bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
+                                   uint64_t offsetTime);
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                         std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                         std::vector<Protocol::StaticOperatorItem>& opDetails) override;
     uint64_t QueryMinOperatorAllocationTime();
     uint64_t QueryMinRecordTimestamp();
+    uint64_t QueryMinComponentTimestamp();
 
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
 
 private:
+    // 动态图表格数据在数据库中存储表名为operator，全量DB对应表名OP_MEMORY
     const std::string operatorTable = "operator";
+    // 动态图折线图数据在数据库中存储表名为record，全量DB对应表名MEMORY_RECORD
     const std::string recordTable = "record";
-    const std::string staticOpTable = "static_op"; // 静态图表
+    // 静态图表格折线图数据在数据库中存储表名为static_op，全量DB无对应表
+    const std::string staticOpTable = "static_op";
+    // 组件级表格数据在数据库中存储表名为module，全量DB对应表名NPU_MODULE_MEM
+    const std::string componentTable = "module";
     const std::string memoryParseStatus = "Memory files parsing status";
     const int exLength = 4;
 
@@ -79,14 +94,17 @@ private:
     std::vector<Operator> operatorCache;
     std::vector<Record> recordCache;
     std::vector<StaticOp> staticOpCache;
+    std::vector<Component> componentCache;
 
     sqlite3_stmt *insertOperatorStmt = nullptr;
     sqlite3_stmt *insertRecordStmt = nullptr;
     sqlite3_stmt *insertStaticOpStmt = nullptr;
+    sqlite3_stmt *insertComponentStmt = nullptr;
 
     sqlite3_stmt *GetOperatorStmt(uint64_t paramLen);
     sqlite3_stmt *GetRecordStmt(uint64_t paramLen);
     sqlite3_stmt *GetStaticOpStmt(uint64_t paramLen);
+    sqlite3_stmt *GetComponentStmt(uint64_t paramLen);
 
     std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
     std::string GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams);

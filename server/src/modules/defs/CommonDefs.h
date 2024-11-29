@@ -19,6 +19,8 @@ namespace Dic {
         R"((memory_record|memory_record(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
     const std::string staticOpMemReg =
         R"((static_op_mem|static_op_mem(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
+    const std::string npuModuleMemReg =
+        R"((npu_module_mem|npu_module_mem(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
     const static std::string KERNEL_DETAIL_REG =
         R"((kernel_details|op_summary(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv$)";
     const std::string traceViewReg =

@@ -33,6 +33,7 @@ public:
     bool OperatorParse(const std::string &filePath, const std::string &fileId);
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
     bool StaticOpParse(const std::string &filePath, const std::string &fileId);
+    bool ComponentParse(const std::string &filePath, const std::string &fileId);
 private:
     const uint32_t maxThreadNum = 4;
     const uint32_t operatorTableNum = 5;
@@ -48,6 +49,7 @@ private:
     Record mapperToRecordDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
     Operator mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
     StaticOp mapperToStaticOpDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
+    Component mapperToComponentDetail(std::map<std::string, size_t> dataMap, std::vector<std::string>);
 
     bool GetMapValid(const std::vector<std::string> &vec, const std::map<std::string, size_t> &dataMap);
     std::vector<std::string> GetPeerDirOperatorFile(const std::string& operatorFile, const std::string &reg);

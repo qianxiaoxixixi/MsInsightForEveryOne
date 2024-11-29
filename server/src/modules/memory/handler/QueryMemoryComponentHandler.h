@@ -6,6 +6,9 @@
 #define PROFILER_SERVER_QUERY_MEMORY_COMPONENT_HANDLER_H
 
 #include "MemoryRequestHandler.h"
+#include "MemoryProtocolRequest.h"
+#include "MemoryProtocolRespose.h"
+#include "VirtualMemoryDataBase.h"
 
 namespace Dic {
 namespace Module {
@@ -18,6 +21,25 @@ public:
     }
     ~QueryMemoryComponentHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    void GetComponentDiff(const std::vector<MemoryComponent> &compareData,
+        const std::vector<MemoryComponent> &baselineData, std::vector<MemoryComponentComparison> &diffData);
+    bool SelectResult(MemoryComponentRequest &request,
+        std::unique_ptr<MemoryComponentComparisonResponse> &responsePtr,
+        std::vector<MemoryComponentComparison> &fullDiffResult);
+    void SortResult(MemoryComponentRequest &request, std::vector<MemoryComponentComparison> &result);
+private:
+    bool CompareComponent(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
+        MemoryComponentRequest &request, std::unique_ptr<MemoryComponentComparisonResponse> &responsePtr);
+    void Merge(MemoryComponent &componentCompare, MemoryComponent &componentBaseline,
+        MemoryComponentComparison &mergeResult);
+    void SortAscend(MemoryComponentRequest &request, std::vector<MemoryComponentComparison> &result);
+    void SortDescend(MemoryComponentRequest &request, std::vector<MemoryComponentComparison> &result);
+    const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
+        {"Component", "string", "component"},
+        {"Peak Memory Reserved(MB)", "number", "totalReserved"},
+        {"Timestamp(ms)", "number", "timestamp"}
+    };
 };
 } // end of namespace Memory
 } // end of namespace Module
