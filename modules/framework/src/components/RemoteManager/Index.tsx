@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import { Session } from '@/entity/session';
 import ImportData from './ImportData/Index';
 import styled from '@emotion/styled';
-import PrjectContents from './ProjectContents/Index';
+import ProjectContents from './ProjectContents/Index';
 import { DataManagerIcon } from 'ascend-icon';
 
 const Container = styled.div`
@@ -16,7 +16,6 @@ const Container = styled.div`
 const Header = styled.div`
     display: flex;
     justify-content: start;
-    gap: 5px;
     flex-direction: row;
     height: 36px;
     align-items: center;
@@ -28,6 +27,9 @@ const Header = styled.div`
     line-height: 18px;
     font-weight: 400;
     user-select: none;
+    > div {
+        margin-right: 5px;
+    }
 `;
 
 interface IProps {
@@ -37,7 +39,7 @@ const Index = observer(({ session }: IProps) => {
     return <Container>
         <Header><DataManagerIcon/>Data Manager</Header>
         <ImportData session={session}/>
-        <PrjectContents/>
+        <ProjectContents/>
     </Container>;
 });
 

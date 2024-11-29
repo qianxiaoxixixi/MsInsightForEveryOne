@@ -19,6 +19,9 @@ export interface ImportActionResponse {
 
 export const importActionHandler: ResponseInterceptor<ImportActionResponse> = (event, data): void => {
     try {
+        if (typeof event.data.args.params.projectAction !== 'number' || typeof event.data.args.params.isConflict !== 'boolean') {
+            return;
+        }
         const projectAction = event.data.args.params.projectAction as ProjectAction;
         const hasConflict = event.data.args.params.isConflict as boolean;
         const projectName = data.dataSource.projectName;

@@ -35,9 +35,7 @@ export class Session {
     }
 
     deleteDataSource(projectIndex: number): void {
-        const dataSources = JSON.parse(JSON.stringify(this._dataSources));
-        dataSources.splice(projectIndex, 1);
-        this._dataSources = dataSources;
+        this._dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
     }
 
     deleteDataPath(projectIndex: number, dataPahtIndex: number): void {
