@@ -83,7 +83,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
             }
             Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
             // 读取每一行数据并插入到operator内
-            memoryDatabase->insertOperatorDetail(opePtr);
+            memoryDatabase->InsertOperatorDetail(opePtr);
         }
     }
     // 读取剩下的数据并插入到operator内
@@ -207,6 +207,20 @@ StaticOp MemoryParse::mapperToStaticOpDetail(std::map<std::string, size_t> dataM
     return staticOp;
 }
 
+Component MemoryParse::mapperToComponentDetail(std::map<std::string, size_t> dataMap, std::vector<std::string> row)
+{
+    Component component {};
+    size_t componentIndex = dataMap[COMPONENT];
+    size_t timestampIndex = dataMap[TIMESTAMP];
+    size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
+    size_t deviceIndex = dataMap[DEVICE];
+    component.component = row[componentIndex];
+    component.timestamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timestampIndex]));
+    component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
+    component.device = row[deviceIndex];
+
+    return component;
+}
 
 bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
 {
@@ -244,7 +258,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
             }
             Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
             // 读取每一行数据并插入到record内
-            database->insertRecordDetail(recordPtr);
+            database->InsertRecordDetail(recordPtr);
         }
     }
     // 读取剩下的数据并插入到record内
@@ -292,17 +306,70 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
                 continue;
             }
             StaticOp staticOpPtr = MemoryParse::mapperToStaticOpDetail(dataMap, row);
-            // 读取每一行数据并插入到record内
-            database->insertStaticOpDetail(staticOpPtr);
+            // 读取每一行数据并插入到static_op内
+            database->InsertStaticOpDetail(staticOpPtr);
         }
     }
-    // 读取剩下的数据并插入到record内
+    // 读取剩下的数据并插入到static_op内
     database->SaveStaticOpDetail();
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("End parsing Memory Record: ", filePath, ", cost time:",
+    ServerLog::Info("End parsing Static Op Mem: ", filePath, ", cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minTimestamp = database->QueryMinRecordTimestamp();
     Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
+    return true;
+}
+
+bool MemoryParse::ComponentParse(const std::string &filePath, const std::string &fileId)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("Start parsing Npu Module Mem: ", filePath, ", FileId: ", fileId);
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        return false;
+    }
+    auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
+        Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
+    if (!memoryDatabase) {
+        ServerLog::Error("Could not get the pointer to memory database.");
+        return false;
+    }
+    std::ifstream file = OpenReadFileSafely(filePath);
+    std::string line;
+    std::map<std::string, size_t> dataMap;
+    bool isHeader = true;
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
+           Timeline::ParserStatus::RUNNING && getline(file, line)) {
+        std::vector<std::string> row = StringUtil::StringSplit(line);
+        if (isHeader) {
+            if (row.empty()) {
+                ServerLog::Error("The first line of npu_module_mem.csv is not header.");
+                return false;
+            }
+            for (size_t i = 0; i < row.size(); i++) {
+                dataMap[row[i]] = i;
+            }
+            bool columnExist = GetMapValid(NPU_MODULE_MEM_CSV, dataMap);
+            if (!columnExist) {
+                return false;
+            }
+            isHeader = false;
+        } else {
+            // 如果某一行数据个数与表头不一致，则跳过
+            if (dataMap.size() != row.size()) {
+                continue;
+            }
+            Component componentPtr = MemoryParse::mapperToComponentDetail(dataMap, row);
+            // 读取每一行数据并插入到module内
+            memoryDatabase->InsertComponentDetail(componentPtr);
+        }
+    }
+    // 读取剩下的数据并插入到module内
+    memoryDatabase->SaveComponentDetail();
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("End parsing Npu Module Mem: ", filePath, ", cost time: ",
+                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    uint64_t minStartTime = memoryDatabase->QueryMinComponentTimestamp();
+    Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
     return true;
 }
 
@@ -378,9 +445,11 @@ MemoryFilePairs MemoryParse::GetMemoryFile(const std::string &path)
     }
     std::vector<std::string> operatorFiles = GetPeerDirOperatorFile(fileList[0], memoryOperatorReg);
     std::vector<std::string> staticOpFiles = GetPeerDirOperatorFile(fileList[0], staticOpMemReg);
+    std::vector<std::string> componentFiles = GetPeerDirOperatorFile(fileList[0], npuModuleMemReg);
     result.recordFiles.insert(fileList[0]);
     result.operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
     result.staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
+    result.componentFiles.insert(componentFiles.begin(), componentFiles.end());
     return result;
 }
 
@@ -395,6 +464,7 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
     for (const auto& recordFile : fileList) {
         std::vector<std::string> operatorFiles = GetPeerDirOperatorFile(recordFile, memoryOperatorReg);
         std::vector<std::string> staticOpFiles = GetPeerDirOperatorFile(recordFile, staticOpMemReg);
+        std::vector<std::string> componentFiles = GetPeerDirOperatorFile(recordFile, npuModuleMemReg);
         if (operatorFiles.empty() && staticOpFiles.empty()) {
             ServerLog::Warn("There is no memory record file or static op mem file paired with ", recordFile);
             continue;
@@ -415,6 +485,7 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
         results[tempId].recordFiles.insert(recordFile);
         results[tempId].operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
         results[tempId].staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
+        results[tempId].componentFiles.insert(componentFiles.begin(), componentFiles.end());
         if (ranks.count(tempId) == 0) {
             Protocol::MemorySuccess one = {tempId, false, true};
             ranks.emplace(tempId, one);
@@ -426,6 +497,7 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
         std::copy(result.second.operatorFiles.begin(), result.second.operatorFiles.end(), std::back_inserter(files));
         std::copy(result.second.recordFiles.begin(), result.second.recordFiles.end(), std::back_inserter(files));
         std::copy(result.second.staticOpFiles.begin(), result.second.staticOpFiles.end(), std::back_inserter(files));
+        std::copy(result.second.componentFiles.begin(), result.second.componentFiles.end(), std::back_inserter(files));
         ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", result.first);
     }
     isCluster = (results.size() > 1);
@@ -465,10 +537,12 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
     std::set<std::string> operatorFiles = filePair.operatorFiles;
     std::set<std::string> recordFiles = filePair.recordFiles;
     std::set<std::string> staticOpFiles = filePair.staticOpFiles;
+    std::set<std::string> componentFiles = filePair.componentFiles;
     std::vector<std::string> files;
     std::copy(operatorFiles.begin(), operatorFiles.end(), std::back_inserter(files));
     std::copy(recordFiles.begin(), recordFiles.end(), std::back_inserter(files));
     std::copy(staticOpFiles.begin(), staticOpFiles.end(), std::back_inserter(files));
+    std::copy(componentFiles.begin(), componentFiles.end(), std::back_inserter(files));
     if (!ValidateUtil::CheckCsvFileList(files)) {
         message = "Failed to parse memory file: " + fileId + " due to access or file size.";
         return false;
@@ -495,6 +569,14 @@ bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& 
             continue;
         }
         message = "Failed to parse staticOp record file, path = " + staticOpFile;
+        return false;
+    }
+
+    for (const auto& componentFile : componentFiles) {
+        if (MemoryParse::Instance().ComponentParse(componentFile, fileId)) {
+            continue;
+        }
+        message = "Failed to parse npu module mem file, path = " + componentFile;
         return false;
     }
 

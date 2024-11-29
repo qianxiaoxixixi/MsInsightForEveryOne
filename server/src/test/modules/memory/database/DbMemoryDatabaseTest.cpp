@@ -41,6 +41,34 @@ public:
     }
 };
 
+TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryComponentData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 100; // page size = 100
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Protocol::MemoryComponent> responseBody;
+    auto result = database->QueryComponentDetail(requestParams, columnAttr, responseBody);
+    EXPECT_TRUE(result);
+    int expectSize = 3;
+    int expectColumnSize = 3;
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireComponentTable)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    std::vector<Dic::Protocol::MemoryComponent> responseBody;
+    bool result = database->QueryEntireComponentTable(responseBody, offsetTime);
+    int expectSize = 3;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(responseBody.size(), expectSize);
+}
+
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorData)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB);
@@ -179,6 +207,18 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorByStreamExceptSeveral)
     int expectColumnSize = 14;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(DbMemoryDatabaseTest, FullDbQueryComponentsTotalNum)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "0";
+    int64_t totalNum;
+    auto result = database->QueryComponentsTotalNum(requestParams, totalNum);
+    EXPECT_TRUE(result);
+    int expectSize = 3;
+    EXPECT_EQ(totalNum, expectSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorsTotalNum)

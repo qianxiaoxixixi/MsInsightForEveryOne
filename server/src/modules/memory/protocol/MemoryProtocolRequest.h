@@ -22,7 +22,7 @@ const std::vector<std::string> operatorTableColumn = {
     "release_active", "stream", "device_type"
 };
 const std::vector<std::string> componentTableColumn = {
-    "component", "timestamp", "total_reserved", "device"
+    "component", "timestamp", "totalReserved", "device"
 };
 const std::vector<std::string> staticOperatorTableColumn = {
     "device_id", "op_name", "node_index_start", "node_index_end", "size"
