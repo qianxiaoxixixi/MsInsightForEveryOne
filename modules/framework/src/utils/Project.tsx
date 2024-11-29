@@ -46,7 +46,7 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         const { activeDataSource, dataSources } = session;
         const dataSource = { ...orginDataSource };
         // 如果目标内容就是当前选中内容，则不做任何处理直接返回
-        if (dataSource.projectName === activeDataSource.projectName && arraysEqual(dataSource.dataPath, activeDataSource.dataPath)) {
+        if (dataSource.projectName === activeDataSource.projectName && arraysValueEqual(dataSource.dataPath, activeDataSource.dataPath)) {
             return;
         }
 
@@ -66,7 +66,8 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         addDataPath(dataSource, action, isConflict);
     });
 }
-function arraysEqual<T>(a: T[], b: T[]): boolean {
+// 允许2个数组值重复或乱序
+function arraysValueEqual<T>(a: T[], b: T[]): boolean {
     return a.length === b.length && a.every((value) => b.includes(value));
 }
 
@@ -78,12 +79,12 @@ export const updateProject = ({ projectAction, projectName, dataPath, hasConflic
     if (!session) {
         return;
     }
-    runInAction(async() => {
+    runInAction(() => {
         try {
             if (projectAction === ProjectAction.ADD_FILE) {
                 // 更新项目目录
                 const dataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath };
-                mergeProjectContents(dataSource, hasConflict);
+                session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
             }
             if (session.activeDataSource.projectName !== projectName) {
                 session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [dataPath[0]] };
@@ -91,16 +92,6 @@ export const updateProject = ({ projectAction, projectName, dataPath, hasConflic
         } catch {
             console.error('Update Project Explorer Failed');
         }
-    });
-};
-// 导入数据合并到当前目录
-const mergeProjectContents = (dataSource: DataSource, hasConflict: boolean): void => {
-    const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
-    runInAction(async() => {
-        session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
     });
 };
 
@@ -112,19 +103,19 @@ function getMergedDataSources(oldDataSources: DataSource[], dataSource: DataSour
     // 项目不存在，新增项目
     if (projectIndex === -1) {
         dataSources.push(dataSource);
-        return dataSources;
-    }
-    // 项目存在，在已有项目下增加文件
-    // 有冲突，替换项目的子文件
-    if (hasConflict) {
-        dataSources[projectIndex].dataPath = dataSource.dataPath;
-        return dataSources;
-    }
-    // 新导入文件全部不在当前项目下
-    const oldDataPath = dataSources[projectIndex].dataPath;
-    const dataPathIdx = dataSource.dataPath.findIndex(path => oldDataPath.includes(path));
-    if (dataPathIdx === -1) {
-        dataSources[projectIndex].dataPath.push(...dataSource.dataPath);
+    } else {
+        // 项目存在，在已有项目下增加文件
+        // 有冲突，替换项目的子文件
+        if (hasConflict) {
+            dataSources[projectIndex].dataPath = dataSource.dataPath;
+        } else {
+            // 新导入文件全部不在当前项目下
+            const oldDataPath = dataSources[projectIndex].dataPath;
+            const dataPathIdx = dataSource.dataPath.findIndex(path => oldDataPath.includes(path));
+            if (dataPathIdx === -1) {
+                dataSources[projectIndex].dataPath.push(...dataSource.dataPath);
+            }
+        }
     }
     return dataSources;
 };
@@ -160,7 +151,7 @@ export const removeProject = (projectIndex: number): void => {
 };
 
 // 移除文件
-export const removeDataPath = (projectIndex: number, dataPahtIndex: number): void => {
+export const removeDataPath = (projectIndex: number, dataPathIndex: number): void => {
     const session = store.sessionStore.activeSession;
     if (!session) {
         return;
@@ -173,7 +164,7 @@ export const removeDataPath = (projectIndex: number, dataPahtIndex: number): voi
                 removeProject(projectIndex);
                 return;
             }
-            const singleDataPath = dataSource.dataPath[dataPahtIndex];
+            const singleDataPath = dataSource.dataPath[dataPathIndex];
             // 通知各页签
             if (session.activeDataSource.projectName === dataSource.projectName) {
                 connector.send({ event: 'remote/removeSingle', body: { dataSource, singleDataPath } });
@@ -181,7 +172,7 @@ export const removeDataPath = (projectIndex: number, dataPahtIndex: number): voi
             // 通知后台
             await deleteDataPath({ ...dataSource, dataPath: [singleDataPath] });
             // 目录更新
-            session.deleteDataPath(projectIndex, dataPahtIndex);
+            session.deleteDataPath(projectIndex, dataPathIndex);
             // 如果移除的是当前选中文件，默认选中第一个文件
             if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.dataPath[0] === singleDataPath) {
                 session.activeDataSource = { ...dataSource, dataPath: [dataSource.dataPath[0]] };

@@ -13,6 +13,7 @@ import DeleteConfirm from './DeleteConfirm';
 import type { Session } from '@/entity/session';
 import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { ProjectAction, SessionAction } from '@/utils/enum';
+import { runInAction } from 'mobx';
 
 const ContentsContainer = styled.div`
     padding: 0.5rem 0.8rem;
@@ -140,7 +141,14 @@ const Contents = observer(({ session }: {session: Session}) => {
         }
         // 如果点击的是文件
         if (node.isLeaf) {
-            session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName: dataSource.projectName, dataPath: [dataSource.dataPath[dataPathIndex]] };
+            runInAction(() => {
+                session.activeDataSource = {
+                    remote: LOCAL_HOST,
+                    port: PORT,
+                    projectName: dataSource.projectName,
+                    dataPath: [dataSource.dataPath[dataPathIndex]],
+                };
+            });
         }
     };
 

@@ -9,6 +9,7 @@ import { DataSource } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
 import localStorageService, { LocalStorageKey } from '@/utils/local-storage';
 import { store } from '@/store';
+import { message as Message } from 'antd';
 export interface ResourceItem {
     path: string;
     name: string;
@@ -39,6 +40,7 @@ const maxDepth = 100;
 // Recursive，递归函数
 export const updateTreeData = (list: TreeDataNode[], key: React.Key, children: TreeDataNode[], depth: number = 0): TreeDataNode[] => {
     if (depth > maxDepth) {
+        Message.error(`The depth of the file directory exceeds ${maxDepth}`);
         return [];
     }
     return list.map(node => {
