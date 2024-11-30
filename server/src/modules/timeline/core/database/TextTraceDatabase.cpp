@@ -1155,11 +1155,11 @@ uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
         "    output_formats AS outputFormats FROM kernel_detail"
         ") subquery WHERE 1=1 ";
     for (const auto &filter : requestParams.filters) {
-        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+        if (!StringUtil::CheckSqlValid(filter.first)) {
             Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
             return total;
         }
-        sql += " AND lower(" + filter.first + ") LIKE lower('%" + filter.second + "%') ";
+        sql += " AND lower(" + filter.first + ") LIKE lower(?) ";
     }
     if (!requestParams.coreType.empty()) {
         sql += " AND accelerator_core = ? ";
@@ -1171,6 +1171,10 @@ uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
     }
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
+    }
+    for (const auto& filter : requestParams.filters) {
+        std::string bindFilter = "%" + filter.second + "%";
+        stmt->BindParams(bindFilter);
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
