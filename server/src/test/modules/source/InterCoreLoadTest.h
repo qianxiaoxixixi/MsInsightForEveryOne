@@ -8,6 +8,45 @@
 #include <string>
 
 namespace Dic::Module::Source::Test {
+const std::string INTER_CORE_LOAD_ANALYSIS_OF_VECTOR_JSON = R"(
+{
+	"advice" : "\t1) core3 vector1 took more time than other vector cores.\n",
+	"op_detail" : [{
+			"core_detail" : [{
+					"L2cache_hit_rate" : "75.700935",
+					"cycles" : "7114",
+					"subcore_id" : "0",
+					"subcore_type" : "vector",
+					"throughput" : "15104"
+				}
+			],
+			"core_id" : 0
+		}, {
+			"core_detail" : [{
+					"L2cache_hit_rate" : "76.635513",
+					"cycles" : "7453",
+					"subcore_id" : "0",
+					"subcore_type" : "vector",
+					"throughput" : "15104"
+				}
+			],
+			"core_id" : 1
+		}, {
+			"core_detail" : [{
+					"L2cache_hit_rate" : "77.272728",
+					"cycles" : "7940",
+					"subcore_id" : "0",
+					"subcore_type" : "vector",
+					"throughput" : "15104"
+				}
+			],
+			"core_id" : 2
+		}
+	],
+	"op_type" : "vector",
+	"soc" : "Ascend910B4"
+}
+)";
 const std::string INTER_CORE_LOAD_ANALYSIS_JSON = R"(
 {
     "advice": "\t0) vector core0 subcore1 took more time than other core.\n",

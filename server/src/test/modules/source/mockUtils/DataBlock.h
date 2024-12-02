@@ -145,6 +145,27 @@ private:
     std::string dataBody;
 };
 
+/**
+ * Source Code类型的数据块
+ */
+class SourceDataBlock : public NormalDataBlock {
+public:
+    SourceDataBlock(const std::string &dataBody, const std::string &sourceFilePath)
+        : NormalDataBlock(DataTypeEnum::SOURCE, dataBody), sourceFilePath(sourceFilePath) {}
+
+    void WriteBody(std::ofstream &file) override
+    {
+        constexpr int pathLength = 4096;
+        std::string path(sourceFilePath);
+        path.resize(pathLength, '\0');
+        file.write(path.c_str(), path.size());
+        NormalDataBlock::WriteBody(file);
+    }
+
+private:
+    const std::string &sourceFilePath;
+};
+
 template<typename T>
 class StructDataBlock : public DataBlock {
 public:
