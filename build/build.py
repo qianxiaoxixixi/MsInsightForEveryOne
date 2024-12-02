@@ -310,15 +310,22 @@ def build_light_package(version, os_name, is_huaweicloud):
         return 1
     return zip_package(profiler_path, package_name)
 
+file_names = {
+    (Const.WINDOWS_OS, 'bin'): 'MindStudioInsight.exe',
+    (Const.WINDOWS_OS, 'target'): 'MindStudio-Insight.exe',
+    (Const.MAC_OS, 'target'): 'MindStudio Insight'
+}
+
 
 def zip_package(profiler_path, package_name):
-    bin_file = 'MindStudio_Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio_Insight'
-    target_file = 'MindStudio-Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio-Insight'
+    system = platform.system()
+    bin_file = file_names.get((system, 'bin'), 'MindStudioInsight')
+    target_file = file_names.get((system, 'target'), 'MindStudio-Insight')
     shutil.copyfile(os.path.join(Const.PLATFORM_TARGET_DIR, 'release', bin_file),
                     os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file))
     # 打包
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, package_name)
-    if platform.system() == Const.WINDOWS_OS:
+    if system == Const.WINDOWS_OS:
         shutil.copytree(os.path.join(Const.PLATFORM_DIR, 'config'),
                         os.path.join(Const.PLATFORM_PREVIEW_DIR, 'config'))  # 仅Windows需要
         bundle_path = os.path.join(Const.PLATFORM_DIR, 'bundle')

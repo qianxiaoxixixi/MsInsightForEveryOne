@@ -1,5 +1,5 @@
 [package]
-name = "MindStudio_Insight"
+name = "MindStudioInsight"
 version = "0.1.0"
 edition = "2021"
 build = "build.rs"
