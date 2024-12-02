@@ -8,7 +8,7 @@
 
 namespace Dic::Module::Source {
 using namespace Dic::Server;
-std::string BinFileParseUtil::GetContentStr(std::ifstream& file, const Position& position)
+std::string BinFileParseUtil::GetContentStr(std::ifstream& file, const Position& position, uint64_t maxSize)
 {
     if (!file) {
         return "";
@@ -21,9 +21,8 @@ std::string BinFileParseUtil::GetContentStr(std::ifstream& file, const Position&
         return "";
     }
     int64_t dataSize = end - start;
-    constexpr uint64_t maxDataSize = 1024 * 1024 * 100; // limit data size to 100MB
-    if (IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
-        ServerLog::Error("Data size of content exceeds % bytes when get content string from bin file", maxDataSize);
+    if (IsDataSizeExceedUpperLimit(dataSize, maxSize)) {
+        ServerLog::Error("Data size of content exceeds % bytes when get content string from bin file", maxSize);
         return "";
     }
 
@@ -34,6 +33,10 @@ std::string BinFileParseUtil::GetContentStr(std::ifstream& file, const Position&
     file.read(&jsonStr[0], dataSize);
     if (!file) {
         ServerLog::Error("Failed to read content str.");
+        return "";
+    }
+    if (!StringUtil::IsUtf8String(jsonStr)) {
+        ServerLog::Error("Can't decode a text frame as utf-8, json string is invalid.");
         return "";
     }
     return jsonStr;

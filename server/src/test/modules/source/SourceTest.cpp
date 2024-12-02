@@ -5,11 +5,12 @@
 #include <gtest/gtest.h>
 #include "SourceFileParser.h"
 #include "SourceProtocolRequest.h"
-#include "StringUtil.h"
-#include "ParserFactory.h"
-#include "../../TestSuit.cpp"
+#include "mockUtils/BinFileGenerator.h"
+#include "SourceTest.h"
 
 using namespace std;
+using namespace Dic;
+using namespace Dic::Module::Source::Test;
 class SourceTest : public ::testing::Test {
 protected:
     std::string data;
@@ -18,18 +19,40 @@ protected:
     std::string baseInfo;
     std::string rooflineDataFile;
 
-protected:
-
     void SetUp() override
     {
+        data = "data.bin";
+        BinFileGenerator dataFileGenerator;
+
+        // add source code
+        SourceDataBlock sourceDataBlock1(FOREACH_TILLING_DEF_H, FOREACH_TILLING_DEF_H_PATH);
+        dataFileGenerator.AddDataBlock(std::make_unique<SourceDataBlock>(sourceDataBlock1));
+        SourceDataBlock sourceDataBlock2(KERNEL_FOREACH_BASE_H, KERNEL_FOREACH_BASE_H_PATH);
+        dataFileGenerator.AddDataBlock(std::make_unique<SourceDataBlock>(sourceDataBlock2));
+        SourceDataBlock sourceDataBlock3(FOREACH_SUB_SCALAR_LIST_CPP, FOREACH_SUB_SCALAR_LIST_CPP_PATH);
+        dataFileGenerator.AddDataBlock(std::make_unique<SourceDataBlock>(sourceDataBlock3));
+        // add api instructions
+        NormalDataBlock apiInstrDataBlock(DataTypeEnum::API_INSTR, API_INSTR_JSON);
+        dataFileGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(apiInstrDataBlock));
+        // add api file
+        NormalDataBlock apiFileDataBlock(DataTypeEnum::API_FILE, API_FILE_JSON);
+        dataFileGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(apiFileDataBlock));
+        // generate file
+        dataFileGenerator.Generate(data);
+
         string currPath = Dic::FileUtil::GetCurrPath();
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
-        data = currPath + R"(/src/test/test_data/data.bin)";
         memoryData = currPath + R"(/src/test/test_data/memory_data.bin)";
         baseInfo = currPath + R"(/src/test/test_data/base_info.bin)";
         loadData = currPath + R"(/src/test/test_data/load_data.bin)";
         rooflineDataFile = currPath + R"(/src/test/test_data/roofline_data.bin)";
+    }
+
+    void TearDown() override
+    {
+        // remove temprary bin files
+        BinFileGenerator::RemoveFile(data);
     }
 };
 
@@ -61,7 +84,7 @@ TEST_F(SourceTest, CheckOperatorBinaryFailedWithSpecificPath)
     EXPECT_EQ(false, parser.CheckOperatorBinary(path));
 }
 
-static Module::Source::SourceFileParser &InitParser(string dataPath)
+static Module::Source::SourceFileParser &InitParser(const string& dataPath)
 {
     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
     EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath));
@@ -81,7 +104,8 @@ TEST_F(SourceTest, GetCoreList)
 {
     auto &parser = InitParser(data);
     const vector<std::string> &coreList = parser.GetCoreList();
-    EXPECT_EQ(coreList.size(), 3); // core list size is 3
+    int coreListSize = 3;
+    EXPECT_EQ(coreList.size(), coreListSize);
     EXPECT_EQ(coreList[0], "core0.veccore0");
     EXPECT_EQ(coreList[1], "core0.veccore1");
     EXPECT_EQ(coreList[2], "core1.veccore0"); // the core index is 2
@@ -92,12 +116,11 @@ TEST_F(SourceTest, GetSourceList)
 {
     auto &parser = InitParser(data);
     const vector<std::string> &sourceList = parser.GetSourceList();
-    EXPECT_EQ(sourceList.size(), 6); // the size of source list is 6
-    EXPECT_EQ(sourceList[0], "/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
-    // the source index is 3
-    EXPECT_EQ(sourceList[3], "/home/lantianxiang/workspace/foreach/common/foreach/op_kernel/kernel_foreach_base.h");
-    // the source index is 5
-    EXPECT_EQ(sourceList[5], "/home/lantianxiang/workspace/foreach/foreach_sub_scalar_list.cpp");
+    int sourceListSize = 3;
+    EXPECT_EQ(sourceList.size(), sourceListSize);
+    EXPECT_EQ(sourceList[0], FOREACH_TILLING_DEF_H_PATH);
+    EXPECT_EQ(sourceList[1], KERNEL_FOREACH_BASE_H_PATH);
+    EXPECT_EQ(sourceList[2], FOREACH_SUB_SCALAR_LIST_CPP_PATH); // index of scalar list cpp is 2
     CleanParser(parser);
 }
 
@@ -107,31 +130,32 @@ TEST_F(SourceTest, GetApiLinesByCoreAndSource)
     auto &parser = InitParser(data);
     vector<Dic::Module::Source::SourceFileLine> apiLines = parser.GetApiLinesByCoreAndSource(
         "core0.cubecore",
-        "/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
+        "/home/test/workspace/foreach/common/foreach/foreach_tiling_def.h");
     EXPECT_EQ(apiLines.size(), 0);
 
     apiLines = parser.GetApiLinesByCoreAndSource(
         "core0.veccore0",
-        "/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling.h");
+        "/home/test/workspace/foreach/common/foreach/foreach_tiling.h");
     EXPECT_EQ(apiLines.size(), 0);
 
     const vector<Dic::Module::Source::SourceFileLine> &linesByCoreAndSource = parser.GetApiLinesByCoreAndSource(
         
-        "core0.veccore0", "/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
-    EXPECT_EQ(linesByCoreAndSource.size(), 7); // the size of lines is 7
-    EXPECT_EQ(0, linesByCoreAndSource[0].line);
-    EXPECT_EQ(729, linesByCoreAndSource[0].cycles[0]); // the size of cycles is 729
-    EXPECT_EQ(5, linesByCoreAndSource[0].instructionsExecuted[0]); // the size of instructions is 5
-    EXPECT_EQ("0x1124406c", linesByCoreAndSource[0].addressRange[0].first);
-    EXPECT_EQ("0x1124407c", linesByCoreAndSource[0].addressRange[0].second);
+        "core0.veccore0", "/home/test/workspace/foreach/common/foreach/foreach_tiling_def.h");
+    int linesByCoreAndSourceSize = 2;
+    EXPECT_EQ(linesByCoreAndSource.size(), linesByCoreAndSourceSize);
+    EXPECT_EQ(31, linesByCoreAndSource[0].line); // the line is 31
+    EXPECT_EQ(15674, linesByCoreAndSource[0].cycles[0]); // the size of cycles is 15674
+    EXPECT_EQ(192, linesByCoreAndSource[0].instructionsExecuted[0]); // the size of instructions is 192
+    EXPECT_EQ("0x11244240", linesByCoreAndSource[0].addressRange[0].first);
+    EXPECT_EQ("0x11244240", linesByCoreAndSource[0].addressRange[0].second);
 
-    EXPECT_EQ(32, linesByCoreAndSource[6].line); // the size of line is 32 and the index is 6
-    EXPECT_EQ(16293, linesByCoreAndSource[6].cycles[0]); // the size of cycles is 16293
-    EXPECT_EQ(193, linesByCoreAndSource[6].instructionsExecuted[0]); // the size of instructions is 193
-    EXPECT_EQ("0x11244540", linesByCoreAndSource[6].addressRange[0].first); // the index of line is 6
-    EXPECT_EQ("0x11244540", linesByCoreAndSource[6].addressRange[0].second); // the index of line is 6
-    EXPECT_EQ("0x11244548", linesByCoreAndSource[6].addressRange[1].first); // the index of line is 6
-    EXPECT_EQ("0x11244844", linesByCoreAndSource[6].addressRange[1].second); // the index of line is 6
+    EXPECT_EQ(32, linesByCoreAndSource[1].line); // the size of line is 32 and the index is 1
+    EXPECT_EQ(16293, linesByCoreAndSource[1].cycles[0]); // the size of cycles is 16293
+    EXPECT_EQ(193, linesByCoreAndSource[1].instructionsExecuted[0]); // the size of instructions is 193
+    EXPECT_EQ("0x11244540", linesByCoreAndSource[1].addressRange[0].first); // the index of line is 1
+    EXPECT_EQ("0x11244540", linesByCoreAndSource[1].addressRange[0].second); // the index of line is 1
+    EXPECT_EQ("0x11244548", linesByCoreAndSource[1].addressRange[1].first); // the index of line is 1
+    EXPECT_EQ("0x11244844", linesByCoreAndSource[1].addressRange[1].second); // the index of line is 1
     CleanParser(parser);
 }
 
@@ -150,17 +174,16 @@ TEST_F(SourceTest, GetInstr)
 TEST_F(SourceTest, GetSourceByName)
 {
     auto &parser = InitParser(data);
-    const string notExistsource =
-            parser.GetSourceByName("/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling.h");
+    std::string foreachTillingPath = "/home/test/workspace/foreach/common/foreach/foreach_tiling.h";
+    const string notExistsource = parser.GetSourceByName(foreachTillingPath);
     EXPECT_TRUE(notExistsource.empty());
 
-    const string &source =
-            parser.GetSourceByName("/home/lantianxiang/workspace/foreach/common/foreach/foreach_tiling_def.h");
+    std::string foreachTillingDefPath = "/home/test/workspace/foreach/common/foreach/foreach_tiling_def.h";
+    const string &source = parser.GetSourceByName(foreachTillingDefPath);
     EXPECT_TRUE(!source.empty());
 
     EXPECT_EQ(true, StringUtil::Contains(source, "__FOREACH_TILING_DEF_H__"));
     EXPECT_EQ(true, StringUtil::Contains(source, "ForeachCommonTilingData"));
-    EXPECT_EQ(true, StringUtil::Contains(source, "InitForeachCommonTilingData"));
     EXPECT_EQ(true, StringUtil::Contains(source, "endif"));
     CleanParser(parser);
 }

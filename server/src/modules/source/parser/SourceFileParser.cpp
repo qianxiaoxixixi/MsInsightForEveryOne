@@ -320,11 +320,8 @@ void SourceFileParser::Reset()
     pid = 0;
 
     dataBlockMap.clear();
-    sourceFiles.clear();
     traceFiles.clear();
-    apiCores.clear();
-    apiFiles.clear();
-    apiInstrPos = {0, 0};
+    sourceInstructionParser.Reset();
 
     Timeline::DataBaseManager::Instance().Clear();
     Timeline::TraceTime::Instance().Reset();
@@ -364,132 +361,28 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
 
 std::vector<std::string> SourceFileParser::GetCoreList()
 {
-    return this->apiCores;
+    return sourceInstructionParser.GetCoreList();
 }
 
 std::vector<std::string> SourceFileParser::GetSourceList()
 {
-    std::vector<std::string> sourceList;
-    for (const auto &entry : sourceFiles) {
-        sourceList.push_back(entry.first);
-    }
-    return sourceList;
+    return sourceInstructionParser.GetSourceList();
 }
 
 std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(const std::string &core,
                                                                          const std::string &sourceName)
 {
-    std::vector<SourceFileLine> result;
-
-    auto it = std::find(apiCores.begin(), apiCores.end(), core);
-    if (it == apiCores.end()) {
-        ServerLog::Error("Can't find the specified core name : ", core);
-        return result;
-    }
-    // never below zero
-    size_t index = std::distance(apiCores.begin(), it);
-
-    if (apiFiles.find(sourceName) == apiFiles.end()) {
-        ServerLog::Warn("The specified file doesn't exist in api files, and source name is:", sourceName);
-        return result;
-    }
-    std::vector<SourceFileLine> &vector = apiFiles[sourceName];
-    for (auto line : vector) {
-        if (line.cycles.size() < index + 1 || line.instructionsExecuted.size() < index + 1) {
-            continue;
-        }
-
-        // filter lines without instruction executed
-        if (line.instructionsExecuted[index] == 0 && line.cycles[index] == 0) {
-            continue;
-        }
-
-        SourceFileLine output;
-        for (const auto &pair : line.addressRange) {
-            output.addressRange.emplace_back(pair.first, pair.second);
-        }
-        output.cycles.emplace_back(line.cycles[index]);
-        output.instructionsExecuted.emplace_back(line.instructionsExecuted[index]);
-        output.line = line.line;
-
-        result.emplace_back(output);
-    }
-    return result;
+    return sourceInstructionParser.GetApiLinesByCoreAndSource(core, sourceName);
 }
 
 std::string SourceFileParser::GetInstr()
 {
-    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
-    if (!file) {
-        ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
-        return "";
-    }
-    int64_t start = apiInstrPos.startPos;
-    int64_t end = apiInstrPos.endPos;
-    if (end < start) {
-        ServerLog::Error("The dataSize parameter is error. The value of end is smaller than start.");
-        file.close();
-        return "";
-    }
-    uint64_t dataSize = end - start;
-    constexpr uint64_t maxDataSize = 1024 * 1024 * 200; // limit data size to 200MB
-    if (BinFileParseUtil::IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
-        ServerLog::Error("Data size of instruction exceeds max upper limit.");
-        return "";
-    }
-
-    file.seekg(start, std::ios::beg);
-
-    std::string content(dataSize, '\0');
-    if (!file.read(&content[0], static_cast<std::streamsize>(dataSize))) {
-        ServerLog::Error("Can't read file,please check file exist or not,file name :", filePath);
-        file.close();
-        return "";
-    }
-    if (!StringUtil::IsUtf8String(content)) {
-        ServerLog::Error("Can't decode a text frame as utf-8,instr content is invalid.");
-        file.close();
-        return "";
-    }
-    file.close();
-    return content;
+    return sourceInstructionParser.GetInstr(filePath);
 }
 
-std::string SourceFileParser::GetSourceByName(std::string sourceName)
+std::string SourceFileParser::GetSourceByName(std::string &sourceName)
 {
-    if (sourceFiles.count(sourceName) == 0) {
-        ServerLog::Warn("Don't exist the specified file ", sourceName);
-        return "";
-    }
-    std::pair<int64_t, int64_t> &pos = sourceFiles[sourceName];
-    int64_t start = pos.first;
-    int64_t end = pos.second;
-    int64_t dataSize = end - start;
-    constexpr uint64_t maxDataSize = 1024 * 1024 * 100; // limit data size to 100MB
-    if (BinFileParseUtil::IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
-        ServerLog::Error("Data size of source file exceeds max upper limit.");
-        return "";
-    }
-
-    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
-    if (!file) {
-        ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
-        return "";
-    }
-    file.seekg(start, std::ios::beg);
-
-    std::string content(dataSize, '\0');
-    if (!file.read(&content[0], static_cast<std::streamsize>(dataSize))) {
-        ServerLog::Error("Can't read file,please check file exist or not,file name :", filePath);
-        return "";
-    }
-    if (!StringUtil::IsUtf8String(content)) {
-        ServerLog::Error("Can't decode a text frame as utf-8,source name :", sourceName);
-        file.close();
-        return "";
-    }
-    file.close();
-    return content;
+    return sourceInstructionParser.GetSourceByName(sourceName, filePath);
 }
 
 bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody, bool isBaseline)
@@ -527,170 +420,12 @@ bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId, b
     return parser.GetDetailsMemoryTable(targetBlockId, responseBody, curFilePath, curBlockMap);
 }
 
-
 void SourceFileParser::ConvertToData()
 {
-    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
-    if (!file) {
-        ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
-        return;
-    }
-
     std::vector<Position> &sourceFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::SOURCE)];
-    for (auto pos : sourceFilePos) {
-        int64_t start = pos.startPos;
-        int64_t end = pos.endPos;
-
-        file.seekg(start, std::ios::beg);
-
-        std::vector<char> filePathBuffer(filePathLengthConst);
-        file.read(filePathBuffer.data(), filePathBuffer.size());
-        if (!file) {
-            ServerLog::Error("Failed to read file path buffer.");
-            break;
-        }
-        std::string sourceFilePath(filePathBuffer.data());
-        if ((start < 0) || (filePathLengthConst > INT64_MAX - start)) {
-            ServerLog::Error(std::string("Start position: ") + std::to_string(start) +
-            std::string(" is illegal at covert to data in source file."));
-            return;
-        }
-        sourceFiles[sourceFilePath] = std::make_pair(start + filePathLengthConst, end);
-    }
-
     std::vector<Position> &apiFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::API_FILE)];
-    if (!apiFilePos.empty()) {
-        Position &pair = apiFilePos.at(0);
-        std::string jsonStr = BinFileParseUtil::GetContentStr(file, pair);
-        ConvertApiFile(jsonStr);
-    }
-    auto &apiInstrPosArray = dataBlockMap[static_cast<int>(DataTypeEnum::API_INSTR)];
-    if (!apiInstrPosArray.empty()) {
-        apiInstrPos = apiInstrPosArray.at(0);
-
-        Position &pair = apiInstrPosArray.at(0);
-        std::string jsonStr = BinFileParseUtil::GetContentStr(file, pair);
-        ConvertApiInstr(jsonStr);
-    }
-    file.close();
-}
-
-void SourceFileParser::ConvertApiInstr(const std::string &jsonStr)
-{
-    Document d;
-    try {
-        d.Parse(jsonStr.c_str());
-        if (JsonUtil::IsJsonArray(d, "Cores")) {
-            Value &cores = d["Cores"];
-            for (auto &core : cores.GetArray()) {
-                apiCores.emplace_back(core.GetString());
-            }
-        }
-    } catch (const std::exception &e) {
-        ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
-    }
-}
-
-void SourceFileParser::ConvertApiFile(const std::string &jsonStr)
-{
-    Document d;
-    try {
-        d.Parse(jsonStr.c_str());
-        if (JsonUtil::IsJsonArray(d, "Files")) {
-            Value &fileArray = d["Files"];
-            apiFiles = ConvertToFileMap(fileArray);
-        }
-    } catch (const std::exception &e) {
-        ServerLog::Error("Can't parse api file,not json.Error is ", e.what());
-    }
-}
-
-std::map<std::string, std::vector<SourceFileLine>> SourceFileParser::ConvertToFileMap(Value &fileArray)
-{
-    std::map<std::string, std::vector<SourceFileLine>> sourceLinesMap;
-
-    for (auto &file : fileArray.GetArray()) {
-        if (!file.IsObject()) {
-            continue;
-        }
-
-        if (!file.HasMember("Source") || !file["Source"].IsString()) {
-            continue;
-        }
-        if (!file.HasMember("Lines") || !file["Lines"].IsArray()) {
-            continue;
-        }
-
-        std::string source = file["Source"].GetString();
-
-        rapidjson::Value &lineArray = file["Lines"];
-        std::vector<SourceFileLine> sourceFileLineArray = ConvertToLineArray(lineArray);
-
-        // 将Source和对应的SourceFileLines vector添加到map中
-        sourceLinesMap[source] = sourceFileLineArray;
-    }
-    return sourceLinesMap;
-}
-
-std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArray)
-{
-    std::vector<SourceFileLine> sourceFileLines;
-
-    for (auto &line : lineArray.GetArray()) {
-        if (!line.IsObject()) {
-            continue;
-        }
-
-        SourceFileLine sourceFileLine;
-
-        // 解析Address Range数组
-        if (!line.HasMember("Address Range") || !line["Address Range"].IsArray()) {
-            continue;
-        }
-        Value &addressRangeArray = line["Address Range"];
-        for (auto &addressRange : addressRangeArray.GetArray()) {
-            if (!addressRange.IsArray() || addressRange.Size() != addressRangeSize) {
-                continue;
-            }
-            if (!addressRange[0].IsString() || !addressRange[1].IsString()) {
-                continue;
-            }
-
-            const char *startAddress = addressRange[0].GetString();
-            const char *endAddress = addressRange[1].GetString();
-
-            sourceFileLine.addressRange.emplace_back(startAddress, endAddress);
-        }
-
-        // 解析Cycles数组
-        if (!line.HasMember("Cycles") || !line["Cycles"].IsArray()) {
-            continue;
-        }
-        Value &cycleArray = line["Cycles"];
-        for (auto &cycle : cycleArray.GetArray()) {
-            sourceFileLine.cycles.emplace_back(cycle.GetFloat());
-        }
-
-        // 解析Instructions Executed数组
-        if (!line.HasMember("Instructions Executed") || !line["Instructions Executed"].IsArray()) {
-            continue;
-        }
-        Value &instrExecutedArray = line["Instructions Executed"];
-        for (auto &instrExecuted : instrExecutedArray.GetArray()) {
-            sourceFileLine.instructionsExecuted.emplace_back(instrExecuted.IsInt() ? instrExecuted.GetInt() : 0);
-        }
-
-        // 解析Line
-        if (!line.HasMember("Line") || !line["Line"].IsInt()) {
-            continue;
-        }
-        int lineIndex = line["Line"].GetInt();
-        sourceFileLine.line = lineIndex;
-
-        // 将解析好的SourceFileLine对象添加到vector中
-        sourceFileLines.push_back(sourceFileLine);
-    }
-    return sourceFileLines;
+    std::vector<Position> &apiInstrPosArray = dataBlockMap[static_cast<int>(DataTypeEnum::API_INSTR)];
+    sourceInstructionParser.ConvertToData(filePath, sourceFilePos, apiFilePos, apiInstrPosArray);
 }
 
 bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody &responseBody,

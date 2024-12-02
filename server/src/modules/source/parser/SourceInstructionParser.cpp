@@ -1,0 +1,302 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#include "SourceInstructionParser.h"
+#include "SafeFile.h"
+#include "ServerLog.h"
+#include "BinFileParseUtil.h"
+#include "JsonUtil.h"
+
+namespace Dic {
+namespace Module {
+namespace Source {
+using namespace Dic::Server;
+bool SourceInstructionParser::ConvertToData(std::string &filePath, std::vector<Position> &sourceFilePos,
+                                            std::vector<Position> &apiFilePos, std::vector<Position> &apiInstrPosArray)
+{
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
+    if (!file) {
+        ServerLog::Error("Can't open file, please check file exist or not, file name: ", filePath);
+        return false;
+    }
+
+    for (auto pos : sourceFilePos) {
+        int64_t start = pos.startPos;
+        int64_t end = pos.endPos;
+        if ((start < 0) || (filePathLengthConst > INT64_MAX - start)) {
+            ServerLog::Error(std::string("Start position: ") + std::to_string(start) +
+                             std::string(" is illegal at covert to data in source file."));
+            return false;
+        }
+        file.seekg(start, std::ios::beg);
+
+        std::vector<char> filePathBuffer(filePathLengthConst);
+        file.read(filePathBuffer.data(), filePathBuffer.size());
+        if (!file) {
+            ServerLog::Error("Failed to read file path buffer.");
+            break;
+        }
+        std::string sourceFilePath(filePathBuffer.data());
+        sourceFiles[sourceFilePath] = {start + filePathLengthConst, end};
+    }
+
+    if (!apiFilePos.empty()) {
+        Position &pair = apiFilePos.at(0);
+        std::string jsonStr = BinFileParseUtil::GetContentStr(file, pair);
+        ConvertApiFile(jsonStr);
+    }
+    if (!apiInstrPosArray.empty()) {
+        apiInstrPos = apiInstrPosArray.at(0);
+        Position &pair = apiInstrPosArray.at(0);
+        std::string jsonStr = BinFileParseUtil::GetContentStr(file, pair);
+        ConvertApiInstr(jsonStr);
+    }
+    file.close();
+    return true;
+}
+
+void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
+{
+    Document d;
+    try {
+        d.Parse(jsonStr.c_str());
+        if (JsonUtil::IsJsonArray(d, "Cores")) {
+            Value &cores = d["Cores"];
+            for (auto &core : cores.GetArray()) {
+                apiCores.emplace_back(core.GetString());
+            }
+        }
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
+    }
+}
+
+/*
+json示例
+{
+  "Cores": [ // 执行算子的计算核，如"core0.cubecore0"，"core0.veccore0"
+    string
+  ],
+  "Files": [ // 源代码文件中的代码行信息
+    {
+      "Lines": [ // 代码行关联的指令地址范围、消耗的时钟周期、执行指令总数
+        {
+          "Address Range": [ // 当前代码行关联的指令地址范围
+            [
+              string
+            ]
+          ],
+          "Cycles": [ // 当前代码行在各个计算核上消耗的总时钟周期（对应顺序是？）
+            int
+          ],
+          "Instructions Executed": [ // 当前代码行在各个计算核上执行的指令总数（对应顺序是？）
+            int
+          ],
+          "Line": 100 // 代码行号
+        }
+      "Source": string // 源代码文件路径
+    }
+  ]
+}
+ */
+void SourceInstructionParser::ConvertApiFile(const std::string &jsonStr)
+{
+    Document d;
+    try {
+        d.Parse(jsonStr.c_str());
+        if (JsonUtil::IsJsonArray(d, "Files")) {
+            Value &fileArray = d["Files"];
+            apiFiles = ConvertToFileMap(fileArray);
+        }
+    } catch (const std::exception &e) {
+        ServerLog::Error("Can't parse api file,not json.Error is ", e.what());
+    }
+}
+
+std::map<std::string, std::vector<SourceFileLine>> SourceInstructionParser::ConvertToFileMap(Value &fileArray)
+{
+    std::map<std::string, std::vector<SourceFileLine>> sourceLinesMap;
+
+    for (auto &file : fileArray.GetArray()) {
+        if (!file.IsObject()) {
+            continue;
+        }
+
+        if (!file.HasMember("Source") || !file["Source"].IsString()) {
+            continue;
+        }
+        if (!file.HasMember("Lines") || !file["Lines"].IsArray()) {
+            continue;
+        }
+
+        std::string source = file["Source"].GetString();
+
+        rapidjson::Value &lineArray = file["Lines"];
+        std::vector<SourceFileLine> sourceFileLineArray = ConvertToLineArray(lineArray);
+
+        // 将Source和对应的SourceFileLines vector添加到map中
+        sourceLinesMap[source] = sourceFileLineArray;
+    }
+    return sourceLinesMap;
+}
+
+std::vector<SourceFileLine> SourceInstructionParser::ConvertToLineArray(Value &lineArray)
+{
+    std::vector<SourceFileLine> sourceFileLines;
+
+    for (auto &line : lineArray.GetArray()) {
+        if (!line.IsObject()) {
+            continue;
+        }
+
+        SourceFileLine sourceFileLine;
+
+        // 解析Address Range数组
+        if (!line.HasMember("Address Range") || !line["Address Range"].IsArray()) {
+            continue;
+        }
+        Value &addressRangeArray = line["Address Range"];
+        for (auto &addressRange : addressRangeArray.GetArray()) {
+            if (!addressRange.IsArray() || addressRange.Size() != addressRangeSize) {
+                continue;
+            }
+            if (!addressRange[0].IsString() || !addressRange[1].IsString()) {
+                continue;
+            }
+
+            const char *startAddress = addressRange[0].GetString();
+            const char *endAddress = addressRange[1].GetString();
+
+            sourceFileLine.addressRange.emplace_back(startAddress, endAddress);
+        }
+
+        // 解析Cycles数组
+        if (!line.HasMember("Cycles") || !line["Cycles"].IsArray()) {
+            continue;
+        }
+        Value &cycleArray = line["Cycles"];
+        for (auto &cycle : cycleArray.GetArray()) {
+            sourceFileLine.cycles.emplace_back(cycle.GetFloat());
+        }
+
+        // 解析Instructions Executed数组
+        if (!line.HasMember("Instructions Executed") || !line["Instructions Executed"].IsArray()) {
+            continue;
+        }
+        Value &instrExecutedArray = line["Instructions Executed"];
+        for (auto &instrExecuted : instrExecutedArray.GetArray()) {
+            sourceFileLine.instructionsExecuted.emplace_back(instrExecuted.IsInt() ? instrExecuted.GetInt() : 0);
+        }
+
+        // 解析Line
+        if (!line.HasMember("Line") || !line["Line"].IsInt()) {
+            continue;
+        }
+        int lineIndex = line["Line"].GetInt();
+        sourceFileLine.line = lineIndex;
+
+        // 将解析好的SourceFileLine对象添加到vector中
+        sourceFileLines.push_back(sourceFileLine);
+    }
+    return sourceFileLines;
+}
+
+void SourceInstructionParser::Reset()
+{
+    sourceFiles.clear();
+    apiCores.clear();
+    apiFiles.clear();
+    apiInstrPos = {0, 0};
+}
+
+std::vector<std::string> SourceInstructionParser::GetCoreList()
+{
+    return this->apiCores;
+}
+
+std::vector<std::string> SourceInstructionParser::GetSourceList()
+{
+    std::vector<std::string> sourceList;
+    for (const auto &entry : sourceFiles) {
+        sourceList.push_back(entry.first);
+    }
+    return sourceList;
+}
+
+std::vector<SourceFileLine> SourceInstructionParser::GetApiLinesByCoreAndSource(const std::string &core,
+                                                                                const std::string &sourceName)
+{
+    std::vector<SourceFileLine> result;
+
+    auto it = std::find(apiCores.begin(), apiCores.end(), core);
+    if (it == apiCores.end()) {
+        ServerLog::Error("Can't find the specified core name: ", core);
+        return result;
+    }
+    // never below zero
+    size_t index = std::distance(apiCores.begin(), it);
+
+    if (apiFiles.find(sourceName) == apiFiles.end()) {
+        ServerLog::Warn("The specified file doesn't exist in api files, and source name is ", sourceName);
+        return result;
+    }
+    std::vector<SourceFileLine> &vector = apiFiles[sourceName];
+    for (auto line : vector) {
+        if (line.cycles.size() < index + 1 || line.instructionsExecuted.size() < index + 1) {
+            continue;
+        }
+
+        // filter lines without instruction executed
+        if (line.instructionsExecuted[index] == 0 && line.cycles[index] == 0) {
+            continue;
+        }
+
+        SourceFileLine output;
+        for (const auto &pair : line.addressRange) {
+            output.addressRange.emplace_back(pair.first, pair.second);
+        }
+        output.cycles.emplace_back(line.cycles[index]);
+        output.instructionsExecuted.emplace_back(line.instructionsExecuted[index]);
+        output.line = line.line;
+
+        result.emplace_back(output);
+    }
+    return result;
+}
+
+std::string SourceInstructionParser::GetInstr(std::string &filePath)
+{
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
+    if (!file) {
+        ServerLog::Error("Failed to open file when parse source instructions, file name is ", filePath);
+        return "";
+    }
+    constexpr uint64_t maxDataSize = 1024 * 1024 * 200; // limit data size to 200MB
+    std::string content = BinFileParseUtil::GetContentStr(file, apiInstrPos, maxDataSize);
+    file.close();
+    return content;
+}
+
+std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, std::string &filePath)
+{
+    if (sourceFiles.count(sourceName) == 0) {
+        ServerLog::Warn("Don't exist the specified file ", sourceName);
+        return "";
+    }
+    Position &pos = sourceFiles[sourceName];
+
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
+    if (!file) {
+        ServerLog::Error("Failed to open file when get source code by name, file name is ", filePath);
+        return "";
+    }
+
+    std::string content = BinFileParseUtil::GetContentStr(file, pos);
+    file.close();
+    return content;
+}
+
+} // Dic
+} // Module
+} // Source

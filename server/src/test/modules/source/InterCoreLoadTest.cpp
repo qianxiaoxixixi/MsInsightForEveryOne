@@ -16,6 +16,38 @@ using namespace Dic::Protocol;
 
 class InterCoreLoadTest : public ::testing::Test {};
 
+TEST_F(InterCoreLoadTest, test_GetInterCoreLoadAnalysisInfo_with_normal_json_of_vector_op_type)
+{
+    InterCoreLoadGraphParser parser;
+    DetailsInterCoreLoadGraphBody body;
+    parser.GetInterCoreLoadAnalysisInfo(INTER_CORE_LOAD_ANALYSIS_OF_VECTOR_JSON, body);
+    // 校验解析的结果
+    EXPECT_STREQ(body.soc.c_str(), "Ascend910B4");
+    EXPECT_STREQ(body.opType.c_str(), "vector");
+    EXPECT_STREQ(body.advice.c_str(), "\t1) core3 vector1 took more time than other vector cores.\n");
+    int opDetailSize = 2;
+    EXPECT_EQ(body.opDetails.size(), opDetailSize);
+    DetailsInterCoreLoadOpDetail &opDetail = body.opDetails[0];
+    int coreId = 0;
+    EXPECT_EQ(opDetail.coreId, coreId);
+    int coreDetailSize = 2;
+    EXPECT_EQ(opDetail.subCoreDetails.size(), coreDetailSize);
+    DetailsInterCoreLoadSubCoreDetail &subCoreDetail = opDetail.subCoreDetails[0];
+    EXPECT_STREQ(subCoreDetail.subCoreName.c_str(), "vector0");
+    uint64_t cycles = 7114;
+    int cycleLevel = 10;
+    EXPECT_EQ(subCoreDetail.cycles.value.compare, cycles);
+    EXPECT_EQ(subCoreDetail.cycles.level, cycleLevel);
+    float throughput = 15104;
+    int throughputLevel = 10;
+    EXPECT_FLOAT_EQ(subCoreDetail.throughput.value.compare, throughput);
+    EXPECT_EQ(subCoreDetail.throughput.level, throughputLevel);
+    float hitRate = 75.700935;
+    int hitRateLevel = 9;
+    EXPECT_FLOAT_EQ(subCoreDetail.cacheHitRate.value.compare, hitRate);
+    EXPECT_EQ(subCoreDetail.cacheHitRate.level, hitRateLevel);
+}
+
 TEST_F(InterCoreLoadTest, test_GetInterCoreLoadAnalysisInfo_with_normal_json)
 {
     InterCoreLoadGraphParser parser;

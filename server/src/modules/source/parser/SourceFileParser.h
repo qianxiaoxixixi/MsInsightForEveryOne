@@ -15,22 +15,14 @@
 #include "SourceProtocolResponse.h"
 #include "JsonFileProcess.h"
 #include "SourceProtocol.h"
+#include "SourceInstructionParser.h"
 
 namespace Dic {
 namespace Module {
 namespace Source {
-struct SourceFileLine {
-    int line;
-    std::vector<float> cycles;
-    std::vector<int> instructionsExecuted;
-    std::vector<std::pair<std::string, std::string>> addressRange;
-};
-
 class SourceFileParser : public FileParser {
 public:
     const static uint16_t reverseConst = 0x5a5a;
-    const static uint16_t filePathLengthConst = 4096;
-    const static uint16_t addressRangeSize = 2;
 
     static SourceFileParser &Instance();
 
@@ -50,7 +42,7 @@ public:
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::string GetInstr();
-    std::string GetSourceByName(std::string sourceName);
+    std::string GetSourceByName(std::string &sourceName);
     bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody, bool isBaseline);
     bool GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &responseBody, bool isBaseline);
     bool GetDetailsMemoryGraph(const std::string& targetBlockId, bool isBaseline,
@@ -69,20 +61,11 @@ public:
 private:
     std::string filePath;
     std::map<int, std::vector<Position>> dataBlockMap;
-    std::map<std::string, std::pair<int64_t, int64_t>> sourceFiles;
     std::map<std::string, std::pair<int64_t, int64_t>> traceFiles;
+    SourceInstructionParser sourceInstructionParser;
 
     std::string baselineFilePath;
     std::map<int, std::vector<Position>> baselineDataBlockMap;
-
-    std::vector<std::string> apiCores;
-    std::map<std::string, std::vector<SourceFileLine>> apiFiles;
-    Position apiInstrPos;
-
-    void ConvertApiInstr(const std::string &jsonStr);
-    void ConvertApiFile(const std::string &jsonStr);
-    std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
-    std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
 
     static uint64_t CalculateTotalSize(std::vector<std::pair<int64_t, int64_t>> &filePos);
 
