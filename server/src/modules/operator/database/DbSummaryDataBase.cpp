@@ -347,6 +347,7 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
         tmpInfo.compare = data;
         resultData.emplace_back(tmpInfo);
     }
+    response.pmuHeaders = FetchPmuColumnNames();
     response.datas = resultData;
     response.level = OperatorGetLevel(sqlRes);
     return true;
@@ -392,6 +393,7 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = 0;
+        int columnCount = sqlite3_column_count(stmt);
         OperatorDetailInfoRes one{};
         one.rankId = sqlite3_column_string(stmt, col++);
         one.stepId = sqlite3_column_string(stmt, col++);
@@ -408,6 +410,10 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
         one.outputShape = sqlite3_column_string(stmt, col++);
         one.outputType = sqlite3_column_string(stmt, col++);
         one.outputFormat = sqlite3_column_string(stmt, col++);
+        for (int i = col; i < columnCount; i++) {
+            std::string columnValue = sqlite3_column_string(stmt, i);
+            one.pmuDatas.push_back(columnValue);
+        }
         res.emplace_back(one);
     }
     sqlite3_finalize(stmt);
@@ -740,6 +746,111 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     return true;
 }
 
+std::vector<std::string> DbSummaryDataBase::FetchPmuColumnNames()
+{
+    std::vector<std::string> columns;
+    if (!CheckTableExist(TABLE_TASK_PMU_INFO)) {
+        return columns;
+    }
+    std::string queryColumnSql = "SELECT STRING_IDS.value "
+                                  "FROM STRING_IDS "
+                                  "WHERE STRING_IDS.id IN ( "
+                                  "    SELECT name "
+                                  "    FROM TASK_PMU_INFO "
+                                  "    WHERE globalTaskId = ( "
+                                  "        SELECT globalTaskId "
+                                  "        FROM TASK_PMU_INFO "
+                                  "        ORDER BY RANDOM() "
+                                  "        LIMIT 1 "
+                                  "    ) "
+                                  ");";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, queryColumnSql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to get pmu cols Info. Msg:", sqlite3_errmsg(db), " ", result);
+        return columns;
+    }
+    // 执行SQL查询并处理结果
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        std::string colName = sqlite3_column_string(stmt, 0);
+        // 表头只能是字母、数字、下划线、短线、空格
+        if (!RegexUtil::RegexMatch(colName, R"(^[a-zA-Z0-9\s\-_]+$)")) {
+            sqlite3_finalize(stmt);
+            ServerLog::Error("There is an SQL injection attack on colName. error colName: %", colName);
+            return {};
+        }
+        columns.push_back(colName);
+    }
+
+    // 释放资源
+    sqlite3_finalize(stmt);
+    return columns;
+}
+
+// STRING_IDS 和 TASK_PMU_INFO表联查，用 globalTaskId分组
+std::string DbSummaryDataBase::CreatPMUTmpTableSql(std::vector<std::string> cols)
+{
+    if (cols.empty()) {
+        return "";
+    }
+    std::string convertPmuDataSql = "SELECT i.globalTaskId ";
+    for (auto const &col : cols) {
+        convertPmuDataSql += ", MAX(CASE WHEN s.value = \'" + col + "\' THEN i.value END) AS " + col;
+    }
+    convertPmuDataSql += " FROM TASK_PMU_INFO i "
+                         " JOIN STRING_IDS s ON i.name = s.id "
+                         " GROUP BY i.globalTaskId ";
+    
+    return " LEFT JOIN ( " + convertPmuDataSql +  " ) AS PMU ON COMPUTE_TASK_INFO.globalTaskId = PMU.globalTaskId ";
+}
+
+std::string DbSummaryDataBase::GetPMUTmpTableColSql(const std::vector<std::string> &cols)
+{
+    if (cols.empty()) {
+        return "";
+    }
+    std::vector<std::string> tmpCols;
+    tmpCols.reserve(cols.size()); // 预留空间，避免多次分配内存
+    for (const std::string &col : cols) {
+        tmpCols.push_back("PMU." + col);
+    }
+    // 加上临时表的前缀
+    return "," + StringUtil::join(tmpCols, ",");
+}
+
+std::string DbSummaryDataBase::GenerateQueryDetailSqlForOperator()
+{
+    std::vector<std::string> pmuClos = FetchPmuColumnNames();
+    // JoinExtraColName、 GetPMUTmpTableColSql、 CreatPMUTmpTableSql 为PMU数据处理，如果没有返回""
+    std::string sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
+        " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
+        " END AS startTime, duration, wait_time, " + blockDimColumnName + ","
+        " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats "
+        + JoinExtraColName(pmuClos) +
+        " FROM ("
+        "     SELECT " + blockDimColumnName + ", deviceId as rank_id, streamId as step_id,NAME.value AS name,"
+        "     OPTYPE.value AS op_type,TASKTYPE.value as accelerator_core, startNs as start_time, "
+        "     ROUND((endNs - startNs)/1000.0, 3) as duration, ROUND(waitNs/1000.0, 3) as wait_time, "
+        "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
+        "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
+        "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats " +
+              GetPMUTmpTableColSql(pmuClos) +
+        " FROM " + TABLE_COMPUTE_TASK_INFO +
+        "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+        "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
+        "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
+        "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
+        "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
+        "     JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
+        "     JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
+        "     JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
+        "     JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
+        "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats " +
+              CreatPMUTmpTableSql(pmuClos) +
+        "     WHERE accelerator_core <> 'HCCL' ORDER by duration DESC LIMIT ? ) subquery ";
+    return sql;
+}
+
 std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqParams &reqParams)
 {
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
@@ -747,34 +858,11 @@ std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqPar
     if (isHccl) {
         sql = GenerateQueryDetailSqlForHCCL(sql);
     } else {
-        sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
-            " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
-            " END AS startTime, duration, wait_time, " + blockDimColumnName + ","
-            " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
-            " FROM ("
-            "     SELECT " + blockDimColumnName + ", deviceId as rank_id, streamId as step_id,NAME.value AS name,"
-            "     OPTYPE.value AS op_type,TASKTYPE.value as accelerator_core, startNs as start_time, "
-            "     ROUND((endNs - startNs)/1000.0, 3) as duration, ROUND(waitNs/1000.0, 3) as wait_time, "
-            "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
-            "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
-            "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
-            " FROM " + TABLE_COMPUTE_TASK_INFO +
-            "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-            "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-            "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-            "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-            "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-            "     JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
-            "     JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
-            "     JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
-            "     JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
-            "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
-            "     WHERE accelerator_core <> 'HCCL' ORDER by duration DESC LIMIT ? ) subquery ";
+        sql = GenerateQueryDetailSqlForOperator();
     }
     if (!GenerateQueryFiltersSql<OperatorStatisticReqParams>(reqParams, sql)) {
         return "";
     }
-
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
                          "to generate all query detail sql.");
