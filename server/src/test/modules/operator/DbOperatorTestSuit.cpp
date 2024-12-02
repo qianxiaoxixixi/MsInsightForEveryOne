@@ -125,3 +125,12 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorStatisticInfoByOpTypeAndInp
     int size = 5;
     EXPECT_EQ(compareRes.size(), size);
 }
+
+TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorDetailInfoWhenPmuDataNotExist)
+{
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("2");
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", GROUP_OPERATOR, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorDetailInfoResponse response = {};
+    bool result = db->QueryOperatorDetailInfo(reqParams, response);
+    EXPECT_EQ(result, true);
+}

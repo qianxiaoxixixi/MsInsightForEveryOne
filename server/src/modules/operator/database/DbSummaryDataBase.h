@@ -37,6 +37,10 @@ public:
     static void ParserEnd(const std::string &fileId, bool result, const std::string &msg);
     static void Reset();
 private:
+    std::vector<std::string> FetchPmuColumnNames();
+    std::string GenerateQueryDetailSqlForOperator();
+    std::string CreatPMUTmpTableSql(std::vector<std::string> cols);
+    std::string GetPMUTmpTableColSql(const std::vector<std::string> &cols);
     bool QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total);
     std::string GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams);
     std::string GenComputeSql(const Protocol::ComputeDetailParams& request);

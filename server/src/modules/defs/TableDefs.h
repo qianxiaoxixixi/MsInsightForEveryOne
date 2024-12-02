@@ -30,6 +30,7 @@ namespace Dic {
     const static std::string TABLE_COMMUNICATION_TASK_INFO = "COMMUNICATION_TASK_INFO";
     const static std::string TABLE_COMMUNICATION_OP = "COMMUNICATION_OP";
     const static std::string TABLE_COMPUTE_TASK_INFO = "COMPUTE_TASK_INFO";
+    const static std::string TABLE_TASK_PMU_INFO = "TASK_PMU_INFO";
     const static std::string TABLE_ENUM_API_LEVEL = "ENUM_API_LEVEL";
     const static std::string TABLE_STRING_IDS = "STRING_IDS";
     const static std::string TABLE_NPU_INFO = "NPU_INFO";
