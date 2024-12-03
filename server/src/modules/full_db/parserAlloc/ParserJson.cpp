@@ -274,13 +274,14 @@ void ParserJson::ClusterProcess(const std::string &selectedFolder, ProjectTypeEn
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (projectType == ProjectTypeEnum::TEXT_CLUSTER) {
-        ClusterFileParser clusterFileParser;
-        if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
+        auto database = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::TEXT);
+        ClusterFileParser clusterFileParser(selectedFolder, database);
+        if (clusterFileParser.ParseClusterFiles()) {
             ServerLog::Info("The cluster file is parsed successfully.");
             parseClusterResult = PARSE_RESULT_OK;
             dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
             ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
-                selectedFolder);
+                                                                                clusterFileParser);
         } else {
             ServerLog::Warn("Failed to parse cluster files.");
             parseClusterResult = PARSE_RESULT_FAIL;
@@ -291,12 +292,11 @@ void ParserJson::ClusterProcess(const std::string &selectedFolder, ProjectTypeEn
     SaveDbPath(projectName, dataPathToDbMap);
 }
 
-void ParserJson::ClusterProcessAsyncStep(const std::string &selectedFolder)
+void ParserJson::ClusterProcessAsyncStep(ClusterFileParser clusterFileParser)
 {
     std::string parseClusterResult;
-    ClusterFileParser clusterFileParser;
     if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
-        clusterFileParser.ParseClusterStep2Files(selectedFolder)) {
+        clusterFileParser.ParseClusterStep2Files()) {
         ServerLog::Info("The cluster step2 file is parsed successfully.");
         parseClusterResult = PARSE_RESULT_OK;
     } else {

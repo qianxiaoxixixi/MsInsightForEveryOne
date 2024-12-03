@@ -20,7 +20,7 @@ namespace Timeline {
 class CommunicationRapidSaxHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>,
         CommunicationRapidSaxHandler> {
 public:
-    CommunicationRapidSaxHandler();
+    explicit CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> &database);
     ~CommunicationRapidSaxHandler();
     bool Null();
     bool Bool(bool b);
@@ -63,6 +63,7 @@ private:
     uint32_t sizeDistributionDepth = 8;
     std::string exception;
     std::unordered_map<std::string, int64_t> groupIdsMap;
+    std::shared_ptr<TextClusterDatabase> database;
 };
 } // end of namespace Timeline
 } // end of namespace Module

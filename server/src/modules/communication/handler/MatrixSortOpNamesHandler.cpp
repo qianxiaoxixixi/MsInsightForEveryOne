@@ -27,8 +27,8 @@ bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryMatrixSortOpNames(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryMatrixSortOpNames(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix sort op names response data.");
         session.OnResponse(std::move(responsePtr));

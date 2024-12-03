@@ -10,7 +10,8 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler()
+CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler(std::shared_ptr<TextClusterDatabase> &database)
+    : database(database)
 {
     currentObject.SetObject();
 }
@@ -93,7 +94,6 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
-    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     if (database == nullptr) {
         ServerLog::Error("Can't get cluster database.");
         return false;

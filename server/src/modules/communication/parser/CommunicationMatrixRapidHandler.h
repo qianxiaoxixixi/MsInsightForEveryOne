@@ -19,7 +19,7 @@ namespace Timeline {
 class CommunicationMatrixRapidHandler : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>,
         CommunicationMatrixRapidHandler> {
 public:
-    CommunicationMatrixRapidHandler();
+    explicit CommunicationMatrixRapidHandler(std::shared_ptr<TextClusterDatabase> &database);
     ~CommunicationMatrixRapidHandler();
     bool Null();
     bool Bool(bool bl);
@@ -52,6 +52,7 @@ private:
     uint32_t opNameDepth = 3;
     uint32_t ranksDepth = 4;
     uint32_t stepSubLen = 4;
+    std::shared_ptr<TextClusterDatabase> database;
 };
 
 } // end of namespace Timeline

@@ -11,7 +11,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 
-CommunicationRapidSaxHandler::CommunicationRapidSaxHandler()
+CommunicationRapidSaxHandler::CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> &database)
+    : database(database)
 {
     currentObject.SetObject();
 }
@@ -125,15 +126,13 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
         return false;
     }
     // 获取所有的groupId映射关系
-    auto databaseRead = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetReadClusterDatabase());
-    if (databaseRead == nullptr) {
+    if (database == nullptr) {
         ServerLog::Error("Can't get cluster database for read when parse communication data.");
         return false;
     }
     if (groupIdsMap.empty()) {
-        groupIdsMap = databaseRead->GetAllGroupMap();
+        groupIdsMap = database->GetAllGroupMap();
     }
-    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     if (database == nullptr) {
         ServerLog::Error("Can't get cluster database for write when parse communication data.");
         return false;

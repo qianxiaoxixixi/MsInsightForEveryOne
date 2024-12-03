@@ -13,8 +13,6 @@
 #include "ParserStatusManager.h"
 #include "DbClusterDataBase.h"
 #include "TraceTime.h"
-#include "FileUtil.h"
-#include "NumberUtil.h"
 #include "CollectionUtil.h"
 #include "ClusterFileParser.h"
 
@@ -45,6 +43,11 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     if (!checkFilePath) {
         return;
     }
+    std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (textDb == nullptr) {
+        ServerLog::Error("Fail to parse json file, file type:", saxHandlerType);
+        return;
+    }
     // 打开JSON文件
     FILE* fp = fopen(filePath.c_str(), "rb");
     if (fp == nullptr) {
@@ -54,10 +57,10 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
     rapidjson::Reader reader;
     if (saxHandlerType == 0) {
-        CommunicationRapidSaxHandler rapidSaxHandler;
+        CommunicationRapidSaxHandler rapidSaxHandler(textDb);
         reader.Parse<kParseNumbersAsStringsFlag>(is, rapidSaxHandler);
     } else {
-        CommunicationMatrixRapidHandler matrixRapidHandler;
+        CommunicationMatrixRapidHandler matrixRapidHandler(textDb);
         reader.Parse(is, matrixRapidHandler);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -75,8 +78,8 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     std::ifstream stepTraceFileCsv = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> indexMap;
-    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    if (database == nullptr) {
+    std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (textDb == nullptr) {
         ServerLog::Error("Can't get cluster database when parse step statistics file.");
         return;
     }
@@ -107,7 +110,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
             continue;
         }
         StepStatistic statistic = MapToStepStatistic(dataMap, tokens);
-        database->InsertStepStatisticsInfo(statistic);
+        textDb->InsertStepStatisticsInfo(statistic);
     }
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("End parse step statistics file data into db, cost time:", (end - start).count());
@@ -124,29 +127,29 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     // 转换为毫秒数
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     ParseCommunicationGroup(selectedPath, baseInfo);
-    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    if (database == nullptr) {
+    std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (textDb == nullptr) {
         ServerLog::Error("Can't get cluster database when sava cluster base info.");
         return;
     }
-    bool result = database->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
+    bool result = textDb->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     if (!result || (baseInfo.config.dpSize == 1 && baseInfo.config.ppSize == 1 && baseInfo.config.tpSize == 1)) {
         ServerLog::Warn("Get initial parallel config from step trace.");
     }
-    database->InsertClusterBaseInfo(baseInfo);
+    textDb->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
                     baseInfo.collectStartTime);
 }
 
-bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
+bool ClusterFileParser::ParseClusterFiles()
 {
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::RUNNING);
-    if (!InitClusterDatabase(selectedPath)) {
+    if (!InitClusterDatabase()) {
         ServerLog::Error("Init cluster database occur an err");
         return false;
     }
-    auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    if (database == nullptr) {
+    std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (textDb == nullptr) {
         ServerLog::Error("Can't get cluster database when parse cluster files.");
         return false;
     }
@@ -155,7 +158,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
-        database->QueryExtremumTimestamp(min, max);
+        textDb->QueryExtremumTimestamp(min, max);
         if (min != UINT64_MAX && max != 0) {
             Timeline::TraceTime::Instance().UpdateTime(min, max);
         }
@@ -164,25 +167,25 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     // parse communication file
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
-            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
+            FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationMatrix);
     // cluster analysis
-    if (communicationMatrixFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_MATRIX, AttDataType::TEXT)) {
+    if (communicationMatrixFileList.empty() && !AttAnalyze(selectedFilePath, ATT_MODEL_MATRIX, AttDataType::TEXT)) {
         return false;
     }
     std::vector<std::string> communicationMatrixList =
-            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
+            FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationMatrix);
     if (!communicationMatrixList.empty()) {
         ParseCommunicationMatrix(communicationMatrixList);
     }
-    database->SaveLastData();
+    textDb->SaveLastData();
     std::regex patternStepTrace(R"(cluster_step_trace_time.csv)");
-    std::vector<std::string> stepTraceFileList = FileUtil::FindFirstFileByRegex(selectedPath, patternStepTrace);
+    std::vector<std::string> stepTraceFileList = FileUtil::FindFirstFileByRegex(selectedFilePath, patternStepTrace);
     if (!stepTraceFileList.empty()) {
         ParseStepStatisticsFile(stepTraceFileList);
-        SaveClusterBaseInfo(selectedPath);
+        SaveClusterBaseInfo(selectedFilePath);
     }
-    if (!database->CreateIndex()) {
-        ServerLog::Error("Failed to create index on cluster database. path:", selectedPath);
+    if (!textDb->CreateIndex()) {
+        ServerLog::Error("Failed to create index on cluster database. path:", selectedFilePath);
         return false;
     }
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
@@ -192,17 +195,17 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     return true;
 }
 
-bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
+bool ClusterFileParser::ParseClusterStep2Files()
 {
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
-            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunication);
+            FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunication);
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
-            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
+            FileUtil::FindFirstFileByRegex(selectedFilePath, patternCommunicationMatrix);
     bool isCopyMatrixFile = false;
-    std::string tempFilePath = FileUtil::SplicePath(selectedPath, "tmp_matrix.json");
+    std::string tempFilePath = FileUtil::SplicePath(selectedFilePath, "tmp_matrix.json");
     // cluster_communication_matrix存在，但cluster_communication不存在时，将matrix文件复制到selectedPath下的临时文件中
     if (!communicationMatrixFileList.empty() && communicationFileList.empty()) {
         isCopyMatrixFile = FileUtil::CopyFileByPath(FileUtil::PathPreprocess(communicationMatrixFileList[0].c_str()),
@@ -212,7 +215,7 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
         }
     }
     // cluster analysis
-    if (communicationFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_TIME, AttDataType::TEXT)) {
+    if (communicationFileList.empty() && !AttAnalyze(selectedFilePath, ATT_MODEL_TIME, AttDataType::TEXT)) {
         return false;
     }
 
@@ -225,14 +228,13 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
             ServerLog::Warn("Copy and clear matrix temp file failed.");
         }
     }
-    auto res = TransCommunicationToDb(selectedPath, patternCommunication);
-    return res;
+    return TransCommunicationToDb(selectedFilePath, patternCommunication);
 }
 
 bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication)
 {
-    auto database = dynamic_cast<TextClusterDatabase *>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    if (database == nullptr) {
+    std::shared_ptr<TextClusterDatabase> textDb = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (textDb == nullptr) {
         ServerLog::Error("Failed to connect to cluster database.", selectedPath);
         return false;
     }
@@ -241,8 +243,8 @@ bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, 
     if (!communicationFileList.empty()) {
         ParseCommunication(communicationFileList);
     }
-    database->SaveLastData();
-    if (!database->CreateTimeIndex()) {
+    textDb->SaveLastData();
+    if (!textDb->CreateTimeIndex()) {
         ServerLog::Error("Failed to CreateTimeIndex on cluster database. path:", selectedPath);
         return false;
     }
@@ -250,41 +252,35 @@ bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, 
         ServerLog::Warn("Parser Cluster Status Is Terminal");
         return false;
     }
-    database->UpdateClusterParseStatus(FINISH_STATUS);
+    textDb->UpdateClusterParseStatus(FINISH_STATUS);
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
-    database->QueryExtremumTimestamp(min, max);
+    textDb->QueryExtremumTimestamp(min, max);
     if (min != UINT64_MAX && max != 0) {
         Timeline::TraceTime::Instance().UpdateTime(min, max);
     }
     return true;
 }
 
-bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
+bool ClusterFileParser::InitClusterDatabase()
 {
-    // 导入前清空cluster databaseWrite
-    DataBaseManager::Instance().ClearClusterDb();
-    clusterDbPath = selectedPath + FILE_SEPARATOR + "cluster.db";
+    clusterDbPath = selectedFilePath + FILE_SEPARATOR + "cluster.db";
     std::ifstream file = OpenReadFileSafely(clusterDbPath, std::ios::in);
-    auto databaseWrite = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
-    // 查询单独一个连接
-    auto databaseRead = dynamic_cast<TextClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
-    if (databaseWrite == nullptr || databaseRead == nullptr) {
+    std::shared_ptr<TextClusterDatabase> databaseWrite = std::dynamic_pointer_cast<TextClusterDatabase>(database);
+    if (databaseWrite == nullptr) {
         ServerLog::Error("Can't get cluster database.");
         return false;
     }
-    databaseRead->OpenDb(clusterDbPath, false);
-    databaseRead->SetConfig();
     if (!file.good()) {
         if (!(databaseWrite->OpenDb(clusterDbPath, true) && databaseWrite->CreateTable() &&
               databaseWrite->SetConfig() && databaseWrite->SetDbVersion() && databaseWrite->InitStmt())) {
-            ServerLog::Error("Failed to open databaseWrite. path:", selectedPath);
+            ServerLog::Error("Failed to open databaseWrite. path:", selectedFilePath);
             return false;
         }
     } else {
         if (!(databaseWrite->OpenDb(clusterDbPath, false))) {
-            ServerLog::Error("Failed to open databaseWrite. path:", selectedPath);
+            ServerLog::Error("Failed to open databaseWrite. path:", selectedFilePath);
             return false;
         }
         // 判断数据库版本是否变更，若变更不能跳过解析
@@ -292,11 +288,11 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
         std::string status = databaseWrite->QueryParseClusterStatus();
         needClearDb = isChange || status.empty() || strcmp(status.c_str(), FINISH_STATUS.c_str()) != 0;
         if (needClearDb && !(databaseWrite->DropAllTable() && databaseWrite->CreateTable())) {
-            ServerLog::Error("Failed to dropAllTable. path:", selectedPath, "isChange:", isChange);
+            ServerLog::Error("Failed to dropAllTable. path:", selectedFilePath, "isChange:", isChange);
             return false;
         }
         if (!(databaseWrite->SetConfig() && databaseWrite->SetDbVersion() && databaseWrite->InitStmt())) {
-            ServerLog::Error("Failed to init databaseWrite. path:", selectedPath);
+            ServerLog::Error("Failed to init databaseWrite. path:", selectedFilePath);
             return false;
         }
     }
@@ -474,12 +470,12 @@ std::string ClusterFileParser::GetStrValue(std::map<std::string, size_t> &dataMa
     return tokens[index];
 }
 
-bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
+bool ClusterFileParser::ParserClusterOfDb()
 {
-    std::string tempPath(selectedPath);
+    std::string tempPath(selectedFilePath);
     // 如果selectedPath是单个文件，则使用该文件所在文件夹作为分析路径
-    if (!FileUtil::IsFolder(selectedPath)) {
-        tempPath = FileUtil::GetParentPath(selectedPath);
+    if (!FileUtil::IsFolder(selectedFilePath)) {
+        tempPath = FileUtil::GetParentPath(selectedFilePath);
     }
     // cluster analysis
     if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT, AttDataType::DB)) {
@@ -490,8 +486,8 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
     if (clusterPath.empty()) {
         return false;
     }
-    auto clusterDatabase =
-        dynamic_cast<FullDb::DbClusterDataBase *>(DataBaseManager::Instance().GetReadClusterDatabase());
+    std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase =
+            std::dynamic_pointer_cast<FullDb::DbClusterDataBase>(database);
     if (clusterDatabase == nullptr) {
         ServerLog::Error("Failed to get Cluster connection.");
         return false;
@@ -527,6 +523,9 @@ std::string ClusterFileParser::GetClusterDbPath()
 {
     return clusterDbPath;
 }
+
+ClusterFileParser::ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> &database)
+    : selectedFilePath(filePath), database(database) {}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

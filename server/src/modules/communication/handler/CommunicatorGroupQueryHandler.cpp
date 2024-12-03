@@ -20,8 +20,8 @@ bool CommunicatorGroupQueryHandler::HandleRequest(std::unique_ptr<Dic::Protocol:
     SetBaseResponse(request, response);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     SetResponseResult(response, true);
-    auto database = Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryCommunicationGroup(response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryCommunicationGroup(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Communication CommunicationGroupQueryHandler Failed");
         session.OnResponse(std::move(responsePtr));

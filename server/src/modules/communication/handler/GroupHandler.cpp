@@ -27,8 +27,8 @@ bool GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->GetGroups(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->GetGroups(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get group response data.");
         session.OnResponse(std::move(responsePtr));

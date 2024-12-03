@@ -26,8 +26,7 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::DB);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
-        auto culsterDatabase =
-                dynamic_cast<DbClusterDataBase *>(DataBaseManager::Instance().GetReadClusterDatabase());
+        auto culsterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
         culsterDatabase->OpenDb(currPath + dbPath3 + "cluster_analysis.db", false);
     }
     static void TearDownTestSuite() {}
@@ -35,7 +34,7 @@ public:
 
 TEST_F(DbCommunicationTest, QueryIterationsData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryIterations(responseBody);
     int expectSize = 2;
@@ -45,7 +44,7 @@ TEST_F(DbCommunicationTest, QueryIterationsData)
 
 TEST_F(DbCommunicationTest, QueryOperatorNameData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
@@ -61,7 +60,7 @@ TEST_F(DbCommunicationTest, QueryOperatorNameData)
 
 TEST_F(DbCommunicationTest, QueryOperatorNameDataWithRank)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
@@ -77,7 +76,7 @@ TEST_F(DbCommunicationTest, QueryOperatorNameDataWithRank)
 
 TEST_F(DbCommunicationTest, QueryRanksData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::RanksParams requestParam;
     requestParam.dbIndex = "0";
     requestParam.iterationId = "2";
@@ -91,7 +90,7 @@ TEST_F(DbCommunicationTest, QueryRanksData)
 
 TEST_F(DbCommunicationTest, QueryDurationData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
     Protocol::DurationListsResponseBody responseBody;
     requestParams.dbIndex = "0";
@@ -105,7 +104,7 @@ TEST_F(DbCommunicationTest, QueryDurationData)
 
 TEST_F(DbCommunicationTest, QueryDurationDataWithRank)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
     Protocol::DurationListsResponseBody responseBody;
     requestParams.dbIndex = "0";
@@ -120,7 +119,7 @@ TEST_F(DbCommunicationTest, QueryDurationDataWithRank)
 
 TEST_F(DbCommunicationTest, QueryBandwidthDistributionData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DistributionDataParam requestParams;
     Dic::Protocol::DistributionResBody responseBody;
     requestParams.iterationId = "1";
@@ -135,7 +134,7 @@ TEST_F(DbCommunicationTest, QueryBandwidthDistributionData)
 
 TEST_F(DbCommunicationTest, QueryBandwidthData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::BandwidthDataParam requestParams;
     Dic::Protocol::BandwidthDataResBody responseBody;
     requestParams.iterationId = "1";
@@ -150,7 +149,7 @@ TEST_F(DbCommunicationTest, QueryBandwidthData)
 
 TEST_F(DbCommunicationTest, QueryIterationAndCommunicationGroupDBSuccess)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::CommunicationKernelParams requestParams;
     requestParams.name = "hcom_broadcast__293_0_1";
     requestParams.rankId = "0";
@@ -162,7 +161,7 @@ TEST_F(DbCommunicationTest, QueryIterationAndCommunicationGroupDBSuccess)
 
 TEST_F(DbCommunicationTest, QueryBandwidthDataWithErrorParamReturnExpectSize0)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::BandwidthDataParam requestParams;
     Dic::Protocol::BandwidthDataResBody responseBody;
     requestParams.iterationId = "2";
@@ -176,7 +175,7 @@ TEST_F(DbCommunicationTest, QueryBandwidthDataWithErrorParamReturnExpectSize0)
 
 TEST_F(DbCommunicationTest, QueryOperatorsCount)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorDetailsParam requestParams;
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "1";
@@ -195,7 +194,7 @@ TEST_F(DbCommunicationTest, QueryOperatorsCount)
 
 TEST_F(DbCommunicationTest, GetCommunicationGroups)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::MatrixGroupParam requestParams;
     Dic::Protocol::MatrixGroupResponseBody responseBody;
     requestParams.iterationId = "1";
@@ -207,7 +206,7 @@ TEST_F(DbCommunicationTest, GetCommunicationGroups)
 
 TEST_F(DbCommunicationTest, QueryMatrixData)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::MatrixBandwidthParam requestParams;
     Dic::Protocol::MatrixListResponseBody responseBody;
     requestParams.iterationId = "1";
@@ -220,7 +219,7 @@ TEST_F(DbCommunicationTest, QueryMatrixData)
 
 TEST_F(DbCommunicationTest, QueryAllCommunicationOperatorsDetails)
 {
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorDetailsParam requestParams;
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "step1";

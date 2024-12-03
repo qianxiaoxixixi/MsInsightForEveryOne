@@ -46,11 +46,11 @@ public:
     std::vector<std::string> GetAllFileId();
     void Clear();
     void Clear(DatabaseType type);
-    void ClearClusterDb();
+    void EraseClusterDb(const std::string &uniqueKey);
     void ReleaseDatabase(const std::string &fileId);
     bool HasFileId(DatabaseType type, const std::string &fileId);
-    VirtualClusterDatabase *GetWriteClusterDatabase();
-    VirtualClusterDatabase *GetReadClusterDatabase();
+    std::shared_ptr<VirtualClusterDatabase> CreateClusterDatabase(const std::string &uniqueKey, DataType type);
+    std::shared_ptr<VirtualClusterDatabase> GetClusterDatabase(const std::string &uniqueKey);
 
     std::shared_ptr<Memory::VirtualMemoryDataBase> GetMemoryDatabase(const std::string &fileId);
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
@@ -82,7 +82,7 @@ private:
     DataBaseManager() = default;
     ~DataBaseManager() = default;
 
-    std::mutex mutex;
+    std::recursive_mutex mutex;
     DataType dataType = DataType::TEXT;
     DataType baselineType = DataType::TEXT;
     FileType fileType = FileType::PYTORCH;
@@ -91,7 +91,7 @@ private:
     std::map<std::string, std::vector<std::string>> host2DbPath;
     std::unordered_set<std::string> databasePathSet;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
-    std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
+    std::map<std::string, std::shared_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 

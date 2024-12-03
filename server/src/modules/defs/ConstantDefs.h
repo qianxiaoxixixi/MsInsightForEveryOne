@@ -34,6 +34,9 @@ static const std::string ATT_MODEL_MATRIX = "communication_matrix";
 // db wrong data
 static const std::string WRONG_DATA = std::to_string(UINT32_MAX);
 
+static const std::string COMPARE = "compare";
+static const std::string BASELINE = "baseline";
+
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_CONSTANTS_DEFS_H

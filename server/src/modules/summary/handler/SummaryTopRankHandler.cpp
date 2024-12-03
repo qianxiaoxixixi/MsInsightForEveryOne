@@ -36,9 +36,9 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     response.body.collectStartTime =
             Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
     response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     response.body.filePath = database->GetDbPath();
-    if (!database->QuerySummaryData(request.params, response.body) ||
+    if (database == nullptr || !database->QuerySummaryData(request.params, response.body) ||
         !database->QueryBaseInfo(response.body)) {
         ServerLog::Warn("Query summary data or query base info is failed");
         SetResponseResult(response, false);

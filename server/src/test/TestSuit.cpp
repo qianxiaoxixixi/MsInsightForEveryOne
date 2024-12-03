@@ -44,9 +44,10 @@ public:
         MemoryParse::Instance().Parse({testDataPath});
         WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
-        ClusterFileParser clusterFileParser;
-        clusterFileParser.ParseClusterFiles(testDataPath);
-        clusterFileParser.ParseClusterStep2Files(testDataPath);
+        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::TEXT);
+        ClusterFileParser clusterFileParser(testDataPath, clusterDatabase);
+        clusterFileParser.ParseClusterFiles();
+        clusterFileParser.ParseClusterStep2Files();
         WaitParseEnd({"0", "1", KERNEL_PREFIX + "0",
                      KERNEL_PREFIX + "1", MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
     }
@@ -75,7 +76,7 @@ public:
     {
         KernelParse::Instance().Reset();
         TraceFileParser::Instance().DeleteParseFiles({"0", "1"});
-        DataBaseManager::Instance().ClearClusterDb();
+        DataBaseManager::Instance().EraseClusterDb(COMPARE);
         std::string tempPath = Dic::FileUtil::GetCurrPath();
         int index = tempPath.find_last_of("server");
         tempPath = tempPath.substr(0, index + 1);

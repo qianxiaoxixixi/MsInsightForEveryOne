@@ -88,7 +88,6 @@ void ParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportA
 void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
     std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
 {
-    DataBaseManager::Instance().ClearClusterDb();
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (isCluster) {
         ServerLog::Info("The cluster file is parsed successfully.");
@@ -107,9 +106,10 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
     std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
 {
     std::string parseClusterResult;
-    ClusterFileParser clusterFileParser;
+    auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
+    ClusterFileParser clusterFileParser(selectedFolder, clusterDatabase);
     if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
-        clusterFileParser.ParserClusterOfDb(selectedFolder)) {
+        clusterFileParser.ParserClusterOfDb()) {
         ServerLog::Info("The cluster db file is parsed successfully.");
         dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
         parseClusterResult = PARSE_RESULT_OK;

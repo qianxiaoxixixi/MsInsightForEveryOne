@@ -6,6 +6,7 @@
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ConstantDefs.h"
 #include "BandwidthHandler.h"
 
 namespace Dic {
@@ -29,8 +30,8 @@ bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryBandwidthData(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryBandwidthData(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication bandwidth data.");
         session.OnResponse(std::move(responsePtr));

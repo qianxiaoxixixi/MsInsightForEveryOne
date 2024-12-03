@@ -24,7 +24,7 @@ DataBaseManager &DataBaseManager::Instance()
 bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::string &dbPath)
 {
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     databasePathSet.emplace(dbPath);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
     std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
@@ -55,7 +55,7 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
 
 std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
     std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
         isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
@@ -72,7 +72,7 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 
 std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabase(const std::string &inputId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
     // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
     std::map<std::string, std::shared_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
@@ -112,7 +112,7 @@ std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryData
 
 std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabase(const std::string &inputId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
     // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
     std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap = memoryDatabaseMap;
@@ -135,7 +135,7 @@ std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabas
 
 void DataBaseManager::ReleaseDatabase(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     auto traceDataBase = traceDatabaseMap.find(fileId);
     if (traceDataBase != traceDatabaseMap.end()) {
         traceDatabaseMap.erase(traceDataBase);
@@ -152,7 +152,7 @@ void DataBaseManager::ReleaseDatabase(const std::string &fileId)
 
 bool DataBaseManager::HasFileId(DatabaseType type, const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     bool result = false;
     switch (type) {
         case DatabaseType::TRACE:
@@ -172,7 +172,7 @@ bool DataBaseManager::HasFileId(DatabaseType type, const std::string &fileId)
 
 std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     std::vector<ConnectionPool *> traceDatabases;
     for (auto &traceDatabase : traceDatabaseMap) {
         traceDatabases.emplace_back(traceDatabase.second.get());
@@ -182,7 +182,7 @@ std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
 
 std::vector<Memory::VirtualMemoryDataBase *> DataBaseManager::GetAllMemoryDatabase()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     std::vector<Memory::VirtualMemoryDataBase *> databases;
     for (auto &databaseMap : memoryDatabaseMap) {
         databases.emplace_back(databaseMap.second.get());
@@ -192,7 +192,7 @@ std::vector<Memory::VirtualMemoryDataBase *> DataBaseManager::GetAllMemoryDataba
 
 std::vector<Summary::VirtualSummaryDataBase *> DataBaseManager::GetAllSummaryDatabase()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     std::vector<Summary::VirtualSummaryDataBase *> databases;
     for (auto &databaseMap : summaryDatabaseMap) {
         databases.emplace_back(databaseMap.second.get());
@@ -202,7 +202,7 @@ std::vector<Summary::VirtualSummaryDataBase *> DataBaseManager::GetAllSummaryDat
 
 void DataBaseManager::Clear()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     traceDatabaseMap.clear();
     memoryDatabaseMap.clear();
     summaryDatabaseMap.clear();
@@ -215,7 +215,7 @@ void DataBaseManager::Clear()
 
 void DataBaseManager::Clear(DatabaseType type)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     switch (type) {
         case DatabaseType::TRACE:
             traceDatabaseMap.clear();
@@ -231,47 +231,54 @@ void DataBaseManager::Clear(DatabaseType type)
     }
 }
 
-void DataBaseManager::ClearClusterDb()
+void DataBaseManager::EraseClusterDb(const std::string &uniqueKey)
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (clusterDatabaseMap.count("cluster_w") != 0) {
-        clusterDatabaseMap["cluster_w"].get()->CloseDb();
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (clusterDatabaseMap.count(uniqueKey) != 0) {
+        clusterDatabaseMap[uniqueKey].get()->CloseDb();
+        clusterDatabaseMap.erase(clusterDatabaseMap.find(uniqueKey));
     }
-    if (clusterDatabaseMap.count("cluster_r") != 0) {
-        clusterDatabaseMap["cluster_r"].get()->CloseDb();
-    }
-    clusterDatabaseMap.clear();
 }
 
-VirtualClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
+/**
+ * 创建集群db对象（如果对象已存在，则清除重新创建）
+ *
+ * @param uniqueKey 唯一键
+ * @param type db类型
+ * @return
+ */
+std::shared_ptr<VirtualClusterDatabase> DataBaseManager::CreateClusterDatabase(const std::string &uniqueKey,
+                                                                               DataType type)
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (clusterDatabaseMap.count("cluster_w") == 0) {
-        if (dataType == DataType::TEXT) {
-            clusterDatabaseMap.emplace("cluster_w", std::make_unique<TextClusterDatabase>(GetDbMutex("cluster_w")));
-        } else if (dataType == DataType::DB) {
-            clusterDatabaseMap.emplace("cluster_w", std::make_unique<DbClusterDataBase>(GetDbMutex("cluster_w")));
-        }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (clusterDatabaseMap.count(uniqueKey) != 0) {
+        EraseClusterDb(uniqueKey);
     }
-    return clusterDatabaseMap["cluster_w"].get();
+    if (type == DataType::TEXT) {
+        clusterDatabaseMap.emplace(uniqueKey, std::make_shared<TextClusterDatabase>(GetDbMutex(uniqueKey)));
+    } else if (type == DataType::DB) {
+        clusterDatabaseMap.emplace(uniqueKey, std::make_shared<DbClusterDataBase>(GetDbMutex(uniqueKey)));
+    }
+    return clusterDatabaseMap[uniqueKey];
 }
 
-VirtualClusterDatabase *DataBaseManager::GetReadClusterDatabase()
+/**
+ * 根据唯一键获取集群db（会返回空指针，如不存在会返回空指针，外层需做好空指针校验）
+ *
+ * @param uniqueKey 唯一键
+ * @return
+ */
+std::shared_ptr<VirtualClusterDatabase> DataBaseManager::GetClusterDatabase(const std::string &uniqueKey)
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (clusterDatabaseMap.count("cluster_r") == 0) {
-        if (dataType == DataType::TEXT) {
-            clusterDatabaseMap.emplace("cluster_r", std::make_unique<TextClusterDatabase>(GetDbMutex("cluster_r")));
-        } else if (dataType == DataType::DB) {
-            clusterDatabaseMap.emplace("cluster_r", std::make_unique<DbClusterDataBase>(GetDbMutex("cluster_r")));
-        }
+    if (clusterDatabaseMap.count(uniqueKey) == 0) {
+        return nullptr;
     }
-    return clusterDatabaseMap["cluster_r"].get();
+    return clusterDatabaseMap[uniqueKey];
 }
 
 std::vector<std::string> DataBaseManager::GetAllFileId()
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     std::vector<std::string> traceFileId;
     for (auto &traceDatabase : traceDatabaseMap) {
         traceFileId.emplace_back(traceDatabase.first);
@@ -281,7 +288,7 @@ std::vector<std::string> DataBaseManager::GetAllFileId()
 
 std::string DataBaseManager::GetDbPath(const std::string &fileId)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
     if (it == traceDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
         it = traceDatabaseMap.find(dbFilePathMap[fileId]);
@@ -337,33 +344,33 @@ FileType DataBaseManager::GetFileTypeByRankId(const std::string &rankId)
 }
 void DataBaseManager::SetFileType(FileType type)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     fileType = type;
 }
 
 void DataBaseManager::SetBaselineFileType(FileType type)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     baselineFileType = type;
 }
 
 void DataBaseManager::SetBaselineDataType(DataType type)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     baselineType = type;
 }
 
 void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath,
     const std::string &hostId)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     dbFilePathMap[rankId] = filePath;
     host2DbPath[hostId].push_back(filePath);
 }
 
 bool DataBaseManager::ResetBaseline()
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     for (const auto &item : traceBaselineDatabaseMap) {
         if (item.second != nullptr) {
             std::string databasePath = item.second->GetDbPath();
@@ -389,7 +396,7 @@ bool DataBaseManager::ResetBaseline()
 
 bool DataBaseManager::IsContainDatabasePath(const std::string &databasePath)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     return (databasePathSet.count(databasePath) > 0);
 }
 } // end of namespace Timeline

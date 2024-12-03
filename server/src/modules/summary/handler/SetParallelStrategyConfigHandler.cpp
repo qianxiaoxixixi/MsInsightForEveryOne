@@ -25,9 +25,9 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string level = PARALLEL_CONFIG_LEVEL_CONFIGURED;
-    if (!database->UpdateParallelStrategyConfig(request.config, level, response.msg)) {
+    if (database == nullptr || !database->UpdateParallelStrategyConfig(request.config, level, response.msg)) {
         response.result = false;
         SetResponseResult(response, false);
         ServerLog::Error("Failed to update parallel strategy config.");
