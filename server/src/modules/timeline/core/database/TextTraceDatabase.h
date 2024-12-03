@@ -26,6 +26,8 @@ public:
 
     bool CreateTable();
     bool CreateIndex();
+    bool DeleteEmptyThread();
+    bool DeleteEmptyFlow();
     bool DropTable();
     bool InitStmt();
     void ReleaseStmt();

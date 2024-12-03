@@ -870,3 +870,217 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenProcessInitAndTabl
     const uint64_t expectSize = 0;
     EXPECT_EQ(processPOS.size(), expectSize);
 }
+
+/**
+ * 删除多余空泳道，存在多余空泳道的情况
+ */
+TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyThreadWhenExistEmptyThread)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceSql =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (1, 1726830796027903782, 2140, 'Computing', "
+        "NULL, 1, NULL, NULL, '', 1726830796027905922, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (2, 1726830796027905942, 1880, "
+        "'MulF16Tactic', NULL, 2, NULL, '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3922\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64679\"}', '', 1726830796027907822, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (3, 1726830796027905942, 1880, 'Computing', "
+        "NULL, 1, NULL, NULL, '', 1726830796027907822, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (4, 1726830796027905922, 20, 'Free', NULL, 3, "
+        "NULL, NULL, '', 1726830796027905942, '');";
+    std::string threadSql = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (1, '0', '42506633', 'Computing', NULL);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (2, '3', '42506505', 'Stream 3', 3);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (3, '3', '42506633', 'Free', NULL);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (5, '3', '42506601', 'Plane 0', 3);";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceSql);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadSql);
+    database.DeleteEmptyThread();
+    ThreadTable threadTable;
+    std::vector<ThreadPO> result;
+    threadTable.Select(ThreadColumn::TRACK_ID)
+        .OrderBy(ThreadColumn::TRACK_ID, TableOrder::ASC)
+        .ExcuteQuery(dbPtr, result);
+    const uint64_t zero = 0;
+    const uint64_t one = 1;
+    const uint64_t two = 2;
+    const uint64_t three = 3;
+    EXPECT_EQ(result.size(), three);
+    EXPECT_EQ(result[zero].trackId, one);
+    EXPECT_EQ(result[one].trackId, two);
+    EXPECT_EQ(result[two].trackId, three);
+}
+
+/**
+ * 删除多余空泳道，不存在多余空泳道的情况
+ */
+TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyThreadWhenNotExistEmptyThread)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceSql =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (1, 1726830796027903782, 2140, 'Computing', "
+        "NULL, 1, NULL, NULL, '', 1726830796027905922, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (2, 1726830796027905942, 1880, "
+        "'MulF16Tactic', NULL, 2, NULL, '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3922\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64679\"}', '', 1726830796027907822, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (3, 1726830796027905942, 1880, 'Computing', "
+        "NULL, 1, NULL, NULL, '', 1726830796027907822, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (4, 1726830796027905922, 20, 'Free', NULL, 3, "
+        "NULL, NULL, '', 1726830796027905942, '');";
+    std::string threadSql = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (1, '0', '42506633', 'Computing', NULL);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (2, '3', '42506505', 'Stream 3', 3);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (3, '3', '42506633', 'Free', NULL);";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceSql);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadSql);
+    database.DeleteEmptyThread();
+    ThreadTable threadTable;
+    std::vector<ThreadPO> result;
+    threadTable.Select(ThreadColumn::TRACK_ID)
+        .OrderBy(ThreadColumn::TRACK_ID, TableOrder::ASC)
+        .ExcuteQuery(dbPtr, result);
+    const uint64_t zero = 0;
+    const uint64_t one = 1;
+    const uint64_t two = 2;
+    const uint64_t three = 3;
+    EXPECT_EQ(result.size(), three);
+    EXPECT_EQ(result[zero].trackId, one);
+    EXPECT_EQ(result[one].trackId, two);
+    EXPECT_EQ(result[two].trackId, three);
+}
+
+/**
+ * 删除多余空泳道，数据库未打开
+ */
+TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyThreadWhenDbNotOpenThenReturnFalse)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    bool result = database.DeleteEmptyThread();
+    EXPECT_EQ(result, false);
+}
+
+/**
+ * 删除多余空连线，数据库未打开
+ */
+TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyFlowWhenDbNotOpenThenReturnFalse)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    bool result = database.DeleteEmptyFlow();
+    EXPECT_EQ(result, false);
+}
+
+/**
+ * 删除多余空泳道，存在多余空连线的情况
+ */
+TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyThreadWhenExistEmptyFlow)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceSql =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (3, 1726830796027905942, 1880, 'Computing', "
+        "NULL, 1, NULL, NULL, '', 1726830796027907822, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (4, 1726830796027905922, 20, 'Free', NULL, 3, "
+        "NULL, NULL, '', 1726830796027905942, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (5, 1726830796027907842, 5180, "
+        "'DynamicQuant', NULL, 2, NULL, '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3923\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64685\"}', '', 1726830796027913022, '');";
+    std::string flowSql = "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", "
+        "\"timestamp\", \"type\") VALUES (3, '56444740029741268992', "
+        "'HostToDevice56444740029741268992', 'HostToDevice', 2, 1726830796027914803, 'f');\n"
+        "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", \"timestamp\", \"type\") "
+        "VALUES (4, '56466413607242956799', 'HostToDevice56466413607242956799', 'HostToDevice', 4, "
+        "1726830796027921376, 's');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceSql);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, flowSql);
+    database.DeleteEmptyFlow();
+    FlowTable flowTable;
+    std::vector<FlowPO> result;
+    flowTable.Select(FlowColumn::TRACK_ID).OrderBy(FlowColumn::TRACK_ID, TableOrder::ASC).ExcuteQuery(dbPtr, result);
+    const uint64_t zero = 0;
+    const uint64_t one = 1;
+    const uint64_t two = 2;
+    EXPECT_EQ(result.size(), one);
+    EXPECT_EQ(result[zero].trackId, two);
+}
+
+/**
+ * 删除多余空泳道，不存在多余空连线的情况
+ */
+TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyThreadWhenNotExistEmptyFlow)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceSql =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (3, 1726830796027905942, 1880, 'Computing', "
+        "NULL, 1, NULL, NULL, '', 1726830796027907822, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (4, 1726830796027905922, 20, 'Free', NULL, 3, "
+        "NULL, NULL, '', 1726830796027905942, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (5, 1726830796027907842, 5180, "
+        "'DynamicQuant', NULL, 2, NULL, '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3923\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64685\"}', '', 1726830796027913022, '');";
+    std::string flowSql = "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", "
+        "\"timestamp\", \"type\") VALUES (3, '56444740029741268992', "
+        "'HostToDevice56444740029741268992', 'HostToDevice', 2, 1726830796027914803, 'f');\n"
+        "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", \"timestamp\", \"type\") "
+        "VALUES (4, '56466413607242956799', 'HostToDevice56466413607242956799', 'HostToDevice', 3, "
+        "1726830796027921376, 's');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceSql);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, flowSql);
+    database.DeleteEmptyFlow();
+    FlowTable flowTable;
+    std::vector<FlowPO> result;
+    flowTable.Select(FlowColumn::TRACK_ID).OrderBy(FlowColumn::TRACK_ID, TableOrder::ASC).ExcuteQuery(dbPtr, result);
+    const uint64_t zero = 0;
+    const uint64_t one = 1;
+    const uint64_t two = 2;
+    const uint64_t three = 3;
+    EXPECT_EQ(result.size(), two);
+    EXPECT_EQ(result[zero].trackId, two);
+    EXPECT_EQ(result[one].trackId, three);
+}

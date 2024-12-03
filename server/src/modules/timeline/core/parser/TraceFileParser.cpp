@@ -189,6 +189,8 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
         return;
     }
     database->CreateIndex();
+    database->DeleteEmptyThread();
+    database->DeleteEmptyFlow();
     std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
     database->UpdateParseStatus(statusInfo);
     ServerLog::Info("Update depth completed. ID:", fileId);
