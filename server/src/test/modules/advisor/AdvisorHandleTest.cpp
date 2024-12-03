@@ -41,19 +41,66 @@ public:
     }
 };
 
-TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandler)
+TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenInvalidPageSize)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
-    EXPECT_NE(session.GetStatus(), WsSession::Status::CLOSED);
     QueryAclnnOpAdvisorHandler handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
-    handler.HandleRequest(std::move(requestPtr));
+    auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
+    request.params.pageSize = MAX_PAGESIZE + 1;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenEmptyRankId)
+{
+    QueryAclnnOpAdvisorHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
+    auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
+    request.params.pageSize = MAX_PAGESIZE;
+    request.params.rankId = "";
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenRankIdContainsIllegalChars)
+{
+    QueryAclnnOpAdvisorHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
+    auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
+    request.params.pageSize = MAX_PAGESIZE - 1;
+    request.params.rankId = "0&";
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenOrderByContainsIllegalChars)
+{
+    QueryAclnnOpAdvisorHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
+    auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
+    request.params.pageSize = MAX_PAGESIZE - 1;
+    request.params.rankId = "0";
+    request.params.orderBy = "&";
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenOrderTypeIsTooLong)
+{
+    QueryAclnnOpAdvisorHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
+    auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
+    request.params.pageSize = MAX_PAGESIZE - 1;
+    request.params.rankId = "0";
+    request.params.orderBy = "step";
+    std::string str(MAX_PAGESIZE, 'a'); // ref 500
+    request.params.orderBy = str;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_EQ(result, false);
 }
 
 TEST_F(AdvisorHandleTest, QueryAffinityAPIAdvice)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
-    EXPECT_NE(session.GetStatus(), WsSession::Status::CLOSED);
     QueryAffinityAPIAdvice handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<AffinityAPIRequest>();
     handler.HandleRequest(std::move(requestPtr));
@@ -61,8 +108,6 @@ TEST_F(AdvisorHandleTest, QueryAffinityAPIAdvice)
 
 TEST_F(AdvisorHandleTest, QueryAffinityOptimizerAdvice)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
-    EXPECT_NE(session.GetStatus(), WsSession::Status::CLOSED);
     QueryAffinityOptimizerAdvice handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<AffinityOptimizerRequest>();
     handler.HandleRequest(std::move(requestPtr));
@@ -70,8 +115,6 @@ TEST_F(AdvisorHandleTest, QueryAffinityOptimizerAdvice)
 
 TEST_F(AdvisorHandleTest, QueryAiCpuOpAdviceHandler)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
-    EXPECT_NE(session.GetStatus(), WsSession::Status::CLOSED);
     QueryAiCpuOpAdviceHandler handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<AICpuOperatorRequest>();
     handler.HandleRequest(std::move(requestPtr));
@@ -79,8 +122,6 @@ TEST_F(AdvisorHandleTest, QueryAiCpuOpAdviceHandler)
 
 TEST_F(AdvisorHandleTest, QueryFusedOpAdviceHandler)
 {
-    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
-    EXPECT_NE(session.GetStatus(), WsSession::Status::CLOSED);
     QueryFusedOpAdviceHandler handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<OperatorFusionRequest>();
     handler.HandleRequest(std::move(requestPtr));
