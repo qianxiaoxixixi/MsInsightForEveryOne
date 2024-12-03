@@ -32,8 +32,8 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryOperatorsCount(request.params, response.body) ||
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication operator data.");

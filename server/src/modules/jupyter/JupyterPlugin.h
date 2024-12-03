@@ -2,6 +2,7 @@
 #ifndef PROFILER_SERVER_JUPYTERPLUGIN_H
 #define PROFILER_SERVER_JUPYTERPLUGIN_H
 #include "BasePlugin.h"
+#include "JupyterProtocol.h"
 #include "JupyterModule.h"
 namespace Dic::Module::Jupyter {
 class JupyterPlugin : public Core::BasePlugin {
@@ -13,7 +14,7 @@ public:
     }
     std::unique_ptr<Module::ProtocolUtil> GetProtocolUtil() override
     {
-        return nullptr;
+        return std::make_unique<JupyterProtocol>();
     }
 };
 }

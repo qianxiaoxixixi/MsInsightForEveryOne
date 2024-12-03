@@ -37,8 +37,8 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     }
 
     // 根据通信算子name,startTime查询step、group
-    auto clusterDatabase = DataBaseManager::Instance().GetReadClusterDatabase();
-    if (database == nullptr) {
+    auto clusterDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (clusterDatabase == nullptr) {
         SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get cluster connection.");
         return false;
     }

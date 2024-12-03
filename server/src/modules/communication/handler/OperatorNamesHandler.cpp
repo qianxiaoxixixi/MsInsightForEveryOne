@@ -27,8 +27,8 @@ bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryOperatorNames(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryOperatorNames(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get operator names response data.");
         session.OnResponse(std::move(responsePtr));

@@ -7,6 +7,7 @@
 
 #include "ParserFactory.h"
 #include "TimelineRequestHandler.h"
+#include "ClusterFileParser.h"
 #include "FileParser.h"
 
 namespace Dic {
@@ -33,7 +34,7 @@ private:
     bool IsJsonValid(const std::string &fileName);
     static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
-    static void ClusterProcessAsyncStep(const std::string &selectedFolder);
+    static void ClusterProcessAsyncStep(Timeline::ClusterFileParser clusterFileParser);
 
     void SetParseCallBack(FileParser &fileParser);
 

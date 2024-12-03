@@ -31,8 +31,8 @@ bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
         return false;
     }
     // query data
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryMatrixList(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryMatrixList(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix response data.");
         session.OnResponse(std::move(responsePtr));

@@ -25,8 +25,8 @@ bool CommunicationOperatorListsHandler::HandleRequest(std::unique_ptr<Protocol::
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryOperatorList(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryOperatorList(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication operator list data.");
         session.OnResponse(std::move(responsePtr));

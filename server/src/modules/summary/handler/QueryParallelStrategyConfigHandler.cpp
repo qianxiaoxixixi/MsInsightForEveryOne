@@ -18,8 +18,8 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     WsSession &session = *WsSessionManager::Instance().GetSession();
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryParallelStrategyConfig(response.config, response.level)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryParallelStrategyConfig(response.config, response.level)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query parallel strategy config.");
         session.OnResponse(std::move(responsePtr));

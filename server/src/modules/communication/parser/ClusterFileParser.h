@@ -9,6 +9,7 @@
 #include "pch.h"
 #include <string>
 #include <vector>
+#include "VirtualClusterDatabase.h"
 #include "ClusterDef.h"
 
 namespace Dic {
@@ -20,18 +21,19 @@ enum class AttDataType {
 };
 class ClusterFileParser {
 public:
-    bool ParseClusterFiles(const std::string &selectedPath);
-    bool ParseClusterStep2Files(const std::string &selectedPath);
-    static bool ParseCommunication(const std::vector<std::string> &filePathList);
+    bool ParseClusterFiles();
+    bool ParseClusterStep2Files();
+    bool ParseCommunication(const std::vector<std::string> &filePathList);
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
-    static void SaveClusterBaseInfo(const std::string& selectedPath);
-    static void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
+    void SaveClusterBaseInfo(const std::string& selectedPath);
+    void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
     static void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
-    bool ParserClusterOfDb(const std::string &selectedPath);
+    bool ParserClusterOfDb();
     std::string GetClusterDbPath();
+    ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> &database);
 private:
-    static void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
-    bool InitClusterDatabase(const std::string& selectedPath);
+    void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
+    bool InitClusterDatabase();
     StepStatistic MapToStepStatistic(std::map<std::string, size_t> &dataMap,
                                      const std::vector<std::string> &tokens);
     size_t subStrlen = 2;
@@ -39,10 +41,12 @@ private:
     bool needClearDb = true;
     // cluster_step_trace_time.csv文件最小列数需要为11列，否则会造成数组越界
     static const int minStepTraceTimeColumnNumber = 11;
+    std::string selectedFilePath;
+    std::shared_ptr<VirtualClusterDatabase> database;
     static bool AttAnalyze(const std::string &selectedPath,
                            const std::string &mode,
                            AttDataType dataType = AttDataType::TEXT);
-    static bool TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication);
+    bool TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication);
     static bool CheckDocumentValid(const Document &doc);
     static std::string GetStrValue(std::map<std::string, size_t> &dataMap, const std::vector<std::string> &tokens,
                                    const std::string &key);

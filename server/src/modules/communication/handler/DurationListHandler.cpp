@@ -26,8 +26,8 @@ bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
-    if (!database->QueryDurationList(request.params, response.body)) {
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr || !database->QueryDurationList(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication duration list data.");
         session.OnResponse(std::move(responsePtr));
