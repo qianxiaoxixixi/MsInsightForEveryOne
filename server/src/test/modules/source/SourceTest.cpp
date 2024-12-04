@@ -6,24 +6,27 @@
 #include "SourceFileParser.h"
 #include "SourceProtocolRequest.h"
 #include "mockUtils/BinFileGenerator.h"
+#include "DetailsComputeLoadJson.h"
+#include "DetailsMemoryJson.h"
+#include "DetailsRoofLineJson.h"
 #include "SourceTest.h"
+
+namespace {
+    std::string g_apiFileData = "apiFileData.bin";
+    std::string g_loadData = "memory_data.bin";
+    std::string g_memoryData = "base_info.bin";
+    std::string g_baseInfo = "load_data.bin";
+    std::string g_rooflineDataFile = "roofline_data.bin";
+}
 
 using namespace std;
 using namespace Dic;
 using namespace Dic::Module::Source::Test;
 class SourceTest : public ::testing::Test {
 protected:
-    std::string data;
-    std::string loadData;
-    std::string memoryData;
-    std::string baseInfo;
-    std::string rooflineDataFile;
-
-    void SetUp() override
+    static void SetUpTestCase()
     {
-        data = "data.bin";
         BinFileGenerator dataFileGenerator;
-
         // add source code
         SourceDataBlock sourceDataBlock1(FOREACH_TILLING_DEF_H, FOREACH_TILLING_DEF_H_PATH);
         dataFileGenerator.AddDataBlock(std::make_unique<SourceDataBlock>(sourceDataBlock1));
@@ -38,30 +41,63 @@ protected:
         NormalDataBlock apiFileDataBlock(DataTypeEnum::API_FILE, API_FILE_JSON);
         dataFileGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(apiFileDataBlock));
         // generate file
-        dataFileGenerator.Generate(data);
+        dataFileGenerator.Generate(g_apiFileData);
 
-        string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        memoryData = currPath + R"(/src/test/test_data/memory_data.bin)";
-        baseInfo = currPath + R"(/src/test/test_data/base_info.bin)";
-        loadData = currPath + R"(/src/test/test_data/load_data.bin)";
-        rooflineDataFile = currPath + R"(/src/test/test_data/roofline_data.bin)";
+        BinFileGenerator memoryDataFileGenerator;
+        // add memory graph json
+        NormalDataBlock memoryGraphDataBlock(DataTypeEnum::DETAILS_MEMORY_GRAPH, DETAILS_MEMORY_GRAPH_JSON);
+        memoryDataFileGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(memoryGraphDataBlock));
+        // add memory table json
+        NormalDataBlock memoryTableDataBlock(DataTypeEnum::DETAILS_MEMORY_TABLE, DETAILS_MEMORY_TABLE_JSON);
+        memoryDataFileGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(memoryTableDataBlock));
+        // generate file
+        memoryDataFileGenerator.Generate(g_memoryData);
+
+        BinFileGenerator baseInfoGenerator;
+        // add base info json
+        NormalDataBlock baseInfoDataBlock(DataTypeEnum::DETAILS_BASE_INFO, DETAILS_BASE_INFO_JSON);
+        baseInfoGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(baseInfoDataBlock));
+        // generate file
+        baseInfoGenerator.Generate(g_baseInfo);
+
+        BinFileGenerator loadDataGenerator;
+        // add compute load graph json
+        NormalDataBlock computeLoadGraphDataBlock(DataTypeEnum::DETAILS_COMPUTE_LOAD_GRAPH,
+                                                  DETAILS_COMPUTE_LOAD_GRAPH_JSON);
+        loadDataGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(computeLoadGraphDataBlock));
+        // add compute load table json
+        NormalDataBlock computeLoadTableDataBlock(DataTypeEnum::DETAILS_COMPUTE_LOAD_TABLE,
+                                                  DETAILS_COMPUTE_LOAD_TABLE_JSON);
+        loadDataGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(computeLoadTableDataBlock));
+        // generate file
+        loadDataGenerator.Generate(g_loadData);
+
+        BinFileGenerator roofLineDataGenerator;
+        // add roofline data json
+        NormalDataBlock roofLineDataBaseInfo(DataTypeEnum::DETAILS_BASE_INFO, ROOFLINE_DATA_BASE_INFO_JSON);
+        NormalDataBlock roofLineData(DataTypeEnum::DETAILS_ROOFLINE, ROOFLINE_DATA_JSON);
+        roofLineDataGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(roofLineDataBaseInfo));
+        roofLineDataGenerator.AddDataBlock(std::make_unique<NormalDataBlock>(roofLineData));
+        roofLineDataGenerator.Generate(g_rooflineDataFile);
     }
 
-    void TearDown() override
+    static void TearDownTestCase()
     {
         // remove temprary bin files
-        BinFileGenerator::RemoveFile(data);
+        BinFileGenerator::RemoveFile(g_apiFileData);
+        BinFileGenerator::RemoveFile(g_loadData);
+        BinFileGenerator::RemoveFile(g_memoryData);
+        BinFileGenerator::RemoveFile(g_baseInfo);
+        BinFileGenerator::RemoveFile(g_rooflineDataFile);
     }
 };
 
 TEST_F(SourceTest, CheckOperatorBinarySuccessfulWithFixedPath)
 {
     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
-    EXPECT_EQ(true, parser.CheckOperatorBinary(data));
-    EXPECT_EQ(true, parser.CheckOperatorBinary(memoryData));
-    EXPECT_EQ(true, parser.CheckOperatorBinary(baseInfo));
+    EXPECT_EQ(true, parser.CheckOperatorBinary(g_apiFileData));
+    EXPECT_EQ(true, parser.CheckOperatorBinary(g_memoryData));
+    EXPECT_EQ(true, parser.CheckOperatorBinary(g_baseInfo));
 }
 
 TEST_F(SourceTest, CheckOperatorBinaryFailedWithSpecificPath)
@@ -102,7 +138,7 @@ static void CleanParser(Module::Source::SourceFileParser &parser)
 
 TEST_F(SourceTest, GetCoreList)
 {
-    auto &parser = InitParser(data);
+    auto &parser = InitParser(g_apiFileData);
     const vector<std::string> &coreList = parser.GetCoreList();
     int coreListSize = 3;
     EXPECT_EQ(coreList.size(), coreListSize);
@@ -114,7 +150,7 @@ TEST_F(SourceTest, GetCoreList)
 
 TEST_F(SourceTest, GetSourceList)
 {
-    auto &parser = InitParser(data);
+    auto &parser = InitParser(g_apiFileData);
     const vector<std::string> &sourceList = parser.GetSourceList();
     int sourceListSize = 3;
     EXPECT_EQ(sourceList.size(), sourceListSize);
@@ -127,7 +163,7 @@ TEST_F(SourceTest, GetSourceList)
 
 TEST_F(SourceTest, GetApiLinesByCoreAndSource)
 {
-    auto &parser = InitParser(data);
+    auto &parser = InitParser(g_apiFileData);
     vector<Dic::Module::Source::SourceFileLine> apiLines = parser.GetApiLinesByCoreAndSource(
         "core0.cubecore",
         "/home/test/workspace/foreach/common/foreach/foreach_tiling_def.h");
@@ -161,7 +197,7 @@ TEST_F(SourceTest, GetApiLinesByCoreAndSource)
 
 TEST_F(SourceTest, GetInstr)
 {
-    auto &parser = InitParser(data);
+    auto &parser = InitParser(g_apiFileData);
     const string &instr = parser.GetInstr();
     EXPECT_TRUE(!instr.empty());
     EXPECT_EQ(true, StringUtil::Contains(instr, "Cores"));
@@ -173,7 +209,7 @@ TEST_F(SourceTest, GetInstr)
 
 TEST_F(SourceTest, GetSourceByName)
 {
-    auto &parser = InitParser(data);
+    auto &parser = InitParser(g_apiFileData);
     std::string foreachTillingPath = "/home/test/workspace/foreach/common/foreach/foreach_tiling.h";
     const string notExistsource = parser.GetSourceByName(foreachTillingPath);
     EXPECT_TRUE(notExistsource.empty());
@@ -191,30 +227,46 @@ TEST_F(SourceTest, GetSourceByName)
 
 TEST_F(SourceTest, QueryBaseInfo)
 {
-    auto &parser = InitParser(baseInfo);
+    auto &parser = InitParser(g_baseInfo);
     Protocol::DetailsBaseInfoResBody resBody;
     bool res = parser.GetDetailsBaseInfo(resBody, false);
     EXPECT_EQ(true, res);
     EXPECT_EQ("sin_custom", resBody.name);
     EXPECT_EQ("Ascend910B4", resBody.soc);
-    EXPECT_EQ("32", resBody.blockDim);
+    EXPECT_EQ("8", resBody.blockDim);
     EXPECT_EQ("13.0600004196167", resBody.duration);
+    parser.Reset();
+}
+
+TEST_F(SourceTest, QueryBaseInfoWhenOpTypeIsMix)
+{
+    auto &parser = InitParser(g_rooflineDataFile);
+    Protocol::DetailsBaseInfoResBody resBody;
+    bool res = parser.GetDetailsBaseInfo(resBody, false);
+    EXPECT_EQ(true, res);
+    EXPECT_EQ("gen_FlashAttentionScore_10000000012201130953_mix_aic", resBody.name);
+    EXPECT_EQ("Ascend910B4", resBody.soc);
+    EXPECT_EQ("4", resBody.blockDim);
+    EXPECT_EQ("mix", resBody.opType);
+    EXPECT_EQ("301.0400085449219", resBody.duration);
+    EXPECT_EQ(2, resBody.blockDetail.size.size()); // the size of size is 2
+    EXPECT_EQ(4, resBody.blockDetail.row.size()); // the size of row is 4
     parser.Reset();
 }
 
 TEST_F(SourceTest, GetDetailsLoadInfo)
 {
-    auto &parser = InitParser(loadData);
+    auto &parser = InitParser(g_loadData);
     Protocol::DetailsLoadInfoResBody responseBody;
     bool res = parser.GetDetailsLoadInfo(responseBody, false);
     EXPECT_EQ(true, res);
-    EXPECT_EQ(32, responseBody.blockIdList.size()); // block id list is 32
+    EXPECT_EQ(8, responseBody.blockIdList.size()); // block id list is 8
     parser.Reset();
 }
 
 TEST_F(SourceTest, GetDetailsMemoryGraph)
 {
-    auto &parser = InitParser(memoryData);
+    auto &parser = InitParser(g_memoryData);
     Protocol::DetailsMemoryGraphResBody resBody;
     bool res = parser.GetDetailsMemoryGraph("0", false, resBody);
     EXPECT_EQ(true, res);
@@ -223,7 +275,7 @@ TEST_F(SourceTest, GetDetailsMemoryGraph)
 
 TEST_F(SourceTest, GetDetailsMemoryTable)
 {
-    auto &parser = InitParser(memoryData);
+    auto &parser = InitParser(g_memoryData);
     Protocol::DetailsMemoryTableResBody resBody;
     bool res = parser.GetDetailsMemoryTable("", false, resBody);
     EXPECT_EQ(true, res);
@@ -241,12 +293,12 @@ TEST_F(SourceTest, GetDetailsMemoryTable)
 
 TEST_F(SourceTest, GetRoofline)
 {
-    auto &parser = InitParser(rooflineDataFile);
+    auto &parser = InitParser(g_rooflineDataFile);
     Protocol::DetailsRooflineBody resBody;
     bool res = parser.GetDetailsRoofline(resBody);
     EXPECT_EQ(true, res);
     EXPECT_EQ(resBody.soc, "Ascend910B4");
-    int dataSize = 7;
+    int dataSize = 5;
     EXPECT_EQ(resBody.data.size(), dataSize);
     auto item = resBody.data[0];
     EXPECT_EQ(item.title, "Memory Unit(Cube)");
