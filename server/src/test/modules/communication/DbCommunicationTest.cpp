@@ -7,8 +7,6 @@
 #include "DataBaseManager.h"
 #include "DbClusterDataBase.h"
 #include "ParamsParser.h"
-#include "FileUtil.h"
-#include "TraceTime.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -231,4 +229,136 @@ TEST_F(DbCommunicationTest, QueryAllCommunicationOperatorsDetails)
     int expectSize = 100;
     EXPECT_EQ(responseBody.allOperators.size(), expectSize);
     EXPECT_EQ(responseBody.allOperators[0].operatorName, "hcom_allReduce__293_647_1");
+}
+
+TEST_F(DbCommunicationTest, QuerySummaryDataSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::SummaryTopRankParams requestParams;
+    Dic::Protocol::SummaryTopRankResBody responseBody;
+    requestParams.rankIdList.emplace_back("0");
+    requestParams.stepIdList.emplace_back("1");
+    requestParams.orderBy = "rankId";
+    database->QuerySummaryData(requestParams, responseBody);
+    int expectSize = 1;
+    const double expectCommunicationOverLappedTime = 887304.62;
+    EXPECT_EQ(responseBody.summaryList.size(), expectSize);
+    EXPECT_EQ(responseBody.summaryList[0].rankId, "0");
+    EXPECT_EQ(responseBody.summaryList[0].communicationOverLappedTime, expectCommunicationOverLappedTime);
+}
+
+TEST_F(DbCommunicationTest, QueryBaseInfoSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::SummaryTopRankResBody responseBody;
+    database->QueryBaseInfo(responseBody);
+    const int expectRankCount = 8;
+    const int expectStepNum = 2;
+    EXPECT_EQ(responseBody.rankCount, expectRankCount);
+    EXPECT_EQ(responseBody.stepNum, expectStepNum);
+}
+
+TEST_F(DbCommunicationTest, GetStepIdListSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::PipelineStepResponseBody responseBody;
+    database->GetStepIdList(responseBody);
+    const int expectSize = 2;
+    EXPECT_EQ(responseBody.stepList.size(), expectSize);
+}
+
+TEST_F(DbCommunicationTest, GetStageAndBubbleSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::PipelineStageTimeParam requestParams;
+    requestParams.stepId = "1";
+    requestParams.stageId = "(0)";
+    Dic::Protocol::PipelineStageOrRankTimeResponseBody responseBody;
+    database->GetStageAndBubble(requestParams, responseBody);
+    const int expectSize = 1;
+    const double expectBubbleTime = 0;
+    const double expectStageTime = 10635932.446;
+    EXPECT_EQ(responseBody.bubbleDetails.size(), expectSize);
+    EXPECT_EQ(responseBody.bubbleDetails[0].bubbleTime, expectBubbleTime);
+    EXPECT_EQ(responseBody.bubbleDetails[0].stageTime, expectStageTime);
+}
+
+TEST_F(DbCommunicationTest, GetRankAndBubbleSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::PipelineRankTimeParam requestParams;
+    requestParams.stepId = "1";
+    requestParams.stageId = "(0)";
+    Dic::Protocol::PipelineStageOrRankTimeResponseBody responseBody;
+    database->GetRankAndBubble(requestParams, responseBody);
+    const int expectSize = 1;
+    const double expectBubbleTime = 0;
+    const double expectStageTime = 10635932.446;
+    EXPECT_EQ(responseBody.bubbleDetails.size(), expectSize);
+    EXPECT_EQ(responseBody.bubbleDetails[0].bubbleTime, expectBubbleTime);
+    EXPECT_EQ(responseBody.bubbleDetails[0].stageTime, expectStageTime);
+}
+
+TEST_F(DbCommunicationTest, QueryExtremumTimestampSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    uint64_t min = 0;
+    uint64_t max = 0;
+    bool res = database->QueryExtremumTimestamp(min, max);
+    const uint64_t expectMin = 1718682999267391232;
+    const uint64_t expectMax = 1718683020669117696;
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(min, expectMin);
+    EXPECT_EQ(max, expectMax);
+}
+
+TEST_F(DbCommunicationTest, QueryOperatorListSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::DurationListParams requestParams;
+    requestParams.rankList.emplace_back("0");
+    requestParams.operatorName = "hcom_broadcast__293_0_1";
+    requestParams.iterationId = "1";
+    requestParams.stage = "(0,1,2,3,4,5,6,7)";
+    Dic::Protocol::OperatorListsResponseBody responseBody;
+    database->QueryOperatorList(requestParams, responseBody);
+    int expectSize = 1;
+    const uint64_t expectTime = 10942055036122166272;
+    EXPECT_EQ(responseBody.opLists.size(), expectSize);
+    EXPECT_EQ(responseBody.minTime, expectTime);
+    EXPECT_EQ(responseBody.minTime, expectTime);
+}
+
+TEST_F(DbCommunicationTest, QueryCommunicationGroupSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Document responseBody;
+    bool res = database->QueryCommunicationGroup(responseBody);
+    EXPECT_EQ(res, true);
+}
+
+TEST_F(DbCommunicationTest, QueryMatrixSortOpNamesSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::OperatorNamesParams requestParams;
+    requestParams.rankList.emplace_back("0");
+    requestParams.iterationId = "1";
+    requestParams.stage = "(0,1,2,3,4,5,6,7)";
+    std::vector<Protocol::OperatorNamesObject> responseBody;
+    bool res = database->QueryMatrixSortOpNames(requestParams, responseBody);
+    const int exceptSize = 17;
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseBody.size(), exceptSize);
+}
+
+TEST_F(DbCommunicationTest, GetParallelConfigFromStepTraceSuccess)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Module::ParallelStrategyConfig config;
+    std::string level;
+    bool res = database->GetParallelConfigFromStepTrace(config, level);
+    const int exceptTpSize = 1;
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(config.tpSize, exceptTpSize);
+    EXPECT_EQ(level, "undefined");
 }
