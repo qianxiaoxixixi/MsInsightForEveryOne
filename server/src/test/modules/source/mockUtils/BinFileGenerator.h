@@ -23,9 +23,11 @@ public:
 
     void Generate(const std::string &outputPath);
     static bool RemoveFile(const std::string &path);
+    bool RemoveFile();
 
 private:
     std::vector<std::unique_ptr<DataBlock>> dataBlocks;
+    std::string filePath;
 };
 
 }

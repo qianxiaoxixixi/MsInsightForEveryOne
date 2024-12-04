@@ -7,6 +7,7 @@
 namespace Dic::Module::Source::Test {
 void BinFileGenerator::Generate(const std::string& outputPath)
 {
+    this->filePath = outputPath;
     std::ofstream outFile(outputPath, std::ios::binary);
     if (!outFile) {
         return;
@@ -27,6 +28,10 @@ bool BinFileGenerator::RemoveFile(const std::string& path)
     }
 }
 
+bool BinFileGenerator::RemoveFile()
+{
+    return RemoveFile(filePath);
+}
 }
 
 using namespace Dic::Module::Source::Test;
