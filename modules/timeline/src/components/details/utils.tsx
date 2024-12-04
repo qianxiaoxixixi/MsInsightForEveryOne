@@ -110,7 +110,7 @@ interface RenderRadiusBorderParams {
 
 export const renderRadiusBorder = ({ topLeft, topRight, bottomRight, bottomLeft, depth, ctx }: RenderRadiusBorderParams): void => {
     const halfLine = 1;
-    ctx.lineWidth = halfLine * 2;
+    ctx.lineWidth = halfLine * 3;
     const height = Math.floor(bottomLeft - halfLine - 1);
     const beginX = topLeft;
     const beginY = topRight + (((halfLine * 2) + height) * depth);

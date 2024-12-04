@@ -617,8 +617,8 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
             continue;
         }
         TraceTime::Instance().UpdateTime(startTime, endTime);
-        TraceTime::Instance().UpdateCardMinTime(fileId, startTime);
-        TraceTime::Instance().UpdateCardMinTime(QueryHostInfo()+"Host", startTime);
+        TraceTime::Instance().UpdateCardTimeDuration(fileId, startTime, endTime);
+        TraceTime::Instance().UpdateCardTimeDuration(QueryHostInfo() + "Host", startTime, endTime);
     }
     Server::ServerLog::Info("Update start and end time. ");
     sqlite3_finalize(stmt);

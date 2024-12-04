@@ -723,6 +723,17 @@ export interface ThreadTrace {
     cname: string;
 };
 
+export interface SliceMeta {
+    [x: string]: unknown;
+    cardId: string;
+    processId: string;
+    startTime: number;
+    endTime: number;
+    duration: number;
+    threadId: string;
+    label: string;
+};
+
 export interface ProcessData {
     duration: number;
     startTime: number;

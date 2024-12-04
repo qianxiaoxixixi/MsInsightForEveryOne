@@ -18,7 +18,8 @@ import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
-import { ThreadTrace } from '../../../entity/data';
+import { CardMetaData, SliceMeta, ThreadTrace } from '../../../entity/data';
+import { getTimeOffsetKey } from '../../../insight/units/utils';
 
 const dragInitData = {
     isDragging: false,
@@ -376,6 +377,84 @@ const processMKeyEvent = (session: Session): void => {
     });
 };
 
+const extractDeviceId = (processId: number): number => {
+    const DEVICE_ID_MASK = 0x1F;
+    return processId & DEVICE_ID_MASK;
+};
+
+const updateSameDeviceOffset = (selectSliceMeta: SliceMeta, session: Session, selectOffsetKey: string, offsetDiff: number): void => {
+    const deviceId = extractDeviceId(parseInt(selectSliceMeta.processId));
+    session.units.forEach((unit) => {
+        if ((unit.metadata as CardMetaData).cardId !== selectSliceMeta.cardId) {
+            return;
+        }
+        if (unit.children === undefined || unit.children.length <= 0) {
+            return;
+        }
+        for (const item of unit.children) {
+            const tempMeta = item.metadata as SliceMeta;
+            if (tempMeta.label !== 'NPU') {
+                continue;
+            }
+            const key = getTimeOffsetKey(session, tempMeta);
+            if (key === selectOffsetKey) {
+                continue;
+            }
+            if (isNaN(Number(tempMeta.processId))) {
+                continue;
+            }
+            const tempDeviceId = extractDeviceId(parseInt(tempMeta.processId));
+            if (tempDeviceId !== deviceId) {
+                continue;
+            }
+            session.unitsConfig.offsetConfig.timestampOffset[key] += offsetDiff;
+        }
+    });
+};
+
+const processOffsetEvent = (session: Session, isLeft: boolean): void => {
+    if (session.benchMarkData === undefined || session.selectedData === undefined) {
+        return;
+    }
+    const selectSliceMeta = session.selectedData as SliceMeta;
+    const benchSliceMeta = session.benchMarkData as SliceMeta;
+    const selectOffsetKey = getTimeOffsetKey(session, selectSliceMeta);
+    const benchSliceOffsetKey = getTimeOffsetKey(session, benchSliceMeta);
+    if (selectOffsetKey === benchSliceOffsetKey) {
+        return;
+    }
+    let offsetDiff = 0;
+    if (isLeft) {
+        offsetDiff = selectSliceMeta.startTime - benchSliceMeta.startTime;
+    } else {
+        offsetDiff = selectSliceMeta.startTime + selectSliceMeta.duration - benchSliceMeta.startTime - benchSliceMeta.duration;
+    }
+    if (!isNaN(Number(selectSliceMeta.processId))) {
+        updateSameDeviceOffset(selectSliceMeta, session, selectOffsetKey, offsetDiff);
+    }
+    const before = session.unitsConfig.offsetConfig.timestampOffset[selectOffsetKey];
+    session.unitsConfig.offsetConfig.timestampOffset[selectOffsetKey] = before + offsetDiff;
+    runInAction(() => {
+        if (session.selectedData === undefined) {
+            return;
+        }
+        const temp = session.selectedData as ThreadTrace;
+        temp.startTime -= offsetDiff;
+        const newAlignSliceData: Array<Record<string, unknown>> = [];
+        newAlignSliceData.push(temp);
+        session.alignSliceData.forEach((item) => {
+            const itemTemp = item as SliceMeta;
+            if (itemTemp.cardId === selectSliceMeta.cardId && itemTemp.processId === selectSliceMeta.processId) {
+                return;
+            }
+            newAlignSliceData.push(item);
+        });
+        session.alignSliceData = newAlignSliceData;
+        session.selectedData = undefined;
+        session.alignRender = !session.alignRender;
+    });
+};
+
 export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
     if (key === 'w' || key === 'W') {
         zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
@@ -387,6 +466,10 @@ export const keyDownAction = (key: string, session: Session, zoomPoint: number |
         moveDomain(session, zoomOrMoveDirection.upOrRight);
     } else if (key === 'm' || key === 'M') {
         processMKeyEvent(session);
+    } else if (key === 'r' || key === 'R') {
+        processOffsetEvent(session, false);
+    } else if (key === 'l' || key === 'L') {
+        processOffsetEvent(session, true);
     } else {
         // handle other keys
     }

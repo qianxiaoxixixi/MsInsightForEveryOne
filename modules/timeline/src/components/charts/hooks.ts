@@ -64,7 +64,8 @@ export const useData = <T extends ChartType>({ session, mapFunc, unit, metadata,
         session.unitsConfig.offsetConfig.timestampOffset,
         session.unitsConfig.filterConfig.pythonFunction,
         session.autoAdjustUnitHeight,
-        session.areFlagEventsHidden]);
+        session.areFlagEventsHidden,
+        session.alignRender]);
     return datasState;
 };
 

@@ -21,7 +21,7 @@ import type {
     ProcessData,
     ProcessMetaData,
     ThreadMetaData,
-    ThreadTrace, HostMetaData,
+    ThreadTrace, HostMetaData, SliceMeta,
 } from '../../entity/data';
 import { createCounterParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
@@ -168,6 +168,43 @@ interface CategoryFlows {
     flows: FlowEvent[];
 }
 
+const drawRectBorder = (selectedData: ThreadTrace,
+    session: Session, xScale: (num: number) => number, yScale: (num: number) => number, ctx: CanvasRenderingContext2D): void => {
+    const duration = selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration;
+    const bottomRight = xScale(duration) - xScale(selectedData.startTime);
+    renderRadiusBorder({
+        topLeft: xScale(selectedData.startTime),
+        topRight: yScale(0),
+        bottomRight,
+        bottomLeft: yScale(1),
+        depth: selectedData.depth,
+        ctx,
+    });
+};
+
+interface DrawBorderArgs {
+    item: Record<string, unknown>;
+    threadMetaData: ThreadMetaData;
+    session: Session;
+    xScale: (num: number) => number;
+    yScale: (num: number) => number;
+    ctx: CanvasRenderingContext2D;
+};
+
+const drawSingleAlignSlice = ({ item, threadMetaData, session, xScale, yScale, ctx }: DrawBorderArgs): void => {
+    const singleSliceData = item as ThreadTrace | undefined;
+    if (singleSliceData === undefined) {
+        return;
+    }
+    const singleMeta = item as SliceMeta;
+    const alignCheck = singleMeta.cardId === threadMetaData.cardId &&
+        singleMeta.processId === threadMetaData.processId &&
+        singleMeta.threadId === threadMetaData.threadId;
+    if (alignCheck) {
+        drawRectBorder(singleSliceData, session, xScale, yScale, ctx);
+    }
+};
+
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'copied',
@@ -241,27 +278,38 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     const selectedData = session.selectedData as ThreadTrace | undefined;
                     const selectedUnitMetaData = session.selectedUnits?.[0]?.metadata as ThreadMetaData;
                     const threadMetaData = metaData as ThreadMetaData;
-                    const check = ctx === null || selectedData === undefined || selectedUnitMetaData === undefined || selectedUnitMetaData !== threadMetaData;
-                    if (check) {
+                    if (ctx === null) {
                         return;
                     }
+                    const check = selectedUnitMetaData !== undefined && selectedData !== undefined && selectedUnitMetaData === threadMetaData;
                     // 来自本泳道点击的数据，给数据描边+画线
                     ctx.strokeStyle = theme.textColorPrimary;
-                    const duration = selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration;
-                    const bottomRight = xScale(duration) - xScale(selectedData.startTime);
-                    renderRadiusBorder({
-                        topLeft: xScale(selectedData.startTime),
-                        topRight: yScale(0),
-                        bottomRight,
-                        bottomLeft: yScale(1),
-                        depth: selectedData.depth,
-                        ctx,
+                    if (check) {
+                        drawRectBorder(selectedData, session, xScale, yScale, ctx);
+                    }
+                    const benchMarkData = session.benchMarkData as ThreadTrace | undefined;
+                    if (benchMarkData === undefined) {
+                        return;
+                    }
+                    const benchMarkMeta = session.benchMarkData as SliceMeta;
+                    const benchCheck = benchMarkMeta.cardId === threadMetaData.cardId &&
+                        benchMarkMeta.processId === threadMetaData.processId &&
+                        benchMarkMeta.threadId === threadMetaData.threadId;
+                    if (benchCheck) {
+                        drawRectBorder(benchMarkData, session, xScale, yScale, ctx);
+                    }
+                    if (session.alignSliceData === undefined) {
+                        return;
+                    }
+                    session.alignSliceData.forEach((item: Record<string, unknown>) => {
+                        drawSingleAlignSlice({ item, threadMetaData, session, xScale, yScale, ctx });
                     });
                 },
                 triggers: [
                     session.selectedData,
                     session.selectedData?.duration,
                     session?.searchData,
+                    session.alignRender,
                 ],
             };
         },
@@ -290,7 +338,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 newLines[cat] = singleCatLinkLine;
             }
             runInAction(() => {
-                session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId };
+                session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId, processId: (metadata as ThreadMetaData).processId };
                 session.linkLines = newLines;
                 session.singleLinkLine = newLines;
                 session.renderTrigger = !session.renderTrigger;

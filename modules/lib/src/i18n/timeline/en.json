@@ -32,8 +32,9 @@
       "Show flag events": "Show SET/WAIT events",
       "Enable auto unit height": "Enable auto unit height",
       "Disable auto unit height": "Disable auto unit height",
-      "Clear cards default offset": "Clear all cards default offset",
-      "Set up cards default offset": "Set up cards default offset"
+      "Recover cards default offset": "Recover cards default offset",
+      "Set base slice": "Set base slice",
+      "Clear base slice": "Clear base slice"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",

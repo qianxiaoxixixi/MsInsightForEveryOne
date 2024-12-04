@@ -140,7 +140,7 @@ void ParserAlloc::SendParseSuccessEvent(const std::string &fileId)
     } else {
         event->body.startTimeUpdated = true;
         TraceTime::Instance().UpdateTime(min, max);
-        TraceTime::Instance().UpdateCardMinTime(fileId, min);
+        TraceTime::Instance().UpdateCardTimeDuration(fileId, min, max);
     }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     event->body.offset = TraceTime::Instance().GetOffsetByFileId(fileId);
