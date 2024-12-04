@@ -459,17 +459,28 @@ const setUpUintOffset = (session: Session, insightUint: InsightUnit, offsetValue
 
 const clearOrRecoverCardDefaultOffset = (session: Session, menuItem?: MenuItemModel): void => {
     runInAction(() => {
-        session.isDefaultOffsetClear = !session.isDefaultOffsetClear;
-        if (session.isDefaultOffsetClear) {
-            session.units.forEach((insightUint) => {
-                setUpUintOffset(session, insightUint, 0);
-            });
-        } else {
-            session.units.forEach((insightUint) => {
-                const offsetValue = insightUint.alignStartTimestamp as number;
-                setUpUintOffset(session, insightUint, offsetValue);
-            });
-        }
+        session.units.forEach((insightUint) => {
+            const offsetValue = insightUint.alignStartTimestamp as number;
+            setUpUintOffset(session, insightUint, offsetValue);
+        });
+        session.benchMarkData = undefined;
+        session.alignSliceData = [];
+        session.contextMenu.isVisible = false;
+    });
+};
+
+const setBaseSlice = (session: Session, menuItem?: MenuItemModel): void => {
+    runInAction(() => {
+        session.benchMarkData = session.selectedData;
+        session.contextMenu.isVisible = false;
+    });
+};
+
+const clearBaseSlice = (session: Session, menuItem?: MenuItemModel): void => {
+    runInAction(() => {
+        session.benchMarkData = undefined;
+        session.alignSliceData = [];
+        session.alignRender = !session.alignRender;
         session.contextMenu.isVisible = false;
     });
 };
@@ -526,6 +537,25 @@ const isShowFlagEventsVisible = (session: Session): boolean => {
 const isHideFlagEventsVisible = (session: Session): boolean => {
     return session.isSimulation && !session.areFlagEventsHidden;
 };
+
+const setBaseSliceVisible = (session: Session): boolean => {
+    if (session.selectedData === undefined) {
+        return false;
+    }
+    if (session.benchMarkData === undefined) {
+        return true;
+    }
+    const selectedData = session.selectedData as ThreadTrace;
+    const benchMarkData = session.benchMarkData as ThreadTrace;
+    if (selectedData.id === benchMarkData.id && selectedData.threadId === benchMarkData.threadId) {
+        return false;
+    }
+    return true;
+};
+
+const clearBaseSliceVisible = (session: Session): boolean => {
+    return session.benchMarkData !== undefined;
+};
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
     setPosition: (_: Position) => void;
@@ -565,8 +595,9 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Hide flag events'), key: 'hideFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isHideFlagEventsVisible(session) },
         { name: t('Show flag events'), key: 'showFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isShowFlagEventsVisible(session) },
         { name: getAutoUnitHeightButtonText(session, t), key: 'autoUnitHeight', event: toggleAutoUnitHeight, visible: true },
-        { name: t('Clear cards default offset'), key: 'clearDefaultOffset', event: clearOrRecoverCardDefaultOffset, visible: !session.isDefaultOffsetClear },
-        { name: t('Set up cards default offset'), key: 'recoverDefaultOffset', event: clearOrRecoverCardDefaultOffset, visible: session.isDefaultOffsetClear },
+        { name: t('Recover cards default offset'), key: 'recoverDefaultOffset', event: clearOrRecoverCardDefaultOffset, visible: true },
+        { name: t('Set base slice'), key: 'setBaseSlice', event: setBaseSlice, visible: setBaseSliceVisible(session) },
+        { name: t('Clear base slice'), key: 'clearBaseSlice', event: clearBaseSlice, visible: clearBaseSliceVisible(session) },
     ];
 
     return <>

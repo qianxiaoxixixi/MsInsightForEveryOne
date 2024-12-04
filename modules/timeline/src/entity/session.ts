@@ -79,8 +79,8 @@ export class Session {
     isSimulation: boolean = false;
     // 是否隐藏了算子调优flag事件
     areFlagEventsHidden: boolean = false;
-    // 是否清除了默认的offset
-    isDefaultOffsetClear: boolean = true;
+    // 快捷键对齐触发渲染
+    alignRender: boolean = false;
     isCluster: boolean = false;
     // 页面可视范围的Card的CardId
     viewedCardIdSet: Set<string> = new Set<string>();
@@ -186,6 +186,8 @@ export class Session {
     private _units: InsightUnit[] = [];
     private _availableUnits: InsightUnit[] = [];
     private _selectedData?: Record<string, unknown>;
+    private _benchMarkData?: Record<string, unknown>;
+    private _alignSliceData: Array<Record<string, unknown>> = [];
     private _selectedRangeData?: Array<Record<string, unknown>>;
     private _interval: number;
 
@@ -277,6 +279,14 @@ export class Session {
         return this._selectedData;
     }
 
+    get benchMarkData(): Record<string, unknown> | undefined {
+        return this._benchMarkData;
+    }
+
+    get alignSliceData(): Array<Record<string, unknown>> {
+        return this._alignSliceData;
+    }
+
     get selectedRangeData(): Array<Record<string, unknown>> | undefined {
         return this._selectedRangeData;
     }
@@ -328,6 +338,14 @@ export class Session {
         this.linkFlow = undefined;
         this.linkData = undefined;
         this.linkDetail = undefined;
+    }
+
+    set benchMarkData(data: Record<string, unknown> | undefined) {
+        this._benchMarkData = data;
+    }
+
+    set alignSliceData(data: Array<Record<string, unknown>>) {
+        this._alignSliceData = data;
     }
 
     set selectedRangeData(data: Array<Record<string, unknown>> | undefined) {

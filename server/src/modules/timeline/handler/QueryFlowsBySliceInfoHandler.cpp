@@ -38,10 +38,9 @@ bool QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         result = database->QueryUintFlows(request.params, response.body, minTimestamp, trackId);
     }  catch (DatabaseException &e) {
         e.Log("Query flows by slice info Fail, ");
-        result = false;
     }
 
-    SetResponseResult(response, result);
+    SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
     return result;
