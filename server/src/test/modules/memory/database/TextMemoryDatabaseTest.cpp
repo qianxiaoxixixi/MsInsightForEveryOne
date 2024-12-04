@@ -10,6 +10,55 @@
 
 using namespace Dic::Module::Timeline;
 
+TEST_F(TestSuit, QueryMemoryComponentDataExpectSeveral)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.currentPage = 1;
+    requestParams.pageSize = 10; // page size = 10
+    requestParams.order = "ascend";
+    requestParams.orderBy = "component";
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Protocol::MemoryComponent> responseBody;
+    bool result = database->QueryComponentDetail(requestParams, columnAttr, responseBody);
+    int expectSize = 2;
+    int expectColumnSize = 3;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(TestSuit, QueryMemoryComponentDataExpectZero)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.currentPage = 2; // current page = 2
+    requestParams.pageSize = 10; // page size = 10
+    requestParams.order = "ascend";
+    requestParams.orderBy = "component";
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Protocol::MemoryComponent> responseBody;
+    bool result = database->QueryComponentDetail(requestParams, columnAttr, responseBody);
+    int expectSize = 0;
+    int expectColumnSize = 3;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(TestSuit, QueryMemoryEntireComponentTable)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    std::vector<Protocol::MemoryComponent> responseBody;
+    bool result = database->QueryEntireComponentTable(responseBody, offsetTime);
+    int expectSize = 2;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(responseBody.size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryMemoryOperatorData)
 {
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
@@ -416,6 +465,22 @@ TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptSeveral)
     EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(TestSuit, QueryComponentsTotalNum)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.currentPage = 1;
+    requestParams.pageSize = 10; // page size = 10
+    requestParams.order = "descend";
+    requestParams.orderBy = "timestamp";
+    int64_t totalNum;
+    bool result = database->QueryComponentsTotalNum(requestParams, totalNum);
+    int expectSize = 2;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(totalNum, expectSize);
 }
 
 TEST_F(TestSuit, QueryOperatorsTotalNum)
