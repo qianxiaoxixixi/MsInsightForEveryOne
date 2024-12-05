@@ -58,15 +58,46 @@ const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: '' };
 const defaultFilters = { type: [], opType: [], name: [], opName: [], accCore: [] };
 
-const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend }:
-{group: string;columnLevel: string;btnCol: any;colMap: any;condition: ConditionType;isExpend: boolean}): any[] => {
+// 字符串替换映射
+const replaceMap = new Map([
+    ['_us_', '(us)'],
+    ['_GB_s_', '(GB/s)'],
+    ['_PCT_', '(%)'],
+]);
+
+function modifyTitle(item: string): string {
+    let modifiedItem = item;
+    replaceMap.forEach((value, key) => {
+        if (modifiedItem.includes(key)) {
+            modifiedItem = modifiedItem.replace(new RegExp(key, 'g'), value);
+        }
+    });
+    return modifiedItem;
+}
+
+const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuHeaders }:
+{group: string;columnLevel: string;btnCol: any;colMap: any;condition: ConditionType;isExpend: boolean; pmuHeaders: any[]}): any[] => {
     const isCompare = condition.isCompare as boolean;
     switch (group) {
-        case OperatorGroup.OPERATOR:
+        case OperatorGroup.OPERATOR: {
             if (isCompare && !isExpend) {
                 return [...colMap[group][columnLevel] ?? colMap[group].l2, btnCol];
             }
-            return colMap[group][columnLevel] ?? colMap[group].l2;
+            const columns = colMap[group][columnLevel] ?? colMap[group].l2;
+            // pmu数据的表头，后端返回时确定
+            if (pmuHeaders === null || pmuHeaders === undefined) {
+                return columns;
+            }
+            pmuHeaders.forEach((item: any, index: number) => {
+                columns.push({
+                    title: modifyTitle(item),
+                    dataIndex: index,
+                    sorter: false,
+                    ellipsis: true,
+                });
+            });
+            return columns;
+        }
         case OperatorGroup.HCCL_OPERATOR:
             if (isCompare && !isExpend) {
                 return [...colMap[group], btnCol];
@@ -223,7 +254,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         if (res === null || res === undefined) {
             return;
         }
-        const { data, total, level } = res;
+        const { pmuHeaders, data, total, level } = res;
         let realData = [];
         if (isCompare) {
             if (isExpend) {
@@ -243,7 +274,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             group = OperatorGroup.HCCL_OPERATOR_TYPE;
             columnLevel = 'l1';
         }
-        const columns = getCols({ group, columnLevel, btnCol, colMap, condition, isExpend });
+        const columns = getCols({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuHeaders });
         if (isCompare) {
             columns.splice(1, 0, compareSourceCol[0]);
         }
@@ -306,6 +337,9 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         loading={loading}
         columns={cols}
         dataSource={tableData}
+        scroll={{
+            x: 100 * cols.length,
+        }}
         pagination={isCompare && compInfo !== undefined ? false : getPageConfigWithPageData(page, setPage)}
         onChange={(pagination: any, newFilters: any, newSorter: any, extra: any): void => {
             if (extra.action === 'sort') {
