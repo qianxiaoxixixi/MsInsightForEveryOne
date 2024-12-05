@@ -212,7 +212,7 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
 bool KernelParse::GetUtilizationColumns(const std::vector<std::string> &rowVector,
     std::vector<std::string> &columns)
 {
-    if (rowVector.size() < 8 || rowVector.size() > 60) { // base column 8 and no more than 60 columns
+    if (rowVector.size() > 100) { // no more than 100 columns
         return false;
     }
     size_t index = 0;
