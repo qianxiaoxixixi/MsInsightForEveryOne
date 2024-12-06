@@ -44,6 +44,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/jupyter/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/jupyter/parser TEST)
 
 aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
+aux_source_directory(${HOME_DIR}/src/protocol TEST)
 
 list(APPEND DIC_TEST_LIST
         ${TEST}
@@ -68,6 +69,7 @@ add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp mod
         modules/timeline/database/DatabaseTest.cpp
         ../utils/NumberSafeUtil.h
         utils/NumberSafeUtilTest.cpp)
+target_include_directories(insight_test PUBLIC ${HOME_DIR}/src/protocol)
 add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
 target_link_libraries(insight_test msinsight)
 target_link_libraries(insight_performance msinsight)

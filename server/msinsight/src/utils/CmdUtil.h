@@ -85,6 +85,8 @@ public:
         return ExecuteCmdWithResult(command, result);
     }
 
+    inline bool Valid() { return !badFlag; }
+
 private:
     static const int bufferSize = 100;
     std::string exec;
