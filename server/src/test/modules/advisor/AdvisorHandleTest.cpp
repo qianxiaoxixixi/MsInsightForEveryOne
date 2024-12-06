@@ -51,12 +51,23 @@ TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenInvalidPa
     EXPECT_EQ(result, false);
 }
 
+TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenInvalidCurrentPage)
+{
+    QueryAclnnOpAdvisorHandler handler;
+    std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
+    auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
+    request.params.pageSize = MAX_PAGESIZE + 1;
+    bool result = handler.HandleRequest(std::move(requestPtr));
+    EXPECT_EQ(result, false);
+}
+
 TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenEmptyRankId)
 {
     QueryAclnnOpAdvisorHandler handler;
     std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
     auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
     request.params.pageSize = MAX_PAGESIZE;
+    request.params.currentPage = 1;
     request.params.rankId = "";
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_EQ(result, false);
@@ -68,6 +79,7 @@ TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenRankIdCon
     std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
     auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
     request.params.pageSize = MAX_PAGESIZE - 1;
+    request.params.currentPage = 1;
     request.params.rankId = "0&";
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_EQ(result, false);
@@ -79,6 +91,7 @@ TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenOrderByCo
     std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
     auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
     request.params.pageSize = MAX_PAGESIZE - 1;
+    request.params.currentPage = 1;
     request.params.rankId = "0";
     request.params.orderBy = "&";
     bool result = handler.HandleRequest(std::move(requestPtr));
@@ -91,6 +104,7 @@ TEST_F(AdvisorHandleTest, QueryAclnnOpAdvisorHandlerTestReturnFalseWhenOrderType
     std::unique_ptr<Request> requestPtr = std::make_unique<AclnnOperatorRequest>();
     auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
     request.params.pageSize = MAX_PAGESIZE - 1;
+    request.params.currentPage = 1;
     request.params.rankId = "0";
     request.params.orderBy = "step";
     std::string str(MAX_PAGESIZE, 'a'); // ref 500
