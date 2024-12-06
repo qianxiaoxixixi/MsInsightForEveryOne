@@ -35,6 +35,22 @@ protected:
     }
 };
 
+TEST_F(AdvisorProtocolFromRequestJsonTest, ToAffinityOptimizerRequestTestFailedWhenLackIdField)
+{
+    Dic::Protocol::AdvisorProtocolUtil advisorProtocol;
+    advisorProtocol.Register();
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    Dic::json_t params(Dic::kObjectType);
+    Dic::JsonUtil::AddMember(json, "params", params, allocator);
+    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
+    Dic::JsonUtil::AddMember(json, "command", REQ_RES_ADVISOR_AFFINITY_OPTIMIZER, allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", "advisor", allocator);
+    std::string error;
+    auto result = advisorProtocol.FromJson(json, error);
+    EXPECT_EQ(result, nullptr);
+}
+
 TEST_F(AdvisorProtocolFromRequestJsonTest, ToAffinityOptimizerRequestTestSuccess)
 {
     Dic::Protocol::AdvisorProtocolUtil advisorProtocol;
