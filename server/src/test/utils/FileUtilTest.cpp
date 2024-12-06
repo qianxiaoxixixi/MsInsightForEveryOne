@@ -378,3 +378,54 @@ TEST(TestUtil, GetRealPathFailedWhenFileIsNotExist)
     EXPECT_EQ(FileUtil::GetRealPath(filePath), "");
 #endif
 }
+
+TEST(TestUtil, ConvertToRealPath)
+{
+#ifdef  _WIN32
+    return;
+#else
+    std::vector<std::string> paths = {""};
+    std::string errMsg;
+    bool suc = FileUtil::ConvertToRealPath(errMsg, paths);
+    EXPECT_EQ(suc, false);
+    EXPECT_EQ(errMsg, "is invalid path");
+    paths[0] = "/etc/hosts";
+    errMsg.clear();
+    EXPECT_EQ(FileUtil::ConvertToRealPath(errMsg, paths), true);
+    EXPECT_EQ(errMsg.empty(), true);
+#endif
+}
+
+TEST(TestUitl, GetRelativePath)
+{
+    std::string path1 = "/etc/host/test";
+    std::string path2 = "/etc/host";
+    auto res = FileUtil::GetRelativePath(path1, path2);
+    EXPECT_NE(res, nullptr);
+    EXPECT_EQ(res->compare("test"), 0);
+    res = FileUtil::GetRelativePath(path2, path1);
+    EXPECT_EQ(res, nullptr);
+}
+
+TEST(TestUtil, GetRootPath)
+{
+    std::string path = "/etc/hosts";
+    EXPECT_EQ(FileUtil::GetRootPath(path), "/");
+    path = "hosts";
+    EXPECT_EQ(FileUtil::GetRootPath(path), "");
+}
+
+TEST(TestUtil, FindIfDbTypeByRegex)
+{
+    std::string currPath = Dic::FileUtil::GetCurrPath();
+    int index = currPath.find_last_of("server");
+    currPath = currPath.substr(0, index + 1);
+    auto testDbDir = currPath + R"(/src/test/test_data)";
+    const std::string DB_REG =
+            R"((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis)\.db$)";
+    const std::string traceViewReg =
+            R"((((trace_view|msprof(_slice_[0-9]{1,2})?_[0-9]{1,14})\.json)|)"
+            R"((operator_memory|operator_memory(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv)$)";
+    bool suc = FileUtil::FindIfDbTypeByRegex(testDbDir, std::regex(traceViewReg), std::regex(DB_REG));
+    EXPECT_EQ(suc, false);
+}
