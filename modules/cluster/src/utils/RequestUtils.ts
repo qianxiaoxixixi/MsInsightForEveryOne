@@ -145,3 +145,33 @@ export const queryCommunicationMatrix = async(param: { iterationId: string ; sta
 Promise<any> => {
     return window.requestData('communication/matrix/bandwidthInfo', param);
 };
+
+export interface QueryFwpBwdTimelineParams {
+    stepId: string;
+    stageId: string;
+}
+export interface TraceItem {
+    name: string;
+    start: number;
+    duration: number;
+    pid: string;
+    tid: string;
+    id: string;
+    cname: 'FP' | 'BP' | 'SEND' | 'RECV' | 'BATCH_SEND_RECV';
+}
+
+interface RankItem {
+    rank: string;
+    componentList: Array<{
+        component: 'FP/BP' | 'P2P Op';
+        traceList: TraceItem[];
+    }>;
+}
+export interface QueryFwpBwdTimelineRes {
+    minTime: number;
+    maxTime: number;
+    rankList: RankItem[];
+}
+export const queryFwpBwdTimeline = async(params: QueryFwpBwdTimelineParams): Promise<QueryFwpBwdTimelineRes> => {
+    return window.requestData('parallelism/pipeline/fwdBwdTimeline', params, 'summary');
+};

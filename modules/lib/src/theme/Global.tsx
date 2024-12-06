@@ -39,6 +39,23 @@ const antdTooltipCss = (theme: Theme): SerializedStyles => css`
     }
 `;
 
+const formatterCss = css`
+    .formatter{
+        .row {
+            display: flex;
+            align-items: center;
+            padding: 2px 0;
+
+            .label{
+                margin-right: 16px;
+            }
+            .value {
+                font-weight: bold;
+            }
+        }
+    }
+`;
+
 export const GlobalStyles = (): JSX.Element => {
     const theme = useTheme();
     return <Global
@@ -80,6 +97,7 @@ export const GlobalStyles = (): JSX.Element => {
                 background-color: ${theme.bgColorLight};
             }
             ${antdTooltipCss(theme)};
+            ${formatterCss};
         `}
     />;
 };

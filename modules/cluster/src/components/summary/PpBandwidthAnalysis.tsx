@@ -21,6 +21,7 @@ import styled from '@emotion/styled';
 import { chartColors, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
+import { FlowChart } from './FlowChart';
 
 const ChartsContainer = styled.div`
   display: flex;
@@ -34,15 +35,33 @@ const ChartsContainer = styled.div`
   }
 `;
 
+const FlowChartContainer = styled.div`
+    margin-top: 24px;
+    padding: 16px 24px;
+    border: 1px solid ${(props): string => props.theme.borderColor};
+
+    .title {
+        color: ${(props): string => props.theme.textColorPrimary};
+        margin-bottom: 20px;
+        font-size: 16px;
+        font-weight: 500;
+    }
+`;
+
 const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
     const [allStageIds, setAllStageIds] = useState<string[]>([]);
     const [conditions, setConditions] = useState<ConditionDataType>(
         { step: '', stage: '' });
+    const { t } = useTranslation('summary');
 
     return (
         <div>
             <Filter session={session} setAllStageIds={setAllStageIds} conditions={conditions} setConditions={setConditions}/>
             <PPBandwidthChart conditions={conditions} allStageIds={allStageIds} session={session}/>
+            <FlowChartContainer>
+                <div className="title">{t('Pipeline Parallelism Chart')}</div>
+                <FlowChart {...conditions} />
+            </FlowChartContainer>
         </div>
     );
 });

@@ -77,6 +77,7 @@
       "accuracy is 0.03, group it into: [0,0.03),[0.03,0.06),[0.06,0.09),...,[0.27,>0.27)",
       "Grading metrics = (selected data - minimum value) / minimum value ",
       "The greener the color, the lower the level; the redder the color, the higher the level"
-    ]
+    ],
+    "Pipeline Parallelism Chart": "Pipeline Parallelism Chart"
   }
 }
