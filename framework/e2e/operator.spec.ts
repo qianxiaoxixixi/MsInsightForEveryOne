@@ -17,6 +17,11 @@ const test = baseTest.extend<TestFixtures>({
     },
 });
 
+const operatorImgMap = {
+    loadOperatorDataSuccess: 'operator.png',
+    expandOperatorDetailTableDataSuccess: 'operator-expand-detail.png',
+};
+
 test.describe('Operator', () => {
     test.beforeEach(async ({ page, operatorPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
@@ -25,6 +30,7 @@ test.describe('Operator', () => {
         await allCardParsedPromise;
     });
 
+    // 【case】非对比非多机operator界面加载
     test('change_filterCondition', async ({ page, operatorPage }) => {
         const { operatorFrame, groupIdSelector, rankIdSelector, topSelector } = operatorPage;
         const groupIdSelect = new SelectHelpers(page, groupIdSelector, operatorFrame);
@@ -37,7 +43,20 @@ test.describe('Operator', () => {
         await topSelect.open();
         await topSelect.selectOption('15');
         await page.mouse.move(0, 0);
-        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot('operator.png', {
+        await expect(operatorFrame.locator('.mi-page'))
+        .toHaveScreenshot(operatorImgMap.loadOperatorDataSuccess, {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // 【case】非对比非多机see more表格加载
+    test('expand_table_when_click_seeMoreCell', async ({ page, operatorPage }) => {
+        const { operatorFrame } = operatorPage;
+        const seeMoreBtn = operatorFrame.getByRole('button', { name: 'See more' }).first();
+        await seeMoreBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(operatorFrame.locator('.mi-page'))
+        .toHaveScreenshot(operatorImgMap.expandOperatorDetailTableDataSuccess, {
             maxDiffPixels: 500,
         });
     });

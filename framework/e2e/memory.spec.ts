@@ -32,6 +32,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await allCardParsedPromise;
     });
 
+    // 【case】text非多机非对比memory界面加载
     test('loadMemoryPageSuccess_when_dataParseSuccess', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
         await page.mouse.move(0, 0);
@@ -41,6 +42,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         });
     });
  
+    // 【case】memory顶部过滤条件改变界面加载
     test('change_filterCondition', async ({ page, memoryPage }) => {
         const { memoryFrame, rankIdSelector, groupIdSelector } = memoryPage;
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
@@ -56,6 +58,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         });
     });
 
+    // 【case】memory底部表格条件查询后结果加载
     test('query_memoryDetailTbale_by_tableFilterCondition', async ({ page, memoryPage }) => {
         const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
         const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
@@ -75,6 +78,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         });
     });
 
+    // 【case】memory底部表格条件重置后结果加载
     test('reset_memoryDetailTbale_by_tableFilterCondition', async ({ page, memoryPage }) => {
         const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
         const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
