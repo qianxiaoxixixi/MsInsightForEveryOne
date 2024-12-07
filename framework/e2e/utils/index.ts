@@ -33,7 +33,10 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
 // 清除数据
 export async function clearAllData(page: Page): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
-    const { deleteAllBtn, deleteAllDialog, deleteAllConfirmBtn, projectList } = frameworkPage;
+    const { settingsBtn, deleteAllBtn, deleteAllDialog, deleteAllConfirmBtn, projectList } = frameworkPage;
+
+    await settingsBtn.click();
+
     const isDisabled = await deleteAllBtn.evaluate((el) => el.classList.contains('disabled'));
 
     if (isDisabled) {

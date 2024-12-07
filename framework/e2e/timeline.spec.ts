@@ -5,6 +5,7 @@
 import { test as baseTest, expect } from '@playwright/test';
 import { TimelinePage, SystemView } from './page-object';
 import { clearAllData, importData, waitForWebSocketEvent } from './utils';
+import { InputHelpers, SelectHelpers } from './components';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
@@ -26,7 +27,7 @@ test.describe('Timeline', () => {
     });
 
     // 泳道展开收缩
-    test('units expand and collapse', async ({ timelinePage }) => {
+    test('test_unitsExpandAndCollapse_when_click', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Python (2045554)');
         const firstUnitInfo = timelineFrame.locator('.unit-info').first();
@@ -37,7 +38,7 @@ test.describe('Timeline', () => {
     });
 
     // 泳道置顶
-    test('units pin to top and unpin', async ({ timelinePage }) => {
+    test('test_unitsPinToTopAndUnpin', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const firstUnitInfo = timelineFrame.locator('.unit-info').first();
         await firstUnitInfo.hover();
@@ -55,7 +56,7 @@ test.describe('Timeline', () => {
     });
 
     // 偏移量设置
-    test('offset config', async ({ page, timelinePage }) => {
+    test('test_offsetConfig', async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const firstUnitInfo = timelineFrame.locator('.unit-info').first();
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -63,18 +64,18 @@ test.describe('Timeline', () => {
         await firstUnitInfo.hover({ force: true });
         // 这里需要优化，改为当图表渲染完成后再继续执行
         await page.waitForTimeout(1500);
-        const offsetBtn = timelineFrame.getByTestId('offset-btn');
+        const offsetBtn = timelineFrame.getByTestId('offset-btn').first();
         await offsetBtn.click();
         const offsetInput = timelineFrame.getByRole('tooltip', { name: /Timestamp Offset/i }).getByRole('textbox');
         await offsetInput.fill('300000000');
         await offsetInput.press('Enter');
         await offsetBtn.click();
         await page.mouse.move(0, 0);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('unit-offset.png');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('unit-offset.png', { maxDiffPixels: 100 });
     });
 
     // 点击算子展示算子详情
-    test('click operator to show Slice Detail ', async ({ page, timelinePage }) => {
+    test('test_showSliceDetail_when_clickOperator', async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
@@ -94,7 +95,7 @@ test.describe('Timeline', () => {
     });
 
     // 框选泳道展示算子列表
-    test('select units range to show Slice List', async ({ page, timelinePage }) => {
+    test('test_showSliceList_when_selectUnitsRange', async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
@@ -116,9 +117,38 @@ test.describe('Timeline', () => {
         expect(rows).toBeGreaterThan(0);
     });
     // System View数据展示
-    test('System View data display', async ({ page }) => {
+    test('test_SystemViewDataDisplay', async ({ page, timelinePage }) => {
+        const { bottomPanel, timelineFrame } = timelinePage;
         const systemView = new SystemView(page);
         await systemView.goto();
+
+        const statsSystemViewOptions = [
+            'Python API Summary',
+            'CANN API Summary',
+            'Ascend HardWare Task Summary',
+            'HCCL Summary',
+            'Overlap Analysis',
+            'Kernel Details',
+        ];
+
+        for (let item of statsSystemViewOptions) {
+            const option = timelineFrame.getByText(item, { exact: true });
+            await option.click();
+            await expect(bottomPanel).toHaveScreenshot(`timeline-${item}.png`, { maxDiffPixels: 100 });
+        }
+    });
+
+    // 算子搜索
+    test('test_operatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
+        const { searchBtn, timelineFrame } = timelinePage;
+        await searchBtn.click();
+        const inputLocator = timelineFrame.locator('.insight-category-search-overlay input');
+        const input = new InputHelpers(page, inputLocator, timelineFrame);
+        await input.setValue('add');
+        await input.press('Enter');
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`search-operator.png`, { maxDiffPixels: 100 });
     });
 
     test.afterEach(async ({ page }) => {

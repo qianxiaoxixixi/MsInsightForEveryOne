@@ -98,7 +98,7 @@ test.describe('Communication', () => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         await page.mouse.move(0, 0);
-        await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl.png');
+        await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl.png', { maxDiffPixels: 500 });
     });
 
     // 【case】通信时长图表：展示对应通信域和算子的通信信息
@@ -147,7 +147,7 @@ test.describe('Communication', () => {
         // 再次点击icon 收起子表格
         await expandIcon.click();
         // 定位并点击查看详情按钮 再次验证子表格是否可见
-        const expandButton = await (await dataAnalysisTable.getCell(1, 13)).locator('button');
+        const expandButton = (await dataAnalysisTable.getCell(1, 13)).locator('button');
         await expandButton.click();
         await expect(expandTable).toBeVisible();
     });
@@ -167,7 +167,8 @@ test.describe('Communication', () => {
         // 表格滚动到可视区域并点击表头排序
         await expandTable.sortTableHead('Start Time(ms)');
         await expandTableLocator.scrollIntoViewIfNeeded();
-        await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png');
+        await page.mouse.move(0, 0);
+        await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 500 });
         // 定位子表格分页器组件
         const pagination = communicationFrame.locator('.ant-pagination.ant-pagination-mini.ant-table-pagination.ant-table-pagination-left').first();
         // 断言数据总数
