@@ -290,8 +290,6 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffCompar
     baselineData.push_back(operatorFirst);
     baselineData.push_back(operatorSecond);
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
-            std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
     handler.GetOperatorDiff(compareData, baselineData, diffData);
     ASSERT_EQ(diffData.size(), baselineData.size());
     for (size_t i = 0; i < baselineData.size() && i < diffData.size(); ++i) {
@@ -325,8 +323,6 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffBaseli
     compareData.push_back(operatorFirst);
     compareData.push_back(operatorSecond);
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
-            std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
     handler.GetOperatorDiff(compareData, baselineData, diffData);
     ASSERT_EQ(diffData.size(), compareData.size());
     for (size_t i = 0; i < compareData.size() && i < diffData.size(); ++i) {
@@ -366,8 +362,6 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffBothNo
     baselineData.push_back(operatorBaselineFirst);
     baselineData.push_back(operatorBaselineSecond);
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
-            std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
     handler.GetOperatorDiff(compareData, baselineData, diffData);
     ASSERT_EQ(diffData.size(), compareData.size());
     ASSERT_EQ(diffData.size(), baselineData.size());
@@ -802,6 +796,236 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerInvalidPara
     requestPtr.get()->params.startNodeIndex = 1;
     requestPtr.get()->params.endNodeIndex = -1;
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerGetOperatorDiffCompareEmptyTest)
+{
+    std::vector<StaticOperatorItem> compareData;
+    std::vector<StaticOperatorItem> baselineData;
+    std::vector<StaticOperatorCompItem> diffData;
+    StaticOperatorItem operatorFirst = {"host", "FlashAttentionScore-op8", 192, 337, 4096.031};
+    StaticOperatorItem operatorSecond = {"host", "TensorMove-op0", 30, 1816, 88064.031};
+    baselineData.push_back(operatorFirst);
+    baselineData.push_back(operatorSecond);
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    handler.GetOperatorDiff(compareData, baselineData, diffData);
+    ASSERT_EQ(diffData.size(), baselineData.size());
+    for (size_t i = 0; i < baselineData.size() && i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.deviceId, "");
+        EXPECT_EQ(diffData[i].diff.opName, baselineData[i].opName);
+        EXPECT_EQ(diffData[i].diff.nodeIndexStart, -baselineData[i].nodeIndexStart);
+        EXPECT_EQ(diffData[i].diff.nodeIndexEnd, -baselineData[i].nodeIndexEnd);
+        EXPECT_EQ(diffData[i].diff.size, -baselineData[i].size);
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerGetOperatorDiffBaselineEmptyTest)
+{
+    std::vector<StaticOperatorItem> compareData;
+    std::vector<StaticOperatorItem> baselineData;
+    std::vector<StaticOperatorCompItem> diffData;
+    StaticOperatorItem operatorFirst = {"host", "FlashAttentionScore-op8", 192, 337, 4096.031};
+    StaticOperatorItem operatorSecond = {"host", "TensorMove-op0", 30, 1816, 88064.031};
+    compareData.push_back(operatorFirst);
+    compareData.push_back(operatorSecond);
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    handler.GetOperatorDiff(compareData, baselineData, diffData);
+    ASSERT_EQ(diffData.size(), compareData.size());
+    for (size_t i = 0; i < compareData.size() && i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.deviceId, compareData[i].deviceId);
+        EXPECT_EQ(diffData[i].diff.opName, compareData[i].opName);
+        EXPECT_EQ(diffData[i].diff.nodeIndexStart, compareData[i].nodeIndexStart);
+        EXPECT_EQ(diffData[i].diff.nodeIndexEnd, compareData[i].nodeIndexEnd);
+        EXPECT_EQ(diffData[i].diff.size, compareData[i].size);
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerGetOperatorDiffBothNotEmptyTest)
+{
+    std::vector<StaticOperatorItem> compareData;
+    std::vector<StaticOperatorItem> baselineData;
+    std::vector<StaticOperatorCompItem> diffData;
+    StaticOperatorItem operatorCompareFirst = {"host", "FlashAttentionScore-op8", 192, 337, 4096.03125};
+    StaticOperatorItem operatorCompareSecond = {"host", "TensorMove-op0", 30, 1816, 88064.03125};
+    compareData.push_back(operatorCompareFirst);
+    compareData.push_back(operatorCompareSecond);
+    StaticOperatorItem operatorBaselineFirst = {"host", "FlashAttentionScore-op8", 398, 543, 4096.03125};
+    StaticOperatorItem operatorBaselineSecond = {"host", "TensorMove-op0", 35, 1808, 88064.03125};
+    baselineData.push_back(operatorBaselineFirst);
+    baselineData.push_back(operatorBaselineSecond);
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    handler.GetOperatorDiff(compareData, baselineData, diffData);
+    const int precision = 3;
+    ASSERT_EQ(diffData.size(), compareData.size());
+    ASSERT_EQ(diffData.size(), baselineData.size());
+    for (size_t i = 0; i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.deviceId, compareData[i].deviceId);
+        EXPECT_EQ(diffData[i].diff.opName, compareData[i].opName);
+        EXPECT_EQ(diffData[i].diff.nodeIndexStart, compareData[i].nodeIndexStart - baselineData[i].nodeIndexStart);
+        EXPECT_EQ(diffData[i].diff.nodeIndexEnd, compareData[i].nodeIndexEnd - baselineData[i].nodeIndexEnd);
+        EXPECT_EQ(diffData[i].diff.size, NumberUtil::DoubleReservedNDigits(compareData[i].size - baselineData[i].size,
+            precision));
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffResultSelectNameAndSizeTest)
+{
+    std::vector<StaticOperatorCompItem> fullDiffResult;
+    StaticOperatorItem opCompareFirst = {"host", "RmsNorm-op8", 198, 328, 16.031};
+    StaticOperatorItem opBaselineFirst = {"host", "RmsNorm-op8", 105, 300, 15.000};
+    StaticOperatorItem opDiffFirst = {"host", "RmsNorm-op8", 93, 28, 1.031};
+    StaticOperatorItem opCompareSecond = {"host", "ReduceMax-op6", 1270, 1271, 24.095};
+    StaticOperatorItem opBaselineSecond = {"host", "ReduceMax-op6", 1277, 1278, 15.092};
+    StaticOperatorItem opDiffSecond = {"host", "ReduceMax-op6", -7, -7, 9.003};
+    StaticOperatorItem opCompareThird = {"host", "OneHot-op8", 1608, 1685, 27.044};
+    StaticOperatorItem opBaselineThird = {"host", "OneHot-op8", 1601, 1700, 28.049};
+    StaticOperatorItem opDiffThird = {"host", "OneHot-op8", 7, -15, -1.005};
+    fullDiffResult.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
+    fullDiffResult.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
+    fullDiffResult.push_back({opCompareThird, opBaselineThird, opDiffThird});
+    MemoryStaticOperatorListRequest request;
+    request.params.searchName = "op8";
+    const int64_t minSize = -1;
+    const int64_t maxSize = 2;
+    request.params.minSize = minSize;
+    request.params.maxSize = maxSize;
+    request.params.startNodeIndex = -1;
+    request.params.endNodeIndex = -1;
+    const int defaultPageSize = 10;
+    request.params.pageSize = defaultPageSize;
+    request.params.currentPage = 1;
+    request.params.order = "";
+    request.params.orderBy = "";
+    std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
+        std::make_unique<MemoryStaticOperatorListCompResponse>();
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    const int expectColumnSize = 6;
+    ASSERT_EQ(responsePtr.get()->totalNum, 1);
+    EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffResultSelectNodeIndexTest)
+{
+    std::vector<StaticOperatorCompItem> fullDiffResult;
+    StaticOperatorItem opCompareFirst = {"host", "RmsNorm-op8", 198, 328, 16.031};
+    StaticOperatorItem opBaselineFirst = {"host", "RmsNorm-op8", 105, 300, 15.000};
+    StaticOperatorItem opDiffFirst = {"host", "RmsNorm-op8", 93, 28, 1.031};
+    StaticOperatorItem opCompareSecond = {"host", "ReduceMax-op6", 1270, 1271, 24.095};
+    StaticOperatorItem opBaselineSecond = {"host", "ReduceMax-op6", 1277, 1278, 15.092};
+    StaticOperatorItem opDiffSecond = {"host", "ReduceMax-op6", -7, -7, 9.003};
+    StaticOperatorItem opCompareThird = {"host", "OneHot-op8", 1608, 1685, 27.044};
+    StaticOperatorItem opBaselineThird = {"host", "OneHot-op8", 1601, 1700, 28.049};
+    StaticOperatorItem opDiffThird = {"host", "OneHot-op8", 7, -15, -1.005};
+    fullDiffResult.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
+    fullDiffResult.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
+    fullDiffResult.push_back({opCompareThird, opBaselineThird, opDiffThird});
+    MemoryStaticOperatorListRequest request;
+    request.params.searchName = "";
+    request.params.minSize = std::numeric_limits<int64_t>::min();
+    request.params.maxSize = std::numeric_limits<int64_t>::max();
+    const int64_t start = 1200;
+    const int64_t end = 1300;
+    request.params.startNodeIndex = start;
+    request.params.endNodeIndex = end;
+    const int defaultPageSize = 10;
+    request.params.pageSize = defaultPageSize;
+    request.params.currentPage = 1;
+    request.params.order = "";
+    request.params.orderBy = "";
+    std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
+        std::make_unique<MemoryStaticOperatorListCompResponse>();
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    const int expectColumnSize = 6;
+    ASSERT_EQ(responsePtr.get()->totalNum, 1);
+    EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffResultSortAscendTest)
+{
+    MemoryStaticOperatorListCompResponse result;
+    std::vector<StaticOperatorCompItem> opDiffDetails;
+    StaticOperatorItem opDiffFirst = {"host", "RmsNorm-op8", 93, 28, 1.031};
+    StaticOperatorItem opDiffSecond = {"host", "ReduceMax-op6", -7, -7, 9.003};
+    StaticOperatorItem opDiffThird = {"host", "OneHot-op8", 7, -15, -1.005};
+    opDiffDetails.push_back({{}, {}, opDiffFirst});
+    opDiffDetails.push_back({{}, {}, opDiffSecond});
+    opDiffDetails.push_back({{}, {}, opDiffThird});
+    result.operatorDiffDetails = opDiffDetails;
+    MemoryStaticOperatorListRequest request;
+    request.params.order = "ascend";
+    const size_t second = 2;
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    request.params.orderBy = "device_id";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
+    request.params.orderBy = "op_name";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "OneHot-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "RmsNorm-op8");
+    request.params.orderBy = "node_index_start";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "OneHot-op8");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "RmsNorm-op8");
+    request.params.orderBy = "node_index_end";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "OneHot-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "RmsNorm-op8");
+    request.params.orderBy = "size";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "OneHot-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "ReduceMax-op6");
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffResultSortDescendTest)
+{
+    MemoryStaticOperatorListCompResponse result;
+    std::vector<StaticOperatorCompItem> opDiffDetails;
+    StaticOperatorItem opDiffFirst = {"host", "RmsNorm-op8", 93, 28, 1.031};
+    StaticOperatorItem opDiffSecond = {"host", "ReduceMax-op6", -7, -7, 9.003};
+    StaticOperatorItem opDiffThird = {"host", "OneHot-op8", 7, -15, -1.005};
+    opDiffDetails.push_back({{}, {}, opDiffFirst});
+    opDiffDetails.push_back({{}, {}, opDiffSecond});
+    opDiffDetails.push_back({{}, {}, opDiffThird});
+    result.operatorDiffDetails = opDiffDetails;
+    MemoryStaticOperatorListRequest request;
+    request.params.order = "descend";
+    const size_t second = 2;
+    Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
+    request.params.orderBy = "device_id";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
+    request.params.orderBy = "op_name";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
+    request.params.orderBy = "node_index_start";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "OneHot-op8");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "ReduceMax-op6");
+    request.params.orderBy = "node_index_end";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
+    request.params.orderBy = "size";
+    handler.SortResult(request, result);
+    EXPECT_EQ(result.operatorDiffDetails[0].diff.opName, "ReduceMax-op6");
+    EXPECT_EQ(result.operatorDiffDetails[1].diff.opName, "RmsNorm-op8");
+    EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryTypeHandlerNormalTest)
