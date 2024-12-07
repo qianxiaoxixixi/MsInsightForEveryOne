@@ -343,7 +343,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             onOpenChange={onTooltipVisibleChange}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:search')} icon={SearchIcon as any} { ...customButtonProps }/>
+            <CustomButton data-testid={'tool-search'} tooltip={t('tooltip:search')} icon={SearchIcon as any} { ...customButtonProps }/>
         </Tooltip>
     );
 });

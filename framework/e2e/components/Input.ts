@@ -21,6 +21,11 @@ export class InputHelpers extends Component {
         return await this.locator.inputValue();
     }
 
+    // 按下键盘键
+    async press(key: string): Promise<void> {
+        return await this.locator.press(key);
+    }
+
     // 断言输入框的值是否为指定文本
     async expectValueToBe(expectedText: string): Promise<void> {
         await expect(this.locator).toHaveValue(expectedText);

@@ -16,11 +16,14 @@ export class TimelinePage {
     readonly zoomInBtn: Locator;
     readonly zoomOutBtn: Locator;
     readonly drawerBtn: Locator; // 底部面板收缩按钮
+    readonly bottomPanel: Locator; // 底部面板
 
     constructor(page: Page) {
         this.page = page;
         this.timelineFrame = page.frameLocator('#Timeline');
+        this.searchBtn = this.timelineFrame.getByTestId('tool-search');
         this.drawerBtn = this.timelineFrame.getByTestId('drawer-btn').nth(1);
+        this.bottomPanel = this.timelineFrame.locator('.bottomPanelContainer');
     }
 
     async goto(): Promise<void> {

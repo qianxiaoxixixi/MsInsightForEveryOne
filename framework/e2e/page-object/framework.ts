@@ -8,6 +8,7 @@ export type TabName = 'timeline' | 'memory' | 'operator' | 'summary' | 'communic
 export class FrameworkPage {
     readonly page: Page;
     // 顶部功能按钮
+    readonly settingsBtn: Locator;
     readonly deleteAllBtn: Locator;
     readonly importDataBtn: Locator;
     readonly switchThemeBtn: Locator;
@@ -38,6 +39,7 @@ export class FrameworkPage {
 
     constructor(page: Page) {
         this.page = page;
+        this.settingsBtn = page.locator('.btn-set');
         this.deleteAllBtn = page.locator('.btn-delete');
         this.importDataBtn = page.locator('.btn-import');
         this.switchThemeBtn = page.locator('.switch-theme');
@@ -50,7 +52,7 @@ export class FrameworkPage {
         this.communicationTab = page.getByRole('menuitem', { name: 'Communication' });
         this.sourceTab = page.getByRole('menuitem', { name: 'Source' });
         this.detailsTab = page.getByRole('menuitem', { name: 'Details' });
-        this.deleteAllDialog = page.getByLabel('Delete All');
+        this.deleteAllDialog = page.getByLabel('Delete Item');
         this.deleteAllConfirmBtn = page.getByRole('button', { name: 'Confirm' });
         this.deleteAllCancelBtn = page.getByRole('button', { name: 'Cancel' });
         this.projectList = page.getByRole('tree');
