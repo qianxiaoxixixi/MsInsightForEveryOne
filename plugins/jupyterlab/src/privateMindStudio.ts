@@ -12,7 +12,7 @@ const MINDSTUDIO_SERVICE_URL = '';
 
 const MINDSTUDIO_STATIC_CONFIG_URL = '';
 
-const MINDSTUDIO_URL = '';
+const MINDSTUDIO_URL = '/resources/frontend/index.html';
 
 /**
  * A namespace for private data.
@@ -64,5 +64,5 @@ export function getMindStudioInstanceUrl(
     baseUrl: string,
     name: string
 ): string {
-    return URLExt.join(baseUrl, MINDSTUDIO_URL, name);
+    return URLExt.join(baseUrl, MINDSTUDIO_URL);
 }

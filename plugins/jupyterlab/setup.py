@@ -79,6 +79,10 @@ setup_args = dict(
         'console_scripts': [
             'jupyterlab-mindstudio-insight = jupyterlab_mindstudio_insight.application:main',
          ],
+        'jupyter_serverextension': [
+            'jupyterlab-mindstudio-insight = jupyterlab_mindstudio_insight.jupyterlab_mindstudio_insight:' \
+            'load_jupyter_server_extension',
+        ],
     },
     classifiers=[
         'Intended Audience :: Developers',

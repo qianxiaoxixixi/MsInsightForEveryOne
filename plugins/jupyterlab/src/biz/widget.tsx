@@ -9,6 +9,7 @@ import * as MindStudio from '../mindstudio';
 import { Message } from '@lumino/messaging';
 import { MindStudioManager } from '../manager';
 import * as CommandIDs from '../commands';
+import { MindStudioInsightTab } from './MindStudioInsight';
 
 export interface MindStudioInvokeOptions {
   mindstudioManager: MindStudioManager;
@@ -66,7 +67,14 @@ export class MindStudioReactWidget extends ReactWidget {
 
   render(): JSX.Element {
     return (
-      <></>
+      <MindStudioInsightTab
+        mindstudioManager={this.mindstudioManager}
+        closeWidget={this.closeCurrent}
+        openMindStudio={this.openMindStudio}
+        openDoc={this.openDoc}
+        updateCurrentModel={this.updateCurrentModel}
+        startNew={this.startNew}
+      />
     );
   };
 

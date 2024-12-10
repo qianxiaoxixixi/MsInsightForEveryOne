@@ -60,7 +60,8 @@ async function activate(
     await addRunningSessionManager(runningSessionManagers, app, manager);
   }
 
-  palette.addItem({ command: CommandIDs.openDoc, category: 'MindStudio' });
+  palette.addItem({ command: CommandIDs.createNew, category: 'mindstudio' });
+  palette.addItem({ command: CommandIDs.openDoc, category: 'mindstudio' });
 
   return tracker;
 }
@@ -163,6 +164,8 @@ function addOpenDocCommand(commands: any): void {
 
 function addCloseCommand(commands: any, tracker: WidgetTracker<MainAreaWidget<MindStudioReactWidget>>): void {
   commands.addCommand(CommandIDs.close, {
+    label: 'Open MindStudio Insight Doc',
+    icon: (args: any) => (args.isPalette ? undefined : mindstudioIcon),
     execute: (args: any) => {
       const model = args.mindstudio as MindStudio.IModel;
       tracker.forEach((widget: MainAreaWidget<MindStudioReactWidget>) => {
