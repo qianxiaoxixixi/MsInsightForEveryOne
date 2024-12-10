@@ -1,0 +1,18 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include jupyter-config/server-config/jupyterlab_mindstudio_insight.json
+
+include package.json
+include install.json
+include ts*.json
+include yarn.lock
+
+graft jupyterlab_mindstudio_insight/labextension
+graft jupyterlab_mindstudio_insight/resources
+
+# Javascript files
+graft src
+graft style
+prune **/node_modules
+prune lib

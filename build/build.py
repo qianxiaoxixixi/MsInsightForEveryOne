@@ -240,6 +240,17 @@ def build_jupyterlab(jupyterlab_version, os_name):
         return 0
 
     plugin_path = os.path.join(PROJECT_PATH, Const.JUPYTERLAB_PLUGINS_DIR)
+    # 拷贝前后端资源
+    jupyterlab_path = 'jupyterlab_mindstudio_insight'
+    resources_dir = 'resources'
+    resources_path = os.path.join(plugin_path, jupyterlab_path, resources_dir)
+    if not os.path.exists(resources_path):
+        os.makedirs(resources_path, 0o750)
+    shutil.copytree(os.path.join(Const.PLATFORM_DIR, resources_dir, 'profiler', 'frontend'),
+                    os.path.join(resources_path, 'frontend'))
+    shutil.copytree(os.path.join(Const.PLATFORM_DIR, resources_dir, 'profiler', 'server'),
+                    os.path.join(resources_path, 'server'))
+
     # 1. 清理jupyterlab环境
     result = exec_command([Const.JUPYTER, 'lab', 'clean'], plugin_path, 'jupyterlab_plugin')
     if result != 0:
