@@ -58,12 +58,6 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
     if (std::empty(sliceIds)) {
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
-    if (database == nullptr) {
-        ServerLog::Warn("hardWare open database is failed");
-        return;
-    }
-    const std::string nameKey = database->GetDbPath();
     std::string sql = "SELECT main.ROWID as id, main.startNs, main.endNs,"
         " coalesce(c.name, m.message, main.taskType) as name FROM " +
         TABLE_TASK +
@@ -80,7 +74,8 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
         " where 1 = 1 and id in (";
     std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
     sql += sliceidvecStr + ");";
-    auto stmt = database->CreatPreparedStatement(sql);
+    auto stmt = CreatPreparedStatement(sql, sliceQuery);
+    const std::string nameKey = GetDbPath(sliceQuery);
     if (stmt == nullptr) {
         ServerLog::Warn("Failed to parpare hardWare query slice by ids");
         return;
@@ -177,6 +172,57 @@ void HardWareRepo::QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDoma
     JsonUtil::AddConstMember(json, TaskColumn::STREAM_ID, streamId, allocator);
     JsonUtil::AddConstMember(json, TaskColumn::TASK_ID, taskId, allocator);
     JsonUtil::AddConstMember(json, TaskColumn::CONNECTION_ID, connectionId, allocator);
+    if (QueryMemoryInfo(sliceQuery, competeSliceDomain, targetTask)) {
+        JsonUtil::AddMember(json, "memcpyDirection", competeSliceDomain.memcpyDirection, allocator);
+        JsonUtil::AddMember(json, "dataSize", competeSliceDomain.dataSize, allocator);
+    }
     competeSliceDomain.args = JsonUtil::JsonDump(json);
+}
+
+bool HardWareRepo::QueryMemoryInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+                                   const TaskPO &targetTask)
+{
+    std::string sql = "select memcpyDirection, min(dataSize - orderNum*maxSize, maxSize) as dataSize from ( "
+      " select startNs,maxSize,dataSize,value as memcpyDirection,row_number() over (order by startNs) - 1 as orderNum "
+      " from " + TABLE_TASK + " main join " + TABLE_MEMCPY_INFO + " MI on main.connectionId = MI.connectionId "
+      " join " + TABLE_STRING_IDS + " str on MI.memcpyDirection = str.id "
+      " where MI.connectionId = ? ) t where t.startNs = ?;";
+    auto stmt = CreatPreparedStatement(sql, sliceQuery);
+    if (stmt == nullptr) {
+        ServerLog::Warn("Failed to parpare MemoryInfo by connection id");
+        return false;
+    }
+    stmt->BindParams(targetTask.connectionId, competeSliceDomain.timestamp);
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Warn("Failed to execute query MemoryInfo by connectionId and startTime.");
+        return false;
+    }
+    if (resultSet->Next()) {
+        competeSliceDomain.memcpyDirection = resultSet->GetString("memcpyDirection");
+        competeSliceDomain.dataSize = resultSet->GetUint64("dataSize");
+        return true;
+    }
+    return false;
+}
+
+Stmt HardWareRepo::CreatPreparedStatement(const std::string &sql, const SliceQuery &sliceQuery)
+{
+    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    if (database == nullptr) {
+        ServerLog::Warn("hardWare open database is failed");
+        return nullptr;
+    }
+    return database->CreatPreparedStatement(sql);
+}
+
+std::string HardWareRepo::GetDbPath(const SliceQuery &sliceQuery)
+{
+    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
+    if (database == nullptr) {
+        ServerLog::Warn("hardWare open database is failed");
+        return "";
+    }
+    return database->GetDbPath();
 }
 }
