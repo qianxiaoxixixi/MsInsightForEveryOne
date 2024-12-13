@@ -12,6 +12,8 @@ public:
     static void ResetBaseline();
     static bool InitBaselineData(const std::string &projectName, const std::string &filePath,
         BaselineInfo &baselineInfo);
+private:
+    static bool IsClusterBaseline(const std::string &fileName);
 };
 }
 }

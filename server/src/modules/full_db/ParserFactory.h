@@ -47,7 +47,6 @@ protected:
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::string GetFileId(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);
-    static bool CheckIsCluster(const std::string &filePath);
     static void SendParseSuccessEvent(const std::string &fileId);
     static void SendParseFailEvent(const std::string &fileId, const std::string &message);
     static bool IsNeedReset(const ImportActionRequest &request);

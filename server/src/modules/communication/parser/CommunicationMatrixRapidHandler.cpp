@@ -10,8 +10,8 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler(std::shared_ptr<TextClusterDatabase> &database)
-    : database(database)
+CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler(std::shared_ptr<TextClusterDatabase> database,
+    const std::string &uniqueKey) : database(database), uniqueKey(uniqueKey)
 {
     currentObject.SetObject();
 }
@@ -91,7 +91,7 @@ bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType l
 
 bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
 {
-    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+    if (ParserStatusManager::Instance().IsClusterParserFinalState(uniqueKey)) {
         return false;
     }
     if (database == nullptr) {

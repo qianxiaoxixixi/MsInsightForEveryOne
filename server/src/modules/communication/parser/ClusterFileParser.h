@@ -30,7 +30,9 @@ public:
     static void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
     bool ParserClusterOfDb();
     std::string GetClusterDbPath();
-    ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> &database);
+    ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> database,
+                      const std::string &uniqueKey);
+    static bool CheckIsCluster(const std::string &filePath);
 private:
     void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     bool InitClusterDatabase();
@@ -39,9 +41,10 @@ private:
     size_t subStrlen = 2;
     std::string clusterDbPath;
     bool needClearDb = true;
-    // cluster_step_trace_time.csv文件最小列数需要为11列，否则会造成数组越界
-    static const int minStepTraceTimeColumnNumber = 11;
     std::string selectedFilePath;
+    // 用于标识集群数据的key，格式为 cluster_路径
+    std::string uniqueKey;
+    const std::string CLUSTER_IDENTIFY = "cluster_";
     std::shared_ptr<VirtualClusterDatabase> database;
     static bool AttAnalyze(const std::string &selectedPath,
                            const std::string &mode,

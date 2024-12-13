@@ -11,8 +11,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 
-CommunicationRapidSaxHandler::CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> &database)
-    : database(database)
+CommunicationRapidSaxHandler::CommunicationRapidSaxHandler(std::shared_ptr<TextClusterDatabase> database,
+    const std::string &uniqueKey) : database(database), uniqueKey(uniqueKey)
 {
     currentObject.SetObject();
 }
@@ -122,7 +122,7 @@ bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType leng
 
 bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
 {
-    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+    if (ParserStatusManager::Instance().IsClusterParserFinalState(uniqueKey)) {
         return false;
     }
     // 获取所有的groupId映射关系

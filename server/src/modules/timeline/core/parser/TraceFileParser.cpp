@@ -225,7 +225,6 @@ void TraceFileParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
     ParserStatusManager::Instance().SetAllTerminateStatus();
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::TERMINATE);
     threadPool->Reset();
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->Reset();
@@ -235,6 +234,7 @@ void TraceFileParser::Reset()
         std::string path = conn->GetDbPath();
         conn->Stop();
     }
+    DataBaseManager::Instance().ClearClusterDb();
     trackIdMap.clear();
     TrackInfoManager::Instance().Reset();
     trackId = 0;

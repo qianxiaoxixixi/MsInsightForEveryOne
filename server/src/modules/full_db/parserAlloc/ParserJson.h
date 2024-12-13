@@ -51,6 +51,9 @@ private:
                               const std::vector<Global::ProjectExplorerInfo> &projectInfos);
     static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::vector<std::string> &subdirectoryList);
+    static void ParserClusterBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
+    void ParserSingleCardBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                                  Global::BaselineInfo &baselineInfo);
 };
 } // end of namespace Module
 } // end of namespace Dic

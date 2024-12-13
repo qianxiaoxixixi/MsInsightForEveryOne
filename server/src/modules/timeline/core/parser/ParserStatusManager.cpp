@@ -35,6 +35,7 @@ void ParserStatusManager::ClearAllParserStatus()
     std::unique_lock<std::mutex> lock(mutex);
     pendingRankAndFilePathMap.clear();
     statusMap.clear();
+    clusterStatusMap.clear();
 }
 
 ParserStatus ParserStatusManager::GetParserStatus(const std::string &fileId)
@@ -46,10 +47,30 @@ ParserStatus ParserStatusManager::GetParserStatus(const std::string &fileId)
     return statusMap[fileId];
 }
 
-ParserStatus ParserStatusManager::GetClusterParserStatus()
+void ParserStatusManager::EraseClusterParserStatusByKeyWord(const std::string &keyWord)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    return clusterParseStatus;
+    for (auto it = clusterStatusMap.begin(); it != clusterStatusMap.end();) {
+        if (it->first.find(keyWord) != std::string::npos) {
+            // erase返回下一个迭代器，因此直接赋值给it
+            it = clusterStatusMap.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
+
+bool ParserStatusManager::IsClusterParserFinalState(const std::string &uniqueKey)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    // 如果没有状态记录视为结束
+    if (clusterStatusMap.count(uniqueKey) == 0) {
+        return true;
+    }
+    if (std::find(finalStateList.begin(), finalStateList.end(), clusterStatusMap[uniqueKey]) != finalStateList.end()) {
+        return true;
+    }
+    return false;
 }
 
 bool ParserStatusManager::SetRunningStatus(const std::string &fileId)
@@ -106,10 +127,56 @@ void ParserStatusManager::SetAllTerminateStatus()
     }
 }
 
-void ParserStatusManager::SetClusterParseStatus(ParserStatus parserStatus)
+bool ParserStatusManager::SetStatusToInit(const std::string &uniqueKey, std::map<std::string, ParserStatus> &statusMap)
+{
+    if (statusMap.count(uniqueKey) == 0) {
+        statusMap[uniqueKey] = ParserStatus::INIT;
+        return true;
+    }
+    return false;
+}
+
+bool ParserStatusManager::SetStatusToRunning(const std::string &uniqueKey,
+                                             std::map<std::string, ParserStatus> &statusMap)
+{
+    if (statusMap.count(uniqueKey) == 0) {
+        return false;
+    }
+    if (statusMap[uniqueKey] != ParserStatus::INIT) {
+        return false;
+    }
+    statusMap[uniqueKey] = ParserStatus::RUNNING;
+    return true;
+}
+
+bool ParserStatusManager::SetStatusToFinalState(const std::string &uniqueKey, ParserStatus parserStatus,
+                                                std::map<std::string, ParserStatus> &statusMap)
+{
+    if (statusMap.count(uniqueKey) == 0) {
+        return false;
+    }
+    if (statusMap[uniqueKey] != ParserStatus::INIT && statusMap[uniqueKey] != ParserStatus::RUNNING) {
+        return false;
+    }
+    statusMap[uniqueKey] = parserStatus;
+    return true;
+}
+
+bool ParserStatusManager::SetClusterParseStatus(const std::string &uniqueKey, ParserStatus parserStatus)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    clusterParseStatus = parserStatus;
+    switch (parserStatus) {
+        case ParserStatus::INIT:
+            return SetStatusToInit(uniqueKey, clusterStatusMap);
+        case ParserStatus::RUNNING:
+            return SetStatusToRunning(uniqueKey, clusterStatusMap);
+        case ParserStatus::FINISH:
+        case ParserStatus::FINISH_ALL:
+        case ParserStatus::TERMINATE:
+            return SetStatusToFinalState(uniqueKey, parserStatus, clusterStatusMap);
+        default:
+            return false;
+    }
 }
 
 bool ParserStatusManager::IsAllFinished(std::string &notFinishTask)
@@ -127,9 +194,11 @@ bool ParserStatusManager::IsAllFinished(std::string &notFinishTask)
             return false;
         }
     }
-    if (clusterParseStatus == ParserStatus::INIT || clusterParseStatus == ParserStatus::RUNNING) {
-        notFinishTask = "clusterParseStatus";
-        return false;
+    for (const auto &item: clusterStatusMap) {
+        if (item.second == ParserStatus::INIT || item.second == ParserStatus::RUNNING) {
+            notFinishTask = item.first;
+            return false;
+        }
     }
     return true;
 }

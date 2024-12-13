@@ -88,6 +88,7 @@ void DbClusterDataBase::UpdateClusterParseStatus(std::string status)
 
 bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
+    responseBody.filePath = GetDbPath();
     std::string filePath = responseBody.filePath;
     int64_t dataSize = FileUtil::GetFileSize(filePath.c_str());
     std::string baseInfoSql = "select (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "

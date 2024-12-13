@@ -301,7 +301,6 @@ void SourceFileParser::Reset()
     std::unique_lock<std::mutex> lock(mutex);
     ServerLog::Info("Reset file parser and wait task completed.");
     Timeline::ParserStatusManager::Instance().SetAllTerminateStatus();
-    Timeline::ParserStatusManager::Instance().SetClusterParseStatus(Timeline::ParserStatus::TERMINATE);
     threadPool->Reset();
     ServerLog::Info("Task completed.");
     auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();

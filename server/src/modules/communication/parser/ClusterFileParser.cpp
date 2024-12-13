@@ -57,10 +57,10 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
     rapidjson::Reader reader;
     if (saxHandlerType == 0) {
-        CommunicationRapidSaxHandler rapidSaxHandler(textDb);
+        CommunicationRapidSaxHandler rapidSaxHandler(textDb, uniqueKey);
         reader.Parse<kParseNumbersAsStringsFlag>(is, rapidSaxHandler);
     } else {
-        CommunicationMatrixRapidHandler matrixRapidHandler(textDb);
+        CommunicationMatrixRapidHandler matrixRapidHandler(textDb, uniqueKey);
         reader.Parse(is, matrixRapidHandler);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -85,8 +85,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     }
     bool isHeader = true;
     std::map<std::string, size_t> dataMap;
-    while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
-            std::getline(stepTraceFileCsv, line)) {
+    while (std::getline(stepTraceFileCsv, line)) {
         std::vector<std::string> tokens = StringUtil::StringSplit(line);
         if (!tokens.empty() and isHeader) {
             // 校验表头，求必要表头和当前文件表头的差集，如果差集数量大于0，则校验不通过
@@ -143,7 +142,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 
 bool ClusterFileParser::ParseClusterFiles()
 {
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::RUNNING);
+    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::INIT);
     if (!InitClusterDatabase()) {
         ServerLog::Error("Init cluster database occur an err");
         return false;
@@ -155,7 +154,7 @@ bool ClusterFileParser::ParseClusterFiles()
     }
     if (!needClearDb) {
         ServerLog::Info("cluster db file is already exist, skip parse ");
-        ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
         textDb->QueryExtremumTimestamp(min, max);
@@ -164,6 +163,7 @@ bool ClusterFileParser::ParseClusterFiles()
         }
         return true;
     }
+    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::RUNNING);
     // parse communication file
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
@@ -188,15 +188,14 @@ bool ClusterFileParser::ParseClusterFiles()
         ServerLog::Error("Failed to create index on cluster database. path:", selectedFilePath);
         return false;
     }
-    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
-        ServerLog::Warn("Parser Cluster Status Is Terminal");
-        return false;
-    }
     return true;
 }
 
 bool ClusterFileParser::ParseClusterStep2Files()
 {
+    if (ParserStatusManager::Instance().IsClusterParserFinalState(uniqueKey)) {
+        return true;
+    }
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
@@ -216,6 +215,7 @@ bool ClusterFileParser::ParseClusterStep2Files()
     }
     // cluster analysis
     if (communicationFileList.empty() && !AttAnalyze(selectedFilePath, ATT_MODEL_TIME, AttDataType::TEXT)) {
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
 
@@ -228,7 +228,9 @@ bool ClusterFileParser::ParseClusterStep2Files()
             ServerLog::Warn("Copy and clear matrix temp file failed.");
         }
     }
-    return TransCommunicationToDb(selectedFilePath, patternCommunication);
+    bool res = TransCommunicationToDb(selectedFilePath, patternCommunication);
+    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
+    return res;
 }
 
 bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication)
@@ -248,12 +250,11 @@ bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, 
         ServerLog::Error("Failed to CreateTimeIndex on cluster database. path:", selectedPath);
         return false;
     }
-    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+    if (ParserStatusManager::Instance().IsClusterParserFinalState(uniqueKey)) {
         ServerLog::Warn("Parser Cluster Status Is Terminal");
         return false;
     }
     textDb->UpdateClusterParseStatus(FINISH_STATUS);
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
     textDb->QueryExtremumTimestamp(min, max);
@@ -472,6 +473,7 @@ std::string ClusterFileParser::GetStrValue(std::map<std::string, size_t> &dataMa
 
 bool ClusterFileParser::ParserClusterOfDb()
 {
+    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::INIT);
     std::string tempPath(selectedFilePath);
     // 如果selectedPath是单个文件，则使用该文件所在文件夹作为分析路径
     if (!FileUtil::IsFolder(selectedFilePath)) {
@@ -500,7 +502,7 @@ bool ClusterFileParser::ParserClusterOfDb()
         return false;
     }
     if (!clusterDatabase->IsDatabaseVersionChange() && clusterDatabase->HasFinishedParseLastTime()) {
-        ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return true;
     }
 
@@ -515,7 +517,7 @@ bool ClusterFileParser::ParserClusterOfDb()
 
     clusterDatabase->UpdatesClusterParseStatus(FINISH_STATUS);
     ServerLog::Info("ParseClusterFiles is success");
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+    ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
     return true;
 }
 
@@ -524,8 +526,25 @@ std::string ClusterFileParser::GetClusterDbPath()
     return clusterDbPath;
 }
 
-ClusterFileParser::ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> &database)
-    : selectedFilePath(filePath), database(database) {}
+ClusterFileParser::ClusterFileParser(const std::string &filePath, std::shared_ptr<VirtualClusterDatabase> database,
+                                     const std::string &uniqueKey)
+    : selectedFilePath(filePath), database(database), uniqueKey(uniqueKey) {}
+
+bool ClusterFileParser::CheckIsCluster(const std::string &filePath)
+{
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (filePath.find(CLUSTER_ANALYSIS_OUTPUT) != std::string::npos) {
+        ServerLog::Info("this folder is cluster_analysis_output, Check_Is_Cluster is true");
+        return true;
+    }
+    if (!FileUtil::FindFolders(filePath, folders, files)) {
+        ServerLog::Info("FindFolders is empty, Check_Is_Cluster is false");
+        return false;
+    }
+    return std::any_of(folders.begin(), folders.end(),
+                       [](std::string &folder) { return folder == CLUSTER_ANALYSIS_OUTPUT; });
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic
