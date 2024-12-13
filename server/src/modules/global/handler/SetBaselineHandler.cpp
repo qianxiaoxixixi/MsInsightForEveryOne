@@ -17,7 +17,7 @@ bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     std::unique_ptr<BaselineSettingResponse> responsePtr = std::make_unique<BaselineSettingResponse>();
     BaselineSettingResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    if (request.params.projectName.empty() || request.params.filePath.empty()) {
+    if (request.params.projectName.empty()) {
         response.body.errorMessage = "Set baseline failed, project name or filepath can't be empty!";
         SendResponse(std::move(responsePtr), false);
         return false;
@@ -29,6 +29,7 @@ bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     response.body.host = baselineInfo.host;
     response.body.errorMessage = baselineInfo.errorMessage;
     response.body.cardName = baselineInfo.cardName;
+    response.body.isCluster = baselineInfo.isCluster;
     SendResponse(std::move(responsePtr), res);
     return res;
 }

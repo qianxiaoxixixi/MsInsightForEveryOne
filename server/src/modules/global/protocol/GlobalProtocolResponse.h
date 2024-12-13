@@ -108,6 +108,7 @@ struct BaselineSettingBody {
     std::string host;
     std::string cardName;
     std::string errorMessage;
+    bool isCluster = false;
 };
 
 struct BaselineSettingResponse : public Response {

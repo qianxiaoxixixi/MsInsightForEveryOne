@@ -3,6 +3,7 @@
  */
 #include <string>
 #include "pch.h"
+#include "ConstantDefs.h"
 #include "ParserStatusManager.h"
 #include "BaselineManager.h"
 namespace Dic::Module::Global {
@@ -47,6 +48,7 @@ void BaselineManager::SetBaselineInfo(const BaselineInfo &baselineInfo)
     baselineRankId = baselineInfo.rankId;
     baselineHost = baselineInfo.host;
     baselineCardName = baselineInfo.cardName;
+    isCluster = baselineInfo.isCluster;
 }
 
 void BaselineManager::Reset()
@@ -55,5 +57,9 @@ void BaselineManager::Reset()
     baselineRankId.clear();
     baselineHost.clear();
     baselineCardName.clear();
+    if (isCluster) {
+        Timeline::ParserStatusManager::Instance().EraseClusterParserStatusByKeyWord(BASELINE);
+    }
+    isCluster = false;
 }
 }

@@ -32,6 +32,7 @@ private:
     std::string baselineRankId;
     std::string baselineHost;
     std::string baselineCardName;
+    bool isCluster = false;
     std::shared_mutex sharedMutex;
 };
 }

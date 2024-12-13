@@ -36,13 +36,14 @@ public:
     void ClearParserStatus(const std::string &fileId);
     void ClearAllParserStatus();
     ParserStatus GetParserStatus(const std::string &fileId);
-    ParserStatus GetClusterParserStatus();
+    void EraseClusterParserStatusByKeyWord(const std::string &keyWord);
+    bool IsClusterParserFinalState(const std::string &uniqueKey);
     bool SetRunningStatus(const std::string &fileId);
     bool SetFinishStatus(const std::string &fileId);
     void SetAllTerminateStatus();
     // return old status
     ParserStatus SetTerminateStatus(const std::string &fileId);
-    void SetClusterParseStatus(ParserStatus parserStatus);
+    bool SetClusterParseStatus(const std::string &uniqueKey, ParserStatus parserStatus);
     void WaitAllFinished(const std::vector<std::string> &fileIds);
     bool IsAllFinished(std::string &notFinishTask);
     bool IsFinished(const std::string &fileId);
@@ -55,11 +56,19 @@ private:
     ParserStatusManager() = default;
     ~ParserStatusManager() = default;
 
+    static bool SetStatusToInit(const std::string &uniqueKey, std::map<std::string, ParserStatus> &statusMap);
+    static bool SetStatusToRunning(const std::string &uniqueKey, std::map<std::string, ParserStatus> &statusMap);
+    static bool SetStatusToFinalState(const std::string &uniqueKey, ParserStatus parserStatus,
+                                      std::map<std::string, ParserStatus> &statusMap);
+
     std::mutex mutex;
     std::map<std::string, ParserStatus> statusMap;
     std::map<std::string, std::pair<ProjectTypeEnum, std::vector<std::string>>> pendingRankAndFilePathMap;
-    ParserStatus clusterParseStatus;
+    std::map<std::string, ParserStatus> clusterStatusMap;
     std::condition_variable parseCv;
+    const std::vector<ParserStatus> finalStateList = {
+        ParserStatus::FINISH, ParserStatus::FINISH_ALL, ParserStatus::TERMINATE
+    };
 };
 } // end of namespace Timeline
 } // end of namespace Module

@@ -15,8 +15,8 @@
 #include "BaselineManager.h"
 #include "ProjectExplorerManager.h"
 #include "TraceTime.h"
+#include "TimeUtil.h"
 #include "FileReader.h"
-#include "ParserJson.h"
 
 namespace Dic {
 namespace Module {
@@ -275,7 +275,7 @@ void ParserJson::ClusterProcess(const std::string &selectedFolder, ProjectTypeEn
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (projectType == ProjectTypeEnum::TEXT_CLUSTER) {
         auto database = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::TEXT);
-        ClusterFileParser clusterFileParser(selectedFolder, database);
+        ClusterFileParser clusterFileParser(selectedFolder, database, COMPARE + TimeUtil::Instance().NowStr());
         if (clusterFileParser.ParseClusterFiles()) {
             ServerLog::Info("The cluster file is parsed successfully.");
             parseClusterResult = PARSE_RESULT_OK;
@@ -295,8 +295,7 @@ void ParserJson::ClusterProcess(const std::string &selectedFolder, ProjectTypeEn
 void ParserJson::ClusterProcessAsyncStep(ClusterFileParser clusterFileParser)
 {
     std::string parseClusterResult;
-    if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
-        clusterFileParser.ParseClusterStep2Files()) {
+    if (clusterFileParser.ParseClusterStep2Files()) {
         ServerLog::Info("The cluster step2 file is parsed successfully.");
         parseClusterResult = PARSE_RESULT_OK;
     } else {
@@ -447,8 +446,8 @@ ProjectTypeEnum ParserJson::GetProjectType(const std::vector<std::string> &dataP
 {
     std::string error;
     std::vector<std::string> traceFiles = FindAllTraceFile(dataPath[0], error);
-    bool isCluster =
-        (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(dataPath[0]);
+    bool isCluster = (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0) ||
+        ClusterFileParser::CheckIsCluster(dataPath[0]);
     if (isCluster) {
         return ProjectTypeEnum::TEXT_CLUSTER;
     }
@@ -490,13 +489,26 @@ std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string 
     return result;
 }
 
-void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
-    Global::BaselineInfo &baselineInfo)
+void ParserJson::ParserClusterBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
 {
-    if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
-        return;
+    // 生成唯一键：COMPARE/BASELINE + YYYY-mm-DD HH:MM:SS.sss，作为一个集群解析任务的唯一标识，会根据这个标识来记录该解析任务的状态信息
+    // 增加时间戳是为了防止标识重复，避免在反复设置baseline时，不同的解析任务使用了同一标识互相影响
+    std::string uniqueKey = BASELINE + TimeUtil::Instance().NowStr();
+    // 创建新的db连接对象
+    auto database = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::TEXT);
+    // 集群解析，如果集群已解析，则只会初始化db，然后结束流程
+    ClusterFileParser clusterFileParser(projectInfos[0].fileName, database, uniqueKey);
+    if (clusterFileParser.ParseClusterFiles()) {
+        ServerLog::Info("The cluster file is parsed successfully.");
+        ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask([](ClusterFileParser parser) -> bool {
+            return parser.ParseClusterStep2Files();
+            }, clusterFileParser);
     }
-    // 当前只处理单卡情况
+}
+
+void ParserJson::ParserSingleCardBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                                          Global::BaselineInfo &baselineInfo)
+{
     std::string filePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
     std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(filePath);
     if (std::empty(jsonFiles)) {
@@ -541,6 +553,20 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
         ServerLog::Warn("Failed to parse baseline memory files.");
     }
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+}
+
+void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    Global::BaselineInfo &baselineInfo)
+{
+    if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
+        return;
+    }
+    // 判断是否为集群
+    if (baselineInfo.isCluster) {
+        ParserClusterBaseline(projectInfos);
+    } else {
+        ParserSingleCardBaseline(projectInfos, baselineInfo);
+    }
 }
 } // Module
 } // Dic

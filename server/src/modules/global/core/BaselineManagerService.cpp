@@ -6,6 +6,7 @@
 #include "DataBaseManager.h"
 #include "BaselineManager.h"
 #include "SourceFileParser.h"
+#include "ClusterFileParser.h"
 #include "BaselineManagerService.h"
 namespace Dic {
 namespace Module {
@@ -22,8 +23,14 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
 {
     ResetBaseline();
     // 查询详细数据
+    std::vector<std::string> filePathList;
+    if (!filePath.empty()) {
+        filePathList.push_back(filePath);
+    }
     std::vector<ProjectExplorerInfo> projectExplorerList =
-        ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, std::vector<std::string>{ filePath });
+        ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, filePathList);
+    // 根据二级目录判断是否为集群数据
+    baselineInfo.isCluster = IsClusterBaseline(filePath);
     if (projectExplorerList.empty() || projectExplorerList[0].parseFilePathInfos.empty()) {
         baselineInfo.errorMessage = "The project does not exist, baseline setting failed.";
         return false;
@@ -44,6 +51,16 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);
     factory->ParserBaseline(projectExplorerList, baselineInfo);
     return true;
+}
+
+bool BaselineManagerService::IsClusterBaseline(const std::string &fileName)
+{
+    // 如果内容为空，即说明设置的是一级目录的对比，视为集群对比
+    if (fileName.empty()) {
+        return true;
+    }
+    // 校验是否为集群数据
+    return FullDb::ClusterFileParser::CheckIsCluster(fileName);
 }
 }
 }

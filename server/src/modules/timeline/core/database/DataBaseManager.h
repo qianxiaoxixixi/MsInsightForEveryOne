@@ -47,6 +47,7 @@ public:
     void Clear();
     void Clear(DatabaseType type);
     void EraseClusterDb(const std::string &uniqueKey);
+    void ClearClusterDb();
     void ReleaseDatabase(const std::string &fileId);
     bool HasFileId(DatabaseType type, const std::string &fileId);
     std::shared_ptr<VirtualClusterDatabase> CreateClusterDatabase(const std::string &uniqueKey, DataType type);

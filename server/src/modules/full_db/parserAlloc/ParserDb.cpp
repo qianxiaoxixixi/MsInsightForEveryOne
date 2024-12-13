@@ -12,6 +12,7 @@
 #include "EventNotifyThreadPoolExecutor.h"
 #include "TrackInfoManager.h"
 #include "BaselineManager.h"
+#include "TimeUtil.h"
 #include "ParserDb.h"
 
 namespace Dic {
@@ -107,9 +108,8 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
 {
     std::string parseClusterResult;
     auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
-    ClusterFileParser clusterFileParser(selectedFolder, clusterDatabase);
-    if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
-        clusterFileParser.ParserClusterOfDb()) {
+    ClusterFileParser clusterFileParser(selectedFolder, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
+    if (clusterFileParser.ParserClusterOfDb()) {
         ServerLog::Info("The cluster db file is parsed successfully.");
         dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
         parseClusterResult = PARSE_RESULT_OK;
@@ -234,6 +234,14 @@ void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &pr
         return;
     }
     std::string parseFilePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
+    if (baselineInfo.isCluster) {
+        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::DB);
+        ClusterFileParser clusterFileParser(parseFilePath, clusterDatabase, BASELINE + TimeUtil::Instance().NowStr());
+        if (!clusterFileParser.ParserClusterOfDb()) {
+            ServerLog::Warn("Failed to parse cluster db files");
+        }
+        return;
+    }
     std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(msprofDBReg));
     if (pytorchFiles.empty() && msprofFiles.empty()) {

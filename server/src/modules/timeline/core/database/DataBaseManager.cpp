@@ -240,6 +240,17 @@ void DataBaseManager::EraseClusterDb(const std::string &uniqueKey)
     }
 }
 
+void DataBaseManager::ClearClusterDb()
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    for (const auto &item: clusterDatabaseMap) {
+        if (item.second != nullptr) {
+            item.second->CloseDb();
+        }
+    }
+    clusterDatabaseMap.clear();
+}
+
 /**
  * 创建集群db对象（如果对象已存在，则清除重新创建）
  *
@@ -390,6 +401,7 @@ bool DataBaseManager::ResetBaseline()
             item.second->CloseDb();
         }
     }
+    EraseClusterDb(BASELINE);
     summaryBaselineDatabaseMap.clear();
     return false;
 }

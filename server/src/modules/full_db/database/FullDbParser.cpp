@@ -49,12 +49,12 @@ void FullDbParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
     Timeline::ParserStatusManager::Instance().SetAllTerminateStatus();
-    Timeline::ParserStatusManager::Instance().SetClusterParseStatus(Timeline::ParserStatus::TERMINATE);
     ServerLog::Info("Task completed.");
     auto connList = Timeline::DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {
         conn->Stop();
     }
+    DataBaseManager::Instance().ClearClusterDb();
     Timeline::DataBaseManager::Instance().Clear();
     Timeline::TraceTime::Instance().Reset();
     FileParser::Reset();

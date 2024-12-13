@@ -12,6 +12,7 @@
 #include "ParserStatusManager.h"
 #include "KernelParse.h"
 #include "MemoryParse.h"
+#include "TimeUtil.h"
 #include "WsSessionImpl.h"
 
 
@@ -45,7 +46,7 @@ public:
         WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
         auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::TEXT);
-        ClusterFileParser clusterFileParser(testDataPath, clusterDatabase);
+        ClusterFileParser clusterFileParser(testDataPath, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
         clusterFileParser.ParseClusterFiles();
         clusterFileParser.ParseClusterStep2Files();
         WaitParseEnd({"0", "1", KERNEL_PREFIX + "0",

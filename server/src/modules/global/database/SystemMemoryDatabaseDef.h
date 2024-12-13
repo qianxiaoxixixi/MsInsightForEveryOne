@@ -34,6 +34,7 @@ struct BaselineInfo {
     std::string rankId;
     std::string cardName;
     std::string errorMessage;
+    bool isCluster = false;
 };
 }
 }
