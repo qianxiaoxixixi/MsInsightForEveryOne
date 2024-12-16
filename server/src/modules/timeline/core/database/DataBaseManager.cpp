@@ -114,8 +114,9 @@ std::shared_ptr<Memory::VirtualMemoryDataBase> DataBaseManager::GetMemoryDatabas
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
-    // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
-    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap = memoryDatabaseMap;
+    // 获取当前map，如果fileId包含baseline字样则从memoryBaselineDatabaseMap中获取，否则从memoryDatabaseMap获取
+    std::map<std::string, std::shared_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap =
+        isBaseline ? memoryBaselineDatabaseMap : memoryDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = inputId;
     if (curMemoryDbMap.count(fileId) == 0) {
