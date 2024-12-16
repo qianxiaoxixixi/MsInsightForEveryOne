@@ -92,6 +92,8 @@ const std::string REQ_RES_COMMUNICATION_LIST = "communication/duration/list";
 
 // summary
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";
+const std::string REQ_RES_PARALLELISM_ARRANGEMENT_ALL = "parallelism/arrangement/all";
+const std::string REQ_RES_PARALLELISM_PERFORMANCE_DATA = "parallelism/performance/data";
 const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
 const std::string REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY = "summary/query/parallelStrategy";
 const std::string REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY = "summary/set/parallelStrategy";
