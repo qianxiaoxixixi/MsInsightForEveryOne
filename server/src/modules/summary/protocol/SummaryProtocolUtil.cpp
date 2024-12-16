@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+#include "ClusterDef.h"
 #include "pch.h"
 #include "SummaryProtocol.h"
 #include "SummaryProtocolUtil.h"
@@ -8,6 +9,7 @@
 namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
+using namespace Dic::Module;
 using namespace rapidjson;
 #pragma region <<Response to json>>
 template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response)
@@ -281,6 +283,77 @@ std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(const P
         rankDetailList.PushBack(rankArrayJson, allocator);
     }
     JsonUtil::AddMember(body, "rankList", rankDetailList, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::move(json);
+}
+
+template <>
+std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const ParallelismArrangementResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "size", response.arrangeData.size, allocator);
+    json_t arrangements(kArrayType);
+    for (const auto& arrangement : response.arrangeData.arrangements) {
+        json_t arrangementJson(kObjectType);
+        JsonUtil::AddMember(arrangementJson, "index", arrangement.index, allocator);
+        JsonUtil::AddMember(arrangementJson, "name", arrangement.name, allocator);
+        json_t positionJson(kObjectType);
+        JsonUtil::AddMember(positionJson, "x", arrangement.position.x, allocator);
+        JsonUtil::AddMember(positionJson, "y", arrangement.position.y, allocator);
+        JsonUtil::AddMember(arrangementJson, "position", positionJson, allocator);
+        json_t attributeJson(kObjectType);
+        for (const auto& indexAttr : arrangement.indexAttributes) {
+            JsonUtil::AddMember(attributeJson, indexAttr.first, indexAttr.second, allocator);
+        }
+        JsonUtil::AddMember(arrangementJson, "attribute", attributeJson, allocator);
+        arrangements.PushBack(arrangementJson, allocator);
+    }
+    JsonUtil::AddMember(body, "arrangements", arrangements, allocator);
+    json_t indicators(kArrayType);
+    for (const auto& indicator : response.arrangeData.indicators) {
+        json_t indicatorJson(kObjectType);
+        JsonUtil::AddMember(indicatorJson, "key", indicator.key, allocator);
+        JsonUtil::AddMember(indicatorJson, "name", indicator.name, allocator);
+        JsonUtil::AddMember(indicatorJson, "rendering", indicator.rendering, allocator);
+        JsonUtil::AddMember(indicatorJson, "chart", indicator.chart, allocator);
+        JsonUtil::AddMember(indicatorJson, "stack", indicator.stack, allocator);
+        indicators.PushBack(indicatorJson, allocator);
+    }
+    JsonUtil::AddMember(body, "indicators", indicators, allocator);
+    json_t connections(kArrayType);
+    for (const auto& connection : response.arrangeData.connections) {
+        json_t connectionJson(kObjectType);
+        JsonUtil::AddMember(connectionJson, "type", connection.type, allocator);
+        JsonUtil::AddMember(connectionJson, "list", connection.indexes, allocator);
+        JsonUtil::AddMember(connectionJson, "group", connection.communicationGroups, allocator);
+        connections.PushBack(connectionJson, allocator);
+    }
+    JsonUtil::AddMember(body, "connections", connections, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::move(json);
+}
+
+template <>
+std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const ParallelismPerformanceResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t performance(kArrayType);
+    for (const auto& data : response.indicatorData.performanceData) {
+        json_t dataJson(kObjectType);
+        JsonUtil::AddMember(dataJson, "index", data.index, allocator);
+        for (const auto& indicator :data.indicators) {
+            JsonUtil::AddMember(dataJson, indicator.first, indicator.second, allocator);
+        }
+        performance.PushBack(dataJson, allocator);
+    }
+    JsonUtil::AddMember(body, "performance", performance, allocator);
+    JsonUtil::AddMember(body, "advice", response.advice, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::move(json);
 }

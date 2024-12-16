@@ -167,7 +167,9 @@ struct CommunicationDetailResponse : public Response {
     int64_t totalNum{};
 };
 
+const std::string KEY_ALL = "all";
 const std::string KEY_ALGORITHM = "algorithm";
+const std::string KEY_DIMENSION = "dimension";
 const std::string KEY_LEVEL = "level";
 const std::string KEY_WORLD_SIZE = "worldSize";
 const std::string KEY_TP_SIZE = "tpSize";
@@ -177,6 +179,11 @@ const std::string KEY_CP_SIZE = "cpSize";
 const std::string KEY_EP_SIZE = "epSize";
 const std::string KEY_RESULT = "result";
 const std::string KEY_MSG = "msg";
+const std::string KEY_TP_INDEX = "tpIndex";
+const std::string KEY_PP_INDEX = "ppIndex";
+const std::string KEY_DP_INDEX = "dpIndex";
+const std::string KEY_CP_INDEX = "cpIndex";
+const std::string KEY_EP_INDEX = "epIndex";
 
 struct QueryParallelStrategyResponse : public Response {
     QueryParallelStrategyResponse() : Response(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {}
@@ -188,6 +195,17 @@ struct SetParallelStrategyResponse : public Response {
     SetParallelStrategyResponse() : Response(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY) {}
     bool result = true;
     std::string msg;
+};
+
+struct ParallelismArrangementResponse : public Response {
+    ParallelismArrangementResponse() : Response(REQ_RES_PARALLELISM_ARRANGEMENT_ALL) {}
+    Module::ArrangementAndConnectionData arrangeData;
+};
+
+struct ParallelismPerformanceResponse : public Response {
+    ParallelismPerformanceResponse() : Response(REQ_RES_PARALLELISM_PERFORMANCE_DATA) {}
+    Module::PerformanceIndicatorData indicatorData;
+    std::vector<std::string> advice;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -23,6 +23,8 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyRequest);
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, ToQueryFwdBwdTimelineRequest);
+    jsonToReqFactory.emplace(REQ_RES_PARALLELISM_ARRANGEMENT_ALL, ToQueryParallelismArrangementRequest);
+    jsonToReqFactory.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA, ToQueryParallelismPerformanceRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -38,6 +40,8 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyResponse);
     resToJsonFactory.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, ToQueryFwdBwdTimelineResponse);
+    resToJsonFactory.emplace(REQ_RES_PARALLELISM_ARRANGEMENT_ALL, ToQueryParallelismArrangementResponse);
+    resToJsonFactory.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA, ToQueryParallelismPerformanceResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -211,6 +215,63 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryFwdBwdTimelineRequest(const jso
     return reqPtr;
 }
 
+std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismArrangementRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<QueryParallelismArrangementRequest> reqPtr = std::make_unique<QueryParallelismArrangementRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of query parallelism arrangement request.";
+        return nullptr;
+    }
+    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_CP_SIZE, KEY_EP_SIZE,
+                                     KEY_DIMENSION};
+    for (auto &item : keys) {
+        if (!json["params"].HasMember(item.c_str())) {
+            error = "Query parallelism arrangement request didn't have key: " + item;
+            return nullptr;
+        }
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.algorithm, json["params"], KEY_ALGORITHM);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.tpSize, json["params"], KEY_TP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.ppSize, json["params"], KEY_PP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.dpSize, json["params"], KEY_DP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<QueryParallelismPerformanceRequest> reqPtr = std::make_unique<QueryParallelismPerformanceRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of query parallelism performance request.";
+        return nullptr;
+    }
+    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_CP_SIZE, KEY_EP_SIZE,
+                                     KEY_DIMENSION, KEY_ORDERBY, KEY_STEP};
+    for (auto &item : keys) {
+        if (!json["params"].HasMember(item.c_str())) {
+            error = "Query parallelism performance request didn't have key: " + item;
+            return nullptr;
+        }
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.algorithm, json["params"], KEY_ALGORITHM);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.tpSize, json["params"], KEY_TP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.ppSize, json["params"], KEY_PP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.dpSize, json["params"], KEY_DP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], KEY_ORDERBY);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.step, json["params"], KEY_STEP);
+    if (json["params"].HasMember("indexList") && json["params"]["indexList"].IsArray()) {
+        for (const auto& index : json["params"]["indexList"].GetArray()) {
+            reqPtr->params.indexList.emplace_back(index.GetUint());
+        }
+    }
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -269,6 +330,18 @@ std::optional<document_t> SummaryProtocol::ToQueryFwdBwdTimelineResponse(const R
 {
     return ToResponseJson<PipelineFwdBwdTimelineResponse>(
         dynamic_cast<const PipelineFwdBwdTimelineResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToQueryParallelismArrangementResponse(const Response &response)
+{
+    return ToResponseJson<ParallelismArrangementResponse>(
+        dynamic_cast<const ParallelismArrangementResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToQueryParallelismPerformanceResponse(const Response &response)
+{
+    return ToResponseJson<ParallelismPerformanceResponse>(
+        dynamic_cast<const ParallelismPerformanceResponse &>(response));
 }
 #pragma endregion
 } // namespace Protocol

@@ -8,6 +8,7 @@
 #include <string>
 #include <optional>
 #include <fstream>
+#include "unordered_map"
 #include "ServerLog.h"
 
 namespace Dic {
@@ -161,6 +162,66 @@ const std::vector<std::string> VALID_STEP_STATISTICS_HEADERS = {
 const std::vector<std::string> PARALLEL_STRATEGY_HEADERS = {
     FIELD_DP_INDEX, FIELD_PP_INDEX, FIELD_TP_INDEX
 };
+
+struct Position {
+    uint8_t x = 0;
+    uint8_t y = 0;
+};
+
+struct IndicatorAttr {
+    std::string key;
+    // 性能指标名称
+    std::string name;
+    // 是否需要在2D排布图上按色域渲染
+    bool rendering;
+    // 下方绘图时图表类型，柱形图还是折线图
+    std::string chart;
+    // 如果是堆积柱形图，堆积分类
+    std::string stack;
+};
+
+struct Connection {
+    // 界面上一条连线连接多个element
+    std::vector<uint32_t> indexes{};
+    // dp, pp, tp, cp...
+    std::string type;
+    // 界面上一条连线对应多个通信域
+    std::vector<std::string> communicationGroups;
+};
+
+// 一张卡或一个分组的相关信息，包括序号、名称、位置、并行分组属性、包含的卡等信息
+struct Element {
+    uint32_t index; // rank or group index
+    std::string name; // rank or group name
+    Position position{}; // rank or group position in 2D arrangement
+    std::unordered_map<std::string, uint32_t> indexAttributes{}; // {dp_index=0}
+    std::vector<std::string> ranks;
+};
+
+struct ArrangementAndConnectionData {
+    uint32_t size;
+    std::vector<IndicatorAttr> indicators;
+    std::vector<Element> arrangements; // rank or group arrangement and performance data
+    std::vector<Connection> connections; // connection between ranks or groups
+};
+
+struct IndicatorDataStruct {
+    uint32_t index; // rank or group index
+    std::unordered_map<std::string, double> indicators; // performance data
+};
+
+// 用来返回性能全量数据
+struct PerformanceIndicatorData {
+    std::vector<IndicatorAttr> indicators;
+    std::vector<IndicatorDataStruct> performanceData;
+};
+
+// Summary性能数据
+const std::string KEY_COMPUTING_TIME = "computingTime";
+const std::string KEY_COMMUNICATION_TIME = "communicationTime";
+const std::string KEY_COMMUNICATION_NOT_OVERLAPPED = "communicationNotOverlapped";
+const std::string KEY_FREE_TIME = "freeTime";
+
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

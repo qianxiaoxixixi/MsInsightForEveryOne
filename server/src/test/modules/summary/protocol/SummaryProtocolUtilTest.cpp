@@ -11,6 +11,7 @@
 #include "SummaryProtocolResponse.h"
 
 using namespace Dic::Protocol;
+using namespace Dic::Module;
 class SummaryProtocolUtilTest : public ::testing::Test {
 protected:
     void SetUp() override
@@ -79,6 +80,97 @@ TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyRequestWithCpAndTpTest)
     EXPECT_EQ(result.config.dpSize, 4); // dp = 4
     EXPECT_EQ(result.config.cpSize, expectCp);
     EXPECT_EQ(result.config.epSize, expectEp);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementRequestWillReturnTrueWhenInputCorrect)
+{
+    Dic::document_t json;
+    std::string err;
+    std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/arrangement/all", "resultCallbackId": 0, "params": {"algorithm": "test",
+        "tpSize": 2, "ppSize": 3, "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp"}})";
+    json.Parse(reqJson.c_str());
+    auto result = dynamic_cast<QueryParallelismArrangementRequest &>(*(protocol.FromJson(json, err)));
+    EXPECT_EQ(result.command, REQ_RES_PARALLELISM_ARRANGEMENT_ALL);
+    EXPECT_EQ(result.params.config.algorithm, "test");
+    EXPECT_EQ(result.params.config.tpSize, 2); // tp = 2
+    EXPECT_EQ(result.params.config.ppSize, 3); // pp = 3
+    EXPECT_EQ(result.params.config.dpSize, 4); // dp = 4
+    EXPECT_EQ(result.params.config.cpSize, 5); // cp = 5
+    EXPECT_EQ(result.params.config.epSize, 6); // cp = 6
+    EXPECT_EQ(result.params.dimension, "ep-dp-cp-pp-tp");
+}
+
+TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementRequestWillReturnNullWhenInputWrong)
+{
+    Dic::document_t json;
+    std::string err;
+    std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/arrangement/all", "resultCallbackId": 0, "params": {
+        "tpSize": 2, "ppSize": 3, "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp"}})";
+    json.Parse(reqJson.c_str());
+    auto result = protocol.FromJson(json, err);
+    EXPECT_TRUE(result == nullptr);
+    reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/arrangement/all", "resultCallbackId": 0, "params": {"algorithm": "test",
+        "ppSize": 3, "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp"}})";
+    json.Parse(reqJson.c_str());
+    result = protocol.FromJson(json, err);
+    EXPECT_TRUE(result == nullptr);
+    reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/arrangement/all", "resultCallbackId": 0, "params": {"algorithm": "test",
+        "tpSize": 2, "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp"}})";
+    json.Parse(reqJson.c_str());
+    result = protocol.FromJson(json, err);
+    EXPECT_TRUE(result == nullptr);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnTrueWhenInputCorrect)
+{
+    Dic::document_t json;
+    std::string err;
+    std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/performance/data", "params": {"algorithm": "test", "tpSize": 2, "ppSize": 3,
+        "dpSize": 4, "cpSize": 5, "epSize": 6, "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa",
+        "step": "all"}})";
+    json.Parse(reqJson.c_str());
+    auto result = dynamic_cast<QueryParallelismPerformanceRequest &>(*(protocol.FromJson(json, err)));
+    EXPECT_EQ(result.command, REQ_RES_PARALLELISM_PERFORMANCE_DATA);
+    EXPECT_EQ(result.params.config.algorithm, "test");
+    EXPECT_EQ(result.params.config.tpSize, 2); // tp = 2
+    EXPECT_EQ(result.params.config.ppSize, 3); // pp = 3
+    EXPECT_EQ(result.params.config.dpSize, 4); // dp = 4
+    EXPECT_EQ(result.params.config.cpSize, 5); // cp = 5
+    EXPECT_EQ(result.params.config.epSize, 6); // cp = 6
+    EXPECT_EQ(result.params.indexList.size(), 2); // indexList.size() = 2
+    EXPECT_EQ(result.params.dimension, "ep-dp-cp-pp-tp");
+    EXPECT_EQ(result.params.step, "all");
+}
+
+TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnNullWhenInputWithWrong)
+{
+    Dic::document_t json;
+    std::string err;
+    std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/performance/data", "params": {"tpSize": 2, "ppSize": 3,
+        "dpSize": 4, "cpSize": 5, "epSize": 6, "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa",
+        "step": "all"}})";
+    json.Parse(reqJson.c_str());
+    auto result = protocol.FromJson(json, err);
+    EXPECT_TRUE(result == nullptr);
+    reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
+        "command": "parallelism/performance/data", "params": {"algorithm": "test", "ppSize": 3, "cpSize": 4,
+        "dpSize": 5, "epSize": 6, "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa",
+        "step": "all"}})";
+    json.Parse(reqJson.c_str());
+    result = protocol.FromJson(json, err);
+    EXPECT_TRUE(result == nullptr);
+    reqJson = R"({"id": 2, "moduleName": "summary", "type": "request", "command": "parallelism/performance/data",
+        "params": {"algorithm": "test", "tpSize": 3, "cpSize": 4, "dpSize": 5, "epSize": 6,
+        "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa", "step": "all"}})";
+    json.Parse(reqJson.c_str());
+    result = protocol.FromJson(json, err);
+    EXPECT_TRUE(result == nullptr);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToQueryParallelStrategyResponseTest)
@@ -205,4 +297,70 @@ TEST_F(SummaryProtocolUtilTest, ToQueryFwdBwdTimelineResponseTestWillReturnWhenN
         }
         i++;
     }
+}
+
+TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementResponseTestWillReturnWhenNormalInput)
+{
+    Dic::Protocol::ParallelismArrangementResponse response{};
+    IndicatorAttr attr = {"computingTime", "computing time", true, "bar", "time"};
+    response.arrangeData.indicators.push_back(attr);
+    Position pos = {0, 0};
+    Element ele;
+    ele.index = 0;
+    ele.name = "ep0-dp0-cp0-pp0-tp0";
+    ele.position = pos;
+    ele.indexAttributes["tpIndex"] = 0;
+    response.arrangeData.arrangements.push_back(ele);
+    response.arrangeData.size = response.arrangeData.arrangements.size();
+    Connection con {{0, 1}, "tp", {}};
+    response.arrangeData.connections.push_back(con);
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("arrangements"), true);
+    ASSERT_EQ(jsonOptional.value()["body"]["arrangements"].GetArray().Size(), response.arrangeData.size);
+    int i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["arrangements"].GetArray()) {
+        auto tmp = response.arrangeData.arrangements.at(i);
+        EXPECT_EQ(item["index"].GetUint(), tmp.index);
+        EXPECT_EQ(item["name"].GetString(), tmp.name);
+        EXPECT_EQ(item.HasMember("position"), true);
+        EXPECT_EQ(item.HasMember("attribute"), true);
+        i++;
+    }
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("indicators"), true);
+    ASSERT_EQ(jsonOptional.value()["body"]["indicators"].GetArray().Size(), response.arrangeData.indicators.size());
+    i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["indicators"].GetArray()) {
+        auto tmp = response.arrangeData.indicators.at(i);
+        EXPECT_EQ(item["key"].GetString(), tmp.key);
+        EXPECT_EQ(item["name"].GetString(), tmp.name);
+        i++;
+    }
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("connections"), true);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceResponseTestWillReturnWhenNormalInput)
+{
+    Dic::Protocol::ParallelismPerformanceResponse response{};
+    IndicatorDataStruct indicator;
+    indicator.index = 0;
+    indicator.indicators["computingTime"] = 100; // 100
+    response.indicatorData.performanceData.push_back(indicator);
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("performance"), true);
+    ASSERT_EQ(jsonOptional.value()["body"]["performance"].GetArray().Size(),
+              response.indicatorData.performanceData.size());
+    int i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["performance"].GetArray()) {
+        auto tmp = response.indicatorData.performanceData.at(i);
+        EXPECT_EQ(item["index"].GetUint(), tmp.index);
+        EXPECT_EQ(item["computingTime"].GetDouble(), tmp.indicators["computingTime"]);
+        i++;
+    }
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("advice"), true);
 }

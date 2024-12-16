@@ -140,6 +140,33 @@ struct PipelineFwdBwdTimelineRequest : public Request {
     PipelineRankTimeParam params;
 };
 
+struct ParallelismArrangement {
+    Module::ParallelStrategyConfig config;
+    std::string dimension;
+};
+
+struct QueryParallelismArrangementRequest : public Request {
+    QueryParallelismArrangementRequest() : Request(REQ_RES_PARALLELISM_ARRANGEMENT_ALL) {};
+    ParallelismArrangement params;
+};
+
+struct ParallelismPerformance {
+    Module::ParallelStrategyConfig config;
+    std::string dimension;
+    std::string orderBy;
+    std::string step;
+    std::vector<uint32_t> indexList;
+};
+
+struct QueryParallelismPerformanceRequest : public Request {
+    QueryParallelismPerformanceRequest() : Request(REQ_RES_PARALLELISM_PERFORMANCE_DATA) {};
+    ParallelismPerformance params;
+};
+
+
+const std::string KEY_ORDERBY = "orderBy";
+const std::string KEY_STEP = "step";
+
 struct ComputeDetailParams {
     std::string rankId;
     std::string timeFlag;
