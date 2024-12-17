@@ -80,6 +80,7 @@ public:
 
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
     std::unordered_map<std::string, int64_t> GetAllGroupMap();
+    bool QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data) override;
 
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;

@@ -901,5 +901,26 @@ bool TextClusterDatabase::GetParallelConfigFromStepTrace(ParallelStrategyConfig 
         "order by step_id asc, CAST(rank_id AS INTEGER) asc";
     return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
+
+bool TextClusterDatabase::QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data)
+{
+    std::string sql;
+    if (step.empty() || step == "All") {
+        sql = "select rank_id as rank, round(sum(compute_time), 3) as compute, "
+            "round(sum(pure_communication_time), 3) as not_overlap, "
+            "round(sum(overlap_communication_time), 3) as overlap, round(sum(communication_time), 3) as communication, "
+            "round(sum(free_time), 3) as free, "
+            "round(sum(pure_communication_exclude_receive_time), 3) as exclude_receive, "
+            "case WHEN sum(preparing) < 0 then 0 else round(sum(preparing), 3) end as preparing "
+            "FROM " + TABLE_STEP_TRACE + " WHERE rank_id <> '' GROUP BY rank_id";
+    } else {
+        sql = "select rank_id as rank, compute_time as compute, pure_communication_time as not_overlap, "
+            "overlap_communication_time as overlap, communication_time as communication, "
+            "free_time as free, pure_communication_exclude_receive_time as exclude_receive, "
+            "case WHEN preparing < 0 then 0 else preparing end as preparing FROM " + TABLE_STEP_TRACE + " "
+            "WHERE rank_id <> '' and step_id = ?";
+    }
+    return ExecuteQueryAllPerformanceDataByStep(sql, step, data);
+}
 } // end of namespace Module
 } // end of namespace Dic

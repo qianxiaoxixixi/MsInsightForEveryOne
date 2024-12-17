@@ -242,3 +242,40 @@ TEST_F(TestSuit, QueryMatrixSortOpNames)
     int expectSize = 3;
     EXPECT_EQ(responseBody.size(), expectSize);
 }
+
+TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
+{
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "2";
+    std::vector<Dic::Module::StepStatistic> data{};
+    auto result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 16); // 16
+    EXPECT_EQ(data.at(0).prepareTime, 0);
+    step = "3";
+    data.clear();
+    result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 0);
+}
+
+TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)
+{
+    DataBaseManager::Instance().SetDataType(DataType::TEXT);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "";
+    std::vector<Dic::Module::StepStatistic> data{};
+    auto result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 16); // 16
+    EXPECT_EQ(data.at(0).prepareTime, 0);
+    EXPECT_NEAR(data.at(0).freeTime, 69909.504, 0.0001); // 69909.504 for result, 0.0001 for error
+    step = "All";
+    data.clear();
+    result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 16); // 16
+    EXPECT_EQ(data.at(0).prepareTime, 0);
+    EXPECT_NEAR(data.at(0).freeTime, 69909.504, 0.0001); // 69909.504 for result, 0.0001 for error
+}
