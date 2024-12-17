@@ -520,6 +520,26 @@ bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &c
           "order by step asc, CAST(`index` AS INTEGER) asc" ;
     return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
+
+bool DbClusterDataBase::QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data)
+{
+    std::string sql;
+    if (step.empty() || step == "All") {
+        sql = "select \"index\" as rank, round(sum(computing), 3) as compute, "
+            "round(sum(communication_not_overlapped), 3) as not_overlap, round(sum(overlapped), 3) as overlap, "
+            "round(sum(communication), 3) as communication, round(sum(free), 3) as free, "
+            "round(sum(preparing), 3) as preparing, "
+            "round(sum(communication_not_overlapped_and_exclude_receive), 3) as exclude_receive "
+            "FROM " + TABLE_STEP_TRACE_TIME + " Where type = 'rank' Group By \"index\"";
+    } else {
+        sql = "select \"index\" as rank, computing as compute, communication_not_overlapped as not_overlap, "
+            "overlapped as overlap, communication, free, preparing,"
+            "communication_not_overlapped_and_exclude_receive as exclude_receive FROM " + TABLE_STEP_TRACE_TIME + " "
+            "Where type = 'rank' and step = ?";
+    }
+
+    return ExecuteQueryAllPerformanceDataByStep(sql, step, data);
+}
 }
 }
 }

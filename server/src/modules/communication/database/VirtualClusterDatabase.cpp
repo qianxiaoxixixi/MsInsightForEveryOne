@@ -816,5 +816,36 @@ bool VirtualClusterDatabase::UpdatesClusterParseStatus(const std::string &status
 {
     return UpdateValueIntoStatusInfoTable(clusterParseStatus, status);
 }
+
+bool VirtualClusterDatabase::ExecuteQueryAllPerformanceDataByStep(const std::string &sql,
+    const std::string &step, std::vector<StepStatistic> &data)
+{
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query all performance data by step.");
+        return false;
+    }
+    if (!step.empty() && step != "All") {
+        stmt->BindParams(step);
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query all performance data by step.");
+        return false;
+    }
+    while (resultSet->Next()) {
+        StepStatistic one{};
+        one.rankId = resultSet->GetString("rank");
+        one.computingTime = resultSet->GetDouble("compute");
+        one.pureCommunicationTime = resultSet->GetDouble("not_overlap");
+        one.overlapCommunicationTime = resultSet->GetDouble("overlap");
+        one.communicationTime = resultSet->GetDouble("communication");
+        one.freeTime = resultSet->GetDouble("free");
+        one.prepareTime = resultSet->GetDouble("preparing");
+        one.pureCommunicationExcludeReceiveTime = resultSet->GetDouble("exclude_receive");
+        data.emplace_back(one);
+    }
+    return true;
+}
 }
 }

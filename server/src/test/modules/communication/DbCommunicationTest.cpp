@@ -362,3 +362,36 @@ TEST_F(DbCommunicationTest, GetParallelConfigFromStepTraceSuccess)
     EXPECT_EQ(config.tpSize, exceptTpSize);
     EXPECT_EQ(level, "undefined");
 }
+
+TEST_F(DbCommunicationTest, QueryAllPerformanceDataByStepWhenSingleStep)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "1";
+    std::vector<Dic::Module::StepStatistic> data{};
+    auto result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 8); // 8
+    EXPECT_EQ(data.at(0).prepareTime, 473.646); // 473.646 for result
+    step = "3";
+    data.clear();
+    result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 0);
+}
+
+TEST_F(DbCommunicationTest, QueryAllPerformanceDataByStepWhenAllStep)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string step = "";
+    std::vector<Dic::Module::StepStatistic> data{};
+    auto result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 8); // 8
+    EXPECT_EQ(data.at(0).prepareTime, 1075.410); // 1075.410 for result
+    step = "All";
+    data.clear();
+    result = database->QueryAllPerformanceDataByStep(step, data);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(data.size(), 8); // 8
+    EXPECT_EQ(data.at(0).prepareTime, 1075.410); // 1075.410 for result
+}
