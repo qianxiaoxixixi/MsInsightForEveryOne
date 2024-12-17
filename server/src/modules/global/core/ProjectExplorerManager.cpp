@@ -8,6 +8,7 @@
 #include "SystemMemoryDatabase.h"
 #include "SystemMemoryDatabaseDef.h"
 #include "ParserFactory.h"
+#include "TimeUtil.h"
 #include "ProjectExplorerManager.h"
 
 namespace Dic {

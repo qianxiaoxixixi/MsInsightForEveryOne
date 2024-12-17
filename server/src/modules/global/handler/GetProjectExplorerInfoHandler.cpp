@@ -26,10 +26,15 @@ bool GetProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> reque
             res[info.projectName].push_back(item.parseFilePath);
         }
     }
-    for (const auto &item : res) {
+
+    for (const auto &info: infos) {
+        if (res.count(info.projectName) == 0) {
+            continue;
+        }
         Protocol::ProjectDirectoryInfo temp;
-        temp.projectName = item.first;
-        temp.fileName = item.second;
+        temp.projectName = info.projectName;
+        temp.fileName = res[info.projectName];
+        res.erase(info.projectName);
         response.body.projectDirectoryList.push_back(temp);
     }
 

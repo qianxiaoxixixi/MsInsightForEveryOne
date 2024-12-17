@@ -27,6 +27,7 @@ struct ProjectExplorerInfo {
     int64_t projectType = 0;
     std::string importType;
     std::vector<std::string> dbPath;
+    std::string accessTime;
 };
 
 struct BaselineInfo {

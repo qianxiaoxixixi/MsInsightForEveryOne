@@ -32,6 +32,7 @@ protected:
         info.importType = importType;
         info.projectType = static_cast<int64_t>(projectType);
         info.dbPath = dbPath;
+        info.accessTime = "2000-01-01 00:00:00.000";
         return info;
     }
     void InitProjectExplorerData()

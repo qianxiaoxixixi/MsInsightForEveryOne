@@ -24,7 +24,7 @@ bool SystemMemoryDatabase::CreateTable()
         return true;
     }
     std::string sql = "CREATE TABLE " + projectExplorerTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
-         "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, dbPath Text, "
+         "projectName TEXT, fileName TEXT, projectType INTEGER, importType TEXT, dbPath Text, accessTime TEXT, "
          "UNIQUE (projectName, fileName) );"
          "CREATE TABLE " + parseFileInfoTable + " ( id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "projectExplorerId INTEGER, parseFilePath TEXT, dbPath Text, UNIQUE (projectExplorerId, parseFilePath));";
@@ -48,15 +48,16 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplo
         }
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    std::string sql = "INSERT INTO " + projectExplorerTable + "(projectName, fileName, projectType, importType, dbPath)"
-                                                              " VALUES(?, ?, ?, ?, ?)";
+    std::string sql = "INSERT INTO " + projectExplorerTable +
+        "(projectName, fileName, projectType, importType, dbPath, accessTime) VALUES(?, ?, ?, ?, ?, ?)";
     for (size_t i = 1; i < projectExplorerInfos.size(); ++i) {
-        sql += ",(?, ?, ?, ?, ?)";
+        sql += ",(?, ?, ?, ?, ?, ?)";
     }
     sql += " ON CONFLICT(projectName, fileName) DO UPDATE SET"
            " projectType = EXCLUDED.projectType,"
            " importType = EXCLUDED.importType,"
-           " dbPath = EXCLUDED.dbPath;";
+           " dbPath = EXCLUDED.dbPath,"
+           " accessTime = EXCLUDED.accessTime;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");
@@ -64,7 +65,7 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplo
     }
     for (const auto &item: projectExplorerInfos) {
         std::string dbPath = StringUtil::join(item.dbPath, ",");
-        stmt->BindParams(item.projectName, item.fileName, item.projectType, item.importType, dbPath);
+        stmt->BindParams(item.projectName, item.fileName, item.projectType, item.importType, dbPath, item.accessTime);
     }
     if (!stmt->Execute()) {
         ServerLog::Error("Failed to save FileMenuData, stmt execute failed.");
@@ -135,8 +136,8 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
     const std::vector<std::string> &projectNameList, const std::vector<std::string>& fileNameList)
 {
     std::vector<ProjectExplorerInfo> res;
-    std::string sql = "SELECT id, projectName, fileName, projectType, importType, dbPath FROM " + projectExplorerTable +
-            " WHERE 1 = 1";
+    std::string sql = "SELECT id, projectName, fileName, projectType, importType, dbPath, accessTime FROM "
+            + projectExplorerTable + " WHERE 1 = 1";
     if (!projectNameList.empty()) {
         sql += " and projectName in (" + StringUtil::CreateQuestionMarkString(projectNameList.size()) + ")";
     }
@@ -165,6 +166,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
         info.projectType = resultSet->GetInt64("projectType");
         info.importType = resultSet->GetString("importType");
         info.dbPath = StringUtil::Split(resultSet->GetString("dbPath"), ",");
+        info.accessTime = resultSet->GetString("accessTime");
         res.emplace_back(info);
     }
     return res;

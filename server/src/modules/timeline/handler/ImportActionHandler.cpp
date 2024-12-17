@@ -8,6 +8,7 @@
 #include "ProjectExplorerManager.h"
 #include "SourceFileParser.h"
 #include "JupyterServerManager.h"
+#include "TimeUtil.h"
 #include "ImportActionHandler.h"
 
 namespace Dic {
@@ -112,6 +113,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
         projectExplorerInfo.projectName = request.params.projectName;
         projectExplorerInfo.projectType = static_cast<int64_t>(projectType);
         projectExplorerInfo.importType = "import";
+        projectExplorerInfo.accessTime = TimeUtil::Instance().NowStr();
         for (const auto &parseFile: parseFileList) {
             Global::ParseFileInfo parseFileInfo;
             parseFileInfo.parseFilePath = parseFile;
