@@ -36,7 +36,6 @@ const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource,
         dataSources.value[idx].dataPath = dataSource.dataPath;
         return true;
     }
-
     const dataPathIdx = dataSource.dataPath.findIndex(path =>
         dataSources.value[idx].dataPath.includes(path));
     if (dataPathIdx === -1) {
