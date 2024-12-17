@@ -13,6 +13,8 @@
 #include "QueryParallelStrategyConfigHandler.h"
 #include "SetParallelStrategyConfigHandler.h"
 #include "QueryFwdBwdTimelineHandler.h"
+#include "QueryParallelismArrangementHandler.h"
+#include "QueryParallelismPerformanceHandler.h"
 #include "ProtocolDefs.h"
 #include "SummaryModule.h"
 
@@ -45,6 +47,10 @@ void SummaryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY,
                               std::make_unique<SetParallelStrategyConfigHandler>());
     requestHandlerMap.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, std::make_unique<QueryFwdBwdTimelineHandler>());
+    requestHandlerMap.emplace(REQ_RES_PARALLELISM_ARRANGEMENT_ALL,
+                              std::make_unique<QueryParallelismArrangementHandler>());
+    requestHandlerMap.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA,
+                              std::make_unique<QueryParallelismPerformanceHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

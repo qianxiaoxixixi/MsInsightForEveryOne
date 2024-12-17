@@ -12,6 +12,8 @@
 #include "RankAndBubbleTimeHandler.h"
 #include "SetParallelStrategyConfigHandler.h"
 #include "StageAndBubbleTimeHandler.h"
+#include "QueryParallelismArrangementHandler.h"
+#include "QueryParallelismPerformanceHandler.h"
 #include "StageHandler.h"
 #include "StepHandler.h"
 
@@ -129,6 +131,58 @@ TEST_F(HandlerTest, SetParallelStrategyConfigHandlerWithExecuteSqlError)
     request->config.ppSize = NUMBER_TEN;
     request->config.epSize = NUMBER_TEN;
     SetParallelStrategyConfigHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryParallelismArrangementHandlerShouldReturnFalseWithParamError)
+{
+    auto request = std::make_unique<QueryParallelismArrangementRequest>();
+    request->params.config.tpSize = 2; // 2
+    request->params.config.dpSize = 4; // 4
+    request->params.config.cpSize = 2; // 2
+    request->params.config.ppSize = 2; // 2
+    request->params.config.epSize = 0; // 0
+    QueryParallelismArrangementHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryParallelismArrangementHandlerShouldReturnFalseWithDataBaseError)
+{
+    auto request = std::make_unique<QueryParallelismArrangementRequest>();
+    request->params.config.tpSize = 2; // 2
+    request->params.config.dpSize = 4; // 4
+    request->params.config.cpSize = 2; // 2
+    request->params.config.ppSize = 2; // 2
+    request->params.config.epSize = 1; // 1
+    QueryParallelismArrangementHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnFalseWithParamError)
+{
+    auto request = std::make_unique<QueryParallelismPerformanceRequest>();
+    request->params.config.tpSize = 2; // 2
+    request->params.config.dpSize = 4; // 4
+    request->params.config.cpSize = 2; // 2
+    request->params.config.ppSize = 2; // 2
+    request->params.config.epSize = 0; // 0
+    QueryParallelismPerformanceHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnFalseWithDataBaseError)
+{
+    auto request = std::make_unique<QueryParallelismPerformanceRequest>();
+    request->params.config.tpSize = 2; // 2
+    request->params.config.dpSize = 4; // 4
+    request->params.config.cpSize = 2; // 2
+    request->params.config.ppSize = 2; // 2
+    request->params.config.epSize = 1; // 1
+    QueryParallelismPerformanceHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }
