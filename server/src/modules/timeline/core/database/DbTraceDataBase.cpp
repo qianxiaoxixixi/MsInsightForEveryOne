@@ -650,8 +650,10 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
         }
         std::sort(timeInfoList.begin(), timeInfoList.end(), std::less<OVERLAP_INFO>());
         std::vector<OVERLAP_INFO> overlapInfoList;
-        OVERLAP_INFO curBlock = OVERLAP_INFO(timeInfoList.begin()->startNs, timeInfoList.begin()->endNs,
-                                             timeInfoList.begin()->type); // 记录当前最大截结束时间对应的覆盖区块
+        // 记录当前最大截结束时间对应的覆盖区块
+        // 此处为了添加第一块数据
+        OVERLAP_INFO curBlock = OVERLAP_INFO(timeInfoList.begin()->startNs, timeInfoList.begin()->startNs,
+                                             -1);
         for (const auto &timeInfo: timeInfoList) {
             if (curBlock.type == 1) { // Communication = 1
                 overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
@@ -667,6 +669,11 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
                 curBlock.startNs = timeInfo.endNs > curBlock.endNs ? curBlock.endNs : timeInfo.endNs;
                 curBlock.endNs = timeInfo.endNs > curBlock.endNs ? timeInfo.endNs : curBlock.endNs;
             }
+        }
+        // 此处为了添加最后一块数据
+        if (curBlock.type == 1) { // Communication = 1
+            overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
+                                         curBlock.endNs, 2);
         }
         if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
             Server::ServerLog::Info("Generate overlap analysis success");
@@ -1335,11 +1342,29 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
             ServerLog::Error("Query operate metadata, MetaType: ", metaType, " reason: ", e.What());
             return false;
         }
+        UpdataCommucationThreadName(type, process);
         if (!process->children.empty()) {
             metaData.emplace_back(std::move(process));
         }
     }
     return true;
+}
+
+// 这是一个补丁，后续需要修改掉
+void DbTraceDataBase::UpdataCommucationThreadName(const PROCESS_TYPE &type,
+    std::unique_ptr<Protocol::UnitTrack> &process) const
+{
+    const std::string suffix = "group";
+    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0") && type == PROCESS_TYPE::HCCL) {
+        for (auto &item : process->children) {
+            if (StringUtil::StartWith(item->metaData.threadName, "Group") &&
+                StringUtil::EndWith(item->metaData.threadName, "Communication")) {
+                std::string threadId = item->metaData.threadId;
+                std::string groupName = threadId.substr(0, threadId.size() - suffix.size());
+                item->metaData.threadName = "Group " + stringsCache.at(path)[groupName] + " Communication";
+            }
+        }
+    }
 }
 
 void DbTraceDataBase::ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process,
