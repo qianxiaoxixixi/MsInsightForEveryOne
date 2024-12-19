@@ -72,12 +72,6 @@ public:
         BaselineInfo baselineInfo;
         bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo);
         std::string notFinishTask = "";
-        int index = 0;
-        while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
-            const int sleepTime = 2000;
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
-            index++;
-        }
         return result;
     }
 
