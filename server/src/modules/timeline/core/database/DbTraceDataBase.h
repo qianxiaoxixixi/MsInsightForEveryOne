@@ -188,6 +188,8 @@ private:
     bool ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
         uint64_t minTimestamp);
+
+    void UpdataCommucationThreadName(const PROCESS_TYPE &type, std::unique_ptr<Protocol::UnitTrack> &process) const;
 };
 }
 
