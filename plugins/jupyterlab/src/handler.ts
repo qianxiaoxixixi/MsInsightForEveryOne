@@ -30,7 +30,7 @@ export async function requestAPI<T>(
   try {
     response = await ServerConnection.makeRequest(requestUrl, init, settings);
   } catch (error) {
-    throw new ServerConnection.NetworkError(error);
+    throw new ServerConnection.NetworkError(error as TypeError);
   }
   
   // 获取后端返回json数据进行处理

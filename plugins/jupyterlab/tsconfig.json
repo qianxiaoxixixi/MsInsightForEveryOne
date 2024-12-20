@@ -12,6 +12,7 @@
     "declaration": true,
     "esModuleInterop": true,
     "incremental": true,
+    "lib": ["esnext", "dom"],
     "jsx": "react",
     "outDir": "lib",
     "rootDir": "src",

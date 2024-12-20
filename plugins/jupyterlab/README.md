@@ -1,1 +1,1 @@
-# jupyterlab_mindstudio_insight
+# mindstudio_insight_jupyterlab

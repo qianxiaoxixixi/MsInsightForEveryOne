@@ -3,4 +3,4 @@ node_modules
 **/lib
 **/package.json
 !/package.json
-jupyterlab_mindstudio_insight
+mindstudio_insight_jupyterlab

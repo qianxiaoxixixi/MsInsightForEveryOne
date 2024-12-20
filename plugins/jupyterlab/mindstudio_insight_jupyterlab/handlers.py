@@ -33,10 +33,19 @@ def start_profiler_server():
 
     if sys.platform == 'win32':
         profiler_server_path = profiler_server_path + '.exe'
+        # 设置执行权限
+        os.chmod(profiler_server_path, 0o755)
         command[0] = profiler_server_path
-
-    # start profiler server and set port
-    profiler_process = subprocess.Popen(command)
+        # start profiler server and set port
+        profiler_process = subprocess.Popen(command)
+    else:
+        # 设置执行权限
+        os.chmod(profiler_server_path, 0o755)
+        server_dir = os.path.join(os.path.dirname(__file__), 'resources', 'server')
+        env = os.environ.copy()
+        env["LD_LIBRARY_PATH"] = f".:{env.get('LD_LIBRARY_PATH', '')}"
+        command[0] = './profiler_server'
+        profiler_process = subprocess.Popen(command, cwd=server_dir, env=env)
 
 
 def stop_profiler_server():
@@ -61,7 +70,7 @@ class RouteHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
         self.finish(json.dumps({
-            "data": "This is jupyterlab_mindstudio_insight get_example endpoint!"
+            "data": "This is mindstudio_insight_jupyterlab get_example endpoint!"
         }))
 
 
@@ -76,7 +85,7 @@ def setup_handlers(web_app):
         (static_route_pattern, StaticFileHandler, {'path': static_frontend_path})
     ]
 
-    api_route_pattern = url_path_join(base_url, "/jupyterlab-mindstudio-insight/get_example")
+    api_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_example")
     api_handlers = [(api_route_pattern, RouteHandler)]
     web_app.add_handlers(host_pattern, static_handlers + api_handlers)
 
