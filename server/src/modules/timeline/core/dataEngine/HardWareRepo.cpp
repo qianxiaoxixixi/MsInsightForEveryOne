@@ -59,7 +59,7 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
         return;
     }
     std::string sql = "SELECT main.ROWID as id, main.startNs, main.endNs,"
-        " coalesce(c.name, m.message, main.taskType) as name FROM " +
+        " coalesce(c.name, m.message, s.name, main.taskType) as name FROM " +
         TABLE_TASK +
         " main "
         " left join " +
@@ -70,7 +70,9 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
         " m on "
         " (m.connectionId = main.connectionId and  m.connectionId != " +
         WRONG_DATA +
-        " )"
+        " ) left join " +
+        TABLE_COMMUNICATION_SCHEDULE_TASK +
+        " s on main.globalTaskId = s.globalTaskId"
         " where 1 = 1 and id in (";
     std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
     sql += sliceidvecStr + ");";

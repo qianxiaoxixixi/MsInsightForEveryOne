@@ -37,7 +37,10 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
                         " eventType INTEGER,rangeId INTEGER, category INTEGER, message INTEGER, globalTid INTEGER, "
                         " endGlobalTid INTEGER, domainId INTEGER, connectionId INTEGER, depth integer); "},
     {TABLE_PYTORCH_CALLCHAINS,"create TEMPORARY table if not exists PYTORCH_CALLCHAINS(id INTEGER, stack INTEGER"
-                              " , stackDepth INTEGER );"}
+                              " , stackDepth INTEGER );"},
+    {TABLE_COMMUNICATION_SCHEDULE_TASK, "create TEMPORARY table if not exists COMMUNICATION_SCHEDULE_TASK_INFO("
+                                        "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, "
+                                        "opType INTEGER);"}
 };
 
     // sql of metadata counter
@@ -192,11 +195,12 @@ const static std::string FULL_DB_UPDATE_TIME =
 // QueryThreadsByPid
 const static std::string ASCEND_THREADS_BY_PID =
             "select main.startNs,main.endNs - main.startNs as duration,main.endNs, "
-            " coalesce(c.name, m.message, main.taskType) as name, main.depth "
+            " coalesce(c.name, m.message, s.name, main.taskType) as name, main.depth "
             " from " + TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
             " c on c.globalTaskId = main.globalTaskId "
             " left join " + TABLE_MSTX_EVENTS + " m on "
-            " (m.connectionId = main.connectionId and main.connectionId != " + WRONG_DATA + " ) "
+            " (m.connectionId = main.connectionId and main.connectionId != " + WRONG_DATA + " ) " +
+            " left join " + TABLE_COMMUNICATION_SCHEDULE_TASK + " s on main.globalTaskId = s.globalTaskId"
             " where deviceId = ? and streamId = ? and main.endNs >= ? AND main.startNs <= ?"
             " ORDER BY main.depth ASC, main.startNs ASC;";
 

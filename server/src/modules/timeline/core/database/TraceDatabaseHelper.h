@@ -197,6 +197,7 @@ private:
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static inline void CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &start, const FlowStartAndEndTime &end,
         uint8_t index, const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData);
+    static std::string GetSystemViewSqlByLayer(const std::string &layer);
 };
 };
 

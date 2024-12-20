@@ -39,6 +39,8 @@ protected:
     std::string stringIdsSql = "CREATE TABLE STRING_IDS (id INTEGER PRIMARY KEY,value TEXT);";
     std::string overlap = "CREATE TABLE OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId integer, "
         "startNs integer, endNs integer, type integer);";
+    const std::string schedulerTable = "CREATE table COMMUNICATION_SCHEDULE_TASK_INFO("
+         "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, opType INTEGER);";
 };
 class MockDatabase : public Dic::Module::FullDb::DbTraceDataBase {
 public:
@@ -328,6 +330,7 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHardware)
     DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
     DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
     DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
     database.SetDbPtr(db);
     Dic::Protocol::SystemViewParams requestParams;
     requestParams.orderBy = "name";
