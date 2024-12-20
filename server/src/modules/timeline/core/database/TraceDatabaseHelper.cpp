@@ -3,7 +3,7 @@
  */
 
 #include "TraceDatabaseHelper.h"
-
+#include <algorithm>
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
@@ -80,11 +80,57 @@ std::optional<std::string> TraceDatabaseHelper::QueryConnectionId(std::unique_pt
     return resultSet->GetString("connectionId");
 }
 
+std::string TraceDatabaseHelper::GetSystemViewSqlByLayer(const std::string &layer)
+{
+    std::string mainSql;
+    if (layer == "Ascend Hardware") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?),\n"
+                  "  main as (select coalesce(a.realName, c.realName, b.realName) as name, "
+                  "  endNs - startNs as duration from TASK task\n"
+                  "  left join COMPUTE_TASK_INFO info on info.globalTaskId = task.globalTaskId "
+                  "  left join COMMUNICATION_SCHEDULE_TASK_INFO schedule on task.globalTaskId = schedule.globalTaskId"
+                  "  left join nameIds a on info.name = a.id "
+                  "  left join nameIds b on task.taskType = b.id"
+                  "  left join nameIds c on schedule.name = c.id"
+                  "  where deviceId = ?),";
+    } else if (layer == "HCCL") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+                  "     rankId as (select ? as deviceId),\n"
+                  "  main as (select realName as name, endNs - startNs as duration from TASK task join rankId "
+                  "  join COMMUNICATION_TASK_INFO info on info.globalTaskId = task.globalTaskId "
+                  "  join nameIds on info.taskType = id "
+                  "  where task.deviceId = rankId.deviceId "
+                  "  UNION ALL select realName as name, op.endNs - op.startNs as duration "
+                  "  from COMMUNICATION_OP op join nameIds on op.opName = id join rankId\n"
+                  "  join TASK task on task.connectionId = op.connectionId"
+                  "  where task.deviceId = rankId.deviceId group by opId),";
+    } else if (layer == "CANN") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+                  "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
+                  "     main as (select realName as name, endNs - startNs as duration from CANN_API api "
+                  " join tmp on api.globalTid >> 32 = tmp.globalPid join nameIds on name = id),";
+    } else if (layer == "Python") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+                  "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
+                  "     main as (select realName as name, endNs - startNs as duration from PYTORCH_API api "
+                  " join tmp on api.globalTid >> 32 = tmp.globalPid join nameIds on name = id),";
+    } else if (layer == "Overlap Analysis") {
+        mainSql = " with main as (select case type when 0 then 'Computing' when 1 then 'Communication' "
+                  "        when 2 then 'Communication(Not Overlapped)' else 'Free' end as name, "
+                  "  endNs - startNs as duration from OVERLAP_ANALYSIS task where name like ? and deviceId = ?),";
+    } else {
+        throw DatabaseException("unsupported type!");
+    }
+    return mainSql;
+}
+
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::SystemViewParams &requestParams,
     const std::string& rankId)
 {
     std::string searchName = "%" + requestParams.searchName + "%";
+    std::transform(searchName.begin(), searchName.end(), searchName.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
     std::string orderBy;
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         throw DatabaseException("There is an SQL injection attack on this parameter.");
@@ -94,42 +140,12 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
     } else {
         orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
     }
-    std::string mainSql;
     auto sql = " total as (select sum(case when name != 'Communication' then duration else 0 end) as totalTime, "
      " count(distinct name) as num from main) select name, round(sum(duration)*100.0/total.totalTime, 4) as time, "
      "sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, round(avg(duration) / 1000.0, 2) as avg, "
      "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max, total.num from main join total group by name ";
     auto limitSql = " limit ? offset ?";
-    if (requestParams.layer == "Ascend Hardware") {
-        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?),\n"
-          "  main as (select coalesce(a.realName, b.realName) as name, endNs - startNs as duration from TASK task\n"
-          "     left join COMPUTE_TASK_INFO info on info.globalTaskId = task.globalTaskId "
-          "     left join nameIds a on name = a.id left join nameIds b on task.taskType = b.id where deviceId = ?),";
-    } else if (requestParams.layer == "HCCL") {
-        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
-      "     rankId as (select ? as deviceId),\n"
-      "  main as (select realName as name, endNs - startNs as duration from TASK task join rankId "
-      "  join COMMUNICATION_TASK_INFO info on info.globalTaskId = task.globalTaskId join nameIds on info.taskType = id "
-      "  where task.deviceId = rankId.deviceId UNION ALL select realName as name, op.endNs - op.startNs as duration "
-      "  from COMMUNICATION_OP op join nameIds on op.opName = id join rankId\n"
-      "  join TASK task on task.connectionId = op.connectionId where task.deviceId = rankId.deviceId group by opId),";
-    } else if (requestParams.layer == "CANN") {
-        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
-                  "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
-                  "     main as (select realName as name, endNs - startNs as duration from CANN_API api "
-                  " join tmp on api.globalTid >> 32 = tmp.globalPid join nameIds on name = id),";
-    } else if (requestParams.layer == "Python") {
-        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
-                  "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
-                  "     main as (select realName as name, endNs - startNs as duration from PYTORCH_API api "
-                  " join tmp on api.globalTid >> 32 = tmp.globalPid join nameIds on name = id),";
-    } else if (requestParams.layer == "Overlap Analysis") {
-        mainSql = " with main as (select case type when 0 then 'Computing' when 1 then 'Communication' "
-                  "        when 2 then 'Communication(Not Overlapped)' else 'Free' end as name, "
-                  "  endNs - startNs as duration from OVERLAP_ANALYSIS task where name like ? and deviceId = ?),";
-    } else {
-            throw DatabaseException("unsupported type!");
-    }
+    std::string mainSql = GetSystemViewSqlByLayer(requestParams.layer);
     return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, rankId,
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
 }
@@ -369,7 +385,9 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <Sqli
         "'Stream '||streamId as threadName, depth, 'Ascend Hardware' as processId, streamId as threadId, "
         "deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
-        "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) WHERE main.deviceId = ? ";
+        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId"
+        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, main.taskType)"
+        " WHERE main.deviceId = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId);
 }
 
@@ -379,8 +397,9 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
     std::string sql = "SELECT main.ROWID as id, si.value AS name, startNs AS start, endNs - startNs as duration, "
         "'Stream '||streamId as threadName, deviceId AS rankId, depth, 'Ascend Hardware' as processId, "
         "streamId as threadId FROM TASK AS main "
-        "LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
-        "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) "
+        " LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
+        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId"
+        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, main.taskType) "
         "WHERE main.deviceId = ? AND main.streamId = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, params.tid);
 }
