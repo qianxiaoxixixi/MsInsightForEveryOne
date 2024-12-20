@@ -109,12 +109,12 @@ def insight_start(backend_args):
             return result
         if not check_event_dir(backend_args):
             return ErrCode.UnKnown
-        subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        subprocess.Popen([backend_path] + backend_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          env={'LD_LIBRARY_PATH': backend_dir + ":" + os.getenv('LD_LIBRARY_PATH', ''),
                               'PYTHONPATH': sites + ":" + user_sites + ":" + os.getenv('PYTHONPATH', '')})
 
     else:
-        subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.Popen([backend_path] + backend_args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.Popen([shutil.which('python'), "-m", "http.server", "-d", frontend_dir,
                       str(FIX_FRONTEND_PORT)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     result = execute_command(["/bin/ps", "aux"])
