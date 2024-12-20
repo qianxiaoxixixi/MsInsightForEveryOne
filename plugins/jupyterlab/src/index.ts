@@ -25,15 +25,15 @@ import * as CommandIDs from './commands';
 import { MindStudioReactWidget } from './biz/widget';
 
 const mindstudioIcon = new LabIcon({
-  name: 'jupyterlab-mindstudio-insight:mindstudio',
+  name: 'mindstudio-insight-jupyterlab:mindstudio',
   svgstr: mindstudioSvgStr,
 });
 
 /**
- * Initialization data for the jupyterlab_mindstudio_insight extension.
+ * Initialization data for the mindstudio_insight_jupyterlab extension.
  */
 const plugin: JupyterFrontEndPlugin<IWidgetTracker<MainAreaWidget<MindStudioReactWidget>>> = {
-  id: 'jupyterlab_mindstudio_insight:plugin',
+  id: 'mindstudio_insight_jupyterlab:plugin',
   requires: [ICommandPalette as any],
   optional: [ILauncher as any, IMainMenu, IRunningSessionManagers],
   autoStart: true,

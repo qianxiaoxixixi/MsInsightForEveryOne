@@ -16,7 +16,7 @@ import setuptools
 HERE = Path(__file__).parent.resolve()
 
 # The name of the project
-PROJECT_NAME = "jupyterlab_mindstudio_insight"
+PROJECT_NAME = "mindstudio_insight_jupyterlab"
 
 lab_path = (HERE / PROJECT_NAME / "labextension")
 config_path = (HERE / "jupyter-config" / "server-config")
@@ -30,12 +30,12 @@ jstargets = [
 data_files_spec = [
     (f"share/jupyter/labextensions/{PROJECT_NAME}", str(lab_path), "**/*"),
     (f"share/jupyter/labextensions/{PROJECT_NAME}", str(HERE), "install.json"),
-    (f"etc/jupyter/jupyter_server_config.d", str(config_path), "jupyterlab_mindstudio_insight.json")
+    (f"etc/jupyter/jupyter_server_config.d", str(config_path), "mindstudio_insight_jupyterlab.json")
 ]
 data_files = get_data_files(data_files_spec)
 
 # frontend build command
-builder = npm_builder(HERE, build_cmd="build:prod", npm=["jlpm"])
+builder = npm_builder(HERE, build_cmd="build:prod", npm=["npm"])
 
 # 使用 wrap_installers 代替 create_cmdclass
 cmdclass = wrap_installers(
@@ -49,13 +49,12 @@ long_description = (HERE / "README.md").read_text()
 pkg_json = json.loads((HERE / "package.json").read_bytes())
 
 package_data_spec = {
-    PROJECT_NAME: ["*"],
+    PROJECT_NAME: ["**/*"],
 }
 
 setup_args = dict(
     name=PROJECT_NAME,
     version=pkg_json["version"],
-    url=pkg_json["homepage"],
     description=pkg_json["description"],
     author=pkg_json["author"]["name"],
     author_email=pkg_json["author"]["email"],
@@ -67,7 +66,7 @@ setup_args = dict(
     data_files=data_files,
     packages=setuptools.find_packages(),
     install_requires=[
-        "jupyterlab=3.6.8",
+        "jupyterlab==4.3.2",
         "tornado<=6.2",
     ],
     zip_safe=False,
@@ -77,10 +76,10 @@ setup_args = dict(
     keywords=["Jupyter", "JupyterLab", "JupyterLab3", "MindStudio", "MindStudio_Insight"],
     entry_points={
         'console_scripts': [
-            'jupyterlab-mindstudio-insight = jupyterlab_mindstudio_insight.application:main',
+            'mindstudio-insight-jupyterlab = mindstudio_insight_jupyterlab.application:main',
          ],
         'jupyter_serverextension': [
-            'jupyterlab-mindstudio-insight = jupyterlab_mindstudio_insight.jupyterlab_mindstudio_insight:' \
+            'mindstudio-insight-jupyterlab = mindstudio_insight_jupyterlab.mindstudio_insight_jupyterlab:' \
             'load_jupyter_server_extension',
         ],
     },

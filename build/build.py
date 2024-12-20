@@ -53,6 +53,7 @@ class Const:
     GRADLE = 'gradle.bat' if platform.system() == WINDOWS_OS else 'gradle'
     GRADLEW = 'gradlew.bat' if platform.system() == WINDOWS_OS else 'gradlew'
     JUPYTER = 'jupyter'
+    PIP = 'pip' if platform.system() == WINDOWS_OS else 'pip3'
     PLUGINS_VERSION_PLACEHOLDER = '{plugins_version}'
 
 
@@ -233,6 +234,35 @@ def build_intellij(idea_version, os_name):
     return 0
 
 
+def update_jupyterlab_plugin_version(jupyterlab_version, plugin_path):
+    package_json_path = os.path.join(plugin_path, 'package.json')
+    if not os.path.exists(package_json_path):
+        return 1
+    
+    with open(package_json_path, 'r', encoding='utf-8') as file:
+        try:
+            package_data = json.load(file)
+        except json.JSONDecodeError:
+            return 1
+    
+    package_data['version'] = jupyterlab_version
+
+    with open(package_json_path, 'w', encoding='utf-8') as file:
+        try:
+            json.dump(package_data, file, indent=2)
+        except json.JSONDecodeError:
+            return 1
+    return 0
+
+
+def get_os_platform():
+    os_system = platform.system().lower()
+    os_machine = platform.machine().lower()
+    if 'windows' in os_system:
+        return 'win_' + os_machine
+    return os_system + '_' + os_machine
+
+
 def build_jupyterlab(jupyterlab_version, os_name):
     # 设置环境变量暂时不构建jupyterlab
     if not os.getenv('BUILD_JUPYTERLAB'):
@@ -240,16 +270,33 @@ def build_jupyterlab(jupyterlab_version, os_name):
         return 0
 
     plugin_path = os.path.join(PROJECT_PATH, Const.JUPYTERLAB_PLUGINS_DIR)
+
+    # 下载构建依赖
+    result = exec_command([Const.PIP, 'install', '--trusted-host', 'mirrors.tools.huawei.com', '-i',
+            'https://mirrors.tools.huawei.com/pypi/simple',
+            'jupyterlab==4.3.2', 'tornado==6.2', 'jupyter_packaging~=0.12.3'],
+            plugin_path, 'jupyterlab_plugin')
+    if result != 0:
+        return 1
+
+    # 设置npm代理
+    os.putenv('npm_config_registry', 'https://mirrors.tools.huawei.com/npm/')
+
     # 拷贝前后端资源
-    jupyterlab_path = 'jupyterlab_mindstudio_insight'
+    jupyterlab_path = 'mindstudio_insight_jupyterlab'
     resources_dir = 'resources'
     resources_path = os.path.join(plugin_path, jupyterlab_path, resources_dir)
     if not os.path.exists(resources_path):
         os.makedirs(resources_path, 0o750)
-    shutil.copytree(os.path.join(Const.PLATFORM_DIR, resources_dir, 'profiler', 'frontend'),
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'),
                     os.path.join(resources_path, 'frontend'))
-    shutil.copytree(os.path.join(Const.PLATFORM_DIR, resources_dir, 'profiler', 'server'),
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(resources_path, 'server'))
+
+    # 修改jupyterlab中package.json版本
+    result = update_jupyterlab_plugin_version(jupyterlab_version, plugin_path)
+    if result != 0:
+        return 1
 
     # 1. 清理jupyterlab环境
     result = exec_command([Const.JUPYTER, 'lab', 'clean'], plugin_path, 'jupyterlab_plugin')
@@ -257,17 +304,27 @@ def build_jupyterlab(jupyterlab_version, os_name):
         return 1
     # 2. 构建whl包
     setup_path, output_path = 'setup.py', 'output'
-    result = exec_command([Const.PYTHON, setup_path, 'bdist_wheel', '--dist-dir', output_path],
+    result = exec_command([Const.PYTHON, setup_path, 'bdist_wheel',
+                           '--plat-name=', get_os_platform(), '--dist-dir', output_path],
+                          plugin_path, 'jupyterlab_plugin')
+    if result != 0:
+        return 1
+
+    # 3. 此处暂时需要构建两次
+    setup_path, output_path = 'setup.py', 'output'
+    result = exec_command([Const.PYTHON, setup_path, 'bdist_wheel',
+                           '--plat-name=', get_os_platform(), '--dist-dir', output_path],
                           plugin_path, 'jupyterlab_plugin')
     if result != 0:
         return 1
 
     # copy jupyterlab plugin to out directory
-    plugin_name = 'mindstudio-insight-extension_' + jupyterlab_version + '_' + os_name + '.whl'
+    plugin_name = 'mindstudio_insight_jupyterlab-' + jupyterlab_version + '-py3-none-' + get_os_platform() + '.whl'
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
-    for file in os.listdir(plugin_path):
+    whl_source_path = os.path.join(plugin_path, 'output')
+    for file in os.listdir(whl_source_path):
         if file.endswith('.whl'):
-            shutil.copy(os.path.join(plugin_path, file), dst_file)
+            shutil.copy(os.path.join(whl_source_path, file), dst_file)
 
     return 0
 
@@ -417,7 +474,7 @@ def build_product_parallel(vscode_version, idea_version, os_name):
         (vscode_version, os_name),
         (idea_version, os_name),
         (idea_version, os_name),
-        (idea_version, os_name)
+        (vscode_version, os_name)
     ]
     pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
     results = []
