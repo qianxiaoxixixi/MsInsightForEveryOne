@@ -3,6 +3,7 @@
 #include "TableDefs.h"
 #include "TrackInfoManager.h"
 #include "DataBaseManager.h"
+#include "NumberUtil.h"
 #include "HardWareRepo.h"
 namespace Dic::Module::Timeline {
 void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
@@ -175,8 +176,13 @@ void HardWareRepo::QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDoma
     JsonUtil::AddConstMember(json, TaskColumn::TASK_ID, taskId, allocator);
     JsonUtil::AddConstMember(json, TaskColumn::CONNECTION_ID, connectionId, allocator);
     if (QueryMemoryInfo(sliceQuery, competeSliceDomain, targetTask)) {
-        JsonUtil::AddMember(json, "memcpyDirection", competeSliceDomain.memcpyDirection, allocator);
-        JsonUtil::AddMember(json, "dataSize", competeSliceDomain.dataSize, allocator);
+        JsonUtil::AddMember(json, "operation", competeSliceDomain.memcpyDirection, allocator);
+        JsonUtil::AddMember(json, "size(B)", competeSliceDomain.dataSize, allocator);
+        if (targetTask.endTime > targetTask.timestamp) {
+            double bandwidth = static_cast<double>(competeSliceDomain.dataSize) /
+                static_cast<double>(targetTask.endTime - targetTask.timestamp);
+            JsonUtil::AddMember(json, "bandwidth(GB/s)", NumberUtil::DoubleReservedNDigits(bandwidth), allocator);
+        }
     }
     competeSliceDomain.args = JsonUtil::JsonDump(json);
 }
@@ -184,17 +190,15 @@ void HardWareRepo::QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDoma
 bool HardWareRepo::QueryMemoryInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
                                    const TaskPO &targetTask)
 {
-    std::string sql = "select memcpyDirection, min(dataSize - orderNum*maxSize, maxSize) as dataSize from ( "
-      " select startNs,maxSize,dataSize,value as memcpyDirection,row_number() over (order by startNs) - 1 as orderNum "
-      " from " + TABLE_TASK + " main join " + TABLE_MEMCPY_INFO + " MI on main.connectionId = MI.connectionId "
-      " join " + TABLE_STRING_IDS + " str on MI.memcpyDirection = str.id "
-      " where MI.connectionId = ? ) t where t.startNs = ?;";
+    std::string sql = "SELECT OPERATION.name as memcpyDirection, size from " + TABLE_MEMCPY_INFO + " MI"
+        " LEFT JOIN " + TABLE_ENUM_MEMCPY_OPERATION + " as OPERATION ON MI.memcpyOperation = OPERATION.id "
+        " WHERE globalTaskId = ?";
     auto stmt = CreatPreparedStatement(sql, sliceQuery);
     if (stmt == nullptr) {
         ServerLog::Warn("Failed to parpare MemoryInfo by connection id");
         return false;
     }
-    stmt->BindParams(targetTask.connectionId, competeSliceDomain.timestamp);
+    stmt->BindParams(targetTask.globalTaskId);
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Warn("Failed to execute query MemoryInfo by connectionId and startTime.");
@@ -202,7 +206,7 @@ bool HardWareRepo::QueryMemoryInfo(const SliceQuery &sliceQuery, CompeteSliceDom
     }
     if (resultSet->Next()) {
         competeSliceDomain.memcpyDirection = resultSet->GetString("memcpyDirection");
-        competeSliceDomain.dataSize = resultSet->GetUint64("dataSize");
+        competeSliceDomain.dataSize = resultSet->GetUint64("size");
         return true;
     }
     return false;

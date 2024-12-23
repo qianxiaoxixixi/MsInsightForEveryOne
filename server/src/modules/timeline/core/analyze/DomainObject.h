@@ -57,6 +57,7 @@ struct CompeteSliceDomain {
     SliceShape sliceShape;
     uint64_t dataSize {};
     std::string memcpyDirection;
+    std::string bandwidth;
     std::string args;
     std::string cardId;
     bool operator < (const CompeteSliceDomain &right) const

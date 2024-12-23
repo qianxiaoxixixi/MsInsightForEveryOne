@@ -225,12 +225,9 @@ std::vector<uint64_t> HostFlowRepo::AddMstxFlowPoint(const FlowQuery &flowQuery,
 
 void HostFlowRepo::AddCannFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
-    // cann下面只有type为10000的算子才有连线点
-    uint64_t nodeType = 10000;
     std::vector<CannApiPO> cannApiPOs;
     cannApiTable->Select(CannApiColumn::ID, CannApiColumn::TIMESTAMP)
         .Select(CannApiColumn::GLOBAL_TID, CannApiColumn::TYPE)
-        .Eq(CannApiColumn::TYPE, nodeType)
         .ExcuteQuery(flowQuery.fileId, cannApiPOs);
     auto &instance = TrackInfoManager::Instance();
     std::string dbPath = cannApiTable->GetDbPath(flowQuery.fileId);

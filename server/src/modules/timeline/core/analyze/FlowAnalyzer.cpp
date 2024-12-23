@@ -174,6 +174,7 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
             location.timestamp = flow.timestamp;
             location.type = type;
             location.rankId = flow.rankId;
+            // 连线中 起点对终点是一对多关系，因此每一个新的起点都会对上一个起点进行覆盖
             locationPtr = &location;
         } else if ((type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) && flowId == curFlowId) {
             auto flowEvent = std::make_unique<Protocol::UnitSingleFlow>();
@@ -184,7 +185,6 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
             flowEvent->to.rankId = flow.rankId;
-            locationPtr = &(flowEvent->to);
             if (flowEvent->from.type == Protocol::LINE_START) {
                 flowDetailList.emplace_back(std::move(flowEvent));
             }
@@ -210,8 +210,12 @@ void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVe
         return;
     }
     // 收集在屏幕中间可展示的连线
-    flowIdResult.emplace_back(flowEventsVec[flowPointSampleStruct.endPointMap[flowId]]);
-    flowIdResult.emplace_back(flowEventsVec[flowPointSampleStruct.startPointMap[flowId]]);
+    for (const auto &item: flowPointSampleStruct.endPointMap[flowId]) {
+        flowIdResult.emplace_back(flowEventsVec[item]);
+    }
+    for (const auto &item: flowPointSampleStruct.startPointMap[flowId]) {
+        flowIdResult.emplace_back(flowEventsVec[item]);
+    }
     flowPointSampleStruct.resultFlowIdSet.emplace(flowId);
 }
 
@@ -232,12 +236,12 @@ void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowPoint> &flowEvents
         }
         // 收集全部开始点
         if (item.timestamp <= endTime && item.type == Protocol::LINE_START) {
-            flowPointSampleStruct.startPointMap[item.flowId] = index;
+            flowPointSampleStruct.startPointMap[item.flowId].push_back(index);
         }
         // 收集全部结束点
         if (item.timestamp >= startTime &&
             (item.type == Protocol::LINE_END || item.type == Protocol::LINE_END_OPTIONAL)) {
-            flowPointSampleStruct.endPointMap[item.flowId] = index;
+            flowPointSampleStruct.endPointMap[item.flowId].push_back(index);
         }
         index++;
         if (uintTime == 0 && item.timestamp < startTime) {
