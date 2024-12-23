@@ -19,9 +19,9 @@ struct FlowPointSampleStruct {
     // 连线去重集合
     std::unordered_set<std::string> resultFlowIdSet;
     // 开始点集合
-    std::unordered_map<std::string, uint64_t> startPointMap;
+    std::unordered_map<std::string, std::vector<uint64_t>> startPointMap;
     // 结束点集合
-    std::unordered_map<std::string, uint64_t> endPointMap;
+    std::unordered_map<std::string, std::vector<uint64_t>> endPointMap;
     // 开始点的采样集合
     std::unordered_set<std::string> startPointResultSet;
     // 结束点的采样集合

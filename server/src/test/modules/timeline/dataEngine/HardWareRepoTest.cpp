@@ -20,11 +20,13 @@ protected:
         "INTEGER,taskType INTEGER,opType INTEGER,inputFormats INTEGER,inputDataTypes INTEGER,inputShapes "
         "INTEGER,outputFormats INTEGER,outputDataTypes INTEGER,outputShapes INTEGER,attrInfo INTEGER, waitNs INTEGER);";
     const std::string memoryInfoSql =
-        "create table MEMCPY_INFO (connectionId integer,dataSize integer, memcpyDirection integer, maxSize integer);";
+        "create table MEMCPY_INFO (globalTaskId integer,size integer, memcpyOperation integer);";
     const std::string mstxSql =
             "create table if not exists MSTX_EVENTS(startNs INTEGER,endNs INTEGER, "
             " eventType INTEGER,rangeId INTEGER, category INTEGER, message INTEGER, globalTid INTEGER, "
             " endGlobalTid INTEGER, domainId INTEGER, connectionId INTEGER, depth integer); ";
+    const std::string memoryOperationEnumSql =
+            "create table if not exists ENUM_MEMCPY_OPERATION(id INTEGER, name TEXT);";
     void SetUp() override
     {
         TrackInfoManager::Instance().Reset();
@@ -42,6 +44,7 @@ protected:
         DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
         DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
         DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+        DatabaseTestCaseMockUtil::CreateTable(db, memoryOperationEnumSql);
         std::string taskInsert =
             "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
             "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
@@ -76,9 +79,12 @@ protected:
     void TestQueryMemoryInfoNormalPrepare(sqlite3 *&db)
     {
         DatabaseTestCaseMockUtil::CreateTable(db, memoryInfoSql);
-        std::string memoryInsert = "INSERT INTO \"main\".\"MEMCPY_INFO\" (\"connectionId\", \"dataSize\","
-                                   " \"memcpyDirection\", \"maxSize\") VALUES (7422, 1000, 1, 600);\n";
+        std::string memoryInsert = "INSERT INTO \"main\".\"MEMCPY_INFO\" (\"globalTaskId\", \"size\","
+                                   " \"memcpyOperation\") VALUES (5, 1000, 1);\n";
         DatabaseTestCaseMockUtil::InsertData(db, memoryInsert);
+        std::string memoryOperationInsert = "INSERT INTO \"main\".\"ENUM_MEMCPY_OPERATION\" (\"id\", \"name\") "
+                                            "VALUES (1, \"host to device\");";
+        DatabaseTestCaseMockUtil::InsertData(db, memoryOperationInsert);
     }
 };
 
@@ -146,8 +152,8 @@ TEST_F(HardWareRepoTest, TestQuerySliceDetailInfoNormalWithMemory)
     bool result = hardWareRepoMock.QuerySliceDetailInfo(query, slice);
     EXPECT_EQ(result, true);
     const std::string expectArgs = "{\"modelId\":\"4294967295\",\"taskType\":\"qqq\",\"streamId\":\"16\","
-                                   "\"taskId\":\"3731\",\"connectionId\":\"7422\",\"memcpyDirection\":\"aaa\","
-                                   "\"dataSize\":600}";
+                                   "\"taskId\":\"3731\",\"connectionId\":\"7422\",\"operation\":\"host to device\","
+                                   "\"size(B)\":1000,\"bandwidth(GB/s)\":0.000426}";
     EXPECT_EQ(slice.args, expectArgs);
 }
 
