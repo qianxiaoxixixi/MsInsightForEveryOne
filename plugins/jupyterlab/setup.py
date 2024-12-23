@@ -66,7 +66,7 @@ setup_args = dict(
     data_files=data_files,
     packages=setuptools.find_packages(),
     install_requires=[
-        "jupyterlab==4.3.2",
+        "jupyterlab>=4.0,<5",
         "tornado<=6.2",
     ],
     zip_safe=False,
