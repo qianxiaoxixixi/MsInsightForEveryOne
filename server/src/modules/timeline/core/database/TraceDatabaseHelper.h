@@ -58,13 +58,13 @@ const std::string QUERY_P2P_COMMUNICATION_OP_TEXT_SQL =
     "    SELECT t.track_id FROM " + THREAD_TABLE + " t JOIN " + PROCESS_TABLE + " p ON t.pid = p.pid "
     "    WHERE p.process_name = 'HCCL' and t.thread_name like 'Group%' "
     ") AND ( "
-    "LOWER(s.name) like 'hcom_send%' or LOWER(s.name) like 'hcom_recv%' or LOWER(s.name) like 'hcom_batchsendrecv%' "
+    "LOWER(s.name) like 'hcom_send%' or LOWER(s.name) like 'hcom_receive%' or LOWER(s.name) like 'hcom_batchsendrecv%' "
     ") AND s.timestamp >= ? AND s.end_time <= ? ORDER BY s.timestamp ASC";
 const std::string QUERY_P2P_COMMUNICATION_OP_DB_SQL =
     "SELECT task.globalPid as pid, 0 as tid, op.startNs - ? as startTime, op.endNs - op.startNs as duration, "
     "str.value as name FROM " + TABLE_COMMUNICATION_OP + " op JOIN " + TABLE_STRING_IDS + " str ON op.opName = str.id "
     "JOIN " + TABLE_TASK + " task ON op.connectionId = task.connectionId AND op.startNs = task.startNs "
-    "WHERE (LOWER(str.value) like 'hcom_send%' or LOWER(str.value) like 'hcom_recv%' "
+    "WHERE (LOWER(str.value) like 'hcom_send%' or LOWER(str.value) like 'hcom_receive%' "
     "or LOWER(str.value) like 'hcom_batchsendrecv%') AND op.startNs >= ? AND op.endNs <= ? ORDER BY op.startNs ASC";
 
 class TraceDatabaseHelper {
