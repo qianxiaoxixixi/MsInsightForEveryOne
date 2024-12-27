@@ -194,7 +194,7 @@ struct QueryParallelStrategyResponse : public Response {
     QueryParallelStrategyResponse() : Response(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {}
     Module::ParallelStrategyConfig config;
     std::string level;
-    const int validValue = 1;
+    const int64_t validValue = 1;
     bool IsValid() const
     {
         if (config.ppSize < validValue || config.tpSize < validValue || config.dpSize < validValue) {
@@ -212,11 +212,11 @@ struct QueryParallelStrategyResponse : public Response {
 
     void SetDefault()
     {
-        config.tpSize = validValue;
-        config.dpSize = validValue;
-        config.ppSize = validValue;
-        config.cpSize = validValue;
-        config.epSize = validValue;
+        config.tpSize = std::max(validValue, config.tpSize);
+        config.dpSize = std::max(validValue, config.dpSize);
+        config.ppSize = std::max(validValue, config.ppSize);
+        config.cpSize = std::max(validValue, config.cpSize);
+        config.epSize = std::max(validValue, config.epSize);
         if (config.algorithm == Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG ||
             config.algorithm == Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
             return;

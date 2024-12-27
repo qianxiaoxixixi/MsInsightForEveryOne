@@ -377,7 +377,8 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponse)
     response.SetDefault();
     EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_EP_DP_PP_ALG);
     EXPECT_EQ(response.config.ppSize, expectId);
-    EXPECT_EQ(response.config.tpSize, expectId);
+    const int expectTp = 2;
+    EXPECT_EQ(response.config.tpSize, expectTp);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponse2)
@@ -397,7 +398,8 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponse2)
     response.SetDefault();
     EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_PP_EP_DP_ALG);
     EXPECT_EQ(response.config.ppSize, expectId);
-    EXPECT_EQ(response.config.tpSize, expectId);
+    const int expectTp = 2;
+    EXPECT_EQ(response.config.tpSize, expectTp);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpPpDp)
@@ -417,7 +419,8 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpPpDp)
     response.SetDefault();
     EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_PP_EP_DP_ALG);
     EXPECT_EQ(response.config.ppSize, expectId);
-    EXPECT_EQ(response.config.tpSize, expectId);
+    const int expectTp = 2;
+    EXPECT_EQ(response.config.tpSize, expectTp);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpDpPp)
@@ -437,7 +440,8 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpDpPp)
     response.SetDefault();
     EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_EP_DP_PP_ALG);
     EXPECT_EQ(response.config.ppSize, expectId);
-    EXPECT_EQ(response.config.tpSize, expectId);
+    const int expectTp = 2;
+    EXPECT_EQ(response.config.tpSize, expectTp);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenInvalid)
@@ -457,5 +461,6 @@ TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenInvalid)
     response.SetDefault();
     EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_EP_DP_PP_ALG);
     EXPECT_EQ(response.config.ppSize, expectId);
-    EXPECT_EQ(response.config.tpSize, expectId);
+    const int expectTp = 2;
+    EXPECT_EQ(response.config.tpSize, expectTp);
 }
