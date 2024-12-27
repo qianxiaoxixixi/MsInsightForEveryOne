@@ -243,7 +243,6 @@ struct ParallelismArrangementResponse : public Response {
 struct ParallelismPerformanceResponse : public Response {
     ParallelismPerformanceResponse() : Response(REQ_RES_PARALLELISM_PERFORMANCE_DATA) {}
     Module::PerformanceIndicatorData indicatorData;
-    std::vector<std::string> advice;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

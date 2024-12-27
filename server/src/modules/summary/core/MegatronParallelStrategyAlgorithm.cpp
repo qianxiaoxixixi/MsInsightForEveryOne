@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+#include <cfloat>
 #include <unordered_map>
 #include "ServerLog.h"
 #include "NumberUtil.h"
@@ -338,10 +339,36 @@ void MegatronParallelStrategyAlgorithm::SortPerformanceDataByIndex(std::vector<I
               });
 }
 
+void MegatronParallelStrategyAlgorithm::AnalyzePerformanceAdviceWithDpCpPpTpDimension(Protocol::TraceStatistic &max,
+    Protocol::TraceStatistic &min, double meanE2ETime, std::vector<std::string> &advices)
+{
+    constexpr double threshold = 0.05;
+    Protocol::TraceStatistic diff = {
+        max.computeDiff - min.computeDiff,
+        max.communicationDiff - min.communicationDiff,
+        max.freeDiff - min.freeDiff
+    };
+    if (diff.computeDiff / meanE2ETime > threshold) {
+        advices.emplace_back("Computing has some issues, because the max difference of \"Total Computing\" "
+                             "has reached " + std::to_string(diff.computeDiff) + "us.");
+    }
+    if (diff.communicationDiff / meanE2ETime > threshold) {
+        advices.emplace_back("Communication has some issues, because the max difference of "
+            "\"Communication(Not Overlapped)\" has reached " + std::to_string(diff.communicationDiff) + "us.");
+    }
+    if (diff.freeDiff / meanE2ETime > threshold) {
+        advices.emplace_back("Free has some issues, because the max difference of \"Free\" "
+                             "has reached " + std::to_string(diff.freeDiff) + "us.");
+    }
+}
+
 void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithDpCpPpTpDimension(
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
     PerformanceIndicatorData &performanceResponseData)
 {
+    Protocol::TraceStatistic max{};
+    Protocol::TraceStatistic min = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double sum = 0;
     for (uint32_t i = 0; i < wordSize; ++i) {
         if (statistic.find(i) == statistic.end()) {
             continue;
@@ -372,8 +399,20 @@ void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithDpCpPpTpDime
         one.indicators.emplace(KEY_COMMUNICATION_RATIO, e2eTime == 0 ? 0 :
             NumberUtil::DoubleReservedNDigits(item.communicationTime / e2eTime, 2)); // 保留2位小数
         performanceResponseData.performanceData.emplace_back(one);
+        max.computeDiff = std::max(max.computeDiff, item.computingTime);
+        max.communicationDiff = std::max(max.communicationDiff, item.pureCommunicationTime);
+        max.freeDiff = std::max(max.freeDiff, item.freeTime);
+        min.computeDiff = std::min(min.computeDiff, item.computingTime);
+        min.communicationDiff = std::min(min.communicationDiff, item.pureCommunicationTime);
+        min.freeDiff = std::min(min.freeDiff, item.freeTime);
+        sum += e2eTime;
     }
     SortPerformanceDataByIndex(performanceResponseData.performanceData);
+
+    if (!performanceResponseData.performanceData.empty() && sum != 0) {
+        AnalyzePerformanceAdviceWithDpCpPpTpDimension(max, min,
+            sum / performanceResponseData.performanceData.size(), performanceResponseData.advices);
+    }
 }
 
 void MegatronParallelStrategyAlgorithm::ReduceTpPerformance(

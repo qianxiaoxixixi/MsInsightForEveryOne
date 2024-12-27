@@ -379,7 +379,7 @@ std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const P
         performance.PushBack(dataJson, allocator);
     }
     JsonUtil::AddMember(body, "performance", performance, allocator);
-    JsonUtil::AddMember(body, "advice", response.advice, allocator);
+    JsonUtil::AddMember(body, "advice", response.indicatorData.advices, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::move(json);
 }

@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_SERVER_SRC_MODULES_SUMMARY_CORE_MEGATRONPARALLELSTRATEGYALGORITHM_H
 
 #include <unordered_map>
+#include "SummaryProtocolResponse.h"
 #include "BaseParallelStrategyAlgorithm.h"
 
 namespace Dic::Module {
@@ -76,6 +77,8 @@ private:
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpStatistic;
     const int numTwo = 2; // 保留2位小数
+    void AnalyzePerformanceAdviceWithDpCpPpTpDimension(Protocol::TraceStatistic &max, Protocol::TraceStatistic &min,
+                                                       double meanE2ETime, std::vector<std::string> &advices);
 };
 }
 #endif // PROFILER_SERVER_SERVER_SRC_MODULES_SUMMARY_CORE_MEGATRONPARALLELSTRATEGYALGORITHM_H
