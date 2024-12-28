@@ -176,6 +176,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
 
     return <>
         <MIChart
+            width={'calc(100vw - 80px)'}
             ref={chartRef}
             loading={loading}
             options={chartOptions}

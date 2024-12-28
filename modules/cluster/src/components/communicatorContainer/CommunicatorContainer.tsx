@@ -100,38 +100,32 @@ interface CommunicatorHeaderProps {
     setGenerateConditions: (params: GenerateConditions) => void;
 }
 const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateConditions, setGenerateConditions }: CommunicatorHeaderProps) => {
-    const [form, setForm] = useState({} as FormInstance<any>);
+    const [form] = Form.useForm();
     const [disabled, setDisabled] = useState(false);
     const [activeTab, setActiveTab] = useState(generateConditions.dimension);
     const { t } = useTranslation('summary');
     const dimensionOptions = getDimensionOptions(t);
     const init = async (): Promise<void> => {
-        if (form.setFieldsValue === undefined) {
-            setTimeout(() => {
-                init();
-            });
+        const { dpSize, tpSize, ppSize, cpSize, epSize, level, algorithm } = await getParallelStrategy();
+        const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;
+        if (level === 'collected') {
+            setDisabled(true);
         } else {
-            const { dpSize, tpSize, ppSize, cpSize, epSize, level, algorithm } = await getParallelStrategy();
-            const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;
-            if (level === 'collected') {
-                setDisabled(true);
-            } else {
-                setDisabled(false);
-            }
-            if (level === 'undefined' || equal) {
-                setShowRank(false);
-            } else {
-                setShowRank(true);
-            }
-            form.setFieldsValue({ dpSize, tpSize, ppSize, cpSize, epSize, algorithm });
-            setGenerateConditions({ algorithm, dimension: activeTab, ppSize, tpSize, cpSize, dpSize, epSize });
-            eventBus.emit('activeCommunicator', undefined);
+            setDisabled(false);
         }
+        if (level === 'undefined' || equal) {
+            setShowRank(false);
+        } else {
+            setShowRank(true);
+        }
+        form.setFieldsValue({ dpSize, tpSize, ppSize, cpSize, epSize, algorithm });
+        setGenerateConditions({ algorithm, dimension: activeTab, ppSize, tpSize, cpSize, dpSize, epSize });
+        eventBus.emit('activeCommunicator', undefined);
     };
 
     useEffect(() => {
         init();
-    }, [session.renderId]);
+    }, []);
 
     const clickGenerate = async (): Promise<void> => {
         const values: GenerateConditions = form.getFieldsValue();
@@ -162,7 +156,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     };
 
     return <>
-        <FormDom disabled={disabled} onClickGenerate={clickGenerate} getForm={setForm}/>
+        <FormDom disabled={disabled} onClickGenerate={clickGenerate} form={form}/>
         {showRank && <Tabs
             activeKey={activeTab}
             onChange={handleTabChange}
@@ -183,12 +177,9 @@ const getDimensionOptions = (t: TFunction): Array<{key: string; label: string}> 
     { key: 'ep-dp-cp-pp-tp', label: t('TP Dimension') },
 ];
 
-const FormDom = ({ disabled, onClickGenerate, getForm }:
-{disabled: boolean; onClickGenerate: () => void; getForm: (dom: FormInstance<any>) => void }): JSX.Element => {
+const FormDom = ({ disabled, onClickGenerate, form }:
+{disabled: boolean; onClickGenerate: () => void; form: FormInstance<any> }): JSX.Element => {
     const { t } = useTranslation('summary');
-    const [form] = Form.useForm();
-
-    getForm(form);
 
     return (
         <>
