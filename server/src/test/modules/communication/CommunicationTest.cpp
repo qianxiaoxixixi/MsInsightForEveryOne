@@ -65,6 +65,28 @@ TEST_F(TestSuit, QueryOperatorNameDataWithRank)
     EXPECT_EQ(responseBody[1].operatorName, "hcom_send__822_0");
 }
 
+TEST_F(TestSuit, GetStageIdByGroupIdFail)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::OperatorNamesParams requestParams;
+    requestParams.dbIndex = "0";
+    requestParams.iterationId = "2";
+    requestParams.stage = "";
+    requestParams.rankList = {"0"};
+    std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
+    database->QueryOperatorNames(requestParams, responseBody);
+    int expectSize = 0;
+    EXPECT_EQ(responseBody.size(), expectSize);
+}
+
+TEST_F(TestSuit, QueryParseClusterStatusSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string status = database->QueryParseClusterStatus();
+    EXPECT_EQ(status, "FINISH");
+}
+
+
 TEST_F(TestSuit, QueryRanksData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);

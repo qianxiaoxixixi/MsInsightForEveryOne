@@ -237,8 +237,42 @@ TEST_F(DbCommunicationTest, QuerySummaryDataSuccess)
     Dic::Protocol::SummaryTopRankParams requestParams;
     Dic::Protocol::SummaryTopRankResBody responseBody;
     requestParams.rankIdList.emplace_back("0");
+    requestParams.rankIdList.emplace_back("-1");
     requestParams.stepIdList.emplace_back("1");
+    requestParams.stepIdList.emplace_back("-1");
     requestParams.orderBy = "rankId";
+    database->QuerySummaryData(requestParams, responseBody);
+    int expectSize = 1;
+    const double expectCommunicationOverLappedTime = 887304.62;
+    EXPECT_EQ(responseBody.summaryList.size(), expectSize);
+    EXPECT_EQ(responseBody.summaryList[0].rankId, "0");
+    EXPECT_EQ(responseBody.summaryList[0].communicationOverLappedTime, expectCommunicationOverLappedTime);
+}
+
+TEST_F(DbCommunicationTest, QuerySummaryDataCheckSqlFail)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::SummaryTopRankParams requestParams;
+    Dic::Protocol::SummaryTopRankResBody responseBody;
+    requestParams.rankIdList.emplace_back("0");
+    requestParams.stepIdList.emplace_back("1");
+    requestParams.orderBy = ";";
+    database->QuerySummaryData(requestParams, responseBody);
+    int expectSize = 1;
+    const double expectCommunicationOverLappedTime = 887304.62;
+    EXPECT_EQ(responseBody.summaryList.size(), expectSize);
+    EXPECT_EQ(responseBody.summaryList[0].rankId, "0");
+    EXPECT_EQ(responseBody.summaryList[0].communicationOverLappedTime, expectCommunicationOverLappedTime);
+}
+
+TEST_F(DbCommunicationTest, QuerySummaryDataSuccessOrderByComputingTime)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    Dic::Protocol::SummaryTopRankParams requestParams;
+    Dic::Protocol::SummaryTopRankResBody responseBody;
+    requestParams.rankIdList.emplace_back("0");
+    requestParams.stepIdList.emplace_back("1");
+    requestParams.orderBy = "computingTime";
     database->QuerySummaryData(requestParams, responseBody);
     int expectSize = 1;
     const double expectCommunicationOverLappedTime = 887304.62;
@@ -391,4 +425,15 @@ TEST_F(DbCommunicationTest, QueryAllPerformanceDataByStepWhenAllStep)
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 8); // 8
     EXPECT_EQ(data.at(0).prepareTime, 1075.410); // 1075.410 for result
+}
+
+TEST_F(DbCommunicationTest, QueryParseClusterStatusSuccess)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::string status = database->QueryParseClusterStatus();
+    EXPECT_EQ(status, "UN_FINISH");
+
+    database->UpdateClusterParseStatus("UNKNOWN");
+    std::string status1 = database->QueryParseClusterStatus();
+    EXPECT_EQ(status1, "UNKNOWN");
 }
