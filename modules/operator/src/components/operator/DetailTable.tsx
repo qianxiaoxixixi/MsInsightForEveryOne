@@ -5,7 +5,7 @@ import { ResizeTable } from 'ascend-resize';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Button } from 'ascend-components';
+import { Button, Tooltip } from 'ascend-components';
 import { DownOutlined } from '@ant-design/icons';
 import { getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';
@@ -14,6 +14,7 @@ import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumnConfig';
+import { HelpIcon } from 'ascend-icon';
 
 interface FullConditionType {
     rankId: string ;
@@ -377,6 +378,26 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     />;
 };
 
+export const useHit = (condition: ConditionType): React.ReactElement => {
+    const { t } = useTranslation('operator');
+    if (condition.isCompare || condition.group !== OperatorGroup.OPERATOR) {
+        return (<></>);
+    }
+    const hit = t('Operator/ComputeOperatorDetailDescribe',
+        { returnObjects: true }) as string[];
+    return (<Tooltip
+        overlayClassName={'width-auto'}
+        title={
+            (
+                <div style={{ padding: '1rem' }}>
+                    {hit?.map((item: string, index: number) => <div key={index}>{item}</div>)}
+                </div>
+            )
+        }>
+        <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
+    </Tooltip>);
+};
+
 const DetailTable = ({ condition, filterType, session }: {condition: ConditionType;filterType: FilterType;session: Session}): JSX.Element => {
     const { t } = useTranslation('operator');
     let table;
@@ -393,7 +414,7 @@ const DetailTable = ({ condition, filterType, session }: {condition: ConditionTy
             table = <BaseTable condition={condition} filterType={filterType} session={session}/>;
             break;
     }
-    return <CollapsiblePanel title={t('sessionTitle.OperatorDetails')} secondary>
+    return <CollapsiblePanel title={<div className={'flex items-center'}>{t('sessionTitle.OperatorDetails')}{useHit(condition)}</div>} secondary>
         {table}
     </CollapsiblePanel>;
 };
