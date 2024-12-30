@@ -24,7 +24,6 @@ public:
 
 private:
     uint64_t GetBodyLength(const uint64_t &headPosition, const uint64_t &headLength) const;
-    Protocol::ProtocolMessage::Type GetMessageType(const std::string &body) const;
 
     const std::string REQ_DELIMITER = "\r\n\r\n";
     const std::string HEAD_START = "Content-Length:";

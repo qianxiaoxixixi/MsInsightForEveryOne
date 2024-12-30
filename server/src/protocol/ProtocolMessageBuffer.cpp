@@ -32,28 +32,6 @@ uint64_t ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, cons
     return res;
 }
 
-ProtocolMessage::Type ProtocolMessageBuffer::GetMessageType(const std::string &body) const
-{
-    std::string err;
-    auto json = JsonUtil::TryParse(body, err);
-    if (!json.has_value()) {
-        return ProtocolMessage::Type::NONE;
-    }
-    if (!json.value().HasMember("type")) {
-        return ProtocolMessage::Type::NONE;
-    }
-    std::string type = json.value()["type"].GetString();
-    if (type == REQUEST_NAME) {
-        return ProtocolMessage::Type::REQUEST;
-    } else if (type == RESPONSE_NAME) {
-        return ProtocolMessage::Type::RESPONSE;
-    } else if (type == EVENT_NAME) {
-        return ProtocolMessage::Type::EVENT;
-    } else {
-        return ProtocolMessage::Type::NONE;
-    }
-}
-
 ProtocolMessageBuffer &ProtocolMessageBuffer::operator << (const std::string &data)
 {
     std::unique_lock<std::mutex> lock(mutex);

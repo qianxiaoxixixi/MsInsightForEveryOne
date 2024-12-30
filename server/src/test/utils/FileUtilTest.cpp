@@ -429,3 +429,17 @@ TEST(TestUtil, FindIfDbTypeByRegex)
     bool suc = FileUtil::FindIfDbTypeByRegex(testDbDir, std::regex(traceViewReg), std::regex(DB_REG));
     EXPECT_EQ(suc, true);
 }
+
+TEST(TestUtil, CopyFileByPath)
+{
+    std::string sourcePath = "CopyFileByPathTest.tmp";
+    std::ofstream sourceFile(sourcePath);
+    EXPECT_TRUE(sourceFile.is_open());
+    sourceFile.close();
+    std::string targetPath = "./CopyFileByPathTest.copy";
+    EXPECT_TRUE(FileUtil::CopyFileByPath(sourcePath, targetPath));
+
+    // remove file
+    std::remove(sourcePath.c_str());
+    std::remove(targetPath.c_str());
+}
