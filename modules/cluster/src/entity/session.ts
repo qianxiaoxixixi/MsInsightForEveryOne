@@ -29,6 +29,7 @@ export class Session {
 
     activeCommunicator: Communicator | undefined;
     rankCount: number = 0;
+    arrangementRankCount: number = 0;
     indicatorList: IndicatorsItem[] = []; // 性能指标项列表
     performanceData: PerformanceDataItem[] = []; // 性能数据
     communicationDomains: string[] = []; // 通信域（包含所有连线、框）

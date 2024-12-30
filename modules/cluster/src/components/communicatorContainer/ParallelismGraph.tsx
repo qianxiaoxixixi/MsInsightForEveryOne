@@ -217,6 +217,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
 
                 session.communicationDomains = [...new Set([...connections, ...frames])];
                 session.indicatorList = data?.indicators ?? {};
+                session.arrangementRankCount = data?.size || 0;
             });
 
             setActiveRectIndex(null);

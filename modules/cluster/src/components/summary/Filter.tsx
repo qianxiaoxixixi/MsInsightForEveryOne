@@ -73,7 +73,7 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
     const groupOptions = useMemo(() => {
         return getRankGroupOptions(session);
     }, [session.communicationDomains]);
-    const topOptions = getTopOptions(session.performanceData.length);
+    const topOptions = getTopOptions(session.arrangementRankCount);
 
     return (<div style={{ marginBottom: 24 }}>
         {

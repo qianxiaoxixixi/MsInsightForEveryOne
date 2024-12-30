@@ -77,6 +77,7 @@ const resetStatus = (): void => {
         session.performanceData = [];
         session.communicationDomains = [];
         session.stepList = [];
+        session.arrangementRankCount = 0;
     });
 };
 
