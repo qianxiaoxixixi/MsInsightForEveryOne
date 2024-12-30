@@ -12,6 +12,8 @@ const MINDSTUDIO_SERVICE_URL = '';
 
 const MINDSTUDIO_STATIC_CONFIG_URL = '';
 
+const MINDSTUDIO_TOKEN_URL = '/mindstudio_insight_jupyterlab/get_token';
+
 const MINDSTUDIO_URL = '/resources/frontend/index.html';
 
 const MINDSTUDIO_PORT_URL = '/mindstudio_insight_jupyterlab/get_available_port';
@@ -48,6 +50,13 @@ export function getServiceUrl(baseUrl: string): string {
 }
 
 /**
+ * Get the token url.
+ */
+export function getTokenUrl(baseUrl: string): string {
+    return URLExt.join(baseUrl, MINDSTUDIO_TOKEN_URL);
+}
+
+/**
  * Get the port url.
  */
 export function getPortUrl(baseUrl: string): string {
@@ -72,8 +81,9 @@ export function getMindStudioInstanceRootUrl(baseUrl: string): string {
 export function getMindStudioInstanceUrl(
     baseUrl: string,
     name: string,
-    port: string
+    port: string,
+    token: string
 ): string {
     let url = URLExt.join(baseUrl, MINDSTUDIO_URL);
-    return `${url}?port=${port}`;
+    return `${url}?port=${port}&token=${token}`;
 }
