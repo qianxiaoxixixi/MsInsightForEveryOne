@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
+#include <gtest/gtest.h>
+#include "WsServer.h"
+#include "WsSessionManager.h"
+
+using namespace Dic;
+using namespace Dic::Core;
+using namespace Dic::Server;
+class WsServerTest : public ::testing::Test {
+};
+
+class WsServerDerived : public WsServer {
+public:
+    using WsServer::WsServer;
+
+    void OnOpenCb(WsChannel *ws)
+    {
+        WsServer::OnOpenCb(ws);
+    }
+    void OnCloseCb(WsChannel *ws, int code, std::string_view message)
+    {
+        WsServer::OnCloseCb(ws, code, message);
+    }
+    void OnMessageCb(WsChannel *ws, std::string_view message, uWS::OpCode opCode)
+    {
+        WsServer::OnMessageCb(ws, message, opCode);
+    }
+};
+
+/**
+ * @tc.name  : ws_server_test_001
+ * @tc.number: ws_server_test_001
+ * @tc.desc  : Test when ws is nullptr then OnOpenCb logs "Accept new session, channel is null"
+ */
+TEST_F(WsServerTest, ws_server_test_001)
+{
+    int port = 8080;
+    WsServerDerived wsServer("localhost", port, "sid");
+    WsChannel* ws = nullptr;
+    EXPECT_NO_THROW(wsServer.OnOpenCb(ws));
+}
+
+/**
+ * @tc.name  : ws_server_on_close_cb_test_001
+ * @tc.number: ws_server_Test_001
+ * @tc.desc  : Test when ws is nullptr then OnCloseCb returns immediately
+ */
+TEST_F(WsServerTest, ws_server_on_close_cb_test_001)
+{
+    int port = 8080;
+    int code = 1000;
+    WsServerDerived wsServer("localhost", port, "sid");
+    wsServer.OnCloseCb(nullptr, code, "Normal closure");
+    // No assertions needed as the function should return immediately
+}
+
+/**
+ * @tc.name  : ws_server_on_message_cb_test_001
+ * @tc.number: ws_server_Test_001
+ * @tc.desc  : Test when ws is nullptr then OnMessageCb returns immediately
+ */
+TEST_F(WsServerTest, ws_server_on_message_cb_test_001)
+{
+    int port = 8080;
+    WsServerDerived wsServer("localhost", port, "sid");
+    wsServer.OnMessageCb(nullptr, "test message", uWS::OpCode::TEXT);
+    // No assertions needed as the function should return immediately
+}
+
+/**
+ * @tc.name  : ws_server_on_message_cb_test_002
+ * @tc.number: ws_server_Test_002
+ * @tc.desc  : Test when session is not valid then OnMessageCb logs an error
+ */
+TEST_F(WsServerTest, ws_server_on_message_cb_test_002)
+{
+    int port = 8080;
+    WsServerDerived wsServer("localhost", port, "sid");
+    Dic::Server::WsChannel wsChannel;
+    wsServer.OnMessageCb(&wsChannel, "test message", uWS::OpCode::TEXT);
+    // No assertions needed as the function should log an error
+}

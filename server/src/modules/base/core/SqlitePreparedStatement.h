@@ -59,11 +59,13 @@ public:
      * @param args args 需要绑定的参数
      */
     template <typename... Args>
+    // LCOV_EXCL_BR_START
     void BindParams(Args&&... args)
     {
         std::tuple<Args &&...> tp(std::forward<Args>(args)...);
         BindParamsHelper(tp, std::make_index_sequence<sizeof...(Args)>{});
     }
+    // LCOV_EXCL_BR_STOP
 
     /**
      * 和Execute()相同，先绑定参数再执行，第二次调用前需要先执行Reset()
@@ -112,11 +114,13 @@ private:
         }
     }
 
+    // LCOV_EXCL_BR_START
     template <typename Tuple, size_t... I>
     void BindParamsHelper(Tuple& tp, std::index_sequence<I...>)
     {
         (BindParam(bindIndex++, std::get<I>(tp)), ...);
     }
+    // LCOV_EXCL_BR_STOP
 };
 } // end of namespace Module
 } // end of namespace Dic

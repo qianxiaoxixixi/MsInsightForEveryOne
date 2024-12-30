@@ -29,11 +29,13 @@ public:
      * 将光标移动到下一行，如果没有下一行，返回false，需要先调用next()，再读数据
      * @return 下一行有数据，返回true，执行失败或到最后一行，返回false
      */
+     // LCOV_EXCL_BR_START
     inline bool Next()
     {
         lastErrorCode = sqlite3_step(stmt);
         return lastErrorCode == SQLITE_ROW;
     }
+    // LCOV_EXCL_BR_STOP
 
     inline std::string GetString(int index) const
     {

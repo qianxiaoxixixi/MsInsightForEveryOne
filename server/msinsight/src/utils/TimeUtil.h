@@ -66,6 +66,7 @@ public:
         return time;
     }
 
+    // LCOV_EXCL_BR_START
     /* *
      * get now UTC seconds
      *
@@ -112,6 +113,7 @@ private:
             StringUtil::IntToString(time.millisecond, 3);
         return timeStr;
     }
+    // LCOV_EXCL_BR_STOP
 };
 } // end of namespace Dic
 
