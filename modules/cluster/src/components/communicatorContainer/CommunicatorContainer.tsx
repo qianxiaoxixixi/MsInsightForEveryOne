@@ -268,7 +268,7 @@ const LegendContainer = (): JSX.Element => {
 const useParallelTypeOptions = (dimension: ParallelSwitchProps['dimension']): Array<{label: string;value: string; disabled?: boolean}> => {
     const { t } = useTranslation('summary');
     const val = dimension ?? '';
-    const ppDisabled = ['ep-dp', 'ep-dp-cp'].includes(val);
+    const ppDisabled = ['ep-dp', 'ep-dp-cp', 'ep-dp-cp-pp'].includes(val);
     const tpDisabled = ['ep-dp', 'ep-dp-cp', 'ep-dp-cp-pp'].includes(val);
     const cpDisabled = ['ep-dp'].includes(val);
 
