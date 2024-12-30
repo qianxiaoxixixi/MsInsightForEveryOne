@@ -50,6 +50,13 @@
       "OutputDataTypes": "Output Data Types",
       "OutputFormats": "Output Formats",
       "Shape": "Shape"
-    }
+    },
+    "Operator/ComputeOperatorDetailDescribe": [
+      "When the data type is db, the units of data without parameters are as follows:",
+      "Time-related: Unified use of nanoseconds (ns) and local Unix time.",
+      "Memory-related: Unified use of bytes (Byte).",
+      "Bandwidth-related: Unified use of bytes per second (Byte/s).",
+      "Frequency-related: Unified use of megahertz (MHz)."
+    ]
   }
 }
