@@ -31,7 +31,11 @@ TEST_F(FileSelectorTest, TestPathNotExist)
 
 TEST_F(FileSelectorTest, TestContainFolder)
 {
+#ifdef _WIN32
     std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\msprof)";
+#else
+    std::string path =  currPath.substr(0, index + 1) + R"(/src/test/test_data/msprof)";
+#endif
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
@@ -53,7 +57,11 @@ TEST_F(FileSelectorTest, TestContainFolder)
 
 TEST_F(FileSelectorTest, TestContainFiles)
 {
+#ifdef _WIN32
     std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\full_db)";
+#else
+    std::string path =  currPath.substr(0, index + 1) + R"(/src/test/test_data/full_db)";
+#endif
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
     std::vector<std::unique_ptr<File>> realChildrenFiles;
@@ -66,14 +74,18 @@ TEST_F(FileSelectorTest, TestContainFiles)
     FileSelector::GetFoldersAndFiles(path, childrenFolders, childrenFiles, exist);
     EXPECT_TRUE(exist);
     for (int i = 0; i < realChildrenFiles.size(); i++) {
-        ASSERT_EQ(realChildrenFiles[0]->name, childrenFiles[i]->name);
+        ASSERT_EQ(realChildrenFiles[i]->name, childrenFiles[i]->name);
     }
     ASSERT_TRUE(childrenFolders.empty());
 }
 
 TEST_F(FileSelectorTest, TestContainFolderandFiles)
 {
+#ifdef _WIN32
     std::string path =  currPath.substr(0, index + 1) + R"(\src\test\test_data\test_rank_0)";
+#else
+    std::string path =  currPath.substr(0, index + 1) + R"(/src/test/test_data/test_rank_0)";
+#endif
     std::vector<std::unique_ptr<Folder>> childrenFolders;
     std::vector<std::unique_ptr<Folder>> realChildrenFolders;
     std::vector<std::unique_ptr<File>> childrenFiles;
@@ -97,6 +109,6 @@ TEST_F(FileSelectorTest, TestContainFolderandFiles)
         ASSERT_EQ(childrenFolders[i]->name, realChildrenFolders[i]->name);
     }
     for (int i = 0; i < realChildrenFiles.size(); i++) {
-        ASSERT_EQ(realChildrenFiles[0]->name, childrenFiles[i]->name);
+        ASSERT_EQ(realChildrenFiles[i]->name, childrenFiles[i]->name);
     }
 }

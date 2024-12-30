@@ -29,15 +29,15 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     }
     std::vector<ProjectExplorerInfo> projectExplorerList =
         ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, filePathList);
-    // 根据二级目录判断是否为集群数据
-    baselineInfo.isCluster = IsClusterBaseline(filePath);
     if (projectExplorerList.empty() || projectExplorerList[0].parseFilePathInfos.empty()) {
         baselineInfo.errorMessage = "The project does not exist, baseline setting failed.";
         return false;
     }
 
     // 只有部分数据类型支持设置对比，如果非预期数据类型，则直接给前端返回错误提示
-    auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerList[0].projectType);
+    auto projectTypeEnum = ProjectExplorerManager::GetProjectType(projectExplorerList);
+    // 根据二级目录判断是否为集群数据
+    baselineInfo.isCluster = IsClusterBaseline(projectTypeEnum, filePath);
     if (!IsBaseLineConfigurableType(projectTypeEnum)) {
         baselineInfo.errorMessage = "Not supported to set the project type for baseline!";
         return false;
@@ -53,8 +53,12 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     return true;
 }
 
-bool BaselineManagerService::IsClusterBaseline(const std::string &fileName)
+bool BaselineManagerService::IsClusterBaseline(ProjectTypeEnum projectTypeEnum, const std::string &fileName)
 {
+    // 如果非text和db场景，则直接判断为非集群场景，返回false
+    if (projectTypeEnum != ProjectTypeEnum::TEXT_CLUSTER && projectTypeEnum != ProjectTypeEnum::DB_CLUSTER) {
+        return false;
+    }
     // 如果内容为空，即说明设置的是一级目录的对比，视为集群对比
     if (fileName.empty()) {
         return true;

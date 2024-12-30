@@ -32,7 +32,7 @@ private:
     void FindTraceFiles(const std::string &path, int depth, std::string &error, std::vector<std::string> &traceFiles);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     bool IsJsonValid(const std::string &fileName);
-    static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType,
+    static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType, bool isShowCluster,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
     static void ClusterProcessAsyncStep(Timeline::ClusterFileParser clusterFileParser);
 
@@ -40,13 +40,12 @@ private:
 
     bool isSimulation(std::string filePath);
 
-    void ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const ImportActionRequest &request);
     std::map<std::string, std::vector<std::string>> GetRankListMap(
         const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::map<std::string, std::vector<std::string>> &rankToFoldersMap);
     std::vector<std::string> GetJsonFileUnderFolder(const std::string &path);
     void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
-        const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request);
+        const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isShowCluster);
     static void FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
                               const std::vector<Global::ProjectExplorerInfo> &projectInfos);
     static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,

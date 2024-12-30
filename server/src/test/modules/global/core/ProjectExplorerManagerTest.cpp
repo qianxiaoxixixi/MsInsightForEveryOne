@@ -7,6 +7,10 @@
 #include "ProjectExplorerManager.h"
 #include "GlobalDefs.h"
 
+const int64_t NUMBER_ZERO = 0;
+const int64_t NUMBER_THREE = 3;
+const int64_t NUMBER_FIVE = 5;
+const int64_t NUMBER_SIX = 6;
 using namespace Dic::Module::Global;
 class ProjectExplorerManagerTest : public ::testing::Test {
 public:
@@ -33,6 +37,9 @@ protected:
         info.projectType = static_cast<int64_t>(projectType);
         info.dbPath = dbPath;
         info.accessTime = "2000-01-01 00:00:00.000";
+        ParseFileInfo parseFileInfo;
+        parseFileInfo.parseFilePath = "test";
+        info.parseFilePathInfos.push_back(parseFileInfo);
         return info;
     }
     void InitProjectExplorerData()
@@ -111,4 +118,30 @@ TEST_F(ProjectExplorerManagerTest, ClearProjectExplorerSuccess)
     std::vector<ProjectExplorerInfo> queryRes = ProjectExplorerManager::Instance()
             .QueryProjectExplorer("", std::vector<std::string>());
     EXPECT_EQ(queryRes.size(), 0);
+}
+
+TEST_F(ProjectExplorerManagerTest, GetProjectTypeWithOnlyMulitTextType)
+{
+    std::vector<ProjectExplorerInfo> projectInfoList;
+    ProjectExplorerInfo info1;
+    info1.projectType = NUMBER_FIVE;
+    ProjectExplorerInfo info2;
+    info2.projectType = NUMBER_THREE;
+    projectInfoList.push_back(info1);
+    projectInfoList.push_back(info2);
+    Dic::ProjectTypeEnum type = ProjectExplorerManager::GetProjectType(projectInfoList);
+    EXPECT_EQ(type, Dic::ProjectTypeEnum::TEXT_CLUSTER);
+}
+
+TEST_F(ProjectExplorerManagerTest, GetProjectTypeWithOnlyMulitDbType)
+{
+    std::vector<ProjectExplorerInfo> projectInfoList;
+    ProjectExplorerInfo info1;
+    info1.projectType = NUMBER_ZERO;
+    ProjectExplorerInfo info2;
+    info2.projectType = NUMBER_SIX;
+    projectInfoList.push_back(info1);
+    projectInfoList.push_back(info2);
+    Dic::ProjectTypeEnum type = ProjectExplorerManager::GetProjectType(projectInfoList);
+    EXPECT_EQ(type, Dic::ProjectTypeEnum::DB_CLUSTER);
 }

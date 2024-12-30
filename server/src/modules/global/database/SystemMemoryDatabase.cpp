@@ -74,9 +74,12 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateProject(std::vector<ProjectExplo
     return true;
 }
 
-bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(std::vector<ParseFileInfo> ParseFileInfoList)
+bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<ParseFileInfo> &parseFileInfoList)
 {
-    for (const auto &item: ParseFileInfoList) {
+    if (parseFileInfoList.empty()) {
+        return true;
+    }
+    for (const auto &item: parseFileInfoList) {
         if (item.projectExplorerId == 0 || item.parseFilePath.empty()) {
             ServerLog::Error("Failed to save FileMenuData, params is invalid.");
             return false;
@@ -85,7 +88,7 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(std::vector<ParseFile
     std::unique_lock<std::recursive_mutex> lock(mutex);
     std::string sql = "INSERT INTO " + parseFileInfoTable + "(projectExplorerId, parseFilePath, dbPath)"
                                                               " VALUES(?, ?, ?)";
-    for (size_t i = 1; i < ParseFileInfoList.size(); ++i) {
+    for (size_t i = 1; i < parseFileInfoList.size(); ++i) {
         sql += ",(?, ?, ?)";
     }
     sql += " ON CONFLICT(projectExplorerId, parseFilePath) DO UPDATE SET"
@@ -95,7 +98,7 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(std::vector<ParseFile
         ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");
         return false;
     }
-    for (const auto &item: ParseFileInfoList) {
+    for (const auto &item: parseFileInfoList) {
         stmt->BindParams(item.projectExplorerId, item.parseFilePath, item.dbPath);
     }
     if (!stmt->Execute()) {

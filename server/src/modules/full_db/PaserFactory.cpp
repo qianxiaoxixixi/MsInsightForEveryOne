@@ -87,13 +87,14 @@ void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const 
     response.body.result.emplace_back(action);
 }
 
-void ParserAlloc::ParseClusterEndProcess(std::string result)
+void ParserAlloc::ParseClusterEndProcess(std::string result, bool isShowCluster)
 {
     ServerLog::Info("Parse Cluster File end, send event");
     auto event = std::make_unique<ParseClusterCompletedEvent>();
     event->moduleName = MODULE_TIMELINE;
     event->result = true;
     event->body.parseResult = std::move(result);
+    event->body.isShowCluster = isShowCluster;
     SendEvent(std::move(event));
 }
 
@@ -250,5 +251,32 @@ void ParserAlloc::SaveDbPath(const std::string &curProjectName,
 {
     Global::ProjectExplorerManager::Instance().UpdateProjectDbPath(curProjectName, dataPathToDbMap);
 }
+
+/**
+ * 校验前端是否展示集群标签
+ *
+ * @param action 导入动作（切换项目、导入文件）
+ * @param curType 当前文件的类型
+ * @param projectName 项目名
+ * @return 是否要打开集群标签
+ */
+bool ParserAlloc::CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnum curType,
+                                        const std::string &projectName)
+{
+    // 如果当前类型是集群，则直接返回true
+    if (curType == ProjectTypeEnum::TEXT_CLUSTER || curType == ProjectTypeEnum::DB_CLUSTER) {
+        return true;
+    }
+    // 如果当前类型非集群，而非新增文件场景，则直接返回false
+    if (action != ProjectActionEnum::ADD_FILE) {
+        return false;
+    }
+    // 新增文件场景下，需要对该项目所有内容进行判断(由于新增导入的场景)
+    std::vector<Global::ProjectExplorerInfo> projectInfo = Global::ProjectExplorerManager::Instance()
+            .QueryProjectExplorer(projectName, {});
+    ProjectTypeEnum projectType = Global::ProjectExplorerManager::GetProjectType(projectInfo);
+    return (projectType == ProjectTypeEnum::TEXT_CLUSTER || projectType == ProjectTypeEnum::DB_CLUSTER);
+}
+
 } // Module
 } // Dic

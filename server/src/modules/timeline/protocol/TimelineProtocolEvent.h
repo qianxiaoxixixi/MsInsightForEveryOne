@@ -72,6 +72,7 @@ struct MemorySuccess {
 
 struct ParseClusterCompletedEventBody {
     std::string parseResult;
+    bool isShowCluster = false;
     bool isAllPageParsed = false;
 };
 

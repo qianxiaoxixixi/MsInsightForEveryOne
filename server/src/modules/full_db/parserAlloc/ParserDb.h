@@ -30,10 +30,8 @@ private:
     static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
         const std::string &host, const std::string &dbFile);
     static void SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response);
-    static void ClusterProcess(const std::string &selectedFolder, bool isCluster,
+    static void ClusterProcess(const std::string &selectedFolder, bool isCluster, ProjectTypeEnum curProjectTypeEnum,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
-    static void ClusterProcessAsyncStep(const std::string &selectedFolder,
-        std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 };
 } // end of namespace Module
 } // end of namespace Dic

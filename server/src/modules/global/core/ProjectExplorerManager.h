@@ -32,6 +32,8 @@ public:
     void InitSystemMemoryDbPath(const std::string &filePath);
     bool IsClusterData(const std::string &projectName);
     bool ClearProjectExplorer(const std::vector<std::string> &projectNameList);
+    static ProjectTypeEnum GetProjectType(const std::vector<ProjectExplorerInfo> &projectInfo);
+    static std::string GetClusterFilePath(const std::vector<ProjectExplorerInfo> &projectInfo);
 
 private:
     std::string systemMemoryDbPath;
