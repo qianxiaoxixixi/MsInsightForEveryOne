@@ -153,10 +153,31 @@ export function shutdownAll(
 }
 
 /**
+ * get mindstudio's token.
+ */
+export function getToken(
+    settings?: ServerConnection.ISettings,
+): Promise<string> {
+    const localSettings = settings || ServerConnection.makeSettings();
+    const tokenUrl = Private.getTokenUrl(localSettings.baseUrl);
+    return ServerConnection.makeRequest(tokenUrl, {}, localSettings)
+    .then((response: Response) => {
+        if (response.status !== 200) {
+            throw new ServerConnection.ResponseError(response);
+        }
+        return response.json();
+    })
+    .then((data: any) => {
+        return data.token;
+    });
+}
+
+/**
  * According mindstudio's name to get mindstudio's url.
  */
 export function getUrl(
     name: string,
+    token: string,
     settings?: ServerConnection.ISettings
 ): Promise<string> {
     const localSettings = settings || ServerConnection.makeSettings();
@@ -171,6 +192,6 @@ export function getUrl(
     })
     .then((data: any) => {
         port = data.port;
-        return Private.getMindStudioInstanceUrl(localSettings.baseUrl, name, port);
+        return Private.getMindStudioInstanceUrl(localSettings.baseUrl, name, port, token);
     });
 }

@@ -9,16 +9,26 @@ import sys
 import json
 import subprocess
 import socket
+import uuid
+import logging
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 import tornado
 from tornado.web import StaticFileHandler
 
 
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 # init profiler_server process
 profiler_process = None
 # default profiler_server port
 available_port = 9000
+# generate random token
+gen_token = str(uuid.uuid4())
 
 
 def find_available_port(start_port=9000, host='127.0.0.1', max_tries=100):
@@ -49,7 +59,10 @@ def start_profiler_server():
     global available_port
     available_port = find_available_port()
     # 配置参数
-    command = [profiler_server_path, '--wsPort', str(available_port), '--logPath', mindstudio_insight_dir]
+    command = [
+        profiler_server_path, '--wsPort', str(available_port),
+        '--wsHost', '0.0.0.0', '--logPath', mindstudio_insight_dir
+    ]
 
     if sys.platform == 'win32':
         profiler_server_path = profiler_server_path + '.exe'
@@ -83,6 +96,18 @@ def shutdown_hook(web_app):
     stop_profiler_server()
 
 
+class TokenHandler(APIHandler):
+    @tornado.web.authenticated
+    def get(self):
+        # generate random token
+        global gen_token
+        # logging info for token
+        logging.info(f"To access the mindstudio insight server, you should take this token: {gen_token}")
+        self.finish(json.dumps({
+            "token": gen_token
+        }))
+
+
 class PortHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
@@ -104,10 +129,32 @@ class RouteHandler(APIHandler):
         }))
 
 
+class TokenAwareStaticFileHandler(StaticFileHandler):
+    def prepare(self):
+        # 获取请求url
+        request_uri = self.request.uri
+        # 获取请求中的token
+        token = self.get_argument("token", None)
+
+        global gen_token
+        if '/resources/frontend/index.html' in request_uri:
+            if not token or token != gen_token:
+                self.set_status(403)
+                self.finish(json.dumps({
+                    "error": "Invalid or missing token"
+                }))
+                return
+
+        super().prepare()
+
+
 def setup_handlers(web_app):
     web_app.settings["shutdown_hook"] = shutdown_hook
     host_pattern = ".{1,255}$"
     base_url = web_app.settings["base_url"]
+
+    token_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_token")
+    token_handlers = [(token_route_pattern, TokenHandler)]
 
     port_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_available_port")
     port_handlers = [(port_route_pattern, PortHandler)]
@@ -115,12 +162,12 @@ def setup_handlers(web_app):
     static_frontend_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'frontend')
     static_route_pattern = url_path_join(base_url, "/resources/frontend/(.*)")
     static_handlers = [
-        (static_route_pattern, StaticFileHandler, {'path': static_frontend_path})
+        (static_route_pattern, TokenAwareStaticFileHandler, {'path': static_frontend_path})
     ]
 
     api_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_example")
     api_handlers = [(api_route_pattern, RouteHandler)]
 
-    web_app.add_handlers(host_pattern, port_handlers + static_handlers + api_handlers)
+    web_app.add_handlers(host_pattern, token_handlers + port_handlers + static_handlers + api_handlers)
 
     start_profiler_server()
