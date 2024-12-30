@@ -19,6 +19,7 @@ struct OperatorDetailsParam {
     std::string orderBy;
     std::string order;
     std::string stage;
+    std::string queryType = "COMPARE";
     int pageSize{};
     int currentPage{};
     bool CheckParams(std::string &errorMsg) const

@@ -11,6 +11,7 @@
 #include "writer.h"
 #include "stringbuffer.h"
 #include "unordered_map"
+#include <vector>
 #include <algorithm>
 
 namespace Dic {

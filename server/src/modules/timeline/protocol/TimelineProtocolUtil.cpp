@@ -628,6 +628,7 @@ template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(co
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
     JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
+    JsonUtil::AddMember(body, "isShowCluster", event.body.isShowCluster, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

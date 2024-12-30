@@ -21,9 +21,6 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
             std::make_unique<Protocol::SummaryStatisticsResponse>();
     SummaryStatisticsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    WsSession &session = *WsSessionManager::Instance().GetSession();
     // check request parameters
     std::string errorMsg;
     if (!request.params.CheckParams(errorMsg)) {
@@ -34,26 +31,22 @@ bool SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
         if (database == nullptr) {
-            ServerLog::Error("Failed to get connection for get summary statistics.");
+            SendResponse(std::move(responsePtr), false, "Failed to get connection for get summary statistics.");
             return false;
         }
     }
     if (!request.params.timeFlag.empty() && request.params.timeFlag.find("compute") != std::string::npos) {
         if (!database->QueryComputeStatisticsData(request.params, response.body)) {
-            ServerLog::Warn("Query compute statistics data is failed");
-            SetResponseResult(response, false, "Query compute statistics data failed");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Query compute statistics data is failed.");
             return false;
         }
     } else {
         if (!database->QueryCommunicationStatisticsData(request.params, response.body)) {
-            ServerLog::Warn("Query communication statistics data is failed");
-            SetResponseResult(response, false, "Query communication statistics data failed");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Query communication statistics data is failed.");
             return false;
         }
     }
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
     return true;
 }
 } // Summary

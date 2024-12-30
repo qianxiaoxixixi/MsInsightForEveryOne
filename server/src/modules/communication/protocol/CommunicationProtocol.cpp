@@ -62,6 +62,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorDetailsRequest(const j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.queryType, json["params"], "queryType");
     return reqPtr;
 }
 

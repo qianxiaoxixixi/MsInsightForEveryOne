@@ -45,17 +45,19 @@ std::vector<ProjectExplorerInfo> ProjectExplorerManager::QueryProjectExplorer(
     if (!projectName.empty()) {
         projectNameList.push_back(projectName);
     }
-    std::vector<ProjectExplorerInfo> res =
+    std::vector<ProjectExplorerInfo> projectExplorerList =
         db->QueryProjectExplorerData(projectNameList, std::vector<std::string>());
     std::vector<int64_t> projectExplorerIdList;
-    for (const auto &item: res) {
+    for (const auto &item: projectExplorerList) {
         projectExplorerIdList.push_back(item.id);
     }
     std::map<int64_t, std::vector<ParseFileInfo>> parseFileInfoMap = db->QueryParseFileInfo(projectExplorerIdList,
                                                                                             dataPathList);
-    for (auto &item: res) {
+    std::vector<ProjectExplorerInfo> res;
+    for (auto &item: projectExplorerList) {
         if (parseFileInfoMap.find(item.id) != parseFileInfoMap.end()) {
             item.parseFilePathInfos = parseFileInfoMap[item.id];
+            res.push_back(item);
         }
     }
     return res;
@@ -168,6 +170,9 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
 
     // 获取项目下所有内容
     std::vector<ProjectExplorerInfo> infos = QueryProjectExplorer(projectName, std::vector<std::string>());
+    if (infos.empty()) {
+        return true;
+    }
     std::vector<int64_t> projectIdList;
     std::vector<std::string> needDeleteImportFileList;
     std::vector<int64_t> needDeleteParseFileIdList;
@@ -305,6 +310,48 @@ bool ProjectExplorerManager::ClearProjectExplorer(const std::vector<std::string>
     Server::ServerLog::Error("Fail to clear project explorer.");
     return false;
 }
+
+ProjectTypeEnum ProjectExplorerManager::GetProjectType(const std::vector<ProjectExplorerInfo> &projectInfo)
+{
+    // 外层保证入参不为空
+    std::set<ProjectTypeEnum> projectTypeSet;
+    for (const auto &item: projectInfo) {
+        projectTypeSet.insert(static_cast<ProjectTypeEnum>(item.projectType));
+    }
+
+    if (projectTypeSet.size() == 1) {
+        return *projectTypeSet.begin();
+    }
+
+    std::set<ProjectTypeEnum> dbProjectTypeSet = {ProjectTypeEnum::DB_CLUSTER, ProjectTypeEnum::DB};
+    std::set<ProjectTypeEnum> dbTypeDifference;
+    std::set_difference(dbProjectTypeSet.begin(), dbProjectTypeSet.end(), projectTypeSet.begin(),
+                        projectTypeSet.end(), std::inserter(dbTypeDifference, dbTypeDifference.begin()));
+    if (dbTypeDifference.empty()) {
+        return ProjectTypeEnum::DB_CLUSTER;
+    }
+
+    std::set<ProjectTypeEnum> textProjectTypeSet = {ProjectTypeEnum::TEXT_CLUSTER, ProjectTypeEnum::TRACE};
+    std::set<ProjectTypeEnum> textTypeDifference;
+    std::set_difference(textProjectTypeSet.begin(), textProjectTypeSet.end(), projectTypeSet.begin(),
+                        projectTypeSet.end(), std::inserter(textTypeDifference, textTypeDifference.begin()));
+    if (dbTypeDifference.empty()) {
+        return ProjectTypeEnum::TEXT_CLUSTER;
+    }
+    return *projectTypeSet.begin();
+}
+
+std::string ProjectExplorerManager::GetClusterFilePath(const std::vector<ProjectExplorerInfo> &projectInfo)
+{
+    for (const auto &item: projectInfo) {
+        auto projectTypeEnum = static_cast<ProjectTypeEnum>(item.projectType);
+        if (projectTypeEnum == ProjectTypeEnum::TEXT_CLUSTER || projectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
+            return item.fileName;
+        }
+    }
+    return "";
+}
+
 }
 }
 }

@@ -37,13 +37,15 @@ public:
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
     static void SendAllParseSuccess();
+    static bool CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnum curType,
+                                      const std::string &projectName);
 
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
     std::unique_ptr<IFileReader> fileReader = nullptr;
 
-    static void ParseClusterEndProcess(std::string result);
+    static void ParseClusterEndProcess(std::string result, bool isShowCluster);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::string GetFileId(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);

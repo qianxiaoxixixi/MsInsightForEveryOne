@@ -13,6 +13,7 @@
 #include "TrackInfoManager.h"
 #include "BaselineManager.h"
 #include "TimeUtil.h"
+#include "ProjectExplorerManager.h"
 #include "ParserDb.h"
 
 namespace Dic {
@@ -45,7 +46,9 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     SetParseCallBack();
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = MODULE_TIMELINE;
-    response.body.isCluster = static_cast<ProjectTypeEnum>(projectInfos[0].projectType) == ProjectTypeEnum::DB_CLUSTER;
+    ProjectTypeEnum curProjectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
+    response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, curProjectTypeEnum,
+                                                    projectInfos[0].projectName);
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     // add response to response queue in session
@@ -61,8 +64,9 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
         }
     }
     // 执行集群数据解析
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, path,
-        isCluster, dataPathToDbMap, projectInfos[0].projectName);
+    std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, clusterFilePath,
+        isCluster, curProjectTypeEnum, dataPathToDbMap, projectInfos[0].projectName);
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
@@ -86,44 +90,25 @@ void ParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportA
     response.body.isPending = isPendingParse;
 }
 
-void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
+void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster, ProjectTypeEnum curProjectTypeEnum,
     std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
-    if (isCluster) {
-        ServerLog::Info("The cluster file is parsed successfully.");
-        parseClusterResult = PARSE_RESULT_OK;
-        ClusterProcessAsyncStep(selectedFolder, dataPathToDbMap);
-    } else {
-        ServerLog::Warn("Failed to parse cluster files.");
-        parseClusterResult = PARSE_RESULT_FAIL;
+    if (curProjectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
+        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
+        ClusterFileParser clusterFileParser(selectedFolder, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
+        if (clusterFileParser.ParserClusterOfDb()) {
+            ServerLog::Info("The cluster db file is parsed successfully.");
+            dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
+            parseClusterResult = PARSE_RESULT_OK;
+        } else {
+            ServerLog::Warn("Failed to parse cluster db files");
+            parseClusterResult = PARSE_RESULT_FAIL;
+        }
     }
     SaveDbPath(projectName, dataPathToDbMap);
     // send event
-    ParserAlloc::ParseClusterEndProcess(parseClusterResult);
-}
-
-void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
-    std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
-{
-    std::string parseClusterResult;
-    auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(COMPARE, DataType::DB);
-    ClusterFileParser clusterFileParser(selectedFolder, clusterDatabase, COMPARE + TimeUtil::Instance().NowStr());
-    if (clusterFileParser.ParserClusterOfDb()) {
-        ServerLog::Info("The cluster db file is parsed successfully.");
-        dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
-        parseClusterResult = PARSE_RESULT_OK;
-    } else {
-        ServerLog::Warn("Failed to parse cluster db files");
-        parseClusterResult = PARSE_RESULT_FAIL;
-    }
-    // send event
-    ServerLog::Info("Parse cluster file end, send event");
-    auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
-    event->moduleName = MODULE_TIMELINE;
-    event->result = true;
-    event->body.parseResult = std::move(parseClusterResult);
-    SendEvent(std::move(event));
+    ParserAlloc::ParseClusterEndProcess(parseClusterResult, isCluster);
 }
 
 std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
@@ -234,15 +219,16 @@ void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &pr
     if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
         return;
     }
-    std::string parseFilePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
     if (baselineInfo.isCluster) {
+        std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
         auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::DB);
-        ClusterFileParser clusterFileParser(parseFilePath, clusterDatabase, BASELINE + TimeUtil::Instance().NowStr());
+        ClusterFileParser clusterFileParser(clusterFilePath, clusterDatabase, BASELINE + TimeUtil::Instance().NowStr());
         if (!clusterFileParser.ParserClusterOfDb()) {
             ServerLog::Warn("Failed to parse cluster db files");
         }
         return;
     }
+    std::string parseFilePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
     std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(msprofDBReg));
     if (pytorchFiles.empty() && msprofFiles.empty()) {
