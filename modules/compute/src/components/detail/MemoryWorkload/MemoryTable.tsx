@@ -147,23 +147,26 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
     }, [data, tDetails]);
     return (
         <div>
-            {advice.length > 0 && (<Hit text={advice} style={{ marginBottom: '10px' }} type={'alarm'}/>) }
+            {advice.length > 0 && (<Hit text={advice} style={{ marginBottom: '10px' }} type={'alarm'} data-testId="memoryWorkloadAdvice"/>) }
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${tDetails('Memory Workload Table Records')}(${limit.current})`}/>}
-            {tablelist.map((item, index) => (
-                <ResizeTable
-                    key={`memoryTable${index}`}
-                    size="small"
-                    columns={item.cols ?? []}
-                    dataSource={item.dataset.map((row, rowIndex) => { return { ...row, key: `memoryTable${index}_${rowIndex}` }; })}
-                    scroll={item.dataset.length > 10 ? { y: 500 } : undefined}
-                    pagination={false}
-                    expandable={{
-                        expandIcon: () => <></>,
-                        expandedRowKeys,
-                    }}
-                />
-            ))}
+            <div data-testId={'memoryWorkloadTable'}>
+                {tablelist.map((item, index) => (
+                    <ResizeTable
+                        key={`memoryTable${index}`}
+                        size="small"
+                        columns={item.cols ?? []}
+                        dataSource={item.dataset.map((row, rowIndex) => { return { ...row, key: `memoryTable${index}_${rowIndex}` }; })}
+                        scroll={item.dataset.length > 10 ? { y: 500 } : undefined}
+                        pagination={false}
+                        expandable={{
+                            expandIcon: () => <></>,
+                            expandedRowKeys,
+                        }}
+                    />
+                ))}
+            </div>
+
         </div>
     );
 });

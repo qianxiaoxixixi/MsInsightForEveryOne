@@ -112,7 +112,7 @@ function Index({ condition, data }: Iprops): JSX.Element {
         updateTable();
     }, [condition, data, t]);
     return (
-        <div>
+        <div data-testId="computeWorkloadTable">
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${t('All Instruction Records')} (${limit.current})`}/>}
             {tablelist.map(item => (

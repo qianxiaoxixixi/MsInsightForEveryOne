@@ -34,12 +34,40 @@ export class DetailsPage {
         return this.detailsFrame.locator('#core_show_as');
     }
 
+    get rooflineChart(): Locator {
+        return this.detailsFrame.getByTestId('rooflineChart');
+    }
+
+    get rooflineAdvice(): Locator {
+        return this.detailsFrame.getByTestId('rooflineAdvice');
+    }
+
     get ComputeWorkloadChart(): Locator {
         return this.detailsFrame.locator('#ComputeWorkload');
     }
 
     get computeWorkloadBlockIdSelector(): Locator {
         return this.detailsFrame.locator('#compute_block_id');
+    }
+
+    get computeWorkloadAdvice(): Locator {
+        return this.detailsFrame.getByTestId('computeWorkloadAdivce');
+    }
+
+    get computeWorkloadTable(): Locator {
+        return this.detailsFrame.getByTestId('computeWorkloadTable');
+    }
+
+    get memoryWorkloadChart(): Locator {
+        return this.detailsFrame.locator('#memory');
+    }
+
+    get memoryWorkloadAdvice(): Locator {
+        return this.detailsFrame.getByTestId('memoryWorkloadAdvice');
+    }
+
+    get memoryWorkloadTable(): Locator {
+        return this.detailsFrame.getByTestId('memoryWorkloadTable');
     }
 
     async goto(): Promise<void> {
