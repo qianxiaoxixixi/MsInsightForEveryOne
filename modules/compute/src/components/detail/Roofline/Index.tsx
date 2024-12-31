@@ -146,8 +146,8 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     return data?.data?.length > 0
         ? (
             <CollapsiblePanel title={tDetails('Roofline')} collapsible>
-                <Tabs items={items}></Tabs>
-                {data?.advice?.length > 0 && <Hit text={data.advice} type={'alarm'}/>}
+                <Tabs items={items} data-testId={'rooflineChart'}></Tabs>
+                {data?.advice?.length > 0 && <Hit text={data.advice} type={'alarm'} data-testId={'rooflineAdvice'}/>}
             </CollapsiblePanel>
         )
         : <></>;

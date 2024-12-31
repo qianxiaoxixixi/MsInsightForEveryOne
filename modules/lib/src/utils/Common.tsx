@@ -6,11 +6,11 @@ import styled from '@emotion/styled';
 import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
-import {chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDefaultChartOptions, getLegendStyle} from './EchartUtils';
+import { chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDefaultChartOptions, getLegendStyle } from './EchartUtils';
 import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
-import {AlarmIcon, BulbIcon} from '../icon/Icon';
+import { AlarmIcon, BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
 export { customConsole } from './Console';
 export {
@@ -22,7 +22,7 @@ export {
     getAdaptiveEchart,
     disposeAdaptiveEchart,
     getDefaultChartOptions,
-    getLegendStyle
+    getLegendStyle,
 };
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
@@ -73,25 +73,25 @@ interface IHitProps {
     type?: string;
 }
 export function Hit(props: IHitProps): JSX.Element {
-    const {type, title, text, style = {}} = props;
+    const { type, title, text, style, ...restProps } = props;
     const icon = type === 'alarm' ? <AlarmIcon/> : <BulbIcon/>;
     const splitText = (str: React.ReactNode): React.ReactNode => {
         if (typeof str !== 'string') {
             return str;
         }
         const list = str.split(BREAK_LINE_REGEXP);
-        return list.map(item => (<div>{item}</div>));
+        return list.map((item, index) => (<div key={index}>{item}</div>));
     };
-    return <StyledAdvice style={style}>
+    return <StyledAdvice style={style} {...restProps}>
         <div>
             {icon}
             {(title !== undefined && title !== null) ? (<span>{title}</span>) : <></>}
         </div>
-        <div>{Array.isArray(text) ? text.map(item => (<div>{splitText(item)}</div>)) : splitText(text)}</div>
+        <div>{Array.isArray(text) ? text.map((item, index) => (<div key={index}>{splitText(item)}</div>)) : splitText(text)}</div>
     </StyledAdvice>;
 }
 export function Advice(props: IHitProps): JSX.Element {
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     return <Hit type={'advice'} title={`${t('Advice')}:`} {...props}/>;
 }
 
@@ -262,7 +262,7 @@ export function useWatchDomResize<T extends Element>(prop: SizeProp): [number, R
 
 const removePrototypePollution = (obj: any): void => {
     if (obj && typeof obj === 'object') {
-        for (let key in obj) {
+        for (const key in obj) {
             if (key === '__proto__' || key === 'constructor') {
                 delete obj[key];
             } else if (typeof obj[key] === 'object') {
@@ -282,7 +282,7 @@ export const safeJSONParse = (str: any, defaultValue: any = null): any => {
     }
 };
 
-export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = []):void => {
+export const disableShortcuts = (forbiddenComboKeys = [], forbiddenSingleKeys = []): void => {
     document.addEventListener('keydown', (e) => {
         const defaultForbiddenComboKeys = ['f', 'p', 'g', 'j', 'r'];
         const defaultForbiddenSingleKeys = ['F3', 'F5', 'F7'];
