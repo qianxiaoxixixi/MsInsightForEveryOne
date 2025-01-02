@@ -81,6 +81,15 @@
         "Operators Reserved: This curve illustrates the device memory trend derived from data collected from operators during memory release, encompassing the total reserved memory of all operators. The memory data presented here is requested by PTA and GE",
         "App Reserved: This curve depicts the device memory allocation trend of the entire process"
       ],
+      "CurveDescribeByCompenent": [
+        "PTA Allocated: This curve illustrates the device memory trend derived from data collected from PTA during memory allocation",
+        "PTA Activated: This curve illustrates the device memory from PTA requested",
+        "PTA Reserved: This curve illustrates the device memory trend derived from data collected from PTA during memory release",
+        "GE Allocated: This curve illustrates the device memory trend derived from data collected from GE during memory allocation",
+        "GE Activated: This curve illustrates the device memory from GE requested",
+        "GE Reserved: This curve illustrates the device memory trend derived from data collected from GE during memory release",
+        "APP Reserved: This curve depicts the device memory allocation trend of the entire process"
+      ],
       "Name": "Name",
       "Min Size": "Min Size(KB)",
       "Max Size": "Max Size(KB)",
