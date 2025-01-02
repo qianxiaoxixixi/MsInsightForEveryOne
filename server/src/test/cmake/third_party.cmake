@@ -1,10 +1,6 @@
-if (CMAKE_INSTALL_PREFIX STREQUAL /usr/local)
-    set(CMAKE_INSTALL_PREFIX ${HOME_DIR}/output CACHE STRING "path for install()" FORCE)
-    message(STATUS "No install prefix selected, default to ${CMAKE_INSTALL_PREFIX}.")
-endif()
+set(CMAKE_INSTALL_PREFIX ${HOME_DIR}/output)
 
 set(MOCKCPP_CXXFLAGS "-fPIC -std=c++17 -Wno-unused-parameter")
-set(MOCKCPP_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 set(MOCKCPP_LINKER_FLAGS "")
 
 include(ExternalProject)
@@ -17,7 +13,7 @@ ExternalProject_Add(mockcpp_build
         -DCMAKE_EXE_LINKER_FLAGS=${MOCKCPP_LINKER_FLAGS}
         -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}/mockcpp
         <SOURCE_DIR>
-    BUILD_COMMAND $(MAKE)
+    BUILD_COMMAND ninja
     BUILD_ALWAYS TRUE
     EXCLUDE_FROM_ALL TRUE
 )

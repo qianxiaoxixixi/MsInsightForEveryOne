@@ -23,6 +23,11 @@ OPEN_SOURCE = [
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/google/googletest.git'
     ],
     [
+        'mockcpp',
+        'master',
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/sinojelly/mockcpp.git'
+    ],
+    [
         'libuv',
         'v1.44.2',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/libuv/libuv.git'
