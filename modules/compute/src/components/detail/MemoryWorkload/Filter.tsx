@@ -79,7 +79,8 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
                     handleChange('blockId', val);
                 }}
                 options={optionMap.blockIdOptions}
-                showSearch={true}
+                showSearch
+                id="memoryWorkloadBlockId"
             />
             )}/>
         <FormItem
@@ -92,7 +93,8 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
                     handleChange('showAs', val);
                 }}
                 options={optionMap.showAsOptions}
-                showSearch={true}
+                showSearch
+                id="memoryWorkloadShowAs"
             />
             )}/>
     </div>);

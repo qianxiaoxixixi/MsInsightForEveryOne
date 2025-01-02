@@ -22,8 +22,15 @@ const imgMap = {
     baseinfoDataCorrect: 'baseinfo-data-correct.png',
     coreOccupancyCorrect: 'core-occupancy-correct.png',
     coreOccupancyShowThroughput: 'core-occupancy-show-throughput.png',
+    rooflineChart: 'roofline-chart.png',
+    rooflineAdvice: 'roofline-advice.png',
     computeWorkloadChartCorrect: 'compute-workload-chart-correct.png',
     computeWorkloadBlockIdChange: 'compute-workload-block-id-change.png',
+    computeWorkloadAdvice: 'compute-workload-advice.png',
+    computeWorkloadTable: 'compute-workload-table.png',
+    memoryWorkloadChart: 'memory-workload-chart.png',
+    memoryWorkloadAdvice: 'memory-workload-advice.png',
+    memoryWorkloadTable: 'memory-workload-table.png',
 };
 const inputMap = {
     coreOccupancyShowAsThroughput: 'Throughput',
@@ -58,6 +65,20 @@ test.describe('Details', () => {
         await showAsSelect.selectOption(inputMap.coreOccupancyShowAsThroughput);
         await expect(coreOccupancyContent).toHaveScreenshot(imgMap.coreOccupancyShowThroughput);
     });
+    // roofline瓶颈分析
+    // 预期：导入数据，roofline图显示正确
+    test('test_details_roofline', async ({page, detailsPage}) => {
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        const {rooflineChart} = detailsPage;
+        await expect(rooflineChart).toHaveScreenshot(imgMap.rooflineChart);
+    });
+    // roofline瓶颈分析-瓶颈分析
+    // 预期：roofline分析的瓶颈分析显示正确
+    test('test_details_roofline_advice', async ({page, detailsPage}) => {
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        const {rooflineAdvice} = detailsPage;
+        await expect(rooflineAdvice).toHaveScreenshot(imgMap.rooflineAdvice);
+    });
     // 计算负载分析
     // 预期：
     // 1、柱状图显示正确
@@ -69,5 +90,38 @@ test.describe('Details', () => {
         await blockIdSelect.open();
         await blockIdSelect.selectOption(inputMap.computeWorkloadBlockId);
         await expect(ComputeWorkloadChart).toHaveScreenshot(imgMap.computeWorkloadBlockIdChange);
+    });
+
+    // 计算负载分析-瓶颈分析结果
+    // 预期：瓶颈分析结果正确
+    test('test_details_compute_workload_advice', async ({page, detailsPage}) => {
+        const {computeWorkloadAdvice} = detailsPage;
+        await expect(computeWorkloadAdvice).toHaveScreenshot(imgMap.computeWorkloadAdvice);
+    });
+    // 计算负载分析-计算负载信息表
+    // 预期：瓶颈分析结果正确
+    test('test_details_compute_workload_table', async ({page, detailsPage}) => {
+        const {computeWorkloadTable} = detailsPage;
+        await expect(computeWorkloadTable).toHaveScreenshot(imgMap.computeWorkloadTable);
+    });
+    // 内存负载分析-热力图
+    // 预期：
+    // 1、导入数据成功
+    // 2、热力图显示正确
+    test('test_details_memory_workload_chart', async ({page, detailsPage}) => {
+        const {memoryWorkloadChart} = detailsPage;
+        await expect(memoryWorkloadChart).toHaveScreenshot(imgMap.memoryWorkloadChart);
+    });
+    // 内存负载分析-瓶颈分析结果
+    // 预期： 瓶颈分析结果正确
+    test('test_details_memory_workload_advice', async ({page, detailsPage}) => {
+        const {memoryWorkloadAdvice} = detailsPage;
+        await expect(memoryWorkloadAdvice).toHaveScreenshot(imgMap.memoryWorkloadAdvice);
+    });
+    // 内存负载分析-内存负载信息表
+    // 预期：内存负载信息表正确
+    test('test_details_memory_workload_table', async ({page, detailsPage}) => {
+        const {memoryWorkloadTable} = detailsPage;
+        await expect(memoryWorkloadTable).toHaveScreenshot(imgMap.memoryWorkloadTable);
     });
 });
