@@ -118,12 +118,25 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime + offsetTime,
-            static_cast<uint64_t>(INT64_MAX)));
-        sqlite3_bind_double(stmt, index++, requestParams.startTime);
-        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime + offsetTime,
-            static_cast<uint64_t>(INT64_MAX)));
-        sqlite3_bind_double(stmt, index++, requestParams.endTime);
+        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
+            // 只显示在时间区间内分配或释放内存的数据
+            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
+                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
+            sqlite3_bind_double(stmt, index++, requestParams.startTime);
+            sqlite3_bind_double(stmt, index++, requestParams.endTime);
+            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
+                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
+            sqlite3_bind_double(stmt, index++, requestParams.startTime);
+            sqlite3_bind_double(stmt, index++, requestParams.endTime);
+        } else {
+            // 显示全部
+            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
+                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
+            sqlite3_bind_double(stmt, index++, requestParams.startTime);
+            sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
+                startTime + offsetTime, static_cast<uint64_t>(INT64_MAX)));
+            sqlite3_bind_double(stmt, index++, requestParams.endTime);
+        }
     }
 
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
@@ -630,12 +643,19 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
         sql += " AND stream <> ''";
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql += " AND ((";
-        sql += (isLowCamel ? "releaseTime" : "release_time");
-        sql += " IS NULL OR ";
-        sql += (isLowCamel ? "releaseTime" : "release_time");
-        sql += " = 0 OR releaseTimestamp >= " + std::to_string(requestParams.startTime) +
-               " ) AND allocationTimestamp <= " + std::to_string(requestParams.endTime) + ")";
+        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
+            sql += " AND (allocationTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
+               " AND " + std::to_string(requestParams.endTime) +
+               " OR releaseTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
+               " AND " + std::to_string(requestParams.endTime) + ")";
+        } else {
+            sql += " AND ((";
+            sql += (isLowCamel ? "releaseTime" : "release_time");
+            sql += " IS NULL OR ";
+            sql += (isLowCamel ? "releaseTime" : "release_time");
+            sql += " = 0 OR releaseTimestamp >= " + std::to_string(requestParams.startTime) +
+                   " ) AND allocationTimestamp <= " + std::to_string(requestParams.endTime) + ")";
+        }
     }
 
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {

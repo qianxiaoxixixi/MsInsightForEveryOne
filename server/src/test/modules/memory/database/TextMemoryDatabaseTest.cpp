@@ -133,6 +133,36 @@ TEST_F(TestSuit, QueryMemoryOperatorWithLimitedTime)
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
+TEST_F(TestSuit, QueryMemoryOperatorWithLimitedTimeOnlyShowWithin)
+{
+    uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    const uint64_t timeStamp = 1695115378729750000;
+    const double secondToMillisecond = 1000.0;
+    const int precision = 3;
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 100; // page size = 100
+    requestParams.startTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.endTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.isOnlyShowAllocatedOrReleasedWithinInterval = true;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Dic::Protocol::MemoryOperator> responseBody;
+    bool result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    int expectSize = 0;
+    int expectColumnSize = 9;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
 TEST_F(TestSuit, QueryMemoryEntireOperatorTable)
 {
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");

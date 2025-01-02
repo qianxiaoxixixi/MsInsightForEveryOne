@@ -86,6 +86,8 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
     } else {
         reqPtr->params.endTime = -1;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isOnlyShowAllocatedOrReleasedWithinInterval,
+        json["params"], "isOnlyShowAllocatedOrReleasedWithinInterval");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");

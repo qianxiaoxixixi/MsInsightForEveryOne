@@ -210,6 +210,11 @@ void QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request
     }
 }
 
+bool QueryMemoryOperatorHandler::IsWithinInterval(const long double num, const double start, const double end)
+{
+    return num >= start && num <= end;
+}
+
 bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, const MemoryOperatorComparison &op)
 {
     bool filter = true;
@@ -221,16 +226,29 @@ bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, cons
         filter = filter && (op.diff.size <= request.params.maxSize);
     }
     if (request.params.startTime != -1 && request.params.endTime != -1) {
-        // 要求compare对象的开始和结束时间有一个在startTime endTime内或在这段时间一直存在，且baseline对象的开始和结束时间也有一个在startTime endTime内或在这段时间一直存在。
         long double compareAlloTime = NumberUtil::StringToLongDouble(op.compare.allocationTime);
         long double compareReleTime = NumberUtil::StringToLongDouble(op.compare.releaseTime);
         long double baselineAlloTime = NumberUtil::StringToLongDouble(op.baseline.allocationTime);
         long double baselineReleTime = NumberUtil::StringToLongDouble(op.baseline.releaseTime);
-        filter = filter &&
-            (compareReleTime == 0 || compareReleTime >= request.params.startTime) &&
-            (compareAlloTime <= request.params.endTime) &&
-            (baselineReleTime == 0 || baselineReleTime >= request.params.startTime) &&
-            (baselineAlloTime <= request.params.endTime);
+        if (request.params.isOnlyShowAllocatedOrReleasedWithinInterval) {
+            // 要求compare对象的在这段时间分配或释放了内存，且baseline对象的开始和结束时间也在这段时间分配或释放了内存。
+            filter = filter &&
+                (QueryMemoryOperatorHandler::IsWithinInterval(compareAlloTime,
+                    request.params.startTime, request.params.endTime) ||
+                 QueryMemoryOperatorHandler::IsWithinInterval(compareReleTime,
+                     request.params.startTime, request.params.endTime)) &&
+                (QueryMemoryOperatorHandler::IsWithinInterval(baselineAlloTime,
+                    request.params.startTime, request.params.endTime) ||
+                 QueryMemoryOperatorHandler::IsWithinInterval(baselineReleTime,
+                     request.params.startTime, request.params.endTime));
+        } else {
+            // 要求compare对象的开始和结束时间有一个在startTime endTime内或在这段时间一直存在，且baseline对象的开始和结束时间也有一个在startTime endTime内或在这段时间一直存在。
+            filter = filter &&
+                (compareReleTime == 0 || compareReleTime >= request.params.startTime) &&
+                (compareAlloTime <= request.params.endTime) &&
+                (baselineReleTime == 0 || baselineReleTime >= request.params.startTime) &&
+                (baselineAlloTime <= request.params.endTime);
+        }
     }
     return filter;
 }

@@ -271,6 +271,11 @@ export interface OperatorMemoryCondition {
      */
     maxSize: number;
     /**
+     * 是否仅查看在选中时间区间分配或释放内存的数据
+     * - 有 startTime, endTime 时生效
+     */
+    isOnlyShowAllocatedOrReleasedWithinInterval: boolean;
+    /**
      * 算子名称筛选条件
      */
     searchName?: string;

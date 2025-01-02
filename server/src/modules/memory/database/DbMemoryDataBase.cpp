@@ -33,13 +33,44 @@ bool DbMemoryDataBase::QueryMemoryResourceType(std::string &type)
     return true;
 }
 
+std::string DbMemoryDataBase::BuildOperatorDetailSql(
+    const std::string& startTimeString, const std::string& offsetTimeString)
+{
+    std::string sql;
+    const std::string tempSql = "SELECT OP_MEMORY.rowid AS id, ";
+    // 在 db 情况下 allocation_time release_time 不可能为 0，不用再判断
+    sql += "NAME.value AS realName, "
+        "ROUND(size / 1024.0, 2) as size, "
+        "CASE WHEN allocation_time IS NULL THEN 'NA' "
+        "ELSE ROUND((allocation_time - " + startTimeString +
+            " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
+        "CASE WHEN release_time IS NULL THEN 'NA' "
+        "ELSE ROUND((release_time - " + startTimeString +
+            " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, "
+        "ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
+        "CASE WHEN active_release_time IS NULL THEN 'NA' "
+        "ELSE ROUND((active_release_time - " + startTimeString +
+            " - " + offsetTimeString + ") / (1000.0 * 1000.0), 3) END AS activeReleaseTime, "
+        "ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
+        "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
+        "ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
+        "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
+        "ROUND(release_total_allocated / (1024.0 * 1024.0), 2) as release_allocated, "
+        "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
+        "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
+    sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
+    sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
+        " WHERE realName LIKE ? ";
+    return tempSql + sql;
+}
+
 bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                            std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                            std::vector<Protocol::MemoryOperator> &opDetails)
 {
-    std::string sql = "";
-    FileType type = DataBaseManager::Instance().GetFileType();
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::string sql;
+    const FileType type = DataBaseManager::Instance().GetFileType();
+    const uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     // 单位转换， KB -> B，并作溢出防护。
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         if (requestParams.minSize > 0 && requestParams.minSize > std::numeric_limits<int64_t>::max() / KB_SIZE) {
@@ -59,30 +90,10 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             requestParams.maxSize *= KB_SIZE;
         }
     }
-    uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+    const uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     if (type == FileType::PYTORCH) {
-        std::string tempSql = "SELECT OP_MEMORY.rowid AS id, ";
-        sql += "NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
-               " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-            "ROUND((allocation_time - " + std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-            ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
-            "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
-            " - " + std::to_string(offsetTime) +
-            ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
-            "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-            std::to_string(startTime) + " - " + std::to_string(offsetTime) +
-            ") / (1000.0 * 1000.0), 3) "
-            "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
-            "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
-            " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
-            "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
-            " ROUND(release_total_allocated / (1024.0 * 1024.0), 2) as release_allocated, "
-            "ROUND(release_total_reserved / (1024.0 * 1024.0), 2) as release_reserve, "
-            "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
-        sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
-        sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
-            " WHERE realName LIKE ? ";
-        sql = tempSql + sql;
+        sql = DbMemoryDataBase::BuildOperatorDetailSql(std::to_string(startTime),
+            std::to_string(offsetTime));
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
@@ -240,11 +251,41 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql.append(isLowCamel ? " AND streamPtr <> ''" : " AND stream_ptr <> ''");
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql.append(" AND ((").append(isLowCamel ? "releaseTime" : "release_time")
-                .append(" IS NULL OR ROUND((")
-                .append(isLowCamel ? "releaseTime" : "release_time").append(" - ?) / (1000.0 * 1000.0), 3) >= ? )")
-                .append(" AND ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
+        const std::string ALLOCATION_TIME_KEY = isLowCamel ? "allocationTime" : "allocation_time";
+        const std::string RELEASE_TIME_KEY = isLowCamel ? "releaseTime" : "release_time";
+        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
+            /*
+             * 只显示在时间区间内分配或释放内存的数据
+             * 参数：
+             * 1. startTime + offsetTime
+             * 2. startTime
+             * 3. endTime
+             * 4. startTime + offsetTime
+             * 5. startTime
+             * 6. endTime
+             */
+            sql.append(" AND ((").append(ALLOCATION_TIME_KEY).append(" IS NOT NULL AND ")
+                .append("ROUND((").append(ALLOCATION_TIME_KEY)
+                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? ");
+            sql.append(") OR (").append(RELEASE_TIME_KEY).append(" IS NOT NULL AND ")
+                .append("ROUND((").append(RELEASE_TIME_KEY)
+                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?)) ");
+        } else {
+            /*
+             * 显示全部的数据
+             * 参数：
+             * 1. startTime + offsetTime
+             * 2. startTime
+             * 3. startTime + offsetTime
+             * 4. endTime
+             */
+            // 在 db 情况下 allocation_time release_time 不可能为 0，不用再判断
+            sql.append(" AND ((").append(RELEASE_TIME_KEY)
+                .append(" IS NULL OR ").append("ROUND((")
+                .append(RELEASE_TIME_KEY).append(" - ?) / (1000.0 * 1000.0), 3) >= ? )")
+                .append(" AND ROUND((").append(ALLOCATION_TIME_KEY)
                 .append(" - ?) / (1000.0 * 1000.0), 3) <= ?) ");
+        }
     }
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND realSize >= ? ";

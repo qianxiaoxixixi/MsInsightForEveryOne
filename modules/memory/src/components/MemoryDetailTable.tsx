@@ -49,6 +49,7 @@ const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: numb
         searchName: memorySession.searchEventOperatorName,
         minSize: memorySession.minSize,
         maxSize: memorySession.maxSize,
+        isOnlyShowAllocatedOrReleasedWithinInterval: memorySession.isOnlyShowAllocatedOrReleasedWithinInterval,
         isCompare,
     };
     if (memorySession.selectedRange) {

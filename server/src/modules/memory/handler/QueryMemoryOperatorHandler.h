@@ -39,6 +39,7 @@ private:
     bool IsSelected(MemoryOperatorRequest &request, const MemoryOperatorComparison &op);
     void SortAscend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
     void SortDescend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
+    static bool IsWithinInterval(long double num, double start, double end);
     const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
         {"Name", "string", "name"},
         {"Size(KB)", "number", "size"},

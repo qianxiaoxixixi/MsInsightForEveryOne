@@ -488,6 +488,48 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
 }
 
+// 测试框选了开始时间、结束时间，且只显示在选中时间区间内分配、释放内存的数据查询是否正确
+TEST_F(MemoryRequestHandlerTest,
+    QueryMemoryOperatorHandlerSelectDiffResultSelectStartTimeAndEndTimeOnlyShowWithinTest)
+{
+    std::vector<MemoryOperatorComparison> fullDiffResult;
+    MemoryOperator opCompareFirst = {"aten::ge", 50, "190.235", "211.478", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opBaselineFirst = {"aten::ge", -150, "136.235", "216.478", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opDiffFirst = {"aten::ge", -100, "4.000", "-4.000", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opCompareSecond = {"matmul", 200.25, "25.230", "120.233", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opBaselineSecond = {"matmul", 100.25, "17.650", "95.23", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opDiffSecond = {"matmul", 100, "7.58", "25.003", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opCompareThird = {"matmulv3", 18.2, "133.100", "145.257", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opBaselineThird = {"matmulv3", -18.2, "13.100", "148.257", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    MemoryOperator opDiffThird = {"matmulv3", 36.4, "120.000", "-3.000", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
+    fullDiffResult.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
+    fullDiffResult.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
+    fullDiffResult.push_back({opCompareThird, opBaselineThird, opDiffThird});
+    MemoryOperatorRequest request;
+    request.params.searchName = "";
+    request.params.minSize = std::numeric_limits<int64_t>::min();
+    request.params.maxSize = std::numeric_limits<int64_t>::max();
+    const double startTime = 140.012;
+    const double endTime = 216.054;
+    request.params.startTime = startTime;
+    request.params.endTime = endTime;
+    request.params.isOnlyShowAllocatedOrReleasedWithinInterval = true;
+    const int defaultPageSize = 10;
+    request.params.pageSize = defaultPageSize;
+    request.params.currentPage = 1;
+    request.params.order = "";
+    request.params.orderBy = "";
+    std::unique_ptr<MemoryOperatorComparisonResponse> responsePtr =
+            std::make_unique<MemoryOperatorComparisonResponse>();
+    Dic::Module::Memory::QueryMemoryOperatorHandler handler;
+    handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
+    const int expectColumnSize = 15;
+    const int expectNum = 1;
+    ASSERT_EQ(responsePtr.get()->totalNum, expectNum);
+    EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.name, "matmulv3");
+    EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
+}
+
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSortAscendTestPartOne)
 {
     MemoryOperatorComparisonResponse result;

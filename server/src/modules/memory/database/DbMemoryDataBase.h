@@ -53,6 +53,7 @@ public:
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
     bool isCluster;
+    std::string BuildOperatorDetailSql(const std::string& startTimeString, const std::string& offsetTimeString);
 };
 
 }

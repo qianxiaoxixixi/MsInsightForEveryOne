@@ -365,6 +365,7 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
+    // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
     std::string sql =
         "SELECT id, name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
         "ROUND((allocation_time - " +
@@ -441,6 +442,7 @@ bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &req
 bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
     std::string sql =
         "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
         "ROUND((allocation_time - " +
@@ -692,9 +694,36 @@ bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
         sql += " AND stream <> ''";
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql += " AND ((release_time = 0 OR "
-               " ROUND((release_time - ?) / (1000.0 * 1000.0), 3) >= ?) AND "
-               " ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) <= ?) ";
+        if (requestParams.isOnlyShowAllocatedOrReleasedWithinInterval) {
+            /*
+             * 只显示在时间区间内分配或释放内存的数据
+             * 参数：
+             * 1. startTime + offsetTime
+             * 2. startTime
+             * 3. endTime
+             * 4. startTime + offsetTime
+             * 5. startTime
+             * 6. endTime
+             */
+            // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
+            sql += " AND (( "
+                   "ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? )"
+                   " OR ( "
+                   "ROUND((release_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?)) ";
+        } else {
+            /*
+             * 显示全部的数据
+             * 参数：
+             * 1. startTime + offsetTime
+             * 2. startTime
+             * 3. startTime + offsetTime
+             * 4. endTime
+             */
+            // 在 text 情况下 allocation_time release_time 不可能为 null，不用再判断
+            sql += " AND ((release_time = 0 OR "
+                   " ROUND((release_time - ?) / (1000.0 * 1000.0), 3) >= ?) AND "
+                   " ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) <= ?) ";
+        }
     }
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND size >= ? ";
