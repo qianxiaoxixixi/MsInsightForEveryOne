@@ -156,7 +156,7 @@ const ViewSelect = observer((props: any) => {
     const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
         <div className={'view-select'}>
-            <Select width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
+            <Select id={'select-system-view'} width={'100%'} value={viewOption} onChange={handleViewChange} options={options}/>
         </div>
     );
 });

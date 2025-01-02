@@ -269,7 +269,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             onOpenChange={onTooltipVisibleChange}
             overlayInnerStyle={{ borderRadius: 2 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:linker')} icon={LinkIcon as any} { ...customButtonProps } ref={ref}/>
+            <CustomButton data-testid={'tool-flow'} tooltip={t('tooltip:linker')} icon={LinkIcon as any} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

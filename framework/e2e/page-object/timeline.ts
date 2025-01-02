@@ -11,19 +11,31 @@ export class TimelinePage {
     readonly markerBtn: Locator;
     readonly filterBtn: Locator;
     readonly searchBtn: Locator;
-    readonly flagBtn: Locator;
+    readonly flowBtn: Locator;
     readonly resetBtn: Locator;
     readonly zoomInBtn: Locator;
     readonly zoomOutBtn: Locator;
     readonly drawerBtn: Locator; // 底部面板收缩按钮
     readonly bottomPanel: Locator; // 底部面板
+    readonly selectFilterType: Locator;
+    readonly selectOptionFilterType: Locator;
+    readonly selectFilterContent: Locator;
 
     constructor(page: Page) {
         this.page = page;
         this.timelineFrame = page.frameLocator('#Timeline');
+        this.markerBtn = this.timelineFrame.getByTestId('tool-marker');
+        this.filterBtn = this.timelineFrame.getByTestId('tool-filter');
         this.searchBtn = this.timelineFrame.getByTestId('tool-search');
+        this.flowBtn = this.timelineFrame.getByTestId('tool-flow');
+        this.resetBtn = this.timelineFrame.getByTestId('tool-reset');
+        this.zoomInBtn = this.timelineFrame.getByTestId('tool-zoom-in');
+        this.zoomOutBtn = this.timelineFrame.getByTestId('tool-zoom-out');
         this.drawerBtn = this.timelineFrame.getByTestId('drawer-btn').nth(1);
         this.bottomPanel = this.timelineFrame.locator('.bottomPanelContainer');
+        this.selectFilterType = this.timelineFrame.locator('#select-filter-type');
+        this.selectOptionFilterType = this.timelineFrame.getByTestId('select-options-filter-type');
+        this.selectFilterContent = this.timelineFrame.locator('#select-filter-content');
     }
 
     async goto(): Promise<void> {
@@ -58,8 +70,11 @@ export class TimelinePage {
 }
 
 export class SystemView extends TimelinePage {
+    readonly selectSystemView: Locator;
+
     constructor(page: Page) {
         super(page);
+        this.selectSystemView = this.timelineFrame.locator('#select-system-view');
     }
 
     async goto(): Promise<void> {

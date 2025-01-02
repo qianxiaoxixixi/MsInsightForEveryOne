@@ -52,6 +52,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
     }), [session.domain.duration, session.endTimeAll]);
     return <Container>
         <Tooltip title={t('tooltip:reset')}><ResetIcon
+            data-testid={'tool-reset'}
             disabled={isResetDisabled}
             onClick={(): void => {
                 runInAction(() => {
@@ -63,6 +64,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         <Controller>
             <Tooltip title={t('tooltip:del')}>
                 <Del
+                    data-testid={'tool-zoom-in'}
                     disabled={isUpperBound}
                     onClick={(): void => {
                         runInAction(() => {
@@ -77,6 +79,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
             </Tooltip>
             <Tooltip title={t('tooltip:add')}>
                 <Add
+                    data-testid={'tool-zoom-out'}
                     disabled={isLowerBound}
                     onClick={(): void => {
                         runInAction(() => {
