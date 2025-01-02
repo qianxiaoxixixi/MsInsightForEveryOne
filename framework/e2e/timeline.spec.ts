@@ -26,6 +26,10 @@ test.describe('Timeline', () => {
         await expect(secondLayerUnit).toBeVisible();
     });
 
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
+
     // 泳道展开收缩
     test('test_unitsExpandAndCollapse_when_click', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
@@ -116,8 +120,8 @@ test.describe('Timeline', () => {
         const rows = await timelineFrame.locator('.ant-table-row').count();
         expect(rows).toBeGreaterThan(0);
     });
-    // System View数据展示
-    test('test_SystemViewDataDisplay', async ({ page, timelinePage }) => {
+    // System View - Stats System View 数据展示
+    test('test_StatsSystemViewDataDisplay_in_SystemView', async ({ page, timelinePage }) => {
         const { bottomPanel, timelineFrame } = timelinePage;
         const systemView = new SystemView(page);
         await systemView.goto();
@@ -134,7 +138,30 @@ test.describe('Timeline', () => {
         for (let item of statsSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
-            await expect(bottomPanel).toHaveScreenshot(`timeline-${item}.png`, { maxDiffPixels: 100 });
+            await timelineFrame.locator('.ant-spin').waitFor({ state: 'visible' });
+            await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
+            await expect(bottomPanel).toHaveScreenshot(`StatsSystemView-${item}.png`, { maxDiffPixels: 100 });
+        }
+    });
+
+    // System View - Expert System View 数据展示
+    test('test_ExpertSystemViewDataDisplay_in_SystemView', async ({ page, timelinePage }) => {
+        const { bottomPanel, timelineFrame } = timelinePage;
+        const systemViewPage = new SystemView(page);
+        const systemViewSelector = new SelectHelpers(page, systemViewPage.selectSystemView, timelineFrame);
+        await systemViewPage.goto();
+
+        await systemViewSelector.open();
+        await systemViewSelector.selectOption('Expert System View');
+
+        const expertSystemViewOptions = ['Affinity API', 'Affinity Optimizer', 'AICPU Operators', 'ACLNN Operators', 'Operators Fusion'];
+
+        for (let item of expertSystemViewOptions) {
+            const option = timelineFrame.getByText(item, { exact: true });
+            await option.click();
+            await timelineFrame.locator('.ant-spin').waitFor({ state: 'visible' });
+            await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
+            await expect(bottomPanel).toHaveScreenshot(`ExpertSystemView-${item}.png`, { maxDiffPixels: 100 });
         }
     });
 
@@ -148,7 +175,126 @@ test.describe('Timeline', () => {
         await input.press('Enter');
         await page.mouse.move(0, 0);
         await page.waitForTimeout(1000);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`search-operator.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-operator.png', { maxDiffPixels: 100 });
+    });
+
+    // 泳道(card)过滤
+    test('test_cardFilter', async ({ page, timelinePage }) => {
+        const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
+        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
+        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+
+        await filterBtn.click();
+        await page.mouse.move(0, 0);
+
+        await filterTypeSelector.open();
+        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
+        const option = selectOptionFilterType.getByText('Card Filter');
+        await option.click();
+
+        await filterContentSelector.open();
+        await filterContentSelector.selectOption('0');
+        await filterBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('card-filter.png', { maxDiffPixels: 100 });
+    });
+
+    // 泳道(unit)过滤
+    test('test_unitFilter', async ({ page, timelinePage }) => {
+        const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
+        const filterTypeSelector = new SelectHelpers(page, selectFilterType, timelineFrame);
+        const filterContentSelector = new SelectHelpers(page, selectFilterContent, timelineFrame);
+
+        await filterBtn.click();
+        await page.mouse.move(0, 0);
+
+        await filterTypeSelector.open();
+        // 由于该 select 框下拉选项是自定义节点，不能使用 SelectHelpers 的 selectOption 方法取值
+        const option = selectOptionFilterType.getByText('Units Filter');
+        await option.click();
+
+        await filterContentSelector.open();
+        await filterContentSelector.selectOption('Ascend Hardware ');
+        await filterBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('units-filter.png', { maxDiffPixels: 100 });
+    });
+
+    // 算子连线
+    test('test_operatorLinkLine', async ({ page, timelinePage }) => {
+        const { flowBtn, timelineFrame } = timelinePage;
+        const hostToDeviceCheckbox = timelineFrame.getByLabel('HostToDevice');
+        const hcclUnit = timelineFrame.locator('#unitWrapperScroller').getByText('HCCL (2094647744)');
+
+        await flowBtn.click();
+        await hostToDeviceCheckbox.check();
+        await flowBtn.click();
+        await hcclUnit.click();
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('operator-link-line.png', { maxDiffPixels: 100 });
+    });
+
+    // 缩放按钮、重置按钮
+    test('test_zoomAndResetUnit', async ({ page, timelinePage }) => {
+        const { resetBtn, zoomInBtn, zoomOutBtn, timelineFrame } = timelinePage;
+
+        const mainContainer = timelineFrame.locator('#main-container');
+        const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Python (2045554)');
+        await secondLayerUnit.click();
+
+        for (let i = 0; i < 5; i++) {
+            await zoomOutBtn.click();
+            if (i < 4) {
+                await page.waitForTimeout(200);
+            }
+        }
+        await page.mouse.move(0, 0);
+        await expect(mainContainer).toHaveScreenshot('zoom-out-unit.png', { maxDiffPixels: 100 });
+
+        for (let i = 0; i < 3; i++) {
+            await zoomInBtn.click();
+            if (i < 2) {
+                await page.waitForTimeout(200);
+            }
+        }
+        await page.mouse.move(0, 0);
+        await expect(mainContainer).toHaveScreenshot('zoom-in-unit.png', { maxDiffPixels: 100 });
+
+        await resetBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(mainContainer).toHaveScreenshot('reset-unit.png', { maxDiffPixels: 100 });
+    });
+
+    // 插入 2 个旗子标记，测试标记列表数据
+    test('test_markerListData_when_insertTwoFlags', async ({ page, timelinePage }) => {
+        const { markerBtn, timelineFrame } = timelinePage;
+        const mainContainer = timelineFrame.locator('#main-container');
+
+        await timelineFrame.locator('canvas:nth-child(6)').click({
+            position: {
+                x: 233,
+                y: 4,
+            },
+        });
+        await timelineFrame.locator('canvas:nth-child(6)').click({
+            position: {
+                x: 449,
+                y: 8,
+            },
+        });
+
+        await markerBtn.click();
+        await timelineFrame.getByText('default-0').click();
+        await timelineFrame.getByText('default-1').hover();
+
+        await page.mouse.move(0, 0);
+        await expect(mainContainer).toHaveScreenshot('marker-list.png', { maxDiffPixels: 100 });
+
+        await page.frameLocator('#Timeline').getByText('Clear').click();
+        await page.frameLocator('#Timeline').getByRole('button', { name: 'OK' }).click();
+
+        await page.mouse.move(0, 0);
+        await expect(mainContainer).toHaveScreenshot('marker-list-clear.png', { maxDiffPixels: 100 });
     });
 
     // 右键菜单--Hide/Show All Hidden
@@ -201,9 +347,5 @@ test.describe('Timeline', () => {
             await clickMenu(clickUnit, timelineFrame, 'Undo Zoom');
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 100 });
         }
-    });
-
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
     });
 });

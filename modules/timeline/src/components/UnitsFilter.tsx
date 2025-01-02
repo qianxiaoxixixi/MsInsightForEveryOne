@@ -135,7 +135,7 @@ const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnT
 
     function dropdownRender(): JSX.Element {
         return (
-            <ChildrenContainer>
+            <ChildrenContainer data-testid={'select-options-filter-type'}>
                 <div key={'file'} onClick={(): void => {
                     setSelectValue('Card Filter');
                     setIsOpen(false);
@@ -183,6 +183,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     return (
         <CustomDiv theme={theme}>
             <Select
+                id="select-filter-type"
                 value={selectValue === null ? null : i18n.t(selectValue, { ns: 'timeline' })}
                 dropdownRender={dropdownRender}
                 onDropdownVisibleChange={(open: boolean): void => setIsOpen(open)}
@@ -191,6 +192,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 height={32} width={120}>
             </Select>
             <Select
+                id={'select-filter-content'}
                 mode="multiple"
                 allowClear
                 options={completeOptions}
@@ -354,7 +356,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             align={{ offset: [-8, 3] }}
             zIndex={1040}
         >
-            <CustomButton tooltip={t('tooltip:filter')} icon={FilterIcon as any} { ...customButtonProps } ref={ref}/>
+            <CustomButton data-testid={'tool-filter'} tooltip={t('tooltip:filter')} icon={FilterIcon as any} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });
