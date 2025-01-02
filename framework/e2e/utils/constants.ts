@@ -9,5 +9,6 @@ export enum FilePath {
     SOURCE = 'D:\\GUI_TEST_DATA\\算子调优\\source\\visualize_data.bin',
     SOURCE_MULTIFILE = 'D:\\GUI_TEST_DATA\\算子调优\\source\\visualize_data_multifile.bin',
     DETAILS = 'D:\\GUI_TEST_DATA\\算子调优\\details\\visualize_data_910_mix.bin',
+    DETAILS_ROOFLINE = 'D:\\GUI_TEST_DATA\\算子调优\\details\\visualize_data_roofline_910_mix.bin',
     JUPYTER = 'D:\\GUI_TEST_DATA\\jupyter\\test.ipynb',
 }
