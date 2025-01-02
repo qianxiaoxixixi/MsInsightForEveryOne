@@ -103,7 +103,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const { parallelTypeList, dyeingMode, dyeingStep, reset: resetParallelSwitchConditions } = useParallelSwitchConditions();
     const theme = useTheme();
     const { data, loading, isUpdated } = useFetchData(generateConditions);
-    const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1 } = generateConditions ?? {};
+    const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
 
     const canvasSize = useMemo(() => {
         let width = 200;
@@ -198,6 +198,37 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         }
     };
 
+    const addLines = (drawer: CanvasDrawer): void => {
+        if (drawer !== null && data !== undefined && activeRectIndex !== null) {
+            const linesGroup = data?.connections?.filter(connection => {
+                const isPpLineInPpDimension = dimension === 'ep-dp-cp-pp' && connection.type === 'pp';
+                return connection.list.includes(activeRectIndex) && !isPpLineInPpDimension;
+            }).map(item => {
+                return {
+                    type: item.type,
+                    list: item.list.map(it => ({
+                        index: it,
+                        position: data.arrangements[it].position,
+                        attribute: data.arrangements[it].attribute,
+                    })),
+                };
+            }) ?? [];
+
+            linesGroup?.forEach(line => {
+                const { type, list } = line;
+                const parallelismSize = {
+                    tpSize,
+                    dpSize,
+                    cpSize,
+                    epSize,
+                    ppSize,
+                };
+                const lineInst = new Line(type, list, parallelismSize);
+                drawer.addLine(lineInst);
+            });
+        }
+    };
+
     useEffect(() => {
         if (canvasRef.current && data !== undefined) {
             const drawer = new CanvasDrawer(canvasRef);
@@ -236,33 +267,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     useEffect(() => {
         if (canvasDrawer !== null) {
             canvasDrawer.clearLines();
-
-            if (activeRectIndex !== null) {
-                const linesGroup = data?.connections?.filter(connection => connection.list.includes(activeRectIndex))
-                    .map(item => {
-                        return {
-                            type: item.type,
-                            list: item.list.map(it => ({
-                                index: it,
-                                position: data.arrangements[it].position,
-                                attribute: data.arrangements[it].attribute,
-                            })),
-                        };
-                    }) ?? [];
-
-                linesGroup?.forEach(line => {
-                    const { type, list } = line;
-                    const parallelismSize = {
-                        tpSize,
-                        dpSize,
-                        cpSize,
-                        epSize,
-                        ppSize,
-                    };
-                    const lineInst = new Line(type, list, parallelismSize);
-                    canvasDrawer.addLine(lineInst);
-                });
-            }
+            addLines(canvasDrawer);
             render();
         }
     }, [activeRectIndex]);

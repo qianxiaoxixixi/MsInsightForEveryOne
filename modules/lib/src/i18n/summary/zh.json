@@ -9,7 +9,7 @@
     "StepCount": "迭代数量",
     "ProfilingSessionDuration": "Profiling数据采集时长",
     "Algorithm": "算法",
-    "Dimension": "域维度",
+    "Dimension": "维度",
     "PPSize": "PP大小",
     "TPSize": "TP大小",
     "DPSize": "DP大小",

@@ -217,7 +217,7 @@ export class Line extends Shape {
     dpOffsetX = 3;
     dpOffsetY = 0;
     cpOffsetX = 9;
-    cpOffsetY = -6;
+    cpOffsetY = -8;
     scrollLeft: number = 0;
     scrollTop: number = 0;
     constructor(type: ParallelismType, list: FrameGroupItem['list'], parallelismSize: ParallelismSize) {
