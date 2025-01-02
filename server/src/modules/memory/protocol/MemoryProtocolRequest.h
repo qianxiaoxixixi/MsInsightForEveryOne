@@ -41,6 +41,7 @@ struct MemoryOperatorParams {
     std::string orderBy;
     std::string order;
     bool isCompare = false;
+    bool isOnlyShowAllocatedOrReleasedWithinInterval = false;
     bool CommonCheck(std::string &errorMsg, uint64_t minTimeStamp)
     {
         if (!CheckStrParamValid(rankId, errorMsg)) {

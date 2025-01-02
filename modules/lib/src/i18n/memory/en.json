@@ -93,6 +93,7 @@
       "Name": "Name",
       "Min Size": "Min Size(KB)",
       "Max Size": "Max Size(KB)",
+      "Show Allocated or Released Within Interval Data": "Only show allocated or released within the selected interval",
       "Button Query": "Query",
       "Button Reset": "Reset",
       "Search by Name": "Search by Name"

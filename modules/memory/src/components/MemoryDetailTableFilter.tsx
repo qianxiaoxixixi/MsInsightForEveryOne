@@ -5,12 +5,13 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
+import { useTranslation } from 'react-i18next';
+import { Button, Input, InputNumber } from 'ascend-components';
 import { SearchBox } from '../utils/styleUtils';
 import { Label } from './Common';
-import { Button, Input, InputNumber } from 'ascend-components';
 import { Session } from '../entity/session';
 import { MemorySession, DEFAULT_SIZE_CONDITION } from '../entity/memorySession';
-import { useTranslation } from 'react-i18next';
+import OptionalCheckbox from './OptionalCheckbox';
 
 const COMPARE_MIN_INPUT_NUMBER = -2147483648;
 const MAX_INPUT_NUMBER = 4294967295;
@@ -101,6 +102,8 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                     minLength={1}
                 />
             </div>
+            {/* 当 MemoryGraphType.STATIC 时，不显示勾选项 */}
+            <OptionalCheckbox memorySession={memorySession} />
             <div className="flex items-center">
                 <Button
                     data-testid={'query-btn'}

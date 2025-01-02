@@ -93,6 +93,7 @@
       "Name": "名称",
       "Min Size": "最小值(KB)",
       "Max Size": "最大值(KB)",
+      "Show Allocated or Released Within Interval Data": "只显示在选中区间内分配或释放的",
       "Button Query": "查询",
       "Button Reset": "重置",
       "Search by Name": "按名称搜索"

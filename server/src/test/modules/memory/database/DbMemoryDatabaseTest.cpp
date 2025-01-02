@@ -143,6 +143,37 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTime)
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
+// 测试框选了开始时间、结束时间，且只显示在选中时间区间内分配、释放内存的数据查询是否正确
+TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithLimitedTimeOnlyShowWithin)
+{
+    uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    const uint64_t timeStamp = 1734230739778225840;
+    const double secondToMillisecond = 1000.0;
+    const int precision = 3;
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 100; // page size = 100
+    requestParams.startTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime)/ (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.endTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.isOnlyShowAllocatedOrReleasedWithinInterval = true;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Dic::Protocol::MemoryOperator> responseBody;
+    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    EXPECT_EQ(result, true);
+    int expectSize = 1;
+    int expectColumnSize = 14;
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryOperatorWithSize)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");

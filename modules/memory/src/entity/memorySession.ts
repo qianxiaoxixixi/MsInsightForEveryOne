@@ -57,6 +57,8 @@ export class MemorySession {
     minSize: number = 0;
     maxSize: number = DEFAULT_SIZE_CONDITION;
     isBtnDisabled: boolean = true;
+    // 是否仅查看在选中时间区间分配或释放内存的数据
+    isOnlyShowAllocatedOrReleasedWithinInterval: boolean = false;
 
     // 底部表格点选与上方折线图联动
     selectedRecord?: OperatorDetail;
