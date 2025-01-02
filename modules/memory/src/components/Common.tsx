@@ -1,11 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpIcon } from 'ascend-icon';
 import { Tooltip } from 'ascend-components';
 import { safeStr } from 'ascend-utils';
+import { useRootStore } from '../context/context';
+import { GroupBy } from '../entity/memorySession';
 
 const HOUR_TO_MICROSECOND = 1000 * 1000 * 60 * 60;
 const MINUTE_TO_MICROSECOND = 1000 * 1000 * 60;
@@ -32,8 +34,23 @@ export const useHit = (): React.ReactElement => {
 };
 
 export const useChartCharacter = (): React.ReactElement => {
+    const hitGroup: { [key: string]: string } = {
+        [GroupBy.DEFAULT]: 'CurveDescribe',
+        [GroupBy.COMPONENT]: 'CurveDescribeByCompenent',
+    };
     const { t } = useTranslation('memory');
-    const hit = t('searchCriteria.CurveDescribe', { returnObjects: true }) as [];
+    const { memoryStore } = useRootStore();
+    const memorySession = memoryStore.activeSession;
+    const [hit, setHit] = useState<[]>();
+    useEffect(() => {
+        if (memorySession === undefined) {
+            return;
+        };
+        setHit(hitGroup[memorySession.groupId] === undefined
+            ? []
+            : t(`searchCriteria.${hitGroup[memorySession.groupId]}`, { returnObjects: true }) as [],
+        );
+    }, [memorySession?.groupId, t]);
     return <Tooltip title={
         <div style={{ padding: '1rem' }}>
             {hit?.map((item: string, index: number) =>
