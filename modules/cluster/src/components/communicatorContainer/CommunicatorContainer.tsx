@@ -309,8 +309,8 @@ const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): J
                     onChange={(checkedValues: CheckboxValueType[]): void => { setParallelTypeList(checkedValues as ParallelismType[]); }}
                 ></CheckboxGroup>
             </Form.Item>
-            <Form.Item label={t('Data Type')}>
-                <Select value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
+            <Form.Item name={'dataType'} label={t('Data Type')}>
+                <Select defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
             </Form.Item>
             {
                 dyeingMode !== 'None' &&

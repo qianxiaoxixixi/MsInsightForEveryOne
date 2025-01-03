@@ -52,7 +52,7 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.El
     }
 
     return (
-        <PanelContainer secondary={secondary} style={style} id={id}>
+        <PanelContainer secondary={secondary} style={style} id={id} className="mi-collapsible-panel">
             <div className="panel-header" onClick={togglePanel} style={headerStyle}>
                 {icon}{title}
             </div>
