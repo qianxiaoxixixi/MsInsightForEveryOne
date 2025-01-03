@@ -81,6 +81,7 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
             <>
                 <Label name={t('Step')} />
                 <Select
+                    id="select-step"
                     value={conditions.step}
                     style={{ width: 120 }}
                     onChange={(val: string): void => handleChange('step', val)}
@@ -91,6 +92,7 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
         }
         <Label name={t('RankGroup')}/>
         <Select
+            id="select-rank-group"
             showSearch
             filterOption={(input, option): boolean =>
                 (option?.label as string ?? '').toLocaleLowerCase().includes(input.toLowerCase())
@@ -107,6 +109,7 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
                 : <>
                     <Label name={t('OrderBy')}/>
                     <Select
+                        id="select-order-by"
                         value={conditions.orderBy}
                         style={{ width: 280 }}
                         onChange={(val: string): void => handleChange('orderBy', val)}
@@ -114,6 +117,7 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
                     />
                     <Label name={t('Top')}/>
                     <Select
+                        id="select-top"
                         value={conditions.top}
                         style={{ width: 120 }}
                         onChange={(val: string): void => handleChange('top', val)}

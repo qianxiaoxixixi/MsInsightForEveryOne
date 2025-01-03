@@ -379,7 +379,7 @@ export const StatisticsTable = (props: {step: string; rankId: string;session: Se
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
-            <div>
+            <div data-testid="statistics-table-container">
                 <div style={{ marginBottom: '20px' }}>
                     <CollapsiblePanel
                         secondary

@@ -192,6 +192,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 />
 
                 <CollapsiblePanel
+                    id="communication-overview-panel"
                     secondary
                     title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{tips}</div>}
                     headerStyle={{ padding: 0 }}
@@ -205,7 +206,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                     />
                     {
                         isPipeline
-                            ? <FlowChartContainer>
+                            ? <FlowChartContainer data-testid="pipeline-chart">
                                 <div className="title">{t('Pipeline Parallelism Chart')}</div>
                                 <FlowChart
                                     step={performanceChartConditions.step}
@@ -213,14 +214,16 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                                 />
                             </FlowChartContainer>
                             : <>
-                                <PerformanceChart
-                                    session={session}
-                                    {...performanceChartConditions}
-                                    {...generateConditions}
-                                    loading={performanceLoading}
-                                    setActiveRankId={setActiveRankId}
-                                    advices={adviceContent}
-                                />
+                                <div data-testid="performance-chart">
+                                    <PerformanceChart
+                                        session={session}
+                                        {...performanceChartConditions}
+                                        {...generateConditions}
+                                        loading={performanceLoading}
+                                        setActiveRankId={setActiveRankId}
+                                        advices={adviceContent}
+                                    />
+                                </div>
                                 {
                                     generateConditions.dimension === 'ep-dp-cp-pp-tp' &&
                                 <StatisticsTable

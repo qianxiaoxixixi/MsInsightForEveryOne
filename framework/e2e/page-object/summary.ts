@@ -6,107 +6,86 @@ import type { FrameLocator, Page, Locator } from '@playwright/test';
 import { FrameworkPage } from './framework';
 import { CheckboxHelpers, SelectHelpers } from '../components';
 
-
 interface ParallelValue {
-    algorithm: string;
+    algorithm: 'Megatron-LM(tp-cp-ep-dp-pp)' | 'Megatron-LM(tp-cp-pp-ep-dp)';
     ppSize: number;
     tpSize: number;
     dpSize: number;
-};
+    cpSize: number;
+    epSize: number;
+}
 
 interface ParallelSwitchValue {
     pipelineParallel: boolean;
     tensorParallel: boolean;
     dataParallel: boolean;
+    contextParallel: boolean;
+    expertParallel: boolean;
     dataType: string;
     dyeingStep?: number;
-};
+}
+
+type DimensionType = 'tp' | 'pp' | 'cp' | 'dp';
 
 export class SummaryPage {
     readonly page: Page;
-    readonly summaryFrame: FrameLocator;
+    summaryFrame: FrameLocator;
     readonly fullmask: Locator;
     readonly btnGenerate: Locator;
-    readonly chartContainer: Locator;
-    readonly parallelRankContainer: Locator;
-    readonly parallelDrawLineSVG: Locator;
-    readonly stageChartContainer: Locator;
-    readonly rankChartContainer: Locator;
+    readonly parallelismGraph: Locator;
+    readonly parallelismGraphLoading: Locator;
+    readonly parallelismGraphPlaceholder: Locator;
+    readonly communicationOverviewContainer: Locator;
+    readonly pipelineChart: Locator;
+    readonly performanceChart: Locator;
+    readonly selectStep: Locator;
+    readonly selectRankGroup: Locator;
+    readonly selectOrderBy: Locator;
+    readonly selectTop: Locator;
+    readonly statisticsTableContainer: Locator;
 
     constructor(page: Page) {
         this.page = page;
         this.summaryFrame = page.frameLocator('#Summary');
         this.fullmask = this.summaryFrame.locator('.fullmask');
-        this.btnGenerate = this.summaryFrame.locator('button').first();
-        this.chartContainer = this.summaryFrame.locator('#overview-chart > div').first();
-        this.parallelRankContainer = this.summaryFrame.getByTestId('parallelRankContainer');
-        this.parallelDrawLineSVG = this.summaryFrame.locator('#parallelDrawLineSVG');
-        this.stageChartContainer = this.summaryFrame.locator('#STAGE');
-        this.rankChartContainer = this.summaryFrame.locator('#RANK');
+        this.btnGenerate = this.summaryFrame.getByRole('button', { name: 'Generate' });
+        this.parallelismGraph = this.summaryFrame.locator('.parallelism-graph');
+        this.parallelismGraphLoading = this.summaryFrame.getByTestId('parallelism-graph-loading');
+        this.parallelismGraphPlaceholder = this.summaryFrame.getByTestId('parallelism-graph-placeholder');
+        this.communicationOverviewContainer = this.summaryFrame.locator('#communication-overview-panel');
+        this.pipelineChart = this.summaryFrame.getByTestId('pipeline-chart');
+        this.performanceChart = this.summaryFrame.getByTestId('performance-chart');
+        this.selectStep = this.summaryFrame.locator('#select-step');
+        this.selectOrderBy = this.summaryFrame.locator('#select-order-by');
+        this.selectRankGroup = this.summaryFrame.locator('#select-rank-group');
+        this.selectTop = this.summaryFrame.locator('#select-top');
+        this.statisticsTableContainer = this.summaryFrame.getByTestId('statistics-table-container');
     }
 
-    async configureParallel(summaryFrame: FrameLocator, btnGenerate: Locator, value: ParallelValue): Promise<void> {
-        const config = summaryFrame.locator('.CommunicatorHeader');
+    async configureParallel(value: ParallelValue): Promise<void> {
+        const config = this.summaryFrame.locator('.CommunicatorHeader');
         const algorithmInput = config.locator('.ant-select-selector');
         const ppSizeInput = config.locator('#ppSize');
         const tpSizeInput = config.locator('#tpSize');
         const dpSizeInput = config.locator('#dpSize');
+        const cpSizeInput = config.locator('#cpSize');
+        const epSizeInput = config.locator('#epSize');
 
         await algorithmInput.click();
-        const optionsList = summaryFrame.locator('#algorithm_list + div');
+        const optionsList = this.summaryFrame.locator('#algorithm_list + div');
         await optionsList.locator(`.ant-select-item-option[title='${value.algorithm}']`).click();
 
         await ppSizeInput.fill(`${value.ppSize}`);
         await tpSizeInput.fill(`${value.tpSize}`);
         await dpSizeInput.fill(`${value.dpSize}`);
+        await cpSizeInput.fill(`${value.cpSize}`);
+        await epSizeInput.fill(`${value.epSize}`);
 
-        await btnGenerate.click();
+        await this.btnGenerate.click();
     }
 
-    async configureParallelSwitch(page: Page, summaryFrame: FrameLocator, value: ParallelSwitchValue): Promise<void> {
-        const config = summaryFrame.getByTestId('parallelSwitch');
-
-        if (value.pipelineParallel) {
-            const pipelineParallelCheckbox = new CheckboxHelpers(
-                page,
-                config.locator('#pipelineParallel'),
-                summaryFrame,
-            );
-            await pipelineParallelCheckbox.click();
-        }
-
-        if (value.tensorParallel) {
-            const tensorParallelCheckbox = new CheckboxHelpers(
-                page,
-                config.locator('#tensorParallel'),
-                summaryFrame,
-            );
-            await tensorParallelCheckbox.click();
-        }
-
-        if (value.dataParallel) {
-            const dataParallelCheckbox = new CheckboxHelpers(
-                page,
-                config.locator('#dataParallel'),
-                summaryFrame,
-            );
-            await dataParallelCheckbox.click();
-        }
-
-        const dataTypeSelect = new SelectHelpers(page, config.locator('#dataType'), summaryFrame);
-        await dataTypeSelect.open();
-        await dataTypeSelect.selectOption(value.dataType);
-
-        if (value.dataType !== 'None') {
-            const dyeingStepInput = config.locator('#dyeingStep');
-            await dyeingStepInput.fill(`${value.dyeingStep}`);
-        }
-    }
-
-    async clickLine(lineSVG: Locator, gClass: string): Promise<void> {
-        const lineContainer = lineSVG.locator(`.${gClass}`);
-        const line = lineContainer.locator('polyline').first();
-        await line.click({ force: true });
+    async changeDimensionTo(dimension: DimensionType): Promise<void> {
+        await this.summaryFrame.getByRole('tab', { name: `${dimension.toLocaleUpperCase()} Dimension` }).click();
     }
 
     async goto(): Promise<void> {

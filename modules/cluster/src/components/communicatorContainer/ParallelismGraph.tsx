@@ -350,8 +350,8 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         setResponsiveSize(size);
     };
 
-    return <div style={{ position: 'relative' }}>
-        {loading && <Loading><div>Loading...</div></Loading>}
+    return <div className="parallelism-graph" style={{ position: 'relative' }}>
+        {loading && <Loading data-testid="parallelism-graph-loading"><div>Loading...</div></Loading>}
         <Responsive onChange={handleResize}>
             {
                 ({ width, height }): React.ReactNode => {
@@ -361,13 +361,15 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                             width={width * devicePixelRatio}
                             height={height * devicePixelRatio}
                         ></Canvas>
-                        <div style={{
-                            width: canvasSize.width,
-                            height: canvasSize.height,
-                        }}
-                        onClick={onClickCanvas}
-                        onMouseMove={onMouseMove}
-                        onMouseOut={onMouseOut}
+                        <div
+                            data-testid="parallelism-graph-placeholder"
+                            style={{
+                                width: canvasSize.width,
+                                height: canvasSize.height,
+                            }}
+                            onClick={onClickCanvas}
+                            onMouseMove={onMouseMove}
+                            onMouseOut={onMouseOut}
                         ></div>
                     </CanvasContainer>;
                 }

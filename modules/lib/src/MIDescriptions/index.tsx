@@ -42,7 +42,7 @@ export const MIDescriptions: React.FC<MIDescriptionsProps> = (props): JSX.Elemen
     const { children, style } = props;
 
     return (
-        <Container style={style}>
+        <Container style={style} className="mi-descriptions">
             {children}
         </Container>
     );

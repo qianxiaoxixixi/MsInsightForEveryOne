@@ -14,7 +14,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
     testDir: './e2e',
     /* Maximum time one test can run for. */
-    timeout: 60 * 1000,
+    timeout: 30 * 1000,
     expect: {
         /**
          * Maximum time expect() should wait for the condition to be met.
@@ -53,10 +53,10 @@ export default defineConfig({
     ],
     /* Run your local dev server before starting the tests */
     webServer: [
-        ...[9000, 9001, 9002, 9003, 9004].map((port) => ({
-            command: `..\\server\\output\\win_mingw64\\bin\\profiler_server.exe --wsPort=${port} --logPath=D:\\MindStudio-Insight_GUI_Test\\GUI\\Ascend-Insight`,
+        {
+            command: `..\\server\\output\\win_mingw64\\bin\\profiler_server.exe --wsPort=9000 --logPath=D:\\MindStudio-Insight_GUI_Test\\GUI\\Ascend-Insight`,
             reuseExistingServer: !process.env.CI,
-        })),
+        },
         {
             /**
              * Use the dev server by default for faster feedback loop.
