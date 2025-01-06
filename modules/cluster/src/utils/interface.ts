@@ -60,6 +60,7 @@ export interface IndicatorsItem {
     stack: string;
     yAxisType: 'time' | 'ratio';
     visible: boolean;
+    unit: 'us' | '%';
 }
 
 export interface ConnectionsItem {

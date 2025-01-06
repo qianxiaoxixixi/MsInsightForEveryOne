@@ -61,9 +61,8 @@ interface PerformanceChartProps extends GenerateConditions {
 
 const getSeries = (session: Session, datasource: PerformanceDataItem[]): any => {
     return session.indicatorList?.map(indicator => {
-        const { chart, key, name, stack, yAxisType } = indicator;
+        const { chart, key, name, stack, yAxisType, unit } = indicator;
         const data = datasource.map(item => item[key]);
-        const unit = yAxisType === 'time' ? 'us' : '%';
         const yAxisIndex = yAxisType === 'time' ? 0 : 1;
 
         return {
