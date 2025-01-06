@@ -248,7 +248,7 @@ interface IcomProps {
 }
 function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Element {
     const { t } = useTranslation('communication');
-    return (<div>
+    return (<div data-testid="filters">
         <FormItem
             name={t('searchCriteria.Step')}
             content={(<Select

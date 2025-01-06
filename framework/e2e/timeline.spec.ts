@@ -3,7 +3,7 @@
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import { TimelinePage, SystemView } from './page-object';
+import { TimelinePage, SystemView, CommunicationPage } from './page-object';
 import { clearAllData, importData } from './utils';
 import { InputHelpers, SelectHelpers } from './components';
 import { FilePath } from './utils/constants';
@@ -128,7 +128,6 @@ test.describe('Timeline', () => {
         await systemView.goto();
 
         const statsSystemViewOptions = [
-            'Python API Summary',
             'CANN API Summary',
             'Ascend HardWare Task Summary',
             'HCCL Summary',
@@ -136,10 +135,11 @@ test.describe('Timeline', () => {
             'Kernel Details',
         ];
 
+        await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Python-API-Summary.png', { maxDiffPixels: 100 });
+
         for (let item of statsSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
-            await timelineFrame.locator('.ant-spin').waitFor({ state: 'visible' });
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
             await expect(bottomPanel).toHaveScreenshot(`StatsSystemView-${item}.png`, { maxDiffPixels: 100 });
         }
@@ -160,7 +160,6 @@ test.describe('Timeline', () => {
         for (let item of expertSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
-            await timelineFrame.locator('.ant-spin').waitFor({ state: 'visible' });
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
             await expect(bottomPanel).toHaveScreenshot(`ExpertSystemView-${item}.png`, { maxDiffPixels: 100 });
         }
@@ -291,11 +290,52 @@ test.describe('Timeline', () => {
         await page.mouse.move(0, 0);
         await expect(mainContainer).toHaveScreenshot('marker-list.png', { maxDiffPixels: 100 });
 
-        await page.frameLocator('#Timeline').getByText('Clear').click();
-        await page.frameLocator('#Timeline').getByRole('button', { name: 'OK' }).click();
+        await timelineFrame.getByText('Clear').click();
+        await timelineFrame.getByRole('button', { name: 'OK' }).click();
 
         await page.mouse.move(0, 0);
         await expect(mainContainer).toHaveScreenshot('marker-list-clear.png', { maxDiffPixels: 100 });
+    });
+
+    // 右键菜单--Fit to screen
+    test('test_fitToScreen_when_rightClickOperator', async ({ page, timelinePage }) => {
+        const { timelineFrame, mainContainer, unitWrapperScroller, expandUnit } = timelinePage;
+        const secondLayerUnit = mainContainer.getByText('Python (2045554)');
+
+        await secondLayerUnit.click();
+        await unitWrapperScroller
+            .locator('canvas')
+            .nth(1)
+            .click({
+                button: 'right',
+                position: {
+                    x: 251,
+                    y: 89,
+                },
+            });
+        await timelineFrame.getByText('Fit to screen').click();
+
+        await expect(mainContainer).toHaveScreenshot('fit-to-screen.png', { maxDiffPixels: 100 });
+    });
+
+    // 右键菜单--右键点击通信算子跳转至通信页面
+    test('test_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage }) => {
+        const { timelineFrame, unitWrapperScroller } = timelinePage;
+        const { communicationFrame } = new CommunicationPage(page);
+
+        await unitWrapperScroller.getByText('HCCL (2094647744)').click();
+        await timelineFrame.locator('div:nth-child(12) > .chart > div > .canvasContainer > .drawCanvas').click({
+            button: 'right',
+            position: {
+                x: 75,
+                y: 9,
+            },
+        });
+        await timelineFrame.getByText('Find in Communication').click();
+        await page.waitForTimeout(1000);
+
+        const hcclChart = communicationFrame.locator('.panel-content').first();
+        await expect(hcclChart).toHaveScreenshot('redirect-to-communication.png', { maxDiffPixels: 100 });
     });
 
     // 右键菜单--Hide/Show All Hidden

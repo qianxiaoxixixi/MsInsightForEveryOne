@@ -2,10 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import { test as baseTest, expect } from '@playwright/test';
-import { MemoryPage } from './page-object';
+import { expect, test as baseTest } from '@playwright/test';
+import { MemoryPage, TimelinePage } from './page-object';
 import { clearAllData, importData, setCompare, waitForWebSocketEvent } from './utils';
-import { SelectHelpers, InputHelpers, CheckboxHelpers } from './components';
+import { CheckboxHelpers, InputHelpers, SelectHelpers } from './components';
+import { FilePath } from './utils/constants';
 
 interface TestFixtures {
     memoryPage: MemoryPage;
@@ -24,6 +25,9 @@ const memoryImgMap = {
     resetPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-reset.png',
     compareRankRes: 'memory-compare-rank.png',
     queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess: 'memory-pytorch-interval-only-show.png',
+    loadMindSporeDataSuccess: 'memory-mindspore-loaded.png',
+    loadMultiMachinesMultiRanksDataSuccess: 'memory-pytorch-multi-loaded.png',
+    redirectToTimeline: 'memory-redirect-to-timeline.png',
 };
 
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
@@ -36,10 +40,12 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
     // 【case】text非多机非对比memory界面加载
     test('loadMemoryPageSuccess_when_dataParseSuccess', async ({ page, memoryPage }) => {
-        const { memoryFrame } = memoryPage;
+        const { memoryFrame, rankIdSelector } = memoryPage;
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('0');
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page'))
-        .toHaveScreenshot(memoryImgMap.loadPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadPytorchSingleMachineMultiRankDataSuccess, {
             maxDiffPixels: 500,
         });
     });
@@ -54,8 +60,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await groupIdSelect.open();
         await groupIdSelect.selectOption('Stream');
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page'))
-        .toHaveScreenshot(memoryImgMap.filterPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.filterPytorchSingleMachineMultiRankDataSuccess, {
             maxDiffPixels: 500,
         });
     });
@@ -74,8 +79,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page'))
-        .toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataSuccess, {
             maxDiffPixels: 500,
         });
     });
@@ -93,28 +97,39 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page'))
-        .toHaveScreenshot(memoryImgMap.resetPytorchSingleMachineMultiRankDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.resetPytorchSingleMachineMultiRankDataSuccess, {
+            maxDiffPixels: 500,
+        });
+    });
+
+    // 表格右键跳转至Timeline
+    test('test_redirectToTimeline_when_rightClickTable', async ({ page, memoryPage }) => {
+        const { memoryFrame } = memoryPage;
+        const { fullPage } = new TimelinePage(page);
+        await memoryFrame.getByRole('cell', { name: 'aten::empty_strided' }).first().click({
+            button: 'right',
+        });
+        await memoryFrame.getByText('Find in Timeline').click();
+
+        await page.mouse.move(0, 0);
+        await expect(fullPage).toHaveScreenshot(memoryImgMap.redirectToTimeline, {
             maxDiffPixels: 500,
         });
     });
 
     // 对比数据
-    test('memory_compare_rank', async ({page, memoryPage}) => {
-        const {memoryFrame} = memoryPage;
+    test('memory_compare_rank', async ({ page, memoryPage }) => {
+        const { memoryFrame } = memoryPage;
         setCompare(page, memoryFrame);
-        await expect(memoryFrame.locator('.mi-page'))
-            .toHaveScreenshot(memoryImgMap.compareRankRes, {
-                maxDiffPixels: 500,
-            });
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankRes, {
+            maxDiffPixels: 500,
+        });
     });
 
     // 【case】memory中间调整区间，底部表格仅查看在选中时间区间分配或释放内存的数据时的结果展示
-    test('query_memoryDetailTable_by_tableFilterConditionOnlyShowAllocatedOrReleasedWithinInterval',
-        async ({ page, memoryPage }) => {
+    test('query_memoryDetailTable_by_tableFilterConditionOnlyShowAllocatedOrReleasedWithinInterval', async ({ page, memoryPage }) => {
         const { memoryFrame, isOnlyShowAllocatedOrReleasedWithinIntervalChecker } = memoryPage;
-        const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox =
-            new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
+        const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox = new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
 
         const chart = memoryFrame.locator('.ant-spin-container > div > div:nth-child(2) > div:nth-child(1) > canvas');
         const chartInfo = await chart.boundingBox();
@@ -139,11 +154,67 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await totalNumListItem.waitFor({ timeout: 1000 });
         expect(await totalNumListItem.innerText()).toBe('Total 229 items');
 
-        await expect(memoryFrame.locator('.mi-page'))
-            .toHaveScreenshot(
-                memoryImgMap.queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess,
-                { maxDiffPixels: 500 }
-            );
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess, {
+            maxDiffPixels: 500,
+        });
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
+});
+
+test.describe('Memory(MindSpore)', () => {
+    test.beforeEach(async ({ page, memoryPage }) => {
+        const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await memoryPage.goto();
+        await importData(page, FilePath.MIND_SPORE);
+        await allCardParsedPromise;
+    });
+
+    // 测试图表加载完成
+    test('test_staticChartDisplay_given_rank1', async ({ page, memoryPage }) => {
+        const { memoryFrame, rankIdSelector } = memoryPage;
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('1');
+
+        // 等待 echarts 动画结束
+        await page.waitForTimeout(1000);
+
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadMindSporeDataSuccess, {
+            maxDiffPixels: 500,
+        });
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
+});
+
+test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
+    test.beforeEach(async ({ page, memoryPage }) => {
+        const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await memoryPage.goto();
+        await importData(page, FilePath.MULTI_MACHINES);
+        await allCardParsedPromise;
+    });
+
+    // 多机多卡数据界面正常加载
+    test('test_pageDisplay_when_changeMachines', async ({ page, memoryPage }) => {
+        const { memoryFrame, rankIdSelector } = memoryPage;
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('1');
+
+        // 等待 echarts 动画结束
+        await page.waitForTimeout(1000);
+
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadMultiMachinesMultiRanksDataSuccess, {
+            maxDiffPixels: 500,
+        });
     });
 
     test.afterEach(async ({ page }) => {

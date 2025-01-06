@@ -9,6 +9,8 @@ import { TableHelpers } from '../components';
 export class CommunicationPage {
     readonly page: Page;
     readonly communicationFrame: FrameLocator;
+    readonly filters: Locator; // 筛选条件区域
+    readonly hcclChart: Locator;
     readonly stepSelector: Locator;
     readonly communicationGroupSelector: Locator;
     readonly operatorNameSelector: Locator;
@@ -23,6 +25,8 @@ export class CommunicationPage {
     constructor(page: Page) {
         this.page = page;
         this.communicationFrame = page.frameLocator('#Communication');
+        this.filters = this.communicationFrame.getByTestId('filters');
+        this.hcclChart = this.communicationFrame.locator('#hccl');
         this.stepSelector = this.communicationFrame.locator('#step-select'); // 迭代id
         this.communicationGroupSelector = this.communicationFrame.locator('#communicationGroup-select'); // 通信域
         this.operatorNameSelector = this.communicationFrame.locator('#operatorName-select'); // 算子名称

@@ -8,6 +8,9 @@ import { FrameworkPage } from './framework';
 export class TimelinePage {
     readonly page: Page;
     readonly timelineFrame: FrameLocator;
+    readonly fullPage: Locator;
+    readonly mainContainer: Locator; // 主页面（不包括底部面板）
+    readonly unitWrapperScroller: Locator; // 泳道容器（不包括置顶泳道）
     readonly markerBtn: Locator;
     readonly filterBtn: Locator;
     readonly searchBtn: Locator;
@@ -24,6 +27,9 @@ export class TimelinePage {
     constructor(page: Page) {
         this.page = page;
         this.timelineFrame = page.frameLocator('#Timeline');
+        this.fullPage = this.timelineFrame.locator('#root');
+        this.mainContainer = this.timelineFrame.locator('#main-container');
+        this.unitWrapperScroller = this.timelineFrame.locator('#unitWrapperScroller');
         this.markerBtn = this.timelineFrame.getByTestId('tool-marker');
         this.filterBtn = this.timelineFrame.getByTestId('tool-filter');
         this.searchBtn = this.timelineFrame.getByTestId('tool-search');

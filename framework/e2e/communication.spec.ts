@@ -3,7 +3,7 @@
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import { CommunicationPage, FrameworkPage } from './page-object';
+import { CommunicationPage, FrameworkPage, TimelinePage } from './page-object';
 import { clearAllData, importData, waitForWebSocketEvent } from './utils';
 import { SelectHelpers, CheckboxHelpers, TableHelpers } from './components';
 
@@ -31,6 +31,10 @@ test.describe('Communication', () => {
         if (await loadingDialog.count()) {
             await loadingDialog.waitFor({ state: 'detached' });
         }
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
     });
 
     // 【case】数据展示配置
@@ -207,7 +211,23 @@ test.describe('Communication', () => {
         expect(operatorPageHeaderText).toHaveText('Total Op Info(RankId 6)');
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    // 右键点击 HCCL 图表，跳转至Timeline
+    test('test_redirectToTimeline_when_rightClickHCCLChart', async ({ page, communicationPage }) => {
+        const { communicationFrame, hcclChart } = communicationPage;
+        const { fullPage } = new TimelinePage(page);
+
+        await communicationFrame.getByText('Communication Duration Analysis').hover();
+        await communicationFrame.getByText('Communication Duration Analysis').click();
+        await page.waitForTimeout(500);
+        await hcclChart.click({
+            button: 'right',
+            position: {
+                x: 278,
+                y: 78,
+            },
+        });
+        await communicationFrame.getByText('Find in Timeline').click();
+
+        await expect(fullPage).toHaveScreenshot('redirect-to-timeline.png', { maxDiffPixels: 500 });
     });
 });
