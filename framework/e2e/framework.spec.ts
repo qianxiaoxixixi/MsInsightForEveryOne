@@ -29,12 +29,16 @@ test.describe('Framework', () => {
     test('toggle theme', async ({ page }) => {
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.switchThemeBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(page).toHaveScreenshot('theme.png', { maxDiffPixels: 500 });
     });
 
     // 切换中英文
     test('toggle language', async ({ page }) => {
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.switchLanguageBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(page).toHaveScreenshot('language.png', { maxDiffPixels: 500 });
     });
 
     // 查看帮助信息
