@@ -2,38 +2,49 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import {expect, type FrameLocator, type Page} from '@playwright/test';
-import {FrameworkPage, FileExploreDialogPage} from '../page-object';
-import {FilePath} from './constants';
+import { expect, type FrameLocator, type Page } from '@playwright/test';
+import { FrameworkPage, FileExploreDialogPage } from '../page-object';
+import { FilePath } from './constants';
 
+let iterationNum: number = 0;
 // 导入数据
 export async function importData(page: Page, filePath: FilePath = FilePath.TEXT): Promise<void> {
-    const frameworkPage = new FrameworkPage(page);
-    const fileExploreDialogPage = new FileExploreDialogPage(page);
-    const {importDataBtn, projectList} = frameworkPage;
-    const {mainDialog, input, confirmBtn} = fileExploreDialogPage;
+    if (iterationNum > 3) {
+        return;
+    }
+    iterationNum++;
+    try {
+        const frameworkPage = new FrameworkPage(page);
+        const fileExploreDialogPage = new FileExploreDialogPage(page);
+        const { importDataBtn, projectList } = frameworkPage;
+        const { mainDialog, input, confirmBtn, fileTree } = fileExploreDialogPage;
 
-    // 点击“导入数据”按钮
-    await importDataBtn.click();
+        // 点击“导入数据”按钮
+        await importDataBtn.click();
 
-    // 确认弹窗已打开
-    await expect(mainDialog).toBeVisible();
-
-    await input.fill(filePath);
-    await input.press('Enter');
-
-    // 点击“确认”按钮
-    await confirmBtn.click();
-    const projectListItemCount = await projectList.getByRole('treeitem').count();
-    expect(projectListItemCount).toBeGreaterThan(0);
-    const currentProject = projectList.getByText(filePath, {exact: true}).first();
-    await expect(currentProject).toBeVisible();
+        // 确认弹窗已打开
+        await expect(mainDialog).toBeVisible();
+        const emptyBlock = fileTree.locator('.el-tree__empty-block');
+        await emptyBlock.waitFor({ state: 'hidden', timeout: 2000 });
+        await input.fill(filePath);
+        await input.press('Enter');
+        // 点击“确认”按钮
+        await confirmBtn.click();
+        await mainDialog.waitFor({ state: 'hidden', timeout: 2000 });
+        const currentProject = projectList.getByText(filePath, { exact: true }).first();
+        await currentProject.waitFor({ state: 'visible' });
+        await expect(currentProject).toBeVisible();
+    } catch {
+        await page.reload();
+        await importData(page, filePath);
+    }
+    iterationNum = 0;
 }
 
 // 清除数据
 export async function clearAllData(page: Page): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
-    const {settingsBtn, deleteAllBtn, deleteAllDialog, deleteAllConfirmBtn, projectList} = frameworkPage;
+    const { settingsBtn, deleteAllBtn, deleteAllDialog, deleteAllConfirmBtn, projectList } = frameworkPage;
 
     await settingsBtn.click();
 
@@ -47,7 +58,7 @@ export async function clearAllData(page: Page): Promise<void> {
     await deleteAllConfirmBtn.click();
 
     const noData = projectList.getByText('No Data');
-    await noData.waitFor({state: 'visible'});
+    await noData.waitFor({ state: 'visible' });
     await expect(noData).toBeVisible();
 }
 

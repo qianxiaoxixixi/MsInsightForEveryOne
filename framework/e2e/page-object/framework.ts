@@ -55,7 +55,7 @@ export class FrameworkPage {
         this.deleteAllDialog = page.getByLabel('Delete Item');
         this.deleteAllConfirmBtn = page.getByRole('button', { name: 'Confirm' });
         this.deleteAllCancelBtn = page.getByRole('button', { name: 'Cancel' });
-        this.projectList = page.getByRole('tree');
+        this.projectList = page.locator('.menu-tree .el-tree');
         this.helpInfoDialog = page.getByLabel('About MindStudio Insight');
         this.loadingDialog = page.locator('.el-loading-mask');
     }
@@ -82,6 +82,7 @@ export class FileExploreDialogPage {
     readonly confirmBtn: Locator;
     readonly closeBtn: Locator;
     readonly input: Locator;
+    readonly fileTree: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -90,5 +91,6 @@ export class FileExploreDialogPage {
         this.confirmBtn = page.getByRole('button', { name: 'Confirm' });
         this.closeBtn = page.getByLabel('Close this dialog');
         this.input = page.getByPlaceholder('Enter the file path and press');
+        this.fileTree = this.mainDialog.getByRole('tree');
     }
 }

@@ -311,24 +311,27 @@ test.describe('Timeline', () => {
     });
 
     // 右键菜单--Expand all/Collapse all
-    test('test_context_menu_click_ExpandAll', async ({ timelinePage }) => {
+    test('test_context_menu_click_ExpandAll', async ({ timelinePage, page }) => {
         const { timelineFrame, clickMenu } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const clickUnit = unitList.locator('.unit-info').first();
         await clickMenu(clickUnit, timelineFrame, 'Expand all');
+        await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('menu-click-expand-all.png', { maxDiffPixels: 100 });
         await clickMenu(clickUnit, timelineFrame, 'Collapse all');
+        await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('menu-click-collapse-all.png', { maxDiffPixels: 100 });
     });
 
     // 右键菜单--Show in events view
-    test('test_context_menu_click_ShowInEventsView', async ({ timelinePage }) => {
+    test('test_context_menu_click_ShowInEventsView', async ({ timelinePage, page }) => {
         const { timelineFrame, clickMenu, bottomPanel } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const clickUnit = unitList.locator('.unit-info').nth(1);
         await clickMenu(clickUnit, timelineFrame, 'Show in events view');
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'attached' });
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'detached' });
+        await page.mouse.move(0, 0);
         await expect(bottomPanel).toHaveScreenshot('test-context-menu-click-ShowInEventsView.png', { maxDiffPixels: 100 });
     });
 
@@ -337,15 +340,18 @@ test.describe('Timeline', () => {
         const { timelineFrame, clickMenu } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const clickUnit = unitList.locator('.unit-info').first();
-        const options = ['UndoZoom', 'ResetZoom'];
+        const options = ['Undo Zoom', 'Reset Zoom'];
 
         for (let i = 0; i < options.length; i++) {
             // 聚焦在timeline
             await clickUnit.click({ button: 'middle' });
             await page.keyboard.press('w');
             await page.keyboard.press('w');
+            await page.waitForTimeout(1000);
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-context-menu-click-Zoom.png', { maxDiffPixels: 100 });
-            await clickMenu(clickUnit, timelineFrame, 'Undo Zoom');
+            await clickMenu(clickUnit, timelineFrame, options[i]);
+            await page.mouse.move(0, 0);
+            await page.waitForTimeout(1000);
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 100 });
         }
     });
