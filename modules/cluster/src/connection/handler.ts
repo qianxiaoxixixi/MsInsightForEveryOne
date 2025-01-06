@@ -77,6 +77,7 @@ export const locateHCCL: NotificationHandler = (data): void => {
         stage,
         operatorName: iterationId && stage && operatorName,
         type: AnalysisType.COMMUNICATION_DURATION_ANALYSIS,
+        baselineIterationId: '',
     });
 };
 

@@ -9,14 +9,14 @@ import { Select, Radio } from 'ascend-components';
 import type { RadioChangeEvent } from 'antd';
 import { getUsableVal, delayExecute } from 'ascend-utils';
 import { Label, toSortedStage, getAllNumberFromString } from '../Common';
-import type { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
+import type { CompareData, optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
 import type { partitionMode } from '../communicatorContainer/ContainerUtils';
 
 export interface ConditionDataType {
-    [key: string]: string | string[];
     iterationId: string ;
+    baselineIterationId: string ;
     stage: string;
     operatorName: string ;
     type: AnalysisType;
@@ -24,20 +24,22 @@ export interface ConditionDataType {
 export const totalOperator = 'Total Op Info';
 export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
 
-const defaultCondition = {
+export const defaultCondition = {
     iterationId: '',
+    baselineIterationId: '',
     stage: '',
     operatorName: '',
     type: AnalysisType.COMMUNICATION_MATRIX,
 };
 const defaultOptionMap = {
     iterationOptions: [],
+    baselineIterationOptions: [],
     operatorOptions: [],
     rankIdOptions: [],
     stageOptions: [],
 };
 
-const observeCondition = observable({ value: defaultCondition });
+const observeCondition = observable<{ value: ConditionDataType }>({ value: defaultCondition });
 
 export function updateData(filterParams: ConditionDataType): void {
     observeCondition.value = filterParams;
@@ -61,8 +63,8 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     if (key !== undefined) {
         const condition = { ...initObj, [key]: val };
         const optionMap = initOptionMap;
-        if (key === 'iterationId') {
-            const stageOptions: optionDataType[] = await getStageOptions(val, session);
+        if (['iterationId', 'baselineIterationId'].includes(key as string)) {
+            const stageOptions: optionDataType[] = await getStageOptions(condition, session);
             const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage);
             optionMap.stageOptions = stageOptions;
             condition.stage = stage.toString();
@@ -77,11 +79,14 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     }
 
     // iterationId（step）
-    const iterationOptions: optionDataType[] = await getiterationOptions();
+    const { compare: iterationOptions, baseline: baselineIterationOptions } = await getiterationOptions(session.isCompare);
     const iterationId = getUsableVal(initObj.iterationId, iterationOptions, defaultCondition.iterationId).toString();
 
+    // 基线step
+    const baselineIterationId = getUsableVal(initObj.baselineIterationId, baselineIterationOptions, defaultCondition.baselineIterationId) as string;
+
     // stage
-    const stageOptions: optionDataType[] = await getStageOptions(iterationId, session);
+    const stageOptions: optionDataType[] = await getStageOptions({ iterationId, baselineIterationId }, session);
     const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage).toString();
 
     // type
@@ -92,15 +97,19 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
         await getOperatorOptions({ iterationId, rankList: [], stage, type });
     const operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
 
-    return { optionMap: { iterationOptions, stageOptions, operatorOptions }, condition: { iterationId, stage, type, operatorName } };
+    return {
+        optionMap: { iterationOptions, baselineIterationOptions, stageOptions, operatorOptions },
+        condition: { iterationId, stage, type, operatorName, baselineIterationId },
+    };
 };
 
-// 下拉可选项
-const getiterationOptions = async(): Promise<optionDataType[]> => {
-    const res: {iterationOrRankId: {compare: string[]} } = await queryIterations();
-    const list: string[] = res?.iterationOrRankId.compare ?? [];
-    const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
-    return options;
+// step选项
+const getiterationOptions = async(isCompare: boolean): Promise<CompareData<optionDataType[]>> => {
+    const res: {iterationOrRankId: {compare: string[];baseline: string[]} } = await queryIterations({ isCompare });
+    const { compare = [], baseline = [] } = res?.iterationOrRankId ?? {};
+    const compareOptions: optionDataType[] = compare.map(item => ({ value: item, label: item }));
+    const baselineOptions = baseline.map(item => ({ value: item, label: item }));
+    return { compare: compareOptions, baseline: baselineOptions, diff: [] };
 };
 
 /**
@@ -148,8 +157,8 @@ function compareStageInfo(stageA: string, stageB: string): number {
     return 0;
 }
 
-const getStageOptions = async (iterationId: string, session: Session): Promise<optionDataType[]> => {
-    const res: {data: [{group: string}] } = await queryStages({ iterationId });
+const getStageOptions = async (condition: {iterationId: string;baselineIterationId: string}, session: Session): Promise<optionDataType[]> => {
+    const res: {data: [{group: string}] } = await queryStages({ ...condition, isCompare: session.isCompare });
     const list = res?.data ?? [];
     const modes = session.communicatorData.partitionModes;
     const options: optionDataType[] = list
@@ -226,7 +235,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
     useEffect(() => {
         updateCondition(condition);
-    }, [session.clusterCompleted, session.communicatorData.partitionModes]);
+    }, [session.clusterCompleted, session.communicatorData.partitionModes, session.isCompare]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {
@@ -238,15 +247,16 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         handleFilterChange(condition);
     }, [condition]);
 
-    return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap}/>);
+    return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap} session={session}/>);
 });
 
 interface IcomProps {
     optionMap: optionMapDataType;
     condition: ConditionDataType;
     handleChange: (key: keyof ConditionDataType, val: string) => void;
+    session: Session;
 }
-function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Element {
+function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): JSX.Element {
     const { t } = useTranslation('communication');
     return (<div data-testid="filters">
         <FormItem
@@ -260,6 +270,21 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                 }}
                 options={optionMap.iterationOptions}
             />)}/>
+        {
+            session.isCompare
+                ? <FormItem
+                    name={t('searchCriteria.BaselineStep')}
+                    content={(<Select
+                        id={'baseline-step-select'}
+                        value={condition.baselineIterationId}
+                        style={{ width: 120 }}
+                        onChange={(val: string): void => {
+                            handleChange('baselineIterationId', val);
+                        }}
+                        options={optionMap.baselineIterationOptions}
+                    />)}/>
+                : <></>
+        }
         <FormItem
             name={t('searchCriteria.CommunicationGroup')}
             content={(<Select
@@ -285,6 +310,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                     }}
                     options={optionMap.operatorOptions}
                     showSearch={true}
+                    disabled={session.isCompare}
                 />)}/>
         <FormItem content={(
             <Radio.Group value={condition.type}
