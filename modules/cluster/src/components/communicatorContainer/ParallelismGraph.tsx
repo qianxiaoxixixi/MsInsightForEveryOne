@@ -137,9 +137,9 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             const updatedData: Record<string, any> = {};
             Object.entries(currentData).forEach(([key, value]) => {
                 if (key !== 'index') {
-                    const indicatorName = session.indicatorMap.get(key)?.name;
+                    const { name: indicatorName, unit } = session.indicatorMap.get(key) ?? {};
                     if (indicatorName !== undefined) {
-                        updatedData[indicatorName] = `${value} us`;
+                        updatedData[indicatorName] = `${value} ${unit}`;
                     }
                 }
             });
@@ -247,7 +247,13 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                     .map(frameGroup => frameGroup.list.map(item => item.index).toString());
 
                 session.communicationDomains = [...new Set([...connections, ...frames])];
-                session.indicatorList = data?.indicators ?? {};
+                session.indicatorList = data?.indicators.map(indicator => {
+                    const unit = indicator.yAxisType === 'time' ? 'us' : '%';
+                    return {
+                        ...indicator,
+                        unit,
+                    };
+                }) ?? [];
                 session.arrangementRankCount = data?.size || 0;
                 session.setRankDyeingData();
             });
@@ -338,7 +344,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         setHoveredRectIndex(activeRect === undefined ? null : activeRect.index);
     }, 100), [canvasDrawer]);
 
-    const onMouseOut: React.MouseEventHandler<HTMLDivElement> = (event): void => {
+    const onMouseOut: React.MouseEventHandler<HTMLDivElement> = (): void => {
         setHoveredRectIndex(null);
     };
 
