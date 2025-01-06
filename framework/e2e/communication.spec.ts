@@ -4,7 +4,7 @@
 
 import { test as baseTest, expect } from '@playwright/test';
 import { CommunicationPage, FrameworkPage } from './page-object';
-import { clearAllData, importData } from './utils';
+import { clearAllData, importData, waitForWebSocketEvent } from './utils';
 import { SelectHelpers, CheckboxHelpers, TableHelpers } from './components';
 
 interface TestFixtures {
@@ -16,16 +16,20 @@ const test = baseTest.extend<TestFixtures>({
         await use(communicationPage);
     },
 });
+let requestDurationListResp: Promise<unknown>;
+let requestTableDataResp: Promise<unknown>;
 
 test.describe('Communication', () => {
     test.beforeEach(async ({ page, communicationPage }) => {
+        requestDurationListResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/duration/list');
+        requestTableDataResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/operatorDetails');
+
         const { loadingDialog } = new FrameworkPage(page);
-        const { fullmask } = communicationPage;
         await page.goto('/');
         await importData(page);
         await communicationPage.goto();
         if (await loadingDialog.count()) {
-            await loadingDialog.waitFor({ state: 'attached' });
+            await loadingDialog.waitFor({ state: 'detached' });
         }
     });
 
@@ -106,7 +110,6 @@ test.describe('Communication', () => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const communicationTime = communicationFrame.locator('#main');
-        await communicationTime.scrollIntoViewIfNeeded();
         await page.mouse.move(0, 0);
         await expect(communicationTime).toHaveScreenshot('visualized-communication-time.png');
     });
@@ -116,7 +119,6 @@ test.describe('Communication', () => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const advice = communicationFrame.getByTestId('communicationAdvice');
-        await advice.scrollIntoViewIfNeeded();
         await page.mouse.move(0, 0);
         await expect(advice).toHaveScreenshot('communication-advice.png');
     });
@@ -127,7 +129,7 @@ test.describe('Communication', () => {
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table');
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
-        await tableLocator.scrollIntoViewIfNeeded();
+        await page.mouse.move(0, 0);
         await dataAnalysisTable.sortTableHead('Elapse Time(ms)');
         await expect(tableLocator).toHaveScreenshot('data-analysis-table-sort.png');
     });
@@ -136,13 +138,16 @@ test.describe('Communication', () => {
     test('expand sub table', async ({ page, communicationPage }) => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
+        await requestDurationListResp;
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table').first();
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
         // 定位并点击展开icon
-        const expandIcon = (await dataAnalysisTable.getCell(1, 1)).locator('div div');
+        const expandIconList = (await dataAnalysisTable.getCell(1, 1)).locator('div div');
+        const expandIcon = expandIconList.first();
         await expandIcon.click();
+        await requestTableDataResp;
         // 定位第一行数据的子表格 验证子表格可见
-        const expandTable = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table').nth(1);
+        const expandTable = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container').locator('.ant-table-container');
         await expect(expandTable).toBeVisible();
         // 再次点击icon 收起子表格
         await expandIcon.click();
@@ -157,16 +162,18 @@ test.describe('Communication', () => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         // 切换到通信耗时分析并点击icon展开子表格
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
+        await requestDurationListResp;
         const tableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table').first();
         const dataAnalysisTable = new TableHelpers(page, tableLocator, communicationFrame);
-        const expandIcon = (await dataAnalysisTable.getCell(1, 1)).locator('div div');
+        const expandIconList = (await dataAnalysisTable.getCell(1, 1)).locator('div div');
+        const expandIcon = expandIconList.first();
         await expandIcon.click();
+        await requestTableDataResp;
         // 定位到子表格元素
-        const expandTableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container > .ant-table-content > table').nth(1);
+        const expandTableLocator = communicationFrame.getByTestId('dataAnalysisTable').locator('.ant-table-container').locator('.ant-table-container');
         const expandTable = new TableHelpers(page, expandTableLocator, communicationFrame);
         // 表格滚动到可视区域并点击表头排序
         await expandTable.sortTableHead('Start Time(ms)');
-        await expandTableLocator.scrollIntoViewIfNeeded();
         await page.mouse.move(0, 0);
         await expect(expandTableLocator).toHaveScreenshot('data-analysis-subtable-sort.png', { maxDiffPixels: 500 });
         // 定位子表格分页器组件
@@ -176,11 +183,8 @@ test.describe('Communication', () => {
         expect(totalTextDiv).toHaveText('Total 59 items');
         // 点击分页按钮
         const pageLink = pagination.locator('.ant-pagination-item.ant-pagination-item-3 a'); // 第三页
-        const prevPage = pagination.locator('.ant-pagination-prev button');
-        const nextPage = pagination.locator('.ant-pagination-next button');
         await pageLink.click();
-        await prevPage.click();
-        await nextPage.click();
+        await requestTableDataResp;
         expect(await expandTable.getCell(1, 2)).toHaveText('331.2512');
         // 验证分页器输入框
         const paginationInput = pagination.locator('.ant-pagination-options .ant-pagination-options-quick-jumper input');

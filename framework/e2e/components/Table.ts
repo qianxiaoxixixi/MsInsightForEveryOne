@@ -23,7 +23,7 @@ export class TableHelpers extends Component {
      * 表头排序
      */
     async sortTableHead(tableHeadText: string): Promise<void> {
-        await this.locator.locator(`text=${tableHeadText}`).click();
+        await this.locator.getByText(tableHeadText).click();
     }
 
     /**
