@@ -49,7 +49,10 @@
     "Advice": "专家建议",
     "More": "更多",
     "Error": "错误",
-    "Filter by field content": "输入关键字过滤"
+    "Filter by field content": "输入关键字过滤",
+    "Baseline": "基线数据",
+    "Comparison": "比对数据",
+    "Difference": "差值"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",

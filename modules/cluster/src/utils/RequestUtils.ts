@@ -15,8 +15,8 @@ import {
  * 无参
  * @return {[]} 返回迭代数组[0,1,2,3]
  */
-export const queryIterations = async(): Promise<any> => {
-    return window.requestData('communication/duration/iterations', {});
+export const queryIterations = async(param: {isCompare: boolean}): Promise<any> => {
+    return window.requestData('communication/duration/iterations', param);
 };
 
 /**
@@ -24,7 +24,7 @@ export const queryIterations = async(): Promise<any> => {
  * 无参
  * @return {[]} 返回迭代数组['(0,1,2)']
  */
-export const queryStages = async(param: {iterationId: string }): Promise<any> => {
+export const queryStages = async(param: {iterationId: string;baselineIterationId: string;isCompare: boolean }): Promise<any> => {
     return window.requestData('communication/matrix/group', param);
 };
 
@@ -149,7 +149,7 @@ export const queryTopSummary = async (param: {isCompare?: boolean}): Promise<any
  * @param {string} operatorName 算子名
  * @return {[]} 返回数组
  */
-export const queryCommunicationMatrix = async(param: { iterationId: string ; stage: string ; operatorName: string}):
+export const queryCommunicationMatrix = async(param: { iterationId: string ; stage: string ; operatorName: string; isCompare: boolean}):
 Promise<any> => {
     return window.requestData('communication/matrix/bandwidthInfo', param);
 };

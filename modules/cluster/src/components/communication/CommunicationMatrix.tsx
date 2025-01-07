@@ -1,64 +1,57 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2025. All rights reserved.
 */
-
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Select, Checkbox, InputNumber, Button } from 'ascend-components';
-import { message } from 'antd';
-import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { Label, COLOR, getDecimalCount } from '../Common';
+import { COLOR, getDecimalCount, getCompareName, getBaselineName } from '../Common';
 import type { ConditionDataType } from './Filter';
-import type { optionDataType, VoidFunction } from '../../utils/interface';
-import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
+import type { CompareData, VoidFunction } from '../../utils/interface';
+import { queryCommunicationMatrix } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
+import type { TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
+import type { PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
+import type { Condition, Range } from './CommunicationMatrix/Filter';
+import Filter, { MatrixType } from './CommunicationMatrix/Filter';
+import { getTransporTypeNumber, getTransportTypeName, transportTypeVisualMap } from './CommunicationMatrix/transportType';
 
-interface FilterInfos {
+interface DataSource {
+    data: MatrixItem[];
+    rankIds: number[];
+}
+interface MatrixItem {
+    srcRank: number;
+    dstRank: number;
+    matrixData: CompareData<MatrixData>;
+}
+interface MatrixData {
+    opName: string;
+    bandwidth: number;
+    transitSize: number;
+    transitTime: number;
+    transportType: string;
+}
+
+interface ChartData {
+    data: HeatmapData[];
+    rankIds: number[];
+    type: MatrixType;
     min: number;
     max: number;
+    isCompare: boolean;
+}
+type HeatmapData = [string, string, React.Key, CompareData<Record<string, React.Key>>];
+enum HeatmapDataIndex {
+    SRC_RANK = 0,
+    DST_RANK = 1,
+    VALUE = 2,
 }
 
-interface RangeInfo {
-    minRange: number;
-    maxRange: number;
-}
-
-interface ICommunicationMatrixProps {
-    isShow: boolean;
-    handleChange: VoidFunction;
-    switchCondition: any;
-    range: RangeInfo;
-    setFilter: VoidFunction;
-}
-
-const useOptions = (): optionDataType[] => {
-    const { t } = useTranslation('communication');
-    return [
-        {
-            label: `${t('searchCriteria.Bandwidth')}(GB/s)`,
-            value: 'bandwidth',
-        },
-        {
-            label: `${t('searchCriteria.TransitSize')}(MB)`,
-            value: 'transitSize',
-        },
-        {
-            label: t('searchCriteria.TransportType'),
-            value: 'transportType',
-        },
-        {
-            label: `${t('searchCriteria.TransitTime')}(ms)`,
-            value: 'transitTime',
-        },
-    ];
-};
-
-function InitChart(data: any, t: TFunction): void {
+function InitChart(data: ChartData, t: TFunction): void {
     const chartDom = document.getElementById('matrixchart');
     if (chartDom !== null) {
         disposeAdaptiveEchart(chartDom);
@@ -67,104 +60,29 @@ function InitChart(data: any, t: TFunction): void {
     }
 }
 
-function handleRepeatData(repeatDataToolTip: {[key: string]: string}, data: any[][]): any[][] {
-    // 此处data中每项均为[srcRank, dstRank, value, ...]形式，存在重复value时拼接为[value1,value2,...]形式在通信矩阵中呈现，并以value1作为颜色指标
-    return data.reduce((prev: any[][], cur: any[]) => {
-        const repeatItem = prev.find((item) => {
-            return item[0] === cur[0] && item[1] === cur[1];
-        });
-        if (repeatItem) {
-            const repeadKey = `${cur[0]},${cur[1]}`;
-            if (repeadKey in repeatDataToolTip) {
-                repeatDataToolTip[repeadKey] = `${repeatItem[2]},${repeatDataToolTip[repeadKey]}`;
-            } else {
-                repeatDataToolTip[repeadKey] = `${repeatItem[2]}`;
-            }
-            repeatItem[2] = cur[2];
-            return prev;
-        } else {
-            return [...prev, cur];
-        }
-    }, []);
-}
-
-function handleTransportType(dataSource: any, option: any, type: any, t: TFunction): void {
-    dataSource.forEach((item: any[]) => {
-        item[2] = allTransporType.indexOf(item[2]);
-    });
-    option.series[0].data = dataSource;
-    option.visualMap = transportTypeOption.visualMap;
-    option.series[0].label.formatter = (params: any): string => {
-        return allTransporType[params.value[2]];
-    };
-    option.series[0].tooltip.formatter = function (params: any): string {
-        const data = params?.data;
-        const str = data?.[3]?.length === 0
-            ? `srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${t(type)}: ${allTransporType[data?.[2]]}`
-            : `${t('operatorName')}: ${data?.[3]} <br/> srcRank -> dstRank: ${data?.[0]} -> ${data?.[1]} <br/> ${t(type)}: ${allTransporType[data?.[2]]}`;
-        return safeStr(str, '<br/>');
-    };
-}
-
-const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL', 'SIO'];
-const defaultVisualMap = {
-    calculable: true,
-    orient: 'horizontal',
-    left: 'center',
-    bottom: '0',
-    inRange: { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] },
-    textStyle: { color: COLOR.GREY_40 },
-    dimension: 2,
-    itemHeight: 300, // 调整宽度
-};
-function wrapData(dataSource: any, t: TFunction): any {
-    const { data, rankIds, type, min, max } = dataSource;
-    const option: any = baseOption;
+function wrapData(dataSource: ChartData, t: TFunction): any {
+    const { data, rankIds, type, min, max, isCompare } = dataSource;
+    const option: any = cloneDeep(baseOption);
     option.xAxis.data = rankIds;
     option.yAxis.data = rankIds;
-    option.series[0].label.show = rankIds.length <= 16;
-
-    if (type === 'transportType') {
-        handleTransportType(data, option, type, t);
-    } else {
-        const repeatDataToolTip: {[key: string]: string} = {};
-        const mixData = handleRepeatData(repeatDataToolTip, data);
-        option.series[0].data = mixData;
-        option.visualMap = cloneDeep(defaultVisualMap);
-        if (data.length > 0 || isFinite(max)) {
-            option.visualMap.max = max;
-            option.visualMap.min = min;
-            if (min === max) {
-                option.visualMap.inRange = { color: [COLOR.BAND_1] };
-            }
-            const minDecimalCount = getDecimalCount(min);
-            const maxDecimalCount = getDecimalCount(max);
-            option.visualMap.precision = Math.max(minDecimalCount, maxDecimalCount);
-        }
-        option.series[0].label.formatter = function (params: any): string {
-            const newData = params?.data;
-            if (newData.length < 3) {
-                return '';
-            }
-            const repeatedKey = `${newData[0]},${newData[1]}`;
-            if (repeatedKey in repeatDataToolTip && repeatDataToolTip[repeatedKey]) {
-                newData[2] = `[${newData[2]},${repeatDataToolTip[repeatedKey]}]`;
-                repeatDataToolTip[repeatedKey] = '';
-            }
-            return newData[2];
-        };
-        option.series[0].tooltip.formatter = function (params: any): string {
-            const datalist = params?.data;
-            const str = datalist?.[3]?.length === 0
-                ? `srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${t(type)}: ${datalist?.[2]}`
-                : `${t('operatorName')}: ${datalist?.[3]} <br/> srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/>${t(type)}: ${datalist?.[2]}`;
-            return safeStr(str, '<br/>');
-        };
-    }
+    option.series = [getSerie({ data, rankIds, t, type, isCompare })];
+    option.visualMap = getVisualMap({ type, min, max, dataLength: data.length, isCompare });
     return option;
 }
 
 const baseOption: any = {
+    xAxis: {
+        type: 'category',
+        name: 'Src Rank Id',
+        splitArea: {
+            show: true,
+        },
+    },
+    yAxis: {
+        type: 'category',
+        name: 'Dst Rank Id',
+    },
+    tooltip: { show: true },
     textStyle: getDefaultChartOptions().textStyle,
     dataZoom: [
         {
@@ -185,219 +103,264 @@ const baseOption: any = {
             end: 100,
         },
     ],
-    tooltip: {
-        position: 'top',
-    },
     grid: {
         left: '100',
         right: '100',
         height: '80%',
         top: '10%',
     },
-    xAxis: {
-        type: 'category',
-        name: 'Src Rank Id',
-        data: [],
-        splitArea: {
-            show: true,
+};
+
+const baseSerie = {
+    type: 'heatmap',
+    emphasis: {
+        itemStyle: {
+            shadowBlur: 10,
+            shadowColor: COLOR.GREY_50,
         },
     },
-    yAxis: {
-        type: 'category',
-        name: 'Dst Rank Id',
-        data: [],
-    },
-    visualMap: {
-        min: 0,
-        max: 10,
-        calculable: true,
-        orient: 'horizontal',
-        left: 'center',
-        bottom: '0',
-        inRange: { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] },
-        textStyle: { color: COLOR.GREY_40 },
-        dimension: 2,
-    },
-    series: [
-        {
-            type: 'heatmap',
-            tooltip: {
-                show: true,
-                formatter: function (params: any): string {
-                    const { data } = params;
-                    return `${data[0]} -> ${data[1]} : ${data[2]}`;
-                },
-            },
-            data: [],
+};
+function getSerie({ data, rankIds, type, isCompare, t }: {
+    data: HeatmapData[];
+    rankIds: number[];
+    type: MatrixType;
+    isCompare: boolean;
+    t: TFunction;
+}): any {
+    if (type === MatrixType.TRANSPORT_TYPE) {
+        const numData = data.map(item => [...item.slice(0, HeatmapDataIndex.VALUE),
+            getTransporTypeNumber(item[HeatmapDataIndex.VALUE] as string),
+            ...item.slice(HeatmapDataIndex.VALUE + 1)]);
+        return {
+            ...baseSerie,
+            data: numData,
             label: {
-                show: true,
+                show: rankIds.length <= 16,
+                formatter: (params: {value: HeatmapData}): string => getTransportTypeName(params.value[HeatmapDataIndex.VALUE] as number),
             },
-            emphasis: {
-                itemStyle: {
-                    shadowBlur: 10,
-                    shadowColor: COLOR.GREY_50,
-                },
+            tooltip: getTooltip({ t, type, isCompare }),
+        };
+    }
+    const { mixData, repeatData } = handleRepeatData(data);
+    return {
+        ...baseSerie,
+        data: mixData,
+        label: {
+            show: rankIds.length <= 16,
+            formatter: function (params: any): string {
+                const newData = params?.data;
+                const [x, y] = newData;
+                const repeatKey = `${x},${y}`;
+                return repeatData[repeatKey].length > 1 ? `[${repeatData[repeatKey].join(',')}]` : repeatData[repeatKey][0];
             },
         },
-    ],
+        tooltip: getTooltip({ t, type, repeatData, isCompare }),
+    };
+}
+
+// 处理重复数据
+function handleRepeatData(data: HeatmapData[]): { mixData: HeatmapData[];repeatData: Record<string, string[]> } {
+    const repeatData: Record<string, string[]> = {};
+    // 此处data中每项均为[srcRank, dstRank, value, ...]形式，存在重复[srcRank, dstRank]时，value拼接为[value1,value2,...]形式在通信矩阵中呈现，并以value1作为颜色指标
+    const mixData = data.reduce<HeatmapData[]>((prev, cur) => {
+        const repeatKey = `${cur[HeatmapDataIndex.SRC_RANK]},${cur[HeatmapDataIndex.DST_RANK]}`;
+        if (repeatData[repeatKey] === undefined) {
+            repeatData[repeatKey] = [`${cur[HeatmapDataIndex.VALUE]}`];
+        } else {
+            repeatData[repeatKey].unshift(`${cur[HeatmapDataIndex.VALUE]}`);
+            prev.splice(prev.findIndex(item =>
+                item[HeatmapDataIndex.SRC_RANK] === cur[HeatmapDataIndex.SRC_RANK] && item[HeatmapDataIndex.DST_RANK] === cur[HeatmapDataIndex.DST_RANK])
+            , 1);
+        }
+        return [...prev, cur];
+    }, []);
+    return { mixData, repeatData };
+}
+
+interface Label {
+    label: string | number;
+    content: string | number;
+    contentClass?: string;
+}
+// 提示框
+function getTooltip({ t, type, isCompare, repeatData }: {t: TFunction;type: string;isCompare: boolean;repeatData?: Record<string, string[]>}):
+TooltipComponentOption {
+    return {
+        show: true,
+        formatter: function (params: any): string {
+            const list = getDisplayList({ t, type, isCompare, repeatData, data: params.data });
+            return list.map(labelItem =>
+                `<span>${safeStr(labelItem.label)}:</span><span class="tooltip-value ${labelItem.contentClass ?? ''}">${safeStr(labelItem.content)}</span><br/>`,
+            ).join('');
+        },
+    };
+}
+
+function getDisplayList({ t, type, isCompare, repeatData, data }:
+{data: HeatmapData;t: TFunction;type: string;isCompare: boolean;repeatData?: Record<string, string[]>}): Label[] {
+    let [srcRank, dstRank, value, { compare, baseline }] = data;
+    const repeatedKey = `${srcRank},${dstRank}`;
+    if (type === MatrixType.TRANSPORT_TYPE) {
+        value = getTransportTypeName(value as number);
+    } else if (repeatData !== undefined && repeatData[repeatedKey].length > 1) {
+        value = `[${repeatData[repeatedKey].join(', ')}]`;
+    }
+
+    const list: Label[] = [{ label: 'srcRank -> dstRank', content: `${srcRank} -> ${dstRank}` }];
+    if (isCompare && type !== MatrixType.TRANSPORT_TYPE) {
+        // 算子名
+        if (compare.opName !== '') {
+            list.push({ label: t(getCompareName('operatorName')), content: compare.opName });
+        }
+        if (baseline.opName !== '') {
+            list.push({ label: t(getBaselineName('operatorName')), content: baseline.opName });
+        }
+        list.push(
+            { label: t('Difference'), content: value, contentClass: typeof value === 'number' && value >= 0 ? 'positive-number' : 'negative-number' },
+            { label: t(getCompareName(type)), content: compare.value },
+            { label: t(getBaselineName(type)), content: baseline.value },
+        );
+    } else {
+        // 算子名
+        if (compare.opName !== '') {
+            list.push({ label: t('operatorName'), content: compare.opName });
+        }
+        list.push({ label: t(type), content: value });
+    }
+    return list;
+}
+
+// 图例（颜色条）
+const baseVisualMap: PiecewiseVisualMapOption = {
+    orient: 'horizontal',
+    left: 'center',
+    bottom: '0',
+    textStyle: { color: COLOR.GREY_40 },
+    dimension: 2,
+};
+function getVisualMap({ dataLength, min, max, type, isCompare = false }: {
+    dataLength: number;min: number;max: number;isCompare?: boolean;type: MatrixType;
+}): VisualMapComponentOption {
+    if (type === MatrixType.TRANSPORT_TYPE) {
+        return transportTypeVisualMap;
+    }
+    if (isCompare) {
+        return {
+            ...baseVisualMap,
+            type: 'piecewise',
+            pieces: [
+                { lt: 0, color: COLOR.BAND_0 },
+                { value: 0, color: COLOR.GREY_20 },
+                { gt: 0, color: COLOR.BAND_4 },
+            ],
+        };
+    }
+    if (dataLength > 0 || isFinite(max)) {
+        return {
+            ...baseVisualMap,
+            calculable: true,
+            itemHeight: 300, // 调整宽度,
+            inRange: min === max ? { color: [COLOR.BAND_1] } : { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] },
+            min,
+            max,
+            precision: Math.max(getDecimalCount(min), getDecimalCount(max)),
+        };
+    }
+    return baseVisualMap;
+}
+
+// 图表更新
+const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, setRange, t, isCompare }: {
+    dataSource: DataSource;
+    switchCondition: Condition;
+    range?: Range;
+    shouldUpdateRange: boolean;
+    setRange: (val: Range) => void;
+    t: TFunction;
+    isCompare: boolean;
+}): void => {
+    const { data, rankIds } = dataSource;
+    const dataList: HeatmapData[] = data.reduce<HeatmapData[]>((pre, cur) => {
+        const { srcRank, dstRank, matrixData: { compare, baseline } } = cur;
+        const compareValue = compare[switchCondition.type];
+        const baselineValue = baseline[switchCondition.type];
+        let value;
+        if (isCompare && typeof compareValue === 'number' && typeof baselineValue === 'number') {
+            value = compareValue - baselineValue;
+        } else {
+            value = compareValue;
+        }
+        let match = rankIds.includes(srcRank) && rankIds.includes(dstRank);
+        if (!switchCondition.showInner) {
+            match = match && srcRank !== dstRank;
+        }
+        if (range) {
+            match = match && typeof value === 'number' && value >= range.min && value <= range.max;
+        }
+        if (match) {
+            pre.push([String(srcRank), String(dstRank), value,
+                {
+                    compare: { opName: compare.opName, value: compareValue },
+                    baseline: { opName: baseline.opName, value: baselineValue },
+                    diff: {},
+                },
+            ]);
+        }
+        return pre;
+    }, []);
+    const values: number[] = dataList.map((item: HeatmapData) => typeof item[HeatmapDataIndex.VALUE] === 'number' ? item[HeatmapDataIndex.VALUE] as number : 0);
+    const min = dataList.length > 0 ? Math.min(...values) : 0;
+    const max = dataList.length > 0 ? Math.max(...values) : 0;
+    if (shouldUpdateRange) {
+        setRange({ min, max });
+    }
+    InitChart({ ...dataSource, data: dataList, type: switchCondition.type, min: range?.min ?? min, max: range?.max ?? max, isCompare }, t);
 };
 
-const transportTypeOption = {
-    visualMap: {
-        type: 'piecewise',
-        calculable: true,
-        orient: 'horizontal',
-        left: 'center',
-        bottom: '0',
-        splitNumber: 1,
-        pieces: [
-            { value: 0, label: allTransporType[0], color: COLOR.BAND_0 },
-            { value: 1, label: allTransporType[1], color: COLOR.BAND_1 },
-            { value: 2, label: allTransporType[2], color: COLOR.BAND_2 },
-            { value: 3, label: allTransporType[3], color: COLOR.BAND_3 },
-            { value: 4, label: allTransporType[4], color: COLOR.BAND_4 },
-        ],
-        textStyle: { color: COLOR.GREY_40 },
-        dimension: 2,
-    },
-};
-
-const updateData = async(conditions: ConditionDataType, callback: VoidFunction): Promise<void> => {
-    const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
+// 数据更新
+const updateData = async(condition: ConditionDataType, setDataSource: VoidFunction, isCompare: boolean): Promise<void> => {
+    const { iterationId, stage, operatorName, baselineIterationId } = condition;
+    const param = { iterationId, stage, operatorName, isCompare, baselineIterationId };
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];
-    const dataAfterDeal = data.map((item: any) => {
-        return { dstRank: item.dstRank, srcRank: item.srcRank, ...item.matrixData?.compare };
-    });
-    const rankRes: {iterationOrRankId: string[] } =
-        await queryRanks({ iterationId: conditions.iterationId });
-    const iterationOrRankId = rankRes?.iterationOrRankId ?? [];
-    const stageRanks = _.map(_.split(_.replace(conditions.stage, /[(),]/, ''), ','),
+    const rankIds = _.map(_.split(_.replace(stage, /[(),]/, ''), ','),
         value => Number.parseInt(value)).filter(value => !Number.isNaN(value))
         .sort((a, b) => a - b);
-    let rankIds = iterationOrRankId.map(item => String(item));
-    if (stageRanks.length > 0) {
-        rankIds = _.filter(rankIds, value => Number(value) >= stageRanks[0] && Number(value) <= stageRanks[stageRanks.length - 1]);
-    }
-    rankIds.sort((a, b) => Number(a) - Number(b));
-    callback({ data: dataAfterDeal, rankIds });
+    setDataSource({ data, rankIds });
 };
 
+// 通信矩阵
 const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow: boolean;conditions: ConditionDataType;session: Session}) => {
-    const [dataSource, setDataSource] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
-    const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
-    const [range, setRange] = useState<RangeInfo>({ minRange: 0, maxRange: 1 });
     const { t } = useTranslation('communication');
+    const [switchCondition, setSwitchCondition] = useState<Condition>({ type: MatrixType.BANDWIDTH, showInner: false });
+    const [range, setRange] = useState<Range>({ min: 0, max: 1 });
+    const [dataSource, setDataSource] = useState<DataSource>({ data: [], rankIds: [] });
 
-    const updateChart = (shouldUpdateRange: boolean, filterInfo?: FilterInfos): void => {
-        let data: any = dataSource.data.map((item: any) => {
-            return [String(item.srcRank), String(item.dstRank),
-                item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
-        });
-        if (!switchCondition.showInner) {
-            data = data.filter((item: any[]) => item[0] !== item[1]);
-        }
-        data = data.filter((item: any[]) => dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
-        if (filterInfo) {
-            data = data.filter((item: any[]) =>
-                typeof item[2] === 'number' && item[2] >= filterInfo.min && item[2] <= filterInfo.max);
-        }
-        const min = data.length > 0 ? Math.min(...data.map((item: number[]) => item[2])) : 0;
-        const max = data.length > 0 ? Math.max(...data.map((item: number[]) => item[2])) : 0;
-        if (shouldUpdateRange) {
-            setRange({ minRange: min, maxRange: max });
-        }
-        InitChart({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max }, t);
+    const handleFilterChange = (filed: string, val: string | boolean): void => {
+        setSwitchCondition({ ...switchCondition, [filed]: val });
     };
+    const handleRangeChange = (rangeVal: Range): void => {
+        updateChart({ shouldUpdateRange: false, range: rangeVal, setRange, switchCondition, dataSource, t, isCompare: session.isCompare });
+    };
+
     useEffect(() => {
         if (isShow) {
             if (session.clusterCompleted) {
-                updateData(conditions, setDataSource);
+                updateData(conditions, setDataSource, session.isCompare);
             } else {
                 setDataSource({ data: [], rankIds: [] });
             }
         }
-    }, [isShow, conditions]);
+    }, [isShow, conditions, session.isCompare]);
+
     useEffect(() => {
-        updateChart(true);
-    }, [dataSource, switchCondition]);
-    const handleChange = (filed: string, val: string | boolean): void => {
-        setSwitchCondition({ ...switchCondition, [filed]: val });
-    };
-    const handleFilterChange = (data: FilterInfos): void => {
-        updateChart(false, data);
-    };
+        updateChart({ shouldUpdateRange: true, setRange, switchCondition, dataSource, t, isCompare: session.isCompare });
+    }, [dataSource, switchCondition, session.isCompare]);
 
-    return <CommunicationMatrixCom isShow={isShow} handleChange={handleChange} switchCondition={switchCondition} range={range} setFilter={handleFilterChange}/>;
-});
-
-const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: VoidFunction }): JSX.Element => {
-    const { minRange, maxRange } = range;
-    const [minValue, setMin] = useState(minRange);
-    const [maxValue, setMax] = useState(maxRange);
-    const [isValid, setIsValid] = useState(true);
-    const { t } = useTranslation();
-
-    const onConfirm = (): void => {
-        if (minValue > maxValue) {
-            message.warning('Invalid Range: The start value cannot be greater than the end value.');
-            setIsValid(false);
-            return;
-        }
-        changeFilter({ min: minValue, max: maxValue });
-    };
-    const changeInput = (value: number, type: string): void => {
-        setIsValid(true);
-        if (type === 'min') {
-            setMin(value);
-        } else {
-            setMax(value);
-        }
-    };
-    useEffect(() => {
-        setMin(minRange);
-        setMax(maxRange);
-    }, [JSON.stringify(range)]);
-    return (
-        <>
-            <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} style={{ margin: '0 8px 0 24px' }} />
-            <InputNumber value={minValue} size="small" style={{ marginRight: 8 }} min={minRange} max={maxRange}
-                onChange={(value: string | number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} data-testid={'communicationMatrixMinRangeInput'} />
-            ~
-            <InputNumber value={maxValue} size="small" style={{ margin: '0 32px 0 8px' }} min={minRange} max={maxRange}
-                onChange={(value: string | number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} data-testid={'communicationMatrixMaxRangeInput'} />
-            <Button onClick={onConfirm} type="primary" size="middle">{t('Confirm', { ns: 'buttonText' })}</Button>
-        </>
-    );
-};
-
-const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, setFilter }: ICommunicationMatrixProps): JSX.Element => {
-    const { t } = useTranslation('communication');
     return <CollapsiblePanel style={{ display: isShow ? 'block' : 'none' }} title={t('sessionTitle.MatrixModel')} padding={'16px 24px'}>
-        <div>
-            <Label name={t('searchCriteria.CommunicationMatrixType')}/>
-            <Select
-                defaultValue="0"
-                style={{ width: 200, marginRight: '20px' }}
-                onChange={(val: string): void => {
-                    handleChange('type', val);
-                }}
-                options={useOptions()}
-                value={switchCondition.type}
-                id={'communicationMatrixType-select'}
-            />
-            <Checkbox checked={switchCondition.showInner}
-                onChange={(e: CheckboxChangeEvent): void => {
-                    handleChange('showInner', e.target.checked);
-                }}
-                data-testid={'showInnerCommunication'}
-            >{t('searchCriteria.ShowInnerCommunication')}</Checkbox>
-            {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
-        </div>
-        <div>
-            <div id={'matrixchart'} style={{ width: 'calc(100vw - 80px)', height: '800px' }}></div>
-        </div>
+        <Filter condition={switchCondition} handleChange={handleFilterChange} range={range} onRangeChange={handleRangeChange}/>
+        <div id={'matrixchart'} style={{ width: 'calc(100vw - 80px)', height: '800px' }}></div>
     </CollapsiblePanel>;
-};
+});
 
 export default CommunicationMatrix;

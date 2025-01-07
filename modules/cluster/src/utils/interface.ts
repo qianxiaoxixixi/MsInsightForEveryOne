@@ -28,7 +28,7 @@ export interface optionMapDataType {
 export interface FormatterParams {
     marker: string;
     name: string;
-    value: any[];
+    value: any;
     data: any ;
     seriesName: string;
     seriesType: string;
@@ -105,12 +105,6 @@ export interface PerformanceDataItem {
 export interface GetParallelismPerformanceRes {
     performance: PerformanceDataItem[];
     advice: string[];
-}
-
-export interface CompareData<T> {
-    compare: T;
-    baseline: T;
-    diff: T;
 }
 
 export interface CompareData<T> {

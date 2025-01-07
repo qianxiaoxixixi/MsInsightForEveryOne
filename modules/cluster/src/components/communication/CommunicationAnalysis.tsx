@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Tooltip } from 'ascend-components';
 import type { Session } from '../../entity/session';
-import Filter, { AnalysisType } from './Filter';
+import Filter, { AnalysisType, defaultCondition } from './Filter';
 import type { ConditionDataType } from './Filter';
 import CommunicationTimeTable from './CommunicationTimeTable';
 import type { DataType, DataType as tableDataType } from './CommunicationTimeTable';
@@ -120,8 +120,7 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         tableData: [],
         adviceData: [],
     });
-    const [conditions, setConditions] = useState<ConditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: AnalysisType.COMMUNICATION_MATRIX, stage: '' });
+    const [conditions, setConditions] = useState<ConditionDataType>(defaultCondition);
     const showOperator = (newRankId: string): void => {
         setRankId(newRankId);
     };
