@@ -407,7 +407,7 @@ const CompareDiv = styled.div`
         color: ${(props): string => props.theme.successColor};
     }
     &.negative {
-        color: ${(props): string => props.theme.warningColor};
+        color: ${(props): string => props.theme.dangerColor};
     }
 `;
 
