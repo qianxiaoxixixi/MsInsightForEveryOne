@@ -553,8 +553,8 @@ export const CounterUnit = unit<CounterMetaData>({
                 threadName: countMetaData.threadName,
                 threadId: countMetaData.threadId,
                 metaType: countMetaData.metaType,
-                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
-                endTime: Math.ceil(session.domainRange.domainEnd + timestampOffset),
+                startTime: 0,
+                endTime: session.endTimeAll,
                 dataSource: countMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
             };
