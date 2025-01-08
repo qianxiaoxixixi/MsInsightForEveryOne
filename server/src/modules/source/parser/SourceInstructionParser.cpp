@@ -105,9 +105,10 @@ void SourceInstructionParser::ConvertApiInstrNew(const std::string &jsonStr)
         return;
     }
     // 遍历dtype中的列对象，获取列名和对应的数据类型
-    for (auto &column : d["Instructions Dtype"]["Instructions"].GetObject()) {
-        std::string columnName = column.name.GetString();
-        auto &value = column.value;
+    auto &instructions = d["Instructions Dtype"]["Instructions"];
+    for (auto column = instructions.MemberBegin(); column != instructions.MemberEnd(); ++column) {
+        std::string columnName = column->name.GetString();
+        auto &value = column->value;
         if (!value.IsInt()) {
             continue;
         }
