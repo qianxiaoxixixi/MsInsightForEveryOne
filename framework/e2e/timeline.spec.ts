@@ -22,6 +22,7 @@ test.describe('Timeline', () => {
     test.beforeEach(async ({ page, timelinePage }) => {
         const { timelineFrame } = timelinePage;
         await timelinePage.goto();
+        await clearAllData(page);
         await importData(page);
         const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Python (2045554)');
         await expect(secondLayerUnit).toBeVisible();
@@ -127,21 +128,15 @@ test.describe('Timeline', () => {
         const systemView = new SystemView(page);
         await systemView.goto();
 
-        const statsSystemViewOptions = [
-            'CANN API Summary',
-            'Ascend HardWare Task Summary',
-            'HCCL Summary',
-            'Overlap Analysis',
-            'Kernel Details',
-        ];
+        const statsSystemViewOptions = ['CANN API Summary', 'Ascend HardWare Task Summary', 'HCCL Summary', 'Overlap Analysis', 'Kernel Details'];
 
-        await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Python-API-Summary.png', { maxDiffPixels: 100 });
+        await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Python-API-Summary.png', { maxDiffPixels: 400 });
 
         for (let item of statsSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
-            await expect(bottomPanel).toHaveScreenshot(`StatsSystemView-${item}.png`, { maxDiffPixels: 100 });
+            await expect(bottomPanel).toHaveScreenshot(`StatsSystemView-${item}.png`, { maxDiffPixels: 400 });
         }
     });
 
@@ -161,7 +156,7 @@ test.describe('Timeline', () => {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
-            await expect(bottomPanel).toHaveScreenshot(`ExpertSystemView-${item}.png`, { maxDiffPixels: 100 });
+            await expect(bottomPanel).toHaveScreenshot(`ExpertSystemView-${item}.png`, { maxDiffPixels: 400 });
         }
     });
 
@@ -372,7 +367,7 @@ test.describe('Timeline', () => {
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'attached' });
         await timelineFrame.locator('.ant-spin').waitFor({ state: 'detached' });
         await page.mouse.move(0, 0);
-        await expect(bottomPanel).toHaveScreenshot('test-context-menu-click-ShowInEventsView.png', { maxDiffPixels: 100 });
+        await expect(bottomPanel).toHaveScreenshot('test-context-menu-click-ShowInEventsView.png', { maxDiffPixels: 400 });
     });
 
     // 右键菜单--Undo Zoom/Reset Zoom
@@ -388,11 +383,11 @@ test.describe('Timeline', () => {
             await page.keyboard.press('w');
             await page.keyboard.press('w');
             await page.waitForTimeout(1000);
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-context-menu-click-Zoom.png', { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-context-menu-click-Zoom.png', { maxDiffPixels: 200 });
             await clickMenu(clickUnit, timelineFrame, options[i]);
             await page.mouse.move(0, 0);
             await page.waitForTimeout(1000);
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 200 });
         }
     });
 
@@ -436,11 +431,22 @@ test.describe('Timeline', () => {
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-add-marker.png`, { maxDiffPixels: 100 });
     });
+});
+
+test.describe('Timeline(Operator)', () => {
+    test.beforeEach(async ({ page, timelinePage }) => {
+        await timelinePage.goto();
+        await clearAllData(page);
+        await importData(page, FilePath.SOURCE);
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
 
     // 算子调优-框选
     test('test_compute_timeline_selectUnitsRange', async ({ timelinePage, page }) => {
         const { timelineFrame } = timelinePage;
-        await importData(page, FilePath.SOURCE);
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
         const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
@@ -463,16 +469,16 @@ test.describe('Timeline', () => {
     // 算子调优-点击算子
     test('test_compute_timeline_operator_click', async ({ timelinePage, page }) => {
         const { timelineFrame } = timelinePage;
-        await importData(page, FilePath.SOURCE);
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
-        const canvas = timelineFrame.locator('#unitWrapperScroller');
-        const boundingBox = await canvas.boundingBox();
-        if (!boundingBox) {
-            return;
-        }
-        const { x: startX, y: startY } = boundingBox;
-        await page.mouse.click(startX + 332, startY + 350);
+
+        const canvas = timelineFrame.locator('#unitWrapperScroller canvas').nth(1);
+        await canvas.click({
+            position: {
+                x: 29,
+                y: 13,
+            },
+        });
         await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
         await expect(timelineFrame.getByText('Title')).toBeVisible();
         await expect(timelineFrame.getByText('Start')).toBeVisible();

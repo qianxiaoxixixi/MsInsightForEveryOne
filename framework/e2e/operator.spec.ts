@@ -27,6 +27,7 @@ test.describe('Operator', () => {
     test.beforeEach(async ({ page, operatorPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await operatorPage.goto();
+        await clearAllData(page);
         await importData(page);
         await allCardParsedPromise;
     });
@@ -52,8 +53,11 @@ test.describe('Operator', () => {
 
     // 【case】非对比非多机see more表格加载
     test('expand_table_when_click_seeMoreCell', async ({ page, operatorPage }) => {
-        const { operatorFrame } = operatorPage;
+        const { operatorFrame, rankIdSelector } = operatorPage;
         const seeMoreBtn = operatorFrame.getByRole('button', { name: 'See more' }).first();
+        const rankIdSelect = new SelectHelpers(page, rankIdSelector, operatorFrame);
+        await rankIdSelect.open();
+        await rankIdSelect.selectOption('0');
         await seeMoreBtn.click();
         await page.mouse.move(0, 0);
         await expect(operatorFrame.locator('.mi-page'))

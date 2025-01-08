@@ -318,6 +318,7 @@ const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): J
                 dyeingMode !== 'None' &&
                 <Form.Item label={(<DyeingTipAndLabel/>)}>
                     <InputNumber
+                        data-testid='input-dyeing-step'
                         defaultValue={dyeingStep}
                         min={0.01}
                         max={0.1}

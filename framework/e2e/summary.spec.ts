@@ -85,7 +85,7 @@ test.describe('Summary', () => {
 
         await expect(parallelismGraph).toHaveScreenshot('heatmap-default-dyeing-step.png', { maxDiffPixels: 300 });
 
-        const dyeingStepInput = summaryFrame.locator('#dyeingStep');
+        const dyeingStepInput = summaryFrame.getByTestId('input-dyeing-step');
         await dyeingStepInput.fill('0.06');
 
         await expect(parallelismGraph).toHaveScreenshot('heatmap-higher-dyeing-step.png', { maxDiffPixels: 300 });
@@ -162,7 +162,7 @@ test.describe('Summary', () => {
         await rankGroupSelector.open();
         await rankGroupSelector.selectOption('(1,9)');
         await orderBySelector.open();
-        await orderBySelector.selectOption('Total Computing');
+        await orderBySelector.selectOption('Preparing');
         await topSelector.open();
         await topSelector.selectOption('1');
 
