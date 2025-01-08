@@ -45,12 +45,16 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
 export async function clearAllData(page: Page): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
     const { settingsBtn, deleteAllBtn, deleteAllDialog, deleteAllConfirmBtn, projectList } = frameworkPage;
+    const isSettingsBtnDisabled = await settingsBtn.evaluate((el) => el.classList.contains('disabled'));
 
+    if (isSettingsBtnDisabled) {
+        return;
+    }
     await settingsBtn.click();
 
-    const isDisabled = await deleteAllBtn.evaluate((el) => el.classList.contains('disabled'));
+    const isDeleteBtnDisabled = await deleteAllBtn.evaluate((el) => el.classList.contains('disabled'));
 
-    if (isDisabled) {
+    if (isDeleteBtnDisabled) {
         return;
     }
     await deleteAllBtn.click();

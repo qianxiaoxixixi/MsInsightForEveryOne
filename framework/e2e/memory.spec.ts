@@ -34,6 +34,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
+        await clearAllData(page);
         await importData(page);
         await allCardParsedPromise;
     });
@@ -120,7 +121,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     // 对比数据
     test('memory_compare_rank', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
-        setCompare(page, memoryFrame);
+        await setCompare(page, memoryFrame);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankRes, {
             maxDiffPixels: 500,
         });
@@ -169,6 +170,7 @@ test.describe('Memory(MindSpore)', () => {
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
+        await clearAllData(page);
         await importData(page, FilePath.MIND_SPORE);
         await allCardParsedPromise;
     });
@@ -198,6 +200,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
+        await clearAllData(page);
         await importData(page, FilePath.MULTI_MACHINES);
         await allCardParsedPromise;
     });

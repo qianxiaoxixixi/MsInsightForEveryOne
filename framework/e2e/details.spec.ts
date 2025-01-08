@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import {expect, test as baseTest} from '@playwright/test';
-import {DetailsPage} from './page-object';
-import {importData, setCompare} from './utils';
+import {DetailsPage, FrameworkPage} from './page-object';
+import {clearAllData, importData, setCompare} from './utils';
 import {FilePath} from './utils/constants';
 import {SelectHelpers} from './components';
 
@@ -26,7 +26,7 @@ const imgMap = {
     rooflineChart: 'roofline-chart.png',
     rooflineAdvice: 'roofline-advice.png',
     computeWorkloadChartCorrect: 'compute-workload-chart-correct.png',
-    computeWorkloadChartCompare: 'compute-workl oad-chart-compare.png',
+    computeWorkloadChartCompare: 'compute-workload-chart-compare.png',
     computeWorkloadBlockIdChange: 'compute-workload-block-id-change.png',
     computeWorkloadAdvice: 'compute-workload-advice.png',
     computeWorkloadTable: 'compute-workload-table.png',
@@ -45,6 +45,7 @@ const inputMap = {
 test.describe('Details', () => {
     test.beforeEach(async ({page, detailsPage}) => {
         await page.goto('/');
+        await clearAllData(page);
         await importData(page, FilePath.DETAILS);
         await detailsPage.goto();
         const opType = detailsPage.detailsFrame.getByText('mix').first();
@@ -99,6 +100,13 @@ test.describe('Details', () => {
     // 2、下拉选项showAs修改后，数值、颜色正确
     test('test_details_compute_workload_correct', async ({page, detailsPage}) => {
         const {ComputeWorkloadChart, computeWorkloadBlockIdSelector, detailsFrame} = detailsPage;
+
+        // 此处切换 tab 是因为第一次快速切换至 detail 页面后， Compute Workload Analysis 图表可能不显示，该 bug 后续修复后删除该兼容逻辑
+        const frameworkPage = new FrameworkPage(page);
+        await frameworkPage.clickTab('timeline');
+        await page.waitForTimeout(1000);
+        await frameworkPage.clickTab('details');
+
         await expect(ComputeWorkloadChart).toHaveScreenshot(imgMap.computeWorkloadChartCorrect);
         const blockIdSelect = new SelectHelpers(page, computeWorkloadBlockIdSelector, detailsFrame);
         await blockIdSelect.open();
