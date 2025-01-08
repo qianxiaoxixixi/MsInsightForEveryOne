@@ -122,11 +122,17 @@ interface InteractorEventParams {
     xReverseScaleRef: XReverseScaleRef;
     splitLineRef: React.RefObject<HTMLDivElement>;
     accumulativeZoomRef: React.MutableRefObject<number>;
-    point?: number;
 }
 
+// 获取缩放的基准点
+const getZoomPoint = (xScale: (x: number) => number, interactorMouseState: InteractorMouseState): number | undefined => {
+    return interactorMouseState.lastPos?.current?.x !== undefined
+        ? xScale(interactorMouseState.lastPos?.current?.x)
+        : undefined;
+};
+
 const handleInteractorEvent = ({
-    interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef, point,
+    interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef,
 }: InteractorEventParams): any => {
     return () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
@@ -139,6 +145,7 @@ const handleInteractorEvent = ({
         },
         mouseWheelAction: (interactorMouseState: InteractorMouseState): void => {
             if (interactorMouseState.wheelEvent) {
+                const point = getZoomPoint(interactorParams.xScale, interactorMouseState);
                 mouseWheelAction(session, accumulativeZoomRef, point, interactorMouseState.wheelEvent);
             }
         },
@@ -146,6 +153,7 @@ const handleInteractorEvent = ({
             mouseLeaveAction(interactorParams, interactorMouseState);
         },
         keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState): void => {
+            const point = getZoomPoint(interactorParams.xScale, interactorMouseState);
             keyDownAction(e.key, session, point);
         },
     });
@@ -229,10 +237,7 @@ const Interactor = ({
         }, 10);
     }, [normalRect]);
 
-    const point = interactorMouseState.lastPos?.current?.x !== undefined
-        ? xScale(interactorMouseState.lastPos?.current?.x)
-        : undefined;
-    useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef, point }));
+    useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScaleRef, splitLineRef, accumulativeZoomRef }));
     return <>
         <Overlay ref={normalCanvas} />
         <Overlay ref={hoverCanvas} />
