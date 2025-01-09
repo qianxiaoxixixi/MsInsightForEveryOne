@@ -171,10 +171,10 @@ const selectOptions = [
     { value: 'megatron-lm(tp-cp-pp-ep-dp)', label: 'Megatron-LM(tp-cp-pp-ep-dp)' },
 ];
 const getDimensionOptions = (t: TFunction): Array<{key: string; label: string}> => [
-    { key: 'ep-dp', label: `DP ${t('Dimension')}` },
-    { key: 'ep-dp-cp', label: `CP ${t('Dimension')}` },
-    { key: 'ep-dp-cp-pp', label: `PP ${t('Dimension')}` },
-    { key: 'ep-dp-cp-pp-tp', label: `TP ${t('Dimension')}` },
+    { key: 'ep-dp', label: `DP ${t('Dimension')} >` },
+    { key: 'ep-dp-pp', label: `DP + PP ${t('Dimension')} >` },
+    { key: 'ep-dp-pp-cp', label: `DP + PP + CP  ${t('Dimension')} >` },
+    { key: 'ep-dp-pp-cp-tp', label: `DP + PP + CP + TP ${t('Dimension')}` },
 ];
 
 const FormDom = ({ disabled, onClickGenerate, form }:
@@ -268,9 +268,9 @@ const LegendContainer = (): JSX.Element => {
 const useParallelTypeOptions = (dimension: ParallelSwitchProps['dimension']): Array<{label: string;value: string; disabled?: boolean}> => {
     const { t } = useTranslation('summary');
     const val = dimension ?? '';
-    const ppDisabled = ['ep-dp', 'ep-dp-cp'].includes(val);
-    const tpDisabled = ['ep-dp', 'ep-dp-cp', 'ep-dp-cp-pp'].includes(val);
-    const cpDisabled = ['ep-dp'].includes(val);
+    const ppDisabled = ['ep-dp'].includes(val);
+    const tpDisabled = ['ep-dp', 'ep-dp-pp', 'ep-dp-pp-cp'].includes(val);
+    const cpDisabled = ['ep-dp', 'ep-dp-pp'].includes(val);
 
     return [
         { value: 'pp', label: t('Pipeline Parallel'), disabled: ppDisabled },

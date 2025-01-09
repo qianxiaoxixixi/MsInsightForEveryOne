@@ -10,7 +10,7 @@
 #include "SummaryProtocolRequest.h"
 
 namespace Dic::Module {
-const std::vector<std::string> LAYOUT = {DP_PARA, CP_PARA, PP_PARA, TP_PARA};
+const std::vector<std::string> LAYOUT = {DP_PARA, PP_PARA, CP_PARA, TP_PARA};
 class BaseParallelStrategyAlgorithm {
 public:
     BaseParallelStrategyAlgorithm() = default;
