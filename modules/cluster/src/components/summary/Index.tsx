@@ -119,7 +119,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
 
     // 获取全展开的连线数据
     const getAllConnections = async (): Promise<void> => {
-        const { connections } = await queryAllConnections({ ...generateConditions, dimension: 'ep-dp-cp-pp-tp' });
+        const { connections } = await queryAllConnections({ ...generateConditions, dimension: 'ep-dp-pp-cp-tp' });
         runInAction(() => {
             if (connections === undefined) {
                 return;
@@ -225,7 +225,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                                     />
                                 </div>
                                 {
-                                    generateConditions.dimension === 'ep-dp-cp-pp-tp' &&
+                                    generateConditions.dimension === 'ep-dp-pp-cp-tp' &&
                                 <StatisticsTable
                                     session={session}
                                     step={performanceChartConditions.step}

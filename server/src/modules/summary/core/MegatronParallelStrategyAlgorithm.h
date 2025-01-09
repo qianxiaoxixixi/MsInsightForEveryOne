@@ -54,17 +54,18 @@ private:
                        uint32_t stepSize, Element &curEle);
     // get performance data
     void SortPerformanceDataByIndex(std::vector<IndicatorDataStruct>& performanceData);
-    void CalculatePerformanceDataWithDpCpPpTpDimension(
+    void CalculatePerformanceDataWithTpDimension(
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         PerformanceIndicatorData &performanceResponseData);
+    void CalculatePerformanceDataWithCpDimension(PerformanceIndicatorData &indicatorData);
     void CalculatePerformanceDataWithPpDimension(PerformanceIndicatorData &indicatorData);
     void ReduceTpPerformance(const std::unordered_map<std::uint32_t, StepStatistic> &statistic);
-    void GetPerformanceResponseDataWithCollapsedDimension(
+    void GetPerformanceResponseDataWithDpDimension(
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         PerformanceIndicatorData &performanceResponseData);
     void ReducePpPerformanceForPpLast();
     void ReducePpPerformanceForDpLast();
-    void ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& ppGroupIdx);
+    void ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& dpGroupIdx);
     void ReduceCpPerformance();
     double Reserved3DecimalPlaces(double num);
 
@@ -82,8 +83,9 @@ private:
     uint32_t tpCpPpSize = 1;
     std::unordered_map<std::uint32_t, StepStatistic> reduceTpMax;
     std::unordered_map<std::uint32_t, StepStatistic> reduceTpMin;
+    std::unordered_map<std::uint32_t, StepStatistic> reduceCpMax;
+    std::unordered_map<std::uint32_t, StepStatistic> reduceCpMin;
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
-    std::unordered_map<std::uint32_t, StepStatistic> reduceCpStatistic;
     const int numTwo = 2; // 保留2位小数
     void AnalyzePerformanceAdviceWithDpCpPpTpDimension(Protocol::TraceStatistic &max, Protocol::TraceStatistic &min,
                                                        double meanE2ETime, std::vector<std::string> &advices);

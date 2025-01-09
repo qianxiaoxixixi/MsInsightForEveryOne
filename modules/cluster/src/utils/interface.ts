@@ -48,7 +48,7 @@ export type SetParallelStrategyParams = Omit<GetParallelStrategyRes, 'level'>;
 
 export type ParallelismType = 'ep' | 'dp' | 'cp' | 'pp' | 'tp';
 export interface ParallelismArrangementParams extends SetParallelStrategyParams {
-    dimension: 'ep-dp' | 'ep-dp-cp' | 'ep-dp-cp-pp' | 'ep-dp-cp-pp-tp';
+    dimension: 'ep-dp' | 'ep-dp-pp' | 'ep-dp-pp-cp' | 'ep-dp-pp-cp-tp';
 }
 
 export interface IndicatorsItem {
