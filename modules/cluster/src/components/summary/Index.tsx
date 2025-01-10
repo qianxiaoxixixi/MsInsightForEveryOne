@@ -166,6 +166,10 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         }
     });
 
+    useEventBus('resetPerformanceConditions', (): void => {
+        setPerformanceChartConditions(defaultPerformanceChartConditions);
+    });
+
     useEffect(() => {
         if (JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions)) {
             return;
