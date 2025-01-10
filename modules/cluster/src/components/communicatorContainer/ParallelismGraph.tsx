@@ -48,6 +48,10 @@ const Loading = styled.div`
     }
 `;
 
+const resetPerformanceConditions = (): void => {
+    eventBus.emit('resetPerformanceConditions');
+};
+
 interface UseFetchDataReturns {
     loading: boolean;
     isUpdated: MutableRefObject<boolean>;
@@ -262,6 +266,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
 
             setActiveRectIndex(null);
             resetParallelSwitchConditions();
+            resetPerformanceConditions();
         }
     }, [isUpdated.current]);
 
