@@ -37,6 +37,11 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
             "Failed to add algorithm to manager when set parallel config. Unexpected algorithm.");
         return false;
     }
+    // 如果存在baseline，则对baseline进行同样的设置
+    auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+    if (baselineDatabase != nullptr) {
+        AddAlgorithmToManager(baselineDatabase, request.config);
+    }
     session.OnResponse(std::move(responsePtr));
     return true;
 }

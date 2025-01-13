@@ -27,10 +27,11 @@ public:
 
     void GenerateArrangementByDimension() override;
     ArrangementAndConnectionData GetArrangementData() override;
-    bool GetPerformanceIndicatorByDimension(const Protocol::ParallelismPerformance &performanceParams,
+    bool GetPerformanceIndicatorByDimension(const GetPerformanceIndicatorParam &performanceParams,
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
-        PerformanceIndicatorData &performanceResponseData, std::string& err) override;
-
+        std::vector<IndicatorDataStruct> &indicatorData, std::string& err) override;
+    void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
+                       std::vector<IndicatorDataStruct> &indicatorData) override;
 private:
     // get arrangements
     void ClearArrangementData();
@@ -56,13 +57,13 @@ private:
     void SortPerformanceDataByIndex(std::vector<IndicatorDataStruct>& performanceData);
     void CalculatePerformanceDataWithTpDimension(
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
-        PerformanceIndicatorData &performanceResponseData);
-    void CalculatePerformanceDataWithCpDimension(PerformanceIndicatorData &indicatorData);
-    void CalculatePerformanceDataWithPpDimension(PerformanceIndicatorData &indicatorData);
+        std::vector<IndicatorDataStruct> &performanceResponseData);
+    void CalculatePerformanceDataWithCpDimension(std::vector<IndicatorDataStruct> &indicatorData);
+    void CalculatePerformanceDataWithPpDimension(std::vector<IndicatorDataStruct> &indicatorData);
     void ReduceTpPerformance(const std::unordered_map<std::uint32_t, StepStatistic> &statistic);
     void GetPerformanceResponseDataWithDpDimension(
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
-        PerformanceIndicatorData &performanceResponseData);
+        std::vector<IndicatorDataStruct> &indicatorData);
     void ReducePpPerformanceForPpLast();
     void ReducePpPerformanceForDpLast();
     void ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& dpGroupIdx);

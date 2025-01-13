@@ -34,7 +34,18 @@ void ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& p
     algorithmMap.emplace(projectName, algPtr);
     algorithmMap.at(projectName)->SetStrategyConfig(config);
     Server::ServerLog::Info("Success to add algorithm to parallel strategy manager.");
-    return;
+}
+
+ParallelStrategyConfig ParallelStrategyAlgorithmManager::GetParallelStrategyConfig(const std::string &key)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    ParallelStrategyConfig config;
+    auto it = algorithmMap.find(key);
+    if (it != algorithmMap.end()) {
+        config = algorithmMap.at(key)->GetStrategyConfig();
+    }
+    Server::ServerLog::Warn("Fail to get parallel strategy config.");
+    return config;
 }
 
 bool ParallelStrategyAlgorithmManager::DeleteAlgorithm(const std::string &projectName)

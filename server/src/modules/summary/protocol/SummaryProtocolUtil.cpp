@@ -364,6 +364,16 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
     return std::move(json);
 }
 
+std::optional<document_t> IndicatorsInfoToJson(const std::unordered_map<std::string, double> &indicators,
+                                               Document::AllocatorType &allocator)
+{
+    document_t dataJson(kObjectType);
+    for (const auto& indicator :indicators) {
+        JsonUtil::AddMember(dataJson, indicator.first, indicator.second, allocator);
+    }
+    return std::move(dataJson);
+}
+
 template <>
 std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const ParallelismPerformanceResponse &response)
 {
@@ -375,9 +385,14 @@ std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const P
     for (const auto& data : response.indicatorData.performanceData) {
         json_t dataJson(kObjectType);
         JsonUtil::AddMember(dataJson, "index", data.index, allocator);
-        for (const auto& indicator :data.indicators) {
-            JsonUtil::AddMember(dataJson, indicator.first, indicator.second, allocator);
-        }
+        json_t indicatorsJson(kObjectType);
+        auto compare = IndicatorsInfoToJson(data.indicators.compare, allocator);
+        JsonUtil::AddMember(indicatorsJson, "compare", compare, allocator);
+        auto baseline = IndicatorsInfoToJson(data.indicators.baseline, allocator);
+        JsonUtil::AddMember(indicatorsJson, "baseline", baseline, allocator);
+        auto diff = IndicatorsInfoToJson(data.indicators.diff, allocator);
+        JsonUtil::AddMember(indicatorsJson, "diff", diff, allocator);
+        JsonUtil::AddMember(dataJson, "indicators", indicatorsJson, allocator);
         performance.PushBack(dataJson, allocator);
     }
     JsonUtil::AddMember(body, "performance", performance, allocator);

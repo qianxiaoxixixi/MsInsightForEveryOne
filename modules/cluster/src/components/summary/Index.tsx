@@ -101,13 +101,16 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         const { performance, advice } = await getParallelismPerformanceData({ step: performanceChartConditions.step, ...generateConditions }).finally(() => {
             setPerformanceLoading(false);
         });
+        const performanceAfterDeal = performance.map(item => {
+            return { index: item.index, ...item.indicators.compare };
+        });
         setAdviceContent(advice ?? []);
         runInAction(() => {
-            if (performance !== undefined) {
-                session.performanceData = performance;
+            if (performanceAfterDeal !== undefined) {
+                session.performanceData = performanceAfterDeal;
 
                 const map: Map<number, PerformanceDataItem> = new Map();
-                performance.forEach(item => {
+                performanceAfterDeal.forEach(item => {
                     map.set(item.index, item);
                 });
                 session.performanceDataMap = map;

@@ -7,6 +7,8 @@
 #include "BaselineManager.h"
 #include "SourceFileParser.h"
 #include "ClusterFileParser.h"
+#include "ParallelStrategyAlgorithmManager.h"
+#include "MegatronParallelStrategyAlgorithm.h"
 #include "BaselineManagerService.h"
 namespace Dic {
 namespace Module {
@@ -50,6 +52,10 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     // 调用工厂进行内容解析
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);
     factory->ParserBaseline(projectExplorerList, baselineInfo);
+    // 集群场景 初始化并行策略
+    if (baselineInfo.isCluster) {
+        InitBaselineParallelStrategy();
+    }
     return true;
 }
 
@@ -65,6 +71,21 @@ bool BaselineManagerService::IsClusterBaseline(ProjectTypeEnum projectTypeEnum, 
     }
     // 校验是否为集群数据
     return FullDb::ClusterFileParser::CheckIsCluster(fileName);
+}
+
+void BaselineManagerService::InitBaselineParallelStrategy()
+{
+    // 初始化baseline的并行策略，通过同步当前compare数据的并行策略
+    auto database = FullDb::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    if (database == nullptr) {
+        return;
+    }
+    auto config = ParallelStrategyAlgorithmManager::Instance().GetParallelStrategyConfig(database->GetDbPath());
+    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
+        auto baselineDb = FullDb::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+        ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(baselineDb->GetDbPath(),
+            std::make_shared<MegatronParallelStrategyAlgorithm>(), config);
+    }
 }
 }
 }

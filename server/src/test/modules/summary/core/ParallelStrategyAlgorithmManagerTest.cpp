@@ -26,12 +26,14 @@ public:
                                  const ParallelStrategyConfig &tmpConfig, std::string &err) override { return true; }
     void GenerateArrangementByDimension() override {}
     ArrangementAndConnectionData GetArrangementData() override { return data; }
-    bool GetPerformanceIndicatorByDimension(const Dic::Protocol::ParallelismPerformance &config,
-        const std::unordered_map<std::uint32_t, StepStatistic> &statistic, PerformanceIndicatorData &performanceData,
-        std::string &err) override
+    bool GetPerformanceIndicatorByDimension(const GetPerformanceIndicatorParam &params,
+                                            const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
+                                            std::vector<IndicatorDataStruct> &indicatorData, std::string &err) override
     {
         return true;
     }
+    void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
+                       std::vector<IndicatorDataStruct> &indicatorData) override {}
 
 private:
     ArrangementAndConnectionData data;

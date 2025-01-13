@@ -10,6 +10,11 @@ void BaseParallelStrategyAlgorithm::SetStrategyConfig(const ParallelStrategyConf
     strategyConfig = config;
 }
 
+ParallelStrategyConfig BaseParallelStrategyAlgorithm::GetStrategyConfig()
+{
+    return strategyConfig;
+}
+
 int64_t BaseParallelStrategyAlgorithm::GetParallelSizeByType(const std::string& type) const
 {
     if (type == DP_PARA) {

@@ -339,9 +339,9 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementResponseTestWillRet
 TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceResponseTestWillReturnWhenNormalInput)
 {
     Dic::Protocol::ParallelismPerformanceResponse response{};
-    IndicatorDataStruct indicator;
+    IndicatorDataStructVo indicator;
     indicator.index = 0;
-    indicator.indicators["computingTime"] = 100; // 100
+    indicator.indicators.compare["computingTime"] = 100; // 100
     response.indicatorData.performanceData.push_back(indicator);
     std::string err;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
@@ -354,7 +354,7 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceResponseTestWillRet
     for (const auto &item : jsonOptional.value()["body"]["performance"].GetArray()) {
         auto tmp = response.indicatorData.performanceData.at(i);
         EXPECT_EQ(item["index"].GetUint(), tmp.index);
-        EXPECT_EQ(item["computingTime"].GetDouble(), tmp.indicators["computingTime"]);
+        EXPECT_EQ(item["indicators"]["compare"]["computingTime"].GetDouble(), tmp.indicators.compare["computingTime"]);
         i++;
     }
     EXPECT_EQ(jsonOptional.value()["body"].HasMember("advice"), true);

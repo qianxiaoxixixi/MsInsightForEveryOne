@@ -94,3 +94,15 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryBaseInfoOnlyBaselineSuccess)
     EXPECT_EQ(response.body.baseInfo.baseline.rankCount, NUMBER_SIXTEEN);
     Clear();
 }
+
+TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategyWithAlgIsNull)
+{
+    Clear();
+    InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath, Dic::COMPARE);
+    ParallelismPerformance params;
+    params.isCompare = true;
+    PerformanceIndicatorData indicatorData;
+    SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
+    EXPECT_EQ(indicatorData.indicators.size(), NUMBER_ZERO);
+}

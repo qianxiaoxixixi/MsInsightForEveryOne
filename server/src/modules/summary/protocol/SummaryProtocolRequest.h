@@ -156,6 +156,8 @@ struct ParallelismPerformance {
     std::string dimension;
     std::string orderBy;
     std::string step;
+    bool isCompare = false;
+    std::string baselineStep;
     std::vector<uint32_t> indexList;
 };
 
