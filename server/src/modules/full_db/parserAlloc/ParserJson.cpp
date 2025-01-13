@@ -35,7 +35,6 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     FillBaseResponseInfo(request, response, projectInfos);
-
     // 获取rankid及文件映射关系信息
     std::map<std::string, std::vector<std::string>> rankToFoldersMap;
     std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
@@ -431,7 +430,11 @@ std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string 
     auto traceFiles = FindAllTraceFile(importFile, error);
     auto opFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(KERNEL_DETAIL_REG));
     auto memoryFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(memoryRecordReg));
-
+    if (traceFiles.empty() && opFiles.empty() && memoryFiles.empty()) {
+        error = "Not find valid text dir!";
+        ServerLog::Info(error);
+        return { importFile };
+    }
     // 将所有文件的父目录放到一个set集合中（利用set进行去重）
     std::set<std::string> resultSet;
     for (const auto &item : traceFiles) {

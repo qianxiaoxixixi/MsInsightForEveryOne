@@ -103,9 +103,14 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     std::vector<Global::ProjectExplorerInfo> projectExplorerInfoList;
 
     // 获取文件列表
-    for (const auto &item: request.params.path) {
+    for (const auto &item : request.params.path) {
         std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(item, projectType, warnMsg);
-        if (!warnMsg.empty()) {
+        if (!warnMsg.empty() && parseFileList.size() == 1 &&
+            !StringUtil::EndWith(parseFileList[0], CLUSTER_ANALYSIS_OUTPUT)) {
+            std::string message =
+                "The nesting depth of the imported sub-file exceeds 5 or the sub-file path length exceeds ";
+            message += std::to_string(FileUtil::GetFilePathLengthLimit());
+            SendParseFailEvent(message);
             return false;
         }
         Global::ProjectExplorerInfo projectExplorerInfo;
