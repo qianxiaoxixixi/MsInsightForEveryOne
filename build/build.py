@@ -47,7 +47,16 @@ class Const:
     ASCEND_INSIGHT_PREFIX = 'MindStudio-Insight'
     ASCEND_INSIGHT = 'MindStudio_Insight'
     BIN_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else ''
-    PACKAGE_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else '.zip'
+    PRODUCT_FORMAT = {
+        # Windows NSI安装程序
+        WINDOWS_OS: '.exe',
+        # MacOS下的app dmg安装包
+        MAC_OS: '.dmg',
+        # Linux下压缩文件
+        LINUX_OS: '.zip'
+    }
+    PACKAGE_SUFFIX = PRODUCT_FORMAT.get(platform.system(), '.zip')
+    MAC_OS_APPNAME = 'MindStudioInsight.app'
     PYTHON = 'python' if platform.system() == WINDOWS_OS else 'python3'
     NPM = 'npm.cmd' if platform.system() == WINDOWS_OS else 'npm'
     GRADLE = 'gradle.bat' if platform.system() == WINDOWS_OS else 'gradle'
@@ -238,13 +247,13 @@ def update_jupyterlab_plugin_version(jupyterlab_version, plugin_path):
     package_json_path = os.path.join(plugin_path, 'package.json')
     if not os.path.exists(package_json_path):
         return 1
-    
+
     with open(package_json_path, 'r', encoding='utf-8') as file:
         try:
             package_data = json.load(file)
         except json.JSONDecodeError:
             return 1
-    
+
     package_data['version'] = jupyterlab_version
 
     with open(package_json_path, 'w', encoding='utf-8') as file:
@@ -365,7 +374,8 @@ def build_light_package(version, os_name, is_huaweicloud):
         huaweicloud_install_plugin(profiler_path=profiler_path)
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
-    cmd_list = [cargo_cmd, 'build', '--release']
+    # 在macos下使用cargo bundle --release直接构建为app
+    cmd_list = [cargo_cmd, 'build' if platform.system() != Const.MAC_OS else 'bundle', '--release']
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     if is_huaweicloud:
         shutil.copyfile(os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py"),
@@ -389,8 +399,10 @@ def zip_package(profiler_path, package_name):
     system = platform.system()
     bin_file = file_names.get((system, 'bin'), 'MindStudioInsight')
     target_file = file_names.get((system, 'target'), 'MindStudio-Insight')
-    shutil.copyfile(os.path.join(Const.PLATFORM_TARGET_DIR, 'release', bin_file),
-                    os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file))
+    # MacOs通过cargo bundle打包后的产物为app, 不拷贝二进制可执行文件
+    if not system == Const.MAC_OS:
+        shutil.copyfile(os.path.join(Const.PLATFORM_TARGET_DIR, 'release', bin_file),
+                        os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file))
     # 打包
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, package_name)
     if system == Const.WINDOWS_OS:
@@ -411,8 +423,23 @@ def zip_package(profiler_path, package_name):
     else:
         traverse_folder_and_chmod(Const.PLATFORM_PREVIEW_DIR, 0o750, 0o640)  # 1、统一修改为文件夹750，文件640
         traverse_folder_and_chmod(os.path.join(profiler_path, Const.SERVER_DIR), 0o750, 0o550)  # 2、server下的文件550
-        os.chmod(os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file), 0o550)  # 3、ascend_insight 550
-        shutil.make_archive(dst_file[:-4], 'zip', Const.PLATFORM_PREVIEW_DIR)
+        # 非MacOS、windows场景，即linux场景，打包为zip即可
+        if system != Const.MAC_OS:
+            os.chmod(os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file), 0o550)  # 3、ascend_insight 550
+            shutil.make_archive(dst_file[:-4], 'zip', Const.PLATFORM_PREVIEW_DIR)
+            return 0
+        # [AR] 新增额外的macOS场景下打包为app->dmg的流程
+        app_dir = os.path.join(Const.PLATFORM_TARGET_DIR, 'release', 'bundle', 'osx', Const.MAC_OS_APPNAME)
+        app_bin_file_dir = os.path.join(app_dir, 'Contents', 'MacOS')
+        os.chmod(os.path.join(app_bin_file_dir, bin_file), 0o550)  # 4、app内二进制文件 ascend_insight 550
+        shutil.copytree(os.path.join(Const.PLATFORM_PREVIEW_DIR, 'resources'),
+                            os.path.join(app_bin_file_dir, 'resources'))
+        shutil.copytree(app_dir, os.path.join(PROJECT_PATH, Const.PLATFORM_PREVIEW_DIR, Const.MAC_OS_APPNAME))
+        # 通过dmgbuild打包
+        cmd_list = ["dmgbuild", "-s", "macos_dmg_settings.json", '\"MindStudio Installer\"', dst_file]
+        result = exec_command(cmd_list, os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle'), 'bin_package')
+        if result != 0:
+            return 1
     return 0
 
 
@@ -514,6 +541,10 @@ def update_plugins_version(version):
     # 替换installer.nsi中的版本信息
     installer_nsi_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle', 'installer.nsi')
     replace_placeholders_in_file(installer_nsi_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)
+
+    # 替换Cargo.toml中的版本信息
+    cargo_toml_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, "Cargo.toml")
+    replace_placeholders_in_file(cargo_toml_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)
 
 
 def huaweicloud_install_plugin(profiler_path):
