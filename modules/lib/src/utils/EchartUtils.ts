@@ -144,15 +144,11 @@ export function removeResizeEvent(echart?: EChartsTypeExtends): void {
     }
 }
 export function disposeAdaptiveEchart(chartDom: HTMLElement): void {
-    try {
-        const listeners = listenerList.filter(item => item.id === chartDom.id);
-        listeners.forEach(listener => {
-            window.removeEventListener(listener.type, listener.value);
-        });
-        listenerList = listenerList.filter(item => item.id !== chartDom.id);
-    } catch {
-        // 不影响后面的，继续
-    }
+    const listeners = listenerList.filter(item => item.id === chartDom.id);
+    listeners.forEach(listener => {
+        window.removeEventListener(listener.type, listener.value);
+    });
+    listenerList = listenerList.filter(item => item.id !== chartDom.id);
     const chart = echarts.getInstanceByDom(chartDom);
     removeResizeEvent(chart);
     chart?.dispose();

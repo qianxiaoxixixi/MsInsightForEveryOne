@@ -27,8 +27,7 @@ interface IProps {
     onRowSelected?: (record?: OperatorDetail, rowIndex?: number) => void;
     current: number;
     pageSize: number;
-    onCurrentChange: (newCurrent: number) => void;
-    onPageSizeChange: (newPageSize: number) => void;
+    onPageChange: (newCurrent: number, newPageSize: number) => void;
     onOrderChange: (order: string | undefined) => void;
     onOrderByChange: (orderBy: string) => void;
     total: number;
@@ -177,7 +176,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,
-        onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange, isCompare, rankId,
+        onPageChange, total, onOrderChange, onOrderByChange, isCompare, rankId,
     } = props;
     const [open, setOpen] = useState<boolean>(false);
     const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
@@ -211,8 +210,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     const key = useMemo(() => `${Math.random()}`, [tableData.columns]);
 
     const onChange = (newCurrent: number, size: number): void => {
-        onCurrentChange(newCurrent);
-        onPageSizeChange(size);
+        onPageChange(newCurrent, size);
     };
 
     const onTableChange: TableProps<OperatorDetail>['onChange'] = (pagination, filter,

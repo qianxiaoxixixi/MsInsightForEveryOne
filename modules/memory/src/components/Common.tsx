@@ -72,23 +72,15 @@ export const convertTime = (time: any): string => {
     let res = '';
     const hour = Math.floor(timeNum / HOUR_TO_MICROSECOND);
     timeNum = timeNum % HOUR_TO_MICROSECOND;
-    res += `${hour}`.padStart(2, '0');
+    res = `${res}${hour}`.padStart(2, '0');
     const min = Math.floor(timeNum / MINUTE_TO_MICROSECOND);
     timeNum = timeNum % MINUTE_TO_MICROSECOND;
-    res += `:${String(min).padStart(2, '0')}`;
+    res = `${res}:${String(min).padStart(2, '0')}`;
     const second = Math.floor(timeNum / SECOND_TO_MICROSECOND);
     timeNum = timeNum % SECOND_TO_MICROSECOND;
-    res += `:${String(second).padStart(2, '0')}`;
+    res = `${res}:${String(second).padStart(2, '0')}`;
     const millisecond = Math.floor(timeNum / MILLISECOND_TO_MICROSECONTD);
     timeNum = timeNum % MILLISECOND_TO_MICROSECONTD;
-    res += `.${String(millisecond).padStart(3, '0')}.${String(timeNum).padStart(3, '0')}`;
+    res = `${res}.${String(millisecond).padStart(3, '0')}.${String(timeNum).padStart(3, '0')}`;
     return res;
-};
-
-export const joinStringArray = (memoryRankIds: string[]): string => {
-    let ans = '';
-    for (const rankId of memoryRankIds) {
-        ans += rankId;
-    };
-    return ans;
 };

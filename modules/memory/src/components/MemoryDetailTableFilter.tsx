@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
@@ -26,40 +26,28 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
 { session: Session; memorySession: MemorySession; queryDetailData: (resetCurrent: boolean) => void }) => {
     // 是否为比对场景
     const isCompare: boolean = session.compareRank.isCompare;
-    const [searchEventOperatorName, setSearchEventOperatorName] = useState<string>('');
-    const [minSize, setMinSize] = useState<number>(0);
-    // 最大内存范围，默认DEFAULT_SIZE_CONDITION KB
-    const [maxSize, setMaxSize] = useState<number>(memorySession.maxSize);
-    const [
-        isOnlyShowAllocatedOrReleasedWithinInterval,
-        setIsOnlyShowAllocatedOrReleasedWithinInterval,
-    ] = useState<boolean>(memorySession.isOnlyShowAllocatedOrReleasedWithinInterval);
     const isBtnDisabled: boolean = memorySession.isBtnDisabled;
     const { t } = useTranslation('memory');
 
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
-        setSearchEventOperatorName(event.target.value as string);
         runInAction(() => {
             memorySession.searchEventOperatorName = event.target.value as string;
         });
     };
 
     const onFilterEventMinSizeInputChanged = (value: number | string | null): void => {
-        setMinSize(value as number);
         runInAction(() => {
             memorySession.minSize = value as number;
         });
     };
 
     const onFilterEventMaxSizeInputChanged = (value: number | string | null): void => {
-        setMaxSize(value as number);
         runInAction(() => {
             memorySession.maxSize = value as number;
         });
     };
 
     const onShowPassThroughTimeIntervalDataCheckboxChanged = (value: CheckboxChangeEvent): void => {
-        setIsOnlyShowAllocatedOrReleasedWithinInterval(value.target.checked as boolean);
         runInAction(() => {
             memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = value.target.checked as boolean;
         });
@@ -70,10 +58,6 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
     };
 
     const onReset = (): void => {
-        setSearchEventOperatorName('');
-        setMinSize(isCompare ? -DEFAULT_SIZE_CONDITION : 0);
-        setMaxSize(DEFAULT_SIZE_CONDITION);
-        setIsOnlyShowAllocatedOrReleasedWithinInterval(DEFAULT_SHOW_WITHIN_INTERVAL);
         runInAction(() => {
             memorySession.searchEventOperatorName = '';
             memorySession.minSize = isCompare ? -DEFAULT_SIZE_CONDITION : 0;
@@ -93,7 +77,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                 <Label name={t('searchCriteria.Name')} />
                 <Input
                     id={'input-name'}
-                    value={searchEventOperatorName}
+                    value={memorySession.searchEventOperatorName}
                     onChange={onSearchEventOperatorChanged}
                     placeholder={t('searchCriteria.Search by Name')}
                     allowClear
@@ -104,7 +88,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                 <Label name={t('searchCriteria.Min Size')} />
                 <InputNumber
                     id={'input-minSize'}
-                    value={minSize}
+                    value={memorySession.minSize}
                     onChange={onFilterEventMinSizeInputChanged}
                     min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
                     max={MAX_INPUT_NUMBER}
@@ -114,7 +98,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                 <Label name={t('searchCriteria.Max Size')} />
                 <InputNumber
                     id={'input-maxSize'}
-                    value={maxSize}
+                    value={memorySession.maxSize}
                     onChange={onFilterEventMaxSizeInputChanged}
                     min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
                     max={MAX_INPUT_NUMBER}
@@ -126,7 +110,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                 idKey="input-onlyShowAllocatedOrReleased"
                 visible={memorySession.memoryType !== MemoryGraphType.STATIC}
                 name={t('searchCriteria.Show Allocated or Released Within Interval Data')}
-                value={isOnlyShowAllocatedOrReleasedWithinInterval}
+                value={memorySession.isOnlyShowAllocatedOrReleasedWithinInterval}
                 onChange={onShowPassThroughTimeIntervalDataCheckboxChanged}
             />
             <div className="flex items-center">
