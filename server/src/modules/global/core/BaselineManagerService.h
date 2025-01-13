@@ -15,6 +15,7 @@ public:
         BaselineInfo &baselineInfo);
 private:
     static bool IsClusterBaseline(ProjectTypeEnum projectTypeEnum, const std::string &fileName);
+    static void InitBaselineParallelStrategy();
 };
 }
 }

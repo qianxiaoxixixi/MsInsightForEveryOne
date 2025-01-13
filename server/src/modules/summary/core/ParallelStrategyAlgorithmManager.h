@@ -23,6 +23,7 @@ public:
     bool DeleteAlgorithm(const std::string &projectName);
     std::shared_ptr<BaseParallelStrategyAlgorithm> GetAlgorithmByProjectName(const std::string &projectName,
                                                                              std::string &err);
+    ParallelStrategyConfig GetParallelStrategyConfig(const std::string &key);
 private:
     ParallelStrategyAlgorithmManager() = default;
     ~ParallelStrategyAlgorithmManager() = default;

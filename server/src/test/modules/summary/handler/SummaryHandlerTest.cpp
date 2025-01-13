@@ -175,7 +175,7 @@ TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnFalseWithParam
     EXPECT_EQ(result, false);
 }
 
-TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnFalseWithDataBaseError)
+TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnTrue)
 {
     auto request = std::make_unique<QueryParallelismPerformanceRequest>();
     request->params.config.tpSize = 2; // 2
@@ -185,7 +185,7 @@ TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnFalseWithDataB
     request->params.config.epSize = 1; // 1
     QueryParallelismPerformanceHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(HandlerTest, StageAndBubbleTimeHandlerWithParamError)

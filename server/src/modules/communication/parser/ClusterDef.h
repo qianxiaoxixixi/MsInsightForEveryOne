@@ -282,11 +282,10 @@ struct IndicatorDataStruct {
     std::unordered_map<std::string, double> indicators; // performance data
 };
 
-// 用来返回性能全量数据
-struct PerformanceIndicatorData {
-    std::vector<IndicatorAttr> indicators;
-    std::vector<IndicatorDataStruct> performanceData;
-    std::vector<std::string> advices;
+struct GetPerformanceIndicatorParam {
+    std::string step;
+    std::string dimension;
+    ParallelStrategyConfig config;
 };
 
 // Summary性能数据

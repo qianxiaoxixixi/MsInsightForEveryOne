@@ -240,9 +240,20 @@ struct ParallelismArrangementResponse : public Response {
     Module::ArrangementAndConnectionData arrangeData;
 };
 
+struct IndicatorDataStructVo {
+    uint32_t index{};
+    CompareData<std::unordered_map<std::string, double>> indicators;
+};
+
+struct PerformanceIndicatorData {
+    std::vector<Module::IndicatorAttr> indicators;
+    std::vector<IndicatorDataStructVo> performanceData;
+    std::vector<std::string> advices;
+};
+
 struct ParallelismPerformanceResponse : public Response {
     ParallelismPerformanceResponse() : Response(REQ_RES_PARALLELISM_PERFORMANCE_DATA) {}
-    Module::PerformanceIndicatorData indicatorData;
+    PerformanceIndicatorData indicatorData;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

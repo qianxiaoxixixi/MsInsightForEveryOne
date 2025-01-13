@@ -99,7 +99,7 @@ export interface GetParallelismPerformanceData extends ParallelismArrangementPar
 }
 
 export interface PerformanceDataItem {
-    [key: string]: number;
+    [key: string]: any;
     index: number;
 }
 export interface GetParallelismPerformanceRes {

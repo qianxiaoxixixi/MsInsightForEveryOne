@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_SUMMARYSERVICE_H
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
+#include "ParallelStrategyAlgorithmManager.h"
 #include "DataBaseManager.h"
 
 namespace Dic {
@@ -17,8 +18,17 @@ class SummaryService {
 public:
     static void QueryCompareSummaryBaseInfo(const SummaryTopRankRequest &request, SummaryTopRankResponse &response);
     static bool QuerySummaryBaseInfo(SummaryBaseInfo &baseInfo, std::shared_ptr<VirtualClusterDatabase> &db);
+    static bool QueryParallelismPerformanceInfo(const ParallelismPerformance &params,
+                                                PerformanceIndicatorData &indicatorData);
 private:
-    static inline int numberThousands = 1000;
+    static std::vector<IndicatorDataStruct> GetPerformanceDataByDimension(
+        std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params);
+    static void MergeParallelismPerformance(std::vector<IndicatorDataStruct> &compare,
+                                            std::vector<IndicatorDataStruct> &baseline,
+                                            PerformanceIndicatorData &indicatorData);
+    static std::unordered_map<std::string, double> CalDiffIndicators(std::unordered_map<std::string, double> &compare,
+                                                                     std::unordered_map<std::string, double> &baseline);
+static inline int numberThousands = 1000;
 };
 }
 }
