@@ -79,15 +79,18 @@ function modifyTitle(item: string): string {
 const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuHeaders }:
 {group: string;columnLevel: string;btnCol: any;colMap: any;condition: ConditionType;isExpend: boolean; pmuHeaders: any[]}): any[] => {
     const isCompare = condition.isCompare as boolean;
+    let result = [];
     switch (group) {
         case OperatorGroup.OPERATOR: {
             if (isCompare && !isExpend) {
-                return [...colMap[group][columnLevel] ?? colMap[group].l2, btnCol];
+                result = [...colMap[group][columnLevel] ?? colMap[group].l2, btnCol];
+                break;
             }
             const columns = colMap[group][columnLevel] ?? colMap[group].l2;
             // pmu数据的表头，后端返回时确定
             if (pmuHeaders === null || pmuHeaders === undefined) {
-                return columns;
+                result = columns;
+                break;
             }
             pmuHeaders.forEach((item: any, index: number) => {
                 columns.push({
@@ -97,21 +100,28 @@ const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuH
                     ellipsis: true,
                 });
             });
-            return columns;
+            result = columns;
+            break;
         }
         case OperatorGroup.HCCL_OPERATOR:
             if (isCompare && !isExpend) {
-                return [...colMap[group], btnCol];
+                result = [...colMap[group], btnCol];
+                break;
             }
-            return colMap[group];
+            result = colMap[group];
+            break;
         case OperatorGroup.HCCL_OPERATOR_TYPE:
-            return getHcclOperatorTypeCols({ group, columnLevel, btnCol, colMap, isCompare, isExpend });
+            result = getHcclOperatorTypeCols({ group, columnLevel, btnCol, colMap, isCompare, isExpend });
+            break;
         default:
             if (isCompare && isExpend) {
-                return [...colMap[group] ?? []];
+                result = [...colMap[group] ?? []];
+                break;
             }
-            return [...colMap[group] ?? [], btnCol];
+            result = [...colMap[group] ?? [], btnCol];
+            break;
     }
+    return result;
 };
 
 const getHcclOperatorTypeCols = ({ group, columnLevel, btnCol, colMap, isCompare, isExpend }:

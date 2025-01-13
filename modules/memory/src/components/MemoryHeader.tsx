@@ -2,14 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { SearchBox, FlexDiv } from '../utils/styleUtils';
 import { MemoryHeaderStrategy } from '../utils/strategyUtils';
 import { Session } from '../entity/session';
-import { MemorySession, ConditionType, GroupBy } from '../entity/memorySession';
-import { Label, useHit, joinStringArray } from './Common';
+import { MemorySession, GroupBy } from '../entity/memorySession';
+import { Label, useHit } from './Common';
 import { Select } from 'ascend-components';
 import { GroupRankIdsByHost } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
@@ -28,8 +28,6 @@ const groupByOptions = (isCompare: boolean): Array<{ label: string; value: strin
 
 const MemoryHeader = observer(({ strategy, session, memorySession }:
 {strategy: MemoryHeaderStrategy; session: Session; memorySession: MemorySession}) => {
-    const [hostCondition, setHostCondition] = useState<ConditionType>(memorySession.hostCondition);
-    const [rankIdCondition, setRankIdCondition] = useState<ConditionType>(memorySession.rankIdCondition);
     const isCompare: boolean = session.compareRank.isCompare;
     const { t } = useTranslation('memory');
     const hit = useHit();
@@ -39,16 +37,14 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     }));
 
     const onHostChanged = (value: string): void => {
-        setHostCondition({ ...hostCondition, value });
         runInAction(() => {
-            memorySession.hostCondition = { ...hostCondition, value };
+            memorySession.hostCondition = { ...memorySession.hostCondition, value };
         });
     };
 
     const onRankIdChanged = (value: string): void => {
-        setRankIdCondition({ ...rankIdCondition, value });
         runInAction(() => {
-            memorySession.rankIdCondition = { ...rankIdCondition, value };
+            memorySession.rankIdCondition = { ...memorySession.rankIdCondition, value };
         });
     };
 
@@ -60,45 +56,43 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
-        setHostCondition({ options: hosts, value: hosts[0] ?? '', ranks });
         runInAction(() => {
-            memorySession.hostCondition = { ...hostCondition, options: hosts, value: hosts[0] ?? '', ranks };
+            memorySession.hostCondition = { options: hosts, value: hosts[0] ?? '', ranks };
         });
-    }, [joinStringArray(session.memoryRankIds)]);
+    }, [session.memoryRankIds.join('')]);
 
     useEffect(() => {
         // 只对RankId为数字做排序，不能转为数字的字符串则不排序
-        const rankIdOptions: string[] = JSON.parse(JSON.stringify(hostCondition.ranks?.get(hostCondition.value) ?? []))
+        const rankIdOptions: string[] = JSON.parse(JSON.stringify(memorySession.hostCondition.ranks?.get(memorySession.hostCondition.value) ?? []))
             .sort((a: any, b: any) => Number(a) - Number(b));
         if (rankIdOptions.length === 0) {
-            setRankIdCondition({ options: [], value: '' });
             runInAction(() => {
                 memorySession.rankIdCondition = { options: [], value: '' };
             });
             return;
         }
-        const rankIdValue = (rankIdCondition.value === undefined || rankIdCondition.value === '') ? rankIdOptions[0] : rankIdCondition.value;
-        setRankIdCondition({ options: rankIdOptions, value: rankIdValue });
+        const rankIdValue = (memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '')
+            ? rankIdOptions[0]
+            : memorySession.rankIdCondition.value;
         runInAction(() => {
             memorySession.rankIdCondition = { options: rankIdOptions, value: rankIdValue };
         });
-    }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
+    }, [memorySession.hostCondition.options, memorySession.hostCondition.value, memorySession.hostCondition.ranks]);
 
     useEffect(() => {
-        setRankIdCondition({ options: rankIdCondition.options, value: rankIdCondition.options[0] });
         runInAction(() => {
-            memorySession.rankIdCondition = { options: rankIdCondition.options, value: rankIdCondition.options[0] };
+            memorySession.rankIdCondition = { options: memorySession.rankIdCondition.options, value: memorySession.rankIdCondition.options[0] };
         });
     }, [session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
-        if (session.compareRank.rankId === rankIdCondition.value) {
+        if (session.compareRank.rankId === memorySession.rankIdCondition.value) {
             return;
         }
         if (session.memoryRankIds.includes(session.compareRank.rankId)) {
             onRankIdChanged(session.compareRank.rankId);
         }
-    }, [session.compareRank.rankId, joinStringArray(session.memoryRankIds)]);
+    }, [session.compareRank.rankId, session.memoryRankIds.join('')]);
 
     useEffect(() => {
         if (isCompare && memorySession.groupId === GroupBy.STREAM) {
@@ -116,11 +110,11 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                         <Label name={t('searchCriteria.Host')} />
                         <Select
                             id={'select-host'}
-                            value={hostCondition.value}
+                            value={memorySession.hostCondition.value}
                             size="middle"
                             onChange={onHostChanged}
                             disabled={isCompare}
-                            options={hostCondition.options.map((host: string) => {
+                            options={memorySession.hostCondition.options.map((host: string) => {
                                 return { value: host, label: host };
                             })}
                         />
@@ -133,14 +127,14 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                         <Label name={t('searchCriteria.RankId')} />
                         <Select
                             id={'select-rankId'}
-                            value={rankIdCondition.value}
+                            value={memorySession.rankIdCondition.value}
                             size="middle"
                             onChange={onRankIdChanged}
                             disabled={isCompare}
-                            options={rankIdCondition.options.map((rankId: string) => {
+                            options={memorySession.rankIdCondition.options.map((rankId: string) => {
                                 return {
                                     value: rankId,
-                                    label: rankId.replace(`${hostCondition.value} `, ''),
+                                    label: rankId.replace(`${memorySession.hostCondition.value} `, ''),
                                 };
                             })}
                         />

@@ -122,8 +122,6 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     // 算子表格表头信息
     const [memoryTableHead, setMemoryTableHead] = useState<any>([]);
     const [tableSpin, setTableSpin] = useState<boolean>(false);
-    const [current, setCurrent] = useState<number>(1);
-    const [pageSize, setPageSize] = useState<number>(10);
     const [total, setTotal] = useState<number>(0);
     const [orderBy, setOrderBy] = useState<string | undefined>(undefined);
     const [order, setOrder] = useState<string | undefined>(undefined);
@@ -133,9 +131,9 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         setSelectedRecord(memorySession, record);
     };
 
-    const handlePageSizeChanged = (newPageSize: number): void => {
-        setPageSize(newPageSize);
+    const handlePageChanged = (newCurrent: number, newPageSize: number): void => {
         runInAction(() => {
+            memorySession.current = newCurrent;
             memorySession.pageSize = newPageSize;
         });
     };
@@ -146,8 +144,6 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         if (isRankIdConditionInvalid || isStaticMemoryInvalid) {
             setMemoryTableData([]);
             setTotal(0);
-            setCurrent(1);
-            setPageSize(10);
             runInAction(() => {
                 memorySession.isBtnDisabled = true;
                 memorySession.current = 1;
@@ -163,10 +159,9 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     };
 
     const setTempCurrent = (resetCurrent = false): number => {
-        let tempCurrent = current;
+        let tempCurrent = memorySession.current;
         if (resetCurrent) {
             tempCurrent = 1;
-            setCurrent(1);
             runInAction(() => {
                 memorySession.current = 1;
             });
@@ -217,8 +212,8 @@ const MemoryDetailTable = observer(({ session, memorySession }:
 
     useEffect(() => {
         setDetailTableData();
-    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.rankIdCondition.value, current, pageSize, order, orderBy,
-        session.isClusterMemoryCompletedSwitch, memorySession.groupId, memorySession.memoryGraphId, t, isCompare, memoryType]);
+    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.rankIdCondition.value, memorySession.current, memorySession.pageSize,
+        order, orderBy, session.isClusterMemoryCompletedSwitch, memorySession.groupId, memorySession.memoryGraphId, t, isCompare, memoryType]);
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
@@ -233,10 +228,9 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                                 rows: memoryTableData,
                             }}
                             onRowSelected={onRowSelected}
-                            current={current}
-                            pageSize={pageSize}
-                            onCurrentChange={setCurrent}
-                            onPageSizeChange={handlePageSizeChanged}
+                            current={memorySession.current}
+                            pageSize={memorySession.pageSize}
+                            onPageChange={handlePageChanged}
                             onOrderChange={setOrder}
                             onOrderByChange={setOrderBy}
                             total={total}
