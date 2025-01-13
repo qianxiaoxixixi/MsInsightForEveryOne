@@ -27,29 +27,36 @@ const std::string MARKER_RECV = "RECV";
 const std::string MARKER_BATCH_SEND_RECV = "BATCH_SEND_RECV";
 
 const std::string QUERY_FWDBWD_FLOW_DATA_TEXT_SQL =
-    "WITH data as ("
-    "    SELECT s.timestamp as start, s.end_time as end, f.flow_id, f.type FROM " + FLOW_TABLE + " f "
-    "    JOIN " + SLICE_TABLE + " s "
-    "    ON f.cat = 'fwdbwd' AND s.cat = 'cpu_op' AND f.track_id = s.track_id AND f.timestamp = s.timestamp "
-    "    AND s.timestamp >= ? AND s.end_time < ? "
-    ") "
-    "SELECT s.start - ? as sStartTime, s.end - ? as sEndTime, f.start - ? as fStartTime, f.end - ? as fEndTime "
-    "FROM data s JOIN data f ON s.type = 's' AND f.type = 'f' AND s.flow_id = f.flow_id AND s.start < f.start "
-    "ORDER BY s.start ASC";
+    "SELECT s.timestamp - ? as sStart, s.end_time - ? as sEnd, f.timestamp - ? as fStart, f.end_time - ? as fEnd "
+    "From ( "
+    "    SELECT f.flow_id as flow_id, f.timestamp as timestamp, s.end_time as end_time "
+    "    FROM " + FLOW_TABLE + "  f JOIN " + SLICE_TABLE + " s ON f.track_id = s.track_id AND f.timestamp = s.timestamp"
+    "    WHERE f.cat = 'fwdbwd' and type = 's' "
+    ") s "
+    "JOIN ("
+    "    SELECT f.flow_id as flow_id, f.timestamp as timestamp, s.end_time as end_time "
+    "    FROM " + FLOW_TABLE + "  f JOIN " + SLICE_TABLE + " s ON f.track_id = s.track_id AND f.timestamp = s.timestamp"
+    "    WHERE f.cat = 'fwdbwd' and type = 'f' "
+    ") f ON s.flow_id = f.flow_id "
+    "WHERE s.timestamp >= ? AND s.end_time < ? ORDER by s.timestamp ";
 
 const std::string QUERY_FWDBWD_FLOW_DATA_DB_SQL =
-    "WITH data as ("
-    "    SELECT startNs, endNs, flow.connectionId FROM " + TABLE_API + " api "
-    "    JOIN ( "
-    "        SELECT id.id as flowId, ids.connectionId as connectionId FROM " + TABLE_CONNECTION_CATS + " cats "
-    "        JOIN " + TABLE_CONNECTION_IDS + " ids ON cats.cat = 'fwdbwd' AND cats.connectionId = ids.connectionId "
-    "    ) flow ON api.type in (SELECT id FROM " + TABLE_ENUM_API_TYPE + " WHERE name = 'op') "
-    "    AND api.connectionId = flow.flowId  AND startNs >= ? AND endNs <= ? "
-    "    ORDER BY flow.connectionId, startNs ASC "
+    "with flow_table as ( "
+    "    SELECT ids.id as flowId, ids.connectionId as connectionId "
+    "    FROM " + TABLE_CONNECTION_CATS + " cats JOIN " + TABLE_CONNECTION_IDS + " ids "
+    "    ON cat = 'fwdbwd' and cats.connectionId = ids.connectionId "
+    "), "
+    "api_table as ( "
+    "    SELECT startNs, endNs, connectionId FROM " + TABLE_API +
+    "    WHERE type in (SELECT id FROM " + TABLE_ENUM_API_TYPE + " WHERE name = 'op')"
+    "), "
+    "data as ( "
+    "    SELECT startNs, endNs, flow.connectionId FROM api_table api join flow_table flow "
+    "    ON api.connectionId = flow.flowId ORDER BY flow.connectionId, startNs ASC "
     ") "
-    "SELECT s.startNs - ? as sStartTime, s.endNs - ? as sEndTime, f.startNs - ? as fStartTime, f.endNs - ? as fEndTime "
-    "FROM data s JOIN data f ON s.startNs < f.startNs AND s.connectionId = f.connectionId "
-    "ORDER BY s.startNs ASC";
+    "SELECT s.startNs as sStart, s.endNs as sENd, f.startNs as fStart, f.endNs as fEnd "
+    "FROM data s JOIN data f ON s.connectionId = f.connectionId AND s.startNs < f.startNs "
+    "WHERE s.startNs >= ? AND s.startNs < ? ORDER by s.startNs ASC";
 
 // 目前根据通信算子名进行过滤，此种方式不够准确，待后续进一步优化为锁定通信域后便锁定p2p通信算子
 const std::string QUERY_P2P_COMMUNICATION_OP_TEXT_SQL =
