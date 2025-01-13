@@ -202,6 +202,10 @@ std::string ParserAlloc::GetFileId(const std::string &filePath, const std::strin
         result = fileId + "_" + std::to_string(++i);
     }
     std::string dbPath = FileUtil::GetDbPath(filePath, result);
+    if (dbPath.length() >= FileUtil::GetFilePathLengthLimit()) {
+        const std::string message = dbPath + " length exceed " + std::to_string(FileUtil::GetFilePathLengthLimit());
+        SendParseFailEvent("", message);
+    }
     if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", result);
         return "";
@@ -264,7 +268,7 @@ void ParserAlloc::SaveDbPath(const std::string &curProjectName,
  * @return 是否要打开集群标签
  */
 bool ParserAlloc::CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnum curType,
-                                        const std::string &projectName)
+    const std::string &projectName)
 {
     // 如果当前类型是集群，则直接返回true
     if (curType == ProjectTypeEnum::TEXT_CLUSTER || curType == ProjectTypeEnum::DB_CLUSTER) {
@@ -275,11 +279,10 @@ bool ParserAlloc::CheckIsOpenClusterTag(ProjectActionEnum action, ProjectTypeEnu
         return false;
     }
     // 新增文件场景下，需要对该项目所有内容进行判断(由于新增导入的场景)
-    std::vector<Global::ProjectExplorerInfo> projectInfo = Global::ProjectExplorerManager::Instance()
-            .QueryProjectExplorer(projectName, {});
+    std::vector<Global::ProjectExplorerInfo> projectInfo =
+        Global::ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, {});
     ProjectTypeEnum projectType = Global::ProjectExplorerManager::GetProjectType(projectInfo);
     return (projectType == ProjectTypeEnum::TEXT_CLUSTER || projectType == ProjectTypeEnum::DB_CLUSTER);
 }
-
 } // Module
 } // Dic

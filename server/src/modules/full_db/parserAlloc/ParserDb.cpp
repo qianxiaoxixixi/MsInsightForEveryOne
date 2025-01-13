@@ -25,7 +25,6 @@ ParserDb::~ParserDb() {}
 
 void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
-    std::string path = projectInfos[0].fileName;
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
@@ -196,6 +195,8 @@ std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &i
     std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(msprofDBReg));
     if (pytorchFiles.empty() && msprofFiles.empty()) {
+        error = "Not find valid db dir!";
+        ServerLog::Info(error);
         return { importFile };
     }
     std::vector<std::string> reportFiles = {};

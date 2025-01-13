@@ -58,12 +58,6 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
         if (!fs::exists(filePath)) {
             continue;
         }
-        if (fs::is_directory(filePath)) {
-            if (TraverseFolder(params, filePath, fileCount, error)) {
-                continue;
-            }
-            return false;
-        }
         if (!CheckProjectFile(params, filePath, error)) {
             return false;
         }
@@ -99,22 +93,5 @@ bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePa
     }
     return true;
 }
-
-bool CheckProjectValidHandler::TraverseFolder(ProjectCheckParams &params, const fs::path &filePath,
-                                              uint64_t &fileCount, ProjectErrorType &error)
-{
-    for (auto &file : fs::recursive_directory_iterator(filePath)) {
-        if (++fileCount > FILE_COUNT_LIMIT) {
-            break;
-        }
-        if (fs::is_regular_file(file.path())) {
-            if (!CheckProjectFile(params, file, error)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 }
 }
