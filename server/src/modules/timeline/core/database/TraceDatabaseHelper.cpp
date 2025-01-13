@@ -843,7 +843,7 @@ bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePre
     const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
     std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
-    auto resultSet = stmt->ExecuteQuery(range.minTimestamp, range.maxTimestamp, offset, offset, offset, offset);
+    auto resultSet = stmt->ExecuteQuery(offset, offset, offset, offset, range.minTimestamp, range.maxTimestamp);
     if (resultSet == nullptr) {
         Server::ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
         return false;
@@ -854,10 +854,10 @@ bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePre
     // 查询数据格式, sStartTime, sEndTime, fStartTime, fEndTime，并按sStartTime升序排列
     while (resultSet->Next()) {
         FlowStartAndEndTime tmp = {
-            .sStartTime = resultSet->GetUint64("sStartTime"),
-            .sEndTime = resultSet->GetUint64("sEndTime"),
-            .fStartTime = resultSet->GetUint64("fStartTime"),
-            .fEndTime = resultSet->GetUint64("fEndTime")
+            .sStartTime = resultSet->GetUint64("sStart"),
+            .sEndTime = resultSet->GetUint64("sEnd"),
+            .fStartTime = resultSet->GetUint64("fStart"),
+            .fEndTime = resultSet->GetUint64("fEnd")
         };
         // 如果start未初始化，先初始化它
         if (first.sEndTime == 0) {
