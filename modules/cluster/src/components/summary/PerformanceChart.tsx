@@ -8,9 +8,9 @@ import type { ChartsHandle } from 'ascend-components/MIChart';
 import type { EChartsOption } from 'echarts';
 import { merge } from 'lodash';
 import { PerformanceDataMap, Session } from '../../entity/session';
-import { PerformanceDataItem } from '../../utils/interface';
+import { FormatterParams, PerformanceDataItem } from '../../utils/interface';
 import { GenerateConditions } from '../communicatorContainer/CommunicatorContainer';
-import { Advice } from 'ascend-utils';
+import { Advice, safeStr } from 'ascend-utils';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -64,9 +64,8 @@ interface PerformanceChartProps extends GenerateConditions {
 const getSeries = (session: Session, datasource: PerformanceDataItem[], t: TFunction): any => {
     return session.performanceChartsIndicators?.map(indicator => {
         const { chart, key, name, stack, yAxisType, unit } = indicator;
-        const data = datasource.map(item => item[key]);
+        const data = datasource.map(item => ({ value: item[key], unit }));
         const yAxisIndex = yAxisType === 'time' ? 0 : 1;
-
         return {
             name: t(name),
             type: chart,
@@ -108,6 +107,34 @@ const getLegend = (session: Session, t: TFunction): EChartsOption['legend'] => {
     };
 };
 
+// isCompare：是否对比状态
+function getTooltip(isCompare: boolean): any {
+    return {
+        ...baseOptions.tooltip,
+        confine: true,
+        formatter: (params: any): string => getTooltipFormatter(params, isCompare),
+    };
+}
+
+function getTooltipFormatter(params: FormatterParams[], isCompare: boolean): string {
+    let html = params[0].name;
+    const displaylist = params.map(serie => {
+        const { marker, seriesName, value, data } = serie;
+        let valueClass = '';
+        if (isCompare) {
+            valueClass = value >= 0 ? 'positive-number' : 'negative-number';
+        }
+        return { marker, name: seriesName, content: `${value} ${data.unit}`, contentClass: valueClass };
+    });
+
+    html += displaylist.map((displayItem) => `
+<div class="tooltip-row">
+    <span>${displayItem.marker}${safeStr(displayItem.name)}</span>
+    <span class="tooltip-value ${displayItem.contentClass}">${safeStr(displayItem.content)}</span>
+</div>`).join('');
+    return html;
+}
+
 export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Element => {
     const { session, setActiveRankId, advices, top, group, orderBy, loading } = props;
     const chartRef = useRef<ChartsHandle>(null);
@@ -122,19 +149,26 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
     }
 
     const filterData = (performanceData: PerformanceDataItem[], performanceDataMap: PerformanceDataMap): PerformanceDataItem[] => {
-        let result = performanceData;
-
+        let result = session.isCompare
+            ? performanceData.map(performanceDataItem => ({
+                ...performanceDataItem, ...performanceDataItem.diff,
+            }))
+            : performanceData;
         if (group !== VALUE_ALL) {
             const groupList = group.split(',');
             const emptyData: Omit<PerformanceDataItem, 'index'> = {};
             Object.keys(performanceData[0] ?? []).forEach(key => {
-                if (key !== 'index') {
+                if (!['index', 'diff'].includes(key)) {
                     emptyData[key] = 0;
                 }
             });
             result = groupList.map(item => {
                 const index = Number(item);
-                return performanceDataMap.get(index) ?? {
+                let performanceDataItem = performanceDataMap.get(index);
+                if (session.isCompare && performanceDataItem !== undefined) {
+                    performanceDataItem = { ...performanceDataItem, ...performanceDataItem.diff };
+                }
+                return performanceDataItem ?? {
                     index,
                     ...emptyData,
                 };
@@ -163,9 +197,10 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
                 data: datasource.map(item => item.index),
             },
             series,
+            tooltip: getTooltip(session.isCompare),
         });
         setChartOptions(options);
-    }, [datasource, session.indicatorList, t]);
+    }, [datasource, session.indicatorList, t, session.isCompare]);
 
     useEffect(() => {
         const filteredData = filterData(session.performanceData, session.performanceDataMap);
