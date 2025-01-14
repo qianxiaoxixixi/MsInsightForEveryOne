@@ -561,14 +561,7 @@ export const CounterUnit = unit<CounterMetaData>({
             const requestKey = createCounterParam('unit/counter', requestParam);
             const request = await session.simpleCache.tryFetchFromCache('unit/counter', requestKey, requestParam, metadata);
             const res = request?.data as number[][];
-            const ans: number[][] = [];
-            res.forEach((data) => {
-                const temp: number[] = [];
-                temp[0] = data[0] - timestampOffset;
-                temp[1] = data[1];
-                ans.push(temp);
-            });
-            return ans;
+            return res.map(([timestamp, ...rest]) => [timestamp - timestampOffset, ...rest]);
         },
         config: (session: Session, metadata) => {
             const palette: Array<keyof Theme['colorPalette']> = [];
