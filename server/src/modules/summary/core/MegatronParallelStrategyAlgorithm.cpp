@@ -491,9 +491,9 @@ void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithTpDimension(
         one.indicators.emplace(KEY_BUBBLE_TIME, NumberUtil::DoubleReservedNDigits(item.bubbleTime, numTwo));
         double e2eTime = item.computingTime + item.pureCommunicationTime + item.freeTime;
         one.indicators.emplace(KEY_COMPUTING_RATIO, e2eTime == 0 ? 0 :
-            NumberUtil::DoubleReservedNDigits(item.computingTime / e2eTime, 2)); // 保留2位小数
+            NumberUtil::DoubleReservedNDigits(item.computingTime / e2eTime * PERCENTAGE_RATIO_SCALE, numTwo));
         one.indicators.emplace(KEY_COMMUNICATION_RATIO, e2eTime == 0 ? 0 :
-            NumberUtil::DoubleReservedNDigits(item.communicationTime / e2eTime, 2)); // 保留2位小数
+            NumberUtil::DoubleReservedNDigits(item.communicationTime / e2eTime * PERCENTAGE_RATIO_SCALE, numTwo));
         indicatorData.emplace_back(one);
     }
     SortPerformanceDataByIndex(indicatorData);
