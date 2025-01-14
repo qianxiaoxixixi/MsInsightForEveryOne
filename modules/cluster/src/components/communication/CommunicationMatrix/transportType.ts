@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 import type { PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
+import type { TFunction } from 'i18next';
 import { COLOR } from '../../Common';
 import { MatrixType } from './Filter';
-import type { TFunction } from 'i18next';
 import { baseSerie, getTooltip, type HeatmapData, HeatmapDataIndex } from '../CommunicationMatrix';
 
 enum CompareRes {
