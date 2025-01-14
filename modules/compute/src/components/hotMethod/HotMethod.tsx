@@ -400,10 +400,10 @@ const Index = observer(({ session }: { session: Session }) => {
                 }
                 body={
                     <LeftRightContainer
-                        flex={true}
+                        flex
                         left={<div style={{ height: '100%', width: '100%', overflow: 'auto', paddingRight: '8px' }}>
                             <LeftRightContainer
-                                flex={true}
+                                flex
                                 leftPercent={70}
                                 left={
                                     <HeaderFixedContainer
