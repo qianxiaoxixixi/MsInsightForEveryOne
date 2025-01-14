@@ -135,7 +135,6 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
 
             const { name, index } = data.arrangements[hoveredRectIndex];
             const currentData = session.performanceDataMap?.get(hoveredRectIndex);
-
             if (currentData === undefined) {
                 return null;
             }
@@ -145,7 +144,10 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 if (key !== 'index') {
                     const { name: indicatorName, unit } = session.indicatorMap.get(key) ?? {};
                     if (indicatorName !== undefined) {
-                        updatedData[t(indicatorName)] = `${value} ${unit}`;
+                        updatedData[t(indicatorName)] =
+                            session.isCompare
+                                ? <span>{value}<span className={currentData.diff[key] >= 0 ? 'positive-number' : 'negative-number'}>({currentData.diff[key]})</span> {unit}</span>
+                                : `${value} ${unit}`;
                     }
                 }
             });
@@ -256,7 +258,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 session.communicationDomains = [...new Set([...connections, ...frames])];
                 session.ppCommunicationDomains = ppConnections;
                 session.indicatorList = data?.indicators.map(indicator => {
-                    const unit = indicator.yAxisType === 'time' ? 'us' : '%';
+                    const unit = indicator.yAxisType === 'time' ? 'μs' : '%';
                     return {
                         ...indicator,
                         unit,

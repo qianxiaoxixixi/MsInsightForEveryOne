@@ -121,11 +121,15 @@
     font-size: 20px;
 }
 
-.tooltip-value{
+.tooltip-row {
+    margin-bottom: 5px;
+}
+
+.tooltip-value {
     float: right;
-    margin-left: 5px;
+    margin-left: 20px;
     font-size: 14px;
-    color: #666;
+    color: var(--mi-text-color);
     font-weight: bold;
 }
 

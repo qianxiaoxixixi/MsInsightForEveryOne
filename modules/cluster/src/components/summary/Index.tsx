@@ -98,11 +98,12 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
 
     const getPerformanceData = async (): Promise<void> => {
         setPerformanceLoading(true);
-        const { performance, advice } = await getParallelismPerformanceData({ step: performanceChartConditions.step, ...generateConditions }).finally(() => {
+        const { performance, advice } = await getParallelismPerformanceData(
+            { step: performanceChartConditions.step, ...generateConditions, isCompare: session.isCompare }).finally(() => {
             setPerformanceLoading(false);
         });
         const performanceAfterDeal = performance.map(item => {
-            return { index: item.index, ...item.indicators.compare };
+            return { index: item.index, ...item.indicators.compare, diff: item.indicators.diff };
         });
         setAdviceContent(advice ?? []);
         runInAction(() => {
@@ -178,7 +179,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
             return;
         }
         getPerformanceData();
-    }, [performanceChartConditions.step, JSON.stringify(generateConditions)]);
+    }, [performanceChartConditions.step, JSON.stringify(generateConditions), session.isCompare]);
 
     useEffect(() => {
         if (JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions)) {
@@ -232,7 +233,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                                     />
                                 </div>
                                 {
-                                    generateConditions.dimension === 'ep-dp-pp-cp-tp' &&
+                                    generateConditions.dimension === 'ep-dp-pp-cp-tp' && !session.isCompare &&
                                 <StatisticsTable
                                     session={session}
                                     step={performanceChartConditions.step}
