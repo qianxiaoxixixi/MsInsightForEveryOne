@@ -60,7 +60,7 @@ export interface IndicatorsItem {
     stack: string;
     yAxisType: 'time' | 'ratio';
     visible: boolean;
-    unit: 'us' | '%';
+    unit: 'μs' | '%';
 }
 
 export interface ConnectionsItem {
@@ -96,6 +96,7 @@ export interface GetParallelismPerformanceData extends ParallelismArrangementPar
     indexList?: number[];
     orderBy?: string;
     step?: string;
+    isCompare: boolean;
 }
 
 export interface PerformanceDataItem {
