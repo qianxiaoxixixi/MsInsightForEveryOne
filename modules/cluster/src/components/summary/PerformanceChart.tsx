@@ -42,30 +42,19 @@ const baseOptions: EChartsOption = {
         {
             type: 'value',
             name: 'Ratio',
-            min: 0,
+            min: function (value: {min: number; max: number}): number {
+                if (value.min >= 0) {
+                    return 0;
+                }
+                const base = parseInt((value.min - 10).toFixed(0));
+                return base - (base % 10);
+            },
             axisLabel: {
                 formatter: '{value}%',
             },
         },
     ],
     series: [],
-};
-
-const getYAxis = (isCompare: boolean): any => {
-    return [
-        {
-            type: 'value',
-            name: 'Time(μs)',
-        },
-        {
-            type: 'value',
-            name: 'Ratio',
-            min: isCompare ? null : 0,
-            axisLabel: {
-                formatter: '{value}%',
-            },
-        },
-    ];
 };
 
 interface PerformanceChartProps extends GenerateConditions {
@@ -213,7 +202,6 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
             xAxis: {
                 data: datasource.map(item => item.index),
             },
-            yAxis: getYAxis(session.isCompare),
             series,
             tooltip: getTooltip(session.isCompare),
         });
