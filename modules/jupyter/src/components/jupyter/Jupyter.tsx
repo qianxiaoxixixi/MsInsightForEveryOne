@@ -14,8 +14,8 @@ const index = observer((props: { session: Session }) => {
     const { t: tHome } = useTranslation();
     const { t } = useTranslation('jupyter');
     if (session.isIpynb && session.ipynbUrl !== '') {
-        // http://localhost:端口号/lab/tree/文件相对路径/文件名.ipynb
-        const urlReg = /^http:\/\/localhost:[0-9]{1,10}\/lab\/tree\/.{1,3000}\.ipynb$/;
+        // http://localhost:端口号/lab/tree/文件相对路径/文件名.ipynb?token=xxxxxx
+        const urlReg = /^http:\/\/localhost:[0-9]{1,10}\/lab\/tree\/.{1,3000}\.ipynb\?token=[A-Za-z0-9]+$/;
         const isSafe = urlReg.test(session.ipynbUrl);
         if (isSafe) {
             return <div className="jupyter-div">
