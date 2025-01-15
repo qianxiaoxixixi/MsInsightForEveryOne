@@ -123,7 +123,7 @@ function isNumberPairsFormat(str: string): boolean {
 
 // 通过stage获取对应的并行策略，存在多个并行策略时，策略间使用'/'进行分割
 function getParallelStrategyByStage(partitionModes: partitionMode[], stage: string): string {
-    const strategyList: string[] = ['pp', 'tp', 'dp', 'tpOrDp'];
+    const strategyList: string[] = ['pp', 'tp', 'dp', 'cp'];
     const matchingKeys: string[] = [];
     partitionModes.forEach((obj) => {
         const found = obj.communicators.some(communicator => communicator.value === stage);
