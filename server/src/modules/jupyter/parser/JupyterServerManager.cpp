@@ -101,13 +101,17 @@ bool JupyterServerManager::Start(const std::string& path)
         return false;
     }
     // 获取路径的根目录，在根目录下启动
-    std::shared_ptr<std::string> cmd = std::make_shared<std::string>(("jupyter-lab " + path +
+    std::string cmd = "jupyter-lab " + path +
                 " --ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
-                "\"self\" * wry://localhost'}}\" --ServerApp.disable_check_xsrf=True --ServerApp.token=\"\" "
-                "--no-browser --port 4000 > \"" + jupyterLogPath + "\" 2>&1"));
-
+                "\"self\" * wry://localhost'}}\" ";
+#ifdef WIN32
+    cmd += " --ServerApp.cookie_options=\"{'SameSite': 'None', 'Secure': True}\"";
+#else
+    cmd = "touch " + jupyterLogPath + " && chmod 600 " + jupyterLogPath + " && " + cmd;
+#endif
+    cmd += " --no-browser > \"" + jupyterLogPath + "\" 2>&1";
     // 开启子进程启动jupyter服务
-    pipe = popen(cmd->c_str(), "r");
+    pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
         ServerLog::Warn("jupyter server start failed.");
         return false;
@@ -192,7 +196,7 @@ std::string JupyterServerManager::GetJupyterUrl(const std::string &filePath)
             FileUtil::GetRelativePath(filePath, jupyterServerInfo.startDirectory);
     if (relativePath != nullptr) {
         res = jupyterServerInfo.protocol + "://" + jupyterServerInfo.host + ":" + jupyterServerInfo.port +
-              "/lab/tree/" + *relativePath;
+              "/lab/tree/" + *relativePath + "?" + jupyterServerInfo.query;
     }
 
     return res;
@@ -236,6 +240,8 @@ void JupyterServerManager::ClearJupyterServerInfo()
     jupyterServerInfo.url = "";
     jupyterServerInfo.port = "";
     jupyterServerInfo.startDirectory = "";
+    jupyterServerInfo.query = "";
+    jupyterServerInfo.fragment = "";
     jupyterServerInfo.path = "";
 }
 
@@ -249,6 +255,8 @@ void JupyterServerManager::FillJupyterServerInfo(const std::string& url)
         jupyterServerInfo.host = url_match[urlHostPosition].str();
         jupyterServerInfo.port = url_match[urlPortPosition].str();
         jupyterServerInfo.path = url_match[urlPathPosition].str();
+        jupyterServerInfo.query = url_match[urlQueryPosition].str();
+        jupyterServerInfo.fragment = url_match[urlFragmentPosition].str();
     }
 }
 
