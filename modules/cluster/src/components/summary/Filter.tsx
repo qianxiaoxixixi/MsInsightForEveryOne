@@ -106,7 +106,7 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
                     session.isCompare &&
                     <FormItem name={t('Baseline Step')}
                         content={ <Select
-                            id="select-step"
+                            id="select-baseline-step"
                             value={conditions.baselineStep}
                             style={{ width: 120 }}
                             onChange={(val: string): void => handleChange('baselineStep', val)}
