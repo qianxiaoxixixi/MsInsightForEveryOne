@@ -362,27 +362,32 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath, 
 
 std::vector<std::string> SourceFileParser::GetCoreList()
 {
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceInstructionParser.GetCoreList();
 }
 
 std::vector<std::string> SourceFileParser::GetSourceList()
 {
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceInstructionParser.GetSourceList();
 }
 
 std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(const std::string &core,
                                                                          const std::string &sourceName)
 {
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceInstructionParser.GetApiLinesByCoreAndSource(core, sourceName);
 }
 
 std::string SourceFileParser::GetInstr()
 {
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceInstructionParser.GetInstr(filePath);
 }
 
 std::string SourceFileParser::GetSourceByName(std::string &sourceName)
 {
+    std::unique_lock<std::mutex> lock(mutex);
     return sourceInstructionParser.GetSourceByName(sourceName, filePath);
 }
 
@@ -423,6 +428,7 @@ bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId, b
 
 void SourceFileParser::ConvertToData()
 {
+    std::unique_lock<std::mutex> lock(mutex);
     std::vector<Position> &sourceFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::SOURCE)];
     std::vector<Position> &apiFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::API_FILE)];
     std::vector<Position> &apiInstrPosArray = dataBlockMap[static_cast<int>(DataTypeEnum::API_INSTR)];
