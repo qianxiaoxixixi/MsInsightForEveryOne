@@ -1353,6 +1353,44 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadatanWhenDbOpen)
     EXPECT_EQ(result, true);
 }
 
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadataWithGroupNameValueWhenDbOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    const std::string processData = "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", "
+        "\"process_sort_index\") VALUES ('42506507', 'Ascend Hardware', 'NPU', 8);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('42506731', 'HCCL', 'NPU', 15);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('42506539', 'AI Core Freq', 'NPU', 9);";
+    const std::string groupNameValue = "90.90.97.96%enp194s0f0_60008_8_1735556595505601";
+    const std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (23, '3', '42506507', 'Stream 3', 3);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (39, '1', '42506731', 'Group " + groupNameValue + " Communication', 1);";
+    const std::string counterData =
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (6, 'AI "
+        "Core Freq', '42506539', 1726830775547610426, NULL, '{\"MHz\":\"1800\"}');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, counterData);
+    const std::string fileId = "9";
+    const uint8_t expectProcessCount = 3;
+    const uint8_t first = 0;
+    const uint8_t second = 1;
+    const uint8_t third = 2;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(metaData.size(), expectProcessCount);
+    EXPECT_EQ(metaData[third]->children.size(), second);
+    EXPECT_EQ(metaData[third]->children[first]->metaData.groupNameValue, groupNameValue);
+}
+
 TEST_F(TextTraceDatabaseMockTest, TestQuerySimulationUintFlows)
 {
     std::recursive_mutex sqlMutex;

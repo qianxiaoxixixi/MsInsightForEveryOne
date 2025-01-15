@@ -1321,13 +1321,15 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                       " where deviceId = ? group by streamId";
                 break;
             case PROCESS_TYPE::HCCL:
-                sql = "with main as (select planeId, op.groupName from " + TABLE_COMMUNICATION_TASK_INFO +
+                sql = "with main as (select planeId, op.groupName, sids.value as groupNameValue from " +
+                    TABLE_COMMUNICATION_TASK_INFO +
                     " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
-                    " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?) "
+                    " join COMMUNICATION_OP op on op.opId = info.opId "
+                    " left join STRING_IDS sids on op.groupName = sids.id where deviceId = ?) "
                     " select 'Plane ' || planeId as name, groupName || '_' || planeId as tid, 0 as maxDepth, "
-                    " groupName, planeId  from main group by planeId, groupName "
+                    " groupName, groupNameValue, planeId  from main group by planeId, groupName "
                     " union select 'Group ' || ((row_number() over ()) -1) || ' Communication' as name, "
-                    " groupName || 'group' as tid, 0 as maxDepth, groupName, -1 as planeId from main "
+                    " groupName || 'group' as tid, 0 as maxDepth, groupName, groupNameValue, -1 as planeId from main "
                     " group by groupName order by groupName ASC, planeId ASC";
                 break;
             default:
@@ -1341,7 +1343,7 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
             while (resultSet->Next()) {
                 auto thread = GenerateBaseUnitTrack("thread", fileId, process->metaData.processId, "", metaType);
                 std::string threadId = resultSet->GetString("tid");
-                ProcessThreadUnit(process, resultSet, thread, threadId);
+                ProcessThreadUnit(process, resultSet, thread, threadId, type);
             }
         } catch (DatabaseException &e) {
             ServerLog::Error("Query operate metadata, MetaType: ", metaType, " reason: ", e.What());
@@ -1365,6 +1367,7 @@ void DbTraceDataBase::UpdataCommucationThreadName(const PROCESS_TYPE &type,
             if (StringUtil::StartWith(item->metaData.threadName, "Group") &&
                 StringUtil::EndWith(item->metaData.threadName, "Communication")) {
                 std::string threadId = item->metaData.threadId;
+                // 此时 threadId 是 groupName + "group", 形如 "409group"
                 std::string groupName = threadId.substr(0, threadId.size() - suffix.size());
                 item->metaData.threadName = "Group " + stringsCache.at(path)[groupName] + " Communication";
             }
@@ -1375,12 +1378,20 @@ void DbTraceDataBase::UpdataCommucationThreadName(const PROCESS_TYPE &type,
 void DbTraceDataBase::ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process,
                                         std::unique_ptr<SqliteResultSet> &resultSet,
                                         std::unique_ptr<Protocol::UnitTrack> &thread,
-                                        const std::string &threadId) const
+                                        const std::string &threadId,
+                                        const PROCESS_TYPE &type) const
 {
     const static std::string WRONG_THREAD_ID = std::to_string(UINT32_MAX);
     // hccl的plane泳道约定一个异常数据不做展示
     if (threadId.find(WRONG_THREAD_ID) != std::string::npos) {
         return;
+    }
+    // 在 metaVersion 版本高于 '1.0' 的情况下，type == PROCESS_TYPE::HCCL 时赋值
+    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0") && type == PROCESS_TYPE::HCCL) {
+        const std::string groupNameValue = resultSet->GetString("groupNameValue");
+        if (TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue)) {
+            thread->metaData.groupNameValue = groupNameValue;
+        }
     }
     thread->metaData.threadId = threadId;
     thread->metaData.threadName = resultSet->GetString("name");

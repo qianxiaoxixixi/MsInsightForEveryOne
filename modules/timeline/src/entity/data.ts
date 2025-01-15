@@ -685,6 +685,7 @@ export interface ThreadMetaData {
     processName?: string;
     threadId?: string;
     threadName: string;
+    groupNameValue: string;
     maxDepth?: number;
     metaType?: string;
     dataSource: DataSource;

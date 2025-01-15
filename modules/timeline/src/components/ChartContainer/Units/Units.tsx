@@ -289,8 +289,8 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         mainContainer?.addEventListener('mouseup', handleMouseUp);
         mainContainer?.addEventListener('mouseleave', handleMouseLeave);
         return () => {
-            mainContainer?.addEventListener('mouseup', handleMouseUp);
-            mainContainer?.addEventListener('mouseleave', handleMouseLeave);
+            mainContainer?.removeEventListener('mouseup', handleMouseUp);
+            mainContainer?.removeEventListener('mouseleave', handleMouseLeave);
         };
     }, []);
 

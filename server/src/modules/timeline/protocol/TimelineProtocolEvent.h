@@ -24,6 +24,7 @@ struct UnitTrackMetaData {
     std::string label;       // type = process
     std::string threadId;    // type = thread
     std::string threadName;  // type = thread, counter
+    std::string groupNameValue;   // type = thread, 在 PROCESS_TYPE::HCCL 时赋值
     std::string metaType;
     int maxDepth = 0;                  // type = thread
     std::vector<std::string> dataType; // type = counter

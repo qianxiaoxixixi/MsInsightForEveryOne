@@ -12,12 +12,15 @@ import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
 import type { ThreadTrace, ThreadMetaData, CardMetaData, ThreadTraceRequest } from '../entity/data';
-import type { TimeStamp } from '../entity/common';
+import { preOrderFlatten, TimeStamp } from '../entity/common';
 import connector from '../connection';
 import { type ChartDesc, type InsightUnit, unit } from '../entity/insight';
 import { Tooltip } from 'ascend-components';
 import type { StackStatusConfig } from '../entity/chart';
 import { getTimeOffsetKey } from '../insight/units/utils';
+import { isPinned, switchPinned } from './ChartContainer/unitPin';
+import { getRootUnit } from '../utils';
+import { getAutoKey } from '../utils/dataAutoKey';
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
     left: string;
@@ -31,12 +34,29 @@ interface Props {
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
 }
 
+interface SelectedUnitStatus {
+    isThreadNameStartWithGroup: boolean;
+    isGroupCommunicationUnit: boolean;
+    groupNameValue: string;
+    isPinned: boolean;
+}
+
+interface SelectedUnitListStatus {
+    isAllThreadNameStartWithGroup: boolean;
+    isAllGroupCommunicationUnit: boolean;
+    isSameGroupNameValue: boolean;
+    groupNameValue: string;
+    isAllPinned: boolean;
+    isAllUnpinned: boolean;
+}
+
 interface MenuItemModel {
     name: string;
     key: string;
     event: (session: Session, menuItem?: MenuItemModel) => void;
     disabled?: boolean;
     visible: boolean;
+    title?: string;
 }
 
 const MenuContainer = styled.div`
@@ -54,6 +74,10 @@ const MenuContainer = styled.div`
 const MenuItem = styled.div`
     padding: 4px 16px;
     color: ${(props): string => props.theme.textColorPrimary};
+    white-space: nowrap; /* 防止文本换行 */
+    overflow: hidden;    /* 隐藏溢出的内容 */
+    text-overflow: ellipsis; /* 添加省略号 */
+    max-width: 300px;        /* 设置一个固定宽度或根据需要调整 */
 
     &:not(.disabled):hover{
       background: ${(props): string => props.theme.primaryColorHover};
@@ -142,6 +166,81 @@ function resetZoom(session: Session, menuItem?: MenuItemModel): void {
         session.contextMenu.zoomHistory = [];
         session.contextMenu.isVisible = false;
     });
+}
+
+function getSameGroupNameUnits(session: Session): InsightUnit[] {
+    if (session.selectedUnits.length === 0) {
+        return [];
+    }
+    const selectedGroupNameValue = (session.selectedUnits[0].metadata as ThreadMetaData).groupNameValue;
+    const flattenUnits = preOrderFlatten(getRootUnit(session.units), 0);
+    return flattenUnits
+        .filter(({ metadata }) => (metadata as ThreadMetaData)?.groupNameValue === selectedGroupNameValue);
+}
+
+function pinAllSameGroupNameValue(session: Session, menuItem?: MenuItemModel): void {
+    if ((menuItem?.disabled ?? false) || session.selectedUnits.length === 0) {
+        return;
+    }
+    const sameGroupNameValueUnits = getSameGroupNameUnits(session);
+    if (sameGroupNameValueUnits.length === 0) {
+        return;
+    }
+    const pinnedUnitKeys = session.pinnedUnits.map((item) => getAutoKey(item));
+    const addUnits = sameGroupNameValueUnits.reduce<InsightUnit[]>((acc, curr): InsightUnit[] => {
+        const key = getAutoKey(curr);
+        if (pinnedUnitKeys.includes(key)) {
+            return acc;
+        }
+        acc.push(curr);
+        pinnedUnitKeys.push(key);
+        return acc;
+    }, []);
+    runInAction(() => {
+        session.pinnedUnits = [...session.pinnedUnits, ...addUnits];
+        addUnits.forEach((item): void => switchPinned(item));
+    });
+    closeMenu(session);
+}
+
+function unpinAllSameGroupNameValue(session: Session, menuItem?: MenuItemModel): void {
+    if (menuItem?.disabled ?? false) {
+        return;
+    }
+    const sameGroupNameValueUnits = getSameGroupNameUnits(session);
+    if (sameGroupNameValueUnits.length === 0) {
+        return;
+    }
+    const { pinnedUnits } = session;
+    const pinnedUnitKeys = pinnedUnits.map((item) => getAutoKey(item));
+    const subtractUnits = sameGroupNameValueUnits.reduce<InsightUnit[]>((acc, curr): InsightUnit[] => {
+        const key = getAutoKey(curr);
+        const findIdx = pinnedUnitKeys.findIndex((pinnedKey: string): boolean => pinnedKey === key);
+        if (findIdx < 0) {
+            return acc;
+        }
+        acc.push(curr);
+        pinnedUnits.splice(findIdx, 1);
+        pinnedUnitKeys.splice(findIdx, 1);
+        return acc;
+    }, []);
+    runInAction(() => {
+        session.pinnedUnits = [...pinnedUnits];
+        subtractUnits.forEach((item): void => switchPinned(item));
+    });
+    closeMenu(session);
+}
+
+function unpinAll(session: Session, menuItem?: MenuItemModel): void {
+    if (menuItem?.disabled ?? false) {
+        return;
+    }
+    const { pinnedUnits } = session;
+    runInAction(() => {
+        session.pinnedUnits = [];
+        pinnedUnits.forEach((item): void => switchPinned(item));
+    });
+    closeMenu(session);
 }
 
 function hideUnit(session: Session, menuItem?: MenuItemModel): void {
@@ -572,20 +671,86 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     }
     setPosition({ left: `${xPos.current}px`, top: `${yPos.current}px` });
     menu.focus();
-};
+}
+
+function calculateSelectedUnitStatus(selectedUnit: InsightUnit): SelectedUnitStatus {
+    const hasStringValue = (str: string = ''): boolean => {
+        return str !== '';
+    };
+    const metadata = selectedUnit.metadata as ThreadMetaData;
+    return {
+        isThreadNameStartWithGroup: metadata?.threadName?.startsWith('Group') ?? false,
+        isGroupCommunicationUnit: hasStringValue(metadata?.groupNameValue),
+        groupNameValue: (selectedUnit.metadata as ThreadMetaData)?.groupNameValue ?? '',
+        isPinned: isPinned(selectedUnit),
+    };
+}
+
+function calculateSelectedUnitListStatus(selectedUnits: InsightUnit[]): SelectedUnitListStatus {
+    const selectedUnitStatuses = selectedUnits.map(calculateSelectedUnitStatus);
+    const isAllThreadNameStartWithGroup = selectedUnitStatuses
+        .every(({ isThreadNameStartWithGroup }) => isThreadNameStartWithGroup);
+    const isAllGroupCommunicationUnit = selectedUnitStatuses
+        .every(({ isGroupCommunicationUnit }) => isGroupCommunicationUnit);
+
+    const isAllPinned = selectedUnitStatuses.every((status) => status.isPinned);
+    const isAllUnpinned = selectedUnitStatuses.every((status) => !status.isPinned);
+
+    const groupNameValue = selectedUnitStatuses?.[0]?.groupNameValue ?? '';
+    const isSameGroupNameValue = isAllGroupCommunicationUnit && selectedUnitStatuses
+        .reduce((acc, curr) => acc && curr.groupNameValue === groupNameValue, true);
+    return {
+        isAllThreadNameStartWithGroup,
+        isAllGroupCommunicationUnit,
+        isSameGroupNameValue,
+        groupNameValue,
+        isAllPinned,
+        isAllUnpinned,
+    };
+}
+
+function buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(
+    selectedUnitListStatus: SelectedUnitListStatus,
+    t: TFunction): MenuItemModel[] {
+    return [
+        {
+            name: t('Pin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
+            title: t('Pin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
+            key: 'pinByGroupNameValue',
+            event: pinAllSameGroupNameValue,
+            disabled: !selectedUnitListStatus.isAllUnpinned,
+            visible: selectedUnitListStatus.isAllUnpinned && selectedUnitListStatus.isSameGroupNameValue,
+        },
+        {
+            name: t('Unpin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
+            title: t('Unpin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
+            key: 'unpinByGroupNameValue',
+            event: unpinAllSameGroupNameValue,
+            disabled: !selectedUnitListStatus.isAllPinned,
+            visible: selectedUnitListStatus.isAllPinned && selectedUnitListStatus.isSameGroupNameValue,
+        },
+    ];
+}
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     const { session, session: { contextMenu: { zoomHistory } } } = props;
-    const isGroupCommunicationUnit = (session.selectedUnits?.[0]?.metadata as ThreadMetaData)?.threadName?.startsWith('Group') ?? false;
+    if (!Array.isArray(session.selectedUnits) || session.selectedUnits.length === 0) {
+        return <></>;
+    }
+    // 为多选 unit 功能做准备
+    const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
+    // session.selectedData 在这里指选中的算子数据
     const isCommunicationOperator = (session.selectedData?.name as string)?.startsWith('hcom_') ?? false;
-    const findInCommunicationVisible = isGroupCommunicationUnit && isCommunicationOperator && session.isCluster;
-
+    const findInCommunicationVisible =
+        selectedUnitListStatus.isAllThreadNameStartWithGroup && isCommunicationOperator && session.isCluster;
     const menuItems: MenuItemModel[] = [
         { name: t('Fit to screen'), key: 'fitToScreen', event: fitToScreen, disabled: session.selectedData?.duration === 0, visible: session.selectedData !== undefined },
         { name: t('Find in Communication'), key: 'findInCommunication', event: findInCommunication, visible: findInCommunicationVisible },
         { name: t('Zoom into selection'), key: 'zoomIntoSelection', event: zoomIntoSelection, visible: session.selectedRange !== undefined },
         { name: `${t('Undo Zoom')} (${zoomHistory.length})`, key: 'undoZoom', event: undoZoom, disabled: zoomHistory.length === 0, visible: true },
         { name: t('Reset Zoom'), key: 'resetZoom', event: resetZoom, disabled: zoomHistory.length === 0, visible: true },
+        { name: t('Unpin All'), key: 'unpinAll', event: unpinAll, disabled: !selectedUnitListStatus.isAllPinned, visible: selectedUnitListStatus.isAllPinned },
+        ...buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(selectedUnitListStatus, t),
         { name: t('Hide'), key: 'hide', event: hideUnit, disabled: false, visible: isHideText(session) },
         { name: t('Show All Hidden'), key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
         { name: t('Show in events view'), key: 'showInEventsView', event: showInEventsView, disabled: false, visible: isShowEventMenu(session) },
@@ -602,6 +767,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
 
     return <>
         {menuItems.filter(menuItem => menuItem.visible).map(item => (<MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
+            title={item.title}
             onClick={(e): void => {
                 if (item.disabled) {
                     return;

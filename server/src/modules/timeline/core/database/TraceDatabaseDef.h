@@ -61,6 +61,7 @@ struct MetaDataDto {
     std::string label;
     std::string threadId;
     std::string threadName;
+    std::string groupNameValue;
     int32_t maxDepth = 0;
     std::string name; // ph = C, name
     std::string args; // ph = C, args

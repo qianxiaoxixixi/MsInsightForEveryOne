@@ -172,6 +172,7 @@ private:
         uint64_t minTimestamp);
     static void AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
              std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap) ;
+    static std::string ExtractGroupNameValue(const std::string &str);
 };
 } // end of namespace Timeline
 // end of namespace Module

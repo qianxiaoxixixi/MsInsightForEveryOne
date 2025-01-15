@@ -567,6 +567,7 @@ json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &
     JsonUtil::AddMember(metadata, "label", unitTrack.metaData.label, allocator);
     JsonUtil::AddMember(metadata, "threadId", unitTrack.metaData.threadId, allocator);
     JsonUtil::AddMember(metadata, "threadName", unitTrack.metaData.threadName, allocator);
+    JsonUtil::AddMember(metadata, "groupNameValue", unitTrack.metaData.groupNameValue, allocator);
     JsonUtil::AddMember(metadata, "metaType", unitTrack.metaData.metaType, allocator);
     JsonUtil::AddMember(metadata, "maxDepth", unitTrack.metaData.maxDepth, allocator);
     json_t dataType(kArrayType);
