@@ -243,7 +243,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
 const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
     const queryName = rowData.name ?? rowData.originOptimizer;
     const res = await queryOneKernel({
-        rankId: rowData.deviceId,
+        rankId: rowData.rankId,
         name: queryName,
         timestamp: rowData.timestamp,
         duration: rowData.duration,
@@ -252,7 +252,7 @@ const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId === rowData.deviceId)) &&
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId === rowData.rankId)) &&
                 unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
             },
             onSuccess: (unit: InsightUnit): void => {

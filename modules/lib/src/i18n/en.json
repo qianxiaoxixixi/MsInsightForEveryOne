@@ -51,7 +51,8 @@
     "Filter by field content": "Filter by field content",
     "Baseline": "Baseline",
     "Comparison": "Comparison",
-    "Difference": "Difference"
+    "Difference": "Difference",
+    "NotFoundJumpTargetWarn": "Jump target not found"
   },
   "sessionList": {
     "Template": "Template",

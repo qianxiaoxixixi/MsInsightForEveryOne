@@ -538,6 +538,7 @@ template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(co
         JsonUtil::AddMember(itemJson, "id", searchAllSlices.id, allocator);
         JsonUtil::AddMember(itemJson, "tid", searchAllSlices.tid, allocator);
         JsonUtil::AddMember(itemJson, "pid", searchAllSlices.pid, allocator);
+        JsonUtil::AddMember(itemJson, "rankId", searchAllSlices.rankId, allocator);
         JsonUtil::AddMember(itemJson, "deviceId", searchAllSlices.deviceId, allocator);
         searchAllSlicesDetails.PushBack(itemJson, allocator);
     }

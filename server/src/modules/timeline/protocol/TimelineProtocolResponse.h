@@ -469,6 +469,7 @@ struct SearchAllSlices {
     std::string pid;
     std::string tid;
     uint64_t depth = 0;
+    std::string rankId;
     std::string deviceId;
 };
 
