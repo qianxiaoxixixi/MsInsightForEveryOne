@@ -533,7 +533,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
         responseBody.depth = resultSet->GetUint64("depth");
         responseBody.threadId = resultSet->GetString("tid");
         responseBody.pid = resultSet->GetString("pid");
-        responseBody.rankId = QueryHostInfo() + GetDeviceId(params.rankId);
+        responseBody.rankId = QueryHostInfo() + params.rankId;
     }
     return true;
 }
@@ -878,7 +878,7 @@ std::string DbTraceDataBase::GetDeviceId(const std::string &fileId)
         realRankId = fileId.substr(hostStr.length());
     }
     if (rankAndDeviceMap.count(realRankId) > 0) {
-        realRankId = rankAndDeviceMap[realRankId];
+        return rankAndDeviceMap[realRankId];
     }
     return realRankId;
 }
@@ -1628,6 +1628,7 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
         searchAllSlice.tid = resultSet->GetString("tid");
         searchAllSlice.pid = resultSet->GetString("pid");
         searchAllSlice.depth = resultSet->GetUint64("depth");
+        searchAllSlice.rankId = params.rankId;
         auto deviceId = resultSet->GetString("deviceId");
         searchAllSlice.deviceId = deviceId.empty() ? path : QueryHostInfo() + deviceId;
         body.searchAllSlices.emplace_back(searchAllSlice);

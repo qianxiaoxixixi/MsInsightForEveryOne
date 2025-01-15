@@ -52,7 +52,8 @@
     "Filter by field content": "输入关键字过滤",
     "Baseline": "基线数据",
     "Comparison": "比对数据",
-    "Difference": "差值"
+    "Difference": "差值",
+    "NotFoundJumpTargetWarn": "未找到跳转的目标"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",

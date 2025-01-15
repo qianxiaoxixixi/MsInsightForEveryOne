@@ -44,6 +44,23 @@ const createContentWithBreaks = (content: string): React.ReactNode => {
     ));
 };
 
+const createContentNormal = (content: number | string | Array<number | string>): string => {
+    if (Array.isArray(content)) {
+        return createContentWithArray(content as string[]);
+    }
+    if (content === undefined || content === '') {
+        return '""';
+    }
+    if (content === null) {
+        return 'null';
+    }
+    return Number.isFinite(Number(content)) ? `${content}` : `"${content}"`;
+};
+
+const createContentWithArray = (content: Array<number | string>): string => {
+    return `[${content.map(createContentNormal).join(', ')}]`;
+};
+
 const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element => {
     const argsJson = data.args;
     const [isHiddenArgs, setHidden] = useState(false);
@@ -66,7 +83,7 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
                     return <Row key={key} style={{ marginLeft: '24px', lineHeight: '32px' }} >
                         <Col flex="150px" style={{ whiteSpace: 'nowrap' }}>{key}</Col>
                         <Col flex="auto" style={{ wordBreak: 'break-all' }}>
-                            { breakKeys.includes(key) ? createContentWithBreaks(args[key]) : args[key] }
+                            { breakKeys.includes(key) ? createContentWithBreaks(args[key]) : createContentNormal(args[key]) }
                         </Col>
                     </Row>;
                 })

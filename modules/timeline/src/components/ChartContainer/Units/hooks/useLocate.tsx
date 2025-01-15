@@ -4,6 +4,8 @@
 
 import { autorun, runInAction } from 'mobx';
 import React from 'react';
+import { message } from 'antd';
+import { t } from 'i18next';
 import type { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
 import type { InsightUnit, UnitMatcher } from '../../../../entity/insight';
 import type { Session } from '../../../../entity/session';
@@ -92,6 +94,9 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
             if (dom === null || !supportJump) { return; }
             if (session.locateUnit === undefined) { return; }
             const targetUnit = getTargetUnit(getRootUnit(session.units), session.locateUnit.target);
+            if (targetUnit === undefined) {
+                message.warn(t('NotFoundJumpTargetWarn'));
+            }
             if (targetUnit !== undefined) {
                 handleUnitSelection(targetUnit);
                 session.locateUnit?.onSuccess(targetUnit);

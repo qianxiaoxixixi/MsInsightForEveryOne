@@ -1515,6 +1515,7 @@ bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         searchAllSlice.id = resultSet->GetString(col++);
         searchAllSlice.tid = resultSet->GetString(col++);
         searchAllSlice.pid = resultSet->GetString(col++);
+        searchAllSlice.rankId = params.rankId;
         searchAllSlice.deviceId = params.rankId;
         body.searchAllSlices.emplace_back(searchAllSlice);
     }
