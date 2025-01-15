@@ -182,77 +182,79 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
     });
 
     useEffect(() => {
-        if (JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions)) {
+        const isDefaultGenerateConditions = JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions);
+
+        if (isDefaultGenerateConditions) {
             return;
         }
         getPerformanceData();
     }, [performanceChartConditions.step, performanceChartConditions.baselineStep, JSON.stringify(generateConditions), session.isCompare]);
 
     useEffect(() => {
-        if (JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions)) {
+        const isDefaultGenerateConditions = JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions);
+
+        if (isDefaultGenerateConditions) {
             return;
         }
         getAllConnections();
     }, [JSON.stringify(generateConditions)]);
 
-    return session.clusterCompleted
-        ? <Layout>
-            <BaseInfo session={session}/>
+    return <Layout>
+        <BaseInfo session={session}/>
 
-            <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
-                <CommunicatorContainer
+        <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
+            <CommunicatorContainer
+                session={session}
+                generateConditions={generateConditions}
+                onGenerateConditionsChange={handleGenerateConditionsChange}
+            />
+
+            <CollapsiblePanel
+                id="communication-overview-panel"
+                secondary
+                title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{tips}</div>}
+                headerStyle={{ padding: 0 }}
+                contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+            >
+                <Filter
                     session={session}
-                    generateConditions={generateConditions}
-                    onGenerateConditionsChange={handleGenerateConditionsChange}
+                    conditions={performanceChartConditions}
+                    onFilterChange={handleFilterChange}
+                    isPipeline={isPipeline}
                 />
-
-                <CollapsiblePanel
-                    id="communication-overview-panel"
-                    secondary
-                    title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{tips}</div>}
-                    headerStyle={{ padding: 0 }}
-                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
-                >
-                    <Filter
-                        session={session}
-                        conditions={performanceChartConditions}
-                        onFilterChange={handleFilterChange}
-                        isPipeline={isPipeline}
-                    />
-                    {
-                        isPipeline
-                            ? <FlowChartContainer data-testid="pipeline-chart">
-                                <div className="title">{t('Pipeline Parallelism Chart')}</div>
-                                <FlowChart
-                                    step={performanceChartConditions.step}
-                                    stage={performanceChartConditions.group}
+                {
+                    isPipeline
+                        ? <FlowChartContainer data-testid="pipeline-chart">
+                            <div className="title">{t('Pipeline Parallelism Chart')}</div>
+                            <FlowChart
+                                step={performanceChartConditions.step}
+                                stage={performanceChartConditions.group}
+                            />
+                        </FlowChartContainer>
+                        : <>
+                            <div data-testid="performance-chart">
+                                <PerformanceChart
+                                    session={session}
+                                    {...performanceChartConditions}
+                                    {...generateConditions}
+                                    loading={performanceLoading}
+                                    setActiveRankId={setActiveRankId}
+                                    advices={adviceContent}
                                 />
-                            </FlowChartContainer>
-                            : <>
-                                <div data-testid="performance-chart">
-                                    <PerformanceChart
-                                        session={session}
-                                        {...performanceChartConditions}
-                                        {...generateConditions}
-                                        loading={performanceLoading}
-                                        setActiveRankId={setActiveRankId}
-                                        advices={adviceContent}
-                                    />
-                                </div>
-                                {
-                                    generateConditions.dimension === 'ep-dp-pp-cp-tp' && !session.isCompare &&
+                            </div>
+                            {
+                                generateConditions.dimension === 'ep-dp-pp-cp-tp' && !session.isCompare &&
                                 <StatisticsTable
                                     session={session}
                                     step={performanceChartConditions.step}
                                     rankId={activeRankId}
                                 />
-                                }
-                            </>
-                    }
-                </CollapsiblePanel>
+                            }
+                        </>
+                }
             </CollapsiblePanel>
-        </Layout>
-        : <></>;
+        </CollapsiblePanel>
+    </Layout>;
 });
 
 export default Index;
