@@ -126,7 +126,7 @@ void SourceInstructionParser::ConvertApiInstrNew(const std::string &jsonStr)
 
 void SourceInstructionParser::ParseInstruction(Value &instr)
 {
-    SourceFileInstruction sourceFileInstruction;
+    SourceFileInstructionDynamicCol sourceFileInstruction;
     for (const auto &columnType: instructionColumnTypeMap) {
         std::string columnName = columnType.first;
         int type = columnType.second;
@@ -149,14 +149,14 @@ void SourceInstructionParser::ParseInstruction(Value &instr)
 template <typename T>
 void SourceInstructionParser::ProcessColumnDataArray(const Value& value, std::vector<T>& columnDataList)
 {
-    if (value.IsArray()) {
-        // 如果是数组，遍历数组中的每一项并处理
-        for (const auto& item : value.GetArray()) {
-            ProcessColumnData(item, columnDataList);
-        }
-    } else {
+    if (!value.IsArray()) {
         // 如果不是数组，直接处理单一值
         ProcessColumnData(value, columnDataList);
+        return;
+    }
+    // 如果是数组，遍历数组中的每一项并处理
+    for (const auto& item : value.GetArray()) {
+        ProcessColumnData(item, columnDataList);
     }
 }
 
@@ -189,6 +189,127 @@ void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
         }
     } catch (const std::exception &e) {
         ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
+    }
+}
+
+/*
+json示例
+{
+  "Cores": [ // 执行算子的计算核，如"core0.cubecore0"，"core0.veccore0"
+    string
+  ],
+  "Files Dtype": { // 指定列名和数据类型
+    // string 0, int 1, float 2
+        "Lines": {
+            "Address": 0,
+            "Cycles": 1
+    }
+  }
+  "Files": [ // 源代码文件中的代码行信息
+    {
+      "Lines": [ // 代码行关联的指令地址范围、消耗的时钟周期、执行指令总数
+        {
+          "Address Range": [ // 当前代码行关联的指令地址范围
+            [
+              string
+            ]
+          ],
+          "Cycles": [ // 当前代码行在各个计算核上消耗的总时钟周期（对应顺序是？）
+            int
+          ],
+          "Instructions Executed": [ // 当前代码行在各个计算核上执行的指令总数（对应顺序是？）
+            int
+          ],
+          "Line": 100 // 代码行号
+        }
+      "Source": string // 源代码文件路径
+    }
+  ]
+}
+ */
+void SourceInstructionParser::ConvertApiFileNew(const std::string &jsonStr)
+{
+    std::string errMsg;
+    auto optional = JsonUtil::TryParse(jsonStr, errMsg);
+    if (!optional.has_value() || !errMsg.empty()) {
+        ServerLog::Error("Parse api file json failed. Error is ", errMsg);
+        return;
+    }
+    auto &d = optional.value();
+    // parse column info
+    if (!d.HasMember("Files Dtype") || !d["Files Dtype"].HasMember("Lines")) {
+        return;
+    }
+    // 遍历dtype中的列对象，获取列名和对应的数据类型
+    auto &lines = d["Files Dtype"]["Lines"];
+    for (auto column = lines.MemberBegin(); column != lines.MemberEnd(); ++column) {
+        std::string columnName = column->name.GetString();
+        auto &value = column->value;
+        if (!value.IsInt()) {
+            continue;
+        }
+        sourceLineColumnTypeMap[columnName] = value.GetInt();
+    }
+
+    if (!JsonUtil::IsJsonArray(d, "Files")) {
+        return;
+    }
+    for (auto &file : d["Files"].GetArray()) {
+        ParseFile(file);
+    }
+}
+
+void SourceInstructionParser::ParseFile(Value &file)
+{
+    if (!JsonUtil::IsJsonArray(file, "Lines") || !file.HasMember("Source")) {
+        return;
+    }
+    std::string sourceName = file["Source"].IsString() ? file["Source"].GetString() : "";
+    if (sourceName.empty()) {
+        return;
+    }
+    for (const auto &line: file["Lines"].GetArray()) {
+        // 根据列信息动态解析Lines数据
+        SourceFileLineDynamicCol sourceFileLine;
+        // 这里Address Range字段不支持动态解析，需要手动解析
+        ParseSourceLineAddressRange(line, sourceFileLine);
+        // 根据前面获取到的列名信息，从json中解析列名对应的字段数据
+        for (const auto &columnType: sourceLineColumnTypeMap) {
+            std::string columnName = columnType.first;
+            int type = columnType.second;
+            if (!line.HasMember(columnName.c_str())) {
+                continue;
+            }
+            // 处理不同数据类型的列
+            auto &columData = line[columnName.c_str()];
+            if (type == ColumDataType::STRING) {
+                ProcessColumnDataArray<std::string>(columData, sourceFileLine.stringColumnMap[columnName]);
+            } else if (type == ColumDataType::INT) {
+                ProcessColumnDataArray<int>(columData, sourceFileLine.intColumnMap[columnName]);
+            } else if (type == ColumDataType::FLOAT) {
+                ProcessColumnDataArray<float>(columData, sourceFileLine.floatColumnMap[columnName]);
+            }
+        }
+
+        sourceLinesMap[sourceName].emplace_back(std::move(sourceFileLine));
+    }
+}
+
+void SourceInstructionParser::ParseSourceLineAddressRange(const Value &line, SourceFileLineDynamicCol &sourceFileLine)
+{
+    if (!line.HasMember("Address Range") || !line["Address Range"].IsArray()) {
+        return;
+    }
+    for (auto &addressRange : line["Address Range"].GetArray()) {
+        if (!addressRange.IsArray() || addressRange.Size() != addressRangeSize) {
+            continue;
+        }
+        if (!addressRange[0].IsString() || !addressRange[1].IsString()) {
+            continue;
+        }
+        const char *startAddress = addressRange[0].GetString();
+        const char *endAddress = addressRange[1].GetString();
+        sourceFileLine.addressRange.emplace_back(startAddress, endAddress);
     }
 }
 
@@ -327,12 +448,16 @@ void SourceInstructionParser::Reset()
     sourceFiles.clear();
     apiCores.clear();
     apiFiles.clear();
+    instructionList.clear();
+    instructionColumnTypeMap.clear();
+    sourceLinesMap.clear();
+    sourceLineColumnTypeMap.clear();
     apiInstrPos = {0, 0};
 }
 
 std::vector<std::string> SourceInstructionParser::GetCoreList()
 {
-    return this->apiCores;
+    return {this->apiCores};
 }
 
 std::vector<std::string> SourceInstructionParser::GetSourceList()
@@ -398,7 +523,7 @@ std::string SourceInstructionParser::GetInstr(std::string &filePath)
     return content;
 }
 
-std::vector<SourceFileInstruction> SourceInstructionParser::GetInstructionsByCoreName(std::string &coreName)
+std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstructionsByCoreName(std::string &coreName)
 {
     return {};
 }

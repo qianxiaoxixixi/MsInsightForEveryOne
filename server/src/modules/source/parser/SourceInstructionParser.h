@@ -23,10 +23,17 @@ struct ColumDataType {
     };
 };
 
-struct SourceFileInstruction {
+struct DynamicColumn {
     std::map<std::string, std::vector<std::string>> stringColumnMap; // column name to data
     std::map<std::string, std::vector<int>> intColumnMap;
     std::map<std::string, std::vector<float>> floatColumnMap;
+};
+
+struct SourceFileInstructionDynamicCol : public DynamicColumn {
+};
+
+struct SourceFileLineDynamicCol : public DynamicColumn {
+    std::vector<std::pair<std::string, std::string>> addressRange;
 };
 
 class SourceInstructionParser {
@@ -38,7 +45,7 @@ public:
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::string GetInstr(std::string &filePath);
-    std::vector<SourceFileInstruction> GetInstructionsByCoreName(std::string &coreName);
+    std::vector<SourceFileInstructionDynamicCol> GetInstructionsByCoreName(std::string &coreName);
     std::string GetSourceByName(std::string &sourceName, std::string &filePath);
     void Reset();
 
@@ -51,11 +58,18 @@ protected:
     template <typename T>
     void ProcessColumnData(const Value& value, std::vector<T>& columnDataList);
     void ConvertApiFile(const std::string &jsonStr);
+    void ConvertApiFileNew(const std::string &jsonStr);
+    void ParseFile(rapidjson::Value &file);
+    void ParseSourceLineAddressRange(const Value &line, SourceFileLineDynamicCol &sourceFileLine);
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
-    std::vector<SourceFileInstruction>& GetInstructionList()
+    std::vector<SourceFileInstructionDynamicCol>& GetInstructionList()
     {
         return instructionList;
+    }
+    std::map<std::string, std::vector<SourceFileLineDynamicCol>>& GetSourceLinesMap()
+    {
+        return sourceLinesMap;
     }
 
 private:
@@ -64,8 +78,10 @@ private:
     std::map<std::string, Position> sourceFiles;
     std::map<std::string, std::vector<SourceFileLine>> apiFiles; // source file name to lines
     std::vector<std::string> apiCores;
-    std::vector<SourceFileInstruction> instructionList;
-    std::map<std::string, int> instructionColumnTypeMap; // column name to data type
+    std::vector<SourceFileInstructionDynamicCol> instructionList;
+    std::map<std::string, int> instructionColumnTypeMap; // instruction column name to data type
+    std::map<std::string, std::vector<SourceFileLineDynamicCol>> sourceLinesMap; // source file name to lines
+    std::map<std::string, int> sourceLineColumnTypeMap; // source line column name to data type
     Position apiInstrPos{};
 };
 

@@ -347,11 +347,7 @@ public:
 
     static inline bool IsEqual(float a, float b, float epsilon = 1e-9)
     {
-        if (std::fabs(a - b) < epsilon) { // 如何两个浮点数只差小于epsilon, 则认为两数相等
-            return true;
-        } else {
-            return false;
-        }
+        return std::fabs(a - b) < epsilon; // 如何两个浮点数只差小于epsilon, 则认为两数相等
     }
 
     template <typename T>
