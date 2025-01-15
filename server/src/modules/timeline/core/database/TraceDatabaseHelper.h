@@ -177,7 +177,12 @@ static bool ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement
     std::vector<Protocol::ThreadTraces> &fwdBwdData);
 static bool ExecuteQueryP2POpData(std::unique_ptr<SqlitePreparedStatement> stmt, const std::string &rankId,
     uint64_t offset, const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData);
-
+static inline bool IsValidHCCLGroupNameValue(const std::string &groupNameValue)
+{
+    const std::string regexStr = "^[a-zA-Z0-9.%]+_[0-9]{1,5}_[0-9]+";
+    const std::regex pattern(regexStr);
+    return std::regex_search(groupNameValue, pattern);
+}
 private:
 /* Functions for BbTraceDataBase */
     static inline void DealLastData(std::vector<Protocol::SimpleSlice> &rows,

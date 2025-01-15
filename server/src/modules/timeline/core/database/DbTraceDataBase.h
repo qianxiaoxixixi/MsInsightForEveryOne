@@ -184,7 +184,8 @@ private:
                      const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);
 
     void ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process, std::unique_ptr<SqliteResultSet> &resultSet,
-                           std::unique_ptr<Protocol::UnitTrack> &thread, const std::string &threadId) const;
+                           std::unique_ptr<Protocol::UnitTrack> &thread, const std::string &threadId,
+                           const PROCESS_TYPE &type) const;
     bool ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePreparedStatement> &stmt,
         const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
         uint64_t minTimestamp);

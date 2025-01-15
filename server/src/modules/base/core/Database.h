@@ -55,7 +55,6 @@ public:
     bool DropAllTable();
     bool IsDatabaseVersionChange();
     bool GetMetaVersion();
-
     bool SetDataBaseVersion();
 
     bool CheckTableExist(const std::string& tableName);

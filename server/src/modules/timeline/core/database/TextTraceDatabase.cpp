@@ -721,6 +721,14 @@ bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         metaDataDto.label = resultSet->GetString("label");
         metaDataDto.threadId = resultSet->GetString("tid");
         metaDataDto.threadName = resultSet->GetString("threadName");
+        // 解开 threadName = "Group {groupNameValue} Communication" 的形式，获取 {groupNameValue}
+        if (StringUtil::StartWith(metaDataDto.threadName, "Group") &&
+            StringUtil::EndWith(metaDataDto.threadName, "Communication")) {
+            const std::string groupNameValue = TextTraceDatabase::ExtractGroupNameValue(metaDataDto.threadName);
+            if (TraceDatabaseHelper::IsValidHCCLGroupNameValue(groupNameValue)) {
+                metaDataDto.groupNameValue = groupNameValue;
+            }
+        }
         metaDataDto.name = resultSet->GetString("name");
         metaDataDto.args = resultSet->GetString("args");
         metaDataVec.emplace_back(metaDataDto);
@@ -728,6 +736,20 @@ bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     ServerLog::Info("Query units meta data. size:", metaDataVec.size());
     MetaDataToResponse(metaDataVec, fileId, metaData);
     return true;
+}
+
+std::string TextTraceDatabase::ExtractGroupNameValue(const std::string& str)
+{
+    // 静态初始化正则表达式，确保只编译一次
+    static const std::regex expr(R"(Group ([\S]+) Communication)");
+
+    std::smatch match;
+    if (std::regex_match(str, match, expr) && match.size() > 1) {
+        // 获取第一个匹配项（即 groupNameValue）
+        return match.str(1);
+    }
+
+    return "";
 }
 
 void TextTraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
@@ -756,6 +778,7 @@ void TextTraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaD
             thread->metaData.processId = metaDataDto.pid;
             thread->metaData.threadId = metaDataDto.threadId;
             thread->metaData.threadName = metaDataDto.threadName;
+            thread->metaData.groupNameValue = metaDataDto.groupNameValue;
             thread->metaData.maxDepth = metaDataDto.maxDepth;
         } else { // counter
             thread->type = "counter";
