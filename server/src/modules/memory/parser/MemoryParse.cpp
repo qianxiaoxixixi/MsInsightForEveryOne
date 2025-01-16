@@ -676,9 +676,7 @@ void MemoryParse::ParseCallBack(const std::string &fileId, bool result, const st
         event->result = true;
         event->isCluster = MemoryParse::Instance().isCluster;
         std::vector<Protocol::MemorySuccess> memoryResult;
-        for (const auto& pair : MemoryParse::Instance().ranks) {
-            memoryResult.push_back(pair.second);
-        }
+        memoryResult.push_back(MemoryParse::Instance().ranks[fileId]);
         event->memoryResult = memoryResult;
         SendEvent(std::move(event));
     }

@@ -385,9 +385,7 @@ void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, con
         event->result = result;
         event->isCluster = true;
         std::vector<Protocol::MemorySuccess> memoryResult;
-        for (const auto& pair : ranks) {
-            memoryResult.push_back(pair.second);
-        }
+        memoryResult.push_back(ranks[fileId]);
         event->memoryResult = memoryResult;
         SendEvent(std::move(event));
     }
