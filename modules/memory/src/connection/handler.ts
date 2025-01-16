@@ -17,21 +17,11 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                 return;
             }
             const memoryResult = data.memoryResult as RankInfo[];
-            const isCluster = data.isCluster as boolean;
-            if (!isCluster && !session.isCluster) {
-                memoryResult.forEach((item) => {
-                    if (!session.memoryRankIds.includes(item.rankId) && (item.hasMemory as boolean)) {
-                        session.memoryRankIds.push(item.rankId);
-                    }
-                });
-            } else {
-                session.memoryRankIds = [];
-                memoryResult.forEach((item) => {
-                    if (item.hasMemory) {
-                        session.memoryRankIds.push(item.rankId);
-                    }
-                });
-            }
+            memoryResult.forEach((item) => {
+                if (!session.memoryRankIds.includes(item.rankId) && (item.hasMemory as boolean)) {
+                    session.memoryRankIds.push(item.rankId);
+                }
+            });
         });
     } catch (err) {
         console.error(err);
