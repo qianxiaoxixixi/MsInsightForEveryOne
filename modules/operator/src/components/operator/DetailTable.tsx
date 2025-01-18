@@ -172,26 +172,25 @@ const queryOperatorDetailData = async ({ fullCondition, filterTypes, opType, opN
     return await queryOperatorsInStatic(param);
 };
 
-const handleOrginData = (group: string, pageSize: number, current: number, data: any[]): any[] => {
+const handleOrginData = (condition: FullConditionType, data: any[]): any[] => {
     const realData: any[] = [];
     data.forEach((item: any, index: number) => {
         if (item.compare !== null && item.compare !== undefined) {
-            const diff = 'diff';
-            item.compare.rowKey = group + String((pageSize * current) + index) + diff;
+            const { opType, opName, accCore, inputShape } = item.compare;
+            item.compare.rowKey = `${JSON.stringify({ ...condition, opType, opName, accCore, inputShape })}${index}`;
             realData.push(item.compare);
         } else {
-            item.rowKey = group + String((pageSize * current) + index);
             realData.push(item);
         };
     });
     return realData;
 };
 
-const handleDiffData = (group: string, pageSize: number, current: number, data: any[], t: TFunction): any => {
+const handleDiffData = (condition: FullConditionType, data: any[], t: TFunction): any => {
     const realData: any[] = [];
     data.forEach((item: any, index: number) => {
         if (item.diff !== null && item.diff !== undefined) {
-            item.diff.rowKey = group + String((pageSize * current) + index);
+            item.diff.rowKey = `${JSON.stringify(condition)}${index}`;
             item.diff.source = t('operator:Difference');
             item.diff.compInfo = [item.baseline, item.compare];
             realData.push(item.diff);
@@ -271,11 +270,11 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             if (isExpend) {
                 realData = handleCompareData(data, t);
             } else {
-                realData = handleDiffData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data, t);
+                realData = handleDiffData(fullCondition, data, t);
                 setCompareColumnLevel(level);
             }
         } else {
-            realData = handleOrginData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data);
+            realData = handleOrginData(fullCondition, data);
         }
         setTableData(realData);
         setPage({ ...page, total });
