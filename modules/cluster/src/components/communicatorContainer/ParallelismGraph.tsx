@@ -209,7 +209,8 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const addLines = (drawer: CanvasDrawer): void => {
         if (drawer !== null && data !== undefined && activeRectIndex !== null) {
             const linesGroup = data?.connections?.filter(connection => {
-                const isPpLineInPpDimension = dimension === 'ep-dp-pp-cp' && connection.type === 'pp';
+                const isPpLineInPpDimension = (dimension === 'ep-dp-pp-cp' || dimension === 'ep-dp-pp') &&
+                    connection.type === 'pp';
                 return connection.list.includes(activeRectIndex) && !isPpLineInPpDimension;
             }).map(item => {
                 return {
