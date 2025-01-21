@@ -252,7 +252,10 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         setIsMatchCase(status);
         runInAction(() => {
             if (session.searchData !== null && session.searchData !== undefined) {
-                session.searchData.isMatchCase = status;
+                session.searchData = {
+                    ...session.searchData,
+                    isMatchCase: status,
+                };
             }
         });
     }
@@ -262,7 +265,10 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         setIsMatchExact(status);
         runInAction(() => {
             if (session.searchData !== null && session.searchData !== undefined) {
-                session.searchData.isMatchExact = status;
+                session.searchData = {
+                    ...session.searchData,
+                    isMatchExact: status,
+                };
             }
         });
     }

@@ -422,7 +422,7 @@ function maskedNotSelectData<T extends ChartType>(session: Session, handle: Char
     if (session.searchData) {
         const name = session.searchData.content;
         const isAble = (item: any): boolean => {
-            if (session.searchData?.isMatchCase === undefined) {
+            if (session.searchData?.isMatchCase === undefined || name === '') {
                 return false;
             }
             const it = item as {name: string};
