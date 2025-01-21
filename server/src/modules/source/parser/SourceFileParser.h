@@ -43,6 +43,7 @@ public:
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::vector<SourceFileLineDynamicCol> GetApiLinesDynamic(const std::string &core, const std::string &sourceName);
     std::string GetInstr();
+    std::vector<SourceApiInstruction> GetInstructions(std::string &coreName);
     std::vector<SourceFileInstructionDynamicCol> GetInstrDynamic(std::string &coreName);
     std::map<std::string, int> GetInstructionColumnTypeMap();
     std::map<std::string, int> GetSourceLineColumnTypeMap();

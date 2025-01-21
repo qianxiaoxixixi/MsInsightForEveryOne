@@ -58,10 +58,23 @@ struct SourceColumnValueMap {
     std::unordered_map<std::string, std::string> stringMap;
 };
 
+struct SourceApiInstrRes {
+    std::string address;
+    std::string ascendCInnerCode;
+    int cycles{};
+    int instructionsExecuted{};
+    std::string pipe;
+    std::string source;
+    int theoreticalStallCycles{};
+    int realStallCycles{};
+};
+
 struct SourceApiInstrDynamicBody {
     std::string coreName;
     std::map<std::string, int> columnNameMap;
     std::vector<SourceColumnValueMap> columnValues;
+    // earlier version data
+    std::vector<SourceApiInstrRes> instructions;
 };
 
 struct SourceApiInstrDynamicResponse : public Response {
@@ -77,6 +90,8 @@ struct SourceFileLineDynamic {
 struct SourceApiLineDynamicResBody {
     std::map<std::string, int> columnNameMap;
     std::vector<SourceFileLineDynamic> sourceFileLines;
+    // earlier version data
+    std::vector<SourceFileLineRes> lines;
 };
 
 struct SourceApiLineDynamicResponse : public Response {
