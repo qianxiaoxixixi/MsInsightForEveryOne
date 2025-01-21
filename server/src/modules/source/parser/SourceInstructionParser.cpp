@@ -172,6 +172,53 @@ void SourceInstructionParser::ProcessColumnData(const Value& value, std::vector<
     }
 }
 
+void SetStringDataOfInstruction(const Value &instruction, std::string &target, const std::string &fieldName)
+{
+    if (instruction.HasMember(fieldName.c_str()) && instruction[fieldName.c_str()].IsString()) {
+        target = instruction[fieldName.c_str()].GetString();
+    }
+}
+
+void SetIntArrayOfInstruction(const Value &instruction, std::vector<int> &target, std::string &&fieldName)
+{
+    if (!JsonUtil::IsJsonArray(instruction, fieldName)) {
+        return;
+    }
+    for (const auto &item: instruction[fieldName.c_str()].GetArray()) {
+        if (item.IsInt()) {
+            target.emplace_back(item.GetInt());
+        }
+    }
+}
+
+/*
+json示例
+{
+  "Cores": [ // 执行算子的计算核，如"core0.cubecore0"，"core0.veccore0"
+    string
+  ],
+  "Instructions": [
+    {
+      "Address": string, 			// 指令的偏移地址,如"0x1269f000"
+      "AscendC Inner Code": string, // 源代码文件路径和代码行号,如"/home/xxx.cpp:23"
+      "Cycles": [ 					// 指令在各个计算核上消耗的时钟周期
+        int
+      ],
+      "Instructions Executed": [ 	// 指令在各个计算核上执行的次数
+        int
+      ],
+      "Pipe": string, 				// 指令所属的指令队列,如"SCALAR"
+      "TheoreticalStallCycles": [                    // 预期阻塞时间
+        int
+       ],
+      "Source": string, 				// 指令内容, 如"MOV_XD_IMM XD:X29,IMM"
+      "RealStallCycles": [                    // 实际阻塞时间
+        int
+       ]
+    }
+  ]
+}
+ */
 void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
 {
     Document d;
@@ -186,6 +233,27 @@ void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
         // parse instructions
         if (d.HasMember("Instructions Dtype")) {
             ConvertApiInstrDynamic(jsonStr);
+            return;
+        }
+        // 适配老版本数据
+        if (!JsonUtil::IsJsonArray(d, "Instructions")) {
+            return;
+        }
+        Value &instructions = d["Instructions"];
+        for (const auto &instruction: instructions.GetArray()) {
+            if (!instruction.IsObject()) {
+                continue;
+            }
+            SourceApiInstruction temp;
+            SetStringDataOfInstruction(instruction, temp.address, "Address");
+            SetStringDataOfInstruction(instruction, temp.source, "Source");
+            SetStringDataOfInstruction(instruction, temp.ascendCInnerCode, "AscendC Inner Code");
+            SetStringDataOfInstruction(instruction, temp.pipe, "Pipe");
+            SetIntArrayOfInstruction(instruction, temp.cycles, "Cycles");
+            SetIntArrayOfInstruction(instruction, temp.instructionsExecuted, "Instructions Executed");
+            SetIntArrayOfInstruction(instruction, temp.realStallCycles, "RealStallCycles");
+            SetIntArrayOfInstruction(instruction, temp.theoreticalStallCycles, "TheoreticalStallCycles");
+            apiInstructionList.emplace_back(temp);
         }
     } catch (const std::exception &e) {
         ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
@@ -451,8 +519,9 @@ std::vector<SourceFileLine> SourceInstructionParser::ConvertToLineArray(Value &l
 void SourceInstructionParser::Reset()
 {
     sourceFiles.clear();
-    apiCores.clear();
     apiFiles.clear();
+    apiInstructionList.clear();
+    apiCores.clear();
     instructionList.clear();
     instructionColumnTypeMap.clear();
     sourceLinesMap.clear();
@@ -526,6 +595,38 @@ std::string SourceInstructionParser::GetInstr(std::string &filePath)
     std::string content = BinFileParseUtil::GetContentStr(file, apiInstrPos, maxDataSize);
     file.close();
     return content;
+}
+
+void SetInstrDataOfTargetCore(const std::vector<int> &sourceList, std::vector<int> &targetList, size_t index)
+{
+    if (sourceList.empty()) {
+        return;
+    }
+    targetList.emplace_back(sourceList[index < sourceList.size() ? index : 0]);
+}
+
+std::vector<SourceApiInstruction> SourceInstructionParser::GetInstructions(std::string &coreName)
+{
+    std::vector<SourceApiInstruction> result;
+    auto targetCore = std::find(apiCores.begin(), apiCores.end(), coreName);
+    if (targetCore == apiCores.end()) {
+        targetCore = apiCores.begin();
+    }
+    size_t index = std::distance(apiCores.begin(), targetCore); // never below zero
+    for (const auto &item: apiInstructionList) {
+        SourceApiInstruction temp;
+        temp.pipe = item.pipe;
+        temp.ascendCInnerCode = item.ascendCInnerCode;
+        temp.address = item.address;
+        temp.source = item.source;
+        SetInstrDataOfTargetCore(item.theoreticalStallCycles, temp.theoreticalStallCycles, index);
+        SetInstrDataOfTargetCore(item.realStallCycles, temp.realStallCycles, index);
+        SetInstrDataOfTargetCore(item.instructionsExecuted, temp.instructionsExecuted, index);
+        SetInstrDataOfTargetCore(item.cycles, temp.cycles, index);
+        result.emplace_back(temp);
+    }
+
+    return result;
 }
 
 std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDynamic(std::string &coreName)

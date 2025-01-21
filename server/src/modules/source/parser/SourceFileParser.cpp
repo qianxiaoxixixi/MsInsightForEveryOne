@@ -385,6 +385,12 @@ std::string SourceFileParser::GetInstr()
     return sourceInstructionParser.GetInstr(filePath);
 }
 
+std::vector<SourceApiInstruction> SourceFileParser::GetInstructions(std::string &coreName)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return sourceInstructionParser.GetInstructions(coreName);
+}
+
 std::vector<SourceFileInstructionDynamicCol> SourceFileParser::GetInstrDynamic(std::string &coreName)
 {
     std::unique_lock<std::mutex> lock(mutex);

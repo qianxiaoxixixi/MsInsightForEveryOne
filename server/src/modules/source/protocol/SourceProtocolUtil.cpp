@@ -66,6 +66,11 @@ std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const Sou
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
+    if (response.body.columnNameMap.empty()) { // 如果列名映射表为空，说明是老版本数据
+        SetSourceApiLineResponseBody(response.body.lines, body, allocator);
+        JsonUtil::AddMember(json, "body", body, allocator);
+        return std::move(json);
+    }
     // 组装表头信息
     json_t jsonFileLineDtype(kObjectType);
     json_t jsonInstrColumn(kObjectType);
@@ -104,6 +109,28 @@ std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const Sou
     return std::move(json);
 }
 
+void SetSourceApiLineResponseBody(const std::vector<SourceFileLineRes> &lines, json_t &body,
+                                  Document::AllocatorType &allocator)
+{
+    json_t jsonLines(kArrayType);
+    for (auto lineRes: lines) {
+        json_t line(kObjectType);
+        JsonUtil::AddMember(line, "Line", lineRes.line, allocator);
+        JsonUtil::AddMember(line, "Instruction Executed", lineRes.instructionExecuted, allocator);
+        JsonUtil::AddMember(line, "Cycle", lineRes.cycle, allocator);
+        json_t ranges(kArrayType);
+        for (auto pair: lineRes.addressRange) {
+            json_t range(kArrayType);
+            range.PushBack(json_t().SetString(pair.first.c_str(), allocator), allocator);
+            range.PushBack(json_t().SetString(pair.second.c_str(), allocator), allocator);
+            ranges.PushBack(range, allocator);
+        }
+        JsonUtil::AddMember(line, "Address Range", ranges, allocator);
+        jsonLines.PushBack(line, allocator);
+    }
+    JsonUtil::AddMember(body, "Lines", jsonLines, allocator);
+}
+
 template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(const SourceApiInstrResponse &response)
 {
     document_t json(kObjectType);
@@ -115,6 +142,25 @@ template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(cons
     return std::move(json);
 }
 
+void SetApiInstructionResponseBody(const std::vector<SourceApiInstrRes> &instructions, json_t &body,
+                                   Document::AllocatorType &allocator)
+{
+    json_t jsonInstructions(kArrayType);
+    for (const auto &item: instructions) {
+        json_t jsonItem(kObjectType);
+        JsonUtil::AddMember(jsonItem, "Source", item.source, allocator);
+        JsonUtil::AddMember(jsonItem, "Address", item.address, allocator);
+        JsonUtil::AddMember(jsonItem, "Ascend Inner Code", item.ascendCInnerCode, allocator);
+        JsonUtil::AddMember(jsonItem, "Cycles", item.cycles, allocator);
+        JsonUtil::AddMember(jsonItem, "Instructions Executed", item.instructionsExecuted, allocator);
+        JsonUtil::AddMember(jsonItem, "Pipe", item.pipe, allocator);
+        JsonUtil::AddMember(jsonItem, "RealStallCycles", item.realStallCycles, allocator);
+        JsonUtil::AddMember(jsonItem, "TheoreticalStallCycles", item.theoreticalStallCycles, allocator);
+        jsonInstructions.PushBack(jsonItem, allocator);
+    }
+    JsonUtil::AddMember(body, "Instructions", jsonInstructions, allocator);
+}
+
 template<>
 std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const SourceApiInstrDynamicResponse &response)
 {
@@ -122,6 +168,11 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
+    if (response.body.columnNameMap.empty()) { // 如果列名映射表为空，说明是老版本数据
+        SetApiInstructionResponseBody(response.body.instructions, body, allocator);
+        JsonUtil::AddMember(json, "body", body, allocator);
+        return std::move(json);
+    }
     // 组装表头信息
     json_t jsonInstrDtype(kObjectType);
     json_t jsonInstrColumn(kObjectType);

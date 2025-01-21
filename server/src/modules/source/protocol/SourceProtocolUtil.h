@@ -19,6 +19,8 @@ template<> std::optional<document_t> ToResponseJson<SourceCodeFileResponse>(cons
 template<> std::optional<document_t> ToResponseJson<SourceApiLineResponse>(const SourceApiLineResponse &response);
 template<>
 std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const SourceApiLineDynamicResponse &response);
+void SetSourceApiLineResponseBody(const std::vector<SourceFileLineRes> &lines, json_t &body,
+                                  Document::AllocatorType &allocator);
 template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(const SourceApiInstrResponse &response);
 template<>
 std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const SourceApiInstrDynamicResponse &response);

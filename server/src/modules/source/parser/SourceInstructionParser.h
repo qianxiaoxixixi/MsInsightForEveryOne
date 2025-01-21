@@ -19,6 +19,17 @@ struct SourceFileLine {
     std::vector<std::pair<std::string, std::string>> addressRange;
 };
 
+struct SourceApiInstruction {
+    std::string address;
+    std::string ascendCInnerCode;
+    std::vector<int> cycles;
+    std::vector<int> instructionsExecuted;
+    std::string pipe;
+    std::string source;
+    std::vector<int> theoreticalStallCycles;
+    std::vector<int> realStallCycles;
+};
+
 struct DynamicColumn {
     std::unordered_map<std::string, std::vector<std::string>> stringColumnMap; // column name to data
     std::unordered_map<std::string, std::vector<int>> intColumnMap;
@@ -42,6 +53,7 @@ public:
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::vector<SourceFileLineDynamicCol> GetApiLinesDynamic(const std::string &core, const std::string &sourceName);
     std::string GetInstr(std::string &filePath);
+    std::vector<SourceApiInstruction> GetInstructions(std::string &coreName);
     std::vector<SourceFileInstructionDynamicCol> GetInstrDynamic(std::string &coreName);
     std::string GetSourceByName(std::string &sourceName, std::string &filePath);
     std::map<std::string, int> GetInstructionColumnTypeMap() const;
@@ -74,12 +86,21 @@ protected:
     {
         return sourceLinesMap;
     }
+    std::vector<SourceApiInstruction>& GetApiInstructionList()
+    {
+        return apiInstructionList;
+    }
+    std::map<std::string, std::vector<SourceFileLine>>& GetApiFiles()
+    {
+        return apiFiles;
+    }
 
 private:
     const static uint16_t filePathLengthConst = 4096;
     const static uint16_t addressRangeSize = 2;
     std::map<std::string, Position> sourceFiles;
     std::map<std::string, std::vector<SourceFileLine>> apiFiles; // source file name to lines
+    std::vector<SourceApiInstruction> apiInstructionList;
     std::vector<std::string> apiCores;
     std::vector<SourceFileInstructionDynamicCol> instructionList;
     std::map<std::string, int> instructionColumnTypeMap; // instruction column name to data type
