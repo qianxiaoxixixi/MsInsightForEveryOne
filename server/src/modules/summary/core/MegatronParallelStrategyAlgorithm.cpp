@@ -390,24 +390,25 @@ std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(
 
 void MegatronParallelStrategyAlgorithm::GetConnections(Element &curEle)
 {
-    // 仅支持 DIMENSIONS_TP 与 DIMENSIONS_PP 层级
-    if (dimension != DIMENSIONS_TP) {
+    static const std::vector<std::string> dimsHasConnection = {DIMENSIONS_TP, DIMENSIONS_CP, DIMENSIONS_PP};
+    if (std::find(dimsHasConnection.begin(), dimsHasConnection.end(), dimension) == dimsHasConnection.end()) {
         return;
     }
-
+    uint32_t hiddenSize = (elementSize == 0 || wordSize == 0) ? 1 : (wordSize / elementSize);
     // 求tp连接，范围为[0, tp size)，步长为1
-    AddConnection(data.connections, TP_PARA, tpSize, 1, curEle);
+    AddConnection(data.connections, TP_PARA, tpSize / hiddenSize, 1, curEle);
     // 求cp连接，范围为[0, cp_size * tp_size)，步长为tp_size
-    AddConnection(data.connections, CP_PARA, tpCpSize, tpSize, curEle);
+    AddConnection(data.connections, CP_PARA, tpCpSize / hiddenSize, tpSize / hiddenSize, curEle);
+
     if (strategyConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG) {
         // 求dp连接，范围为[0, cp_size * tp_size * dp_size)，步长为tp size * cp size
-        AddConnection(data.connections, DP_PARA, tpCpDpSize, tpCpSize, curEle);
+        AddConnection(data.connections, DP_PARA, tpCpDpSize / hiddenSize, tpCpSize / hiddenSize, curEle);
         // 求pp连接，范围为[0, cp size，步长为tp size * cp size * dp size
-        AddConnection(data.connections, PP_PARA, data.size - curEle.index, tpCpDpSize, curEle);
+        AddConnection(data.connections, PP_PARA, data.size - curEle.index, tpCpDpSize / hiddenSize, curEle);
         return;
     } else {
         // 求pp连接，范围为cp size，步长为tp size * cp size * dp size
-        AddConnection(data.connections, PP_PARA, tpCpPpSize, tpCpSize, curEle);
+        AddConnection(data.connections, PP_PARA, tpCpPpSize / hiddenSize, tpCpSize / hiddenSize, curEle);
         // 求dp连接，范围为cp size，步长为tp size * cp size
         AddConnection(data.connections, DP_PARA, data.size - curEle.index, tpCpPpSize, curEle);
     }
@@ -417,6 +418,9 @@ void MegatronParallelStrategyAlgorithm::AddConnection(std::vector<Connection> &c
     const std::string &paraType, uint32_t len, uint32_t stepSize, Element &curEle)
 {
     if (curEle.indexAttributes[paraType + STR_INDEX] != 0) {
+        return;
+    }
+    if (len <= 1) {
         return;
     }
     std::vector<uint32_t> indexes{};
