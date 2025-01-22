@@ -34,6 +34,7 @@ interface FullConditionType {
 interface CompInfo {
     level: string;
     detailData: any[];
+    pmuHeaders: any[];
 }
 
 const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputShape, compInfo, session }:
@@ -82,24 +83,26 @@ const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuH
     let result = [];
     switch (group) {
         case OperatorGroup.OPERATOR: {
-            if (isCompare && !isExpend) {
-                result = [...colMap[group][columnLevel] ?? colMap[group].l2, btnCol];
-                break;
-            }
+            // 对于operator算子，先获取基本列，再获取pmu列
             const columns = colMap[group][columnLevel] ?? colMap[group].l2;
-            // pmu数据的表头，后端返回时确定
-            if (pmuHeaders === null || pmuHeaders === undefined) {
-                result = columns;
+            // pmu数据的表头，后端返回时确定,如果为空或者未定义就是没有，不做处理直接返回
+            if (pmuHeaders !== null && pmuHeaders !== undefined && Array.isArray(pmuHeaders)) {
+                pmuHeaders.forEach((item: any) => {
+                    columns.push({
+                        title: modifyTitle(item),
+                        dataIndex: item,
+                        sorter: false,
+                        ellipsis: true,
+                    });
+                });
+            }
+
+            if (isCompare && !isExpend) {
+                // 这里是比对的表头信息，多加了一个see more 列用于查看详细信息
+                result = [...columns, btnCol];
                 break;
             }
-            pmuHeaders.forEach((item: any, index: number) => {
-                columns.push({
-                    title: modifyTitle(item),
-                    dataIndex: index,
-                    sorter: false,
-                    ellipsis: true,
-                });
-            });
+            // 这个是比对的详细的表格数据
             result = columns;
             break;
         }
@@ -122,6 +125,29 @@ const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuH
             break;
     }
     return result;
+};
+
+const fetchData = async (fullCondition: FullConditionType, condition: ConditionType,
+    opDetail: { opType?: string; opName?: string; accCore?: string; inputShape?: string },
+    pageStatus: { isCompare: boolean; compInfo?: CompInfo }): Promise<{ res: any; isExpend: boolean }> => {
+    const filterTypes = setFilterTypes(fullCondition);
+    const { opType, opName, accCore, inputShape } = opDetail;
+    const { isCompare, compInfo } = pageStatus;
+    let isExpend = false;
+    let res;
+
+    if (opType !== undefined || opName !== undefined || accCore !== undefined) {
+        isExpend = true;
+        if (isCompare) {
+            res = { data: compInfo?.detailData ?? [], total: 2, level: compInfo?.level, pmuHeaders: compInfo?.pmuHeaders };
+        } else {
+            res = await queryOperatorDetailData({ fullCondition, filterTypes, opType, opName, accCore, inputShape });
+        }
+    } else {
+        res = await queryOperatorData({ condition, fullCondition, filterTypes });
+    }
+
+    return { res, isExpend };
 };
 
 const getHcclOperatorTypeCols = ({ group, columnLevel, btnCol, colMap, isCompare, isExpend }:
@@ -226,6 +252,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
     });
     const [compareColumnLevel, setCompareColumnLevel] = useState<string>();
+    const [comparePmuColumns, setComparePmuColumns] = useState<string[]>([]);
     const btnCol = {
         title: t('Details'),
         width: 115,
@@ -247,20 +274,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const colMap = useColMap(isCompare && compInfo === undefined);
     const compareSourceCol = useCompareSourceColumn();
     const updateData = async(): Promise<void> => {
-        let isExpend = false;
-        const filterTypes = setFilterTypes(fullCondition);
-        let res;
-        if (opType !== undefined || opName !== undefined || accCore !== undefined) {
-            // 展开算子
-            isExpend = true;
-            if (isCompare) {
-                res = { data: compInfo?.detailData ?? [], total: 2, level: compInfo?.level };
-            } else {
-                res = await queryOperatorDetailData({ fullCondition, filterTypes, opType, opName, accCore, inputShape });
-            }
-        } else {
-            res = await queryOperatorData({ condition, fullCondition, filterTypes });
-        };
+        const { res, isExpend } = await fetchData(fullCondition, condition, { opType, opName, accCore, inputShape }, { isCompare, compInfo });
         if (res === null || res === undefined) {
             return;
         }
@@ -272,6 +286,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             } else {
                 realData = handleDiffData(fullCondition, data, t);
                 setCompareColumnLevel(level);
+                // 存到缓存里面
+                setComparePmuColumns(pmuHeaders);
             }
         } else {
             realData = handleOrginData(fullCondition, data);
@@ -378,6 +394,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                         isCompare
                             ? {
                                 level: compareColumnLevel,
+                                pmuHeaders: comparePmuColumns,
                                 detailData: record.compInfo ?? [],
                             } as CompInfo
                             : undefined

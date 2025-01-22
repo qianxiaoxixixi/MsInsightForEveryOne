@@ -75,7 +75,6 @@ bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
         ServerLog::Error("Failed to prepare insert kernel detail statement. error:", sqlite3_errmsg(db));
         return false;
     }
- 
     hasInitStmt = true;
     return true;
 }
@@ -712,9 +711,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         return true;
     }
 
-    std::vector<std::string> TextSummaryDataBase::FetchPmuColumnNames()
+    std::set<std::string> TextSummaryDataBase::FetchPmuColumnNames()
     {
-        std::vector<std::string> columns;
+        if (!pmuColumns_.empty()) {
+            return pmuColumns_;
+        }
         std::string queryColumnSql = "SELECT name "
                                      "FROM pragma_table_info('" + TABLE_KERNEL + "') "
                                      "WHERE cid >= ( "
@@ -726,7 +727,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         int result = sqlite3_prepare_v2(db, queryColumnSql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
-            return columns;
+            return pmuColumns_;
         }
         // 执行SQL查询并处理结果
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -737,11 +738,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 sqlite3_finalize(stmt);
                 return {};
             }
-            columns.push_back(colName);
+            pmuColumns_.insert(colName);
         }
         // 释放资源
         sqlite3_finalize(stmt);
-        return columns;
+        return pmuColumns_;
     }
 
     std::string TextSummaryDataBase::GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams,
@@ -751,8 +752,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         // 获取pmu数据的列用来做查询，如果pmuColumnNames为空，就表示没有pmu列需要查找
         std::string pmuColumnNames;
         if (!isHccl) {
-            std::vector<std::string> pmuClos = FetchPmuColumnNames();
-            pmuColumnNames = JoinExtraColName(pmuClos);
+            std::set<std::string> pmuClos = FetchPmuColumnNames();
+            pmuColumnNames = JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end()));
         }
         std::string sql;
         std::string sqlTab =
@@ -867,10 +868,9 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             one.outputShape = sqlite3_column_string(stmt, col++);
             one.outputType = sqlite3_column_string(stmt, col++);
             one.outputFormat = sqlite3_column_string(stmt, col++);
-            for (int i = col; i < columnCount; i++) {
-                std::string columnValue = sqlite3_column_string(stmt, i);
+            for (const auto &pmuCol : FetchPmuColumnNames()) {
                 // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
-                one.pmuDatas.emplace_back(std::move(columnValue));
+                one.pmuDatas[pmuCol] = sqlite3_column_string(stmt, col++);
             }
             res.emplace_back(one);
         }

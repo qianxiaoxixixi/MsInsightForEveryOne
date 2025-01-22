@@ -88,7 +88,7 @@ private:
     bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
 
     bool IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup);
-    std::vector<std::string> FetchPmuColumnNames();
+    std::set<std::string> FetchPmuColumnNames();
     std::string GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams, bool isLimit);
     std::string GetQuerySqlNofilter(Protocol::OperatorStatisticReqParams &reqParams, const bool isHccl,
                                     const std::string &group, const std::string &name);

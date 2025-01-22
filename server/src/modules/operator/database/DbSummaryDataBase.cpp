@@ -391,7 +391,6 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
     }
-
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = 0;
         int columnCount = sqlite3_column_count(stmt);
@@ -411,9 +410,9 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
         one.outputShape = sqlite3_column_string(stmt, col++);
         one.outputType = sqlite3_column_string(stmt, col++);
         one.outputFormat = sqlite3_column_string(stmt, col++);
-        for (int i = col; i < columnCount; i++) {
-            std::string columnValue = sqlite3_column_string(stmt, i);
-            one.pmuDatas.push_back(columnValue);
+        for (const auto &pmuCol : pmuColumns_) {
+            // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
+            one.pmuDatas[pmuCol] = sqlite3_column_string(stmt, col++);
         }
         res.emplace_back(one);
     }
@@ -751,11 +750,10 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
 }
 // LCOV_EXCL_BR_STOP
 
-std::vector<std::string> DbSummaryDataBase::FetchPmuColumnNames()
+std::set<std::string> DbSummaryDataBase::FetchPmuColumnNames()
 {
-    std::vector<std::string> columns;
-    if (!CheckTableExist(TABLE_TASK_PMU_INFO)) {
-        return columns;
+    if (!CheckTableExist(TABLE_TASK_PMU_INFO) || !pmuColumns_.empty()) {
+        return pmuColumns_;
     }
     std::string queryColumnSql = "SELECT STRING_IDS.value "
                                   "FROM STRING_IDS "
@@ -773,7 +771,7 @@ std::vector<std::string> DbSummaryDataBase::FetchPmuColumnNames()
     int result = sqlite3_prepare_v2(db, queryColumnSql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to get pmu cols Info. Msg:", sqlite3_errmsg(db), " ", result);
-        return columns;
+        return pmuColumns_;
     }
     // 执行SQL查询并处理结果
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -784,16 +782,16 @@ std::vector<std::string> DbSummaryDataBase::FetchPmuColumnNames()
             ServerLog::Error("There is an SQL injection attack on colName. error colName: %", colName);
             return {};
         }
-        columns.push_back(colName);
+        pmuColumns_.insert(colName);
     }
 
     // 释放资源
     sqlite3_finalize(stmt);
-    return columns;
+    return pmuColumns_;
 }
 
 // STRING_IDS 和 TASK_PMU_INFO表联查，用 globalTaskId分组
-std::string DbSummaryDataBase::CreatPMUTmpTableSql(std::vector<std::string> cols)
+std::string DbSummaryDataBase::CreatPMUTmpTableSql(const std::set<std::string> &cols)
 {
     if (cols.empty()) {
         return "";
@@ -809,7 +807,7 @@ std::string DbSummaryDataBase::CreatPMUTmpTableSql(std::vector<std::string> cols
     return " LEFT JOIN ( " + convertPmuDataSql +  " ) AS PMU ON COMPUTE_TASK_INFO.globalTaskId = PMU.globalTaskId ";
 }
 
-std::string DbSummaryDataBase::GetPMUTmpTableColSql(const std::vector<std::string> &cols)
+std::string DbSummaryDataBase::GetPMUTmpTableColSql(const std::set<std::string> &cols)
 {
     if (cols.empty()) {
         return "";
@@ -826,13 +824,13 @@ std::string DbSummaryDataBase::GetPMUTmpTableColSql(const std::vector<std::strin
 // LCOV_EXCL_BR_START
 std::string DbSummaryDataBase::GenerateQueryDetailSqlForOperator()
 {
-    std::vector<std::string> pmuClos = FetchPmuColumnNames();
+    std::set<std::string> pmuClos = FetchPmuColumnNames();
     // JoinExtraColName、 GetPMUTmpTableColSql、 CreatPMUTmpTableSql 为PMU数据处理，如果没有返回""
     std::string sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
         " CASE WHEN start_time == 0 THEN 'NA' ELSE  ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
         " END AS startTime, duration, wait_time, " + blockDimColumnName + ","
         " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats "
-        + JoinExtraColName(pmuClos) +
+        + JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end())) +
         " FROM ("
         "     SELECT " + blockDimColumnName + ", deviceId as rank_id, streamId as step_id,NAME.value AS name,"
         "     OPTYPE.value AS op_type,TASKTYPE.value as accelerator_core, startNs as start_time, "

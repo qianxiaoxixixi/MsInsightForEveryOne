@@ -105,6 +105,13 @@ public:
         }
         return pmuColumnNames;
     }
+
+    const std::set<std::string>& GetPmuColumns() const
+    {
+        return pmuColumns_;
+    }
+    // kernelparser解析的时候赋值
+    std::set<std::string> pmuColumns_;
 };
 }
 

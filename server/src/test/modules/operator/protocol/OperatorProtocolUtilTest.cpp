@@ -340,7 +340,14 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestWhenPmuDataExist)
 {
     Dic::Protocol::OperatorDetailInfoResponse response;
     std::string err;
-    std::vector<std::string> datas = {"1", "2", "3", "4", "5"};
+    // pmu数据新增
+    std::map<std::string, std::string> datas = {
+            {"aic_total_time", "1"},
+            {"aic_totle_cycle", "2"},
+            {"aiv_bw", "3"},
+            {"aic_bw", "4"},
+            {"aic_rate", "5"}
+    };
     response.pmuHeaders = {"aic_total_time", "aic_totle_cycle", "aiv_bw", "aic_bw", "aic_rate"};
     response.datas = {
         {

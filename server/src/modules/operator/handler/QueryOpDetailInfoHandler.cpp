@@ -128,6 +128,10 @@ namespace Dic::Module::Operator {
     bool QueryOpDetailInfoHandler::HandleCompareDataRequest(OperatorDetailInfoRequest &request,
                                                             OperatorDetailInfoResponse &response)
     {
+        // topK是0，不用查询直接返回
+        if (request.params.topK == 0) {
+            return true;
+        }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
@@ -135,9 +139,8 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to query current detail info by rankId.");
             return false;
         }
-        if (request.params.topK == 0) {
-            return true;
-        }
+        std::set<std::string> cmpPmuHeader = database->GetPmuColumns();
+
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             ServerLog::Error("[Operator]Failed to get baseline id.");
@@ -150,6 +153,9 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
             return false;
         }
+        std::set<std::string> basePmuHeader = databaseBaseline->GetPmuColumns();
+
+        // 按照分组合并基线和compare数据，获取全量的比对数据
         std::vector<Protocol::OperatorDetailCmpInfoRes> fullCmpData;
         fullCmpData = GetCmpDataVec(baselineRes, cmpRes);
         constexpr int64_t MAX_INT64 = std::numeric_limits<int64_t>::max();
@@ -160,7 +166,11 @@ namespace Dic::Module::Operator {
         } else {
             response.total = safeSize;
         }
-        response.datas = GetFixNumDiffCmpData(fullCmpData, request.params, response.total);
+        cmpPmuHeader.insert(basePmuHeader.begin(), basePmuHeader.end());
+        response.pmuHeaders = cmpPmuHeader;
+        // 计算比对数据的值，返回给data
+        response.datas = GetFixNumDiffCmpData(fullCmpData, request.params, response.total,
+                                              basePmuHeader, cmpPmuHeader);
         return true;
     }
 
@@ -248,8 +258,23 @@ namespace Dic::Module::Operator {
         return datailData;
     }
 
-    void QueryOpDetailInfoHandler::FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data)
+    std::string QueryOpDetailInfoHandler::CalPmuDataCompare(const std::string &comPmu,
+                                                            const std::string &basePmu)
     {
+        // profiling给的数据不一定都是double且有可能为空，是double就计算，不是double原样呈现
+        if (NumberUtil::IsDouble(comPmu) && NumberUtil::IsDouble(basePmu)) {
+            return NumberUtil::StringDoubleMinus(comPmu, basePmu);
+        } else {
+            // 注意这里如果两个数据都是空，那么还是按照原数据呈现不要做处理，方便区分是未上报还是数据有问题
+            return comPmu + "->" + basePmu;
+        }
+    }
+
+    void QueryOpDetailInfoHandler::FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data,
+                                                    const std::set<std::string> &basePmuHeader,
+                                                    const std::set<std::string> &cmpPmuHeader)
+    {
+        // data.compare.duration == DOUBLE_MIN_VALUE 表示compare数据没有不用做计算
         if (data.compare.duration == DOUBLE_MIN_VALUE) {
             data.diff.name = data.baseline.name;
         } else if (data.baseline.duration == DOUBLE_MIN_VALUE) {
@@ -271,19 +296,37 @@ namespace Dic::Module::Operator {
             data.diff.outputShape = data.compare.outputShape + "->" + data.baseline.outputShape;
             data.diff.outputType = data.compare.outputType + "->" + data.baseline.outputType;
             data.diff.outputFormat = data.compare.outputFormat + "->" + data.baseline.outputFormat;
+            // 遍历base数据
+            for (const auto& col : basePmuHeader) {
+                // 先判断compare里面有没有这个数据
+                if (data.compare.pmuDatas.find(col) == data.compare.pmuDatas.end()) {
+                    data.diff.pmuDatas[col] = "-";
+                    continue;
+                }
+                data.diff.pmuDatas[col] = CalPmuDataCompare(data.compare.pmuDatas[col], data.baseline.pmuDatas[col]);
+            }
+            // 遍历compare
+            for (const auto& col : cmpPmuHeader) {
+                // 先判断base里面有没有这个数据
+                if (data.baseline.pmuDatas.find(col) == data.baseline.pmuDatas.end()) {
+                    data.diff.pmuDatas[col] = "-";
+                    continue;
+                }
+                data.diff.pmuDatas[col] = CalPmuDataCompare(data.compare.pmuDatas[col], data.baseline.pmuDatas[col]);
+            }
         }
     }
 
     std::vector<Protocol::OperatorDetailCmpInfoRes> QueryOpDetailInfoHandler::GetFixNumDiffCmpData(
         std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData,
-        Protocol::OperatorStatisticReqParams &reqParams,
-        const int64_t total)
+        Protocol::OperatorStatisticReqParams &reqParams, const int64_t total,
+        const std::set<std::string> &basePmuHeader, const std::set<std::string> &cmpPmuHeader)
     {
         if (datailData.empty()) {
             return datailData;
         }
         for (auto &data: datailData) {
-            FromatDatailData(data);
+            FromatDatailData(data, basePmuHeader, cmpPmuHeader);
         }
         std::string dbOrderBy = reqParams.orderBy;
         // 对差值排序

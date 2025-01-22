@@ -316,6 +316,13 @@ public:
         return static_cast<double>(std::round(data * ratio) / ratio);
     }
 
+    static inline bool IsDouble(const std::string& str)
+    {
+        std::istringstream iss(str);
+        double d;
+        return (iss >> d) && (iss.eof());
+    }
+
     static inline double Sub(double a, double b)
     {
         return DoubleReservedNDigits(DoubleReservedNDigits(a) - DoubleReservedNDigits(b));

@@ -133,9 +133,9 @@ void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const
     JsonUtil::AddMember(dataJson, "outputShape", ele.outputShape, allocator);
     JsonUtil::AddMember(dataJson, "outputType", ele.outputType, allocator);
     JsonUtil::AddMember(dataJson, "outputFormat", ele.outputFormat, allocator);
-    for (int i = 0; i < ele.pmuDatas.size(); i++) {
-        rapidjson::Value value(ele.pmuDatas[i].c_str(), allocator);
-        rapidjson::Value key(std::to_string(i).c_str(), allocator);
+    for (auto& [colName, pmuValue] : ele.pmuDatas) {
+        rapidjson::Value key(colName.c_str(), allocator);
+        rapidjson::Value value(pmuValue.c_str(), allocator);
         dataJson.AddMember(key, value, allocator);
     }
     parent.AddMember(rapidjson::Value(label, allocator).Move(), dataJson, allocator);
