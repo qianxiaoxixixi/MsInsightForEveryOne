@@ -32,6 +32,8 @@ const Tooltip = styled.div(props => ({
     left: 0,
     top: 0,
     userSelect: 'none',
+    willChange: 'transform',
+    transformStyle: 'preserve-3d',
 }));
 
 interface TranslateValue {
@@ -72,7 +74,6 @@ const TooltipComp = ({ x, y, content }: TooltipArg): JSX.Element => {
         : {
             visibility: 'visible',
             opacity: 1,
-            willChange: 'transform',
             transform: `translate3d(${translateX}px, ${translateY}px, 0px)`,
         };
 
