@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_OPERATORPROTOCOLRESPONSE_H
 #define PROFILER_SERVER_OPERATORPROTOCOLRESPONSE_H
 
+#include <set>
 #include <vector>
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
@@ -48,7 +49,7 @@ namespace Dic::Protocol {
         std::string outputShape{"-"};
         std::string outputType{"-"};
         std::string outputFormat{"-"};
-        std::vector<std::string> pmuDatas;
+        std::map<std::string, std::string> pmuDatas;
     };
 
     struct OperatorStatisticCmpInfoRes {
@@ -87,7 +88,7 @@ namespace Dic::Protocol {
         OperatorDetailInfoResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
         int64_t total{0};
         std::string level; // l0, l1, l2
-        std::vector<std::string> pmuHeaders;
+        std::set<std::string> pmuHeaders;
         std::vector<OperatorDetailCmpInfoRes> datas;
     };
 

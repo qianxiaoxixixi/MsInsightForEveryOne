@@ -31,10 +31,13 @@ namespace Dic::Module::Operator {
             std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
         std::vector<Protocol::OperatorDetailCmpInfoRes> GetFixNumDiffCmpData(
             std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData,
-            Protocol::OperatorStatisticReqParams &reqParams, const int64_t total);
+            Protocol::OperatorStatisticReqParams &reqParams, const int64_t total,
+            const std::set<std::string> &basePmuHeader, const std::set<std::string> &cmpPmuHeader);
         void SortDataBynameAndStartTime(std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
                                 std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
-        void FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data);
+        void FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data, const std::set<std::string> &basePmuHeader,
+                              const std::set<std::string> &cmpPmuHeader);
+        std::string CalPmuDataCompare(const std::string &comPmu, const std::string &basePmu);
     };
 }
 
