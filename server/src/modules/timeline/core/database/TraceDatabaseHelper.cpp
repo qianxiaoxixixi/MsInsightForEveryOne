@@ -762,6 +762,7 @@ void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet
     while (resultSet->Next()) {
         Protocol::KernelDetail detail;
         detail.id = resultSet->GetString("id");
+        detail.taskId = resultSet->GetString("taskId"),
         detail.name = resultSet->GetString("name");
         detail.type = resultSet->GetString("type");
         detail.acceleratorCore = resultSet->GetString("acceleratorCore");

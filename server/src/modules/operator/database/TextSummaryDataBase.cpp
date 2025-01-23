@@ -35,9 +35,9 @@ bool TextSummaryDataBase::CreateTable()
     }
     std::string sql =
         "CREATE TABLE " + TABLE_KERNEL + " (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, " +
-        "name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time INTEGER, " +
-        "block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, " +
-        "output_data_types TEXT, output_formats TEXT);" +
+        "task_id TEXT, name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, " +
+        "wait_time INTEGER, block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, " +
+        "output_shapes TEXT, output_data_types TEXT, output_formats TEXT);" +
         "CREATE INDEX rank_index ON " + TABLE_KERNEL + " (rank_id);";
     std::lock_guard<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
@@ -64,12 +64,12 @@ bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
         }
     }
     std::string sql =
-            "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
-            "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
-            "output_data_types, output_formats" + columnSql + ") " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
+            "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, task_id, name, op_type, accelerator_core, " +
+            "start_time, duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, " +
+            "output_shapes, output_data_types, output_formats" + columnSql + ") " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")");
+        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertKernelStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert kernel detail statement. error:", sqlite3_errmsg(db));
@@ -100,6 +100,7 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel> &kern
     for (const auto &event : kernelVec) {
         sqlite3_bind_text(stmt, idx++, event.rankId.c_str(), event.rankId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.stepId.c_str(), event.stepId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.taskId.c_str(), event.taskId.length(), SQLITE_TRANSIENT),
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.acceleratorCore.c_str(), event.acceleratorCore.length(), SQLITE_TRANSIENT);
@@ -168,12 +169,12 @@ sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen, const std::v
             }
         }
         std::string sql =
-                "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
-                "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
-                "output_data_types, output_formats" + columnSql + ") " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
+                "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, task_id, name, op_type, accelerator_core, " +
+                "start_time, duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, " +
+                "output_shapes, output_data_types, output_formats" + columnSql + ") " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")");
+            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare for insert kernel. length:", paramLen, " . error:", sqlite3_errmsg(db));

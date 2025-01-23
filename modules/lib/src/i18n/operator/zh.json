@@ -41,6 +41,7 @@
       "SeeMore": "查看更多",
       "StartTime": "开始时间",
       "WaitTime": "等待时间",
+      "TaskId": "任务ID",
       "Duration": "时长",
       "BlockDim": "Block数量",
       "InputShapes": "输入Shapes",

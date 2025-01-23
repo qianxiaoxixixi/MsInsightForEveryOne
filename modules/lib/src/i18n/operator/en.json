@@ -41,6 +41,7 @@
       "SeeMore": "see more",
       "StartTime": "Start Time",
       "WaitTime": "Wait Time",
+      "TaskId": "Task ID",
       "Duration": "Duration",
       "BlockDim": "Block Dim",
       "InputShapes": "Input Shapes",

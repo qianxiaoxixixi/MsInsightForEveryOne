@@ -375,6 +375,7 @@ struct ParseCardsResponse : public Response {
 
 struct KernelDetail {
     std::string id;
+    std::string taskId;
     std::string name;
     std::string type;
     std::string acceleratorCore;

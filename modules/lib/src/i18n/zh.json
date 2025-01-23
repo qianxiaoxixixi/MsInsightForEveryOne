@@ -160,6 +160,7 @@
   "filterColumnName": {
     "Name": "名称",
     "Type": "类型",
+    "TaskId": "任务ID",
     "AcceleratorCore": "加速器核",
     "InputShapes": "输入Shapes",
     "InputDataTypes": "输入数据类型",

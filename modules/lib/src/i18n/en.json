@@ -159,6 +159,7 @@
   "filterColumnName": {
     "Name": "Name",
     "Type": "Type",
+    "TaskId": "Task ID",
     "AcceleratorCore": "Accelerator Core",
     "InputShapes": "Input Shapes",
     "InputDataTypes": "Input Data Types",

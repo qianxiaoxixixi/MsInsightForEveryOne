@@ -53,7 +53,7 @@ private:
     const std::string kernelParseState = "Kernel files parsing status";
     bool hasInitStmt = false;
     sqlite3_stmt *insertKernelStmt = nullptr;
-    const uint32_t cacheSize = 800;
+    const uint32_t cacheSize = 600;
     const uint32_t maxCategorySize = 50;
     std::vector<Kernel> kernelCache;
 

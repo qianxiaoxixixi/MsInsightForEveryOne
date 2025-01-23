@@ -89,9 +89,9 @@ TEST_F(TextSummaryDatabaseTest, SaveKernelDetailAndCheckSuccess)
 {
     for (int i = 0; i < 1000 / 2; ++i) { // 1000 is cacheSize, 2 is half of cacheSize
         Kernel kernel = {
-            "rank" + std::to_string(i), "step" + std::to_string(i), "name" + std::to_string(i),
-            "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
-            "", "", "", "", "", ""
+            "rank" + std::to_string(i), "step" + std::to_string(i), "task" + std::to_string(i),
+            "name" + std::to_string(i), "type" + std::to_string(i), "Dynamic", "AICore",
+            50 + i, 100.0 + i, 10.0 + i, i, "", "", "", "", "", ""
         };
         g_testDataBase.InsertKernelDetail(kernel, {});
     }
@@ -107,11 +107,11 @@ TEST_F(TextSummaryDatabaseTest, SaveKernelDetailAndCheckSuccess)
 
 TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
 {
-    for (int i = 0; i < 800 / 2; ++i) { // 800 is cacheSize, 2 is half of cacheSize
+    for (int i = 0; i < 600 / 2; ++i) { // 600 is cacheSize, 2 is half of cacheSize
         Kernel kernel = {
-            "rank" + std::to_string(i), "step" + std::to_string(i), "name" + std::to_string(i),
-            "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
-            "", "", "", "", "", ""
+            "rank" + std::to_string(i), "step" + std::to_string(i), "task" + std::to_string(i),
+            "name" + std::to_string(i), "type" + std::to_string(i), "Dynamic", "AICore",
+            50 + i, 100.0 + i, 10.0 + i, i, "", "", "", "", "", ""
         };
         g_testDataBase.InsertKernelDetail(kernel, {});
     }
@@ -119,17 +119,17 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
     bool result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
     EXPECT_EQ(num, 0);
-    for (int i = 0; i < 800; ++i) { // 800 is cacheSize, 2 is half of cacheSize
+    for (int i = 0; i < 600; ++i) { // 600 is cacheSize, 2 is half of cacheSize
         Kernel kernel = {
-            "rank" + std::to_string(i), "step" + std::to_string(i), "name" + std::to_string(i),
-            "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
-            "", "", "", "", "", ""
+            "rank" + std::to_string(i), "step" + std::to_string(i), "task" + std::to_string(i),
+            "name" + std::to_string(i), "type" + std::to_string(i), "Dynamic", "AICore",
+            50 + i, 100.0 + i, 10.0 + i, i, "", "", "", "", "", ""
         };
         g_testDataBase.InsertKernelDetail(kernel, {});
     }
     result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
-    EXPECT_EQ(num, 800); // 800 is cacheSize
+    EXPECT_EQ(num, 600); // 600 is cacheSize
     g_testDataBase.SaveKernelDetail({});
 }
 
@@ -138,16 +138,16 @@ TEST_F(TextSummaryDatabaseTest, QueryMinStartTimeTest)
     uint64_t start = g_testDataBase.QueryMinStartTime();
     EXPECT_EQ(start, UINT64_MAX);
     std::vector<Kernel> list = {
-        {"0", "2", "Cast", "Cast", "Dynamic", "AI_CORE", 1695115378722946000, 5.7985, 11.041, 33,
+        {"0", "2", "", "Cast", "Cast", "Dynamic", "AI_CORE", 1695115378722946000, 5.7985, 11.041, 33,
          "", "", "", "", "", ""},
-        {"0", "2", "ZerosLike", "ZerosLike", "Dynamic", "AI_CORE", 1695115378713661000, 496.8508, 0, 48,
+        {"0", "2", "", "ZerosLike", "ZerosLike", "Dynamic", "AI_CORE", 1695115378713661000, 496.8508, 0, 48,
          "", "", "", "", "", ""},
-        {"0", "2", "hcom_broadcast__483_0", "hcom_broadcast_", "NA",
+        {"0", "2", "", "hcom_broadcast__483_0", "hcom_broadcast_", "NA",
             "HCCL", 1695115378715400200, 4975.2664, 1242.3992, 0, "", "", "", "", "", ""
         },
-        {"0", "2", "Slice", "Slice", "Dynamic", "AI_CORE", 1695115378723264800, 1.9795, 312.9515, 2,
+        {"0", "2", "", "Slice", "Slice", "Dynamic", "AI_CORE", 1695115378723264800, 1.9795, 312.9515, 2,
          "", "", "", "", "", ""},
-        {"0", "2", "hcom_broadcast__483_1", "hcom_broadcast_", "NA",
+        {"0", "2", "", "hcom_broadcast__483_1", "hcom_broadcast_", "NA",
             "HCCL",1695115378722392500,4975.2664,1242.3992,0, "", "", "", "", "", ""
         }
     };
@@ -164,11 +164,11 @@ TEST_F(TextSummaryDatabaseTest, QueryRankIdsTest)
     auto ranks = g_testDataBase.QueryRankIds();
     EXPECT_EQ(ranks.size(), 0);
     std::vector<Kernel> list = {
-            {"0", "2", "Cast", "Cast", "Dynamic", "AI_CORE", 1695115378722946000, 5.7985, 11.041, 33,
+            {"0", "2", "", "Cast", "Cast", "Dynamic", "AI_CORE", 1695115378722946000, 5.7985, 11.041, 33,
              "", "", "", "", "", ""},
-            {"1", "2", "ZerosLike", "ZerosLike", "Dynamic", "AI_CORE", 1695115378713661000, 496.8508, 0, 48,
+            {"1", "2", "", "ZerosLike", "ZerosLike", "Dynamic", "AI_CORE", 1695115378713661000, 496.8508, 0, 48,
              "", "", "", "", "", ""},
-            {"2", "2", "hcom_broadcast__483_0", "hcom_broadcast_", "NA",
+            {"2", "2", "", "hcom_broadcast__483_0", "hcom_broadcast_", "NA",
              "HCCL",1695115378715400200,4975.2664,1242.3992,0, "", "", "", "", "", ""
             }
     };
