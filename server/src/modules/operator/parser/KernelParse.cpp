@@ -52,6 +52,9 @@ void KernelParse::InitKernelParseMap()
     parseFuncMap.emplace(std::vector<std::string>{ STEP_ID },
         std::bind(&KernelParse::ParsePyTorchStepInfoData, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4));
+    parseFuncMap.emplace(std::vector<std::string>{ FIELD_TASK_ID },
+        std::bind(&KernelParse::ParseTaskIdInfoData, std::placeholders::_1, std::placeholders::_2,
+        std::placeholders::_3, std::placeholders::_4));
     parseFuncMap.emplace(std::vector<std::string>{ FIELD_OP_STATE },
         std::bind(&KernelParse::ParseOpStateInfoData, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4));
@@ -296,6 +299,12 @@ inline void KernelParse::ParsePyTorchStepInfoData(const std::map<std::string, si
     const std::vector<std::string> &row, const std::string &fileId, Kernel &kernel)
 {
     kernel.stepId = row[dataMap.at(STEP_ID)];
+}
+
+inline void KernelParse::ParseTaskIdInfoData(const std::map<std::string, size_t> &dataMap,
+    const std::vector<std::string> &row, const std::string &fileId, Dic::Module::Summary::Kernel &kernel)
+{
+    kernel.taskId = row[dataMap.at(FIELD_TASK_ID)];
 }
 
 inline void KernelParse::ParseMsProfOpBaseInfoData(const std::map<std::string, size_t> &dataMap,

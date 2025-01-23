@@ -363,6 +363,7 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
         if (responseBody.count == 0) {
             responseBody.count = resultSet->GetUint64("num");
         }
+        detail.taskId = std::to_string(resultSet->GetUint64("taskId"));
         responseBody.kernelDetails.emplace_back(detail);
     }
     return true;
@@ -391,7 +392,7 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
         if (index != 0) {
             sql += " AND ";
         }
-        if (filter.first == "name") {
+        if (filter.first == "name" || filter.first == "taskId") {
             sql += " lower(" + filter.first + ") LIKE lower(?) ";  // 绑定filter.second
         } else {
             sql += filter.first + " IN ("
@@ -410,20 +411,22 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
       "     select info.ROWID, nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
       "       'HCCL' as taskType, info.startNs, round((info.endNs - info.startNs)/1000.0, 3) as duration,\n"
       " 0 as " + blockDimColumnName + ",round(waitNs/1000.0, 3) as wait_time,'N/A' as inputShapes, 'N/A' as "
-      " inputDataTypes,'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats"
+      " inputDataTypes,'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats,"
+      " TASK.connectionId as taskId"
       "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
       "       join nameIds on opName = nameIds.id group by info.opName\n"
       "     UNION all"
       "     select TASK.ROWID, nameIds.realName as name, opType, info.taskType, startNs,"
       "            round((endNs - startNs)/1000.0, 3) as duration,\n"
       "" + blockDimColumnName + ", round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
-      "            outputShapes, outputDataTypes, outputFormats  from COMPUTE_TASK_INFO info "
+      "            outputShapes, outputDataTypes, outputFormats, TASK.connectionId as taskId "
+      "      from COMPUTE_TASK_INFO info "
       "      JOIN TASK ON info.globalTaskId = TASK.globalTaskId join nameIds on name = nameIds.id where deviceId = ?), "
       "    total as (select count(*) as num "
       "    from ("
       "        SELECT name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
       "        wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
-      "        inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats FROM main"
+      "        inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, taskId FROM main"
       "    ) subquery ";
     if (!GetKernelDetailFilterSql(sql, requestParams)) {  // 第一次绑定filter.second占位
         return sql;
@@ -431,7 +434,7 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
     sql += " )\n"
       "SELECT ROWID as id, total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime,\n"
       "       duration, wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
-      "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats\n"
+      "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats, taskId\n"
       "FROM main join total ";
     if (!GetKernelDetailFilterSql(sql, requestParams)) {  // 第二次绑定filter.second占位
         return sql;

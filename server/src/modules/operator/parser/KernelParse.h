@@ -17,6 +17,7 @@
 
 namespace Dic::Module::Summary {
 // 表头字段-公共部分
+const std::string FIELD_TASK_ID = "Task ID";
 const std::string FIELD_OP_STATE = "OP State";
 const std::string FIELD_BLOCK_DIM = "Block Dim";
 const std::string FIELD_INPUT_SHAPES = "Input Shapes";
@@ -109,6 +110,8 @@ private:
     static void ParseMsProfOpBaseInfoData(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
     static void ParsePyTorchStepInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseTaskIdInfoData(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
     static void ParseStartTimeInfoData(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);

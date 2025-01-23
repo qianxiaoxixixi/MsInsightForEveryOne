@@ -144,7 +144,8 @@ TEST_F(KernelParseTest, CheckPyTorchBaseHeaderFieldAndFilterParseFunc)
     std::string fileId = "0";
     std::map<std::string, size_t> dataMap = GenerateDataMap(rowVector);
     std::vector<std::string> dataVector = {"Add0", "Add", "AI_CORE", "1695115378710248", "498.4", "0", "48"};
-    Kernel ref = {fileId, "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48, "", "", "", "", "", ""};
+    Kernel ref = {fileId, "", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000,
+                  498.4, 0, 48, "", "", "", "", "", ""};
     for (const auto& parseFunc : parseFuncList) {
         parseFunc(dataMap, dataVector, fileId, kernel);
     }
@@ -167,7 +168,8 @@ TEST_F(KernelParseTest, CheckPyTorchTaskStartTimeHeaderFieldAndFilterParseFunc)
     std::string fileId = "0";
     std::map<std::string, size_t> dataMap = GenerateDataMap(rowVector);
     std::vector<std::string> dataVector = {"1", "Ad0", "Add", "AI_CORE", "1695115378710248", "498.4", "0", "48"};
-    Kernel ref = {fileId, "1", "Ad0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48, "", "", "", "", "", ""};
+    Kernel ref = {fileId, "1", "", "Ad0", "Add", "", "AI_CORE", 1695115378710248000,
+                  498.4, 0, 48, "", "", "", "", "", ""};
     for (const auto& parseFunc : parseFuncList) {
         parseFunc(dataMap, dataVector, fileId, kernel);
     }
@@ -189,7 +191,7 @@ TEST_F(KernelParseTest, CheckMsProfBaseHeaderFieldAndFilterParseFunc)
     Kernel kernel{};
     std::map<std::string, size_t> dataMap = GenerateDataMap(rowVector);
     std::vector<std::string> dataVector = {"0", "Add0", "Add", "AI_CORE", "1695115378710248", "498.4", "0", "48"};
-    Kernel ref = {"0", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48, "", "", "", "", "", ""};
+    Kernel ref = {"0", "", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48, "", "", "", "", "", ""};
     for (const auto& parseFunc : parseFuncList) {
         parseFunc(dataMap, dataVector, "1", kernel);
     }
@@ -217,7 +219,7 @@ TEST_F(KernelParseTest, CheckPyTorchWithShapeHeaderFieldAndFilterParseFunc)
         "2,8193;2;2", "INT32;INT64;INT64", "FORMAT_ND;FORMAT_ND;FORMAT_ND", "2,8192", "INT32", "FORMAT_ND"
     };
     Kernel ref = {
-        fileId, "1", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
+        fileId, "1", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
         "2,8193;2;2", "INT32;INT64;INT64", "FORMAT_ND;FORMAT_ND;FORMAT_ND", "2,8192", "INT32", "FORMAT_ND"
     };
     for (const auto& parseFunc : parseFuncList) {
@@ -246,7 +248,7 @@ TEST_F(KernelParseTest, CheckMsProfWithShapeHeaderFieldAndFilterParseFunc)
         "2,8193;2;2", "INT32;INT64;INT64", "FORMAT_ND;FORMAT_ND;FORMAT_ND", "2,8192", "INT32", "FORMAT_ND"
     };
     Kernel ref = {
-        "0", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
+        "0", "", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
         "2,8193;2;2", "INT32;INT64;INT64", "FORMAT_ND;FORMAT_ND;FORMAT_ND", "2,8192", "INT32", "FORMAT_ND"
     };
     for (const auto& parseFunc : parseFuncList) {
@@ -281,7 +283,7 @@ TEST_F(KernelParseTest, CheckPyTorchWithPipeUtilizationAICMetricsHeaderFieldAndF
             "0.899", "354.137", "0.971", "0.005", "5.288", "0"
     };
     Kernel ref = {
-        fileId, "1", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
+        fileId, "1", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
         "2,8193;2;2", "INT32;INT64;INT64", "FORMAT_ND;FORMAT_ND;FORMAT_ND", "2,8192", "INT32", "FORMAT_ND",
         {
             "364.64", "11668432", "62.096", "0.17", "0.0", "0.0", "0.851", "0.002", "0.0", "0.0", "327.665",
@@ -318,7 +320,7 @@ TEST_F(KernelParseTest, CheckPyTorchWithArithmeticUtilizationAICMetricsHeaderFie
             "361.76", "11576412", "0.0", "0.0", "0.0", "0.156", "0.0", "0.001", "0.0", "154601472.0"
     };
     Kernel ref = {
-        fileId, "1", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
+        fileId, "1", "", "Add0", "Add", "", "AI_CORE", 1695115378710248000, 498.4, 0, 48,
         "2,8193;2;2", "INT32;INT64;INT64", "FORMAT_ND;FORMAT_ND;FORMAT_ND", "2,8192", "INT32", "FORMAT_ND",
         {"361.76", "11576412", "0.0", "0.0", "0.0", "0.156", "0.0", "0.001", "0.0", "154601472.0"}
     };

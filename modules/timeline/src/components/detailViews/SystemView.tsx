@@ -438,6 +438,7 @@ const defaultFilters = {
     name: [],
     type: [],
     accCore: [],
+    taskId: [],
     inputShapes: [],
     inputDataTypes: [],
     inputFormats: [],
@@ -447,7 +448,7 @@ const defaultFilters = {
 };
 
 const filterColumn = [
-    'name', 'type', 'acceleratorCore', 'inputShapes', 'inputDataTypes',
+    'name', 'type', 'acceleratorCore', 'taskId', 'inputShapes', 'inputDataTypes',
     'inputFormats', 'outputShapes', 'outputDataTypes', 'outputFormats',
 ];
 
