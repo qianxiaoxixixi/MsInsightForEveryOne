@@ -390,19 +390,17 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorGraphRequestLackIdTestReturnNul
 TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestNormalTest)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
-        "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "deviceId": "host", "modelName": "0",
-        "graphId": "0", "searchName": "model.layers.0.attention_norm.weight", "minSize": -1000, "maxSize": 10000,
+        "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "graphId": "0",
+        "searchName": "model.layers.0.attention_norm.weight", "minSize": -1000, "maxSize": 10000,
         "startNodeIndex": 1, "endNodeIndex": 2533, "currentPage": 1000, "pageSize": 20,
         "orderBy": "op_name", "order": "descend"}})";
-    StaticOperatorListParams expect = {"3", "host", "0", "0", "model.layers.0.attention_norm.weight",
+    StaticOperatorListParams expect = {"3", "0", "model.layers.0.attention_norm.weight",
         -1000, 10000, 1, 2533, 1000, 20, "op_name", "descend", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
     auto result = dynamic_cast<MemoryStaticOperatorListRequest &>(*(memoryProtocol.FromJson(json, err))).params;
     EXPECT_EQ(result.rankId, expect.rankId);
-    EXPECT_EQ(result.deviceId, expect.deviceId);
-    EXPECT_EQ(result.modelName, expect.modelName);
     EXPECT_EQ(result.graphId, expect.graphId);
     EXPECT_EQ(result.searchName, expect.searchName);
     EXPECT_EQ(result.minSize, expect.minSize);
@@ -419,10 +417,10 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestNormalTest)
 TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackNodeIndexAndSizeTest)
 {
     std::string reqJson = R"({"id": 10, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
-        "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "deviceId": "host", "modelName": "0",
-        "graphId": "0", "searchName": "model.layers.0.attention_norm.weight", "currentPage": 1000, "pageSize": 20,
+        "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "graphId": "0",
+        "searchName": "model.layers.0.attention_norm.weight", "currentPage": 1000, "pageSize": 20,
         "orderBy": "op_name", "order": "descend"}})";
-    StaticOperatorListParams expect = {"3", "host", "0", "0", "model.layers.0.attention_norm.weight",
+    StaticOperatorListParams expect = {"3", "0", "model.layers.0.attention_norm.weight",
         std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), -1, -1, 1000, 20,
         "op_name", "descend", false};
     Dic::document_t json;
@@ -430,8 +428,6 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackNodeIndexAndSize
     std::string err;
     auto result = dynamic_cast<MemoryStaticOperatorListRequest &>(*(memoryProtocol.FromJson(json, err))).params;
     EXPECT_EQ(result.rankId, expect.rankId);
-    EXPECT_EQ(result.deviceId, expect.deviceId);
-    EXPECT_EQ(result.modelName, expect.modelName);
     EXPECT_EQ(result.graphId, expect.graphId);
     EXPECT_EQ(result.searchName, expect.searchName);
     EXPECT_EQ(result.minSize, expect.minSize);
@@ -448,8 +444,8 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackNodeIndexAndSize
 TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackIdTestReturnNull)
 {
     std::string reqJson = R"({"moduleName": "memory", "type": "request", "resultCallbackId": 0,
-        "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "deviceId": "host", "modelName": "0",
-        "graphId": "0", "searchName": "model.layers.0.attention_norm.weight", "minSize": -1000, "maxSize": 10000,
+        "command": "Memory/view/staticOpMemoryList", "params": {"rankId": "3", "graphId": "0",
+        "searchName": "model.layers.0.attention_norm.weight", "minSize": -1000, "maxSize": 10000,
         "startNodeIndex": 1, "endNodeIndex": 2533, "currentPage": 1000, "pageSize": 20,
         "orderBy": "op_name", "order": "descend"}})";
     Dic::document_t json;
@@ -458,6 +454,32 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListRequestLackIdTestReturnNull
     std::unique_ptr<Request> requestPtr = memoryProtocol.FromJson(json, err);
     EXPECT_EQ(requestPtr, nullptr);
     EXPECT_EQ(err, "Failed to set request base info, command is: Memory/view/staticOpMemoryList");
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorSizeRequestNormalTest)
+{
+    std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/staticOpMemorySize", "params": {"rankId": "1", "graphId": "0", "isCompare": false}})";
+    StaticOperatorSizeParams expect = {"1", "0", false};
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<MemoryStaticOperatorSizeRequest &>(*(memoryProtocol.FromJson(json, err))).params;
+    EXPECT_EQ(result.rankId, expect.rankId);
+    EXPECT_EQ(result.graphId, expect.graphId);
+    EXPECT_EQ(result.isCompare, expect.isCompare);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorSizeRequestLackIdTestReturnNull)
+{
+    std::string reqJson = R"({"moduleName": "memory", "type": "request", "resultCallbackId": 0,
+        "command": "Memory/view/staticOpMemorySize", "params": {"rankId": "1", "graphId": "0", "isCompare": false}})";
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    std::unique_ptr<Request> requestPtr = memoryProtocol.FromJson(json, err);
+    EXPECT_EQ(requestPtr, nullptr);
+    EXPECT_EQ(err, "Failed to set request base info, command is: Memory/view/staticOpMemorySize");
 }
 
 TEST_F(MemoryProtocolTest, ToMemoryTypeRequestNormalTest)
@@ -513,8 +535,8 @@ TEST_F(MemoryProtocolTest, ToMemoryViewRequestLackIdTestReturnNull)
 TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestNormalTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "memory", "type": "request", "resultCallbackId": 0,
-        "command": "Memory/view/operator/size", "params": {"rankId": "1", "type": "Overall"}})";
-    MemoryViewParams expect = {"1", "Overall", false};
+        "command": "Memory/view/operatorSize", "params": {"rankId": "1", "type": "Overall", "isCompare": false}})";
+    MemoryOperatorSizeParams expect = {"1", "Overall", false};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -527,13 +549,13 @@ TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestNormalTest)
 TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeRequestLackIdTestReturnNull)
 {
     std::string reqJson = R"({"moduleName": "memory", "type": "request", "resultCallbackId": 0,
-        "command": "Memory/view/operator/size", "params": {"rankId": "1", "type": "Overall"}})";
+        "command": "Memory/view/operatorSize", "params": {"rankId": "1", "type": "Overall", "isCompare": false}})";
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
     std::unique_ptr<Request> requestPtr = memoryProtocol.FromJson(json, err);
     EXPECT_EQ(requestPtr, nullptr);
-    EXPECT_EQ(err, "Failed to set request base info, command is: Memory/view/operator/size");
+    EXPECT_EQ(err, "Failed to set request base info, command is: Memory/view/operatorSize");
 }
 
 TEST_F(MemoryProtocolTest, ToMemoryComponentResponseEmptyDataTest)
@@ -670,6 +692,28 @@ TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorListResponseNoComparisonDataTes
     std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
     CheckResponseBaseStruct(jsonOptional);
     CheckStaticOperatorListResponseStruct(jsonOptional, response);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorSizeResponseEmptyDataTest)
+{
+    MemoryStaticOperatorSizeResponse response;
+    std::string err;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryStaticOperatorSizeResponseValidDataTest)
+{
+    MemoryStaticOperatorSizeResponse response;
+    std::string err;
+    response.size.minSize = -1.0;
+    response.size.maxSize = 1.0;
+    std::optional<document_t> jsonOptional = memoryProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("minSize"));
+    ASSERT_TRUE(jsonOptional.value()["body"].HasMember("maxSize"));
+    EXPECT_EQ(jsonOptional.value()["body"]["minSize"].GetDouble(), response.size.minSize);
+    EXPECT_EQ(jsonOptional.value()["body"]["maxSize"].GetDouble(), response.size.maxSize);
 }
 
 TEST_F(MemoryProtocolTest, ToMemoryTypeResponseEmptyDataTest)

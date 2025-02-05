@@ -35,7 +35,7 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql to get stream list. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Get stream lists. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return streams;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -57,7 +57,7 @@ bool VirtualMemoryDataBase::ExecuteMemoryType(std::vector<std::string> &graphId,
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Query operator size failed!. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Query memory type. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -74,7 +74,7 @@ bool VirtualMemoryDataBase::ExecuteMemoryResourceType(std::string &type, std::st
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Query operator size failed!. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Query memory resource type. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
     int64_t totalNum = 0;
@@ -91,8 +91,30 @@ bool VirtualMemoryDataBase::ExecuteOperatorSize(double &min, double &max, std::s
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Query operator size failed!. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Query operator size. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_double(stmt, col++);
+        max = sqlite3_column_double(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
+                                                      double &min, double &max, const std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query static operator size. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    if (!requestParams.graphId.empty()) {
+        sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -109,7 +131,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Query operators total num. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
     int index = bindStartIndex;
@@ -158,7 +180,7 @@ bool VirtualMemoryDataBase::ExecuteComponentTotalNum(Protocol::MemoryComponentPa
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Query components total num. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -175,7 +197,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        ServerLog::Error("Query static operators total num. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
     int index = bindStartIndex;
@@ -183,10 +205,6 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
     sqlite3_bind_text(stmt, index++, searchName.c_str(), searchName.length(), nullptr);
     if (!requestParams.graphId.empty()) {
         sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
-    }
-    if (!requestParams.modelName.empty()) {
-        std::string modelName = "%" + requestParams.modelName + "%";
-        sqlite3_bind_text(stmt, index++, modelName.c_str(), modelName.length(), nullptr);
     }
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sqlite3_bind_int64(stmt, index++, requestParams.minSize);

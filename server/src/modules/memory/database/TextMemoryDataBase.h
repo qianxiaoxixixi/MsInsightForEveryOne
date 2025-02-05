@@ -61,7 +61,9 @@ public:
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
-    bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
+    bool QueryOperatorSize(double &min, double &max) override;
+    bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
+                                 double &min, double &max) override;
     bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
     bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
                                    uint64_t offsetTime);

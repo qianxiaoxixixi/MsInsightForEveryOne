@@ -30,7 +30,8 @@ public:
         uint64_t offsetTime);
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
-    bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
+    bool QueryOperatorSize(double &min, double &max) override;
+    bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams, double &min, double &max) override;
     bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) override;
 
     bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,

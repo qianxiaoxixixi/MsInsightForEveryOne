@@ -117,9 +117,10 @@ const std::string REQ_RES_MEMORY_RESOURCE_TYPE = "Memory/view/resourceType";
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
 const std::string REQ_RES_MEMORY_COMPONENT = "Memory/view/component";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
-const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operator/size";
+const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operatorSize";
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH = "Memory/view/staticOpMemoryGraph";
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST = "Memory/view/staticOpMemoryList";
+const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX = "Memory/view/staticOpMemorySize";
 const std::string REQ_RES_MEMORY_FIND_SLICE = "Memory/find/slice";
 
 // Operator Request

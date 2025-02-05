@@ -105,24 +105,10 @@ struct MemoryResourceTypeResponse : public Response {
     std::string type = Module::Memory::MEMORY_RESOURCE_TYPE_PYTORCH;
 };
 
-struct MemoryOperatorResponse : public Response {
-    MemoryOperatorResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
-    std::vector<MemoryTableColumnAttr> columnAttr;
-    std::vector<MemoryOperator> operatorDetails;
-    int64_t totalNum = 0;
-};
-
 struct MemoryOperatorComparisonResponse : public Response {
     MemoryOperatorComparisonResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
     std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<MemoryOperatorComparison> operatorDiffDetails;
-    int64_t totalNum = 0;
-};
-
-struct MemoryComponentResponse : public Response {
-    MemoryComponentResponse() : Response(REQ_RES_MEMORY_COMPONENT) {}
-    std::vector<MemoryTableColumnAttr> columnAttr;
-    std::vector<MemoryComponent> componentDetails;
     int64_t totalNum = 0;
 };
 
@@ -148,6 +134,11 @@ struct OperatorSize {
     double maxSize;
 };
 
+struct StaticOperatorSize {
+    double minSize;
+    double maxSize;
+};
+
 struct MemoryOperatorSizeResponse : public Response {
     MemoryOperatorSizeResponse() : Response(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {}
     OperatorSize size;
@@ -158,18 +149,16 @@ struct MemoryStaticOperatorGraphResponse : public Response {
     StaticOperatorGraphItem data;
 };
 
-struct MemoryStaticOperatorListResponse : public Response {
-    MemoryStaticOperatorListResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
-    std::vector<MemoryTableColumnAttr> columnAttr;
-    std::vector<StaticOperatorItem> operatorDetails;
-    int64_t totalNum = 0;
-};
-
 struct MemoryStaticOperatorListCompResponse : public Response {
     MemoryStaticOperatorListCompResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {}
     std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<StaticOperatorCompItem> operatorDiffDetails;
     int64_t totalNum = 0;
+};
+
+struct MemoryStaticOperatorSizeResponse : public Response {
+    MemoryStaticOperatorSizeResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX) {}
+    StaticOperatorSize size;
 };
 
 struct ComponentDto {

@@ -748,9 +748,6 @@ bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorLi
     if (!requestParams.graphId.empty()) {
         sql += " AND graph_id = ?";
     }
-    if (!requestParams.modelName.empty()) {
-        sql += " AND model_name = ? ";
-    }
     if (requestParams.startNodeIndex >= 0 && requestParams.endNodeIndex >= requestParams.startNodeIndex) {
         sql += " AND (node_index_start BETWEEN " + std::to_string(requestParams.startNodeIndex) +
                " AND " + std::to_string(requestParams.endNodeIndex) +
@@ -766,10 +763,22 @@ bool TextMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorLi
     return ExecuteStaticOperatorListTotalNum(requestParams, totalNum, sql);
 }
 
-bool TextMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)
+bool TextMemoryDataBase::QueryOperatorSize(double &min, double &max)
 {
     std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM " + operatorTable;
     return ExecuteOperatorSize(min, max, sql);
+}
+
+bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
+                                                 double &min, double &max)
+{
+    std::string sql =
+        "SELECT ROUND(min(size) / 1024.0, 2) as minSize, ROUND(max(size) / 1024.0, 2) as maxSize FROM "
+        + staticOpTable + " WHERE op_name <> 'TOTAL'";
+    if (!requestParams.graphId.empty()) {
+        sql += " AND graph_id = ?" ;
+    }
+    return ExecuteStaticOperatorSize(requestParams, min, max, sql);
 }
 
 } // end of namespace Memory

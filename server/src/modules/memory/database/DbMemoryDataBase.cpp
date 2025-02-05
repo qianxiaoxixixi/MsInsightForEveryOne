@@ -311,7 +311,7 @@ bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &
     return ExecuteComponentTotalNum(requestParams, totalNum, sql);
 }
 
-bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)
+bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max)
 {
     FileType type = DataBaseManager::Instance().GetFileType();
     std::string sql = "";
@@ -325,12 +325,21 @@ bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string r
     return ExecuteOperatorSize(min, max, sql);
 }
 
+// DB格式不支持静态图内存数据
+bool DbMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams, double &min,
+                                               double &max)
+{
+    return false;
+}
+
+// DB格式不支持静态图内存数据
 bool DbMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                                     int64_t &totalNum)
 {
     return false;
 }
 
+// DB格式不支持静态图内存数据
 bool DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
                                                std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                                std::vector<Protocol::StaticOperatorItem> &opDetails)
@@ -338,12 +347,14 @@ bool DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParam
     return false;
 }
 
+// DB格式不支持静态图内存数据
 bool DbMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                       std::vector<Protocol::StaticOperatorItem>& opDetails)
 {
     return false;
 }
 
+// DB格式不支持静态图内存数据
 bool DbMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                                 Protocol::StaticOperatorGraphItem &graphItem)
 {

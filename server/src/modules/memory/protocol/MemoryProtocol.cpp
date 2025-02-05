@@ -22,6 +22,7 @@ void MemoryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH, ToMemoryStaticOperatorGraphRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST, ToMemoryStaticOperatorListRequest);
+    jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX, ToMemoryStaticOperatorSizeRequest);
 }
 
 void MemoryProtocol::RegisterResponseToJsonFuncs()
@@ -35,6 +36,7 @@ void MemoryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH, ToMemoryStaticOperatorGraphResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST, ToMemoryStaticOperatorListResponseJson);
+    resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX, ToMemoryStaticOperatorSizeResponseJson);
 }
 
 void MemoryProtocol::RegisterEventToJsonFuncs()
@@ -162,6 +164,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorSizeRequest(const json_
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 
@@ -188,8 +191,6 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryStaticOperatorListRequest(const
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.graphId, json["params"], "graphId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.modelName, json["params"], "modelName");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, json["params"], "deviceId");
 
     if (json["params"].HasMember("startNodeIndex")) {
         reqPtr->params.startNodeIndex = JsonUtil::GetInteger(json["params"], "startNodeIndex");
@@ -216,6 +217,19 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryStaticOperatorListRequest(const
         reqPtr->params.maxSize = std::numeric_limits<int64_t>::max();
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> MemoryProtocol::ToMemoryStaticOperatorSizeRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<MemoryStaticOperatorSizeRequest> reqPtr = std::make_unique<MemoryStaticOperatorSizeRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.graphId, json["params"], "graphId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
@@ -271,6 +285,12 @@ std::optional<document_t> MemoryProtocol::ToMemoryStaticOperatorListResponseJson
 {
     return ToResponseJson<MemoryStaticOperatorListCompResponse>(
         dynamic_cast<const MemoryStaticOperatorListCompResponse &>(response));
+}
+
+std::optional<document_t> MemoryProtocol::ToMemoryStaticOperatorSizeResponseJson(const Response &response)
+{
+    return ToResponseJson<MemoryStaticOperatorSizeResponse>(
+        dynamic_cast<const MemoryStaticOperatorSizeResponse &>(response));
 }
 #pragma endregion
 } // end of namespace Protocol
