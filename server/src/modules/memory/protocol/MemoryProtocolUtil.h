@@ -13,19 +13,21 @@
 namespace Dic {
 namespace Protocol {
     // response
-    template<typename RESPONSE>std::optional<document_t> ToResponseJson(const RESPONSE &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryOperatorComparisonResponse>(
+    template<typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response);
+    template<> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonResponse>(
         const MemoryOperatorComparisonResponse &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryComponentComparisonResponse>(
+    template<> std::optional<document_t> ToResponseJson<MemoryComponentComparisonResponse>(
         const MemoryComponentComparisonResponse &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeResponse &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryResourceTypeResponse>
+    template<> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response);
+    template<> std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeResponse &response);
+    template<> std::optional<document_t> ToResponseJson<MemoryResourceTypeResponse>
             (const MemoryResourceTypeResponse &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
+    template<> std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
             (const MemoryStaticOperatorGraphResponse &response);
-    template<>std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
+    template<> std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
             (const MemoryStaticOperatorListCompResponse &response);
+    template<> std::optional<document_t> ToResponseJson<MemoryStaticOperatorSizeResponse>
+            (const MemoryStaticOperatorSizeResponse &response);
     template<>
     std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response);
     std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool hasStream,

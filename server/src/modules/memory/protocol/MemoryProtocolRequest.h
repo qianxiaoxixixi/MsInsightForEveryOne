@@ -86,10 +86,29 @@ struct MemoryOperatorParams {
     }
 };
 
+struct MemoryOperatorSizeParams {
+    std::string rankId;
+    std::string type;
+    bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP) {
+            errorMsg = "Group By parameter should be Overall or Stream.";
+            return false;
+        }
+        if (isCompare && type == MEMORY_STREAM_GROUP) {
+            errorMsg = "Memory comparing does not support request type Stream.";
+            return false;
+        }
+        return true;
+    }
+};
+
 struct StaticOperatorListParams {
     std::string rankId;
-    std::string deviceId;
-    std::string modelName;
     std::string graphId;
     std::string searchName;
     int64_t minSize;
@@ -104,12 +123,6 @@ struct StaticOperatorListParams {
     bool CommonCheck(std::string &errorMsg)
     {
         if (!CheckStrParamValid(rankId, errorMsg)) {
-            return false;
-        }
-        if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
-            return false;
-        }
-        if (!CheckStrParamValidEmptyAllowed(modelName, errorMsg)) {
             return false;
         }
         if (!CheckStrParamValidEmptyAllowed(graphId, errorMsg)) {
@@ -162,6 +175,22 @@ struct StaticOperatorGraphParams {
     }
 };
 
+struct StaticOperatorSizeParams {
+    std::string rankId;
+    std::string graphId;
+    bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(graphId, errorMsg)) {
+            return false;
+        }
+        return true;
+    }
+};
+
 struct MemoryTypeRequest : public Request {
     MemoryTypeRequest() : Request(REQ_RES_MEMORY_TYPE) {};
     std::string rankId;
@@ -175,6 +204,11 @@ struct MemoryResourceTypeRequest : public Request {
 struct MemoryOperatorRequest : public Request {
     MemoryOperatorRequest() : Request(REQ_RES_MEMORY_OPERATOR) {};
     MemoryOperatorParams params;
+};
+
+struct MemoryOperatorSizeRequest : public Request {
+    MemoryOperatorSizeRequest() : Request(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {};
+    MemoryOperatorSizeParams params;
 };
 
 struct MemoryComponentParams {
@@ -214,7 +248,7 @@ struct MemoryComponentRequest : public Request {
 
 struct MemoryViewParams {
     std::string rankId;
-    std::string type; // Overall, Stream
+    std::string type; // Overall, Stream, Component
     bool isCompare = false;
     bool CommonCheck(std::string &errorMsg)
     {
@@ -249,11 +283,6 @@ struct MemoryViewRequest : public Request {
     MemoryViewParams params;
 };
 
-struct MemoryOperatorSizeRequest : public Request {
-    MemoryOperatorSizeRequest() : Request(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {};
-    MemoryViewParams params;
-};
-
 struct MemoryStaticOperatorGraphRequest : public Request {
     MemoryStaticOperatorGraphRequest() : Request(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH) {};
     StaticOperatorGraphParams params;
@@ -262,6 +291,11 @@ struct MemoryStaticOperatorGraphRequest : public Request {
 struct MemoryStaticOperatorListRequest : public Request {
     MemoryStaticOperatorListRequest() : Request(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST) {};
     StaticOperatorListParams params;
+};
+
+struct MemoryStaticOperatorSizeRequest : public Request {
+    MemoryStaticOperatorSizeRequest() : Request(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX) {};
+    StaticOperatorSizeParams params;
 };
 
 } // end of namespace Protocol

@@ -10,14 +10,19 @@
 namespace Dic {
 namespace Module {
 namespace Memory {
-class QueryOperatorSizeHandler : public MemoryRequestHandler {
+class QueryMemoryOperatorSizeHandler : public MemoryRequestHandler {
 public:
-    QueryOperatorSizeHandler()
+    QueryMemoryOperatorSizeHandler()
     {
         command = Protocol::REQ_RES_MEMORY_OPERATOR_MIN_MAX;
     };
-    ~QueryOperatorSizeHandler() override = default;
+    ~QueryMemoryOperatorSizeHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                           OperatorSize &compareData, OperatorSize &baselineData,
+                           MemoryOperatorSizeRequest &request, std::string &errorMsg);
+    void ExecuteComparisonAlgorithm(const OperatorSize &compareData, const OperatorSize &baselineData,
+                                    MemoryOperatorSizeResponse &response);
 };
 
 } // end of namespace Memory

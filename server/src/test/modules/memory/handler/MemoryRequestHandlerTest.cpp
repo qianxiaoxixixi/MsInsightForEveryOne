@@ -11,9 +11,10 @@
 #include "QueryMemoryResourceTypeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
 #include "QueryMemoryStaticOperatorListHandler.h"
+#include "QueryMemoryStaticOperatorSizeHandler.h"
 #include "QueryMemoryTypeHandler.h"
 #include "QueryMemoryViewHandler.h"
-#include "QueryOperatorSizeHandler.h"
+#include "QueryMemoryOperatorSizeHandler.h"
 #include "MemoryProtocolRespose.h"
 #include "DataBaseManager.h"
 #include "DbMemoryDataBase.h"
@@ -1173,6 +1174,37 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     EXPECT_EQ(result.operatorDiffDetails[second].diff.opName, "OneHot-op8");
 }
 
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorSizeHandlerNormalTest)
+{
+    Dic::Module::Memory::QueryMemoryStaticOperatorSizeHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryStaticOperatorSizeRequest> requestPtr =
+        std::make_unique<Dic::Protocol::MemoryStaticOperatorSizeRequest>();
+    requestPtr.get()->params.rankId = "0";
+    requestPtr.get()->params.graphId = "";
+    ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorSizeHandlerInvalidParamTest)
+{
+    Dic::Module::Memory::QueryMemoryStaticOperatorSizeHandler handler;
+    std::unique_ptr<Dic::Protocol::MemoryStaticOperatorSizeRequest> requestPtr =
+        std::make_unique<Dic::Protocol::MemoryStaticOperatorSizeRequest>();
+    requestPtr.get()->params.rankId = "0";
+    requestPtr.get()->params.graphId = "0&1";
+    ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorSizeHandlerExecuteComparisonAlgorithmTest)
+{
+    Protocol::StaticOperatorSize compareData{120.14, 259.99};
+    Protocol::StaticOperatorSize baselineData{12.30, 558.97};
+    Protocol::MemoryStaticOperatorSizeResponse response;
+    Dic::Module::Memory::QueryMemoryStaticOperatorSizeHandler handler;
+    handler.ExecuteComparisonAlgorithm(compareData, baselineData, response);
+    EXPECT_EQ(response.size.minSize, compareData.minSize - baselineData.maxSize);
+    EXPECT_EQ(response.size.maxSize, compareData.maxSize - baselineData.minSize);
+}
+
 TEST_F(MemoryRequestHandlerTest, QueryMemoryTypeHandlerNormalTest)
 {
     Dic::Module::Memory::QueryMemoryTypeHandler handler;
@@ -1304,7 +1336,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesBothN
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorSizeHandlerNormalTest)
 {
-    Dic::Module::Memory::QueryOperatorSizeHandler handler;
+    Dic::Module::Memory::QueryMemoryOperatorSizeHandler handler;
     std::unique_ptr<Dic::Protocol::MemoryOperatorSizeRequest> requestPtr =
         std::make_unique<Dic::Protocol::MemoryOperatorSizeRequest>();
     requestPtr.get()->params.rankId = "0";
@@ -1314,10 +1346,21 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorSizeHandlerNormalTest)
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorSizeHandlerInvalidParamTest)
 {
-    Dic::Module::Memory::QueryOperatorSizeHandler handler;
+    Dic::Module::Memory::QueryMemoryOperatorSizeHandler handler;
     std::unique_ptr<Dic::Protocol::MemoryOperatorSizeRequest> requestPtr =
         std::make_unique<Dic::Protocol::MemoryOperatorSizeRequest>();
     requestPtr.get()->params.rankId = "0";
     requestPtr.get()->params.type = "";
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorSizeHandlerExecuteComparisonAlgorithmTest)
+{
+    Protocol::OperatorSize compareData{120.14, 259.99};
+    Protocol::OperatorSize baselineData{12.30, 558.97};
+    Protocol::MemoryOperatorSizeResponse response;
+    Dic::Module::Memory::QueryMemoryOperatorSizeHandler handler;
+    handler.ExecuteComparisonAlgorithm(compareData, baselineData, response);
+    EXPECT_EQ(response.size.minSize, compareData.minSize - baselineData.maxSize);
+    EXPECT_EQ(response.size.maxSize, compareData.maxSize - baselineData.minSize);
 }

@@ -390,6 +390,36 @@ TEST_F(TestSuit, QueryEntireStaticOperatorTable)
     EXPECT_EQ(opDetails.size(), expectSize);
 }
 
+TEST_F(TestSuit, QueryStaticOperatorSizeDataWithoutGraphId)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::StaticOperatorSizeParams requestParams;
+    requestParams.graphId = "";
+    double min;
+    double max;
+    bool result = database->QueryStaticOperatorSize(requestParams, min, max);
+    double expectMin = 0.0;
+    double expectMax = 2.29;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(min, expectMin);
+    EXPECT_EQ(max, expectMax);
+}
+
+TEST_F(TestSuit, QueryStaticOperatorSizeDataWithGraphId)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::StaticOperatorSizeParams requestParams;
+    requestParams.graphId = "0";
+    double min;
+    double max;
+    bool result = database->QueryStaticOperatorSize(requestParams, min, max);
+    double expectMin = 0.0;
+    double expectMax = 2.29;
+    EXPECT_TRUE(result);
+    EXPECT_EQ(min, expectMin);
+    EXPECT_EQ(max, expectMax);
+}
+
 TEST_F(TestSuit, QueryStaticOperatorGraph)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
@@ -680,9 +710,9 @@ TEST_F(TestSuit, QueryOperatorSizeData)
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
     double min;
     double max;
-    bool result = database->QueryOperatorSize(min, max, "");
-    int expectMin = 64;
-    int expectMax = 81984;
+    bool result = database->QueryOperatorSize(min, max);
+    double expectMin = 64.0;
+    double expectMax = 81984.0;
     EXPECT_TRUE(result);
     EXPECT_EQ(min, expectMin);
     EXPECT_EQ(max, expectMax);

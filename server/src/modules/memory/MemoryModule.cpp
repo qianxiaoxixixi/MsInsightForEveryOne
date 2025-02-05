@@ -6,9 +6,10 @@
 #include "QueryMemoryOperatorHandler.h"
 #include "QueryMemoryComponentHandler.h"
 #include "QueryMemoryViewHandler.h"
-#include "QueryOperatorSizeHandler.h"
+#include "QueryMemoryOperatorSizeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
 #include "QueryMemoryStaticOperatorListHandler.h"
+#include "QueryMemoryStaticOperatorSizeHandler.h"
 #include "FindSliceByAllocationTimeHandler.h"
 #include "RepositoryFactory.h"
 #include "DataEngine.h"
@@ -37,11 +38,13 @@ void MemoryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_MEMORY_OPERATOR, std::make_unique<QueryMemoryOperatorHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_COMPONENT, std::make_unique<QueryMemoryComponentHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_VIEW, std::make_unique<QueryMemoryViewHandler>());
-    requestHandlerMap.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, std::make_unique<QueryOperatorSizeHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, std::make_unique<QueryMemoryOperatorSizeHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH,
         std::make_unique<QueryMemoryStaticOperatorGraphHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST,
         std::make_unique<QueryMemoryStaticOperatorListHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX,
+        std::make_unique<QueryMemoryStaticOperatorSizeHandler>());
 
     auto renderEngine = Timeline::RenderEngine::Instance();
     auto findSliceByAllocationTimeHandler = std::make_unique<FindSliceByAllocationTimeHandler>(renderEngine);

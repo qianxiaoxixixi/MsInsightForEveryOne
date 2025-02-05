@@ -461,6 +461,18 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryEntireStaticOperatorTable)
     EXPECT_EQ(responseBody.size(), expectSize);
 }
 
+TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryStaticOperatorSize)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::StaticOperatorSizeParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.graphId = "";
+    double min;
+    double max;
+    bool result = database->QueryStaticOperatorSize(requestParams, min, max);
+    EXPECT_FALSE(result);
+}
+
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryTypeDataDynamic)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
@@ -520,7 +532,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryOperatorSizeData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     double min;
     double max;
-    auto result = database->QueryOperatorSize(min, max, "0");
+    auto result = database->QueryOperatorSize(min, max);
     EXPECT_EQ(result, true);
     EXPECT_EQ(min, 0.5); // minSize = 0.5
     EXPECT_EQ(max, 32896); // maxSize = 32896

@@ -297,6 +297,20 @@ std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &o
     return std::move(json);
 }
 
+template<>
+std::optional<document_t> ToResponseJson<MemoryStaticOperatorSizeResponse>
+    (const MemoryStaticOperatorSizeResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "minSize", response.size.minSize, allocator);
+    JsonUtil::AddMember(body, "maxSize", response.size.maxSize, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

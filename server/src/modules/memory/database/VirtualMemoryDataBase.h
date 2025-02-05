@@ -40,7 +40,9 @@ public:
     virtual bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) = 0;
     virtual bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) = 0;
 
-    virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
+    virtual bool QueryOperatorSize(double &min, double &max) = 0;
+    virtual bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
+                                         double &min, double &max) = 0;
     virtual bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) = 0;
     virtual bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
                                            uint64_t offsetTime) = 0;
@@ -129,6 +131,8 @@ protected:
     bool ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type);
     bool ExecuteMemoryResourceType(std::string &type, std::string sql);
     bool ExecuteOperatorSize(double &min, double &max, std::string sql);
+    bool ExecuteStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams,
+                                   double &min, double &max, const std::string &sql);
     bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
     bool ExecuteComponentTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum, std::string &sql);
     bool ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
