@@ -123,13 +123,15 @@ void ClusterService::QueryMatrixInfo(Protocol::MatrixBandwidthParam &params, Pro
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<MatrixInfoDo> compareMatrixList;
     std::vector<MatrixInfoDo> baselineMatrixList;
-    if (database == nullptr || !database->QueryMatrixList(params, compareMatrixList)) {
+    Protocol::MatrixBandwidthParam compareParams{params.stage, params.operatorName, params.iterationId};
+    if (database == nullptr || !database->QueryMatrixList(compareParams, compareMatrixList)) {
         ServerLog::Error("Failed to get compare matrix response data.");
     }
 
     if (params.isCompare) {
+        Protocol::MatrixBandwidthParam baselineParams{params.stage, params.operatorName, params.baselineIterationId};
         auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
-        if (baselineDatabase == nullptr || !baselineDatabase->QueryMatrixList(params, baselineMatrixList)) {
+        if (baselineDatabase == nullptr || !baselineDatabase->QueryMatrixList(baselineParams, baselineMatrixList)) {
             ServerLog::Error("Failed to get baseline matrix response data.");
         }
     }
@@ -183,13 +185,17 @@ void ClusterService::QueryOperatorList(Protocol::DurationListParams &params, Pro
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<OperatorTimeDo> compareOperatorTimeList;
     std::vector<OperatorTimeDo> baselineOperatorTimeList;
-    if (database == nullptr || !database->QueryOperatorList(params, compareOperatorTimeList)) {
+    Protocol::DurationListParams compareParams(params);
+    if (database == nullptr || !database->QueryOperatorList(compareParams, compareOperatorTimeList)) {
         ServerLog::Error("Failed to get compare operator list response data.");
     }
 
     if (params.isCompare) {
+        Protocol::DurationListParams baselineParams(params);
+        baselineParams.iterationId = params.baselineIterationId;
         auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
-        if (baselineDatabase == nullptr || !baselineDatabase->QueryOperatorList(params, baselineOperatorTimeList)) {
+        if (baselineDatabase == nullptr ||
+            !baselineDatabase->QueryOperatorList(baselineParams, baselineOperatorTimeList)) {
             ServerLog::Error("Failed to get baseline operator response data.");
         }
     }
@@ -280,13 +286,17 @@ void ClusterService::QueryDurationList(Protocol::DurationListParams &params, Pro
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<DurationDo> compareDurationDoList;
     std::vector<DurationDo> baselineDurationDoList;
-    if (database == nullptr || !database->QueryDurationList(params, compareDurationDoList)) {
+    Protocol::DurationListParams compareParams(params);
+    if (database == nullptr || !database->QueryDurationList(compareParams, compareDurationDoList)) {
         ServerLog::Error("Failed to get compare during list response data.");
     }
 
     if (params.isCompare) {
+        Protocol::DurationListParams baselineParams(params);
+        baselineParams.iterationId = params.baselineIterationId;
         auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
-        if (baselineDatabase == nullptr || !baselineDatabase->QueryDurationList(params, baselineDurationDoList)) {
+        if (baselineDatabase == nullptr ||
+            !baselineDatabase->QueryDurationList(baselineParams, baselineDurationDoList)) {
             ServerLog::Error("Failed to get baseline during response data.");
         }
     }
