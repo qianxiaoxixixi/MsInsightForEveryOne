@@ -157,6 +157,7 @@ TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.baselineIterationId = "2";
     params.isCompare = true;
     Dic::Protocol::OperatorListsResponseBody body;
     ClusterService::QueryOperatorList(params, body);
@@ -193,6 +194,7 @@ TEST_F(ClusterServiceTest, QueryDurationListSuccess)
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.baselineIterationId = "2";
     params.isCompare = true;
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
@@ -213,6 +215,7 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    params.baselineIterationId = "2";
     params.isCompare = true;
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
