@@ -749,19 +749,24 @@ bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> 
 }
 
 void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList,
-                                        const std::string &rankId)
+                                        const std::string &deviceId)
 {
     std::string sql;
+    bool isUniqueDevice = TraceDatabaseHelper::IsDeviceIdUnique(path);
     if (isComputing) {
         sql = "select startNs, endNs from TASK main join COMPUTE_TASK_INFO info "
               " on info.globalTaskId = main.globalTaskId where deviceId=? and startNs != endNs order by startNs, endNs";
     } else {
-        sql = "select op.startNs, op.endNs from COMMUNICATION_OP op join TASK task "
-              " on task.connectionId = op.connectionId where deviceId=? group by opId  order by op.startNs, op.endNs";
+        sql = "select op.startNs, op.endNs from COMMUNICATION_OP op ";
+        if (!isUniqueDevice) {
+            sql += " join TASK task on task.connectionId = op.connectionId where deviceId=? ";
+        }
+        sql += " group by opId  order by op.startNs, op.endNs";
     }
     auto stmt = CreatPreparedStatement();
     try {
-        auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, rankId);
+        auto resultSet = (!isComputing && isUniqueDevice) ? TraceDatabaseHelper::ExecuteQuery(stmt, sql) :
+            TraceDatabaseHelper::ExecuteQuery(stmt, sql, deviceId);
         OVERLAP_INFO curInfo {};
         bool hasCurInfo = false;
         while (resultSet->Next()) { // Computing = 0, Communication = 1
