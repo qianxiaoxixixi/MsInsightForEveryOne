@@ -50,7 +50,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
 
     const onGroupByChanged = (value: string): void => {
         runInAction(() => {
-            memorySession.groupId = value;
+            memorySession.groupId = value as GroupBy;
         });
     };
 

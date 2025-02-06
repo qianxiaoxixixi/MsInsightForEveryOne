@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Graph, StaticOperatorCurve } from '../entity/memory';
 import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
-import { MemorySession, DEFAULT_SIZE_CONDITION } from '../entity/memorySession';
+import { MemorySession } from '../entity/memorySession';
 import { staticOpMemoryGraphGet } from '../utils/RequestUtils';
 
 const StaticLineChart = observer(({ session, memorySession, isDark }:
@@ -31,8 +31,6 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
             memorySession.memoryGraphId = value;
             memorySession.staticSelectedRange = undefined;
             memorySession.searchEventOperatorName = '';
-            memorySession.minSize = isCompare ? -DEFAULT_SIZE_CONDITION : 0;
-            memorySession.maxSize = DEFAULT_SIZE_CONDITION;
             memorySession.current = 1;
             memorySession.pageSize = 10;
         });

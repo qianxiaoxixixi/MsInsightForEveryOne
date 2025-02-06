@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Graph, MemoryCurve } from '../entity/memory';
 import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
-import { MemorySession, DEFAULT_SIZE_CONDITION } from '../entity/memorySession';
+import { MemorySession, GroupBy } from '../entity/memorySession';
 import { memoryCurveGet } from '../utils/RequestUtils';
 
 const DynamicLineChart = observer(({ session, memorySession, isDark }:
@@ -55,7 +55,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
             });
             setMemoryCurveData(resp);
             let columns: string[] = [];
-            if (memorySession.groupId === 'Stream') {
+            if (memorySession.groupId === GroupBy.STREAM) {
                 columns = resp.legends?.map(legend => {
                     const index = legend.lastIndexOf(' ');
                     if (index > -1) {
@@ -92,8 +92,6 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
         runInAction(() => {
             memorySession.selectedRange = undefined;
             memorySession.searchEventOperatorName = '';
-            memorySession.minSize = isCompare ? -DEFAULT_SIZE_CONDITION : 0;
-            memorySession.maxSize = DEFAULT_SIZE_CONDITION;
             memorySession.current = 1;
             memorySession.pageSize = 10;
         });

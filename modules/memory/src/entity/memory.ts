@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
+import { GroupBy } from './memorySession';
+
 /**
  * 返回的数据是否包含memory信息
  * @interface RankInfo
@@ -282,7 +284,7 @@ export interface OperatorMemoryCondition {
     /**
      * 查询的类型：Overall、Stream
      */
-    type: string;
+    type: GroupBy;
     /**
      * 是否为比对场景
      */
@@ -548,3 +550,13 @@ export interface OrderPageInfo {
     order?: string;
     orderBy?: string;
 };
+
+/**
+ * 查询内存视图算子内存最大最小值的条件
+ */
+export interface MemorySizeQueryCondition {
+    rankId: string;
+    type: GroupBy;
+    isCompare: boolean;
+    graphId?: string;
+}

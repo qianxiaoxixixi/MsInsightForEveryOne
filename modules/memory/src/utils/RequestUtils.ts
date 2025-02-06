@@ -12,8 +12,10 @@ import type {
     StaticOperatorCurve,
     GetTableDataParams,
     GetTableDataResponse,
+    MemorySizeQueryCondition,
 } from '../entity/memory';
 import { GetSlicePositionParams, SlicePositionResponse } from '../entity/memory';
+import { GroupBy } from '../entity/memorySession';
 
 /**
  * 查询算子内存数据类型
@@ -62,7 +64,7 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
  * @param params 查询条件
  * @returns {OperatorDetail[]} 查询结果
  */
-export const memoryCurveGet = async (params: { rankId: string; type: string; isCompare: boolean }): Promise<MemoryCurve> => {
+export const memoryCurveGet = async (params: { rankId: string; type: GroupBy; isCompare: boolean }): Promise<MemoryCurve> => {
     return window.request({ command: 'Memory/view/memoryUsage', params });
 };
 
@@ -84,4 +86,20 @@ Promise<GetTableDataResponse> => {
 export const fetchOperatorPosition = async (params: GetSlicePositionParams):
 Promise<SlicePositionResponse> => {
     return await window.request({ command: 'Memory/find/slice', params: { ...params } });
+};
+
+/**
+ * 查询动态图算子内存最大最小值
+ */
+export const fetchDynamicOperatorMaxMin = async (params: MemorySizeQueryCondition):
+Promise<{minSize: number; maxSize: number}> => {
+    return await window.request({ command: 'Memory/view/operatorSize', params: { ...params } });
+};
+
+/**
+ * 查询静态图算子内存最大最小值
+ */
+export const fetchStaticOperatorMaxMin = async (params: MemorySizeQueryCondition):
+Promise<{minSize: number; maxSize: number}> => {
+    return await window.request({ command: 'Memory/view/staticOpMemorySize', params: { ...params } });
 };

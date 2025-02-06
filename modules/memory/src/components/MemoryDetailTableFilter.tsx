@@ -13,7 +13,6 @@ import { Session } from '../entity/session';
 import {
     MemorySession,
     MemoryGraphType,
-    DEFAULT_SIZE_CONDITION,
     DEFAULT_SHOW_WITHIN_INTERVAL,
 } from '../entity/memorySession';
 import OptionalCheckbox from './OptionalCheckbox';
@@ -60,8 +59,8 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
     const onReset = (): void => {
         runInAction(() => {
             memorySession.searchEventOperatorName = '';
-            memorySession.minSize = isCompare ? -DEFAULT_SIZE_CONDITION : 0;
-            memorySession.maxSize = DEFAULT_SIZE_CONDITION;
+            memorySession.minSize = memorySession.defaultMinSize;
+            memorySession.maxSize = memorySession.defaultMaxSize;
             memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = DEFAULT_SHOW_WITHIN_INTERVAL;
         });
         queryDetailData(false);
