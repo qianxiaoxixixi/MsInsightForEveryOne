@@ -26,8 +26,6 @@ export interface SelectedRange {
     endTs: number;
 };
 
-export const DEFAULT_SIZE_CONDITION = 1000000;
-
 export const DEFAULT_SHOW_WITHIN_INTERVAL = false;
 
 export const enum GroupBy {
@@ -48,7 +46,7 @@ export class MemorySession {
     // 顶部筛选条件相关变量
     hostCondition: ConditionType = { options: [], value: '' };
     rankIdCondition: ConditionType = { options: [], value: '' };
-    groupId: string = 'Overall';
+    groupId: GroupBy = GroupBy.DEFAULT;
 
     // 中部折线图框选和下方表格联动
     selectedRange?: SelectedRange;
@@ -57,7 +55,9 @@ export class MemorySession {
     // 底部表格筛选条件相关变量
     searchEventOperatorName: string = '';
     minSize: number = 0;
-    maxSize: number = DEFAULT_SIZE_CONDITION;
+    maxSize: number = 0;
+    defaultMinSize = 0;
+    defaultMaxSize = 0;
     isBtnDisabled: boolean = true;
     // 是否仅查看在选中时间区间分配或释放内存的数据
     isOnlyShowAllocatedOrReleasedWithinInterval: boolean = DEFAULT_SHOW_WITHIN_INTERVAL;

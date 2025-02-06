@@ -14,8 +14,8 @@ import { Session } from '../entity/session';
 import { MemorySession, MemoryGraphType, GroupBy } from '../entity/memorySession';
 import MemoryDetailTableFilter from './MemoryDetailTableFilter';
 import { AntTableChart, TableByComponent } from './AntTableChart';
-import { OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
-import { operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
+import { MemorySizeQueryCondition, OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
+import { fetchDynamicOperatorMaxMin, fetchStaticOperatorMaxMin, operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
 import { customConsole as console } from 'ascend-utils';
 
 const enum CompareSource {
@@ -98,6 +98,29 @@ const getFetchApi = (memoryType: string): any => {
         default:
             return operatorsMemoryGet;
     };
+};
+
+const getFetchSizeApi = (memoryType: string): any => {
+    switch (memoryType) {
+        case MemoryGraphType.DYNAMIC:
+            return fetchDynamicOperatorMaxMin;
+        case MemoryGraphType.STATIC:
+            return fetchStaticOperatorMaxMin;
+        default:
+            return fetchDynamicOperatorMaxMin;
+    };
+};
+
+const buildSearchSizeParam = (memorySession: MemorySession, isCompare: boolean): MemorySizeQueryCondition => {
+    const param: MemorySizeQueryCondition = { rankId: memorySession.rankIdCondition.value, type: memorySession.groupId, isCompare };
+    switch (memorySession.memoryType) {
+        case MemoryGraphType.STATIC:
+            param.graphId = memorySession.memoryGraphId;
+            break;
+        default:
+            break;
+    };
+    return param;
 };
 
 export const handleOperatorDetails = (operatorDetails: any[], isCompare: boolean, t: TFunction): any => {
@@ -211,9 +234,29 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     };
 
     useEffect(() => {
+        if (memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '') {
+            return;
+        }
+        setMemoryTableData([]);
+        const fetchSizeApi = getFetchSizeApi(memorySession.memoryType);
+        const params = buildSearchSizeParam(memorySession, isCompare);
+        fetchSizeApi(params).then((res: { minSize: number; maxSize: number }) => {
+            runInAction(() => {
+                memorySession.defaultMinSize = res.minSize ?? 0;
+                memorySession.defaultMaxSize = res.maxSize ?? 0;
+                memorySession.minSize = memorySession.defaultMinSize;
+                memorySession.maxSize = memorySession.defaultMaxSize;
+                setDetailTableData();
+            });
+        }).catch((err: any) => {
+            console.error(err);
+        });
+    }, [memorySession.rankIdCondition.value, memorySession.groupId, memorySession.memoryGraphId, isCompare]);
+
+    useEffect(() => {
         setDetailTableData();
-    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.rankIdCondition.value, memorySession.current, memorySession.pageSize,
-        order, orderBy, session.isClusterMemoryCompletedSwitch, memorySession.groupId, memorySession.memoryGraphId, t, isCompare, memoryType]);
+    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
+        order, orderBy, t, memoryType]);
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
