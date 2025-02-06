@@ -75,7 +75,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await nameInput.setValue('aten::empty_strided');
         expect(await nameInput.expectValueToBe('aten::empty_strided'));
         expect(await minSizeInput.expectValueToBe('0'));
-        expect(await maxSizeInput.expectValueToBe('1000000'));
+        expect(await maxSizeInput.expectValueToBe('503810'));
         const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
@@ -93,7 +93,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
         expect(await nameInput.expectValueToBe(''));
         expect(await minSizeInput.expectValueToBe('0'));
-        expect(await maxSizeInput.expectValueToBe('1000000'));
+        expect(await maxSizeInput.expectValueToBe('503810'));
         const queryBtn = memoryFrame.getByTestId('reset-btn');
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
