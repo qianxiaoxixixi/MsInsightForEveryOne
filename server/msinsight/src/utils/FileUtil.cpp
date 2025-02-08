@@ -90,7 +90,7 @@ std::string FileUtil::GetAbsPath(const std::string &path)
     }
     return curPath + std::string(MSVP_SLASH) + path;
 }
- 
+
 bool FileUtil::IsSoftLink(const std::string &path)
 {
 #ifdef _WIN32
@@ -149,7 +149,6 @@ bool FileUtil::CheckDirValid(const std::string &path)
         Server::ServerLog::Error("Failed to retrieve the absolute path.");
         return false;
     }
- 
     if (!CheckFilePathLength(dir)) {
         return false;
     }
@@ -160,12 +159,10 @@ bool FileUtil::CheckDirValid(const std::string &path)
         Server::ServerLog::Error("The directory path not exists. path: %.", dir);
         return false;
     }
- 
     if (IsSoftLink(dir)) {
         Server::ServerLog::Error("The path is soft link. path: %.", dir);
         return false;
     }
- 
     if (!CheckDirAccess(dir, R_OK)) {
         Server::ServerLog::Error("The path has no read access. path: %.", dir);
         return false;
@@ -584,6 +581,37 @@ bool FileUtil::CheckPathInvalidChar(const std::string &filePath)
     }
     return false;
 }
+
+static inline std::vector<std::function<std::tuple<bool, const char*>(const std::string&)>> CheckPathBasicConditions = {
+    [](const std::string &path) {
+        return std::make_tuple(path.empty(), "Failed to retrieve the absolute path");
+    }, // 是否为空
+    [](const std::string &path) {
+        return std::make_tuple(!FileUtil::CheckFilePathLength(path), "The file path exceed limit");
+    }, // 是否过长
+    [](const std::string &path) {
+        return std::make_tuple(FileUtil::CheckPathInvalidChar(path), "The file path contains invalid char");
+    }, // 是否含有非法字符
+    [](const std::string &path) {
+        return std::make_tuple(!fs::exists(path), "The file path not exist");
+    }, // 是否存在
+    [](const std::string &path) {
+        return std::make_tuple(FileUtil::IsSoftLink(path), "The file path is soft link");
+    }, // 是否软链
+    [](const std::string &path) {
+        return std::make_tuple(!FileUtil::CheckPathOwner(path), "The file path owner not current user");
+    }, // 是否非属主
+    [](const std::string &path) {
+        const std::string parentDir = fs::path(path).parent_path().string();
+        return std::make_tuple(!parentDir.empty() && !FileUtil::CheckPathOwner(parentDir),
+            "The parent file dir owner not right");
+    }, // 是否非父级目录属主
+    [](const std::string &path) {
+        return std::make_tuple(!fs::is_directory(path) && !FileUtil::IsRegularFile(path),
+            "The file is not regular file");
+    }, // 是否非常规文件/目录
+};
+
 Status FileUtil::CheckPathBasic(const std::string &filePath, fs::perms permission)
 {
     Status s(true);
@@ -592,53 +620,17 @@ Status FileUtil::CheckPathBasic(const std::string &filePath, fs::perms permissio
         s.SetErr("The path is empty");
         return s;
     }
-    std::string absPath = GetAbsPath(filePath);
-    if (absPath.empty()) {
-        Server::ServerLog::Error("Failed to retrieve the absolute path. path:", filePath);
-        s.SetErr("Failed to retrieve the absolute path.");
-        return s;
-    }
-    if (!CheckFilePathLength(absPath)) {
-        Server::ServerLog::Error("The file path exceed limit. path:", filePath);
-        s.SetErr("The file path exceed limit");
-        return s;
-    }
-    if (CheckPathInvalidChar(absPath)) {
-        Server::ServerLog::Error("The file path contains invalid char. path:", filePath);
-        s.SetErr("The path contains invalid character");
-        return s;
-    }
+    const std::string absPath = GetAbsPath(filePath);
     try {
-        if (!fs::exists(absPath)) {
-            Server::ServerLog::Error("The file path not exist. path:", filePath);
-            s.SetErr("The file path not exist");
-            return s;
-        }
-        if (IsSoftLink(absPath)) {
-            Server::ServerLog::Error("The file path is soft link.path:", filePath);
-            s.SetErr("The file path is soft link");
-            return s;
-        }
-        // current dir
-        if (!CheckPathOwner(absPath)) {
-            Server::ServerLog::Error("The file path owner not current user.path:", filePath);
-            s.SetErr("The file path owner not current user");
-            return s;
-        }
-        // parent dir
-        std::string parentDir = fs::path(absPath).parent_path().string();
-        if (!parentDir.empty() && !CheckPathOwner(parentDir)) {
-            Server::ServerLog::Error("The parent file dir owner not right");
-            s.SetErr("The parent file dir owner not right");
-            return s;
-        }
-        if (!fs::is_directory(absPath) && !IsRegularFile(absPath)) {
-            Server::ServerLog::Error("The file is not regular file.path:", filePath);
-            s.SetErr("The file is not regular file");
-            return s;
+        for (size_t i = 0;i < CheckPathBasicConditions.size(); ++i) {
+            if (auto [ failed, onFailedMsg ] = CheckPathBasicConditions[i](absPath); failed) {
+                Server::ServerLog::Error("%s. Path:%s", onFailedMsg, absPath);
+                s.SetErr(onFailedMsg);
+                return s;
+            }
         }
         if (permission != fs::perms::none && !CheckPathPermission(absPath, permission)) {
-            Server::ServerLog::Error("The file permission is not correct.path:", filePath);
+            Server::ServerLog::Error("The file permission is not correct, path: ", filePath);
             s.SetErr("The file permission is not correct");
             return s;
         }
