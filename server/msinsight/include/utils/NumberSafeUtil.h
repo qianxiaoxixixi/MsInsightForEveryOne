@@ -61,22 +61,25 @@ bool IsSafeCast(const F &s)
     using D = BaseType_t<T>;
     if constexpr (std::is_same_v<S, D>) {  // 相同类型
         return true;
-    } else if constexpr (std::is_unsigned_v<S> && std::is_unsigned_v<D>) {   // 两个类型都为非负整型
+    }
+    if constexpr (std::is_unsigned_v<S> && std::is_unsigned_v<D>) {   // 两个类型都为非负整型
         if (sizeof(S) < sizeof(D)) return true;     // 源数据类型大小小于模板大小,必定安全转换
         return !bitUpper<S, D>(std::forward<S>(src));   // 检查是否有超出目标类型大小范围的非0位，检查是否会丢失数据
-    } else if constexpr ((std::is_integral_v<S> && std::is_unsigned_v<D>)       // 整型和非负整型
+    }
+    if constexpr ((std::is_integral_v<S> && std::is_unsigned_v<D>)       // 整型和非负整型
                          || (std::is_unsigned_v<S> && std::is_integral_v<D>)) {
         if (sizeof(S) < sizeof(D)) return true;         //  同上
         if (!IsSignBitZero<S>(std::forward<S>(src))) return false;  // 符号位/最高位为1, 转换失败
         return !bitUpper<S, D>(std::forward<S>(src));   // 检查是否有超出目标类型大小的非0位
-    } else if constexpr (std::is_floating_point_v<S> && std::is_floating_point_v<D>) {
+    }
+    if constexpr (std::is_floating_point_v<S> && std::is_floating_point_v<D>) {
         // 浮点数，需要检查数据类型范围是否包括，精度损失仍能转换成功
-        if (std::is_same_v<S, D>) return true;
         if (std::numeric_limits<S>::digits < std::numeric_limits<D>::digits
             && std::numeric_limits<S>::max_exponent < std::numeric_limits<D>::max_exponent)
             return true;
         if (sizeof(S) > sizeof(D)) return (s > (std::numeric_limits<D>::max()) || s < std::numeric_limits<D>::min());
-    } else if constexpr (std::is_integral_v<S> && std::is_floating_point_v<D>) {   // 整型到浮点型，检查数据类型范围
+    }
+    if constexpr (std::is_integral_v<S> && std::is_floating_point_v<D>) {   // 整型到浮点型，检查数据类型范围
         if (static_cast<D>(src) >= -std::numeric_limits<D>::max()
             && static_cast<D>(src) <= std::numeric_limits<D>::max())
             return true;

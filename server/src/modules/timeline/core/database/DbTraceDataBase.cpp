@@ -652,6 +652,36 @@ void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
     sqlite3_finalize(stmt);
 }
 
+std::vector<OVERLAP_INFO> BuildOverlapInfoList(const std::vector<OVERLAP_INFO> &timeInfoList)
+{
+    std::vector<OVERLAP_INFO> overlapInfoList;
+    // 记录当前最大截结束时间对应的覆盖区块
+    // 此处为了添加第一块数据
+    OVERLAP_INFO curBlock = OVERLAP_INFO(timeInfoList.begin()->startNs, timeInfoList.begin()->startNs,
+                                         -1);
+    for (const auto &timeInfo: timeInfoList) {
+        if (curBlock.type == 1) { // Communication = 1
+            overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
+                                         timeInfo.startNs > curBlock.endNs ? curBlock.endNs : timeInfo.startNs, 2);
+        }
+        if (timeInfo.startNs > curBlock.endNs) {
+            overlapInfoList.emplace_back(curBlock.endNs, timeInfo.startNs, 3); // Free = 3
+            curBlock.endNs = timeInfo.endNs;
+            curBlock.type = timeInfo.type;
+            curBlock.startNs = timeInfo.startNs;
+        } else {
+            curBlock.type = timeInfo.endNs > curBlock.endNs ? timeInfo.type : curBlock.type;
+            curBlock.startNs = timeInfo.endNs > curBlock.endNs ? curBlock.endNs : timeInfo.endNs;
+            curBlock.endNs = timeInfo.endNs > curBlock.endNs ? timeInfo.endNs : curBlock.endNs;
+        }
+    }
+    // 此处为了添加最后一块数据
+    if (curBlock.type == 1) { // Communication = 1
+        overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
+                                     curBlock.endNs, 2);
+    }
+    return overlapInfoList;
+}
 void DbTraceDataBase::GenerateOverlapAnalysis()
 {
     if (!CheckTableExist(TABLE_OVERLAP_ANALYSIS)) {
@@ -677,32 +707,7 @@ void DbTraceDataBase::GenerateOverlapAnalysis()
             continue;
         }
         std::sort(timeInfoList.begin(), timeInfoList.end(), std::less<OVERLAP_INFO>());
-        std::vector<OVERLAP_INFO> overlapInfoList;
-        // 记录当前最大截结束时间对应的覆盖区块
-        // 此处为了添加第一块数据
-        OVERLAP_INFO curBlock = OVERLAP_INFO(timeInfoList.begin()->startNs, timeInfoList.begin()->startNs,
-                                             -1);
-        for (const auto &timeInfo: timeInfoList) {
-            if (curBlock.type == 1) { // Communication = 1
-                overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
-                                             timeInfo.startNs > curBlock.endNs ? curBlock.endNs : timeInfo.startNs, 2);
-            }
-            if (timeInfo.startNs > curBlock.endNs) {
-                overlapInfoList.emplace_back(curBlock.endNs, timeInfo.startNs, 3); // Free = 3
-                curBlock.endNs = timeInfo.endNs;
-                curBlock.type = timeInfo.type;
-                curBlock.startNs = timeInfo.startNs;
-            } else {
-                curBlock.type = timeInfo.endNs > curBlock.endNs ? timeInfo.type : curBlock.type;
-                curBlock.startNs = timeInfo.endNs > curBlock.endNs ? curBlock.endNs : timeInfo.endNs;
-                curBlock.endNs = timeInfo.endNs > curBlock.endNs ? timeInfo.endNs : curBlock.endNs;
-            }
-        }
-        // 此处为了添加最后一块数据
-        if (curBlock.type == 1) { // Communication = 1
-            overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
-                                         curBlock.endNs, 2);
-        }
+        const std::vector<OVERLAP_INFO> overlapInfoList = BuildOverlapInfoList(timeInfoList);
         if (InsertOverlapAnalysisInfo(timeInfoList, deviceId) && InsertOverlapAnalysisInfo(overlapInfoList, deviceId)) {
             Server::ServerLog::Info("Generate overlap analysis success");
         } else {
