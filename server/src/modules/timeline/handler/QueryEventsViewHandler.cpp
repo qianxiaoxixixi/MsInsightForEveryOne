@@ -35,8 +35,7 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     }
     if (!database->QueryEventsViewData(request.params, responsePtr->body,
         TraceTime::Instance().GetStartTime())) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to get events view table response data.");
+        ServerLog::Warn("Failed to get events view table response data.");
         session.OnResponse(std::move(responsePtr));
         return false;
     }
