@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react';
 import { Checkbox } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
@@ -32,19 +32,14 @@ interface IProps {
 // 目录树 全选、删除按钮
 const CheckMenu = observer(({ editStatus, isAll, toggleCheckAll, checkedKeys }: IProps) => {
     const { t } = useTranslation('framework');
-    const [checkAll, setCheckAll] = useState(false);
 
     const confirm = (): void => {
         removeProjects(checkedKeys);
     };
 
-    useEffect(() => {
-        setCheckAll(isAll);
-    }, [isAll]);
-
     return editStatus
         ? <CheckMenuContainer>
-            <Checkbox onChange={(e: CheckboxChangeEvent): void => toggleCheckAll(e.target.checked)} checked={checkAll}>{t('All')}</Checkbox>
+            <Checkbox onChange={(e: CheckboxChangeEvent): void => toggleCheckAll(e.target.checked)} checked={isAll}>{t('All')}</Checkbox>
             <Popconfirm placement="topLeft"
                 title={t('DeleteConfirmDescribe')}
                 onConfirm={confirm}
