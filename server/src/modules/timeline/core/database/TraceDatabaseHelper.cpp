@@ -9,6 +9,7 @@
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
     {"Python", PROCESS_TYPE::API},
+    {"python3", PROCESS_TYPE::API},
     {"MindSpore", PROCESS_TYPE::API},
     {"CANN", PROCESS_TYPE::CANN_API},
     {"Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE},
@@ -34,6 +35,7 @@ std::map<std::string, std::string> analysisType = {
 };
 
 std::map<PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap = {
+    {PROCESS_TYPE::MS_TX, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::CANN_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
     {PROCESS_TYPE::ASCEND_HARDWARE,
@@ -350,8 +352,13 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <Sqlit
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, "
         "globalTid as processId, type as threadId "
         "FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE pid||'' = ? UNION "
+        "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, "
+        "globalTid as processId, 'mstx' as threadId "
+        "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE pid||'' = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -365,8 +372,23 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <Sqlite
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, "
         "depth, globalTid as processId, type as threadId "
         "FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
+        "WHERE globalTid = ? UNION "
+        "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, "
+        "depth, globalTid as processId, 'mstx' as threadId "
+        "FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
         "WHERE globalTid = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid, params.pid, params.pid);
+}
+
+std::unique_ptr <SqliteResultSet> QueryEventsView4MSTX(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+{
+    std::string sql = "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
+        "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'mstx' as threadId, "
+        "(globalTid / 4294967296) AS pid FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
+        "WHERE globalTid = ? ";
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.pid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Pytorch(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -519,7 +541,7 @@ std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <S
     if (StringUtil::StartWith(processName, "process")) {
         return QueryEventsView4Process(stmt, orderByCondition, params);
     } else if (StringUtil::StartWith(processName, "Thread")) {
-        if (params.tid.empty() && params.threadName.empty()) {
+        if (params.threadName.empty()) {
             return QueryEventsView4Thread(stmt, orderByCondition, params);
         } else if (params.threadName == "hccl") {
             return QueryEventsView4HostHccl(stmt, orderByCondition, params);
@@ -540,7 +562,7 @@ void GetEventsViewResultSet4DbDetails(std::unique_ptr<SqliteResultSet>& resultSe
     while (resultSet->Next()) {
         auto ptr = std::make_unique<EventDetail>();
         // 根据泳道类型，创建对应子类对象的指针，填充特有数据
-        if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API) {
+        if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API || metaType == PROCESS_TYPE::MS_TX) {
             auto hostPtr = std::make_unique<HostEventDetail>();
             hostPtr->tid = resultSet->GetString("tid");
             hostPtr->pid = resultSet->GetString("pid");
@@ -608,6 +630,41 @@ std::string TraceDatabaseHelper::GetOrderByCondition(const Protocol::EventsViewP
     return orderByCondition;
 }
 
+std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    const Protocol::EventsViewParams &params, std::string &orderByCondition, const std::string& rankId,
+    const PROCESS_TYPE &metaType)
+{
+    switch (metaType) { // 根据不同的泳道类型，调用不同的query查询数据表
+        case Protocol::PROCESS_TYPE::MS_TX:
+            return QueryEventsView4MSTX(stmt, orderByCondition, params);
+        case Protocol::PROCESS_TYPE::API:
+            return QueryEventsView4Pytorch(stmt, orderByCondition, params);
+        case Protocol::PROCESS_TYPE::CANN_API:
+            return GetEventsViewResult4CANNAPI(stmt, orderByCondition, params);
+        case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
+            if (params.tid.empty() && params.threadName.empty()) {
+                return QueryEventsView4Hardware(stmt, orderByCondition, params, rankId);
+            } else {
+                return QueryEventsView4Stream(stmt, orderByCondition, params, rankId);
+            }
+        case Protocol::PROCESS_TYPE::HCCL:
+            if (params.tid.empty() && params.threadName.empty()) {
+                return QueryEventsView4DeviceHCCL(stmt, orderByCondition, params, rankId);
+            } else {
+                return QueryEventsView4Group(stmt, orderByCondition, params, rankId);
+            }
+        case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
+            if (params.tid.empty() && params.threadName.empty()) {
+                return QueryEventsView4Overlap(stmt, orderByCondition, params);
+            } else {
+                return QueryEventsView4OverlapSub(stmt, orderByCondition, params);
+            }
+        default:
+            ServerLog::Warn("No defined query way");
+            return nullptr;
+    }
+}
+
 bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
     const std::string& rankId)
@@ -619,37 +676,7 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
     auto metaType = GetProcessType(params.metaType);
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
-        switch (metaType) { // 根据不同的泳道类型，调用不同的query查询数据表
-            case Protocol::PROCESS_TYPE::API:
-                resultSet = QueryEventsView4Pytorch(stmt, orderByCondition, params);
-                break;
-            case Protocol::PROCESS_TYPE::CANN_API:
-                resultSet = GetEventsViewResult4CANNAPI(stmt, orderByCondition, params);
-                break;
-            case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
-                if (params.tid.empty() && params.threadName.empty()) {
-                    resultSet = QueryEventsView4Hardware(stmt, orderByCondition, params, rankId);
-                } else {
-                    resultSet = QueryEventsView4Stream(stmt, orderByCondition, params, rankId);
-                }
-                break;
-            case Protocol::PROCESS_TYPE::HCCL:
-                if (params.tid.empty() && params.threadName.empty()) {
-                    resultSet = QueryEventsView4DeviceHCCL(stmt, orderByCondition, params, rankId);
-                } else {
-                    resultSet = QueryEventsView4Group(stmt, orderByCondition, params, rankId);
-                }
-                break;
-            case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
-                if (params.tid.empty() && params.threadName.empty()) {
-                    resultSet = QueryEventsView4Overlap(stmt, orderByCondition, params);
-                } else {
-                    resultSet = QueryEventsView4OverlapSub(stmt, orderByCondition, params);
-                }
-                break;
-            default:
-                ServerLog::Warn("No defined query way");
-        }
+        resultSet = QueryEventsViewResultSet(stmt, params, orderByCondition, rankId, metaType);
     } catch (DatabaseException &de) {
         ServerLog::Error("Query events view data for DB. Execute query failed: ", de.What());
         return false;
