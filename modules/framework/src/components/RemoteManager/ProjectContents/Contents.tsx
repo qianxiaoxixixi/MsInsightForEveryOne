@@ -100,9 +100,11 @@ const ContentsContainer = styled.div`
     }
     // 比对数据
     .baseline{
+        font-weight:bold;
         color: ${(props): string => props.theme.primaryColor};
     }
     .comparison{
+        font-weight:bold;
         color: ${(props): string => props.theme.warningColor};
     }
 `;
@@ -140,8 +142,9 @@ const getTreeData = (session: Session): TreeDataNode[] => {
         isLeaf: false,
         icon: <LocalImportIcon/>,
         title: <Tooltip placement="bottom" title={dataSource.projectName}>
-            <span className="content-body">
-                <span className="content-name"><EditableText text={dataSource.projectName}/></span>
+            <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: '' })}`}>
+                <span className="content-name" onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: '' })}>
+                    <EditableText text={dataSource.projectName}/></span>
                 <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
                     <ImportDataBtn projectName={dataSource.projectName} session={session}/>
                     <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} />

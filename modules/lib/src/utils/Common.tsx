@@ -448,3 +448,7 @@ export class HandleSingleDoubleClick {
         action();
     }
 }
+
+export const notNull = (val: any): boolean => {
+    return val !== undefined && val !== null && val !== '';
+};

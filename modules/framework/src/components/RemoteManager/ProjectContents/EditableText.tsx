@@ -64,7 +64,7 @@ function EditableText({ text = '' }: IProps): JSX.Element {
     }, [editing]);
 
     return <Container>
-        <div className={editing ? 'hide' : 'show'} onDoubleClick={handleDoubleClick}>{ text }</div>
+        <div className={`can-right-click ${editing ? 'hide' : 'show'}`} onDoubleClick={handleDoubleClick}>{ text }</div>
         <Input className={editing ? 'show' : 'hide'}
             ref={inputRef}
             value={editText}

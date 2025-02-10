@@ -42,46 +42,44 @@ export const isSameFile = (one: File, anotherOne: File): boolean => {
 
 // 右键菜单
 const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element => {
-    const { selectedFile, compareSet: { baseline, comparison }, activeDataSource } = session;
-    // 当前是否有打开的项目
-    const hasActivePorject = activeDataSource.projectName !== '';
-    // 是否已设置基线
-    const isBaselineSetted = baseline.projectName !== '' && baseline.filePath !== '';
-    // 是否是在当前打开项目下
-    const isInActiveProject = hasActivePorject && activeDataSource.projectName === selectedFile.projectName;
+    const { selectedFile, compareSet: { baseline, comparison } } = session;
+    const { projectName: selectedProjectName, filePath: selectedFileName } = selectedFile;
+    const { projectName: baselineProjectName, filePath: baselineFilePath } = baseline;
+    const { projectName: compareProjectName, filePath: compareFilePath } = comparison;
+    // 右击的是项目名还是文件名
+    const isProject = selectedProjectName !== '' && selectedFileName === '';
+    // 是否基线文件
+    const isBaseline = selectedProjectName === baselineProjectName && selectedFileName === baselineFilePath;
+    const isBaselineSetted = baselineProjectName !== '';
+    const isComparison = selectedProjectName === compareProjectName && selectedFileName === compareFilePath;
 
     const allMenuItems: MenuItemModel[] = [
         {
             label: t('Set as Baseline Data'),
             key: 'setAsBaselineData',
             action: (): void => { setBaselineData(selectedFile); },
-            // 当前选中此文件
-            disabled: !hasActivePorject || isSameFile(selectedFile, baseline),
+            // 此文件（项目）不是基线
+            visible: !isBaseline,
         },
         {
             label: t('Unset as Baseline Data'),
             key: 'unsetAsBaselineData',
             action: cancelBaselineData,
-            // 此文件不是基线文件
-            disabled: !hasActivePorject || !isSameFile(selectedFile, baseline),
+            // 此文件（项目）是基线文件
+            visible: isBaseline,
         },
         {
             label: t('Set as Comparison Data'),
             key: 'setAsComparisonData',
             action: (): void => { setCompareData(selectedFile); },
-            // 只有当前打开项目下的文件，才可以作为对比文件
-            visible: isInActiveProject,
-            // 没有基线文件or这个是基线文件or这个是对比文件
-            disabled: !hasActivePorject || (!isBaselineSetted || isSameFile(selectedFile, baseline) || isSameFile(selectedFile, comparison)),
+            // 不是项目名、不是基线数据、不是对比数据，且基线文件已设置
+            visible: !isProject && !isBaseline && !isComparison && isBaselineSetted,
         },
         {
             label: t('Unset as Comparison Data'),
             key: 'unsetAsComparisonData',
             action: cancelCompareData,
-            // 只有当前打开项目下的文件，才可以作为对比文件
-            visible: isInActiveProject,
-            // 没有基线文件或者这个不是对比文件
-            disabled: !hasActivePorject || (!isBaselineSetted || !isSameFile(selectedFile, comparison)),
+            visible: isComparison,
         },
     ];
 
@@ -133,7 +131,7 @@ function adjustMenuPosition({ menu, setMenuPosition, mousePosition }: {
 
 const MenuContainer = styled.div`
     padding: 3px 0;
-    min-width: 200px;
+    min-width: 100px;
     border-radius: ${(props): string => props.theme.borderRadiusBase};
     background-color:  ${(props): string => props.theme.contextMenuBgColor};
     position: fixed;
@@ -148,7 +146,7 @@ const Menu = ({ session }: IProps): JSX.Element => {
     const menuRef = useRef<HTMLDivElement>(null);
     const [mousePosition, setMousePosition] = useState<Position>({ x: 0, y: 0 });
     const [menuPosition, setMenuPosition] = useState<Position>({ x: 0, y: 0 });
-    const { t } = useTranslation('timeline', { keyPrefix: 'contextMenu' });
+    const { t } = useTranslation('framework');
 
     const handleContextMenu = (event: MouseEvent): void => {
         event.preventDefault();
