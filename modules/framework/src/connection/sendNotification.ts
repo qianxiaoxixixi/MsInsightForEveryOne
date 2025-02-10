@@ -67,3 +67,10 @@ export function sendUpdateProjectName(oldProjectName: string, newProjectName: st
 export function sendReset(): void {
     connector.send({ event: 'remote/reset', body: {}, target: 'plugin' });
 }
+
+export const sendClusterBaselineStatus = (status: boolean): void => {
+    connector.send({
+        event: 'clusterBaselineToggle',
+        body: { status },
+    });
+};
