@@ -19,6 +19,7 @@ import { isProjectNameExisted, updateDataSourceName } from '@/utils/Resource';
 import { sendReset, sendUpdateProjectName } from '@/connection/sendNotification';
 import { updateProjectNameHandler } from '@/utils/Compare';
 import { updateRankMapByProjectName } from '@/utils/Rank';
+import { openLoading, closeLoading } from '@/utils/useLoading';
 
 export interface UpdateProjectParam {
     projectAction: ProjectAction;
@@ -45,6 +46,7 @@ export const loadHistoryProject = async(): Promise<void> => {
 // 导入数据、切换项目
 export async function handleProjectAction({ action, dataSource: orginDataSource, isConflict }:
 {action: ProjectAction;dataSource: DataSource;isConflict: boolean}): Promise<void> {
+    openLoading();
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -73,6 +75,7 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         const path = dataSource.dataPath[0].includes(dataSource.projectName) ? dataSource.projectName : dataSource.dataPath[0];
         localStorageService.setItem(LocalStorageKey.LAST_FILE_PATH, path);
     });
+    closeLoading();
 }
 // 允许2个数组值重复或乱序
 function arraysValueEqual<T>(a: T[], b: T[]): boolean {

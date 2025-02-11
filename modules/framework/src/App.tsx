@@ -16,8 +16,14 @@ import { connectRemote } from '@/centralServer/server';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import './index.css';
 import { registerEventListeners } from '@/connection';
+import { registerDragAndDropFile } from '@/utils';
+import { Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import i18n from 'ascend-i18n';
 
 const init = async(session: Session): Promise<void> => {
+    // 注册文件拖拽
+    registerDragAndDropFile();
     // 连接与模块的通信
     registerEventListeners();
 
@@ -49,14 +55,19 @@ const App = observer(() => {
         ? <ThemeProvider theme={themeInstance.getThemeType()}>
             <GlobalStyles />
             <SharedConfigProvider locale={locale}>
-                {
-                    view({
-                        mainContainer: <Main session={session} />,
-                        draggableContainer: <RemoteManager session={session} />,
-                        id: 'framework',
-                        padding: 16,
-                    })
-                }
+                <Spin
+                    spinning={session.loading}
+                    tip={i18n.t('Loading', { ns: 'framework' })}
+                    indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}>
+                    {
+                        view({
+                            mainContainer: <Main session={session} />,
+                            draggableContainer: <RemoteManager session={session} />,
+                            id: 'framework',
+                            padding: 16,
+                        })
+                    }
+                </Spin>
             </SharedConfigProvider>
         </ThemeProvider>
         : <></>;

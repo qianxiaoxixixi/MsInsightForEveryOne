@@ -18,3 +18,12 @@
   pointer-events:none;
   display:none;
 }
+
+/*loading遮罩*/
+#root>.ant-spin-nested-loading>div>.ant-spin {
+  max-height: none;
+  background: rgba(0,0,0,0.5);
+}
+#root>.ant-spin-nested-loading>div>.ant-spin .ant-spin-text{
+  text-shadow:none;
+}
