@@ -1,13 +1,16 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+import { message as Message } from 'antd';
+import { runInAction } from 'mobx';
+import i18n from 'ascend-i18n';
 import connector from '@/connection';
 import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import type { File } from '@/entity/session';
-import { message as Message } from 'antd';
-import { runInAction } from 'mobx';
 import { store } from '@/store';
 import { cancelBaseline, setBaseline } from '@/utils/Request';
+import { sendClusterBaselineStatus } from '@/connection/sendNotification';
+import { notNull } from 'ascend-utils';
 
 export interface CompareData {
     projectName: string;
@@ -15,6 +18,7 @@ export interface CompareData {
     rankId: string;
     host?: string;
     cardName?: string;
+    isCluster?: boolean;
 }
 
 export interface TimelineCard {
@@ -52,8 +56,13 @@ export const setBaselineData = async ({ projectName, filePath }: File): Promise<
     // 设置新的基线
     // 通知后台
     const result: any = await setBaseline({ projectName, filePath });
-    if (result.errorMessage as string) {
-        Message.warning(result.errorMessage as string);
+    // 基线是工程或者集群文件(cluster_analysis_output)，进入集群对比
+    const isProject = projectName !== '' && filePath === '';
+    const isClusterCompare = isProject || result.isCluster === true;
+    if (notNull(result.errorMessage) || notNull(result?.error?.code)) {
+        Message.warning(result.errorMessage as string ?? result.error?.code);
+    } else if (isClusterCompare) {
+        handleClusterCompare({ projectName, filePath, ...result });
     } else {
         const { rankId, cardName, host } = result as CompareData;
         const timelineCard: TimelineCard = {
@@ -72,6 +81,34 @@ export const setBaselineData = async ({ projectName, filePath }: File): Promise<
         });
     }
 };
+/**
+ * 集群对比
+ */
+const handleClusterCompare = async(data: CompareData): Promise<void> => {
+    const session = store.sessionStore.activeSession;
+    const { activeDataSource } = session;
+    // 如果没有打开的工程，告警
+    if (activeDataSource.projectName === '') {
+        Message.warning(i18n.t('Open a Project as Comparison Data', { ns: 'framework' }));
+        return;
+    }
+    // 如果基线没有集群数据，告警
+    if (!data.isCluster) {
+        Message.warning(i18n.t('No cluster data available in Baseline', { ns: 'framework' }));
+        return;
+    }
+    // 如果对比没有集群数据，告警
+    if (!session.isCluster) {
+        Message.warning(i18n.t('No cluster data available in Comparison', { ns: 'framework' }));
+        return;
+    }
+    // 选中基线
+    runInAction(() => {
+        session.compareSet.baseline = { projectName: data.projectName, filePath: data.filePath, rankId: '' };
+    });
+    // 发送通知
+    sendClusterBaselineStatus(true);
+};
 
 /**
  * 取消基线数据
@@ -82,6 +119,7 @@ export const cancelBaselineData = async (): Promise<void> => {
     // 通知页签
     const datasource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [filePath] };
     sendTabRemoveBaseline(datasource, filePath);
+    sendClusterBaselineStatus(false);
     // 通知后台
     await cancelBaseline();
     // 取消基线文件，同时也取消对比文件
@@ -121,6 +159,8 @@ export const cancelCompareData = (): void => {
     runInAction(() => {
         session.compareSet.comparison = { projectName: '', filePath: '', rankId: '' };
     });
+    // 发送通知
+    sendClusterBaselineStatus(false);
 };
 
 /**
