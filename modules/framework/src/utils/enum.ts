@@ -9,6 +9,7 @@ export enum ProjectError {
     EXISTING_LARGE_FILES = 3,
     // 文件/文件夹作已导入
     IMPORTED = 4,
+    EXCEEDS_MXIMUN_LENGTH = 5,
     FILE_NOT_EXIST = 6,
     OTHER = -1,
 }
