@@ -14,6 +14,8 @@ import type { AscendSliceDetail } from '../entity/data';
 import { CaretDownIcon } from 'ascend-icon';
 import { Col, Row } from 'ascend-components';
 import { safeJSONParse } from 'ascend-utils';
+import { ResizeTable } from 'ascend-resize';
+import { getDefaultColumData } from './detailViews/Common';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;
@@ -44,8 +46,25 @@ const createContentWithBreaks = (content: string): React.ReactNode => {
     ));
 };
 
-const createContentNormal = (content: number | string | Array<number | string>): string => {
+const createContentNormal = (content: number | string | Array<number | string> | object[]): string | React.ReactNode => {
     if (Array.isArray(content)) {
+        if (content.length > 0 && typeof content[0] === 'object' && content[0] !== null) {
+            const headers = Object.keys(content[0]);
+            if (headers.length === 0) {
+                return '';
+            }
+            const columns = headers.map((key: string) => ({
+                title: key,
+                dataIndex: key,
+                ...getDefaultColumData(key),
+                sorter: (a: any, b: any) => a[key] - b[key],
+            }));
+            const dataSource = content as object[];
+            return <ResizeTable
+                columns={columns}
+                dataSource={dataSource}
+                pagination={false}/>;
+        }
         return createContentWithArray(content as string[]);
     }
     if (content === undefined || content === '') {
