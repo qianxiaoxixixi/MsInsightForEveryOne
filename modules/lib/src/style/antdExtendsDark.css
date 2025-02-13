@@ -64,6 +64,10 @@
     background: var(--mi-bg-color);
     color: var(--mi-text-color-primary);
 }
+.ant-modal-confirm-body .ant-modal-confirm-content {
+    background: var(--mi-bg-color);
+    color: var(--mi-text-color-primary);
+}
 .ant-modal-header{
     background: none;
 }

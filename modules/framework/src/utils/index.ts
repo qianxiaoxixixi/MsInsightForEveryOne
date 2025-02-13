@@ -3,6 +3,12 @@
  */
 import { store } from '@/store/rootStore';
 import { modulesConfig } from '@/moduleConfig';
+import { ProjectAction, ProjectError } from '@/utils/enum';
+import i18n from 'ascend-i18n';
+import { message } from 'antd';
+import { handleProjectAction } from '@/utils/Project';
+import { GLOBAL_HOST } from '@/centralServer/websocket/defs';
+import { checkPathValid } from '@/utils/Resource';
 
 export function getModuleIndex(name = ''): number {
     const session = store.sessionStore.activeSession;
@@ -13,4 +19,31 @@ export function getModuleIndex(name = ''): number {
 export function firstLetterUpper(value: string): string {
     const word = String(value);
     return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+// 注册文件拖拽事件
+export function registerDragAndDropFile(): void {
+    Object.defineProperty(window, 'handleDrop', {
+        value: async (path: string) => {
+            const dataSource = {
+                ...GLOBAL_HOST,
+                projectName: path,
+                dataPath: [path],
+            };
+            // 校验
+            const validRes: ProjectError = await checkPathValid({ path, dataSource });
+            // 校验通过
+            if ([ProjectError.NO_ERRORS, ProjectError.IMPORTED].includes(validRes)) {
+                const action = validRes === ProjectError.NO_ERRORS ? ProjectAction.ADD_FILE : ProjectAction.SWITCH_PROJECT;
+                handleProjectAction({ action, dataSource, isConflict: false });
+            } else if (validRes === ProjectError.PROJECT_NAME_CONFLICT) {
+                message.info({ content: `${i18n.t('framework:FileConflict')}:${i18n.t('framework:FileConflictContent')}` });
+            } else {
+                message.info({ content: `Error:${ProjectError[validRes]}` });
+            }
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
+    });
 }

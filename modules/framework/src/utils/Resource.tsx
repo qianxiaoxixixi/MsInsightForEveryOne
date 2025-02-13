@@ -83,23 +83,23 @@ Promise<ProjectError> => {
         return ProjectError.IMPORTED;
     }
     // 校验文件安全，如文件冲突、超大文件、软链接等
-    const res = await checkProjectValid(dataSource, { projectName: dataSource.projectName ?? '', dataPath: dataSource.dataPath ?? [] });
+    const res = await checkProjectValid({ projectName: dataSource.projectName ?? '', dataPath: dataSource.dataPath ?? [] });
     return (res as {result: ProjectError}).result;
 };
 
 // 文件是否已导入
 export const checkExistedDataSource = (dataSource: DataSource): boolean => {
     const session = store.sessionStore.activeSession;
-    const allProject: DataSource[] = session?.dataSources ?? [];
-    const projectIndex = allProject.findIndex((item) =>
+    const allProject: DataSource[] = session.dataSources ?? [];
+    const project = allProject.find((item) =>
         item.remote === dataSource.remote &&
             item.port === dataSource.port &&
             item.projectName === dataSource.projectName);
-    if (projectIndex === -1) {
+    if (project === undefined) {
         return false;
     }
-    const pathIndex = dataSource.dataPath.findIndex(path => allProject[projectIndex].dataPath?.includes(path));
-    return pathIndex > -1;
+    const isPathExisted = dataSource.dataPath.some(path => project.dataPath.includes(path));
+    return isPathExisted;
 };
 
 // 上次导入文件路径
