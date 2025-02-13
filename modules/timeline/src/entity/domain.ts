@@ -6,6 +6,7 @@ import { makeAutoObservable } from 'mobx';
 import type { TimeStamp } from './common';
 
 export const GOLDEN_RATE = 0.1236;
+export const PAN_RATE = 0.05; // 平移倍率
 
 const validNumber = (num: number | undefined): number | undefined => {
     if (num === undefined || isNaN(num) || !isFinite(num)) {

@@ -20,7 +20,7 @@ type DrawTextType = Array<StackStatusData & {width: number} >;
 
 const FONT_SIZE = 12;
 const DFT_PADDING = 8;
-const DOTTED_RANGE = 6;
+const CHEVRON_WIDTH = 12;
 
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D, overflow: OverflowType): string => {
     if (ctx.measureText(text).width <= maxWidth) { return text; }
@@ -38,6 +38,30 @@ const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2
         }
     }
     return `${text.slice(0, mid)}...`;
+};
+
+/**
+ * 画人字形型箭头
+ * @param ctx
+ * @param x 箭头顶部 x 坐标
+ * @param y 箭头顶部 y 坐标
+ * @param h 箭头高
+ */
+export const drawChevron = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    h: number,
+): void => {
+    const HALF_CHEVRON_WIDTH = CHEVRON_WIDTH / 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + HALF_CHEVRON_WIDTH, y + h);
+    ctx.lineTo(x, y + h - HALF_CHEVRON_WIDTH);
+    ctx.lineTo(x - HALF_CHEVRON_WIDTH, y + h);
+    ctx.lineTo(x, y);
+    ctx.closePath();
+    ctx.fill();
 };
 
 // 计算当前节点宽度及圆角半径大小，同时将需要写的文字提前放入数组保存
@@ -64,28 +88,16 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
     }
     if (data.duration === 0) {
         const startHeight = yScale(data.depth) + 1;
-        const image = ctx.getImageData(startTime - 2, startHeight + (height / 2), 4, 1);
-        if (image.data.every((value) => value === 0)) { // 当duration为0且两侧没有色块，择展示为三角箭头
-            ctx.beginPath();
-            ctx.moveTo(startTime, startHeight);
-            ctx.lineTo(startTime - DOTTED_RANGE, startHeight + height - 2);
-            ctx.lineTo(startTime, startHeight + (height / 2));
-            ctx.lineTo(startTime + DOTTED_RANGE, startHeight + height - 2);
-            ctx.lineTo(startTime, startHeight);
-            ctx.closePath();
-            ctx.fill();
-            return;
-        }
+        drawChevron(ctx, startTime, startHeight, height - 2);
+        return;
     }
     ctx.fillRect(startTime, yScale(data.depth) + 1, width, height - 2);
 };
 
 function dealDataColor(theme: Theme, dataColor: Map<keyof Theme['colorPalette'], StackStatusData[]>,
-    zeroDataColor: Map<keyof Theme['colorPalette'], StackStatusData[]>,
     dataMultiColor: StackStatusData[], datas: StackStatusData[][]): void {
     Object.keys(theme.colorPalette).forEach(key => {
         dataColor.set(key as keyof Theme['colorPalette'], []);
-        zeroDataColor.set(key as keyof Theme['colorPalette'], []);
     });
     datas.forEach(it => it.forEach(data => {
         // 目前只支持最多2种背景颜色的情况，下面绘制多色背景时for循环两次也是这样原因
@@ -94,7 +106,7 @@ function dealDataColor(theme: Theme, dataColor: Map<keyof Theme['colorPalette'],
                 dataMultiColor.push(data);
             }
         } else {
-            data.duration === 0 ? zeroDataColor.get(data.color)?.push(data) : dataColor.get(data.color)?.push(data);
+            dataColor.get(data.color)?.push(data);
         }
     }));
 }
@@ -122,9 +134,8 @@ const draw = ({ ctx, datas, xScale, yScale, theme, right, isSimulation, textConf
     // draw by color order
     // change fillstyle as less as possible
     const dataColor = new Map<keyof Theme['colorPalette'], StackStatusData[]>();
-    const zeroDataColor = new Map<keyof Theme['colorPalette'], StackStatusData[]>();
     const dataMultiColor: StackStatusData[] = [];
-    dealDataColor(theme, dataColor, zeroDataColor, dataMultiColor, datas);
+    dealDataColor(theme, dataColor, dataMultiColor, datas);
     const height = yScale(1) - yScale(0);
     const textToDraw: DrawTextType = [];
     const func = (arr: StackStatusData[], key: keyof Theme['colorPalette']): void => {
@@ -135,7 +146,6 @@ const draw = ({ ctx, datas, xScale, yScale, theme, right, isSimulation, textConf
     };
     // 绘制一个背景的节点
     dataColor.forEach(func);
-    zeroDataColor.forEach(func);
     // 绘制有多个背景色的节点
     if (dataMultiColor.length > 0) {
         for (let i = 0; i < 2; i++) {
@@ -162,7 +172,7 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
         return undefined;
     }
     const mouseTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(mousePos.x);
-    const range = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(DOTTED_RANGE);
+    const range = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(CHEVRON_WIDTH / 2);
     const depth = Math.floor(mousePos.y / depthHeight);
     const data = datas[depth];
     if (data === undefined || data.length === 0) {
@@ -279,9 +289,9 @@ export const StackStatusChart = observer(({
         if (noRender) {
             return;
         }
-        const ctx = canvas.current.getContext('2d', { willReadFrequently: true });
+        const ctx = canvas.current.getContext('2d');
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
-        ctx?.setTransform(1, 0, 0, 1, 0, 0);
+        ctx?.resetTransform();
         ctx?.scale(devicePixelRatio, devicePixelRatio);
         ctx?.clearRect(0, 0, width, height);
         draw({ ctx, datas: datasState, xScale, yScale, theme, right: session.endTimeAll ?? 0, isSimulation: session.isSimulation, textConfig });
