@@ -3,7 +3,7 @@
  */
 import { RenderEngine } from './index';
 
-const RENDER_FREQUENCY = 100;
+const RENDER_FREQUENCY = 16;
 describe('RenderEngine', () => {
     let renderEngine: RenderEngine;
 

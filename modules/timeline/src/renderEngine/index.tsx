@@ -11,7 +11,7 @@ interface Task {
     status: 'pending' | 'fullfilled';
     type: 'once' | 'always';
 }
-const RENDER_FREQUENCY = 100;
+const RENDER_FREQUENCY = 16;
 export class RenderEngine {
     private readonly _renderTasks: Map<RenderID, Task> = new Map();
     private _curTaskID: number = 0;

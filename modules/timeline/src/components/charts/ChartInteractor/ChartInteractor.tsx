@@ -25,6 +25,7 @@ import {
     mouseWheelAction,
     mouseMoveAction,
     keyDownAction,
+    keyUpAction,
     type MouseDownActionResult,
 } from './actions';
 import type { TimeStamp } from '../../../entity/common';
@@ -92,6 +93,7 @@ export interface ChartInteractorHandles {
     mouseWheelAction: (interactorMouseState: InteractorMouseState) => void;
     mouseLeaveAction: (interactorMouseState: InteractorMouseState) => void;
     keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState) => void;
+    keyUpAction: (e: KeyboardEvent, interactorMouseState: InteractorMouseState) => void;
 }
 
 export interface InteractorMouseState {
@@ -155,6 +157,9 @@ const handleInteractorEvent = ({
         keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState): void => {
             const point = getZoomPoint(interactorParams.xScale, interactorMouseState);
             keyDownAction(e.key, session, point);
+        },
+        keyUpAction: (): void => {
+            keyUpAction();
         },
     });
 };

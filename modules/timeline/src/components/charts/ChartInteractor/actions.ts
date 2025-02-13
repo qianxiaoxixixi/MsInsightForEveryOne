@@ -14,7 +14,7 @@ import type { Pos } from './common';
 import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
 import type { DrawArgs, DrawCanvasArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
-import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
+import { PAN_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
@@ -318,7 +318,7 @@ const zoomDomain = (session: Session, zoomCount: number, zoomPoint: number | und
 const moveDomain = (session: Session, direction: number): void => {
     const { domainRange: { domainStart, domainEnd } } = session;
     const timeDuration = domainEnd - domainStart;
-    const timeOffset = direction * MOVE_RATE * timeDuration;
+    const timeOffset = direction * PAN_RATE * timeDuration;
     const newEnd = clamp(domainEnd + timeOffset, timeDuration, session.endTimeAll ?? session.domain.defaultDuration);
     runInAction(() => {
         session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
@@ -343,7 +343,11 @@ const zoomOrMoveDirection = {
     downOrLeft: -1,
 };
 
-const processMKeyEvent = (session: Session): void => {
+const processMKeyEvent = (session: Session, isKeyPressed: boolean): void => {
+    if (isKeyPressed) {
+        return;
+    }
+
     let render = false;
     let range: number[] = [];
     if (!session.mKeyRender && session.selectedData === undefined) {
@@ -477,6 +481,7 @@ function ignoreCaseEqual(key: string, keyName: string): boolean {
     return key.toUpperCase() === keyName.toUpperCase();
 }
 
+let isKeyPressed = false;
 export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
     if (ignoreCaseEqual(key, 'W')) {
         zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
@@ -487,7 +492,7 @@ export const keyDownAction = (key: string, session: Session, zoomPoint: number |
     } else if (ignoreCaseEqual(key, 'D') || key === 'ArrowRight') {
         moveDomain(session, zoomOrMoveDirection.upOrRight);
     } else if (ignoreCaseEqual(key, 'M')) {
-        processMKeyEvent(session);
+        processMKeyEvent(session, isKeyPressed);
     } else if (ignoreCaseEqual(key, 'R')) {
         processOffsetEvent(session, false);
     } else if (ignoreCaseEqual(key, 'L')) {
@@ -497,4 +502,10 @@ export const keyDownAction = (key: string, session: Session, zoomPoint: number |
     } else {
         // handle other keys
     }
+
+    isKeyPressed = true;
+};
+
+export const keyUpAction = (): void => {
+    isKeyPressed = false;
 };

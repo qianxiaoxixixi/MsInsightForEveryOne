@@ -140,7 +140,7 @@ export const ChartContainer = observer((props: Props) => {
     const [containerDom, setContainerDom] = React.useState<HTMLDivElement | undefined>(undefined);
     const chartInteractorRef = useRef<ChartInteractorHandles>(null);
     const scrollerRef = React.useRef<HTMLDivElement>(null);
-    const { onMouseUp, onKeyDown, interactorMouseState, ...otherInteractors } =
+    const { onMouseUp, onKeyDown, onKeyUp, interactorMouseState, ...otherInteractors } =
         useInteractorMouseState(chartInteractorRef, scrollerRef, session, !!props.interactive);
     useEffect(() => {
         if (containerDom === undefined) {
@@ -151,31 +151,28 @@ export const ChartContainer = observer((props: Props) => {
             document.removeEventListener('mouseup', onMouseUp);
         };
     }, [containerDom]);
-    const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 100), [session]);
+    const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 16, 50), [session]);
     const handleKeyDownEvent = (e: KeyboardEvent): void => {
         if (!e.repeat) {
             keyHoldAction.beginLoop(e as unknown as React.KeyboardEvent<HTMLDivElement>);
         }
     };
+    const handleKeyUpEvent = (e: KeyboardEvent): void => {
+        keyHoldAction.clearLoop();
+        requestAnimationFrame(() => { onKeyUp(e); });
+    };
     useEffect(() => {
         document.addEventListener('keydown', handleKeyDownEvent);
-        document.addEventListener('keyup', keyHoldAction.clearLoop);
+        document.addEventListener('keyup', handleKeyUpEvent);
         document.addEventListener('blur', keyHoldAction.clearLoop);
 
         return (): void => {
             document.removeEventListener('keydown', handleKeyDownEvent);
-            document.removeEventListener('keyup', keyHoldAction.clearLoop);
+            document.removeEventListener('keyup', handleKeyUpEvent);
             document.removeEventListener('blur', keyHoldAction.clearLoop);
         };
     });
     return <Container
-        onKeyDown={(e): void => {
-            if (!e.repeat) {
-                keyHoldAction.beginLoop(e);
-            }
-        }}
-        onKeyUp={(): void => { keyHoldAction.clearLoop(); }}
-        onBlur={(): void => { keyHoldAction.clearLoop(); }}
         {...otherInteractors}
         ref={(dom): void => {
             setContainerDom(dom ?? undefined);
@@ -215,7 +212,7 @@ function isTargetElement(event: React.MouseEvent): boolean {
     }
     return Boolean(ele);
 }
-// eslint-disable-next-line max-lines-per-function
+
 const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartInteractorHandles>, scrollerRef: React.RefObject<HTMLDivElement>,
     session: Session, interactive?: boolean): InteractorMouseHandlers => {
     const clickPos = useRef<undefined | Pos>(undefined); const lastPos = useRef<Pos | undefined>(undefined);
@@ -260,13 +257,12 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         chartInteractorRef.current.mouseUpAction(interactorMouseState, e);
     };
     const onMouseLeave = (): void => {
-        if (!chartInteractorRef.current) {
-            return;
-        }
+        if (!chartInteractorRef.current) { return; }
         chartInteractorRef.current.mouseLeaveAction(interactorMouseState);
     };
     const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => chartInteractorRef.current?.keyDownAction(e, interactorMouseState);
-    return { onMouseMove, onMouseDown, onWheel, onMouseLeave, onMouseUp, onKeyDown, interactorMouseState };
+    const onKeyUp = (e: KeyboardEvent): void => chartInteractorRef.current?.keyUpAction(e, interactorMouseState);
+    return { onMouseMove, onMouseDown, onWheel, onMouseLeave, onMouseUp, onKeyDown, onKeyUp, interactorMouseState };
 };
 
 interface InteractorMouseHandlers {
@@ -276,5 +272,6 @@ interface InteractorMouseHandlers {
     onMouseDown: (e: React.MouseEvent) => void;
     onWheel: (e: React.WheelEvent<HTMLDivElement>) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
+    onKeyUp: (e: KeyboardEvent) => void;
     interactorMouseState: InteractorMouseState;
 };

@@ -8,7 +8,7 @@ import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import _, { clamp } from 'lodash';
 import type { Session } from '../../entity/session';
-import { GOLDEN_RATE as MOVE_RATE } from '../../entity/domain';
+import { PAN_RATE } from '../../entity/domain';
 import { THUMB_WIDTH_PX } from '../base';
 import { traceStart } from '../../utils/traceLogger';
 
@@ -88,7 +88,7 @@ const useWatchScrollEvent = (props: WatchScrollEventProps): void => {
                     if (curExecutor !== lastExecutor.current) { return; }
                     const timeDuration = domainEnd - domainStart;
                     const timeOffset = accumulativeShiftRef.current *
-                        MOVE_RATE * timeDuration;
+                        PAN_RATE * timeDuration;
                     const newEnd = clamp(domainEnd + timeOffset, timeDuration, session.endTimeAll ?? session.domain.defaultDuration);
                     runInAction(() => {
                         session.realTimeUpdate = newEnd === (session.endTimeAll ?? 0) && session.phase === 'recording';
