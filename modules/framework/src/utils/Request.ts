@@ -30,8 +30,8 @@ export const getFiles = async (path = ''): Promise<unknown> => {
  * 检查文件路径是否安全
  * @returns ProjectError
  */
-export const checkProjectValid = async (dataSource: DataSource, params: {projectName: string;dataPath: string[]}): Promise<unknown> => {
-    return request(dataSource, 'global', {
+export const checkProjectValid = async (params: {projectName: string;dataPath: string[]}): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'global', {
         command: 'files/checkProjectValid',
         params,
     });

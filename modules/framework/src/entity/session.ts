@@ -28,6 +28,8 @@ export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     defaultConnected?: boolean;
     actionListener: {type: SessionAction;value: string} = { type: SessionAction.NO_ACTION, value: '' };
+    // 加载状态
+    loading: boolean = false;
     // 数据源/项目管理
     rankList: Rank[] = [];
     rankMap: Map<string, Rank> = new Map();
