@@ -141,17 +141,18 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             }
 
             const updatedData: Record<string, any> = {};
-            Object.entries(currentData).forEach(([key, value]) => {
-                if (key !== 'index') {
-                    const { name: indicatorName, unit } = session.indicatorMap.get(key) ?? {};
-                    if (indicatorName !== undefined) {
-                        updatedData[t(indicatorName)] =
-                            session.isCompare
-                                ? <span>{value}<span className={currentData.diff[key] >= 0 ? 'positive-number' : 'negative-number'}>({currentData.diff[key]})</span> {unit}</span>
-                                : `${value} ${unit}`;
-                    }
+
+            for (const indicatorItem of session.indicatorMap.values()) {
+                const { key, name: indicatorName, unit } = indicatorItem;
+                const value = currentData[key];
+                if (value !== undefined) {
+                    updatedData[t(indicatorName)] =
+                        session.isCompare
+                            ? <span>{value}<span className={currentData.diff[key] >= 0 ? 'positive-number' : 'negative-number'}>({currentData.diff[key]})</span> {unit}</span>
+                            : `${value} ${unit}`;
                 }
-            });
+            }
+
             return {
                 [t('Index')]: index,
                 [t('Name')]: name,
