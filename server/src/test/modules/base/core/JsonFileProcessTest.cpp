@@ -28,7 +28,7 @@ protected:
         const uint64_t offset = 10;
         std::string jsonArray = "[";
         while (jsonArray.size() < sizeInBytes - offset) {
-            jsonArray += "{\"key\": \"value\"},";
+            jsonArray += "{\"ph\": \"Xvalue\"},";
         }
         if (jsonArray.back() == ',') {
             jsonArray.back() = ']';
@@ -42,7 +42,7 @@ protected:
     {
         const uint64_t offset = 2;
         std::string jsonDocument = "{\"traceEvents\":[";
-        std::string jsonObject = "{\"id\": 1, \"name\": \"test\"}";
+        std::string jsonObject = "{\"id\": 1, \"ph\": \"XXtest\"}";
         size_t jsonObjectSize = jsonObject.size();
         while (jsonDocument.size() + jsonObjectSize < sizeInBytes - offset) { // 留出空间用于最后的 "]}"
             jsonDocument += jsonObject + ",";
