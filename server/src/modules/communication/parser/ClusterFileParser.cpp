@@ -317,7 +317,7 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
         std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
                   back_inserter(fileContent));
         doc.Parse(fileContent.c_str());
-        if (!CheckDocumentValid(doc)) {
+        if (!CheckDocumentValid(doc) || !doc.HasMember("p2p") || !doc.HasMember("collective")) {
             return;
         }
         auto p2p = doc.FindMember("p2p")->value.GetArray();
