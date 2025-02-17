@@ -68,20 +68,13 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::
         int64_t start = file.tellg();
         std::string endRegex;
         if (start + blockSize >= contentSize) {
-            // 如果解析的内容长度小于endBufferLength,直接将文件指针移动到内容起始位置
-            if (contentSize < endBufferLength) {
-                file.seekg(contentStart, std::ifstream::beg);
-            } else {
-                file.seekg(contentEnd - endBufferLength, std::ifstream::beg);
-            }
-            endRegex = R"(\}\s*\]|\}\s*,\s*\])";
+            file.seekg(contentEnd - endBufferLength, std::ifstream::beg);
             endFlag = true;
         } else {
             file.seekg(blockSize, std::ifstream::cur);
-            endRegex = R"(\}\s*,\s*\{)";
         }
-        if (!SeekRegexPosition(file, endRegex)) {
-            Dic::Server::ServerLog::Info("Failed to find json format end position.");
+        if (!SeekPhEndPosition(file, endFlag)) {
+            Dic::Server::ServerLog::Error("Failed to find ph json format.");
             break;
         }
         int64_t end = file.tellg();
@@ -108,7 +101,7 @@ void JsonFileProcess::ComputeSmallFilePosition(std::ifstream &file, std::vector<
         } else {
             file.seekg(contentEnd - endBufferLength, std::ifstream ::beg);
         }
-        if (SeekRegexPosition(file, R"(\}\s*\]\s*\})")) {
+        if (SeekPhEndPosition(file, true)) {
             int64_t end = file.tellg();
             if (start > INT64_MAX - 1 || start + 1 > end) {
                 Server::ServerLog::Warn("Failed to find legal end position of json object format.");
@@ -164,6 +157,53 @@ bool JsonFileProcess::SeekRegexPosition(std::ifstream &file, const std::string &
         return false;
     }
     file.seekg(result.value().position(), std::ifstream::cur);
+    return true;
+}
+
+bool JsonFileProcess::SeekPhEndPosition(std::ifstream &file, bool endFlag)
+{
+    file.clear();
+    auto cur = file.tellg();
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(endBufferLength);
+    file.read(buffer.get(), endBufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        Dic::Server::ServerLog::Error("Seek ph end position. Failed to read file.");
+        return false;
+    }
+    file.clear();
+    file.seekg(cur);
+    std::string str(buffer.get(), readCount);
+    size_t offset = std::string::npos;
+    if (endFlag) {
+        offset = str.rfind("\"ph\"");
+    } else {
+        offset = str.find("\"ph\"");
+    }
+    if (offset == std::string::npos || offset > INT_MAX || str.size() > INT_MAX) {
+        Dic::Server::ServerLog::Error("Failed to find ph.");
+        return false;
+    }
+    int pos = -1;
+    uint32_t leftCount = 0;
+    for (int i = offset; i < str.size(); ++i) {
+        if (str[i] == '{') {
+            leftCount++;
+            continue;
+        }
+        if (str[i] == '}' && leftCount == 0) {
+            pos = i;
+            break;
+        }
+        if (str[i] == '}') {
+            leftCount--;
+        }
+    }
+    if (pos == -1) {
+        Dic::Server::ServerLog::Error("Failed to find ph end position.");
+        return false;
+    }
+    file.seekg(pos, std::ifstream::cur);
     return true;
 }
 } // end of namespace Module

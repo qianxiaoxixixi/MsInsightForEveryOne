@@ -16,7 +16,7 @@ public:
 protected:
     static const int64_t blockSize = 1024 * 1024 * 50; // 50MB
     static const int startBufferLength = 1024;
-    static const int endBufferLength = 1024 * 10;
+    static const int endBufferLength = 1024 * 1024;
     static std::vector<std::pair<int64_t, int64_t>> GetSplitPosition(std::ifstream &file,
         std::pair<int64_t, int64_t> position = {0, 0});
 private:
@@ -24,6 +24,8 @@ private:
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static void ComputeSmallFilePosition(std::ifstream &file, std::vector<std::pair<int64_t, int64_t>> &result,
         const JsonFormat &json, std::pair<int64_t, int64_t> position);
+
+    static bool SeekPhEndPosition(std::ifstream &file, bool endFlag);
 };
 } // end of namespace Module
 } // end of namespace Dic
