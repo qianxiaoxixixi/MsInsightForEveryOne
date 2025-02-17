@@ -35,6 +35,7 @@ bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
+        // ConvertToRealPath 调用 FileUtil::ConvertToRealPath 方法，其中 FileUtil::CheckDirValid 已做软链接检查
         if (!request.params.ConvertToRealPath(warnMsg) || !ImportFile(request, warnMsg)) {
             SetResponseResult(response, false, warnMsg);
             session.OnResponse(std::move(responsePtr));

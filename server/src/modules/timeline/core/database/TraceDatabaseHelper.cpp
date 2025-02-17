@@ -1079,8 +1079,8 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
-            responseBody.data[index].avgWallDuration =
-                    responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+            responseBody.data[index].avgWallDuration = NumberSafe::Division(
+                responseBody.data[index].wallDuration, responseBody.data[index].occurrences);
         }
     }
 }
@@ -1111,8 +1111,8 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
-            responseBody.data[index].avgWallDuration =
-                    responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+            responseBody.data[index].avgWallDuration = NumberSafe::Division(
+                responseBody.data[index].wallDuration, responseBody.data[index].occurrences);
         }
     }
 }
