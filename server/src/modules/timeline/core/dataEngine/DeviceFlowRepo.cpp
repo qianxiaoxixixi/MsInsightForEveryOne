@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "TrackInfoManager.h"
+#include "NumberSafeUtil.h"
 #include "DeviceFlowRepo.h"
 namespace Dic::Module::Timeline {
 void DeviceFlowRepo::AddDeviceFlowPoint(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
@@ -33,7 +34,7 @@ void DeviceFlowRepo::AddHardWareMstxFlowPoint(const FlowQuery &flowQuery, std::v
         endPoint.type = "f";
         endPoint.flowId = flowId;
         endPoint.id = item.id;
-        endPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
+        endPoint.timestamp = NumberSafe::Sub(item.timestamp, flowQuery.minTimestamp);
         endPoint.rankId = host + instance.GetRankId(host, std::to_string(item.deviceId));
         endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid, std::to_string(item.streamId));
         flowPointVec.emplace_back(endPoint);

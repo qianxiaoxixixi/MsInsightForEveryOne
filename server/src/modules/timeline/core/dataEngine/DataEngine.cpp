@@ -134,11 +134,17 @@ void DataEngine::QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vecto
         return;
     }
     auto textFlowRespo = respotoryFactory->GetFlowRespo(PROCESS_TYPE::TEXT);
+    if (textFlowRespo == nullptr) {
+        return;
+    }
     textFlowRespo->QueryFlowPointByCategory(flowQuery, flowPointVec);
     if (!std::empty(flowPointVec)) {
         return;
     }
     auto DbFlowRepo = respotoryFactory->GetFlowRespo(PROCESS_TYPE::DB);
+    if (DbFlowRepo == nullptr) {
+        return;
+    }
     DbFlowRepo->QueryFlowPointByCategory(flowQuery, flowPointVec);
 }
 
@@ -149,6 +155,9 @@ void DataEngine::QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<Com
         return;
     }
     auto textRepo = respotoryFactory->GetSimulationSliceRespo(PROCESS_TYPE::TEXT);
+    if (textRepo == nullptr) {
+        return;
+    }
     textRepo->QueryAllFlagSlice(sliceQuery, competeSliceDomainVec);
 }
 
@@ -176,6 +185,9 @@ bool DataEngine::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, Comp
         return false;
     }
     auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
+    if (sliceRespo == nullptr) {
+        return false;
+    }
     return sliceRespo->QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
 }
 }

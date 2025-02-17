@@ -75,6 +75,7 @@ public:
         auto it = cache.find(trackId);
         if (it == cache.end()) {
             while (curCapacity >= allCapacity) {
+                // 此处上下文逻辑可以保证curCapacity大于cache[used.back()].first.size()
                 curCapacity -= cache[used.back()].first.size();
                 cache.erase(used.back());
                 used.pop_back();

@@ -6,6 +6,7 @@
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "CollectionTimeService.h"
+#include "NumberSafeUtil.h"
 #include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {
@@ -347,7 +348,7 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
     const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
     uint64_t minTimestamp)
 {
-    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
+    uint64_t offset = NumberSafe::Muls(requestParams.current - 1, requestParams.pageSize);
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel detail data.", stmt->GetErrorMessage());
@@ -722,12 +723,12 @@ bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> 
                                                 const std::string &rankId)
 {
     std::lock_guard<std::recursive_mutex> lockGuard(mutex);
-    int64_t size = overlapInfoList.size();
-    int64_t count = size / cacheSize;
+    size_t size = overlapInfoList.size();
+    size_t count = size / cacheSize;
     bool result = true;
-    for (int64_t index = 0; index <= count; ++index) {
-        int64_t start = index * cacheSize;
-        int64_t length = cacheSize;
+    for (size_t index = 0; index <= count; ++index) {
+        size_t start = index * cacheSize;
+        size_t length = cacheSize;
         if (size - start < cacheSize) {
             length = size - start;
         }
@@ -735,7 +736,7 @@ bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> 
             ServerLog::Error("Failed to start Transaction.");
             return false;
         }
-        for (int64_t tmpIndex = start; tmpIndex < start + length; tmpIndex++) {
+        for (size_t tmpIndex = start; tmpIndex < start + length; tmpIndex++) {
             insertOverlapStmt->Reset();
             insertOverlapStmt->BindParams(rankId, overlapInfoList[tmpIndex].startNs,
                                           overlapInfoList[tmpIndex].endNs, overlapInfoList[tmpIndex].type);
@@ -827,7 +828,7 @@ void DbTraceDataBase::UpdateWaitTime()
         if (prevTime.find(deviceId) == prevTime.end()) {
             prevTime[deviceId] = startNs;
         }
-        int64_t waitNs = startNs > prevTime[deviceId] ? startNs - prevTime[deviceId] : 0;
+        int64_t waitNs = startNs > prevTime[deviceId] ? NumberSafe::Sub(startNs, prevTime[deviceId]) : 0;
         prevTime[deviceId] = endNs;
         WAIT_TIME task;
         task.id = resultSet->GetInt64("id");
