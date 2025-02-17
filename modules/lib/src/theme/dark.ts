@@ -217,6 +217,7 @@ export const dark: Theme = {
     borderRadiusCircle: '100%',
     pagePadding: '16px',
     icon: '#D1D1D1',
+    iconColor: '#D1D1D1',
     tableTextColor: '#8D98AA',
     radioSelectedColor: '#007AFF',
     rankBackgroudColor: '#2A2F37',
