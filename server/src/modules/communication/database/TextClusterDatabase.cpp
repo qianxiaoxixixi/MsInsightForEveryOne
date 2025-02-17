@@ -231,7 +231,7 @@ void TextClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> 
     }
 
     auto result = sqlite3_step(stmt);
-    if (timeInfoList.size() != TABLE_CACHE_SIZE) {
+    if (!(timeInfoList.size() == TABLE_CACHE_SIZE && isInitStmt)) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -313,7 +313,7 @@ void TextClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth
         sqlite3_bind_double(stmt, idx++, bandwidth.transitTime);
     }
     auto result = sqlite3_step(stmt);
-    if (bandWidthList.size() != TABLE_CACHE_SIZE) {
+    if (!(bandWidthList.size() == TABLE_CACHE_SIZE && isInitStmt)) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -444,7 +444,7 @@ void TextClusterDatabase::InsertCommunicationMatrixInfo(std::vector<Communicatio
         sqlite3_bind_double(stmt, idx++, info.bandwidth);
     }
     auto result = sqlite3_step(stmt);
-    if (matrixInfos.size() != TABLE_CACHE_SIZE) {
+    if (!(matrixInfos.size() == TABLE_CACHE_SIZE && isInitStmt)) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
