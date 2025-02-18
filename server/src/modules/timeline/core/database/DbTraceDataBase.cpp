@@ -1423,7 +1423,8 @@ void DbTraceDataBase::UpdataCommucationThreadName(const PROCESS_TYPE &type,
     std::unique_ptr<Protocol::UnitTrack> &process) const
 {
     const std::string suffix = "group";
-    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0") && type == PROCESS_TYPE::HCCL) {
+    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0")
+        && (type == PROCESS_TYPE::HCCL || type == PROCESS_TYPE::COMMUNICATION)) {
         for (auto &item : process->children) {
             if (StringUtil::StartWith(item->metaData.threadName, "Group") &&
                 StringUtil::EndWith(item->metaData.threadName, "Communication")) {
@@ -1448,7 +1449,8 @@ void DbTraceDataBase::ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &pr
         return;
     }
     // 在 metaVersion 版本高于 '1.0' 的情况下，type == PROCESS_TYPE::HCCL 时
-    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0") && type == PROCESS_TYPE::HCCL) {
+    if (!std::empty(metaVersion) && !StringUtil::StartWith(metaVersion, "1.0")
+        && (type == PROCESS_TYPE::HCCL || type == PROCESS_TYPE::COMMUNICATION)) {
         const std::string groupNameValue = resultSet->GetString("groupNameValue");
         const std::string threadName = resultSet->GetString("name");
         if (!StringUtil::StartWith(threadName, "Plane") &&
