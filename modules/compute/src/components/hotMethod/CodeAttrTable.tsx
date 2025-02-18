@@ -6,9 +6,20 @@ import type { TFunction } from 'i18next';
 import type { ColumnsType } from 'antd/es/table';
 import { FieldType, NOT_APPLICABLE } from './defs';
 import React from 'react';
+import Bar, { BarType } from './Bar';
 
 // 列配置
-const codeCols: ColumnsType<Ilinetable> = [];
+const codeCols: ColumnsType<Ilinetable> = [
+    {
+        title: 'L2Cache Hit Rate',
+        dataIndex: 'L2Cache Hit Rate',
+        width: 120,
+        ellipsis: true,
+        render: (percent: number): React.ReactNode => {
+            return <Bar value={percent} type={BarType.PERCENT}/>;
+        },
+        className: 'height20',
+    }];
 
 // 固定显示列
 const fixedCols = ['Instructions Executed', 'Cycles'];
