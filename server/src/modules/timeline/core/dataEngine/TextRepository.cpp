@@ -261,7 +261,7 @@ void TextRepository::QueryShapeInfoBySlice(const SliceQuery &sliceQuery, Compete
         .Select(KernelDetailColumn::OUTPUT_SHAPES, KernelDetailColumn::OUTPUT_DATA_TYPES)
         .Eq(KernelDetailColumn::START_TIME, competeSliceDomain.timestamp)
         .Eq(KernelDetailColumn::NAME, competeSliceDomain.name)
-        .NotIn(KernelDetailColumn::ACCELERATOR_CORE, communication_list)
+        .NotIn(KernelDetailColumn::ACCELERATOR_CORE, COMMUNICATION_LIST)
         .ExcuteQuery(sliceQuery.rankId, kernelDetailPOs);
     if (std::empty(kernelDetailPOs)) {
         return;
