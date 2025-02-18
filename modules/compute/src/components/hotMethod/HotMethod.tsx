@@ -455,13 +455,14 @@ const sortData = (dataSource: InstrsColumnType[], sorter: Record<string, any>): 
     }
     const sign = sorter.order === 'ascend' ? 1 : -1;
     const field: keyof InstrsColumnType = sorter.field;
-    const filedType = typeof dataSource[0][field];
     return [...dataSource].sort((a, b) => {
-        switch (filedType) {
-            case 'number':
-                return sign * (Number(a[field]) - Number(b[field]));
-            default:
-                return sign * String(a[field]).localeCompare(String(b[field]));
+        // 数字和字符串混合，无论升序降序，数字都排前面
+        const aType = isNaN(Number(a[field])) ? typeof a[field] : 'number';
+        const bType = isNaN(Number(b[field])) ? typeof b[field] : 'number';
+        if (aType === 'number') {
+            return bType === 'number' ? sign * (Number(a[field]) - Number(b[field])) : -1;
+        } else {
+            return bType === 'number' ? 1 : sign * String(a[field]).localeCompare(String(b[field]));
         }
     });
 };

@@ -25,7 +25,7 @@ export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFu
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
             const items = [...new Set(curInstrData.map(item => item[col.dataIndex as keyof InstrsColumnType]))];
             const filters = items.map(item => ({
-                text: item,
+                text: isNaN(Number(item)) ? item : Number(item),
                 value: item,
             }));
             Object.assign(col, {

@@ -114,7 +114,7 @@ interface IProps {
 // 百分比色条，2种
 // 默认：使用当前值/最大值 计算百分比
 // BarType。PERCENT：直接使用value作为百分比
-function Bar({ value = 0, max = 1, type }: IProps): JSX.Element {
+function Bar({ value, max = 1, type }: IProps): JSX.Element {
     const valueNum = Number(value);
     const maxNum = Number(max);
     const isWrongNumber = type === BarType.PERCENT
@@ -132,7 +132,7 @@ function Bar({ value = 0, max = 1, type }: IProps): JSX.Element {
             : value;
     }
     return isWrongNumber
-        ? <></>
+        ? <>{type === BarType.PERCENT ? value : ''}</>
         : (<BarContainer title={`${valueNum}`}><BaseBar value={valueNum} percent={percent} label={label}/></BarContainer>);
 };
 export default Bar;
