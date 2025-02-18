@@ -144,11 +144,13 @@ void FlowAnalyzer::ComputeScreenFlowPoint(const std::vector<FlowPoint> &flowEven
 {
     FlowPointSampleStruct flowPointSampleStruct;
     GroupSampleFlowPoint(flowEventsVec, startTime, endTime, flowPointSampleStruct);
+    // 单位时间片，入参已根据业务规则校验开始时间结束时间
+    uint64_t unitTime = (endTime - startTime) / 1000;
     for (const auto &item : flowPointSampleStruct.startPointResultSet) {
-        OfferFlowPointPair(flowEventsVec, flowIdResult, flowPointSampleStruct, item);
+        OfferFlowPointPair(flowEventsVec, flowIdResult, flowPointSampleStruct, item, unitTime);
     }
     for (const auto &item : flowPointSampleStruct.endPointResultSet) {
-        OfferFlowPointPair(flowEventsVec, flowIdResult, flowPointSampleStruct, item);
+        OfferFlowPointPair(flowEventsVec, flowIdResult, flowPointSampleStruct, item, unitTime);
     }
 }
 
@@ -163,7 +165,7 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
 {
     std::string curFlowId;
     Protocol::FlowLocation location;
-    Protocol::FlowLocation *locationPtr = &location;
+    Protocol::FlowLocation pointTlocation;
     for (const auto &flow : flowEventsVec) {
         std::string type = flow.type;
         std::string flowId = flow.flowId;
@@ -175,19 +177,26 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
             location.type = type;
             location.rankId = flow.rankId;
             // 连线中 起点对终点是一对多关系，因此每一个新的起点都会对上一个起点进行覆盖
-            locationPtr = &location;
-        } else if ((type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) && flowId == curFlowId) {
+            pointTlocation = location;
+        } else if ((type == Protocol::LINE_END_OPTIONAL || type == Protocol::LINE_END) && flowId == curFlowId) {
             auto flowEvent = std::make_unique<Protocol::UnitSingleFlow>();
             flowEvent->cat = category;
-            flowEvent->from = *locationPtr;
+            flowEvent->from.pid = pointTlocation.pid;
+            flowEvent->from.tid = pointTlocation.tid;
+            flowEvent->from.depth = pointTlocation.depth;
+            flowEvent->from.timestamp = pointTlocation.timestamp;
+            flowEvent->from.rankId = pointTlocation.rankId;
             flowEvent->to.pid = flow.pid;
             flowEvent->to.tid = flow.tid;
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
             flowEvent->to.rankId = flow.rankId;
-            if (flowEvent->from.type == Protocol::LINE_START) {
-                flowDetailList.emplace_back(std::move(flowEvent));
-            }
+            pointTlocation.pid = flow.pid;
+            pointTlocation.tid = flow.tid;
+            pointTlocation.depth = flow.depth;
+            pointTlocation.timestamp = flow.timestamp;
+            pointTlocation.rankId = flow.rankId;
+            flowDetailList.emplace_back(std::move(flowEvent));
         }
         curFlowId = flowId;
     }
@@ -195,7 +204,7 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
 
 void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVec,
     std::vector<FlowPoint> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
-    const std::string &flowId) const
+    const std::string &flowId, uint64_t unitTime) const
 {
     // 过滤重复连线
     if (flowPointSampleStruct.resultFlowIdSet.count(flowId) > 0) {
@@ -210,8 +219,22 @@ void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVe
         return;
     }
     // 收集在屏幕中间可展示的连线
+    std::vector<FlowPoint> tempPoint;
     for (const auto &item: flowPointSampleStruct.endPointMap[flowId]) {
-        flowIdResult.emplace_back(flowEventsVec[item]);
+        tempPoint.emplace_back(flowEventsVec[item]);
+    }
+    std::sort(tempPoint.begin(), tempPoint.end());
+    uint64_t curTime = 0;
+    uint64_t curTrackId = 0;
+    for (const auto &item: tempPoint) {
+        if (item.trackId != curTrackId) {
+            curTime = 0;
+            curTrackId = item.trackId;
+        }
+        if (item.timestamp >= curTime + unitTime || curTime == 0) {
+            flowIdResult.emplace_back(item);
+            curTime = item.timestamp;
+        }
     }
     for (const auto &item: flowPointSampleStruct.startPointMap[flowId]) {
         flowIdResult.emplace_back(flowEventsVec[item]);
@@ -315,6 +338,14 @@ bool FlowAnalyzer::CompareFlowIdAndTimestampASC(const FlowPoint &first, const Fl
         return true;
     }
     if (first.type != Protocol::LINE_START && second.type == Protocol::LINE_START) {
+        return false;
+    }
+    if (first.type != Protocol::LINE_START && second.type != Protocol::LINE_START &&
+        first.timestamp < second.timestamp) {
+        return true;
+    }
+    if (first.type != Protocol::LINE_START && second.type != Protocol::LINE_START &&
+        first.timestamp > second.timestamp) {
         return false;
     }
     if (first.type != Protocol::LINE_START && second.type != Protocol::LINE_START && first.id < second.id) {

@@ -58,11 +58,11 @@ public:
     void ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &flowDetailVec,
         std::map<std::string, std::vector<Protocol::UnitSingleFlow>> &flowMap, uint64_t minTimestamp);
     void SortByTrackIdASC(std::vector<FlowPoint> &FlowCategoryEventsDtoVec);
-    void SortByFlowIdAndTimestampASC(std::vector<FlowPoint> &flowCategoryEventsDtoVec);
+    static void SortByFlowIdAndTimestampASC(std::vector<FlowPoint> &flowCategoryEventsDtoVec);
     void ComputeScreenFlowPoint(const std::vector<FlowPoint> &flowEventsVec, uint64_t startTime,
         uint64_t endTime, std::vector<FlowPoint> &flowIdResult);
-    void ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec, const std::string &category,
-        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
+    static void ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec, const std::string &category,
+                                 std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
     /* *
      * 根据连线点计算点所在的算子
      * @param flowPoint
@@ -82,7 +82,7 @@ private:
         const FlowPoint &flowPoint);
     void OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVec,
         std::vector<FlowPoint> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
-        const std::string &flowId) const;
+        const std::string &flowId, uint64_t unitTime) const;
 };
 }
 

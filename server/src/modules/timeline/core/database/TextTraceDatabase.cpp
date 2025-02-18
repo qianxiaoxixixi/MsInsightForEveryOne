@@ -570,35 +570,23 @@ void TextTraceDatabase::AssembleUnitFlowsBody(UnitFlowsBody &responseBody, uint6
     std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap)
 {
     std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
-    for (const auto &item : flowPointMap) {
+    for (auto &item : flowPointMap) {
         const static int FLOW_COUNT = 2; // from + to
-        if (item.second.size() != FLOW_COUNT) {
+        if (item.second.size() < FLOW_COUNT) {
             continue;
         }
-        UnitSingleFlow unitSingleFlow;
-        unitSingleFlow.title = item.second[0].name;
-        unitSingleFlow.cat = item.second[0].cat;
-        unitSingleFlow.id = item.second[0].flowId;
-        FlowPoint from(item.second[0]);
-        FlowPoint to(item.second[1]);
-        if (from.type != to.type && to.type == LINE_START) {
-            from = item.second[1];
-            to = item.second[0];
+        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+        FlowAnalyzer::SortByFlowIdAndTimestampASC(item.second);
+        FlowAnalyzer::ComputeUintFlows(item.second, item.second[0].cat, flowDetailList);
+        std::vector<UnitCatFlows> unitAllFlow;
+        for (const auto &singleFlow: flowDetailList) {
+            if (singleFlow->from.timestamp < minTimestamp || singleFlow->to.timestamp < minTimestamp) {
+                continue;
+            }
+            singleFlow->from.timestamp -= minTimestamp;
+            singleFlow->to.timestamp -= minTimestamp;
+            flowMap[singleFlow->cat].emplace_back(*singleFlow);
         }
-        unitSingleFlow.from.id = std::to_string(from.id);
-        unitSingleFlow.from.pid = from.pid;
-        unitSingleFlow.from.tid = from.tid;
-        if (from.timestamp < minTimestamp || to.timestamp < minTimestamp) {
-            continue;
-        }
-        unitSingleFlow.from.timestamp = from.timestamp - minTimestamp;
-        unitSingleFlow.from.depth = from.depth;
-        unitSingleFlow.to.id = std::to_string(to.id);
-        unitSingleFlow.to.pid = to.pid;
-        unitSingleFlow.to.tid = to.tid;
-        unitSingleFlow.to.timestamp = to.timestamp - minTimestamp;
-        unitSingleFlow.to.depth = to.depth;
-        flowMap[unitSingleFlow.cat].emplace_back(unitSingleFlow);
     }
     std::vector<UnitCatFlows> unitAllFlow;
     for (const auto &item : flowMap) {
@@ -1018,12 +1006,17 @@ bool TextTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
         ServerLog::Error("Query unit counter. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
+    std::string curArgs;
     while (resultSet->Next()) {
         UnitCounterData unitCounterData;
         unitCounterData.timestamp = resultSet->GetUint64("startTime");
         unitCounterData.valueJsonStr = resultSet->GetString("args");
-        dataList.emplace_back(unitCounterData);
+        if (unitCounterData.valueJsonStr != curArgs) {
+            dataList.emplace_back(unitCounterData);
+            curArgs = unitCounterData.valueJsonStr;
+        }
     }
+    ServerLog::Info("Unit counter size is: ", dataList.size());
     return true;
 }
 
