@@ -762,6 +762,49 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenInitThenInsertSucc
 }
 
 /**
+ * 先对线程泳道排序，再补充线程泳道信息，数据完整
+ */
+TEST_F(TextTraceDatabaseMockTest, TestFirstOrderThreadThenUpdataThreadInfo)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, sliceTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, flowTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, counterTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, threadTableSql);
+    database.InitStmt();
+    const uint64_t trackId = 1;
+    const uint64_t order = 10;
+    Trace::MetaData event;
+    event.trackId = trackId;
+    event.args.sortIndex = order;
+    database.UpdateThreadSortIndex(event);
+    Trace::ThreadEvent threadEvent;
+    threadEvent.trackId = trackId;
+    threadEvent.tid = "ggg";
+    threadEvent.pid = "lll";
+    threadEvent.threadName = "mmmm";
+    threadEvent.SetThreadSortIndex();
+    database.AddSimulationThreadCache(threadEvent);
+    database.CommitData();
+    std::vector<ThreadPO> threadPOS;
+    threadTable.Select(ThreadColumn::TRACK_ID, ThreadColumn::TID)
+        .Select(ThreadColumn::THREAD_NAME, ThreadColumn::THREAD_SORT_INDEX)
+        .Select(ThreadColumn::PID)
+        .ExcuteQuery(dbPtr, threadPOS);
+    const uint64_t expectSize = 1;
+    EXPECT_EQ(threadPOS.size(), expectSize);
+    EXPECT_EQ(threadPOS[0].trackId, trackId);
+    EXPECT_EQ(threadPOS[0].tid, "ggg");
+    EXPECT_EQ(threadPOS[0].pid, "lll");
+    EXPECT_EQ(threadPOS[0].threadName, "mmmm");
+    EXPECT_EQ(threadPOS[0].threadSortIndex, order);
+}
+
+/* *
  * 算子调优场景测试CommitData，初始化了，但表不存在，插入失败
  */
 TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenInitAndTableNotExistThenInsertFailed)
@@ -850,6 +893,42 @@ TEST_F(TextTraceDatabaseMockTest, TestSimulationCommitDataWhenProcessInitThenIns
     EXPECT_EQ(processPOS.size(), expectSize);
     EXPECT_EQ(processPOS[0].processName, "mm");
     EXPECT_EQ(processPOS[0].pid, "yy");
+}
+
+/**
+ * 先对进程泳道排序，再补充进程泳道信息，数据完整
+ */
+TEST_F(TextTraceDatabaseMockTest, TestFirstOrderProcessThenUpdataProcessInfo)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, sliceTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, flowTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, counterTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, processSql);
+    database.InitStmt();
+    const uint64_t order = 10;
+    Trace::MetaData event;
+    event.pid = "yy";
+    event.args.sortIndex = order;
+    database.UpdateProcessSortIndex(event);
+    Trace::ProcessEvent processEvent;
+    processEvent.pid = "yy";
+    processEvent.processName = "mm";
+    database.AddSimulationProcessCache(processEvent);
+    database.CommitData();
+    std::vector<ProcessPO> processPOS;
+    processTable.Select(ProcessColumn::PID, ProcessColumn::PROCESS_NAME)
+            .Select(ProcessColumn::LABEL, ProcessColumn::PROCESS_SORT_INDEX)
+            .ExcuteQuery(dbPtr, processPOS);
+    const uint64_t expectSize = 1;
+    EXPECT_EQ(processPOS.size(), expectSize);
+    EXPECT_EQ(processPOS[0].processName, "mm");
+    EXPECT_EQ(processPOS[0].pid, "yy");
+    EXPECT_EQ(processPOS[0].processSortIndex, order);
 }
 
 /**

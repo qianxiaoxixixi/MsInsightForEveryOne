@@ -26,7 +26,8 @@ const std::string UPDATE_PROCESS_NAME_SQL = "INSERT INTO  process  (pid, process
     "DO UPDATE SET process_name = excluded.process_name;";
 const std::string SIMULATION_UPDATE_PROCESS_NAME_SQL =
     "INSERT INTO  process  (pid, process_name) VALUES (?, ?) ON CONFLICT (pid) "
-    "DO NOTHING";
+    "DO UPDATE SET process_name = CASE WHEN process_name IS NULL OR process_name = '' THEN EXCLUDED.process_name ELSE "
+    "process_name END;";
 const std::string UPDATE_PROCESS_LABLE_SQL =
     "INSERT INTO process (pid, label) VALUES (?, ?) ON CONFLICT (pid) DO UPDATE SET label = excluded.label;";
 const std::string UPDATE_PROCESS_SORTINDEX_SQL = "INSERT INTO process (pid, process_sort_index) VALUES (?, ?) ON "
@@ -40,7 +41,11 @@ const std::string UPDATE_THREAD_SORTINDEX_SQL = "INSERT INTO thread (track_id, t
     "excluded.thread_sort_index;";
 const std::string SIMULATION_UPDATE_THREAD_NAME_SQL = "INSERT INTO thread"
     " (track_id, tid, pid, thread_name, thread_sort_index) VALUES (?, ?, ?, ?, ?)"
-    " ON CONFLICT (track_id) DO NOTHING ";
+    " ON CONFLICT (track_id) DO UPDATE SET tid = CASE WHEN tid IS NULL OR tid = '' THEN EXCLUDED.tid ELSE tid END,"
+    " pid = CASE WHEN pid IS NULL OR pid = '' THEN EXCLUDED.pid ELSE pid END,"
+    " thread_name = CASE WHEN thread_name IS NULL OR thread_name = '' THEN EXCLUDED.thread_name ELSE thread_name END,"
+    " thread_sort_index = CASE WHEN thread_sort_index IS NULL OR thread_sort_index = 0 THEN EXCLUDED.thread_sort_index "
+    "ELSE thread_sort_index END;";
 const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
     " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
     " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT, end_time INTEGER, flag_id TEXT);" +
