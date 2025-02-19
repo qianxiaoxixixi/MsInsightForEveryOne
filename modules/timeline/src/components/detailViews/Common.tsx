@@ -170,7 +170,7 @@ export const statsSystemViewItems: string[] = [
     'Python API Summary',
     'CANN API Summary',
     'Ascend HardWare Task Summary',
-    'COMMUNICATION Summary',
+    'Communication Summary',
     'Overlap Analysis',
     'Kernel Details',
 ];
