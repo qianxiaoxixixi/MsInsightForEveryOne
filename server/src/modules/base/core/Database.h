@@ -56,6 +56,7 @@ public:
     bool IsDatabaseVersionChange();
     bool GetMetaVersion();
     bool SetDataBaseVersion();
+    std::string QueryValueFromMetaDataByName(const std::string &name);
 
     bool CheckTableExist(const std::string& tableName);
     bool CheckTablesExist(const std::vector<std::string> &tablesName);

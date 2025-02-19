@@ -50,6 +50,7 @@ protected:
 
     static void ParseClusterEndProcess(std::string result, bool isShowCluster);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
+    static void ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::string GetFileId(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);
     static void SendParseSuccessEvent(const std::string &fileId);

@@ -14,6 +14,8 @@
 #include "EventNotifyThreadPoolExecutor.h"
 #include "BaselineManager.h"
 #include "ProjectExplorerManager.h"
+#include "MetaDataParser.h"
+#include "MetaDataCacheManager.h"
 #include "TraceTime.h"
 #include "TimeUtil.h"
 #include "FileReader.h"
@@ -171,6 +173,8 @@ void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::st
     for (const auto &item : projectInfos) {
         fileList.push_back(item.fileName);
     }
+    // 对metadata数据进行解析
+    ParserMetaData(projectInfos);
     bool isParseTraceJson = rankListMap.size() < PENDIND_CRITICAL_VALUE;
     for (const auto &rankEntry : rankListMap) {
         if (!isParseTraceJson) {
@@ -535,6 +539,18 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
         ParserClusterBaseline(projectInfos);
     } else {
         ParserSingleCardBaseline(projectInfos, baselineInfo);
+    }
+}
+
+void ParserJson::ParserMetaData(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+{
+    for (const auto &project: projectInfos) {
+        for (const auto &item: project.parseFilePathInfos) {
+            std::string parent = FileUtil::GetParentPath(item.parseFilePath);
+            std::string metaDataFilePath = FileUtil::SplicePath(parent, PROFILER_METADATA_FILE);
+            auto groupInfoList = MetaDataParser::ParserParallelGroupInfoByFilePath(metaDataFilePath);
+            MetaDataCacheManager::Instance().AddParallelGroupInfo(groupInfoList);
+        }
     }
 }
 

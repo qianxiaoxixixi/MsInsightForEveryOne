@@ -6,6 +6,8 @@
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "CollectionTimeService.h"
+#include "MetaDataParser.h"
+#include "MetaDataCacheManager.h"
 #include "NumberSafeUtil.h"
 #include "DbTraceDataBase.h"
 
@@ -1159,6 +1161,15 @@ void DbTraceDataBase::InitStringsCache()
     }
     while (result->Next()) {
         stringsCache[path].emplace(result->GetString("id"), result->GetString("value"));
+    }
+}
+
+void DbTraceDataBase::InitMetaDataInfo()
+{
+    if (CheckTableExist(TABLE_META_DATA)) {
+        std::string groupInfoStr = QueryValueFromMetaDataByName("parallel_group_info");
+        auto groupInfoList = MetaDataParser::ParserParallelGroupInfoByText(groupInfoStr);
+        MetaDataCacheManager::Instance().AddParallelGroupInfo(groupInfoList);
     }
 }
 

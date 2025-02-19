@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TrackInfoManager.h"
+#include "MetaDataCacheManager.h"
 #include "HcclRepo.h"
 namespace Dic::Module::Timeline {
 void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
@@ -262,6 +263,7 @@ void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomai
         .Select(CommucationTaskInfoColumn::DST_RANK, CommucationTaskInfoColumn::TRANSPORT_TYPE)
         .Select(CommucationTaskInfoColumn::SIZE, CommucationTaskInfoColumn::DATA_TYPE)
         .Select(CommucationTaskInfoColumn::LINK_TYPE, CommucationTaskInfoColumn::RDMA_TYPE)
+        .Select(CommucationTaskInfoColumn::GROUPNAME)
         .Eq(CommucationTaskInfoColumn::GLOBAL_TASK_ID, globalTaskId)
         .ExcuteQuery(sliceQuery.rankId, commucationTaskInfoPOs);
     if (std::empty(commucationTaskInfoPOs)) {
@@ -289,12 +291,39 @@ void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomai
     JsonUtil::AddConstMember(json, TaskColumn::TASK_TYPE, taskType, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::SRC_RANK, srcRank, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::DST_RANK, dstRank, allocator);
+    std::optional<ParallelGroupInfo> groupInfo = GetGroupInfoByGroupNameId(commucationTaskInfoPOs[0].groupName,
+                                                                           sliceQuery.rankId);
+    if (groupInfo.has_value()) {
+        std::vector<std::string> ranks = groupInfo.value().globalRanks;
+        JsonUtil::AddConstMember(json, globalSrcRank, GetRealRankByLocalRank(targetTaskInfo.srcRank, ranks), allocator);
+        JsonUtil::AddConstMember(json, globalDstRank, GetRealRankByLocalRank(targetTaskInfo.dstRank, ranks), allocator);
+    }
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::TRANSPORT_TYPE, transPortName, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::SIZE, size, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::DATA_TYPE, dataTypeName, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::LINK_TYPE, linkTypeName, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::RDMA_TYPE, rdmaTypeName, allocator);
     competeSliceDomain.args = JsonUtil::JsonDump(json);
+}
+
+std::string HcclRepo::GetRealRankByLocalRank(uint64_t localRank, std::vector<std::string> &realRankList)
+{
+    if (realRankList.size() <= localRank) {
+        return "-1";
+    }
+    return realRankList[localRank];
+}
+
+std::optional<ParallelGroupInfo> HcclRepo::GetGroupInfoByGroupNameId(const uint64_t groupNameId,
+                                                                     const std::string &fileId)
+{
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(
+        std::vector<uint64_t>{groupNameId}, fileId);
+    auto groupNameItr = strMap.find(groupNameId);
+    if (groupNameItr == strMap.end()) {
+        return std::nullopt;
+    }
+    return MetaDataCacheManager::Instance().GetParallelGroupInfo(groupNameItr->second);
 }
 
 std::string HcclRepo::QueryRdmaTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo)

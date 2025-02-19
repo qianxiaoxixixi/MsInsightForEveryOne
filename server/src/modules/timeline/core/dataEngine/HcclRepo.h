@@ -48,6 +48,8 @@ protected:
 
 private:
     const std::string groupSuffix = "group";
+    const std::string globalSrcRank = "globalSrcRank";
+    const std::string globalDstRank = "globalDstRank";
 
     std::vector<uint64_t> QueryGlobalTaskIdsByRank(const TrackInfo &trackInfo);
 
@@ -77,6 +79,10 @@ private:
 
     void SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
         const TaskPO &targetPO);
+
+    static std::string GetRealRankByLocalRank(uint64_t localRank, std::vector<std::string> &realRankList);
+
+    std::optional<ParallelGroupInfo> GetGroupInfoByGroupNameId(uint64_t groupNameId, const std::string &fileId);
 
     bool QueryPlaneSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
 };

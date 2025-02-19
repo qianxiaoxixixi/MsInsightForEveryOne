@@ -23,7 +23,7 @@ import { Checkbox, Tooltip } from 'ascend-components';
 import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
 import { StyledButton } from '../../base/StyledButton';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
-import { CardUnit } from '../../../insight/units/AscendUnit';
+import { CardUnit, ThreadUnit } from '../../../insight/units/AscendUnit';
 import { UnitProgress } from '../../charts/UnitProgress';
 // trace/platform
 import { platform } from '../../../platforms';
@@ -92,13 +92,16 @@ interface DefaultInfoProps {
 
 const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
     const tag = (typeof unit.tag === 'string') ? `${unit.tag}` : unit.tag?.(session, unit.metadata) ?? undefined;
+    // 判断是否为HCCL的group甬道，并且rank列表不为空
+    const isGroupUnit = unit instanceof ThreadUnit && unit.metadata.groupNameValue !== '' && unit.metadata.rankList.length > 0;
+    const tooltip = isGroupUnit ? `(${(unit.metadata.rankList.join(', '))})` : name;
     return <DefaultInfoContainer>
         <div
             key={ `${getAutoKey(unit)} lane info` }
             className={cls('insight-lane-info-header', { expandable: unit.children && unit.children.length > 0 }) }
         >
             <div className={cls('insight-lane-info-outer-name', { noTag: isEmpty(tag) })}>
-                <Tooltip title={name}>
+                <Tooltip title={tooltip}>
                     <span className="insight-lane-info-name">{name}</span>
                 </Tooltip>
                 { [...unit.notifications ?? []]?.map((item, index) => {

@@ -25,6 +25,7 @@ struct UnitTrackMetaData {
     std::string threadId;    // type = thread
     std::string threadName;  // type = thread, counter
     std::string groupNameValue;   // type = thread, 在 PROCESS_TYPE::HCCL 时赋值
+    std::vector<std::string> rankList; // type = thread, 为HCCL中group甬道时赋值，内容为通信域内所有rankId信息
     std::string metaType;
     int maxDepth = 0;                  // type = thread
     std::vector<std::string> dataType; // type = counter

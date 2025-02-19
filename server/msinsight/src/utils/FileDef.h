@@ -29,6 +29,7 @@ const std::string DEVICE_DIR_REG = R"(^device_\d+$)";
 
 const std::string PROFILER_INFO_FILE_PREFIX = "profiler_info_";
 const std::string PROFILER_INFO_FILE_REG = R"(^profiler_info_[0-9]{1,5}.json$)";
+const std::string PROFILER_METADATA_FILE = "profiler_metadata.json";
 
 
 const std::string JSON_FILE_SUFFIX = ".json";
