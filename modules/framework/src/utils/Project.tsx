@@ -26,6 +26,7 @@ export interface UpdateProjectParam {
     projectName: string;
     dataPath: string[];
     hasConflict: boolean;
+    subdirectory: string[];
 }
 
 // 历史项目
@@ -44,8 +45,8 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, dataSource: orginDataSource, isConflict }:
-{action: ProjectAction;dataSource: DataSource;isConflict: boolean}): Promise<void> {
+export async function handleProjectAction({ action, dataSource: orginDataSource, isConflict, selectedPath }:
+{action: ProjectAction;dataSource: DataSource;isConflict: boolean;selectedPath?: string}): Promise<void> {
     openLoading();
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
@@ -58,7 +59,7 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
 
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
-            const firstDataPath = dataSources.find(data => data.projectName === dataSource.projectName)?.dataPath[0];
+            const firstDataPath = selectedPath ?? dataSources.find(data => data.projectName === dataSource.projectName)?.dataPath[0];
             if (firstDataPath !== undefined) {
                 dataSource.dataPath = [firstDataPath];
             }
@@ -85,7 +86,7 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 项目更新
 // 1、更新项目目录
 // 2、设置为打开(选中）项目
-export const updateProject = ({ projectAction, projectName, dataPath, hasConflict }: UpdateProjectParam): void => {
+export const updateProject = ({ projectAction, projectName, dataPath, hasConflict, subdirectory }: UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
         try {
@@ -93,9 +94,18 @@ export const updateProject = ({ projectAction, projectName, dataPath, hasConflic
                 // 更新项目目录
                 const dataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath };
                 session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
+                // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
+                if (hasConflict || dataPath.length > 1) {
+                    session.activeDataSource = { ...dataSource, dataPath: [dataPath[0]] };
+                }
+                // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
+                if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.dataPath.length > 0) {
+                    session.activeDataSource = dataSource;
+                    return;
+                }
             }
-            if (session.activeDataSource.projectName !== projectName) {
-                session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [dataPath[0]] };
+            if (projectAction === ProjectAction.SWITCH_PROJECT) {
+                session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: subdirectory };
             }
         } catch {
             console.error('Update Project Explorer Failed');

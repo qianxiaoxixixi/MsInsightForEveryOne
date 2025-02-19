@@ -26,12 +26,13 @@ export const importActionHandler: ResponseInterceptor<ImportActionResponse> = (e
         const projectAction = event.data.args.params.projectAction as ProjectAction;
         const hasConflict = event.data.args.params.isConflict as boolean;
         const projectName = data.dataSource.projectName;
+        const subdirectory = event.data.remote.dataPath as string[];
         const dataPath = data.body.subdirectoryList;
         // 更新rank信息
         const ranInfoList = data.body.result;
         updateRankMap(projectAction, projectName, ranInfoList);
         // 更新项目目录
-        updateProject({ projectAction, projectName, dataPath, hasConflict });
+        updateProject({ projectAction, projectName, dataPath, hasConflict, subdirectory });
     } catch (error) {
         console.error(error);
     }
