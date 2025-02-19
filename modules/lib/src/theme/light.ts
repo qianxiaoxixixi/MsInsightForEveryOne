@@ -217,6 +217,7 @@ export const light: Theme = {
     borderRadiusCircle: '100%',
     pagePadding: '16px',
     icon: '#8D98AA',
+    iconColor: '#4E5865',
     tableTextColor: '#000000',
     radioSelectedColor: '#007AFF',
     rankBackgroudColor: '#FDFEFF',

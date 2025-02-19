@@ -46,6 +46,13 @@ import { ReactComponent as DataManagerLightSvg } from './img/data_manager_light.
 import { ReactComponent as LangZhSvg } from './img/lang_zh.svg';
 import { ReactComponent as LangEnSvg } from './img/lang_en.svg';
 import { ReactComponent as SetSvg } from './img/set.svg';
+import { ReactComponent as RegularSvg } from './img/regular.svg';
+import { ReactComponent as CaseLightSvg } from './img/case_light.svg';
+import { ReactComponent as CaseDarkSvg } from './img/case_dark.svg';
+import { ReactComponent as CaseActiveSvg } from './img/case_active.svg';
+import { ReactComponent as FullTextLightSvg } from './img/full_text_light.svg';
+import { ReactComponent as FullTextDarkSvg } from './img/full_text_dark.svg';
+import { ReactComponent as FullTextActiveSvg } from './img/full_text_active.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
@@ -88,6 +95,9 @@ const iconMap: Record<string, any> = {
     langZh: LangZhSvg,
     langEn: LangEnSvg,
     set: SetSvg,
+    regular: RegularSvg,
+    caseActive: CaseActiveSvg,
+    fullTextActive: FullTextActiveSvg,
     dark: {
         help: HelpDarkSvg,
         flag: FlagDarkIcon,
@@ -102,6 +112,8 @@ const iconMap: Record<string, any> = {
         add: AddDarkSvg,
         localImport: LocalImportDarkSvg,
         dataManager: DataManagerDarkSvg,
+        case: CaseDarkSvg,
+        fullText: FullTextDarkSvg,
     },
     light: {
         help: HelpLightSvg,
@@ -117,6 +129,8 @@ const iconMap: Record<string, any> = {
         add: AddLightSvg,
         localImport: LocalImportLightSvg,
         dataManager: DataManagerLightSvg,
+        case: CaseLightSvg,
+        fullText: FullTextLightSvg,
     },
 };
 
@@ -290,4 +304,31 @@ export function LangEnIcon(props: ISVGProps): JSX.Element {
 
 export function SetIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'set'} {...props }/>;
+}
+
+// 正则
+export function RegularIcon(props: ISVGProps): JSX.Element {
+    const { active, style, ...restProps } = props;
+    return <Icon style={{
+        height: '16px',
+        width: '16px',
+        borderRadius: '1px',
+        padding: '1px 2px',
+        background: active ? themeInstance.getThemeType().radioSelectedColor : 'none',
+        color: active ? themeInstance.getThemeType().textColorFourth : '',
+        ...(style ?? {}),
+    }}
+    type={'regular'} width={13} height={13} {...restProps} />;
+}
+
+// 大小写匹配
+export function CaseIcon(props: ISVGProps): JSX.Element {
+    const { active, ...restProps } = props;
+    return <Icon type={`case${active ? 'Active' : ''}`} {...restProps}/>;
+}
+
+// 全文匹配
+export function FullTextIcon(props: ISVGProps): JSX.Element {
+    const { active, ...restProps } = props;
+    return <Icon type={`fullText${active ? 'Active' : ''}`} {...restProps}/>;
 }
