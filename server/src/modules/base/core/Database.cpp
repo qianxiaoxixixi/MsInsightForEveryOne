@@ -188,21 +188,34 @@ void Database::SetDbPath(const std::string& dbPath)
     path = dbPath;
 }
 
+std::string Database::QueryValueFromMetaDataByName(const std::string &name)
+{
+    // 外层需要校验TABLE_META_DATA表是否存在
+    std::string result;
+    auto sql = "select value from " + TABLE_META_DATA + " where name = ?";
+    auto stmt = CreatPreparedStatement();
+    try {
+        auto resultSet = ExecuteQuery(stmt, sql, name);
+        if (resultSet->Next()) {
+            result = resultSet->GetString(resultStartIndex);
+        }
+        return result;
+    } catch (DatabaseException &e) {
+        ServerLog::Error("Get Meta data Fail, name:", name, ", error:", e.What());
+        return result;
+    }
+}
+
 bool Database::GetMetaVersion()
 {
     if (CheckTableExist(TABLE_META_DATA)) {
         isLowCamel = true;
-        auto sql = "select value as version from " + TABLE_META_DATA + " where name = ?";
-        auto stmt = CreatPreparedStatement();
-        try {
-            auto resultSet = ExecuteQuery(stmt, sql, "SCHEMA_VERSION");
-            if (resultSet->Next()) {
-                metaVersion = resultSet->GetString(resultStartIndex);
-            }
-        } catch (DatabaseException &e) {
-            ServerLog::Error("Get Meta Version Fail, ", e.What());
+        std::string schemaVersion = QueryValueFromMetaDataByName("SCHEMA_VERSION");
+        if (schemaVersion.empty()) {
+            ServerLog::Error("Get Meta Version Fail");
             return false;
         }
+        metaVersion = schemaVersion;
     }
     return true;
 }

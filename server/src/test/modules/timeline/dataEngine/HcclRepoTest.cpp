@@ -8,6 +8,7 @@
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 #include "EnumHcclDataTypeTable.h"
 #include "TableDefaultMock.h"
+#include "MetaDataCacheManager.h"
 #include "TrackInfoManager.h"
 using namespace Dic::TimeLine::HcclRepo::Mock;
 using namespace Dic::Global::PROFILER::MockUtil;
@@ -41,10 +42,8 @@ protected:
         TrackInfoManager::Instance().Reset();
     }
 
-    void TestPlaneQueryGroupSliceDetailInfoPrepare(HcclDependency &dependency)
+    void CreateTestTable(sqlite3 *db)
     {
-        sqlite3 *db = nullptr;
-        DatabaseTestCaseMockUtil::OpenDB(db);
         DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
         DatabaseTestCaseMockUtil::CreateTable(db, taskInfoSql);
         DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
@@ -52,6 +51,13 @@ protected:
         DatabaseTestCaseMockUtil::CreateTable(db, linkTypeSql);
         DatabaseTestCaseMockUtil::CreateTable(db, rdmaSql);
         DatabaseTestCaseMockUtil::CreateTable(db, transSql);
+    }
+
+    void TestPlaneQueryGroupSliceDetailInfoPrepare(HcclDependency &dependency)
+    {
+        sqlite3 *db = nullptr;
+        DatabaseTestCaseMockUtil::OpenDB(db);
+        CreateTestTable(db);
         std::string taskInsert =
             "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", "
             "\"globalTaskId\", \"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", "
@@ -75,7 +81,8 @@ protected:
         std::string transInsert =
             "INSERT INTO \"main\".\"ENUM_HCCL_TRANSPORT_TYPE\" (\"id\", \"name\") VALUES (2, 'LOCAL');";
         DatabaseTestCaseMockUtil::InsertData(db, transInsert);
-        std::string strInsert = "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (319, 'kkkk');";
+        std::string strInsert = "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (319, 'kkkk'), (379, "
+                                "'172.16.4.45%eth0_64000_0_1739179801171386');";
         DatabaseTestCaseMockUtil::InsertData(db, strInsert);
         dependency.taskTableMock = std::make_unique<TaskTableMock>();
         dependency.taskTableMock->SetDb(db);
@@ -91,6 +98,13 @@ protected:
         dependency.enumHcclLinkTypeTableMock->SetDb(db);
         dependency.enumHcclTransportTypeTableMock = std::make_unique<EnumHcclTransportTypeTableMock>();
         dependency.enumHcclTransportTypeTableMock->SetDb(db);
+    }
+
+    void TestMockGroupInfoCache()
+    {
+        std::vector<ParallelGroupInfo> infos = {{"172.16.4.45%eth0_64000_0_1739179801171386", "tp",
+                                                 {"0", "5", "6"}}};
+        MetaDataCacheManager::Instance().AddParallelGroupInfo(infos);
     }
 };
 /**
@@ -540,4 +554,49 @@ TEST_F(HcclRepoTest, TestPlaneQueryGroupSliceDetailInfo)
         "\"INT16\","
         "\"linkType\":\"PCIE\",\"rdmaType\":\"RDMA_SEND_OP\"}";
     EXPECT_EQ(slice.args, expectArgs);
+}
+
+/**
+ * 测试查询plane泳道详情(带有group信息，会根据局部rank获取全局rank)
+ */
+TEST_F(HcclRepoTest, TestPlaneQueryGroupSliceDetailInfoWithGroupInfo)
+{
+    class HcclRepoMock : public HcclRepo {
+    public:
+        void SetMock(HcclDependency &dependency)
+        {
+            taskTable = std::move(dependency.taskTableMock);
+            commucationTaskInfoTable = std::move(dependency.commucationTaskInfoTableMock);
+            stringIdsTable = std::move(dependency.stringIdsTableMock);
+            enumHcclDataTypeTable = std::move(dependency.enumHcclDataTypeTableMock);
+            enumHcclRdmaTypeTable = std::move(dependency.enumHcclRdmaTypeTableMock);
+            enumHcclLinkTypeTable = std::move(dependency.enumHcclLinkTypeTableMock);
+            enumHcclTransportTypeTable = std::move(dependency.enumHcclTransportTypeTableMock);
+        }
+    };
+    HcclDependency dependency;
+    TestPlaneQueryGroupSliceDetailInfoPrepare(dependency);
+    HcclRepoMock hcclRepoMock;
+    hcclRepoMock.SetMock(dependency);
+    TestMockGroupInfoCache();
+    SliceQuery query;
+    CompeteSliceDomain slice;
+    query.sliceId = "1";
+    const uint64_t trackId = TrackInfoManager::Instance().GetTrackId("hhh", "hccl", "1669");
+    query.trackId = trackId;
+    query.rankId = "hhh";
+    bool result = hcclRepoMock.QuerySliceDetailInfo(query, slice);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(slice.name, "kkkk");
+    const uint64_t expectStart = 1718180918997464923;
+    const uint64_t expectEnd = 1718180918997464923;
+    EXPECT_EQ(slice.timestamp, expectStart);
+    EXPECT_EQ(slice.endTime, expectEnd);
+    const std::string expectArgs =
+            "{\"notifyId\":\"0\",\"streamId\":\"16\",\"taskId\":\"3730\",\"contextId\":\"4294967295\",\"taskType\":"
+            "\"kkkk\",\"srcRank\":\"1\",\"dstRank\":\"2\",\"globalSrcRank\":\"5\",\"globalDstRank\":\"6\","
+            "\"transportType\":\"LOCAL\",\"size\":\"40\",\"dataType\":"
+            "\"INT16\",\"linkType\":\"PCIE\",\"rdmaType\":\"RDMA_SEND_OP\"}";
+    EXPECT_EQ(slice.args, expectArgs);
+    MetaDataCacheManager::Instance().Clear();
 }

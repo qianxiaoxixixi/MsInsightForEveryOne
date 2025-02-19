@@ -56,6 +56,7 @@ private:
     static void ParserClusterBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
     void ParserSingleCardBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
                                   Global::BaselineInfo &baselineInfo);
+    static void ParserMetaData(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 };
 } // end of namespace Module
 } // end of namespace Dic

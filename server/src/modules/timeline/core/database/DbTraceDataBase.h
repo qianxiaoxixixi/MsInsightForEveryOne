@@ -121,6 +121,7 @@ public:
     void UpdateStartTime(const std::string &fileId);
     void UpdateAllDepth();
     void InitStringsCache();
+    void InitMetaDataInfo();
     void InitConnectionCats();
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();

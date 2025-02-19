@@ -689,6 +689,7 @@ export interface ThreadMetaData {
     maxDepth?: number;
     metaType?: string;
     dataSource: DataSource;
+    rankList: string[];
 };
 
 export interface ProcessMetaData {

@@ -84,6 +84,7 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
             meta.dataSource = paramsTree.get(insightMetaData.metadata).dataSource;
             meta.metaType = insightMetaData.metadata.metaType;
             meta.groupNameValue = insightMetaData.metadata.groupNameValue;
+            meta.rankList = insightMetaData.metadata.rankList;
             const threadUnit = new ThreadUnit(meta);
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
             if (insightMetaData.metadata.maxDepth === 1 || insightMetaData.metadata.maxDepth === 0) {

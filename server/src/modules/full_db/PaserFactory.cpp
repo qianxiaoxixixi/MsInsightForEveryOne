@@ -14,6 +14,7 @@
 #include "MemoryParse.h"
 #include "FullDbParser.h"
 #include "ProjectExplorerManager.h"
+#include "MetaDataCacheManager.h"
 #include "ParserStatusManager.h"
 
 namespace Dic {
@@ -73,6 +74,7 @@ void ParserFactory::Reset()
     Summary::KernelParse::Instance().Reset();
     Memory::MemoryParse::Instance().Reset();
     FullDb::FullDbParser::Instance().Reset();
+    MetaDataCacheManager::Instance().Clear();
 }
 
 void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
@@ -183,6 +185,22 @@ void ParserAlloc::SearchMetaData(const std::string &fileId, std::vector<std::uni
         return;
     }
     database->QueryUnitsMetadata(fileId, metaData);
+    ProcessMetadata(metaData);
+}
+
+void ParserAlloc::ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaData)
+{
+    for (const auto &item: metaData) {
+        for (const auto &thread: item->children) {
+            // 判断是否为group内容
+            auto groupInfoOpt = MetaDataCacheManager::Instance().GetParallelGroupInfo(thread->metaData.groupNameValue);
+            if (!groupInfoOpt.has_value()) {
+                continue;
+            }
+            thread->metaData.threadName = groupInfoOpt.value().groupName + ":" + thread->metaData.threadName;
+            thread->metaData.rankList = groupInfoOpt.value().globalRanks;
+        }
+    }
 }
 
 std::string ParserAlloc::GetFileId(const std::string &filePath, const std::string &importPath)
