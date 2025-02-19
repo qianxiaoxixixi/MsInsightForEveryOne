@@ -383,6 +383,7 @@ bool HcclRepo::QueryGroupSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSl
         .Select(CommucationTaskOpColumn::OP_NAME, CommucationTaskOpColumn::CONNECTION_ID)
         .Select(CommucationTaskOpColumn::DATA_TYPE, CommucationTaskOpColumn::ALG_TYPE)
         .Select(CommucationTaskOpColumn::COUNT, CommucationTaskOpColumn::OP_ID)
+        .Select(CommucationTaskOpColumn::RELAY, CommucationTaskOpColumn::RETRY)
         .Eq(CommucationTaskOpColumn::OP_ID, sliceQuery.sliceId)
         .ExcuteQuery(trackInfo.cardId, commucationTaskOpPOVec);
     if (std::empty(commucationTaskOpPOVec)) {
@@ -405,12 +406,16 @@ bool HcclRepo::QueryGroupSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSl
     const std::string dataType = dataTypeMap[commucationTaskOpPOVec[0].dataType];
     const std::string algType = strMap[commucationTaskOpPOVec[0].algType];
     const std::string count = std::to_string(commucationTaskOpPOVec[0].count);
+    const std::string relay = commucationTaskOpPOVec[0].relay == 0 ? "no" : "yes";
+    const std::string retry = commucationTaskOpPOVec[0].retry == 0 ? "no" : "yes";
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddConstMember(json, CommucationTaskOpColumn::CONNECTION_ID, connectionId, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskOpColumn::DATA_TYPE, dataType, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskOpColumn::ALG_TYPE, algType, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskOpColumn::COUNT, count, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskOpColumn::RELAY, relay, allocator);
+    JsonUtil::AddConstMember(json, CommucationTaskOpColumn::RETRY, retry, allocator);
     competeSliceDomain.args = JsonUtil::JsonDump(json);
     return true;
 }

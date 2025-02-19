@@ -438,7 +438,7 @@ TEST_F(HcclRepoTest, TestGroupQueryGroupSliceDetailInfo)
     std::string opInsert =
         "INSERT INTO \"main\".\"COMMUNICATION_OP\" (\"opName\", \"startNs\", \"endNs\", \"connectionId\", "
         "\"groupName\", \"opId\", \"relay\", \"retry\", \"dataType\", \"algType\", \"count\", \"opType\", \"waitNs\") "
-        "VALUES (377, 1718180919002130516, 1718180919038847310, 7429, 379, 1, 0, 0, 5, 380, 5, 336, 2259745);";
+        "VALUES (377, 1718180919002130516, 1718180919038847310, 7429, 379, 1, 1, 0, 5, 380, 5, 336, 2259745);";
     std::string dataTypeInsert = "INSERT INTO \"main\".\"ENUM_HCCL_DATA_TYPE\" (\"id\", \"name\") VALUES (5, 'INT16');";
     std::string stringInsert = "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (377, 'mmmm');\n"
         "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (380, 'aaaa');";
@@ -463,10 +463,11 @@ TEST_F(HcclRepoTest, TestGroupQueryGroupSliceDetailInfo)
     const uint64_t expectEnd = 1718180919038847310;
     EXPECT_EQ(slice.timestamp, expectStart);
     EXPECT_EQ(slice.endTime, expectEnd);
-    EXPECT_EQ(slice.args, "{\"connectionId\":\"7429\",\"dataType\":\"INT16\",\"algType\":\"aaaa\",\"count\":\"5\"}");
+    EXPECT_EQ(slice.args, "{\"connectionId\":\"7429\",\"dataType\":\"INT16\",\"algType\":\"aaaa\",\"count\":\"5\","
+                          "\"relay\":\"yes\",\"retry\":\"no\"}");
 }
 
-/**
+/* *
  * 测试查询group泳道详情,算子不存在
  */
 TEST_F(HcclRepoTest, TestGroupQueryGroupSliceDetailInfoWhenSliceNotExistThenRetuenFalse)
