@@ -222,6 +222,7 @@ declare module '@emotion/react' {
         borderRadiusCircle: string;
         pagePadding: string;
         icon: string; // 图标颜色
+        iconColor: string; // 图标颜色2
         tableTextColor: string; // 表格颜色
         radioSelectedColor: string; // 单选框选中填充颜色
         rankBackgroudColor: string;
