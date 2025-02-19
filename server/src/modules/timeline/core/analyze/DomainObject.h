@@ -6,7 +6,7 @@
 #define PROFILER_SERVER_DOMAINOBJECT_H
 #include <string>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 namespace Dic::Module::Timeline {
 struct SliceDomain {
     uint64_t id = 0;
