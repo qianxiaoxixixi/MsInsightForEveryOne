@@ -49,6 +49,12 @@ const FileExplorerContainer = styled.div`
     }
 `;
 
+const StyledModal = styled(Modal)`
+    .ant-modal-footer {
+        padding: 10px 0;
+    }
+`;
+
 // 文件最大路径长度
 const MAX_FILE_PATH_LENGTH = 260;
 interface IProps {
@@ -62,6 +68,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
     const [inputPath, setInputPath] = useState(getLastFilePath());
     const [actionListener, setActionListener] = useState<CatalogActionListener>({ type: CatalogAction.NO_ACTION });
     const [hit, setHit] = useState<{alert: boolean;message: string;options?: Record<string, string | number>}>({ alert: false, message: 'FileSearchDescribe' });
+    const [conflictModalVis, setConflictModalVis] = useState<boolean>(false);
 
     // 点击确认
     const handleConfirm = async(): Promise<void> => {
@@ -73,6 +80,10 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
 
         // 校验
         const validRes: ProjectError = await checkPathValid({ path, dataSource });
+        if (validRes === ProjectError.PROJECT_NAME_CONFLICT) {
+            setConflictModalVis(true);
+            return;
+        }
         // 校验通过
         if ([ProjectError.NO_ERRORS, ProjectError.IMPORTED].includes(validRes)) {
             const action = validRes === ProjectError.NO_ERRORS ? ProjectAction.ADD_FILE : ProjectAction.SWITCH_PROJECT;
@@ -96,6 +107,20 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         setHit({ alert: !success, message: result?.message ? result.message : 'FileSearchDescribe', options: result?.options });
     };
 
+    const onContinue = (): void => {
+        const path = getTrimedPath(inputPath);
+        const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: currentProject, dataPath: [path] } as DataSource;
+        handleProjectAction({ action: ProjectAction.ADD_FILE, dataSource, isConflict: true });
+        setConflictModalVis(false);
+        setTimeout(() => {
+            closeDialog();
+        }, 0);
+    };
+
+    const closeConflictModal = (): void => {
+        setConflictModalVis(false);
+    };
+
     // 每次打开对话框，刷新目录
     useEffect(() => {
         if (dialogOpen) {
@@ -103,7 +128,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         }
     }, [dialogOpen]);
 
-    return <Modal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
+    return <StyledModal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
         footer={<div>
             <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
             <Button onClick={closeDialog}>{t('Cancel')}</Button>
@@ -126,7 +151,16 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
                 onSearchReturnChange={handleSearchReturn}
             />
         </FileExplorerContainer>
-    </Modal>;
+        <StyledModal
+            maskClosable={false} title={t('FileConflict')} width={320} open={conflictModalVis} onCancel={closeConflictModal}
+            footer={<div>
+                <Button onClick={onContinue} type="primary" size="small" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
+                <Button onClick={closeConflictModal} size="small">{t('Cancel')}</Button>
+            </div>}
+        >
+            {t('FileConflictContent')}
+        </StyledModal>
+    </StyledModal>;
 });
 
 export default FileExplorer;

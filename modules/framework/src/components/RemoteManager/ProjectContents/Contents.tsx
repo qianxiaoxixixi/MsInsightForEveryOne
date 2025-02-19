@@ -211,7 +211,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         const dataSource: DataSource = dataSources[projectIndex];
         // 如果点击其它工程或者其它工程下文件
         if (dataSource.projectName !== activeDataSource.projectName) {
-            handleProjectAction({ action: ProjectAction.SWITCH_PROJECT, dataSource, isConflict: false });
+            handleProjectAction({ action: ProjectAction.SWITCH_PROJECT, dataSource, isConflict: false, selectedPath: dataSource.dataPath[dataPathIndex] });
         }
         // 如果点击的是文件
         if (node.isLeaf) {
