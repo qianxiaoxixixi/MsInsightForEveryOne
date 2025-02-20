@@ -117,7 +117,10 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
                 return;
             } else {
                 // 是否上层目录
-                const isParentDir = searchText.startsWith(String(node.key));
+                const curPath = String(node.key);
+                // 分隔符
+                const separator = curPath.includes('/') ? '/' : '\\';
+                const isParentDir = searchText.startsWith(curPath.endsWith(separator) ? curPath : `${curPath}${separator}`);
                 if (isParentDir) {
                     routeKeys.push(node.key);
                     const nextLevelTree = await onLoadData(node);
