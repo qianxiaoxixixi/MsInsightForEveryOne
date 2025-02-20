@@ -2,15 +2,15 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import styled from '@emotion/styled';
-import { Button, Checkbox, Tooltip } from 'ascend-components';
+import { Button, Checkbox, Input, Tooltip } from 'ascend-components';
 import { observer } from 'mobx-react';
-import React, { useRef, useState } from 'react';
+import React, { type ChangeEvent, useRef, useState } from 'react';
 import { LinkIcon } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import { useTranslation } from 'react-i18next';
 import { StyledEmpty } from './base/StyledEmpty';
-import { runInAction } from 'mobx';
+import { action, runInAction } from 'mobx';
 import type { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
@@ -209,12 +209,21 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
 };
 
 const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
-    const displayCategories = useGetCategories(session, isSuspend);
+    let displayCategories = useGetCategories(session, isSuspend);
     const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
+    const [inputValue, setInput] = React.useState<string>();
     const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedCardIdSet);
     const isEmptyData = displayCategories.length === 0;
     const updateLinkLines = React.useCallback(updateSessionLineData(checkedCategories, fetchLinkLinesMap, session),
         [checkedCategories, session.viewedCardIdSet]);
+    const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
+        const inputContent = e.target.value;
+        const trimmedValue = inputContent.trim();
+        setInput(trimmedValue);
+    });
+    if (inputValue !== undefined && inputValue.length > 0) {
+        displayCategories = displayCategories.filter(str => str.startsWith(inputValue));
+    }
     const dependencyParam = [session.domainRange.domainStart,
         session.domainRange.domainEnd,
         checkedCategories,
@@ -229,6 +238,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
     }, [session.doReset]);
     return (
         <FilterContainer>
+            <Input size="middle" onChange={onInputChange}></Input>
             <FilterList>
                 {isEmptyData
                     ? <StyledEmpty />
