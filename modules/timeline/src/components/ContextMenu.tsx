@@ -425,13 +425,24 @@ const setChildrenUnitHide = (units: InsightUnit[]): void => {
     }
 };
 
+function getRankIdByCardId(cardId: string): string {
+    // text 场景：rankId = cardId，直接返回
+    // db 场景：cardId = '{文件名} {rankId}'，需特殊处理
+    // 匹配最后一个空格之后的所有数字
+    const match = cardId.match(/ (?<rankId>\d+)$/);
+    if ((match?.groups?.rankId) !== undefined) {
+        return match.groups.rankId;
+    } else {
+        return cardId;
+    }
+}
+
 function getUnparsedCards(session: Session, rankIds: string[]): InsightUnit[] {
     return preOrderFlatten(getRootUnit(session.units), 0, {
         when: (node) => !(node instanceof CardUnit && node.metadata?.cardName !== 'Host'),
     })
         .filter((item) => item instanceof CardUnit && item.metadata?.cardName !== 'Host' && item.shouldParse)
-        // rankId === cardId，可以比较
-        .filter((item) => rankIds.includes((item.metadata as CardMetaData).cardId));
+        .filter((item) => rankIds.includes(getRankIdByCardId((item.metadata as CardMetaData).cardId)));
 }
 
 const isShowHideText = (session: Session): boolean => {
@@ -817,12 +828,13 @@ function buildParseCardsOfRelatedGroupMenuItem(
         name = t('Parsed Cards of Related Group');
         disabled = true;
     } else {
-        name = t('Parse Cards of Related Group', { ranks: unparsedCardIds.join(',') });
+        name = t('Parse Cards of Related Group', { ranks: unparsedCardIds.map(getRankIdByCardId).join(',') });
         disabled = false;
     }
 
     return [{
         name,
+        title: name,
         key: 'parseCardsOfRelatedGroup',
         event: (): void => {
             parseCards({ cards: unparsedCardIds }).then((): void => {
