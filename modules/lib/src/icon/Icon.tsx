@@ -56,6 +56,7 @@ import { ReactComponent as FullTextActiveSvg } from './img/full_text_active.svg'
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
+import { useTheme } from '@emotion/react';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
     active?: boolean;
@@ -160,7 +161,7 @@ const StyledIcon = styled.div<{ color?: string;disabled?: boolean }>`
 `;
 
 export function Icon({ type = '', svgElement, className = '', theme, color, active, disabled, style, ...restProp }: IIconProps): JSX.Element {
-    const curTheme = themeInstance.getCurrentTheme();
+    const curTheme = useTheme().mode;
     const Svg = iconMap[type] ?? iconMap[theme ?? curTheme][type] ?? svgElement;
     if (Svg === null || Svg === undefined) {
         return <StyledIcon/>;
