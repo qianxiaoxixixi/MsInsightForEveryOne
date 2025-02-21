@@ -35,6 +35,7 @@ public:
         ProjectTypeEnum projectTypeEnum, std::string &error)
     {
         std::vector<std::string> res = { importFile };
+        error = "Not found any valid file";             // other默认弹窗,存在以下场景:由于存在非法路径, DB JSON等格式会判断异常走到other下
         return res;
     };
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
