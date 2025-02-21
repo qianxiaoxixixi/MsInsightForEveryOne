@@ -58,6 +58,7 @@ const App = observer(() => {
             <GlobalStyles />
             <SharedConfigProvider locale={locale}>
                 <Spin
+                    wrapperClassName="spin-global"
                     spinning={session.loading}
                     tip={i18n.t('Loading', { ns: 'framework' })}
                     indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}>
