@@ -119,6 +119,16 @@ export class Session {
         this.isCluster = remove ? false : null;
         this.isBinary = remove ? false : null;
         this.toIframeUrl = '';
+        this.startTime = -1;
+        this.endTimeAll = -1;
+        this.parseCompleted = false;
+        this.clusterCompleted = false;
+        this.durationFileCompleted = false;
+        this.unitcount = 0;
+        this.coreList = [];
+        this.sourceList = [];
+        this.memoryRankIds = [];
+        this.operatorRankIds = [];
     }
 
     // 数据源管理
