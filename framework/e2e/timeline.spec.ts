@@ -170,7 +170,7 @@ test.describe('Timeline', () => {
         await input.press('Enter');
         await page.mouse.move(0, 0);
         await page.waitForTimeout(1000);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-operator.png', { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-operator.png', { maxDiffPixels: 50 });
     });
 
     // 泳道(card)过滤

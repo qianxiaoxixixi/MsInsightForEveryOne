@@ -27,3 +27,8 @@
 #root>.ant-spin-nested-loading>div>.ant-spin .ant-spin-text{
   text-shadow:none;
 }
+
+.spin-global,
+.spin-global > .ant-spin-container {
+  height:100%;
+}
