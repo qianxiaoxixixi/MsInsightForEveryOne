@@ -16,6 +16,16 @@ const onFilterDropdownOpenChange = (open: boolean): void => {
         limitInput();
     }
 };
+
+// 筛选列，是数字且小于0，用NA表示
+const getFilter = (item: any): any => {
+    if (!isNaN(Number(item))) {
+        return Number(item) < 0 ? 'NA' : Number(item);
+    } else {
+        return item;
+    }
+};
+
 // 更新指令表的显示列
 export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFunction, curInstrData: InstrsColumnType[]): ColumnsType<InstrsColumnType> => {
     const columns: ColumnsType<InstrsColumnType> = getDynamicInstrColumns(t, dynamicFields);
@@ -25,7 +35,7 @@ export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFu
         if (col.dataIndex !== undefined && !unfilterableCols.includes(String(col.dataIndex))) {
             const items = [...new Set(curInstrData.map(item => item[col.dataIndex as keyof InstrsColumnType]))];
             const filters = items.map(item => ({
-                text: isNaN(Number(item)) ? item : Number(item),
+                text: getFilter(item),
                 value: item,
             }));
             Object.assign(col, {

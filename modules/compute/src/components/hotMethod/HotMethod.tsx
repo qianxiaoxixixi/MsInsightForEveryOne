@@ -430,6 +430,14 @@ const getShowData = (dataSource: InstrsColumnType[], filters: Record<string, any
     return newDataSource;
 };
 
+const isMatchfFilter = (filterValue: any, value: any): boolean => {
+    if (!isNaN(Number(value))) {
+        // 是数字的时候，筛选条件是 NA，选小于0的数字
+        return filterValue === 'NA' ? value < 0 : filterValue === value;
+    }
+    return filterValue === value;
+};
+
 const filterData = (dataSource: InstrsColumnType[], filters: Record<string, any[]>): InstrsColumnType[] => {
     const fields = Object.keys(filters).filter(field => filters[field] !== null);
     if (fields.length === 0) {
@@ -440,7 +448,9 @@ const filterData = (dataSource: InstrsColumnType[], filters: Record<string, any[
         for (let i = 0; i < fields.length; i++) {
             const field = fields[i];
             const value = (row as any)[field];
-            fit = fit && filters[field].find((filterValue: string | number) => filterValue === value);
+            fit = fit && filters[field].some((filterValue: string | number) => {
+                return isMatchfFilter(filterValue, value);
+            });
             if (!fit) {
                 break;
             }
