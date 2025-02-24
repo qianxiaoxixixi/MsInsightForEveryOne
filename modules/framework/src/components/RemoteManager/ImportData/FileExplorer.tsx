@@ -67,6 +67,7 @@ interface IProps {
 const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IProps) => {
     const { t } = useTranslation('framework');
     const [inputPath, setInputPath] = useState(getLastFilePath());
+    const [selectedPath, setSelectedPath] = useState('');
     const [actionListener, setActionListener] = useState<CatalogActionListener>({ type: CatalogAction.NO_ACTION });
     const [hit, setHit] = useState<{alert: boolean;message: string;options?: Record<string, string | number>}>({ alert: false, message: 'FileSearchDescribe' });
     const [conflictModalVis, setConflictModalVis] = useState<boolean>(false);
@@ -74,8 +75,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
 
     // 点击确认
     const handleConfirm = async(): Promise<void> => {
-        const path = getTrimedPath(inputPath);
-        setInputPath(path);
+        const path = selectedPath;
         // 若currentProject存在，在已有项目下导入数据，否则新增项目
         const projectName = currentProject !== '' ? currentProject : path;
         const dataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [path] };
@@ -125,6 +125,18 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         setConflictModalVis(false);
     };
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        setInputPath(e.target.value);
+        setActionListener({ type: CatalogAction.INPUT_PATH_CHANGE, value: e.target.value });
+    };
+
+    const handleSelectedChange = (val: string): void => {
+        setSelectedPath(val);
+        if (val !== '' && val !== inputPath) {
+            setInputPath(val);
+        }
+    };
+
     // 每次打开对话框，刷新目录
     useEffect(() => {
         if (dialogOpen) {
@@ -132,9 +144,14 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         }
     }, [dialogOpen]);
 
+    // 输入路径更新后，清掉告警
+    useEffect(() => {
+        setHit({ alert: false, message: 'FileSearchDescribe' });
+    }, [inputPath]);
+
     return <><StyledModal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
         footer={<div>
-            <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
+            <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} disabled={selectedPath === ''}>{t('Confirm')}</Button>
             <Button onClick={closeDialog}>{t('Cancel')}</Button>
         </div>}>
         <FileExplorerContainer>
@@ -145,13 +162,13 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
                 maxLength={MAX_FILE_PATH_LENGTH}
                 suffix={<Tooltip placement="bottom" title={t('RefreshDirectory')} ><RefreshIcon className={'icon-refresh'} onClick={searchCatalog}/></Tooltip>}
                 value={inputPath}
-                onChange={(e): void => setInputPath(e.target.value)}
+                onChange={handleInputChange}
                 onPressEnter={searchCatalog}
             />
             <Text type={hit.alert ? 'danger' : undefined}>{t(hit.message, hit.options)}</Text>
             <ResourceCatalog
                 actionListener={actionListener}
-                onSelectedChange={(value: string): void => setInputPath(value)}
+                onSelectedChange={handleSelectedChange}
                 onSearchReturnChange={handleSearchReturn}
             />
         </FileExplorerContainer>
