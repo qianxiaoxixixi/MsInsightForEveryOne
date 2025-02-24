@@ -184,11 +184,11 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
         one.opName = sqlite3_column_string(stmt, col++);
         one.inputShape = sqlite3_column_string(stmt, col++);
         one.accCore = sqlite3_column_string(stmt, col++);
-        one.totalTime = sqlite3_column_double(stmt, col++);
-        one.count = sqlite3_column_int64(stmt, col++);
-        one.avgTime = sqlite3_column_double(stmt, col++);
-        one.maxTime = sqlite3_column_double(stmt, col++);
-        one.minTime = sqlite3_column_double(stmt, col++);
+        one.totalTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.count = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
+        one.avgTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.maxTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.minTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
         res.emplace_back(one);
     }
     sqlite3_finalize(stmt);
@@ -399,9 +399,9 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
         one.type = sqlite3_column_string(stmt, col++);
         one.accCore = sqlite3_column_string(stmt, col++);
         one.startTime = sqlite3_column_string(stmt, col++);
-        one.duration = sqlite3_column_double(stmt, col++);
-        one.waitTime = sqlite3_column_double(stmt, col++);
-        one.blockDim = sqlite3_column_int64(stmt, col++);
+        one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.waitTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
         one.inputShape = sqlite3_column_string(stmt, col++);
         one.inputType = sqlite3_column_string(stmt, col++);
         one.inputFormat = sqlite3_column_string(stmt, col++);
@@ -522,9 +522,9 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
         one.type = sqlite3_column_string(stmt, col++);
         one.accCore = sqlite3_column_string(stmt, col++);
         one.startTime = sqlite3_column_string(stmt, col++);
-        one.duration = sqlite3_column_double(stmt, col++);
-        one.waitTime = sqlite3_column_double(stmt, col++);
-        one.blockDim = sqlite3_column_int64(stmt, col++);
+        one.duration = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.waitTime = Sqlite3ColumnConvertStr(SQLITE_FLOAT, stmt, col++);
+        one.blockDim = Sqlite3ColumnConvertStr(SQLITE_INTEGER, stmt, col++);
         one.inputShape = sqlite3_column_string(stmt, col++);
         one.inputType = sqlite3_column_string(stmt, col++);
         one.inputFormat = sqlite3_column_string(stmt, col++);
