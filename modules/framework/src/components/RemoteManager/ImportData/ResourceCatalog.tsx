@@ -51,6 +51,7 @@ const ResourceCataologContainer = styled.div`
 export enum CatalogAction {
     SEARCH = 'search',
     REFRESH = 'refresh',
+    INPUT_PATH_CHANGE = 'input path change',
     NO_ACTION = 'no action',
 }
 export interface CatalogActionListener {
@@ -80,7 +81,7 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
     const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
     const [selectedPath, setSelectedPath] = useState<React.Key>('');
     const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
-    const selectedKeys = useMemo(() => [selectedPath], [selectedPath]);
+    const selectedKeys = useMemo(() => selectedPath === '' ? [] : [selectedPath], [selectedPath]);
 
     // 查询并跳转到对应文件
     // Recursive，递归函数
@@ -152,6 +153,8 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
     const handleSelect = (keys: React.Key[], { node }: {node: EventDataNode<TreeDataNode>}): void => {
         // 点击都是选中
         setSelectedPath(node.key);
+        // 更新输入框
+        onSelectedChange(String(node.key));
         // 展开的折叠or折叠的展开
         const newExpandedKeys = node.expanded ? expandedKeys.filter(key => key !== node.key) : [...expandedKeys, node.key];
         setExpandedKeys(newExpandedKeys);
@@ -176,13 +179,14 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
         if ([CatalogAction.SEARCH, CatalogAction.REFRESH].includes(type)) {
             searchPath(value);
         }
+        // 若输入框文字变化，清除选中目录
+        if (type === CatalogAction.INPUT_PATH_CHANGE && value !== selectedPath) {
+            setSelectedPath('');
+        }
     }, [actionListener]);
 
     // 选中目录变化
     useEffect(() => {
-        if (selectedPath === '') {
-            return;
-        }
         onSelectedChange(String(selectedPath));
     }, [selectedPath]);
 
