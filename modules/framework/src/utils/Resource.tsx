@@ -109,9 +109,15 @@ export const getLastFilePath = (): string => {
 
 // 修整输入的文件路径
 // 1、去掉首尾空字符串
-// 2、尾部多余的斜杠\ /，如D:\data\ -> D:\data
+// 2、除了C:\这种根目录，除去其它路径尾部多余的斜杠\ /，如D:\data\ -> D:\data
 export const getTrimedPath = (inputPath: string): string => {
-    return inputPath.trim().replace(/[^\\/][\\/]+$/, (match: string) => match.substr(0, 1));
+    const trimedPath = inputPath.trim();
+    const rootReg = /^[\s\S]+:\\+$/;
+    if (rootReg.test(trimedPath)) {
+        // 清理路径尾部多余的\
+        return trimedPath.replace(/:\\+$/, ':\\');
+    }
+    return trimedPath.replace(/[^\\/][\\/]+$/, (match: string) => match.substring(0, 1));
 };
 
 // 查询目录树时，自动修整查询路径

@@ -8,6 +8,7 @@ import 'ascend-i18n';
 import 'ascend-style';
 import { store } from './store';
 import App from './App';
+import { disableShortcuts } from 'ascend-utils';
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
@@ -16,3 +17,7 @@ root.render(
             <App/>
         </RootStoreContext.Provider>
     ));
+
+// 禁用右键刷新以及F5、Ctrl+R刷新
+document.oncontextmenu = (): boolean => false;
+disableShortcuts();
