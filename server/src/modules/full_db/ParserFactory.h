@@ -21,7 +21,20 @@ class ParserAlloc {
 public:
     ParserAlloc() = default;
     virtual ~ParserAlloc() = default;
-    virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) {};
+    virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
+    {
+        // 需要返回应答
+        auto responsePtr = std::make_unique<ImportActionResponse>();
+        ImportActionResponse& response  = *responsePtr;
+        responsePtr->body.isCluster = false;
+        ModuleRequestHandler::SetBaseResponse(request, response);
+        response.body.subdirectoryList = {};
+        response.command = Protocol::REQ_RES_IMPORT_ACTION;
+        response.moduleName  = MODULE_TIMELINE;
+        response.body.reset = false;
+        ModuleRequestHandler::SetResponseResult(response, true);
+        SendResponse(std::move(responsePtr), true);
+    };
     virtual void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         Global::BaselineInfo &baselineInfo)
     {

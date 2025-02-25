@@ -23,6 +23,12 @@ public:
                         Global::BaselineInfo &baselineInfo) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
+            Dic::ProjectTypeEnum projectTypeEnum,
+            std::string &error) override
+    {
+        return {importFile};
+    }
 private:
     void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder);
     std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,
