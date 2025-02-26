@@ -68,10 +68,12 @@ const std::string PARALLEL_CONFIG_LEVEL_CONFIGURED = "configured";
 const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
 
 const std::string MEGATRON_ALG = "megatron";
+const std::string MINDSPEED_ALG = "mindspeed";
 const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
 const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
 const std::string MEGATRON_LM_TP_CP_EP_DP_PP_ALG = "megatron-lm(tp-cp-ep-dp-pp)";
 const std::string MEGATRON_LM_TP_CP_PP_EP_DP_ALG = "megatron-lm(tp-cp-pp-ep-dp)";
+const std::string MINDSPEED_TP_CP_EP_DP_PP_ALG = "mindspeed(tp-cp-ep-dp-pp)";
 const std::string DIMENSIONS_DP = "ep-dp";
 const std::string DIMENSIONS_PP = "ep-dp-pp";
 const std::string DIMENSIONS_CP = "ep-dp-pp-cp";
@@ -91,7 +93,7 @@ const int64_t MAX_PARALLEL_SIZE = 10000;
 const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
 struct ParallelStrategyConfig {
-    std::string algorithm = MEGATRON_LM_TP_DP_PP_ALG; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
+    std::string algorithm = MEGATRON_LM_TP_DP_PP_ALG;
     int64_t ppSize{};
     int64_t tpSize{};
     int64_t dpSize{};
@@ -120,11 +122,19 @@ struct ParallelStrategyConfig {
             errorMsg = "[Summary] EP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
             return false;
         }
-        // 检查dpSize是否能被epSize整除
-        if (dpSize % epSize != 0) {
+
+        if (algorithm == MINDSPEED_TP_CP_EP_DP_PP_ALG && dpSize * cpSize % epSize != 0) {
+            // 对于MindSpeed, 检查dpSize是否能被epSize * cpSize整除
+            errorMsg = "[Summary] The product of DP size and CP size must be evenly divided by EP Size.";
+            return false;
+        }
+        if ((algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG || algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG)
+            && dpSize % epSize != 0) {
+            // 对于Megatron, 检查dpSize是否能被epSize整除
             errorMsg = "[Summary] DP size must be evenly divided by EP Size.";
             return false;
         }
+
         // 检查四个数的乘积是否小于UINT32_MAX
         if (ppSize * tpSize * dpSize * cpSize > UINT32_MAX) {
             errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +

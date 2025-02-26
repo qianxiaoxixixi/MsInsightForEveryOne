@@ -9,7 +9,9 @@
 #include "ClusterFileParser.h"
 #include "ParallelStrategyAlgorithmManager.h"
 #include "MegatronParallelStrategyAlgorithm.h"
+#include "MindSpeedParallelStrategyAlgorithm.h"
 #include "BaselineManagerService.h"
+using namespace Dic::Module::Summary;
 namespace Dic {
 namespace Module {
 namespace Global {
@@ -81,11 +83,9 @@ void BaselineManagerService::InitBaselineParallelStrategy()
         return;
     }
     auto config = ParallelStrategyAlgorithmManager::Instance().GetParallelStrategyConfig(database->GetDbPath());
-    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
-        auto baselineDb = FullDb::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
-        ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(baselineDb->GetDbPath(),
-            std::make_shared<MegatronParallelStrategyAlgorithm>(), config);
-    }
+    std::string errMsg;
+    auto baselineDb = FullDb::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(baselineDb->GetDbPath(), config, errMsg);
 }
 }
 }

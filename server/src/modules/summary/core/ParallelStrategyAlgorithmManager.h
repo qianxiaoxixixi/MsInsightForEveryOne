@@ -9,17 +9,14 @@
 #include <mutex>
 #include <map>
 #include "BaseParallelStrategyAlgorithm.h"
-namespace Dic::Module {
-
-const std::string MEGATRON_DP_PP = "megatron-lm(tp-cp-ep-dp-pp)";
-const std::string MEGATRON_PP_DP = "megatron-lm(tp-cp-pp-ep-dp)";
+namespace Dic::Module::Summary {
 
 class ParallelStrategyAlgorithmManager {
 public:
     static ParallelStrategyAlgorithmManager &Instance();
     void Reset();
-    void AddOrUpdateAlgorithm(const std::string& projectName,
-        const std::shared_ptr<BaseParallelStrategyAlgorithm>& algPtr, const ParallelStrategyConfig& config);
+    bool AddOrUpdateAlgorithm(const std::string& projectName, const ParallelStrategyConfig& config,
+        std::string& errMsg);
     bool DeleteAlgorithm(const std::string &projectName);
     std::shared_ptr<BaseParallelStrategyAlgorithm> GetAlgorithmByProjectName(const std::string &projectName);
     ParallelStrategyConfig GetParallelStrategyConfig(const std::string &key);

@@ -4,6 +4,7 @@
 
 #include <memory>
 #include "MegatronParallelStrategyAlgorithm.h"
+#include "MindSpeedParallelStrategyAlgorithm.h"
 #include "WsSessionManager.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
@@ -29,27 +30,20 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     if (!response.IsValid()) {
         response.SetDefault();
     }
-    if (!AddAlgorithmToManager(database, response.config)) {
-        SendResponse(std::move(responsePtr), false,
-            "Failed to add algorithm to manager when query parallel config. Unexpected algorithm.");
+    std::string errMsg;
+    if (!ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(
+        database->GetDbPath(), response.config, errMsg)) {
+        SendResponse(std::move(responsePtr), false, errMsg);
         return false;
     }
     // 如果存在baseline，则对baseline进行同样的设置
     auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
-    if (baselineDatabase != nullptr) {
-        AddAlgorithmToManager(baselineDatabase, response.config);
+    if (baselineDatabase != nullptr && !ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(
+        baselineDatabase->GetDbPath(), response.config, errMsg)) {
+        SendResponse(std::move(responsePtr), false, errMsg);
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
     return true;
-}
-bool QueryParallelStrategyConfigHandler::AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase> &database,
-    const ParallelStrategyConfig &config)
-{
-    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
-        ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(database->GetDbPath(),
-            std::make_shared<MegatronParallelStrategyAlgorithm>(), config);
-        return true;
-    }
-    return false;
 }
 }
