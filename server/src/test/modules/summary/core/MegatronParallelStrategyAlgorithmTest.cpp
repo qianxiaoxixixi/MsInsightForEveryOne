@@ -6,6 +6,7 @@
 #include "MegatronParallelStrategyAlgorithm.h"
 using namespace Dic::Module;
 using namespace Dic::Protocol;
+using namespace Dic::Module::Summary;
 class MegatronParallelStrategyAlgorithmTest : public ::testing::Test {
 };
 

@@ -9,13 +9,15 @@
 #include <vector>
 #include <cstdint>
 
-namespace Dic::Module {
+namespace Dic::Module::Summary {
 using allGroupsType = std::vector<std::vector<uint32_t>>;
 
 class ParallelStrategyAlgorithmHelper {
 public:
     static allGroupsType GetAllGroupsRanksByToken(const std::vector<std::string>& token,
         const std::vector<uint32_t>& parallelSize, const std::vector<std::string>& order, uint32_t worldSize);
+    template <typename T>
+    static std::vector<T> replaceElement(const std::vector<T> &vec, const T& oldValue, const std::vector<T>& newValues);
 private:
     static std::vector<bool> GetMask(const std::vector<std::string>& order, const std::vector<std::string>& token);
     static allGroupsType GenerateMaskedOrthogonalRankGroups(const std::vector<uint32_t>& parallelSize,

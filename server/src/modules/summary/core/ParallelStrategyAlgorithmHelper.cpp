@@ -6,7 +6,7 @@
 #include "StringUtil.h"
 #include "ParallelStrategyAlgorithmHelper.h"
 
-namespace Dic::Module {
+namespace Dic::Module::Summary {
  /**
   * 生成当前rank groups
   * @param token 涉及rank groups的并行域，例如['tp', 'dp']
@@ -150,5 +150,28 @@ allGroupsType ParallelStrategyAlgorithmHelper::GenerateMaskedOrthogonalRankGroup
         ranks.push_back(rank);
     }
     return ranks;
+}
+
+ /**
+  * 将一组vector中出现的元素oldValue用数组newValues替换掉
+  * @tparam T
+  * @param vec
+  * @param oldValue
+  * @param newValues
+  * @return
+  */
+template <typename T>
+std::vector<T> ParallelStrategyAlgorithmHelper::replaceElement(const std::vector<T> &vec, const T& oldValue,
+    const std::vector<T>& newValues)
+{
+    std::vector<T> res = vec;
+    for (auto it = res.begin(); it != res.end(); ++it) {
+        if (*it == oldValue) {
+            res.erase(it);
+            res.insert(it, newValues.begin(), newValues.end());
+            break;
+        }
+    }
+    return res;
 }
 }

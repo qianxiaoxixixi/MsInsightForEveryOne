@@ -4,9 +4,11 @@
 
 #include "ServerLog.h"
 #include "StringUtil.h"
+#include "MegatronParallelStrategyAlgorithm.h"
+#include "MindSpeedParallelStrategyAlgorithm.h"
 #include "ParallelStrategyAlgorithmManager.h"
 using namespace Dic::Server;
-namespace Dic::Module {
+namespace Dic::Module::Summary {
 ParallelStrategyAlgorithmManager &ParallelStrategyAlgorithmManager::Instance()
 {
     static ParallelStrategyAlgorithmManager instance;
@@ -19,8 +21,8 @@ void ParallelStrategyAlgorithmManager::Reset()
     algorithmMap.clear();
 }
 
-void ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& projectName,
-    const std::shared_ptr<BaseParallelStrategyAlgorithm>& algPtr, const ParallelStrategyConfig& config)
+bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& projectName,
+    const ParallelStrategyConfig& config, std::string& errMsg)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     // 若已存在该project，则更新config
@@ -29,11 +31,20 @@ void ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& p
         algorithmMap.at(projectName)->ClearStrategyConfigCache();
         algorithmMap.at(projectName)->SetStrategyConfig(config);
         Server::ServerLog::Info("Algorithm already exist. Update parallel strategy config for this program.");
-        return;
+        return true;
     }
-    algorithmMap.emplace(projectName, algPtr);
+    // 若不存在，则添加相应算法类
+    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
+        algorithmMap.emplace(projectName, std::make_shared<MegatronParallelStrategyAlgorithm>());
+    } else if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MINDSPEED_ALG)) {
+        algorithmMap.emplace(projectName, std::make_shared<MindSpeedParallelStrategyAlgorithm>());
+    } else {
+        errMsg = "Failed to add algorithm to manager when set parallel config. Unexpected algorithm.";
+        return false;
+    }
     algorithmMap.at(projectName)->SetStrategyConfig(config);
     Server::ServerLog::Info("Success to add algorithm to parallel strategy manager.");
+    return true;
 }
 
 ParallelStrategyConfig ParallelStrategyAlgorithmManager::GetParallelStrategyConfig(const std::string &key)

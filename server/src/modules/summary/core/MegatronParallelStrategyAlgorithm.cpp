@@ -7,50 +7,43 @@
 #include "NumberUtil.h"
 #include "MegatronParallelStrategyAlgorithm.h"
 
-namespace Dic::Module {
+namespace Dic::Module::Summary {
 MegatronParallelStrategyAlgorithm::MegatronParallelStrategyAlgorithm() = default;
 
 MegatronParallelStrategyAlgorithm::~MegatronParallelStrategyAlgorithm() = default;
 
-void MegatronParallelStrategyAlgorithm::ClearStrategyConfigCache()
+void MegatronParallelStrategyAlgorithm::UpdateOrderAndParallelSize()
 {
-    // arrangements data
-    data.size = 0;
-    data.indicators.clear();
-    data.arrangements.clear();
-    data.connections.clear();
-    elementSize = 1;
-    paraOrder.clear();
-    paraOrderWithEp.clear();
-    paraDetailsMap.clear();
-    updatedOrder.clear();
-    updatedOrderWithEp.clear();
+    updatedOrder = paraOrder;
+    updatedOrder.erase(std::remove_if(updatedOrder.begin(), updatedOrder.end(), [this](const std::string& group) {
+        return !(paraDetailsMap[group].isShown);
+        }), updatedOrder.end());
     parallelSize.clear();
-    parallelSizeWithEp.clear();
-
-    // performance data
-    wordSize = 1;
-    tpSize = 1;
-    tpCpSize = 1;
-    tpCpDpSize = 1;
-    tpCpPpSize = 1;
-    reduceTpMax.clear();
-    reduceTpMin.clear();
-    reducePpStatistic.clear();
-    reduceCpMax.clear();
-    reduceCpMin.clear();
+    for (const auto& para : updatedOrder) {
+        parallelSize.push_back(paraDetailsMap[para].size);
+    }
+    if (paraDetailsMap[EP_PARA].isShown) {
+        // 仅影响连线生成，不影响布局
+        updatedOrderWithEp = paraOrderWithEp;
+        updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
+            [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }),
+            updatedOrderWithEp.end());
+        parallelSizeWithEp.clear();
+        for (const auto& para : updatedOrderWithEp) {
+            if (para == DP_PARA) {
+                // 前端入参已校验
+                parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size);
+            } else {
+                parallelSizeWithEp.push_back(paraDetailsMap[para].size);
+            }
+        }
+    }
 }
 
 bool MegatronParallelStrategyAlgorithm::UpdateParallelDimension(const std::string &tmpDimension,
     const ParallelStrategyConfig &tmpConfig, std::string &err)
 {
-    strategyConfig = tmpConfig;
-    dimension = tmpDimension;
-    tpSize = tmpConfig.tpSize;
-    tpCpSize = tpSize * tmpConfig.cpSize;
-    tpCpDpSize = tpCpSize * tmpConfig.dpSize;
-    tpCpPpSize = tpCpSize * tmpConfig.ppSize;
-    wordSize = tpCpSize * tmpConfig.dpSize * tmpConfig.ppSize;
+    CalStrategyConfig(tmpDimension, tmpConfig);
     if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG || tmpConfig.algorithm == MEGATRON_LM_TP_DP_PP_ALG) {
         paraOrder = {TP_PARA, CP_PARA, DP_PARA, PP_PARA};
     } else if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ||
@@ -68,83 +61,13 @@ bool MegatronParallelStrategyAlgorithm::UpdateParallelDimension(const std::strin
     }
 
     bool res = UpdateShowMap(err);
-
-    // 删除不存在的通信域
-    updatedOrder = paraOrder;
-    updatedOrder.erase(std::remove_if(updatedOrder.begin(), updatedOrder.end(), [this](const std::string& group) {
-        return !(paraDetailsMap[group].isShown);
-        }), updatedOrder.end());
-    parallelSize.clear();
-    for (const auto& para : updatedOrder) {
-        parallelSize.push_back(paraDetailsMap[para].size);
+    if (res) {
+        // 根据 paraDetailsMap[para].isShown 删除不存在的通信域
+        UpdateOrderAndParallelSize();
+        // 计算当前元素总数
+        UpdateElementSize();
     }
-
-    if (paraDetailsMap[EP_PARA].isShown) {
-        // 仅影响连线生成，不影响布局
-        updatedOrderWithEp = paraOrderWithEp;
-        updatedOrderWithEp.erase(std::remove_if(updatedOrderWithEp.begin(), updatedOrderWithEp.end(),
-            [this](const std::string& group) { return !(paraDetailsMap[group].isShown); }), updatedOrderWithEp.end());
-        parallelSizeWithEp.clear();
-        for (const auto& para : updatedOrderWithEp) {
-            if (para == DP_PARA) {
-                // 前端入参已校验
-                parallelSizeWithEp.push_back(paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size);
-            } else {
-                parallelSizeWithEp.push_back(paraDetailsMap[para].size);
-            }
-        }
-    }
-    UpdateElementSize();
     return res;
-}
-
-void MegatronParallelStrategyAlgorithm::UpdateElementSize()
-{
-    elementSize = 1;
-    // 前端入参已校验，无整数溢出风险
-    for (const auto& para : paraOrder) {
-        elementSize *= paraDetailsMap[para].size;
-    }
-    data.size = elementSize;
-}
-
-bool MegatronParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
-{
-    // 按层次关闭showMap, 被关闭的层次size置1，接下来就不用感知区别不同层次size的影响了
-    for (const auto& para : paraOrderWithEp) {
-        paraDetailsMap[para].isShown = false;
-        paraDetailsMap[para].size = 1;
-    }
-    SetParaDetail(EP_PARA, strategyConfig.epSize);
-    SetParaDetail(DP_PARA, strategyConfig.dpSize);
-    if (dimension == DIMENSIONS_DP) {
-        return true;
-    }
-    SetParaDetail(PP_PARA, strategyConfig.ppSize);
-    if (dimension == DIMENSIONS_PP) {
-        return true;
-    }
-    SetParaDetail(CP_PARA, strategyConfig.cpSize);
-    if (dimension == DIMENSIONS_CP) {
-        return true;
-    }
-    SetParaDetail(TP_PARA, strategyConfig.tpSize);
-    if (dimension == DIMENSIONS_TP) {
-        return true;
-    } else {
-        err = "Failed to update show map for parallel view. Unexpected dimension.";
-    }
-    return false;
-}
-
-void MegatronParallelStrategyAlgorithm::SetParaDetail(const std::string &para, int64_t size)
-{
-    // 参数为1，该并行域未生效
-    if (size == 1) {
-        return;
-    }
-    paraDetailsMap[para].isShown = true;
-    paraDetailsMap[para].size = size;
 }
 
 bool MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension(std::string &err)
@@ -152,7 +75,7 @@ bool MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension(std::stri
     ClearArrangementData();
     SetIndicatorAttr();
     std::unordered_map<std::string, uint32_t> indexAttributes;
-    for (const auto& para : paraOrder) {
+    for (const auto& para : paraOrderWithEp) {
         indexAttributes[para + STR_INDEX] = 0;
     }
     // get arrangements
@@ -171,150 +94,6 @@ bool MegatronParallelStrategyAlgorithm::GenerateArrangementByDimension(std::stri
         }
     }
     return true;
-}
-
-void MegatronParallelStrategyAlgorithm::ClearArrangementData()
-{
-    data.indicators.clear();
-    data.arrangements.clear();
-    data.connections.clear();
-}
-
-ArrangementAndConnectionData MegatronParallelStrategyAlgorithm::GetArrangementData()
-{
-    return data;
-}
-
-// 对于TP View，展示全部原始数据，及step_trace_time中的内容
-void MegatronParallelStrategyAlgorithm::SetTpIndicatorAttr()
-{
-    uint8_t index = 0;
-    // 总计算、总通信不在柱状图中显示，而是通过掩盖和未掩盖的堆叠形成
-    data.indicators.emplace_back(
-        index++, KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, false, true, BAR_CHART, "", TIME_AXIS);
-
-    // 参与stack堆叠：预处理、纯计算、重叠、纯通信、下发
-    data.indicators.emplace_back(index++, KEY_PURE_COMPUTING_TIME, VALUE_COMPUTING_NOT_OVERLAPPED,
-                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_OVERLAPPED, VALUE_COMMUNICATION_OVERLAPPED,
-                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED, VALUE_COMMUNICATION_NOT_OVERLAPPED,
-                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_FREE_TIME, VALUE_FREE_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_PREPARING_TIME, VALUE_PREPARING_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-
-    // Communication(Not Overlapped and Exclude Receive)
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE,
-        VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE, true, false, false, BAR_CHART, "", TIME_AXIS);
-
-    // stage and bubble
-    data.indicators.emplace_back(
-        index++, KEY_STAGE_TIME, VALUE_STAGE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_BUBBLE_TIME, VALUE_BUBBLE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS);
-
-    // ratio
-    data.indicators.emplace_back(
-        index++, KEY_COMPUTING_RATIO, VALUE_COMPUTING_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_COMMUNICATION_RATIO, VALUE_COMMUNICATION_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS);
-}
-
-// 对于CP Dimension，通过展示一个TP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析CP域的性能瓶颈
-// 对于通信，可关注最小值，有时通信最小的点，才是瓶颈所在
-// 通过极差，可以反映TP域内各卡计算、通信是否均衡，尤其是计算
-void MegatronParallelStrategyAlgorithm::SetCpIndicatorAttr()
-{
-    uint8_t index = 0;
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
-                                 VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
-                                 VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
-                                 true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
-                                 true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
-                                 VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
-                                 VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
-                                 VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
-                                 VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-
-    // 通信掩盖、通信未掩盖
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
-}
-
-// 对于PP Dimension，通过展示一个TP&CP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析PP域的性能瓶颈
-// 对于通信，可关注最小值，有时通信最小的点，才是瓶颈所在
-// 通过极差，可以反映TP&CP域内各卡计算、通信是否均衡，尤其是计算
-void MegatronParallelStrategyAlgorithm::SetPpIndicatorAttr()
-{
-    uint8_t index = 0;
-    // 总计算、总通信、下发、npu总时间, 默认显示总计算
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
-                                 VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
-                                 VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
-                                 true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
-                                 true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
-                                 VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
-                                 VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
-                                 VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
-                                 VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
-                                 true, false, false, BAR_CHART, "", TIME_AXIS);
-
-    // 通信掩盖、通信未掩盖
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
-}
-
-// 对于DP Dimension，通过展示一个TP&CP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析PP域的性能瓶颈
-void MegatronParallelStrategyAlgorithm::SetDpIndicatorAttr()
-{
-    uint8_t index = 0;
-    // 总计算、总通信, 默认显示总计算
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_TOTAL_COMPUTING_TIME,
-        VALUE_SUM_OF_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_TOTAL_COMMUNICATION,
-        VALUE_SUM_OF_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_FREE_TIME, VALUE_SUM_OF_MAX + VALUE_FREE_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
-    // 通信掩盖、通信未掩盖、下发
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_COMMUNICATION_NOT_OVERLAPPED,
-        VALUE_SUM_OF_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
 }
 
 void MegatronParallelStrategyAlgorithm::SetIndicatorAttr()
@@ -337,8 +116,6 @@ void MegatronParallelStrategyAlgorithm::GetPerArrangement(uint32_t index,
     element.index = index;
     if (index != 0) {
         UpdateIndexAttributes(indexAttributes);
-    } else {
-        indexAttributes[EP_PARA + STR_INDEX] = 0;
     }
     element.indexAttributes = indexAttributes;
     element.name = GetElementName(indexAttributes);
@@ -365,37 +142,7 @@ void MegatronParallelStrategyAlgorithm::UpdateIndexAttributes(
     }
     // 添加epIndex, 前端入参已校验，分母不可能为零, dpSize一定能被epSize整除
     uint32_t epScale = paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size;
-    indexAttributes[EP_PARA + STR_INDEX] = indexAttributes[DP_PARA + STR_INDEX] / epScale;
-}
-
-std::string MegatronParallelStrategyAlgorithm::GetElementName(
-    std::unordered_map<std::string, uint32_t> &indexAttributes)
-{
-    std::string name;
-    for (const auto& para : LAYOUT) {
-        if (paraDetailsMap[para].isShown && GetParallelSizeByType(para) > 1) {
-            name += para;
-            name += std::to_string(indexAttributes[para + STR_INDEX]);
-            name += "-";
-        }
-    }
-    if (!name.empty()) {
-        name.pop_back();
-    }
-    return name;
-}
-
-Position MegatronParallelStrategyAlgorithm::GetElementPosition(
-    std::unordered_map<std::string, uint32_t>& indexAttributes)
-{
-    Position position;
-    // 前端入参已校验，无整数溢出风险
-    uint32_t dpLen = paraDetailsMap[TP_PARA].size * paraDetailsMap[CP_PARA].size;
-    uint32_t cpLen = paraDetailsMap[TP_PARA].size;
-    position.x = indexAttributes[DP_PARA + STR_INDEX] * dpLen + indexAttributes[CP_PARA + STR_INDEX] * cpLen
-        + indexAttributes[TP_PARA + STR_INDEX];
-    position.y = indexAttributes[PP_PARA + STR_INDEX];
-    return position;
+    indexAttributes[EP_INDEX] = indexAttributes[DP_INDEX] / epScale;
 }
 
 std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(uint32_t index,
@@ -425,8 +172,8 @@ std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(
         ppIndexMax = ppIndexMin + 1;
     }
 
-    for (uint32_t cpIndex = cpIndexMin; cpIndex < cpIndexMax; ++cpIndex) {
-        for (uint32_t ppIndex = ppIndexMin; ppIndex < ppIndexMax; ++ppIndex) {
+    for (uint32_t ppIndex = ppIndexMin; ppIndex < ppIndexMax; ++ppIndex) {
+        for (uint32_t cpIndex = cpIndexMin; cpIndex < cpIndexMax; ++cpIndex) {
             for (uint32_t tpIndex = 0; tpIndex < strategyConfig.tpSize; ++tpIndex) {
                 uint32_t rank = strategyConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ?
                     tpCpPpSize * attrs[DP_INDEX] + tpCpSize * ppIndex + tpSize * cpIndex + tpIndex :
@@ -445,7 +192,7 @@ std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(
  */
 std::vector<Connection> MegatronParallelStrategyAlgorithm::GetAllCommunicationGroups(std::string &err)
 {
-    if (allCommunicationGroups.empty() && GetConnectionsByTokenList(err)) {
+    if (allCommunicationGroups.empty() && !GetConnectionsByTokenList(err)) {
         return {};
     }
     return allCommunicationGroups;
