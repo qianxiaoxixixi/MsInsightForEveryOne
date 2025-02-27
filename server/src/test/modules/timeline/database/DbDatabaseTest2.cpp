@@ -505,6 +505,25 @@ TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenHCCL)
     EXPECT_EQ(result, true);
 }
 
+TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCommunication)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskTableSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    database.SetDbPtr(db);
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.orderBy = "name";
+    requestParams.layer = "COMMUNICATION";
+    Dic::Protocol::SystemViewBody responseBody;
+    bool result = database.QuerySystemViewData(requestParams, responseBody);
+    EXPECT_EQ(result, true);
+}
+
 TEST_F(DbDatabaseTest2, TestQuerySystemViewDataWhenCANN)
 {
     std::recursive_mutex testMutex;

@@ -116,6 +116,7 @@ struct FlowPoint {
     }
 };
 
+// PROCESS_TYPE 仅仅给 DB 场景使用，Text 场景最好不要使用此枚举值
 enum class PROCESS_TYPE {
     ASCEND_HARDWARE,
     HCCL,

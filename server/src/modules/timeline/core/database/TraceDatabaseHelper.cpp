@@ -14,7 +14,7 @@ std::map<std::string, PROCESS_TYPE> metaTypeMap = {
     {"CANN", PROCESS_TYPE::CANN_API},
     {"Ascend Hardware", PROCESS_TYPE::ASCEND_HARDWARE},
     {"HCCL", PROCESS_TYPE::HCCL},
-    {"COMMUNICATION", PROCESS_TYPE::HCCL},
+    {"Communication", PROCESS_TYPE::HCCL},
     {"Overlap Analysis", PROCESS_TYPE::OVERLAP_ANALYSIS},
 };
 
