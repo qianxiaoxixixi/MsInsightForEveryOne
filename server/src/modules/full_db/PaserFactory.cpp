@@ -8,7 +8,7 @@
 #include "ParserIpynb.h"
 #include "ParserDb.h"
 #include "DataBaseManager.h"
-#include "ClusterParseThreadPoolExecutor.h"
+#include "ClusterFileParser.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 #include "MemoryParse.h"
@@ -36,7 +36,7 @@ std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::vecto
     std::pair<std::string, ParserType> result;
     if (FileUtil::FindIfDbTypeByRegex(pathList[0], std::regex(traceViewReg), std::regex(DB_REG))) {
         result = std::make_pair(pathList[0], ParserType::DB);
-    } else if (ParserJson::ExistJsonFormatFile(pathList[0])) {
+    } else if (ParserJson::ExistJsonFormatFile(pathList[0]) || ClusterFileParser::CheckIsCluster(pathList[0])) {
         result = std::make_pair(pathList[0], ParserType::JSON);
     } else {
         result = std::make_pair(pathList[0], ParserType::OTHER);
