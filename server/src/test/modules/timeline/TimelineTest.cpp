@@ -85,6 +85,15 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithHCCL)
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
 
+TEST_F(TestSuit, QueryLayerOperatorTimeWithCommunication)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("COMMUNICATION", "%%");
+    int expectSize = 449202040;
+    EXPECT_EQ(lround(data.allOperatorTime), expectSize);
+}
+
 TEST_F(TestSuit, QueryLayerOperatorTimeWithOverlap)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
@@ -752,12 +761,80 @@ TEST_F(TestSuit, QueryEventsViewData4HCCL)
     EXPECT_EQ(ptr->depth, 0);
 }
 
+TEST_F(TestSuit, QueryEventsViewData4Communication)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "14083661400";
+    params.processName = "Communication (14083661400)";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_1;
+    params.rankId = "0";
+    params.orderBy = "duration";
+    params.order = "descend";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 28;
+    const uint64_t EXPECT_START = 1695115378818416800;
+    const uint64_t EXPECT_DURATION = 102721612;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Group(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "hcom_allReduce__459_0");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Group 2 Communication");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "14083661400");
+    EXPECT_EQ(ptr->threadId, "17");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
 TEST_F(TestSuit, QueryEventsViewData4HCCLGroup)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     EventsViewParams params;
     params.pid = "14083661400";
     params.processName = "HCCL (14083661400)";
+    params.tid = "0";
+    params.threadName = "Group 0 Communication";
+    params.pageSize = PAGE_SIZE;
+    params.currentPage = CUR_PAGE_1;
+    params.rankId = "0";
+    params.orderBy = "duration";
+    params.order = "descend";
+
+    EventsViewBody body;
+    database->QueryEventsViewData(params, body, 0);
+    const uint64_t EXPECT_COUNT = 20;
+    const uint64_t EXPECT_START = 1695115378715400200;
+    const uint64_t EXPECT_DURATION = 4975266;
+
+    EXPECT_EQ(body.count, EXPECT_COUNT);
+    CheckEventsViewColumns4Group(body);
+    EXPECT_EQ(body.eventDetailList.size(), PAGE_SIZE);
+    auto ptr = dynamic_cast<DeviceEventDetail *>(body.eventDetailList.at(0).get());
+    EXPECT_TRUE(ptr != nullptr);
+    EXPECT_EQ(ptr->name, "hcom_broadcast__483_0");
+    EXPECT_EQ(ptr->startTime, EXPECT_START);
+    EXPECT_EQ(ptr->duration, EXPECT_DURATION);
+    EXPECT_EQ(ptr->threadName, "Group 0 Communication");
+    EXPECT_EQ(ptr->rankId, "0");
+    EXPECT_EQ(ptr->processId, "14083661400");
+    EXPECT_EQ(ptr->threadId, "0");
+    EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryEventsViewData4CommunicationGroup)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    EventsViewParams params;
+    params.pid = "14083661400";
+    params.processName = "Communication (14083661400)";
     params.tid = "0";
     params.threadName = "Group 0 Communication";
     params.pageSize = PAGE_SIZE;
