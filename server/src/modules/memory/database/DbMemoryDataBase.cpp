@@ -210,7 +210,7 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams
             "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component ";
-        sql += " UNION select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
+        sql += " UNION ALL select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
                 " ) / (1000.0 * 1000.0), 2) as timestampNs, "
                " 0 as total_allocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as total_reserve, "
                " 0 as totalActive, '' as stream from NPU_MEM join STRING_IDS as ids on ids.id = type "
