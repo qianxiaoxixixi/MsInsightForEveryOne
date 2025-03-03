@@ -316,11 +316,19 @@ const updateData = async(condition: ConditionDataType, setDataSource: VoidFuncti
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];
     // 从矩阵数据中获取要展示的rankId列表
-    const rankIds = Array.from(
-        new Set(
-            data.flatMap(({ srcRank, dstRank }: {srcRank: number; dstRank: number}) => [srcRank, dstRank]),
-        ),
-    ).sort((a, b) => (a as number) - (b as number));
+    let rankIds: number[];
+    if (stage === 'p2p') {
+        rankIds = Array.from(
+            new Set(
+                data.flatMap(({ srcRank, dstRank }: {srcRank: number; dstRank: number}) => [srcRank, dstRank]),
+            ),
+        ).sort((a, b) => (a as number) - (b as number)) as number[];
+    } else {
+        rankIds = stage.replace(/[(),]/, '')
+            .split(',').map(value => Number.parseInt(value))
+            .filter(value => !Number.isNaN(value))
+            .sort((a, b) => a - b);
+    }
     setDataSource({ data, rankIds });
 };
 
