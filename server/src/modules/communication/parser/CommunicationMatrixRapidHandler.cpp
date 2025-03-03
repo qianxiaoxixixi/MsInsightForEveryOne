@@ -133,15 +133,15 @@ CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const r
     if (std::strcmp(iterationId.c_str(), "step") == 0) {
         matrixInfo.iterationId = "0";
     }
-    int nameIndex = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
-    if (nameIndex > 0) {
+    size_t nameIndex = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
+    if (nameIndex > 0 && nameIndex != std::string::npos) {
         matrixInfo.sortOp = tempOpName.substr(0, nameIndex);
         matrixInfo.groupName = tempOpName.substr(nameIndex + 1);
     } else {
         matrixInfo.sortOp = tempOpName;
     }
-    int rankIndex = tempRank.empty() ? 0 : tempRank.find_last_of('-');
-    if (rankIndex > 0) {
+    size_t rankIndex = tempRank.empty() ? 0 : tempRank.find_last_of('-');
+    if (rankIndex > 0 && rankIndex != std::string::npos) {
         matrixInfo.srcRank = atof(tempRank.substr(0, rankIndex).c_str());
         matrixInfo.dstRank =  atof(tempRank.substr(rankIndex + 1).c_str());
     } else {

@@ -98,14 +98,16 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
         sum += summaryDto.computingTime + summaryDto.communicationNotOverLappedTime + summaryDto.freeTime;
         responseBody.summaryList.emplace_back(summaryDto);
     }
-    if (!responseBody.summaryList.empty() && sum != 0) {
+    if (!responseBody.summaryList.empty()) {
         double mean = sum / responseBody.summaryList.size();
-        double diff = max.freeDiff - min.freeDiff;
-        responseBody.traceStatistic.freeDiff = diff / mean > overlapThreshold ? diff: 0;
-        diff = max.computeDiff - min.computeDiff;
-        responseBody.traceStatistic.computeDiff =diff / mean > overlapThreshold ? diff : 0;
-        diff = max.communicationDiff - min.communicationDiff;
-        responseBody.traceStatistic.communicationDiff = diff / mean > overlapThreshold ? diff : 0;
+        if (mean != 0) {
+            double diff = max.freeDiff - min.freeDiff;
+            responseBody.traceStatistic.freeDiff = diff / mean > overlapThreshold ? diff : 0;
+            diff = max.computeDiff - min.computeDiff;
+            responseBody.traceStatistic.computeDiff = diff / mean > overlapThreshold ? diff : 0;
+            diff = max.communicationDiff - min.communicationDiff;
+            responseBody.traceStatistic.communicationDiff = diff / mean > overlapThreshold ? diff : 0;
+        }
     }
     sqlite3_finalize(stmt);
     return true;
