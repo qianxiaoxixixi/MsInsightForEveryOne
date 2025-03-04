@@ -5,10 +5,9 @@ import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, InputNumber, Button, Select, Tooltip, CheckboxGroup, Tabs } from 'ascend-components';
+import { Form, InputNumber, InputGroup, InputSplit, Button, Select, CheckboxGroup, Tabs } from 'ascend-components';
 import { message, Popconfirm } from 'antd';
 import type { CheckboxValueType } from 'antd/es/checkbox/Group';
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import eventBus from '../../utils/eventBus';
 import styled from '@emotion/styled';
 import { FormInstance } from 'antd/lib/form';
@@ -17,6 +16,7 @@ import { getParallelStrategy, setParallelStrategy } from '../../utils/RequestUti
 import { ErrorInfo, ParallelismArrangementParams, ParallelismType } from '../../utils/interface';
 import { ParallelSwitchConditionsProvider, useParallelSwitchConditions } from './Context';
 import type { TFunction } from 'i18next';
+import { COLOR } from '../Common';
 
 const Legend = styled.div`
     height: 20px;
@@ -51,10 +51,11 @@ const ColorScaleContainer = styled.div`
     margin-top: 5px;
     color: ${(props): string => props.theme.svgPlayBackgroundColor};
     .colorScale {
-        width: 150px;
-        background-image: linear-gradient(to right, #24AB36, #d3eed7 45%, #f9d2d2 55%, #E32020);
+        width: 200px;
+        background-image: linear-gradient(to right, ${COLOR.BAND_3}, ${COLOR.BAND_2},${COLOR.BAND_1},${COLOR.BAND_0});
     }
     .colorScaleNum {
+        color:${(props): string => props.theme.textColorTertiary};
         margin: 0 5px;
     }
 `;
@@ -237,17 +238,16 @@ const CommunicatorContent = observer(({ session, generateConditions }: Communica
     );
 });
 
-const ColorScale = ({ session, dyeingMode }: { session: Session; dyeingMode: string }): JSX.Element => {
-    const colorScaleData = session.rankDyeingData[dyeingMode];
-    return (
-        (dyeingMode === 'None')
-            ? <></>
-            : <ColorScaleContainer>
-                <div className="colorScaleNum">{Number(colorScaleData.min.toFixed(2))}</div>
-                <div className="colorScale"></div>
-                <div className="colorScaleNum">{Number(colorScaleData.max.toFixed(2))}</div>
-            </ColorScaleContainer>
-    );
+const ColorScale = ({ min, max }: { min: number | null; max: number | null }): JSX.Element => {
+    const isRangeEmpty = min === null || max === null;
+    return isRangeEmpty
+        ? <></>
+        : <ColorScaleContainer>
+            <div className="colorScaleNum">{min}</div>
+            <div className="colorScale"></div>
+            <div className="colorScaleNum">{max}</div>
+        </ColorScaleContainer>
+    ;
 };
 
 const LegendContainer = (): JSX.Element => {
@@ -302,8 +302,9 @@ interface ParallelSwitchProps {
 
 const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): JSX.Element => {
     const { t } = useTranslation('summary');
-    const { parallelTypeList, setParallelTypeList, setDyeingMode, dyeingMode, dyeingStep, setDyeingStep } = useParallelSwitchConditions();
+    const { parallelTypeList, setParallelTypeList, setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal } = useParallelSwitchConditions();
     const parallelTypeOptions = useParallelTypeOptions(dimension);
+    const [range, setRange] = useState<number[]>([]);
 
     const dataTypeOptions = useMemo(() => {
         const options = session.dataTypeOptions.map(indicator => {
@@ -312,56 +313,62 @@ const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): J
         return getDefaultDataTypeOptions(t).concat(options);
     }, [t, session.indicatorList]);
 
+    useEffect(() => {
+        const { min = null, max = null } = session.rankDyeingData[dyeingMode] ?? {};
+        if (min !== null && max !== null) {
+            setStartVal(min);
+            setEndVal(max);
+            setRange([min, max]);
+        }
+    }, [dyeingMode]);
+
     return (
-        <Form layout="inline" data-testid="parallelSwitch">
-            <Form.Item>
-                <CheckboxGroup
-                    value={parallelTypeList}
-                    options={parallelTypeOptions}
-                    onChange={(checkedValues: CheckboxValueType[]): void => { setParallelTypeList(checkedValues as ParallelismType[]); }}
-                ></CheckboxGroup>
-            </Form.Item>
-            <Form.Item label={t('Data Type')}>
-                <Select id="dataType" defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
-            </Form.Item>
-            {
-                dyeingMode !== 'None' &&
-                <Form.Item label={(<DyeingTipAndLabel/>)}>
-                    <InputNumber
-                        data-testid="input-dyeing-step"
-                        defaultValue={dyeingStep}
-                        min={0.01}
-                        max={0.1}
-                        step={0.01}
-                        maxLength={4}
-                        style={{ width: '120px' }}
-                        onChange={(value): void => { setDyeingStep(value as number); }}
-                    />
+        <>
+            <Form layout="inline" data-testid="parallelSwitch">
+                <Form.Item>
+                    <CheckboxGroup
+                        value={parallelTypeList}
+                        options={parallelTypeOptions}
+                        onChange={(checkedValues: CheckboxValueType[]): void => { setParallelTypeList(checkedValues as ParallelismType[]); }}
+                    ></CheckboxGroup>
                 </Form.Item>
-            }
-            <ColorScale session={session} dyeingMode={dyeingMode} />
-        </Form>
+                <Form.Item label={t('Data Type')}>
+                    <Select id="dataType" defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
+                </Form.Item>
+                {
+                    dyeingMode !== 'None' &&
+                <>
+                    <Form.Item label={t('VisibleRange')}>
+                        <InputGroup compact>
+                            <InputNumber
+                                data-testid="input-dyeing-minimum"
+                                value={startVal}
+                                min={range[0]}
+                                max={range[1]}
+                                step={1}
+                                center
+                                style={{ width: 100 }}
+                                placeholder={t('Minimum')}
+                                onChange={(value): void => { setStartVal(value as number); }}
+                            />
+                            <InputSplit placeholder="~" disabled />
+                            <InputNumber
+                                data-testid="input-dyeing-maximum"
+                                value={endVal}
+                                min={range[0]}
+                                max={range[1]}
+                                step={1}
+                                center
+                                style={{ width: 100, borderLeft: 0 }}
+                                placeholder={t('Maximum')}
+                                onChange={(value): void => { setEndVal(value as number); }}
+                            />
+                        </InputGroup>
+                    </Form.Item>
+                    <ColorScale min={startVal} max={endVal} />
+                </>
+                }
+            </Form>
+        </>
     );
 });
-
-const DyeingTipAndLabel = (): JSX.Element => {
-    const { t } = useTranslation('summary');
-    const hit = t('DyeingTooltip', { returnObjects: true }) as string[];
-    return <div style={{ display: 'flex' }}>
-        <div style={{ marginRight: 5 }}>{t('DyeingStep')}</div>
-        <Tooltip overlayClassName={'width-auto'} placement="bottom"
-            title={
-                (
-                    <div style={{ padding: 10, whiteSpace: 'nowrap' }}>
-                        {
-                            hit?.map((item: string) => (
-                                <div key={item}>{item}</div>
-                            ))
-                        }
-                    </div>
-                )
-            }>
-            <QuestionCircleOutlined style={{ cursor: 'pointer' }}/>
-        </Tooltip>
-    </div>;
-};

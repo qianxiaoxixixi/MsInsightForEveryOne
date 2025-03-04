@@ -2,9 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-import { notZero } from '../Common';
+import { notZero, COLOR } from '../Common';
 import { Session } from '../../entity/session';
 import { ArrangementItem, ConnectionsItem, ParallelismType } from '../../utils/interface';
+import { hexToRgb } from 'ascend-utils';
 
 export interface communicatorContainerData {
     partitionModes: partitionMode[];
@@ -24,17 +25,70 @@ export interface RankDyeingData {
     [key: string]: { min: number; max: number };
 }
 
-export const getDyeingColor = (session: Session, index: number, dyeingMode: string, step: number): string => {
-    const performanceValue = session.performanceDataMap.get(index);
-    if (performanceValue === undefined || !Object.keys(performanceValue).includes(dyeingMode)) {
+interface DyeingColorParams {
+    session: Session;
+    index: number;
+    dyeingMode: string;
+    range: Array<number | null>;
+}
+
+/**
+ * 计算每张卡的性能颜色
+ * @param session
+ * @param index 卡号
+ * @param dyeingMode 性能指标
+ * @param range 性能区间
+ */
+export const getDyeingColor = ({ session, index, dyeingMode, range }: DyeingColorParams): string => {
+    const performanceDataItem = session.performanceDataMap.get(index);
+    const [startVal, endVal] = range;
+    const isRangeEmpty = startVal === null || endVal === null;
+
+    if (isRangeEmpty || performanceDataItem === undefined || !Object.keys(performanceDataItem).includes(dyeingMode)) {
         return '';
     }
 
-    const min = session.rankDyeingData[dyeingMode].min;
-    const ratio = (performanceValue[dyeingMode] - min) / notZero(min);
-    const level = Math.ceil(ratio / step);
+    const performanceValue = performanceDataItem[dyeingMode];
 
-    return level < 5 ? `rgba(36,171,54,${(5 - level) * 0.2})` : `rgba(227,32,32,${(level - 4) * 0.2})`;
+    if (performanceValue < startVal || performanceValue > endVal) {
+        return '';
+    }
+
+    if (performanceValue === startVal && performanceValue === endVal) {
+        return COLOR.BAND_0;
+    }
+
+    // 计算归一化比例
+    const ratio = (performanceValue - startVal) / notZero(endVal - startVal);
+
+    const COLOR_BANDS = [COLOR.BAND_3, COLOR.BAND_2, COLOR.BAND_1, COLOR.BAND_0];
+
+    // 计算区间索引和局部比例
+    const segmentIndex = Math.min(Math.floor(ratio * 3), 2); // 限制最大索引为2
+    const startColor = COLOR_BANDS[segmentIndex];
+    const endColor = COLOR_BANDS[segmentIndex + 1];
+    const localRatio = (ratio - (segmentIndex / 3)) * 3;
+
+    return interpolateColor(startColor, endColor, localRatio);
+};
+
+// 计算插值的方法
+const interpolateColor = (minColor: string, maxColor: string, ratio: number): string => {
+    const minColorRgb = hexToRgb(minColor);
+    const maxColorRgb = hexToRgb(maxColor);
+
+    if (minColorRgb === null || maxColorRgb === null) {
+        return '';
+    }
+
+    const [r1, g1, b1] = minColorRgb;
+    const [r2, g2, b2] = maxColorRgb;
+
+    const r = Math.round(r1 + ((r2 - r1) * ratio));
+    const g = Math.round(g1 + ((g2 - g1) * ratio));
+    const b = Math.round(b1 + ((b2 - b1) * ratio));
+
+    return `rgb(${r}, ${g}, ${b})`;
 };
 
 export interface FrameGroupItem {

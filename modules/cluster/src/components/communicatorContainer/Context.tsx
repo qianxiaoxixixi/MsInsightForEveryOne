@@ -7,30 +7,36 @@ import { ParallelismType } from '../../utils/interface';
 
 interface ParallelSwitchConditionsContextType {
     dyeingMode: string;
-    dyeingStep: number;
+    startVal: number | null;
+    endVal: number | null;
     parallelTypeList: ParallelismType[];
     setDyeingMode: (value: string) => void;
-    setDyeingStep: (value: number) => void;
+    setStartVal: (value: number | null) => void;
+    setEndVal: (value: number | null) => void;
     setParallelTypeList: (values: ParallelismType[]) => void;
     reset: () => void;
 }
 const ParallelSwitchConditionsContext = createContext<ParallelSwitchConditionsContextType | undefined>(undefined);
 export function ParallelSwitchConditionsProvider({ children }: { children: React.ReactNode }): JSX.Element {
     const [dyeingMode, setDyeingMode] = useState('None');
-    const [dyeingStep, setDyeingStep] = useState(0.03);
+    const [startVal, setStartVal] = useState<ParallelSwitchConditionsContextType['startVal']>(null);
+    const [endVal, setEndVal] = useState<ParallelSwitchConditionsContextType['endVal']>(null);
     const [parallelTypeList, setParallelTypeList] = useState<ParallelismType[]>(['dp']);
 
     const reset = (): void => {
         setDyeingMode('None');
-        setDyeingStep(0.03);
         setParallelTypeList(['dp']);
+        setStartVal(null);
+        setEndVal(null);
     };
     return (
         <ParallelSwitchConditionsContext.Provider value={{
             dyeingMode,
             setDyeingMode,
-            dyeingStep,
-            setDyeingStep,
+            startVal,
+            setStartVal,
+            endVal,
+            setEndVal,
             parallelTypeList,
             setParallelTypeList,
             reset,

@@ -106,7 +106,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const [activeRectIndex, setActiveRectIndex] = useState<number | null>(null);
     const [hoveredRectIndex, setHoveredRectIndex] = useState<number | null>(null);
     const [responsiveSize, setResponsiveSize] = useState({ width: 0, height: 0 });
-    const { parallelTypeList, dyeingMode, dyeingStep, reset: resetParallelSwitchConditions } = useParallelSwitchConditions();
+    const { parallelTypeList, dyeingMode, startVal, endVal, reset: resetParallelSwitchConditions } = useParallelSwitchConditions();
     const theme = useTheme();
     const { data, loading, isUpdated } = useFetchData(generateConditions);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
@@ -173,7 +173,14 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 new Rectangle({
                     index: arrangement.index,
                     rowAndCol: arrangement.position,
-                    fillColor: dyeingMode === 'None' ? undefined : getDyeingColor(session, arrangement.index, dyeingMode, dyeingStep),
+                    fillColor: dyeingMode === 'None'
+                        ? undefined
+                        : getDyeingColor({
+                            session,
+                            index: arrangement.index,
+                            dyeingMode,
+                            range: [startVal, endVal],
+                        }),
                     backgroundColor: theme.bgColorLighter,
                     color: theme.textColorPrimary,
                     attribute: {
@@ -283,7 +290,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             addRectangles(canvasDrawer);
             render();
         }
-    }, [theme.mode, dyeingMode, dyeingStep]);
+    }, [theme.mode, dyeingMode, startVal, endVal]);
 
     useEffect(() => {
         if (canvasDrawer !== null) {
