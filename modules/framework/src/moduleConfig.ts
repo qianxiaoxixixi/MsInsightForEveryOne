@@ -11,6 +11,7 @@ export interface ModuleConfig {
     isCluster?: boolean;
     isCompute?: boolean;
     isJupyter?: boolean;
+    hasCachelineRecords?: boolean;
 };
 
 const isDev = false;
@@ -84,7 +85,7 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: isDev ? 'http://localhost:3004/cache.html' : './plugins/Compute/cache.html',
         },
-        isCompute: true,
+        hasCachelineRecords: true,
     },
     {
         name: 'Jupyter',
