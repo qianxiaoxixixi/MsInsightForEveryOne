@@ -79,6 +79,7 @@ bool RenderEngine::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &p
     flowQuery.fileId = params.rankId;
     flowQuery.minTimestamp = minTimestamp;
     dataEngine->QueryFlowPointByCategory(flowQuery, flowEventsVec);
+    flowEventsVec = ComputeLockRangePoints(params, flowEventsVec);
     std::unique_ptr<FlowAnalyzer> flowAnalyzerPtr = std::make_unique<FlowAnalyzer>();
     flowAnalyzerPtr->ComputeScreenFlowPoint(flowEventsVec, params.startTime, params.endTime, flowPointResult);
     std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = std::make_unique<SliceAnalyzer>();
@@ -109,6 +110,38 @@ bool RenderEngine::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &p
     flowAnalyzerPtr->ComputeUintFlows(flowPointResult, params.category, flowDetailList);
     ServerLog::Info("Query flow category events. size:", flowDetailList.size());
     return true;
+}
+
+std::vector<FlowPoint> RenderEngine::ComputeLockRangePoints(FlowCategoryEventsParams &params,
+    std::vector<FlowPoint> &flowEventsVec) const
+{
+    ServerLog::Info("flowEventsVec size is: ", flowEventsVec.size());
+    std::unordered_set<uint64_t> trackIdSet;
+    for (const auto &metadata : params.metadataList) {
+        if (std::empty(metadata.pid) || std::empty(metadata.tid)) {
+            continue;
+        }
+        uint64_t trackId = TrackInfoManager::Instance().GetTrackId(params.rankId, metadata.pid, metadata.tid);
+        trackIdSet.emplace(trackId);
+    }
+    if (std::empty(trackIdSet)) {
+        return flowEventsVec;
+    }
+    std::unordered_set<std::string> lockFlowIdSet;
+    for (const auto &item : flowEventsVec) {
+        if (trackIdSet.count(item.trackId) > 0 && item.timestamp >= params.lockStartTime &&
+            item.timestamp <= params.lockEndTime) {
+            lockFlowIdSet.emplace(item.flowId);
+        }
+    }
+    std::vector<FlowPoint> lockFlowPointVec;
+    for (const auto &item : flowEventsVec) {
+        if (lockFlowIdSet.count(item.flowId) > 0) {
+            lockFlowPointVec.emplace_back(item);
+        }
+    }
+    ServerLog::Info("lockFlowPointVec size is: ", lockFlowPointVec.size());
+    return lockFlowPointVec;
 }
 
 void RenderEngine::ComputeSimulationFlows(const FlowCategoryEventsParams &params,
