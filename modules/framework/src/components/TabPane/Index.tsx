@@ -55,6 +55,7 @@ export function updateDataScene(data: Record<string, any>): void {
         isReset: data.reset,
         isIpynb: data.isIpynb,
         isBinary: data.isBinary,
+        hasCachelineRecords: data.hasCachelineRecords,
     };
     updateSession(scenceInfo);
 }
@@ -69,17 +70,26 @@ function getActive(session: Session, scene: Scene, activeModule: string, availab
         return activeModule;
     }
 }
-function isAvailable(moduleConfig: ModuleConfig, scene: Scene): boolean {
+function isAvailable(moduleConfig: ModuleConfig, scene: Scene, dataCompose: Record<string, boolean>): boolean {
+    // 根据包含某种数据，控制页签显隐
+    const composeList = Object.keys(dataCompose);
+    for (const name of composeList) {
+        if (dataCompose[name] && Boolean((moduleConfig as any)[name])) {
+            return true;
+        }
+    }
     return Boolean(moduleConfig[`is${scene}`]);
 }
 
 const Index = observer(({ session }: {session: Session}) => {
     const { t } = useTranslation('framework', { keyPrefix: 'tabs' });
     const [scene, setScene] = useState<Scene>('Default');
+    const [dataCompose, setDataCompose] = useState<Record<string, boolean>>({});
     const [activeModule, setActiveModule] = useState('Timeline');
     const [mergedModulesConfig, setMergedModulesConfig] = useState(modulesConfig);
 
-    const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene)), [scene, mergedModulesConfig]);
+    const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene, dataCompose))
+        , [scene, dataCompose, mergedModulesConfig]);
     const items: MenuProps['items'] = useMemo(() => availableModules.map(config => ({ label: t(config.name, { defaultValue: config.name }), key: config.name }))
         , [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
@@ -118,11 +128,12 @@ const Index = observer(({ session }: {session: Session}) => {
             return;
         }
         setScene(session.scene);
-    }, [session.isBinary, session.isCluster, session.isIpynb]);
+        setDataCompose({ hasCachelineRecords: session.hasCachelineRecords });
+    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords]);
     useEffect(() => {
         const newActiveModule = getActive(session, scene, activeModule, availableModules);
         setActiveModule(newActiveModule);
-    }, [scene]);
+    }, [scene, availableModules]);
     useEffect(() => {
         const { type, value } = session.actionListener;
         const allModuleName = mergedModulesConfig.map(module => module.name);
