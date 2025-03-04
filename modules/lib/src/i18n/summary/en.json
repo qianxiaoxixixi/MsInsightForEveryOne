@@ -106,13 +106,9 @@
     "NoDataTip": "The original collected data doesn't contain the parallelism strategy configuration parameters. Please configure the parameters",
     "Data Type": "Data Type",
     "None": "None",
-    "DyeingStep": "Accuracy",
-    "DyeingTooltip": [
-      "Divide the calculated grading metrics into 10 levels based on accuracy. For example, if the",
-      "accuracy is 0.03, group it into: [0,0.03),[0.03,0.06),[0.06,0.09),...,[0.27,>0.27)",
-      "Grading metrics = (selected data - minimum value) / minimum value ",
-      "The greener the color, the lower the level; the redder the color, the higher the level"
-    ],
+    "VisibleRange": "Visible Range",
+    "Minimum": "Minimum",
+    "Maximum": "Maximum",
     "Pipeline Parallelism Chart": "Pipeline Parallelism Chart"
   }
 }

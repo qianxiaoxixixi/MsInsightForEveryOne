@@ -6,6 +6,7 @@ import * as React from 'react';
 import { type InputProps, type InputRef, type InputNumberProps, Input, InputNumber } from 'antd';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
+import type { GroupProps } from 'antd/es/input';
 
 // 默认最大输入200个字符
 const DEFAULT_MAX_LENGTH = 200;
@@ -58,9 +59,26 @@ export const MIInput = styled(Support)`
     }
 `;
 
+export const MIInputSplit = styled(MIInput)`
+    width: 30px !important;
+    border-left: 0;
+    border-right: 0;
+    pointer-events: none;
+
+    &.ant-input[disabled] {
+        background-color: ${(props): string => props.theme.bgColor};
+        border-color: ${(props): string => props.theme.borderColorLighter};
+    }
+`;
+
+export const MIInputGroup = React.forwardRef((props: GroupProps) => (
+    <Input.Group {...props} />
+));
+
 type ValueType = string | number;
 export const MIInputNumber = styled((props: InputNumberProps<ValueType> & {
     children?: React.ReactNode;
+    center?: boolean;
 } & {
     ref?: React.Ref<HTMLInputElement>;
 }) => {
@@ -70,7 +88,6 @@ export const MIInputNumber = styled((props: InputNumberProps<ValueType> & {
             min={DEFAULT_MIN_INPUT_NUMBER}
             max={DEFAULT_MAX_INPUT_NUMBER}
             maxLength={DEFAULT_MAX_LENGTH}
-            formatter={(value): string => `${Number(value)}`}
             {...restProps}
         />
     );
@@ -103,5 +120,9 @@ export const MIInputNumber = styled((props: InputNumberProps<ValueType> & {
                 }
             }
         }
+    }
+
+    .ant-input-number-input {
+        text-align: ${(props): string => props.center ? 'center' : 'left'};
     }
 `;
