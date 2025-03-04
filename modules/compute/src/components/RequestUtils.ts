@@ -164,5 +164,5 @@ export const queryRoofline = async(): Promise<IRooflineData> => {
  * @return {cacheRecords:[]}
  */
 export const queryCacheRecord = async(): Promise<QueryCacheRecordReturn> => {
-    return window.requestData('source/cache/traceRecord', {}) as Promise<QueryCacheRecordReturn>;
+    return window.requestData('source/cache/cachelineRecords', {}) as Promise<QueryCacheRecordReturn>;
 };

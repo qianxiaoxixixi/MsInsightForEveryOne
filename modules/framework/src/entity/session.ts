@@ -40,6 +40,7 @@ export class Session {
     ipynbUrl: string = '';
     isReset: boolean = false;
     isFullDb: boolean = false;
+    hasCachelineRecords: boolean = false;
     // 解析状态
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;

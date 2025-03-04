@@ -120,6 +120,9 @@ const baseSet = {
     xAxis: {
         type: 'category',
         data: range(0, 128),
+        splitArea: {
+            show: true,
+        },
     },
 };
 
