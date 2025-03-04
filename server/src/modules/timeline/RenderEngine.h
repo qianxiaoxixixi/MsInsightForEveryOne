@@ -37,6 +37,9 @@ private:
     void ComputeSimulationFlows(const Protocol::FlowCategoryEventsParams &params,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList,
         std::vector<FlowPoint> &flowPointResult);
+
+    std::vector<FlowPoint> ComputeLockRangePoints(Protocol::FlowCategoryEventsParams &params,
+        std::vector<FlowPoint> &flowEventsVec) const;
 };
 }
 

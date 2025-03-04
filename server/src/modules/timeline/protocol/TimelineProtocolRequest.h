@@ -119,6 +119,9 @@ struct Metadata {
     std::string tid;
     std::string pid;
     std::string metaType;
+    std::string rankId;
+    uint64_t lockStartTime = 0;
+    uint64_t lockEndTime = 0;
 };
 
 struct UnitThreadsParams {
@@ -200,6 +203,21 @@ struct SearchCountParams {
     bool isMatchExact = false;
     std::string rankId;
     std::string searchContent;
+    std::vector<Metadata> metadataList;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        for (const auto &item: metadataList) {
+            if (item.lockStartTime > item.lockEndTime) {
+                warnMsg = "Search count lock start time is bigger than lock end time";
+                return false;
+            }
+            if (item.lockEndTime > UINT64_MAX - minTime) {
+                warnMsg = "Search count events lock end time is invalid";
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 struct SearchCountRequest : public Request {
@@ -213,6 +231,21 @@ struct SearchSliceParams {
     std::string rankId;
     std::string searchContent;
     int index = 0;
+    std::vector<Metadata> metadataList;
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        for (const auto &item: metadataList) {
+            if (item.lockStartTime > item.lockEndTime) {
+                warnMsg = "Search slice lock start time is bigger than lock end time";
+                return false;
+            }
+            if (item.lockEndTime > UINT64_MAX - minTime) {
+                warnMsg = "Search slice events lock end time is invalid";
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 struct SearchSliceRequest : public Request {
@@ -246,6 +279,9 @@ struct FlowCategoryEventsParams {
     uint64_t endTime = 0;
     double timePerPx = 0;
     bool isSimulation = false;
+    std::vector<Metadata> metadataList;
+    uint64_t lockStartTime = 0;
+    uint64_t lockEndTime = 0;
     bool CheckParams(uint64_t minTime, std::string &warnMsg) const
     {
         if (startTime > endTime) {
@@ -254,6 +290,14 @@ struct FlowCategoryEventsParams {
         }
         if (endTime > UINT64_MAX - minTime) {
             warnMsg = "flow category events end time is invalid";
+            return false;
+        }
+        if (lockStartTime > lockEndTime) {
+            warnMsg = "flow category events lock start time is bigger than lock end time";
+            return false;
+        }
+        if (lockEndTime > UINT64_MAX - minTime) {
+            warnMsg = "flow category events lock end time is invalid";
             return false;
         }
         return true;
@@ -433,8 +477,28 @@ struct SearchAllSliceParams {
     std::string order;
     uint64_t current = 0;
     uint64_t pageSize = 0;
+    std::vector<Metadata> metadataList;
     bool CheckParams(std::string &warnMsg) const
     {
+        return CheckUnsignPageValid(pageSize, current, warnMsg);
+    }
+
+    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
+    {
+        for (const auto &item: metadataList) {
+            if (item.lockStartTime > item.lockEndTime) {
+                warnMsg = "Search all slice lock start time is bigger than lock end time";
+                return false;
+            }
+            if (item.lockEndTime > UINT64_MAX - minTime) {
+                warnMsg = "Search all slice lock end time is invalid";
+                return false;
+            }
+        }
+        if (!StringUtil::CheckSqlValid(orderBy)) {
+            warnMsg = "Search all slice order column name is invalid";
+            return false;
+        }
         return CheckUnsignPageValid(pageSize, current, warnMsg);
     }
 };

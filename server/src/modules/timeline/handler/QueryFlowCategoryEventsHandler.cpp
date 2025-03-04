@@ -3,7 +3,7 @@
  */
 #include "WsSessionManager.h"
 #include "TraceTime.h"
-#include "DataBaseManager.h"
+#include "TrackInfoManager.h"
 #include "QueryFlowCategoryEventsHandler.h"
 
 namespace Dic {

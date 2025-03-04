@@ -238,6 +238,50 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     EXPECT_EQ(flowDetailList[0]->to.tid, "0"); // to.tid = 0
 }
 
+TEST_F(TestSuit, QueryFlowCategoryEventsWithLockRange)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Dic::Protocol::FlowCategoryEventsParams requestParams;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitSingleFlow>> flowDetailList;
+    uint64_t STARTTIME = 9171200;
+    uint64_t ENDTIME = 20617000;
+    uint64_t LOCK_STARTTIME = 15617000;
+    uint64_t LOCK_ENDTIME = 18617000;
+    requestParams.startTime = STARTTIME;
+    requestParams.endTime = ENDTIME;
+    requestParams.timePerPx = 1;
+    requestParams.category = "HostToDevice";
+    requestParams.rankId = "0";
+    requestParams.lockStartTime = LOCK_STARTTIME;
+    requestParams.lockEndTime = LOCK_ENDTIME;
+    Metadata metadata;
+    metadata.metaType = "TEXT";
+    metadata.pid = "140836602";
+    metadata.tid = "1408366";
+    metadata.rankId = "0";
+    requestParams.metadataList.emplace_back(metadata);
+    uint64_t minTimestamp = 1695115378704489800;
+    const int expectSize = 1;
+    const uint64_t expectFromTimestamp = 17654000;
+    const uint64_t expectToTimestamp = 17902700;
+    renderEngine->QueryFlowCategoryEvents(requestParams, minTimestamp, flowDetailList);
+    std::string EXPECT_FROM_TID = "1408366";
+    EXPECT_EQ(flowDetailList.size(), expectSize); // flowDetailList size = 5
+    EXPECT_EQ(flowDetailList[0]->cat, "HostToDevice");
+    EXPECT_EQ(flowDetailList[0]->from.timestamp, expectFromTimestamp); // timestamp = 1695115378722143800
+    EXPECT_EQ(flowDetailList[0]->from.pid, "140836602");
+    EXPECT_EQ(flowDetailList[0]->from.depth, 0);
+    EXPECT_EQ(flowDetailList[0]->from.tid, EXPECT_FROM_TID);       // from.tid = 1408366
+    EXPECT_EQ(flowDetailList[0]->to.timestamp, expectToTimestamp); // to.timestamp = 1695115378722392500
+    EXPECT_EQ(flowDetailList[0]->to.pid, "14083661400");
+    EXPECT_EQ(flowDetailList[0]->to.depth, 0);
+    EXPECT_EQ(flowDetailList[0]->to.tid, "0"); // to.tid = 0
+}
+
 TEST_F(TestSuit, QueryFlowCategoryList)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");

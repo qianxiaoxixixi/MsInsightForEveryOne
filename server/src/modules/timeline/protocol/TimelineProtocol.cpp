@@ -219,6 +219,19 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchCountRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isMatchExact, json["params"], "isMatchExact");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchContent, json["params"], "searchContent");
+    if (json["params"].HasMember("metadataList") && json["params"]["metadataList"].IsArray()) {
+        for (const auto &metaData: json["params"]["metadataList"].GetArray()) {
+            Metadata data{
+                    .tid = JsonUtil::GetString(metaData, "tid"),
+                    .pid = JsonUtil::GetString(metaData, "pid"),
+                    .metaType = JsonUtil::GetString(metaData, "metaType"),
+                    .rankId = JsonUtil::GetString(metaData, "rankId"),
+            };
+            JsonUtil::SetByJsonKeyValue(data.lockStartTime, metaData, "lockStartTime");
+            JsonUtil::SetByJsonKeyValue(data.lockEndTime, metaData, "lockEndTime");
+            reqPtr->params.metadataList.emplace_back(std::move(data));
+        }
+    }
     return reqPtr;
 }
 
@@ -234,6 +247,19 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchSliceRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchContent, json["params"], "searchContent");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.index, json["params"], "index");
+    if (json["params"].HasMember("metadataList") && json["params"]["metadataList"].IsArray()) {
+        for (const auto &metaData: json["params"]["metadataList"].GetArray()) {
+            Metadata data{
+                    .tid = JsonUtil::GetString(metaData, "tid"),
+                    .pid = JsonUtil::GetString(metaData, "pid"),
+                    .metaType = JsonUtil::GetString(metaData, "metaType"),
+                    .rankId = JsonUtil::GetString(metaData, "rankId"),
+            };
+            JsonUtil::SetByJsonKeyValue(data.lockStartTime, metaData, "lockStartTime");
+            JsonUtil::SetByJsonKeyValue(data.lockEndTime, metaData, "lockEndTime");
+            reqPtr->params.metadataList.emplace_back(std::move(data));
+        }
+    }
     return reqPtr;
 }
 
@@ -277,6 +303,18 @@ std::unique_ptr<Request> TimelineProtocol::ToFlowCategoryEventsRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isSimulation, json["params"], "isSimulation");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    if (json["params"].HasMember("metadataList") && json["params"]["metadataList"].IsArray()) {
+        for (const auto &metaData: json["params"]["metadataList"].GetArray()) {
+            Metadata data{
+                    .tid = JsonUtil::GetString(metaData, "tid"),
+                    .pid = JsonUtil::GetString(metaData, "pid"),
+                    .metaType = JsonUtil::GetString(metaData, "metaType")
+            };
+            reqPtr->params.metadataList.emplace_back(std::move(data));
+        }
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.lockStartTime, json["params"], "lockStartTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.lockEndTime, json["params"], "lockEndTime");
     return reqPtr;
 }
 
@@ -428,6 +466,19 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchAllSlicesRequest(const Dic::j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    if (json["params"].HasMember("metadataList") && json["params"]["metadataList"].IsArray()) {
+        for (const auto &metaData: json["params"]["metadataList"].GetArray()) {
+            Metadata data{
+                    .tid = JsonUtil::GetString(metaData, "tid"),
+                    .pid = JsonUtil::GetString(metaData, "pid"),
+                    .metaType = JsonUtil::GetString(metaData, "metaType"),
+                    .rankId = JsonUtil::GetString(metaData, "rankId"),
+            };
+            JsonUtil::SetByJsonKeyValue(data.lockStartTime, metaData, "lockStartTime");
+            JsonUtil::SetByJsonKeyValue(data.lockEndTime, metaData, "lockEndTime");
+            reqPtr->params.metadataList.emplace_back(std::move(data));
+        }
+    }
     return reqPtr;
 }
 #pragma endregion
