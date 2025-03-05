@@ -1318,4 +1318,313 @@ std::string TraceDatabaseHelper::GetSingleSearchNameWithLockRangeSql(const std::
     }
     return tempSql;
 }
+
+void TraceDatabaseHelper::SearchSliceNameWithLockRangeBindStmt(const SearchSliceParams &params,
+    const std::vector<TrackQuery> &trackQuery, std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &path,
+    const std::string &deviceId)
+{
+    stmt->BindParams(params.searchContent);
+    for (const auto &item : trackQuery) {
+        BindSearchNameWithLockRangeStmt(stmt, path, deviceId, item);
+    }
+}
+
+void TraceDatabaseHelper::BindSearchNameWithLockRangeStmt(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const std::string &path, const std::string &deviceId, const TrackQuery &item)
+{
+    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
+    if (type == PROCESS_TYPE::API && item.rankId == path) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::CANN_API && item.rankId == path) {
+        stmt->BindParams(item.processId, item.threadId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::MS_TX && item.rankId == path) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::ASCEND_HARDWARE && item.rankId != path) {
+        stmt->BindParams(deviceId, item.threadId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::HCCL && item.rankId != path) {
+        if (StringUtil::EndWith(item.threadId, "group")) {
+            std::string tid = item.threadId.substr(0, item.threadId.size() - 5);
+            stmt->BindParams(tid, item.startTime, item.endTime);
+        } else {
+            std::string groupName = item.threadId;
+            std::string threadId = item.threadId;
+            size_t pos = item.threadId.find_last_of("_");
+            if (pos != std::string::npos && item.threadId.size() > pos) {
+                threadId = item.threadId.substr(pos + 1);
+                groupName = item.threadId.substr(0, pos);
+            }
+            stmt->BindParams(deviceId, groupName, threadId, item.startTime, item.endTime);
+        }
+    }
+}
+
+std::string TraceDatabaseHelper::GetSearchCountWithLockSql(const SearchCountParams &params,
+    const std::vector<TrackQuery> &trackQuery)
+{
+    std::string sql;
+    std::string nameMatch;
+    if (params.isMatchExact && params.isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like ?";
+    } else if (params.isMatchExact) {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower(?)";
+    } else if (params.isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    sql = "with ids as (" + nameMatch + ") ";
+    std::vector<std::string> sqls;
+    for (const auto &item : trackQuery) {
+        std::string tempSql = GetSingleSearchCountLockRangeSql(params, item);
+        if (!tempSql.empty()) {
+            sqls.emplace_back(tempSql);
+        }
+    }
+    sql = sql + StringUtil::join(sqls, " UNION ALL ");
+    return sql;
+}
+
+std::string TraceDatabaseHelper::GetSingleSearchCountLockRangeSql(const SearchCountParams &params,
+    const TrackQuery &item)
+{
+    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
+    std::string tempSql;
+    if (type == PROCESS_TYPE::API && StringUtil::EndWith(params.rankId, "Host")) {
+        tempSql = "SELECT count(1) FROM (SELECT name from " + TABLE_API +
+            " WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) api join ids on id = api.name ";
+    } else if (type == PROCESS_TYPE::CANN_API && StringUtil::EndWith(params.rankId, "Host")) {
+        tempSql = "SELECT count(1) FROM (SELECT name from " + TABLE_CANN_API +
+            " WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= ?) cann join ids on id = cann.name ";
+    } else if (type == PROCESS_TYPE::MS_TX && StringUtil::EndWith(params.rankId, "Host")) {
+        tempSql = "SELECT count(1) FROM (SELECT message from " + TABLE_MSTX_EVENTS +
+            " WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) mstx join ids on id = mstx.message ";
+    } else if (type == PROCESS_TYPE::ASCEND_HARDWARE && !StringUtil::EndWith(params.rankId, "Host")) {
+        tempSql = "SELECT count(1) FROM (SELECT coalesce(c.name, m.message, s.name, main.taskType) as "
+            "name FROM " +
+            TABLE_TASK +
+            " main "
+            " left join " +
+            TABLE_COMPUTE_TASK_INFO +
+            " c on c.globalTaskId = main.globalTaskId "
+            " left join " +
+            TABLE_MSTX_EVENTS +
+            " m on "
+            " (m.connectionId = main.connectionId and  m.connectionId != " +
+            WRONG_DATA + " ) left join " + TABLE_COMMUNICATION_SCHEDULE_TASK +
+            " s on main.globalTaskId = s.globalTaskId WHERE main.deviceId = ? AND main.streamId = ? AND "
+            "main.startNs >= ? AND main.endNs <= ?) hadware  join ids on id = hadware.name ";
+    } else if (type == PROCESS_TYPE::HCCL && !StringUtil::EndWith(params.rankId, "Host")) {
+        if (StringUtil::EndWith(item.threadId, "group")) {
+            tempSql = "SELECT count(1) FROM (SELECT opName as name from " + TABLE_COMMUNICATION_OP +
+                " WHERE groupName = ? AND startNs >= ? AND endNs <= ?) op join ids on id = op.name ";
+        } else {
+            tempSql = "SELECT count(1) FROM (SELECT ci.taskType as name from TASK main left join " +
+                TABLE_COMMUNICATION_TASK_INFO + " ci on ci.globalTaskId = main.globalTaskId " +
+                " WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? AND "
+                "main.endNs <= ?) info join ids on id = info.name ";
+        }
+    }
+    return tempSql;
+}
+
+void TraceDatabaseHelper::SearchCountWithLockRangeBindStmt(const SearchCountParams &params,
+    const std::vector<TrackQuery> &trackQuery, std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const std::string &deviceId)
+{
+    stmt->BindParams(params.searchContent);
+    for (const auto &item : trackQuery) {
+        BindSingleTrackStmt(params, stmt, deviceId, item);
+    }
+}
+
+void TraceDatabaseHelper::BindSingleTrackStmt(const SearchCountParams &params,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &deviceId, const TrackQuery &item)
+{
+    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
+    if (type == PROCESS_TYPE::API && StringUtil::EndWith(params.rankId, "Host")) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::CANN_API && StringUtil::EndWith(params.rankId, "Host")) {
+        stmt->BindParams(item.processId, item.threadId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::MS_TX && StringUtil::EndWith(params.rankId, "Host")) {
+        stmt->BindParams(item.processId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::ASCEND_HARDWARE && !StringUtil::EndWith(params.rankId, "Host")) {
+        stmt->BindParams(deviceId, item.threadId, item.startTime, item.endTime);
+    } else if (type == PROCESS_TYPE::HCCL && !StringUtil::EndWith(params.rankId, "Host")) {
+        if (StringUtil::EndWith(item.threadId, "group")) {
+            std::string tid = item.threadId.substr(0, item.threadId.size() - 5);
+            stmt->BindParams(tid, item.startTime, item.endTime);
+        } else {
+            std::string groupName = item.threadId;
+            std::string threadId = item.threadId;
+            size_t pos = item.threadId.find_last_of("_");
+            if (pos != std::string::npos && item.threadId.size() > pos) {
+                threadId = item.threadId.substr(pos + 1);
+                groupName = item.threadId.substr(0, pos);
+            }
+            stmt->BindParams(deviceId, groupName, threadId, item.startTime, item.endTime);
+        }
+    }
+}
+
+std::string TraceDatabaseHelper::GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId)
+{
+    std::string sql;
+    std::string nameMatch;
+    if (isMatchExact && isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like ?";
+    } else if (isMatchExact) {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower(?)";
+    } else if (isMatchCase) {
+        nameMatch = "select id from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    if (!DataBaseManager::Instance().GetDbPathByHost(rankId).empty()) {
+        sql = "with ids as (" + nameMatch + ") SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API +
+            " union all select message from  " + TABLE_MSTX_EVENTS + " union all select name from  " + TABLE_API +
+            ") api join ids on id = api.name";
+        return sql;
+    }
+    std::string communicationOpSql;
+    if (!TraceDatabaseHelper::IsDeviceIdUnique(rankId)) {
+        communicationOpSql = "select opName as name from COMMUNICATION_OP op "
+            " join tasks on op.connectionId = tasks.connectionId group by opId";
+    } else {
+        communicationOpSql = "select opName as name from COMMUNICATION_OP op";
+    }
+    sql = "with ids as (" + nameMatch +
+        "), "
+        "     tasks as (select globalTaskId, taskType, connectionId from TASK where deviceId = ?), "
+        "     com as (select opId, info.globalTaskId,info.taskType as name from COMMUNICATION_TASK_INFO info "
+        " join tasks on  info.globalTaskId = tasks.globalTaskId), "
+        "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
+        " on  info.globalTaskId = tasks.globalTaskId), "
+        " schedule as (select info.globalTaskId, name from COMMUNICATION_SCHEDULE_TASK_INFO info left join tasks "
+        " on info.globalTaskId = tasks.globalTaskId)"
+        "select count(1) from ( "
+        "    select coalesce(compute.name, schedule.name, main.taskType) as name from tasks main "
+        "         left join compute on compute.globalTaskId = main.globalTaskId "
+        " left join schedule ON main.globalTaskId = schedule.globalTaskId"
+        "    union ALL select name from com "
+        "    union ALL " +
+        communicationOpSql + ") allNames join ids on id = allNames.name;";
+    return sql;
+}
+
+std::string TraceDatabaseHelper::GetComOpSliceDetailsSql(const std::string &rankId)
+{
+    std::string communicationOpSql;
+    std::vector<uint64_t> deviceId = TraceDatabaseHelper::GetDeviceIdList(rankId);
+    if (deviceId.size() == 1) {
+        communicationOpSql = " select " + std::to_string(deviceId[0]) +
+            " as deviceId,opName as name,'HCCL' as pid,"
+            "'HCCL' as metaType, groupName||'group' as tid, op.startNs - minTime.value as startTime, "
+            "op.endNs - op.startNs as duration, 0 as depth, op.ROWID as id "
+            " from COMMUNICATION_OP op join minTime";
+    } else {
+        communicationOpSql = " select tasks.deviceId,opName as name,'HCCL' as pid, 'HCCL' as metaType, "
+            " groupName||'group' as tid, op.startNs - minTime.value as startTime, "
+            " op.endNs - op.startNs as duration, 0 as depth, op.ROWID as id from COMMUNICATION_OP op "
+            " join minTime join tasks on op.connectionId = tasks.connectionId group by opId";
+    }
+    return communicationOpSql;
+}
+
+std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
+    const std::string &order, const std::string &orderByField, const std::string &rankId)
+{
+    std::string sql;
+    std::string nameMatch;
+    std::string orderBy;
+    std::string orderKey = orderByField == "timestamp" ? "startTime" : orderByField;
+    if (order == "descend") {
+        orderBy = " ORDER BY " + orderKey + " DESC";
+    } else {
+        orderBy = " ORDER BY " + orderKey + " ASC";
+    }
+    if (isMatchExact && isMatchCase) {
+        nameMatch = "select id, value from STRING_IDS where value like ?";
+    } else if (isMatchExact) {
+        nameMatch = "select id, value from STRING_IDS where lower(value) like lower(?)";
+    } else if (isMatchCase) {
+        nameMatch = "select id, value from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    std::string communicationOpSql = GetComOpSliceDetailsSql(rankId);
+    sql = "with ids as (" + nameMatch +
+        "), minTime as (select ? as value),\n"
+        " tasks as (select deviceId, TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
+        " startNs - minTime.value as startTime,endNs - startNs as duration,depth,connectionId from TASK join minTime "
+        " where deviceId = ? ORDER BY startTime),\n"
+        " com as (select deviceId, opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid,"
+        " startTime, duration, 0 as depth, info.taskType as name"
+        " from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
+        " ORDER BY startTime)\n"
+        " select * from ( select deviceId, coalesce(compute.name, schedule.name, main.taskType) as name, main.pid,"
+        " main.pid as metaType,"
+        " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
+        " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId "
+        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId union ALL"
+        " select deviceId,name, pid, pid as meatType, tid, startTime, duration, depth, id from com union ALL " +
+        communicationOpSql +
+        " UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
+        " type as tid, "
+        "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, CANN_API.ROWID as id from "
+        "CANN_API JOIN minTime UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
+        " 'pytorch' as tid, "
+        "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, PYTORCH_API.ROWID as id from "
+        "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" +
+        orderBy + " LIMIT ? OFFSET ?";
+    return sql;
+}
+
+std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
+    const std::string &path)
+{
+    const std::string order = "descend";
+    const std::string orderByField = "timestamp";
+    std::string sql;
+    std::string nameMatch = " select id from STRING_IDS where ";
+    std::string orderKey = orderByField == "timestamp" ? "startTime" : orderByField;
+    std::string orderBy = " ORDER BY " + orderKey + (order == "descend" ? " DESC" : "ASC");
+    nameMatch.append(isMatchCase ? " value like " : "lower(value) like lower(");
+    nameMatch.append(isMatchExact ? "?" : "'%'||?||'%'");
+    nameMatch.append(isMatchCase ? " " : ")");
+    if (strcmp(rankId.c_str(), path.c_str()) == 0) {
+        sql = "with ids as (" + nameMatch + ") "
+            "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
+            " depth, api.id, 'HOST' as metaType ,? as rankId"
+            " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name "
+            " from " + TABLE_CANN_API + " api join ids on ids.id = api.name "
+            " Union all select globalTid, 'MsTx' as type, startNs, endNs, depth, ROWID as id, message as name "
+            " from " + TABLE_MSTX_EVENTS + " api join ids on ids.id = api.message "
+            " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, ROWID as id, name "
+            " from " + TABLE_API + " api join ids on ids.id = api.name) api " + orderBy + " LIMIT 1 OFFSET ?";
+    } else {
+        std::string associationTaskSql;
+        if (!TraceDatabaseHelper::IsDeviceIdUnique(path)) {
+            associationTaskSql = "join tasks on op.connectionId = tasks.connectionId";
+        }
+        std::string comSql = "select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
+            " startNs - minTime.value as startTime, endNs - startNs as duration, 0 as depth, op.ROWID"
+            " as id from COMMUNICATION_OP op join minTime " +
+            associationTaskSql + " join ids on ids.id = opName group by opId";
+        sql = "with ids as (" + nameMatch + "), minTime as (select ? as value), "
+            " tasks as (select ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, connectionId, "
+            " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
+            " where deviceId = ? ORDER BY startTime), "
+            " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
+            " info.taskType as name from COMMUNICATION_TASK_INFO info "
+            " join tasks on info.globalTaskId=tasks.globalTaskId ORDER BY startTime) "
+            " select * from ( select coalesce(compute.name, schedule.name, main.taskType) as name, main.pid, main.pid "
+            " as metaType, main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main "
+            " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId "
+            " left join COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
+            " join ids on ids.id = coalesce(compute.name, schedule.name, main.taskType) "
+            " union ALL select name, pid, pid as meatType, tid, startTime, duration, depth, com.id from com "
+            " join ids on ids.id = com.name  union ALL " + comSql + " ) allNames " + orderBy + " LIMIT 1 OFFSET ?";
+    }
+    return sql;
+}
 }

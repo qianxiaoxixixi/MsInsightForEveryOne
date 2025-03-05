@@ -1134,3 +1134,114 @@ TEST_F(DbTraceDatabaseTest, GetSearchSliceNameWithLockRangeSqlWhenHccl)
         "0 as depth from COMMUNICATION_OP op join ids on id = op.opName WHERE op.groupName = ? AND "
         "op.startNs >= ? AND op.endNs <= ?  ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
 }
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenPython)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    item.rankId = path;
+    Dic::Module::Timeline::SearchCountParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::API);
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = true;
+    params.isMatchExact = true;
+    params.rankId = "ll Host";
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where value like ?) SELECT count(1) FROM (SELECT name from "
+        "PYTORCH_API WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) api join ids on id = api.name ");
+}
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenCann)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    item.rankId = path;
+    Dic::Module::Timeline::SearchCountParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::CANN_API);
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = true;
+    params.isMatchExact = false;
+    params.rankId = "ll Host";
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id from STRING_IDS where value like '%'||?||'%') SELECT count(1) FROM (SELECT name from "
+        "CANN_API WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= ?) cann join ids on id = cann.name ");
+}
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenMstx)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    item.rankId = path;
+    Dic::Module::Timeline::SearchCountParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::MS_TX);
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    params.rankId = "ll Host";
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) "
+        "FROM (SELECT message from MSTX_EVENTS WHERE globalTid = ? AND startNs >= ? AND endNs <= ?) mstx "
+        "join ids on id = mstx.message ");
+}
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHardWare)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    Dic::Module::Timeline::SearchCountParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::ASCEND_HARDWARE);
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) FROM "
+        "(SELECT coalesce(c.name, m.message, s.name, main.taskType) as name FROM TASK main  left join "
+        "COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId  left join MSTX_EVENTS m on  (m.connectionId = "
+        "main.connectionId and  m.connectionId != 4294967295 ) left join COMMUNICATION_SCHEDULE_TASK_INFO s on "
+        "main.globalTaskId = s.globalTaskId WHERE main.deviceId = ? AND main.streamId = ? AND main.startNs >= ? AND "
+        "main.endNs <= ?) hadware  join ids on id = hadware.name ");
+}
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHccl)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    Dic::Module::Timeline::SearchCountParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::HCCL);
+    item.threadId = "888group";
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetSearchCountWithLockSql(params, trackQueryVec);
+    EXPECT_EQ(sql, "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT count(1) "
+        "FROM (SELECT opName as name from COMMUNICATION_OP WHERE groupName = ? AND startNs >= ? AND endNs "
+        "<= ?) op join ids on id = op.name ");
+}
+
+TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHcclPlane)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    std::string path = "lll";
+    Dic::Module::Timeline::SearchSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::HCCL);
+    item.threadId = "888";
+    trackQueryVec.emplace_back(item);
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql =
+        Dic::Module::Timeline::TraceDatabaseHelper::GetSearchSliceNameWithLockRangeSql(params, trackQueryVec, path);
+    EXPECT_EQ(sql,
+        "with ids as (select id from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT main.ROWID as id, "
+        "'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs as timestamp, main.endNs as endTime, "
+        "main.depth from TASK main join COMMUNICATION_TASK_INFO ci on ci.globalTaskId = main.globalTaskId join ids on "
+        "ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? "
+        "AND main.endNs <= ? ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+}
