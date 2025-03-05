@@ -132,6 +132,29 @@ const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBo
 static void ReduceThread(const std::vector<CompeteSliceDomain> &rows,
     const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
 static void SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr);
+static std::string GetLockRangeSql(const Protocol::SearchAllSliceParams &params,
+    const std::vector<TrackQuery> &trackQueryVec);
+static void SearchAllSliceWithLockRangeBindStmt(const SearchAllSliceParams &params,
+    const std::vector<TrackQuery> &trackQueryVec, std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const std::string &deviceId);
+
+static std::string GetSearchSliceNameWithLockRangeSql(const SearchSliceParams &params,
+    const std::vector<TrackQuery> &trackQuery, const std::string &path);
+static void SearchSliceNameWithLockRangeBindStmt(const SearchSliceParams &params,
+    const std::vector<TrackQuery> &trackQuery, std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &path,
+    const std::string &deviceId);
+static std::string GetSearchCountWithLockSql(const SearchCountParams &params,
+    const std::vector<TrackQuery> &trackQuery);
+static void SearchCountWithLockRangeBindStmt(const SearchCountParams &params, const std::vector<TrackQuery> &trackQuery,
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &deviceId);
+static std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
+static std::string GetComOpSliceDetailsSql(const std::string &rankId);
+
+static std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string &order,
+    const std::string &orderByField, const std::string &rankId);
+
+static std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
+    const std::string &path);
 
 static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(
         const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
@@ -239,6 +262,21 @@ private:
 
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
+
+    static std::string GetSingleSearchNameWithLockRangeSql(const std::string &path, const TrackQuery &singleQuery);
+
+    static std::string GetSingleLockRangeSql(const TrackQuery &item);
+
+    static std::string GetSingleSearchCountLockRangeSql(const SearchCountParams &params, const TrackQuery &item);
+
+    static void BindSingleTrackStmt(const SearchCountParams &params, std::unique_ptr<SqlitePreparedStatement> &stmt,
+        const std::string &deviceId, const TrackQuery &item);
+
+    static void BindSearchAllSliceSingleTrack(std::unique_ptr<SqlitePreparedStatement> &stmt,
+        const std::string &deviceId, const TrackQuery &item);
+
+    static void BindSearchNameWithLockRangeStmt(std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &path,
+        const std::string &deviceId, const TrackQuery &item);
 };
 };
 
