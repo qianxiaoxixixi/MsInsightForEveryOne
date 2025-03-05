@@ -14,6 +14,23 @@ const StyledModal = styled(Modal)`
     .ShortcutModal {
         color: ${(p): string => p.theme.textColor};
 
+        &__header {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            margin-bottom: 16px;
+            border: 1px solid ${(p): string => p.theme.borderColor};
+            border-radius: 4px;
+
+            .name {
+                font-weight: bold;
+            }
+
+            .value {
+                font-style: italic;
+            }
+        }
+
         &__modules-container {
             display: grid;
             grid-column-gap: 24px;
@@ -69,6 +86,15 @@ const StyledModal = styled(Modal)`
         }
     }
 `;
+
+const Header = (): JSX.Element => {
+    const { t } = useTranslation();
+
+    return <div className="ShortcutModal__header">
+        <div className="name">{t('Documentation')}：</div>
+        <div className="value">https://www.hiascend.com/document/detail/zh/mindstudio</div>
+    </div>;
+};
 
 const Section = (props: { title?: string; children: React.ReactNode }): JSX.Element => (
     <>
@@ -145,6 +171,7 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
         style={{ maxWidth: 800 }}
         wrapClassName="ShortcutModal"
     >
+        <Header />
         <Section>
             <ShortcutModule caption={t('tabs.Timeline')}>
                 <Shortcut
@@ -156,12 +183,24 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                     shortcuts={[KEYS.S]}
                 />
                 <Shortcut
+                    label={t('shortcuts.Undo zoom')}
+                    shortcuts={[KEYS.BACKSPACE]}
+                />
+                <Shortcut
+                    label={t('shortcuts.Reset zoom')}
+                    shortcuts={[`${getShortcutKey('CtrlOrCmd')}+0`]}
+                />
+                <Shortcut
+                    label={t('shortcuts.Zoom into selection')}
+                    shortcuts={['Shift+Z']}
+                />
+                <Shortcut
                     label={t('shortcuts.Pan left')}
                     shortcuts={[KEYS.A, `${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.drag')}`]}
                 />
                 <Shortcut
                     label={t('shortcuts.Pan right')}
-                    shortcuts={[KEYS.D]}
+                    shortcuts={[KEYS.D, `${getShortcutKey('CtrlOrCmd')}+${t('shortcuts.drag')}`]}
                 />
                 <Shortcut
                     label={t('shortcuts.Toggle bottom drawer')}
@@ -173,7 +212,7 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                 />
                 <Shortcut
                     label={t('shortcuts.Zoom into a selection')}
-                    shortcuts={[`${getShortcutKey('Alt')}${DELIMITER}${t('shortcuts.click')}`]}
+                    shortcuts={[`${getShortcutKey('Alt')}${DELIMITER}${t('shortcuts.drag')}`]}
                 />
                 <Shortcut
                     label={t('shortcuts.L align')}
