@@ -1,0 +1,105 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+
+import { register } from './register';
+import { KEYS } from 'ascend-utils';
+import type { Session } from '../entity/session';
+import { runInAction } from 'mobx';
+import { debounce } from 'lodash';
+import { setZoomHistory } from '../components/ContextMenu';
+import { getZoomPoint } from '../components/charts/ChartInteractor/ChartInteractor';
+
+enum ZoomDirection {
+    IN = -1,
+    OUT = 1,
+}
+
+function undoZoom(session: Session): void {
+    if (session.contextMenu.zoomHistory.length === 0) {
+        return;
+    }
+    runInAction(() => {
+        session.contextMenu.zoomHistory.pop();
+        const zoomHistoryLength = session.contextMenu.zoomHistory.length;
+        if (zoomHistoryLength === 0) {
+            session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+        } else {
+            session.domainRange = session.contextMenu.zoomHistory[zoomHistoryLength - 1];
+        }
+    });
+}
+
+function resetZoom(session: Session): void {
+    if (session.contextMenu.zoomHistory.length === 0) {
+        return;
+    }
+    runInAction(() => {
+        session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+        session.contextMenu.zoomHistory = [];
+    });
+}
+
+const zoomDomain = (session: Session, zoomCount: number, zoomPoint: number | undefined): void => {
+    runInAction(() => {
+        session.zoom = { zoomCount, zoomPoint };
+    });
+    setZoomHistoryDebounce(session);
+};
+
+const setZoomHistoryDebounce = debounce((session) => {
+    runInAction(() => {
+        setZoomHistory(session, session.domainRange);
+    });
+}, 300);
+
+export const actionUndoZoom = register({
+    name: 'undoZoom',
+    label: (session: Session, t) =>
+        `${t('timeline:contextMenu.Undo Zoom')}(${session.contextMenu.zoomHistory.length})`,
+    disabled: (session: Session) => session.contextMenu.zoomHistory.length === 0,
+    perform: (session): void => {
+        undoZoom(session);
+    },
+    keyTest: (event) => {
+        return event.key === KEYS.BACKSPACE;
+    },
+    once: true,
+});
+
+export const actionResetZoom = register({
+    name: 'resetZoom',
+    label: 'timeline:contextMenu.Reset Zoom',
+    disabled: (session: Session) => session.contextMenu.zoomHistory.length === 0,
+    perform: (session): void => {
+        resetZoom(session);
+    },
+    keyTest: (event) => {
+        return event[KEYS.CTRL_OR_CMD] && event.key === KEYS['0'];
+    },
+    once: true,
+});
+
+export const actionZoomIn = register({
+    name: 'zoomIn',
+    label: '',
+    perform: (session, interactorMouseState, xScale): void => {
+        const zoomPoint = interactorMouseState === undefined || xScale === undefined
+            ? 0
+            : getZoomPoint(xScale, interactorMouseState);
+        zoomDomain(session, ZoomDirection.IN, zoomPoint);
+    },
+    keyTest: (event) => event.key.toLowerCase() === KEYS.W,
+});
+
+export const actionZoomOut = register({
+    name: 'zoomOut',
+    label: '',
+    perform: (session, interactorMouseState, xScale): void => {
+        const zoomPoint = interactorMouseState === undefined || xScale === undefined
+            ? 0
+            : getZoomPoint(xScale, interactorMouseState);
+        zoomDomain(session, ZoomDirection.OUT, zoomPoint);
+    },
+    keyTest: (event) => event.key.toLowerCase() === KEYS.S,
+});

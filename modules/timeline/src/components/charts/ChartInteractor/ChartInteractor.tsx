@@ -127,7 +127,7 @@ interface InteractorEventParams {
 }
 
 // 获取缩放的基准点
-const getZoomPoint = (xScale: (x: number) => number, interactorMouseState: InteractorMouseState): number | undefined => {
+export const getZoomPoint = (xScale: (x: number) => number, interactorMouseState: InteractorMouseState): number | undefined => {
     return interactorMouseState.lastPos?.current?.x !== undefined
         ? xScale(interactorMouseState.lastPos?.current?.x)
         : undefined;
