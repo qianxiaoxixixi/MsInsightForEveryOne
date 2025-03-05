@@ -29,6 +29,7 @@ import { RenderEngineContext } from '../../context/context';
 import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
 import { Resizor } from 'ascend-resize';
+import { ActionManager } from '../../actions/manager';
 
 const DEFAULT_LANE_INFO_WIDTH = 250;
 const DEFAULT_LANE_CHART_WIDTH = 100;
@@ -66,6 +67,7 @@ const Container = styled.div`
 `;
 interface Props {
     session: Session;
+    actionManager: ActionManager;
     interactive?: boolean;
     theme?: Theme;
 }
@@ -136,7 +138,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
 });
 
 export const ChartContainer = observer((props: Props) => {
-    const { session } = props;
+    const { session, actionManager } = props;
     const [containerDom, setContainerDom] = React.useState<HTMLDivElement | undefined>(undefined);
     const chartInteractorRef = useRef<ChartInteractorHandles>(null);
     const scrollerRef = React.useRef<HTMLDivElement>(null);
@@ -151,16 +153,20 @@ export const ChartContainer = observer((props: Props) => {
             document.removeEventListener('mouseup', onMouseUp);
         };
     }, [containerDom]);
-    const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 16, 50), [session]);
+    const keyHoldAction = useMemo(() => loopActionFactory(
+        (e: React.KeyboardEvent<HTMLDivElement>) => actionManager.handleKeyDown(e, interactorMouseState, chartInteractorRef.current?.xScale), 16, 50),
+    [session]);
     const handleKeyDownEvent = (e: KeyboardEvent): void => {
         if (!e.repeat) {
+            keyHoldAction.clearLoop();
             keyHoldAction.beginLoop(e as unknown as React.KeyboardEvent<HTMLDivElement>);
         }
     };
     const handleKeyUpEvent = (e: KeyboardEvent): void => {
         keyHoldAction.clearLoop();
-        requestAnimationFrame(() => { onKeyUp(e); });
+        requestAnimationFrame(() => { actionManager.handleKeyUp(e); });
     };
+
     useEffect(() => {
         document.addEventListener('keydown', handleKeyDownEvent);
         document.addEventListener('keyup', handleKeyUpEvent);
@@ -171,7 +177,7 @@ export const ChartContainer = observer((props: Props) => {
             document.removeEventListener('keyup', handleKeyUpEvent);
             document.removeEventListener('blur', keyHoldAction.clearLoop);
         };
-    });
+    }, []);
     return <Container
         {...otherInteractors}
         ref={(dom): void => {

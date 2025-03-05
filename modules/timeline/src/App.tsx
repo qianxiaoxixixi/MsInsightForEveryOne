@@ -9,11 +9,12 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { AppErrorBoundary } from './components/error/AppErrorBoundary';
 import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBoundary';
-import { useRootStore } from './context/context';
+import { ActionManagerContext, useRootStore } from './context/context';
 import { SessionPage } from './pages/SessionPage';
 import { themeInstance, GlobalStyles } from 'ascend-theme';
 import connector from './connection';
 import { disableShortcuts } from 'ascend-utils';
+import { ActionManager } from './actions/manager';
 
 const Window = styled.div`
     height: 100vh;
@@ -110,7 +111,13 @@ export const App = observer(() => {
                 <AppErrorBoundary>
                     <SessionPageErrorBoundary>
                         <SharedConfigProvider locale={locale}>
-                            {session !== undefined ? <SessionPage session={session} /> : <StatePopover/>}
+                            {
+                                session !== undefined
+                                    ? <ActionManagerContext.Provider value={new ActionManager(session)}>
+                                        <SessionPage session={session} />
+                                    </ActionManagerContext.Provider>
+                                    : <StatePopover/>
+                            }
                         </SharedConfigProvider>
                     </SessionPageErrorBoundary>
                 </AppErrorBoundary>
