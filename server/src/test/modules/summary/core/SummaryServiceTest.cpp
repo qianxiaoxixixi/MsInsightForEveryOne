@@ -25,7 +25,7 @@ protected:
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
     }
 
-    static void InitParser(const std::string &dataPath, const std::string &uniqueKey)
+    static std::string InitParser(const std::string &dataPath, const std::string &uniqueKey)
     {
         // 创建新的db连接对象
         auto database = Dic::Module::FullDb::DataBaseManager::Instance().CreateClusterDatabase(uniqueKey,
@@ -35,6 +35,7 @@ protected:
                                                                  uniqueKey + Dic::TimeUtil::Instance().NowStr());
         clusterFileParser.ParseClusterFiles();
         clusterFileParser.ParseClusterStep2Files();
+        return database->GetDbPath();
     }
 
     static void Clear()
@@ -105,4 +106,28 @@ TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategyWithAlgIsNull)
     PerformanceIndicatorData indicatorData;
     SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
     EXPECT_EQ(indicatorData.indicators.size(), NUMBER_ZERO);
+}
+
+TEST_F(SummaryServiceTest, QueryCompareSummaryParallelStrategySuccess)
+{
+    Clear();
+    std::string dbPath = InitParser(filePath, Dic::BASELINE);
+    InitParser(filePath, Dic::COMPARE);
+    Dic::Module::ParallelStrategyConfig config;
+    const int defaultSize = 2;
+    config.ppSize = defaultSize;
+    config.tpSize = defaultSize;
+    config.dpSize = defaultSize;
+    config.cpSize = defaultSize;
+    config.epSize = defaultSize;
+    std::string err;
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(dbPath, config, err);
+    ParallelismPerformance params;
+    params.dimension = "ep-dp-pp-cp-tp";
+    params.step = "2";
+    params.isCompare = true;
+    params.config = config;
+    PerformanceIndicatorData indicatorData;
+    SummaryService::QueryParallelismPerformanceInfo(params, indicatorData);
+    EXPECT_EQ(indicatorData.performanceData.size(), NUMBER_SIXTEEN);
 }

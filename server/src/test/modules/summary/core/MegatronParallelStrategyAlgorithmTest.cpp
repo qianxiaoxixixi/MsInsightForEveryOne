@@ -246,6 +246,16 @@ void PrepareParametersForGetPerformanceByDimensionTest(ParallelStrategyConfig& c
     }
 }
 
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> PrepareParametersForGetCommInfoByDimension()
+{
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> res;
+    res["0"].push_back({10, "0", "(0, 1)", "tp"});
+    res["1"].push_back({12, "1", "(0, 1)", "tp"});
+    res["2"].push_back({13, "2", "(2, 3)", "tp"});
+    res["3"].push_back({14, "3", "(2, 3)", "tp"});
+    return res;
+}
+
 TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithTpDimension)
 {
     MegatronParallelStrategyAlgorithm algorithm;
@@ -280,6 +290,71 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldRe
     bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
     EXPECT_EQ(res, true);
     EXPECT_EQ(responseData.size(), 7); // 7 pp groups
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetCommInfoByDimension_TP_dimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> input =
+        PrepareParametersForGetCommInfoByDimension();
+    auto res = algorithm.GetCommInfoByDimension(input, dimension);
+    const int exceptSize = 4;
+    const double exceptComm = 10;
+    EXPECT_EQ(res.size(), exceptSize);
+    EXPECT_EQ(res["0"][0].commTime, exceptComm);
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetCommInfoByDimension_CP_dimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_CP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> input =
+            PrepareParametersForGetCommInfoByDimension();
+    auto res = algorithm.GetCommInfoByDimension(input, dimension);
+    const int exceptSize = 2;
+    const double exceptComm = 11;
+    EXPECT_EQ(res.size(), exceptSize);
+    EXPECT_EQ(res["0"][0].commTime, exceptComm);
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetCommInfoByDimension_PP_dimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_PP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> input =
+            PrepareParametersForGetCommInfoByDimension();
+    auto res = algorithm.GetCommInfoByDimension(input, dimension);
+    const int exceptSize = 1;
+    const double exceptComm = 12.25;
+    EXPECT_EQ(res.size(), exceptSize);
+    EXPECT_EQ(res["0"][0].commTime, exceptComm);
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetCommInfoByDimension_DP_dimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_DP;
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> input =
+            PrepareParametersForGetCommInfoByDimension();
+    auto res = algorithm.GetCommInfoByDimension(input, dimension);
+    const int exceptSize = 0;
+    EXPECT_EQ(res.size(), exceptSize);
 }
 
 TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithPpDimension)

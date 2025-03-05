@@ -5,7 +5,15 @@
 #include "ServerLog.h"
 #include "MindSpeedParallelStrategyAlgorithm.h"
 namespace Dic::Module::Summary {
-MindSpeedParallelStrategyAlgorithm::MindSpeedParallelStrategyAlgorithm() = default;
+MindSpeedParallelStrategyAlgorithm::MindSpeedParallelStrategyAlgorithm()
+{
+    commInfoHandlers[DIMENSIONS_TP] =
+        std::bind(&MindSpeedParallelStrategyAlgorithm::ReduceCommTpDimensionDef, this, std::placeholders::_1);
+    commInfoHandlers[DIMENSIONS_CP] =
+        std::bind(&MindSpeedParallelStrategyAlgorithm::ReduceCommCpDimensionDef, this, std::placeholders::_1);
+    commInfoHandlers[DIMENSIONS_PP] =
+        std::bind(&MindSpeedParallelStrategyAlgorithm::ReduceCommPpDimensionDef, this, std::placeholders::_1);
+}
 
 MindSpeedParallelStrategyAlgorithm::~MindSpeedParallelStrategyAlgorithm() = default;
 

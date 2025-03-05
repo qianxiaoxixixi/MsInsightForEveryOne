@@ -253,11 +253,6 @@ void SummaryService::MergeCommInfo(std::vector<CommInfoUnderRank> compare, std::
 std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::QueryParallelismCommTime(
     std::shared_ptr<VirtualClusterDatabase> &database, const GetPerformanceIndicatorParam &params)
 {
-    // 暂不支持折叠情况，后续支持后放开
-    if (params.dimension != "ep-dp-pp-cp-tp") {
-        ServerLog::Warn("Fail to query parallelism, not support dimension.");
-        return {};
-    }
     if (database == nullptr) {
         ServerLog::Warn("Fail to query parallelism communication info, database not exist.");
         return {};
@@ -290,7 +285,9 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> SummaryService::
         return {};
     }
     // 匹配数据
-    return MatchCommDataForConnection(commTimeForRankDim, connections, importRankList);
+    auto MatchRes = MatchCommDataForConnection(commTimeForRankDim, connections, importRankList);
+    // 数据根据维度进行折叠
+    return algPtr->GetCommInfoByDimension(MatchRes, params.dimension);
 }
 
 /**
