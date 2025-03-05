@@ -196,6 +196,7 @@ export class Session {
     } | undefined> = {};
 
     autoAdjustUnitHeight: boolean = false;
+    showBottomPanel: boolean | null = null;
 
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
