@@ -218,7 +218,9 @@ const drawMaskRange = ({
     }, selectedRange, isNsMode, session, theme,
 }: DrawArgs & { ctx: CanvasRenderingContext2D }): void => {
     let maskRange: number[] | undefined;
-    if (clickPos !== undefined && mousePosNow !== undefined && clickPos.x !== mousePosNow.x) {
+    if (session.selectedRangeIsLock && session.lockRange !== undefined) {
+        maskRange = [xReverseScaleRef.current(session.lockRange[0]), xReverseScaleRef.current(session.lockRange[1])];
+    } else if (clickPos !== undefined && mousePosNow !== undefined && clickPos.x !== mousePosNow.x) {
         // 1st priority
         // is brushing
         maskRange = [clickPos.x, mousePosNow.x];
@@ -230,10 +232,11 @@ const drawMaskRange = ({
         maskRange = undefined;
     }
     const elements = document.getElementsByClassName('chart-selected');
+    const unitLength = session.selectedRangeIsLock ? session.lockUnitCount : session.selectedUnits.length;
     if (maskRange !== undefined) {
         maskRange.sort((a, b) => a - b);
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        if (session.selectedUnits.length !== 0) {
+        if (unitLength !== 0) {
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
             if (elements.length !== 0) {
                 Array.of(...elements).forEach(element => {
@@ -281,7 +284,6 @@ export const drawOnMove = ({
     if (session.mKeyRender) {
         return;
     }
-    // clear all
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // draw mask

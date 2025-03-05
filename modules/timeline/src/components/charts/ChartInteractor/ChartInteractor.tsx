@@ -219,8 +219,10 @@ const Interactor = ({
         hoverCanvasCtx?.scale(devicePixelRatio, devicePixelRatio);
     },
     [normalRect, hoverRect]);
-
     useEffect(() => {
+        if (session.selectedRangeIsLock) {
+            return;
+        }
         const drawArgs = getDrawArgs();
         if (drawArgs === null) { return; }
         drawMEventMask(drawArgs);

@@ -276,12 +276,13 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     // click
                     const ctx = handle.context;
                     const selectedData = session.selectedData as ThreadTrace | undefined;
-                    const selectedUnitMetaData = session.selectedUnits?.[0]?.metadata as ThreadMetaData;
+                    const selectedUnitMetaData = session.selectedData as ThreadMetaData | undefined;
                     const threadMetaData = metaData as ThreadMetaData;
                     if (ctx === null) {
                         return;
                     }
-                    const check = selectedUnitMetaData !== undefined && selectedData !== undefined && selectedUnitMetaData === threadMetaData;
+                    const check = selectedUnitMetaData !== undefined && selectedData !== undefined &&
+                        selectedUnitMetaData.threadId === threadMetaData.threadId;
                     // 来自本泳道点击的数据，给数据描边+画线
                     ctx.strokeStyle = theme.textColorPrimary;
                     if (check) {

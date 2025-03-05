@@ -19,6 +19,7 @@ import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { hashToNumber } from '../../utils/colorUtils';
 import type { ThreadMetaData } from '../../entity/data';
 import { calculateDomainRange } from '../CategorySearch';
+import { ProcessMetaData } from '../../entity/data';
 
 const CONTAINER = styled.div`
     height: calc(100% - 50px);
@@ -227,6 +228,20 @@ const FindDetail = observer((props: any) => {
 });
 
 const searchData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<SearchTableData> => {
+    const metadataList = (prop.session.lockUnit as InsightUnit[]).map(selectUnit => {
+        const { threadId, processId, metaType, cardId } = selectUnit?.metadata as ThreadMetaData ?? {};
+        const timestampOffset = getTimeOffset(prop.session, selectUnit?.metadata as ProcessMetaData);
+        const lockStartTime = prop.session.lockRange === undefined ? 0 : Math.floor(prop.session.lockRange[0] + timestampOffset);
+        const lockEndTime = prop.session.lockRange === undefined ? 0 : Math.ceil(prop.session.lockRange[1] + timestampOffset);
+        return {
+            tid: threadId,
+            pid: processId,
+            metaType,
+            rankId: cardId,
+            lockStartTime,
+            lockEndTime,
+        };
+    });
     const res = await searchAllSlices({
         rankId: prop.rankId,
         pageSize: pages.pageSize,
@@ -236,6 +251,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         searchContent: prop.session.searchData.content,
         isMatchCase: prop.session.searchData.isMatchCase,
         isMatchExact: prop.session.searchData.isMatchExact,
+        metadataList,
     });
     return res;
 };

@@ -21,6 +21,9 @@ export const useSelectUnits = (session: Session): SelectUnit => {
         if (session.selectedUnits.includes(unit)) {
             return;
         }
+        if (session.selectedRangeIsLock) {
+            return;
+        }
         session.selectedUnitKeys.push(getAutoKey(unit));
         session.selectedUnits.push(unit);
     });
@@ -28,6 +31,9 @@ export const useSelectUnits = (session: Session): SelectUnit => {
 
 export const useDeselectUnits = (session: Session): SelectUnit => {
     return (unit: KeyedInsightUnit): void => runInAction(() => {
+        if (session.selectedRangeIsLock) {
+            return;
+        }
         const unitKey = getAutoKey(unit);
         const unitIndex = session.selectedUnits.findIndex(selectedUnit => getAutoKey(selectedUnit) === unitKey);
 

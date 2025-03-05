@@ -29,6 +29,7 @@ import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
 import { ThreadMetaData } from '../../../entity/data';
 import { PAGE_PADDING } from '../../charts/ChartInteractor/draw';
+import { MouseButton } from '../../charts/ChartInteractor/actions';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     position: relative;
@@ -154,7 +155,13 @@ export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, i
             {...props}
         />
         <div className={isSelected ? 'chart-selected' : 'chart'} ref={ref}
-            onMouseDown={(): void => {
+            onMouseDown={(e): void => {
+                if (session.selectedRangeIsLock) {
+                    return;
+                }
+                if (e.button !== MouseButton.LEFT) {
+                    return;
+                }
                 selectUnit(unit);
                 traceSingle('selectLane', [unit.name]);
             }}
@@ -308,10 +315,12 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
 
     const handleMouseMove = (e: React.MouseEvent): void => {
         if (!isSelecting) { return; }
+        if (session.selectedRangeIsLock) {
+            return;
+        }
         const top = Math.min(e.clientY, startPoint.current.y);
         const bottom = Math.max(e.clientY, startPoint.current.y);
         const newSelected: Set<string> = new Set();
-
         for (const [key, value] of unitsRefs.current) {
             const rect = value?.getBoundingClientRect();
 

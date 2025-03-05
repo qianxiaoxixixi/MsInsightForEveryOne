@@ -15,7 +15,7 @@ import type { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
-import { type HostMetaData, ProcessMetaData } from '../entity/data';
+import { type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
 import i18n from 'ascend-i18n';
 
 const MAX_HEIGHT = 200;
@@ -111,6 +111,19 @@ interface CategoryEvents {
 
 type FetchLinkLines = (session: Session) => Promise<CategoryEvents['flowDetailList']>;
 type UseFetchLinkLines = Map<string, FetchLinkLines>;
+
+const getLockRangeMetaList = (session: Session, cardId: string | undefined): any => {
+    return session.lockUnit.map(selectUnit => {
+        const { threadId, processId, metaType } = selectUnit?.metadata as ThreadMetaData ?? {};
+        return {
+            tid: threadId,
+            pid: processId,
+            metaType,
+            rankId: cardId,
+        };
+    });
+};
+
 const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<string>): UseFetchLinkLines => React.useMemo(() => new Map(
     displayCategories.map(category => [
         category,
@@ -138,7 +151,22 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 const start = Math.floor(domainStart + timestampOffset);
                 const end = Math.ceil(domainEnd + timestampOffset);
                 const host = (unit.parent?.metadata as HostMetaData)?.host ?? '';
-                const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx, isSimulation: session.isSimulation, host };
+                const metadataList = getLockRangeMetaList(session, cardId);
+                const lockStartTime = session.lockRange === undefined ? 0 : Math.floor(session.lockRange[0] + timestampOffset);
+                const lockEndTime = session.lockRange === undefined ? 0 : Math.ceil(session.lockRange[1] + timestampOffset);
+                const params =
+                    {
+                        rankId: cardId,
+                        startTime: start,
+                        endTime: end,
+                        category,
+                        timePerPx,
+                        isSimulation: session.isSimulation,
+                        host,
+                        metadataList,
+                        lockStartTime,
+                        lockEndTime,
+                    };
                 res = res.concat((await window.request(dataSource,
                     { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
                     .map(data => ({ ...data, cardId })));

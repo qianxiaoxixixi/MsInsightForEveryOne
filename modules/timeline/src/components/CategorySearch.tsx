@@ -3,7 +3,7 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Button, Input } from 'ascend-components';
+import { Button, Input, Tooltip } from 'ascend-components';
 import { message } from 'antd';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useEffect, useState } from 'react';
@@ -16,7 +16,7 @@ import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import type { ThreadMetaData } from '../entity/data';
+import type { ProcessMetaData, ThreadMetaData } from '../entity/data';
 import { generateFlowParam } from '../insight/units/details';
 import { getTimeOffset } from '../insight/units/utils';
 
@@ -82,6 +82,23 @@ interface SliceData {
 
 let remoteCntArray: RemoteCount[] = [];
 
+const getLockRangeMetaList = (session: Session): any => {
+    return session.lockUnit.map(selectUnit => {
+        const { threadId, processId, metaType, cardId } = selectUnit?.metadata as ThreadMetaData ?? {};
+        const timestampOffset = getTimeOffset(session, selectUnit?.metadata as ProcessMetaData);
+        const lockStartTime = session.lockRange === undefined ? 0 : Math.floor(session.lockRange[0] + timestampOffset);
+        const lockEndTime = session.lockRange === undefined ? 0 : Math.ceil(session.lockRange[1] + timestampOffset);
+        return {
+            tid: threadId,
+            pid: processId,
+            metaType,
+            rankId: cardId,
+            lockStartTime,
+            lockEndTime,
+        };
+    });
+};
+
 // 获取搜索的结果数量
 const queryDataCount = async (session: Session, searchContent: string, isMatchCase: boolean, isMatchExact: boolean): Promise<number> => {
     if (searchContent === undefined || searchContent === '') {
@@ -89,12 +106,13 @@ const queryDataCount = async (session: Session, searchContent: string, isMatchCa
     }
     let totalCnt = 0;
     remoteCntArray = [];
+    const metadataList = getLockRangeMetaList(session);
     for (const unit of session.units) {
         if (!unit.isDisplay) {
             continue;
         }
         const metadata = unit.metadata as any;
-        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent, isMatchCase, isMatchExact } });
+        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent, isMatchCase, isMatchExact, metadataList } });
         if (res.totalCount === 0) {
             continue;
         }
@@ -133,7 +151,8 @@ const jumpSlice = async ({ session, searchContent, index, isMatchExact, isMatchC
         }
     }
     setIsSearching(true);
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact } })
+    const metadataList = getLockRangeMetaList(session);
+    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact, metadataList } })
         .finally(() => {
             setIsSearching(false);
         });

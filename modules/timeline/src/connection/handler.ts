@@ -393,6 +393,9 @@ function resetSession(): void {
             selectedDetails: [],
             searchData: undefined,
         });
+        session.selectedRangeIsLock = false;
+        session.lockUnitCount = 0;
+        session.lockRange = undefined;
         session.selectedUnitKeys = [];
         session.singleLinkLine = {};
     });
