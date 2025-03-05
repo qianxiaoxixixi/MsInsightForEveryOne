@@ -94,6 +94,7 @@ export interface ChartInteractorHandles {
     mouseLeaveAction: (interactorMouseState: InteractorMouseState) => void;
     keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState) => void;
     keyUpAction: (e: KeyboardEvent, interactorMouseState: InteractorMouseState) => void;
+    xScale: (x: number) => number;
 }
 
 export interface InteractorMouseState {
@@ -161,6 +162,7 @@ const handleInteractorEvent = ({
         keyUpAction: (): void => {
             keyUpAction();
         },
+        xScale: interactorParams.xScale,
     });
 };
 

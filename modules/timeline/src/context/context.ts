@@ -4,6 +4,7 @@
 import { createContext, useContext } from 'react';
 import type { RootStore } from '../store';
 import type { RenderEngine } from '../renderEngine';
+import { ActionManager } from '../actions/manager';
 export const RootStoreContext = createContext<RootStore | undefined>(undefined);
 
 export const useRootStore = (): RootStore => {
@@ -22,4 +23,14 @@ export const useRenderEngine = (): RenderEngine => {
         throw new Error('RenderEngine is undefined');
     }
     return renderEngine;
+};
+
+export const ActionManagerContext = createContext<ActionManager | undefined>(undefined);
+
+export const useActionManager = (): ActionManager => {
+    const actionManager = useContext(ActionManagerContext);
+    if (actionManager === undefined) {
+        throw new Error('ActionManagerContext is undefined');
+    }
+    return actionManager;
 };

@@ -24,9 +24,7 @@ export const loopActionFactory = (callBackFunc: (args: any) => void, msPerTime: 
     }
     function clearAction(): void {
         isZoomInning = false;
-        setTimeout(() => {
-            lastTime = 0;
-        }, msPerTime);
+        lastTime = 0;
     }
     return { beginLoop: beginAction, clearLoop: clearAction };
 };

@@ -10,6 +10,8 @@ import { ChartContainer } from '../components/ChartContainer';
 import type { Session } from '../entity/session';
 import { stateTexts } from '../utils/constant';
 import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
+import { useActionManager } from '../context/context';
+import { actions } from '../actions/register';
 
 const ImgWithFallback = ({
     className = '',
@@ -65,7 +67,8 @@ const StatePopover = observer(({ session }: { session: Session }) => {
 
 export const BOTTOM_HEIGHT = 332;
 export const SessionPage = observer(({ session }: { session: Session }): any => {
-    const [view, handleOpen] = useDraggableContainer({
+    const actionManager = useActionManager();
+    const [view, handleOpen, togglePanel] = useDraggableContainer({
         draggableWH: BOTTOM_HEIGHT,
         dragDirection: DragDirection.BOTTOM,
         open: false,
@@ -82,8 +85,19 @@ export const SessionPage = observer(({ session }: { session: Session }): any => 
         }
     }, [session.doContextSearch, session.showEvent]);
 
+    useEffect(() => {
+        if (session.showBottomPanel === null) {
+            return;
+        }
+        togglePanel();
+    }, [session.showBottomPanel]);
+
+    useEffect(() => {
+        actionManager.registerAll(actions);
+    }, []);
+
     return view({
-        mainContainer: <ChartContainer session={session} interactive />,
+        mainContainer: <ChartContainer session={session} actionManager={actionManager} interactive />,
         draggableContainer: <BottomPanel session={session} />,
         slot: <StatePopover session={session} />,
         id: 'SessionPage',
