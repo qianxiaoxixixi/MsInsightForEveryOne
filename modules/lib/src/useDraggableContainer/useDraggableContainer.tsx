@@ -505,7 +505,7 @@ const getMinDragWidth = (dragDirection: DragDirection, foldWH?: number): number 
  * view：可拖动布局构造函数；
  * handleOpen：显示/隐藏可拖动容器；
  */
-export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void) ] => {
+export const useDraggableContainer = (props: DCProps): [((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void), () => void] => {
     const { draggableWH, dragDirection, foldWH, sizeMethod = SizeMethod.PERCENT, open = true } = props;
     const container = useRef<HTMLDivElement>(null);
     const draggable = useRef<HTMLDivElement>(null);
@@ -563,5 +563,5 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
             {viewProps.slot}
         </Container>;
     };
-    return [view, handleOpen];
+    return [view, handleOpen, showDraggable];
 };
