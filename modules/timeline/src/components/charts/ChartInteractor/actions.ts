@@ -347,7 +347,9 @@ const processMKeyEvent = (session: Session, isKeyPressed: boolean): void => {
     if (isKeyPressed) {
         return;
     }
-
+    if (session.selectedRangeIsLock) {
+        return;
+    }
     let render = false;
     let range: number[] = [];
     if (!session.mKeyRender && session.selectedData === undefined) {

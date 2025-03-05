@@ -39,7 +39,9 @@
       "Disable auto unit height": "Disable auto unit height",
       "Recover cards default offset": "Recover cards default offset",
       "Set base slice": "Set base slice",
-      "Clear base slice": "Clear base slice"
+      "Clear base slice": "Clear base slice",
+      "Lock selection area": "Lock selection area",
+      "Unlock selection area": "Unlock selection area"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",

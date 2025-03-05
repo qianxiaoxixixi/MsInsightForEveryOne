@@ -651,6 +651,44 @@ const clearBaseSlice = (session: Session, menuItem?: MenuItemModel): void => {
     });
 };
 
+const lockSelecttionArea = (session: Session, menuItem?: MenuItemModel): void => {
+    if (session.selectedRange === undefined || session.selectedUnits === undefined) {
+        return;
+    }
+    if (session.selectedUnits.length === 0) {
+        return;
+    }
+    runInAction(() => {
+        session.selectedRangeIsLock = true;
+        session.lockUnitCount = session.selectedUnits.length;
+        session.lockRange = session.selectedRange;
+        session.lockUnit = session.selectedUnits;
+    });
+};
+
+const unLockSelecttionArea = (session: Session, menuItem?: MenuItemModel): void => {
+    runInAction(() => {
+        session.selectedRangeIsLock = false;
+        session.lockUnitCount = 0;
+        session.lockRange = undefined;
+        session.lockUnit = [];
+    });
+};
+
+const setLockSelecttionVisible = (session: Session): boolean => {
+    if (session.selectedRangeIsLock) {
+        return false;
+    }
+    if (session.selectedRange === undefined || session.selectedUnits === undefined) {
+        return false;
+    }
+    return session.selectedUnits.length !== 0;
+};
+
+const setUnLockSelecttionVisible = (session: Session): boolean => {
+    return session.selectedRangeIsLock;
+};
+
 const toggleAutoUnitHeight = (session: Session): void => {
     runInAction(() => {
         session.autoAdjustUnitHeight = !session.autoAdjustUnitHeight;
@@ -885,6 +923,8 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Recover cards default offset'), key: 'recoverDefaultOffset', event: clearOrRecoverCardDefaultOffset, visible: true },
         { name: t('Set base slice'), key: 'setBaseSlice', event: setBaseSlice, visible: setBaseSliceVisible(session) },
         { name: t('Clear base slice'), key: 'clearBaseSlice', event: clearBaseSlice, visible: clearBaseSliceVisible(session) },
+        { name: t('Lock selection area'), key: 'lockSelectionArea', event: lockSelecttionArea, visible: setLockSelecttionVisible(session) },
+        { name: t('Unlock selection area'), key: 'unLockSelectionArea', event: unLockSelecttionArea, visible: setUnLockSelecttionVisible(session) },
     ];
 
     return <>

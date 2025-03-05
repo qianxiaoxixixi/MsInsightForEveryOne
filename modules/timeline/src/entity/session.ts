@@ -116,7 +116,6 @@ export class Session {
     // Timeline模块键盘滚动区域
     scrollArea: string = '';
     expandedUnitKeys: string[] | [] = [];
-    selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
     selectedDetailKeys: [string] | [] = [];
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: UnitsConfig = {
@@ -151,6 +150,25 @@ export class Session {
      * m快捷键遮罩范围
      */
     mMaskRange: number[] = [];
+    /**
+     * 框选的范围是否已经被锁定
+     */
+    selectedRangeIsLock: boolean = false;
+
+    /**
+     * 锁定的框选范围
+     */
+    lockRange?: [ TimeStamp, TimeStamp ];
+
+    /**
+     * 锁定的泳道个数
+     */
+    lockUnitCount: number = 0;
+
+    /**
+     * 锁定的泳道
+     */
+    lockUnit: InsightUnit[] = [];
 
     linkFlow?: Record<string, unknown>;
     linkDetail?: LinkDataDesc<Record<string, unknown>>;
@@ -192,6 +210,7 @@ export class Session {
     private _alignSliceData: Array<Record<string, unknown>> = [];
     private _selectedRangeData?: Array<Record<string, unknown>>;
     private _interval: number;
+    private _selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {
@@ -293,6 +312,10 @@ export class Session {
         return this._selectedRangeData;
     }
 
+    get selectedUnits(): InsightUnit[] {
+        return this._selectedUnits;
+    }
+
     set endTimeAll(endTimeAll: TimeStamp | undefined) {
         this._endTimeAll = endTimeAll;
         this._domain !== undefined && (this._domain.endTimeAll = endTimeAll ?? this.domain.maxDuration);
@@ -307,6 +330,9 @@ export class Session {
     }
 
     set selectedUnitKeys(value: string[]) {
+        if (this.selectedRangeIsLock) {
+            return;
+        }
         this._selectedUnitKeys = value;
         // 'More' panel should be cleared when selected unit is changed
         runInAction(() => {
@@ -354,6 +380,13 @@ export class Session {
         this._selectedRangeData = data;
     }
 
+    set selectedUnits(data: InsightUnit[]) {
+        if (this.selectedRangeIsLock) {
+            return;
+        }
+        this._selectedUnits = data;
+    }
+
     printSessionInfo(): string {
         return `${JSON.stringify({ ...omit(this, ['caches', 'sharedState', '_units']) })}`;
     }
@@ -377,6 +410,9 @@ export class Session {
     }
 
     setSelectedUnitKeys(value: [string] | []): void {
+        if (this.selectedRangeIsLock) {
+            return;
+        }
         this._selectedUnitKeys = value;
     };
 }

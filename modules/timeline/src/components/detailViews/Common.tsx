@@ -219,7 +219,7 @@ export const queryOneKernel = async (param: {
 
 export const searchAllSlices = async (param: {
     rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-    searchContent: string; isMatchCase: boolean; isMatchExact: boolean;
+    searchContent: string; isMatchCase: boolean; isMatchExact: boolean; metadataList: any;
 }): Promise<any> => {
     return window.requestData('search/all/slices', param, 'timeline');
 };
