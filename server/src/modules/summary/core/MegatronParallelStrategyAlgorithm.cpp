@@ -6,7 +6,15 @@
 #include "MegatronParallelStrategyAlgorithm.h"
 
 namespace Dic::Module::Summary {
-MegatronParallelStrategyAlgorithm::MegatronParallelStrategyAlgorithm() = default;
+MegatronParallelStrategyAlgorithm::MegatronParallelStrategyAlgorithm()
+{
+    commInfoHandlers[DIMENSIONS_TP] =
+        std::bind(&MegatronParallelStrategyAlgorithm::ReduceCommTpDimensionDef, this, std::placeholders::_1);
+    commInfoHandlers[DIMENSIONS_CP] =
+        std::bind(&MegatronParallelStrategyAlgorithm::ReduceCommCpDimensionDef, this, std::placeholders::_1);
+    commInfoHandlers[DIMENSIONS_PP] =
+        std::bind(&MegatronParallelStrategyAlgorithm::ReduceCommPpDimensionDef, this, std::placeholders::_1);
+}
 
 MegatronParallelStrategyAlgorithm::~MegatronParallelStrategyAlgorithm() = default;
 

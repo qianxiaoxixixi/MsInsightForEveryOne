@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_SERVER_SRC_MODULES_SUMMARY_CORE_BASEPARALLELSTRATEGYALGORITHM_H
 
 #include <unordered_map>
+#include <functional>
 #include "ClusterDef.h"
 #include "SummaryProtocolResponse.h"
 #include "SummaryProtocolRequest.h"
@@ -37,6 +38,9 @@ public:
     virtual void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
                                std::vector<IndicatorDataStruct> &indicatorData);
     virtual std::vector<Connection> GetAllCommunicationGroups(std::string &err) = 0;
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> GetCommInfoByDimension(
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &expandCommInfos,
+        const std::string &dimension);
 
 protected:
     int64_t GetParallelSizeByType(const std::string& type) const;
@@ -74,6 +78,9 @@ protected:
         Protocol::TraceStatistic &max, Protocol::TraceStatistic &min, double meanE2ETime,
         std::vector<std::string> &advices);
 
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> ReduceCommDefaultFunc(
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, int w, int h);
+
     ParallelStrategyConfig strategyConfig;
     std::string dimension = DIMENSIONS_DP; // 默认一层级
     uint32_t wordSize = 1;
@@ -109,6 +116,16 @@ protected:
     const static inline int cpSizeWithEp = 1;
     const static inline int reservedNum = 2; // 保留2位小数
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
+
+    using CommInfoHandler = std::function<std::unordered_map<std::string, std::vector<CommInfoUnderRank>>(
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>&)>;
+    std::map<std::string, CommInfoHandler> commInfoHandlers;
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> ReduceCommTpDimensionDef(
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData);
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> ReduceCommCpDimensionDef(
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData);
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> ReduceCommPpDimensionDef(
+        const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData);
 };
 }
 #endif // PROFILER_SERVER_SERVER_SRC_MODULES_SUMMARY_CORE_BASEPARALLELSTRATEGYALGORITHM_H

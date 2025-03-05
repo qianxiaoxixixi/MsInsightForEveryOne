@@ -65,6 +65,7 @@
     "Sum of Min Communication(Not Overlapped)": "Sum of Min Communication(Not Overlapped)",
     "Communication(Not Overlapped and Exclude Receive)": "Communication(Not Overlapped and Exclude Receive Ops)",
     "Communication": "Communication",
+    "Avg Communication": "Avg Communication",
     "Max Communication": "Max Communication",
     "Min Communication": "Min Communication",
     "Communication Range": "Communication Range(Max-Min)",

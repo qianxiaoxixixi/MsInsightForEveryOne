@@ -66,6 +66,7 @@
     "Sum of Min Communication(Not Overlapped)": "最小通信时间(未被覆盖)的总和",
     "Communication(Not Overlapped and Exclude Receive)": "通信时间(未被覆盖且不包含Receive算子)",
     "Communication": "通信时间",
+    "Avg Communication": "平均通信时间",
     "Max Communication": "最大通信时间",
     "Min Communication": "最小通信时间",
     "Communication Range": "通信时间极差(最大与最小间的差值)",

@@ -3,6 +3,7 @@
  */
 #include <cfloat>
 #include "NumberUtil.h"
+#include "ServerLog.h"
 #include "BaseParallelStrategyAlgorithm.h"
 
 namespace Dic::Module::Summary {
@@ -610,5 +611,97 @@ void BaseParallelStrategyAlgorithm::CalAdviceInfo(const std::string &tmpDimensio
     if (!indicatorData.empty() && sum != 0) {
         AnalyzePerformanceAdviceWithDpCpPpTpDimension(max, min, sum / indicatorData.size(), advices);
     }
+}
+
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::GetCommInfoByDimension(
+    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &expandCommInfos,
+    const std::string &dimension)
+{
+    // 查找对应的处理函数
+    auto it = commInfoHandlers.find(dimension);
+    // 如果找到了对应的处理函数，则调用它
+    if (it != commInfoHandlers.end()) {
+        return it->second(expandCommInfos);
+    } else {
+        // 如果没有找到对应的处理函数，则默认返回空列表
+        return {};
+    }
+}
+
+/**
+ * 默认折叠算法将输入的数据按滑动窗口进行折叠求平均
+ * @param input 输入数据
+ * @param w 滑动窗口宽
+ * @param h 滑动窗口高
+ * @return
+ */
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::ReduceCommDefaultFunc(
+    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>> &input, int w, int h)
+{
+    if (input.empty()) {
+        Server::ServerLog::Error("Fail to reduce communication data, input is empty.");
+        return {};
+    }
+
+    // 检查参数是否为0，滑动窗口是否符合折叠要求
+    bool isParamZero = strategyConfig.ppSize == 0 || tpCpDpSize == 0 || w == 0 || h == 0;
+    bool isInvalidWindowSize = strategyConfig.ppSize % h != 0 || tpCpDpSize % w != 0;
+    if (isParamZero || isInvalidWindowSize) {
+        Server::ServerLog::Error("Fail to reduce communication data, param error.");
+        return {};
+    }
+
+    // 先进行求和，resMap的格式为 {序号: {"通信域名(tp/dp等)"： “通信数据”}}
+    std::unordered_map<std::string, std::unordered_map<std::string, double>> resMap;
+    // 求和的同时统计个数，格式为{"序号-通信域名": 累加的个数}
+    std::unordered_map<std::string, int> countMap;
+    for (const auto &item: input) {
+        // 开始计算折叠后的下标：获取原始下表
+        uint32_t index = StringUtil::StringToUint32(item.first);
+        // 二维数组维度，计算元素的目标位置（折叠后该点数据应该被计算在第curRow行，curColumn列的点中）
+        // 折叠后行数,(index / tpCpDpSize)为折叠前所在行，再除去窗口高度h则为折叠后所在行
+        uint32_t curRow = index / tpCpDpSize / h;
+        // 折叠后列数，index % tpCpDpSize 为折叠前所在列，再除去窗口宽度w，为折叠后所在列
+        uint32_t curColumn = index % tpCpDpSize / w;
+        // 计算折叠后序号：所在行号 * 行数据个数 + 所在列号
+        uint32_t curIndex = curRow * (tpCpDpSize / w) + curColumn;
+        std::string finalIndexStr = std::to_string(curIndex);
+        for (const auto &commInfo: item.second) {
+            resMap[finalIndexStr][commInfo.pgName] += commInfo.commTime;
+            countMap[finalIndexStr + "-" + commInfo.pgName]++;
+        }
+    }
+
+    // 求平均
+    std::unordered_map<std::string, std::vector<CommInfoUnderRank>> res;
+    for (const auto &item: resMap) {
+        std::vector<CommInfoUnderRank> commInfos;
+        for (const auto &info: item.second) {
+            // 这里从countMap的key值就是由resMap的两层key值拼接成的，不会出现0的情况
+            double avgComm =
+                NumberUtil::DoubleReservedNDigits(info.second / countMap[item.first + "-" + info.first], 3);
+            commInfos.push_back({avgComm, item.first, "", info.first});
+        }
+        res[item.first] = commInfos;
+    }
+    return res;
+}
+
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::ReduceCommTpDimensionDef(
+    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData)
+{
+    return expendData;
+}
+
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::ReduceCommCpDimensionDef(
+    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData)
+{
+    return ReduceCommDefaultFunc(expendData, tpSize, 1);
+}
+
+std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStrategyAlgorithm::ReduceCommPpDimensionDef(
+    const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData)
+{
+    return ReduceCommDefaultFunc(expendData, tpCpSize, 1);
 }
 }
