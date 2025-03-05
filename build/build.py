@@ -390,6 +390,9 @@ def build_light_package(version, os_name, is_huaweicloud):
         cmd_list = cmd_list + ["--no-default-features"]
         package_name = Const.ASCEND_INSIGHT_PREFIX + '_huaweicloud_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
 
+    shutil.copyfile(os.path.join(PROJECT_PATH, "build", "plugin_install.py"),
+                    os.path.join(profiler_path, "plugin_install.py"))
+
     result = exec_command(cmd_list, Const.PLATFORM_DIR, 'bin_package')
     if result != 0:
         return 1
