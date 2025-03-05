@@ -8,6 +8,7 @@
 #include "NpuInfoRepoMock.h"
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
+using namespace Dic::Module::Timeline;
 class DbTraceDatabaseTest : public ::testing::Test {
 protected:
     class MockDatabase2 : public Dic::Module::FullDb::DbTraceDataBase {
@@ -915,4 +916,121 @@ TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenRankIdAndDeviceIdNotSame)
     EXPECT_EQ(result, true);
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
     EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");
+}
+
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenPython)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::API);
+    trackQueryVec.emplace_back(item);
+    params.order = "descend";
+    params.isMatchCase = true;
+    params.isMatchExact = true;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where value like ?)  SELECT api.ROWID as id, 'pytorch' as tid, "
+        "api.globalTid as pid, api.startNs as timestamp, api.endNs as endTime, api.depth, '' as deviceId, ids.value as "
+        "value from PYTORCH_API  api join ids on ids.id = api.name WHERE api.globalTid = ? AND api.startNs >= ? AND "
+        "api.endNs <= ?  ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
+}
+
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenCann)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::CANN_API);
+    trackQueryVec.emplace_back(item);
+    params.order = "asc";
+    params.isMatchCase = true;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where value like '%'||?||'%')  SELECT cann.connectionId as id, "
+        "cann.globalTid as pid, cann.type as tid, cann.startNs as timestamp, cann.endNs as endTime, cann.depth, '' as "
+        "deviceId, ids.value from CANN_API  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND "
+        "startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
+}
+
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenMstx)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::MS_TX);
+    trackQueryVec.emplace_back(item);
+    params.order = "asc";
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where lower(value) like lower('%'||?||'%'))  SELECT mstx.ROWID "
+        "as id, mstx.globalTid as pid, 'MsTx' as tid, mstx.startNs as timestamp, mstx.endNs as endTime, mstx.depth, '' "
+        "as deviceId, ids.value from MSTX_EVENTS  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND "
+        "startNs >= ? AND endNs <= ?  ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
+}
+
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenHardWare)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::ASCEND_HARDWARE);
+    trackQueryVec.emplace_back(item);
+    params.order = "asc";
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT hadware.id "
+        "as id, hadware.pid as pid, hadware.tid as tid, hadware.timestamp as timestamp, hadware.endTime as endTime, "
+        "hadware.depth as depth, hadware.deviceId as deviceId, ids.value  FROM (SELECT coalesce(c.name, m.message, "
+        "s.name, main.taskType) as name, main.ROWID AS id, 'Ascend Hardware' as pid, main.streamId as tid,main.startNs "
+        "as timestamp, main.endNs as endTime, main.depth as depth, main.deviceId as deviceId FROM TASK main left join "
+        "COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId left join MSTX_EVENTS m on (m.connectionId = "
+        "main.connectionId and  m.connectionId != 4294967295 ) left join COMMUNICATION_SCHEDULE_TASK_INFO s on "
+        "main.globalTaskId = s.globalTaskId WHERE main.deviceId = ? AND main.streamId = ? AND main.startNs >= ? AND "
+        "main.endNs <= ?) hadware  join ids on ids.id = hadware.name  ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
+}
+
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenGroup)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::HCCL);
+    trackQueryVec.emplace_back(item);
+    item.threadId = "999group";
+    params.order = "asc";
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT main.ROWID "
+        "as id, 'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs as timestamp, main.endNs as endTime, "
+        "main.depth, main.deviceId as deviceId, ids.value from TASK main join COMMUNICATION_TASK_INFO ci on "
+        "ci.globalTaskId = main.globalTaskId join ids on ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName "
+        "= ? AND ci.planeId = ? AND main.startNs >= ? AND main.endNs <= ? ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
+}
+
+TEST_F(DbTraceDatabaseTest, GetLockRangeSqlWhenPlane)
+{
+    std::vector<Dic::Module::Timeline::TrackQuery> trackQueryVec;
+    Dic::Module::Timeline::TrackQuery item;
+    Dic::Module::Timeline::SearchAllSliceParams params;
+    item.metaType = PROCESS_TYPE_ES.at(PROCESS_TYPE::HCCL);
+    trackQueryVec.emplace_back(item);
+    item.threadId = "999";
+    params.order = "asc";
+    params.isMatchCase = false;
+    params.isMatchExact = false;
+    std::string sql = Dic::Module::Timeline::TraceDatabaseHelper::GetLockRangeSql(params, trackQueryVec);
+    EXPECT_EQ(sql,
+        "with ids as (select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')) SELECT main.ROWID "
+        "as id, 'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs as timestamp, main.endNs as endTime, "
+        "main.depth, main.deviceId as deviceId, ids.value from TASK main join COMMUNICATION_TASK_INFO ci on "
+        "ci.globalTaskId = main.globalTaskId join ids on ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName "
+        "= ? AND ci.planeId = ? AND main.startNs >= ? AND main.endNs <= ? ORDER BY timestamp DESC  LIMIT ? OFFSET ?");
 }

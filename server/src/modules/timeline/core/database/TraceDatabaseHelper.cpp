@@ -1117,4 +1117,87 @@ void TraceDatabaseHelper::SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRep
         npuInfoRepo = std::move(npuInfoRepoPtr);
     }
 }
+
+std::string TraceDatabaseHelper::GetLockRangeSql(const SearchAllSliceParams &params,
+    const std::vector<TrackQuery> &trackQueryVec)
+{
+    std::string sql;
+    std::string nameMatch;
+    std::string orderBy;
+    if (params.order == "descend") {
+        orderBy = " ORDER BY " + params.orderBy + " DESC";
+    } else {
+        orderBy = " ORDER BY " + params.orderBy + " ASC";
+    }
+    if (params.isMatchExact && params.isMatchCase) {
+        nameMatch = "select id, value from STRING_IDS where value like ?";
+    } else if (params.isMatchExact) {
+        nameMatch = "select id, value from STRING_IDS where lower(value) like lower(?)";
+    } else if (params.isMatchCase) {
+        nameMatch = "select id, value from STRING_IDS where value like '%'||?||'%'";
+    } else {
+        nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
+    }
+    sql = "with ids as (" + nameMatch + ") ";
+    std::vector<std::string> sqls;
+    for (const auto &item : trackQueryVec) {
+        std::string tempSql = GetSingleLockRangeSql(item);
+        if (!tempSql.empty()) {
+            sqls.emplace_back(tempSql);
+        }
+    }
+    sql = sql + StringUtil::join(sqls, " UNION ALL ");
+    std::string orderByFiled = " ORDER BY timestamp DESC  LIMIT ? OFFSET ?";
+    sql += orderByFiled;
+    return sql;
+}
+
+std::string TraceDatabaseHelper::GetSingleLockRangeSql(const TrackQuery &item)
+{
+    PROCESS_TYPE type = STR_TO_ENUM<PROCESS_TYPE>(item.metaType).value();
+    std::string tempSql;
+    if (type == PROCESS_TYPE::API) {
+        tempSql = " SELECT api.ROWID as id, 'pytorch' as tid, api.globalTid as pid, api.startNs as timestamp, "
+            "api.endNs as endTime, api.depth, '' as deviceId, ids.value as value from " + TABLE_API +
+            "  api join ids on ids.id = api.name WHERE api.globalTid = ? AND api.startNs >= ? AND api.endNs <= ? ";
+    } else if (type == PROCESS_TYPE::CANN_API) {
+        tempSql = " SELECT cann.connectionId as id, cann.globalTid as pid, cann.type as tid, cann.startNs as "
+            "timestamp, cann.endNs as endTime, cann.depth, '' as deviceId, ids.value from " +
+            TABLE_CANN_API +
+            "  cann join ids on ids.id = cann.name WHERE globalTid = ? AND type = ? AND startNs >= ? AND endNs <= "
+            "? ";
+    } else if (type == PROCESS_TYPE::MS_TX) {
+        tempSql = " SELECT mstx.ROWID as id, mstx.globalTid as pid, 'MsTx' as tid, mstx.startNs as timestamp, "
+            "mstx.endNs as endTime, mstx.depth, '' as deviceId, ids.value from " +
+            TABLE_MSTX_EVENTS +
+            "  mstx join ids on ids.id = mstx.message WHERE globalTid = ? AND startNs >= ? AND endNs <= ? ";
+    } else if (type == PROCESS_TYPE::ASCEND_HARDWARE) {
+        tempSql = "SELECT hadware.id as id, hadware.pid as pid, hadware.tid as tid, hadware.timestamp as "
+            "timestamp, hadware.endTime as endTime, hadware.depth as depth, hadware.deviceId as deviceId, "
+            "ids.value  FROM (SELECT coalesce(c.name, m.message, s.name, main.taskType) as "
+            "name, main.ROWID AS id, 'Ascend Hardware' as pid, main.streamId as tid,main.startNs as timestamp, "
+            "main.endNs as endTime, main.depth as depth, main.deviceId as deviceId FROM " +
+            TABLE_TASK + " main left join " + TABLE_COMPUTE_TASK_INFO +
+            " c on c.globalTaskId = main.globalTaskId left join " + TABLE_MSTX_EVENTS +
+            " m on (m.connectionId = main.connectionId and  m.connectionId != " +
+            WRONG_DATA + " ) left join " + TABLE_COMMUNICATION_SCHEDULE_TASK +
+            " s on main.globalTaskId = s.globalTaskId WHERE main.deviceId = ? AND main.streamId = ? AND "
+            "main.startNs >= ? AND main.endNs <= ?) hadware  join ids on ids.id = hadware.name ";
+    } else if (type == PROCESS_TYPE::HCCL) {
+        if (StringUtil::EndWith(item.threadId, "group")) {
+            tempSql = " SELECT op.opId as id, 'HCCL' as pid, op.groupName||'group' as tid, op.startNs as "
+                "timestamp, op.endNs as endTime, 0 as depth, '0' as deviceId, ids.value from " +
+                TABLE_COMMUNICATION_OP +
+                " op join ids on id = op.opName WHERE op.groupName = ? AND op.startNs >= ? AND op.endNs <= ? ";
+        } else {
+            tempSql = "SELECT main.ROWID as id, 'HCCL' as pid, ci.groupName||'_'||ci.planeId as tid, main.startNs "
+                "as timestamp, main.endNs as endTime, main.depth, main.deviceId as deviceId, ids.value from "
+                "TASK main join " + TABLE_COMMUNICATION_TASK_INFO +
+                " ci on ci.globalTaskId = main.globalTaskId join ids on ids.id = ci.taskType" +
+                " WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? AND "
+                "main.endNs <= ?";
+        }
+    }
+    return tempSql;
+}
 }

@@ -82,5 +82,39 @@ struct ThreadQuery {
     std::string fileId;
     PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
 };
+
+struct TrackQuery {
+    /* *
+     * 数据库db文件路径唯一标识
+     */
+    std::string rankId;
+    /* *
+     * 进程信息
+     */
+    std::string processId;
+    /* *
+     * 线程信息
+     */
+    std::string threadId;
+    /* *
+     * 线程泳道唯一标识
+     */
+    uint64_t trackId = 0;
+
+    /**
+     * 线程泳道属于哪个类型
+     */
+    std::string metaType;
+
+    /**
+     * 泳道开始时间
+     */
+    uint64_t startTime = 0;
+
+    /**
+     * 泳道结束时间
+     */
+    uint64_t endTime = 0;
+};
 }
 #endif // PROFILER_SERVER_SLICEQUERY_H
