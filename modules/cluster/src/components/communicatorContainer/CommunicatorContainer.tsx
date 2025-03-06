@@ -106,7 +106,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     const [activeTab, setActiveTab] = useState(generateConditions.dimension);
     const { t } = useTranslation('summary');
     const dimensionOptions = useMemo(() => {
-        const options = getDimensionOptions(t);
+        const options = getDimensionOptions(t, generateConditions);
 
         // 无 CP 维度时，选中 DP 维度
         if (generateConditions.cpSize === 1 && activeTab === 'ep-dp-pp-cp') {
@@ -184,13 +184,17 @@ const PARALLEL_STRATEGY_INPUT_PROPS = { min: 1, max: 10000, style: { width: '80p
 const selectOptions = [
     { value: 'megatron-lm(tp-cp-ep-dp-pp)', label: 'Megatron-LM(tp-cp-ep-dp-pp)' },
     { value: 'megatron-lm(tp-cp-pp-ep-dp)', label: 'Megatron-LM(tp-cp-pp-ep-dp)' },
+    { value: 'mindspeed(tp-cp-ep-dp-pp)', label: 'MindSpeed(tp-cp-ep-dp-pp)' },
 ];
-const getDimensionOptions = (t: TFunction): Array<{key: string; label: string}> => [
-    { key: 'ep-dp', label: `DP ${t('Dimension')} >` },
-    { key: 'ep-dp-pp', label: `DP + PP ${t('Dimension')} >` },
-    { key: 'ep-dp-pp-cp', label: `DP + PP + CP  ${t('Dimension')} >` },
-    { key: 'ep-dp-pp-cp-tp', label: `DP + PP + CP + TP ${t('Dimension')}` },
-];
+const getDimensionOptions = (t: TFunction, generateConditions: GenerateConditions): Array<{key: string; label: string}> => {
+    const { cpSize } = generateConditions;
+    return [
+        { key: 'ep-dp', label: `DP ${t('Dimension')} >` },
+        { key: 'ep-dp-pp', label: `DP + PP ${t('Dimension')} >` },
+        { key: 'ep-dp-pp-cp', label: `DP + PP + CP  ${t('Dimension')} >` },
+        { key: 'ep-dp-pp-cp-tp', label: cpSize === 1 ? `DP + PP + TP ${t('Dimension')}` : `DP + PP + CP + TP ${t('Dimension')}` },
+    ];
+};
 
 const FormDom = ({ isCollectedConfiguration, onClickGenerate, form }:
 {isCollectedConfiguration: boolean; onClickGenerate: () => void; form: FormInstance<any> }): JSX.Element => {
@@ -244,7 +248,7 @@ interface CommunicatorContentProps {
 const CommunicatorContent = observer(({ session, generateConditions }: CommunicatorContentProps) => {
     return (
         <ParallelSwitchConditionsProvider>
-            <ParallelSwitch session={session} dimension={generateConditions?.dimension} />
+            <ParallelSwitch session={session} generateConditions={generateConditions} dimension={generateConditions?.dimension} />
             <ParallelismGraph session={session} generateConditions={generateConditions} />
             <LegendContainer/>
         </ParallelSwitchConditionsProvider>
@@ -288,20 +292,22 @@ const LegendContainer = (): JSX.Element => {
     );
 };
 
-const useParallelTypeOptions = (dimension: ParallelSwitchProps['dimension']): Array<{label: string;value: string; disabled?: boolean}> => {
+const useParallelTypeOptions = (dimension: ParallelSwitchProps['dimension'], generateConditions: GenerateConditions | null):
+Array<{label: string;value: string; disabled?: boolean}> => {
     const { t } = useTranslation('summary');
+    const { cpSize } = generateConditions ?? {};
     const val = dimension ?? '';
     const ppDisabled = ['ep-dp'].includes(val);
     const tpDisabled = ['ep-dp', 'ep-dp-pp', 'ep-dp-pp-cp'].includes(val);
     const cpDisabled = ['ep-dp', 'ep-dp-pp'].includes(val);
 
     return [
-        { value: 'pp', label: t('Pipeline Parallel'), disabled: ppDisabled },
-        { value: 'tp', label: t('Tensor Parallel'), disabled: tpDisabled },
-        { value: 'cp', label: t('Context Parallel'), disabled: cpDisabled },
-        { value: 'dp', label: t('Data Parallel') },
-        { value: 'ep', label: t('Expert Parallel') },
-    ];
+        { value: 'pp', label: t('Pipeline Parallel'), disabled: ppDisabled, visible: true },
+        { value: 'tp', label: t('Tensor Parallel'), disabled: tpDisabled, visible: true },
+        { value: 'cp', label: t('Context Parallel'), disabled: cpDisabled, visible: cpSize !== 1 },
+        { value: 'dp', label: t('Data Parallel'), visible: true },
+        { value: 'ep', label: t('Expert Parallel'), visible: true },
+    ].filter(option => option.visible);
 };
 
 const getDefaultDataTypeOptions = (t: TFunction): Array<{label: string;value: string}> => {
@@ -311,12 +317,13 @@ const getDefaultDataTypeOptions = (t: TFunction): Array<{label: string;value: st
 interface ParallelSwitchProps {
     session: Session;
     dimension?: GenerateConditions['dimension'] | null;
+    generateConditions: GenerateConditions | null;
 }
 
-const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): JSX.Element => {
+const ParallelSwitch = observer(({ session, dimension, generateConditions }: ParallelSwitchProps): JSX.Element => {
     const { t } = useTranslation('summary');
     const { parallelTypeList, setParallelTypeList, setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal } = useParallelSwitchConditions();
-    const parallelTypeOptions = useParallelTypeOptions(dimension);
+    const parallelTypeOptions = useParallelTypeOptions(dimension, generateConditions);
     const [range, setRange] = useState<number[]>([]);
 
     const dataTypeOptions = useMemo(() => {

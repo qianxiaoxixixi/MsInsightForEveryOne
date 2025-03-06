@@ -124,7 +124,22 @@ function isNumberPairsFormat(str: string): boolean {
 
 // 通过stage获取对应的并行策略，存在多个并行策略时，策略间使用'/'进行分割
 function getParallelStrategyByStage(partitionModes: partitionMode[], stage: string): string {
-    const strategyList: string[] = ['pp', 'tp', 'dp', 'cp'];
+    const strategyList: string[] = [
+        'tp-cp',
+        'tp-dp',
+        'tp-dp-cp',
+        'mp',
+        'pp',
+        'tp',
+        'cp',
+        'dp-cp',
+        'dp',
+        'mp_exp',
+        'dp_modulo_exp_cp',
+        'dp_modulo_exp',
+        'tp_exp',
+        'exp',
+    ];
     const matchingKeys: string[] = [];
     partitionModes.forEach((obj) => {
         const found = obj.communicators.some(communicator => communicator.value === stage);
@@ -298,7 +313,8 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                 }}
                 filterOption={(input: any, option: any): boolean => (option?.label as string).toLowerCase().includes(input.toLowerCase())}
                 options={optionMap.stageOptions}
-                showSearch={true}
+                showSearch
+                dropdownMatchSelectWidth
             />)}/>
         <FormItem
             name={t('searchCriteria.OperatorName')}
