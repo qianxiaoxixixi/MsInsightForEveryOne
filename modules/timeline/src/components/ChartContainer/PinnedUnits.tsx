@@ -115,8 +115,10 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
                     (movingUnitIndex === flattenUnits.length - 1 || !isAncestorPinned(flattenUnits[movingUnitIndex + 1]))) {
                     isUnitBelowTopmostRef.current = false;
                     switchUnitInSession(draggingUnitKeyRef.current, unitBelowKeyRef.current);
-                    setDraggingUnitIndex(movingUnitIndex < draggingUnitIndex ? movingUnitIndex + 1 : movingUnitIndex);
+                    setDraggingUnitIndex(movingUnitIndex);
                 }
+                // 找到鼠标移入泳道即可退出此次循环
+                break;
             } else {
                 if (!(e.clientY - rect.top < UNIT_MOVE_THRESHOLD && e.clientY > rect.top)) {
                     continue;
@@ -125,8 +127,10 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
                 // 上方相邻泳道为根泳道，说明可以直接换位
                 if (!isAncestorPinned(flattenUnits[movingUnitIndex])) {
                     switchUnitInSession(draggingUnitKeyRef.current, key);
-                    setDraggingUnitIndex(movingUnitIndex > draggingUnitIndex ? movingUnitIndex - 1 : movingUnitIndex);
+                    setDraggingUnitIndex(movingUnitIndex - 1);
                 }
+                // 找到鼠标移入泳道即可退出此次循环
+                break;
             }
         }
     };
