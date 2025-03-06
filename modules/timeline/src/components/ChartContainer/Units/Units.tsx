@@ -232,7 +232,7 @@ export const UnitObserver = observer((
                 if (session.selectedRangeIsLock) {
                     return;
                 }
-                if (e.button !== MouseButton.LEFT) {
+                if (e.button !== MouseButton.LEFT && session.selectedRange !== undefined) {
                     return;
                 }
                 selectUnit(unit);
