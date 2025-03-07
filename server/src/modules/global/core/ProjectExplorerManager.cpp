@@ -150,7 +150,7 @@ bool ProjectExplorerManager::InitSystemMemoryDb()
         return false;
     }
     // db配置并创建表
-    if (db->SetConfig() && db->CreateTable()) {
+    if (db->SetConfig() && db->CreateTable() && db->SetDataBaseVersion()) {
         return true;
     }
     return false;
