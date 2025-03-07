@@ -209,7 +209,8 @@ struct QueryParallelStrategyResponse : public Response {
         }
         return true;
     }
-
+    const std::vector<std::string> expectedAlg = {Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG,
+        Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG, Module::MINDSPEED_TP_CP_EP_DP_PP_ALG};
     void SetDefault()
     {
         config.tpSize = std::max(validValue, config.tpSize);
@@ -217,12 +218,10 @@ struct QueryParallelStrategyResponse : public Response {
         config.ppSize = std::max(validValue, config.ppSize);
         config.cpSize = std::max(validValue, config.cpSize);
         config.epSize = std::max(validValue, config.epSize);
-        if (config.algorithm == Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG ||
-            config.algorithm == Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
+        if (std::find(expectedAlg.begin(), expectedAlg.end(), config.algorithm) != expectedAlg.end()) {
             return;
-        } else {
-            config.algorithm = Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
         }
+        config.algorithm = Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
     }
 };
 

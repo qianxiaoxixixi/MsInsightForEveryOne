@@ -90,6 +90,11 @@ bool MindSpeedParallelStrategyAlgorithm::UpdateParallelDimension(const std::stri
     paraOrderWithEp.insert(paraOrderWithEp.begin() + epPosPpLast, EP_PARA);
 
     bool res = UpdateShowMap(err);
+    // epSize > dpSize时，ep框只在cp不被折叠的情况下有意义，则若cp被折叠，ep也应被折叠
+    if (strategyConfig.epSize > strategyConfig.dpSize && !paraDetailsMap[CP_PARA].isShown) {
+        paraDetailsMap[EP_PARA].isShown = false;
+        paraDetailsMap[EP_PARA].size = 1;
+    }
     if (res) {
         // 根据 paraDetailsMap[para].isShown 删除不存在的通信域
         UpdateOrderAndParallelSize();
@@ -104,8 +109,15 @@ bool MindSpeedParallelStrategyAlgorithm::GenerateArrangementByDimension(std::str
     ClearArrangementData();
     SetIndicatorAttr();
     std::unordered_map<std::string, uint32_t> indexAttributes;
-    for (const auto& para : paraOrderWithEp) {
-        indexAttributes[para + STR_INDEX] = 0;
+    if (strategyConfig.epSize > strategyConfig.dpSize && !paraDetailsMap[CP_PARA].isShown) {
+        // epSize > dpSize时，ep框只在cp不被折叠的情况下有意义，则若cp被折叠，ep也应被折叠, 后端不返回epIndex
+        for (const auto& para : paraOrder) {
+            indexAttributes[para + STR_INDEX] = 0;
+        }
+    } else {
+        for (const auto& para : paraOrderWithEp) {
+            indexAttributes[para + STR_INDEX] = 0;
+        }
     }
     // get arrangements
     for (uint32_t index = 0; index < elementSize; index++) {
@@ -148,9 +160,14 @@ void MindSpeedParallelStrategyAlgorithm::UpdateIndexAttributes(
             indexAttributes[curPara + STR_INDEX] = 0;
         }
     }
+    if (strategyConfig.epSize > strategyConfig.dpSize && !paraDetailsMap[CP_PARA].isShown) {
+        // epSize > dpSize时，ep框只在cp不被折叠的情况下有意义，则若cp被折叠，ep也应被折叠, 后端不返回epIndex
+        return;
+    }
     // 添加epIndex, 前端入参已校验，分母不可能为零, dpSize * cpSize 一定能被epSize整除
     uint32_t epScale = paraDetailsMap[DP_PARA].size * paraDetailsMap[CP_PARA].size / paraDetailsMap[EP_PARA].size;
-    indexAttributes[EP_INDEX] = indexAttributes[DP_INDEX] / epScale;
+    indexAttributes[EP_INDEX] = (indexAttributes[CP_INDEX] +
+            paraDetailsMap[CP_PARA].size * indexAttributes[DP_INDEX]) / epScale;
 }
 
 std::vector<uint32_t> MindSpeedParallelStrategyAlgorithm::GetElementContainRanks(uint32_t index,

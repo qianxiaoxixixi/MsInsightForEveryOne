@@ -56,7 +56,6 @@ bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& p
         return false;
     }
     algorithmMap.at(projectName)->SetStrategyConfig(config);
-    Server::ServerLog::Info("Success to add algorithm to parallel strategy manager.");
     return true;
 }
 
