@@ -1530,6 +1530,15 @@ std::string TraceDatabaseHelper::GetComOpSliceDetailsSql(const std::string &rank
     return communicationOpSql;
 }
 
+std::string TraceDatabaseHelper::GetMsTxEventsSliceDetailSql()
+{
+    return " SELECT '' AS deviceId, message as name, globalTid AS pid, 'HOST' AS metaType,"
+        "'MsTx' AS tid, startNs - minTime.value AS startTime, endNs - startNs AS duration,"
+        "depth, MSTX_EVENTS.ROWID AS id "
+        "FROM MSTX_EVENTS JOIN minTime ";
+}
+
+
 std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
     const std::string &order, const std::string &orderByField, const std::string &rankId)
 {
@@ -1552,6 +1561,7 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
         nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
     std::string communicationOpSql = GetComOpSliceDetailsSql(rankId);
+    std::string mstxEventsSql = GetMsTxEventsSliceDetailSql();
     sql = "with ids as (" + nameMatch +
         "), minTime as (select ? as value),\n"
         " tasks as (select deviceId, TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
@@ -1571,8 +1581,8 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
         " UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
         " type as tid, "
         "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, CANN_API.ROWID as id from "
-        "CANN_API JOIN minTime UNION all select '' as deviceId, name, globalTid as pid, 'HOST' as metaType,"
-        " 'pytorch' as tid, "
+        "CANN_API JOIN minTime UNION all " + mstxEventsSql + "UNION all select '' as deviceId, name, globalTid as pid,"
+        "'HOST' as metaType, 'pytorch' as tid, "
         "startNs - minTime.value AS startTime, endNs - startNs AS duration, depth, PYTORCH_API.ROWID as id from "
         "PYTORCH_API JOIN minTime ) allNames join ids on ids.id = allNames.name" +
         orderBy + " LIMIT ? OFFSET ?";

@@ -149,6 +149,7 @@ static void SearchCountWithLockRangeBindStmt(const SearchCountParams &params, co
     std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &deviceId);
 static std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
 static std::string GetComOpSliceDetailsSql(const std::string &rankId);
+static std::string GetMsTxEventsSliceDetailSql();
 
 static std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase, const std::string &order,
     const std::string &orderByField, const std::string &rankId);
