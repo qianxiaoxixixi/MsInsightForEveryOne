@@ -231,6 +231,9 @@ static bool ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement
     std::vector<Protocol::ThreadTraces> &fwdBwdData);
 static bool ExecuteQueryP2POpData(std::unique_ptr<SqlitePreparedStatement> stmt, const std::string &rankId,
     uint64_t offset, const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData);
+
+static void ComputeSummarySlice(std::unique_ptr<SqliteResultSet> &resultSet, uint64_t unitTime,
+    UnitThreadTracesSummaryBody &responseBody);
 static inline bool IsValidHCCLGroupNameValue(const std::string &groupNameValue)
 {
     const std::string regexStr = "[^0-9]";

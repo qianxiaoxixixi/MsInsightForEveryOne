@@ -112,23 +112,26 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
     params.endTime = 400000000; // endTime = 400000000
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    EXPECT_EQ(body.data.size(), 24); // size = 24
-    EXPECT_EQ(body.data[0].startTime, 39828694); // startTime = 39828694
+    const uint64_t expectSize1 = 25;
+    EXPECT_EQ(body.data.size(), expectSize1); // size = 24
+    EXPECT_EQ(body.data[0].startTime, 0); // startTime = 39828694
 
     body.data.clear();
     params.metaType = "HCCL";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    EXPECT_EQ(body.data.size(), 8); // size = 8
-    EXPECT_EQ(body.data[0].startTime, 175902293); // startTime = 175902293
+    const uint64_t expectSize2 = 9;
+    EXPECT_EQ(body.data.size(), expectSize2); // size = 8
+    EXPECT_EQ(body.data[0].startTime, 0); // startTime = 175902293
 
     body.data.clear();
     params.metaType = "CANN_API";
     params.processId = "11814731181473";
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
-    EXPECT_EQ(body.data.size(), 3); // size = 3
-    EXPECT_EQ(body.data[0].startTime, 39360870); // startTime = 39360870
+    const uint64_t expectSize3 = 2;
+    EXPECT_EQ(body.data.size(), expectSize3); // size = 3
+    EXPECT_EQ(body.data[0].startTime, 0); // startTime = 39360870
 
     params.metaType = "HBM";
     EXPECT_EQ(database->QueryThreadTracesSummary(params, body, minTimestamp), false);

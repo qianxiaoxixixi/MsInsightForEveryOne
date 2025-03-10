@@ -682,17 +682,10 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
         ServerLog::Error("Failed to get result set to query thread traces summary.", stmt->GetErrorMessage());
         return false;
     }
-    uint64_t maxTime = 0;
-    while (resultSet->Next()) {
-        Protocol::ThreadTracesSummary summary;
-        uint64_t endTime = resultSet->GetUint64("end_time");
-        if (endTime > maxTime) {
-            summary.startTime = resultSet->GetUint64("start_time");
-            summary.duration = resultSet->GetUint64("duration");
-            responseBody.data.emplace_back(summary);
-            maxTime = endTime;
-        }
-    }
+    const uint64_t maxDataCount = 30000;
+    uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
+    unitTime = unitTime <= 0 ? 1 : unitTime;
+    TraceDatabaseHelper::ComputeSummarySlice(resultSet, unitTime, responseBody);
     return true;
 }
 void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
