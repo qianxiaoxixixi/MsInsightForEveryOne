@@ -9,6 +9,10 @@ import { runInAction } from 'mobx';
 import { ThreadTrace } from '../entity/data';
 
 const processMKeyEvent = (session: Session): void => {
+    if (session.selectedRangeIsLock) {
+        return;
+    }
+
     let render = false;
     let range: number[] = [];
     if (!session.mKeyRender && session.selectedData === undefined) {

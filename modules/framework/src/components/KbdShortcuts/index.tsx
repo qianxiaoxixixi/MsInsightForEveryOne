@@ -200,7 +200,15 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                 />
                 <Shortcut
                     label={t('shortcuts.Pan right')}
-                    shortcuts={[KEYS.D, `${getShortcutKey('CtrlOrCmd')}+${t('shortcuts.drag')}`]}
+                    shortcuts={[KEYS.D, `${getShortcutKey('CtrlOrCmd')}${DELIMITER}${t('shortcuts.drag')}`]}
+                />
+                <Shortcut
+                    label={t('shortcuts.Scroll up')}
+                    shortcuts={['↑']}
+                />
+                <Shortcut
+                    label={t('shortcuts.Scroll down')}
+                    shortcuts={['↓']}
                 />
                 <Shortcut
                     label={t('shortcuts.Toggle bottom drawer')}
@@ -221,6 +229,12 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                 <Shortcut
                     label={t('shortcuts.R align')}
                     shortcuts={[KEYS.R]}
+                />
+            </ShortcutModule>
+            <ShortcutModule caption={t('tabs.Source')}>
+                <Shortcut
+                    label={t('shortcuts.Find in source code')}
+                    shortcuts={[`${getShortcutKey('CtrlOrCmd')}${DELIMITER}F`]}
                 />
             </ShortcutModule>
         </Section>
