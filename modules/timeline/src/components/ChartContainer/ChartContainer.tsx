@@ -142,7 +142,7 @@ export const ChartContainer = observer((props: Props) => {
     const [containerDom, setContainerDom] = React.useState<HTMLDivElement | undefined>(undefined);
     const chartInteractorRef = useRef<ChartInteractorHandles>(null);
     const scrollerRef = React.useRef<HTMLDivElement>(null);
-    const { onMouseUp, onKeyDown, onKeyUp, interactorMouseState, ...otherInteractors } =
+    const { onMouseUp, onKeyDown, interactorMouseState, ...otherInteractors } =
         useInteractorMouseState(chartInteractorRef, scrollerRef, session, !!props.interactive);
     useEffect(() => {
         if (containerDom === undefined) {
@@ -267,8 +267,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         chartInteractorRef.current.mouseLeaveAction(interactorMouseState);
     };
     const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => chartInteractorRef.current?.keyDownAction(e, interactorMouseState);
-    const onKeyUp = (e: KeyboardEvent): void => chartInteractorRef.current?.keyUpAction(e, interactorMouseState);
-    return { onMouseMove, onMouseDown, onWheel, onMouseLeave, onMouseUp, onKeyDown, onKeyUp, interactorMouseState };
+    return { onMouseMove, onMouseDown, onWheel, onMouseLeave, onMouseUp, onKeyDown, interactorMouseState };
 };
 
 interface InteractorMouseHandlers {
@@ -278,6 +277,5 @@ interface InteractorMouseHandlers {
     onMouseDown: (e: React.MouseEvent) => void;
     onWheel: (e: React.WheelEvent<HTMLDivElement>) => void;
     onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
-    onKeyUp: (e: KeyboardEvent) => void;
     interactorMouseState: InteractorMouseState;
 };

@@ -14,13 +14,9 @@ import type { Pos } from './common';
 import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
 import type { DrawArgs, DrawCanvasArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
-import { PAN_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
-import { CardMetaData, SliceMeta, ThreadTrace } from '../../../entity/data';
-import { getTimeOffsetKey } from '../../../insight/units/utils';
-import { PINNED_UNIT_WRAPPER_SCROLLER_ID, UNIT_WRAPPER_SCROLLER_ID } from '../../ChartContainer/Units/Units';
 
 const dragInitData = {
     isDragging: false,
@@ -28,9 +24,6 @@ const dragInitData = {
     domainStart: 0,
     domainEnd: 0,
 };
-
-// 每次滚动的步长
-const SCROLL_STEP = 20;
 
 let dragData = { ...dragInitData };
 function resetDragInitData(): void {
@@ -308,23 +301,6 @@ export const mouseWheelAction = (
     }
 };
 
-const zoomDomain = (session: Session, zoomCount: number, zoomPoint: number | undefined): void => {
-    runInAction(() => {
-        session.zoom = { zoomCount, zoomPoint };
-    });
-    setZoomHistoryDebounce(session);
-};
-
-const moveDomain = (session: Session, direction: number): void => {
-    const { domainRange: { domainStart, domainEnd } } = session;
-    const timeDuration = domainEnd - domainStart;
-    const timeOffset = direction * PAN_RATE * timeDuration;
-    const newEnd = clamp(domainEnd + timeOffset, timeDuration, session.endTimeAll ?? session.domain.defaultDuration);
-    runInAction(() => {
-        session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
-    });
-};
-
 const moveDomainByDragging = throttle((session: Session, offset: number, canvasWidth: number): void => {
     if (!dragData.isDragging || canvasWidth === 0) {
         return;
@@ -337,177 +313,3 @@ const moveDomainByDragging = throttle((session: Session, offset: number, canvasW
         session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
     });
 }, 100);
-
-const zoomOrMoveDirection = {
-    upOrRight: 1,
-    downOrLeft: -1,
-};
-
-const processMKeyEvent = (session: Session, isKeyPressed: boolean): void => {
-    if (isKeyPressed) {
-        return;
-    }
-    if (session.selectedRangeIsLock) {
-        return;
-    }
-    let render = false;
-    let range: number[] = [];
-    if (!session.mKeyRender && session.selectedData === undefined) {
-        // 页面无遮罩，无选中算子，点击m，页面无遮罩
-        render = false;
-        range = [];
-    } else if (!session.mKeyRender && session.selectedData !== undefined) {
-        // 页面无遮罩，选中算子，点击m，页面出现遮罩
-        const selectedData = session.selectedData as ThreadTrace;
-        range = [selectedData.startTime, selectedData.startTime + selectedData.duration];
-        render = true;
-    } else if (session.mKeyRender && session.selectedData === undefined) {
-        // 页面有遮罩，无选中算子，点击m，页面无遮罩
-        render = false;
-        range = [];
-    } else if (session.mKeyRender && session.selectedData !== undefined) {
-        const selectedData = session.selectedData as ThreadTrace;
-        const tempRange = [selectedData.startTime, selectedData.startTime + selectedData.duration];
-        if (session.mMaskRange[0] === tempRange[0] && session.mMaskRange[1] === tempRange[1]) {
-            // 页面有遮罩，有选中算子，但是同一个范围，点击m，页面无遮罩
-            render = false;
-            range = [];
-        } else {
-            // 页面有遮罩，有选中算子，但不是同一个范围，点击m，页面更换遮罩
-            render = true;
-            range = tempRange;
-        }
-    } else {
-        render = session.mKeyRender;
-        range = session.mMaskRange;
-    }
-    runInAction(() => {
-        session.mKeyRender = render;
-        session.mMaskRange = range;
-    });
-};
-
-const extractDeviceId = (processId: number): number => {
-    const DEVICE_ID_MASK = 0x1F;
-    return processId & DEVICE_ID_MASK;
-};
-
-const updateSameDeviceOffset = (selectSliceMeta: SliceMeta, session: Session, selectOffsetKey: string, offsetDiff: number): void => {
-    const deviceId = extractDeviceId(parseInt(selectSliceMeta.processId));
-    const benchMeta = session.benchMarkData as SliceMeta;
-    const benchKey = getTimeOffsetKey(session, benchMeta);
-    session.units.forEach((unit) => {
-        if ((unit.metadata as CardMetaData).cardId !== selectSliceMeta.cardId) {
-            return;
-        }
-        if (unit.children === undefined || unit.children.length <= 0) {
-            return;
-        }
-        for (const item of unit.children) {
-            const tempMeta = item.metadata as SliceMeta;
-            if (tempMeta.label !== 'NPU') {
-                continue;
-            }
-            const key = getTimeOffsetKey(session, tempMeta);
-            if (key === selectOffsetKey || key === benchKey) {
-                continue;
-            }
-            if (isNaN(Number(tempMeta.processId))) {
-                continue;
-            }
-            const tempDeviceId = extractDeviceId(parseInt(tempMeta.processId));
-            if (tempDeviceId !== deviceId) {
-                continue;
-            }
-            session.unitsConfig.offsetConfig.timestampOffset[key] += offsetDiff;
-        }
-    });
-};
-
-const processOffsetEvent = (session: Session, isLeft: boolean): void => {
-    if (session.benchMarkData === undefined || session.selectedData === undefined) {
-        return;
-    }
-    const selectSliceMeta = session.selectedData as SliceMeta;
-    const benchSliceMeta = session.benchMarkData as SliceMeta;
-    const selectOffsetKey = getTimeOffsetKey(session, selectSliceMeta);
-    const benchSliceOffsetKey = getTimeOffsetKey(session, benchSliceMeta);
-    if (selectOffsetKey === benchSliceOffsetKey) {
-        return;
-    }
-    let offsetDiff = 0;
-    if (isLeft) {
-        offsetDiff = selectSliceMeta.startTime - benchSliceMeta.startTime;
-    } else {
-        offsetDiff = selectSliceMeta.startTime + selectSliceMeta.duration - benchSliceMeta.startTime - benchSliceMeta.duration;
-    }
-    if (!isNaN(Number(selectSliceMeta.processId))) {
-        updateSameDeviceOffset(selectSliceMeta, session, selectOffsetKey, offsetDiff);
-    }
-    const before = session.unitsConfig.offsetConfig.timestampOffset[selectOffsetKey];
-    session.unitsConfig.offsetConfig.timestampOffset[selectOffsetKey] = before + offsetDiff;
-    runInAction(() => {
-        if (session.selectedData === undefined) {
-            return;
-        }
-        const temp = session.selectedData as ThreadTrace;
-        temp.startTime -= offsetDiff;
-        const newAlignSliceData: Array<Record<string, unknown>> = [];
-        newAlignSliceData.push(temp);
-        session.alignSliceData.forEach((item) => {
-            const itemTemp = item as SliceMeta;
-            if (itemTemp.cardId === selectSliceMeta.cardId && itemTemp.processId === selectSliceMeta.processId) {
-                return;
-            }
-            newAlignSliceData.push(item);
-        });
-        session.alignSliceData = newAlignSliceData;
-        session.selectedData = undefined;
-        session.alignRender = !session.alignRender;
-    });
-};
-
-const scrollWrapper = (eventKey: string, session: Session): void => {
-    if (!session.scrollArea) {
-        return;
-    }
-    const scrollElement = document.getElementById(session.scrollArea === 'pinned' ? PINNED_UNIT_WRAPPER_SCROLLER_ID : UNIT_WRAPPER_SCROLLER_ID);
-    // 滚动方向，正数为向下滚动，反之向上
-    const scrollDirection = eventKey === 'ArrowDown' ? 1 : -1;
-    requestAnimationFrame(() => {
-        scrollElement?.scrollBy(0, SCROLL_STEP * scrollDirection);
-    });
-};
-
-function ignoreCaseEqual(key: string, keyName: string): boolean {
-    return key.toUpperCase() === keyName.toUpperCase();
-}
-
-let isKeyPressed = false;
-export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
-    if (ignoreCaseEqual(key, 'W')) {
-        zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
-    } else if (ignoreCaseEqual(key, 'S')) {
-        zoomDomain(session, zoomOrMoveDirection.upOrRight, zoomPoint);
-    } else if (ignoreCaseEqual(key, 'A') || key === 'ArrowLeft') {
-        moveDomain(session, zoomOrMoveDirection.downOrLeft);
-    } else if (ignoreCaseEqual(key, 'D') || key === 'ArrowRight') {
-        moveDomain(session, zoomOrMoveDirection.upOrRight);
-    } else if (ignoreCaseEqual(key, 'M')) {
-        processMKeyEvent(session, isKeyPressed);
-    } else if (ignoreCaseEqual(key, 'R')) {
-        processOffsetEvent(session, false);
-    } else if (ignoreCaseEqual(key, 'L')) {
-        processOffsetEvent(session, true);
-    } else if (key === 'ArrowUp' || key === 'ArrowDown') {
-        scrollWrapper(key, session);
-    } else {
-        // handle other keys
-    }
-
-    isKeyPressed = true;
-};
-
-export const keyUpAction = (): void => {
-    isKeyPressed = false;
-};

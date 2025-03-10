@@ -24,8 +24,6 @@ import {
     mouseLeaveAction,
     mouseWheelAction,
     mouseMoveAction,
-    keyDownAction,
-    keyUpAction,
     type MouseDownActionResult,
 } from './actions';
 import type { TimeStamp } from '../../../entity/common';
@@ -154,13 +152,6 @@ const handleInteractorEvent = ({
         },
         mouseLeaveAction: (interactorMouseState: InteractorMouseState): void => {
             mouseLeaveAction(interactorParams, interactorMouseState);
-        },
-        keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState): void => {
-            const point = getZoomPoint(interactorParams.xScale, interactorMouseState);
-            keyDownAction(e.key, session, point);
-        },
-        keyUpAction: (): void => {
-            keyUpAction();
         },
         xScale: interactorParams.xScale,
     });
