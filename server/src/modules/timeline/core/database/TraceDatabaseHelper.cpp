@@ -816,6 +816,34 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
     return true;
 }
 
+void TraceDatabaseHelper::ComputeSummarySlice(std::unique_ptr<SqliteResultSet> &resultSet,
+    uint64_t unitTime, Protocol::UnitThreadTracesSummaryBody &responseBody)
+{
+    uint64_t tempStartTime = 0;
+    uint64_t tempEndTime = 0;
+    while (resultSet->Next()) {
+        uint64_t curEndTime = resultSet->GetUint64("end_time");
+        uint64_t curStartTime = resultSet->GetUint64("start_time");
+        if (curEndTime < curStartTime) {
+            continue;
+        }
+        if (tempEndTime + unitTime >= curStartTime) {
+            tempEndTime = tempEndTime > curEndTime ? tempEndTime : curEndTime;
+            continue;
+        }
+        ThreadTracesSummary summary;
+        summary.startTime = tempStartTime;
+        summary.duration = tempEndTime >= tempStartTime ? tempEndTime - tempStartTime : 0;
+        tempStartTime = curStartTime;
+        tempEndTime = curEndTime;
+        responseBody.data.emplace_back(summary);
+    }
+    ThreadTracesSummary summary;
+    summary.startTime = tempStartTime;
+    summary.duration = tempEndTime > tempStartTime ? tempEndTime - tempStartTime : 0;
+    responseBody.data.emplace_back(summary);
+}
+
 void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody)
 {
