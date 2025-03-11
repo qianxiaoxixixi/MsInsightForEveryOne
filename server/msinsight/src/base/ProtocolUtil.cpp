@@ -82,14 +82,15 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
     if (!JsonUtil::IsJsonKeyValid(json, "params") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
         return false;
     }
-    request.id = json["id"].GetUint();
-    request.command = json["command"].GetString();
-    if (JsonUtil::IsJsonKeyValid(json, "projectName")) {
-        request.projectName = json["projectName"].GetString();
-    }
-    auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"].GetString());
+    JsonUtil::SetByJsonKeyValue(request.id, json, "id");
+    JsonUtil::SetByJsonKeyValue(request.command, json, "command");
+    JsonUtil::SetByJsonKeyValue(request.projectName, json, "projectName");
+    std::string typeStr;
+    JsonUtil::SetByJsonKeyValue(typeStr, json, "type");
+    auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(typeStr);
     request.type = type.has_value() ? type.value() : ProtocolMessage::Type::NONE;
-    std::string moduleName = json["moduleName"].GetString();
+    std::string moduleName;
+    JsonUtil::SetByJsonKeyValue(moduleName, json, "moduleName");
     request.moduleName = moduleName.empty() ? MODULE_UNKNOWN : moduleName;
     JsonUtil::SetByJsonKeyValue(request.resultCallbackId, json, "resultCallbackId");
     return true;
@@ -129,7 +130,13 @@ void ProtocolUtil::SetEventJsonBaseInfo(const Event &event, document_t &json)
 
 bool ProtocolUtil::IsRequest(const json_t &jsonRequest)
 {
-    return (jsonRequest.HasMember("type")) && (jsonRequest["type"].GetString() == REQUEST_NAME);
+    if (!jsonRequest.HasMember("type")) {
+        return false;
+    }
+    if (!jsonRequest["type"].IsString()) {
+        return false;
+    }
+    return jsonRequest["type"].GetString() == REQUEST_NAME;
 }
 
 std::string ProtocolUtil::Command(const json_t &jsonRequest)
