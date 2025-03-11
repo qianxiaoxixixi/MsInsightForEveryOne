@@ -24,3 +24,4 @@ export { actionPanLeft, actionPanRight } from './actionPan';
 export { actionToggleSelection } from './actionToggleSelection';
 export { actionScrollDown, actionScrollUp } from './actionScroll';
 export { actionToggleBottomPanel } from './actionToggleBottomPanel';
+export { actionLockSelection, actionUnLockSelection } from './actionLockSelection';

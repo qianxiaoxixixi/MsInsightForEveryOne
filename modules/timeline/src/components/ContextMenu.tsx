@@ -29,14 +29,14 @@ import {
     actionFindInCommunication,
     actionFitToScreen,
     actionHideFlagEvents, actionHidePythonCallStack,
-    actionHideUnits,
+    actionHideUnits, actionLockSelection,
     actionRecoverDefaultOffset,
     actionResetZoom, actionSetBenchmarkSlice,
     actionShowFlagEvents,
     actionShowHiddenUnits,
     actionShowInEventsView,
     actionShowPythonCallStack,
-    actionUndoZoom,
+    actionUndoZoom, actionUnLockSelection,
     actionUnpinAll,
     actionZoomIntoSelection,
 } from '../actions';
@@ -241,44 +241,6 @@ function getUnparsedCards(session: Session, rankIds: string[]): InsightUnit[] {
         .filter((item) => rankIds.includes(getRankIdByCardId((item.metadata as CardMetaData).cardId)));
 }
 
-const lockSelecttionArea = (session: Session, menuItem?: MenuItemModel): void => {
-    if (session.selectedRange === undefined || session.selectedUnits === undefined) {
-        return;
-    }
-    if (session.selectedUnits.length === 0) {
-        return;
-    }
-    runInAction(() => {
-        session.selectedRangeIsLock = true;
-        session.lockUnitCount = session.selectedUnits.length;
-        session.lockRange = session.selectedRange;
-        session.lockUnit = session.selectedUnits;
-    });
-};
-
-const unLockSelecttionArea = (session: Session, menuItem?: MenuItemModel): void => {
-    runInAction(() => {
-        session.selectedRangeIsLock = false;
-        session.lockUnitCount = 0;
-        session.lockRange = undefined;
-        session.lockUnit = [];
-    });
-};
-
-const setLockSelecttionVisible = (session: Session): boolean => {
-    if (session.selectedRangeIsLock) {
-        return false;
-    }
-    if (session.selectedRange === undefined || session.selectedUnits === undefined) {
-        return false;
-    }
-    return session.selectedUnits.length !== 0;
-};
-
-const setUnLockSelecttionVisible = (session: Session): boolean => {
-    return session.selectedRangeIsLock;
-};
-
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu: HTMLDivElement;
     setPosition: (_: Position) => void;
@@ -423,6 +385,8 @@ const contextMenuItems: Action[] = [
     actionRecoverDefaultOffset,
     actionSetBenchmarkSlice,
     actionClearBenchmarkSlice,
+    actionLockSelection,
+    actionUnLockSelection,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
@@ -435,8 +399,6 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     const menuItems: MenuItemModel[] = [
         ...buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(selectedUnitListStatus, t),
         ...buildParseCardsOfRelatedGroupMenuItem(session, t),
-        { name: t('timeline:contextMenu.Lock selection area'), key: 'lockSelectionArea', event: lockSelecttionArea, visible: setLockSelecttionVisible(session) },
-        { name: t('timeline:contextMenu.Unlock selection area'), key: 'unLockSelectionArea', event: unLockSelecttionArea, visible: setUnLockSelecttionVisible(session) },
     ];
 
     return <>
