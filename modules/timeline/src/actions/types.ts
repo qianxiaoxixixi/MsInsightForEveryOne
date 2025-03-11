@@ -47,7 +47,9 @@ export type ActionName =
   | 'setBaseSlice'
   | 'clearBaseSlice'
   | 'toggleSelection'
-  | 'toggleBottomPanel';
+  | 'toggleBottomPanel'
+  | 'lockSelection'
+  | 'unlockSelection';
 
 export interface Action {
     name: ActionName;
