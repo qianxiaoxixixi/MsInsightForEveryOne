@@ -31,6 +31,7 @@
     "Evict And Write": "Evict And Write",
     "Evict Without Write": "Evict Without Write",
     "Cacheline Id": "Cacheline ID",
+    "Show Instructions": "Show Instructions In Source",
     "UB Read Conflict": "UB Read Conflict",
     "UB Write Conflict": "UB Write Conflict",
     "Vector Utilization Percentage": "Vector Utilization Percentage"

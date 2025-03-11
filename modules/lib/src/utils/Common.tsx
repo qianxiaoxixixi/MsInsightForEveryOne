@@ -476,3 +476,11 @@ export const hexToRgb = (hex: string): [number, number, number] | null => {
 
     return [r, g, b];
 };
+
+export const isArray = (val: any): boolean => {
+    if (!Array.isArray) {
+        return Object.prototype.toString.call(val) === '[object Array]';
+    } else {
+        return Array.isArray(val);
+    }
+};

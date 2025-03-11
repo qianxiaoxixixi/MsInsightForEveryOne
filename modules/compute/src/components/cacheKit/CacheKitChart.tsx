@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { CloseCircleOutlined } from '@ant-design/icons';
 import { range } from 'lodash';
 import { observer } from 'mobx-react';
@@ -9,14 +9,16 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { CacheEventType, CacheRecordItem } from './defs';
 import styled from '@emotion/styled';
-import { type Session } from '../../entity/session';
-import { safeStr } from 'ascend-utils';
+import type { CacheUnit, Session } from '../../entity/session';
+import { isArray, safeStr } from 'ascend-utils';
 import * as echarts from 'echarts';
 import { type Theme, useTheme } from '@emotion/react';
 import { queryCacheRecord } from '../RequestUtils';
 import { swtich2Source } from '../../connection/sendNotification';
 import { CACHELINE_RECORD, CACHELINE_ID, ADDRESS_RANGE, HIT, MISS } from './defs';
-import { store } from '../../store';
+import { Dropdown } from 'ascend-components';
+import type { MenuProps } from 'antd';
+import { observable, runInAction } from 'mobx';
 
 const ChartContainer = styled.div`
     width: 620px;
@@ -190,11 +192,6 @@ ${t('EventRatio')}：${safeStr(item.data[DataIndex.RATIO])} %`;
 let allCacheRecords: CacheRecordItem[] = [];
 const getchartsData = async (): Promise<{ chartsData: Record<string, ChartDataItem> ;cacheRecords: CacheRecordItem[]} > => {
     let cacheRecords: CacheRecordItem[] = [];
-    try {
-        cacheRecords = (await queryCacheRecord() ?? { [CACHELINE_RECORD]: [] })?.[CACHELINE_RECORD] ?? [];
-    } catch (err) {
-        // 请求异常，用初始空值
-    }
     const chartsData: { [key: string]: ChartDataItem } = {};
     const chartkeys: CacheEventType[] = [HIT, MISS];
     chartkeys.forEach(key => {
@@ -203,11 +200,24 @@ const getchartsData = async (): Promise<{ chartsData: Record<string, ChartDataIt
             data: [],
         };
     });
+    try {
+        cacheRecords = (await queryCacheRecord() ?? { [CACHELINE_RECORD]: [] })?.[CACHELINE_RECORD] ?? [];
+    } catch (err) {
+        // 请求异常，用初始空值
+        return { chartsData, cacheRecords };
+    }
     const yAxisNum = cacheRecords.length / 128;
     for (let i = 0; i < cacheRecords.length; i++) {
-        const cachelineId = cacheRecords[i][CACHELINE_ID];
+        const cachelineId = cacheRecords[i]?.[CACHELINE_ID];
         for (let j = 0; j < chartkeys.length; j++) {
-            const [eventNumber, eventRatio] = cacheRecords[i][chartkeys[j]].Value;
+            const value = cacheRecords[i]?.[chartkeys[j]]?.Value;
+            if (!isArray(value)) {
+                continue;
+            }
+            const [eventNumber, eventRatio] = value;
+            if (typeof eventNumber !== 'number' || typeof eventRatio !== 'number') {
+                continue;
+            }
             const ratio = Number((eventRatio * 100).toFixed(1));
             chartsData[chartkeys[j]].yAxisNum = yAxisNum;
             chartsData[chartkeys[j]].data.push(
@@ -232,10 +242,11 @@ interface IParams {
     t: TFunction;
     theme: Theme;
     name: string;
+    setDropDownVisible?: (val: boolean) => void;
 }
 
 const initCharts = (params: IParams): void => {
-    const { domId, dataSource, isPreview, t, theme, name } = params;
+    const { domId, dataSource, isPreview, t, theme, name, setDropDownVisible } = params;
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
         echarts.getInstanceByDom(chartDom)?.dispose();
@@ -243,30 +254,46 @@ const initCharts = (params: IParams): void => {
         const { data, yAxisNum } = dataSource;
         const options = getBaseOption({ yAxis: range(0, yAxisNum), data, isPreview, t, theme, name });
         myChart.setOption(options);
-        myChart.on('click', showInstructions);
+        if (isPreview && setDropDownVisible !== undefined) {
+            myChart.on('contextmenu', (e: echarts.ECElementEvent): void => {
+                handleContextEvent(e, setDropDownVisible);
+            });
+        }
     }
 };
 
-export function showInstructions(params: any): void {
-    const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
-    // 如果没有source信息
-    if (!(session.coreList?.length > 0)) {
-        return;
-    }
-    const { data, seriesName } = params;
+const selectedCacheUnit = observable<{ value: CacheUnit }>({ value: { cachelineId: -1, addressRange: [] } });
+function handleContextEvent(event: echarts.ECElementEvent, setDropDownVisible: (val: boolean) => void): void {
+    const { data, seriesName } = event as any;
     const record = allCacheRecords[data[DataIndex.INDEX]];
-    if (record?.[seriesName]?.[ADDRESS_RANGE]?.length > 0) {
-        swtich2Source({ addressRange: record[seriesName][ADDRESS_RANGE], cachelineId: record[CACHELINE_ID] });
-    }
+    runInAction(() => {
+        selectedCacheUnit.value = {
+            addressRange: record?.[seriesName]?.[ADDRESS_RANGE] ?? [],
+            cachelineId: record?.[CACHELINE_ID] ?? -1,
+        };
+    });
+    setDropDownVisible(true);
 }
 
-const PreviewCacheKitChart = ({ setShowPreChart, preChartData, title }:
-{ setShowPreChart: (val: boolean) => void; preChartData: ChartDataItem; title: string }): JSX.Element => {
+const useMenuItems = (session: Session, t: TFunction): MenuProps['items'] => {
+    const menus = useMemo(() => ([{
+        label: t('Show Instructions'),
+        key: 'showInstructions',
+        // 如果没有source信息或Address Range是空数组
+        disabled: session.coreList.length === 0 || selectedCacheUnit.value.addressRange.length === 0,
+        onClick: (): void => {
+            swtich2Source(selectedCacheUnit.value);
+        },
+    }]), [session.coreList, t, selectedCacheUnit.value]);
+    return menus;
+};
+
+const PreviewCacheKitChart = observer(({ setShowPreChart, preChartData, title, session }:
+{ setShowPreChart: (val: boolean) => void; preChartData: ChartDataItem; title: string ;session: Session}): JSX.Element => {
     const { t } = useTranslation('source');
     const theme = useTheme();
+    const [dropDownVisible, setDropDownVisible] = useState(false);
+    const menuItems = useMenuItems(session, t);
     const params = {
         domId: 'previewCacheKitChart',
         dataSource: preChartData,
@@ -274,6 +301,7 @@ const PreviewCacheKitChart = ({ setShowPreChart, preChartData, title }:
         t,
         theme,
         name: title,
+        setDropDownVisible,
     };
     useEffect(() => {
         initCharts(params);
@@ -284,10 +312,27 @@ const PreviewCacheKitChart = ({ setShowPreChart, preChartData, title }:
     return <PreviewCacheKitChartContainer>
         <CloseCircleOutlined className="closePreview" onClick={(): void => setShowPreChart(false)} />
         <div className="chartTitle">{t(title)}</div>
-        <div id="previewCacheKitChart" style={{ width: '1100px', height: '1000px', margin: 'auto' }}></div>
+        <Dropdown
+            menu={{
+                items: menuItems,
+                onClick: (): void => setDropDownVisible(false),
+                onBlur: (e: React.FocusEvent<HTMLUListElement, Element>): void => {
+                    const hasItem = menuItems?.findIndex(item =>
+                        (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
+                    if (!hasItem) {
+                        setDropDownVisible(false);
+                    }
+                },
+            }}
+            trigger={['contextMenu']}
+            open={dropDownVisible}
+            autoFocus
+        >
+            <div id="previewCacheKitChart" style={{ width: '1100px', height: '1000px', margin: 'auto' }}></div>
+        </Dropdown>
         <div className="mapTitle">{`${t('EventRatio')}(%)`}</div>
     </PreviewCacheKitChartContainer>;
-};
+});
 
 const CacheKitChartBase = ({ session, title, data, handleClick }:
 { session: Session; title: string; data: ChartDataItem; handleClick: (val: ChartDataItem, title: string) => void }): JSX.Element => {
@@ -329,7 +374,7 @@ const CacheKitChart = observer(({ session }: { session: Session }): JSX.Element 
                 ))
             }
         </CacheKitChartsContainer>
-        {showPreChart && <PreviewCacheKitChart preChartData={preChartData} setShowPreChart={setShowPreChart} title={preChartDataTitle} />}
+        {showPreChart && <PreviewCacheKitChart preChartData={preChartData} setShowPreChart={setShowPreChart} title={preChartDataTitle} session={session}/>}
     </>;
 });
 
