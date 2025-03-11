@@ -11,7 +11,7 @@ import { Session } from '../entity/session';
 import { MemorySession, GroupBy } from '../entity/memorySession';
 import { Label, useHit } from './Common';
 import { Select } from 'ascend-components';
-import { GroupRankIdsByHost } from 'ascend-utils';
+import { GroupRankIdsByHost, notNull } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
 import _ from 'lodash';
 
@@ -68,7 +68,10 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         const rankIdOptions = getRankIdOptions(memorySession.hostCondition.value, ranks);
         runInAction(() => {
             memorySession.hostCondition = { options: hosts, value: memorySession.hostCondition.value ?? '', ranks };
-            memorySession.rankIdCondition = { options: rankIdOptions, value: session.compareRank.rankId ?? '' };
+            memorySession.rankIdCondition = {
+                options: rankIdOptions,
+                value: notNull(session.compareRank.rankId) ? session.compareRank.rankId : (rankIdOptions[0] ?? ''),
+            };
         });
     }, [session.memoryRankIds.join('')]);
 
