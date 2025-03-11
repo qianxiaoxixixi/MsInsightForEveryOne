@@ -7,7 +7,7 @@ import React from 'react';
 import { message } from 'antd';
 import { t } from 'i18next';
 import type { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
-import type { InsightUnit, UnitMatcher } from '../../../../entity/insight';
+import { InsightUnit, UnitHeight, UnitMatcher } from '../../../../entity/insight';
 import type { Session } from '../../../../entity/session';
 import { getAutoKey } from '../../../../utils/dataAutoKey';
 import { getRootUnit } from '../../../../utils';
@@ -72,9 +72,10 @@ export interface OrderOptions {
 
 export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], supportJump: boolean,
     orderOptions: OrderOptions, dom: HTMLDivElement | null): void => {
-    const scrollToResult = (scrollHResult: number): void => {
+    const scrollToResult = (scrollHResult: number, callback?: (scrolled: number) => void): void => {
         requestAnimationFrame(() => {
             dom?.scrollTo(0, scrollHResult);
+            callback?.(scrollHResult);
         });
     };
 
@@ -89,6 +90,18 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
         session.selectedUnits = [targetUnit];
     };
 
+    // 绘制完成泳道后再微调滚动条
+    const tuningScroller = React.useCallback((scrolled: number): void => {
+        if (dom === null || !supportJump || session.selectedData === undefined) { return; }
+        // UnitHeight.STANDARD 是展开的 Slice 标准高度；1 是 Slice 之间的间隔
+        const relativeSliceY: number = Number.isInteger(session.selectedData.depth)
+            ? (UnitHeight.STANDARD + 1) * Math.max(session.selectedData.depth as number - 1, 0)
+            : 0;
+        const halfScrollerHeight = dom.clientHeight / 2;
+        const offset = Math.max(relativeSliceY - halfScrollerHeight, 0);
+        scrollToResult(scrolled + offset);
+    }, [session, dom]);
+
     React.useEffect(() => autorun(
         () => {
             if (dom === null || !supportJump) { return; }
@@ -96,18 +109,18 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
             const targetUnit = getTargetUnit(getRootUnit(session.units), session.locateUnit.target);
             if (targetUnit === undefined) {
                 message.warn(t('NotFoundJumpTargetWarn'));
-            }
-            if (targetUnit !== undefined) {
+            } else {
                 handleUnitSelection(targetUnit);
                 session.locateUnit?.onSuccess(targetUnit);
                 const scrollHResult = getNormalUnitHeight(unitsArea, orderOptions, targetUnit);
                 if (scrollHResult !== undefined) {
-                    scrollToResult(scrollHResult);
+                    // 第一次 scrollToResult 到 scrollHResult，会请求后端重新绘制泳道
+                    scrollToResult(scrollHResult, tuningScroller);
                 }
             }
             runInAction(() => {
                 session.locateUnit = undefined;
             });
         },
-    ), [session, dom, unitsArea]);
+    ), [session, dom, unitsArea, tuningScroller]);
 };
