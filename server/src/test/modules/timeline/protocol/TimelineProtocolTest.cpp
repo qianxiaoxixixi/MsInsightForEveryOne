@@ -385,3 +385,49 @@ TEST_F(ProtocolTest, EventToJson)
         timelineProtocol.ToJson(event6, error);
     });
 }
+
+TEST_F(ProtocolTest, TestSetRequestBaseInfoNormal)
+{
+    std::string command = "lll";
+    Dic::Protocol::Request request(command);
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    const uint32_t expectId = 100;
+    const uint32_t expectResultCallbackId = 55;
+    Dic::JsonUtil::AddMember(json, "id", expectId, allocator);
+    Dic::JsonUtil::AddMember(json, "command", command, allocator);
+    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
+    Dic::JsonUtil::AddMember(json, "params", "{}", allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
+    Dic::JsonUtil::AddMember(json, "projectName", "mmmmmmmmm", allocator);
+    Dic::JsonUtil::AddMember(json, "resultCallbackId", expectResultCallbackId, allocator);
+    Dic::Protocol::ProtocolUtil::SetRequestBaseInfo(request, json);
+    EXPECT_EQ(request.id, expectId);
+    EXPECT_EQ(request.command, command);
+    EXPECT_TRUE(request.type == Dic::Protocol::ProtocolMessage::Type::REQUEST);
+    EXPECT_EQ(request.moduleName, "hhh");
+    EXPECT_EQ(request.projectName, "mmmmmmmmm");
+}
+
+TEST_F(ProtocolTest, TestSetRequestBaseInfoWhenNotNormal)
+{
+    std::string command = "lll";
+    Dic::Protocol::Request request(command);
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    const uint32_t expectId = 100;
+    const uint32_t expectResultCallbackId = 55;
+    Dic::JsonUtil::AddMember(json, "id", "100", allocator);
+    Dic::JsonUtil::AddMember(json, "command", expectId, allocator);
+    Dic::JsonUtil::AddMember(json, "type", expectId, allocator);
+    Dic::JsonUtil::AddMember(json, "params", expectId, allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", expectId, allocator);
+    Dic::JsonUtil::AddMember(json, "projectName", expectId, allocator);
+    Dic::JsonUtil::AddMember(json, "resultCallbackId", expectResultCallbackId, allocator);
+    Dic::Protocol::ProtocolUtil::SetRequestBaseInfo(request, json);
+    EXPECT_EQ(request.id, 0);
+    EXPECT_EQ(request.command, command);
+    EXPECT_TRUE(request.type == Dic::Protocol::ProtocolMessage::Type::NONE);
+    EXPECT_EQ(request.moduleName, "unknown");
+    EXPECT_EQ(request.projectName, "");
+}

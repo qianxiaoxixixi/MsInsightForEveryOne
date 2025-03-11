@@ -97,7 +97,9 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectExplorerInfoDeleteRequest(cons
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
     if (json["params"].HasMember("dataPath") && json["params"]["dataPath"].IsArray()) {
         for (const auto &item : json["params"]["dataPath"].GetArray()) {
-            reqPtr->params.dataPath.emplace_back(item.GetString());
+            if (item.IsString()) {
+                reqPtr->params.dataPath.emplace_back(item.GetString());
+            }
         }
     }
     return reqPtr;
@@ -112,7 +114,9 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectExplorerInfoClearRequest(const
     }
     if (json["params"].HasMember("projectNameList") && json["params"]["projectNameList"].IsArray()) {
         for (const auto &item : json["params"]["projectNameList"].GetArray()) {
-            reqPtr->params.projectNameList.emplace_back(item.GetString());
+            if (item.IsString()) {
+                reqPtr->params.projectNameList.emplace_back(item.GetString());
+            }
         }
     }
     return reqPtr;
@@ -128,7 +132,9 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectValidCheckRequest(const json_t
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
     if (json["params"].HasMember("dataPath") && json["params"]["dataPath"].IsArray()) {
         for (const auto &item : json["params"]["dataPath"].GetArray()) {
-            reqPtr->params.dataPath.emplace_back(item.GetString());
+            if (item.IsString()) {
+                reqPtr->params.dataPath.emplace_back(item.GetString());
+            }
         }
     }
     return reqPtr;
