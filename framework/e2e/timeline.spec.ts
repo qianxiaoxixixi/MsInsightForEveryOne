@@ -173,6 +173,19 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-operator.png', { maxDiffPixels: 50 });
     });
 
+    // 算子搜索在泳道较深的位置时能显示在div中
+    test('test_deepOperatorSearch_when_EnterOperatorName', async ({ page, timelinePage }) => {
+        const { searchBtn, timelineFrame } = timelinePage;
+        await searchBtn.click();
+        const inputLocator = timelineFrame.locator('.insight-category-search-overlay input');
+        const input = new InputHelpers(page, inputLocator, timelineFrame);
+        await input.setValue('<built-in function get_autocast_gpu_dtype>');
+        await input.press('Enter');
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(2000);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 50 });
+    });
+
     // 泳道(card)过滤
     test('test_cardFilter', async ({ page, timelinePage }) => {
         const { filterBtn, timelineFrame, selectFilterType, selectOptionFilterType, selectFilterContent } = timelinePage;
