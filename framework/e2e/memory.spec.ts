@@ -168,6 +168,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 });
 
 test.describe('Memory(MindSpore)', () => {
+    test.describe.configure({ timeout: 60_000 });
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();

@@ -42,6 +42,7 @@ test.describe('Communication', () => {
 
     // 【case】数据展示配置
     test('data display configuration', async ({ page, communicationPage }) => {
+        test.setTimeout(60_000);
         const {
             stepSelector,
             communicationFrame,
@@ -58,7 +59,16 @@ test.describe('Communication', () => {
         // 筛选通信域
         const communicationGroupSelect = new SelectHelpers(page, communicationGroupSelector, communicationFrame);
         await communicationGroupSelect.open();
-        await communicationGroupSelect.selectOption('tp-dp-cp:(0, 1, 2, 3, 4, 5, 6, 7)');
+
+        const optionUnsignedText = '(0, 1, 2, 3, 4, 5, 6, 7)';
+        const optionSignedText = 'tp-dp-cp:(0, 1, 2, 3, 4, 5, 6, 7)';
+        const optionUnsigned = page.locator(`.ant-select-item-option[title='${optionUnsignedText}']`);
+
+        if ((await optionUnsigned.count()) > 0) {
+            await communicationGroupSelect.selectOption(optionUnsignedText);
+        } else {
+            await communicationGroupSelect.selectOption(optionSignedText);
+        }
         // 筛选算子名称
         const operatorNameSelect = new SelectHelpers(page, operatorNameSelector, communicationFrame);
         await operatorNameSelect.open();

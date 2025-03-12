@@ -4,7 +4,7 @@
 
 import { test as baseTest, expect } from '@playwright/test';
 import { OperatorPage } from './page-object';
-import {clearAllData, importData, setCompare, waitForWebSocketEvent} from './utils';
+import { clearAllData, importData, setCompare, waitForWebSocketEvent } from './utils';
 import { SelectHelpers } from './components';
 
 interface TestFixtures {
@@ -45,8 +45,7 @@ test.describe('Operator', () => {
         await topSelect.open();
         await topSelect.selectOption('15');
         await page.mouse.move(0, 0);
-        await expect(operatorFrame.locator('.mi-page'))
-        .toHaveScreenshot(operatorImgMap.loadOperatorDataSuccess, {
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot(operatorImgMap.loadOperatorDataSuccess, {
             maxDiffPixels: 500,
         });
     });
@@ -60,20 +59,19 @@ test.describe('Operator', () => {
         await rankIdSelect.selectOption('0');
         await seeMoreBtn.click();
         await page.mouse.move(0, 0);
-        await expect(operatorFrame.locator('.mi-page'))
-        .toHaveScreenshot(operatorImgMap.expandOperatorDetailTableDataSuccess, {
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot(operatorImgMap.expandOperatorDetailTableDataSuccess, {
             maxDiffPixels: 500,
         });
     });
 
     // 对比数据
-    test('operator_compare_rank', async ({page, operatorPage}) => {
-        const {operatorFrame} = operatorPage;
-        setCompare(page, operatorFrame);
-        await expect(operatorFrame.locator('.mi-page'))
-            .toHaveScreenshot(operatorImgMap.compareRankRes, {
-                maxDiffPixels: 500,
-            });
+    test('operator_compare_rank', async ({ page, operatorPage }) => {
+        const { operatorFrame } = operatorPage;
+        await setCompare(page, operatorFrame);
+        await operatorFrame.locator('.ant-spin').waitFor({state: 'hidden'});
+        await expect(operatorFrame.locator('.mi-page')).toHaveScreenshot(operatorImgMap.compareRankRes, {
+            maxDiffPixels: 500,
+        });
     });
 
     test.afterEach(async ({ page }) => {
