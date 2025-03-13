@@ -2040,9 +2040,15 @@ bool DbTraceDataBase::QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t 
 {
     std::vector<std::string> tableList = {TABLE_API, TABLE_CONNECTION_CATS, TABLE_CONNECTION_IDS, TABLE_ENUM_API_TYPE};
     if (!CheckTablesExist(tableList)) {
+        ServerLog::Error("Failed to check dependent table for query fwdbwd data in the DB scenario.");
         return false;
     }
-    auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_DB_SQL);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (!ExecSql(CREATE_TEMP_FWDBWD_FLOW_TABLE_DB_SQL)) {
+        ServerLog::Error("Failed to create temp fwdbwd table in the DB scenario.");
+        return false;
+    }
+    auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query fwd/bwd data by flow in the DB scenario.");
         return false;
