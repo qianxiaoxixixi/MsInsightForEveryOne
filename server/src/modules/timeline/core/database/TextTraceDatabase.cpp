@@ -1869,7 +1869,17 @@ std::string TextTraceDatabase::QueryHostInfo()
 bool TextTraceDatabase::QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset,
     const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
-    auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_TEXT_SQL);
+    std::vector<std::string> tableList = {SLICE_TABLE, FLOW_TABLE};
+    if (!CheckTablesExist(tableList)) {
+        ServerLog::Error("Failed to check dependent table for query fwdbwd data in the TEXT scenario.");
+        return false;
+    }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (!ExecSql(CREATE_TEMP_FWDBWD_FLOW_TABLE_TEXT_SQL)) {
+        ServerLog::Error("Failed to create temp fwdbwd table in the TEXT scenario.");
+        return false;
+    }
+    auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query fwd/bwd data by flow in the TEXT scenario.");
         return false;
