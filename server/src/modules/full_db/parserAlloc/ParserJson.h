@@ -26,6 +26,8 @@ public:
     static bool ExistJsonFormatFile(const std::string &file);
 protected:
     bool CheckParseFileInfoSize(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles) const;
+    static std::tuple<bool, bool, bool> CheckHasTraceJsonMemoryDataOperatorData(
+        const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 
 private:
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);
