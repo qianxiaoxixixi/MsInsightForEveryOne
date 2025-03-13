@@ -137,3 +137,42 @@ TEST_F(ParserJsonTest, TestCheckParseFileInfoSizeWhenTotalFileSizeExceed20GThenR
     bool result = parserJson.CheckParseFileInfoSizeTest(parseFileInfo, jsonFiles);
     EXPECT_EQ(result, false);
 }
+
+TEST_F(ParserJsonTest, TestCheckHasTraceJsonMemoryDataOperatorData)
+{
+    class MockParserJson : public Dic::Module::ParserJson {
+    public:
+        static void CheckHasTraceJsonMemeoryDataOpDataFailTest()
+        {
+            Global::ProjectExplorerInfo projectExplorerInfo;
+            std::vector<std::string> parseFileList = {"a.a", "invaild.csv"};
+            for (const auto &parseFile: parseFileList) {
+                Global::ParseFileInfo parseFileInfo;
+                parseFileInfo.parseFilePath = parseFile;
+                projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+            }
+            auto [hasJson, hasMemory, hasOp] = CheckHasTraceJsonMemoryDataOperatorData({projectExplorerInfo});
+            EXPECT_EQ(hasJson, false);
+            EXPECT_EQ(hasMemory, false);
+            EXPECT_EQ(hasOp, false);
+        }
+
+        static void CheckHasTraceJsonMemeoryDataOpDataSuccessTest()
+        {
+            Global::ProjectExplorerInfo projectExplorerInfo;
+            std::vector<std::string> parseFileList = {"a.json", "memory_record.csv", "kernel_details.csv"};
+            for (const auto &parseFile: parseFileList) {
+                Global::ParseFileInfo parseFileInfo;
+                parseFileInfo.parseFilePath = parseFile;
+                projectExplorerInfo.parseFilePathInfos.push_back(parseFileInfo);
+            }
+            auto [hasJson, hasMemory, hasOp] = CheckHasTraceJsonMemoryDataOperatorData({projectExplorerInfo});
+            EXPECT_EQ(hasJson, true);
+            EXPECT_EQ(hasMemory, true);
+            EXPECT_EQ(hasOp, true);
+        }
+    };
+
+    MockParserJson::CheckHasTraceJsonMemeoryDataOpDataFailTest();
+    MockParserJson::CheckHasTraceJsonMemeoryDataOpDataSuccessTest();
+}

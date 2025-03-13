@@ -69,6 +69,8 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     if (rankListMap.size() >= PENDIND_CRITICAL_VALUE) {
         response.body.isPending = true;
     }
+    auto [hasTraceJson, hasMemoryData, hasOperatorData] = CheckHasTraceJsonMemoryDataOperatorData(projectInfos);
+    response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData && !isCluster;
     ModuleRequestHandler::SetResponseResult(response, true);
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
@@ -571,6 +573,36 @@ bool ParserJson::ExistJsonFormatFile(const std::string &file)
         return false;
     }
     return true;
+}
+
+std::tuple<bool, bool, bool> ParserJson::CheckHasTraceJsonMemoryDataOperatorData(
+    const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+{
+    static const std::regex memoryRegex(memoryRecordReg);
+    static const std::regex kernelRegex(KERNEL_DETAIL_REG);
+
+    bool hasTraceJson = false;
+    bool hasMemoryCsv = false;
+    bool hasOperatorCsv = false;
+
+    for (const auto &project : projectInfos) {
+        if (hasTraceJson && hasMemoryCsv && hasOperatorCsv) break; // 提前退出
+
+        for (const auto &item : project.parseFilePathInfos) {
+            std::string fileName = FileUtil::GetFileName(item.parseFilePath);
+            if (!hasTraceJson && StringUtil::EndWith(fileName, JSON_FILE_SUFFIX)) {
+                hasTraceJson = true;
+            } else if (!hasMemoryCsv && std::regex_match(fileName, memoryRegex)) {
+                hasMemoryCsv = true;
+            } else if (!hasOperatorCsv && std::regex_match(fileName, kernelRegex)) {
+                hasOperatorCsv = true;
+            }
+
+            if (hasTraceJson && hasMemoryCsv && hasOperatorCsv) break; // 内层循环提前退出
+        }
+    }
+
+    return {hasTraceJson, hasMemoryCsv, hasOperatorCsv}; // 使用列表初始化
 }
 } // Module
 } // Dic

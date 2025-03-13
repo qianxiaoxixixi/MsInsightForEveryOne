@@ -30,6 +30,7 @@ struct ImportActionResBody {
     std::vector<std::string> subdirectoryList;
     bool isBinary = false;
     bool isCluster = false;
+    bool isOnlyTraceJson = false;
     bool reset = true;
     bool isSimulation = false;
     bool isIpynb = false;

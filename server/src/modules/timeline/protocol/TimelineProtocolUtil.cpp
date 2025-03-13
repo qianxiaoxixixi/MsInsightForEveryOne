@@ -22,6 +22,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
+    JsonUtil::AddMember(body, "isOnlyTraceJson", response.body.isOnlyTraceJson, allocator);
     JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
     JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
     JsonUtil::AddMember(body, "isSimulation", response.body.isSimulation, allocator);
