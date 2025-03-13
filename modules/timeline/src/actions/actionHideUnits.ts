@@ -16,6 +16,9 @@ interface EmptyMetaData {
 };
 
 function hideUnit(session: Session): void {
+    if (session.selectedRangeIsLock) {
+        return;
+    }
     hideUnits(session, session.selectedUnits);
     runInAction(() => {
         session.renderTrigger = !session.renderTrigger;
@@ -185,6 +188,7 @@ export const actionHideUnits = register({
     name: 'hideUnits',
     label: 'timeline:contextMenu.Hide',
     visible: (session: Session) => isHideUnitMenuVisible(session),
+    disabled: (session: Session) => session.selectedRangeIsLock,
     perform: (session): void => {
         hideUnit(session);
     },
@@ -194,6 +198,7 @@ export const actionShowHiddenUnits = register({
     name: 'showHiddenUnits',
     label: 'timeline:contextMenu.Show All Hidden',
     visible: (session: Session) => isShowUnitsMenuVisible(session),
+    disabled: (session: Session) => session.selectedRangeIsLock,
     perform: (session): void => {
         showHiddenUnit(session);
     },
