@@ -148,7 +148,7 @@ interface PinButtonProps {
 }
 const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }: PinButtonProps): JSX.Element => {
     const { t } = useTranslation();
-    const style = { backgroundColor: 'transparent', marginLeft: 10 };
+    const style = { backgroundColor: 'transparent', marginLeft: 1 };
     const placeholder = <StyledButton style={style} icon={<StickyIcon fill="transparent" />} />;
     return <>
         {shouldDisplayStickyButton(session, isHovered, hasPinButton, isPinned)
@@ -193,18 +193,39 @@ interface ConfigBarProps {
     isSelected: boolean;
 }
 const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected }: ConfigBarProps): JSX.Element => {
+    const selectUnits = useSelectUnits(session);
+    const deselectUnits = useDeselectUnits(session);
+    const onStopPropagation = React.useCallback((e: React.MouseEvent) => {
+        // 阻止事件冒泡
+        e.stopPropagation();
+        // 阻止默认事件行为
+        e.preventDefault();
+    }, []);
+    const onCheckChange = React.useCallback((e: CheckboxChangeEvent) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        if (Object.is(checked, true)) {
+            selectUnits(unit);
+        } else {
+            deselectUnits(unit);
+        }
+    }, [unit]);
     return <div className="insight-lane-configbar" style={{ flex: 'none' }}>
-        <div style={{ display: 'flex', marginLeft: 5 }} onMouseUp={(e: React.MouseEvent): void => {
+        <div style={{ display: 'flex', marginLeft: 5, alignItems: 'center' }} onMouseUp={(e: React.MouseEvent): void => {
             if (!session.isDragging) {
                 e.stopPropagation();
             }
             e.preventDefault();
         }}>
             {(isHovered || isSelected) && unit.configBar?.(session, unit.metadata)}
+            <UnitInfoActionDiv
+                showCheckbox={session.phase === 'download' && (isHovered || isSelected)}
+                onMouseUp={onStopPropagation}>
+                <Checkbox onChange={onCheckChange} checked={isSelected}/>
+            </UnitInfoActionDiv>
             <PinButton
                 session={session}
                 unit={unit}
-                isHovered={isHovered}
+                isHovered={isHovered || isSelected}
                 hasPinButton={hasPinButton}
                 isPinned={isPinned(unit)}
             />
@@ -325,28 +346,19 @@ const UnitInfoContainer = styled.div<{ unit: InsightUnit; laneInfoWidth: number 
     width: ${(props): number => props.laneInfoWidth}px;
     flex-basis: ${(props): number => props.laneInfoWidth}px;
     height: ${(props): number => props.unit.height()}px;
-    padding-left: ${(props): number => 28 * ((props.unit as any)[level] ?? 0)}px;
+    padding-left: ${(props): number => 14 * ((props.unit as any)[level] ?? 0)}px;
     text-align: left;
     color: ${(props): string => props.theme.unitInfoTextColor};
     display: flex;
     align-items: center;
 `;
 
-const UnitInfoActionHeader = styled.div<{ showCheckbox: boolean; moveRight: boolean }>`
-    position: ${(props): string => props.moveRight ? 'static' : 'absolute'};
-    margin-left: ${(props): number => props.moveRight ? 0 : -20}px;
-    display: flex;
+const UnitInfoActionDiv = styled.div<{ showCheckbox: boolean }>`
+    display: ${(props): string => props.showCheckbox ? 'flex' : 'none'};
     align-items: center;
-    width: ${(props): number => (props.moveRight && !props.showCheckbox) ? 0 : 20}px;
-    transform-origin: ${(props): string => props.moveRight ? 'left' : 'right'};
-    transform: scaleX(${(props): number => props.showCheckbox ? 1 : 0});
-    transition: transform 0.3s ease-in, width 0.3s ease-in;
-    overflow: hidden;
-
-    .ant-checkbox-wrapper {
-        max-height: 20px;
-        margin-left: 4px;
-    }
+    max-height: 20px;
+    scale: 0.8;
+    margin-left: 6px;
 `;
 
 const UnitInfoBody = styled.div<{ offset: number }>`
@@ -377,16 +389,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const isDragging = session.isDragging;
     const [isHovered, setIsHovered] = React.useState(false);
     const selectUnit = useSelectUnit(session);
-    const selectUnits = useSelectUnits(session);
-    const deselectUnits = useDeselectUnits(session);
-    const showCheckbox = React.useMemo(() => isSelected || isHovered, [isSelected, isHovered]);
-    const checkboxMoveRight = unit.parent === undefined;
     const expandable: boolean = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
-    const calculateSiblingsAllNotExpandable = React.useCallback(() => {
-        const siblings = (unit.parent === undefined) ? session.units : (unit.parent.children ?? []);
-        return !siblings.some((item) => hasExpandIcon &&
-            (Boolean(item.children) || (Boolean(item.collapsible) && Boolean(item.collapseAction))));
-    }, [hasExpandIcon, unit]);
     const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
         if (!expandable) {
             return;
@@ -415,24 +418,6 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         });
         _unit.collapseAction?.(_unit);
     }, [session, expandable]);
-    const onStopPropagation = React.useCallback((e: React.MouseEvent) => {
-        // 拖拽时允许事件冒泡
-        if (isDragging) {
-            return;
-        }
-        // 阻止事件冒泡到 UnitInfoContainer
-        e.stopPropagation();
-        // 阻止默认事件行为
-        e.preventDefault();
-    }, [isDragging]);
-    const onCheckChange = React.useCallback((e: CheckboxChangeEvent) => {
-        const checked = (e.target as HTMLInputElement).checked;
-        if (Object.is(checked, true)) {
-            selectUnits(unit);
-        } else {
-            deselectUnits(unit);
-        }
-    }, [unit]);
     const onMouseLeft = (): void => {
         // 拖拽时不触发点击事件
         if (isDragging) {
@@ -468,14 +453,11 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         onMouseLeave={(): void => { setIsHovered(false); }}
         onMouseUp={onUnitInfoContainerMouseUp}
     >
-        <UnitInfoActionHeader showCheckbox={showCheckbox} moveRight={checkboxMoveRight} onMouseUp={onStopPropagation}>
-            <Checkbox onChange={onCheckChange} checked={isSelected}/> {/* Checkbox(20px) */}
-        </UnitInfoActionHeader>
-        <UnitInfoBody offset={(checkboxMoveRight && showCheckbox) ? 20 : 0}>
+        <UnitInfoBody offset={0}>
             {/* position: 'absolute' 将 ExpandIcon 从文档流移出，不影响 UnitInfoContent 宽度显示 */}
             {expandable && <div style={{ position: 'absolute' }}><ExpandIcon unit={unit} /></div>} {/* ExpandIcon(14px) */}
             {/* paddingLeft: '14px' 为 ExpandIcon 的显示留出空间 */}
-            <div style={{ paddingLeft: calculateSiblingsAllNotExpandable() ? '0px' : '14px', width: '100%' }}>
+            <div style={{ paddingLeft: '14px', width: '100%' }}>
                 <UnitInfoContent
                     unit={unit}
                     session={session}
