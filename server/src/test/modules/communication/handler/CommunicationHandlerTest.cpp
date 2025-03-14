@@ -8,7 +8,6 @@
 #include "CommunicationOperatorListsHandler.h"
 #include "BandwidthHandler.h"
 #include "CommunicationOperatorDetailsHandler.h"
-#include "CommunicatorGroupQueryHandler.h"
 #include "DistributionHandler.h"
 #include "GroupHandler.h"
 #include "IterationsHandler.h"
@@ -86,14 +85,6 @@ TEST_F(HandlerTest, CommunicationOperatorDetailsWithExeSqlFail)
     request->params.order = "order";
     request->params.stage = "1";
     CommunicationOperatorDetailsHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, CommunicatorGroupQueryHandlerWithExeSqlFail)
-{
-    auto request = std::make_unique<CommunicatorGroupRequest>();
-    CommunicatorGroupQueryHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }

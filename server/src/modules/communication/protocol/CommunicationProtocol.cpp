@@ -15,7 +15,6 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_DETAILS, ToOperatorDetailsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, ToDistributionRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, ToBandwidthDataRequest);
-    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_COMMUNICATOR, ToCommunicatorRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesRequest);
@@ -31,7 +30,6 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_DETAILS, ToOperatorDetailsResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, ToDistributionResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, ToBandwidthDataResponse);
-    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_COMMUNICATOR, ToCommunicatorResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesResponse);
@@ -94,16 +92,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorRequest(const Dic::json_t &json, std::string &error)
-{
-    std::unique_ptr<CommunicatorGroupRequest> reqPtr = std::make_unique<CommunicatorGroupRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info of communicator request.";
-        return nullptr;
-    }
     return reqPtr;
 }
 
@@ -234,11 +222,6 @@ std::optional<document_t> CommunicationProtocol::ToBandwidthDataResponse(const R
 std::optional<document_t> CommunicationProtocol::ToDistributionResponse(const Response &response)
 {
     return ToResponseJson<DistributionResponse>(dynamic_cast<const DistributionResponse &>(response));
-}
-
-std::optional<document_t> CommunicationProtocol::ToCommunicatorResponse(const Dic::Protocol::Response &response)
-{
-    return ToResponseJson<CommunicatorGroupResponse>(dynamic_cast<const CommunicatorGroupResponse &>(response));
 }
 
 std::optional<document_t> CommunicationProtocol::ToIterationsResponse(const Response &response)

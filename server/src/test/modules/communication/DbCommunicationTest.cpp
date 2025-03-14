@@ -368,14 +368,6 @@ TEST_F(DbCommunicationTest, QueryOperatorListSuccess)
     EXPECT_EQ(opLists.size(), expectSize);
 }
 
-TEST_F(DbCommunicationTest, QueryCommunicationGroupSuccess)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Document responseBody;
-    bool res = database->QueryCommunicationGroup(responseBody);
-    EXPECT_EQ(res, true);
-}
-
 TEST_F(DbCommunicationTest, QueryMatrixSortOpNamesSuccess)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);

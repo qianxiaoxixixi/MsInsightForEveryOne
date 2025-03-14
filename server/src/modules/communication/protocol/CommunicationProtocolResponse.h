@@ -63,11 +63,6 @@ struct GroupItem {
     std::string value;
 };
 
-struct CommunicatorGroupResponse : public Response {
-    CommunicatorGroupResponse() : Response(REQ_RES_COMMUNICATION_COMMUNICATOR) {}
-    rapidjson::Document body;
-};
-
 struct BandwidthDataItem {
     std::string transportType;
     double transitSize;

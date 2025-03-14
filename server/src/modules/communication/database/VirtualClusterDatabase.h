@@ -60,7 +60,6 @@ public:
         std::vector<DurationDo> &durationDoList) = 0;
     virtual bool QueryOperatorList(Protocol::DurationListParams &requestParams,
         std::vector<OperatorTimeDo> &operatorTimeDoList) = 0;
-    virtual bool QueryCommunicationGroup(rapidjson::Document &responseBody) = 0;
     virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
         std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
@@ -110,7 +109,6 @@ protected:
                                   std::vector<DurationDo> &durationDoList, std::string sql, uint64_t startTime);
     bool ExecuteQueryOperatorList(Protocol::DurationListParams &requestParams,
         std::vector<OperatorTimeDo> &operatorTimeDoList, const std::string &sql, uint64_t startTime);
-    bool ExecuteQueryCommunicationGroup(rapidjson::Document &responseBody, std::string sql);
     bool ExecuteQueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
                                        std::vector<Protocol::OperatorNamesObject> &responseBody, std::string sql);
     std::string GetRanksSql(const std::vector<std::string> &rankList);

@@ -9,32 +9,6 @@
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
-bool VirtualClusterDatabase::ExecuteQueryCommunicationGroup(rapidjson::Document &responseBody, std::string sql)
-{
-    sqlite3_stmt *stmtBaseInfo = nullptr;
-    int baseInfoResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmtBaseInfo, nullptr);
-    if (baseInfoResult != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare query communication group info statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    responseBody.SetObject();
-    auto allocator = responseBody.GetAllocator();
-    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
-        int coll = resultStartIndex;
-        std::string stages(sqlite3_column_string(stmtBaseInfo, coll++));
-        if (!stages.empty()) {
-            responseBody.AddMember("tpOrDpGroups", Document(kArrayType, &allocator).Parse(stages.c_str()), allocator);
-        }
-        std::string ppStages(sqlite3_column_string(stmtBaseInfo, coll++));
-        if (!ppStages.empty()) {
-            responseBody.AddMember("ppGroups", Document(kArrayType, &allocator).Parse(ppStages.c_str()), allocator);
-            responseBody.AddMember("defaultPPSize", responseBody["ppGroups"].Size(), allocator);
-        }
-    }
-    sqlite3_finalize(stmtBaseInfo);
-    return true;
-}
-
 bool VirtualClusterDatabase::HasColumn(const std::string &tableName, const std::string &columnName)
 {
     if (!Database::CheckTableExist(tableName)) {
