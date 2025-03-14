@@ -150,6 +150,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
     }, [inputPath]);
 
     return <><StyledModal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
+        width={800}
         footer={<div>
             <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} disabled={selectedPath === ''}>{t('Confirm')}</Button>
             <Button onClick={closeDialog}>{t('Cancel')}</Button>

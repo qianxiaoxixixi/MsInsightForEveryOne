@@ -16,6 +16,10 @@ const ResourceCataologContainer = styled.div`
     overflow-y: auto;
     background: ${(props): string => props.theme.bgColorDark};
     padding: 10px 0;
+    .ant-tree{
+        width: max-content;
+        min-width: 100%;
+    }
     .ant-tree-list {
         background: ${(props): string => props.theme.bgColorDark};
         color: ${(props): string => props.theme.textColorPrimary};
@@ -87,7 +91,7 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
     // Recursive，递归函数
     const searchPath = async(searchText: string = '', curLevelTree: TreeDataNode[] = [], historyRouteKeys: React.Key[] = [], depth = 0): Promise<void> => {
         // 安全防护:最大查询深度
-        const maxDepth = 20;
+        const maxDepth = 100;
         if (depth > maxDepth) {
             onSearchReturnChange({ success: false, result: { message: SearchReturnMessage.EXCEEDING_MAX_DEPETH, options: { maxDepth } } });
             return;
@@ -111,8 +115,8 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
                 setSelectedPath(node.key);
                 // 跳转到选中节点
                 setTimeout(() => {
-                    const dom = document.getElementById(searchText);
-                    dom?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const dom = document.getElementsByClassName('ant-tree-treenode-selected')[0];
+                    dom?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
                 });
                 onSearchReturnChange({ success: true });
                 return;
