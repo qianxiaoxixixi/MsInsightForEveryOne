@@ -62,7 +62,7 @@ test.describe('Communication', () => {
 
         const optionUnsignedText = '(0, 1, 2, 3, 4, 5, 6, 7)';
         const optionSignedText = 'tp-dp-cp:(0, 1, 2, 3, 4, 5, 6, 7)';
-        const optionUnsigned = page.locator(`.ant-select-item-option[title='${optionUnsignedText}']`);
+        const optionUnsigned = communicationFrame.locator(`.ant-select-item-option[title='${optionUnsignedText}']`);
 
         if ((await optionUnsigned.count()) > 0) {
             await communicationGroupSelect.selectOption(optionUnsignedText);

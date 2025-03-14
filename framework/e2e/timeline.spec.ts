@@ -375,7 +375,7 @@ test.describe('Timeline', () => {
         expect(await clickUnitCheckboxTwo.isChecked()).toBe(true);
         await clickMenu(clickUnitTwo, timelineFrame, 'Hide');
         const hideUnit = timelineFrame.locator('#unitWrapperScroller .unit > .empty');
-        const hideUnitTitle = hideUnit.locator('.insight-lane-info > span > span');
+        const hideUnitTitle = hideUnit.locator('.insight-lane-info span');
         expect(await hideUnitTitle.innerHTML()).toBe('2 units hidden');
         await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
         expect(await hideUnit.count()).toBe(0);
