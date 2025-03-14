@@ -79,18 +79,6 @@ template <> std::optional<document_t> ToResponseJson<BandwidthDataResponse>(cons
     return std::move(json);
 }
 
-template <>
-std::optional<document_t> ToResponseJson<CommunicatorGroupResponse>(const CommunicatorGroupResponse &response)
-{
-    document_t json(kObjectType);
-    auto &allocator = json.GetAllocator();
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-
-    json_t body(response.body, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
-}
-
 std::optional<document_t> IterOrRanksInfoToJson(const std::vector<IterationsOrRanksObject> &objs,
                                                 Document::AllocatorType &allocator)
 {

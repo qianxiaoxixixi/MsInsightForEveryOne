@@ -8,7 +8,6 @@
 {"id":11,"moduleName":"memory","type":"request","command":"Memory/view/memoryUsage","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1"}}
 {"id":12,"moduleName":"memory","type":"request","command":"Memory/view/operator","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","currentPage":1,"pageSize":10,"orderName":"","minSize":0,"maxSize":1000000}}
 {"id":13,"moduleName":"memory","type":"request","command":"Memory/view/memoryUsage","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
-{"id":14,"moduleName":"communication","type":"request","command":"communication/communicator","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":15,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllSteps","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":16,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":[]}}
 {"id":17,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllSteps","params":{"token":"Rd``OTxPVKtcJPt]"}}

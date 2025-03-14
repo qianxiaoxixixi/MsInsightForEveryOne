@@ -479,12 +479,6 @@ bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
     return ExecuteQueryBaseInfo(baseInfo, baseInfoSql);
 }
 
-bool TextClusterDatabase::QueryCommunicationGroup(Document &responseBody)
-{
-    std::string baseInfoSql = "select stages, pp_stages from " + TABLE_BASE_INFO;
-    return ExecuteQueryCommunicationGroup(responseBody, baseInfoSql);
-}
-
 std::string TextClusterDatabase::QueryParseClusterStatus()
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;

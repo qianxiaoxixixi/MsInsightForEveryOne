@@ -70,7 +70,6 @@ public:
         std::vector<DurationDo> &durationDoList) override;
     bool QueryOperatorList(Protocol::DurationListParams &requestParams,
         std::vector<OperatorTimeDo> &operatorTimeDoList) override;
-    bool QueryCommunicationGroup(Document &responseBody) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,
                                              Protocol::CommunicationKernelBody &responseBody) override;

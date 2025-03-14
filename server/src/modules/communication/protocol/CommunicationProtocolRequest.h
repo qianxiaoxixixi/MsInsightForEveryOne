@@ -131,10 +131,6 @@ struct DistributionDataRequest : public Request {
     DistributionDataParam params;
 };
 
-struct CommunicatorGroupRequest : public Request {
-    CommunicatorGroupRequest() : Request(REQ_RES_COMMUNICATION_COMMUNICATOR) {};
-};
-
 struct RanksParams {
     std::string dbIndex;
     std::string iterationId;

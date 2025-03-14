@@ -28,6 +28,7 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     }
     if (!database->QueryCommunicationKernelInfo(request.params.name, request.params.rankId, response.body)) {
         SendResponse(std::move(responsePtr), false, "Failed to query communication kernel info.");
+        return false;
     }
 
     // 判断是否具备集群数据并且包含集群文件

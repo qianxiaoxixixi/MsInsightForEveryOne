@@ -395,39 +395,6 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
     return ExecuteQueryOperatorList(requestParams, operatorTimeDoList, sql, startTime);
 }
 
-bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)
-{
-    std::string baseInfoSql =
-            " with ComGroup as (select distinct REPLACE(REPLACE(rank_set, '(', '['), ')', ']') as stage, "
-            " type from " + TABLE_COMM_GROUP + ") "
-            " select (select group_concat(stage, ',') from ComGroup where type = 'collective') as stage, "
-            "       (select group_concat(stage, ',') from ComGroup where type = 'p2p') as pp_stages";
-    sqlite3_stmt *stmtBaseInfo = nullptr;
-    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
-    if (baseInfoResult != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to prepare query communicationGroup statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    responseBody.SetObject();
-    auto allocator = responseBody.GetAllocator();
-    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
-        int coll = resultStartIndex;
-        std::string stages(sqlite3_column_string(stmtBaseInfo, coll++));
-        if (!stages.empty()) {
-            std::string stage = "[" + stages + "]";
-            responseBody.AddMember("tpOrDpGroups", Document(kArrayType, &allocator).Parse(stage.c_str()), allocator);
-        }
-        std::string ppStages(sqlite3_column_string(stmtBaseInfo, coll++));
-        if (!ppStages.empty()) {
-            std::string ppStage = "[" + ppStages + "]";
-            responseBody.AddMember("ppGroups", Document(kArrayType, &allocator).Parse(ppStage.c_str()), allocator);
-            responseBody.AddMember("defaultPPSize", responseBody["ppGroups"].Size(), allocator);
-        }
-    }
-    sqlite3_finalize(stmtBaseInfo);
-    return true;
-}
-
 bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
