@@ -53,7 +53,8 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         const { activeDataSource, dataSources } = session;
         const dataSource = { ...orginDataSource };
 
-        if (session.isReset) {
+        // 这里添加 session.isCluster 判断，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
+        if (session.isReset || session.isCluster) {
             session.reset();
         }
 
