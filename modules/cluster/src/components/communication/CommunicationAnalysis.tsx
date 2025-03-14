@@ -111,7 +111,7 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
             {/* 带宽分析 */}
             { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
                 session={session} returnHome={returnHome}
-                operatorName={conditions.operatorName} stage={conditions.stage} /> }
+                operatorName={conditions.operatorName} stage={conditions.stage} pgName={conditions.pgName} /> }
             <div style={{ position: 'absolute', top: '15px', right: '20px' }}>
                 <Tooltip
                     placement="left"

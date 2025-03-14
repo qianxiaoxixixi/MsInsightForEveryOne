@@ -20,6 +20,7 @@ struct OperatorDetailsParam {
     std::string order;
     std::string stage;
     std::string queryType = "Comparison";
+    std::string pgName;
     int pageSize{};
     int currentPage{};
     bool CheckParams(std::string &errorMsg) const
@@ -57,6 +58,7 @@ struct OperatorDetailsParam {
         this->stage = param.stage;
         this->pageSize = param.pageSize;
         this->currentPage = param.currentPage;
+        this->pgName = param.pgName;
     }
     OperatorDetailsParam& operator=(const OperatorDetailsParam& param) = delete;
 };
@@ -72,6 +74,7 @@ struct BandwidthDataParam {
     std::string rankId;
     std::string operatorName;
     std::string stage;
+    std::string pgName;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -103,6 +106,7 @@ struct DistributionDataParam {
     std::string operatorName;
     std::string transportType;
     std::string stage;
+    std::string pgName;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -164,6 +168,7 @@ struct OperatorNamesParams {
     std::string iterationId;
     std::vector<std::string> rankList = {};
     std::string stage;
+    std::string pgName;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -210,6 +215,7 @@ struct DurationListParams {
     std::string targetOperatorName;
     bool isCompare = false;
     std::string baselineIterationId;
+    std::string pgName;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -240,6 +246,7 @@ struct DurationListParams {
         this->operatorName = params.operatorName;
         this->stage = params.stage;
         this->targetOperatorName = params.targetOperatorName;
+        this->pgName = params.pgName;
         for (const auto &item: params.rankList) {
             this->rankList.push_back(item);
         }
@@ -280,6 +287,7 @@ struct MatrixBandwidthParam {
     std::string stage;
     std::string operatorName;
     std::string iterationId;
+    std::string pgName;
     bool isCompare = false;
     std::string baselineIterationId;
     bool CheckParams(std::string &errorMsg) const

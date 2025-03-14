@@ -16,9 +16,9 @@ namespace Module {
         int dstRank;
         std::string transportType;
         std::string opName;
-        double transitSize;
-        double transitTime;
-        double bandwidth;
+        double transitSize = 0;
+        double transitTime = 0;
+        double bandwidth = 0;
     };
 
     struct OperatorTimeDo {
@@ -31,17 +31,17 @@ namespace Module {
     struct DurationDo {
         std::string rankId;
         double startTime;
-        double elapseTime;
-        double transitTime;
-        double synchronizationTime;
-        double waitTime;
-        double idleTime;
-        double synchronizationTimeRatio;
-        double waitTimeRatio;
-        double sdmaBw{};
-        double rdmaBw{};
-        double sdmaTime{};
-        double rdmaTime{};
+        double elapseTime = 0;
+        double transitTime = 0;
+        double synchronizationTime = 0;
+        double waitTime = 0;
+        double idleTime = 0;
+        double synchronizationTimeRatio = 0;
+        double waitTimeRatio = 0;
+        double sdmaBw = 0;
+        double rdmaBw = 0;
+        double sdmaTime = 0;
+        double rdmaTime = 0;
     };
 }
 }

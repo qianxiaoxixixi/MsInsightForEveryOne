@@ -311,8 +311,8 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
 
 // 数据更新
 const updateData = async(condition: ConditionDataType, setDataSource: VoidFunction, isCompare: boolean): Promise<void> => {
-    const { iterationId, stage, operatorName, baselineIterationId } = condition;
-    const param = { iterationId, stage, operatorName, isCompare, baselineIterationId };
+    const { iterationId, stage, operatorName, baselineIterationId, pgName } = condition;
+    const param = { iterationId, pgName, stage, operatorName, isCompare, baselineIterationId };
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];
     // 从矩阵数据中获取要展示的rankId列表

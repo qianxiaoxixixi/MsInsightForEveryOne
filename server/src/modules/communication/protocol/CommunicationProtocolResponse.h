@@ -45,7 +45,7 @@ struct OperatorItem {
 };
 
 struct OperatorDetailsResBody {
-    int count;
+    int count = 0;
     int pageSize;
     int currentPage;
     std::vector<OperatorItem> allOperators;
@@ -65,10 +65,10 @@ struct GroupItem {
 
 struct BandwidthDataItem {
     std::string transportType;
-    double transitSize;
-    double transitTime;
-    double bandwidth;
-    double largePacketRatio;
+    double transitSize = 0;
+    double transitTime = 0;
+    double bandwidth = 0;
+    double largePacketRatio = 0;
 };
 
 struct BandwidthDataResBody {
@@ -106,6 +106,16 @@ struct RanksResponse : public Response {
 
 struct OperatorNamesObject {
     std::string operatorName;
+
+    bool operator<(const OperatorNamesObject& other) const
+    {
+        return operatorName < other.operatorName;
+    }
+
+    bool operator==(const OperatorNamesObject& other) const
+    {
+        return operatorName == other.operatorName;
+    }
 };
 
 struct OperatorNamesResponse : public Response {

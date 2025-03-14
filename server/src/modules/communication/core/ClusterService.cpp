@@ -123,13 +123,14 @@ void ClusterService::QueryMatrixInfo(Protocol::MatrixBandwidthParam &params, Pro
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<MatrixInfoDo> compareMatrixList;
     std::vector<MatrixInfoDo> baselineMatrixList;
-    Protocol::MatrixBandwidthParam compareParams{params.stage, params.operatorName, params.iterationId};
+    Protocol::MatrixBandwidthParam compareParams{params.stage, params.operatorName, params.iterationId, params.pgName};
     if (database == nullptr || !database->QueryMatrixList(compareParams, compareMatrixList)) {
         ServerLog::Error("Failed to get compare matrix response data.");
     }
 
     if (params.isCompare) {
-        Protocol::MatrixBandwidthParam baselineParams{params.stage, params.operatorName, params.baselineIterationId};
+        Protocol::MatrixBandwidthParam baselineParams{params.stage, params.operatorName,
+                                                      params.baselineIterationId, params.pgName};
         auto baselineDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(BASELINE);
         if (baselineDatabase == nullptr || !baselineDatabase->QueryMatrixList(baselineParams, baselineMatrixList)) {
             ServerLog::Error("Failed to get baseline matrix response data.");

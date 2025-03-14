@@ -89,6 +89,12 @@ private:
     sqlite3_stmt *stepStmt = nullptr;
     sqlite3_stmt *matrixStmt = nullptr;
     bool isInitStmt = false;
+    int reservedNumber = 4;
+    // pp通信域
+    std::string ppVal = "pp";
+    std::string p2pVal = "p2p";
+    std::string sendOpKey = "send";
+    std::string receiveOpKey = "receive";
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
     std::vector<CommunicationMatrixInfo> matrixCache;
@@ -98,6 +104,25 @@ private:
 
     std::string BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetStageIdByGroupId(const std::string &groupId);
+    bool CheckIsPpOp(const std::string &opName);
+    std::vector<MatrixInfoDo> MergeMatrixInfoDoList(const std::vector<MatrixInfoDo> &collective,
+                                                    const std::vector<MatrixInfoDo> &p2p);
+    std::string GetRankStrForSql(const std::string &rankListStr);
+    std::vector<Protocol::OperatorNamesObject> MergeOperatorNameObject(
+        const std::vector<Protocol::OperatorNamesObject> &collective,
+        const std::vector<Protocol::OperatorNamesObject> &p2p);
+    std::string GetDurationListSql(const std::string &bandwidthCondition, const std::string &timeCondition);
+    std::vector<DurationDo> MergeDurationDoList(const std::vector<DurationDo> &collective,
+                                                const std::vector<DurationDo> &p2p);
+    std::string GetAllOperatorsSql(const std::string &startTime, const std::string &bandwidthCondition,
+                                   const std::string &timeCondition);
+    std::string GetAllOperatorsSql(uint64_t &startTime, const Protocol::OperatorDetailsParam &param);
+    Protocol::DistributionResBody MergeDistribution(Protocol::DistributionResBody &collective,
+                                                    Protocol::DistributionResBody &p2p);
+    std::string MergeDistributionJson(const std::optional<document_t> &colData,
+                                      const std::optional<document_t> &p2pData);
+    Protocol::BandwidthDataResBody MergeBandwidthData(const Protocol::BandwidthDataResBody &collective,
+                                                      const Protocol::BandwidthDataResBody &p2p);
 };
 } // end of namespace Module
 } // end of namespace Dic

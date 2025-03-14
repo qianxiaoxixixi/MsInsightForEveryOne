@@ -46,10 +46,10 @@ TEST_F(CommunicationProtocolRequestTest, BandwidthDataParamTest)
 
 TEST_F(CommunicationProtocolRequestTest, DistributionDataParamTest)
 {
-    Dic::Protocol::DistributionDataParam param1 = {"1", ";", "1", "opName", "type", "stage"};
-    Dic::Protocol::DistributionDataParam param2 = {"1", "1", "1", ";", "type", "stage"};
-    Dic::Protocol::DistributionDataParam param3 = {"1", "1", "1", "opName", ";", "stage"};
-    Dic::Protocol::DistributionDataParam param4 = {"1", "1", "1", "opName", "type", ";"};
+    Dic::Protocol::DistributionDataParam param1 = {"1", ";", "1", "opName", "type", "stage", ""};
+    Dic::Protocol::DistributionDataParam param2 = {"1", "1", "1", ";", "type", "stage", ""};
+    Dic::Protocol::DistributionDataParam param3 = {"1", "1", "1", "opName", ";", "stage", ""};
+    Dic::Protocol::DistributionDataParam param4 = {"1", "1", "1", "opName", "type", ";", ""};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
     EXPECT_EQ(param2.CheckParams(msg), false);
@@ -115,10 +115,10 @@ TEST_F(CommunicationProtocolRequestTest, MatrixGroupParamTestBaselineStepError)
 
 TEST_F(CommunicationProtocolRequestTest, MatrixBandwidthParamTest)
 {
-    Dic::Protocol::MatrixBandwidthParam param1 = {"stage", "opName", ";", false, "1"};
-    Dic::Protocol::MatrixBandwidthParam param2 = {"stage", ";", "1", false, "1"};
-    Dic::Protocol::MatrixBandwidthParam param3 = {";", "opName", "1", false, "1"};
-    Dic::Protocol::MatrixBandwidthParam param4 = {"stage", "opName", "1", false, ";"};
+    Dic::Protocol::MatrixBandwidthParam param1 = {"stage", "opName", ";", "", false, "1"};
+    Dic::Protocol::MatrixBandwidthParam param2 = {"stage", ";", "1", "", false, "1"};
+    Dic::Protocol::MatrixBandwidthParam param3 = {";", "opName", "1", "", false, "1"};
+    Dic::Protocol::MatrixBandwidthParam param4 = {"stage", "opName", "1", "", false, ";"};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
     EXPECT_EQ(param2.CheckParams(msg), false);

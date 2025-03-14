@@ -34,7 +34,7 @@ const BreadcrumbBox = styled.div`
         padding: 0 8px;
     }
 `;
-const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
+const Operators = ({ returnHome, rankId, operatorName, iterationId, stage, pgName }: any): JSX.Element => {
     const { t } = useTranslation('communication');
     return (
         <FixedBox data-testid={'operators'}>
@@ -46,7 +46,7 @@ const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any
                 <div className="delimiter">|</div>
                 <div data-testid={'operatorRankId'}>{operatorName}(RankId {rankId})</div>
             </BreadcrumbBox>
-            <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage}/>
+            <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage} pgName={pgName}/>
         </FixedBox>
     );
 };

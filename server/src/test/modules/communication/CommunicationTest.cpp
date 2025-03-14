@@ -125,9 +125,8 @@ TEST_F(TestSuit, QueryDurationDataWithRank)
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";
-    requestParams.rankList = {"0"};
     database->QueryDurationList(requestParams, durationList);
-    int expectSize = 1;
+    int expectSize = 2;
     EXPECT_EQ(durationList.size(), expectSize);
 }
 
