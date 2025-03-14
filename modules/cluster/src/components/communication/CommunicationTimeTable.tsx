@@ -176,6 +176,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             order: _sorter.order,
             stage: conditions.stage,
             queryType: record.source,
+            pgName: conditions.pgName,
         });
         setDataSource(res?.allOperators ?? []);
         setPage({ ..._page, total: res?.count ?? 0 });

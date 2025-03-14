@@ -21,6 +21,7 @@ export interface ConditionDataType {
     operatorName: string ;
     type: AnalysisType;
     targetOperatorName?: string;
+    pgName: string;
 }
 export const totalOperator = 'Total Op Info';
 export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
@@ -31,6 +32,7 @@ export const defaultCondition = {
     stage: '',
     operatorName: '',
     type: AnalysisType.COMMUNICATION_MATRIX,
+    pgName: '',
 };
 const defaultOptionMap = {
     iterationOptions: [],
@@ -59,6 +61,14 @@ function getDefaultStage(inputArray: Array<{value: string | number}>): string | 
     return result.value;
 }
 
+function getPgNameByStage(stageOptions: optionDataType[], stage: string): string {
+    const stageData = stageOptions.find(item => item.value === stage);
+    if (stageData === undefined) {
+        return '';
+    }
+    return (stageData as unknown as {strategy: string}).strategy as string;
+}
+
 const getOptionsAndValue = async (session: Session, initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):
 Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     if (key !== undefined) {
@@ -68,11 +78,15 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
             const stageOptions: optionDataType[] = await getStageOptions(condition, session);
             const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage);
             optionMap.stageOptions = stageOptions;
+            condition.pgName = getPgNameByStage(stageOptions, stage.toString());
             condition.stage = stage.toString();
         }
         if (['iterationId', 'stage', 'type'].includes(key as string)) {
+            if ((key as string) === 'stage') {
+                condition.pgName = getPgNameByStage(optionMap.stageOptions, val);
+            }
             const operatorOptions: optionDataType[] = await getOperatorOptions(
-                { iterationId: condition.iterationId, rankList: [], stage: condition.stage, type: condition.type });
+                { iterationId: condition.iterationId, stage: condition.stage, type: condition.type, pgName: condition.pgName });
             optionMap.operatorOptions = operatorOptions;
             condition.operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
         }
@@ -89,18 +103,19 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     // stage
     const stageOptions: optionDataType[] = await getStageOptions({ iterationId, baselineIterationId }, session);
     const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage).toString();
+    const pgName = getPgNameByStage(stageOptions, stage.toString());
 
     // type
     const type = initObj.type ?? defaultCondition.type;
 
     // Operator Name
     const operatorOptions: optionDataType[] =
-        await getOperatorOptions({ iterationId, rankList: [], stage, type });
+        await getOperatorOptions({ iterationId, stage, type, pgName });
     const operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
 
     return {
         optionMap: { iterationOptions, baselineIterationOptions, stageOptions, operatorOptions },
-        condition: { iterationId, stage, type, operatorName, baselineIterationId },
+        condition: { iterationId, stage, pgName, type, operatorName, baselineIterationId },
     };
 };
 
@@ -210,12 +225,12 @@ const getStageOptions = async (condition: {iterationId: string;baselineIteration
         });
     return options;
 };
-const getOperatorOptions = async ({ iterationId, rankList, stage, type }: {iterationId: string;
-    rankList: string[]; stage: string;type: string;}):
+const getOperatorOptions = async ({ iterationId, stage, type, pgName }: {iterationId: string;
+    stage: string;type: string; pgName: string;}):
 Promise<optionDataType[]> => {
     const res: {operatorName: string[] } = (type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS
-        ? await queryOperators({ iterationId, rankList, stage })
-        : await queryMatrixOperators({ iterationId, stage }));
+        ? await queryOperators({ iterationId, stage, pgName })
+        : await queryMatrixOperators({ iterationId, stage, pgName }));
     const list = res?.operatorName ?? [];
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;

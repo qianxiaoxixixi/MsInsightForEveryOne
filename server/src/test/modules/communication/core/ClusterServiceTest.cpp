@@ -130,7 +130,7 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoSuccess)
     InitParser(filePath, Dic::COMPARE);
     InitParser(filePath, Dic::BASELINE);
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
-                                                  "2", true, "2"};
+                                                  "2", "", true, "2"};
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_TWO);
@@ -142,7 +142,7 @@ TEST_F(ClusterServiceTest, QueryMatrixInfoFailOfDatabaseNotExist)
 {
     Clear();
     Dic::Protocol::MatrixBandwidthParam params = {"(0, 1, 2, 3, 4, 5, 6, 7)", "hcom_broadcast__483_0",
-                                                  "2", true, "2"};
+                                                  "2", "", true, "2"};
     Dic::Protocol::MatrixListResponseBody body;
     ClusterService::QueryMatrixInfo(params, body);
     EXPECT_EQ(body.matrixList.size(), NUMBER_ZERO);
@@ -153,7 +153,6 @@ TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
     InitParser(filePath, Dic::COMPARE);
     InitParser(filePath, Dic::BASELINE);
     Dic::Protocol::DurationListParams params;
-    params.rankList.emplace_back("1");
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
@@ -163,7 +162,7 @@ TEST_F(ClusterServiceTest, QueryOperatorListSuccess)
     ClusterService::QueryOperatorList(params, body);
     const uint64_t expectMaxTime = 11229980;
     const uint64_t expectMinTime = 10397500;
-    EXPECT_EQ(body.opLists.size(), NUMBER_ONE);
+    EXPECT_EQ(body.opLists.size(), NUMBER_TWO);
     EXPECT_EQ(body.maxTime, expectMaxTime);
     EXPECT_EQ(body.minTime, expectMinTime);
     EXPECT_EQ(body.opLists[0].compare.size(), NUMBER_ONE);
@@ -175,7 +174,6 @@ TEST_F(ClusterServiceTest, QueryOperatorListFailWithoutDb)
 {
     Clear();
     Dic::Protocol::DurationListParams params;
-    params.rankList.emplace_back("1");
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
@@ -190,7 +188,6 @@ TEST_F(ClusterServiceTest, QueryDurationListSuccess)
     InitParser(filePath, Dic::COMPARE);
     InitParser(filePath, Dic::BASELINE);
     Dic::Protocol::DurationListParams params;
-    params.rankList.emplace_back("1");
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
@@ -198,9 +195,9 @@ TEST_F(ClusterServiceTest, QueryDurationListSuccess)
     params.isCompare = true;
     Dic::Protocol::DurationListsResponseBody body;
     ClusterService::QueryDurationList(params, body);
-    const double expectStartTime = 10.3975;
-    EXPECT_EQ(body.durationList.size(), NUMBER_ONE);
-    EXPECT_EQ(body.durationList[0].rankId, "1");
+    const double expectStartTime = 10.6855;
+    EXPECT_EQ(body.durationList.size(), NUMBER_TWO);
+    EXPECT_EQ(body.durationList[0].rankId, "0");
     EXPECT_EQ(body.durationList[0].durationData.compare.startTime, expectStartTime);
     EXPECT_EQ(body.durationList[0].durationData.baseline.startTime, expectStartTime);
     EXPECT_EQ(body.bwStatistics.size(), NUMBER_ONE);
@@ -211,7 +208,6 @@ TEST_F(ClusterServiceTest, QueryDurationListFailWithoutDb)
 {
     Clear();
     Dic::Protocol::DurationListParams params;
-    params.rankList.emplace_back("1");
     params.operatorName = "hcom_broadcast__483_1";
     params.iterationId = "2";
     params.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
