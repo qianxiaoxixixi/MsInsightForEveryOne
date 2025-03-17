@@ -7,6 +7,7 @@ import { Popconfirm, Tooltip } from 'antd';
 import { DeleteIcon } from 'ascend-icon';
 import { removeDataPath, removeProject } from '@/utils/Project';
 import { useTranslation } from 'react-i18next';
+import { openLoading } from '@/utils/useLoading';
 
 interface IProps {
     isProject: boolean;
@@ -16,6 +17,7 @@ interface IProps {
 const DeleteConfirm = observer(({ isProject, projectIndex, dataPathIndex }: IProps) => {
     const { t } = useTranslation('framework');
     const confirm = (): void => {
+        openLoading();
         if (isProject) {
             removeProject(projectIndex);
         } else {

@@ -83,7 +83,6 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         localStorageService.setItem(LocalStorageKey.LAST_FILE_PATH, path);
     });
     cancelBaselineData();
-    closeLoading();
 }
 // 允许2个数组值重复或乱序
 function arraysValueEqual<T>(a: T[], b: T[]): boolean {
@@ -169,6 +168,7 @@ export const removeProject = (projectIndex: number): void => {
         } catch {
             console.error('remove error');
         }
+        closeLoading();
     });
 };
 
@@ -195,6 +195,7 @@ export const removeProjects = async (projectNameList: React.Key[] = []): Promise
         } catch {
             console.error('remove error');
         }
+        closeLoading();
     });
 };
 
@@ -225,6 +226,7 @@ export const removeDataPath = (projectIndex: number, dataPathIndex: number): voi
         } catch {
             console.error('removeSingle error');
         }
+        closeLoading();
     });
 };
 
