@@ -64,6 +64,13 @@ def common_path_check(path: str, exist_only=True):
     return True
 
 
+def is_within_directory(src, dst):
+    """ 检查是否存在压缩跨路径覆盖攻击"""
+    abs_src_dir = os.path.abspath(os.path.join(dst, src))
+    abs_dst_dir = os.path.abspath(dst)
+    return os.path.commonpath([abs_src_dir]) == os.path.commonpath([abs_src_dir, abs_dst_dir])
+
+
 def unzip_safety(zip_file: str, dist_path):
     max_extract_count = 1000
     max_extract_file_size = 200 * 1024 * 1024  # 200MB
@@ -72,6 +79,9 @@ def unzip_safety(zip_file: str, dist_path):
         for file in file_list:
             if zip_file.getinfo(file).file_size > max_extract_file_size:
                 logging.error(f"File size exceeds max extract file limit(200MB), file={file}")
+                return False
+            if not is_within_directory(file, dist_path):
+                logging.error("Detect extract file cross dist path")
                 return False
             if not common_path_check(os.path.join(dist_path, file), exist_only=False):
                 logging.error("Extract file path is invalided")
