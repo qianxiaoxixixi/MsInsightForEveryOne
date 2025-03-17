@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
-import { Button, Select, FormItem } from 'ascend-components';
+import { Button, Select, FormItem, Tooltip } from 'ascend-components';
 import {
     getColumnSearchProps,
     getDefaultColumData,
@@ -30,6 +30,7 @@ import {
     queryOperatorFusion,
     fusionOperatorColumns,
     eventViewData,
+    SystemViewItem,
 } from './Common';
 import { ResizeTable } from 'ascend-resize';
 import { limitInput, GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
@@ -42,6 +43,8 @@ import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
+import { OverallMetrics } from './OverallMetrics';
+import { HelpIcon } from 'ascend-icon';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
@@ -101,6 +104,8 @@ const AsideSelectList = styled.div`
     flex: 1;
     overflow: auto;
     & .aside-select-item {
+        display: flex;
+        align-items: center;
         cursor: pointer;
         color: ${(props): string => props.theme.textColorSecondary};
         + .aside-select-item {
@@ -231,7 +236,7 @@ const SelectList = observer((props: any) => {
     useEffect(() => {
         setSelectedKey(props.selectKey);
     }, [props.selectKey]);
-    let systemViewItems: string[] = [];
+    let systemViewItems: SystemViewItem[] = [];
     switch (props.viewOption) {
         case 0:
             systemViewItems = statsSystemViewItems;
@@ -252,7 +257,13 @@ const SelectList = observer((props: any) => {
                     key={index}
                     onClick={(): void => handleClick(index)}
                 >
-                    {t(item)}
+                    <div>{t(item.name)}</div>
+                    {
+                        item.tips !== undefined &&
+                            <Tooltip title={t(item.tips)}>
+                                <HelpIcon style={{ cursor: 'pointer', marginLeft: 4 }} height={20} width={20} />
+                            </Tooltip>
+                    }
                 </div>
                 ))
         }
@@ -281,7 +292,7 @@ const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => 
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, nsDuration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
-                    id: res.id,
+                    id: props.session.isFullDb as boolean ? rowData.id : res.id,
                     startTime,
                     name: queryName,
                     color: colorPalette[hashToNumber(queryName, colorPalette.length)],
@@ -420,7 +431,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, Number((rowData.duration * 1000).toFixed(0)));
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
-                    id: res.id,
+                    id: props.session.isFullDb as boolean ? rowData.id : res.id,
                     startTime,
                     name: rowData.name,
                     color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
@@ -577,7 +588,7 @@ const EventView = observer((props: any) => {
     return <EventDetail request={eventViewData} {...props} />;
 });
 
-const contentList: any[][] = [[...layerTypes.map((type) => {
+const contentList: any[][] = [[OverallMetrics, ...layerTypes.map((type) => {
     return observer((props: any) => {
         return (
             <BaseSummary

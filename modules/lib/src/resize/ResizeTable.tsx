@@ -14,7 +14,7 @@ import { CaretDownIcon, CaretRightIcon } from '../icon/Icon';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 const Support = React.forwardRef(
-    (props: TableProps<any>) => {
+    (props: ResizeTableProps<any>) => {
         return <Table { ...props } />;
     },
 );
@@ -55,7 +55,7 @@ const StyledTable = styled(Support)`
 
     //行
     .ant-table-tbody > tr.ant-table-row:hover > td, .ant-table-tbody > tr > td.ant-table-cell-row-hover {
-        background: ${(p): string => p.theme.bgColorLight};
+        background: ${(p): string => p.rowHoverable ? p.theme.bgColorLight : 'unset'};
     }
     .ant-table-tbody > tr.ant-table-placeholder:hover > td {
         background: unset;
@@ -204,7 +204,20 @@ const StyledTable = styled(Support)`
         font-size: 12px;
         border: none;
     }
-    
+
+    .ant-table-row-expand-icon {
+      background: ${(p): string => p.theme.bgColorDark};
+    }
+
+    .level-1 {
+        background: ${(p): string => p.theme.primaryColorLight2};
+        color: ${(p): string => p.theme.textColorPrimary};
+    }
+    .level-2 {
+        background: ${(p): string => p.theme.primaryColorLight4};
+        color: ${(p): string => p.theme.textColorPrimary};
+    }
+
     // summary 汇总行
     .ant-table-summary {
         background: ${(p): string => p.theme.bgColorLight};
@@ -237,6 +250,7 @@ interface ResizeTableProps<T> extends TableProps<T> {
     style?: object;
     virtual?: boolean;
     scroll?: {x?: number;y?: number;rowHeight?: number;scrollToFirstRowOnChange?: boolean};
+    rowHoverable?: boolean;
 }
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
@@ -304,9 +318,10 @@ const getFullExpandable = (expandable?: any): any => {
     const expandIcon = <T extends {children?: unknown[]}>({ expanded, onExpand, record }:
     {expanded: boolean;onExpand: (record: T, event: React.MouseEvent<any>) => void;record: T}): React.ReactNode => {
         if (record.children !== null && record.children !== undefined && record.children.length > 0) {
-            return expanded
-                ? (<CaretDownIcon onClick={(e): void => onExpand(record, e)} style={{ cursor: 'pointer' }}/>)
-                : <CaretRightIcon onClick={(e): void => onExpand(record, e)} style={{ cursor: 'pointer' }}/>;
+            return <CaretRightIcon onClick={(e): void => {
+                e.stopPropagation();
+                onExpand(record, e);
+            }} style={{ cursor: 'pointer', transform: `rotate(${expanded ? '90deg' : 0})` }}/>;
         } else {
             return <></>;
         }
@@ -329,7 +344,8 @@ const EMPTY_VIEW_HEIGHT = 60;
 export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): EmotionJSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
-        scroll, dataSource, pagination, expandable, onChange, ...restProps
+        scroll, dataSource, pagination, expandable, onChange, rowHoverable = true,
+        ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
     const marginTop = scroll?.y ? (scroll.y - EMPTY_VIEW_HEIGHT) / 2 : 50;
@@ -377,6 +393,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
                 onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}
                 pagination={virtual ? false : fullPagination}
                 expandable={fullExpandable}
+                rowHoverable={rowHoverable}
                 scroll={scroll}
                 dataSource={virtual ? renderList : dataSource}
                 className={!variableTotalWidth ? '' : 'variableTotalWidth'}

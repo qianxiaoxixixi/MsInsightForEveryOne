@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { TimelineMarkerElement } from './TimelineMarker';
 import { useTheme } from '@emotion/react';
 import { StartIcon } from 'ascend-icon';
-import { type ParseCardsParam, parseCards } from '../api/Request';
+import { parseCards } from '../api/request';
+import type { ParseCardsParam } from '../api/interface';
 import { CardUnit } from '../insight/units/AscendUnit';
 
 const ChartRowContainer = styled.div`

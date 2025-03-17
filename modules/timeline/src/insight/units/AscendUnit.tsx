@@ -39,9 +39,10 @@ import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
 import { ResizeTable } from 'ascend-resize';
-import { getDefaultColumData, getPageData } from '../../components/detailViews/Common';
+import { getDefaultColumData, getPageData, PageType } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
 import { safeJSONParse } from 'ascend-utils';
+import { SorterResult } from 'antd/lib/table/interface';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -371,7 +372,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             {
                 Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail
                     session={session} height={height} detail={slicesListDetail} summaryBuilder={generateSummary}></SelectSimpleTabularDetail>,
-                More: (): JSX.Element => <SliceRightOpDetail session={newSession} metadata={metadata} />,
+                More: (): JSX.Element => <SameOperatorsList session={newSession} metadata={metadata} updater={useSliceListMoreUpdater} />,
                 moreWh: 320,
             },
         ];
@@ -691,52 +692,32 @@ const useColumns = (): any => {
         { title: t('Duration(ns)'), dataIndex: 'duration', ...getDefaultColumData('duration') },
     ];
 };
-// eslint-disable-next-line max-lines-per-function
-export const SliceRightOpDetail = observer(({ session, metadata }: { session: Session; metadata: unknown }) => {
+
+export type SameOperatorsUpdaterType = (session: Session, metadata: unknown) => ({
+    page: PageType;
+    setPage: (args: PageType) => void;
+    sorter: SorterResult<OpData>;
+    setSorter: React.Dispatch<React.SetStateAction<SorterResult<OpData>>>;
+    slice: any;
+});
+
+const useSliceListMoreUpdater: SameOperatorsUpdaterType = (session) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
-    const defaultSorter = { field: 'duration', order: 'descend' };
-    const [dataSource, setDataSource] = useState<any[]>([]);
+    const defaultSorter: SorterResult<OpData> = { field: 'duration', order: 'descend' };
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
-    const [isLoading, setLoading] = useState(false);
     const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : safeJSONParse(session.selectedMultiSlice), [session.selectedMultiSlice]);
+    return { page, setPage, sorter, setSorter, slice };
+};
+
+export const SameOperatorsList = observer(({ session, metadata, updater }: { session: Session; metadata: unknown; updater: SameOperatorsUpdaterType }) => {
+    const { page, setPage, sorter, setSorter, slice } = updater(session, metadata);
+    const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const [selectedRowKey, setSelectedRowKey] = useState('');
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    const jumpTo = async (record: OpData): Promise<void> => {
-        if (slice === undefined) {
-            return;
-        }
-        runInAction(() => {
-            session.locateUnit = {
-                target: (iunit: InsightUnit): boolean => {
-                    return iunit instanceof ThreadUnit && (Boolean(iunit.metadata.cardId === (metadata as MetaData).cardId)) &&
-                    (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
-                },
-                onSuccess: (iunit): void => {
-                    const selectedMultiSlice = safeJSONParse(session.selectedMultiSlice);
-                    const startTime = record.timestamp - getTimeOffset(session, iunit.metadata as ThreadMetaData);
-                    const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
-                    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                    session.selectedData = {
-                        id: record.id,
-                        startTime,
-                        name: selectedMultiSlice.name,
-                        color: colorPalette[hashToNumber(selectedMultiSlice.name, colorPalette.length)],
-                        duration: record.duration,
-                        depth: record.depth,
-                        threadId: record.tid,
-                        processId: record.pid,
-                        cardId: (metadata as MetaData).cardId,
-                        startRecordTime: session.startRecordTime,
-                        showSelectedData: true,
-                    };
-                },
-                showDetail: false,
-            };
-        });
-    };
-
-    async function queryDetails(): Promise<void> {
+    async function loadData(): Promise<void> {
         if (slice === undefined || slice.name === 'Totals') {
             setDataSource([]);
             setPage(defaultPage);
@@ -754,7 +735,6 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         const timestampoffset = getTimeOffset(session, metadata as ThreadMetaData);
         data.forEach(item => {
             item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
-            item.tid = slice.tid;
             item.pid = slice.pid;
         });
         setDataSource((data).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
@@ -766,25 +746,59 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         if (page.current !== 1) {
             setPage({ ...page, current: 1 });
         } else {
-            queryDetails();
+            loadData();
         }
     }, [slice]);
 
     useEffect(() => {
-        queryDetails();
+        loadData();
     }, [sorter.field, sorter.order, page.current, page.pageSize]);
+
+    const jumpTo = async (record: OpData): Promise<void> => {
+        if (slice === undefined) {
+            return;
+        }
+        runInAction(() => {
+            session.locateUnit = {
+                target: (iunit: InsightUnit): boolean => {
+                    return iunit instanceof ThreadUnit && (Boolean(iunit.metadata.cardId === (metadata as MetaData).cardId)) &&
+                        (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
+                },
+                onSuccess: (iunit): void => {
+                    const startTime = record.timestamp - getTimeOffset(session, iunit.metadata as ThreadMetaData);
+                    const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
+                    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                    session.selectedData = {
+                        id: record.id,
+                        startTime,
+                        name: slice.name,
+                        color: colorPalette[hashToNumber(slice.name, colorPalette.length)],
+                        duration: record.duration,
+                        depth: record.depth,
+                        threadId: record.tid,
+                        processId: record.pid,
+                        cardId: (metadata as MetaData).cardId,
+                        startRecordTime: session.startRecordTime,
+                        showSelectedData: true,
+                    };
+                },
+                showDetail: false,
+            };
+        });
+    };
+
     return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
         <ResizeTable
-            onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
+            onChange={(pagination, filters, newSorter, extra): void => {
                 if (extra.action === 'sort') {
-                    setSorter(newsorter as typeof sorter);
+                    setSorter(newSorter as SorterResult<OpData>);
                 }
             }}
             pagination={getPageData(page, setPage)}
             dataSource={dataSource}
             columns={useColumns()}
             size="small"
-            loading = {isLoading}
+            loading = {loading}
             onRow={(record: OpData): {onClick: () => void} => {
                 return {
                     onClick: (): void => {

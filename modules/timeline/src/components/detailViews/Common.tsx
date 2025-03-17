@@ -166,26 +166,36 @@ export const fusionOperatorColumns: ColumData[] = [
     { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
 
-export const statsSystemViewItems: string[] = [
-    'Python API Summary',
-    'CANN API Summary',
-    'Ascend HardWare Task Summary',
-    'Communication Summary',
-    'Overlap Analysis',
-    'Kernel Details',
+export interface SystemViewItem {
+    name: string;
+    tips?: string;
+}
+export const statsSystemViewItems: SystemViewItem[] = [
+    { name: 'Overall Metrics', tips: 'OverallMetricsTips' },
+    { name: 'Python API Summary' },
+    { name: 'CANN API Summary' },
+    { name: 'Ascend HardWare Task Summary' },
+    { name: 'Communication Summary' },
+    { name: 'Overlap Analysis' },
+    { name: 'Kernel Details' },
 ];
 
 export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'HCCL', 'Overlap Analysis'];
 
-export const expertSystemViewItems: string[] = [
-    'Affinity API',
-    'Affinity Optimizer',
-    'AICPU Operators',
-    'ACLNN Operators',
-    'Operators Fusion',
+export const expertSystemViewItems: SystemViewItem[] = [
+    { name: 'Affinity API' },
+    { name: 'Affinity Optimizer' },
+    { name: 'AICPU Operators' },
+    { name: 'ACLNN Operators' },
+    { name: 'Operators Fusion' },
 ];
 
-export const getPageData = (page: { current: number; pageSize: number; total: number }, setPage: VoidFunction): object => {
+export interface PageType {
+    current: number;
+    pageSize: number;
+    total: number;
+}
+export const getPageData = (page: PageType, setPage: VoidFunction): object => {
     return {
         ...page,
         showSizeChanger: page.total > 10,
