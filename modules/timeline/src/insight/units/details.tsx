@@ -17,12 +17,17 @@ import { hashToNumber } from '../../utils/colorUtils';
 import { TableState } from '../../components/details/types';
 import { Table } from 'antd';
 import { AutoKey } from '../../utils/dataAutoKey';
+
+const isSelfTimeHidden = (session: Session): boolean => {
+    return session.isSimulation;
+};
+
 export const slicesListDetail = detail({
     name: 'Slice List',
     columns: [
         ['Name', (data): string => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
         ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration as number), 180],
-        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime as number), 180],
+        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime as number), 180, 'left', isSelfTimeHidden],
         ['Average Wall Duration', (data): string => getSliceTimeDisplay(data.avgWallDuration as number), 180],
         ['Occurrences', (data): string => `${(data.occurrences as string) ?? 0}`, 180],
     ],
