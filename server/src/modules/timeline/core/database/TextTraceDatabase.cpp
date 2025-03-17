@@ -810,7 +810,7 @@ std::map<std::string, std::vector<Thread>> TextTraceDatabase::QueryAllThreadInfo
 std::map<std::pair<std::string, std::string>, std::string> TextTraceDatabase::QueryAllCounterInfo()
 {
     std::map<std::pair<std::string, std::string>, std::string> res;
-    std::string sql = "SELECT pid,name, args FROM counter group by name";
+    std::string sql = "SELECT pid,name, args FROM counter group by pid, name";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query all counter info failed!.");
