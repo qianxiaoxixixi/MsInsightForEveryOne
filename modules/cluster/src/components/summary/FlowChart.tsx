@@ -30,6 +30,11 @@ interface SeriesDataItem {
     };
 }
 
+enum OPERATOR_TYPE {
+    FP_BP = 'FP/BP',
+    P2P_OP = 'P2P Op',
+}
+
 const PREFIX = 'prefix_';
 
 const addPrefix = (str: string, prefix = PREFIX): string => {
@@ -96,17 +101,18 @@ interface CoordSys {
     height: number;
 }
 const renderRect: CustomSeriesRenderItem = (params, api) => {
-    const { start: vStart, end: vEnd, name: vName } = valueMap;
+    const { start: vStart, end: vEnd, component: vComponent, name: vName } = valueMap;
     const categoryIndex = api.value(0);
     const name = removePrefix(api.value(vName) as string);
     const start = api.coord([api.value(vStart), categoryIndex]);
     const end = api.coord([api.value(vEnd), categoryIndex]);
     const gridItemHeight = (api.size?.([0, 1]) as number[])[1];
+    const offset = gridItemHeight * 0.04;
     const { x: coordSysX, y: coordSysY, width: coordSysWidth, height: coordSysHeight } = params.coordSys as unknown as CoordSys;
 
     const rectWidth = end[0] - start[0];
-    const rectHeight = gridItemHeight * 0.6;
-    const rectY = Math.round(start[1] - (rectHeight / 2));
+    const rectHeight = gridItemHeight * 0.3;
+    const rectY = api.value(vComponent) === OPERATOR_TYPE.FP_BP ? Math.round(start[1] - rectHeight - offset) : Math.round(start[1] + offset);
     const rectShape = echarts.graphic.clipRectByRect(
         {
             x: start[0],
@@ -159,6 +165,10 @@ const baseOptions: EChartsOption = {
             <div class="formatter">
                 <div class="row">${params.marker} ${safeStr(params.name)}</div>
                 <div class="row">
+                    <div class="label">Rank ID</div>
+                    <div class="value">${safeStr(params.value[0])}</div>
+                </div>
+                <div class="row">
                     <div class="label">Start Time</div>
                     <div class="value">${safeStr(params.value[1])} ms</div>
                 </div>
@@ -182,6 +192,8 @@ const baseOptions: EChartsOption = {
             type: 'inside',
             filterMode: 'weakFilter',
             zoomOnMouseWheel: 'ctrl',
+            moveOnMouseMove: 'ctrl',
+            moveOnMouseWheel: 'shift',
         },
     ],
     xAxis: {
@@ -223,7 +235,7 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
     const [chartHeight, setChartHeight] = useState('400px');
 
     const syncScroll = (e: WheelEvent): void => {
-        if (!e.ctrlKey) {
+        if (!e.ctrlKey && !e.shiftKey) {
             scrollContainer?.scrollBy(0, e.deltaY);
         }
     };
