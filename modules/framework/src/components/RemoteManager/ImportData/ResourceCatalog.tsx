@@ -12,7 +12,7 @@ import { dealResource, ResourceItem, updateTreeData } from '@/utils/Resource';
 
 const ResourceCataologContainer = styled.div`
     margin-top: 24px;
-    height: 310px;
+    height: 500px;
     overflow-y: auto;
     background: ${(props): string => props.theme.bgColorDark};
     padding: 10px 0;
@@ -115,7 +115,7 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
                 setSelectedPath(node.key);
                 // 跳转到选中节点
                 setTimeout(() => {
-                    const dom = document.getElementsByClassName('ant-tree-treenode-selected')[0];
+                    const dom = document.getElementById(searchText)?.closest('div');
                     dom?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
                 });
                 onSearchReturnChange({ success: true });
