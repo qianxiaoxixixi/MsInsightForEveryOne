@@ -30,6 +30,7 @@ import TableHead, { type Col } from './TableHead';
 import { store } from '../../store';
 import { runInAction } from 'mobx';
 import CodeTextSearch, { CODE_SEARCH_WINDOW_HEIGHT } from './CodeTextSearch';
+import { formatDecimal } from 'ascend-utils';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -174,9 +175,15 @@ const Index = observer(({ session }: { session: Session }) => {
         // 指令记录
         const records = res?.Instructions ?? [];
         setInstrLimit({ ...instrLimit, overlimit: records.length > instrLimit.maxSize });
+        const percentageFields = Object.keys(fields).filter(fieldName => fields[fieldName] === FieldType.PERCENTAGE);
         const list: InstrsColumnType[] = records.map((item: JsonInstructionType, index: number) => {
+            const formatData: Record<string, any> = {};
+            percentageFields.forEach(fieldName => {
+                formatData[fieldName] = formatDecimal(item[fieldName] as number);
+            });
             return {
                 ...item,
+                ...formatData,
                 index: index + 1,
                 maxCycles: 0,
             };
@@ -199,7 +206,17 @@ const Index = observer(({ session }: { session: Session }) => {
         }
         const res = await queryDynamicLine({ sourceName: source, coreName: core });
         const fields = res?.['Files Dtype']?.Lines ?? {};
-        const list: Iline[] = res?.Lines ?? [];
+        let list: Iline[] = res?.Lines ?? [];
+        const percentageFields = Object.keys(fields).filter(fieldName => fields[fieldName] === FieldType.PERCENTAGE);
+        if (percentageFields.length > 0) {
+            list = list.map(item => {
+                const formatData: Record<string, any> = {};
+                percentageFields.forEach(fieldName => {
+                    formatData[fieldName] = formatDecimal(item[fieldName] as number);
+                });
+                return { ...item, ...formatData };
+            });
+        }
         return { lines: list.reverse(), fields };
     };
 
