@@ -10,6 +10,7 @@ import { updateRankMap } from '@/utils/Rank';
 import { updateDataScene } from '../components/TabPane/Index';
 import { updateSession } from '@/connection/notificationHandler';
 import { store } from '@/store';
+import { closeLoading } from '@/utils/useLoading';
 
 interface ImportActionBody {
     subdirectoryList: string[];
@@ -56,6 +57,7 @@ export const importActionHandler: ResponseInterceptor<ImportActionResponse> = (e
     } catch (error) {
         console.error(error);
     }
+    closeLoading();
 };
 
 export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotification> = (data): void => {
