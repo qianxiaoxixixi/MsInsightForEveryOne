@@ -37,7 +37,7 @@ export class TimelinePage {
         this.resetBtn = this.timelineFrame.getByTestId('tool-reset');
         this.zoomInBtn = this.timelineFrame.getByTestId('tool-zoom-in');
         this.zoomOutBtn = this.timelineFrame.getByTestId('tool-zoom-out');
-        this.drawerBtn = this.timelineFrame.getByTestId('drawer-btn').nth(1);
+        this.drawerBtn = this.timelineFrame.getByTestId('drawer-btn').nth(2);
         this.bottomPanel = this.timelineFrame.locator('.bottomPanelContainer');
         this.selectFilterType = this.timelineFrame.locator('#select-filter-type');
         this.selectOptionFilterType = this.timelineFrame.getByTestId('select-options-filter-type');

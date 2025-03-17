@@ -128,9 +128,9 @@ test.describe('Timeline', () => {
         const systemView = new SystemView(page);
         await systemView.goto();
 
-        const statsSystemViewOptions = ['CANN API Summary', 'Ascend HardWare Task Summary', 'Communication Summary', 'Overlap Analysis', 'Kernel Details'];
+        const statsSystemViewOptions = ['Python API Summary', 'CANN API Summary', 'Ascend HardWare Task Summary', 'Communication Summary', 'Overlap Analysis', 'Kernel Details'];
 
-        await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Python-API-Summary.png', { maxDiffPixels: 400 });
+        await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Overall-Metrics.png', { maxDiffPixels: 400 });
 
         for (let item of statsSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
