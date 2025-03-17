@@ -4,7 +4,7 @@
 
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BottomPanel } from '../components/BottomPanel';
 import { ChartContainer } from '../components/ChartContainer';
 import type { Session } from '../entity/session';
@@ -68,14 +68,20 @@ const StatePopover = observer(({ session }: { session: Session }) => {
 export const BOTTOM_HEIGHT = 332;
 export const SessionPage = observer(({ session }: { session: Session }): any => {
     const actionManager = useActionManager();
+    // 用户是否主动收起底部面板（收起后不在自动弹起）
+    const [hasUserHiddenBottomPanel, setHasUserHiddenBottomPanel] = useState(false);
     const [view, handleOpen, togglePanel] = useDraggableContainer({
         draggableWH: BOTTOM_HEIGHT,
         dragDirection: DragDirection.BOTTOM,
         open: false,
     });
     useEffect(() => {
+        if (hasUserHiddenBottomPanel) {
+            return;
+        }
         if (session.selectedUnitKeys.length > 0 && (session.selectedRange !== undefined || session.selectedData !== undefined)) {
             handleOpen(true);
+            setHasUserHiddenBottomPanel(true);
         }
     }, [session.selectedUnitKeys, session.selectedRange, session.selectedData]);
 
@@ -90,6 +96,7 @@ export const SessionPage = observer(({ session }: { session: Session }): any => 
             return;
         }
         togglePanel();
+        setHasUserHiddenBottomPanel(true);
     }, [session.showBottomPanel]);
 
     useEffect(() => {
