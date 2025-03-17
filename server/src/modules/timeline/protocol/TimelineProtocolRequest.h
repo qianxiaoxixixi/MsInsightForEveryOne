@@ -45,7 +45,22 @@ struct ImportActionParams {
             errorMsg = "Import file path is empty.";
             return false;
         }
-        return FileUtil::ConvertToRealPath(errorMsg, this->path);
+        if (!FileUtil::ConvertToRealPath(errorMsg, this->path)) {
+            return false;
+        }
+        std::string importPath = this->path.front();
+        std::string realPath = FileUtil::GetRealPath(importPath);
+        if (!FileUtil::IsFolder(realPath)) {
+            return true;
+        }
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        FileUtil::FindFolders(realPath, folders, files);
+        if (std::empty(folders) && std::empty(files)) {
+            errorMsg = "Import path is empty folder!";
+            return false;
+        }
+        return true;
     }
 };
 
