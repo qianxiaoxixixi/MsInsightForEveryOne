@@ -109,7 +109,7 @@ const StyledCard = styled((props: CardProps & { width?: number}) => <Card {...pr
     }
 `;
 
-const StyledMoreCard = styled(StyledCard)`
+export const StyledMoreCard = styled(StyledCard)`
     background-color: ${(p): string => p.theme.contentBackgroundColor};
     & > .ant-card-head {
         min-height: 0;
@@ -146,7 +146,7 @@ const DetailContainer = styled.div`
     }
 `;
 
-const MoreContainer = styled.div`
+export const MoreContainer = styled.div`
     overflow: hidden;
     display: flex;
     position: relative;

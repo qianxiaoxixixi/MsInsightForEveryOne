@@ -33,7 +33,8 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { isPinned, switchPinned } from '../unitPin';
 import { useSelectUnit } from './hooks';
 import { useDeselectUnits, useSelectUnits } from './hooks/useSelectUnit';
-import { type ParseCardsParam, parseCards } from '../../../api/Request';
+import { parseCards } from '../../../api/request';
+import type { ParseCardsParam } from '../../../api/interface';
 import { useComplexMouseEvent } from './mouseEvent';
 
 const DefaultInfoContainer = styled.div`

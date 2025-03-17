@@ -107,7 +107,7 @@ export const EventDetail = observer((props: any) => {
     const eventColumns = generateEventColumns(eventColum, setRowData);
 
     return (
-        <div style={{ height: '100%', padding: '5px 5px 15px 5px' }}>
+        <div style={{ height: '100%' }}>
             <ResizeTable
                 onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
                     if (extra.action === 'sort') {

@@ -17,7 +17,7 @@ import { type InsightUnit, unit } from '../entity/insight';
 import { isPinned, switchPinned } from './ChartContainer/unitPin';
 import { getRootUnit } from '../utils';
 import { getAutoKey } from '../utils/dataAutoKey';
-import { parseCards } from '../api/Request';
+import { parseCards } from '../api/request';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { message } from 'antd';
 import {

@@ -96,7 +96,9 @@
       "AICPU Operators": "AICPU 算子",
       "ACLNN Operators": "ACLNN 算子",
       "Operators Fusion": "算子融合",
-      "Events View": "事件视图"
+      "Events View": "事件视图",
+      "Overall Metrics": "综合指标",
+      "OverallMetricsTips": "要得到计算时间的子层级分类，性能数据采集时需设置为以下特定模式：Level等级为L1及以上，且aic_metrics取值为PipeUtilization"
     },
     "tableHead": {
       "Name": "名称",
@@ -127,7 +129,10 @@
       "Stream Name": "任务流名称",
       "Group Name": "通信域名称",
       "Analysis Type": "分析算子类型",
-      "Rank ID": "卡序号"
+      "Rank ID": "卡序号",
+      "Category": "类别",
+      "Number": "数量",
+      "Time Ratio": "时间占比"
     },
     "dragFile": {
       "FileFormatError": "仅支持上传Trace Event类型的文件",

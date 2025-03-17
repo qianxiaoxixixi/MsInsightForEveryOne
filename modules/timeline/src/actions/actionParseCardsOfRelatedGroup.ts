@@ -3,7 +3,7 @@
  */
 
 import { register } from './register';
-import { parseCards } from '../api/Request';
+import { parseCards } from '../api/request';
 import { runInAction } from 'mobx';
 import { message } from 'antd';
 import type { InsightUnit } from '../entity/insight';
