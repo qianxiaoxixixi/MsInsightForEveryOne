@@ -138,7 +138,7 @@ function Bar({ value, max = 1, type }: IProps): JSX.Element {
     }
     return isWrongNumber
         ? <>{NOT_APPLICABLE}</>
-        : (<BarContainer title={`${valueNum}`}><BaseBar value={valueNum} percent={percent} label={label}/></BarContainer>);
+        : (<BarContainer title={`${label}`}><BaseBar value={valueNum} percent={percent} label={label}/></BarContainer>);
 };
 export default Bar;
 

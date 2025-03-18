@@ -169,9 +169,14 @@ export function formatDecimal(val: number | string, fixed = 2): number {
     if (isNaN(num) || num === 0) {
         return num;
     } else {
-        let decimal = Math.floor(Math.log10(Math.abs(num)));
-        decimal = decimal >= 0 ? 0 : -decimal;
-        return Number(num.toFixed(decimal + fixed));
+        const numStr = String(num);
+        let decimal = 0;
+        const match = numStr.match(/\.0*(?<notZero>[1-9])/);
+        if (match) {
+            // 小数点后第一个非零数字位置
+            decimal = match[0].indexOf(match[1]);
+        }
+        return Number(num.toFixed(decimal <= fixed ? fixed : decimal - 1 + fixed));
     }
 }
 
