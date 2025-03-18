@@ -21,7 +21,7 @@ import {
     syncScroller,
 } from '../Common';
 import type { Iline, Ilinetable, InstrsColumnType, JsonInstructionType } from './defs';
-import { FieldType, NOT_APPLICABLE } from './defs';
+import { FieldType, InstructionVersion, ASCENDC_INNER_CODE, NOT_APPLICABLE } from './defs';
 import { queryDynamicInstr, queryDynamicLine, querySourceCode } from '../RequestUtils';
 import { Layout } from 'ascend-layout';
 import { getInstrColumns } from './InstructionTable';
@@ -113,8 +113,21 @@ const Index = observer(({ session }: { session: Session }) => {
     };
 
     const handleInstrsClick = (instr: InstrsColumnType): void => {
-        const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(instr, codeline['Address Range']));
-        setSelectedline(data?.Line ?? -1);
+        let line = -1;
+        // 指令数据ASCENDC_INNER_CODE可用版本
+        if (session.instrVersion === InstructionVersion.ASCENDC_INNER_CODE) {
+            const infoList = String(instr[ASCENDC_INNER_CODE]).split(':');
+            const file = infoList[0];
+            const fileLine = Number(infoList[1]);
+            if (file === condition.source && !isNaN(fileLine)) {
+                line = fileLine;
+            }
+        }
+        if (line <= 0) {
+            const data = loggedCodeLines.find((codeline: Ilinetable) => isRelated(instr, codeline['Address Range']));
+            line = data?.Line ?? -1;
+        }
+        setSelectedline(line);
         recoverDefaultInstructionSource();
     };
 
