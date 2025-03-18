@@ -304,6 +304,9 @@ bool Database::GetTableList(std::vector<std::string> &tableList) const
             if (table == "sqlite_sequence") {
                 continue;
             }
+            if (!StringUtil::CheckSqlValid(table)) {
+                continue;
+            }
             tableList.emplace_back(table);
         }
     } else {
