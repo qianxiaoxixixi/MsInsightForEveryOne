@@ -383,6 +383,10 @@ struct SystemViewParams {
     std::string searchName;
     bool CheckParams(std::string &warnMsg) const
     {
+        if (!StringUtil::CheckSqlValid(layer)) {
+            warnMsg = "Layer name not incorrect!";
+            return false;
+        }
         return CheckUnsignPageValid(pageSize, current, warnMsg);
     }
 };
