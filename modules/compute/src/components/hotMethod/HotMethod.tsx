@@ -116,11 +116,11 @@ const Index = observer(({ session }: { session: Session }) => {
         let line = -1;
         // 指令数据ASCENDC_INNER_CODE可用版本
         if (session.instrVersion === InstructionVersion.ASCENDC_INNER_CODE) {
-            const infolist = String(instr[ASCENDC_INNER_CODE]).split(':');
-            const file = infolist[0];
-            const fileline = infolist[1];
-            if (file === condition.source && !isNaN(Number(fileline))) {
-                line = Number(fileline);
+            const infoList = String(instr[ASCENDC_INNER_CODE]).split(':');
+            const file = infoList[0];
+            const fileLine = Number(infoList[1]);
+            if (file === condition.source && !isNaN(fileLine)) {
+                line = fileLine;
             }
         }
         if (line <= 0) {
