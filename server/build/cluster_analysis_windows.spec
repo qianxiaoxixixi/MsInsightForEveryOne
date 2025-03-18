@@ -22,7 +22,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['libcrypto-1_1.dll', 'libssl-1_1.dll', 'tkinter'],
+    excludes=['pygments', 'libcrypto-1_1.dll', 'libssl-1_1.dll', 'tkinter'],
     noarchive=False,
     optimize=0,
 )
