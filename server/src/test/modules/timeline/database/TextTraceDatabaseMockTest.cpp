@@ -1641,3 +1641,17 @@ TEST_F(TextTraceDatabaseMockTest, TestQuerySimulationUintFlows)
     bool result = database.QueryUintFlows(requestParams, responseBody, minTimestamp, trackId);
     EXPECT_EQ(result, true);
 }
+
+TEST_F(TextTraceDatabaseMockTest, TestGetTableList)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::vector<std::string> tableList;
+    database.GetTableList(tableList);
+    const uint64_t expectSize = 5;
+    EXPECT_EQ(tableList.size(), expectSize);
+}
