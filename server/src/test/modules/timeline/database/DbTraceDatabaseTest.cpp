@@ -453,37 +453,13 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     requestParams.tid = {"0"};
     requestParams.pid = "17738580008830245";
     requestParams.metaType = "Ascend Hardware";
-    requestParams.orderBy = "name";
+    requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
     const std::vector<std::string> traceId = {"0"};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
-}
-
-TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenHccl)
-{
-    std::recursive_mutex testMutex;
-    MockDatabase2 database(testMutex);
-    sqlite3 *db = nullptr;
-    DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, comcaInfoSql);
-    DatabaseTestCaseMockUtil::OpenDBAndCreateTable(db, comcaOpSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
-    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
-    database.SetDbPtr(db);
-    Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
-    requestParams.pid = "17738580008830245";
-    requestParams.metaType = "HCCL";
-    requestParams.orderBy = "name";
-    requestParams.order = "DESC";
-    Dic::Protocol::UnitThreadsOperatorsBody responseBody;
-    const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
-    bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
-    EXPECT_EQ(result, false);
 }
 
 TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
@@ -499,7 +475,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
     requestParams.tid = {"0"};
     requestParams.pid = "17738580008830245";
     requestParams.metaType = "CANN_API";
-    requestParams.orderBy = "name";
+    requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
@@ -521,7 +497,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenMstx)
     requestParams.tid = {"0"};
     requestParams.pid = "17738580008830245";
     requestParams.metaType = "MSTX_EVENTS";
-    requestParams.orderBy = "depth";
+    requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
@@ -551,7 +527,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     requestParams.tid = {"0"};
     requestParams.pid = "17738580008830245";
     requestParams.metaType = "PYTORCH_API";
-    requestParams.orderBy = "depth";
+    requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     const uint64_t min = 0;
     const uint64_t max = 1823510445651061410;

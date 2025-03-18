@@ -214,35 +214,39 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
+    uint64_t offset = NumberSafe::Muls(requestParams.current - 1, requestParams.pageSize);
     auto sameOperatorsDetailsSql = GetQueryThreadSameOperatorsDetailsSql(requestParams.tid, processType, requestParams);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
             Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(requestParams.name, minTimestamp);
-            return Execute(stmt, rankId, requestParams.startTime, requestParams.endTime);
+            return Execute(stmt, rankId, requestParams.startTime, requestParams.endTime, requestParams.pageSize,
+                           offset);
         case PROCESS_TYPE::HCCL:
             Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(minTimestamp, rankId);
-            return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.name);
+            return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.name,
+                           requestParams.pageSize, offset);
         case PROCESS_TYPE::CANN_API:
             sql = sameOperatorsDetailsSql + orderBy;
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
-                                requestParams.startTime, requestParams.endTime);
+                                requestParams.startTime, requestParams.endTime, requestParams.pageSize, offset);
         case PROCESS_TYPE::MS_TX:
             sql = "with nameIds as (select id from STRING_IDS where value = ?) "
                   " select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
                   " from MSTX_EVENTS main join  nameIds on message = id where globalTid = ? "
                   " and timestamp + duration >= ? AND timestamp <= ?" + orderBy;
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
-                                requestParams.startTime, requestParams.endTime);
+                                requestParams.startTime, requestParams.endTime, requestParams.pageSize, offset);
         case PROCESS_TYPE::API:
             sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
                   " select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
                   " from PYTORCH_API main join  nameIds on name = id\n"
                   "     where globalTid = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
-                                requestParams.startTime, requestParams.endTime);
+                                requestParams.startTime, requestParams.endTime, requestParams.pageSize, offset);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
             sql = sameOperatorsDetailsSql + orderBy;
-            return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.startTime, requestParams.endTime);
+            return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.startTime, requestParams.endTime,
+                                requestParams.pageSize, offset);
         default:
             throw DatabaseException("unsupported type!");
     }
@@ -270,7 +274,7 @@ std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsSql(const std
                    " from CANN_API main join nameIds on name = id where globalTid = ? and type in (" + tidPlaceholders
                    + ") and timestamp + duration >= ? AND timestamp <= ? ";
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            return "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, type as tid"
+            return "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, "
                    " main.ROWID as id , type as tid"
                    " from OVERLAP_ANALYSIS main where deviceId = ? and type in (" + tidPlaceholders
                    + ") and timestamp + duration >= ? AND timestamp <= ? ";
