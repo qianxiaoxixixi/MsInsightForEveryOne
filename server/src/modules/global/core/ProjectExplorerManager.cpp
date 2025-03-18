@@ -231,7 +231,15 @@ ProjectErrorType ProjectExplorerManager::CheckProjectConflict(const std::string 
     if (diff.empty()) {
         return ProjectErrorType::TRANSFER_PROJECT;
     }
-
+    if (infos.empty()) {
+        return ProjectErrorType::NO_ERRORS;
+    }
+    if (infos[0].projectType < static_cast<int>(ProjectTypeEnum::DB) ||
+        infos[0].projectType > static_cast<int>(ProjectTypeEnum::OTHER)) {
+        Server::ServerLog::Error("Failed to cast project type. project type is: ",
+            std::to_string(infos[0].projectType));
+        return ProjectErrorType::OTHER;
+    }
     bool isConflict = !infos.empty() && (infos[0].importType == "drag" ||
             isFileConflict(projectTypeEnum, static_cast<ProjectTypeEnum>(infos[0].projectType)));
     if (isConflict) {
@@ -276,6 +284,12 @@ bool ProjectExplorerManager::IsClusterData(const std::string &projectName)
     if (projectExplorerInfo.empty()) {
         return false;
     }
+    if (projectExplorerInfo[0].projectType < static_cast<int>(ProjectTypeEnum::DB) ||
+        projectExplorerInfo[0].projectType > static_cast<int>(ProjectTypeEnum::OTHER)) {
+        Server::ServerLog::Warn("Project type incorrect. project type is: ",
+            std::to_string(projectExplorerInfo[0].projectType));
+        return false;
+    }
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::TEXT_CLUSTER || projectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
         return true;
@@ -316,6 +330,11 @@ ProjectTypeEnum ProjectExplorerManager::GetProjectType(const std::vector<Project
     // 外层保证入参不为空
     std::set<ProjectTypeEnum> projectTypeSet;
     for (const auto &item: projectInfo) {
+        if (item.projectType < static_cast<int>(ProjectTypeEnum::DB) ||
+            item.projectType > static_cast<int>(ProjectTypeEnum::OTHER)) {
+            Server::ServerLog::Warn("Ignore project type. project type is: ", std::to_string(item.projectType));
+            continue;
+        }
         projectTypeSet.insert(static_cast<ProjectTypeEnum>(item.projectType));
     }
 
@@ -344,8 +363,8 @@ ProjectTypeEnum ProjectExplorerManager::GetProjectType(const std::vector<Project
 std::string ProjectExplorerManager::GetClusterFilePath(const std::vector<ProjectExplorerInfo> &projectInfo)
 {
     for (const auto &item: projectInfo) {
-        auto projectTypeEnum = static_cast<ProjectTypeEnum>(item.projectType);
-        if (projectTypeEnum == ProjectTypeEnum::TEXT_CLUSTER || projectTypeEnum == ProjectTypeEnum::DB_CLUSTER) {
+        if (item.projectType == static_cast<int>(ProjectTypeEnum::TEXT_CLUSTER) ||
+            item.projectType == static_cast<int>(ProjectTypeEnum::DB_CLUSTER)) {
             return item.fileName;
         }
     }
