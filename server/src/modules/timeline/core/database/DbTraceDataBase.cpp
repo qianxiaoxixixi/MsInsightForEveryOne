@@ -1816,11 +1816,12 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
     }
     std::string orderBy = " ORDER BY " + requestParams.orderBy;
     orderBy.append(requestParams.order == "descend" ? " DESC " : " ASC ");
+    std::string orderByAndPage = orderBy + " limit ? offset ?";
     auto stmt = CreatPreparedStatement();
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
         resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams,
-            GetDeviceId(requestParams.rankId), minTimestamp, orderBy);
+            GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage);
     } catch (DatabaseException &e) {
         ServerLog::Error("Query thread same operators details fail, ", e.What());
         return false;
