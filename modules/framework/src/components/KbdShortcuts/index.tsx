@@ -2,11 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { KEYS, getShortcutKey } from 'ascend-utils';
 import styled from '@emotion/styled';
+import { Tooltip } from 'ascend-components';
+import { HelpIcon } from 'ascend-icon';
 
 const DELIMITER = '+';
 
@@ -23,6 +25,9 @@ const StyledModal = styled(Modal)`
             border-radius: 4px;
 
             .name {
+                display: flex;
+                align-items: center;
+                gap: 6px;
                 font-weight: bold;
             }
 
@@ -87,13 +92,42 @@ const StyledModal = styled(Modal)`
     }
 `;
 
-const Header = (): JSX.Element => {
-    const { t } = useTranslation();
+const MAX_SIZE = 10 * 1024;
+const FILE_URL = 'public-URL.json';
+async function fetchJSON(url: string): Promise<any> {
+    const response = await fetch(url, { method: 'HEAD' });
+    const contentLength = response.headers.get('Content-Length');
+    if (contentLength && Number(contentLength) > MAX_SIZE) {
+        throw new Error('文件过大，已拒绝加载');
+    }
 
-    return <div className="ShortcutModal__header">
-        <div className="name">{t('Documentation')}：</div>
-        <div className="value">https://www.hiascend.com/document/detail/zh/mindstudio</div>
-    </div>;
+    const dataResponse = await fetch(url);
+    return dataResponse.json();
+}
+const Header = (): JSX.Element => {
+    const { t } = useTranslation('framework');
+    const [url, setUrl] = useState('');
+
+    useEffect(() => {
+        fetchJSON(FILE_URL)
+            .then(data => setUrl(data.documentation))
+            .catch((error) => {
+                throw new Error(`JSON 解析失败：${(error as Error).message}`);
+            });
+    }, []);
+
+    return url
+        ? <div className="ShortcutModal__header">
+            <div className="name">
+                <Tooltip
+                    title={<img src="images/documentation.png" alt="Documentation"/>}>
+                    <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
+                </Tooltip>
+                <div>{t('Documentation')}：</div>
+            </div>
+            <div className="value">{url}</div>
+        </div>
+        : <></>;
 };
 
 const Section = (props: { title?: string; children: React.ReactNode }): JSX.Element => (
