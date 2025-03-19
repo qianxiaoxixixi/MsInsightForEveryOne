@@ -635,9 +635,13 @@ template <typename EVENT> std::optional<document_t> ToEventJson(const EVENT &eve
     return std::nullopt;
 }
 
-json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &allocator, uint32_t depth)
 {
+    const static int MAX_DEPTH = 20; // 限制最大递归次数
     json_t json(kObjectType);
+    if (depth > MAX_DEPTH) {
+        return json;
+    }
     JsonUtil::AddMember(json, "type", unitTrack.type, allocator);
     json_t metadata(kObjectType);
     JsonUtil::AddMember(metadata, "cardId", unitTrack.metaData.cardId, allocator);
@@ -657,7 +661,7 @@ json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &
     JsonUtil::AddMember(metadata, "dataType", dataType, allocator);
     json_t children(kArrayType);
     for (const auto &track : unitTrack.children) {
-        children.PushBack(UnitTrackToJson(*track, allocator), allocator);
+        children.PushBack(UnitTrackToJson(*track, allocator, depth + 1), allocator);
     }
     JsonUtil::AddMember(json, "children", children, allocator);
     JsonUtil::AddMember(json, "metadata", metadata, allocator);
@@ -681,7 +685,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     JsonUtil::AddMember(unit, "metadata", metadata, allocator);
     json_t children(kArrayType);
     for (const auto &track : event.body.unit.children) {
-        children.PushBack(UnitTrackToJson(*track, allocator), allocator);
+        children.PushBack(UnitTrackToJson(*track, allocator, 0), allocator); // 限制最大递归次数，起始为0
     }
     JsonUtil::AddMember(unit, "children", children, allocator);
     JsonUtil::AddMember(body, "unit", unit, allocator);
