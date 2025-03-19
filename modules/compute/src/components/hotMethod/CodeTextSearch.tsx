@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { themeInstance } from 'ascend-theme';
 
 const TextSearchContainer = styled.div`
-    z-index: 100;
+    z-index: 1000;
     background:${(p): string => p.theme.bgColorLight};
     box-shadow : 0 8px 16px 0 rgba( 0,0,0,0.10 ) ;
     height:48px;
@@ -282,15 +282,6 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
         closeFind();
     };
 
-    const switchRange = (): void => {
-        setInRange(pre => !pre);
-        const dom = getCodeDom();
-        if (!dom) {
-            return;
-        }
-        dom.classList.toggle(CODE_RANGE_ACTIVE_CLASSNAME);
-    };
-
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
         const val = e.target.value;
         setText(val);
@@ -312,6 +303,14 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
             handleSearch(true);
         }
     }, [observeRange.index]);
+    useEffect(() => {
+        const dom = getCodeDom();
+        if (inRange) {
+            dom?.classList.add(CODE_RANGE_ACTIVE_CLASSNAME);
+        } else {
+            dom?.classList.remove(CODE_RANGE_ACTIVE_CLASSNAME);
+        }
+    }, [inRange]);
     return <TextSearchContainer onClick={(e): void => e.stopPropagation()}>
         <Input style={{ width: 'calc(100% - 200px)' }} value={text} onChange={handleInputChange} onPressEnter={(): void => handleSearch()}
             suffix={ <Filter onChange={(val): void => setCondition(val)} theme={themeInstance.getCurrentTheme()}/>} allowClear/>
@@ -322,7 +321,7 @@ const CodeTextSearch = observer(({ code }: {code: string}): JSX.Element => {
         <ArrowUpOutlined className={`btn ${total === 0 ? 'disabled' : ''}`} onClick={(): void => goToResultItem(curIndex - 1)}/>
         <ArrowDownOutlined className={`btn ${total === 0 ? 'disabled' : ''}`} onClick={(): void => goToResultItem(curIndex + 1)}/>
         <Tooltip title={t('Find In Selection')}>
-            <AlignLeftOutlined className={`btn ${code === '' ? 'disabled' : ''} ${inRange ? 'active' : ''}`} onClick={switchRange}/>
+            <AlignLeftOutlined className={`btn ${code === '' ? 'disabled' : ''} ${inRange ? 'active' : ''}`} onClick={(): void => setInRange(pre => !pre)}/>
         </Tooltip>
         <CloseOutlined className={'btn'} onClick={handleEsc}/>
     </TextSearchContainer>;
