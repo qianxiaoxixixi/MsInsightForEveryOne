@@ -91,7 +91,11 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
         return false;
     }
     LogIfFileNotExist(projectExplorerInfo);
-
+    if (projectExplorerInfo[0].projectType < static_cast<int>(ProjectTypeEnum::DB) ||
+        projectExplorerInfo[0].projectType > static_cast<int>(ProjectTypeEnum::OTHER)) {
+        ServerLog::Warn("Project type invalid!");
+        return false;
+    }
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);

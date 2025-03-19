@@ -92,7 +92,15 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
-    reqPtr->params.projectAction = static_cast<ProjectActionEnum>(json["params"]["projectAction"].GetInt());
+    int projectAction = static_cast<int>(ProjectActionEnum::UNKNOWN);
+    JsonUtil::SetByJsonKeyValue(projectAction, json["params"], "projectAction");
+    if (projectAction != static_cast<int>(ProjectActionEnum::ADD_FILE) &&
+        projectAction != static_cast<int>(ProjectActionEnum::TRANSFER_PROJECT) &&
+        projectAction != static_cast<int>(ProjectActionEnum::UNKNOWN)) {
+        error = "Project action invalid!";
+        return nullptr;
+    }
+    reqPtr->params.projectAction = static_cast<ProjectActionEnum>(projectAction);
     reqPtr->params.isConflict = json["params"]["isConflict"].GetBool();
     return reqPtr;
 }
