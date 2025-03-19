@@ -520,7 +520,7 @@ test.describe('Timeline(Operator)', () => {
         await page.mouse.move(startX + 200, startX - 200);
         await page.mouse.up();
         await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
-        await expect(timelineFrame.getByText('Self Time')).toBeVisible();
+        await expect(timelineFrame.getByText('Self Time')).not.toBeVisible();
         await expect(timelineFrame.getByText('Average Wall Duration')).toBeVisible();
         const rows = await timelineFrame.locator('.ant-table-row').count();
         expect(rows).toBeGreaterThan(0);
