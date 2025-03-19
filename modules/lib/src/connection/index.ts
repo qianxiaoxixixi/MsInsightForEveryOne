@@ -21,6 +21,7 @@ abstract class BaseConnector {
     protected _targetWindows: TargetWindow[] | undefined;
     protected _getTargetWindows: GetTragetWindows;
     protected _listeners: Map<EventHanlder, Array<ListenerCallback | null>> = new Map();
+    protected abstract _level: string;
 
     protected constructor(getTargetWindow: GetTragetWindows) {
         if (typeof window !== 'object') {
@@ -66,15 +67,16 @@ abstract class BaseConnector {
             return;
         }
         this._targetWindows = this._getTargetWindows();
-        const isPostMessageInvalid = body.to !== undefined && window.parent !== null && window.parent[body.to]?.postMessage === undefined;
+        const frameworkWindow = this._level === 'server' ? window : window.parent as Window;
+        const isPostMessageInvalid = body.to !== undefined && frameworkWindow !== null && frameworkWindow[body.to]?.postMessage === undefined;
         if (isPostMessageInvalid || this._targetWindows.length === 0) {
             const errMsg = 'missed postMessage function, please check your iframe element';
             console.warn(this.printErrMsg(errMsg));
             reject?.(new Error(errMsg));
             return;
         }
-        body.from = Object.entries(window.parent as Window).findIndex(([, val]) => val === window);
-        const targetWindows = body.to !== undefined ? [(window.parent as Window)[body.to]] : this._targetWindows;
+        body.from = Object.entries(frameworkWindow).findIndex(([, val]) => val === window);
+        const targetWindows = body.to !== undefined ? [frameworkWindow[body.to]] : this._targetWindows;
         const postBody = body.keepRawData === true ? body : JSON.stringify(body);
         targetWindows.forEach(targetWindow => {
             targetWindow.postMessage(postBody, this.getTargetOrigin());
@@ -130,6 +132,7 @@ interface FetchRequest {
     id: FetchSequenceID;
 }
 export class ClientConnector extends BaseConnector {
+    protected readonly _level: string = 'client';
     private readonly _msgSequence: Map<FetchSequenceID, {resolve: (value: unknown) => void; reject: (value: unknown) => void}> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
     private readonly _module: string;
@@ -143,6 +146,7 @@ export class ClientConnector extends BaseConnector {
     }) {
         super(getTargetWindow);
         this._module = module;
+        this._level = 'client';
     }
 
     send<T extends EventHanlder>(body: SendParams<T>, reject?: (err: Error) => void): void {
@@ -182,6 +186,7 @@ type Response = (res: MessageEvent) => Promise<Record<string, unknown>>;
 export class ServerConnector extends BaseConnector {
     protected readonly _getInterceptorHandlers: (command: string) => <T>(event: MessageEvent, responseInterceptor: T) => void;
     protected readonly _sendBefore?: <T extends EventHanlder>(body: SendParams<T>) => SendParams<T>;
+    protected readonly _level: string = 'server';
     private _responseForFetch: Response | null = null;
 
     constructor({ getTargetWindow, getInterceptorHandlers, sendBefore }: {
