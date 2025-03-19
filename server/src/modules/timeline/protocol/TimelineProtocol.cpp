@@ -86,7 +86,9 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
     }
     if (json["params"].HasMember("path") && json["params"]["path"].IsArray()) {
         for (const auto &path : json["params"]["path"].GetArray()) {
-            reqPtr->params.path.emplace_back(path.GetString());
+            if (path.IsString()) {
+                reqPtr->params.path.emplace_back(path.GetString());
+            }
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
@@ -104,7 +106,9 @@ std::unique_ptr<Request> TimelineProtocol::ToParseCardsRequest(const json_t &jso
     }
     if (json["params"].HasMember("cards") && json["params"]["cards"].IsArray()) {
         for (const auto &card : json["params"]["cards"].GetArray()) {
-            reqPtr->params.cards.emplace_back(card.GetString());
+            if (card.IsString()) {
+                reqPtr->params.cards.emplace_back(card.GetString());
+            }
         }
     }
     return reqPtr;
@@ -276,7 +280,9 @@ std::unique_ptr<Request> TimelineProtocol::ToRemoteDeleteRequest(const json_t &j
     }
     if (json["params"].HasMember("rankId") && json["params"]["rankId"].IsArray()) {
         for (const auto &id : json["params"]["rankId"].GetArray()) {
-            reqPtr->params.rankId.emplace_back(id.GetString());
+            if (id.IsString()) {
+                reqPtr->params.rankId.emplace_back(id.GetString());
+            }
         }
     }
     return reqPtr;
@@ -444,7 +450,9 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     if (json["params"].HasMember("tid") && json["params"]["tid"].IsArray()) {
         for (const auto &tid : json["params"]["tid"].GetArray()) {
-            reqPtr->params.tid.emplace_back(tid.GetString());
+            if (tid.IsString()) {
+                reqPtr->params.tid.emplace_back(tid.GetString());
+            }
         }
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
