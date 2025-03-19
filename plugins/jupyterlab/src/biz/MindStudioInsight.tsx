@@ -12,7 +12,6 @@ interface MindStudioInsightProps {
     mindstudioManager: MindStudioManager;
     closeWidget: () => void;
     openMindStudio: (modelName: string) => void;
-    openDoc: () => void;
     updateCurrentModel: (model: MindStudio.IModel | null) => void;
     startNew: (name: string, options?: MindStudio.IOptions) => Promise<MindStudio.IMindStudio>;
 }

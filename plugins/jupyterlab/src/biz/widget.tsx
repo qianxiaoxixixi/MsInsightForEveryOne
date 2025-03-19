@@ -71,7 +71,6 @@ export class MindStudioReactWidget extends ReactWidget {
         mindstudioManager={this.mindstudioManager}
         closeWidget={this.closeCurrent}
         openMindStudio={this.openMindStudio}
-        openDoc={this.openDoc}
         updateCurrentModel={this.updateCurrentModel}
         startNew={this.startNew}
       />
@@ -91,9 +90,5 @@ export class MindStudioReactWidget extends ReactWidget {
     this.app.commands.execute(CommandIDs.open, {
       modelName,
     });
-  };
-
-  protected openDoc = (): void => {
-    this.app.commands.execute(CommandIDs.openDoc);
   };
 }

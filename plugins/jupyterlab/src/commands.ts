@@ -9,6 +9,4 @@ export const createNew = 'mindstudio:create-new';
 
 export const open = 'mindstudio:open';
 
-export const openDoc = 'mindstudio:openDoc';
-
 export const close = 'mindstudio:close';

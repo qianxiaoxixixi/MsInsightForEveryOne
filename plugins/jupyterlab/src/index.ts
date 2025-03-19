@@ -61,7 +61,6 @@ async function activate(
   }
 
   palette.addItem({ command: CommandIDs.createNew, category: 'mindstudio' });
-  palette.addItem({ command: CommandIDs.openDoc, category: 'mindstudio' });
 
   return tracker;
 }
@@ -75,7 +74,6 @@ function addCommands(
 ): void {
   const { commands } = app;
   addOpenCommand(commands, app, manager, tracker);
-  addOpenDocCommand(commands);
   addCloseCommand(commands, tracker);
   addCreateNewCommand(commands, app);
 
@@ -152,14 +150,6 @@ function getWidget(
     app.shell.activateById(tabWidget.id);
     return tabWidget;
   }
-}
-
-function addOpenDocCommand(commands: any): void {
-  commands.addCommand(CommandIDs.openDoc, {
-    execute: (args: any) => {
-      window.open('https://www.hiascend.com/document/detail/zh/mindstudio/70RC3/msinsightug/msascendinsightug/Insight_userguide_0002.html');
-    },
-  });
 }
 
 function addCloseCommand(commands: any, tracker: WidgetTracker<MainAreaWidget<MindStudioReactWidget>>): void {
