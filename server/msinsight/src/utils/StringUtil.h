@@ -382,16 +382,6 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
     return stream.str();
 }
 
-static std::string GetIllegalCharacter()
-{
-    std::string illegalCharacter;
-    for (const auto ch : injectList) {
-        illegalCharacter.push_back(ch);
-    }
-    illegalCharacter.pop_back();
-    return illegalCharacter;
-}
-
 static std::string GetPrintAbleString(const std::string &input)
 {
     std::string sanitized;

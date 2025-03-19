@@ -13,6 +13,12 @@ bool FindSliceByAllocationTimeHandler::HandleRequest(std::unique_ptr<Protocol::R
     std::unique_ptr<MemoryFindSliceResponse> responsePtr = std::make_unique<MemoryFindSliceResponse>();
     MemoryFindSliceResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    std::string paramCheckErrMsg;
+    if (!request.params.CommonCheck(paramCheckErrMsg)) {
+        SendResponse(std::move(responsePtr), false, paramCheckErrMsg);
+        ServerLog::Warn("Invalid paramn. ", paramCheckErrMsg);
+        return false;
+    }
     if (renderEngine == nullptr) {
         SendResponse(std::move(responsePtr), false, "Failed to find slice. timeline not exist!");
         ServerLog::Warn("Failed to find slice. timeline not exist!");
@@ -25,7 +31,7 @@ bool FindSliceByAllocationTimeHandler::HandleRequest(std::unique_ptr<Protocol::R
         return false;
     }
     Timeline::CompeteSliceDomain slice = renderEngine->FindSliceByTimePoint(request.params.fileId, request.params.name,
-        target.allocationTime, target.metaType);
+                                                                            target.allocationTime, target.metaType);
     if (std::empty(slice.tid) && std::empty(slice.pid)) {
         SendResponse(std::move(responsePtr), false, "Failed to find slice in timeline!");
         return false;

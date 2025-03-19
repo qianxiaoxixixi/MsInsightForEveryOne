@@ -23,6 +23,23 @@ namespace Dic::Protocol {
         std::string rankId;
         std::string group; // Operator、Operator Type、Input Shape
         int64_t topK{0};
+
+        bool CommonCheck(std::string &errorMsg)
+        {
+            if (!CheckStrParamValid(this->rankId, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check rankId in Query Compute Unit Info.") + errorMsg;
+                return false;
+            }
+            if (!CheckStrParamValid(this->group, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check group in Query Compute Unit Info.") + errorMsg;
+                return false;
+            }
+            if (this->topK < -1) {
+                errorMsg = std::string("[Operator]Failed to check topK in Query Compute Unit Info.") + errorMsg;
+                return false;
+            }
+            return true;
+        }
     };
 
     // 算子视图表格数据的请求参数

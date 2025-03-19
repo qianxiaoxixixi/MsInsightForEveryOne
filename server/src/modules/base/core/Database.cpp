@@ -43,8 +43,7 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (!StringUtil::ValidateStringParam(dbPath)) {
-        ServerLog::Error("DB path contains illegal character. Illegal characters are: " +
-                         StringUtil::GetIllegalCharacter() + " and newline character.");
+        ServerLog::Error("DB path contains illegal character.");
         return false;
     }
     if (!FileUtil::CheckFilePathLength(dbPath)) {
