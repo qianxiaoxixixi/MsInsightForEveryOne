@@ -19,7 +19,7 @@ namespace Dic::Module::Operator {
         OperatorCategoryInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
         if (!CheckRequestParam(request.params)) {
-            ServerLog::Error("[Operator]Failed to check request parameter in Query Category Info.");
+            ServerLog::Warn("[Operator]Failed to check request parameter in Query Category Info.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return false;
@@ -40,8 +40,8 @@ namespace Dic::Module::Operator {
     bool QueryOpCategoryInfoHandler::CheckRequestParam(OperatorDurationReqParams params)
     {
         std::string errMsg;
-        if (!CheckStrParamValid(params.rankId, errMsg)) {
-            ServerLog::Error(std::string("[Operator]Failed to check rankId in Query Category Info.") + errMsg);
+        if (!params.CommonCheck(errMsg)) {
+            ServerLog::Warn(errMsg);
             return false;
         }
         return true;

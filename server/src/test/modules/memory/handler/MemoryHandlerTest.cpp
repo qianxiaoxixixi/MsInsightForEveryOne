@@ -122,6 +122,7 @@ TEST_F(MemoryHandlerTest, TestFindSliceByAllocationTimeHandlerNormal)
     std::unique_ptr<Dic::Protocol::MemoryFindSliceRequest> request =
         std::make_unique<Dic::Protocol::MemoryFindSliceRequest>();
     request->params.id = "1";
+    request->params.fileId = "0";
     bool res = handler.HandleRequest(std::move(request));
     EXPECT_EQ(res, true);
 }

@@ -271,6 +271,18 @@ struct MemoryFindSliceParams {
     std::string fileId;
     std::string id;
     std::string name;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(fileId, errorMsg)) {
+            errorMsg = "The value of request param [fileId] is invalid, detail:" + errorMsg;
+            return false;
+        }
+        if (!CheckStrParamValid(id, errorMsg)) {
+            errorMsg = "The value of request param [id] is invalid, detail:" + errorMsg;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct MemoryFindSliceRequest : public Request {
