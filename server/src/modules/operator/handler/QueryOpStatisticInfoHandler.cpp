@@ -132,8 +132,7 @@ namespace Dic::Module::Operator {
         std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
         res = GetCmpDataVec(request.params.group, baselineRes, compareRes);
         constexpr int64_t MAX_INT64 = std::numeric_limits<int64_t>::max();
-        int64_t safeSize = (res.size() > static_cast<size_t>(MAX_INT64)) ?
-                            MAX_INT64 : static_cast<int64_t>(res.size());
+        int64_t safeSize = (res.size() > MAX_INT64) ? MAX_INT64 : static_cast<int64_t>(res.size());
         if (request.params.topK > 0) {
             response.total = std::min(request.params.topK, safeSize);
         } else {
@@ -264,9 +263,11 @@ namespace Dic::Module::Operator {
                                                                            OperatorStatisticCmpInfoRes &b) {
             return StaticCmp(a, b, order, dbOrderBy);
         });
-
+        uint64_t MAX_UINT64 = std::numeric_limits<uint64_t>::max();
+        uint64_t safeTotal = total < 0 ? MAX_UINT64 : static_cast<uint64_t>(total);
+        safeTotal = std::min(safeTotal, statisticData.size());
         std::vector<Protocol::OperatorStatisticCmpInfoRes> topKStatisticData(statisticData.begin(),
-                                                                             statisticData.begin() + total);
+                                                                             statisticData.begin() + safeTotal);
 
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pagesize 默认是10条
         uint64_t dataSize = topKStatisticData.size();
