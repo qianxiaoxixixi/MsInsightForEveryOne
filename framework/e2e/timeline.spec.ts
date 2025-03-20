@@ -452,7 +452,7 @@ test.describe('Timeline', () => {
 
     // 键盘 W、S、A、D、方向键
     test('test_keyword', async ({ timelinePage, page }) => {
-        const { timelineFrame, zoomOutBtn } = timelinePage;
+        const { timelineFrame, zoomOutBtn, resetBtn } = timelinePage;
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
@@ -469,7 +469,9 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowDown.png`, { maxDiffPixels: 100 });
         await page.keyboard.press('ArrowUp');
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowUp.png`, { maxDiffPixels: 100 });
+        await resetBtn.click();
         await zoomOutBtn.click();
+        await page.mouse.move(0, 0);
         await page.keyboard.press('ArrowRight');
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
         await page.keyboard.press('ArrowLeft');
