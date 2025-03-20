@@ -57,15 +57,15 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
         [session.pinnedUnits, flattenUnits, height, scrollTop],
     );
     const headOffset = React.useMemo(
-        () => flattenUnits.filter((_, i) => i < first).reduce((prev, cur) => prev + cur.height(), 0),
+        () => flattenUnits.filter((_, i) => i < first).reduce((prev, cur) => prev + cur.height() + 1, 0),
         [flattenUnits, first],
     );
     const visibleUnitsHeight = React.useMemo(
-        () => flattenUnits.filter((_, i) => first <= i && i < last).reduce((prev, cur) => prev + cur.height(), 0),
+        () => flattenUnits.filter((_, i) => first <= i && i < last).reduce((prev, cur) => prev + cur.height() + 1, 0),
         [flattenUnits, first, last],
     );
     const tailOffset = React.useMemo(
-        () => flattenUnits.filter((_, i) => i >= last).reduce((prev, cur) => prev + cur.height(), 0),
+        () => flattenUnits.filter((_, i) => i >= last).reduce((prev, cur) => prev + cur.height() + 1, 0),
         [flattenUnits, last],
     );
     const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
