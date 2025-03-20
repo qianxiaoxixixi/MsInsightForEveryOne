@@ -124,9 +124,12 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
             dbFiles.push_back(file);
             continue;
         }
-        std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(file, std::regex(pytorchDBReg));
+        std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(file, std::regex(pytorchDBReg));
+        if (frameworkFiles.empty()) {
+            frameworkFiles = FileUtil::FindFilesWithFilter(file, std::regex(mindsporeDBReg));
+        }
         std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(file, std::regex(msprofDBReg));
-        dbFiles.insert(dbFiles.end(), pytorchFiles.begin(), pytorchFiles.end());
+        dbFiles.insert(dbFiles.end(), frameworkFiles.begin(), frameworkFiles.end());
         dbFiles.insert(dbFiles.end(), msprofFiles.begin(), msprofFiles.end());
     }
     // 只解析找到的第一个report文件
@@ -186,10 +189,13 @@ ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPat
     if (dataPath.empty()) {
         return ProjectTypeEnum::DB;
     }
-    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(pytorchDBReg));
+    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(pytorchDBReg));
+    if (frameworkFiles.empty()) {
+        frameworkFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(mindsporeDBReg));
+    }
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(msprofDBReg));
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(dataPath[0], std::regex(clusterDBReg));
-    int rankCount = pytorchFiles.size() + msprofFiles.size();
+    int rankCount = frameworkFiles.size() + msprofFiles.size();
     // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
     bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
     return isCluster ? ProjectTypeEnum::DB_CLUSTER : ProjectTypeEnum::DB;
@@ -198,16 +204,19 @@ ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPat
 std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &importFile,
     ProjectTypeEnum projectTypeEnum, std::string &error)
 {
-    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
+    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
+    if (frameworkFiles.empty()) {
+        frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(mindsporeDBReg));
+    }
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(msprofDBReg));
-    if (pytorchFiles.empty() && msprofFiles.empty()) {
+    if (frameworkFiles.empty() && msprofFiles.empty()) {
         error = "Not find valid db dir!";
         ServerLog::Info(error);
         return { importFile };
     }
     std::vector<std::string> reportFiles = {};
-    if (!pytorchFiles.empty()) {
-        reportFiles = pytorchFiles;
+    if (!frameworkFiles.empty()) {
+        reportFiles = frameworkFiles;
         DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
     } else if (!msprofFiles.empty()) {
         reportFiles = msprofFiles;
@@ -227,24 +236,22 @@ void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &pr
         return;
     }
     if (baselineInfo.isCluster) {
-        std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
-        auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::DB);
-        ClusterFileParser clusterFileParser(clusterFilePath, clusterDatabase, BASELINE + TimeUtil::Instance().NowStr());
-        if (!clusterFileParser.ParserClusterOfDb()) {
-            ServerLog::Warn("Failed to parse cluster db files");
-        }
+        ParserDb::ParseClusterBaselineInfo(projectInfos);
         return;
     }
     std::string parseFilePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
-    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
+    std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
+    if (frameworkFiles.empty()) {
+        frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(mindsporeDBReg));
+    }
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(msprofDBReg));
-    if (pytorchFiles.empty() && msprofFiles.empty()) {
+    if (frameworkFiles.empty() && msprofFiles.empty()) {
         return;
     }
     std::string file;
-    if (!pytorchFiles.empty()) {
+    if (!frameworkFiles.empty()) {
         DataBaseManager::Instance().SetBaselineFileType(FileType::PYTORCH);
-        file = pytorchFiles[0];
+        file = frameworkFiles[0];
     } else {
         DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
         file = msprofFiles[0];
@@ -271,6 +278,16 @@ void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &pr
         ServerLog::Error("Failed to create baseline connection pool. ");
     }
     FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ rankId }, file);
+}
+
+void ParserDb::ParseClusterBaselineInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+{
+    std::string clusterFilePath = Global::ProjectExplorerManager::GetClusterFilePath(projectInfos);
+    auto clusterDatabase = DataBaseManager::Instance().CreateClusterDatabase(BASELINE, DataType::DB);
+    ClusterFileParser clusterFileParser(clusterFilePath, clusterDatabase, BASELINE + TimeUtil::Instance().NowStr());
+    if (!clusterFileParser.ParserClusterOfDb()) {
+        ServerLog::Warn("Failed to parse cluster db files");
+    }
 }
 } // Module
 } // Dic
