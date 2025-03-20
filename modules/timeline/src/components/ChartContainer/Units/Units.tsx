@@ -461,18 +461,22 @@ interface ScrollerProps {
     orderOptions: OrderOptions;
     unitsArea: InsightUnit[];
     supportJump: boolean;
-};
+    shouldUpdateScrollTop?: boolean;
+}
 
-export const Scroller = React.forwardRef(({ id, session, children, eventType, orderOptions: sorderOptions, unitsArea, supportJump }: ScrollerProps,
-    ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
+export const Scroller = React.forwardRef(({
+    id, session, children, eventType, orderOptions: sorderOptions, unitsArea, supportJump, shouldUpdateScrollTop,
+}: ScrollerProps, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
     // 广播滚动事件
     function scroll(e: React.UIEvent<HTMLDivElement>): void {
         const scrollTop = e.currentTarget.scrollTop;
         eventBus.emit(eventType, scrollTop);
-        // 修改session.scrollTop
-        runInAction(() => {
-            session.scrollTop = scrollTop;
-        });
+        if (shouldUpdateScrollTop !== undefined && shouldUpdateScrollTop) {
+            // 修改session.scrollTop
+            runInAction(() => {
+                session.scrollTop = scrollTop;
+            });
+        }
     }
 
     function mouseEnter(): void {
@@ -513,7 +517,7 @@ const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
 const Units = ({ session, height, hasPinButton, laneInfoWidth }:
 { session: Session; height: number; hasPinButton: boolean; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
     return <Scroller id={UNIT_WRAPPER_SCROLLER_ID} session={session} unitsArea={session.units} supportJump={true}
-        ref={ref} orderOptions={orderOptions} eventType={EventType.UNITWRAPPERSCROLL}>
+        ref={ref} orderOptions={orderOptions} eventType={EventType.UNITWRAPPERSCROLL} shouldUpdateScrollTop>
         <FlattenUnits
             session={session}
             height={height}
