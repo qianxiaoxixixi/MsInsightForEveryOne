@@ -47,7 +47,6 @@ export const loadHistoryProject = async(): Promise<void> => {
 // 导入数据、切换项目
 export async function handleProjectAction({ action, dataSource: orginDataSource, isConflict, selectedPath }:
 {action: ProjectAction;dataSource: DataSource;isConflict: boolean;selectedPath?: string}): Promise<void> {
-    openLoading();
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -62,7 +61,7 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         if (dataSource.projectName === activeDataSource.projectName && arraysValueEqual(dataSource.dataPath, activeDataSource.dataPath)) {
             return;
         }
-
+        openLoading();
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
             const firstDataPath = selectedPath ?? dataSources.find(data => data.projectName === dataSource.projectName)?.dataPath[0];
@@ -73,6 +72,7 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         if (!isExistedRemote(dataSource)) {
             const connected = await connectRemote(dataSource);
             if (!connected) {
+                closeLoading();
                 return;
             }
         }
