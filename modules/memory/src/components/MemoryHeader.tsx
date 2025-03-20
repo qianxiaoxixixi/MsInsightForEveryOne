@@ -93,6 +93,10 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                 memorySession.hostCondition = { ...memorySession.hostCondition, value: list[0] };
                 memorySession.rankIdCondition = { options: rankIdOptions, value: session.compareRank.rankId ?? '' };
             });
+        } else {
+            runInAction(() => {
+                memorySession.hostCondition.value = '';
+            });
         }
         if (session.memoryRankIds.includes(session.compareRank.rankId)) {
             onRankIdChanged(session.compareRank.rankId);
