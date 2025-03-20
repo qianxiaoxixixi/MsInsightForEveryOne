@@ -265,7 +265,7 @@ namespace Dic::Module::Operator {
         });
         uint64_t MAX_UINT64 = std::numeric_limits<uint64_t>::max();
         uint64_t safeTotal = total < 0 ? MAX_UINT64 : static_cast<uint64_t>(total);
-        safeTotal = std::min(safeTotal, statisticData.size());
+        safeTotal = std::min(safeTotal, static_cast<uint64_t>(statisticData.size()));
         std::vector<Protocol::OperatorStatisticCmpInfoRes> topKStatisticData(statisticData.begin(),
                                                                              statisticData.begin() + safeTotal);
 
