@@ -35,9 +35,9 @@ TEST_F(CommunicationProtocolRequestTest, OperatorDetailsParamTest)
 
 TEST_F(CommunicationProtocolRequestTest, BandwidthDataParamTest)
 {
-    Dic::Protocol::BandwidthDataParam param1 = {"1", ";", "1", "opName", "stage"};
-    Dic::Protocol::BandwidthDataParam param2 = {"1", "1", "1", ";", "stage"};
-    Dic::Protocol::BandwidthDataParam param3 = {"1", "1", "1", "opName", ";"};
+    Dic::Protocol::BandwidthDataParam param1 = {";", "1", "opName", "stage"};
+    Dic::Protocol::BandwidthDataParam param2 = {"1", "1", ";", "stage"};
+    Dic::Protocol::BandwidthDataParam param3 = {"1", "1", "opName", ";"};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
     EXPECT_EQ(param2.CheckParams(msg), false);
@@ -46,10 +46,10 @@ TEST_F(CommunicationProtocolRequestTest, BandwidthDataParamTest)
 
 TEST_F(CommunicationProtocolRequestTest, DistributionDataParamTest)
 {
-    Dic::Protocol::DistributionDataParam param1 = {"1", ";", "1", "opName", "type", "stage", ""};
-    Dic::Protocol::DistributionDataParam param2 = {"1", "1", "1", ";", "type", "stage", ""};
-    Dic::Protocol::DistributionDataParam param3 = {"1", "1", "1", "opName", ";", "stage", ""};
-    Dic::Protocol::DistributionDataParam param4 = {"1", "1", "1", "opName", "type", ";", ""};
+    Dic::Protocol::DistributionDataParam param1 = {";", "1", "opName", "type", "stage", ""};
+    Dic::Protocol::DistributionDataParam param2 = {"1", "1", ";", "type", "stage", ""};
+    Dic::Protocol::DistributionDataParam param3 = {"1", "1", "opName", ";", "stage", ""};
+    Dic::Protocol::DistributionDataParam param4 = {"1", "1", "opName", "type", ";", ""};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
     EXPECT_EQ(param2.CheckParams(msg), false);
@@ -59,7 +59,7 @@ TEST_F(CommunicationProtocolRequestTest, DistributionDataParamTest)
 
 TEST_F(CommunicationProtocolRequestTest, RanksParamsTest)
 {
-    Dic::Protocol::RanksParams param1 = {"1", ";"};
+    Dic::Protocol::RanksParams param1 = {";"};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
 }
@@ -67,7 +67,6 @@ TEST_F(CommunicationProtocolRequestTest, RanksParamsTest)
 TEST_F(CommunicationProtocolRequestTest, OperatorNamesParamsTest)
 {
     Dic::Protocol::OperatorNamesParams base;
-    base.dbIndex = "1";
     base.iterationId = "1";
     base.rankList.emplace_back("1");
     base.stage = "stage";
@@ -83,7 +82,6 @@ TEST_F(CommunicationProtocolRequestTest, OperatorNamesParamsTest)
 TEST_F(CommunicationProtocolRequestTest, DurationListParamsTest)
 {
     Dic::Protocol::DurationListParams base;
-    base.dbIndex = "1";
     base.iterationId = "1";
     base.operatorName = "opName";
     base.stage = "stage";

@@ -27,7 +27,6 @@ TEST_F(TestSuit, QueryOperatorNameData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
@@ -54,7 +53,6 @@ TEST_F(TestSuit, QueryOperatorNameDataWithRank)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.rankList = {"0"};
@@ -70,7 +68,6 @@ TEST_F(TestSuit, GetStageIdByGroupIdFail)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "";
     requestParams.rankList = {"0"};
@@ -92,7 +89,6 @@ TEST_F(TestSuit, QueryRanksData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::RanksParams requestParam;
-    requestParam.dbIndex = "0";
     requestParam.iterationId = "2";
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryRanksHandler(responseBody);
@@ -107,7 +103,6 @@ TEST_F(TestSuit, QueryDurationData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
     std::vector<Dic::Module::DurationDo> durationList;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";
@@ -121,7 +116,6 @@ TEST_F(TestSuit, QueryDurationDataWithRank)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
     std::vector<Dic::Module::DurationDo> durationList;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";

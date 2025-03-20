@@ -24,7 +24,7 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // check request parameters
     std::string errorMsg;
-    if (!request.config.CheckParams(errorMsg) || !SummaryService::CheckParamForMindSpeed(request.config, errorMsg)) {
+    if (!request.config.CheckParams(errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }

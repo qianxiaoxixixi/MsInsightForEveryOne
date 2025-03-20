@@ -53,30 +53,6 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
     auto baselineData = BaseInfoToJson(response.body.baseInfo.baseline, allocator);
     JsonUtil::AddMember(baseInfo, "baseline", baselineData, allocator);
     JsonUtil::AddMember(body, "baseInfo", baseInfo, allocator);
-    json_t summaryList(kArrayType);
-    for (const SummaryDto& summaryDto : response.body.summaryList) {
-        json_t summaryDtoJson(kObjectType);
-        JsonUtil::AddMember(summaryDtoJson, "rankId", summaryDto.rankId, allocator);
-        JsonUtil::AddMember(summaryDtoJson, "totalTime", summaryDto.totalTime, allocator);
-        JsonUtil::AddMember(summaryDtoJson, "computingTime", summaryDto.computingTime, allocator);
-        JsonUtil::AddMember(summaryDtoJson, "communicationOverLappedTime",
-                            summaryDto.communicationOverLappedTime, allocator);
-        JsonUtil::AddMember(summaryDtoJson, "communicationNotOverLappedTime",
-                            summaryDto.communicationNotOverLappedTime, allocator);
-        JsonUtil::AddMember(summaryDtoJson, "freeTime", summaryDto.freeTime, allocator);
-        JsonUtil::AddMember(summaryDtoJson, "prepareTime", summaryDto.prepareTime, allocator);
-        summaryList.PushBack(summaryDtoJson, allocator);
-    }
-    json_t adviceJson(kObjectType);
-    TraceStatistic stat = response.body.traceStatistic;
-    int digit = 2;
-    JsonUtil::AddMember(adviceJson, "compute", NumberUtil::DoubleReservedNDigits(stat.computeDiff, digit), allocator);
-    JsonUtil::AddMember(adviceJson, "communication",
-                        NumberUtil::DoubleReservedNDigits(stat.communicationDiff, digit), allocator);
-    JsonUtil::AddMember(adviceJson, "free", NumberUtil::DoubleReservedNDigits(stat.freeDiff, digit), allocator);
-
-    JsonUtil::AddMember(body, "summaryList", summaryList, allocator);
-    JsonUtil::AddMember(body, "advice", adviceJson, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

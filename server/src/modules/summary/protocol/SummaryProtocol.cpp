@@ -57,18 +57,6 @@ std::unique_ptr<Request> SummaryProtocol::ToTopNRequest(const json_t &json, std:
         error = "Failed to set request base info of topN request.";
         return nullptr;
     }
-    if (json["params"].HasMember("stepIdList") && json["params"]["stepIdList"].IsArray()) {
-        for (const auto &stepId : json["params"]["stepIdList"].GetArray()) {
-            reqPtr->params.stepIdList.emplace_back(stepId.GetString());
-        }
-    }
-    if (json["params"].HasMember("rankIdList") && json["params"]["rankIdList"].IsArray()) {
-        for (const auto &rankId : json["params"]["rankIdList"].GetArray()) {
-            reqPtr->params.rankIdList.emplace_back(rankId.GetString());
-        }
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.limit, json["params"], "limit");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }

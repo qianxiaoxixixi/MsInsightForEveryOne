@@ -30,8 +30,6 @@ public:
     bool HasFinishedParseLastTime();
     bool UpdatesClusterParseStatus(const std::string& status);
 
-    virtual bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-                          Protocol::SummaryTopRankResBody &responseBody) = 0;
     virtual bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) = 0;
     virtual bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody) = 0;
     virtual bool GetStages(Protocol::PipelineStageParam &param, Protocol::PipelineStageResponseBody &responseBody) = 0;
@@ -77,8 +75,6 @@ protected:
     const std::string clusterParseStatus = "Cluster files parsing status";
     const double overlapThreshold = 0.05;
     bool HasColumn(const std::string &tableName, const std::string &columnName);
-    bool ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-        Protocol::SummaryTopRankResBody &responseBody, std::string sql);
     bool ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo, std::string sql);
     bool ExecuteGetStepIdList(Protocol::PipelineStepResponseBody &responseBody, std::string sql);
     bool ExecuteGetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody,

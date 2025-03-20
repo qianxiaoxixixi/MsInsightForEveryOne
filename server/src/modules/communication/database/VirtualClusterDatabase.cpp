@@ -36,58 +36,6 @@ bool VirtualClusterDatabase::HasColumn(const std::string &tableName, const std::
     return result;
 }
 
-bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-    Protocol::SummaryTopRankResBody &responseBody, std::string sql)
-{
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare build condition statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    for (const auto &item: requestParams.stepIdList) {
-        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    for (const auto &item: requestParams.rankIdList) {
-        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    bool isContainsFieldPreparing = (sql.find("preparing") != std::string::npos);
-    Protocol::TraceStatistic max{};
-    Protocol::TraceStatistic min = {DBL_MAX, DBL_MAX, DBL_MAX};
-    double sum = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::SummaryDto summaryDto;
-        summaryDto.rankId = sqlite3_column_string(stmt, col++);
-        summaryDto.computingTime = sqlite3_column_double(stmt, col++);
-        summaryDto.communicationNotOverLappedTime = sqlite3_column_double(stmt, col++);
-        summaryDto.communicationOverLappedTime = sqlite3_column_double(stmt, col++);
-        summaryDto.freeTime = sqlite3_column_double(stmt, col++);
-        summaryDto.prepareTime = isContainsFieldPreparing ? sqlite3_column_double(stmt, col++) : -1;
-        max.computeDiff = std::max(summaryDto.computingTime, max.computeDiff);
-        max.communicationDiff = std::max(summaryDto.communicationNotOverLappedTime, max.communicationDiff);
-        max.freeDiff = std::max(summaryDto.freeTime, max.freeDiff);
-        min.computeDiff = std::min(summaryDto.computingTime, min.computeDiff);
-        min.communicationDiff = std::min(summaryDto.communicationNotOverLappedTime, min.communicationDiff);
-        min.freeDiff = std::min(summaryDto.freeTime, min.freeDiff);
-        sum += summaryDto.computingTime + summaryDto.communicationNotOverLappedTime + summaryDto.freeTime;
-        responseBody.summaryList.emplace_back(summaryDto);
-    }
-    if (!responseBody.summaryList.empty()) {
-        double mean = sum / responseBody.summaryList.size();
-        if (mean != 0) {
-            double diff = max.freeDiff - min.freeDiff;
-            responseBody.traceStatistic.freeDiff = diff / mean > overlapThreshold ? diff : 0;
-            diff = max.computeDiff - min.computeDiff;
-            responseBody.traceStatistic.computeDiff = diff / mean > overlapThreshold ? diff : 0;
-            diff = max.communicationDiff - min.communicationDiff;
-            responseBody.traceStatistic.communicationDiff = diff / mean > overlapThreshold ? diff : 0;
-        }
-    }
-    sqlite3_finalize(stmt);
-    return true;
-}
-
 bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo, std::string sql)
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;

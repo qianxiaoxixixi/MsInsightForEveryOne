@@ -7,14 +7,6 @@
 
 class SummaryProtocolRequestTest : public ::testing::Test {};
 
-TEST_F(SummaryProtocolRequestTest, SummaryTopRankParamsTest)
-{
-    Dic::Protocol::SummaryTopRankParams params;
-    params.orderBy = ";";
-    std::string msg;
-    EXPECT_EQ(params.CheckParams(msg), false);
-}
-
 TEST_F(SummaryProtocolRequestTest, SummaryStatisticParamsTestTimeFlagInvaild)
 {
     Dic::Protocol::SummaryStatisticParams params;
