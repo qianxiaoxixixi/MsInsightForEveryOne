@@ -17,8 +17,7 @@ bool QueryParallelismArrangementHandler::HandleRequest(std::unique_ptr<Protocol:
 
     // check request parameter
     std::string err;
-    if (!request.params.config.CheckParams(err) ||
-        !SummaryService::CheckParamForMindSpeed(request.params.config, err)) {
+    if (!request.params.CheckParams(err)) {
         SendResponse(std::move(responsePtr), false, err);
         return false;
     }

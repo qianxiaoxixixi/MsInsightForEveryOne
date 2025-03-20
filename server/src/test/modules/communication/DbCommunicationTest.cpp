@@ -45,7 +45,6 @@ TEST_F(DbCommunicationTest, QueryOperatorNameData)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.rankList = {};
@@ -61,7 +60,6 @@ TEST_F(DbCommunicationTest, QueryOperatorNameDataWithRank)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::OperatorNamesParams requestParams;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.rankList = {"0"};
@@ -77,7 +75,6 @@ TEST_F(DbCommunicationTest, QueryRanksData)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::RanksParams requestParam;
-    requestParam.dbIndex = "0";
     requestParam.iterationId = "2";
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryRanksHandler(responseBody);
@@ -92,7 +89,6 @@ TEST_F(DbCommunicationTest, QueryDurationData)
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
     std::vector<Dic::Module::DurationDo> durationDoList;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.operatorName = "Total Op Info";
@@ -106,7 +102,6 @@ TEST_F(DbCommunicationTest, QueryDurationDataWithRank)
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
     std::vector<Dic::Module::DurationDo> durationDoList;
-    requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.operatorName = "Total Op Info";
@@ -237,56 +232,6 @@ TEST_F(DbCommunicationTest, QueryAllCommunicationOperatorsDetails)
     int expectSize = 100;
     EXPECT_EQ(responseBody.allOperators.size(), expectSize);
     EXPECT_EQ(responseBody.allOperators[0].operatorName, "hcom_allReduce__293_647_1");
-}
-
-TEST_F(DbCommunicationTest, QuerySummaryDataSuccess)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::SummaryTopRankParams requestParams;
-    Dic::Protocol::SummaryTopRankResBody responseBody;
-    requestParams.rankIdList.emplace_back("0");
-    requestParams.rankIdList.emplace_back("-1");
-    requestParams.stepIdList.emplace_back("1");
-    requestParams.stepIdList.emplace_back("-1");
-    requestParams.orderBy = "rankId";
-    database->QuerySummaryData(requestParams, responseBody);
-    int expectSize = 1;
-    const double expectCommunicationOverLappedTime = 887304.62;
-    EXPECT_EQ(responseBody.summaryList.size(), expectSize);
-    EXPECT_EQ(responseBody.summaryList[0].rankId, "0");
-    EXPECT_EQ(responseBody.summaryList[0].communicationOverLappedTime, expectCommunicationOverLappedTime);
-}
-
-TEST_F(DbCommunicationTest, QuerySummaryDataCheckSqlFail)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::SummaryTopRankParams requestParams;
-    Dic::Protocol::SummaryTopRankResBody responseBody;
-    requestParams.rankIdList.emplace_back("0");
-    requestParams.stepIdList.emplace_back("1");
-    requestParams.orderBy = ";";
-    database->QuerySummaryData(requestParams, responseBody);
-    int expectSize = 1;
-    const double expectCommunicationOverLappedTime = 887304.62;
-    EXPECT_EQ(responseBody.summaryList.size(), expectSize);
-    EXPECT_EQ(responseBody.summaryList[0].rankId, "0");
-    EXPECT_EQ(responseBody.summaryList[0].communicationOverLappedTime, expectCommunicationOverLappedTime);
-}
-
-TEST_F(DbCommunicationTest, QuerySummaryDataSuccessOrderByComputingTime)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::SummaryTopRankParams requestParams;
-    Dic::Protocol::SummaryTopRankResBody responseBody;
-    requestParams.rankIdList.emplace_back("0");
-    requestParams.stepIdList.emplace_back("1");
-    requestParams.orderBy = "computingTime";
-    database->QuerySummaryData(requestParams, responseBody);
-    int expectSize = 1;
-    const double expectCommunicationOverLappedTime = 887304.62;
-    EXPECT_EQ(responseBody.summaryList.size(), expectSize);
-    EXPECT_EQ(responseBody.summaryList[0].rankId, "0");
-    EXPECT_EQ(responseBody.summaryList[0].communicationOverLappedTime, expectCommunicationOverLappedTime);
 }
 
 TEST_F(DbCommunicationTest, QueryBaseInfoSuccess)

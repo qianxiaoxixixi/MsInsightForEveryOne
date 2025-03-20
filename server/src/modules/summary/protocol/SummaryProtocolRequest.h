@@ -15,20 +15,7 @@
 namespace Dic {
 namespace Protocol {
 struct SummaryTopRankParams {
-    int limit{};
-    std::vector<std::string> stepIdList;
-    std::vector<std::string> rankIdList;
-    std::string orderBy;
     bool isCompare = false;
-    bool CheckParams(std::string &errorMsg) const
-    {
-        std::string paramError;
-        if (!CheckStrParamValid(this->orderBy, paramError)) {
-            errorMsg = "[Summary] Failed to check orderBy." + paramError;
-            return false;
-        }
-        return true;
-    }
 };
 
 struct SummaryTopRankRequest : public Request {
@@ -144,6 +131,18 @@ struct PipelineFwdBwdTimelineRequest : public Request {
 struct ParallelismArrangement {
     Module::ParallelStrategyConfig config;
     std::string dimension;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        if (!config.CheckParams(errorMsg)) {
+            return false;
+        }
+        if (std::find(Module::DIMENSIONS_ALLOWED.begin(), Module::DIMENSIONS_ALLOWED.end(), dimension) ==
+            Module::DIMENSIONS_ALLOWED.end()) {
+            errorMsg = "[Summary] Dimension is not allowed.";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct QueryParallelismArrangementRequest : public Request {
@@ -159,6 +158,31 @@ struct ParallelismPerformance {
     bool isCompare = false;
     std::string baselineStep;
     std::vector<uint32_t> indexList;
+    bool CheckParams(std::string &errorMsg) const
+    {
+        if (!config.CheckParams(errorMsg)) {
+            return false;
+        }
+        if (std::find(Module::DIMENSIONS_ALLOWED.begin(), Module::DIMENSIONS_ALLOWED.end(), dimension) ==
+            Module::DIMENSIONS_ALLOWED.end()) {
+            errorMsg = "[Summary] Dimension is not allowed.";
+            return false;
+        }
+        std::string paramError;
+        if (!CheckStrParamValidEmptyAllowed(this->orderBy, paramError)) {
+            errorMsg = "[Summary] Failed to check orderBy." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->step, paramError)) {
+            errorMsg = "[Summary] Failed to check step." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->baselineStep, paramError)) {
+            errorMsg = "[Summary] Failed to check baselineStep." + paramError;
+            return false;
+        }
+        return true;
+    }
 };
 
 struct QueryParallelismPerformanceRequest : public Request {
@@ -185,6 +209,10 @@ struct ComputeDetailParams {
             return false;
         }
         std::string paramError;
+        if (!CheckStrParamValid(this->rankId, paramError)) {
+            errorMsg = "[Summary] Failed to check rank id." + paramError;
+            return false;
+        }
         if (!CheckStrParamValid(this->timeFlag, paramError)) {
             errorMsg = "[Summary] Failed to check time flag." + paramError;
             return false;
@@ -220,11 +248,11 @@ struct CommunicationDetailParams {
         }
         std::string paramError;
         if (!CheckStrParamValid(this->rankId, paramError)) {
-            errorMsg = "[Summary] Failed to check time flag." + paramError;
+            errorMsg = "[Summary] Failed to check rank id." + paramError;
             return false;
         }
         if (!CheckStrParamValid(this->timeFlag, paramError)) {
-            errorMsg = "[Summary] Failed to check rank id." + paramError;
+            errorMsg = "[Summary] Failed to check time flag." + paramError;
             return false;
         }
         if (!CheckStrParamValidEmptyAllowed(this->orderBy, paramError)) {

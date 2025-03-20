@@ -31,49 +31,6 @@ bool DbClusterDataBase::DropTable()
     return DropSomeTables(tables);
 }
 
-bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-    Protocol::SummaryTopRankResBody &responseBody)
-{
-    std::string stepCondition;
-    std::string rankCondition;
-    std::string prepareTimeCondition;
-    if (HasColumn(TABLE_STEP_TRACE_TIME, "preparing")) {
-        prepareTimeCondition = ",sum(ROUND(preparing,2)) as prepareTime ";
-    }
-    if (!requestParams.stepIdList.empty()) {
-        stepCondition = " and step in (?";
-        for (size_t i = 1; i < requestParams.stepIdList.size(); i++) {
-            stepCondition.append(",?");
-        }
-        stepCondition.append(") ");
-    }
-    if (!requestParams.rankIdList.empty()) {
-        rankCondition = " and \"index\" in (?";
-        for (size_t i = 1; i < requestParams.rankIdList.size(); i++) {
-            rankCondition.append(",?");
-        }
-        rankCondition.append(") ");
-    }
-    std::string sql = "SELECT \"index\" as rankId, sum(ROUND(computing,2)) as computingTime, "
-                      "sum(ROUND(communication_not_overlapped,2)) as communicationNotOverLappedTime, "
-                      "sum(ROUND(overlapped,2)) as communicationOverLappedTime, sum(ROUND(free,2)) as freeTime "+
-                      prepareTimeCondition +
-                      "FROM " + TABLE_STEP_TRACE_TIME +
-                      " WHERE rankId !='' " + stepCondition + rankCondition
-                      + "group by rankId ";
-    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
-        return ExecuteQuerySummaryData(requestParams, responseBody, sql);
-    }
-    if (requestParams.orderBy == "rankId") {
-        sql += " ORDER by CAST(rankId AS UNSIGNED) asc";
-    } else {
-        sql += " ORDER by " + requestParams.orderBy + " desc";
-    }
-
-    return ExecuteQuerySummaryData(requestParams, responseBody, sql);
-}
-
 std::string DbClusterDataBase::QueryParseClusterStatus()
 {
     return parseStatus;

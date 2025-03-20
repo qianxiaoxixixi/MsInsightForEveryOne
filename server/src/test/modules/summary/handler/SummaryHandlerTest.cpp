@@ -183,6 +183,7 @@ TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnTrue)
     request->params.config.cpSize = 2; // 2
     request->params.config.ppSize = 2; // 2
     request->params.config.epSize = 1; // 1
+    request->params.dimension = "ep-dp";
     QueryParallelismPerformanceHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
@@ -234,11 +235,10 @@ TEST_F(HandlerTest, StepHandlerWithExecuteSqlFail)
     EXPECT_EQ(result, false);
 }
 
-TEST_F(HandlerTest, SummaryTopRankHandlerWithCheckDbIsNull)
+TEST_F(HandlerTest, SummaryTopRankHandlerHandleRequestReturnTrue)
 {
     auto request = std::make_unique<SummaryTopRankRequest>();
-    request->params.orderBy = "";
     SummaryTopRankHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }

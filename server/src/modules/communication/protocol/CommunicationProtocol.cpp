@@ -72,7 +72,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToDistributionRequest(const json
         error = "Failed to set request base info of distribution request.";
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
@@ -90,7 +89,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
@@ -145,7 +143,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
         error = "Failed to set request base info of duration request.";
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
@@ -170,7 +167,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToRanksRequest(const json_t &jso
         error = "Failed to set request base info of ranks request.";
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
     return reqPtr;
 }
@@ -183,7 +179,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {
@@ -202,7 +197,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixOpNamesRequest(const jso
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.dbIndex, json["params"], "dbIndex");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pgName, json["params"], "pgName");
     if (json["params"].HasMember("rankList") && json["params"]["rankList"].IsArray()) {

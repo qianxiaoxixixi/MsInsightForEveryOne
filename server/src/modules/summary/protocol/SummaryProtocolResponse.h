@@ -44,9 +44,6 @@ struct SummaryBaseInfo {
 
 struct SummaryTopRankResBody {
     CompareData<SummaryBaseInfo> baseInfo;
-    // todo-yqs 通信概览数据会有另外的接口进行处理，此处暂留，后续需要清理
-    std::vector<SummaryDto> summaryList;
-    TraceStatistic traceStatistic;
 };
 
 struct SummaryTopRankResponse : public Response {

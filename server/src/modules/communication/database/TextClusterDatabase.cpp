@@ -468,13 +468,6 @@ std::string TextClusterDatabase::GetMatrixStmtSql(int len)
     return sql;
 }
 
-bool TextClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-    Protocol::SummaryTopRankResBody &responseBody)
-{
-    std::string sql = BuildCondition(requestParams);
-    return ExecuteQuerySummaryData(requestParams, responseBody, sql);
-}
-
 bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
 {
     baseInfo.filePath = GetDbPath();
@@ -683,48 +676,6 @@ bool TextClusterDatabase::CheckIsPpOp(const std::string &opName)
         opName.find(receiveOpKey) != std::string::npos;
 }
 
-std::string TextClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
-{
-    std::string stepCondition;
-    std::string rankCondition;
-    std::string prepareTimeCondition;
-    if (HasColumn(TABLE_STEP_TRACE, "preparing")) {
-        prepareTimeCondition = ",sum(ROUND(preparing,2)) as prepareTime ";
-    }
-    if (!requestParams.stepIdList.empty()) {
-        stepCondition = " and step_id in (?";
-        for (size_t i = 1; i < requestParams.stepIdList.size(); i++) {
-            stepCondition.append(",?");
-        }
-        stepCondition.append(") ");
-    }
-    if (!requestParams.rankIdList.empty()) {
-        rankCondition = " and rank_id in (?";
-        for (size_t i = 1; i < requestParams.rankIdList.size(); i++) {
-            rankCondition.append(",?");
-        }
-        rankCondition.append(") ");
-    }
-    std::string sql = "SELECT rank_id as rankId, sum(ROUND(compute_time,2)) as computingTime,"
-                      "sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,"
-                      "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
-                      "sum(ROUND(free_time,2)) as freeTime "
-                      + prepareTimeCondition +
-                      "FROM " + TABLE_STEP_TRACE +
-                      " WHERE rank_id !='' " + stepCondition + rankCondition
-                      + "group by rank_id ";
-    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
-        return sql;
-    }
-    if (requestParams.orderBy == "rankId") {
-        sql += " ORDER by CAST(rankId AS UNSIGNED) asc";
-    } else {
-        sql += " ORDER by " + requestParams.orderBy + " desc";
-    }
-    return sql;
-}
-
 bool TextClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
     std::string sql = "SELECT MIN(start_time) as minTime, MAX(start_time) as maxTime "
@@ -880,7 +831,7 @@ bool TextClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param
         return collectiveRes;
     }
 
-    Protocol::BandwidthDataParam p2pParam{param.dbIndex, param.iterationId, param.rankId, param.operatorName, p2pVal};
+    Protocol::BandwidthDataParam p2pParam{param.iterationId, param.rankId, param.operatorName, p2pVal};
     Protocol::BandwidthDataResBody p2p;
     bool p2pRes = ExecuteQueryBandwidthData(p2pParam, p2p, sql);
     resBody = MergeBandwidthData(collective, p2p);
@@ -981,7 +932,7 @@ bool TextClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam 
         return collectiveRes;
     }
 
-    Protocol::DistributionDataParam p2pParam{param.dbIndex, param.iterationId, param.rankId, param.operatorName,
+    Protocol::DistributionDataParam p2pParam{param.iterationId, param.rankId, param.operatorName,
         param.transportType, p2pVal};
     Protocol::DistributionResBody p2p;
     bool p2pRes = ExecuteQueryDistributionData(p2pParam, p2p, sql);

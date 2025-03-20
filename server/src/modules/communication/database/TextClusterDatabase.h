@@ -39,8 +39,6 @@ public:
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &matrixInfos);
 
-    bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-                          Protocol::SummaryTopRankResBody &responseBody) override;
     std::string QueryParseClusterStatus() override;
     void UpdateClusterParseStatus(std::string status) override;
     bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) override;
@@ -102,7 +100,6 @@ private:
     std::string GetBandwidthStmtSql(int len);
     std::string GetMatrixStmtSql(int len);
 
-    std::string BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetStageIdByGroupId(const std::string &groupId);
     bool CheckIsPpOp(const std::string &opName);
     std::vector<MatrixInfoDo> MergeMatrixInfoDoList(const std::vector<MatrixInfoDo> &collective,

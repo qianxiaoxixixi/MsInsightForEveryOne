@@ -69,7 +69,6 @@ struct OperatorDetailsRequest : public Request {
 };
 
 struct BandwidthDataParam {
-    std::string dbIndex;
     std::string iterationId;
     std::string rankId;
     std::string operatorName;
@@ -100,7 +99,6 @@ struct BandwidthDataRequest : public Request {
 };
 
 struct DistributionDataParam {
-    std::string dbIndex;
     std::string iterationId;
     std::string rankId;
     std::string operatorName;
@@ -136,7 +134,6 @@ struct DistributionDataRequest : public Request {
 };
 
 struct RanksParams {
-    std::string dbIndex;
     std::string iterationId;
     bool CheckParams(std::string &errorMsg) const
     {
@@ -164,7 +161,6 @@ struct IterationsRequest  : public Request {
 };
 
 struct OperatorNamesParams {
-    std::string dbIndex;
     std::string iterationId;
     std::vector<std::string> rankList = {};
     std::string stage;
@@ -186,7 +182,6 @@ struct OperatorNamesParams {
     OperatorNamesParams() = default;
     OperatorNamesParams(const OperatorNamesParams &params)
     {
-        this->dbIndex = params.dbIndex;
         this->iterationId = params.iterationId;
         for (const auto &item: params.rankList) {
             this->rankList.push_back(item);
@@ -207,7 +202,6 @@ struct MatrixSortOpNamesRequest  : public Request {
 };
 
 struct DurationListParams {
-    std::string dbIndex;
     std::string iterationId;
     std::vector<std::string> rankList = {};
     std::string operatorName;
@@ -241,7 +235,6 @@ struct DurationListParams {
     DurationListParams() = default;
     DurationListParams(const DurationListParams& params)
     {
-        this->dbIndex = params.dbIndex;
         this->iterationId = params.iterationId;
         this->operatorName = params.operatorName;
         this->stage = params.stage;

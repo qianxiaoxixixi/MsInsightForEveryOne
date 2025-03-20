@@ -18,8 +18,6 @@ public:
 
     bool CreateTable();
     bool DropTable();
-    bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
-                          Protocol::SummaryTopRankResBody &responseBody) override;
     std::string QueryParseClusterStatus() override;
     void UpdateClusterParseStatus(std::string status) override;
     bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) override;
