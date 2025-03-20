@@ -69,12 +69,11 @@ export const getInstrColumns = (dynamicFields: Record<string, FieldType>, t: TFu
 };
 
 const instrsColsConfig = [
-    { title: '#', dataIndex: 'index', width: 60, align: 'right' as AlignType, ellipsis: true },
-    { title: 'Address', dataIndex: 'Address', ellipsis: true },
-    { title: 'Pipe', dataIndex: 'Pipe', ellipsis: true },
+    { title: '#', dataIndex: 'index', width: 60, align: 'right' as AlignType, ellipsis: true, sorter: true },
     {
         title: 'Source',
         dataIndex: 'Source',
+        sorter: true,
         ellipsis: { showTitle: false },
         render: (source: string): React.ReactNode => (
             <Tooltip placement="topLeft" title={source} >
