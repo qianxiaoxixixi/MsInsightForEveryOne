@@ -32,6 +32,7 @@ private:
     static void SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response);
     static void ClusterProcess(const std::string &selectedFolder, bool isCluster, ProjectTypeEnum curProjectTypeEnum,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
+    static void ParseClusterBaselineInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos);
 };
 } // end of namespace Module
 } // end of namespace Dic
