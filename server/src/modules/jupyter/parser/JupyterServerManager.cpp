@@ -88,7 +88,8 @@ bool JupyterServerManager::Start(const std::string& path)
 {
     ServerLog::Info("jupyter server start. start path:", path);
     // 如果jupyter文件存在，则清空jupyter日志，防止启动过程中，程序读取了老日志
-    if (FileUtil::CheckDirAccess(jupyterLogPath, 0) && !FileUtil::RemoveFile(jupyterLogPath)) {
+    if (!FileUtil::CheckDirValid(jupyterLogPath) || !FileUtil::CheckDirAccess(jupyterLogPath, W_OK) ||
+        !FileUtil::RemoveFile(jupyterLogPath)) {
         ServerLog::Error("Failed to remove jupyter log file. ");
         return false;
     }
