@@ -27,6 +27,7 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
         const emptyBlock = fileTree.locator('.el-tree__empty-block');
         await emptyBlock.waitFor({ state: 'hidden', timeout: 2000 });
         await input.waitFor({ state: 'visible', timeout: 2000 });
+        await input.click();
         await input.fill(filePath);
         await input.press('Enter');
         // 点击“确认”按钮
@@ -65,7 +66,7 @@ export async function clearAllData(page: Page): Promise<void> {
     const checkbtn = page.locator('.dragContainer').first().getByText('All');
     await checkbtn.waitFor({ state: 'hidden' });
     const elementText = await projectList.textContent();
-    await expect(elementText.trim()).toBe('');
+    await expect(elementText?.trim()).toBe('');
 }
 
 // 等待ws返回指定数据
