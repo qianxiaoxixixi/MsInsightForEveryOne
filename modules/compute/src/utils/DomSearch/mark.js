@@ -384,62 +384,6 @@ export default class Mark {
         this.normalizeTextNode(node.nextSibling);
     }
 
-    /* markRegExp 函数进行现代化重构后的版本 */
-    markRegExp(regexp, opt) {
-        // 合并配置并验证参数
-        this.opt = { ...this.opt, ...opt };
-        this.#validateRegex(regexp);
-
-        // 状态跟踪
-        let matchCount = 0;
-
-        // 方法选择逻辑 (Strategy 模式)
-        const processMethod = this.opt.acrossElements
-            ? this.wrapMatchesAcrossElements
-            : this.wrapMatches;
-
-        // 回调函数组合
-        const callbacks = {
-            each: element => {
-                matchCount++;
-                this.opt.each(element);
-            },
-            done: () => {
-                if (matchCount === 0) {
-                    this.opt.noMatch(regexp);
-                }
-                this.opt.done(matchCount);
-            },
-            filter: (node, matchText) => {
-                return this.opt.filter(
-                    node,
-                    matchText,
-                    matchCount + 1, // 保持原逻辑，在计数前预加
-                );
-            },
-        };
-
-        // 执行核心处理流程
-        processMethod.call(
-            this,
-            regexp,
-            this.opt.ignoreGroups,
-            callbacks.filter,
-            callbacks.each,
-            callbacks.done,
-        );
-
-        // 返回实例支持链式调用
-        return this;
-    }
-
-    // 新增私有方法进行正则验证
-    #validateRegex(regex) {
-        if (!(regex instanceof RegExp)) {
-            throw new TypeError('Expected a RegExp object');
-        }
-    }
-
     mark(sv, config) {
         this.opt = config;
         const { keywords, length: keywordsLen } = this.getSeparatedKeywords(Array.isArray(sv) ? sv : [sv]);
