@@ -389,6 +389,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
     const { isSelected } = props;
     const isDragging = session.isDragging;
     const [isHovered, setIsHovered] = React.useState(false);
+    const isClickDownRef = React.useRef<boolean>(false);
     const selectUnit = useSelectUnit(session);
     const expandable: boolean = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
     const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
@@ -419,16 +420,26 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         });
         _unit.collapseAction?.(_unit);
     }, [session, expandable]);
+    const onMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>): void => {
+        e.stopPropagation(); // 阻止冒泡防止事件冒泡到 ChartContainer 上
+        isClickDownRef.current = true;
+    };
     const onMouseLeft = (): void => {
-        // 拖拽时不触发点击事件
-        if (isDragging) {
+        // 拖拽时或不是在此泳道触发的mousedown，则不触发点击事件
+        if (isDragging || !isClickDownRef.current) {
             return;
         }
+        isClickDownRef.current = false;
         selectUnit(unit);
         traceSingle('selectLane', [unit.name]);
         onExpand(unit);
     };
     const onMouseRight = (): void => {
+        // 不是在此泳道触发的mousedown，则不触发点击事件
+        if (!isClickDownRef.current) {
+            return;
+        }
+        isClickDownRef.current = false;
         // 当前泳道已选中，不再对当前泳道选中
         if (!isSelected) {
             selectUnit(unit);
@@ -452,6 +463,7 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
             }
         }}
         onMouseLeave={(): void => { setIsHovered(false); }}
+        onMouseDown={onMouseDown}
         onMouseUp={onUnitInfoContainerMouseUp}
     >
         <UnitInfoBody offset={0}>
