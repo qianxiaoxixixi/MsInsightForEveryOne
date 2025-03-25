@@ -198,18 +198,18 @@ test.describe('Communication', () => {
         const pagination = communicationFrame.locator('.ant-pagination.ant-pagination-mini.ant-table-pagination.ant-table-pagination-left').first();
         // 断言数据总数
         const totalTextDiv = pagination.locator('li').first().locator('div');
-        expect(totalTextDiv).toHaveText('Total 59 items');
+        await expect(totalTextDiv).toHaveText('Total 59 items');
         // 点击分页按钮
         const pageLink = pagination.locator('.ant-pagination-item.ant-pagination-item-3 a'); // 第三页
         await pageLink.click();
         await waitForResponse(await ws, (res) => res?.command === 'communication/operatorDetails');
-        expect(await expandTable.getCell(1, 2)).toHaveText('1.518');
+        await expect(await expandTable.getCell(1, 2)).toHaveText('1.518');
         // 验证分页器输入框
         const paginationInput = pagination.locator('.ant-pagination-options .ant-pagination-options-quick-jumper input');
         await paginationInput.focus();
         await paginationInput.fill('1');
         await paginationInput.press('Enter');
-        expect(await expandTable.getCell(1, 2)).toHaveText('0.0421');
+        await expect(await expandTable.getCell(1, 2)).toHaveText('0.0421');
     });
 
     // 【case】点击“带宽分析”列的查看更多可以跳转至所选rank的对应算子带宽分析页
@@ -222,7 +222,7 @@ test.describe('Communication', () => {
             state: 'visible',
         });
         const operatorPageHeaderText = operatorPage.getByTestId('operatorRankId');
-        expect(operatorPageHeaderText).toHaveText('Total Op Info(RankId 6)');
+        await expect(operatorPageHeaderText).toHaveText('Total Op Info(RankId 6)');
     });
 
     // 右键点击 HCCL 图表，跳转至Timeline
