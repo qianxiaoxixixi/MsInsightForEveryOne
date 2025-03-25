@@ -129,6 +129,11 @@ const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnT
     const { cardNames, unitNames } = useUnitsNameSet(session);
     const [completeOptions, setCompleteOptions] = useState<CompleteOptionProps[]>([]);
 
+    // 切换项目时 session.projectName 改变，触发 selectValue 重置
+    useEffect(() => {
+        setSelectValue(null);
+    }, [session.projectName]);
+
     useEffect(() => {
         handleSearch('');
     }, [selectValue]);
