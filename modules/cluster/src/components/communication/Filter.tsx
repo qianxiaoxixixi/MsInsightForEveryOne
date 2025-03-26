@@ -344,6 +344,7 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                     options={optionMap.operatorOptions}
                     showSearch={true}
                     disabled={session.isCompare}
+                    dropdownMatchSelectWidth
                 />)}/>
         <FormItem content={(
             <Radio.Group value={condition.type}
