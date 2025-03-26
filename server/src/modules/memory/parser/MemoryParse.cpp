@@ -610,6 +610,9 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     if (!db->OpenDb(dbPath, false)) {
         message = "Failed to open db file. Please delete the file manually: " + dbPath;
+#if defined(__linux__) || defined(__APPLE__)
+        message += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
+#endif
         return false;
     }
 

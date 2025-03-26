@@ -169,6 +169,15 @@ struct CompareData {
     T compare;
     T diff;
 };
+
+#if defined(__linux__) || defined(__APPLE__)
+const std::string FILE_DESCRIPTOR_RUN_OUT_MESSAGE =
+    ". The reason could be that file descriptors of profiler_server have run out."
+    " Use \"ulimit -a\" to see the soft limit of file descriptors."
+    " Use \"lsof -p pid | wc -l\" to see the current file descriptors of profiler_server."
+    " If file descriptors run out, you could use \"ulimit -n number\" to set the soft limit"
+    " of file descriptors and restart MindStudio Insight in the terminal to solve the problem.";
+#endif
 } // end of namespace
 }
 
