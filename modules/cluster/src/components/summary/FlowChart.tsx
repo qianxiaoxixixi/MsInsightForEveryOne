@@ -11,7 +11,6 @@ import {
     TraceItem,
 } from '../../utils/RequestUtils';
 import type { EChartsOption, CustomSeriesRenderItem } from 'echarts';
-import * as echarts from 'echarts';
 import { merge } from 'lodash';
 import { type Theme, useTheme } from '@emotion/react';
 import { clamp, safeStr } from 'ascend-utils';
@@ -94,12 +93,6 @@ const formatData = (dataSource: QueryFwpBwdTimelineRes | null, theme: Theme): {r
     return { ranks, data };
 };
 
-interface CoordSys {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
 const renderRect: CustomSeriesRenderItem = (params, api) => {
     const { start: vStart, end: vEnd, component: vComponent, name: vName } = valueMap;
     const categoryIndex = api.value(0);
@@ -108,53 +101,39 @@ const renderRect: CustomSeriesRenderItem = (params, api) => {
     const end = api.coord([api.value(vEnd), categoryIndex]);
     const gridItemHeight = (api.size?.([0, 1]) as number[])[1];
     const offset = gridItemHeight * 0.04;
-    const { x: coordSysX, y: coordSysY, width: coordSysWidth, height: coordSysHeight } = params.coordSys as unknown as CoordSys;
 
     const rectWidth = end[0] - start[0];
     const rectHeight = gridItemHeight * 0.3;
     const rectY = api.value(vComponent) === OPERATOR_TYPE.FP_BP ? Math.round(start[1] - rectHeight - offset) : Math.round(start[1] + offset);
-    const rectShape = echarts.graphic.clipRectByRect(
-        {
+
+    const textWidth = rectWidth > TEXT_PADDING_X ? Math.floor(rectWidth - TEXT_PADDING_X) : rectWidth;
+
+    return {
+        type: 'rect',
+        transition: ['shape'],
+        shape: {
             x: start[0],
             y: rectY,
             width: rectWidth,
             height: rectHeight,
         },
-        {
-            x: coordSysX,
-            y: coordSysY,
-            width: coordSysWidth,
-            height: coordSysHeight,
+        textContent: {
+            type: 'text',
+            style: {
+                text: name,
+                fill: '#ffffff',
+                overflow: 'truncate',
+                width: textWidth,
+            },
         },
-    );
-
-    const textWidth = rectWidth > TEXT_PADDING_X ? Math.floor(rectWidth - TEXT_PADDING_X) : rectWidth;
-
-    return {
-        type: 'group',
-        children: [
-            {
-                type: 'rect',
-                transition: ['shape'],
-                shape: rectShape,
-                style: {
-                    fill: api.visual('color'),
-                },
-            },
-            {
-                type: 'text',
-                style: {
-                    text: name,
-                    width: textWidth,
-                    overflow: 'truncate',
-                    x: start[0] + (rectWidth / 2),
-                    y: rectY + (rectHeight / 2),
-                    textAlign: 'center',
-                    textVerticalAlign: 'center',
-                    fill: '#ffffff',
-                },
-            },
-        ],
+        textConfig: {
+            position: 'inside',
+            inside: true,
+            local: true,
+        },
+        style: {
+            fill: api.visual('color'),
+        },
     };
 };
 
