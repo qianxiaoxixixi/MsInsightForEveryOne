@@ -172,6 +172,9 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
     if (!database->OpenDb(dbPath, false)) {
         message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
                 filePathList[0] + " dbPath: " + dbPath;
+#if defined(__linux__) || defined(__APPLE__)
+        message += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
+#endif
         return false;
     }
     if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime()) {

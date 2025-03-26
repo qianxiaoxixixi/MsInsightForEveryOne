@@ -1,5 +1,8 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 
+#if defined(__linux__) || defined(__APPLE__)
+#include <sys/resource.h>
+#endif
 #include "pch.h"
 #include "ParamsParser.h"
 #include "SocketUtil.h"
@@ -10,6 +13,26 @@ using namespace Dic;
 using namespace Dic::Server;
 
 namespace Dic {
+void SetResourceLimitForServer()
+{
+#if defined(__linux__) || defined(__APPLE__)
+    struct rlimit oldResourceLimit;
+    if (getrlimit(RLIMIT_NOFILE, &oldResourceLimit) == -1) {
+        ServerLog::Error("Could not execute getrlimit command.");
+        return;
+    }
+    struct rlimit newResourceLimit;
+    const int two = 2;
+    newResourceLimit.rlim_cur = oldResourceLimit.rlim_max / two;
+    newResourceLimit.rlim_max = oldResourceLimit.rlim_max;
+    if (setrlimit(RLIMIT_NOFILE, &newResourceLimit) == -1) {
+        ServerLog::Error("Could not execute setrlimit command.");
+        return;
+    }
+    ServerLog::Info("Set the soft limit of file descriptors to the hard limit / 2 successfully.");
+#endif
+}
+
 void ParamsOptionInfo()
 {
     const ParamsOption &option = ParamsParser::Instance().GetOption();
@@ -64,6 +87,7 @@ int main(int argc, const char *argv[])
     }
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
     ParamsOptionInfo();
+    SetResourceLimitForServer();
     StartServer(option);
     return 0;
 }
