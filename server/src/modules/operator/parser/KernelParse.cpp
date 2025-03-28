@@ -517,7 +517,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
 void KernelParse::Reset()
 {
     ServerLog::Info("Summary reset. wait task completed.");
-    ParseEndCallBack("", true, "");
+    ParseCallBack("", true, "");
     if (threadPool != nullptr) {
         threadPool->Reset();
     }
