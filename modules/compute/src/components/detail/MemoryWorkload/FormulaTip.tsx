@@ -58,7 +58,7 @@ export const FormulaTip = observer(({ session }: { session: Session}) => {
         mouseY={tipConfig.y}
         content={tipConfig.content}
         position="fixed"
-        placement={'topLeft' as any}
+        placement={'topLeft'}
         animation={false}
     />;
 });

@@ -14,6 +14,7 @@ enum Placement {
     TOP_LEFT = 'topLeft',
     RIGHT_BOTTOM = 'rightBottom',
 }
+type PlacementType = 'topLeft' | 'rightBottom';
 
 const TooltipContainer = styled.div(props => ({
     position: 'absolute',
@@ -40,7 +41,7 @@ interface ITransParams {
     x: number;
     y: number;
     dom: HTMLElement | null;
-    placement: Placement;
+    placement: PlacementType;
     position: string;
 }
 const getTranslatePosition = ({ x, y, dom, placement, position }: ITransParams): TranslateValue => {
@@ -91,7 +92,7 @@ const getPosStyle = ({ isEmpty, lastTranslate, translatePos, animation }: IPosPa
     if (animation) {
         return style;
     }
-    return { ...style, transition: 'opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1), visibility 0s cubic-bezier(0.23, 1, 0.32, 1), transform 0s cubic-bezier(0.23, 1, 0.32, 1)' };
+    return { ...style, transition: 'opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1), transform 0s' };
 };
 
 interface TranslateValue {
@@ -103,7 +104,7 @@ interface IProps {
     content?: Record<string, any> | React.ReactNode[] | null;
     style?: CSSProperties;
     animation?: boolean;
-    placement?: Placement;
+    placement?: PlacementType;
     position?: 'absolute' | 'fixed';
 }
 
