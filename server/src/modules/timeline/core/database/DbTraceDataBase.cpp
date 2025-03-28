@@ -159,12 +159,20 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
 bool DbTraceDataBase::SetCardAlias(const Protocol::SetCardAliasParams &requestParams,
                                    Protocol::SetCardAliasBody &responseBody)
 {
-    return false;
+    if (!CheckTableExist(metaDataTable)) {
+        ServerLog::Error("Failed to set card alias because table is not exist.");
+        return false;
+    }
+    return UpdateMetaDataTableWithNoPrimaryKey(cardAliasName, requestParams.cardAlias);
 }
 
 std::string DbTraceDataBase::QueryCardAlias()
 {
-    return "";
+    std::string cardAlias = GetValueFromMetaDataTable(cardAliasName);
+    if (cardAlias.empty()) {
+        return "";
+    }
+    return cardAlias;
 }
 
 int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)

@@ -647,7 +647,7 @@ bool Database::CreateMetaDataTableForText()
     return ExecSql(sql);
 }
 
-std::string Database::GetValueFromTextMetaDataTable(const std::string& name)
+std::string Database::GetValueFromMetaDataTable(const std::string& name)
 {
     std::string value;
     if (!StringUtil::CheckSqlValid(name)) {
@@ -692,6 +692,42 @@ bool Database::UpdateMetaDataTable(const std::string &name, const std::string &v
         return false;
     }
 
+    return true;
+}
+
+bool Database::UpdateMetaDataTableWithNoPrimaryKey(const std::string &name, const std::string &value)
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::string checkSql = "SELECT 1 FROM " + metaDataTable + " WHERE name = ? LIMIT 1;";
+    auto checkStmt = CreatPreparedStatement(checkSql);
+    if (checkStmt == nullptr) {
+        ServerLog::Error("Failed to create check stmt: name=", name);
+        return false;
+    }
+    auto exist = checkStmt->ExecuteQuery(name);
+    if (exist == nullptr) {
+        ServerLog::Error("Failed to get result set for getting value from meta data table: ",
+                         checkStmt->GetErrorMessage());
+        return false;
+    }
+
+    std::string actionSql;
+    if (exist->Next()) {
+        actionSql = "UPDATE " + metaDataTable + " SET value = ? WHERE name = ?;";
+    } else {
+        actionSql = "INSERT INTO " + metaDataTable + " (value, name) VALUES (?, ?);";
+    }
+    auto actionStmt = CreatPreparedStatement(actionSql);
+    if (actionStmt == nullptr) {
+        ServerLog::Error("Failed to create action stmt: name=", name);
+        return false;
+    }
+
+    actionStmt->BindParams(value, name);
+    if (!actionStmt->Execute()) {
+        ServerLog::Error("Failed to execute action stmt: name=", name, ", value=", value);
+        return false;
+    }
     return true;
 }
 

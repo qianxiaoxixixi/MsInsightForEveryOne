@@ -588,7 +588,7 @@ bool TextTraceDatabase::SetCardAlias(const Protocol::SetCardAliasParams &request
 
 std::string TextTraceDatabase::QueryCardAlias()
 {
-    std::string cardAlias = GetValueFromTextMetaDataTable(cardAliasName);
+    std::string cardAlias = GetValueFromMetaDataTable(cardAliasName);
     if (cardAlias.empty()) {
         return "";
     }

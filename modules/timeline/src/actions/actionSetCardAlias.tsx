@@ -19,7 +19,7 @@ const isSetAliasVisible = (session: Session): boolean => {
     if (selectedUnit === undefined) {
         return false;
     }
-    return selectedUnit instanceof CardUnit ?? false;
+    return (selectedUnit instanceof CardUnit && selectedUnit.metadata?.cardName !== 'Host') ?? false;
 };
 
 const setAlias = (session: Session): void => {

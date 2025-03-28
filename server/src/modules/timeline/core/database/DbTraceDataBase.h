@@ -145,6 +145,7 @@ private:
     bool isExistMstx = false;
 
     std::string host;
+    const std::string cardAliasName = "RANK_LABEL";
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateApiDepthStmt = nullptr;
