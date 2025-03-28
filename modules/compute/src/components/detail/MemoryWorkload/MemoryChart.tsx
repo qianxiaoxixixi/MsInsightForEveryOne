@@ -11,6 +11,7 @@ import { queryMemoryGraph } from '../../RequestUtils';
 import { type Session } from '../../../entity/session';
 import { CompareData } from '../../../utils/interface';
 import { runInAction } from 'mobx';
+import { FormulaTip } from './FormulaTip';
 export interface ImemoryData {
     blockId: string;
     blockType: string;
@@ -116,6 +117,7 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
     return <div>
         <div id={chartId} style={{ ...style, width: '1250px', margin: '10px auto' }}>
             <svg width={'100%'} height={'100%'}></svg>
+            <FormulaTip session={session}/>
         </div>
     </div>;
 });

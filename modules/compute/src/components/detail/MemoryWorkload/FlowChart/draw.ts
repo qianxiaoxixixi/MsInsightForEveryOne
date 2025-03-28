@@ -8,6 +8,7 @@ import type { ImemoryData, ImemoryUnit } from '../MemoryChart';
 import type { Icondition } from '../Filter';
 import { getFormatNum, getFormatNumReturnEmpty } from '../../../Common';
 import { CompareData } from '../../../../utils/interface';
+import { showFormula, hideFormula } from '../FormulaTip';
 
 const bodyStyle = window.getComputedStyle(document.body);
 const fontFamily = bodyStyle.fontFamily;
@@ -262,14 +263,14 @@ const vectorCore2: Inode = {
                 labels: [
                     { value: 'Vector' },
                     { value: 'Ratio:', x: 490, y: 95 },
-                    { id: 'vector1Ratio', value: '0%', x: 520, y: 95, position: 'right' },
+                    { id: 'vector1Ratio', name: 'vectorRatio', value: '0%', x: 520, y: 95, position: 'right' },
                     { id: 'vector1RatioBaseline', value: '' },
                 ],
             };
         }
         return item;
     }),
-    line: (vectorCore.line ?? []).map(item => ({ ...item, id: `${item.id}_2`, label: `${item.label}_2` })),
+    line: (vectorCore.line ?? []).map(item => ({ ...item, id: `${item.id}_2`, name: item.id, label: `${item.label}_2` })),
 };
 const mixCore: Inode = {
     name: '',
@@ -350,6 +351,7 @@ const mixCore: Inode = {
         },
         {
             id: 'L2_OR_UB_TO_L1_append',
+            name: 'L2_OR_UB_TO_L1',
             label: '',
             points: '200,285 200,230 50,230 50,85 99,85',
         },
@@ -364,6 +366,7 @@ const mixCore: Inode = {
         },
         {
             id: 'L2_OR_L1_TO_UB_append',
+            name: 'L2_OR_L1_TO_UB',
             label: '',
             points: '140,170 140,310 180,310',
         },
@@ -394,6 +397,7 @@ const mixCore: Inode = {
         },
         {
             id: 'L2_OR_L1_TO_L0B_append',
+            name: 'L2_OR_L1_TO_L0B',
             points: '0,210 200,210 200,135 279,135',
             label: '',
         },
@@ -1283,7 +1287,9 @@ const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any
                 return context;
             }
             return d.value ?? '';
-        });
+        }).on('mouseover', (event: MouseEvent, d): void => {
+            showFormula({ ...data, ...(d as IdrawLabel), event });
+        }).on('mouseout', (): void => { hideFormula(); });
 };
 
 const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean, showAs: string): string => {

@@ -3,17 +3,17 @@
  */
 
 import styled from '@emotion/styled';
-import React, { CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import React, { CSSProperties, useEffect, useRef, useMemo, useState } from 'react';
+import { isArray } from 'ascend-utils';
 
 // tooltip位置偏移量
 const OFFSET_X = 20;
 const OFFSET_Y = 16;
-
-export interface TooltipArg {
-    x: number;
-    y: number;
-    content?: Record<string, any> | null;
-};
+const MINI_OFFSET_Y = 8;
+enum Placement {
+    TOP_LEFT = 'topLeft',
+    RIGHT_BOTTOM = 'rightBottom',
+}
 
 const TooltipContainer = styled.div(props => ({
     position: 'absolute',
@@ -36,69 +36,122 @@ const TooltipContainer = styled.div(props => ({
     transformStyle: 'preserve-3d',
 }));
 
+interface ITransParams {
+    x: number;
+    y: number;
+    dom: HTMLElement | null;
+    placement: Placement;
+    position: string;
+}
+const getTranslatePosition = ({ x, y, dom, placement, position }: ITransParams): TranslateValue => {
+    if (!dom?.parentElement) {
+        return { x: 0, y: 0 };
+    }
+    let translateX;
+    let translateY;
+    const boxWidth = position === 'fixed' ? document.body.clientWidth : dom.parentElement.clientWidth;
+    switch (placement) {
+        case Placement.RIGHT_BOTTOM:
+            translateX = x + OFFSET_X;
+            translateY = y + OFFSET_Y;
+            if (translateX + dom.clientWidth > boxWidth) {
+                translateX = x - dom.clientWidth - OFFSET_X;
+            }
+            break;
+        case Placement.TOP_LEFT:
+            translateX = x;
+            translateY = y - dom.clientHeight - MINI_OFFSET_Y;
+            if (translateX + dom.clientWidth > boxWidth) {
+                translateX = boxWidth - dom.clientWidth;
+            }
+            break;
+        default:
+            translateX = x + OFFSET_X;
+            translateY = y + OFFSET_Y;
+            break;
+    }
+
+    return { x: translateX, y: translateY };
+};
+
+interface IPosParams {
+    isEmpty: boolean;
+    lastTranslate: TranslateValue;
+    translatePos: TranslateValue;
+    animation: boolean;
+}
+const getPosStyle = ({ isEmpty, lastTranslate, translatePos, animation }: IPosParams): CSSProperties => {
+    const style: CSSProperties = {
+        visibility: isEmpty ? 'hidden' : 'visible',
+        opacity: isEmpty ? 0 : 1,
+        transform: isEmpty
+            ? `translate3d(${lastTranslate.x}px,${lastTranslate.y}px , 0px)`
+            : `translate3d(${translatePos.x}px, ${translatePos.y}px, 0px)`,
+    };
+    if (animation) {
+        return style;
+    }
+    return { ...style, transition: 'opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1), visibility 0s cubic-bezier(0.23, 1, 0.32, 1), transform 0s cubic-bezier(0.23, 1, 0.32, 1)' };
+};
+
 interface TranslateValue {
     x: number;
     y: number;
 }
 
-const TooltipComp = ({ x, y, content }: TooltipArg): JSX.Element => {
+interface IProps {
+    content?: Record<string, any> | React.ReactNode[] | null;
+    style?: CSSProperties;
+    animation?: boolean;
+    placement?: Placement;
+    position?: 'absolute' | 'fixed';
+}
+
+type TooltipArg = TranslateValue & IProps;
+
+const TooltipComp = ({ x, y, content, style, animation = true, placement = Placement.RIGHT_BOTTOM, position = 'absolute' }: TooltipArg): JSX.Element => {
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [currentContent, setCurrentContent] = useState<TooltipArg['content']>();
+    // 动画效果，从上次位置滑动到当前位置
     const [lastTranslate, setLastTranslate] = useState<TranslateValue>({ x: 0, y: 0 });
-    const isEmpty = content === null || content === undefined;
-
-    const [translateX, translateY] = useMemo(() => {
-        if (!tooltipRef?.current?.parentElement) { return [0, 0]; }
-        let translateXValue = x + OFFSET_X;
-        const translateYValue = y + OFFSET_Y;
-        if (tooltipRef.current.clientWidth + x + OFFSET_X > tooltipRef.current.parentElement.clientWidth) {
-            translateXValue = x - tooltipRef.current.clientWidth - OFFSET_X;
-        }
-
-        return [translateXValue, translateYValue];
-    }, [x, y]);
+    const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+    const translatePos = useMemo(() => getTranslatePosition({ x, y, dom: tooltipRef.current, placement, position }), [x, y, windowSize]);
+    const isEmpty = useMemo(() => content === null || content === undefined, [content]);
+    const styles: CSSProperties = getPosStyle({ isEmpty, lastTranslate, translatePos, animation });
 
     useEffect(() => {
         if (!isEmpty) {
             setCurrentContent(content);
-            setLastTranslate({ x: translateX, y: translateY });
+            setLastTranslate(translatePos);
         }
+        setTimeout(() => {
+            setWindowSize({ width: tooltipRef.current?.clientWidth ?? 0, height: tooltipRef.current?.clientHeight ?? 0 });
+        });
     }, [content]);
 
-    const styles: CSSProperties = isEmpty
-        ? {
-            visibility: 'hidden',
-            opacity: 0,
-            transform: `translate3d(${lastTranslate.x}px, ${lastTranslate.y}px, 0px)`,
-        }
-        : {
-            visibility: 'visible',
-            opacity: 1,
-            transform: `translate3d(${translateX}px, ${translateY}px, 0px)`,
-        };
-
-    return <TooltipContainer ref={tooltipRef} style={styles}>
+    return <TooltipContainer ref={tooltipRef} style={{ ...styles, position, ...(style ?? {}) }}>
         {
-            currentContent && <div className="formatter">
-                {Object.entries(currentContent).map(([key, value]) => (
-                    <div className="row" key={JSON.stringify(key)}>
-                        <div className="label">{key}</div>
-                        <div className="value">{value}</div>
-                    </div>
-                ))}
-            </div>
+            isArray(currentContent)
+                ? currentContent?.map((item: React.ReactNode, index: number) => (<div key={index}>{item}</div>))
+                : <div className="formatter">
+                    {Object.entries(currentContent ?? {}).map(([key, value]) => (
+                        <div className="row" key={JSON.stringify(key)}>
+                            <div className="label">{key}</div>
+                            <div className="value">{value}</div>
+                        </div>
+                    ))}
+                </div>
         }
     </TooltipContainer>;
 };
 
-export interface TooltipProps {
-    content?: Record<string, unknown> | null;
+export interface ITooltipProps extends IProps {
     mouseX: number | null;
     mouseY: number | null;
 }
 
-export function MIDynamicTooltip({ content, mouseX, mouseY }: TooltipProps): JSX.Element | null {
+export function MIDynamicTooltip({ mouseX, mouseY, ...restProps }: ITooltipProps): JSX.Element | null {
     if (mouseX === null || mouseY === null) { return null; }
 
-    return <TooltipComp x={mouseX} y={mouseY} content={content} />;
+    return <TooltipComp x={mouseX} y={mouseY} {...restProps} />;
 }
