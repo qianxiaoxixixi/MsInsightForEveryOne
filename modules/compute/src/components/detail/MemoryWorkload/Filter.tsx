@@ -2,11 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select } from 'ascend-components';
+import { Select, Tooltip } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import { getUsableVal, FormItem } from 'ascend-utils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput, useHit } from '../../Common';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export interface Icondition {
     blockId: string ;
@@ -71,7 +72,7 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
     return (<div>
         <FormItem
             name={<><span>Block ID</span>{useHit()}</>}
-            nameStyle={{ width: '90px' }}
+            nameStyle={{ width: '90px', verticalAlign: 'middle' }}
             content={(<Select
                 value={condition.blockId}
                 style={{ width: '150px' }}
@@ -84,8 +85,11 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
             />
             )}/>
         <FormItem
-            name={t('Show As')}
-            nameStyle={{ width: '70px' }}
+            name={<><span>{t('Show As')}</span>
+                <Tooltip title={t('Bandwidth Formula')}>
+                    <QuestionCircleOutlined style={{ cursor: 'pointer', margin: '0 3px' }}/>
+                </Tooltip></>}
+            nameStyle={{ width: 'fit-content', verticalAlign: 'middle' }}
             content={(<Select
                 value={condition.showAs}
                 style={{ width: '170px' }}

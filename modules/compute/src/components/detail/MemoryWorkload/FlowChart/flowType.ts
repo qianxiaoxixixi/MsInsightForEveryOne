@@ -32,6 +32,7 @@ export interface IrectPosition {
 }
 export type Iline = {
     id?: string;
+    name?: string;
     label?: string | number;
     labelXy?: {x: number;y: number};
     labelPosition?: 'top' | 'bottom' | 'left' | 'right';
@@ -64,6 +65,7 @@ export interface Ibox {
 }
 interface Ilabel {
     id?: string;
+    name?: string;
     value?: string;
     x?: number;
     y?: number;
@@ -93,12 +95,14 @@ export interface IdrawLabel {
     x: number;
     y: number;
     id?: string;
+    name?: string;
     value?: string;
     position?: orientType;
 }
 export interface IdrawLine {
     points: string;
     id?: string;
+    name?: string;
     label?: string | number;
     labelXy?: Ixy;
     labelPosition?: orientType;
