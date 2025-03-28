@@ -68,6 +68,7 @@ public:
     bool ExtendColumns(const std::string &tableName, const std::vector<std::string>& columns);
     bool CreateMetaDataTableForText();
     bool UpdateMetaDataTable(const std::string &name, const std::string &value);
+    bool UpdateMetaDataTableWithNoPrimaryKey(const std::string &name, const std::string &value);
 
 protected:
     bool CheckTableContainData(const std::string& tableName);
@@ -89,7 +90,7 @@ protected:
     std::string metaVersion;
     const std::string metaDataTable = "META_DATA";
 
-    std::string GetValueFromTextMetaDataTable(const std::string& name);
+    std::string GetValueFromMetaDataTable(const std::string& name);
     bool CreateStatusInfoTable(); // 创建表时未加锁，需要在调用处加锁
     std::string GetValueFromStatusInfoTable(const std::string& key);
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
