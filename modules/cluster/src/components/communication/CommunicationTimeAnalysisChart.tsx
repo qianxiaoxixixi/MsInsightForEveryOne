@@ -381,6 +381,10 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
 
     // 修复echarts的dataZoom开启鼠标滚轮缩放时，页面不滚动的问题
     const syncScroll = (e: WheelEvent): void => {
+        if ((e.target as HTMLElement).tagName !== 'CANVAS') {
+            return;
+        }
+
         if (!e.ctrlKey) {
             scrollContainer?.scrollBy(0, e.deltaY);
         }
@@ -391,13 +395,11 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
             setChartHeight(getChartHeight(dataSource));
             InitCharts(dataSource, session, setDropDownVisible);
 
-            const canvasEl = chartRef.current?.querySelector('canvas');
-            canvasEl?.addEventListener('wheel', syncScroll);
+            chartRef.current?.addEventListener('wheel', syncScroll, true);
         });
 
         return (): void => {
-            const canvasEl = chartRef.current?.querySelector('canvas');
-            canvasEl?.removeEventListener('wheel', syncScroll);
+            chartRef.current?.removeEventListener('wheel', syncScroll, true);
         };
     }, [dataSource]);
 

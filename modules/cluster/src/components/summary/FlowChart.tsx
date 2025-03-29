@@ -214,6 +214,9 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
     const [chartHeight, setChartHeight] = useState('400px');
 
     const syncScroll = (e: WheelEvent): void => {
+        if ((e.target as HTMLElement).tagName !== 'CANVAS') {
+            return;
+        }
         if (!e.ctrlKey && !e.shiftKey) {
             scrollContainer?.scrollBy(0, e.deltaY);
         }
@@ -254,12 +257,14 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
 
     // echarts配置项中设置zoomOnMouseWheel: 'ctrl' 后, 滚轮在图表上无法触发滚动，此处需要手动处理滚动
     useEffect(() => {
-        canvasEl?.addEventListener('wheel', syncScroll);
+        const chartDom = chartRef.current?.getChartDom();
+
+        chartDom?.addEventListener('wheel', syncScroll, true);
 
         return (): void => {
-            canvasEl?.removeEventListener('wheel', syncScroll);
+            chartDom?.removeEventListener('wheel', syncScroll, true);
         };
-    }, [canvasEl]);
+    }, []);
 
     return <MIChart ref={chartRef} height={chartHeight} loading={loading} options={chartOptions} />;
 };
