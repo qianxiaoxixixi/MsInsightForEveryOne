@@ -15,21 +15,19 @@ import type { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
-import { type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
+import { CardMetaData, type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
 import i18n from 'ascend-i18n';
+import { Spin } from 'antd';
 
-const MAX_HEIGHT = 200;
-const PADDING_RATIO_TO_MAX_HEIGHT = 0.08;
 const FilterContainer = styled.div`
     display: flex;
     flex-direction: column;
-    width: 200px;
-    max-height: ${MAX_HEIGHT}px;
-    padding: ${MAX_HEIGHT * PADDING_RATIO_TO_MAX_HEIGHT}px ${MAX_HEIGHT * PADDING_RATIO_TO_MAX_HEIGHT}px 7px ${MAX_HEIGHT * PADDING_RATIO_TO_MAX_HEIGHT}px;
+    padding: 10px;
 `;
 
 const FilterList = styled.div`
-    max-height: ${MAX_HEIGHT - (MAX_HEIGHT * 2 * PADDING_RATIO_TO_MAX_HEIGHT)}px;
+    min-height: 100px;
+    max-height: 200px;
     overflow-y: scroll;
 `;
 
@@ -176,21 +174,26 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
     ]),
 ), [displayCategories, viewedCardIdSet]);
 
-const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
+const useGetCategories = (session: Session, isSuspend: boolean): {categories: string[]; loading: boolean} => {
     const [categories, setCategories] = React.useState<string[]>([]);
-    const unitsRef = React.useRef<string>();
+    const [loading, setLoading] = React.useState<boolean>(false);
+    const cardIdsRef = React.useRef<string>();
     React.useEffect(() => {
+        if (!isSuspend) {
+            return;
+        }
         const cardUnits = getCardUnits(session.units);
-        const cardUnitsString = JSON.stringify(cardUnits, (key, value) => {
-            return key !== 'parent' ? value : undefined;
-        });
-        if (!isSuspend || cardUnitsString === unitsRef.current) { return; }
-        unitsRef.current = cardUnitsString;
+        const cardUnitsParsed = cardUnits.filter(cardUnit => cardUnit.phase === 'download');
+        const parsedCardIdsString = cardUnitsParsed.map((unit) => (unit.metadata as CardMetaData).cardId).toString();
+
+        if (parsedCardIdsString === cardIdsRef.current) { return; }
+        cardIdsRef.current = parsedCardIdsString;
         const fetchList: Array<Promise<{ category: string[] }>> = [];
-        for (const unit of cardUnits) {
+        for (const unit of cardUnitsParsed) {
             const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
             fetchList.push(window.request(dataSource, { command: 'flow/categoryList', params: { rankId: cardId } }));
         }
+        setLoading(true);
         Promise.all(fetchList).then((results) => {
             const curCategories = new Set<string>();
             results.forEach(({ category }) => {
@@ -204,9 +207,17 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
                     session.linkLines[category] = undefined;
                 });
             });
+        }).finally(() => {
+            setLoading(false);
         });
     }, [isSuspend]);
-    return categories;
+
+    React.useEffect(() => {
+        cardIdsRef.current = '';
+        setCategories([]);
+    }, [session.doReset]);
+
+    return { categories, loading };
 };
 
 const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: Map<string, FetchLinkLines>, session: Session): any => {
@@ -237,7 +248,7 @@ const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: M
 };
 
 const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
-    let displayCategories = useGetCategories(session, isSuspend);
+    let { categories: displayCategories, loading } = useGetCategories(session, isSuspend);
     const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
     const [inputValue, setInput] = React.useState<string>();
     const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedCardIdSet);
@@ -250,7 +261,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         setInput(trimmedValue);
     });
     if (inputValue !== undefined && inputValue.length > 0) {
-        displayCategories = displayCategories.filter(str => str.startsWith(inputValue));
+        displayCategories = displayCategories.filter(str => str.toLowerCase().includes(inputValue.toLowerCase()));
     }
     const dependencyParam = [session.domainRange.domainStart,
         session.domainRange.domainEnd,
@@ -265,27 +276,29 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         setCheckedCategories([]);
     }, [session.doReset]);
     return (
-        <FilterContainer>
-            <Input size="middle" onChange={onInputChange}></Input>
-            <FilterList>
-                {isEmptyData
-                    ? <StyledEmpty />
-                    : displayCategories.map((category, index) => <FilterItem
-                        key={index}
-                        category={category}
-                        checkedCategories={checkedCategories}
-                        setCheckedCategories={setCheckedCategories}
-                    />)}
-            </FilterList>
-            {!isEmptyData && <FilterButtonLine>
-                <Button type={'primary'} onClick={(): void => setCheckedCategories([...displayCategories])}>
-                    {i18n.t('timeline:All')}
-                </Button>
-                <Button onClick={((): void => setCheckedCategories([]))}>
-                    {i18n.t('timeline:None')}
-                </Button>
-            </FilterButtonLine>}
-        </FilterContainer>
+        <Spin spinning={loading} delay={400}>
+            <FilterContainer>
+                <Input size="middle" allowClear onChange={onInputChange} style={{ width: '100%', marginBottom: 10 }}></Input>
+                <FilterList>
+                    {isEmptyData
+                        ? <StyledEmpty />
+                        : displayCategories.map((category, index) => <FilterItem
+                            key={index}
+                            category={category}
+                            checkedCategories={checkedCategories}
+                            setCheckedCategories={setCheckedCategories}
+                        />)}
+                </FilterList>
+                {!isEmptyData && <FilterButtonLine>
+                    <Button type={'primary'} onClick={(): void => setCheckedCategories([...displayCategories])}>
+                        {i18n.t('timeline:All')}
+                    </Button>
+                    <Button onClick={((): void => setCheckedCategories([]))}>
+                        {i18n.t('timeline:None')}
+                    </Button>
+                </FilterButtonLine>}
+            </FilterContainer>
+        </Spin>
     );
 });
 

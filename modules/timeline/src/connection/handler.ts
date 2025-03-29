@@ -393,6 +393,7 @@ function resetSession(): void {
             selectedDetailKeys: [],
             selectedDetails: [],
             searchData: undefined,
+            linkLines: {},
         });
         session.selectedRangeIsLock = false;
         session.lockUnitCount = 0;
