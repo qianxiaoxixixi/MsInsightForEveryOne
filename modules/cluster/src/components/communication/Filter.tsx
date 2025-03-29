@@ -346,14 +346,17 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                     disabled={session.isCompare}
                     dropdownMatchSelectWidth
                 />)}/>
-        <FormItem content={(
-            <Radio.Group value={condition.type}
-                onChange={(e: RadioChangeEvent): void => {
-                    handleChange('type', e.target.value);
-                }}>
-                <Radio value={AnalysisType.COMMUNICATION_MATRIX}>{t('searchCriteria.CommunicationMatrix')}</Radio>
-                <Radio value={AnalysisType.COMMUNICATION_DURATION_ANALYSIS}>{t('searchCriteria.CommunicationDurationAnalysis')}</Radio>
-            </Radio.Group>)}/>
+        { condition.stage &&
+            <FormItem content={(
+                <Radio.Group value={condition.type}
+                    onChange={(e: RadioChangeEvent): void => {
+                        handleChange('type', e.target.value);
+                    }}>
+                    <Radio value={AnalysisType.COMMUNICATION_MATRIX}>{t('searchCriteria.CommunicationMatrix')}</Radio>
+                    <Radio
+                        value={AnalysisType.COMMUNICATION_DURATION_ANALYSIS}>{t('searchCriteria.CommunicationDurationAnalysis')}</Radio>
+                </Radio.Group>)}/>
+        }
         <div>
         </div>
     </div>);
