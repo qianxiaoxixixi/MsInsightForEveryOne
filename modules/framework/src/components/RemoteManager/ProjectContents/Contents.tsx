@@ -231,7 +231,12 @@ const Contents = observer(({ session }: {session: Session}) => {
         };
     };
 
-    const handleSingleClick = (keys: React.Key[], nodeEvent: {node: EventDataNode<TreeDataNode>}): void => {
+    const handleSingleClick = (keys: React.Key[], nodeEvent: { node: EventDataNode<TreeDataNode>; nativeEvent: MouseEvent}): void => {
+        // 区分正常点击项目或文件还是点击Tooltip中的内容
+        const targrt = nodeEvent.nativeEvent.target as HTMLElement;
+        if (targrt.className === 'ant-tooltip-inner') {
+            return;
+        }
         // React不区分单击、双击
         // 如果点击项目名，为避免影响双击事件，增加了额外控制
         if (!nodeEvent.node.isLeaf) {
