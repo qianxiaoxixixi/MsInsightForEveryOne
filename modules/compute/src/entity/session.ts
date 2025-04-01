@@ -40,6 +40,8 @@ export class Session {
     instructionSelectSource: InstructionSelectSource = InstructionSelectSource.DEFAULT;
     cacheUnit: CacheUnit = defaultCacheUnit;
     instructionUpdateId: number = 0;
+    // 内存负载分析图-计算公式提示
+    memoryIndicator: {name?: string;x: number;y: number} = { x: 0, y: 0 };
     constructor() {
         makeAutoObservable(this);
     }
