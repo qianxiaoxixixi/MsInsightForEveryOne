@@ -61,12 +61,7 @@ export class SimpleCache {
 
 async function requestProcessData(requestParam: Record<string, unknown>): Promise<ProcessData[] | undefined> {
     try {
-        const { store } = require('../store');
-        const { sessionStore } = store;
-        const session = sessionStore.activeSession;
         const param: Record<string, unknown> = Object.assign({}, requestParam);
-        param.startTime = 0;
-        param.endTime = session?.endTimeAll ?? 0;
         const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTracesSummary', params: param });
         return request.data as ProcessData[];
     } catch (e) {

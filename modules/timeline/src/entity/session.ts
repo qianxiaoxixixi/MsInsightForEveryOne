@@ -15,6 +15,8 @@ import i18n from 'ascend-i18n';
 import { type Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
 import { InsightUnitSet } from '../utils/PageSetting';
+import { getTimeOffsetKey } from '../insight/units/utils';
+import type { CardMetaData, ThreadTraceRequest } from './data';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -206,6 +208,7 @@ export class Session {
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
+    private _initEndTimeAll: TimeStamp | undefined;
     private _endTimeAll: TimeStamp | undefined;
     private _name: string | null;
     private _phase: Phase = 'configuring';
@@ -325,8 +328,8 @@ export class Session {
     }
 
     set endTimeAll(endTimeAll: TimeStamp | undefined) {
-        this._endTimeAll = endTimeAll;
-        this._domain !== undefined && (this._domain.endTimeAll = endTimeAll ?? this.domain.maxDuration);
+        this._initEndTimeAll = endTimeAll;
+        this.updateEndTimeAll();
     }
 
     set name(value: string | null) {
@@ -398,6 +401,37 @@ export class Session {
         this._selectedUnits = data;
     }
 
+    updateEndTimeAll(): void {
+        this._endTimeAll = this._initEndTimeAll === undefined ? undefined : (this._initEndTimeAll + this.getMaxRelativeOffset());
+        this._domain !== undefined && (this._domain.endTimeAll = this._endTimeAll ?? this.domain.maxDuration);
+    }
+
+    setTimestampOffset(key: string, value: number): void {
+        const prevObj = this.unitsConfig.offsetConfig.timestampOffset;
+        this.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [key]: (value) };
+        this.updateEndTimeAll();
+    }
+
+    setTimestampOffsetAll(offsetConfig: Record<string, number>): void {
+        this.unitsConfig.offsetConfig.timestampOffset = { ...offsetConfig };
+        this.updateEndTimeAll();
+    }
+
+    setTimestampOffsetByUnit(unit: InsightUnit, value: number, shouldUpdate: boolean = true): void {
+        const prevObj = { ...this.unitsConfig.offsetConfig.timestampOffset };
+        if (unit.children !== undefined && unit.children.length > 0) {
+            for (const item of unit.children) {
+                const key = getTimeOffsetKey(this, item.metadata as ThreadTraceRequest);
+                prevObj[key] = value;
+            }
+        }
+        this.unitsConfig.offsetConfig.timestampOffset = {
+            ...prevObj,
+            [(unit.metadata as CardMetaData).cardId]: (value),
+        };
+        if (shouldUpdate) { this.updateEndTimeAll(); }
+    }
+
     printSessionInfo(): string {
         return `${JSON.stringify({ ...omit(this, ['caches', 'sharedState', '_units']) })}`;
     }
@@ -438,5 +472,27 @@ export class Session {
         if (this.contextMenu.zoomHistory.length > MAX_ZOOM_COUNT) {
             this.contextMenu.zoomHistory = this.contextMenu.zoomHistory.slice(-MAX_ZOOM_COUNT);
         }
+    }
+
+    private getMaxRelativeOffset(): number {
+        if (!Array.isArray(this._units) ||
+            this.unitsConfig.offsetConfig.timestampOffset === undefined ||
+            Object.keys(this.unitsConfig.offsetConfig.timestampOffset).length === 0) {
+            return 0;
+        }
+
+        const getRelativeOffset = (unit: InsightUnit): number => {
+            const initTimeOffset = unit.alignStartTimestamp ?? 0;
+            const timeOffsetKey = getTimeOffsetKey(this, unit.metadata as { cardId?: string; processId?: string });
+            const currentTimeOffset = this.unitsConfig.offsetConfig.timestampOffset[timeOffsetKey] ?? 0;
+            return Math.max(0, initTimeOffset - currentTimeOffset);
+        };
+
+        const result = this._units.flatMap((unit: InsightUnit): number[] => {
+            const relativeOffsets = Array.isArray(unit.children) ? unit.children.map(getRelativeOffset) : [];
+            relativeOffsets.unshift(getRelativeOffset(unit));
+            return relativeOffsets;
+        });
+        return Math.max(...result);
     }
 }
