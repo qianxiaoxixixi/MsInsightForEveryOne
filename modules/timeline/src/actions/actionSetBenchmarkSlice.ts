@@ -73,6 +73,7 @@ const updateSameDeviceOffset = (selectSliceMeta: SliceMeta, session: Session, se
             session.unitsConfig.offsetConfig.timestampOffset[key] += offsetDiff;
         }
     });
+    session.updateEndTimeAll();
 };
 
 const processOffsetEvent = (session: Session, isLeft: boolean): void => {
@@ -96,7 +97,7 @@ const processOffsetEvent = (session: Session, isLeft: boolean): void => {
         updateSameDeviceOffset(selectSliceMeta, session, selectOffsetKey, offsetDiff);
     }
     const before = session.unitsConfig.offsetConfig.timestampOffset[selectOffsetKey];
-    session.unitsConfig.offsetConfig.timestampOffset[selectOffsetKey] = before + offsetDiff;
+    session.setTimestampOffset(selectOffsetKey, before + offsetDiff);
     runInAction(() => {
         if (session.selectedData === undefined) {
             return;

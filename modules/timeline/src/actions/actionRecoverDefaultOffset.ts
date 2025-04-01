@@ -6,29 +6,18 @@ import { register } from './register';
 import type { Session } from '../entity/session';
 import { runInAction } from 'mobx';
 import type { InsightUnit } from '../entity/insight';
-import { getTimeOffsetKey } from '../insight/units/utils';
-import type { CardMetaData, ThreadTraceRequest } from '../entity/data';
 
 const setUpUintOffset = (session: Session, insightUint: InsightUnit, offsetValue: number): void => {
-    const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
-    if (insightUint.children !== undefined && insightUint.children.length > 0) {
-        for (const item of insightUint.children) {
-            const key = getTimeOffsetKey(session, item.metadata as ThreadTraceRequest);
-            session.unitsConfig.offsetConfig.timestampOffset[key] = offsetValue;
-        }
-    }
-    session.unitsConfig.offsetConfig.timestampOffset = {
-        ...prevObj,
-        [(insightUint.metadata as CardMetaData).cardId]: (offsetValue),
-    };
+    session.setTimestampOffsetByUnit(insightUint, offsetValue, false);
 };
 
 const clearOrRecoverCardDefaultOffset = (session: Session): void => {
     runInAction(() => {
         session.units.forEach((insightUint) => {
-            const offsetValue = insightUint.alignStartTimestamp as number;
-            setUpUintOffset(session, insightUint, offsetValue);
+            setUpUintOffset(session, insightUint, 0);
         });
+        session.updateEndTimeAll();
+        session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
         session.benchMarkData = undefined;
         session.alignSliceData = [];
     });

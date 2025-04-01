@@ -460,8 +460,8 @@ const SummaryChart = chart({
             cardId: processMetaData.cardId,
             processId: processMetaData.processId,
             metaType: processMetaData.metaType,
-            startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
-            endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
+            startTime: Math.floor(Math.max(0, timestampOffset)),
+            endTime: Math.ceil(Math.max(0, (session.endTimeAll ?? 0) + timestampOffset)),
             dataSource: processMetaData.dataSource,
             timePerPx: session.domain.timePerPx,
         };
@@ -558,8 +558,8 @@ export const CounterUnit = unit<CounterMetaData>({
                 threadName: countMetaData.threadName,
                 threadId: countMetaData.threadId,
                 metaType: countMetaData.metaType,
-                startTime: 0,
-                endTime: session.endTimeAll,
+                startTime: Math.floor(Math.max(0, timestampOffset)),
+                endTime: Math.ceil(Math.max(0, (session.endTimeAll ?? 0) + timestampOffset)),
                 dataSource: countMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
             };

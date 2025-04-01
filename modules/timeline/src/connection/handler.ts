@@ -48,11 +48,11 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                     if (unitData.unit.children !== undefined && unitData.unit.children.length > 0) {
                         for (const item of unitData.unit.children) {
                             const key = getTimeOffsetKey(session, item.metadata);
+                            item.alignStartTimestamp = unit.alignStartTimestamp;
                             session.unitsConfig.offsetConfig.timestampOffset[key] = unit.alignStartTimestamp;
                         }
                     }
                     session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: unit.alignStartTimestamp };
-                    unit.alignStartTimestamp = unitData.offset;
                     handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
                     recursiveExpandUnit(unitData.unit.children ?? [], unit);
                 }
@@ -659,12 +659,14 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
                     if (unit.children !== undefined && unit.children.length > 0) {
                         for (const item of unit.children) {
                             const key = getTimeOffsetKey(session, item.metadata as ThreadTraceRequest);
+                            item.alignStartTimestamp = unit.alignStartTimestamp;
                             session.unitsConfig.offsetConfig.timestampOffset[key] = unit.alignStartTimestamp;
                         }
                     }
                     session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: (unit.alignStartTimestamp) };
                 }
             });
+            session.updateEndTimeAll();
         });
     } catch (error) {
         console.error(error);

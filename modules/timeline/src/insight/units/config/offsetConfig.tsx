@@ -68,16 +68,19 @@ export function handleTimestampOffsetReassignment(
 ): boolean {
     if (cardMetaData.processId === null || !hasStringValue(cardMetaData.processId)) {
         const cardId = cardMetaData.cardId;
-        const timestampOffsetConfig = session.unitsConfig.offsetConfig.timestampOffset;
+        const timestampOffsetConfig = { ...session.unitsConfig.offsetConfig.timestampOffset };
         const offsetKeys = Object.keys(timestampOffsetConfig);
         let isReassigned = false;
 
+        const timestampOffsetKey = getTimeOffsetKey(session, cardMetaData);
+        timestampOffsetConfig[timestampOffsetKey] = inputValue;
         for (const key of offsetKeys) {
             if (key.startsWith(`${cardId}__`) && timestampOffsetConfig[key] !== inputValue) {
                 timestampOffsetConfig[key] = inputValue;
                 isReassigned = true;
             }
         }
+        session.setTimestampOffsetAll(timestampOffsetConfig);
         return isReassigned;
     }
     return false;
@@ -96,8 +99,8 @@ function checkValue(inputElement: HTMLInputElement, session: Session, setValue: 
         if (preTimestampOffset === inputValue && !isReassigned) {
             return;
         }
-        const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
-        session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [timestampOffsetKey]: (inputValue) };
+        session.setTimestampOffset(timestampOffsetKey, inputValue);
+        session.setDomainWithoutHistory({ domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration });
     } else {
         setValue(defaultOffset);
     }
