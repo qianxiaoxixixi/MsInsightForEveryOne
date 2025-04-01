@@ -300,6 +300,10 @@ bool ProjectExplorerManager::IsClusterData(const std::string &projectName)
 bool ProjectExplorerManager::ClearProjectExplorer(const std::vector<std::string> &projectNameList)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (db == nullptr) {
+        Server::ServerLog::Warn("System db not init!");
+        return true;
+    }
     db->StartTransaction();
     // 根据项目名获取对应的id,如果projectNameList为空，代表要清空所有内容，因此这里多个if条件可以减少一次sql查询
     std::vector<int64_t> projectIdList;

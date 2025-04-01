@@ -112,6 +112,7 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
 // 清空项目内容
 TEST_F(ProjectExplorerManagerTest, ClearProjectExplorerSuccess)
 {
+    ProjectExplorerManager::Instance().ClearProjectExplorer(std::vector<std::string>{});
     InitProjectExplorerData();
     bool result = ProjectExplorerManager::Instance().ClearProjectExplorer(std::vector<std::string>{});
     EXPECT_EQ(result, true);
