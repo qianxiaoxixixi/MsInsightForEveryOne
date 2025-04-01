@@ -139,35 +139,36 @@ export const actionUnpinAll = register({
         return selectedUnitListStatus.isAllPinned;
     },
     perform: (session): void => {
-        // 为多选 unit 功能做准备
-        const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
-        if (!selectedUnitListStatus.isAllPinned) {
-            return;
-        }
         unpinAll(session);
     },
 });
 
 export const actionPinByGroupNameValue = register({
     name: 'pinByGroupNameValue',
-    label: '',
-    perform: (session): void => {
+    label: (session, t) => {
         const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
-        if (!selectedUnitListStatus.isAllUnpinned) {
-            return;
-        }
+        return t('timeline:contextMenu.Pin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue });
+    },
+    visible: (session) => {
+        const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
+        return selectedUnitListStatus.isAllUnpinned && selectedUnitListStatus.isSameGroupNameValue;
+    },
+    perform: (session): void => {
         pinAllSameGroupNameValue(session);
     },
 });
 
 export const actionUnpinByGroupNameValue = register({
     name: 'unpinByGroupNameValue',
-    label: '',
-    perform: (session): void => {
+    label: (session, t) => {
         const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
-        if (!selectedUnitListStatus.isAllPinned) {
-            return;
-        }
+        return t('timeline:contextMenu.Unpin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue });
+    },
+    visible: (session) => {
+        const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
+        return selectedUnitListStatus.isAllPinned && selectedUnitListStatus.isSameGroupNameValue;
+    },
+    perform: (session): void => {
         unpinAllSameGroupNameValue(session);
     },
 });

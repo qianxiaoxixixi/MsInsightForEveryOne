@@ -6,7 +6,11 @@ export { actionFitToScreen } from './actionFitToScreen';
 export { actionZoomIntoSelection } from './actionZoomIntoSelection';
 export { actionFindInCommunication } from './actionFindInCommunication';
 export { actionUndoZoom, actionResetZoom, actionZoomIn, actionZoomOut } from './actionZoom';
-export { actionUnpinAll } from './actionPinUnits';
+export {
+    actionUnpinAll,
+    actionPinByGroupNameValue,
+    actionUnpinByGroupNameValue,
+} from './actionPinUnits';
 export { actionShowHiddenUnits, actionHideUnits } from './actionHideUnits';
 export { actionShowInEventsView } from './actionShowInEventsView';
 export { actionShowPythonCallStack, actionHidePythonCallStack } from './actionShowPythonCallStack';
