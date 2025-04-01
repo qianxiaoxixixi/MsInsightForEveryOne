@@ -8,11 +8,9 @@
 #include "FileUtil.h"
 
 namespace Dic {
-    inline std::string EMPTY_ERROR_MSG;
+    inline std::string g_emptyErrorMsg;
     std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode = std::ios::in,
-                                     std::string &errMsg = EMPTY_ERROR_MSG);
-    inline std::ifstream OpenFileStreamSafely(const std::string &path, std::ios::openmode mode);
-    inline std::ifstream OpenWriteFileSafely(const std::string &path, std::ios::openmode mode = std::ios::out);
+                                     std::string &errMsg = g_emptyErrorMsg);
 }
 
 #endif // PROFILER_SERVER_SAFEFILE_H
