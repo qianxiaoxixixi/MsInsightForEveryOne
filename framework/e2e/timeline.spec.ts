@@ -139,7 +139,7 @@ test.describe('Timeline', () => {
 
         await expect(bottomPanel).toHaveScreenshot('StatsSystemView-Overall-Metrics.png', { maxDiffPixels: 400 });
 
-        for (let item of statsSystemViewOptions) {
+        for (const item of statsSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
@@ -159,7 +159,7 @@ test.describe('Timeline', () => {
 
         const expertSystemViewOptions = ['Affinity API', 'Affinity Optimizer', 'AICPU Operators', 'ACLNN Operators', 'Operators Fusion'];
 
-        for (let item of expertSystemViewOptions) {
+        for (const item of expertSystemViewOptions) {
             const option = timelineFrame.getByText(item, { exact: true });
             await option.click();
             await timelineFrame.locator('.ant-spin').waitFor({ state: 'hidden' });
@@ -465,33 +465,33 @@ test.describe('Timeline', () => {
         await secondUnitInfo.click();
         await page.mouse.move(0, 0);
         await page.keyboard.press('w');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-w.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-w.png', { maxDiffPixels: 100 });
         await page.keyboard.press('d');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-d.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-d.png', { maxDiffPixels: 100 });
         await page.keyboard.press('a');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-a.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-a.png', { maxDiffPixels: 100 });
         await page.keyboard.press('s');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-s.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-s.png', { maxDiffPixels: 100 });
         await page.keyboard.press('ArrowDown');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowDown.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-ArrowDown.png', { maxDiffPixels: 100 });
         await page.keyboard.press('ArrowUp');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowUp.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-ArrowUp.png', { maxDiffPixels: 100 });
         await resetBtn.click();
         await zoomOutBtn.click();
         await page.mouse.move(0, 0);
         await page.keyboard.press('ArrowRight');
         try {
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-ArrowRight.png', { maxDiffPixels: 100 });
         } catch (e) {
             await page.keyboard.press('ArrowRight');
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-ArrowRight.png', { maxDiffPixels: 100 });
         }
         await page.keyboard.press('ArrowLeft');
         try {
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowLeft.png`, { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-ArrowLeft.png', { maxDiffPixels: 100 });
         } catch (e) {
             await page.keyboard.press('ArrowLeft');
-            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowLeft.png`, { maxDiffPixels: 100 });
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-ArrowLeft.png', { maxDiffPixels: 100 });
         }
     });
 
@@ -508,7 +508,7 @@ test.describe('Timeline', () => {
         await page.mouse.click(startX + 100, startY + 5);
         await page.mouse.click(startX + 200, startY + 5);
         await page.mouse.move(0, 0);
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-add-marker.png`, { maxDiffPixels: 100 });
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-add-marker.png', { maxDiffPixels: 100 });
     });
 });
 

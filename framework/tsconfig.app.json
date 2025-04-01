@@ -1,20 +1,10 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "src/**/*.json"],
-  "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
     "moduleResolution": "Node",
     "paths": {
-      "@/*": ["./src/*"],
-      "@modules": ["./src/views/Modules.vue"],
-      "@remoteManager": ["./src/views/RemoteManager.vue"],
-      "@plugins": ["./plugins"],
-      "@components": ["./src/components"],
-      "@router": ["./src/router/index.ts"],
-      "@centralServer": ["./src/centralServer/websocket/messageManager.ts"],
-      "@assets": ["./src/assets"],
+      "@/*": ["./e2e/*"],
     }
   }
 }
