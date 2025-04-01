@@ -14,31 +14,36 @@ import type { ChartInteractorHandles, InteractorMouseState } from './charts/Char
 import type { ThreadMetaData, CardMetaData } from '../entity/data';
 import { preOrderFlatten } from '../entity/common';
 import { type InsightUnit, unit } from '../entity/insight';
-import { isPinned, switchPinned } from './ChartContainer/unitPin';
 import { getRootUnit } from '../utils';
-import { getAutoKey } from '../utils/dataAutoKey';
 import { parseCards } from '../api/request';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { message } from 'antd';
 import {
     actionClearBenchmarkSlice,
-    actionCollapseAllUnits, actionDisableAutoUnitHeight,
+    actionCollapseAllUnits,
+    actionDisableAutoUnitHeight,
     actionEnableAutoUnitHeight,
     actionExpandAllUnits,
     actionFindInCommunication,
     actionFitToScreen,
-    actionHideFlagEvents, actionHidePythonCallStack,
-    actionHideUnits, actionLockSelection,
+    actionHideFlagEvents,
+    actionHidePythonCallStack,
+    actionHideUnits,
+    actionLockSelection,
     actionRecoverDefaultOffset,
-    actionResetZoom, actionSetBenchmarkSlice,
+    actionResetZoom,
+    actionSetBenchmarkSlice,
     actionShowFlagEvents,
     actionShowHiddenUnits,
     actionShowInEventsView,
     actionShowPythonCallStack,
-    actionUndoZoom, actionUnLockSelection,
+    actionUndoZoom,
+    actionUnLockSelection,
     actionUnpinAll,
     actionZoomIntoSelection,
     actionSetCardAlias,
+    actionPinByGroupNameValue,
+    actionUnpinByGroupNameValue,
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
@@ -54,22 +59,6 @@ interface Props {
     interactorMouseState: InteractorMouseState;
     theme?: Theme;
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
-}
-
-interface SelectedUnitStatus {
-    isThreadNameStartWithGroup: boolean;
-    isGroupCommunicationUnit: boolean;
-    groupNameValue: string;
-    isPinned: boolean;
-}
-
-interface SelectedUnitListStatus {
-    isAllThreadNameStartWithGroup: boolean;
-    isAllGroupCommunicationUnit: boolean;
-    isSameGroupNameValue: boolean;
-    groupNameValue: string;
-    isAllPinned: boolean;
-    isAllUnpinned: boolean;
 }
 
 interface MenuItemModel {
@@ -120,69 +109,6 @@ const MenuItem = styled.div`
         opacity: 0.6;
     }
 `;
-
-function getSameGroupNameUnits(session: Session): InsightUnit[] {
-    if (session.selectedUnits.length === 0) {
-        return [];
-    }
-    const selectedGroupNameValue = (session.selectedUnits[0].metadata as ThreadMetaData).groupNameValue;
-    const flattenUnits = preOrderFlatten(getRootUnit(session.units), 0);
-    return flattenUnits
-        .filter(({ metadata }) => (metadata as ThreadMetaData)?.groupNameValue === selectedGroupNameValue);
-}
-
-function pinAllSameGroupNameValue(session: Session, menuItem?: MenuItemModel): void {
-    if ((menuItem?.disabled ?? false) || session.selectedUnits.length === 0) {
-        return;
-    }
-    const sameGroupNameValueUnits = getSameGroupNameUnits(session);
-    if (sameGroupNameValueUnits.length === 0) {
-        return;
-    }
-    const pinnedUnitKeys = session.pinnedUnits.map((item) => getAutoKey(item));
-    const addUnits = sameGroupNameValueUnits.reduce<InsightUnit[]>((acc, curr): InsightUnit[] => {
-        const key = getAutoKey(curr);
-        if (pinnedUnitKeys.includes(key)) {
-            return acc;
-        }
-        acc.push(curr);
-        pinnedUnitKeys.push(key);
-        return acc;
-    }, []);
-    runInAction(() => {
-        session.pinnedUnits = [...session.pinnedUnits, ...addUnits];
-        addUnits.forEach((item): void => switchPinned(item));
-    });
-    closeMenu(session);
-}
-
-function unpinAllSameGroupNameValue(session: Session, menuItem?: MenuItemModel): void {
-    if (menuItem?.disabled ?? false) {
-        return;
-    }
-    const sameGroupNameValueUnits = getSameGroupNameUnits(session);
-    if (sameGroupNameValueUnits.length === 0) {
-        return;
-    }
-    const { pinnedUnits } = session;
-    const pinnedUnitKeys = pinnedUnits.map((item) => getAutoKey(item));
-    const subtractUnits = sameGroupNameValueUnits.reduce<InsightUnit[]>((acc, curr): InsightUnit[] => {
-        const key = getAutoKey(curr);
-        const findIdx = pinnedUnitKeys.findIndex((pinnedKey: string): boolean => pinnedKey === key);
-        if (findIdx < 0) {
-            return acc;
-        }
-        acc.push(curr);
-        pinnedUnits.splice(findIdx, 1);
-        pinnedUnitKeys.splice(findIdx, 1);
-        return acc;
-    }, []);
-    runInAction(() => {
-        session.pinnedUnits = [...pinnedUnits];
-        subtractUnits.forEach((item): void => switchPinned(item));
-    });
-    closeMenu(session);
-}
 
 function closeMenu(session: Session): void {
     runInAction(() => {
@@ -249,65 +175,6 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     }
     setPosition({ left: `${xPos.current}px`, top: `${yPos.current}px` });
     menu.focus();
-}
-
-function calculateSelectedUnitStatus(selectedUnit: InsightUnit): SelectedUnitStatus {
-    const hasStringValue = (str: string = ''): boolean => {
-        return str !== '';
-    };
-    const metadata = selectedUnit.metadata as ThreadMetaData;
-    return {
-        isThreadNameStartWithGroup: metadata?.threadName?.includes('Group') ?? false,
-        isGroupCommunicationUnit: hasStringValue(metadata?.groupNameValue),
-        groupNameValue: (selectedUnit.metadata as ThreadMetaData)?.groupNameValue ?? '',
-        isPinned: isPinned(selectedUnit),
-    };
-}
-
-function calculateSelectedUnitListStatus(selectedUnits: InsightUnit[]): SelectedUnitListStatus {
-    const selectedUnitStatuses = selectedUnits.map(calculateSelectedUnitStatus);
-    const isAllThreadNameStartWithGroup = selectedUnitStatuses
-        .every(({ isThreadNameStartWithGroup }) => isThreadNameStartWithGroup);
-    const isAllGroupCommunicationUnit = selectedUnitStatuses
-        .every(({ isGroupCommunicationUnit }) => isGroupCommunicationUnit);
-
-    const isAllPinned = selectedUnitStatuses.every((status) => status.isPinned);
-    const isAllUnpinned = selectedUnitStatuses.every((status) => !status.isPinned);
-
-    const groupNameValue = selectedUnitStatuses?.[0]?.groupNameValue ?? '';
-    const isSameGroupNameValue = isAllGroupCommunicationUnit && selectedUnitStatuses
-        .reduce((acc, curr) => acc && curr.groupNameValue === groupNameValue, true);
-    return {
-        isAllThreadNameStartWithGroup,
-        isAllGroupCommunicationUnit,
-        isSameGroupNameValue,
-        groupNameValue,
-        isAllPinned,
-        isAllUnpinned,
-    };
-}
-
-function buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(
-    selectedUnitListStatus: SelectedUnitListStatus,
-    t: TFunction): MenuItemModel[] {
-    return [
-        {
-            name: t('timeline:contextMenu.Pin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
-            title: t('timeline:contextMenu.Pin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
-            key: 'pinByGroupNameValue',
-            event: pinAllSameGroupNameValue,
-            disabled: !selectedUnitListStatus.isAllUnpinned,
-            visible: selectedUnitListStatus.isAllUnpinned && selectedUnitListStatus.isSameGroupNameValue,
-        },
-        {
-            name: t('timeline:contextMenu.Unpin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
-            title: t('timeline:contextMenu.Unpin by Group Communication Unit Name', { name: selectedUnitListStatus.groupNameValue }),
-            key: 'unpinByGroupNameValue',
-            event: unpinAllSameGroupNameValue,
-            disabled: !selectedUnitListStatus.isAllPinned,
-            visible: selectedUnitListStatus.isAllPinned && selectedUnitListStatus.isSameGroupNameValue,
-        },
-    ];
 }
 
 function buildParseCardsOfRelatedGroupMenuItem(
@@ -380,6 +247,8 @@ const contextMenuItems: Action[] = [
     actionLockSelection,
     actionUnLockSelection,
     actionSetCardAlias,
+    actionPinByGroupNameValue,
+    actionUnpinByGroupNameValue,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
@@ -387,10 +256,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     if (!Array.isArray(session.selectedUnits) || session.selectedUnits.length === 0) {
         return <></>;
     }
-    // 为多选 unit 功能做准备
-    const selectedUnitListStatus = calculateSelectedUnitListStatus(session.selectedUnits);
     const menuItems: MenuItemModel[] = [
-        ...buildPinAndUnpinByGroupCommunicationUnitNameMenuItem(selectedUnitListStatus, t),
         ...buildParseCardsOfRelatedGroupMenuItem(session, t),
     ];
 
@@ -409,6 +275,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
                 return <MenuItem
                     className={`menu-item ${disabled ? 'disabled' : ''}`}
                     key={item.name}
+                    title={label}
                     onClick={(e): void => {
                         if (disabled) { return; }
                         item.perform(session);
