@@ -118,13 +118,9 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
         file.seekg(reserveLen, std::ios::cur);
 
         int64_t startPos = file.tellg();
-        if (startPos < 0) {
+        if (startPos < 0 || dataSize > static_cast<uint64_t>(INT64_MAX - startPos) ||
+            static_cast<uint64_t>(startPos) + dataSize < paddingLength) {
             ServerLog::Error("Parse source file failed, source file is invalid.");
-            return false;
-        }
-        if (dataSize > static_cast<uint64_t>(INT64_MAX - startPos) || startPos + dataSize < paddingLength) {
-            // 溢出防护
-            ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
         }
         int64_t endPos = NumberSafe::Sub(NumberSafe::Add(startPos, static_cast<int64_t>(dataSize)), paddingLength);
@@ -218,7 +214,7 @@ uint64_t SourceFileParser::CalculateTotalSize(std::vector<std::pair<int64_t, int
             ServerLog::Error("Addition overflowed, source file is too large.");
             return 0;
         }
-        totalSize += size;
+        totalSize += static_cast<uint64_t>(size);
     }
 
     return totalSize;
