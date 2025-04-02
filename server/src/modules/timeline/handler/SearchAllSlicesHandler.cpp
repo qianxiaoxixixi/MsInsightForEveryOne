@@ -42,8 +42,8 @@ bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             trackQuery.processId = item.pid;
             trackQuery.threadId = item.tid;
             trackQuery.trackId = TrackInfoManager::Instance().GetTrackId(request.params.rankId, item.pid, item.tid);
-            trackQuery.startTime = item.lockStartTime + minTimestamp;
-            trackQuery.endTime = item.lockEndTime + minTimestamp;
+            trackQuery.startTime = item.lockStartTime + minTimestamp; // 校验过，保证 lockStartTime < lockEndTime
+            trackQuery.endTime = item.lockEndTime + minTimestamp; // 校验过，保证 lockEndTime + minTime < UINT64_MAX
             trackQuery.metaType = item.metaType;
             trackQueryVec.emplace_back(trackQuery);
         }

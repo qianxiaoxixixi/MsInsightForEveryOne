@@ -25,7 +25,7 @@ void HostFlowRepo::QueryFwdbwd(const FlowQuery &flowQuery, std::vector<FlowPoint
         startPoint.flowId = flowId;
         PytorchApiPO start = pytorchApiPOLog[flowId];
         startPoint.id = start.id;
-        startPoint.timestamp = start.timestamp - flowQuery.minTimestamp;
+        startPoint.timestamp = start.timestamp - flowQuery.minTimestamp; // 业务上 timestamp > minTimestamp
         startPoint.trackId = instance.GetTrackId(flowQuery.fileId, std::to_string(start.globalTid), pythonApiTid);
         FlowPoint endPoint;
         endPoint.type = "f";

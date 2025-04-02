@@ -9,7 +9,6 @@
 #include "CollectionTimeService.h"
 #include "MetaDataParser.h"
 #include "MetaDataCacheManager.h"
-#include "NumberSafeUtil.h"
 #include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {
@@ -291,7 +290,7 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
     responseBody.startTime = resultSet->GetUint64("timestamp");
     uint64_t endTime = resultSet->GetUint64("endTime");
     responseBody.duration = endTime >= responseBody.startTime ? endTime - responseBody.startTime : 0;
-    responseBody.startTime -= minTimestamp;
+    responseBody.startTime -= minTimestamp; // 业务上 minTimestamp 是最小的时间，一定有 item.timestamp > minTimestamp
     responseBody.depth = resultSet->GetInt32("depth");
     responseBody.id = resultSet->GetString("id");
     return true;
@@ -427,7 +426,8 @@ bool DbTraceDataBase::ExcecuteQueryKernelDetailData(std::unique_ptr<SqlitePrepar
     const Protocol::KernelDetailsParams &requestParams, Protocol::KernelDetailsBody &responseBody,
     uint64_t minTimestamp)
 {
-    uint64_t offset = NumberSafe::Muls(requestParams.current - 1, requestParams.pageSize);
+    uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
+        (requestParams.current - 1) * requestParams.pageSize;
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel detail data.", stmt->GetErrorMessage());
@@ -894,7 +894,7 @@ void DbTraceDataBase::UpdateWaitTime()
         if (prevTime.find(deviceId) == prevTime.end()) {
             prevTime[deviceId] = startNs;
         }
-        int64_t waitNs = startNs > prevTime[deviceId] ? NumberSafe::Sub(startNs, prevTime[deviceId]) : 0;
+        int64_t waitNs = startNs > prevTime[deviceId] ? startNs - prevTime[deviceId] : 0;
         prevTime[deviceId] = endNs;
         WAIT_TIME task;
         task.id = resultSet->GetInt64("id");
@@ -1728,8 +1728,8 @@ bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParam
         Protocol::SearchAllSlices searchAllSlice{};
         searchAllSlice.name = resultSet->GetString("value");
         searchAllSlice.timestamp = resultSet->GetUint64("timestamp");
-        searchAllSlice.duration = resultSet->GetUint64("endTime") - searchAllSlice.timestamp;
-        searchAllSlice.timestamp -= minTimestamp;
+        searchAllSlice.duration = resultSet->GetUint64("endTime") - searchAllSlice.timestamp; // 保证 endTime > timestamp
+        searchAllSlice.timestamp -= minTimestamp; // 业务上 minTimestamp 是最小时间，保证 timestamp > minTimestamp
         searchAllSlice.id = resultSet->GetString("id");
         searchAllSlice.tid = resultSet->GetString("tid");
         searchAllSlice.pid = resultSet->GetString("pid");

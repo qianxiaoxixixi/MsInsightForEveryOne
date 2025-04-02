@@ -435,7 +435,7 @@ bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
     const int64_t maxDataCount = 30000;
-    uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
+    uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount; // 校验过保证 endTime > startTime
     unitTime = unitTime <= 0 ? 1 : unitTime;
     std::vector<uint64_t> trackIds = QueryAllTrackIdsByPid(requestParams.processId);
     std::string sql = TextSqlConstant::GetSummarySliceSql(trackIds.size());

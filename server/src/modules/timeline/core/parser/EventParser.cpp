@@ -163,7 +163,7 @@ void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> event
             setFlagSliceMap[event.flagId] = event;
             return;
         } else {
-            event.dur = setFlagSliceMap[event.flagId].ts - event.ts;
+            event.dur = setFlagSliceMap[event.flagId].ts > event.ts ? setFlagSliceMap[event.flagId].ts - event.ts : 0;
             SimulationEventHandle(std::move(eventPtr));
             setFlagSliceMap.erase(event.flagId);
             return;
@@ -175,7 +175,8 @@ void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> event
             waitFlagSliceMap[event.flagId] = event;
             return;
         } else {
-            event.dur = waitFlagSliceMap[event.flagId].ts - event.ts;
+            event.dur = waitFlagSliceMap[event.flagId].ts > event.ts ?
+                waitFlagSliceMap[event.flagId].ts - event.ts : 0;
             SimulationEventHandle(std::move(eventPtr));
             waitFlagSliceMap.erase(event.flagId);
             return;
@@ -196,7 +197,7 @@ void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPt
             return;
         } else {
             Trace::Slice beginSlice = setFlagSliceMap[event.flagId];
-            beginSlice.dur = event.ts - beginSlice.ts;
+            beginSlice.dur = event.ts > beginSlice.ts ? event.ts - beginSlice.ts : 0;
             SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
             setFlagSliceMap.erase(event.flagId);
             return;
@@ -209,7 +210,7 @@ void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPt
             return;
         } else {
             Trace::Slice beginSlice = waitFlagSliceMap[event.flagId];
-            beginSlice.dur = event.ts - beginSlice.ts;
+            beginSlice.dur = event.ts > beginSlice.ts ? event.ts - beginSlice.ts : 0;
             SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
             waitFlagSliceMap.erase(event.flagId);
             return;

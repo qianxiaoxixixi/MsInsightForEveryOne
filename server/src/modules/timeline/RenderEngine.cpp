@@ -102,6 +102,8 @@ bool RenderEngine::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &p
             TrackInfoManager::Instance().GetTrackInfo(curTrackId, trackInfo);
             sliceAnalyzerPtr->SortByTimestampASC(cacheSlices);
         }
+        // item.timestamp = timestamp - flowQuery.minTimestamp，timestamp 是从数据库中查出，一定有 timestamp <= INT64_MAX
+        // 业务上 flowQuery.minTimestamp 的值能保证是数据库中的最小时间
         item.depth = sliceAnalyzerPtr->ComputeFlowPointDepth(cacheSlices, item.type, item.timestamp + minTimestamp);
         item.pid = trackInfo.processId;
         item.tid = trackInfo.threadId;
@@ -192,7 +194,7 @@ void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, Un
     responseBody.data.selfTime = 0;
     responseBody.data.args = competeSliceDomain.args;
     responseBody.data.title = competeSliceDomain.name;
-    responseBody.data.duration = competeSliceDomain.endTime - competeSliceDomain.timestamp;
+    responseBody.data.duration = competeSliceDomain.endTime - competeSliceDomain.timestamp; // 保证 endTime >= timestamp
     responseBody.data.inputShapes = competeSliceDomain.sliceShape.inputShapes;
     responseBody.data.inputDataTypes = competeSliceDomain.sliceShape.inputDataTypes;
     responseBody.data.inputFormats = competeSliceDomain.sliceShape.inputFormats;
@@ -215,7 +217,7 @@ void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, Un
     uint64_t nextDepthTime = 0;
     for (auto item = it; item != sliceVec.end(); ++item) {
         if (item->timestamp >= targetTimestamp && item->endTime <= targetEndTime && item->depth == targetDepth) {
-            nextDepthTime += item->endTime - item->timestamp;
+            nextDepthTime += item->endTime - item->timestamp; // 从数据库查询得到。业务上保证 item->endTime >= item->timestamp
         }
     }
     if (nextDepthTime > 0 && nextDepthTime <= responseBody.data.duration) {
