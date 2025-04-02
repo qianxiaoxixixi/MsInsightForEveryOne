@@ -169,7 +169,7 @@ void QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
         response.operatorDiffDetails.clear();
         response.totalNum = 0;
     } else {
-        response.totalNum = filteredDiffResult.operatorDiffDetails.size();
+        response.totalNum = NumberSafe::SafeCastSizeTypeToInt64(filteredDiffResult.operatorDiffDetails.size());
         for (size_t i = offset; i < offset + pageSize && i < filteredDiffResult.operatorDiffDetails.size(); ++i) {
             response.operatorDiffDetails.push_back(filteredDiffResult.operatorDiffDetails[i]);
         }

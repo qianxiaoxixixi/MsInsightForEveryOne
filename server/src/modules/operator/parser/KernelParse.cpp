@@ -293,9 +293,9 @@ inline void KernelParse::ParsePyTorchOpBaseInfoData(const std::map<std::string, 
     kernel.name = row[dataMap.at(FIELD_NAME)];
     kernel.type = row[dataMap.at(FIELD_TYPE)];
     kernel.acceleratorCore = row[dataMap.at(FIELD_ACCELERATOR_CORE)];
-    kernel.duration = atof(row[dataMap.at(FIELD_DURATION)].c_str());
-    kernel.waitTime = atof(row[dataMap.at(FIELD_WAIT_TIME)].c_str());
-    kernel.blockDim = atof(row[dataMap.at(FIELD_BLOCK_DIM)].c_str());
+    kernel.duration = NumberUtil::StringToDouble(row[dataMap.at(FIELD_DURATION)]);
+    kernel.waitTime = NumberUtil::StringToDouble(row[dataMap.at(FIELD_WAIT_TIME)]);
+    kernel.blockDim = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_DIM)]);
 }
 
 inline void KernelParse::ParsePyTorchStepInfoData(const std::map<std::string, size_t> &dataMap,
@@ -317,9 +317,9 @@ inline void KernelParse::ParseMsProfOpBaseInfoData(const std::map<std::string, s
     kernel.name = row[dataMap.at(FIELD_OP_NAME)];
     kernel.type = row[dataMap.at(FIELD_OP_TYPE)];
     kernel.acceleratorCore = row[dataMap.at(FIELD_TASK_TYPE)];
-    kernel.duration = atof(row[dataMap.at(FIELD_TASK_DURATION)].c_str());
-    kernel.waitTime = atof(row[dataMap.at(FIELD_TASK_WAIT_TIME)].c_str());
-    kernel.blockDim = atof(row[dataMap.at(FIELD_BLOCK_DIM)].c_str());
+    kernel.duration = NumberUtil::StringToDouble(row[dataMap.at(FIELD_TASK_DURATION)]);
+    kernel.waitTime = NumberUtil::StringToDouble(row[dataMap.at(FIELD_TASK_WAIT_TIME)]);
+    kernel.blockDim = NumberUtil::StringToLongLong(row[dataMap.at(FIELD_BLOCK_DIM)]);
 }
 
 inline void KernelParse::ParseShapeInfoData(const std::map<std::string, size_t> &dataMap,

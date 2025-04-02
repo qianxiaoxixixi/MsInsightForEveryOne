@@ -136,7 +136,7 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
 TEST_F(TextSummaryDatabaseTest, QueryMinStartTimeTest)
 {
     uint64_t start = g_testDataBase.QueryMinStartTime();
-    EXPECT_EQ(start, UINT64_MAX);
+    EXPECT_EQ(start, INT64_MAX);
     std::vector<Kernel> list = {
         {"0", "2", "", "Cast", "Cast", "Dynamic", "AI_CORE", 1695115378722946000, 5.7985, 11.041, 33,
          "", "", "", "", "", ""},

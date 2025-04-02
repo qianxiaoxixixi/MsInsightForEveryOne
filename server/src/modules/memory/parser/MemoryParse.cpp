@@ -116,10 +116,10 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
     size_t sizeIndex = dataMap[SIZE];
     size_t durationIndex = dataMap[DURATION];
     anOperator.name = row[nameIndex];
-    anOperator.size = atof(row[sizeIndex].c_str());
+    anOperator.size = NumberUtil::StringToDouble(row[sizeIndex]);
     anOperator.allocationTime = NumberUtil::TimestampUsToNs(
         NumberUtil::StringToLongDouble(row[allocationTimeIndex]));
-    anOperator.duration = atof(row[durationIndex].c_str());
+    anOperator.duration = NumberUtil::StringToDouble(row[durationIndex]);
 
     if (dataMap.count(RELEASE_TIME)) {
         size_t releaseTimeIndex = dataMap[RELEASE_TIME];
@@ -131,23 +131,23 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
     }
 
     if (dataMap.find(ALLOCATION_ACTIVE_MB) != dataMap.end()) {
-        anOperator.activeDuration = atof(row[dataMap[ACTIVE_DURATION]].c_str());
+        anOperator.activeDuration = NumberUtil::StringToDouble(row[dataMap[ACTIVE_DURATION]]);
         anOperator.activeReleaseTime = NumberUtil::TimestampUsToNs(
             NumberUtil::StringToLongDouble(row[dataMap[ACTIVE_RELEASE_TIME]]));
-        anOperator.allocationActive = atof(row[dataMap[ALLOCATION_ACTIVE_MB]].c_str());
-        anOperator.releaseActive = atof(row[dataMap[RELEASE_ACTIVE_MB]].c_str());
+        anOperator.allocationActive = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ACTIVE_MB]]);
+        anOperator.releaseActive = NumberUtil::StringToDouble(row[dataMap[RELEASE_ACTIVE_MB]]);
         anOperator.streamId = row[dataMap[STREAM_PTR]];
     }
     if (dataMap.find(ALLOCATION_ALLOCATED_KB) != dataMap.end()) {
-        anOperator.allocationAllocated = atof(row[dataMap[ALLOCATION_ALLOCATED_KB]].c_str()) / KB_TO_MB;
-        anOperator.allocationReserved = atof(row[dataMap[ALLOCATION_RESERVED_KB]].c_str()) / KB_TO_MB;
-        anOperator.releaseAllocated = atof(row[dataMap[RELEASE_ALLOCATED_KB]].c_str()) / KB_TO_MB;
-        anOperator.releaseReserved = atof(row[dataMap[RELEASE_RESERVED_KB]].c_str()) / KB_TO_MB;
+        anOperator.allocationAllocated = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ALLOCATED_KB]]) / KB_TO_MB;
+        anOperator.allocationReserved = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_RESERVED_KB]]) / KB_TO_MB;
+        anOperator.releaseAllocated = NumberUtil::StringToDouble(row[dataMap[RELEASE_ALLOCATED_KB]]) / KB_TO_MB;
+        anOperator.releaseReserved = NumberUtil::StringToDouble(row[dataMap[RELEASE_RESERVED_KB]]) / KB_TO_MB;
     } else {
-        anOperator.allocationAllocated = atof(row[dataMap[ALLOCATION_ALLOCATED_MB]].c_str());
-        anOperator.allocationReserved = atof(row[dataMap[ALLOCATION_RESERVED_MB]].c_str());
-        anOperator.releaseAllocated = atof(row[dataMap[RELEASE_ALLOCATED_MB]].c_str());
-        anOperator.releaseReserved = atof(row[dataMap[RELEASE_RESERVED_MB]].c_str());
+        anOperator.allocationAllocated = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_ALLOCATED_MB]]);
+        anOperator.allocationReserved = NumberUtil::StringToDouble(row[dataMap[ALLOCATION_RESERVED_MB]]);
+        anOperator.releaseAllocated = NumberUtil::StringToDouble(row[dataMap[RELEASE_ALLOCATED_MB]]);
+        anOperator.releaseReserved = NumberUtil::StringToDouble(row[dataMap[RELEASE_RESERVED_MB]]);
     }
 
     return anOperator;
@@ -165,19 +165,19 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_KB];
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_KB];
         size_t deviceTypeIndex = dataMap[DEVICE];
-        record.totalAllocated = atof(row[totalAllocatedIndex].c_str()) / KB_TO_MB;
-        record.totalReserved = atof(row[totalReservedIndex].c_str()) / KB_TO_MB;
+        record.totalAllocated = NumberUtil::StringToDouble(row[totalAllocatedIndex]) / KB_TO_MB;
+        record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]) / KB_TO_MB;
         record.totalActivated = dataMap.count(TOTAL_ACTIVE_KB) == 0 ?
-                0 : atof(row[dataMap[TOTAL_ACTIVE_KB]].c_str()) / KB_TO_MB;
+                0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_KB]]) / KB_TO_MB;
         record.deviceType = row[deviceTypeIndex];
     } else {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_MB];
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
         size_t deviceTypeIndex = dataMap[DEVICETYPE];
-        record.totalAllocated = atof(row[totalAllocatedIndex].c_str());
-        record.totalReserved = atof(row[totalReservedIndex].c_str());
+        record.totalAllocated = NumberUtil::StringToDouble(row[totalAllocatedIndex]);
+        record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
         record.totalActivated = dataMap.count(TOTAL_ACTIVE_MB) == 0 ?
-                0 : atof(row[dataMap[TOTAL_ACTIVE_MB]].c_str());
+                0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_MB]]);
         record.deviceType = row[deviceTypeIndex];
     }
     if (dataMap.find(STREAM_PTR) != dataMap.end()) {
@@ -201,9 +201,9 @@ StaticOp MemoryParse::mapperToStaticOpDetail(std::map<std::string, size_t> dataM
     size_t nodeIndexStart = dataMap[NODE_INDEX_START];
     size_t nodeIndexEnd = dataMap[NODE_INDEX_END];
     size_t size = dataMap[SIZE_KB];
-    staticOp.nodeIndexStart = atof(row[nodeIndexStart].c_str());
-    staticOp.nodeIndexEnd = atof(row[nodeIndexEnd].c_str());
-    staticOp.size = atof(row[size].c_str());
+    staticOp.nodeIndexStart = NumberUtil::StringToLongLong(row[nodeIndexStart]);
+    staticOp.nodeIndexEnd = NumberUtil::StringToLongLong(row[nodeIndexEnd]);
+    staticOp.size = NumberUtil::StringToDouble(row[size]);
 
     return staticOp;
 }
