@@ -243,5 +243,11 @@ static inline auto Muls(T &&a, F &&b)
     }
     return tmp;
 }
+
+static inline int64_t SafeCastSizeTypeToInt64(size_t sizeTypeNum)
+{
+    return static_cast<uint64_t>(sizeTypeNum) > static_cast<uint64_t>(INT64_MAX) ?
+        INT64_MAX : static_cast<int64_t>(sizeTypeNum);
+}
 }
 #endif // PROFILER_SERVER_NUMBERSAFEUTIL_H

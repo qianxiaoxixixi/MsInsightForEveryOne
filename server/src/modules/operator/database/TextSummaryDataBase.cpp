@@ -196,21 +196,21 @@ bool TextSummaryDataBase::HasFinishedParseLastTime()
 
 uint64_t TextSummaryDataBase::QueryMinStartTime()
 {
-    std::string sql = "Select MIN(start_time) FROM " + TABLE_KERNEL + " WHERE start_time != 0";
+    std::string sql = "Select MIN(start_time) FROM " + TABLE_KERNEL + " WHERE start_time > 0";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql for query minimum start time.", sqlite3_errmsg(db));
         return 0;
     }
-    uint64_t min = 0;
+    int64_t min = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         min = sqlite3_column_int64(stmt, col++);
     }
     sqlite3_finalize(stmt);
-    if (min == 0) {
-        min = UINT64_MAX;
+    if (min <= 0) {
+        min = INT64_MAX;
     }
     return min;
 }
