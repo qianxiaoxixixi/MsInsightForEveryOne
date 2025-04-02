@@ -44,6 +44,10 @@ import { calculateDomainRange } from '../../components/CategorySearch';
 import { safeJSONParse } from 'ascend-utils';
 import { SorterResult } from 'antd/lib/table/interface';
 
+const MAX_UNIT_CANVAS_HEIGHT = 50_000; // 画布高度上限
+const MAX_UNIT_DEPTH = Math.floor(MAX_UNIT_CANVAS_HEIGHT / UnitHeight.STANDARD); // 泳道深度上限
+const FALLBACK_DEPTH = 2; // 当深度超过上限，使用此深度值
+
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
 };
@@ -208,6 +212,23 @@ const drawSingleAlignSlice = ({ item, threadMetaData, session, xScale, yScale, c
     }
 };
 
+const getThreadTracesRequestParams = (session: Session, threadMetaData: ThreadMetaData, timestampOffset: number): Record<string, unknown> => {
+    const key = threadMetaData.cardId !== undefined ? `${threadMetaData.cardId}_${threadMetaData.threadName}` : null;
+    const isFilterPythonFunction = key !== null ? (session?.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[key] ?? false : false;
+    return {
+        cardId: threadMetaData.cardId,
+        processId: threadMetaData.processId,
+        threadId: threadMetaData.threadId,
+        metaType: threadMetaData.metaType,
+        startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
+        endTime: Math.ceil(session.domainRange.domainEnd + timestampOffset),
+        dataSource: threadMetaData.dataSource,
+        timePerPx: session.domain.timePerPx,
+        isFilterPythonFunction,
+        isHideFlagEvents: session.areFlagEventsHidden,
+    };
+};
+
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'copied',
@@ -221,30 +242,27 @@ export const ThreadUnit = unit<ThreadMetaData>({
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
             const timestampOffset = getTimeOffset(session, threadMetaData);
-            const key = threadMetaData.cardId !== undefined ? `${threadMetaData.cardId}_${threadMetaData.threadName}` : null;
-            const isFilterPythonFunction = key !== null ? (session?.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[key] ?? false : false;
-            const requestParam: Record<string, unknown> & { timePerPx: number } = {
-                cardId: threadMetaData.cardId,
-                processId: threadMetaData.processId,
-                threadId: threadMetaData.threadId,
-                metaType: threadMetaData.metaType,
-                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
-                endTime: Math.ceil(session.domainRange.domainEnd + timestampOffset),
-                dataSource: threadMetaData.dataSource,
-                timePerPx: session.domain.timePerPx,
-                isFilterPythonFunction,
-                isHideFlagEvents: session.areFlagEventsHidden,
-            };
+            const requestParams = getThreadTracesRequestParams(session, threadMetaData, timestampOffset);
             try {
-                const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParam });
+                const request = await window.request(requestParams.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParams });
                 if (request === undefined) {
                     return [];
                 }
 
                 const { data: threadTraceList, maxDepth, currentMaxDepth, havePythonFunction } = request;
+
                 if (thisUnit) {
-                    const activeMaxDepth = session.autoAdjustUnitHeight ? currentMaxDepth : maxDepth;
+                    let activeMaxDepth = session.autoAdjustUnitHeight ? currentMaxDepth : maxDepth;
+                    activeMaxDepth = activeMaxDepth > MAX_UNIT_DEPTH ? FALLBACK_DEPTH : activeMaxDepth;
                     updateUnitData(thisUnit, activeMaxDepth, havePythonFunction);
+                }
+
+                // 画布高度渲染上限 50_000 像素左右，所以这里限制最大深度为 MAX_UNIT_DEPTH，超过该深度一般是因为数据异常，不作渲染
+                if (maxDepth > MAX_UNIT_DEPTH) {
+                    if (thisUnit) {
+                        (thisUnit.chart as ChartDesc<'stackStatus'>).error = true;
+                    }
+                    return [];
                 }
                 // 泳道chart返回数据减去时间偏移
                 return _.map(threadTraceList, (it) => _.map(it, (data) => {

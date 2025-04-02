@@ -4,7 +4,6 @@
 
 import styled from '@emotion/styled';
 import React, { CSSProperties, useEffect, useRef, useMemo, useState } from 'react';
-import { isArray } from 'ascend-utils';
 
 // tooltip位置偏移量
 const OFFSET_X = 20;
@@ -132,7 +131,7 @@ const TooltipComp = ({ x, y, content, style, animation = true, placement = Place
 
     return <TooltipContainer ref={tooltipRef} style={{ ...styles, position, ...(style ?? {}) }}>
         {
-            isArray(currentContent)
+            Array.isArray(currentContent)
                 ? currentContent?.map((item: React.ReactNode, index: number) => (<div key={index}>{item}</div>))
                 : <div className="formatter">
                     {Object.entries(currentContent ?? {}).map(([key, value]) => (
