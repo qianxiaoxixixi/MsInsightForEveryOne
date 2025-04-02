@@ -122,8 +122,10 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
             InterCoreSubCoreDetail subCoreDetail;
             subCoreDetail.subCoreIndex = JsonUtil::GetInteger(jsonCoreDetail, "subcore_id");
             subCoreDetail.subCoreType = JsonUtil::GetString(jsonCoreDetail, "subcore_type");
-            subCoreDetail.cycles = JsonUtil::GetInteger(jsonCoreDetail, "cycles");
-            subCoreDetail.throughput = JsonUtil::GetInteger(jsonCoreDetail, "throughput");
+            int64_t tmp = JsonUtil::GetInteger(jsonCoreDetail, "cycles");
+            subCoreDetail.cycles = tmp < 0 ? 0 :  static_cast<uint64_t>(tmp);
+            tmp = JsonUtil::GetInteger(jsonCoreDetail, "throughput");
+            subCoreDetail.throughput = tmp < 0 ? 0 :  static_cast<uint64_t>(tmp);
             subCoreDetail.hitRate = JsonUtil::GetFloat(jsonCoreDetail, "L2cache_hit_rate");
 
             // 设置最优值
@@ -152,9 +154,9 @@ void InterCoreLoadGraphParser::TransformAnalysisDetail(InterCoreLoadAnalysisDeta
 
     std::vector<InterCoreOpDetail> newOpDetails;
     uint8_t index = 0;
-    // 按照2个一组，将vector计算单元，分配到新的core op detail中
     while (index < analysisDetail.opDetails.size()) {
-        uint8_t coreId = NumberSafe::Division(index, 2);
+        // 按照2个一组，将vector计算单元，分配到新的core op detail中
+        uint8_t coreId = static_cast<uint8_t>(index / 2);
         InterCoreOpDetail detail;
         detail.coreId = coreId;
         Try2MoveSubCoreDetails(analysisDetail.opDetails[index], detail, SUB_CORE_INDEX_0);

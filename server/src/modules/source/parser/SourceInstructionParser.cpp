@@ -554,7 +554,7 @@ std::vector<SourceFileLine> SourceInstructionParser::GetApiLinesByCoreAndSource(
         return result;
     }
     // never below zero
-    size_t index = std::distance(apiCores.begin(), it);
+    size_t index = static_cast<size_t>(std::distance(apiCores.begin(), it));
 
     if (apiFiles.find(sourceName) == apiFiles.end()) {
         ServerLog::Warn("The specified file doesn't exist in api files, and source name is ", sourceName);
@@ -612,7 +612,7 @@ std::vector<SourceApiInstruction> SourceInstructionParser::GetInstructions(std::
     if (targetCore == apiCores.end()) {
         targetCore = apiCores.begin();
     }
-    size_t index = std::distance(apiCores.begin(), targetCore); // never below zero
+    size_t index = static_cast<size_t>(std::distance(apiCores.begin(), targetCore)); // never below zero
     for (const auto &item: apiInstructionList) {
         SourceApiInstruction temp;
         temp.pipe = item.pipe;
@@ -636,7 +636,8 @@ std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDy
     if (targetCore == apiCores.end()) {
         targetCore = apiCores.begin();
     }
-    size_t index = std::distance(apiCores.begin(), targetCore); // never below zero
+    // never below zero
+    size_t index = static_cast<size_t>(std::distance(apiCores.begin(), targetCore));
 
     for (const auto &item: instructionList) {
         SourceFileInstructionDynamicCol col;
