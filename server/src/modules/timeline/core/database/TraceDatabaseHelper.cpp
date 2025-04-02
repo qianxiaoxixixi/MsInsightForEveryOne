@@ -214,7 +214,8 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
-    uint64_t offset = NumberSafe::Muls(requestParams.current - 1, requestParams.pageSize);
+    uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
+        (requestParams.current - 1) * requestParams.pageSize;
     auto sameOperatorsDetailsSql = GetQueryThreadSameOperatorsDetailsSql(requestParams.tid, processType, requestParams);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
@@ -1184,7 +1185,7 @@ void TraceDatabaseHelper::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &
             continue;
         }
         // 符合要求的元素
-        if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime) {
+        if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime && tmpSelfTime >= rowJ.duration) {
             tmpSelfTime -= rowJ.duration;
         }
         j++;
@@ -1221,8 +1222,8 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
-            responseBody.data[index].avgWallDuration = NumberSafe::Division(
-                responseBody.data[index].wallDuration, responseBody.data[index].occurrences);
+            responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
+                responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
             responseBody.data[index].tid.insert(cur.tid);
         }
     }
@@ -1254,8 +1255,8 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
-            responseBody.data[index].avgWallDuration = NumberSafe::Division(
-                responseBody.data[index].wallDuration, responseBody.data[index].occurrences);
+            responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
+                responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
             responseBody.data[index].tid.insert(cur.tid);
         }
     }

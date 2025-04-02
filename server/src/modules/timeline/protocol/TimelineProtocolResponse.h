@@ -375,11 +375,13 @@ struct CommunicationSummaryInfoByThread {
     void UpdateData(bool waitFlag, uint64_t completeTime, uint64_t uncoveredTime)
     {
         if (waitFlag) {
-            completeWaitTime += completeTime;
-            uncoveredWaitTime += uncoveredTime;
+            completeWaitTime = completeWaitTime < UINT64_MAX - completeTime ? completeWaitTime + completeTime : 0;
+            uncoveredWaitTime = uncoveredWaitTime < UINT64_MAX - uncoveredTime ? uncoveredWaitTime + uncoveredTime : 0;
         } else {
-            completeTransmitTime += completeTime;
-            uncoveredTransmitTime += uncoveredTime;
+            completeTransmitTime += completeTransmitTime < UINT64_MAX - completeTime ?
+                completeTransmitTime + completeTime : 0;
+            uncoveredTransmitTime += uncoveredTransmitTime < UINT64_MAX - uncoveredTime ?
+                uncoveredTransmitTime + uncoveredTime : 0;
         }
     }
 };

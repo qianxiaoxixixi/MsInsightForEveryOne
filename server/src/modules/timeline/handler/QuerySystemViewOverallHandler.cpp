@@ -85,7 +85,7 @@ double QuerySystemViewOverallHandler::GetOverlapAnalysisData(SystemViewOverallHe
     double computingTime = overallHelper.overlapInfos[computingIndex].duration;
     double freeTime = overallHelper.overlapInfos[freeIndex].duration;
     e2eTime = communicationNotOverlapped + computingTime + freeTime;
-    if (e2eTime == 0.0) {
+    if (std::fabs(e2eTime - 0.0) < std::numeric_limits<double>::epsilon()) {
         return e2eTime;
     }
     double computingRatio = NumberUtil::DoubleReservedNDigits(PERCENTAGE_RATIO_SCALE * computingTime / e2eTime, TWO);

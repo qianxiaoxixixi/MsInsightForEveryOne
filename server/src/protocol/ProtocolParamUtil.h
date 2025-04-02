@@ -52,6 +52,10 @@ struct PageParam {
             errMsg = "Failed to check page parameter. Page size cannot be zero.";
             return false;
         }
+        if (current == 0) {
+            errMsg = "Failed to check page parameter. Current cannot be zero.";
+            return false;
+        }
         return true;
     }
 };

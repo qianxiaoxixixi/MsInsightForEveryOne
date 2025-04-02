@@ -34,7 +34,7 @@ void DeviceFlowRepo::AddHardWareMstxFlowPoint(const FlowQuery &flowQuery, std::v
         endPoint.type = "f";
         endPoint.flowId = flowId;
         endPoint.id = item.id;
-        endPoint.timestamp = NumberSafe::Sub(item.timestamp, flowQuery.minTimestamp);
+        endPoint.timestamp = item.timestamp > flowQuery.minTimestamp ? item.timestamp - flowQuery.minTimestamp : 0;
         endPoint.rankId = host + instance.GetRankId(host, std::to_string(item.deviceId));
         endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid, std::to_string(item.streamId));
         flowPointVec.emplace_back(endPoint);
@@ -69,7 +69,7 @@ std::unordered_set<uint64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQue
         endPoint.type = "f";
         endPoint.flowId = flowId;
         endPoint.id = item.opId;
-        endPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
+        endPoint.timestamp = item.timestamp - flowQuery.minTimestamp; // 业务上 timestamp > minTimestamp
         endPoint.trackId = instance.GetTrackId(endPoint.rankId, hcclPid, std::to_string(item.groupName) + "group");
         flowPointVec.emplace_back(endPoint);
     }

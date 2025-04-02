@@ -113,6 +113,9 @@ void QueryOverallMoreDetailsHandler::GetPagedData(std::vector<SameOperatorsDetai
     }
     uint64_t end = std::min(offset + static_cast<uint64_t>(params.page.pageSize),
                             static_cast<uint64_t>(filteredEvents.size()));
+    if (offset > UINT32_MAX || end > UINT32_MAX) {
+        return;
+    }
     response.body.sameOperatorsDetails.assign(filteredEvents.begin() + static_cast<uint32_t>(offset),
                                               filteredEvents.begin() + static_cast<uint32_t>(end));
 }

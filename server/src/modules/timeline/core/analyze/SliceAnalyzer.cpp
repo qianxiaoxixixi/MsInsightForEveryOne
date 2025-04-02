@@ -29,7 +29,7 @@ std::set<std::pair<uint64_t, uint32_t>> SliceAnalyzer::ComputeResultIds(uint64_t
 {
     // 根据开始时间结束时间把屏幕平均分成1000份
     const int maxDataCount = 1000;
-    uint64_t unitTime = (endTime - startTime) / maxDataCount;
+    uint64_t unitTime = (endTime - startTime) / maxDataCount; // 前端传入做了校验保证 startTime <= endTime
     if (unitTime == 0) {
         return ComputeSmallScreenIds(startTime, endTime, sliceDomain, endList, pythonFunctionIds);
     }
@@ -53,18 +53,20 @@ std::set<std::pair<uint64_t, uint32_t>> SliceAnalyzer::ComputeResultIds(uint64_t
                 ids.emplace(endList[item.depth].tempId, item.depth);
                 endList[item.depth].tempId = 0;
                 endList[item.depth].tempDuration = 0;
+                // item.timestamp 从数据库得到，item.timestamp <= INT64_MAX，unitTime <= UINT64_MAX / 1000
+                // item.timestamp + unitTime < UINT64_MAX
                 endList[item.depth].curLimitTime = item.timestamp + unitTime;
             }
             // 更新tempId
-            if (endList[item.depth].tempDuration <= item.endTime - item.timestamp) {
+            if (item.endTime >= item.timestamp && endList[item.depth].tempDuration <= item.endTime - item.timestamp) {
                 endList[item.depth].tempId = item.id;
                 endList[item.depth].tempDuration = item.endTime - item.timestamp;
             }
         } else {
             DepthHelper depthHelper;
             depthHelper.endTime = item.endTime;
-            depthHelper.curLimitTime = startTime + unitTime;
-            if (item.endTime >= startTime && item.timestamp <= endTime) {
+            depthHelper.curLimitTime = startTime + unitTime; // (startTime + unitTime) < endTime < UINT64_MAX
+            if (item.endTime >= startTime && item.timestamp <= endTime && item.endTime >= item.timestamp) {
                 depthHelper.tempId = item.id;
                 depthHelper.tempDuration = item.endTime - item.timestamp;
             }

@@ -90,9 +90,9 @@ std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
     long double start = JsonUtil::GetLongDouble(json, "ts");
     double tempDur = JsonUtil::GetDouble(json, "dur");
     event->ts = NumberUtil::TimestampUsToNs(start);
-    long double end = NumberSafe::Add(start, tempDur);
+    long double end = start < std::numeric_limits<long double>::max() - tempDur ? start + tempDur : 0;
     event->end = NumberUtil::TimestampUsToNs(end);
-    event->dur = NumberSafe::Sub(event->end, event->ts);
+    event->dur = event->end > event->ts ? event->end - event->ts : 0;
     event->name = JsonUtil::GetString(json, "name");
     event->threadName = JsonUtil::GetString(json, "tid");
     event->processName = JsonUtil::GetString(json, "pid");
