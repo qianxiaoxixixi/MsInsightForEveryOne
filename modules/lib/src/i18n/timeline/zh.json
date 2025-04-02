@@ -143,6 +143,7 @@
       "FileSizeLimitWarning": "请选择小于10GB的文件",
       "Error": "错误",
       "Warn": "警告"
-    }
+    },
+    "RenderError": "渲染失败，请检查数据是否正确"
   }
 }

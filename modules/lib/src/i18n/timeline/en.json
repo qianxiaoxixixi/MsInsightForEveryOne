@@ -143,6 +143,7 @@
       "FileSizeLimitWarning": "Please select a file smaller than 10GB",
       "Error": "Error",
       "Warn": "Warn"
-    }
+    },
+    "RenderError": "Rendering failed. Please check if the data is correct"
   }
 }

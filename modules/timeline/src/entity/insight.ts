@@ -28,6 +28,7 @@ export interface ChartDesc<T extends ChartType> {
     onHover?: ChartReaction<T>;
     onClick?: ChartReaction<T>;
     decorator?: ChartDecorator<T>;
+    error?: boolean;
 }
 
 export const isGetChartConfig = <T extends ChartType>(config: ChartDesc<T>['config']): config is GetChartConfig<T> => {

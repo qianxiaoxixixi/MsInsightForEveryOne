@@ -14,6 +14,8 @@ import { StatusChart } from './StatusChart';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { Mask } from './Mask';
 import { customDebounce } from '../../utils/customDebounce';
+import { useTranslation } from 'react-i18next';
+import styled from '@emotion/styled';
 
 const chartMap: { [K in ChartType]: React.FC<ChartProps<K>> } = {
     filledLine: FilledLineChart,
@@ -28,6 +30,16 @@ export function isShowMask(session: Session, phase: string): boolean {
     return session.id !== 'HomePage' && session.phase !== 'error' && phase !== 'configuring' && phase !== 'download' && phase !== 'error';
 }
 
+const ChartErrorDiv = styled.div<{height: number}>`
+    display: flex;
+    height: ${(props): string => `${props.height}px`};
+
+    .text {
+        color: ${(props): string => props.theme.dangerColor};
+        margin: auto;
+    }
+`;
+
 export const Chart = observer(<T extends ChartType>(props: {
     desc: ChartDesc<T>;
     serial: string;
@@ -38,6 +50,7 @@ export const Chart = observer(<T extends ChartType>(props: {
     width: number;
     phase: string;
 }) => {
+    const { t } = useTranslation('timeline');
     const { desc, serial, title, session, metadata, width, phase, unit } = props;
     const offlinePlaceholder = useMemo(() => {
         return <ChartErrorBoundary height={desc.height} width={width} phase={phase}>
@@ -65,7 +78,14 @@ export const Chart = observer(<T extends ChartType>(props: {
     };
     return <ChartErrorBoundary height={desc.height} width={width} phase={phase}>
         <Mask unitPhase={phase} isShowMask={isShowMask(session, phase)}>
-            { React.createElement(chartMap[desc.type], { key: `${serial} chart`, ...chartProps }) }
+            {desc.error
+                ? <ChartErrorDiv height={desc.height}>
+                    <div className="text">
+                        {t('RenderError')}
+                    </div>
+                </ChartErrorDiv>
+                : React.createElement(chartMap[desc.type], { key: `${serial} chart`, ...chartProps })
+            }
         </Mask>
     </ChartErrorBoundary>;
 });
