@@ -84,7 +84,7 @@ bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool
     if (StringUtil::Contains(numberStr, ".")) {
         tempTransitSize = NumberUtil::StringToDouble(numberStr);
     } else {
-        tempInt = std::strtol(str, nullptr, INT_TEN);
+        tempInt = NumberUtil::StringToInt(numberStr);
     }
     return true;
 }

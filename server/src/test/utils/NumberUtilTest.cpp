@@ -127,6 +127,17 @@ TEST(NumberUtil, StringToLongDoubleWithAbnormalStringReturnInvalidNumber) {
     EXPECT_EQ(NumberUtil::StringToLongDouble("a+b"), 0);
 }
 
+TEST(NumberUtil, StringToIntWithNormalStringReturnValidNumber) {
+    EXPECT_EQ(NumberUtil::StringToInt("0"), 0);
+    EXPECT_EQ(NumberUtil::StringToInt("2537"), 2537);
+    EXPECT_EQ(NumberUtil::StringToInt("-1064"), -1064);
+}
+
+TEST(NumberUtil, StringToIntWithAbnormalStringReturnZero) {
+    EXPECT_EQ(NumberUtil::StringToInt(""), 0);
+    EXPECT_EQ(NumberUtil::StringToInt("abc"), 0);
+}
+
 TEST(NumberUtil, StringToLongWithNormalStringReturnValidNumber) {
     EXPECT_EQ(NumberUtil::TryParseInt("0"), 0);
     EXPECT_EQ(NumberUtil::TryParseInt("001"), 1);
