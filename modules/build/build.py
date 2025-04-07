@@ -108,12 +108,6 @@ def main():
         multiprocessing.set_start_method('fork')
 
     clean()
-    os.putenv('npm_config_build_from_source', 'true')
-    os.putenv('npm_config_audit', 'false')
-    os.putenv('npm_config_strict_ssl', 'false')
-    os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
-    os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
-    os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
 
     return parallel_build()
 
