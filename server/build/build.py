@@ -62,20 +62,6 @@ def execute_cmd(cmd, work_path):
     return proc.returncode
 
 
-def information():
-    build_log('os platform = {}'.format(platform.system()))
-    build_log('home directory = {}'.format(HOME_DIR))
-    build_log('third_party directory = {}'.format(THIRD_PARTY_DIR))
-    build_log('src directory = {}'.format(SRC_DIR))
-    build_log('output directory = {}'.format(OUTPUT_DIR))
-    build_log('build directory = {}'.format(BUILD_DIR))
-    build_log('log directory = {}'.format(LOG_DIR))
-
-
-def info(args):
-    information()
-
-
 def log_output(output):
     """log command output"""
     while True:
@@ -100,29 +86,16 @@ def get_gxx_type():
     return gxx_type
 
 
-def build_bin(args):
+def build():
     build_log('begin build...\n')
-    generator = 'Ninja'
     gxx_type = get_gxx_type()
     build_dir = os.path.join(CMAKE_BUILD_DIR, gxx_type)
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
-    if args.build_release:
-        build_type = 'release'
-    else:
-        build_type = 'debug'
 
     build_cmds = [
-        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
-        '-D_PROJECT_TYPE=' + args.project_type
+        'cmake', HOME_DIR, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=release'
     ]
-
-    if args.cross_compile:
-        toolchain = os.path.join(HOME_DIR, 'toolchain.cmake')
-        build_cmds.append('-DCMAKE_TOOLCHAIN_FILE=' + toolchain)
-
-    if args.project_type == 'true':
-        build_cmds.append('-DWASM_MJS_ENABLE=ON')
 
     result = execute_cmd(build_cmds, build_dir)
     if result != 0:
@@ -158,24 +131,6 @@ def build_bin(args):
     return 0
 
 
-def build(args):
-    return build_bin(args)
-
-
-def clean(args):
-    """clean build outputs and logs"""
-    build_log('begin clean...\n')
-    output_dirs = ['output', LOG_DIR, CMAKE_BUILD_DIR]
-    for file_path in output_dirs:
-        abs_file_path = os.path.join(HOME_DIR, file_path)
-        if os.path.isdir(abs_file_path):
-            shutil.rmtree(abs_file_path, ignore_errors=True)
-        if os.path.isfile(abs_file_path):
-            os.remove(abs_file_path)
-    build_log('end clean.\n')
-    return 0
-
-
 def init_log(name):
     """init log config"""
     if not os.path.exists(LOG_DIR):
@@ -195,18 +150,17 @@ def init_log(name):
     return building_log
 
 
-def build_test(args):
+def build_test():
     build_log('begin test build...\n')
     generator = 'MinGW Makefiles' if IS_WINDOWS else 'Ninja'
     build_dir = os.path.join(CMAKE_BUILD_DIR, "test")
 
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
-    build_type = 'release'
 
     build_cmds = [
-        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
-        '-D_PROJECT_TYPE=' + args.project_type
+        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=release',
+        '-D_PROJECT_TYPE=test'
     ]
 
     result = execute_cmd(build_cmds, build_dir)
@@ -230,49 +184,15 @@ def main():
     subparsers = parser.add_subparsers(help='sub command help')
     parser_build = subparsers.add_parser('build', help='build dic server')
     parser_build.set_defaults(func=build)
-    parser_build.add_argument('--release',
-                              action='store_true',
-                              dest='build_release',
-                              help='release build')
-    parser_build.add_argument('--debug',
-                              action='store_false',
-                              dest='build_release',
-                              help='debug build')
-    parser_build.add_argument('--project_type',
-                              nargs='?',
-                              type=str,
-                              dest='project_type',
-                              default='',
-                              help='project type. CentricServer or EdgeServer')
-
-    parser_build.add_argument('--cross_compile',
-                              action='store_true',
-                              help='cross compile')
-
-    parser_clean = subparsers.add_parser('clean', help='clean build')
-    parser_clean.set_defaults(func=clean)
-
-    parser_clean = subparsers.add_parser('info', help='build information')
-    parser_clean.set_defaults(func=info)
 
     parser_test = subparsers.add_parser('test', help='test build')
     parser_test.set_defaults(func=build_test)
-    parser_test.add_argument('--profile',
-                             action='store_true',
-                             dest='profile',
-                             help='build type setting. just profile')
-    parser_test.add_argument('--project_type',
-                             nargs='?',
-                             type=str,
-                             dest='project_type',
-                             default='test',
-                             help='project_type. just test')
 
     args = parser.parse_args()
     if not hasattr(args, 'func'):
         args = parser.parse_args(['build'] + sys.argv[1:])
 
-    return args.func(args)
+    return args.func()
 
 
 if __name__ == '__main__':

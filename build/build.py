@@ -33,7 +33,6 @@ class Const:
     MODULES_DIR = 'modules'
     SERVER_DIR = 'server'
     BUILD_DIR = 'build'
-    PLATFORM_DIR = 'platform'
     SRC_DIR = 'src'
     MANIFEST_DIR = 'manifest'
     DEPENDENCY_DIR = 'dependency'
@@ -68,11 +67,6 @@ class Const:
     MAC_ARM_SIGNATURE_CERTIFICATE_ID = "0CC4E29F544EE91874A89DE9C61421E3D3722A79"
     MAC_X86_SIGNATURE_CERTIFICATE_ID = "0B361EE30477593A3766B67157B94FB942EAF20F"
     MAC_SIGNATURE_CERTIFICATE_ID = ""
-
-
-class ExecError(Exception):
-    def __init__(self, message=None):
-        super(ExecError, self).__init__(message)
 
 
 def init():
@@ -136,7 +130,7 @@ def build_server():
     if result != 0:
         return 1
     # 编译代码
-    result = exec_command([Const.PYTHON, 'build.py', 'build', '--release'], build_path, Const.SERVER_DIR)
+    result = exec_command([Const.PYTHON, 'build.py', 'build'], build_path, Const.SERVER_DIR)
     if result != 0:
         return 1
     # 归一化构建产物目录，方便后续其他组件拷贝
@@ -155,10 +149,7 @@ def build_server():
 
 
 def build_frontend():
-    os.putenv('npm_config_build_from_source', 'true')
-    os.putenv('npm_config_audit', 'false')
     os.putenv('npm_config_strict_ssl', 'false')
-    os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
 
     module_name = 'frontend'
@@ -181,10 +172,7 @@ def build_frontend():
 
 
 def set_npm_config():
-    os.putenv('npm_config_build_from_source', 'true')
-    os.putenv('npm_config_audit', 'false')
     os.putenv('npm_config_strict_ssl', 'false')
-    os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
 
@@ -365,10 +353,7 @@ def build_package(version, os_name):
 
 def build_light_package(version, os_name, is_huaweicloud):
     if is_huaweicloud and os_name != "linux-aarch64" and os_name != "linux-x86_64":
-        logging.warning('Only build huaweicloud package for arm and x86_64, Not for windows!')
         return 0
-    os.putenv('RUSTUP_UPDATE_ROOT', 'http://rust.inhuawei.com/rustup-static/rustup')
-    os.putenv('RUSTUP_DIST_SERVER', 'http://rust.inhuawei.com/rustup-static')
     os.putenv('CARGO_REGISTRY', 'https://mirrors.tools.huawei.com/rust/crates.io-index/')
     if os.getenv('BEPHOME') is not None:  # 规避目前cargo不能跑bep问题
         os.putenv('LD_PRELOAD', '')
