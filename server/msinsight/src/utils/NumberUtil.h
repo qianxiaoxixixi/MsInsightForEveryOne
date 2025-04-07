@@ -209,6 +209,18 @@ public:
         }
     }
 
+    static inline int StringToInt(const std::string& usStr)
+    {
+        if (usStr.empty()) {
+            return 0;
+        }
+        try {
+            return std::stoi(usStr);
+        } catch (std::exception &) {
+            return 0;
+        }
+    }
+
     static inline long StringToLong(const std::string& usStr)
     {
         if (usStr.empty()) {

@@ -142,10 +142,10 @@ CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const r
     }
     size_t rankIndex = tempRank.empty() ? 0 : tempRank.find_last_of('-');
     if (rankIndex > 0 && rankIndex != std::string::npos) {
-        matrixInfo.srcRank = atof(tempRank.substr(0, rankIndex).c_str());
-        matrixInfo.dstRank =  atof(tempRank.substr(rankIndex + 1).c_str());
+        matrixInfo.srcRank = NumberUtil::StringToInt(tempRank.substr(0, rankIndex));
+        matrixInfo.dstRank = NumberUtil::StringToInt(tempRank.substr(rankIndex + 1));
     } else {
-        matrixInfo.srcRank = atof(tempRank.c_str());
+        matrixInfo.srcRank = NumberUtil::StringToInt(tempRank);
     }
     matrixInfo.transportType = JsonUtil::GetDumpString(json, "Transport Type");
     matrixInfo.transitTime = JsonUtil::GetDouble(json, "Transit Time(ms)");
