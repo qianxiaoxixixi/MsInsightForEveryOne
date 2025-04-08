@@ -671,9 +671,10 @@ std::vector<MatrixInfoDo> TextClusterDatabase::MergeMatrixInfoDoList(const std::
 
 bool TextClusterDatabase::CheckIsPpOp(const std::string &opName)
 {
+    std::string opNameLowercase = StringUtil::ToLower(opName);
     // 判断算子是否为Total Op Info 或send或receive
-    return opName == totalOpInfo || opName.find(sendOpKey) != std::string::npos ||
-        opName.find(receiveOpKey) != std::string::npos;
+    return opName == totalOpInfo || opNameLowercase.find(sendOpKey) != std::string::npos ||
+        opNameLowercase.find(receiveOpKey) != std::string::npos;
 }
 
 bool TextClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
