@@ -4,11 +4,13 @@
 
 import { test, expect } from '@playwright/test';
 import { FrameworkPage } from '@/page-object';
+import { clearAllData } from '@/utils';
 
 test.describe('Framework', () => {
     test.beforeEach(async ({ page }) => {
         const frameworkPage = new FrameworkPage(page);
         await frameworkPage.goto();
+        await clearAllData(page);
     });
 
     // 切换主题
