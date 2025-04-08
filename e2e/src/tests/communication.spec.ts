@@ -6,6 +6,7 @@ import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { CommunicationPage, FrameworkPage, TimelinePage } from '@/page-object';
 import { clearAllData, importData, setupWebSocketListener, waitForResponse, waitForWebSocketEvent } from '@/utils';
 import { SelectHelpers, TableHelpers } from '@/components';
+import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     communicationPage: CommunicationPage;
@@ -243,5 +244,31 @@ test.describe('Communication', () => {
         await communicationFrame.getByText('Find in Timeline').click();
 
         await expect(fullPage).toHaveScreenshot('redirect-to-timeline.png', { maxDiffPixels: 500 });
+    });
+});
+
+test.describe('Communication(cluster)', () => {
+    test.beforeEach(async ({ page, communicationPage }) => {
+        const { loadingDialog } = new FrameworkPage(page);
+        await page.goto('/');
+        await importData(page, FilePath.TEXT_CLUSTER);
+        await communicationPage.goto();
+        if (await loadingDialog.count()) {
+            await loadingDialog.waitFor({ state: 'detached' });
+        }
+    });
+
+    test.afterEach(async ({ page }) => {
+        await clearAllData(page);
+    });
+
+    // 【case】p2p矩阵检查
+    test('p2p_matrix', async ({ page, communicationPage }) => {
+        const { communicationFrame, communicationGroupSelector, matrixChart } = communicationPage;
+        const communicationGroupSelect = new SelectHelpers(page, communicationGroupSelector, communicationFrame);
+        await communicationGroupSelect.open();
+        await communicationGroupSelect.setValue('p2p');
+        await communicationGroupSelect.selectOption('p2p');
+        await expect(matrixChart).toHaveScreenshot('communication-matrix-p2p.png');
     });
 });
