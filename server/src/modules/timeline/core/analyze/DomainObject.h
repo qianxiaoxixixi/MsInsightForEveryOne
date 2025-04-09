@@ -114,6 +114,14 @@ struct FlowPoint {
         }
         return timestamp == right.timestamp && id < right.id;
     }
+
+    static bool CompareTimestampASC(const FlowPoint &first, const FlowPoint &second)
+    {
+        if (first.timestamp == second.timestamp) {
+            return first.trackId < second.trackId;
+        }
+        return first.timestamp < second.timestamp;
+    }
 };
 
 // PROCESS_TYPE 仅仅给 DB 场景使用，Text 场景最好不要使用此枚举值

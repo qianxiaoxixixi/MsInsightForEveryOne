@@ -76,6 +76,10 @@ struct FlowQuery {
     std::string cat;
     std::string fileId;
     PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
+    /**
+     * flowId集合
+     */
+    std::vector<std::string> flowIds;
 };
 
 struct ThreadQuery {
