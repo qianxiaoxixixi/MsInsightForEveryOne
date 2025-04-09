@@ -359,7 +359,7 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
         "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw, bw.sdma_time as sdma_time, bw.rdma_time as rdma_time "
         "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
         " LEFT JOIN " + TABLE_COMM_GROUP + " map ON map.group_name = t.group_name"
-        " JOIN ("
+        " LEFT JOIN ("
         "    SELECT rank_id, "
         "    MAX(CASE WHEN band_type = 'SDMA' THEN bandwidth ELSE 0 END) AS sdma_bw, "
         "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw, "
