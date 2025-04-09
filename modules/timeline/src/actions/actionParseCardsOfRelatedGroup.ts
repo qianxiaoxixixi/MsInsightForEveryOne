@@ -25,6 +25,10 @@ function getRankIdByCardId(cardId: string): string {
     }
 }
 
+function getSelectedRankList(session: Session): string[] {
+    return session.selectedUnits.map((item) => (item.metadata as ThreadMetaData).rankList ?? []).flat();
+}
+
 function getUnparsedCards(session: Session, rankIds: string[]): InsightUnit[] {
     return preOrderFlatten(getRootUnit(session.units), 0, {
         when: (node) => !(node instanceof CardUnit && node.metadata?.cardName !== 'Host'),
@@ -33,19 +37,42 @@ function getUnparsedCards(session: Session, rankIds: string[]): InsightUnit[] {
         .filter((item) => rankIds.includes(getRankIdByCardId((item.metadata as CardMetaData).cardId)));
 }
 
-export const actionActionParseCardsOfRelatedGroup = register({
-    name: 'parseCardsOfRelatedGroup',
-    label: 'timeline:contextMenu.Parsed Cards of Related Group',
-    perform: (session): void => {
-        let unparsedCards: InsightUnit[] = [];
+function getUnparsedCardIds(session: Session): string[] {
+    let unparsedCards: InsightUnit[] = [];
 
-        // 必须只选中一个
-        if (session.selectedUnits.length === 1) {
-            const rankList = session.selectedUnits.map((item) => (item.metadata as ThreadMetaData).rankList ?? []).flat();
-            if (Array.isArray(rankList) && rankList.length !== 0) {
-                unparsedCards = getUnparsedCards(session, rankList);
-            }
+    // 必须只选中一个
+    if (session.selectedUnits.length === 1) {
+        const rankList = getSelectedRankList(session);
+        if (Array.isArray(rankList) && rankList.length !== 0) {
+            unparsedCards = getUnparsedCards(session, rankList);
         }
+    }
+
+    return unparsedCards.map((item) => (item.metadata as CardMetaData).cardId);
+}
+
+export const actionParseCardsOfRelatedGroup = register({
+    name: 'parseCardsOfRelatedGroup',
+    label: (session, t) => {
+        const unparsedCardIds = getUnparsedCardIds(session);
+        return unparsedCardIds.length === 0
+            ? t('timeline:contextMenu.Parsed Cards of Related Group')
+            : t('timeline:contextMenu.Parse Cards of Related Group', { ranks: unparsedCardIds.map(getRankIdByCardId).join(',') });
+    },
+    disabled: (session) => {
+        const unparsedCardIds = getUnparsedCardIds(session);
+        return unparsedCardIds.length === 0;
+    },
+    visible: (session) => {
+        if (session.selectedUnits.length !== 1) {
+            return false;
+        }
+        const rankList = getSelectedRankList(session);
+        return Array.isArray(rankList) && rankList.length !== 0;
+    },
+    perform: (session): void => {
+        const rankList = getSelectedRankList(session);
+        const unparsedCards = getUnparsedCards(session, rankList);
         const unparsedCardIds = unparsedCards.map((item) => (item.metadata as CardMetaData).cardId);
 
         parseCards({ cards: unparsedCardIds }).then((): void => {

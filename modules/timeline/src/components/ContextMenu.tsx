@@ -11,13 +11,8 @@ import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { Session } from '../entity/session';
 import type { ChartInteractorHandles, InteractorMouseState } from './charts/ChartInteractor/ChartInteractor';
-import type { ThreadMetaData, CardMetaData } from '../entity/data';
-import { preOrderFlatten } from '../entity/common';
-import { type InsightUnit, unit } from '../entity/insight';
-import { getRootUnit } from '../utils';
-import { parseCards } from '../api/request';
-import { CardUnit } from '../insight/units/AscendUnit';
-import { message } from 'antd';
+import { unit } from '../entity/insight';
+
 import {
     actionClearBenchmarkSlice,
     actionCollapseAllUnits,
@@ -44,30 +39,21 @@ import {
     actionSetCardAlias,
     actionPinByGroupNameValue,
     actionUnpinByGroupNameValue,
+    actionParseCardsOfRelatedGroup,
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
 
-export const MAX_ZOOM_COUNT = 10000;
 interface Position {
     left: string;
     top: string;
-};
+}
 
 interface Props {
     session: Session;
     interactorMouseState: InteractorMouseState;
     theme?: Theme;
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
-}
-
-interface MenuItemModel {
-    name: string;
-    key: string;
-    event: (session: Session, menuItem?: MenuItemModel) => void;
-    disabled?: boolean;
-    visible: boolean;
-    title?: string;
 }
 
 const MenuContainer = styled.div`
@@ -137,26 +123,6 @@ export const EmptyUnit = unit<EmptyMetaData>({
 interface EmptyMetaData {
     count: number;
     dataSource: DataSource;
-};
-
-function getRankIdByCardId(cardId: string): string {
-    // text 场景：rankId = cardId，直接返回
-    // db 场景：cardId = '{文件名} {rankId}'，需特殊处理
-    // 匹配最后一个空格之后的所有数字
-    const match = cardId.match(/ (?<rankId>\d+)$/);
-    if ((match?.groups?.rankId) !== undefined) {
-        return match.groups.rankId;
-    } else {
-        return cardId;
-    }
-}
-
-function getUnparsedCards(session: Session, rankIds: string[]): InsightUnit[] {
-    return preOrderFlatten(getRootUnit(session.units), 0, {
-        when: (node) => !(node instanceof CardUnit && node.metadata?.cardName !== 'Host'),
-    })
-        .filter((item) => item instanceof CardUnit && item.metadata?.cardName !== 'Host' && item.shouldParse)
-        .filter((item) => rankIds.includes(getRankIdByCardId((item.metadata as CardMetaData).cardId)));
 }
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
@@ -175,52 +141,6 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     }
     setPosition({ left: `${xPos.current}px`, top: `${yPos.current}px` });
     menu.focus();
-}
-
-function buildParseCardsOfRelatedGroupMenuItem(
-    session: Session,
-    t: TFunction): MenuItemModel[] {
-    let name = '';
-    let disabled = true;
-    let visible = false;
-    let unparsedCards: InsightUnit[] = [];
-
-    // 必须只选中一个
-    if (session.selectedUnits.length === 1) {
-        const rankList = session.selectedUnits.map((item) => (item.metadata as ThreadMetaData).rankList ?? []).flat();
-        if (Array.isArray(rankList) && rankList.length !== 0) {
-            visible = true;
-            unparsedCards = getUnparsedCards(session, rankList);
-        }
-    }
-    const unparsedCardIds = unparsedCards.map((item) => (item.metadata as CardMetaData).cardId);
-    if (unparsedCardIds.length === 0) {
-        name = t('timeline:contextMenu.Parsed Cards of Related Group');
-        disabled = true;
-    } else {
-        name = t('timeline:contextMenu.Parse Cards of Related Group', { ranks: unparsedCardIds.map(getRankIdByCardId).join(',') });
-        disabled = false;
-    }
-
-    return [{
-        name,
-        title: name,
-        key: 'parseCardsOfRelatedGroup',
-        event: (): void => {
-            parseCards({ cards: unparsedCardIds }).then((): void => {
-                runInAction((): void => {
-                    unparsedCards.forEach((item): void => {
-                        item.isParseLoading = true;
-                    });
-                });
-            }).catch(err => {
-                message.error(err);
-            });
-            closeMenu(session);
-        },
-        disabled,
-        visible,
-    }];
 }
 
 const contextMenuItems: Action[] = [
@@ -249,6 +169,7 @@ const contextMenuItems: Action[] = [
     actionSetCardAlias,
     actionPinByGroupNameValue,
     actionUnpinByGroupNameValue,
+    actionParseCardsOfRelatedGroup,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
@@ -256,9 +177,6 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     if (!Array.isArray(session.selectedUnits) || session.selectedUnits.length === 0) {
         return <></>;
     }
-    const menuItems: MenuItemModel[] = [
-        ...buildParseCardsOfRelatedGroupMenuItem(session, t),
-    ];
 
     return <>
         {[contextMenuItems
@@ -286,17 +204,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
                     <kbd className="menu-item__shortcut">{item.name ? getShortcutFromShortcutName(item.name as ShortcutName) : ''}</kbd>
                 </MenuItem>;
             }),
-        menuItems.filter(menuItem => menuItem.visible).map(item => (
-            <MenuItem
-                className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key} title={item.title}
-                onClick={(e): void => {
-                    if (item.disabled) { return; }
-                    item.event(session, item);
-                }}
-            >
-                <div className="menu-item__label">{item.name}</div>
-                <kbd className="menu-item__shortcut"></kbd>
-            </MenuItem>))]}
+        ]}
     </>;
 };
 
