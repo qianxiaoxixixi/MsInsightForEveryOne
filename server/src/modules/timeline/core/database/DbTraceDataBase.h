@@ -103,7 +103,7 @@ public:
 
     std::vector<std::string> QueryRankId();
     std::string QueryHostInfo() override;
-    std::string QueryHostInfoWithHostPath(const std::string &pathTillCard);
+    std::string QueryHostInfoWithHostPath(const std::string &path);
     std::string GetDeviceId(const std::string& fileId);
     std::unordered_map<std::string, std::string> QueryRankIdAndDeviceMap();
 
