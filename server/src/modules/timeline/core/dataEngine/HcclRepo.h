@@ -78,7 +78,7 @@ private:
     std::string QueryRdmaTypeName(const SliceQuery &sliceQuery, CommucationTaskInfoPO &targetTaskInfo);
 
     void SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
-        const TaskPO &targetPO);
+        const TaskPO &targetPO, CommucationTaskInfoPO &targetTaskInfo);
 
     static std::string GetRealRankByLocalRank(uint64_t localRank, std::vector<std::string> &realRankList);
 
