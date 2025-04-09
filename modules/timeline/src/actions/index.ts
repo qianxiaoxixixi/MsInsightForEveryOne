@@ -30,3 +30,4 @@ export { actionScrollDown, actionScrollUp } from './actionScroll';
 export { actionToggleBottomPanel } from './actionToggleBottomPanel';
 export { actionLockSelection, actionUnLockSelection } from './actionLockSelection';
 export { actionSetCardAlias } from './actionSetCardAlias';
+export { actionParseCardsOfRelatedGroup } from './actionParseCardsOfRelatedGroup';
