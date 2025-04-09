@@ -25,16 +25,16 @@ const DEFAULT_CHART_ZOOM_HEIGHT = 400;
 const MIN_CHART_ITEM_HEIGHT = 30;
 const MAX_CHART_HEIGHT = 800;
 const NS_TO_MS_FACTOR = 0.000001;
-// HCCL缩略图初始化最大可见rank数量
+// Communication 缩略图初始化最大可见rank数量
 const INITINAL_MAX_VISIBLE_RANK_NUMBER = 516;
-// HCCL缩略图初始化最大可见算子数
+// Communication 缩略图初始化最大可见算子数
 const MAX_VISIBLE_OPERATOR_NUMBER = 10000;
 
 function initDataZoom(totalNum: number, dataLength: number): void {
     if (dataLength <= 0 || totalNum <= 0 || option.dataZoom.length <= 1) {
         return;
     }
-    // 计算HCCL缩略图纵轴显示范围，限定最多显示516列，如果rank数量超过516则计算比例，计算 范围 = (516 ÷ rank数量) * 100
+    // 计算 Communication 缩略图纵轴显示范围，限定最多显示516列，如果rank数量超过516则计算比例，计算 范围 = (516 ÷ rank数量) * 100
     // 显示区间为[100 - 范围, 100]
     if (dataLength > INITINAL_MAX_VISIBLE_RANK_NUMBER) {
         const yPercentage = Math.ceil(INITINAL_MAX_VISIBLE_RANK_NUMBER / dataLength * 100);
@@ -44,7 +44,7 @@ function initDataZoom(totalNum: number, dataLength: number): void {
         option.dataZoom[1].start = 0;
         option.dataZoom[1].end = 100;
     }
-    // 计算HCCL缩略图横轴显示范围，限定最多显示10000条（10000是估值，实际显示范围会有所波动），计算 范围 = (10000 ÷ 数据总量) * 100
+    // 计算 Communication 缩略图横轴显示范围，限定最多显示10000条（10000是估值，实际显示范围会有所波动），计算 范围 = (10000 ÷ 数据总量) * 100
     // 显示区间为[0, 范围]
     if (totalNum > MAX_VISIBLE_OPERATOR_NUMBER) {
         const xPercentage = Math.ceil(MAX_VISIBLE_OPERATOR_NUMBER / totalNum * 100);
@@ -378,6 +378,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
     const menuItems = useMenuItems(session);
     const chartRef = useRef<HTMLDivElement>(null);
     const scrollContainer = document.querySelector('.mi-page-content');
+    const { t } = useTranslation('communication', { keyPrefix: 'sessionTitle' });
 
     // 修复echarts的dataZoom开启鼠标滚轮缩放时，页面不滚动的问题
     const syncScroll = (e: WheelEvent): void => {
@@ -403,7 +404,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
         };
     }, [dataSource]);
 
-    return <CollapsiblePanel title={'HCCL'}>
+    return <CollapsiblePanel title={t('Communication')}>
         {session.durationFileCompleted
             ? <Dropdown
                 menu={{

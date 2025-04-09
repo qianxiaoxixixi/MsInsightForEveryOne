@@ -70,7 +70,7 @@ const resetStatus = (): void => {
     });
 };
 
-export const locateHCCL: NotificationHandler = (data): void => {
+export const locateCommunication: NotificationHandler = (data): void => {
     const { iterationId, operatorName, stage } = data as unknown as ConditionDataType;
     updateData({
         iterationId,
