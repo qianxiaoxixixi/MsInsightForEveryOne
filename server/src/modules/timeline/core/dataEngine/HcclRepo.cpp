@@ -247,29 +247,33 @@ bool HcclRepo::QueryPlaneSliceDetailInfo(const SliceQuery &sliceQuery, CompeteSl
     competeSliceDomain.id = targetPO.id;
     competeSliceDomain.timestamp = targetPO.timestamp;
     competeSliceDomain.endTime = targetPO.endTime;
-    std::vector<uint64_t> strIds = { targetPO.taskType };
-    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(strIds, sliceQuery.rankId);
-    competeSliceDomain.name = strMap[targetPO.taskType];
-    SetPlaneSliceArgs(sliceQuery, competeSliceDomain, targetPO);
-    return true;
-}
-
-void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
-    const TaskPO &targetPO)
-{
-    const uint64_t globalTaskId = targetPO.globalTaskId;
     std::vector<CommucationTaskInfoPO> commucationTaskInfoPOs;
     commucationTaskInfoTable->Select(CommucationTaskInfoColumn::SRC_RANK)
         .Select(CommucationTaskInfoColumn::DST_RANK, CommucationTaskInfoColumn::TRANSPORT_TYPE)
         .Select(CommucationTaskInfoColumn::SIZE, CommucationTaskInfoColumn::DATA_TYPE)
         .Select(CommucationTaskInfoColumn::LINK_TYPE, CommucationTaskInfoColumn::RDMA_TYPE)
-        .Select(CommucationTaskInfoColumn::GROUPNAME)
-        .Eq(CommucationTaskInfoColumn::GLOBAL_TASK_ID, globalTaskId)
+        .Select(CommucationTaskInfoColumn::GROUPNAME, CommucationTaskInfoColumn::TASK_TYPE)
+        .Eq(CommucationTaskInfoColumn::GLOBAL_TASK_ID, targetPO.globalTaskId)
         .ExcuteQuery(sliceQuery.rankId, commucationTaskInfoPOs);
     if (std::empty(commucationTaskInfoPOs)) {
-        return;
+        ServerLog::Warn("Failed to query plane slice detail by id. id is: %", sliceQuery.sliceId);
+        return false;
     }
-    CommucationTaskInfoPO targetTaskInfo = commucationTaskInfoPOs[0];
+    CommucationTaskInfoPO infoPo = commucationTaskInfoPOs[0];
+    std::vector<uint64_t> strIds = { infoPo.taskType };
+    std::unordered_map<uint64_t, std::string> strMap = stringIdsTable->QueryStrMap(strIds, sliceQuery.rankId);
+    if (strMap.find(infoPo.taskType) == strMap.end()) {
+        ServerLog::Warn("Failed to query plane slice name.");
+        return false;
+    }
+    competeSliceDomain.name = strMap[infoPo.taskType];
+    SetPlaneSliceArgs(sliceQuery, competeSliceDomain, targetPO, infoPo);
+    return true;
+}
+
+void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain,
+    const TaskPO &targetPO, CommucationTaskInfoPO &targetTaskInfo)
+{
     std::string notifyId = std::to_string(targetTaskInfo.notifyId);
     std::string streamId = std::to_string(targetPO.streamId);
     std::string taskId = std::to_string(targetPO.taskId);
@@ -291,7 +295,7 @@ void HcclRepo::SetPlaneSliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomai
     JsonUtil::AddConstMember(json, TaskColumn::TASK_TYPE, taskType, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::SRC_RANK, srcRank, allocator);
     JsonUtil::AddConstMember(json, CommucationTaskInfoColumn::DST_RANK, dstRank, allocator);
-    std::optional<ParallelGroupInfo> groupInfo = GetGroupInfoByGroupNameId(commucationTaskInfoPOs[0].groupName,
+    std::optional<ParallelGroupInfo> groupInfo = GetGroupInfoByGroupNameId(targetTaskInfo.groupName,
                                                                            sliceQuery.rankId);
     if (groupInfo.has_value()) {
         std::vector<std::string> ranks = groupInfo.value().globalRanks;
