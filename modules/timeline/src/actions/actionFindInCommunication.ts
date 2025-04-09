@@ -21,7 +21,7 @@ async function findInCommunication(session: Session): Promise<void> {
         event: 'switchModule',
         body: {
             switchTo: 'communication',
-            toModuleEvent: 'locateHCCL',
+            toModuleEvent: 'locateCommunication',
             params: {
                 operatorName: session.selectedData?.name,
                 iterationId: res?.step,

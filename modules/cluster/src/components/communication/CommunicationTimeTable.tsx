@@ -134,7 +134,7 @@ async function findInCommunication(condition: ConditionDataType): Promise<void> 
     }
 }
 
-// Total HCCL Opertators表
+// Total Communication Operators 表
 const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = { field: 'elapseTime', order: 'descend' };
@@ -153,8 +153,8 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
                 },
             },
             {
-                label: t('Find in HCCL'),
-                key: 'findInHCCL',
+                label: t('Find in Communication'),
+                key: 'findInCommunication',
                 onClick: (): void => {
                     findInCommunication(conditions);
                 },
