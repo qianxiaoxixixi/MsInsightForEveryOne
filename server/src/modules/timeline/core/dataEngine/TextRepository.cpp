@@ -126,7 +126,10 @@ void TextRepository::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vec
     std::vector<FlowPO> flowPOVec;
     flowTable.Select(FlowColumn::NAME, FlowColumn::CAT, FlowColumn::FLOW_ID)
         .Select(FlowColumn::TIMESTAMP, FlowColumn::TYPE, FlowColumn::TRACK_ID)
-        .Eq(FlowColumn::FLOW_ID, flowQuery.flowId)
+        .In(FlowColumn::FLOW_ID, flowQuery.flowIds)
+        .OrderBy(FlowColumn::TIMESTAMP, TableOrder::ASC)
+        .OrderBy(FlowColumn::TRACK_ID, TableOrder::ASC)
+        .OrderBy(FlowColumn::ID, TableOrder::ASC)
         .ExcuteQuery(trackInfo.cardId, flowPOVec);
     for (const auto &item : flowPOVec) {
         FlowPoint flowPoint;

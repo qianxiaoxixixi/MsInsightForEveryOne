@@ -120,6 +120,30 @@ public:
         return *this;
     }
 
+    /**
+     * 如果inputs存在任何一个sql注入，数据查询为空
+     * @param str
+     * @param inputs
+     * @return
+     */
+    Table &In(std::string_view str, const std::vector<std::string> &inputs)
+    {
+        ConditionStr() += " AND " + std::string(str) + " IN ( ";
+        bool sqlInject = false;
+        for (const auto &item: inputs) {
+            if (!StringUtil::CheckSqlValid(item)) {
+                sqlInject = true;
+                break;
+            }
+        }
+        if (!sqlInject) {
+            std::string inputStr = StringUtil::join(inputs, ", ");
+            ConditionStr() += inputStr;
+        }
+        ConditionStr() += " ) ";
+        return *this;
+    }
+
     Table &OrderBy(std::string_view columnName, TableOrder order)
     {
         if (std::empty(OrderByStr())) {

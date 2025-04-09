@@ -26,13 +26,35 @@ void FlowAnalyzer::SetRepository(std::unique_ptr<FlowRepoInterface> repositoryDe
 std::vector<FlowPoint> FlowAnalyzer::ComputeAllFlowPointBySliceId(FlowQuery &flowQuery, const std::string &sliceId)
 {
     std::unordered_set<std::string> onSliceFlowPointSet = ComputeOnSliceFlowPointBySliceId(flowQuery, sliceId);
-    std::vector<FlowPoint> res;
-    if (std::empty(onSliceFlowPointSet)) {
-        return res;
-    }
     for (const auto &item : onSliceFlowPointSet) {
-        flowQuery.flowId = item;
-        repository->QueryFlowPointByFlowId(flowQuery, res);
+        flowQuery.flowIds.emplace_back(item);
+    }
+    std::vector<FlowPoint> allPoints;
+    repository->QueryFlowPointByFlowId(flowQuery, allPoints);
+    const uint64_t targetTime = flowQuery.minTimestamp + flowQuery.startTime;
+    const uint64_t targetTrackId = flowQuery.trackId;
+    FlowPoint targetPoint;
+    targetPoint.timestamp = targetTime;
+    targetPoint.trackId = targetTrackId;
+    auto it = std::lower_bound(allPoints.begin(), allPoints.end(), targetPoint, FlowPoint::CompareTimestampASC);
+    if (it == allPoints.end()) {
+        return {};
+    }
+    std::vector<FlowPoint> res;
+    res.emplace_back(*it);
+    // 从该元素开始往前遍历，直到遍历到同泳道数据
+    for (auto i = it - 1; i >= allPoints.begin(); --i) {
+        res.emplace_back(*i);
+        if (i->timestamp != targetTime && i->trackId == targetTrackId) {
+            break;
+        }
+    }
+    // 从该元素开始往后遍历，直到遍历到同泳道数据
+    for (auto i = it + 1; i < allPoints.end(); ++i) {
+        res.emplace_back(*i);
+        if (i->timestamp != targetTime && i->trackId == targetTrackId) {
+            break;
+        }
     }
     return res;
 }
