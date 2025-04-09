@@ -112,11 +112,19 @@ fn home_dir() -> Option<PathBuf> {
 #[cfg(windows)]
 #[link(name = "shell32")]
 extern "system" {
+    /// Tests whether the current user is a member of the Administrator's group.
+    /// 
+    /// ### FFI Signature
+    /// ```c++
+    /// BOOL IsUserAnAdmin();
+    /// ```
     pub fn IsUserAnAdmin() -> bool;
 }
 
 #[cfg(windows)]
 fn is_admin() -> bool {
+    /// ### Safety
+    /// No any Memory Safety problems
     unsafe { IsUserAnAdmin() }
 }
 
