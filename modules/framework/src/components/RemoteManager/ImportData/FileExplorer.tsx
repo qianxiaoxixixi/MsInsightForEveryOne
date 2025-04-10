@@ -10,7 +10,7 @@ import { Button, Input, Tooltip } from 'ascend-components';
 import { RefreshIcon } from 'ascend-icon';
 import { checkPathValid, getLastFilePath, getSearchDir, getTrimedPath } from '@/utils/Resource';
 import { ProjectAction, ProjectError } from '@/utils/enum';
-import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { type Project } from '@/centralServer/websocket/defs';
 import type { CatalogActionListener, SearchResult } from './ResourceCatalog';
 import ResourceCatalog, { CatalogAction } from './ResourceCatalog';
 import { handleProjectAction } from '@/utils/Project';
@@ -78,14 +78,14 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         const path = selectedPath;
         // 若currentProject存在，在已有项目下导入数据，否则新增项目
         const projectName = currentProject !== '' ? currentProject : path;
-        const dataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [path] };
+        const newProject: Project = { projectName, dataPath: [path] };
 
         // 校验
-        const validRes: ProjectError = await checkPathValid({ path, dataSource });
+        const validRes: ProjectError = await checkPathValid(newProject);
         // 校验通过
         if ([ProjectError.NO_ERRORS, ProjectError.IMPORTED].includes(validRes)) {
             const action = validRes === ProjectError.NO_ERRORS ? ProjectAction.ADD_FILE : ProjectAction.SWITCH_PROJECT;
-            handleProjectAction({ action, dataSource, isConflict: false });
+            handleProjectAction({ action, project: newProject, isConflict: false });
             closeDialog();
             // 校验告警
         } else {
@@ -113,8 +113,8 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
 
     const onContinue = (): void => {
         const path = getTrimedPath(inputPath);
-        const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: currentProject, dataPath: [path] } as DataSource;
-        handleProjectAction({ action: ProjectAction.ADD_FILE, dataSource, isConflict: true });
+        const project: Project = { projectName: currentProject, dataPath: [path] };
+        handleProjectAction({ action: ProjectAction.ADD_FILE, project, isConflict: true });
         setConflictModalVis(false);
         setTimeout(() => {
             closeDialog();
