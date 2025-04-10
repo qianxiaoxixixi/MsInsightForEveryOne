@@ -18,7 +18,7 @@ void SetResourceLimitForServer()
 #if defined(__linux__) || defined(__APPLE__)
     struct rlimit oldResourceLimit;
     if (getrlimit(RLIMIT_NOFILE, &oldResourceLimit) == -1) {
-        ServerLog::Error("Could not execute getrlimit command.");
+        ServerLog::Error("Failed to execute getrlimit command.");
         return;
     }
     struct rlimit newResourceLimit;
@@ -26,10 +26,17 @@ void SetResourceLimitForServer()
     newResourceLimit.rlim_cur = oldResourceLimit.rlim_max / two;
     newResourceLimit.rlim_max = oldResourceLimit.rlim_max;
     if (setrlimit(RLIMIT_NOFILE, &newResourceLimit) == -1) {
-        ServerLog::Error("Could not execute setrlimit command.");
+        const int defaultMaxFilesPerProc = 10240;
+        newResourceLimit.rlim_cur = defaultMaxFilesPerProc;
+        if (setrlimit(RLIMIT_NOFILE, &newResourceLimit) == -1) {
+            ServerLog::Error("Failed to execute setrlimit command.");
+            return;
+        }
+        ServerLog::Info("Set the soft limit of file descriptors to 10240 successfully.");
         return;
     }
     ServerLog::Info("Set the soft limit of file descriptors to the hard limit / 2 successfully.");
+    return;
 #endif
 }
 
