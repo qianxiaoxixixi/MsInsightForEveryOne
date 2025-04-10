@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { CONTENT_LENGTH_PREFIX, isResponse, PORT, LOCAL_HOST } from './defs';
-import type { DataRequest, ModuleName, DataSource, Notification, Response, Request, ResponseHandler } from './defs';
+import type { DataRequest, ModuleName, Host, Notification, Response, Request, ResponseHandler } from './defs';
 import connector from '@/connection';
 import { message as Message, Modal } from 'antd';
 import { customConsole as console } from 'ascend-utils';
@@ -30,12 +30,12 @@ const MAX_RESPONSE_HANDLERS = 1000;
 
 export class Connection {
     private readonly _ws: WebSocket | undefined;
-    private readonly _dataSource: DataSource;
+    private readonly _host: Host;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _fetchFlag: boolean = true;
 
-    constructor(dataSource: DataSource) {
+    constructor(initHost: Host) {
         console.info('[connector]', 'init');
         if (this._ws !== undefined) {
             // wedge: close and release the old websocket
@@ -44,9 +44,9 @@ export class Connection {
 
         const session = store.sessionStore.activeSession;
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
-        if (dataSource.jupyterlabProxy) {
+        if (initHost.jupyterlabProxy) {
             const { host, search } = window.location;
-            const path = `/proxy/${dataSource.port}${window.location.pathname}`;
+            const path = `/proxy/${initHost.port}${window.location.pathname}`;
             const uri = protocol + host + path + search;
             this._ws = new WebSocket(uri);
             runInAction(() => {
@@ -54,14 +54,14 @@ export class Connection {
             });
         } else if (!window.location.pathname.includes('/proxy/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
-            this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}${window.location.search}`);
+            this._ws = new WebSocket(`${protocol}${hostname}:${initHost.port}${window.location.search}`);
             runInAction(() => {
-                session.toIframeUrl = `${protocol}${hostname}:${dataSource.port}`;
+                session.toIframeUrl = `${protocol}${hostname}:${initHost.port}`;
             });
         } else {
             const { location } = window;
             const { host } = location;
-            const path = `${window.location.pathname}`.replace(/proxy\/\d{4}/, `proxy/${dataSource.port}`);
+            const path = `${window.location.pathname}`.replace(/proxy\/\d{4}/, `proxy/${initHost.port}`);
             const { search } = location;
             const uri = protocol + host + path + search;
 
@@ -70,27 +70,11 @@ export class Connection {
                 session.toIframeUrl = `${protocol}${host}${path.replace(/\/index.html/, '')}`;
             });
         }
-        this._dataSource = dataSource;
+        this._host = initHost;
     }
 
     get isConnected(): boolean {
         return this._ws?.readyState === WebSocket.OPEN;
-    }
-
-    addDataPath(dataPath: string[] | string): void {
-        let tempPath = dataPath;
-        if (!Array.isArray(dataPath)) {
-            tempPath = [dataPath];
-        }
-        this._dataSource.dataPath?.push(...tempPath);
-    }
-
-    deleteDataPath(dataPath: string[] | string): void {
-        let tempPath = dataPath;
-        if (!Array.isArray(dataPath)) {
-            tempPath = [dataPath];
-        }
-        this._dataSource.dataPath = this._dataSource.dataPath?.filter(item => !tempPath.includes(item)) ?? [];
     }
 
     async reset(): Promise<void> {
@@ -130,7 +114,7 @@ export class Connection {
                 Modal.warning({
                     content: 'WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart MindStudio Insight.',
                     okText: 'Reconnect',
-                    onOk: () => connectRemote(this._dataSource),
+                    onOk: () => connectRemote(this._host),
                     closable: true,
                 });
             };
@@ -201,7 +185,7 @@ export class Connection {
 
         // handle notifications
         if (!isResponse(msg)) {
-            msg.body.dataSource = this._dataSource;
+            msg.body.dataSource = this._host;
             connector.send({ ...msg });
             return;
         }

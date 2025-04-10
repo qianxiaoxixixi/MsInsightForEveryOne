@@ -7,8 +7,8 @@ import { LocalStorageKey, localStorageService } from 'ascend-local-storage';
 import connector from '@/connection';
 import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
-import { DataSource, LOCAL_HOST, PORT, ProjectDirectory } from '@/centralServer/websocket/defs';
-import { addDataPath, connectRemote, isExistedRemote } from '@/centralServer/server';
+import { DataSource, Project, ProjectDirectory, GLOBAL_HOST } from '@/centralServer/websocket/defs';
+import { addDataPath } from '@/centralServer/server';
 import {
     deleteDataPath, deleteProject, resetTimeline, getHistoryProject, updateProjectName as requestUpdateProjectName,
     clearProjects,
@@ -36,7 +36,7 @@ export const loadHistoryProject = async(): Promise<void> => {
     const result = await getHistoryProject() as {projectDirectoryList: ProjectDirectory[]};
     const projectDirectoryList = result?.projectDirectoryList ?? [];
     projectDirectoryList.forEach(item => {
-        const source: DataSource = { remote: LOCAL_HOST, port: PORT, projectName: item.projectName, dataPath: item.fileName };
+        const source: DataSource = { ...GLOBAL_HOST, projectName: item.projectName, dataPath: item.fileName };
         sources.push(source);
     });
     runInAction(() => {
@@ -45,12 +45,12 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, dataSource: orginDataSource, isConflict, selectedPath }:
-{action: ProjectAction;dataSource: DataSource;isConflict: boolean;selectedPath?: string}): Promise<void> {
+export async function handleProjectAction({ action, project, isConflict, selectedPath }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedPath?: string}): Promise<void> {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
-        const dataSource = { ...orginDataSource };
+        const newProject = { ...project };
 
         // 这里添加 session.isCluster 判断，如果是集群数据，也要重置 session 使 clusterCompleted = false, 确保 Summary 和 Communication 模块正常加载
         if (session.isReset || session.isCluster) {
@@ -58,28 +58,25 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
         }
 
         // 如果目标内容就是当前选中内容，则不做任何处理直接返回
-        if (dataSource.projectName === activeDataSource.projectName && arraysValueEqual(dataSource.dataPath, activeDataSource.dataPath)) {
+        if (newProject.projectName === activeDataSource.projectName && arraysValueEqual(newProject.dataPath, activeDataSource.dataPath)) {
             return;
         }
         openLoading();
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
-            const firstDataPath = selectedPath ?? dataSources.find(data => data.projectName === dataSource.projectName)?.dataPath[0];
+            const firstDataPath = selectedPath ?? dataSources.find(data => data.projectName === newProject.projectName)?.dataPath[0];
             if (firstDataPath !== undefined) {
-                dataSource.dataPath = [firstDataPath];
+                newProject.dataPath = [firstDataPath];
             }
         }
-        if (!isExistedRemote(dataSource)) {
-            const connected = await connectRemote(dataSource);
-            if (!connected) {
-                closeLoading();
-                return;
-            }
+        const res = await addDataPath(newProject, action, isConflict);
+        if (!res) {
+            closeLoading();
+            return;
         }
-        addDataPath(dataSource, action, isConflict);
 
         // 保存文件路径
-        const path = dataSource.dataPath[0].includes(dataSource.projectName) ? dataSource.projectName : dataSource.dataPath[0];
+        const path = newProject.dataPath[0].includes(newProject.projectName) ? newProject.projectName : newProject.dataPath[0];
         localStorageService.setItem(LocalStorageKey.LAST_FILE_PATH, path);
     });
     cancelBaselineData();
@@ -98,7 +95,7 @@ export const updateProject = ({ projectAction, projectName, dataPath, hasConflic
         try {
             if (projectAction === ProjectAction.ADD_FILE) {
                 // 更新项目目录
-                const dataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath };
+                const dataSource = { ...GLOBAL_HOST, projectName, dataPath };
                 session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
                 // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
                 if (hasConflict || dataPath.length > 1) {
@@ -111,7 +108,7 @@ export const updateProject = ({ projectAction, projectName, dataPath, hasConflic
                 }
             }
             if (projectAction === ProjectAction.SWITCH_PROJECT) {
-                session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: subdirectory };
+                session.activeDataSource = { ...GLOBAL_HOST, projectName, dataPath: subdirectory };
             }
         } catch {
             console.error('Update Project Explorer Failed');
@@ -159,7 +156,7 @@ export const removeProject = (projectIndex: number): void => {
                 // 重置frame页面
                 session.reset(true);
                 // 设置当前打开（选中）项目空
-                session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+                session.activeDataSource = { ...GLOBAL_HOST, projectName: '', dataPath: [] };
             }
             // 通知后台
             await deleteProject(dataSource);
@@ -190,7 +187,7 @@ export const removeProjects = async (projectNameList: React.Key[] = []): Promise
                 // framework重置
                 session.reset(true);
                 // 当前选中置空
-                session.activeDataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+                session.activeDataSource = { ...GLOBAL_HOST, projectName: '', dataPath: [] };
             }
         } catch {
             console.error('remove error');

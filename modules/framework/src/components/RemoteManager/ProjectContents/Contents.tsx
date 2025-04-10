@@ -12,7 +12,7 @@ import type { EventDataNode } from 'antd/lib/tree';
 import { AddIcon, LocalImportIcon } from 'ascend-icon';
 import { store } from '@/store';
 import type { File, Session } from '@/entity/session';
-import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { type DataSource, GLOBAL_HOST } from '@/centralServer/websocket/defs';
 import { ProjectAction, SessionAction } from '@/utils/enum';
 import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
 import DeleteConfirm from './DeleteConfirm';
@@ -212,14 +212,14 @@ const Contents = observer(({ session }: {session: Session}) => {
         const dataSource: DataSource = dataSources[projectIndex];
         // 如果点击其它工程或者其它工程下文件
         if (dataSource.projectName !== activeDataSource.projectName) {
-            handleProjectAction({ action: ProjectAction.SWITCH_PROJECT, dataSource, isConflict: false, selectedPath: dataSource.dataPath[dataPathIndex] });
+            handleProjectAction(
+                { action: ProjectAction.SWITCH_PROJECT, project: dataSource, isConflict: false, selectedPath: dataSource.dataPath[dataPathIndex] });
         }
         // 如果点击的是文件
         if (node.isLeaf) {
             runInAction(() => {
                 session.activeDataSource = {
-                    remote: LOCAL_HOST,
-                    port: PORT,
+                    ...GLOBAL_HOST,
                     projectName: dataSource.projectName,
                     dataPath: [dataSource.dataPath[dataPathIndex]],
                 };
