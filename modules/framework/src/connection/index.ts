@@ -43,7 +43,7 @@ export function registerEventListeners(): void {
     connector.registerAwaitFetch(async (e) => {
         const currentRemote = store.sessionStore.activeSession?.activeDataSource ?? GLOBAL_HOST;
         const { remote = currentRemote, args, module, voidResponse } = e.data;
-        const result = await request(remote, module, args, voidResponse);
+        const result = await request(module, args, voidResponse);
         return { dataSource: remote, body: result };
     });
 }

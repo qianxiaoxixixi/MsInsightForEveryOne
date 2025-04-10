@@ -5,7 +5,7 @@ import { message as Message } from 'antd';
 import { runInAction } from 'mobx';
 import i18n from 'ascend-i18n';
 import connector from '@/connection';
-import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { type DataSource, GLOBAL_HOST } from '@/centralServer/websocket/defs';
 import type { File } from '@/entity/session';
 import { store } from '@/store';
 import { cancelBaseline, setBaseline } from '@/utils/Request';
@@ -73,7 +73,7 @@ export const setBaselineData = async ({ projectName, filePath }: File): Promise<
             host: host ?? '',
             cardPath: filePath,
         };
-        const dataSource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [filePath] };
+        const dataSource = { ...GLOBAL_HOST, projectName, dataPath: [filePath] };
         // 通知页签
         sendTabAddBaseline(dataSource, [timelineCard]);
         // 选中基线
@@ -124,7 +124,7 @@ export const cancelBaselineData = async (): Promise<void> => {
     const session = store.sessionStore.activeSession;
     const { projectName, filePath } = session.compareSet.baseline;
     // 通知页签
-    const datasource = { remote: LOCAL_HOST, port: PORT, projectName, dataPath: [filePath] };
+    const datasource = { ...GLOBAL_HOST, projectName, dataPath: [filePath] };
     sendTabRemoveBaseline(datasource, filePath);
     sendClusterBaselineStatus(false);
     // 通知后台

@@ -5,7 +5,7 @@ import React from 'react';
 import { FileIcon, FolderIcon } from 'ascend-icon';
 import type { TreeDataNode } from 'antd';
 import { checkProjectValid, getFiles } from '@/utils/Request';
-import { DataSource } from '@/centralServer/websocket/defs';
+import { DataSource, Project } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
 import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { store } from '@/store';
@@ -71,34 +71,31 @@ export const fileExist = async (path: string): Promise<boolean> => {
 };
 
 // 文件/文件夹安全校验
-export const checkPathValid = async({ path, dataSource }: { path: string; dataSource: DataSource}):
+export const checkPathValid = async(project: Project):
 Promise<ProjectError> => {
     // 检查文件是否存在
-    const existed = await fileExist(path);
+    const existed = await fileExist(project.dataPath[0] ?? '');
     if (!existed) {
         return ProjectError.FILE_NOT_EXIST;
     }
     // 是否在左侧已导入的数据中
-    if (checkExistedDataSource(dataSource)) {
+    if (checkExistedDataSource(project)) {
         return ProjectError.IMPORTED;
     }
     // 校验文件安全，如文件冲突、超大文件、软链接等
-    const res = await checkProjectValid({ projectName: dataSource.projectName ?? '', dataPath: dataSource.dataPath ?? [] });
+    const res = await checkProjectValid({ projectName: project.projectName ?? '', dataPath: project.dataPath ?? [] });
     return (res as {result: ProjectError}).result;
 };
 
 // 文件是否已导入
-export const checkExistedDataSource = (dataSource: DataSource): boolean => {
+export const checkExistedDataSource = (data: Project): boolean => {
     const session = store.sessionStore.activeSession;
     const allProject: DataSource[] = session.dataSources ?? [];
-    const project = allProject.find((item) =>
-        item.remote === dataSource.remote &&
-            item.port === dataSource.port &&
-            item.projectName === dataSource.projectName);
+    const project = allProject.find((item) => item.projectName === data.projectName);
     if (project === undefined) {
         return false;
     }
-    const isPathExisted = dataSource.dataPath.some(path => project.dataPath.includes(path));
+    const isPathExisted = data.dataPath.some(path => project.dataPath.includes(path));
     return isPathExisted;
 };
 
