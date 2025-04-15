@@ -85,10 +85,9 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
             if (!session) {
                 return;
             }
-            if (data.isAllPageParsed as boolean && session.shouldRefresh) {
+            if (data.isAllPageParsed as boolean) {
                 session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
             }
-            session.shouldRefresh = true;
         });
     } catch (error) {
         console.error(error);
@@ -128,7 +127,6 @@ export const switchDirectoryHandler: NotificationHandler = (data): void => {
     const session = store.sessionStore.activeSession;
     if (session) {
         runInAction(() => {
-            session.shouldRefresh = false;
             session.compareRank = { rankId: data.rankId as string, isCompare: data.isCompare as boolean };
         });
     }

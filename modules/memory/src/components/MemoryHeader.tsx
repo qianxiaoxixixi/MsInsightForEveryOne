@@ -65,13 +65,24 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
 
     useEffect(() => {
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
-        const rankIdOptions = getRankIdOptions(memorySession.hostCondition.value, ranks);
+        // 判断是否为db场景（host存在compareRank中)，若是则取出host，否则hostCondition.value为空
+        const list = session.compareRank.rankId.split(' ');
+        const hostInRank = list.length > 1 ? list[0] : '';
+        const host = notNull(memorySession.hostCondition.value) ? memorySession.hostCondition.value : hostInRank;
+        const rankIdOptions = getRankIdOptions(host, ranks);
         runInAction(() => {
-            memorySession.hostCondition = { options: hosts, value: memorySession.hostCondition.value ?? '', ranks };
-            memorySession.rankIdCondition = {
-                options: rankIdOptions,
-                value: notNull(session.compareRank.rankId) ? session.compareRank.rankId : (rankIdOptions[0] ?? ''),
-            };
+            memorySession.hostCondition = { ...memorySession.hostCondition, options: hosts, ranks };
+            if (!hosts.includes(host)) {
+                memorySession.hostCondition.value = '';
+            } else {
+                memorySession.hostCondition.value = host ?? '';
+            }
+            memorySession.rankIdCondition.options = rankIdOptions;
+            if (rankIdOptions.includes(session.compareRank.rankId)) {
+                memorySession.rankIdCondition.value = notNull(session.compareRank.rankId) ? session.compareRank.rankId : (rankIdOptions[0] ?? '');
+            } else {
+                memorySession.rankIdCondition.value = '';
+            }
         });
     }, [session.memoryRankIds.join('')]);
 
@@ -90,8 +101,11 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         if (list.length > 1) {
             const rankIdOptions = getRankIdOptions(list[0], memorySession.hostCondition.ranks);
             runInAction(() => {
-                memorySession.hostCondition = { ...memorySession.hostCondition, value: list[0] };
-                memorySession.rankIdCondition = { options: rankIdOptions, value: session.compareRank.rankId ?? '' };
+                memorySession.hostCondition = { ...memorySession.hostCondition, value: memorySession.hostCondition.options.includes(list[0]) ? list[0] : '' };
+                memorySession.rankIdCondition = {
+                    options: rankIdOptions,
+                    value: rankIdOptions.includes(session.compareRank.rankId) ? session.compareRank.rankId : '',
+                };
             });
         } else {
             runInAction(() => {

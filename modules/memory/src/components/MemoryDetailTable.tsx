@@ -257,7 +257,8 @@ const MemoryDetailTable = observer(({ session, memorySession }:
 
     useEffect(() => {
         setDetailTableData();
-    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize, order, orderBy, t]);
+    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
+        session.isClusterMemoryCompletedSwitch, order, orderBy, t]);
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
