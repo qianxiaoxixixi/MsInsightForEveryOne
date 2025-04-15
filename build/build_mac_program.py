@@ -117,12 +117,13 @@ def destroy_ssh_connect(ssh_client):
     ssh_client.close()
 
 
-def execute_cmd(ssh_client, cmd, sensitive: bool = False, *args):
+def execute_cmd(ssh_client, cmd, timeout: int = 3*60, sensitive: bool = False, *args):
     """
     通过ssh通道，在远端执行命令，并实时打印日志
 
     :param ssh_client: ssh
     :param cmd: cmd
+    :param timeout: 命令执行的超时时间
     :param sensitive: bool 是否包含敏感指令(包含敏感字符串，占位符{***})
     :param *args: 需要填充到敏感字符串占位符的值，按顺序填充
     :return:
@@ -139,7 +140,7 @@ def execute_cmd(ssh_client, cmd, sensitive: bool = False, *args):
 
     logging.info('Start to execute cmd: %s', log_cmd)
 
-    stdin, stdout, stderr = ssh_client.exec_command(cmd)
+    stdin, stdout, stderr = ssh_client.exec_command(cmd, timeout=timeout)
     for line in stdout:
         logging.info(line.strip())
 
@@ -200,8 +201,8 @@ def build_project(ssh_client, workspace):
     """
     build_dir = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + 'build'
     log_file = build_dir + SLASH + 'daily_build_mac.log'
-    cmd = 'cd ' + build_dir + '&& source ~/.bash_profile && python3 -u build.py'
-    execute_cmd(ssh_client, cmd)
+    cmd = 'cd ' + build_dir + '&& source ~/.bash_profile && python3 -u build.py 2>&1'
+    execute_cmd(ssh_client, cmd, timeout=20 * 60)
 
 
 def copy_file_back(ssh_client, workspace):
