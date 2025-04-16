@@ -236,7 +236,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_ADVISOR_SRC} ${DIC_MODULES_ADVISOR_HANDLER_SRC}
         ${DIC_MODULES_ADVISOR_PROTOCOL_SRC} ${DIC_MODULES_ADVISOR_PROCESS_SRC})
 add_subdirectory(entry)
-if (${_PROJECT_TYPE} MATCHES "test")
+if (${_PROJECT_TYPE} MATCHES "test|fuzz")
     enable_testing()
     set(CMAKE_C_FLAGS_PROFILE --coverage)
     set(CMAKE_CXX_FLAGS_PROFILE --coverage)

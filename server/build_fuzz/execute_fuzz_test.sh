@@ -19,10 +19,9 @@ echo "*************** FUZZCODE  START *****************"
 cmake -D_PROJECT_TYPE=fuzz ${dir_build_fuzz}/..
 echo "*************** CMAKE  FINISH "
 cpu_number=$(nproc)
-make -j${cpu_number}
+make -j${cpu_number} insight_fuzz
 echo "*************** MAKE  FINISH "
 
-cd ${dir_build_fuzz}
 if [ -d "${dir_build_fuzz}/report" ]; then
   rm -rf ${dir_build_fuzz}/report
 fi
