@@ -4,8 +4,8 @@
 import type { PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
 import type { TFunction } from 'i18next';
 import { COLOR } from '../../Common';
-import { MatrixType } from './Filter';
-import { baseSerie, getTooltip, type HeatmapData, HeatmapDataIndex } from '../CommunicationMatrix';
+import { MatrixType, MatrixTypeValues } from './Filter';
+import { baseSeries, getTooltip, type HeatmapData, HeatmapDataIndex } from '../CommunicationMatrix';
 
 enum CompareRes {
     SAME = 0,
@@ -13,21 +13,13 @@ enum CompareRes {
 }
 
 export const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL', 'SIO'];
-export const getTransporTypeNumber = (item: HeatmapData, isCompare: boolean): number => {
+export const getTransporTypeNumber = (item: HeatmapData, matrixType: MatrixTypeValues, isCompare: boolean): number => {
     if (isCompare) {
         const compareData = item[HeatmapDataIndex.DATA];
-        return compareData.compare.value === compareData.baseline.value ? CompareRes.SAME : CompareRes.DIFFERENT;
+        return compareData.compare[matrixType][0] === compareData.baseline[matrixType][0] ? CompareRes.SAME : CompareRes.DIFFERENT;
     }
     const type = item[HeatmapDataIndex.VALUE] as string;
     return allTransporType.indexOf(type);
-};
-export const getTransportTypeName = (item: HeatmapData, isCompare: boolean, showAll?: boolean): string => {
-    const num = item[HeatmapDataIndex.VALUE] as number;
-    if (isCompare) {
-        const compareData = item[HeatmapDataIndex.DATA];
-        return num === CompareRes.DIFFERENT || showAll ? `${compareData.baseline.value}->${compareData.compare.value}` : `${compareData.compare.value}`;
-    }
-    return allTransporType[num] ?? '';
 };
 
 export const transportTypeVisualMap: PiecewiseVisualMapOption = {
@@ -66,14 +58,21 @@ export const getTransportTypeSerie = ({ data, rankIds, type, isCompare, t }: {
     t: TFunction;
 }): any => {
     const numData = data.map(item => [...item.slice(0, HeatmapDataIndex.VALUE),
-        getTransporTypeNumber(item, isCompare),
+        getTransporTypeNumber(item, type, isCompare),
         ...item.slice(HeatmapDataIndex.VALUE + 1)]);
     return {
-        ...baseSerie,
+        ...baseSeries,
         data: numData,
         label: {
             show: rankIds.length <= 16,
-            formatter: (params: {value: HeatmapData}): string => getTransportTypeName(params.value, isCompare),
+            formatter: (params: any): string => {
+                const num = params.value[HeatmapDataIndex.VALUE] as number;
+                if (isCompare) {
+                    const compareData = params.value[HeatmapDataIndex.DATA];
+                    return num === CompareRes.DIFFERENT ? `${compareData.baseline[type][0]}->${compareData.compare[type][0]}` : `${compareData.compare[type][0]}`;
+                }
+                return allTransporType[num] ?? '';
+            },
         },
         tooltip: getTooltip({ t, type, isCompare }),
     };
