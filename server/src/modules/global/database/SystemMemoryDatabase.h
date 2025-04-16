@@ -17,7 +17,7 @@ public:
     explicit SystemMemoryDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~SystemMemoryDatabase() override = default;
 
-    bool SetConfig();
+    bool SetConfig() override;
     bool CreateTable();
     std::vector<ProjectExplorerInfo> QueryProjectExplorerData(const std::vector<std::string> &projectNameList,
                                                               const std::vector<std::string>& fileNameList);

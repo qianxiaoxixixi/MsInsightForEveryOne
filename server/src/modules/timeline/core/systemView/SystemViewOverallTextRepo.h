@@ -9,6 +9,7 @@ using namespace Dic::Protocol;
 namespace Dic::Module::Timeline {
 class SystemViewOverallTextRepo : public SystemViewOverallRepoInterface {
 public:
+    ~SystemViewOverallTextRepo() override = default;
     std::vector<OverallTmpInfo> QueryOverlapAnalysisDataForOverallMetric(
         const Protocol::SystemViewOverallReqParam &requestParams,
         const std::shared_ptr<VirtualTraceDatabase> &database) override;

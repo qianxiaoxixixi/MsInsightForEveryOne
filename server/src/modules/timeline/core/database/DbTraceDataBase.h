@@ -160,7 +160,7 @@ private:
     std::vector<OVERLAP_INFO> timeInfoCache;
     std::vector<std::string> rankIds;
 
-    bool SetConfig();
+    bool SetConfig() override;
     bool InitStmt();
 
     void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);

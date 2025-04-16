@@ -37,7 +37,7 @@ std::optional<document_t> BaseInfoToJson(const SummaryBaseInfo &baseInfo, Docume
     JsonUtil::AddMember(json, "filePath", baseInfo.filePath, allocator);
     JsonUtil::AddMember(json, "collectDuration", baseInfo.collectDuration, allocator);
     JsonUtil::AddMember(json, "stepNum", baseInfo.stepNum, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(const SummaryTopRankResponse &response)
@@ -54,7 +54,7 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
     JsonUtil::AddMember(baseInfo, "baseline", baselineData, allocator);
     JsonUtil::AddMember(body, "baseInfo", baseInfo, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -75,7 +75,7 @@ std::optional<document_t> ToResponseJson<SummaryStatisticsResponse>(const Summar
     }
     JsonUtil::AddMember(body, "summaryStatisticsItemList", summaryStatisticsItemList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<ComputeDetailResponse>(const ComputeDetailResponse &response)
@@ -104,7 +104,7 @@ template <> std::optional<document_t> ToResponseJson<ComputeDetailResponse>(cons
     JsonUtil::AddMember(body, "computeDetails", computeDetails, allocator);
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<PipelineStepResponse>(const PipelineStepResponse &response)
@@ -119,7 +119,7 @@ template <> std::optional<document_t> ToResponseJson<PipelineStepResponse>(const
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<PipelineStageResponse>(const PipelineStageResponse &response)
@@ -134,7 +134,7 @@ template <> std::optional<document_t> ToResponseJson<PipelineStageResponse>(cons
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -154,7 +154,7 @@ std::optional<document_t> ToResponseJson<PipelineStageTimeResponse>(const Pipeli
     }
     JsonUtil::AddMember(body, "stageAndBubbleTimes", stageAndBubbleTimes, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<PipelineRankTimeResponse>(const PipelineRankTimeResponse &response)
@@ -173,7 +173,7 @@ template <> std::optional<document_t> ToResponseJson<PipelineRankTimeResponse>(c
     }
     JsonUtil::AddMember(body, "stageAndBubbleTimes", stageAndBubbleTimes, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -196,7 +196,7 @@ std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const Comm
     JsonUtil::AddMember(body, "communicationDetails", communicationDetails, allocator);
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -214,7 +214,7 @@ std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const Qu
     JsonUtil::AddMember(body, KEY_CP_SIZE, response.config.cpSize, allocator);
     JsonUtil::AddMember(body, KEY_EP_SIZE, response.config.epSize, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -227,7 +227,7 @@ std::optional<document_t> ToResponseJson<SetParallelStrategyResponse>(const SetP
     JsonUtil::AddMember(body, KEY_RESULT, response.result, allocator);
     JsonUtil::AddMember(body, KEY_MSG, response.msg, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -243,7 +243,7 @@ std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(const P
     if (response.body.rankDataList.empty()) {
         JsonUtil::AddMember(body, "rankList", rankDetailList, allocator);
         JsonUtil::AddMember(json, KEY_BODY, body, allocator);
-        return std::move(json);
+        return std::optional<document_t>{std::move(json)};
     }
 
     for (const PipelineFwdBwdTimelineByRank &rankItem : response.body.rankDataList) {
@@ -273,7 +273,7 @@ std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(const P
     }
     JsonUtil::AddMember(body, "rankList", rankDetailList, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 void GetArrangementsJson(const ParallelismArrangementResponse& response, document_t& json, json_t& body)
@@ -337,7 +337,7 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
     }
     JsonUtil::AddMember(body, "connections", connections, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> IndicatorsInfoToJson(const std::unordered_map<std::string, double> &indicators,
@@ -347,7 +347,7 @@ std::optional<document_t> IndicatorsInfoToJson(const std::unordered_map<std::str
     for (const auto& indicator :indicators) {
         JsonUtil::AddMember(dataJson, indicator.first, indicator.second, allocator);
     }
-    return std::move(dataJson);
+    return std::optional<document_t>(std::move(dataJson));
 }
 
 template <>
@@ -383,7 +383,7 @@ std::optional<document_t> ToResponseJson<ParallelismPerformanceResponse>(const P
     JsonUtil::AddMember(body, "performance", performance, allocator);
     JsonUtil::AddMember(body, "advice", response.indicatorData.advices, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 #pragma endregion
 } // end of namespace Protocol

@@ -16,24 +16,24 @@ public:
     explicit DbSummaryDataBase(std::recursive_mutex &sqlMutex) : Summary::VirtualSummaryDataBase(sqlMutex) {};
     virtual ~DbSummaryDataBase() {};
 
-    bool OpenDb(const std::string &dbPath, bool clearAllTable);
+    bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool QueryComputeOpDetail(Protocol::ComputeDetailParams params,
-        std::vector<Protocol::ComputeDetail> &computeDetails);
-    bool QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum);
+        std::vector<Protocol::ComputeDetail> &computeDetails) override;
+    bool QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum) override;
     bool QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
-        std::vector<Protocol::CommunicationDetail> &commDetails);
+        std::vector<Protocol::CommunicationDetail> &commDetails) override;
     bool QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams, Protocol::QueryType type,
-                                   std::vector<Protocol::OperatorDurationRes> &datas);
+                                   std::vector<Protocol::OperatorDurationRes> &datas) override;
     bool QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                    Protocol::OperatorStatisticInfoResponse &response);
+                                    Protocol::OperatorStatisticInfoResponse &response) override;
     bool QueryAllOperatorStatisticInfo(OperatorStatisticReqParams &reqParams,
                                        std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
     bool QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                 Protocol::OperatorDetailInfoResponse& response);
+                                 Protocol::OperatorDetailInfoResponse& response) override;
     bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                    std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
+                                    std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level) override;
     bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
-                               Protocol::OperatorMoreInfoResponse& response);
+                               Protocol::OperatorMoreInfoResponse& response) override;
     static void ParserEnd(const std::string &fileId, bool result, const std::string &msg);
     static void Reset();
 private:

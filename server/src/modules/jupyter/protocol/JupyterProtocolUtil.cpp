@@ -27,7 +27,7 @@ std::optional <document_t> ToEventJson<ParseJupyterCompletedEvent>(const ParseJu
     JsonUtil::AddMember(body, "url", event.body.url, allocator);
     JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>(std::move(json));
 }
 
 #pragma endregion

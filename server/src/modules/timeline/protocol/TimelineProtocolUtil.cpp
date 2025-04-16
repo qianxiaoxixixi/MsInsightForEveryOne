@@ -67,7 +67,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     }
     JsonUtil::AddMember(body, "result", result, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response)
@@ -98,7 +98,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
     JsonUtil::AddMember(body, "havePythonFunction", response.body.havePythonFunction, allocator);
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -118,7 +118,7 @@ std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResponse>(
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response)
@@ -147,7 +147,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response)
@@ -172,7 +172,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(c
     JsonUtil::AddMember(data, "attrInfo", response.body.data.attrInfo, allocator);
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 json_t FlowLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
@@ -187,7 +187,7 @@ json_t FlowLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_AL
     JsonUtil::AddMember(json, "id", flowLocation.id, allocator);
     JsonUtil::AddMember(json, "metaType", flowLocation.metaType, allocator);
     JsonUtil::AddMember(json, "rankId", flowLocation.rankId, allocator);
-    return std::move(json);
+    return json;
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitFlowsResponse>(const UnitFlowsResponse &response)
@@ -215,7 +215,7 @@ template <> std::optional<document_t> ToResponseJson<UnitFlowsResponse>(const Un
     }
     JsonUtil::AddMember(body, "unitAllFlows", unitAllFlows, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<SetCardAliasResponse>(const SetCardAliasResponse &response)
@@ -235,7 +235,7 @@ template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const 
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(json, "body", body, json.GetAllocator());
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response)
@@ -254,7 +254,7 @@ template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const 
     }
     JsonUtil::AddMember(body, "countList", countList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response)
@@ -271,7 +271,7 @@ template <> std::optional<document_t> ToResponseJson<SearchSliceResponse>(const 
     JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
     JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response)
@@ -283,7 +283,7 @@ template <> std::optional<document_t> ToResponseJson<RemoteDeleteResponse>(const
     JsonUtil::AddMember(body, "startTimeUpdated", response.body.startTimeUpdated, allocator);
     JsonUtil::AddMember(body, "maxTimeStamp", response.body.maxTimeStamp, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<FlowCategoryListResponse>(const FlowCategoryListResponse &response)
@@ -298,7 +298,7 @@ template <> std::optional<document_t> ToResponseJson<FlowCategoryListResponse>(c
     }
     JsonUtil::AddMember(body, "category", category, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 json_t FlowEventLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
@@ -309,7 +309,7 @@ json_t FlowEventLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAU
     JsonUtil::AddMember(json, "timestamp", flowLocation.timestamp, allocator);
     JsonUtil::AddMember(json, "depth", flowLocation.depth, allocator);
     JsonUtil::AddMember(json, "rankId", flowLocation.rankId, allocator);
-    return std::move(json);
+    return json;
 }
 
 template <>
@@ -329,7 +329,7 @@ std::optional<document_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowC
     }
     JsonUtil::AddMember(body, "flowDetailList", flowDetailList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response)
@@ -354,7 +354,7 @@ template <> std::optional<document_t> ToResponseJson<UnitCounterResponse>(const 
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<SystemViewResponse>(const SystemViewResponse &response)
@@ -380,7 +380,7 @@ template <> std::optional<document_t> ToResponseJson<SystemViewResponse>(const S
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const EventsViewResponse &response)
@@ -427,7 +427,7 @@ template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const E
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<ParseCardsResponse>(const ParseCardsResponse &response)
@@ -438,7 +438,7 @@ template <> std::optional<document_t> ToResponseJson<ParseCardsResponse>(const P
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "isContinueParse", response.body.isContinueParse, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response)
@@ -477,7 +477,7 @@ template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(cons
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -496,7 +496,7 @@ std::optional<document_t> ToResponseJson<CommunicationKernelResponse>(const Comm
     JsonUtil::AddMember(body, "group", response.body.group, allocator);
     JsonUtil::AddMember(body, "startTime", response.body.startTime, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response)
@@ -513,7 +513,7 @@ template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const On
     JsonUtil::AddMember(body, "step", response.body.step, allocator);
     JsonUtil::AddMember(body, "group", response.body.group, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -547,7 +547,7 @@ std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const Uni
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(const SearchAllSlicesResponse &response)
@@ -575,7 +575,7 @@ template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(co
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 json_t SystemViewOverallResToJson(const SystemViewOverallRes &res,
@@ -627,7 +627,7 @@ std::optional<document_t> ToResponseJson<SystemViewOverallResponse>(const System
     JsonUtil::AddMember(body, "pageSize", response.pageParam.pageSize, allocator);
     JsonUtil::AddMember(body, "current", response.pageParam.current, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 #pragma endregion
 
@@ -667,7 +667,7 @@ json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &
     }
     JsonUtil::AddMember(json, "children", children, allocator);
     JsonUtil::AddMember(json, "metadata", metadata, allocator);
-    return std::move(json);
+    return json;
 }
 
 template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event)
@@ -693,7 +693,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     JsonUtil::AddMember(unit, "children", children, allocator);
     JsonUtil::AddMember(body, "unit", unit, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event)
@@ -705,7 +705,7 @@ template <> std::optional<document_t> ToEventJson<ParseFailEvent>(const ParseFai
     JsonUtil::AddMember(body, "rankId", event.body.rankId, allocator);
     JsonUtil::AddMember(body, "error", event.body.error, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event)
@@ -718,7 +718,7 @@ template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(co
     JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
     JsonUtil::AddMember(body, "isShowCluster", event.body.isShowCluster, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSuccessEvent &event)
@@ -738,7 +738,7 @@ template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSucc
     JsonUtil::AddMember(body, "cardOffsets", dataType, allocator);
     JsonUtil::AddMember(body, "minTime", event.body.minTime, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -751,7 +751,7 @@ std::optional<document_t> ToEventJson<ParseClusterStep2CompletedEvent>(const Par
     JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
     JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event)
@@ -770,7 +770,7 @@ template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(con
     JsonUtil::AddMember(body, "isCluster", event.isCluster, allocator);
     JsonUtil::AddMember(body, "memoryResult", memoryResult, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const ModuleResetEvent &event)
@@ -781,7 +781,7 @@ template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const Module
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "reset", event.reset, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToEventJson<ParseProgressEvent>(const ParseProgressEvent &event)
@@ -795,7 +795,7 @@ template <> std::optional<document_t> ToEventJson<ParseProgressEvent>(const Pars
     JsonUtil::AddMember(body, "totalSize", event.body.totalSize, allocator);
     JsonUtil::AddMember(body, "progress", event.body.progress, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 #pragma endregion

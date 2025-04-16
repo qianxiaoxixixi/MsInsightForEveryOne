@@ -28,7 +28,7 @@ template<> std::optional<document_t> ToResponseJson<SourceCodeFileResponse>(cons
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "fileContent", response.body.fileContent, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<> std::optional<document_t> ToResponseJson<SourceApiLineResponse>(const SourceApiLineResponse &response)
@@ -56,7 +56,7 @@ template<> std::optional<document_t> ToResponseJson<SourceApiLineResponse>(const
     }
     JsonUtil::AddMember(body, "lines", lines, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -69,7 +69,7 @@ std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const Sou
     if (response.body.columnNameMap.empty()) { // 如果列名映射表为空，说明是老版本数据
         SetSourceApiLineResponseBody(response.body.lines, body, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
-        return std::move(json);
+        return std::optional<document_t>{std::move(json)};
     }
     // 组装表头信息
     json_t jsonFileLineDtype(kObjectType);
@@ -106,7 +106,7 @@ std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const Sou
     JsonUtil::AddMember(body, "Lines", lines, allocator);
     JsonUtil::AddMember(body, "Files Dtype", jsonFileLineDtype, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 void SetSourceApiLineResponseBody(const std::vector<SourceFileLineRes> &lines, json_t &body,
@@ -139,7 +139,7 @@ template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(cons
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "instructions", response.body.instructions, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 void SetApiInstructionResponseBody(const std::vector<SourceApiInstrRes> &instructions, json_t &body,
@@ -171,7 +171,7 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
     if (response.body.columnNameMap.empty()) { // 如果列名映射表为空，说明是老版本数据
         SetApiInstructionResponseBody(response.body.instructions, body, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
-        return std::move(json);
+        return std::optional<document_t>{std::move(json)};
     }
     // 组装表头信息
     json_t jsonInstrDtype(kObjectType);
@@ -201,7 +201,7 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
     JsonUtil::AddMember(body, "Core", response.body.coreName, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
 
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(const DetailsBaseInfoResponse &response)
@@ -215,7 +215,7 @@ template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(con
     std::optional<document_t> jsonBaseline = DetailsBaseInfoToJson(response.body.baseline, allocator);
     JsonUtil::AddMember(body, "baseline", jsonBaseline, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> DetailsBaseInfoToJson(const DetailsBaseInfoResBody &body, Document::AllocatorType &allocator)
@@ -246,7 +246,7 @@ std::optional<document_t> DetailsBaseInfoToJson(const DetailsBaseInfoResBody &bo
         advice.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(bodyJson, "advice", advice, allocator);
-    return std::move(bodyJson);
+    return std::optional<document_t>(std::move(bodyJson));
 }
 
 template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(const DetailsLoadInfoResponse &response)
@@ -265,7 +265,7 @@ template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(con
     std::optional<document_t> tableData = SubBlockDataToJson(response.body.tableData, allocator);
     JsonUtil::AddMember(body, "tableData", tableData, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> SubBlockDataToJson(const SubBlockData &data, Document::AllocatorType &allocator)
@@ -288,7 +288,7 @@ std::optional<document_t> SubBlockDataToJson(const SubBlockData &data, Document:
         advice.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(chartData, "advice", advice, allocator);
-    return std::move(chartData);
+    return std::optional<document_t>(std::move(chartData));
 }
 
 std::optional<document_t> SubBlockUnitDataToJson(const SubBlockUnitData &data, Document::AllocatorType &allocator)
@@ -300,7 +300,7 @@ std::optional<document_t> SubBlockUnitDataToJson(const SubBlockUnitData &data, D
     JsonUtil::AddMember(unitData, "unit", data.unit, allocator);
     JsonUtil::AddMember(unitData, "value", data.value, allocator);
     JsonUtil::AddMember(unitData, "originValue", data.originValue, allocator);
-    return std::move(unitData);
+    return std::optional<document_t>(std::move(unitData));
 }
 
 std::vector<std::string> RemoveDuplicateAdvice(const std::vector<std::string> &list)
@@ -360,7 +360,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const Detai
     }
     JsonUtil::AddMember(body, "coreMemory", coreMemory, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> L2CacheToJson(const L2Cache &l2Cache, Document::AllocatorType &allocator)
@@ -370,7 +370,7 @@ std::optional<document_t> L2CacheToJson(const L2Cache &l2Cache, Document::Alloca
     JsonUtil::AddMember(l2CacheJson, "hit", l2Cache.hit, allocator);
     JsonUtil::AddMember(l2CacheJson, "totalRequest", l2Cache.totalRequest, allocator);
     JsonUtil::AddMember(l2CacheJson, "miss", l2Cache.miss, allocator);
-    return std::move(l2CacheJson);
+    return std::optional<document_t>(std::move(l2CacheJson));
 }
 
 std::optional<document_t> MemoryUnitToJson(const MemoryUnit &memoryUnit, Document::AllocatorType &allocator)
@@ -381,7 +381,7 @@ std::optional<document_t> MemoryUnitToJson(const MemoryUnit &memoryUnit, Documen
     JsonUtil::AddMember(unitJson, "peakRatio", memoryUnit.peakRatio, allocator);
     JsonUtil::AddMember(unitJson, "bandwidth", memoryUnit.bandwidth, allocator);
     JsonUtil::AddMember(unitJson, "memoryPath", memoryUnit.memoryPath, allocator);
-    return std::move(unitJson);
+    return std::optional<document_t>(std::move(unitJson));
 }
 
 std::optional<document_t> UtilizationRateToJson(const UtilizationRate &rate, Document::AllocatorType &allocator)
@@ -390,7 +390,7 @@ std::optional<document_t> UtilizationRateToJson(const UtilizationRate &rate, Doc
     JsonUtil::AddMember(rateJson, "cycle", rate.cycle, allocator);
     JsonUtil::AddMember(rateJson, "totalCycles", rate.totalCycles, allocator);
     JsonUtil::AddMember(rateJson, "ratio", rate.ratio, allocator);
-    return std::move(rateJson);
+    return std::optional<document_t>(std::move(rateJson));
 }
 
 std::optional<document_t> UtilizationRateCompareToJson(const CompareData<UtilizationRate> &compareRate,
@@ -403,7 +403,7 @@ std::optional<document_t> UtilizationRateCompareToJson(const CompareData<Utiliza
     JsonUtil::AddMember(compareJson, "baseline", baseline, allocator);
     std::optional<document_t> diff = UtilizationRateToJson(compareRate.diff, allocator);
     JsonUtil::AddMember(compareJson, "diff", diff, allocator);
-    return std::move(compareJson);
+    return std::optional<document_t>(std::move(compareJson));
 }
 
 template<>
@@ -434,7 +434,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
     }
     JsonUtil::AddMember(body, "memoryTable", memoryTable, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> CompareTableRowToJson(const std::vector<CompareData<TableRow>> &rows,
@@ -460,7 +460,7 @@ std::optional<document_t> CompareTableRowToJson(const std::vector<CompareData<Ta
         JsonUtil::AddMember(rowJson, "diff", diffRow, allocator);
         res.PushBack(rowJson, allocator);
     }
-    return std::move(res);
+    return std::optional<document_t>(std::move(res));
 }
 
 template<typename T>
@@ -511,7 +511,7 @@ template<> std::optional<document_t> ToResponseJson<DetailsInterCoreLoadGraphRes
     JsonUtil::AddMember(body, "opDetails", jOpDetails, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
 
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -543,7 +543,7 @@ std::optional<document_t> ToResponseJson<DetailsRooflineResponse>(const DetailsR
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -557,25 +557,25 @@ std::optional<document_t> ToResponseJson<CachelineRecordResponse>(const Cachelin
     std::string data = response.body.cachelineRecords;
     if (data.empty()) {
         JsonUtil::AddMember(json, "body", bodyValue, allocator);
-        return std::move(json);
+        return std::optional<document_t>{std::move(json)};
     }
 
     document_t document;
     // 处理解析错误
     if (document.Parse(data.c_str()).HasParseError() || !document.IsObject()) {
         JsonUtil::AddMember(json, "body", bodyValue, allocator);
-        return std::move(json);
+        return std::optional<document_t>{std::move(json)};
     }
 
     try {
         bodyValue.CopyFrom(document, allocator);
     } catch (const std::exception& e) {
         JsonUtil::AddMember(json, "body", bodyValue, allocator);
-        return std::move(json);
+        return std::optional<document_t>{std::move(json)};
     }
 
     JsonUtil::AddMember(json, "body", bodyValue, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 #pragma endregion

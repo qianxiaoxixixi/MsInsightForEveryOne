@@ -11,6 +11,7 @@
 namespace Dic::Module::Timeline {
 class NpuInfoRepo {
 public:
+    virtual ~NpuInfoRepo() = default;
     virtual std::vector<uint64_t> QueryDeviceIdByFileId(const std::string &fileId);
     void SetNpuInfoTable(std::unique_ptr<NpuInfoTable> npuInfoTablePtr);
 

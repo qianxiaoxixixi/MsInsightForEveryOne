@@ -38,7 +38,7 @@ template
     }
     JsonUtil::AddMember(body, "data", dataList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<AffinityAPIResponse>(const AffinityAPIResponse &response)
@@ -66,7 +66,7 @@ template <> std::optional<document_t> ToResponseJson<AffinityAPIResponse>(const 
     }
     JsonUtil::AddMember(body, "data", dataList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<OperatorFusionResponse>(const OperatorFusionResponse &response)
@@ -94,7 +94,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorFusionResponse>(con
     }
     JsonUtil::AddMember(body, "data", dataList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<AICpuOperatorResponse>(const AICpuOperatorResponse &response)
@@ -120,7 +120,7 @@ template <> std::optional<document_t> ToResponseJson<AICpuOperatorResponse>(cons
     }
     JsonUtil::AddMember(body, "data", dataList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<AclnnOperatorResponse>(const AclnnOperatorResponse &response)
@@ -146,7 +146,7 @@ template <> std::optional<document_t> ToResponseJson<AclnnOperatorResponse>(cons
     }
     JsonUtil::AddMember(body, "data", dataList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> AdvisorProtocolToResponseJson::ToAffinityOptimizerResponse(const Response &response)

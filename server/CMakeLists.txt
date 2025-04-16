@@ -24,7 +24,7 @@ else()
 endif()
 
 # set compile warn
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers -Wno-braced-scalar-init")
 set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers")
 # set some compile warn as error which is not allow
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fallthrough -Werror=switch")

@@ -21,7 +21,7 @@ public:
         std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
-    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
+    bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 protected:
     std::unique_ptr<TaskTable> taskTable = std::make_unique<TaskTable>();
     std::unique_ptr<ComputeTaskInfoTable> computeTaskInfoTable = std::make_unique<ComputeTaskInfoTable>();

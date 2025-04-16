@@ -20,7 +20,7 @@ template <> std::optional<document_t> ToResponseJson<TokenHeartCheckResponse>(co
 {
     document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 json_t FolderToJson(const std::unique_ptr<Folder> &folder, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
@@ -41,7 +41,7 @@ json_t FolderToJson(const std::unique_ptr<Folder> &folder, RAPIDJSON_DEFAULT_ALL
         childrenFolders.PushBack(FolderToJson(childrenFolder, allocator), allocator);
     }
     JsonUtil::AddMember(json, "childrenFolders", childrenFolders, allocator);
-    return std::move(json);
+    return json;
 }
 
 template <> std::optional<document_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response)
@@ -66,7 +66,7 @@ template <> std::optional<document_t> ToResponseJson<FilesGetResponse>(const Fil
     }
     JsonUtil::AddMember(body, "childrenFolders", childrenFolders, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -78,7 +78,7 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoUpdateResponse>(
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -101,7 +101,7 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoGetResponse>(const P
     }
     JsonUtil::AddMember(body, "projectDirectoryList", projectDirectoryJson, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -113,7 +113,7 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteResponse>(
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -125,7 +125,7 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoClearResponse>(
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -137,7 +137,7 @@ std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const Projec
     auto &allocator = json.GetAllocator();
     JsonUtil::AddMember(body, "result", response.body.result, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(const BaselineSettingResponse &response)
@@ -152,7 +152,7 @@ template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(co
     JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
     JsonUtil::AddMember(body, "errorMessage", response.body.errorMessage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<BaselineCancelResponse>(const BaselineCancelResponse &response)
@@ -162,7 +162,7 @@ template <> std::optional<document_t> ToResponseJson<BaselineCancelResponse>(con
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 #pragma endregion
@@ -177,7 +177,7 @@ template <> std::optional<document_t> ToEventJson<ReadFileFailEvent>(const ReadF
     JsonUtil::AddMember(body, "filePath", event.body.filePath, allocator);
     JsonUtil::AddMember(body, "error", event.body.error, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 #pragma endregion
 } // end of namespace Protocol

@@ -17,8 +17,8 @@ public:
     explicit TextSummaryDataBase(std::recursive_mutex &sqlMutex);
     ~TextSummaryDataBase() override;
 
+    bool SetConfig() override;
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
-    bool SetConfig();
     bool CreateTable();
     bool DropTable();
     bool InitStmt(const std::vector<std::string> &columns);
@@ -101,7 +101,7 @@ private:
     bool ExecSqlGetRes(sqlite3_stmt *stmt, std::vector<Protocol::OperatorDetailInfoRes> &res);
     std::vector<Protocol::OperatorDetailInfoRes> ExecSqlGetMoreInfo(sqlite3_stmt *stmt);
     bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                    std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
+                                    std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level) override;
 };
 
 } // end of namespace Summary
