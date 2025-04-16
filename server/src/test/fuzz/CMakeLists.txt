@@ -17,7 +17,6 @@ aux_source_directory(${FUZZ_HOME_DIR}/compute FUZZ_COMPUTE_TEST)
 
 include_directories(${FUZZ_HOME_DIR}/common)
 aux_source_directory(${FUZZ_HOME_DIR}/common FUZZ_COMMON_TEST)
-
 list(APPEND DIC_FUZZ_TEST_LIST
 		${FUZZ_TIMELINE_TEST}
         ${FUZZ_COMPUTE_TEST}
@@ -32,8 +31,15 @@ list(APPEND DIC_FUZZ_TEST_LIST
 )
 
 add_executable(insight_fuzz  FuzzMain.cpp ${DIC_FUZZ_TEST_LIST})
+target_include_directories(insight_fuzz PRIVATE
+		${HOME_DIR}/msinsight/src
+		${HOME_DIR}/msinsight/src/utils
+		${HOME_DIR}/msinsight/src/base
+		${HOME_DIR}/msinsight/include
+		${HOME_DIR}/msinsight/include/utils
+		${HOME_DIR}/msinsight/include/base)
 # 添加预编译头文件到目标
-target_precompile_headers(insight_fuzz PRIVATE ${SRC_HOME_DIR}/entry/server/bin/include/pch.h)
+target_precompile_headers(insight_fuzz PRIVATE ${HOME_DIR}/msinsight/src/utils/pch.h)
 # U_SOCKETS_SRC_LIST无法使用预编译头文件，故排除
 set_source_files_properties(${U_SOCKETS_SRC_LIST} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 add_compile_options(
@@ -63,7 +69,7 @@ add_link_options(
         -fsanitize-coverage=trace-pc,trace-cmp
 )
 
-target_link_libraries(insight_fuzz gtest gtest_main gmock_main
+target_link_libraries(insight_fuzz msinsight gtest gtest_main gmock_main
 		uv_a pthread dl sqlite z Secodefuzz stdc++fs)
 
 target_link_directories(insight_fuzz PUBLIC
