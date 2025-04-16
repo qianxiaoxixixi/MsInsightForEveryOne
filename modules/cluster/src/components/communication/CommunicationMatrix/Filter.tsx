@@ -27,6 +27,8 @@ export enum MatrixType {
     TRANSIT_TIME = 'transitTime',
 }
 
+export type MatrixTypeValues = typeof MatrixType[keyof typeof MatrixType];
+
 const useOptions = (): optionDataType[] => {
     const { t } = useTranslation('communication');
     return [

@@ -15,10 +15,10 @@ import CollapsiblePanel from 'ascend-collapsible-panel';
 import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 import type { TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
 import type { PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
-import type { Condition, Range } from './CommunicationMatrix/Filter';
+import type { Condition, MatrixTypeValues, Range } from './CommunicationMatrix/Filter';
 import Filter, { MatrixType } from './CommunicationMatrix/Filter';
+
 import {
-    getTransportTypeName,
     getTransportTypeSerie,
     getTransportTypeVisualMap,
 } from './CommunicationMatrix/transportType';
@@ -40,6 +40,14 @@ interface MatrixData {
     transportType: string;
 }
 
+interface MergedMatrixData {
+    opName: string;
+    bandwidth: number[];
+    transitSize: number[];
+    transitTime: number[];
+    transportType: string[];
+}
+
 interface ChartData {
     data: HeatmapData[];
     rankIds: number[];
@@ -48,13 +56,19 @@ interface ChartData {
     max: number;
     isCompare: boolean;
 }
-export type HeatmapData = [string, string, React.Key, CompareData<Record<string, React.Key>>];
+export type HeatmapData = [string, string, React.Key, CompareData<MergedMatrixData>];
 export enum HeatmapDataIndex {
     SRC_RANK = 0,
     DST_RANK = 1,
     VALUE = 2,
     DATA = 3,
 }
+
+const matrixDataTypeUnits = {
+    bandwidth: '(GB/s)',
+    transitSize: '(MB)',
+    transitTime: '(ms)',
+};
 
 function InitChart(data: ChartData, t: TFunction): void {
     const chartDom = document.getElementById('matrixchart');
@@ -70,7 +84,7 @@ function wrapData(dataSource: ChartData, t: TFunction): any {
     const option: any = cloneDeep(baseOption);
     option.xAxis.data = rankIds;
     option.yAxis.data = rankIds;
-    option.series = [getSerie({ data, rankIds, t, type, isCompare })];
+    option.series = [getSeries({ data, rankIds, t, type, isCompare })];
     option.visualMap = getVisualMap({ type, min, max, dataLength: data.length, isCompare, t });
     return option;
 }
@@ -116,7 +130,7 @@ const baseOption: any = {
     },
 };
 
-export const baseSerie = {
+export const baseSeries = {
     type: 'heatmap',
     emphasis: {
         itemStyle: {
@@ -125,7 +139,7 @@ export const baseSerie = {
         },
     },
 };
-function getSerie({ data, rankIds, type, isCompare, t }: {
+function getSeries({ data, rankIds, type, isCompare, t }: {
     data: HeatmapData[];
     rankIds: number[];
     type: MatrixType;
@@ -135,72 +149,59 @@ function getSerie({ data, rankIds, type, isCompare, t }: {
     if (type === MatrixType.TRANSPORT_TYPE) {
         return getTransportTypeSerie({ data, rankIds, type, isCompare, t });
     }
-    const { mixData, repeatData } = handleRepeatData(data);
+
     return {
-        ...baseSerie,
-        data: mixData,
+        ...baseSeries,
+        data,
         label: {
             show: rankIds.length <= 16,
             formatter: function (params: any): string {
-                const newData = params?.data;
-                const [x, y] = newData;
-                const repeatKey = `${x},${y}`;
-                return repeatData[repeatKey].length > 1 ? `[${repeatData[repeatKey].join(',')}]` : repeatData[repeatKey][0];
+                const dataList = isCompare ? params?.data[3].diff : params?.data[3].compare;
+                if (!dataList) {
+                    return '';
+                }
+                return dataList[type].length > 1 ? `[${dataList[type].join(',')}]` : dataList[type][0];
             },
         },
-        tooltip: getTooltip({ t, type, repeatData, isCompare }),
+        tooltip: getTooltip({ t, type, isCompare }),
     };
-}
-
-// 处理重复数据
-function handleRepeatData(data: HeatmapData[]): { mixData: HeatmapData[];repeatData: Record<string, string[]> } {
-    const repeatData: Record<string, string[]> = {};
-    // 此处data中每项均为[srcRank, dstRank, value, ...]形式，存在重复[srcRank, dstRank]时，value拼接为[value1,value2,...]形式在通信矩阵中呈现，并以value1作为颜色指标
-    const mixData = data.reduce<HeatmapData[]>((prev, cur) => {
-        const repeatKey = `${cur[HeatmapDataIndex.SRC_RANK]},${cur[HeatmapDataIndex.DST_RANK]}`;
-        if (repeatData[repeatKey] === undefined) {
-            repeatData[repeatKey] = [`${cur[HeatmapDataIndex.VALUE]}`];
-        } else {
-            repeatData[repeatKey].unshift(`${cur[HeatmapDataIndex.VALUE]}`);
-            prev.splice(prev.findIndex(item =>
-                item[HeatmapDataIndex.SRC_RANK] === cur[HeatmapDataIndex.SRC_RANK] && item[HeatmapDataIndex.DST_RANK] === cur[HeatmapDataIndex.DST_RANK])
-            , 1);
-        }
-        return [...prev, cur];
-    }, []);
-    return { mixData, repeatData };
 }
 
 interface Label {
     label: string | number;
     content: string | number;
     contentClass?: string;
+    key?: MatrixType;
 }
 // 提示框
-export function getTooltip({ t, type, isCompare, repeatData }: {t: TFunction;type: string;isCompare: boolean;repeatData?: Record<string, string[]>}):
+export function getTooltip({ t, type, isCompare }: {t: TFunction;type: MatrixTypeValues;isCompare: boolean}):
 TooltipComponentOption {
     return {
         show: true,
         formatter: function (params: any): string {
-            const list = getDisplayList({ t, type, isCompare, repeatData, data: params.data });
-            return list.map(labelItem =>
-                `<span>${safeStr(labelItem.label)}:</span><span class="tooltip-value ${labelItem.contentClass ?? ''}">${safeStr(labelItem.content)}</span><br/>`,
-            ).join('');
+            const list = getDisplayList({ t, type, isCompare, data: params.data });
+            return list.map(labelItem => {
+                const unit = matrixDataTypeUnits[labelItem.key as keyof typeof matrixDataTypeUnits];
+                return `<span>
+                    ${safeStr(labelItem.label)}:
+                 </span>
+                 <span class="tooltip-value ${labelItem.contentClass ?? ''}">
+                    ${safeStr(labelItem.content)}
+                    <span style="font-weight: normal;color: var(--mi-text-color-tertiary)">${unit ?? ''}</span>
+                 </span>
+                 <br/>`;
+            }).join('');
         },
     };
 }
 
-function getDisplayList({ t, type, isCompare, repeatData, data }:
-{data: HeatmapData;t: TFunction;type: string;isCompare: boolean;repeatData?: Record<string, string[]>}): Label[] {
-    let [srcRank, dstRank, value, { compare, baseline }] = data;
-    const repeatedKey = `${srcRank},${dstRank}`;
-    if (type === MatrixType.TRANSPORT_TYPE) {
-        value = getTransportTypeName(data, isCompare, true);
-    } else if (repeatData !== undefined && repeatData[repeatedKey].length > 1) {
-        value = `[${repeatData[repeatedKey].join(', ')}]`;
-    }
+function getDisplayList({ t, type, isCompare, data }:
+{data: HeatmapData;t: TFunction;type: MatrixTypeValues;isCompare: boolean}): Label[] {
+    const [srcRank, dstRank, value, { compare, baseline }] = data;
+    const list: Label[] = [
+        { label: 'Src Rank -> Dst Rank', content: `${srcRank} -> ${dstRank}` },
+    ];
 
-    const list: Label[] = [{ label: 'srcRank -> dstRank', content: `${srcRank} -> ${dstRank}` }];
     if (isCompare) {
         // 算子名
         if (compare.opName !== '') {
@@ -210,19 +211,30 @@ function getDisplayList({ t, type, isCompare, repeatData, data }:
             list.push({ label: t(getBaselineName('operatorName')), content: baseline.opName });
         }
         if (type !== MatrixType.TRANSPORT_TYPE) {
-            list.push({ label: t('Difference'), content: value, contentClass: typeof value === 'number' && value >= 0 ? 'positive-number' : 'negative-number' });
+            list.push({ label: t('Difference'), content: value, key: type, contentClass: typeof value === 'number' && value >= 0 ? 'positive-number' : 'negative-number' });
         }
         list.push(
-            { label: t(getCompareName(type)), content: compare.value },
-            { label: t(getBaselineName(type)), content: baseline.value },
+            { label: t(getCompareName(type)), content: compare[type][0], key: type },
+            { label: t(getBaselineName(type)), content: baseline[type][0], key: type },
         );
     } else {
         // 算子名
         if (compare.opName !== '') {
             list.push({ label: t('operatorName'), content: compare.opName });
         }
-        list.push({ label: t(type), content: value });
+        const allTypeList = Object.values(MatrixType).map((itemType) => {
+            let content;
+            if (compare[itemType].length > 1) {
+                content = `[${compare[itemType].join(', ')}]`;
+            } else {
+                content = compare[itemType][0];
+            }
+
+            return { label: t(itemType), content, key: itemType };
+        });
+        list.push(...allTypeList);
     }
+
     return list;
 }
 
@@ -265,8 +277,14 @@ function getVisualMap({ dataLength, min, max, type, isCompare = false, t }: {
     return baseVisualMap;
 }
 
-// 图表更新
-const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, setRange, t, isCompare }: {
+// 将 MatrixType 对应的 value 转为对象
+function mapValuesToEnum(data: Record<string, any>): Omit<MergedMatrixData, 'opName'> {
+    return Object.fromEntries(
+        Object.values(MatrixType).map((key) => [key, [data[key]]]),
+    ) as Omit<MergedMatrixData, 'opName'>;
+}
+
+interface UpdateChartParams {
     dataSource: DataSource;
     switchCondition: Condition;
     range?: Range;
@@ -274,12 +292,14 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
     setRange: (val: Range) => void;
     t: TFunction;
     isCompare: boolean;
-}): void => {
+}
+// 图表更新
+const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, setRange, t, isCompare }: UpdateChartParams): void => {
     const { data, rankIds } = dataSource;
-    const dataList: HeatmapData[] = data.reduce<HeatmapData[]>((pre, cur) => {
+    const result = data.reduce((acc: Record<string, HeatmapData>, cur) => {
         const { srcRank, dstRank, matrixData: { compare, baseline, diff } } = cur;
+        const key = `${srcRank}-${dstRank}`;
         const compareValue = compare[switchCondition.type];
-        const baselineValue = baseline[switchCondition.type];
         const diffValue = diff[switchCondition.type];
         const value = isCompare ? diffValue : compareValue;
         let match = rankIds.includes(srcRank) && rankIds.includes(dstRank);
@@ -290,16 +310,35 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
             match = match && typeof value === 'number' && value >= range.min && value <= range.max;
         }
         if (match) {
-            pre.push([String(srcRank), String(dstRank), value,
-                {
-                    compare: { opName: compare.opName, value: compareValue },
-                    baseline: { opName: baseline.opName, value: baselineValue },
-                    diff: { value: diffValue },
-                },
-            ]);
+            // 数据去重、值合并：如果存在重复的 key 时，将重复数据合并为 acc[key][3] 中各项指标的值拼接为 [value1,value2,...]
+            if (!acc[key]) {
+                acc[key] = [String(srcRank), String(dstRank), value,
+                    {
+                        compare: {
+                            opName: compare.opName,
+                            ...mapValuesToEnum(compare),
+                        },
+                        baseline: {
+                            opName: baseline.opName,
+                            ...mapValuesToEnum(baseline),
+                        },
+                        diff: {
+                            opName: diff.opName,
+                            ...mapValuesToEnum(diff),
+                        },
+                    },
+                ];
+            } else {
+                for (const item of Object.values(MatrixType)) {
+                    (acc[key][3].compare[item] as Array<string | number>).unshift(compare[item]);
+                }
+            }
         }
-        return pre;
-    }, []);
+
+        return acc;
+    }, {});
+
+    const dataList = Object.values(result);
     const values: number[] = dataList.map((item: HeatmapData) => typeof item[HeatmapDataIndex.VALUE] === 'number' ? item[HeatmapDataIndex.VALUE] as number : 0);
     const min = dataList.length > 0 ? Math.min(...values) : 0;
     const max = dataList.length > 0 ? Math.max(...values) : 0;
