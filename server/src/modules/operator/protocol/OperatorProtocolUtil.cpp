@@ -23,7 +23,7 @@ std::optional<document_t> ToResponseJson<OperatorCategoryInfoResponse>(const Ope
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -42,7 +42,7 @@ std::optional<document_t> ToResponseJson<OperatorComputeUnitInfoResponse>(const 
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 void AddStatisticMemberWithLabel(rapidjson::Value& parent, const char* label, const OperatorStatisticInfoRes& ele,
@@ -81,7 +81,7 @@ std::optional<document_t> ToResponseJson<OperatorStatisticInfoResponse>(const Op
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const OperatorDetailInfoRes& ele,
@@ -139,7 +139,7 @@ std::optional<document_t> ToResponseJson<OperatorDetailInfoResponse>(const Opera
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -185,7 +185,7 @@ std::optional<document_t> ToResponseJson<OperatorMoreInfoResponse>(const Operato
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -199,7 +199,7 @@ std::optional<document_t> ToEventJson<OperatorParseStatusEvent>(const OperatorPa
     JsonUtil::AddMember(body, "status", event.data.status, allocator);
     JsonUtil::AddMember(body, "error", event.data.error, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -207,6 +207,6 @@ std::optional<document_t> ToEventJson<OperatorParseClearEvent>(const OperatorPar
 {
     document_t json(kObjectType);
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 }

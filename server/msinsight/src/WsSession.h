@@ -10,6 +10,7 @@ public:
         STARTED,
         CLOSED
     };
+    virtual ~WsSession() = default;
     virtual void Start() = 0;
     virtual Status GetStatus() const = 0;
     virtual void OnResponse(std::unique_ptr<Protocol::Response> responsePtr) = 0;

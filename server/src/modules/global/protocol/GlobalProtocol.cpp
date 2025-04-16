@@ -229,7 +229,7 @@ std::optional<document_t> GlobalProtocol::ToGetModuleConfigResponseJson(const Re
     }
     JsonUtil::AddMember(body, "configs", configs, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 #pragma endregion
 

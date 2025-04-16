@@ -134,7 +134,7 @@ public:
             return;
         }
         std::string str = head;
-        if (!logStrList.empty(), logStrList[0].find('%') != std::string::npos) {
+        if (!logStrList.empty() && logStrList[0].find('%') != std::string::npos) {
             str += FormatString(logStrList);
         } else {
             for (const auto &item: logStrList) {

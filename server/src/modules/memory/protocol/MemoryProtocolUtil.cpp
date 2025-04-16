@@ -50,7 +50,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonRes
     JsonUtil::AddMember(body, "operatorDetail", operatorDiffDetail, allocator);
     JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool hasStream,
@@ -78,7 +78,7 @@ std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool ha
         JsonUtil::AddMember(json, "releaseActive", op.releaseActive, allocator);
         JsonUtil::AddMember(json, "streamId", op.streamId, allocator);
     }
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<MemoryComponentComparisonResponse>(
@@ -117,7 +117,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryComponentComparisonRe
     JsonUtil::AddMember(body, "componentDetail", componentDiffDetail, allocator);
     JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> ToMemoryComponentJson(const MemoryComponent &component, Document::AllocatorType &allocator)
@@ -131,7 +131,7 @@ std::optional<document_t> ToMemoryComponentJson(const MemoryComponent &component
     JsonUtil::AddMember(json, "timestamp", component.timestamp, allocator);
     JsonUtil::AddMember(json, "totalReserved", component.totalReserved, allocator);
     JsonUtil::AddMember(json, "device", component.device, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response)
@@ -156,7 +156,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const M
     JsonUtil::AddMember(body, "lines", linesList, allocator);
     JsonUtil::AddMember(body, "title", response.data.title, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -169,7 +169,7 @@ std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const Memor
     JsonUtil::AddMember(body, "minSize", response.size.minSize, allocator);
     JsonUtil::AddMember(body, "maxSize", response.size.maxSize, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 
@@ -188,7 +188,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryFindSliceResponse>(co
     JsonUtil::AddMember(body, "startTime", response.data.startTime, allocator);
     JsonUtil::AddMember(body, "duration", response.data.duration, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeResponse &response)
@@ -204,7 +204,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const M
     JsonUtil::AddMember(body, "type", response.type, allocator);
     JsonUtil::AddMember(body, "graphId", graphIdList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -216,7 +216,7 @@ std::optional<document_t> ToResponseJson<MemoryResourceTypeResponse>(const Memor
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "type", response.type, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -242,7 +242,7 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
     JsonUtil::AddMember(body, "legends", legends, allocator);
     JsonUtil::AddMember(body, "lines", linesList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -282,7 +282,7 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
     JsonUtil::AddMember(body, "operatorDetail", operatorDiffDetail, allocator);
     JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &op,
@@ -294,7 +294,7 @@ std::optional<document_t> ToMemoryStaticOperatorJson(const StaticOperatorItem &o
     JsonUtil::AddMember(json, "nodeIndexStart", op.nodeIndexStart, allocator);
     JsonUtil::AddMember(json, "nodeIndexEnd", op.nodeIndexEnd, allocator);
     JsonUtil::AddMember(json, "size", op.size, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template<>
@@ -308,7 +308,7 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorSizeResponse>
     JsonUtil::AddMember(body, "minSize", response.size.minSize, allocator);
     JsonUtil::AddMember(body, "maxSize", response.size.maxSize, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 #pragma endregion

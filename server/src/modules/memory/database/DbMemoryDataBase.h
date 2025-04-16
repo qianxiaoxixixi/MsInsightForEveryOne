@@ -15,20 +15,20 @@ namespace FullDb {
 class DbMemoryDataBase : public Memory::VirtualMemoryDataBase {
 public:
     explicit DbMemoryDataBase(std::recursive_mutex &sqlMutex) : Memory::VirtualMemoryDataBase(sqlMutex) {};
-    virtual ~DbMemoryDataBase() {};
+    ~DbMemoryDataBase() override = default;
 
-    bool OpenDb(const std::string &dbPath, bool clearAllTable);
+    bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
     bool QueryMemoryResourceType(std::string &type) override;
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                             std::vector<Protocol::MemoryOperator> &opDetails);
+                             std::vector<Protocol::MemoryOperator> &opDetails) override;
     bool QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
                               std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                               std::vector<Protocol::MemoryComponent> &componentDetails) override;
     bool QueryMemoryView(Protocol::MemoryViewParams &requestParams, Protocol::MemoryViewData &operatorBody,
-        uint64_t offsetTime);
-    bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
+        uint64_t offsetTime) override;
+    bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
     bool QueryComponentsTotalNum(Protocol::MemoryComponentParams &requestParams, int64_t &totalNum) override;
     bool QueryOperatorSize(double &min, double &max) override;
     bool QueryStaticOperatorSize(Protocol::StaticOperatorSizeParams &requestParams, double &min, double &max) override;
@@ -43,7 +43,7 @@ public:
 
     bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
     bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                   uint64_t offsetTime);
+                                   uint64_t offsetTime) override;
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) override;
 
@@ -53,7 +53,6 @@ public:
     static void Reset();
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
-    bool isCluster;
     std::string BuildOperatorDetailSql(const std::string& startTimeString, const std::string& offsetTimeString);
 };
 

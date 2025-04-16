@@ -44,7 +44,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorDetailsResponse>(co
     JsonUtil::AddMember(body, "count", response.body.count, allocator);
     JsonUtil::AddMember(body, "allOperators", allOperators, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<DistributionResponse>(const DistributionResponse &response)
@@ -55,7 +55,7 @@ template <> std::optional<document_t> ToResponseJson<DistributionResponse>(const
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "distributionData", response.body.distributionData, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<BandwidthDataResponse>(const BandwidthDataResponse &response)
@@ -76,7 +76,7 @@ template <> std::optional<document_t> ToResponseJson<BandwidthDataResponse>(cons
     }
     JsonUtil::AddMember(body, "items", items, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> IterOrRanksInfoToJson(const std::vector<IterationsOrRanksObject> &objs,
@@ -86,7 +86,7 @@ std::optional<document_t> IterOrRanksInfoToJson(const std::vector<IterationsOrRa
     for (const IterationsOrRanksObject& ranksObject : objs) {
         iterationIdList.PushBack(json_t().SetString(ranksObject.iterationOrRankId.c_str(), allocator), allocator);
     }
-    return std::move(iterationIdList);
+    return std::optional<document_t>(std::move(iterationIdList));
 }
 
 template <>
@@ -103,7 +103,7 @@ std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const Iterat
     JsonUtil::AddMember(iterationOrRankId, "baseline", baselineData, allocator);
     JsonUtil::AddMember(body, "iterationOrRankId", iterationOrRankId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 template <> std::optional<document_t> ToResponseJson<OperatorNamesResponse>(const OperatorNamesResponse &response)
 {
@@ -117,7 +117,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorNamesResponse>(cons
     }
     JsonUtil::AddMember(body, "operatorName", operatorName, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <>
@@ -133,7 +133,7 @@ std::optional<document_t> ToResponseJson<MatrixSortOpNamesResponse>(const Matrix
     }
     JsonUtil::AddMember(body, "operatorName", operatorName, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> DurationDataToJson(const DurationData &durationData, Document::AllocatorType &allocator)
@@ -149,7 +149,7 @@ std::optional<document_t> DurationDataToJson(const DurationData &durationData, D
     JsonUtil::AddMember(res, "waitTimeRatio", durationData.waitTimeRatio, allocator);
     JsonUtil::AddMember(res, "sdmaBw", durationData.sdmaBw, allocator);
     JsonUtil::AddMember(res, "rdmaBw", durationData.rdmaBw, allocator);
-    return std::move(res);
+    return std::optional<document_t>(std::move(res));
 }
 
 template <> std::optional<document_t> ToResponseJson<DurationResponse>(const DurationResponse &response)
@@ -186,7 +186,7 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
     JsonUtil::AddMember(body, "items", items, allocator);
     JsonUtil::AddMember(body, "advice", adviceJson, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> OpTimeListToJson(const std::vector<OperatorTimeItem> &opTimeList,
@@ -200,7 +200,7 @@ std::optional<document_t> OpTimeListToJson(const std::vector<OperatorTimeItem> &
         JsonUtil::AddMember(opJson, "duration", item.elapseTime, allocator);
         res.PushBack(opJson, allocator);
     }
-    return std::move(res);
+    return std::optional<document_t>(std::move(res));
 }
 
 template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(const OperatorListsResponse &response)
@@ -225,7 +225,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(cons
     JsonUtil::AddMember(body, "minTime", response.body.minTime, allocator);
     JsonUtil::AddMember(body, "maxTime", response.body.maxTime, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksResponse &response)
@@ -240,7 +240,7 @@ template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksR
     }
     JsonUtil::AddMember(body, "iterationOrRankId", iterationOrRankId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response)
@@ -259,7 +259,7 @@ template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const 
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 std::optional<document_t> MatrixDataToJson(const MatrixData &matrixData, Document::AllocatorType &allocator)
@@ -270,7 +270,7 @@ std::optional<document_t> MatrixDataToJson(const MatrixData &matrixData, Documen
     JsonUtil::AddMember(res, "transitTime", matrixData.transitTime, allocator);
     JsonUtil::AddMember(res, "bandwidth", matrixData.bandwidth, allocator);
     JsonUtil::AddMember(res, "opName", matrixData.opName, allocator);
-    return std::move(res);
+    return std::optional<document_t>(std::move(res));
 }
 
 template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const MatrixListResponse &response)
@@ -296,7 +296,7 @@ template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const M
     }
     JsonUtil::AddMember(body, "matrixList", matrixList, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 #pragma endregion

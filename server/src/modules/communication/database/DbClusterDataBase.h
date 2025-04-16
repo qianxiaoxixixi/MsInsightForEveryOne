@@ -40,7 +40,7 @@ public:
     bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
                             std::vector<Protocol::OperatorNamesObject> &responseBody) override;
     bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
-                                std::vector<Protocol::OperatorNamesObject> &responseBody);
+                                std::vector<Protocol::OperatorNamesObject> &responseBody) override;
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody) override;
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
         std::vector<DurationDo> &durationDoList) override;

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <cstdint>
 #include "cmath"
 #include "algorithm"
 #include "NumberSafeUtil.h"

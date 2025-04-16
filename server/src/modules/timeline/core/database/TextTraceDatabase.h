@@ -137,7 +137,6 @@ private:
     const std::string flowTable = "flow";
     const std::string counterTable = "counter";
     const std::string timelineParseStatus = "Timeline files parsing status";
-    const uint32_t unit = 1000;
     const uint32_t tolerance = 500; // 匹配算子时的范围为±500
     const std::string cardAliasName = "RANK_LABEL";
     bool initStmt = false;
@@ -161,7 +160,7 @@ private:
     std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = nullptr;
     std::unique_ptr<FlowAnalyzer> flowAnalyzerPtr = nullptr;
 
-    bool SetConfig();
+    bool SetConfig() override;
     bool InitSliceFlowCounterStmt();
     bool InitProcessThreadStmt();
     std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);

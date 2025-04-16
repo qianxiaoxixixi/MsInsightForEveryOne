@@ -210,7 +210,7 @@ namespace Dic::Module::Timeline {
         void AggregateComputingOverallMetrics(std::vector<SystemViewOverallRes> &responseBody);
     private:
         // SummarizeOverall最大递归深度为5层，防止无穷递归
-        const int maxDepth = 5;
+        const uint32_t maxDepth = 5;
         const int timeScale = 1000; // us转化为ns
         static void UpdateSystemViewResStatus(SystemViewOverallRes& currentRes, const OverallTmpInfo& tmpInfo);
         void SummarizeSystemViewOverall(SystemViewOverallRes &currentRes, uint32_t depth);

@@ -21,7 +21,7 @@ public:
     ~TextMemoryDataBase() override;
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
-    bool SetConfig();
+    bool SetConfig() override;
     bool CreateTable();
     bool DropTable();
     bool InitStmt();
@@ -67,7 +67,7 @@ public:
                                  double &min, double &max) override;
     bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
     bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
-                                   uint64_t offsetTime);
+                                   uint64_t offsetTime) override;
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                         std::vector<Protocol::StaticOperatorItem>& opDetails) override;
     uint64_t QueryMinOperatorAllocationTime();
@@ -87,7 +87,6 @@ private:
     // 组件级表格数据在数据库中存储表名为module，全量DB对应表名NPU_MODULE_MEM
     const std::string componentTable = "module";
     const std::string memoryParseStatus = "Memory files parsing status";
-    const int exLength = 4;
 
     bool hasInitStmt = false;
     const uint32_t cacheSize = 100;
