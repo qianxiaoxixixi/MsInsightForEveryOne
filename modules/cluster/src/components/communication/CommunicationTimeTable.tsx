@@ -7,12 +7,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button } from 'ascend-components';
-import type { MenuProps, TableColumnsType } from 'antd';
-import { Dropdown } from 'antd';
+import { type MenuProps, message, type TableColumnsType, Dropdown } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
-import type { VoidFunction } from '../../utils/interface';
+import { type ErrorInfo, VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { type ConditionDataType, totalOperator, updateData } from './Filter';
 import { ResizeTable } from 'ascend-resize';
@@ -103,23 +102,30 @@ async function redirectToTimeline(): Promise<void> {
         name,
         rankId: rankId.toString(),
     };
-    const res = await window.requestData('unit/kernelDetail', params, 'timeline');
-    const resObj = res ?? {};
-    connector.send({
-        event: 'switchModule',
-        body: {
-            switchTo: 'timeline',
-            toModuleEvent: 'locateUnit',
-            params: {
-                ...resObj,
-                ...params,
-                processId: resObj.pid,
-                startTime: resObj.startTime,
-                rankId: resObj.rankId,
-                duration,
+    try {
+        const res = await window.requestData('unit/kernelDetail', params, 'timeline');
+        const resObj = res ?? {};
+        connector.send({
+            event: 'switchModule',
+            body: {
+                switchTo: 'timeline',
+                toModuleEvent: 'locateUnit',
+                params: {
+                    ...resObj,
+                    ...params,
+                    processId: resObj.pid,
+                    startTime: resObj.startTime,
+                    rankId: resObj.rankId,
+                    duration,
+                },
             },
-        },
-    });
+        });
+    } catch (e) {
+        const errMsg = (e as ErrorInfo)?.message;
+        if (errMsg !== undefined) {
+            message.error(errMsg);
+        }
+    }
 }
 
 async function findInCommunication(condition: ConditionDataType): Promise<void> {
@@ -141,6 +147,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
+    const [loading, setLoading] = useState(false);
     const { t } = useTranslation('communication');
     const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
     const useMenuItems = (): MenuProps['items'] => {
@@ -167,6 +174,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
         updateTableData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId]);
     const updateTableData = async(_page: any, _sorter: {field: string;order: string}): Promise<void> => {
+        setLoading(true);
         const res = await queryOperatorDetails({
             iterationId: record.source === Source.COMPARISON ? conditions.iterationId : conditions.baselineIterationId,
             rankId: record.rankId,
@@ -177,6 +185,8 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             stage: conditions.stage,
             queryType: record.source,
             pgName: conditions.pgName,
+        }).finally(() => {
+            setLoading(false);
         });
         setDataSource(res?.allOperators ?? []);
         setPage({ ..._page, total: res?.count ?? 0 });
@@ -209,6 +219,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
         <Dropdown menu={{ items }} trigger={['contextMenu']}>
             <div>
                 <ResizeTable columns={columns} dataSource={dataSource} size="small"
+                    loading={loading}
                     pagination={getPageConfigWithPageData(page, setPage)}
                     onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
                         if (extra.action === 'sort') {

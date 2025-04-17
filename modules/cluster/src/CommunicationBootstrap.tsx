@@ -42,7 +42,7 @@ export const App = observer(() => {
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
         <GlobalStyles />
         <SharedConfigProvider locale={locale}>
-            {session !== undefined && <CommunicationAnalysis session={session} />}
+            {session?.clusterCompleted && <CommunicationAnalysis session={session} />}
             <div className={`fullmask ${session?.clusterCompleted ? 'hide' : ''}`}>{Loading}</div>
         </SharedConfigProvider>
     </ThemeProvider>);
