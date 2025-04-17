@@ -351,6 +351,9 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
 // 数据更新
 const updateData = async(condition: ConditionDataType, setDataSource: VoidFunction, isCompare: boolean): Promise<void> => {
     const { iterationId, stage, operatorName, baselineIterationId, pgName } = condition;
+    if (stage === '' || operatorName === '') {
+        return;
+    }
     const param = { iterationId, pgName, stage, operatorName, isCompare, baselineIterationId };
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];

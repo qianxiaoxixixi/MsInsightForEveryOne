@@ -10,14 +10,14 @@ import { observer } from 'mobx-react-lite';
 import { getBaselineName, getCompareName, Loading } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'ascend-components';
-import type { MenuProps } from 'antd';
+import { type MenuProps, message } from 'antd';
 import connector from '../../connection';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
 import { type Theme } from '@emotion/react';
 import { disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
-import { ClickOperatorItem, CompareData, FormatterParams } from '../../utils/interface';
+import { ClickOperatorItem, CompareData, type ErrorInfo, FormatterParams } from '../../utils/interface';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -311,23 +311,30 @@ async function redirectToTimeline(): Promise<void> {
         name,
         rankId: rankId.toString(),
     };
-    const res = await window.requestData('unit/kernelDetail', params, 'timeline');
-    const resObj = res ?? {};
-    connector.send({
-        event: 'switchModule',
-        body: {
-            switchTo: 'timeline',
-            toModuleEvent: 'locateUnit',
-            params: {
-                ...resObj,
-                ...params,
-                processId: resObj.pid,
-                startTime: resObj.startTime,
-                rankId: resObj.rankId,
-                duration,
+    try {
+        const res = await window.requestData('unit/kernelDetail', params, 'timeline');
+        const resObj = res ?? {};
+        connector.send({
+            event: 'switchModule',
+            body: {
+                switchTo: 'timeline',
+                toModuleEvent: 'locateUnit',
+                params: {
+                    ...resObj,
+                    ...params,
+                    processId: resObj.pid,
+                    startTime: resObj.startTime,
+                    rankId: resObj.rankId,
+                    duration,
+                },
             },
-        },
-    });
+        });
+    } catch (e) {
+        const errMsg = (e as ErrorInfo)?.message;
+        if (errMsg !== undefined) {
+            message.error(errMsg);
+        }
+    }
 }
 
 const useMenuItems = (session: Session): MenuProps['items'] => {

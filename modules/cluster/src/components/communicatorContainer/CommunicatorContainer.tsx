@@ -333,6 +333,7 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
     const { parallelTypeList, setParallelTypeList, setDyeingMode, dyeingMode, startVal, endVal, setStartVal, setEndVal } = useParallelSwitchConditions();
     const parallelTypeOptions = useParallelTypeOptions(dimension, generateConditions);
     const [range, setRange] = useState<number[]>([]);
+    const [unit, setUnit] = useState('');
 
     const dataTypeOptions = useMemo(() => {
         const options = session.dataTypeOptions.map(indicator => {
@@ -346,6 +347,7 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
 
     useEffect(() => {
         const { min = null, max = null } = session.rankDyeingData[dyeingMode] ?? {};
+        setUnit(session.indicatorMap.get(dyeingMode)?.unit ?? '');
         if (min !== null && max !== null) {
             setStartVal(min);
             setEndVal(max);
@@ -369,7 +371,7 @@ const ParallelSwitch = observer(({ session, dimension, generateConditions }: Par
                 {
                     dyeingMode !== 'None' &&
                 <>
-                    <Form.Item label={t('VisibleRange')}>
+                    <Form.Item label={`${t('VisibleRange')} (${unit})`}>
                         <InputGroup compact>
                             <InputNumber
                                 data-testid="input-dyeing-minimum"

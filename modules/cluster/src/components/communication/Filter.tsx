@@ -228,6 +228,9 @@ const getStageOptions = async (condition: {iterationId: string;baselineIteration
 const getOperatorOptions = async ({ iterationId, stage, type, pgName }: {iterationId: string;
     stage: string;type: string; pgName: string;}):
 Promise<optionDataType[]> => {
+    if (stage === '') {
+        return [];
+    }
     const res: {operatorName: string[] } = (type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS
         ? await queryOperators({ iterationId, stage, pgName })
         : await queryMatrixOperators({ iterationId, stage, pgName }));
