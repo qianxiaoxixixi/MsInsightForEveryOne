@@ -34,15 +34,20 @@ export function init(page?: string): void {
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;
-        requestData: <T extends object>(method: string, params: object, module?: string) => Promise<T>;
+        requestData: <T extends object>(method: string, params: Record<string, unknown>, module?: string) => Promise<T>;
     }
 };
-window.requestData = async <T extends object>(command: string, params: object, module?: string): Promise<T> => {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
-    });
-    return (data as {body: T})?.body;
+window.requestData = async <T extends object>(command: string, config: Record<string, unknown>, module?: string): Promise<T> => {
+    const { retry, ...params } = config;
+    try {
+        const data = await withTimeout(connector.fetch({
+            args: { command, params },
+            module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
+        }), retry ? 1000 : 0);
+        return (data as {body: T})?.body;
+    } catch (error) {
+        return window.requestData(command, params, module);
+    };
 };
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
@@ -53,3 +58,15 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
         callback(res.body);
     });
 });
+
+function withTimeout(promise: any, timeout: number): Promise<any> {
+    if (timeout <= 0) {
+        return promise;
+    }
+    return Promise.race([
+        promise, // 原始的异步操作
+        new Promise((resolve, reject) =>
+            setTimeout(() => reject(new Error('withTimeout')), timeout),
+        ), // 超时逻辑
+    ]);
+}
