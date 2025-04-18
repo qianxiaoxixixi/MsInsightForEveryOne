@@ -10,7 +10,7 @@ import type { QueryCacheRecordReturn } from '@/components/cacheKit/defs';
  * @return {fileContent:string}
  */
 export const querySourceCode = async(sourceName: string): Promise<any> => {
-    return window.requestData('source/code/file', { sourceName });
+    return window.requestData('source/code/file', { sourceName, retry: true });
 };
 
 /**
@@ -32,7 +32,7 @@ export const queryApiLine = async(param: {sourceName: string; coreName: string})
  * @return {lines:[]}
  */
 export const queryDynamicLine = async(param: {sourceName: string; coreName: string}): Promise<any> => {
-    return window.requestData('source/api/line/dynamic', param);
+    return window.requestData('source/api/line/dynamic', { ...param, retry: true });
 };
 
 /**
@@ -51,7 +51,7 @@ export const queryApiInstr = async(): Promise<any> => {
  * @return {instructions:string}
  */
 export const queryDynamicInstr = async(param: {coreName: string}): Promise<any> => {
-    return window.requestData('source/api/instructions/dynamic', param);
+    return window.requestData('source/api/instructions/dynamic', { ...param, retry: true });
 };
 
 /**
