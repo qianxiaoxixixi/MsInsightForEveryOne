@@ -210,7 +210,9 @@ std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &i
     }
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(msprofDBReg));
     if (frameworkFiles.empty() && msprofFiles.empty()) {
-        error = "Not find valid db dir!";
+        error = "No parsable db files found, Possible reasons:; 1.File not exist; "
+                "2.The nesting depth of the imported sub-file exceeds 5; 3.The sub-file path length exceeds " +
+                std::to_string(FileUtil::GetFilePathLengthLimit());
         ServerLog::Info(error);
         return { importFile };
     }

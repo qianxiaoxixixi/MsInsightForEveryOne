@@ -441,7 +441,9 @@ std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string 
     auto opFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(KERNEL_DETAIL_REG));
     auto memoryFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(memoryRecordReg));
     if (traceFiles.empty() && opFiles.empty() && memoryFiles.empty()) {
-        error = "Not find valid text dir!";
+        error = "No parsable text files found, Possible reasons:; 1.File not exist; "
+                "2.The nesting depth of the imported sub-file exceeds 5; 3.The sub-file path length exceeds " +
+                std::to_string(FileUtil::GetFilePathLengthLimit());
         ServerLog::Info(error);
         return { importFile };
     }
