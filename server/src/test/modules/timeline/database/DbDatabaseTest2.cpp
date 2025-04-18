@@ -45,6 +45,13 @@ protected:
 class MockDatabase : public Dic::Module::FullDb::DbTraceDataBase {
 public:
     explicit MockDatabase(std::recursive_mutex &sqlMutex) : DbTraceDataBase(sqlMutex) {}
+    ~MockDatabase() override
+    {
+        if (isOpen && db != nullptr) {
+            sqlite3_close(db);
+            isOpen = false;
+        }
+    }
     void SetDbPtr(sqlite3 *dbPtr)
     {
         isOpen = true;
@@ -870,6 +877,43 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPU)
     const std::string rankId;
     EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchApiSql);
+    std::string stringTable = "CREATE TABLE STRING_IDS (id INTEGER, value VARCHAR);";
+    std::string npuTable = "CREATE TABLE NPU_MEM (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,"
+        "deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, stringTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, npuTable);
+    DatabaseTestCaseMockUtil::InsertData(db, "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES "
+        "(1, 'app');");
+    DatabaseTestCaseMockUtil::InsertData(db, "INSERT INTO \"main\".\"NPU_MEM\" (\"type\", \"ddr\", \"hbm\", "
+        "\"timestampNs\", \"deviceId\") VALUES (1, 0, 28036571136, 1725542118206101090, 0);");
+    database.SetDbPtr(db);
+
+    auto stmt = database.CreatPreparedStatement();
+    Dic::Protocol::UnitCounterParams requestParams;
+    requestParams.metaType = "NPU_MEM";
+    requestParams.threadId = "APP/HBM";
+    const uint64_t expectStartTime = 1725542118206101090;
+    const uint64_t rangeTime = 1000000;
+    requestParams.startTime = expectStartTime - rangeTime;
+    requestParams.endTime = expectStartTime + rangeTime;
+    const uint64_t minTimestamp = 0;
+    const std::string rankId = "0";
+
+    auto resultSet = Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId);
+    resultSet->Next();
+    auto startTime = resultSet->GetUint64("startTime");
+    auto args = resultSet->GetString("args");
+    EXPECT_EQ(startTime, expectStartTime);
+    EXPECT_EQ(args, "{\"B\":28036571136}");
 }
 
 TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSimple)

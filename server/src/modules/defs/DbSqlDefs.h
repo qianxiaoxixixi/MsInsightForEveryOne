@@ -94,9 +94,9 @@ const static std::string ACC_PMU_UNIT_COUNTER_SQL =
      " else writeOstLevel end, accId) as args  from ACC_PMU join pn "
      " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string NPU_UNIT_COUNTER_SQL = "with pn as (select ? as value) select timestampNs - ? as startTime, "
-     " case type when 0 then 'APP*'  else 'Device*' end as typeName, format('{\"B\":%s}',"
+     " case s.value when 'app' then 'APP*'  else 'Device*' end as typeName, format('{\"B\":%s}',"
      " case when glob('*DDR', pn.value) then ddr when glob('*HBM', pn.value) then "
-     " hbm else hbm + ddr end) as args from NPU_MEM join pn where deviceId = ? and "
+     " hbm else hbm + ddr end) as args from NPU_MEM join STRING_IDS s on type = s.id join pn where deviceId = ? and "
      " glob(typeName, pn.value) and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string SAMPLE_PMU_UNIT_COUNTER_SQL =
         "select timestampNs - ? as startTime, "
