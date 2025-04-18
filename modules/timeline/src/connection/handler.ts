@@ -19,6 +19,7 @@ import i18n from 'ascend-i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
 import { savePageSetting, recoverPageSetting, updatePageSetting } from '../utils/PageSetting';
 import { customConsole as console } from 'ascend-utils';
+import React from 'react';
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
@@ -123,7 +124,21 @@ export const parseFailHandler: NotificationHandler = (data): void => {
         }
         setUnitPhaseByCardId((data as any).rankId, session, 'error');
     });
-    message.error(data.error as string);
+    const msgList = (data.error as string).split(';');
+    const children: any[] = [];
+    msgList.forEach(msg => {
+        children.push(msg);
+        children.push(React.createElement('br'));
+    });
+
+    const content = React.createElement(
+        'div',
+        {
+            style: { 'text-align': 'left' },
+        },
+        ...children,
+    );
+    message.error(content);
 };
 
 const getRootUnit = (session: Session, host: string, dataSource: DataSource): InsightUnit | undefined => {

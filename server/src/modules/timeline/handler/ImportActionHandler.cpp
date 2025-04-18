@@ -117,12 +117,10 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     // 获取文件列表
     for (const auto &item : request.params.path) {
         std::vector<std::string> parseFileList = factory->GetParseFileByImportFile(item, projectType, warnMsg);
-        if (!warnMsg.empty() && parseFileList.size() == 1 &&
-            !ClusterFileParser::CheckIsCluster(parseFileList[0])) {
-            std::string message =
-                "The nesting depth of the imported sub-file exceeds 5 or the sub-file path length exceeds ";
-            message += std::to_string(FileUtil::GetFilePathLengthLimit());
-            SendParseFailEvent(message);
+        bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
+        // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
+        if (!warnMsg.empty() && isNotCluster) {
+            SendParseFailEvent(warnMsg);
         }
         Global::ProjectExplorerInfo projectExplorerInfo;
         projectExplorerInfo.fileName = item;
