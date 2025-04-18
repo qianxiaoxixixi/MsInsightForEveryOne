@@ -6,7 +6,8 @@
 namespace Dic::Server {
 static std::unique_ptr<LogUtil> printInstance = nullptr;
 static std::unique_ptr<LogUtil> recordInstance = nullptr;
-std::string Dic::Server::ServerLog::currentLogPath = "";
+std::string ServerLog::currentLogPath;
+std::mutex ServerLog::currentLogPathMutex;
 #ifdef _WIN32
 const std::string_view PATH_SLASH = "\\";
 #else
@@ -43,6 +44,19 @@ void ServerLog::Initialize(const LogLevel &level)
         printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "", wsPort);
     }
 }
+
+std::string ServerLog::GetCurrentLogPath()
+{
+    std::lock_guard<std::mutex> lock(ServerLog::currentLogPathMutex);
+    return ServerLog::currentLogPath;
+}
+
+void ServerLog::SetCurrentLogPath(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(ServerLog::currentLogPathMutex);
+    ServerLog::currentLogPath = path;
+}
+
 const std::string ServerLog::GetLogHead(const LogLevel &level)
 {
     std::string head;
@@ -53,7 +67,8 @@ const std::string ServerLog::GetLogHead(const LogLevel &level)
 void ServerLog::RecordImpl(const LogLevel &level, std::vector<std::string> &logStrList)
 {
     recordInstance->LogT(level, GetLogHead(level), logStrList);
-    ServerLog::currentLogPath = recordInstance->GetLogFilePath();
+    std::string path = recordInstance->GetLogFilePath();
+    SetCurrentLogPath(path);
 }
 
 void ServerLog::PrintImpl(const LogLevel &level, std::vector<std::string> &logStrList)

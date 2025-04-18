@@ -18,9 +18,11 @@ namespace Dic {
 namespace Server {
 class ServerLog {
 public:
-    static std::string currentLogPath;
     static void Initialize(const std::string &logPath, const int &logSize, const std::string &logLevelStr,
                            std::string wsPortStr);
+
+    static std::string GetCurrentLogPath();
+    static void SetCurrentLogPath(const std::string& path);
 
     template <typename... ARGS> static inline void Info(const ARGS... args)
     {
@@ -104,6 +106,8 @@ private:
 
     std::mutex recordInstanceMutex;
     std::mutex printInstanceMutex;
+    static std::mutex currentLogPathMutex;
+    static std::string currentLogPath;
     std::string wsPort;
 };
 } // end of namespace Server

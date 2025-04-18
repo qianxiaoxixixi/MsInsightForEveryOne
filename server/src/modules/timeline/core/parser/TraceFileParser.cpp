@@ -47,7 +47,7 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
 {
     if (!InitParser(filePathArr, fileId)) {
         auto msg = "Failed to open db. Please delete dbFile and try again or see logs in " +
-                   ServerLog::currentLogPath;
+                   ServerLog::GetCurrentLogPath();
 #if defined(__linux__) || defined(__APPLE__)
         msg += FILE_DESCRIPTOR_RUN_OUT_MESSAGE;
 #endif
