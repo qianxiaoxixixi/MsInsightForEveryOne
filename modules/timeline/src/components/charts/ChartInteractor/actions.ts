@@ -174,7 +174,11 @@ const getOffsetTop = (ele: HTMLElement): number => {
 const isInSplitLineY = (offsetY: number, splitLineRef: React.RefObject<HTMLDivElement> | undefined): boolean => {
     if (splitLineRef?.current) {
         const splitLinePosTop = getOffsetTop(splitLineRef.current as HTMLElement);
-        const splitLineHeight = splitLineRef.current.clientHeight ?? 0;
+        /**
+         * offsetHeight：返回元素的高度，包含内边距（padding）和边框（border），但不包括外边距（margin）和滚动条。
+         * clientHeight：返回元素的高度，包含内边距但不包括边框、外边距和滚动条。
+         */
+        const splitLineHeight = splitLineRef.current.offsetHeight ?? 0;
         const splitLinePosY = [splitLinePosTop, splitLinePosTop + splitLineHeight];
         if (offsetY >= splitLinePosY[0] && offsetY <= splitLinePosY[1]) {
             return true;
@@ -223,7 +227,7 @@ export const mouseDownAction = (session: Session, xReverseScaleRef: XReverseScal
     }
 
     const offsetX = lastPos.x;
-    const offsetY = lastPos.y;
+    const absoluteOffsetY = lastPos.absoluteY;
     if (offsetX > xReverseScaleRef.current(session.endTimeAll as number)) {
         runInAction(() => {
             if (isSingleLine(session)) {
@@ -234,7 +238,7 @@ export const mouseDownAction = (session: Session, xReverseScaleRef: XReverseScal
         });
         return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
-    if (isInSplitLineY(offsetY, splitLineRef)) {
+    if (isInSplitLineY(absoluteOffsetY, splitLineRef)) {
         return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
     let needDragOneSide = false;
@@ -244,10 +248,12 @@ export const mouseDownAction = (session: Session, xReverseScaleRef: XReverseScal
         interactorMouseState.clickPos.current = {
             x: xReverseScaleRef.current(isOnLeftSide ? session.selectedRange[1] : session.selectedRange[0]),
             y: lastPos.y,
+            absoluteX: lastPos.absoluteX,
+            absoluteY: lastPos.absoluteY,
         };
         needDragOneSide = true;
     } else {
-        interactorMouseState.clickPos.current = { x: offsetX, y: lastPos.y };
+        interactorMouseState.clickPos.current = { x: offsetX, y: lastPos.y, absoluteX: lastPos.absoluteX, absoluteY: lastPos.absoluteY };
         session.timelineMaker.oldMarkedRange = undefined;
     }
     runInAction(() => { session.selectedRange = undefined; });

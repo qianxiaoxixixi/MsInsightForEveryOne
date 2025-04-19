@@ -233,10 +233,12 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         const offsetX = e.nativeEvent.x - rect.left - LANE_INFO_WIDTH_PX.value;
         const offsetY = e.nativeEvent.y - rect.top;
         if (offsetX <= 0) {
-            interactorMouseState.lastPos.current = interactorMouseState.clickPos.current ? { x: 0, y: offsetY } : undefined;
+            interactorMouseState.lastPos.current = interactorMouseState.clickPos.current
+                ? { x: 0, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y }
+                : undefined;
             return;
         }
-        interactorMouseState.lastPos.current = { x: offsetX, y: offsetY };
+        interactorMouseState.lastPos.current = { x: offsetX, y: offsetY, absoluteX: e.nativeEvent.x, absoluteY: e.nativeEvent.y };
     };
     const onMouseDown = (e: React.MouseEvent): void => {
         const disabled = !isTargetElement(e) || !chartInteractorRef.current || !interactive ||
