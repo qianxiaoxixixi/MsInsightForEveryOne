@@ -42,6 +42,8 @@ interface DCProps {
 
 const MIN_HORIZONTAL_WH = 14;
 const MIN_VERTICAL_WH = 10;
+const GAP_LENGTH = 10;
+const SPLIT_BUFFER = 2; // 控制鼠标位置永远包在 splitLine 元素之内
 
 const ContainerBase = styled.div<CssProps>`
     display: flex;
@@ -93,7 +95,7 @@ const ContainerLeft = styled(ContainerBase)`
         & > .splitLine {
             position: absolute;
             height: 100%;
-            width: 10px;
+            width: ${(p): string => p.splitLineH};
             top: 0;
             right: 0;
             z-index: 1;
@@ -131,7 +133,7 @@ const ContainerRight = styled(ContainerBase)`
         & > .splitLine {
             position: absolute;
             height: 100%;
-            width: 10px;
+            width: ${(p): string => p.splitLineH};
             top: 0;
             left: 0;
             z-index: 1;
@@ -173,7 +175,7 @@ const ContainerBottom = styled(ContainerBase)`
             border-top: ${(p): string => p.theme.dividerColor} 0 solid;
             user-select: none;
             &:hover[aria-disabled=true] {
-                border-top-width: 1px;
+                border-top-width: 2px;
                 cursor: n-resize;
             }
         }
@@ -215,19 +217,19 @@ const ContainerTop = styled(ContainerBase)`
             border-bottom: ${(p): string => p.theme.dividerColor} 0 solid;
             user-select: none;
             &:hover[aria-disabled=true] {
-                border-bottom-width: 1px;
+                border-bottom-width: 2px;
                 cursor: n-resize;
             }
         }
     }
-    &.gap {
+    &.gap { // 此处添加的样式是针对 timeline 泳道分隔栏的
         .splitLine {
             background-color: ${(p): string => p.theme.bgColorDark};
             border-top:${(p): string => p.theme.dividerColor} 2px solid;
-            border-bottom:${(p): string => p.theme.dividerColor} 2px solid;
+            border-bottom:${(p): string => p.theme.dividerColor} 1px solid;
         }
         .dragContainer {
-            padding-bottom: 10px;
+            padding-bottom: ${(p): string => p.splitLineH};
         }
     }
 
@@ -262,40 +264,40 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
     switch (dragDirection) {
         case DragDirection.TOP:
             offset = domDragRect.bottom - e.clientY;
-            if (offset <= 10 && offset > 0 && isOpen.current) {
+            if (offset <= GAP_LENGTH && offset > 0 && isOpen.current) {
                 movingState.current = {
                     ...baseMS,
                     startX: domDragRect.x,
-                    startY: domDragRect.bottom,
+                    startY: e.clientY,
                 };
             }
             break;
         case DragDirection.BOTTOM:
             offset = e.clientY - domDragRect.top;
-            if (offset <= 10 && offset > 0 && isOpen.current) {
+            if (offset <= GAP_LENGTH && offset > 0 && isOpen.current) {
                 movingState.current = {
                     ...baseMS,
                     startX: domDragRect.x,
-                    startY: domDragRect.top,
+                    startY: e.clientY,
                 };
             }
             break;
         case DragDirection.LEFT:
             offset = domDragRect.right - e.clientX;
-            if (offset <= 10 && offset > 0 && isOpen.current) {
+            if (offset <= GAP_LENGTH && offset > 0 && isOpen.current) {
                 movingState.current = {
                     ...baseMS,
-                    startX: domDragRect.left,
+                    startX: e.clientX,
                     startY: domDragRect.y,
                 };
             }
             break;
         default:
             offset = e.clientX - domDragRect.left;
-            if (offset <= 10 && offset > 0 && isOpen.current) {
+            if (offset <= GAP_LENGTH && offset > 0 && isOpen.current) {
                 movingState.current = {
                     ...baseMS,
-                    startX: domDragRect.right,
+                    startX: e.clientX,
                     startY: domDragRect.y,
                 };
             }
@@ -331,25 +333,25 @@ const handleMouseMove = (params: ImouseAction) => (e: MouseEvent): void => {
         case DragDirection.BOTTOM:
             offsetY = e.y - moving.startY;
             if (Math.abs(offsetY) >= 5) {
-                domDrag.style.height = `${clamp(dom.clientHeight - e.y + containerOffsetTop, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
+                domDrag.style.height = `${clamp(dom.clientHeight - e.y + containerOffsetTop + SPLIT_BUFFER, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
             }
             break;
         case DragDirection.TOP:
             offsetY = e.y - moving.startY;
             if (Math.abs(offsetY) >= 5) {
-                domDrag.style.height = `${clamp(e.y - containerOffsetTop, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
+                domDrag.style.height = `${clamp(e.y - containerOffsetTop + SPLIT_BUFFER, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
             }
             break;
         case DragDirection.LEFT:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(e.x, 245, dom.clientWidth * 0.4)}px`;
+                domDrag.style.width = `${clamp(e.x + SPLIT_BUFFER, 245, dom.clientWidth * 0.4)}px`;
             }
             break;
         default:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(moving.startX - e.clientX, MIN_DRAG_WH, dom.clientWidth * RIGHT_PERCENT)}px`;
+                domDrag.style.width = `${clamp(moving.startX - e.clientX + SPLIT_BUFFER, MIN_DRAG_WH, dom.clientWidth * RIGHT_PERCENT)}px`;
             }
             break;
     }
@@ -518,7 +520,7 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
     const Container = containerMap.get(dragDirection) as typeof ContainerBase;
     const view = (vProps: ViewProps): JSX.Element => {
         return <Container key={vProps.id} ref={container} column draggableWH={open ? dragWh : '0px'} className={vProps.gap ? 'gap' : ''}
-            splitLineH={open ? '10px' : '0px'} dragDirection={dragDirection} minWH={MIN_DRAG_WH}
+            splitLineH={open ? `${GAP_LENGTH}px` : '0px'} dragDirection={dragDirection} minWH={MIN_DRAG_WH}
             onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
             onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
             <div className={'topC'} ref={draggable}>

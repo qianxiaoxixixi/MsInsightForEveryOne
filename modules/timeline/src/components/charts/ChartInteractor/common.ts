@@ -7,6 +7,8 @@ import type { XReverseScaleRef } from './ChartInteractor';
 export interface Pos {
     x: number;
     y: number;
+    absoluteX: number;
+    absoluteY: number;
 };
 const TEXT_WIDTH = 70;
 const FONT_SIZE = 12;
