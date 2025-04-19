@@ -42,35 +42,32 @@ target_include_directories(insight_fuzz PRIVATE
 target_precompile_headers(insight_fuzz PRIVATE ${HOME_DIR}/msinsight/src/utils/pch.h)
 # U_SOCKETS_SRC_LIST无法使用预编译头文件，故排除
 set_source_files_properties(${U_SOCKETS_SRC_LIST} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
-add_compile_options(
+target_compile_options(insight_fuzz PRIVATE
         -g
         -fPIC
-        -Wall
+		-Wall
         -Winvalid-pch
         -fms-extensions
-        -std=c++11
+		-std=c++11
         -O0
         -fno-omit-frame-pointer
         -ftest-coverage
         -fprofile-arcs
         -fdump-rtl-expand
         -Wno-pmf-conversions
-        -D_GLIBCXX_USE_CXX11_ABI=0
         # for fsannitize
         -fsanitize=address
         -fsanitize=undefined
-        -fsanitize-coverage=trace-cmp
-        -fsanitize-coverage=trace-pc
+        -fsanitize-coverage=trace-cmp,trace-pc
 )
-
-add_link_options(
-        -fsanitize=address
-        -fsanitize=undefined
-        -fsanitize-coverage=trace-pc,trace-cmp
+target_link_options(insight_fuzz PRIVATE
+		-fsanitize=address
+		-fsanitize=undefined
+		-fsanitize-coverage=trace-cmp,trace-pc
 )
-
-target_link_libraries(insight_fuzz msinsight gtest gtest_main gmock_main
-		uv_a pthread dl sqlite z Secodefuzz stdc++fs)
+target_link_libraries(insight_fuzz PRIVATE
+		msinsight gtest gtest_main gmock_main
+		uv_a pthread dl sqlite z Secodefuzz stdc++fs gcov)
 
 target_link_directories(insight_fuzz PUBLIC
         ${HOME_DIR}/third_party/secodefuzz/examples/out-bin-x64/
