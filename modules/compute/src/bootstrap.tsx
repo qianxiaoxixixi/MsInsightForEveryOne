@@ -34,19 +34,23 @@ export function init(page?: string): void {
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;
-        requestData: <T extends object>(method: string, params: Record<string, unknown>, module?: string) => Promise<T>;
+        requestData: <T extends object>(method: string, params: Record<string, unknown>, module?: string) => Promise<T | undefined> ;
     }
 };
-window.requestData = async <T extends object>(command: string, config: Record<string, unknown>, module?: string): Promise<T> => {
+const REQUEST_ERROR_TIMEOUT = 'page request error timeout';
+window.requestData = async <T extends object>(command: string, config: Record<string, unknown>, module?: string): Promise<T | undefined> => {
     const { retry, ...params } = config;
     try {
         const data = await withTimeout(connector.fetch({
             args: { command, params },
             module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
-        }), retry ? 1000 : 0);
+        }), retry ? 1000 : 0, REQUEST_ERROR_TIMEOUT);
         return (data as {body: T})?.body;
     } catch (error) {
-        return window.requestData(command, params, module);
+        if ((error as any)?.message === REQUEST_ERROR_TIMEOUT) {
+            return window.requestData(command, params, module);
+        }
+        return undefined;
     };
 };
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
@@ -59,14 +63,14 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     });
 });
 
-function withTimeout(promise: any, timeout: number): Promise<any> {
+function withTimeout(promise: any, timeout: number, message?: string): Promise<any> {
     if (timeout <= 0) {
         return promise;
     }
     return Promise.race([
         promise, // 原始的异步操作
         new Promise((resolve, reject) =>
-            setTimeout(() => reject(new Error('withTimeout')), timeout),
+            setTimeout(() => reject(new Error(message ?? 'withTimeout')), timeout),
         ), // 超时逻辑
     ]);
 }
