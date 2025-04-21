@@ -554,8 +554,17 @@ void ParserJson::ParserMetaData(const std::vector<Global::ProjectExplorerInfo> &
         for (const auto &item: project.parseFilePathInfos) {
             std::string parent = FileUtil::GetParentPath(item.parseFilePath);
             std::string metaDataFilePath = FileUtil::SplicePath(parent, PROFILER_METADATA_FILE);
+            if (!FileUtil::CheckDirValid(metaDataFilePath)) {
+                ServerLog::Error("Meta data file % is not valid.", metaDataFilePath);
+                continue;
+            }
             auto groupInfoList = MetaDataParser::ParserParallelGroupInfoByFilePath(metaDataFilePath);
             MetaDataCacheManager::Instance().AddParallelGroupInfo(groupInfoList);
+            if (MetaDataCacheManager::Instance().GetDistributedArgsInfo() != std::nullopt) {
+                continue;
+            }
+            std::optional<DistributedArgs> args = MetaDataParser::ParserDistributedArgsByFilePath(metaDataFilePath);
+            MetaDataCacheManager::Instance().SetDistributedArgsInfo(args);
         }
     }
 }

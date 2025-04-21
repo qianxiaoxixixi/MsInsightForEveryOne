@@ -14,6 +14,7 @@
 #include "DbClusterDataBase.h"
 #include "TraceTime.h"
 #include "CollectionUtil.h"
+#include "MetaDataCacheManager.h"
 #include "ClusterFileParser.h"
 
 
@@ -132,9 +133,15 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
         ServerLog::Error("Can't get cluster database when sava cluster base info.");
         return;
     }
-    bool result = textDb->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
-    if (!result || (baseInfo.config.dpSize == 1 && baseInfo.config.ppSize == 1 && baseInfo.config.tpSize == 1)) {
-        ServerLog::Warn("Get initial parallel config from step trace.");
+    std::optional<DistributedArgs> args = MetaDataCacheManager::Instance().GetDistributedArgsInfo();
+    if (args.has_value()) {
+        baseInfo.config = args.value().config;
+        baseInfo.level = PARALLEL_CONFIG_LEVEL_COLLECTED;
+    } else {
+        bool result = textDb->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
+        if (!result) {
+            ServerLog::Error("Failed to get initial parallel config from profiler_metadata.json or step trace.");
+        }
     }
     textDb->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",

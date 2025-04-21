@@ -440,7 +440,8 @@ const std::string TIME_STACK = "time";
 const std::string TIME_AXIS = "time";
 const std::string RATIO_AXIS = "ratio";
 
-// 当初始状态的数据库有ClusterBaseInfo表时，存储distributed_args列的信息
+// text格式数据，从profiler_metadata.json获取distributed_args并行策略信息
+// db格式数据，当初始状态的数据库有ClusterBaseInfo表时，存储distributed_args列的并行策略信息
 struct DistributedArgs {
     ParallelStrategyConfig config{MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 1, 1, 1, 1};
     int64_t worldSize = 1;
