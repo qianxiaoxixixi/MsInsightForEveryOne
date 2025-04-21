@@ -153,7 +153,7 @@ export const queryCoreOccupancy = async(isCompared: boolean): Promise<any> => {
     return window.requestData('source/details/interCoreLoadAnalysis', { isCompared });
 };
 
-export const queryRoofline = async(): Promise<IRooflineData> => {
+export const queryRoofline = async(): Promise<IRooflineData | undefined> => {
     return window.requestData('source/details/roofline', {});
 };
 
