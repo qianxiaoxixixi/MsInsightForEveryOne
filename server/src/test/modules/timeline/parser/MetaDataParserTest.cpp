@@ -6,6 +6,7 @@
 #include "MetaDataParser.h"
 #include "FileUtil.h"
 
+using namespace Dic::Module;
 using namespace Dic::Module::Timeline;
 class MetaDataParserTest : public ::testing::Test {
 protected:
@@ -13,16 +14,16 @@ protected:
     void SetUp() override
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
-        int index = currPath.find_last_of("server");
-        currPath = currPath.substr(0, index + 1);
-        filePath = currPath + R"(/src/test/test_data/metadata/profiler_metadata.json)";
+        int index = currPath.find("server");
+        currPath = currPath.substr(0, index);
+        filePath = currPath + R"(server/src/test/test_data/metadata/profiler_metadata.json)";
     }
 };
 
 /**
  * 测试解析profiler_metadata文件成功
  */
-TEST_F(MetaDataParserTest, test_ParserParallelGroupInfoByFilePath_success)
+TEST_F(MetaDataParserTest, TestParserParallelGroupInfoByFilePathReturnSuccess)
 {
     std::vector<ParallelGroupInfo> res = MetaDataParser::ParserParallelGroupInfoByFilePath(filePath);
     const int twentyOne = 21;
@@ -32,7 +33,7 @@ TEST_F(MetaDataParserTest, test_ParserParallelGroupInfoByFilePath_success)
 /**
  * 测试解析parallel_group_info数据失败，文本内容为空
  */
-TEST_F(MetaDataParserTest, test_ParserParallelGroupInfoByText_fail_with_empty_text)
+TEST_F(MetaDataParserTest, TestParserParallelGroupInfoByTextFailWithEmptyText)
 {
     std::vector<ParallelGroupInfo> res = MetaDataParser::ParserParallelGroupInfoByText("");
     const int zero = 0;
@@ -42,7 +43,7 @@ TEST_F(MetaDataParserTest, test_ParserParallelGroupInfoByText_fail_with_empty_te
 /**
  * 测试解析parallel_group_info数据成功
  */
-TEST_F(MetaDataParserTest, test_ParserParallelGroupInfoByText_success)
+TEST_F(MetaDataParserTest, TestParserParallelGroupInfoByTextReturnSuccess)
 {
     std::string text = "{\"10.174.216.241%enp189s0f1_55000_0_1738895486152654\": {\"group_name\": \"default_group\", "
                        "\"group_rank\": 0, \"global_ranks\": [0, 1, 2, 3, 4, 5, 6, 7]}, "
@@ -61,4 +62,22 @@ TEST_F(MetaDataParserTest, test_ParserParallelGroupInfoByText_success)
     std::vector<ParallelGroupInfo> res = MetaDataParser::ParserParallelGroupInfoByText(text);
     const int seven = 7;
     EXPECT_EQ(res.size(), seven);
+}
+
+/**
+ * 测试解析profiler_metadata文件distributed_args
+ */
+TEST_F(MetaDataParserTest, TestParserDistributedArgsByFilePathReturnSuccess)
+{
+    std::optional<DistributedArgs> args = MetaDataParser::ParserDistributedArgsByFilePath(filePath);
+    const int two = 2;
+    const int eight = 8;
+    ASSERT_TRUE(args.has_value());
+    EXPECT_EQ(args.value().config.tpSize, two);
+    EXPECT_EQ(args.value().config.ppSize, two);
+    EXPECT_EQ(args.value().config.dpSize, two);
+    EXPECT_EQ(args.value().config.cpSize, 1);
+    EXPECT_EQ(args.value().config.epSize, 1);
+    EXPECT_EQ(args.value().worldSize, eight);
+    EXPECT_TRUE(args.value().sequenceParallel);
 }
