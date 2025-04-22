@@ -395,6 +395,21 @@ struct SystemViewRequest : public Request {
     SystemViewParams params;
 };
 
+struct SystemViewAICoreFreqParams {
+    uint64_t current = 0;
+    uint64_t pageSize = 0;
+    std::string rankId;
+    bool CheckParams(std::string &warnMsg) const
+    {
+        return CheckUnsignPageValid(pageSize, current, warnMsg);
+    }
+};
+
+struct SystemViewAICoreFreqRequest : public Request {
+    SystemViewAICoreFreqRequest() : Request(REQ_RES_SYSTEM_VIEW_AICORE_FREQ){};
+    SystemViewAICoreFreqParams params;
+};
+
 struct EventsViewParams {
     std::string orderBy;
     std::string order;

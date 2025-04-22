@@ -60,6 +60,11 @@ std::vector<SameOperatorsDetails> SystemViewOverallHelper::FilterComputingEvents
     return filteredEvents;
 }
 
+static bool CompareByName(const SystemViewOverallRes& a, const SystemViewOverallRes& b)
+{
+    return a.name < b.name;
+}
+
 void SystemViewOverallHelper::AggregateComputingOverallMetrics(std::vector<SystemViewOverallRes> &responseBody)
 {
     if (responseBody.empty()) {
@@ -69,7 +74,7 @@ void SystemViewOverallHelper::AggregateComputingOverallMetrics(std::vector<Syste
     for (const auto &tmpInfo: kernelEvents) {
         ComputeOverallMetrics(responseBody[0].children, tmpInfo, 0);
     }
-    std::sort(responseBody[0].children.begin(), responseBody[0].children.end(), SystemViewOverallRes::CompareByName);
+    std::sort(responseBody[0].children.begin(), responseBody[0].children.end(), CompareByName);
     double otherComputingTime = responseBody[0].totalTime;
     for (auto &item: responseBody[0].children) {
         otherComputingTime -= item.totalTime;

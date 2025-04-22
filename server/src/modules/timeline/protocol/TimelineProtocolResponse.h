@@ -184,6 +184,17 @@ struct ResetWindowResponse : public Response {
     ResetWindowResponse() : Response(REQ_RES_RESET_WINDOW) {}
 };
 
+inline bool CompareLess(uint32_t depth1, uint32_t depth2, uint64_t time1, uint64_t time2)
+{
+    if (depth1 < depth2) {
+        return true;
+    }
+    if (depth1 == depth2 && time1 < time2) {
+        return true;
+    }
+    return false;
+}
+
 // struct
 struct RowThreadTrace {
     int64_t id = 0;
@@ -195,13 +206,7 @@ struct RowThreadTrace {
     std::string cname;
     bool operator < (const RowThreadTrace &right) const
     {
-        if (depth < right.depth) {
-            return true;
-        }
-        if (depth == right.depth && startTime < right.startTime) {
-            return true;
-        }
-        return false;
+        return CompareLess(depth, right.depth, startTime, right.startTime);
     }
 };
 
@@ -222,13 +227,7 @@ struct SimpleSlice {
     std::string metaType;
     bool operator < (const SimpleSlice &right) const
     {
-        if (depth < right.depth) {
-            return true;
-        }
-        if (depth == right.depth && timestamp < right.timestamp) {
-            return true;
-        }
-        return false;
+        return CompareLess(depth, right.depth, timestamp, right.timestamp);
     }
 
     bool operator > (const SimpleSlice &right) const
@@ -337,6 +336,23 @@ struct SystemViewResponse : public Response {
     SystemViewBody body;
 };
 
+struct SystemViewAICoreFreqDetail {
+    double frequency;  // 频率
+    double timestamp;  // 时间戳
+};
+
+struct SystemViewAICoreFreqBody {
+    std::vector<SystemViewAICoreFreqDetail> AICoreDetails;
+    uint64_t total = 0;
+    uint64_t pageSize{};
+    uint64_t currentPage{};
+};
+
+struct SystemViewAICoreFreqResponse : public Response {
+    SystemViewAICoreFreqResponse() : Response(REQ_RES_SYSTEM_VIEW_AICORE_FREQ) {}
+    SystemViewAICoreFreqBody body;
+};
+
 struct SystemViewOverallRes {
     double totalTime{};
     double ratio{};
@@ -355,11 +371,6 @@ struct SystemViewOverallRes {
     {
         max = (max == -std::numeric_limits<double>::infinity()) ? 0.0 : max;
         min = (min == std::numeric_limits<double>::infinity()) ? 0.0 : min;
-    }
-
-    static bool CompareByName(const SystemViewOverallRes& a, const SystemViewOverallRes& b)
-    {
-        return a.name < b.name;
     }
 };
 

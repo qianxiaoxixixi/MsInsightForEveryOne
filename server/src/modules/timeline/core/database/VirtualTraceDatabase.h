@@ -59,6 +59,8 @@ public:
     virtual bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) = 0;
     virtual bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
         Protocol::SystemViewBody &responseBody) = 0;
+    virtual bool QuerySystemViewAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+                                               Protocol::SystemViewAICoreFreqBody &responseBody) = 0;
     virtual LayerStatData QueryLayerData(const std::string &layer, const std::string &name) = 0;
     virtual std::vector<std::string> QueryCoreType() = 0;
     virtual bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
