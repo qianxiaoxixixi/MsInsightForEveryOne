@@ -401,6 +401,12 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
     return true;
 }
 
+bool DbTraceDataBase::QuerySystemViewAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+                                                    Protocol::SystemViewAICoreFreqBody &responseBody)
+{
+    return true;
+}
+
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {

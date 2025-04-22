@@ -1289,6 +1289,12 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
     return true;
 }
 
+bool TextTraceDatabase::QuerySystemViewAICoreFreqData(
+    const Protocol::SystemViewAICoreFreqParams &requestParams, Protocol::SystemViewAICoreFreqBody &responseBody)
+{
+    return true;
+}
+
 LayerStatData TextTraceDatabase::QueryLayerData(const std::string &layer, const std::string &name)
 {
     LayerStatData layerStatData;
