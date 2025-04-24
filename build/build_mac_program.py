@@ -225,7 +225,7 @@ def unlock_signature_keychain(ssh_client, ssh_config):
     远程ssh链接需要解锁签名钥匙串，以供后续签名使用
     """
     cmd = "security unlock-keychain -p %s ~/Library/Keychains/login.keychain-db" % SENSITIVE_CMD_PLACEHOLDER
-    execute_cmd(ssh_client, cmd, True, ssh_config.passwd)
+    execute_cmd(ssh_client, cmd, 3*60, True, ssh_config.passwd)
 
 
 def init_local_workspace():
