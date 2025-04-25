@@ -221,9 +221,10 @@ test.describe('Memory(MindSpore)', () => {
         await rankIdSelect.open();
         await rankIdSelect.selectOption('0');
         // 等待echarts加载完成再操作
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // 滚动到最下方，让graph折线图和表格显示出来
         await page.mouse.wheel(0, 800);
+        await page.waitForTimeout(1000);
         // 框选
         const graphChart = memoryFrame.locator('canvas').nth(1);
         expect(graphChart).not.toBeNull();
