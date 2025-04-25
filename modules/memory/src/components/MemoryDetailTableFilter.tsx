@@ -89,6 +89,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                     id={'input-minSize'}
                     value={memorySession.minSize}
                     onChange={onFilterEventMinSizeInputChanged}
+                    precision={0}
                     min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
                     max={MAX_INPUT_NUMBER}
                 />
@@ -99,6 +100,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                     id={'input-maxSize'}
                     value={memorySession.maxSize}
                     onChange={onFilterEventMaxSizeInputChanged}
+                    precision={0}
                     min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
                     max={MAX_INPUT_NUMBER}
                     minLength={1}
