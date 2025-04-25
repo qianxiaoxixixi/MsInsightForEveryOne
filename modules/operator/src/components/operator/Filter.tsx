@@ -163,10 +163,14 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
 
 const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
     const { t } = useTranslation('operator', { keyPrefix: 'searchCriteria' });
-    const groupOptions = optionMap.groupOptions.map(item => ({
-        ...item,
-        label: t(item.label as string),
-    }));
+    if (condition.isCompare && condition.group === 'Operator') {
+        condition.group = 'Operator Type';
+    }
+    const groupOptions = (condition.isCompare ? optionMap.groupOptions.filter(item => item.value !== 'Operator') : optionMap.groupOptions)
+        .map(item => ({
+            ...item,
+            label: t(item.label as string),
+        }));
     const topKOptions = optionMap.topKOptions.map(item => ({
         ...item,
         label: t(item.label as string),
