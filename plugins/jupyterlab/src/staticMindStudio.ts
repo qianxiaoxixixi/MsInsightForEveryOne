@@ -155,8 +155,7 @@ export function shutdownAll(
 /**
  * According mindstudio's name to get mindstudio's url.
  */
-export function getUrl(
-    name: string,
+export function startIframeUrl(
     settings?: ServerConnection.ISettings
 ): Promise<string> {
     const localSettings = settings || ServerConnection.makeSettings();
@@ -169,6 +168,24 @@ export function getUrl(
         return response.json();
     })
     .then((data: any) => {
-        return Private.getMindStudioInstanceUrl(localSettings.baseUrl, name, data.proxy, data.port);
+        return Private.getMindStudioInstanceUrl(localSettings.baseUrl, data.proxy, data.port, data.profilerServerId);
+    });
+}
+
+/**
+ * Terminate mindstudio profiler server by iframe's url.
+ */
+export function terminateIframe(
+    profilerServerId: string,
+    settings?: ServerConnection.ISettings
+): Promise<void> {
+    const localSettings = settings || ServerConnection.makeSettings();
+    const terminateProfilerUrl = Private.terminateIframe(localSettings.baseUrl, encodeURIComponent(profilerServerId));
+    return ServerConnection.makeRequest(terminateProfilerUrl, {}, localSettings)
+    .then((response: Response) => {
+        if (response.status !== 200) {
+            throw new ServerConnection.ResponseError(response);
+        }
+        return response.json();
     });
 }

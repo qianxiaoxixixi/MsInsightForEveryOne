@@ -26,6 +26,7 @@ export class MindStudioReactWidget extends ReactWidget {
 
   currentMindStudioModel: MindStudio.IModel | null = null;
   createdModelName?: string;
+  profilerServerId: string | null;
 
   /**
    * Constructs a new CounterWidget.
@@ -35,6 +36,7 @@ export class MindStudioReactWidget extends ReactWidget {
     this.mindstudioManager = options.mindstudioManager;
     this.createdModelName = options.createdModelName;
     this.app = options.app;
+    this.profilerServerId = '';
 
     this.title.closable = true;
     this.title.label = 'MindStudio Insight';
@@ -42,12 +44,21 @@ export class MindStudioReactWidget extends ReactWidget {
   }
 
   dispose(): void {
+    this.mindstudioManager.terminateIframe(this.profilerServerId ?? '').then(() => {})
+      .catch(() => {});
     super.dispose();
   }
 
   closeCurrent = (): void => {
     this.dispose();
     this.close();
+  };
+
+  startIframeUrl = async (): Promise<string> => {
+    const url = await this.mindstudioManager.startIframeUrl();
+    const match = url.match(/profilerServerId=(?<profilerServerId>[^&;]+)/);
+    this.profilerServerId = match ? match[1] : null;
+    return url;
   };
 
   startNew = (
@@ -73,6 +84,7 @@ export class MindStudioReactWidget extends ReactWidget {
         openMindStudio={this.openMindStudio}
         updateCurrentModel={this.updateCurrentModel}
         startNew={this.startNew}
+        startIFrame={this.startIframeUrl}
       />
     );
   };

@@ -46,11 +46,11 @@ export class Connection {
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (initHost.jupyterlabProxy) {
             const { host, search } = window.location;
-            const path = `/proxy/${initHost.port}${window.location.pathname}`;
+            const path = `${window.location.pathname.replace(/\/resources\/frontend/, `/proxy/${initHost.port}/resources/frontend`)}`;
             const uri = protocol + host + path + search;
             this._ws = new WebSocket(uri);
             runInAction(() => {
-                session.toIframeUrl = `${protocol}${host}${path.replace(/\/index.html/, '')}`;
+                session.toIframeUrl = `${protocol}${host}${window.location.pathname.replace(/\/resources\/frontend\/.*/, `/proxy/${initHost.port}`)}`;
             });
         } else if (!window.location.pathname.includes('/proxy/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;

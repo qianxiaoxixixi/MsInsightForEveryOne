@@ -16,6 +16,8 @@ const MINDSTUDIO_URL = '/resources/frontend/index.html';
 
 const MINDSTUDIO_IFRAME_CONFIG_URL = '/mindstudio_insight_jupyterlab/get_iframe_config';
 
+const MINDSTUDIO_TERMINATE_PROFILER_URL = '/mindstudio_insight_jupyterlab/terminate_profiler_server';
+
 /**
  * A namespace for private data.
  */
@@ -48,15 +50,8 @@ export function getServiceUrl(baseUrl: string): string {
 }
 
 /**
- * Get the iframe config url.
- */
-export function getIFrameConfigUrl(baseUrl: string): string {
-    return URLExt.join(baseUrl, MINDSTUDIO_IFRAME_CONFIG_URL);
-}
-
-/**
  * Kill mindstudio by url.
- */
+*/
 export function killMindStudio(url: string): void {
     // Update the local data store.
     if (running[url]) {
@@ -65,19 +60,34 @@ export function killMindStudio(url: string): void {
     }
 }
 
+/**
+ * Get the iframe config url.
+ */
+export function getIFrameConfigUrl(baseUrl: string): string {
+    return URLExt.join(baseUrl, MINDSTUDIO_IFRAME_CONFIG_URL);
+}
+
+/**
+ * Terminate profiler server.
+ */
+export function terminateIframe(baseUrl: string, profilerServerId: string): string {
+    let url = URLExt.join(baseUrl, MINDSTUDIO_TERMINATE_PROFILER_URL);
+    return `${url}?profilerServerId=${profilerServerId}`;
+}
+
 export function getMindStudioInstanceRootUrl(baseUrl: string): string {
     return URLExt.join(baseUrl, MINDSTUDIO_URL);
 }
 
 export function getMindStudioInstanceUrl(
     baseUrl: string,
-    name: string,
     proxy: boolean,
-    port: string
+    port: string,
+    profilerServerId: string,
 ): string {
     let url = URLExt.join(baseUrl, MINDSTUDIO_URL);
     if (proxy) {
-        return `${url}?jupyterlabProxy=true&port=${port}`;
+        return `${url}?jupyterlabProxy=true&port=${port}&profilerServerId=${profilerServerId}`;
     }
-    return `${url}?port=${port}`;
+    return `${url}?port=${port}&profilerServerId=${profilerServerId}`;
 }

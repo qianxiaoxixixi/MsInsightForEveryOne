@@ -12,6 +12,7 @@ import socket
 import logging
 import re
 import shutil
+import uuid
 import psutil
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
@@ -26,9 +27,11 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 # init profiler_server process
-profiler_process = None
+profiler_process = {}
 # default profiler_server port
 available_port = 9000
+# default profiler_server_id
+profiler_server_id = str(uuid.uuid4())
 
 
 def check_jupyter_server_proxy_installed():
@@ -121,21 +124,27 @@ def start_profiler_server():
         '--wsHost', get_local_ip(), '--logPath', mindstudio_insight_dir
     ]
 
+    # 生成唯一profiler标识符
+    global profiler_server_id
+    profiler_server_id = str(uuid.uuid4())
+
     if sys.platform == 'win32':
         profiler_server_path = profiler_server_path + '.exe'
         # 设置执行权限
-        os.chmod(profiler_server_path, 0o755)
+        os.chmod(profiler_server_path, 0o550)
         command[0] = profiler_server_path
         # start profiler server and set port
-        profiler_process = subprocess.Popen(command)
+        process = subprocess.Popen(command)
+        profiler_process[profiler_server_id] = process
     else:
         # 设置执行权限
-        os.chmod(profiler_server_path, 0o755)
+        os.chmod(profiler_server_path, 0o550)
         server_dir = os.path.join(os.path.dirname(__file__), 'resources', 'server')
         env = os.environ.copy()
         env["LD_LIBRARY_PATH"] = f".:{env.get('LD_LIBRARY_PATH', '')}"
         command[0] = './profiler_server'
-        profiler_process = subprocess.Popen(command, cwd=server_dir, env=env)
+        process = subprocess.Popen(command, cwd=server_dir, env=env)
+        profiler_process[profiler_server_id] = process
 
 
 def is_port_in_use(port):
@@ -147,13 +156,18 @@ def is_port_in_use(port):
 
 def stop_profiler_server():
     global profiler_process
-    if profiler_process:
-        try:
-            profiler_process.terminate()
-            profiler_process.wait(timeout=3)
-        except subprocess.TimeoutExpired:
-            profiler_process.kill()  # 强制终止进程
-        profiler_process = None
+    if not profiler_process:
+        return
+    for server_id, process in profiler_process.items():
+        if process:
+            try:
+                process.terminate()
+                process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()  # 强制终止进程
+            finally:
+                del profiler_process[server_id]
+    profiler_process = {}
 
 
 def shutdown_hook(web_app):
@@ -163,12 +177,42 @@ def shutdown_hook(web_app):
 class IFrameConfigHandler(APIHandler):
     @tornado.web.authenticated
     def get(self):
+        start_profiler_server()
         # find available port
         global available_port
+        # find start profiler server id
+        global profiler_server_id
         self.finish(json.dumps({
             "proxy": check_jupyter_server_proxy_installed(),
-            "port": available_port
+            "port": available_port,
+            "profilerServerId": profiler_server_id,
         }))
+
+
+class TerminateProfilerHandler(APIHandler):
+    @tornado.web.authenticated
+    def get(self):
+        query_profiler_server_id = self.get_query_argument("profilerServerId")
+        global profiler_process
+        process = profiler_process.get(query_profiler_server_id)
+        if process:
+            try:
+                process.terminate()
+                process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()
+            finally:
+                del profiler_process[query_profiler_server_id]
+            
+            self.finish(json.dumps({
+                "status": "terminated",
+                "profilerServerId": query_profiler_server_id,
+            }))
+        else:
+            self.set_status(404)
+            self.finish(json.dumps({
+                "error": "Profiler server not found",
+            }))
 
 
 class RouteHandler(APIHandler):
@@ -202,6 +246,9 @@ def setup_handlers(web_app):
     iframe_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_iframe_config")
     iframe_handlers = [(iframe_route_pattern, IFrameConfigHandler)]
 
+    terminate_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/terminate_profiler_server")
+    terminate_handlers = [(terminate_route_pattern, TerminateProfilerHandler)]
+
     static_frontend_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'frontend')
     static_route_pattern = url_path_join(base_url, "/resources/frontend/(.*)")
     static_handlers = [
@@ -211,6 +258,4 @@ def setup_handlers(web_app):
     api_route_pattern = url_path_join(base_url, "/mindstudio_insight_jupyterlab/get_example")
     api_handlers = [(api_route_pattern, RouteHandler)]
 
-    web_app.add_handlers(host_pattern, iframe_handlers + static_handlers + api_handlers)
-
-    start_profiler_server()
+    web_app.add_handlers(host_pattern, iframe_handlers + terminate_handlers + static_handlers + api_handlers)

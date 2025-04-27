@@ -68,6 +68,22 @@ export class MindStudioManager implements MindStudio.IManager {
   }
 
   /**
+   * Start profiler server and show mindstudio iframe
+   * 
+   * @returns A new mindstudio url.
+   */
+  async startIframeUrl(): Promise<string> {
+    return await MindStudio.startIframeUrl();
+  }
+
+  /**
+   * Dispose mindstudio iframe and terminate profiler server
+   */
+  async terminateIframe(profilerServerId: string): Promise<void> {
+    return await MindStudio.terminateIframe(profilerServerId);
+  }
+
+  /**
    * Create a new mindstudio.
    */
   async startNew(
