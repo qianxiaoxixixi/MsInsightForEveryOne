@@ -176,38 +176,38 @@ void BaseParallelStrategyAlgorithm::SetTpIndicatorAttr()
 {
     uint8_t index = 0;
     // 总计算、总通信不在柱状图中显示，而是通过掩盖和未掩盖的堆叠形成
-    data.indicators.emplace_back(
-        index++, KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, false, true, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back(
+        {index++, KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back(
+        {index++, KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, false, true, BAR_CHART, "", TIME_AXIS});
 
     // 参与stack堆叠：预处理、纯计算、重叠、纯通信、下发
-    data.indicators.emplace_back(index++, KEY_PURE_COMPUTING_TIME, VALUE_COMPUTING_NOT_OVERLAPPED,
-                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_OVERLAPPED, VALUE_COMMUNICATION_OVERLAPPED,
-                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED, VALUE_COMMUNICATION_NOT_OVERLAPPED,
-                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_FREE_TIME, VALUE_FREE_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_PREPARING_TIME, VALUE_PREPARING_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
+    data.indicators.push_back({index++, KEY_PURE_COMPUTING_TIME, VALUE_COMPUTING_NOT_OVERLAPPED,
+                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS});
+    data.indicators.push_back({index++, KEY_COMMUNICATION_OVERLAPPED, VALUE_COMMUNICATION_OVERLAPPED,
+                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS});
+    data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED, VALUE_COMMUNICATION_NOT_OVERLAPPED,
+                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS});
+    data.indicators.push_back(
+        {index++, KEY_FREE_TIME, VALUE_FREE_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS});
+    data.indicators.push_back(
+        {index++, KEY_PREPARING_TIME, VALUE_PREPARING_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS});
 
     // Communication(Not Overlapped and Exclude Receive)
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE,
-        VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE,
+        VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE, true, false, false, BAR_CHART, "", TIME_AXIS});
 
     // stage and bubble
-    data.indicators.emplace_back(
-        index++, KEY_STAGE_TIME, VALUE_STAGE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_BUBBLE_TIME, VALUE_BUBBLE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back(
+        {index++, KEY_STAGE_TIME, VALUE_STAGE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back(
+        {index++, KEY_BUBBLE_TIME, VALUE_BUBBLE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS});
 
     // ratio
-    data.indicators.emplace_back(
-        index++, KEY_COMPUTING_RATIO, VALUE_COMPUTING_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS);
-    data.indicators.emplace_back(
-        index++, KEY_COMMUNICATION_RATIO, VALUE_COMMUNICATION_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS);
+    data.indicators.push_back(
+        {index++, KEY_COMPUTING_RATIO, VALUE_COMPUTING_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS});
+    data.indicators.push_back(
+        {index++, KEY_COMMUNICATION_RATIO, VALUE_COMMUNICATION_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS});
 }
 
 // 对于CP Dimension，通过展示一个TP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析CP域的性能瓶颈
@@ -216,36 +216,36 @@ void BaseParallelStrategyAlgorithm::SetTpIndicatorAttr()
 void BaseParallelStrategyAlgorithm::SetCpIndicatorAttr()
 {
     uint8_t index = 0;
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
-        VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
-        VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
+        true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
+        true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
+        VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
+        VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
 
     // 通信掩盖、通信未掩盖
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
 }
 
 // 对于PP Dimension，通过展示一个TP&CP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析PP域的性能瓶颈
@@ -255,36 +255,36 @@ void BaseParallelStrategyAlgorithm::SetPpIndicatorAttr()
 {
     uint8_t index = 0;
     // 总计算、总通信、下发、npu总时间, 默认显示总计算
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
-        VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
-        VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
-        true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
+        true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
+        true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
+        VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
+        VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
+        true, false, false, BAR_CHART, "", TIME_AXIS});
 
     // 通信掩盖、通信未掩盖
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
-        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
-        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
 }
 
 // 对于DP Dimension，通过展示一个TP&CP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析PP域的性能瓶颈
@@ -292,15 +292,15 @@ void BaseParallelStrategyAlgorithm::SetDpIndicatorAttr()
 {
     uint8_t index = 0;
     // 总计算、总通信, 默认显示总计算
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_TOTAL_COMPUTING_TIME,
-        VALUE_SUM_OF_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_TOTAL_COMMUNICATION,
-        VALUE_SUM_OF_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_FREE_TIME, VALUE_SUM_OF_MAX + VALUE_FREE_TIME,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, VALUE_SUM_OF_MAX + KEY_TOTAL_COMPUTING_TIME,
+        VALUE_SUM_OF_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, VALUE_SUM_OF_MAX + KEY_TOTAL_COMMUNICATION,
+        VALUE_SUM_OF_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS});
+    data.indicators.push_back({index++, VALUE_SUM_OF_MAX + KEY_FREE_TIME, VALUE_SUM_OF_MAX + VALUE_FREE_TIME,
+        true, true, false, BAR_CHART, "", TIME_AXIS});
     // 通信掩盖、通信未掩盖、下发
-    data.indicators.emplace_back(index++, VALUE_SUM_OF_MAX + KEY_COMMUNICATION_NOT_OVERLAPPED,
-        VALUE_SUM_OF_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.push_back({index++, VALUE_SUM_OF_MAX + KEY_COMMUNICATION_NOT_OVERLAPPED,
+        VALUE_SUM_OF_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS});
 }
 
 void BaseParallelStrategyAlgorithm::CalculatePerformanceDataWithTpDimension(
@@ -703,5 +703,126 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStra
     const std::unordered_map<std::string, std::vector<CommInfoUnderRank>>& expendData)
 {
     return ReduceCommDefaultFunc(expendData, tpCpSize, 1);
+}
+
+
+/**
+ * 折叠视图下，计算每个折叠分组中的rank set
+ * @return
+ */
+uint32_t BaseParallelStrategyAlgorithm::CalculateContainingRanksByAttrs(
+    uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex, uint32_t tpIndex)
+{
+    return strategyConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ?
+           tpCpPpSize * dpIndex + tpCpSize * ppIndex + tpSize * cpIndex + tpIndex :
+           tpCpDpSize * ppIndex + tpCpSize * dpIndex + tpSize * cpIndex + tpIndex;
+}
+
+std::string BaseParallelStrategyAlgorithm::FormatRanksForInterval(uint32_t start, uint32_t end)
+{
+    std::stringstream formatRanks;
+    if (start > end) {
+        return "";
+    } else if (start == end) {
+        formatRanks << start;
+    } else if (end - start == 1) {
+        formatRanks << start << "," << end;
+    } else {
+        formatRanks << start << "-" << end;
+    }
+    return formatRanks.str();
+}
+
+std::string BaseParallelStrategyAlgorithm::FormatRanksForSeveralIntervals(const std::vector<std::string>& intervals)
+{
+    std::stringstream tmpResult;
+    std::string formattedRankSet;
+    for (const auto& interval : intervals) {
+        tmpResult << interval << ",";
+    }
+    formattedRankSet = tmpResult.str();
+    formattedRankSet.pop_back();
+    return formattedRankSet;
+}
+
+std::vector<uint32_t> BaseParallelStrategyAlgorithm::GetElementContainFormattedRanks(
+    std::unordered_map<std::string, uint32_t> &attrs, std::string &formattedRanks, const ElementRankDetails& details)
+{
+    uint32_t rankStart = 0;
+    uint32_t rankEnd = 0;
+    std::vector<uint32_t> ranks{};
+    // 若涉及pp折叠，且不为MEGATRON_LM_TP_CP_PP_EP_DP_ALG算法，则RankSet由若干个区间组成
+    if (details.ppIndexMax != details.ppIndexMin && strategyConfig.algorithm != MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
+        std::vector<std::string> formatRanksForDpDimension;
+        for (uint32_t ppIndex = details.ppIndexMin; ppIndex <= details.ppIndexMax; ++ppIndex) {
+            rankStart = CalculateContainingRanksByAttrs(attrs[DP_INDEX], ppIndex, details.cpIndexMin,
+                                                        details.tpIndexMin);
+            rankEnd = CalculateContainingRanksByAttrs(attrs[DP_INDEX], ppIndex, details.cpIndexMax,
+                                                      details.tpIndexMax);
+            formatRanksForDpDimension.push_back(FormatRanksForInterval(rankStart, rankEnd));
+            for (uint32_t rankIndex = rankStart; rankIndex <= rankEnd; ++rankIndex) {
+                ranks.push_back(rankIndex);
+            }
+        }
+        formattedRanks = FormatRanksForSeveralIntervals(formatRanksForDpDimension);
+        return ranks;
+    }
+    if (details.ppIndexMax == details.ppIndexMin) {
+        // 若不涉及pp折叠，则tp折叠或cp折叠一定是一串连续序号，用一个区间表示即可
+        rankStart = CalculateContainingRanksByAttrs(attrs[DP_INDEX], attrs[PP_INDEX], details.cpIndexMin,
+                                                    details.tpIndexMin);
+        rankEnd = CalculateContainingRanksByAttrs(attrs[DP_INDEX], attrs[PP_INDEX], details.cpIndexMax,
+                                                  details.tpIndexMax);
+    } else if (strategyConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
+        // 若涉及pp折叠，且为MEGATRON_LM_TP_CP_PP_EP_DP_ALG算法, 则tp/cp/pp折叠卡序号都为一个连续区间
+        rankStart = CalculateContainingRanksByAttrs(attrs[DP_INDEX], details.ppIndexMin, details.cpIndexMin,
+                                                    details.tpIndexMin);
+        rankEnd = CalculateContainingRanksByAttrs(attrs[DP_INDEX], details.ppIndexMax, details.cpIndexMax,
+                                                  details.tpIndexMax);
+    }
+    formattedRanks = FormatRanksForInterval(rankStart, rankEnd);
+    for (uint32_t rankIndex = rankStart; rankIndex <= rankEnd; ++rankIndex) {
+        ranks.push_back(rankIndex);
+    }
+    return ranks;
+}
+
+/**
+ * 折叠视图下，计算每个折叠分组中的rank set，结果用格式化字符串表示
+ * @param index 元素序号
+ * @param attrs 元素并行坐标，即dpIndex、ppIndex等
+ * @return
+ */
+std::vector<uint32_t> BaseParallelStrategyAlgorithm::GetElementContainRanks(uint32_t index,
+    std::unordered_map<std::string, uint32_t> &attrs, std::string &formattedRanks)
+{
+    std::vector<uint32_t> ranks{};
+    std::stringstream formatRanks;
+    if (wordSize <= 1) {
+        return ranks;
+    }
+    if (dimension == DIMENSIONS_TP) {
+        ranks.emplace_back(index);
+        formatRanks << index;
+        formattedRanks = formatRanks.str();
+        return ranks;
+    }
+
+    ElementRankDetails details;
+    // xxIndex ∈ [xxIndexMin, xxIndexMax], 前端入参已校验，以下xxSize >= 1
+    details.ppIndexMax = strategyConfig.ppSize - 1;
+    details.cpIndexMax = strategyConfig.cpSize - 1;
+    details.tpIndexMax = strategyConfig.tpSize - 1;
+
+    if (dimension == DIMENSIONS_CP) {
+        details.cpIndexMin = attrs[CP_INDEX];
+        details.cpIndexMax = details.cpIndexMin;
+        details.ppIndexMin = attrs[PP_INDEX];
+        details.ppIndexMax = details.ppIndexMin;
+    } else if (dimension == DIMENSIONS_PP) {
+        details.ppIndexMin = attrs[PP_INDEX];
+        details.ppIndexMax = details.ppIndexMin;
+    }
+    return GetElementContainFormattedRanks(attrs, formattedRanks, details);
 }
 }

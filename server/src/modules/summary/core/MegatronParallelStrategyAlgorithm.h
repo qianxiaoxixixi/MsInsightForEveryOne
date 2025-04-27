@@ -35,8 +35,6 @@ private:
     void SetIndicatorAttr();
     void GetPerArrangement(uint32_t index, std::unordered_map<std::string, uint32_t> &indexAttributes);
     void UpdateIndexAttributes(std::unordered_map<std::string, uint32_t> &indexAttributes);
-    std::vector<uint32_t> GetElementContainRanks(uint32_t index,
-                                                 std::unordered_map<std::string, uint32_t> &indexAttributes);
     // get connections
     void UpdateOrderAndParallelSize();
     bool GetConnectionsByMegatronToken(std::string &err, bool independentEp);

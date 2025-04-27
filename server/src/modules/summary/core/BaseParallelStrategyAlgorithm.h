@@ -53,6 +53,13 @@ protected:
     void UpdateElementSize();
     std::string GetElementName(std::unordered_map<std::string, uint32_t> &indexAttributes);
     Position GetElementPosition(std::unordered_map<std::string, uint32_t>& indexAttributes) const;
+    uint32_t CalculateContainingRanksByAttrs(uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex, uint32_t tpIndex);
+    static std::string FormatRanksForInterval(uint32_t start, uint32_t end);
+    static std::string FormatRanksForSeveralIntervals(const std::vector<std::string>& intervals);
+    std::vector<uint32_t> GetElementContainRanks(uint32_t index,
+        std::unordered_map<std::string, uint32_t> &attrs, std::string &formattedRanks);
+    std::vector<uint32_t> GetElementContainFormattedRanks(std::unordered_map<std::string, uint32_t> &attrs,
+        std::string &formattedRanks, const ElementRankDetails& details);
 
     // get performance indicator
     void SetTpIndicatorAttr();
@@ -98,12 +105,18 @@ protected:
 
     ArrangementAndConnectionData data;
 
+    // 并行顺序（包含size=1的域）
     std::vector<std::string> paraOrder{};
+    // 并行顺序（包含size=1的域）且考虑ep域
     std::vector<std::string> paraOrderWithEp{};
+    // 并行顺序（不包含size=1的域）
     std::vector<std::string> updatedOrder{};
+    // 并行顺序（不包含size=1的域）且考虑ep域
     std::vector<std::string> updatedOrderWithEp{};
+    // 按照updatedOrder顺序的并行策略尺寸
     std::vector<uint32_t> parallelSize{};
-    std::vector<uint32_t> parallelSizeWithEp{}; // 仅影响连线生成，不影响布局
+    // 按照updatedOrderWithEp顺序的并行策略尺寸, 会对原有DP Size进行拆分,仅影响连线生成，不影响布局
+    std::vector<uint32_t> parallelSizeWithEp{};
     std::vector<Connection> allCommunicationGroups{}; // 全量通信域
     std::unordered_map<std::string, ParallelDetails> paraDetailsMap; // 记录某并行域是否被折叠
 

@@ -299,7 +299,8 @@ TEST_F(SummaryProtocolUtilTest, ToQueryFwdBwdTimelineResponseTestWillReturnWhenN
 TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementResponseTestWillReturnWhenNormalInput)
 {
     Dic::Protocol::ParallelismArrangementResponse response{};
-    IndicatorAttr attr = {0, "computingTime", "computing time", true, false, true, "bar", "time", "time"};
+    IndicatorAttr attr = { .number = 0, .key = "computingTime", .name = "computing time", . renderHeatMap = true,
+        .renderChart = false, .visible = true, .chart = "bar", .stack = "time", .yAxisType = "time"};
     response.arrangeData.indicators.push_back(attr);
     Position pos = {0, 0};
     Element ele;
