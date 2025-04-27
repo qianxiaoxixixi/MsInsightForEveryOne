@@ -293,6 +293,7 @@ void GetArrangementsJson(const ParallelismArrangementResponse& response, documen
             JsonUtil::AddMember(attributeJson, indexAttr.first, indexAttr.second, allocator);
         }
         JsonUtil::AddMember(arrangementJson, "attribute", attributeJson, allocator);
+        JsonUtil::AddMember(arrangementJson, "formattedRanks", arrangement.formattedRanks, allocator);
         JsonUtil::AddMember(arrangementJson, "ranks", arrangement.ranks, allocator);
         arrangements.PushBack(arrangementJson, allocator);
     }

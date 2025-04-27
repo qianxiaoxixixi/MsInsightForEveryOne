@@ -18,7 +18,7 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
         return false;
     }
     // 查找文件列表
-    auto hotspotFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(ExpertHotspotFileReg));
+    auto hotspotFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(EXPERT_HOTSPOT_FILE_REG));
     if (hotspotFiles.size() == 0) {
         errorMsg = "No parsable files found";
         return false;

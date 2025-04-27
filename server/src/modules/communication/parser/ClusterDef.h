@@ -68,19 +68,46 @@ const std::string PARALLEL_CONFIG_LEVEL_CONFIRMED = "confirmed";
 const std::string PARALLEL_CONFIG_LEVEL_CONFIGURED = "configured";
 const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
 
+// 并行策略算法类
 const std::string MEGATRON_ALG = "megatron";
 const std::string MINDSPEED_ALG = "mindspeed";
+const std::string MINDIE_LLM_ALG = "mindie-llm";
+
+/**
+ * 1.TP+CP+DP+EP+PP (EP cross DP)
+ * 此排布方式来自于Megatron-Core，排布的顺序是TP->CP->DP->PP，EP横跨DP之上且不参与或不影响排布编号（即要求DP能够被EP整除）
+ */
 const std::string MEGATRON_LM_TP_CP_EP_DP_PP_ALG = "megatron-lm(tp-cp-ep-dp-pp)";
+
+/**
+ * 2.TP+CP+PP+DP+EP (EP cross DP)
+ * 此排布方式也来自于Megatron-Core，排布的顺序是TP->CP->PP->DP，EP横跨DP之上且不参与或不影响排布编号
+ */
 const std::string MEGATRON_LM_TP_CP_PP_EP_DP_ALG = "megatron-lm(tp-cp-pp-ep-dp)";
+
+/**
+ * 3.TP+CP+DP+EP+PP (EP cross CP and DP)
+ * 此排布方式来自于MindSpeed-Core，排布顺序TP->CP->DP->PP（与1类似），EP横跨CP+DP之上且不参与或不影响排布编号（即要求CP*DP能够被EP整除)
+ */
 const std::string MINDSPEED_TP_CP_EP_DP_PP_ALG = "mindspeed(tp-cp-ep-dp-pp)";
+
+/**
+ * 4.TP+DP+EP+PP+MOE_TP (EP independent)
+ * 来自于MINDIE_LLM（DeepSeek V3也可以算作此类型）,非MOE层采用TP->DP->PP顺序排布，MOE层采用MOE_TP->EP顺序排布
+ */
+const std::string MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG = "mindie-llm(tp-dp-ep-pp-moetp)";
+
 const std::vector<std::string> ALGORITHMS_ALLOWED = {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, MEGATRON_LM_TP_CP_PP_EP_DP_ALG,
-    MINDSPEED_TP_CP_EP_DP_PP_ALG};
+    MINDSPEED_TP_CP_EP_DP_PP_ALG, MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG};
+
+// MindSpeed相关高级参数
 const std::string MINDSPEED_ULYSSES_CP_ALG = "ulysses_cp_algo";
 const std::string MINDSPEED_MEGATRON_CP_ALG = "megatron_cp_algo";
 const std::string MINDSPEED_HYBIRD_CP_ALG = "hybird_cp_algo";
 const std::string MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG = "hybird_adaptive_cp_algo";
 const std::vector<std::string> MINDSPEED_CP_ALGORITHM_ALLOWED = {MINDSPEED_ULYSSES_CP_ALG, MINDSPEED_MEGATRON_CP_ALG,
     MINDSPEED_HYBIRD_CP_ALG, MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG};
+// 并行策略层次化展开，域维度
 const std::string DIMENSIONS_DP = "ep-dp";
 const std::string DIMENSIONS_PP = "ep-dp-pp";
 const std::string DIMENSIONS_CP = "ep-dp-pp-cp";
@@ -91,14 +118,16 @@ const std::string CP_PARA = "cp";
 const std::string DP_PARA = "dp";
 const std::string TP_PARA = "tp";
 const std::string EP_PARA = "ep";
+const std::string MOE_TP_PARA = "moe_tp";
+// 并行策略坐标
 const std::string STR_INDEX = "Index";
 const std::string PP_INDEX = "ppIndex";
 const std::string CP_INDEX = "cpIndex";
 const std::string DP_INDEX = "dpIndex";
 const std::string TP_INDEX = "tpIndex";
 const std::string EP_INDEX = "epIndex";
+const std::string MOE_TP_INDEX = "moeTpIndex";
 const int64_t MAX_PARALLEL_SIZE = 10000;
-const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
 struct ParallelStrategyConfigForMindSpeed {
     bool useTp2D = false;
@@ -116,124 +145,12 @@ struct ParallelStrategyConfig {
     int64_t dpSize{};
     int64_t cpSize = 1;
     int64_t epSize = 1;
+    int64_t moeTpSize = 1;
     ParallelStrategyConfigForMindSpeed configForMindSpeed;
-    bool CheckParams(std::string &errorMsg) const
-    {
-        // algorithm只允许为以下三者之一
-        if (std::find(ALGORITHMS_ALLOWED.begin(), ALGORITHMS_ALLOWED.end(), algorithm) == ALGORITHMS_ALLOWED.end()) {
-            errorMsg = "[Summary] Algorithm is not allowed.";
-            return false;
-        }
-
-        // 检查ppSize, tpSize, dpSize的范围
-        if (ppSize <= 0 || ppSize > MAX_PARALLEL_SIZE) {
-            errorMsg = "[Summary] PP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
-            return false;
-        }
-        if (tpSize <= 0 || tpSize > MAX_PARALLEL_SIZE) {
-            errorMsg = "[Summary] TP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
-            return false;
-        }
-        if (dpSize <= 0 || dpSize > MAX_PARALLEL_SIZE) {
-            errorMsg = "[Summary] DP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
-            return false;
-        }
-        if (cpSize <= 0 || cpSize > MAX_PARALLEL_SIZE) {
-            errorMsg = "[Summary] CP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
-            return false;
-        }
-        if (epSize <= 0 || epSize > MAX_PARALLEL_SIZE) {
-            errorMsg = "[Summary] EP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
-            return false;
-        }
-
-        if (algorithm == MINDSPEED_TP_CP_EP_DP_PP_ALG && dpSize * cpSize % epSize != 0) {
-            // 对于MindSpeed, 检查dpSize是否能被epSize * cpSize整除
-            errorMsg = "[Summary] The product of DP size and CP size must be evenly divided by EP Size.";
-            return false;
-        }
-        if ((algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG || algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG)
-            && dpSize % epSize != 0) {
-            // 对于Megatron, 检查dpSize是否能被epSize整除
-            errorMsg = "[Summary] DP size must be evenly divided by EP Size.";
-            return false;
-        }
-        // 检查四个数的乘积是否小于UINT32_MAX
-        if (ppSize * tpSize * dpSize * cpSize > UINT32_MAX) {
-            errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
-                       std::to_string(UINT32_MAX);
-            return false;
-        }
-        return CheckParamForMindSpeed(errorMsg);
-    }
-
-    bool CheckParamForMindSpeed(std::string& errorMsg) const
-    {
-        if (configForMindSpeed.cpAlgo.empty()) {
-            return true;
-        }
-        // 如果cpAlgo不为空，只允许为以下四者之一
-        if (std::find(MINDSPEED_CP_ALGORITHM_ALLOWED.begin(), MINDSPEED_CP_ALGORITHM_ALLOWED.end(),
-            configForMindSpeed.cpAlgo) == MINDSPEED_CP_ALGORITHM_ALLOWED.end()) {
-            errorMsg = "[Summary] Mindspeed CP algorithm is not allowed.";
-            return false;
-        }
-        // 检查tpSize是否能被nd1dim1 nd2dim1整除
-        if (!CheckTp2DSizeForMindSpeed(errorMsg)) {
-            return false;
-        }
-        // 检查cpSize是否能被ulyssesDegree整除
-        if (configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_CP_ALG ||
-            configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG) {
-            if (configForMindSpeed.ulyssesDegree <= 0) {
-                errorMsg = "[Summary] Ulysses degree must be greater than 0.";
-                return false;
-            }
-            if (cpSize % configForMindSpeed.ulyssesDegree != 0) {
-                errorMsg = "[Summary] CP size must be evenly divided by ulysses degree for hybird cp.";
-                return false;
-            }
-        }
-        // 检查winSize
-        if (!configForMindSpeed.useTp2D && configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_CP_ALG) {
-            if (configForMindSpeed.winSize <= 0) {
-                errorMsg = "[Summary] CP Window size must be greater than 0.";
-                return false;
-            }
-            if (cpSize % (configForMindSpeed.ulyssesDegree * configForMindSpeed.winSize) != 0) {
-                errorMsg = "[Summary] CP size must be evenly divided by ulysses degree plus cp window size.";
-                return false;
-            }
-        }
-        if (!configForMindSpeed.useTp2D && configForMindSpeed.cpAlgo == MINDSPEED_MEGATRON_CP_ALG) {
-            if (configForMindSpeed.winSize <= 0) {
-                errorMsg = "[Summary] CP Window size must be greater than 0.";
-                return false;
-            }
-            if (cpSize % configForMindSpeed.winSize != 0) {
-                errorMsg = "[Summary] CP size must be evenly divided by cp window size.";
-                return false;
-            }
-        }
-        return true;
-    }
-
-    bool CheckTp2DSizeForMindSpeed(std::string& errorMsg) const
-    {
-        if (configForMindSpeed.useTp2D) {
-            if (configForMindSpeed.nd1dim1 <= 0 || configForMindSpeed.nd2dim1 <= 0) {
-                errorMsg = "[Summary] Nd1dim1 or nd2dim1 must be greater than 0.";
-                return false;
-            }
-            if (tpSize % configForMindSpeed.nd1dim1 != 0 ||
-                tpSize % configForMindSpeed.nd2dim1 != 0) {
-                errorMsg = "[Summary] TP size must be evenly divided by nd1dim1 or nd2dim1 for tp2d.";
-                return false;
-            }
-        }
-        return true;
-    }
-
+    bool CheckParams(std::string &errorMsg) const;
+    bool CheckBaseParams(std::string &errorMsg) const;
+    bool CheckParamForMindSpeed(std::string& errorMsg) const;
+    bool CheckTp2DSizeForMindSpeed(std::string& errorMsg) const;
     bool operator==(const ParallelStrategyConfig& conf) const
     {
         if (algorithm != conf.algorithm) {
@@ -295,16 +212,16 @@ const std::string FIELD_TP_INDEX = "TP Index";
 const std::string FIELD_CP_INDEX = "CP Index";
 const std::string FIELD_EP_INDEX = "EP Index";
 
-const std::string VALUE_PREPARING_TIME = FIELD_PREPARE_TIME;
-const std::string VALUE_TOTAL_COMPUTING_TIME = FIELD_COMPUTING;
+const std::string VALUE_PREPARING_TIME = "Preparing";
+const std::string VALUE_TOTAL_COMPUTING_TIME = "Computing";
 const std::string VALUE_COMPUTING_NOT_OVERLAPPED = "Computing(Not Overlapped)";
-const std::string VALUE_TOTAL_COMMUNICATION = FIELD_COMMUNICATION;
+const std::string VALUE_TOTAL_COMMUNICATION = "Communication";
 const std::string VALUE_COMMUNICATION_OVERLAPPED = "Computing/Communication Overlapped";
-const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED = FIELD_COMMUNICATION_NOT_OVERLAPPED;
-const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE;
-const std::string VALUE_FREE_TIME = FIELD_FREE;
-const std::string VALUE_STAGE_TIME = FIELD_STAGE;
-const std::string VALUE_BUBBLE_TIME = FIELD_BUBBLE;
+const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED = "Communication(Not Overlapped)";
+const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = "Communication(Not Overlapped and Exclude Receive)";
+const std::string VALUE_FREE_TIME = "Free";
+const std::string VALUE_STAGE_TIME = "Stage";
+const std::string VALUE_BUBBLE_TIME = "Bubble";
 const std::string VALUE_NPU_TIME = "Computing + Communication(Not Overlapped) + Free";
 
 const std::vector<std::string> VALID_STEP_STATISTICS_HEADERS = {
@@ -340,12 +257,6 @@ struct IndicatorAttr {
     std::string stack;
     // 数据类型，用于区分y轴
     std::string yAxisType;
-    IndicatorAttr() = default;
-    IndicatorAttr(uint8_t number, std::string key, std::string name, bool renderHeatMap, bool renderChart,
-        bool visible, std::string chart, std::string stack, std::string yAxisType)
-        : number(number), key(std::move(key)), name(std::move(name)), renderHeatMap(renderHeatMap),
-        renderChart(renderChart), visible(visible), chart(std::move(chart)),
-        stack(std::move(stack)), yAxisType(std::move(yAxisType)) {}
 };
 
 struct Connection {
@@ -386,6 +297,15 @@ struct Element {
     Position position{}; // rank or group position in 2D arrangement
     std::unordered_map<std::string, uint32_t> indexAttributes{}; // {dp_index=0}
     std::vector<uint32_t> ranks;
+    std::string formattedRanks;
+};
+struct ElementRankDetails {
+    uint32_t ppIndexMin = 0;
+    uint32_t ppIndexMax = 0;
+    uint32_t cpIndexMin = 0;
+    uint32_t cpIndexMax = 0;
+    uint32_t tpIndexMin = 0;
+    uint32_t tpIndexMax = 0;
 };
 
 struct ArrangementAndConnectionData {
@@ -467,7 +387,7 @@ struct ExpertHotspotStruct {
 };
 
 const int CACHE_SIZE = 1000;
-const std::string ExpertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv)";
+const std::string EXPERT_HOTSPOT_FILE_REG = R"((prefill|decode)_([0-9]{1,4})\.csv)";
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

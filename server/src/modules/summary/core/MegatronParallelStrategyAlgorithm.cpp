@@ -128,7 +128,7 @@ void MegatronParallelStrategyAlgorithm::GetPerArrangement(uint32_t index,
     element.indexAttributes = indexAttributes;
     element.name = GetElementName(indexAttributes);
     element.position = GetElementPosition(indexAttributes);
-    element.ranks = GetElementContainRanks(index, indexAttributes);
+    element.ranks = GetElementContainRanks(index, indexAttributes, element.formattedRanks);
     data.arrangements.push_back(element);
 }
 
@@ -151,46 +151,6 @@ void MegatronParallelStrategyAlgorithm::UpdateIndexAttributes(
     // 添加epIndex, 前端入参已校验，分母不可能为零, dpSize一定能被epSize整除
     uint32_t epScale = paraDetailsMap[DP_PARA].size / paraDetailsMap[EP_PARA].size;
     indexAttributes[EP_INDEX] = indexAttributes[DP_INDEX] / epScale;
-}
-
-std::vector<uint32_t> MegatronParallelStrategyAlgorithm::GetElementContainRanks(uint32_t index,
-    std::unordered_map<std::string, uint32_t> &attrs)
-{
-    std::vector<uint32_t> ranks{};
-    if (wordSize <= 1) {
-        return ranks;
-    }
-    if (dimension == DIMENSIONS_TP) {
-        ranks.emplace_back(index);
-        return ranks;
-    }
-
-    uint32_t ppIndexMin = 0;
-    uint32_t ppIndexMax = strategyConfig.ppSize;
-    uint32_t cpIndexMin = 0;
-    uint32_t cpIndexMax = strategyConfig.cpSize;
-
-    if (dimension == DIMENSIONS_CP) {
-        cpIndexMin = attrs[CP_INDEX];
-        cpIndexMax = cpIndexMin + 1;
-        ppIndexMin = attrs[PP_INDEX];
-        ppIndexMax = ppIndexMin + 1;
-    } else if (dimension == DIMENSIONS_PP) {
-        ppIndexMin = attrs[PP_INDEX];
-        ppIndexMax = ppIndexMin + 1;
-    }
-
-    for (uint32_t ppIndex = ppIndexMin; ppIndex < ppIndexMax; ++ppIndex) {
-        for (uint32_t cpIndex = cpIndexMin; cpIndex < cpIndexMax; ++cpIndex) {
-            for (uint32_t tpIndex = 0; tpIndex < strategyConfig.tpSize; ++tpIndex) {
-                uint32_t rank = strategyConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ?
-                    tpCpPpSize * attrs[DP_INDEX] + tpCpSize * ppIndex + tpSize * cpIndex + tpIndex :
-                    tpCpDpSize * ppIndex + tpCpSize * attrs[DP_INDEX] + tpSize * cpIndex + tpIndex;
-                ranks.emplace_back(rank);
-            }
-        }
-    }
-    return ranks;
 }
 
 /**

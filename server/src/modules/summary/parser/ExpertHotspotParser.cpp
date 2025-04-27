@@ -11,7 +11,7 @@ namespace Dic::Module::Summary {
             return false;
         }
         // 解析文件名，获取模型阶段和rankId
-        auto searchRes = RegexUtil::RegexSearch(filePath, ExpertHotspotFileReg);
+        auto searchRes = RegexUtil::RegexSearch(filePath, EXPERT_HOTSPOT_FILE_REG);
         if (!searchRes.has_value() || searchRes.value().size() != regexMatchNumber) {
             return false;
         }
