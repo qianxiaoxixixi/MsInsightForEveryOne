@@ -101,11 +101,17 @@ export function shutdownAll(
   return staticMindStudio.shutdownAll(settings);
 }
 
-export async function getUrl(
-  name: string,
+export async function startIframeUrl(
   settings?: ServerConnection.ISettings
 ): Promise<string> {
-  return await staticMindStudio.getUrl(name, settings);
+  return staticMindStudio.startIframeUrl(settings);
+}
+
+export async function terminateIframe(
+  profilerServerId: string,
+  settings?: ServerConnection.ISettings
+): Promise<void> {
+  return staticMindStudio.terminateIframe(profilerServerId, settings);
 }
 
 /**
