@@ -75,15 +75,19 @@ void PluginsManager::LoadPlugins()
         }
         for (auto &file : fs::directory_iterator(dir)) {
             std::string filePath = StringUtil::ToLocalStr(file.path().string());
-            if (!is_directory(file) && file.path().extension().string() == EXT
-                && FileUtil::CheckFilePath(filePath)) {
-                AddPathEnv(dirPath);
-#ifdef _WIN32
-                LoadLibraryA(filePath.c_str());
-#else
-                dlopen(file.path().string().c_str(), RTLD_LAZY);
-#endif
+            if (is_directory(file) || file.path().extension().string() != EXT || !FileUtil::CheckFilePath(filePath)) {
+                continue;
             }
+            AddPathEnv(dirPath);
+#ifdef _WIN32
+            if (LoadLibraryA(filePath.c_str()) == nullptr) {
+                std::cerr << "Load " << filePath << " failed, err=" << GetLastError() << std::endl;
+            }
+#else
+            if (dlopen(file.path().string().c_str(), RTLD_LAZY) == nullptr) {
+                std::cerr << "Load " << file.path().string() << " failed, err=" << dlerror() << std::endl;
+            }
+#endif
         }
     }
 }
