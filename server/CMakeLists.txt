@@ -24,7 +24,7 @@ else()
 endif()
 
 # set compile warn
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers -Wno-braced-scalar-init")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers")
 set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-unknown-pragmas -Wno-unused-parameter -Wno-missing-field-initializers")
 # set some compile warn as error which is not allow
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fallthrough -Werror=switch")
@@ -32,12 +32,12 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fa
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
 
-if (CMAKE_BUILD_TYPE MATCHES "release")
+if (CMAKE_BUILD_TYPE MATCHES "Release")
     set(CMAKE_CXX_VISIBILITY_PRESET hidden)
     set(CMAKE_C_VISIBILITY_PRESET hidden)
     set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
     set(CMAKE_SKIP_RPATH true)
-elseif(CMAKE_BUILD_TYPE MATCHES "debug")
+elseif(CMAKE_BUILD_TYPE MATCHES "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 endif()

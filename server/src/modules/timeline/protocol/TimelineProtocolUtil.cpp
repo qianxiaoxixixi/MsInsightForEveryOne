@@ -225,7 +225,7 @@ template <> std::optional<document_t> ToResponseJson<SetCardAliasResponse>(const
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>(std::move(json));
 }
 
 
@@ -402,7 +402,7 @@ template <> std::optional<document_t> ToResponseJson<SystemViewAICoreFreqRespons
     JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    return std::optional<document_t>{std::move(json)};
 }
 
 template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const EventsViewResponse &response)

@@ -45,7 +45,8 @@ std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithHCCL(const Protoco
         return "";
     }
     std::string sql = " WHERE 1";
-    for (const auto& [key, _] : requestParams.filters) {
+    for (const auto& [key, value] : requestParams.filters) {
+        (void)value; // 去除编译告警
         if (!StringUtil::CheckSqlValid(key)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
             throw DatabaseException("filter first value is invalid for sql.");
@@ -63,7 +64,8 @@ std::string DbKernelDetailHelper::GetKernelDetailFilterSqlWithoutHCCL(
         return "";
     }
     std::string sql = " WHERE 1";
-    for (const auto& [key, _] : requestParams.filters) {
+    for (const auto& [key, value] : requestParams.filters) {
+        (void)value; // 去除编译告警
         if (!StringUtil::CheckSqlValid(key)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
             throw DatabaseException("filter first value is invalid for sql.");
