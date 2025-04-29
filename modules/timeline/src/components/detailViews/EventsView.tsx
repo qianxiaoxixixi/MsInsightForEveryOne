@@ -221,3 +221,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         metaType: requestData.metaType as string,
     });
 };
+
+export const EventView = observer((props: any) => {
+    return <EventDetail request={eventViewData} {...props} />;
+});

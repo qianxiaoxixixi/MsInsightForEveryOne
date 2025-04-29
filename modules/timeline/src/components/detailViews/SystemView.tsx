@@ -10,41 +10,21 @@ import {
     getColumnSearchProps,
     getDefaultColumData,
     getPageData,
-    useKernelDetails,
-    pythonApiSummaryColumns,
-    queryKernelDetails,
-    queryOneKernel,
-    querySystemViewDetails,
     statsSystemViewItems,
     expertSystemViewItems,
-    layerTypes,
     type IQueryCondition,
-    queryAffinityOptimizer,
-    affinityOptimizerColumns,
-    queryAICPUOperators,
-    queryACLNNOperators,
-    aicpuOperatorColumns,
-    aclnnOperatorColumns,
-    queryAffinityAPI,
-    affinityAPIColumns,
-    queryOperatorFusion,
-    fusionOperatorColumns,
-    eventViewData,
     SystemViewItem,
 } from './Common';
 import { ResizeTable } from 'ascend-resize';
 import { limitInput, GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
-import type { CardMetaData, ThreadMetaData } from '../../entity/data';
-import { runInAction } from 'mobx';
+import type { CardMetaData } from '../../entity/data';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
-import { calculateDomainRange } from '../CategorySearch';
-import { colorPalette, getTimeOffset } from '../../insight/units/utils';
-import type { InsightUnit } from '../../entity/insight';
-import { hashToNumber } from '../../utils/colorUtils';
-import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
-import { EventDetail } from './EventsView';
-import { OverallMetrics } from './OverallMetrics';
+import { getTimeOffset } from '../../insight/units/utils';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { HelpIcon } from 'ascend-icon';
+import { StatsSystemView } from './StatsSystemView';
+import { ExpertSystemView, handleAdvisorSelected } from './ExpertSystemView';
+import { EventView } from './EventsView';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
@@ -271,47 +251,8 @@ const SelectList = observer((props: any) => {
     );
 });
 
-const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => {
-    const queryName = rowData.name ?? rowData.originOptimizer;
-    const nsDuration = Number((rowData.duration * 1000).toFixed(0));
-    const res = await queryOneKernel({
-        rankId: rowData.rankId,
-        name: queryName,
-        timestamp: rowData.startTime,
-        duration: nsDuration,
-    });
-    const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
-    runInAction(() => {
-        props.session.locateUnit = {
-            target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId === rowData.rankId &&
-                    unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
-            },
-            onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.startTime - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, nsDuration);
-                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                props.session.selectedData = {
-                    id: props.session.isFullDb as boolean ? rowData.id : res.id,
-                    startTime,
-                    name: queryName,
-                    color: colorPalette[hashToNumber(queryName, colorPalette.length)],
-                    duration: nsDuration,
-                    metaType: rowData.pid,
-                    threadId: rowData.tid,
-                    processId: rowData.pid,
-                    cardId: rowData.rankId,
-                    startRecordTime: props.session.startRecordTime,
-                    showDetail: false,
-                    depth,
-                };
-            },
-        };
-    });
-};
-
 // eslint-disable-next-line max-lines-per-function
-const BaseSummary = observer((props: any) => {
+export const BaseSummary = observer((props: any) => {
     const isStats = props.isStats as boolean;
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = isStats ? { field: 'totalTime', order: 'descend' } : { field: 'duration', order: 'descend' };
@@ -412,192 +353,4 @@ const BaseSummary = observer((props: any) => {
     );
 });
 
-const handleSelected = async(rowData: any, props: any): Promise<void> => {
-    const res = await queryOneKernel({
-        rankId: props.rankId,
-        name: rowData.name,
-        timestamp: rowData.startTime,
-        duration: Number((rowData.duration * 1000).toFixed(0)),
-    });
-    runInAction(() => {
-        props.session.locateUnit = {
-            target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId === props.rankId &&
-                    unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
-            },
-            onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.startTime - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
-                // 此处duration单位为us,计算和跳转时需要转换为ns
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, Number((rowData.duration * 1000).toFixed(0)));
-                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                props.session.selectedData = {
-                    id: props.session.isFullDb as boolean ? rowData.id : res.id,
-                    startTime,
-                    name: rowData.name,
-                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
-                    duration: Number((rowData.duration * 1000).toFixed(0)),
-                    depth: res.depth,
-                    threadId: res.threadId,
-                    processId: res.pid,
-                    cardId: props.rankId,
-                    startRecordTime: props.session.startRecordTime,
-                    metaType: res.pid,
-                    showDetail: false,
-                };
-            },
-        };
-    });
-};
-
-const defaultFilters = {
-    name: [],
-    type: [],
-    accCore: [],
-    taskId: [],
-    inputShapes: [],
-    inputDataTypes: [],
-    inputFormats: [],
-    outputShapes: [],
-    outputDataTypes: [],
-    outputFormats: [],
-};
-
-const filterColumn = [
-    'name', 'type', 'acceleratorCore', 'taskId', 'inputShapes', 'inputDataTypes',
-    'inputFormats', 'outputShapes', 'outputDataTypes', 'outputFormats',
-];
-
-// eslint-disable-next-line max-lines-per-function
-const KernelDetails = observer((props: any) => {
-    const defaultPage = { current: 1, pageSize: 10, total: 0 };
-    const defaultSorter = { field: 'duration', order: 'descend' };
-    const [dataSource, setDataSource] = useState<any[]>([]);
-    const [page, setPage] = useState(defaultPage);
-    const [sorter, setSorter] = useState(defaultSorter);
-    const [filters, setFilters] = useState(defaultFilters);
-    const [rowData, setRowData] = useState<any>({});
-    const kernelDetails = useKernelDetails();
-    const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
-
-    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
-    useEffect(() => {
-        updateData(page, sorter, filters);
-    }, [sorter, filters, props.rankId]);
-    useEffect(() => {
-        if (status === 'download') {
-            updateData(page, sorter, filters);
-        }
-    }, [status]);
-    const updateData = async(pages: any, sorters: {field: string;order: string}, filtersConditions: any): Promise<void> => {
-        if (props.rankId === undefined) {
-            setDataSource([]);
-            setPage(defaultPage);
-            return;
-        }
-        const filterTypes: string[] = [];
-        Object.keys(filtersConditions).forEach(key => {
-            const filterValue = filtersConditions[key];
-            if (filterColumn.includes(key) && filterValue != null) {
-                if (Array.isArray((filterValue)) && filterValue.length > 0) {
-                    filterTypes.push(JSON.stringify({ columnName: key, value: filterValue[0] }));
-                }
-            }
-        });
-        const res = await queryKernelDetails({
-            rankId: props.rankId,
-            pageSize: pages.pageSize,
-            current: pages.current,
-            orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
-            order: sorters.order ?? defaultSorter.order,
-            coreType: '',
-            filterCondition: filterTypes,
-        });
-        const timestampoffset = getTimeOffset(props.session, props.rankId);
-        const data = res.kernelDetails.map((item: {
-            startTimeLabel: string;
-            startTime: number;}) => {
-            item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
-            return item;
-        });
-        setDataSource(data);
-        setPage({ ...page, total: res.count });
-    };
-
-    const colums = [
-        ...kernelDetails,
-        {
-            title: t('Click To Timeline'),
-            dataIndex: 'click',
-            key: 'click',
-            ellipsis: true,
-            render: (_: any, record: any): JSX.Element => (<Button type="link"
-                onClick={(): void => {
-                    setRowData(record as any);
-                }}>{t('Click')}</Button>),
-        },
-    ];
-
-    useEffect(() => {
-        if (rowData.name === null || rowData.name === undefined) {
-            return;
-        }
-        handleSelected(rowData, props);
-    }, [rowData]);
-    return (
-        (status === 'download' || props.rankId === undefined)
-            ? <ResizeTable
-                onChange={(pagination: any, newFilters: any, newSorter: any): void => {
-                    setSorter(newSorter);
-                    setFilters(newFilters);
-                }}
-                pagination={getPageData(page, setPage)}
-                dataSource={dataSource}
-                columns={colums}
-                scroll={{ y: props.bottomHeight - DETAIL_HEADER_HEIGHT_ETC_PX }}
-                rowClassName={(record: any): string => {
-                    return record.id === rowData.id ? 'selected-row' : 'click-able';
-                }}
-                size="small"/>
-            : <div style={{ display: 'flex', height: '100%' }}>
-                <StyledEmpty style={{ margin: 'auto' }}/>
-            </div>
-    );
-});
-
-const AffinityAPI = observer((props: any) => {
-    return <BaseSummary request={queryAffinityAPI} columns={affinityAPIColumns} {...props} />;
-});
-
-const AffinityOptimizer = observer((props: any) => {
-    return <BaseSummary request={queryAffinityOptimizer} columns={affinityOptimizerColumns} {...props} />;
-});
-
-const AICPUOperator = observer((props: any) => {
-    return <BaseSummary request={queryAICPUOperators} columns={aicpuOperatorColumns} {...props} />;
-});
-
-const ACLNNOperator = observer((props: any) => {
-    return <BaseSummary request={queryACLNNOperators} columns={aclnnOperatorColumns} {...props} />;
-});
-
-const FusedOperator = observer((props: any) => {
-    return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
-});
-
-const EventView = observer((props: any) => {
-    return <EventDetail request={eventViewData} {...props} />;
-});
-
-const contentList: any[][] = [[OverallMetrics, ...layerTypes.map((type) => {
-    return observer((props: any) => {
-        return (
-            <BaseSummary
-                layerType={type}
-                request={querySystemViewDetails}
-                isStats={true}
-                columns={pythonApiSummaryColumns}
-                {...props}
-            />
-        );
-    });
-}), KernelDetails], [AffinityAPI, AffinityOptimizer, AICPUOperator, ACLNNOperator, FusedOperator], [EventView]];
+const contentList: any[][] = [StatsSystemView, ExpertSystemView, [EventView]];
