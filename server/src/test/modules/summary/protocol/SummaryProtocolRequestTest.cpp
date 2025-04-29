@@ -97,3 +97,39 @@ TEST_F(SummaryProtocolRequestTest, CommunicationDetailParamsTestOrderInvaild)
     std::string msg;
     EXPECT_EQ(params.CheckParams(msg), false);
 }
+
+TEST_F(SummaryProtocolRequestTest, ImportExpertDataParamsTestVersionInvaild)
+{
+    Dic::Protocol::ImportExpertDataParams params;
+    params.filePath = "filePath";
+    params.version = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, ImportExpertDataParamsTestFilePathInvaild)
+{
+    Dic::Protocol::ImportExpertDataParams params;
+    params.filePath = ";";
+    params.version = "1";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, QueryExpertHotspotParamsTestModelStageInvaild)
+{
+    Dic::Protocol::QueryExpertHotspotParams params;
+    params.modelStage = ";";
+    params.version = "1";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}
+
+TEST_F(SummaryProtocolRequestTest, QueryExpertHotspotParamsTestVersionInvaild)
+{
+    Dic::Protocol::QueryExpertHotspotParams params;
+    params.modelStage = "prefill";
+    params.version = ";";
+    std::string msg;
+    EXPECT_EQ(params.CheckParams(msg), false);
+}

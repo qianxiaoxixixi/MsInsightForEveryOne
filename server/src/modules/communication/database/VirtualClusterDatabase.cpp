@@ -5,6 +5,7 @@
 #include <ConstantDefs.h>
 #include "pch.h"
 #include "NumDefs.h"
+#include "CollectionUtil.h"
 #include "VirtualClusterDatabase.h"
 
 namespace Dic {
@@ -51,9 +52,9 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
         std::string value = sqlite3_column_string(stmtBaseInfo, coll++);
         info.insert({key, value});
     }
-    std::string valueRanks = FindValueByKey(info, "ranks", "");
-    std::string valueSteps = FindValueByKey(info, "steps", "");
-    std::string valueDataSize = FindValueByKey(info, "data_size", "");
+    std::string valueRanks = CollectionUtil::FindValueByKey(info, "ranks", CollectionUtil::EMPTY_STRING);
+    std::string valueSteps = CollectionUtil::FindValueByKey(info, "steps", CollectionUtil::EMPTY_STRING);
+    std::string valueDataSize = CollectionUtil::FindValueByKey(info, "data_size", CollectionUtil::EMPTY_STRING);
     if (!valueRanks.empty()) {
         baseInfo.rankList = JsonUtil::JsonToVector(valueRanks);
     }
@@ -65,6 +66,62 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
     baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(INT_MAX));
     sqlite3_finalize(stmtBaseInfo);
     return true;
+}
+
+std::map<std::string, std::string> VirtualClusterDatabase::ExecuteQueryBaseInfoByKeys(
+    const std::vector<std::string> &keys, const std::string &tableName)
+{
+    if (keys.empty()) {
+        return {};
+    }
+    std::string sql = "SELECT key, value FROM " + tableName +
+        " WHERE key IN (" + StringUtil::CreateQuestionMarkString(keys.size()) + ");";
+    sqlite3_stmt *stmtBaseInfo = nullptr;
+    int baseInfoResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmtBaseInfo, nullptr);
+    if (baseInfoResult != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare Query base info by keys statement. error:", sqlite3_errmsg(db));
+        return {};
+    }
+    int index = bindStartIndex;
+    for (const auto &item: keys) {
+        sqlite3_bind_text(stmtBaseInfo, index++, item.c_str(), item.length(), SQLITE_TRANSIENT);
+    }
+    std::map<std::string, std::string> info;
+    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
+        int coll = resultStartIndex;
+        std::string key = sqlite3_column_string(stmtBaseInfo, coll++);
+        std::string value = sqlite3_column_string(stmtBaseInfo, coll++);
+        info.insert({key, value});
+    }
+    sqlite3_finalize(stmtBaseInfo);
+    return info;
+}
+
+bool VirtualClusterDatabase::ExecuteInsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap,
+                                                                  const std::string &tableName)
+{
+    if (baseInfoMap.empty()) {
+        return false;
+    }
+    std::string sql = "INSERT INTO " + tableName + " (key, value) VALUES (?,?)";
+    for (size_t i = 0; i < baseInfoMap.size() - 1; ++i) {
+        sql += ",(?,?)";
+    }
+    sql += " ON CONFLICT(key) DO UPDATE SET value = excluded.value;";
+    sqlite3_stmt *stmt = nullptr;
+    int baseInfoResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (baseInfoResult != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare insert duplicate update base info statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    for (const auto &item: baseInfoMap) {
+        sqlite3_bind_text(stmt, index++, item.first.c_str(), item.first.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, item.second.c_str(), item.second.length(), SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return result == SQLITE_DONE;
 }
 
 bool VirtualClusterDatabase::ExecuteGetStepIdList(Protocol::PipelineStepResponseBody &responseBody, std::string sql)
@@ -407,7 +464,7 @@ bool VirtualClusterDatabase::ExecuteQueryRanksHandler(std::vector<Protocol::Iter
         std::string value = sqlite3_column_string(stmt, col++);
         info.insert({key, value});
     }
-    std::string valueRanks = FindValueByKey(info, "ranks", "");
+    std::string valueRanks = CollectionUtil::FindValueByKey(info, "ranks", CollectionUtil::EMPTY_STRING);
     GetStepsOrRanksObject(valueRanks, responseBody);
     sqlite3_finalize(stmt);
     return true;
@@ -453,7 +510,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
         std::string value = sqlite3_column_string(stmt, col++);
         info.insert({key, value});
     }
-    std::string valueSteps = FindValueByKey(info, "steps", "");
+    std::string valueSteps = CollectionUtil::FindValueByKey(info, "steps", CollectionUtil::EMPTY_STRING);
     GetStepsOrRanksObject(valueSteps, responseBody);
     if (responseBody.empty()) {
         ServerLog::Warn("Failed to obtain the number of iteration ids. At least one id must be contained. "
@@ -628,13 +685,13 @@ bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql
         std::string value = sqlite3_column_string(stmt, col++);
         info.insert({key, value});
     }
-    std::string valueAlgorithm = FindValueByKey(info, "algorithm", "");
-    std::string valueDpSize = FindValueByKey(info, "dp_size", "");
-    std::string valuePpSize = FindValueByKey(info, "pp_size", "");
-    std::string valueTpSize = FindValueByKey(info, "tp_size", "");
-    std::string valueCpSize = FindValueByKey(info, "cp_size", "");
-    std::string valueEpSize = FindValueByKey(info, "ep_size", "");
-    std::string valueLevel = FindValueByKey(info, "level", "");
+    std::string valueAlgorithm = CollectionUtil::FindValueByKey(info, "algorithm", CollectionUtil::EMPTY_STRING);
+    std::string valueDpSize = CollectionUtil::FindValueByKey(info, "dp_size", CollectionUtil::EMPTY_STRING);
+    std::string valuePpSize = CollectionUtil::FindValueByKey(info, "pp_size", CollectionUtil::EMPTY_STRING);
+    std::string valueTpSize = CollectionUtil::FindValueByKey(info, "tp_size", CollectionUtil::EMPTY_STRING);
+    std::string valueCpSize = CollectionUtil::FindValueByKey(info, "cp_size", CollectionUtil::EMPTY_STRING);
+    std::string valueEpSize = CollectionUtil::FindValueByKey(info, "ep_size", CollectionUtil::EMPTY_STRING);
+    std::string valueLevel = CollectionUtil::FindValueByKey(info, "level", CollectionUtil::EMPTY_STRING);
     config.algorithm = valueAlgorithm;
     config.dpSize = NumberUtil::StringToLongLong(valueDpSize);
     config.ppSize = NumberUtil::StringToLongLong(valuePpSize);
@@ -818,15 +875,6 @@ std::vector<CommInfoUnderRank> VirtualClusterDatabase::ExecuteGetCommTimeForRank
     return res;
 }
 
-std::string VirtualClusterDatabase::FindValueByKey(const std::map<std::string, std::string> &info,
-                                                   const std::string &key, const std::string defaultValue)
-{
-    if (info.find(key) == info.end()) {
-        return defaultValue;
-    }
-    return info.at(key);
-}
-
 sqlite3_stmt *VirtualClusterDatabase::InitExpertHotspotInsertStmt(uint64_t paramLen)
 {
     if (paramLen == 0) {
@@ -889,11 +937,11 @@ bool VirtualClusterDatabase::BatchInsertExpertHotspotData(const std::vector<Expe
     }
     int idx = bindStartIndex;
     for (const auto &info : expertHotspotInfos) {
-        sqlite3_bind_int64(stmt, idx++, info.localExpertId);
+        sqlite3_bind_int(stmt, idx++, info.localExpertId);
         sqlite3_bind_text(stmt, idx++, info.modelStage.c_str(), info.modelStage.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, info.rankId.c_str(), info.rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, idx++, info.rankId);
         sqlite3_bind_int64(stmt, idx++, info.visits);
-        sqlite3_bind_int64(stmt, idx++, info.layer);
+        sqlite3_bind_int(stmt, idx++, info.layer);
         sqlite3_bind_text(stmt, idx++, info.version.c_str(), info.version.length(), SQLITE_TRANSIENT);
     }
     auto result = sqlite3_step(stmt);
@@ -934,8 +982,8 @@ bool VirtualClusterDatabase::DeleteExpertHotspot(const std::string &modelStage, 
 std::vector<ExpertHotspotStruct> VirtualClusterDatabase::QueryExpertHotspotData(const std::string &modelStage,
                                                                                 const std::string &version)
 {
-    std::string sql = "SELECT localExpertId, modelStage, rankId, visits, layer FROM " + TABLE_EXPERT_HOTSPOT_INTO +
-        " WHERE modelStage = ? and version = ?";
+    std::string sql = "SELECT localExpertId, modelStage, rankId, visits, version, layer FROM " +
+        TABLE_EXPERT_HOTSPOT_INTO + " WHERE modelStage = ? and version = ?";
     sqlite3_stmt *stmt = nullptr;
     int stmtResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (stmtResult != SQLITE_OK || stmt == nullptr) {
@@ -951,13 +999,22 @@ std::vector<ExpertHotspotStruct> VirtualClusterDatabase::QueryExpertHotspotData(
         ExpertHotspotStruct info{};
         info.localExpertId = sqlite3_column_int(stmt, col++);
         info.modelStage = sqlite3_column_string(stmt, col++);
-        info.rankId = sqlite3_column_string(stmt, col++);
+        info.rankId = sqlite3_column_int(stmt, col++);
         info.visits = sqlite3_column_int64(stmt, col++);
         info.version = sqlite3_column_string(stmt, col++);
         info.layer = sqlite3_column_int(stmt, col++);
         res.emplace_back(info);
     }
+    sqlite3_finalize(stmt);
     return res;
+}
+
+void VirtualClusterDatabase::ReleaseStmt()
+{
+    if (insertHotspotStmt != nullptr) {
+        sqlite3_finalize(insertHotspotStmt);
+        insertHotspotStmt = nullptr;
+    }
 }
 }
 }

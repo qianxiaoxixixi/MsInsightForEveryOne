@@ -402,18 +402,22 @@ void FileUtil::RecursionFindFilesByRegex(std::vector<std::string> &result, const
                                          const std::regex &fileRegex)
 {
     std::string error;
+    // 递归限制判断
     if (!IsWithinRecursionLimit(result, depth, error)) {
         return;
     }
+    // 查找当前目录下所有文件和文件夹
     std::vector<std::string> folders;
     std::vector<std::string> files;
     if (!FileUtil::FindFolders(path, folders, files)) {
         return;
     }
+    // 遍历文件夹，进一步递归
     for (const auto &folder: folders) {
         std::string tmpPath = FileUtil::SplicePath(path, folder);
         RecursionFindFilesByRegex(result, tmpPath, depth + 1, fileRegex);
     }
+    // 遍历文件，对每个文件进行判断是否满足正则表达式
     for (const auto &file : files) {
         std::string tmpPath = SplicePath(path, file);
         if (!std::regex_match(file, fileRegex)) {

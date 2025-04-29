@@ -11,6 +11,16 @@
 namespace Dic {
 class CollectionUtil {
 public:
+    template <typename T>
+    static inline T FindValueByKey(const std::map<std::string, T> &info, const std::string &key,
+                                   const T &defaultValue)
+    {
+        auto it = info.find(key);
+        if (it == info.end()) {
+            return defaultValue;
+        }
+        return it->second;
+    }
     /**
      * 模板方法，求两个基础类型集合的差集
      *
@@ -75,6 +85,8 @@ public:
         // 比较排序后的vector
         return sortedVec1 == sortedVec2;
     }
+
+    static const inline std::string EMPTY_STRING = "";
 };
 }
 #endif // PROFILER_SERVER_COLLECTIONUTIL_H

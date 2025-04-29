@@ -47,7 +47,7 @@ TEST_F(ExpertHotspotManagerTest, InitExpertHotspotDataSuccess)
     InitParser(filePath, Dic::COMPARE);
     std::string error;
     Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(hotspotPath, "1", error);
-    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotsSpotData("decode", "1");
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData("decode", "1");
     const int exceptSize = 232;
     EXPECT_EQ(res.size(), exceptSize);
     Clear();

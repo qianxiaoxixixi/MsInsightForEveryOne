@@ -25,6 +25,8 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, ToQueryFwdBwdTimelineRequest);
     jsonToReqFactory.emplace(REQ_RES_PARALLELISM_ARRANGEMENT_ALL, ToQueryParallelismArrangementRequest);
     jsonToReqFactory.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA, ToQueryParallelismPerformanceRequest);
+    jsonToReqFactory.emplace(REQ_RES_IMPORT_EXPERT_DATA, ToImportExpertDataRequest);
+    jsonToReqFactory.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, ToQueryExpertHotspotRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -42,6 +44,8 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PIPELINE_FWD_BWD_TIMELINE, ToQueryFwdBwdTimelineResponse);
     resToJsonFactory.emplace(REQ_RES_PARALLELISM_ARRANGEMENT_ALL, ToQueryParallelismArrangementResponse);
     resToJsonFactory.emplace(REQ_RES_PARALLELISM_PERFORMANCE_DATA, ToQueryParallelismPerformanceResponse);
+    resToJsonFactory.emplace(REQ_RES_IMPORT_EXPERT_DATA, ToImportExpertDataResponse);
+    resToJsonFactory.emplace(REQ_RES_QUERY_EXPERT_HOTSPOT, ToQueryExpertHotspotResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -257,6 +261,38 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
     return reqPtr;
 }
 
+std::unique_ptr<Request> SummaryProtocol::ToImportExpertDataRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ImportExpertDataRequest> reqPtr = std::make_unique<ImportExpertDataRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of import expert data request.";
+        return nullptr;
+    }
+    if (!json.HasMember("params")) {
+        error = "Failed to set request parameter of import expert data request due to missing parameter.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.version, json["params"], "version");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToQueryExpertHotspotRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<QueryExpertHotspotRequest> reqPtr = std::make_unique<QueryExpertHotspotRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info of query expert hotspot data request.";
+        return nullptr;
+    }
+    if (!json.HasMember("params")) {
+        error = "Failed to set request parameter of query expert hotspot data request due to missing parameter.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.modelStage, json["params"], "modelStage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.version, json["params"], "version");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -327,6 +363,16 @@ std::optional<document_t> SummaryProtocol::ToQueryParallelismPerformanceResponse
 {
     return ToResponseJson<ParallelismPerformanceResponse>(
         dynamic_cast<const ParallelismPerformanceResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToImportExpertDataResponse(const Response &response)
+{
+    return ToResponseJson<ImportExpertDataResponse>(dynamic_cast<const ImportExpertDataResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToQueryExpertHotspotResponse(const Response &response)
+{
+    return ToResponseJson<QueryExpertHotspotResponse>(dynamic_cast<const QueryExpertHotspotResponse &>(response));
 }
 #pragma endregion
 } // namespace Protocol

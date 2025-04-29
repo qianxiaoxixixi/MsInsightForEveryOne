@@ -76,6 +76,8 @@ public:
     bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) override;
     bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) override;
+    std::map<std::string, std::string> QueryBaseInfoByKeys(const std::vector<std::string> &keys) override;
+    bool InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap) override;
 
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
     std::unordered_map<std::string, int64_t> GetAllGroupMap();

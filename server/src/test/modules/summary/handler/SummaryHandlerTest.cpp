@@ -17,6 +17,8 @@
 #include "StageHandler.h"
 #include "StepHandler.h"
 #include "SummaryTopRankHandler.h"
+#include "ImportExpertDataHandler.h"
+#include "QueryExpertHotspotHandler.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::Summary;
@@ -239,6 +241,26 @@ TEST_F(HandlerTest, SummaryTopRankHandlerHandleRequestReturnTrue)
 {
     auto request = std::make_unique<SummaryTopRankRequest>();
     SummaryTopRankHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, true);
+}
+
+TEST_F(HandlerTest, ImportExpertDataHandlerRequestReturnFalse)
+{
+    auto request = std::make_unique<ImportExpertDataRequest>();
+    request->params.version = "1";
+    request->params.filePath = "filePath";
+    ImportExpertDataHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, QueryExpertHotspotHandlerRequestReturnTrue)
+{
+    auto request = std::make_unique<QueryExpertHotspotRequest>();
+    request->params.modelStage = "prefill";
+    request->params.version = "1";
+    QueryExpertHotspotHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
 }

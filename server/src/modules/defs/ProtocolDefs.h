@@ -102,6 +102,8 @@ const std::string REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY = "summary/query/paral
 const std::string REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY = "summary/set/parallelStrategy";
 const std::string REQ_RES_COMPUTE_DETAIL = "summary/queryComputeDetail";
 const std::string REQ_RES_COMMUNICATION_DETAIL = "summary/queryCommunicationDetail";
+const std::string REQ_RES_IMPORT_EXPERT_DATA = "summary/importExpertData";
+const std::string REQ_RES_QUERY_EXPERT_HOTSPOT = "summary/queryExpertHotspot";
 
 // pipeline
 const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllSteps";

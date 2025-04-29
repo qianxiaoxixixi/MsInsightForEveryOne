@@ -13,10 +13,12 @@ namespace Dic::Module::Summary {
 class ExpertHotspotParser {
 public:
     explicit ExpertHotspotParser(std::shared_ptr<VirtualClusterDatabase> &database) : db(database) {}
-    bool Parser(const std::string &filePath, const std::string &version);
+    bool Parse(const std::string &filePath, const std::string &version);
+    std::map<std::string, ModelInfo> GetModelInfoList();
 private:
     const static int regexMatchNumber = 3;
     std::shared_ptr<VirtualClusterDatabase> db = nullptr;
+    std::map<std::string, ModelInfo> modelInfoMap;
 };
 }
 
