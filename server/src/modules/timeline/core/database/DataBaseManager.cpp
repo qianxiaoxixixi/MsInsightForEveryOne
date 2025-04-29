@@ -246,6 +246,7 @@ void DataBaseManager::ClearClusterDb()
     std::unique_lock<std::recursive_mutex> lock(mutex);
     for (const auto &item: clusterDatabaseMap) {
         if (item.second != nullptr) {
+            item.second->ReleaseStmt();
             item.second->CloseDb();
         }
     }

@@ -8,6 +8,7 @@
 #include "TableDefs.h"
 #include "NumDefs.h"
 #include "TraceTime.h"
+#include "CollectionUtil.h"
 #include "TextClusterDatabase.h"
 // LCOV_EXCL_BR_START
 namespace Dic {
@@ -507,6 +508,16 @@ bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
     return ExecuteQueryBaseInfo(baseInfo, baseInfoSql);
 }
 
+std::map<std::string, std::string> TextClusterDatabase::QueryBaseInfoByKeys(const std::vector<std::string> &keys)
+{
+    return ExecuteQueryBaseInfoByKeys(keys, TABLE_BASE_INFO);
+}
+
+bool TextClusterDatabase::InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap)
+{
+    return ExecuteInsertDuplicateUpdateBaseInfo(baseInfoMap, TABLE_BASE_INFO);
+}
+
 std::string TextClusterDatabase::QueryParseClusterStatus()
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;
@@ -524,7 +535,7 @@ std::string TextClusterDatabase::QueryParseClusterStatus()
         std::string value = sqlite3_column_string(stmtBaseInfo, coll++);
         info.insert({key, value});
     }
-    std::string valueParseStatus = FindValueByKey(info, "parse_status", "");
+    std::string valueParseStatus = CollectionUtil::FindValueByKey(info, "parse_status", CollectionUtil::EMPTY_STRING);
     parseStatus = valueParseStatus;
     sqlite3_finalize(stmtBaseInfo);
     return parseStatus;

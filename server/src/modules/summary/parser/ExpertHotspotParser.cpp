@@ -5,13 +5,13 @@
 #include "SafeFile.h"
 
 namespace Dic::Module::Summary {
-    bool ExpertHotspotParser::Parser(const std::string &filePath, const std::string &version)
+    bool ExpertHotspotParser::Parse(const std::string &filePath, const std::string &version)
     {
         if (db == nullptr) {
             return false;
         }
         // 解析文件名，获取模型阶段和rankId
-        auto searchRes = RegexUtil::RegexSearch(filePath, EXPERT_HOTSPOT_FILE_REG);
+        auto searchRes = RegexUtil::RegexSearch(filePath, expertHotspotFileReg);
         if (!searchRes.has_value() || searchRes.value().size() != regexMatchNumber) {
             return false;
         }
@@ -19,7 +19,7 @@ namespace Dic::Module::Summary {
         // 读取文件，读取过程中会校验文件状态
         std::ifstream file = OpenReadFileSafely(filePath);
         std::string line;
-        std::string rankId = searchRes.value()[2];
+        int rankId = NumberUtil::StringToInt(searchRes.value()[2]);
         std::string modelStage = searchRes.value()[1];
         int layer = 0;
         size_t expertCountPerRank = 0;
@@ -40,7 +40,16 @@ namespace Dic::Module::Summary {
             }
             layer++;
         }
+        modelInfoMap[modelStage].rankNumber++;
+        modelInfoMap[modelStage].moeLayer = layer;
+        // 单独看热点数据，没有专家id，因此使用专家数量作为专家id的最大值
+        modelInfoMap[modelStage].expertNumber += expertCountPerRank;
         return true;
+    }
+
+    std::map<std::string, ModelInfo> ExpertHotspotParser::GetModelInfoList()
+    {
+        return modelInfoMap;
     }
 }
 

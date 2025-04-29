@@ -361,6 +361,33 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceResponseTestWillRet
     EXPECT_EQ(jsonOptional.value()["body"].HasMember("advice"), true);
 }
 
+TEST_F(SummaryProtocolUtilTest, ToQueryExpertHotspotResponseJsonWhenNormalInput)
+{
+    QueryExpertHotspotResponse response{};
+    ExpertHotspotStruct info{"prefill", 0, 100, 0, 0, "1", 0};
+    response.body.hotspotInfos.push_back(info);
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("hotspotInfos"), true);
+    ASSERT_EQ(jsonOptional.value()["body"]["hotspotInfos"].GetArray().Size(),
+              response.body.hotspotInfos.size());
+}
+
+TEST_F(SummaryProtocolUtilTest, ToImportExpertDataResponseJsonWhenNormalInput)
+{
+    ImportExpertDataResponse response{};
+    response.result = true;
+    response.msg = "";
+    std::string err;
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
+    EXPECT_EQ(jsonOptional.has_value(), true);
+    EXPECT_EQ(jsonOptional.value().HasMember("body"), true);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("result"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["result"].GetBool(), true);
+}
+
 TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponse)
 {
     using namespace Dic::Module;

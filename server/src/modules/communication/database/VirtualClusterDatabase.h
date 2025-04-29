@@ -68,6 +68,8 @@ public:
     virtual bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) = 0;
     virtual bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) = 0;
+    virtual std::map<std::string, std::string> QueryBaseInfoByKeys(const std::vector<std::string> &keys) = 0;
+    virtual bool InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap) = 0;
     virtual bool QueryAllPerformanceDataByStep(const std::string &step,
                                                std::unordered_map<std::uint32_t, StepStatistic> &data) = 0;
     bool BatchInsertExpertHotspotData(const std::vector<ExpertHotspotStruct> &expertHotspotInfos);
@@ -75,19 +77,23 @@ public:
     void SaveExpertHotspot();
     bool DeleteExpertHotspot(const std::string &modelStage, const std::string &version);
     std::vector<ExpertHotspotStruct> QueryExpertHotspotData(const std::string &modelStage, const std::string &version);
-
+    void ReleaseStmt();
 protected:
     const std::string totalOpInfo = "Total Op Info";
     const std::string clusterParseStatus = "Cluster files parsing status";
     const std::string commonSql = "CREATE TABLE IF NOT EXISTS " + TABLE_EXPERT_HOTSPOT_INTO +
         " (id INTEGER PRIMARY KEY AUTOINCREMENT, localExpertId INTEGER, modelStage TEXT, rankId INTEGER,"
         " visits INTEGER, layer INTEGER, version TEXT);"
-        "CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_HOTSPOT_INTO + "(modelStage, version);";
+        " CREATE INDEX IF NOT EXISTS idx_ms ON " + TABLE_EXPERT_HOTSPOT_INTO + "(modelStage, version);";
     sqlite3_stmt *insertHotspotStmt = nullptr;
     std::vector<ExpertHotspotStruct> expertHotspotCache;
     const double overlapThreshold = 0.05;
     bool HasColumn(const std::string &tableName, const std::string &columnName);
     bool ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo, std::string sql);
+    std::map<std::string, std::string> ExecuteQueryBaseInfoByKeys(const std::vector<std::string> &keys,
+                                                                  const std::string &tableName);
+    bool ExecuteInsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap,
+                                              const std::string &tableName);
     bool ExecuteGetStepIdList(Protocol::PipelineStepResponseBody &responseBody, std::string sql);
     bool ExecuteGetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody,
         std::string sql);
@@ -129,8 +135,6 @@ protected:
     bool ExecuteSetParallelStrategyConfig(std::string &sql, const ParallelStrategyConfig &config, std::string &level);
     bool ExecuteQueryAllPerformanceDataByStep(const std::string &sql,
         const std::string &step, std::unordered_map<std::uint32_t, StepStatistic> &data);
-    std::string FindValueByKey(const std::map<std::string, std::string> &info,
-        const std::string &key, const std::string defaultValue);
     void GetStepsOrRanksObject(const std::string &jsonStr,
                                std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     sqlite3_stmt *GetExpertHotspotInsertStmt(uint64_t paramLen);

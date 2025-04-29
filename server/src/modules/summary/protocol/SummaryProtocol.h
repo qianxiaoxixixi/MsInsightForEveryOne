@@ -33,6 +33,8 @@ private:
     static std::unique_ptr<Request> ToQueryFwdBwdTimelineRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToQueryParallelismArrangementRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToQueryParallelismPerformanceRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToImportExpertDataRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToQueryExpertHotspotRequest(const json_t &json, std::string &error);
 
     // response to json
     static std::optional<document_t> ToTopNResponse(const Response &response);
@@ -48,6 +50,8 @@ private:
     static std::optional<document_t> ToQueryFwdBwdTimelineResponse(const Response &response);
     static std::optional<document_t> ToQueryParallelismArrangementResponse(const Response &response);
     static std::optional<document_t> ToQueryParallelismPerformanceResponse(const Response &response);
+    static std::optional<document_t> ToImportExpertDataResponse(const Response &response);
+    static std::optional<document_t> ToQueryExpertHotspotResponse(const Response &response);
 };
 } // namespace Protocol
 } // namespace Dic

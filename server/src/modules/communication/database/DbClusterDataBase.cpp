@@ -74,6 +74,16 @@ bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
     return true;
 }
 
+std::map<std::string, std::string> DbClusterDataBase::QueryBaseInfoByKeys(const std::vector<std::string> &keys)
+{
+    return ExecuteQueryBaseInfoByKeys(keys, TABLE_CLUSTER_BASE_INFO);
+}
+
+bool DbClusterDataBase::InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap)
+{
+    return ExecuteInsertDuplicateUpdateBaseInfo(baseInfoMap, TABLE_CLUSTER_BASE_INFO);
+}
+
 bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
 {
     std::string sql = "select distinct step as stepId FROM " + TABLE_STEP_TRACE_TIME + " ORDER BY step";

@@ -385,7 +385,7 @@ struct ExpertHotspotStruct {
     // 模型阶段：prefill和decode两种
     std::string modelStage;
     // 卡号，从0开始计数
-    std::string rankId;
+    int rankId = 0;
     // 访问数
     uint64_t visits = 0;
     // 层级，从0开始计数
@@ -394,10 +394,48 @@ struct ExpertHotspotStruct {
     int localExpertId = 0;
     // 版本号（重置前、重置后）
     std::string version;
+    // 全局专家号
+    int expertId = 0;
+    // 索引
+    int expertIndex = 0;
+
+    bool operator<(const ExpertHotspotStruct &other) const
+    {
+        if (this->layer != other.layer) {
+            return this->layer < other.layer;
+        }
+        if (this->rankId != other.rankId) {
+            return this->rankId < other.rankId;
+        }
+        return this->localExpertId < other.localExpertId;
+    }
 };
 
-const int CACHE_SIZE = 1000;
-const std::string EXPERT_HOTSPOT_FILE_REG = R"((prefill|decode)_([0-9]{1,4})\.csv)";
+struct ExpertDeploymentStruct {
+    int deviceId = 0;
+    std::vector<int> deviceDeviceExpertList;
+    int layer = 0;
+    std::string modelStage;
+    std::string version;
+};
+
+struct ModelInfo {
+    // 稠密层列表，数据格式0,1,2
+    std::vector<int> denseLayerList;
+    // moe层数
+    int moeLayer = 0;
+    // rank数量
+    int rankNumber = 0;
+    // 专家数量（专家序号的最大值）
+    int expertNumber = 0;
+};
+
+const std::string KEY_DENSE_LAYER_LIST = "denseLayerList";
+const std::string KEY_MOE_LAYER = "moeLayer";
+const std::string KEY_RANK_NUMBER = "rankNumber";
+const std::string KEY_EXPERT_NUMBER = "expertNumber";
+const int CACHE_SIZE = 1024;
+const std::string expertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

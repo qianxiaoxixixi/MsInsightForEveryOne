@@ -60,6 +60,7 @@ namespace Dic {
 
     // 集群公共表（text和db共有）
     const static std::string TABLE_EXPERT_HOTSPOT_INTO = "ExpertHotspotInfo";
+    const static std::string TABLE_MODEL_DATA_INFO = "ModelDataInfo";
 
     // database version
 #ifndef DATABASE_VERSION

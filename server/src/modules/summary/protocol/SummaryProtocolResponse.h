@@ -228,6 +228,21 @@ struct SetParallelStrategyResponse : public Response {
     std::string msg;
 };
 
+struct ImportExpertDataResponse : public Response {
+    ImportExpertDataResponse() : Response(REQ_RES_IMPORT_EXPERT_DATA) {}
+    bool result = true;
+    std::string msg;
+};
+
+struct QueryExpertHotspotBody {
+    std::vector<Module::ExpertHotspotStruct> hotspotInfos;
+};
+
+struct QueryExpertHotspotResponse : public Response {
+    QueryExpertHotspotResponse() : Response(REQ_RES_QUERY_EXPERT_HOTSPOT) {}
+    QueryExpertHotspotBody body;
+};
+
 struct ParallelismArrangementResponse : public Response {
     ParallelismArrangementResponse() : Response(REQ_RES_PARALLELISM_ARRANGEMENT_ALL) {}
     Module::ArrangementAndConnectionData arrangeData;

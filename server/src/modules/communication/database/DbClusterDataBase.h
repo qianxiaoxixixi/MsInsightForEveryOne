@@ -53,6 +53,8 @@ public:
     bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) override;
     bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) override;
+    std::map<std::string, std::string> QueryBaseInfoByKeys(const std::vector<std::string> &keys) override;
+    bool InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap) override;
     bool QueryAllPerformanceDataByStep(const std::string &step,
                                        std::unordered_map<std::uint32_t, StepStatistic> &data) override;
 

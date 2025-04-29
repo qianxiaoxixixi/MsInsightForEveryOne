@@ -281,6 +281,57 @@ struct SetParallelStrategyRequest : public Request {
     Module::ParallelStrategyConfig config;
 };
 
+struct ImportExpertDataParams {
+    std::string filePath;
+    std::string version;
+
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValid(this->filePath, paramError)) {
+            errorMsg = "[Summary] Failed to check file path." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->version, paramError)) {
+            errorMsg = "[Summary] Failed to check version." + paramError;
+            return false;
+        }
+        return true;
+    }
+};
+
+struct ImportExpertDataRequest : public Request {
+    ImportExpertDataRequest() : Request(REQ_RES_IMPORT_EXPERT_DATA) {};
+    ImportExpertDataParams params;
+};
+
+struct QueryExpertHotspotParams {
+    std::string modelStage;
+    std::string version;
+    std::vector<int> denseLayerList;
+    int layerNum = 0;
+    int expertNum = 0;
+
+    bool CheckParams(std::string &errorMsg) const
+    {
+        std::string paramError;
+        if (!CheckStrParamValid(this->modelStage, paramError)) {
+            errorMsg = "[Summary] Failed to check model stage." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValid(this->version, paramError)) {
+            errorMsg = "[Summary] Failed to check version." + paramError;
+            return false;
+        }
+        return true;
+    }
+};
+
+struct QueryExpertHotspotRequest : public Request {
+    QueryExpertHotspotRequest() : Request(REQ_RES_QUERY_EXPERT_HOTSPOT) {};
+    QueryExpertHotspotParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 
