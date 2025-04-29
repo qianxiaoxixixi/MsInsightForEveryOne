@@ -161,6 +161,10 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query project explorer data.", stmt->GetErrorMessage());
+        return res;
+    }
     while (resultSet->Next()) {
         ProjectExplorerInfo info{};
         info.id = resultSet->GetInt64("id");
