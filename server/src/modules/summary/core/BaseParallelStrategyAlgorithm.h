@@ -109,9 +109,9 @@ protected:
     std::vector<std::string> paraOrder{};
     // 并行顺序（包含size=1的域）且考虑ep域
     std::vector<std::string> paraOrderWithEp{};
-    // 并行顺序（不包含size=1的域）
+    // 并行顺序（不包含size=1的域）, 用于计算连线
     std::vector<std::string> updatedOrder{};
-    // 并行顺序（不包含size=1的域）且考虑ep域
+    // 并行顺序（不包含size=1的域）且考虑ep域, 用于计算连线
     std::vector<std::string> updatedOrderWithEp{};
     // 按照updatedOrder顺序的并行策略尺寸
     std::vector<uint32_t> parallelSize{};

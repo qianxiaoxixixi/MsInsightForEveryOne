@@ -400,7 +400,8 @@ void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
                       " (SELECT DISTINCT step_id FROM step_statistic_info WHERE rank_id !=''))), "
                       " ('collect_start_time', ?), ('collect_duration', ?), ('data_size', ?), "
                       " ('stages', ?), ('pp_stages', ?), ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
-                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('level', ?), ('parse_status', NULL);";
+                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('moe_tp_size', '1'), "
+                      " ('level', ?), ('parse_status', NULL);";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare baseInfoTable statement. error:", sqlite3_errmsg(db));
         return;
@@ -1270,7 +1271,7 @@ void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string
 bool TextClusterDatabase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
 {
     std::string sql = "SELECT key, value FROM " + TABLE_BASE_INFO + " WHERE key IN " +
-        "('algorithm', 'dp_size', 'pp_size', 'tp_size', 'cp_size', 'ep_size', 'level');";
+        "('algorithm', 'dp_size', 'pp_size', 'tp_size', 'cp_size', 'ep_size', 'moe_tp_size', 'level');";
     return ExecuteQueryParallelStrategyConfig(sql, config, level);
 }
 
@@ -1284,6 +1285,7 @@ bool TextClusterDatabase::UpdateParallelStrategyConfig(const ParallelStrategyCon
                       " WHEN key = 'tp_size' THEN ?"
                       " WHEN key = 'cp_size' THEN ?"
                       " WHEN key = 'ep_size' THEN ?"
+                      " WHEN key = 'moe_tp_size' THEN ?"
                       " WHEN key = 'level' THEN ?"
                       " ELSE value END;";
     return ExecuteSetParallelStrategyConfig(sql, config, level);

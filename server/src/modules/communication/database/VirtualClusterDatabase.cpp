@@ -691,6 +691,7 @@ bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql
     std::string valueTpSize = CollectionUtil::FindValueByKey(info, "tp_size", CollectionUtil::EMPTY_STRING);
     std::string valueCpSize = CollectionUtil::FindValueByKey(info, "cp_size", CollectionUtil::EMPTY_STRING);
     std::string valueEpSize = CollectionUtil::FindValueByKey(info, "ep_size", CollectionUtil::EMPTY_STRING);
+    std::string valueMoeTpSize = CollectionUtil::FindValueByKey(info, "moe_tp_size", CollectionUtil::EMPTY_STRING);
     std::string valueLevel = CollectionUtil::FindValueByKey(info, "level", CollectionUtil::EMPTY_STRING);
     config.algorithm = valueAlgorithm;
     config.dpSize = NumberUtil::StringToLongLong(valueDpSize);
@@ -698,6 +699,7 @@ bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql
     config.tpSize = NumberUtil::StringToLongLong(valueTpSize);
     config.cpSize = NumberUtil::StringToLongLong(valueCpSize);
     config.epSize = NumberUtil::StringToLongLong(valueEpSize);
+    config.moeTpSize = NumberUtil::StringToLongLong(valueMoeTpSize);
     level = valueLevel;
     sqlite3_finalize(stmt);
     return true;
@@ -718,12 +720,14 @@ bool VirtualClusterDatabase::ExecuteSetParallelStrategyConfig(std::string &sql,
     std::string stringTpSize = std::to_string(config.tpSize);
     std::string stringCpSize = std::to_string(config.cpSize);
     std::string stringEpSize = std::to_string(config.epSize);
+    std::string stringMoeTpSize = std::to_string(config.moeTpSize);
     sqlite3_bind_text(stmt, index++, config.algorithm.c_str(), config.algorithm.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stringDpSize.c_str(), stringDpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stringPpSize.c_str(), stringPpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stringTpSize.c_str(), stringTpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stringCpSize.c_str(), stringCpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stringEpSize.c_str(), stringEpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stringMoeTpSize.c_str(), stringMoeTpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, level.c_str(), level.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {

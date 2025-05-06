@@ -184,7 +184,7 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     for (const auto& item : data.arrangements) {
         EXPECT_EQ(item.name, EXPECTED_NAME[item.index]);
         EXPECT_EQ(item.position, EXPECTED_POSITION[item.index]);
-        EXPECT_EQ(item.ranks.size(), config.tpSize * config.ppSize);
+        EXPECT_EQ(item.ranks.size(), config.tpSize * config.cpSize);
         for (size_t i = 0; i < item.ranks.size(); ++i) {
             EXPECT_EQ(item.ranks.at(i), EXPECT_RANKS[item.index].at(i));
         }

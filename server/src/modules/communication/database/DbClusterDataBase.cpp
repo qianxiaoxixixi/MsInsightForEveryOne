@@ -453,7 +453,7 @@ void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
                       " (key, value) VALUES ('ranks', NULL), ('steps', NULL), "
                       " ('collect_start_time', NULL), ('collect_duration', NULL), "
                       " ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
-                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('level', ?); ";
+                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('moe_tp_size', '1'), ('level', ?); ";
     auto result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK || stmt == nullptr) {
         ServerLog::Error("Failed to prepare inserting cluster base info statement. error:", sqlite3_errmsg(db));
@@ -480,7 +480,7 @@ void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
 bool DbClusterDataBase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
 {
     std::string sql = "SELECT key, value FROM " + TABLE_CLUSTER_BASE_INFO + " WHERE key IN " +
-                      "('algorithm', 'dp_size', 'pp_size', 'tp_size', 'cp_size', 'ep_size', 'level');";
+                      "('algorithm', 'dp_size', 'pp_size', 'tp_size', 'cp_size', 'ep_size', 'moe_tp_size', 'level');";
     return ExecuteQueryParallelStrategyConfig(sql, config, level);
 }
 
@@ -494,6 +494,7 @@ bool DbClusterDataBase::UpdateParallelStrategyConfig(const ParallelStrategyConfi
                       " WHEN key = 'tp_size' THEN ?"
                       " WHEN key = 'cp_size' THEN ?"
                       " WHEN key = 'ep_size' THEN ?"
+                      " WHEN key = 'moe_tp_size' THEN ?"
                       " WHEN key = 'level' THEN ?"
                       " ELSE value END;";
     return ExecuteSetParallelStrategyConfig(sql, config, level);

@@ -189,6 +189,9 @@ std::unique_ptr<Request> SummaryProtocol::ToSetParallelStrategyRequest(const jso
     if (json["params"].HasMember(KEY_EP_SIZE.c_str())) {
         JsonUtil::SetByJsonKeyValue(reqPtr->config.epSize, json["params"], KEY_EP_SIZE);
     }
+    if (json["params"].HasMember(KEY_MOE_TP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->config.moeTpSize, json["params"], KEY_MOE_TP_SIZE);
+    }
     return reqPtr;
 }
 
@@ -215,8 +218,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismArrangementRequest(c
         error = "Failed to set request base info of query parallelism arrangement request.";
         return nullptr;
     }
-    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_CP_SIZE, KEY_EP_SIZE,
-                                     KEY_DIMENSION};
+    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_EP_SIZE, KEY_DIMENSION};
     for (auto &item : keys) {
         if (!json["params"].HasMember(item.c_str())) {
             error = "Query parallelism arrangement request didn't have key: " + item;
@@ -227,8 +229,13 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismArrangementRequest(c
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.tpSize, json["params"], KEY_TP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.ppSize, json["params"], KEY_PP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.dpSize, json["params"], KEY_DP_SIZE);
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
+    if (json["params"].HasMember(KEY_CP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
+    if (json["params"].HasMember(KEY_MOE_TP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.moeTpSize, json["params"], KEY_MOE_TP_SIZE);
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
     return reqPtr;
 }
@@ -240,7 +247,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
         error = "Failed to set request base info of query parallelism performance request.";
         return nullptr;
     }
-    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_CP_SIZE, KEY_EP_SIZE,
+    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_EP_SIZE,
                                      KEY_DIMENSION, KEY_STEP};
     for (auto &item : keys) {
         if (!json["params"].HasMember(item.c_str())) {
@@ -252,8 +259,13 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.tpSize, json["params"], KEY_TP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.ppSize, json["params"], KEY_PP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.dpSize, json["params"], KEY_DP_SIZE);
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
+    if (json["params"].HasMember(KEY_CP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
+    if (json["params"].HasMember(KEY_MOE_TP_SIZE.c_str())) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.config.moeTpSize, json["params"], KEY_MOE_TP_SIZE);
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], KEY_IS_COMPARE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineStep, json["params"], KEY_BASELINE_STEP);

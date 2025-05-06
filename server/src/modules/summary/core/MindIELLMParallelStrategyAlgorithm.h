@@ -12,6 +12,8 @@
 namespace Dic::Module::Summary {
 class MindIELLMParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
+    static const std::unordered_map<std::string, std::string> tokenExceptEp;
+    static const std::unordered_map<std::string, std::string> tokenWithEp;
     MindIELLMParallelStrategyAlgorithm();
     ~MindIELLMParallelStrategyAlgorithm() override;
 
@@ -26,6 +28,16 @@ public:
                        std::vector<IndicatorDataStruct> &indicatorData) override;
     std::vector<Connection> GetAllCommunicationGroups(std::string &err) override;
 private:
+    enum class ParaMode {
+        TP_DP_PP,
+        MOE_TP_EP_PP
+    };
+    void UpdateOrderAndParallelSize();
+    void SetIndicatorAttr();
+    void GetPerArrangement(uint32_t index, std::unordered_map<std::string, uint32_t> &indexAttributes);
+    void UpdateIndexAttributes(std::unordered_map<std::string, uint32_t> &indexAttributes);
+    bool GetConnectionsByTokenList(std::string &err);
+    bool GetConnectionsByToken(std::string &err, ParaMode mode);
 };
 }
 

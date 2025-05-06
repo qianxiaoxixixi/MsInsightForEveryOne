@@ -179,6 +179,7 @@ const std::string KEY_PP_SIZE = "ppSize";
 const std::string KEY_DP_SIZE = "dpSize";
 const std::string KEY_CP_SIZE = "cpSize";
 const std::string KEY_EP_SIZE = "epSize";
+const std::string KEY_MOE_TP_SIZE = "moeTpSize";
 const std::string KEY_RESULT = "result";
 const std::string KEY_MSG = "msg";
 const std::string KEY_TP_INDEX = "tpIndex";
@@ -197,17 +198,16 @@ struct QueryParallelStrategyResponse : public Response {
         if (config.ppSize < validValue || config.tpSize < validValue || config.dpSize < validValue) {
             return false;
         }
-        if (config.cpSize < validValue || config.epSize < validValue) {
+        if (config.cpSize < validValue || config.epSize < validValue || config.moeTpSize < validValue) {
             return false;
         }
-        if (config.algorithm != Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG &&
-            config.algorithm != Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
+        if (std::find(Module::ALGORITHMS_ALLOWED.begin(), Module::ALGORITHMS_ALLOWED.end(), config.algorithm) ==
+            Module::ALGORITHMS_ALLOWED.end()) {
             return false;
         }
         return true;
     }
-    const std::vector<std::string> expectedAlg = {Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG,
-        Module::MEGATRON_LM_TP_CP_PP_EP_DP_ALG, Module::MINDSPEED_TP_CP_EP_DP_PP_ALG};
+
     void SetDefault()
     {
         config.tpSize = std::max(validValue, config.tpSize);
@@ -215,7 +215,9 @@ struct QueryParallelStrategyResponse : public Response {
         config.ppSize = std::max(validValue, config.ppSize);
         config.cpSize = std::max(validValue, config.cpSize);
         config.epSize = std::max(validValue, config.epSize);
-        if (std::find(expectedAlg.begin(), expectedAlg.end(), config.algorithm) != expectedAlg.end()) {
+        config.moeTpSize = std::max(validValue, config.moeTpSize);
+        if (std::find(Module::ALGORITHMS_ALLOWED.begin(), Module::ALGORITHMS_ALLOWED.end(), config.algorithm) !=
+            Module::ALGORITHMS_ALLOWED.end()) {
             return;
         }
         config.algorithm = Module::MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
