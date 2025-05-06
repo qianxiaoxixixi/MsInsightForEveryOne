@@ -79,6 +79,7 @@
       "Find in source code": "Find in source code"
     },
     "Or": "Or",
-    "Documentation": "Documentation"
+    "Documentation": "Documentation",
+    "ImportExpertHotspotDataTips": "Please select the directory or file containing MoE expert hotspot data"
   }
 }

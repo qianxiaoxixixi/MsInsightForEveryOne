@@ -10,6 +10,7 @@ import { type Session } from '@/entity/session';
 import { SessionAction } from '@/utils/enum';
 import FileExplorer from './FileExplorer';
 import SetBtn from './SetBtn';
+import connector from '@/connection';
 
 const ImportContainer = styled.div`
     display: flex;
@@ -58,12 +59,16 @@ const ImportData = observer(({ session }: {session: Session}) => {
     const { t } = useTranslation('framework');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [currentProject, setCurrentProject] = useState('');
+    const [customImport, setCustomImport] = useState(false);
+    const [importTips, setImportTips] = useState('');
 
     const openDialog = (): void => {
         setDialogOpen(true);
     };
     const closeDialog = (): void => {
+        setCustomImport(false);
         setDialogOpen(false);
+        setImportTips('');
     };
     // 新导入数据
     const importData = (): void => {
@@ -71,11 +76,30 @@ const ImportData = observer(({ session }: {session: Session}) => {
         openDialog();
     };
 
-    // 在已有项目下导入
+    const handleConfirm = (path: string): void => {
+        connector.send({
+            event: 'importExpertLoadDataConfirm',
+            body: { path },
+            to: 'Summary',
+        });
+    };
+
     useEffect(() => {
-        if (session.actionListener.type === SessionAction.ADD_DATA_UNDER_PROJECT) {
-            setCurrentProject(session.actionListener.value);
-            openDialog();
+        switch (session.actionListener.type) {
+            // 在已有项目下导入
+            case SessionAction.ADD_DATA_UNDER_PROJECT:
+                setCurrentProject(session.actionListener.value);
+                openDialog();
+                break;
+            // Summary 专家负载均衡导入
+            case SessionAction.IMPORT_MOE_LOAD_DATA:
+                setCustomImport(true);
+                setCurrentProject('');
+                setImportTips(t('ImportExpertHotspotDataTips'));
+                openDialog();
+                break;
+            default:
+                break;
         }
     }, [session.actionListener]);
     return <>
@@ -84,6 +108,9 @@ const ImportData = observer(({ session }: {session: Session}) => {
             <SetBtn session={session}/>
         </ImportContainer>
         <FileExplorer
+            onConfirm={handleConfirm}
+            customImport={customImport}
+            importTips={importTips}
             currentProject={currentProject}
             dialogOpen={dialogOpen}
             closeDialog={closeDialog}

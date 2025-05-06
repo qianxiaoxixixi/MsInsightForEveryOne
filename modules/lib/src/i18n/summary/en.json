@@ -110,6 +110,16 @@
     "VisibleRange": "Visible Range",
     "Minimum": "Minimum",
     "Maximum": "Maximum",
-    "Pipeline Parallelism Chart": "Pipeline Parallelism Chart"
+    "Pipeline Parallelism Chart": "Pipeline Parallelism Chart",
+    "MOE Expert Load Balancing Analysis": "MOE Expert Load Balancing Analysis",
+    "Model Layer Num": "Model Layer Num",
+    "Dense Layer List": "Dense Layer List",
+    "Expert Num": "Expert Num",
+    "Model Stage": "Model Stage",
+    "Data Version": "Data Version",
+    "Unbalanced": "Unbalanced",
+    "Balanced": "Balanced",
+    "Import data": "Import data",
+    "Search": "Search"
   }
 }

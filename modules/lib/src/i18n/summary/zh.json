@@ -110,6 +110,16 @@
     "VisibleRange": "筛选范围",
     "Minimum": "最小值",
     "Maximum": "最大值",
-    "Pipeline Parallelism Chart": "流水并行图"
+    "Pipeline Parallelism Chart": "流水并行图",
+    "MOE Expert Load Balancing Analysis": "MOE大模型专家负载均衡分析",
+    "Model Layer Num": "模型层数",
+    "Dense Layer List": "非MOE层列表",
+    "Expert Num": "专家数",
+    "Model Stage": "模型阶段",
+    "Data Version": "数据类型",
+    "Unbalanced": "均衡前",
+    "Balanced": "均衡后",
+    "Import data": "导入数据",
+    "Search": "查询"
   }
 }

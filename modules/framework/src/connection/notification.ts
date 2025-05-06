@@ -8,6 +8,7 @@ import {
     switchModuleHandler,
     updateSessionHandler,
     getLanguageHandler,
+    openImportDialogHandler,
 } from './notificationHandler';
 import { sendWakeupPlugin } from '@/connection/sendNotification';
 
@@ -39,4 +40,5 @@ export const listenerMap: Record<string, ListenerCallback> = {
     switchModule: switchModuleHandler,
     getLanguage: getLanguageHandler,
     pluginMounted: sendWakeupPlugin,
+    openImportDialog: openImportDialogHandler,
 };

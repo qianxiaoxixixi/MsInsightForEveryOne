@@ -12,7 +12,7 @@ type ECharts = echarts.ECharts;
 
 interface ChartProps {
     options: EChartsOption;
-    loading: boolean;
+    loading?: boolean;
     width?: string;
     height?: string;
     onEvents?: {

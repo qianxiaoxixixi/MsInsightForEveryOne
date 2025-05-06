@@ -5,9 +5,12 @@
 import {
     GetParallelismPerformanceData,
     GetParallelismPerformanceRes,
-    GetParallelStrategyRes,
+    GetParallelStrategyRes, ImportExpertDataParams,
     ParallelismArrangementParams,
     ParallelismArrangementResult,
+    QueryModelInfoResult,
+    QueryExpertHotspotParams,
+    QueryExpertHotspotResult,
     SetParallelStrategyParams,
 } from './interface';
 import { createCancelableApi } from 'ascend-utils';
@@ -215,3 +218,24 @@ export const getParallelismPerformanceDataCancelable = createCancelableApi(
         return await window.requestData('parallelism/performance/data', params, 'summary');
     },
 );
+
+/**
+ * 导入 MOE 专家负载均衡数据
+ */
+export const importExpertData = async(params: ImportExpertDataParams): Promise<void> => {
+    return await window.requestData('summary/importExpertData', params, 'summary');
+};
+
+/**
+ * 查询 MOE 专家负载均衡数据
+ */
+export const queryExpertHotspot = async(params: QueryExpertHotspotParams): Promise<QueryExpertHotspotResult> => {
+    return await window.requestData('summary/queryExpertHotspot', params, 'summary');
+};
+
+/**
+ * 查询 MOE 专家负载均衡搜索条件
+ */
+export const queryModelInfo = async(): Promise<QueryModelInfoResult> => {
+    return await window.requestData('summary/queryModelInfo', {}, 'summary');
+};

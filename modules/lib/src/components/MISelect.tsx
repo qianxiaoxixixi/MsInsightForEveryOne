@@ -40,7 +40,7 @@ export const MISelect = styled((props: SelectProps & { width?: number | string; 
     return <Select
         suffixIcon={<StyledSuffixIcon />}
         removeIcon={<StyledRemoveIcon />}
-        placeholder={t('No data')}
+        placeholder={t('Please select')}
         dropdownMatchSelectWidth={dropdownMatchSelectWidth ?? false}
         notFoundContent={<NoDataContent>{t('No data')}</NoDataContent>}
         {...restProps}
