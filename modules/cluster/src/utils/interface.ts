@@ -116,3 +116,36 @@ export interface CompareData<T> {
     baseline: T;
     diff: T;
 }
+
+export interface ImportExpertDataParams {
+    filePath: string;
+    version: 'unbalanced' | 'balanced';
+}
+
+export interface QueryExpertHotspotParams {
+    layerNum: number;
+    expertNum: number;
+    modelStage: 'prefill' | 'decode';
+    version: 'unbalanced' | 'balanced';
+    denseLayerList: number[];
+}
+
+export interface QueryExpertHotspotItem {
+    modelStage: 'prefill' | 'decode';
+    rankId: number;
+    visits: number;
+    layer: number;
+    expertId: number;
+    expertIndex: number;
+    version: 1 | 2; // 1: 均衡前  2: 均衡后
+}
+
+export interface QueryExpertHotspotResult {
+    hotspotInfos: QueryExpertHotspotItem[];
+}
+
+export interface QueryModelInfoResult {
+    layerNum: number;
+    expertNum: number;
+    denseLayerList: number[];
+}

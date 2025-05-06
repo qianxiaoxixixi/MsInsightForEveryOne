@@ -150,3 +150,9 @@ export const switchModuleHandler = (e: NotificationMessage): void => {
 export const getLanguageHandler = (e: NotificationMessage): void => {
     sendLanguage(e.data.from);
 };
+
+export const openImportDialogHandler = (): void => {
+    const session = store.sessionStore.activeSession;
+
+    session.actionListener = { type: SessionAction.IMPORT_MOE_LOAD_DATA, value: '' };
+};

@@ -24,6 +24,7 @@ export enum ProjectAction {
 export enum SessionAction {
     ADD_DATA_UNDER_PROJECT = 'add data under project',
     SWITCH_ACTIVE_MODULE = 'switch active module',
+    IMPORT_MOE_LOAD_DATA = 'import MOE load data',
     NO_ACTION = 'no action',
 }
 

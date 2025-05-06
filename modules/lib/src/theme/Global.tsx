@@ -57,6 +57,14 @@ const formatterCss = css`
     }
 `;
 
+const antdFormCss = css`
+    .ant-form-inline {
+        .ant-form-item {
+            margin-bottom: 16px;
+        }
+    }
+`;
+
 export const GlobalStyles = (): JSX.Element => {
     const theme = useTheme();
     return <Global
@@ -99,6 +107,7 @@ export const GlobalStyles = (): JSX.Element => {
             }
             ${antdTooltipCss(theme)};
             ${formatterCss};
+            ${antdFormCss};
         `}
     />;
 };

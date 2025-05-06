@@ -8,7 +8,7 @@ import { Modal, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Tooltip } from 'ascend-components';
 import { RefreshIcon } from 'ascend-icon';
-import { checkPathValid, getLastFilePath, getSearchDir, getTrimedPath } from '@/utils/Resource';
+import { checkPathValid, fileExist, getLastFilePath, getSearchDir, getTrimedPath } from '@/utils/Resource';
 import { ProjectAction, ProjectError } from '@/utils/enum';
 import { type Project } from '@/centralServer/websocket/defs';
 import type { CatalogActionListener, SearchResult } from './ResourceCatalog';
@@ -26,6 +26,10 @@ const FileExplorerContainer = styled.div`
         overflow: hidden;
         font-weight: 700;
         padding-bottom: 10px;
+    }
+    .import-tips {
+        color: ${(props): string => props.theme.textColorSecondary};
+        margin-bottom: 10px;
     }
     // 输入框
     .ant-input-affix-wrapper {
@@ -59,12 +63,15 @@ const StyledModal = styled(Modal)`
 // 文件最大路径长度
 const MAX_FILE_PATH_LENGTH = 260;
 interface IProps {
+    customImport: boolean;
+    importTips: string;
     currentProject: string;
     dialogOpen: boolean;
     closeDialog: () => void;
+    onConfirm: (path: string) => void;
 }
 // 文件资源管理器
-const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IProps) => {
+const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, customImport, importTips, onConfirm }: IProps) => {
     const { t } = useTranslation('framework');
     const [inputPath, setInputPath] = useState(getLastFilePath());
     const [selectedPath, setSelectedPath] = useState('');
@@ -79,6 +86,12 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         // 若currentProject存在，在已有项目下导入数据，否则新增项目
         const projectName = currentProject !== '' ? currentProject : path;
         const newProject: Project = { projectName, dataPath: [path] };
+
+        // 导入场景：拿到选择的文件路径，单独处理后续逻辑
+        if (customImport) {
+            await confirmSelectedPath(path);
+            return;
+        }
 
         // 校验
         const validRes: ProjectError = await checkPathValid(newProject);
@@ -96,6 +109,16 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
                 setCheckResult(validRes);
                 setConflictModalVis(true);
             }
+        }
+    };
+
+    const confirmSelectedPath = async (path: string): Promise<void> => {
+        const existed = await fileExist(path);
+        if (existed) {
+            onConfirm(path);
+            closeDialog();
+        } else {
+            setHit({ alert: true, message: 'FileNotFundDescribe' });
         }
     };
 
@@ -149,7 +172,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         setHit({ alert: false, message: 'FileSearchDescribe' });
     }, [inputPath]);
 
-    return <><StyledModal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
+    return <><StyledModal title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
         width={800}
         footer={<div>
             <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} disabled={selectedPath === ''}>{t('Confirm')}</Button>
@@ -157,6 +180,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IPro
         </div>}>
         <FileExplorerContainer>
             {!currentProject ? <></> : <span className="project-name">{t('Current Project')} ：{currentProject}</span>}
+            {importTips ? <div className="import-tips">{importTips}</div> : null}
             <Input
                 placeholder={t('FileSearchDescribe')}
                 showCount
