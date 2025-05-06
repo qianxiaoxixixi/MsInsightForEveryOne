@@ -30,6 +30,10 @@ const std::string DP_CP_MODULO_EP_GROUP_NAME = "dp_modulo_exp_cp";
 const std::string MP_EP_GROUP = "tp-ep-pp";
 const std::string MP_EP_GROUP_NAME = "mp_exp";
 
+// Token list for MindIE-LLM
+const std::string MOE_TP_GROUP = "moeTp";
+const std::string MOE_TP_GROUP_NAME = "moe_tp";
+
 // Token list for MindSpeed
 // CP
 const std::string CP_ULYSSES_GROUP = "ulysses";

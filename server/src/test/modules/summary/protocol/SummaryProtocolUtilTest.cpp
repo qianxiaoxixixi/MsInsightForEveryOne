@@ -58,8 +58,8 @@ TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyRequestTest)
     EXPECT_EQ(result.config.tpSize, 2); // tp = 2
     EXPECT_EQ(result.config.ppSize, 3); // pp = 3
     EXPECT_EQ(result.config.dpSize, 4); // dp = 4
-    EXPECT_EQ(result.config.cpSize, 1); // pp = 3
-    EXPECT_EQ(result.config.epSize, 1); // dp = 4
+    EXPECT_EQ(result.config.cpSize, 1);
+    EXPECT_EQ(result.config.epSize, 1);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyRequestWithCpAndTpTest)
@@ -88,7 +88,8 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementRequestWillReturnTr
     std::string err;
     std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
         "command": "parallelism/arrangement/all", "resultCallbackId": 0, "params": {"algorithm": "test",
-        "tpSize": 2, "ppSize": 3, "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-pp-cp-tp"}})";
+        "tpSize": 2, "ppSize": 3, "dpSize": 4, "cpSize": 5, "epSize": 6,
+        "moeTpSize": 7, "dimension": "ep-dp-pp-cp-tp"}})";
     json.Parse(reqJson.c_str());
     auto result = dynamic_cast<QueryParallelismArrangementRequest &>(*(protocol.FromJson(json, err)));
     EXPECT_EQ(result.command, REQ_RES_PARALLELISM_ARRANGEMENT_ALL);
@@ -97,7 +98,8 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementRequestWillReturnTr
     EXPECT_EQ(result.params.config.ppSize, 3); // pp = 3
     EXPECT_EQ(result.params.config.dpSize, 4); // dp = 4
     EXPECT_EQ(result.params.config.cpSize, 5); // cp = 5
-    EXPECT_EQ(result.params.config.epSize, 6); // cp = 6
+    EXPECT_EQ(result.params.config.epSize, 6); // ep = 6
+    EXPECT_EQ(result.params.config.moeTpSize, 7); // moeTp = 7
     EXPECT_EQ(result.params.dimension, "ep-dp-pp-cp-tp");
 }
 
@@ -131,7 +133,8 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnTr
     std::string err;
     std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
         "command": "parallelism/performance/data", "params": {"algorithm": "test", "tpSize": 2, "ppSize": 3,
-        "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-pp-cp-tp", "step": "all"}})";
+        "dpSize": 4, "cpSize": 5, "epSize": 6, "moeTpSize": 7,
+        "dimension": "ep-dp-pp-cp-tp", "step": "all"}})";
     json.Parse(reqJson.c_str());
     auto result = dynamic_cast<QueryParallelismPerformanceRequest &>(*(protocol.FromJson(json, err)));
     EXPECT_EQ(result.command, REQ_RES_PARALLELISM_PERFORMANCE_DATA);
@@ -140,7 +143,8 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnTr
     EXPECT_EQ(result.params.config.ppSize, 3); // pp = 3
     EXPECT_EQ(result.params.config.dpSize, 4); // dp = 4
     EXPECT_EQ(result.params.config.cpSize, 5); // cp = 5
-    EXPECT_EQ(result.params.config.epSize, 6); // cp = 6
+    EXPECT_EQ(result.params.config.epSize, 6); // ep = 6
+    EXPECT_EQ(result.params.config.moeTpSize, 7); // moeTp = 7
     EXPECT_EQ(result.params.dimension, "ep-dp-pp-cp-tp");
     EXPECT_EQ(result.params.step, "all");
 }
@@ -177,11 +181,13 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelStrategyResponseTest)
     response.config.algorithm = "megatron-lm";
     const int64_t expectCp = 7;
     const int64_t expectEp = 9;
+    const int64_t expectMoeTp = 9;
     response.config.tpSize = 8; // tp = 8
     response.config.ppSize = 4; // pp = 4
     response.config.dpSize = 2; // dp = 2
-    response.config.cpSize = expectCp; // dp = 2
-    response.config.epSize = expectEp; // dp = 2
+    response.config.cpSize = expectCp;
+    response.config.epSize = expectEp;
+    response.config.moeTpSize = expectMoeTp;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_ALGORITHM.c_str()], response.config.algorithm.c_str());
     EXPECT_EQ(jsonOptional.value()["body"][KEY_TP_SIZE.c_str()], response.config.tpSize);
@@ -189,6 +195,7 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelStrategyResponseTest)
     EXPECT_EQ(jsonOptional.value()["body"][KEY_DP_SIZE.c_str()], response.config.dpSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_CP_SIZE.c_str()], response.config.cpSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_EP_SIZE.c_str()], response.config.epSize);
+    EXPECT_EQ(jsonOptional.value()["body"][KEY_MOE_TP_SIZE.c_str()], response.config.moeTpSize);
 }
 
 TEST_F(SummaryProtocolUtilTest, ToSetParallelStrategyResponseTest)

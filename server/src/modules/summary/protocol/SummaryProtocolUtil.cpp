@@ -213,6 +213,7 @@ std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const Qu
     JsonUtil::AddMember(body, KEY_DP_SIZE, response.config.dpSize, allocator);
     JsonUtil::AddMember(body, KEY_CP_SIZE, response.config.cpSize, allocator);
     JsonUtil::AddMember(body, KEY_EP_SIZE, response.config.epSize, allocator);
+    JsonUtil::AddMember(body, KEY_MOE_TP_SIZE, response.config.moeTpSize, allocator);
     JsonUtil::AddMember(json, KEY_BODY, body, allocator);
     return std::optional<document_t>{std::move(json)};
 }

@@ -6,6 +6,7 @@
 #include "StringUtil.h"
 #include "MegatronParallelStrategyAlgorithm.h"
 #include "MindSpeedParallelStrategyAlgorithm.h"
+#include "MindIELLMParallelStrategyAlgorithm.h"
 #include "ParallelStrategyAlgorithmManager.h"
 using namespace Dic::Server;
 namespace Dic::Module::Summary {
@@ -51,6 +52,8 @@ bool ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& p
         algorithmMap.emplace(projectName, std::make_shared<MegatronParallelStrategyAlgorithm>());
     } else if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MINDSPEED_ALG)) {
         algorithmMap.emplace(projectName, std::make_shared<MindSpeedParallelStrategyAlgorithm>());
+    } else if (StringUtil::ToLower(config.algorithm) == MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG) {
+        algorithmMap.emplace(projectName, std::make_shared<MindIELLMParallelStrategyAlgorithm>());
     } else {
         errMsg = "Failed to add algorithm to manager when set parallel config. Unexpected algorithm.";
         return false;

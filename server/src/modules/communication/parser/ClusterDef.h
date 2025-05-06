@@ -118,7 +118,7 @@ const std::string CP_PARA = "cp";
 const std::string DP_PARA = "dp";
 const std::string TP_PARA = "tp";
 const std::string EP_PARA = "ep";
-const std::string MOE_TP_PARA = "moe_tp";
+const std::string MOE_TP_PARA = "moeTp";
 // 并行策略坐标
 const std::string STR_INDEX = "Index";
 const std::string PP_INDEX = "ppIndex";

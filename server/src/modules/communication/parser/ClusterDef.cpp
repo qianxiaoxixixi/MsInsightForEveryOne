@@ -111,7 +111,7 @@ bool ParallelStrategyConfig::CheckParamForMindSpeed(std::string& errorMsg) const
             return false;
         }
         if (cpSize % (configForMindSpeed.ulyssesDegree * configForMindSpeed.winSize) != 0) {
-            errorMsg = "[Summary] CP size must be evenly divided by ulysses degree plus cp window size.";
+            errorMsg = "[Summary] CP size must be evenly divided by the product of ulysses degree and cp window size.";
             return false;
         }
     }

@@ -82,6 +82,8 @@ int64_t BaseParallelStrategyAlgorithm::GetParallelSizeByType(const std::string& 
         return strategyConfig.tpSize;
     } else if (type == CP_PARA) {
         return strategyConfig.cpSize;
+    } else if (type == MOE_TP_PARA) {
+        return strategyConfig.moeTpSize;
     }
     // 默认值为1，表征没有启用对应的并行方式
     return 1;
@@ -107,7 +109,9 @@ bool BaseParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
     if (dimension == DIMENSIONS_CP) {
         return true;
     }
+    // 目前仅支持全展开视图下返回moeTp坐标
     SetParaDetail(TP_PARA, strategyConfig.tpSize);
+    SetParaDetail(MOE_TP_PARA, strategyConfig.moeTpSize);
     if (dimension == DIMENSIONS_TP) {
         return true;
     }

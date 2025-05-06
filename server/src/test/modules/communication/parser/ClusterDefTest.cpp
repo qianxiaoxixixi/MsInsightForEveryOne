@@ -58,28 +58,57 @@ TEST_F(ClusterDefTest, TestParallelStrategyConfigForBaseCheck)
     EXPECT_EQ(error, "[Summary] MOE_TP size must be between 1 and "+ std::to_string(MAX_PARALLEL_SIZE));
 }
 
-TEST_F(ClusterDefTest, TestParallelStrategyConfigForProductCheck)
+// Test for DP size evenly divided by EP size
+TEST_F(ClusterDefTest, TestDPSizeEvenlyDividedByEPSize)
 {
-    ParallelStrategyConfig config1 = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 5, 5, 100, 100, 254 };
+    ParallelStrategyConfig config = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 5, 5, 100, 100, 254 };
     std::string error;
-    EXPECT_EQ(config1.CheckParams(error), false);
+    EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] DP size must be evenly divided by EP Size.");
-    ParallelStrategyConfig config2 = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 10000, 10000, 10000, 10000, 100 };
-    EXPECT_EQ(config2.CheckParams(error), false);
+}
+
+// Test for product of PP, TP, DP, CP sizes being less than UINT32_MAX
+TEST_F(ClusterDefTest, TestProductOfPPAndTPAndDPAndCPSizesLessThanUINT32Max)
+{
+    ParallelStrategyConfig config = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 10000, 10000, 10000, 10000, 100 };
+    std::string error;
+    EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
                      std::to_string(UINT32_MAX));
-    ParallelStrategyConfig config3 = { MINDSPEED_TP_CP_EP_DP_PP_ALG, 5, 5, 10, 10, 254};
-    EXPECT_EQ(config3.CheckParams(error), false);
+}
+
+// Test for DP and CP sizes being evenly divided by EP size
+TEST_F(ClusterDefTest, TestDPAndCPSizeEvenlyDividedByEPSize)
+{
+    ParallelStrategyConfig config = { MINDSPEED_TP_CP_EP_DP_PP_ALG, 5, 5, 10, 10, 254 };
+    std::string error;
+    EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The product of DP size and CP size must be evenly divided by EP Size.");
-    ParallelStrategyConfig config4 = { MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG, 5, 5, 5, 1, 5, 1};
-    EXPECT_EQ(config4.CheckParams(error), false);
+}
+
+// Test for MOE algorithm validation (MOE_TP and EP sizes match TP and DP sizes)
+TEST_F(ClusterDefTest, TestMOEAlgorithmValidation)
+{
+    ParallelStrategyConfig config = { MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG, 5, 5, 5, 1, 5, 1 };
+    std::string error;
+    EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The product of MOE_TP size and EP size should match the product of TP size and "
                      "DP size for the MOE algorithm.");
-    ParallelStrategyConfig config5 = { MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG, 5, 5, 5, 5, 5, 5};
-    EXPECT_EQ(config5.CheckParams(error), false);
-    EXPECT_EQ(error, "[Summary] The CP Parallelism is not supported by the MOE algorithm.");
+}
 
-    error = "";
+// Test for unsupported CP parallelism in MOE algorithm
+TEST_F(ClusterDefTest, TestUnsupportedCPParallelismForMOEAlgorithm)
+{
+    ParallelStrategyConfig config = { MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG, 5, 5, 5, 5, 5, 5 };
+    std::string error;
+    EXPECT_EQ(config.CheckParams(error), false);
+    EXPECT_EQ(error, "[Summary] The CP Parallelism is not supported by the MOE algorithm.");
+}
+
+// Test for valid configuration (all parameters are valid)
+TEST_F(ClusterDefTest, TestValidConfiguration)
+{
+    std::string error = "";
     ParallelStrategyConfig config = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 2, 2, 4, 2, 2 };
     EXPECT_EQ(config.CheckParams(error), true);
     EXPECT_EQ(error, "");
