@@ -412,8 +412,8 @@ export const draw = (props: DrawCanvasArgs): void => {
     threadIsCol.clear();
     processIsCol.clear();
     unitIsHidden.clear();
-    const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
-    const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
+    const pinnedScrollArea = document.querySelector('#main-container .topC');
+    const pinnedAreaHeight = pinnedScrollArea?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
     drawLinkLines(ctx, session, theme, pinnedAreaHeight);
 };
