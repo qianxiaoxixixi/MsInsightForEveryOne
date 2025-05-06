@@ -45,6 +45,12 @@ const ContentsContainer = styled.div`
             background: none;
         }
     }
+    // 勾选状态
+    .ant-tree-checkbox {
+        & + .ant-tree-node-content-wrapper-open, &.ant-tree-node-content-wrapper-close {
+            width: calc(100% - 48px);
+        }
+    }
     .ant-tree-title {
         display: inline-block;
         width: calc(100% - 24px);
@@ -80,8 +86,7 @@ const ContentsContainer = styled.div`
     .btn-box {
         align-items: center;
         justify-content: end;
-        width: 40px;
-        margin-left: 10px;
+        width: 30px;
         display: none;
     }
     // 选中效果/鼠标滑动效果
@@ -91,13 +96,8 @@ const ContentsContainer = styled.div`
         .btn-box {
             display: flex;
         }
-    }
-    .ant-tree-treenode:hover {
         .content-name {
-            width: calc(100% - 50px);
-        }
-        .ant-tree-checkbox + span .content-name {
-            width: calc(100% - 70px);
+            width: calc(100% - 30px);
         }
     }
     // 比对数据
