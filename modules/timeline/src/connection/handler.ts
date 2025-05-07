@@ -10,7 +10,7 @@ import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
 import type { CardInfo } from '../components/ImportSelect';
 import { Session } from '../entity/session';
-import type { NotificationHandler } from './defs';
+import { ImportResult, NotificationHandler } from './defs';
 import connector from '../connection/index';
 import { message } from 'antd';
 import { getTimeOffset, getTimeOffsetKey } from '../insight/units/utils';
@@ -149,7 +149,7 @@ const getRootUnit = (session: Session, host: string, dataSource: DataSource): In
     return insightUnit !== undefined ? insightUnit : new ROOT_UNIT({ dataSource, host });
 };
 
-const initUnitSessionInfo = (session: Session, result: any, dataSource: DataSource): void => {
+const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource: DataSource): void => {
     session.projectName = dataSource.projectName;
     session.phase = 'download';
     session.endTimeAll = undefined;
@@ -160,7 +160,7 @@ const initUnitSessionInfo = (session: Session, result: any, dataSource: DataSour
     session.isCluster = result.isCluster;
 };
 
-const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {
+const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource): void => {
     if (!session) {
         return;
     }
@@ -251,26 +251,28 @@ const createBaselineCard = (session: Session | undefined, result: any, dataSourc
     });
     session.sortUnits();
 };
+export const savePageSettingRemoteHandler: NotificationHandler = async (): Promise<unknown> => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    if (!session) {
+        return;
+    }
+    // 导入新Remote前，保存当前页面
+    // 所有卡解析完成
+    const parseCompleted = !(session.units.some(item => item.phase !== 'download'));
+    if (parseCompleted) {
+        savePageSetting();
+    }
+};
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
-        const projectAction = getPropFromData(data, 'action');
-        const isConflict = getPropFromData(data, 'isConflict');
+        const result = getPropFromData(data, 'importResult') as ImportResult;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         if (!session) {
             return;
         }
-        // 导入新Remote前，保存当前页面
-        // 所有卡解析完成
-        const parseCompleted = !(session.units.some(item => item.phase !== 'download'));
-        if (parseCompleted) {
-            savePageSetting();
-        }
-        const result = await window.request(dataSource, {
-            command: 'import/action',
-            params: { projectName: dataSource.projectName, path: dataSource.dataPath, projectAction, isConflict },
-        });
         runInAction(() => {
             initUnitInfo(session, result, dataSource);
         });

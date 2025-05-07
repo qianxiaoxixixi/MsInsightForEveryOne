@@ -4,13 +4,15 @@
 import React from 'react';
 import { FileIcon, FolderIcon } from 'ascend-icon';
 import type { TreeDataNode } from 'antd';
+import { message as Message } from 'antd';
 import { checkProjectValid, getFiles } from '@/utils/Request';
 import { DataSource, Project } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
-import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
+import { LocalStorageKey, localStorageService } from 'ascend-local-storage';
 import { store } from '@/store';
-import { message as Message } from 'antd';
 import { runInAction } from 'mobx';
+import { hasFileOverlap } from '@/utils/Project';
+
 export interface ResourceItem {
     path: string;
     name: string;
@@ -74,7 +76,7 @@ export const fileExist = async (path: string): Promise<boolean> => {
 export const checkPathValid = async(project: Project):
 Promise<ProjectError> => {
     // 检查文件是否存在
-    const existed = await fileExist(project.dataPath[0] ?? '');
+    const existed = await fileExist(project.projectPath[0] ?? '');
     if (!existed) {
         return ProjectError.FILE_NOT_EXIST;
     }
@@ -83,7 +85,7 @@ Promise<ProjectError> => {
         return ProjectError.IMPORTED;
     }
     // 校验文件安全，如文件冲突、超大文件、软链接等
-    const res = await checkProjectValid({ projectName: project.projectName ?? '', dataPath: project.dataPath ?? [] });
+    const res = await checkProjectValid({ projectName: project.projectName ?? '', dataPath: project.projectPath ?? [] });
     return (res as {result: ProjectError}).result;
 };
 
@@ -95,8 +97,7 @@ export const checkExistedDataSource = (data: Project): boolean => {
     if (project === undefined) {
         return false;
     }
-    const isPathExisted = data.dataPath.some(path => project.dataPath.includes(path));
-    return isPathExisted;
+    return hasFileOverlap(data, project);
 };
 
 // 上次导入文件路径

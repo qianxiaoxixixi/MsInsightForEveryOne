@@ -2,8 +2,19 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 // Timeline Module
+import type { CardInfo } from '../components/ImportSelect';
+
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
 export const PORT = 9000;
+
+export interface ImportResult {
+    reset: boolean;
+    isPending: boolean;
+    isSimulation: boolean;
+    isIpynb: boolean;
+    isCluster: boolean;
+    result: CardInfo[];
+}
 
 export interface Request {
     id: number;

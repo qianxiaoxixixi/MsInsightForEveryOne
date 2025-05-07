@@ -2,9 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { makeAutoObservable } from 'mobx';
-import { type DataSource, GLOBAL_HOST } from '../centralServer/websocket/defs';
+import { ActiveDataSource, type DataSource, GLOBAL_HOST } from '../centralServer/websocket/defs';
 import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
+import { deleteProjectDataPath } from '@/utils/Project';
 
 // Scene：数据场景：默认、集群、算子调优、Jupter、只trace.json文件
 export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson';
@@ -74,7 +75,7 @@ export class Session {
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
 
-    private _activeDataSource: DataSource = { ...GLOBAL_HOST, projectName: '', dataPath: [] };
+    private _activeDataSource: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [] };
 
     constructor() {
         makeAutoObservable(this);
@@ -108,7 +109,7 @@ export class Session {
         return this._dataSources;
     }
 
-    get activeDataSource(): DataSource {
+    get activeDataSource(): ActiveDataSource {
         return this._activeDataSource;
     }
 
@@ -116,7 +117,7 @@ export class Session {
         this._dataSources = data;
     }
 
-    set activeDataSource(data: DataSource) {
+    set activeDataSource(data: ActiveDataSource) {
         this._activeDataSource = data;
     }
 
@@ -144,9 +145,9 @@ export class Session {
         this._dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
     }
 
-    deleteDataPath(projectIndex: number, dataPahtIndex: number): void {
+    deleteDataPath(projectIndex: number, dataPath: string): void {
         const dataSources = JSON.parse(JSON.stringify(this._dataSources));
-        dataSources[projectIndex].dataPath.splice(dataPahtIndex, 1);
+        deleteProjectDataPath(dataSources[projectIndex], dataPath);
         this._dataSources = dataSources;
     }
 }

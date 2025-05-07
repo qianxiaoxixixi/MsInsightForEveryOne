@@ -3,18 +3,14 @@
 */
 import type { NotificationInterceptor, ResponseInterceptor } from './defs';
 import {
-    importActionHandler,
     type ImportActionResponse,
     parseMemorySuccessHandler,
 } from './interceptorHandler';
 
-const IMPORT = 'import/action';
 const MEMORY_COMPLETED = 'parse/memoryCompleted';
 
 export type ResponseType = ImportActionResponse;
-export const INTERCEPTOR_HANDLERS: Record<string, ResponseInterceptor<ResponseType>> = {
-    [IMPORT]: importActionHandler,
-};
+export const INTERCEPTOR_HANDLERS: Record<string, ResponseInterceptor<ResponseType>> = {};
 
 export const NOTIFICATION_INTERCEPTOR_HANDLERS: Record<string, NotificationInterceptor<any>> = {
     [MEMORY_COMPLETED]: parseMemorySuccessHandler,

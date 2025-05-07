@@ -6,6 +6,7 @@ import i18n from 'ascend-i18n';
 import { message } from 'antd';
 import { handleProjectAction } from '@/utils/Project';
 import { checkPathValid } from '@/utils/Resource';
+import { Project } from '@/centralServer/websocket/defs';
 
 export function firstLetterUpper(value: string): string {
     const word = String(value);
@@ -16,9 +17,10 @@ export function firstLetterUpper(value: string): string {
 export function registerDragAndDropFile(): void {
     Object.defineProperty(window, 'handleDrop', {
         value: async (path: string) => {
-            const project = {
+            const project: Project = {
                 projectName: path,
-                dataPath: [path],
+                projectPath: [path],
+                children: [],
             };
             // 校验
             const validRes: ProjectError = await checkPathValid(project);

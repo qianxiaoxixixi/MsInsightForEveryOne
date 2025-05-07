@@ -2,19 +2,36 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { request } from '@/centralServer/server';
-import { Project } from '@/centralServer/websocket/defs';
+import { ImportResultBody, Project, ProjectDirectory } from '@/centralServer/websocket/defs';
 import { File } from '@/entity/session';
+import { ProjectAction } from '@/utils/enum';
+import { ErrorMsg } from '@/centralServer/websocket/connection';
 
-/**
- * 获取历史导入的文件
- * @returns ProjectDirectory[]
- */
-export const getHistoryProject = async (): Promise<unknown> => {
-    return request('global', {
-        command: 'files/getProjectExplorer',
-        params: {},
-    });
-};
+export interface ImportProjectParams extends Record<string, unknown> {
+    projectName: string;
+    path: string[];
+    projectAction: ProjectAction;
+    isConflict: boolean;
+}
+
+export interface CardInfo {
+    cardName: string;
+    rankId: string;
+    result: boolean;
+    cardPath: string;
+    host?: string;
+    dataPathList: string[];
+}
+
+export interface ImportResult {
+    reset: boolean;
+    isPending: boolean;
+    isSimulation: boolean;
+    isIpynb: boolean;
+    isCluster: boolean;
+    result: CardInfo[];
+}
+
 /**
  * 获取文件路径下所有文件、文件夹
  * @returns ProjectDirectory[]
@@ -27,13 +44,38 @@ export const getFiles = async (path = ''): Promise<unknown> => {
 };
 
 /**
- * 检查文件路径是否安全
+ * 检查项目是否安全
  * @returns ProjectError
  */
 export const checkProjectValid = async (params: {projectName: string;dataPath: string[]}): Promise<unknown> => {
     return request('global', {
         command: 'files/checkProjectValid',
         params,
+    });
+};
+
+/**
+ * 清理Timeline
+ */
+export const resetTimeline = async (): Promise<unknown> => {
+    return request('timeline', { command: 'remote/reset' });
+};
+
+export const importProject = async (params: ImportProjectParams): Promise<ImportResultBody | ErrorMsg> => {
+    return request<ImportResultBody>('timeline', {
+        command: 'import/action',
+        params,
+    });
+};
+
+/**
+ * 获取历史导入的文件
+ * @returns ProjectDirectory[]
+ */
+export const getHistoryProject = async (): Promise<{projectDirectoryList: ProjectDirectory[]} | ErrorMsg> => {
+    return request<{projectDirectoryList: ProjectDirectory[]}>('global', {
+        command: 'files/getProjectExplorer',
+        params: {},
     });
 };
 
@@ -45,13 +87,6 @@ export const updateProjectName = async (oldProjectName: string, newProjectName: 
         command: 'files/updateProjectExplorer',
         params: { oldProjectName, newProjectName },
     });
-};
-
-/**
- * 清理Timeline
- */
-export const resetTimeline = async (): Promise<unknown> => {
-    return request('timeline', { command: 'remote/reset' });
 };
 
 /**
@@ -74,7 +109,7 @@ export const clearProjects = async (projectNameList: React.Key[] = []): Promise<
 /**
  * 移除文件
  */
-export const deleteDataPath = async (project: Project): Promise<unknown> => {
+export const deleteDataPath = async (project: { projectName: string; dataPath: string[] }): Promise<unknown> => {
     return request('global', {
         command: 'files/deleteProjectExplorer',
         params: { projectName: project.projectName, dataPath: project.dataPath },

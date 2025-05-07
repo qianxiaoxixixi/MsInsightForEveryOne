@@ -5,7 +5,7 @@ import { message as Message } from 'antd';
 import { runInAction } from 'mobx';
 import i18n from 'ascend-i18n';
 import connector from '@/connection';
-import { type DataSource, GLOBAL_HOST } from '@/centralServer/websocket/defs';
+import { GLOBAL_HOST } from '@/centralServer/websocket/defs';
 import type { File } from '@/entity/session';
 import { store } from '@/store';
 import { cancelBaseline, setBaseline } from '@/utils/Request';
@@ -30,14 +30,14 @@ export interface TimelineCard {
     result: boolean;
 }
 
-const sendTabAddBaseline = function(dataSource: DataSource, baseLine: TimelineCard[]): void {
+const sendTabAddBaseline = function(dataSource: any, baseLine: TimelineCard[]): void {
     connector.send({
         event: 'baseline/add',
         body: { dataSource, baseLine },
     });
 };
 
-export const sendTabRemoveBaseline = function(dataSource: DataSource, singleDataPath: string): void {
+export const sendTabRemoveBaseline = function(dataSource: any, singleDataPath: string): void {
     connector.send({
         event: 'baseline/remove',
         body: { dataSource, singleDataPath },
@@ -73,9 +73,9 @@ export const setBaselineData = async ({ projectName, filePath }: File): Promise<
             host: host ?? '',
             cardPath: filePath,
         };
-        const dataSource = { ...GLOBAL_HOST, projectName, dataPath: [filePath] };
+        const dataSourceForTimeline = { ...GLOBAL_HOST, projectName, dataPath: [filePath] };
         // 通知页签
-        sendTabAddBaseline(dataSource, [timelineCard]);
+        sendTabAddBaseline(dataSourceForTimeline, [timelineCard]);
         // 选中基线
         runInAction(() => {
             session.compareSet.baseline = { projectName, filePath, rankId };
@@ -124,8 +124,8 @@ export const cancelBaselineData = async (): Promise<void> => {
     const session = store.sessionStore.activeSession;
     const { projectName, filePath } = session.compareSet.baseline;
     // 通知页签
-    const datasource = { ...GLOBAL_HOST, projectName, dataPath: [filePath] };
-    sendTabRemoveBaseline(datasource, filePath);
+    const dataSourceForTimeline = { ...GLOBAL_HOST, projectName, dataPath: [filePath] };
+    sendTabRemoveBaseline(dataSourceForTimeline, filePath);
     sendClusterBaselineStatus(false);
     // 通知后台
     await cancelBaseline();
