@@ -438,6 +438,16 @@ const std::string KEY_EXPERT_NUMBER = "expertNumber";
 const int CACHE_SIZE = 1024;
 const std::string expertHotspotFileReg = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
 const std::string expertDeploymentFileReg = R"((prefill|decode)_global_deployment\.json$)";
+
+const std::string PACKET_ANALYZER_TITLE = "Packet Analysis";
+struct PacketAnalyzerData {
+    // 小包分析采集三项数据，第一项是链路方式，为SDMA或者RDMA之一
+    std::string type;
+    // 第二项是传输大小
+    double transitSize;
+    // 第三项是传输时长
+    double transitTime;
+};
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

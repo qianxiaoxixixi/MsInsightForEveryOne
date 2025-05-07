@@ -394,3 +394,15 @@ TEST_F(DbCommunicationTest, QueryParseClusterStatusSuccess)
     std::string status1 = database->QueryParseClusterStatus();
     EXPECT_EQ(status1, "UNKNOWN");
 }
+
+TEST_F(DbCommunicationTest, QueryPacketAnalyzerDataTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<Dic::Module::PacketAnalyzerData> data;
+    bool result = database->QueryPacketAnalyzerData(data);
+    int expectSize = 21002;
+    ASSERT_TRUE(result);
+    ASSERT_EQ(data.size(), expectSize);
+    EXPECT_EQ(data[0].type, "SDMA");
+    EXPECT_EQ(data[1].type, "SDMA");
+}

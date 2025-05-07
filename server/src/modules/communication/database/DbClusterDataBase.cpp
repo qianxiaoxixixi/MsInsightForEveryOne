@@ -629,6 +629,13 @@ std::vector<CommInfoUnderRank> DbClusterDataBase::GetCommTimeForRankDim(const st
     std::string stepAfterDeal = stepId.empty() || stepId == "All" ? stepId : "step" + stepId;
     return ExecuteGetCommTimeForRankDim(sql, stepAfterDeal);
 }
+
+bool DbClusterDataBase::QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data)
+{
+    std::string sql = "SELECT band_type, transit_size, transit_time FROM " + TABLE_COMM_ANALYZER_BANDWIDTH +
+        " WHERE (band_type = 'RDMA' OR band_type = 'SDMA') AND transit_size > 0;";
+    return ExecuteQueryPacketAnalyzerData(data, sql);
+}
 }
 }
 }
