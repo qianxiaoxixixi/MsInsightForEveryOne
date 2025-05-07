@@ -666,3 +666,15 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenOverlap)
     bool result = database->QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
+
+TEST_F(FullDbTestSuit, QueryByteAlignmentAnalyzerRawDataTest)
+{
+    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> largeOpInfo;
+    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> smallOpInfo;
+    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
+        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDbNew"));
+    bool result = database->QueryByteAlignmentAnalyzerRawData(largeOpInfo, smallOpInfo);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(largeOpInfo.size(), 4); // 4
+    ASSERT_EQ(smallOpInfo.size(), 72); // 72
+}

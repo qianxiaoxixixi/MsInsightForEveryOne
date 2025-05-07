@@ -440,6 +440,28 @@ struct PacketAnalyzerData {
     // 第三项是传输时长
     double transitTime;
 };
+
+const std::string BYTEALIGNMENT_ANALYZER_TITLE = "Byte Alignment Analysis";
+struct CommunicationSmallOperatorInfo {
+    uint64_t size = 0;
+    std::string transportType;
+    std::string linkType;
+};
+struct CommunicationLargeOperatorInfo {
+    std::string name;
+    std::vector<CommunicationSmallOperatorInfo> memcpyTasks;
+    std::vector<CommunicationSmallOperatorInfo> reduceInlineTasks;
+};
+struct ByteAlignmentAnalyzerLargeOperatorInfo {
+    std::string name;
+};
+struct ByteAlignmentAnalyzerSmallOperatorInfo {
+    std::string name;
+    std::string taskType;
+    uint64_t size = 0;
+    std::string transportType;
+    std::string linkType;
+};
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

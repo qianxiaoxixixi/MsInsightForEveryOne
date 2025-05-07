@@ -128,6 +128,10 @@ const std::string QUERY_COMMUNICATION_GROUP_ID_TEXT_SQL =
     "SELECT track_id as groupId, thread_name as groupName "
     "FROM " + THREAD_TABLE + " WHERE pid in (SELECT pid FROM " + PROCESS_TABLE + " WHERE process_name in "
                                                                  " ('HCCL', 'COMMUNICATION', 'Communication'))";
+
+const std::string QUERY_BYTE_ALIGNMENT_ANALYZER_DATA_SQL = "SELECT name, args FROM " + SLICE_TABLE +
+    " WHERE SUBSTR(name, 1, 4) = 'hcom' OR SUBSTR(name, 1, 6) = 'Memcpy' OR SUBSTR(name, 1, 6) = 'Reduce'";
+
 // 兼容老版本（1.0.0）
 const std::string QUERY_COMMUNICATION_GROUP_ID_DB_1_0_SQL =
     "SELECT groupId, 'Group ' || row_num || ' Communication' as groupName "

@@ -1979,6 +1979,36 @@ bool TextTraceDatabase::QueryP2PCommunicationOpData(const std::string &rankId, u
     return TraceDatabaseHelper::ExecuteQueryP2POpData(std::move(stmt), rankId, offset, range, p2pOpData);
 }
 
+bool TextTraceDatabase::QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data)
+{
+    std::vector<std::pair<std::string, std::string>> rawData;
+    if (!QueryByteAlignmentAnalyzerRawData(rawData)) {
+        return false;
+    }
+    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(data, rawData);
+    return true;
+}
+
+bool TextTraceDatabase::QueryByteAlignmentAnalyzerRawData(std::vector<std::pair<std::string, std::string>> &rawData)
+{
+    std::string sql = QUERY_BYTE_ALIGNMENT_ANALYZER_DATA_SQL;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query byte alignment analyzer data. Error: ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::pair<std::string, std::string> item;
+        item.first = sqlite3_column_string(stmt, col++);
+        item.second = sqlite3_column_string(stmt, col++);
+        rawData.emplace_back(item);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool TextTraceDatabase::DeleteEmptyThread()
 {
     if (!isOpen) {

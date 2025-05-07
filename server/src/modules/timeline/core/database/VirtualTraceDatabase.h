@@ -20,6 +20,7 @@
 #include "EventDef.h"
 #include "SystemViewOverallHelper.h"
 #include "DominQuery.h"
+#include "ClusterDef.h"
 
 namespace Dic::Module::Timeline {
 const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
@@ -96,6 +97,8 @@ public:
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &fwdBwdData) = 0;
     virtual bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) = 0;
+    virtual bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) = 0;
+
     // 调用前需保证uncovered、sql等不为空
     bool CalculateCommunicationSummaryData(const std::vector<Protocol::ThreadTraces> &uncovered,
         const std::map<std::string, std::string> &groupInfoMap, const std::string &sql, double e2eTime,

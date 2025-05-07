@@ -1878,4 +1878,85 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
     }
     return sql;
 }
+
+void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
+    std::vector<std::pair<std::string, std::string>> rawData)
+{
+    bool hasOneHcom = false;
+    CommunicationLargeOperatorInfo op;
+    for (const auto &item : rawData) {
+        if (item.first.find("hcom") == 0) {
+            if (hasOneHcom) {
+                result.push_back(op);
+            } else {
+                hasOneHcom = true;
+            }
+            op.name = item.first;
+            op.memcpyTasks.clear();
+            op.reduceInlineTasks.clear();
+        } else {
+            if (!hasOneHcom) {
+                continue;
+            }
+            Dic::document_t json;
+            json.Parse(item.second.c_str());
+            if (!json.IsObject()) {
+                ServerLog::Error("Args is not valid json format.");
+                continue;
+            }
+            if (!json.HasMember("size(Byte)") || !json["size(Byte)"].IsString()) {
+                ServerLog::Error("Args has no member size(Byte) or member is not int.");
+                continue;
+            }
+            if (!json.HasMember("transport type") || !json["transport type"].IsString()) {
+                ServerLog::Error("Args has no member transport type or member is not string.");
+                continue;
+            }
+            if (!json.HasMember("link type") || !json["link type"].IsString()) {
+                ServerLog::Error("Args has no member link type or member is not string.");
+                continue;
+            }
+            CommunicationSmallOperatorInfo info;
+            int64_t tempSize = NumberUtil::StringToLongLong(json["size(Byte)"].GetString());
+            info.size = (tempSize < 0 ? 0 : static_cast<uint64_t>(tempSize));
+            info.transportType = json["transport type"].GetString();
+            info.linkType = json["link type"].GetString();
+            if (item.first.find("Memcpy") == 0) {
+                op.memcpyTasks.emplace_back(info);
+            } else {
+                op.reduceInlineTasks.emplace_back(info);
+            }
+        }
+    }
+    result.push_back(op);
+}
+
+void TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
+    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
+    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo)
+{
+    std::map<std::string, CommunicationLargeOperatorInfo> resultMap;
+    for (const auto &singleLargeOp : largeOpInfo) {
+        CommunicationLargeOperatorInfo info;
+        info.name = singleLargeOp.name;
+        resultMap[singleLargeOp.name] = info;
+    }
+    for (const auto &singleSmallOp : smallOpInfo) {
+        if (resultMap.find(singleSmallOp.name) == resultMap.end()) {
+            continue;
+        }
+        CommunicationSmallOperatorInfo smallOpInfo;
+        smallOpInfo.size = singleSmallOp.size;
+        smallOpInfo.transportType = singleSmallOp.transportType;
+        smallOpInfo.linkType = singleSmallOp.linkType;
+        if (singleSmallOp.taskType.find("Memcpy") == 0) {
+            resultMap[singleSmallOp.name].memcpyTasks.emplace_back(smallOpInfo);
+        } else {
+            resultMap[singleSmallOp.name].reduceInlineTasks.emplace_back(smallOpInfo);
+        }
+    }
+    for (const auto &item : resultMap) {
+        result.emplace_back(item.second);
+    }
+}
 }
