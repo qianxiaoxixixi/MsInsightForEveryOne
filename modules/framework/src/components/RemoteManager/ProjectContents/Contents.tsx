@@ -5,14 +5,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import styled from '@emotion/styled';
-import { Tooltip, type TreeDataNode } from 'antd';
+import { Tooltip } from 'antd';
 import { Tree } from 'ascend-components';
 import { HandleSingleDoubleClick } from 'ascend-utils';
 import type { EventDataNode } from 'antd/lib/tree';
+import type { DataNode } from 'rc-tree/lib/interface';
 import { AddIcon, LocalImportIcon } from 'ascend-icon';
 import { store } from '@/store';
 import type { File, Session } from '@/entity/session';
-import { type DataSource, GLOBAL_HOST } from '@/centralServer/websocket/defs';
+import { type DataSource, FileOrDirectory, GLOBAL_HOST, LayerType, Project } from '@/centralServer/websocket/defs';
 import { ProjectAction, SessionAction } from '@/utils/enum';
 import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
 import DeleteConfirm from './DeleteConfirm';
@@ -22,6 +23,11 @@ import EditableText from './EditableText';
 import CheckMenu from './CheckMenu';
 import { getRankId } from '@/utils/Rank';
 import { cancelCompareData, isInClusterCompare } from '@/utils/Compare';
+
+interface ProjectTreeDataNode extends DataNode {
+    layerType: LayerType;
+    layerData: FileOrDirectory | Project;
+}
 
 const ContentsContainer = styled.div`
     margin-right: 10px;
@@ -137,10 +143,44 @@ function ImportDataBtn({ projectName, session }: {projectName: string;session: S
     </Tooltip>;
 };
 
+const createCompareRankIdFuncWithProjectName = (projectName: string): (a: FileOrDirectory, b: FileOrDirectory) => number =>
+    (a, b) => getRankId({ projectName, filePath: a.path }).localeCompare(getRankId({ projectName, filePath: b.path }));
+
+const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: number, session: Session, depth: number): ProjectTreeDataNode => {
+    const isLeaf = depth >= 5 || data.children.length <= 0;
+    const node: ProjectTreeDataNode = {
+        key: `${projectName}-${data.path}`,
+        layerType: data.type as LayerType,
+        layerData: data,
+        checkable: false,
+        isLeaf,
+        title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={data.path}>
+            <span className={`content-body ${getNodeClass(session, { projectName, filePath: data.path })}`}>
+                <span className={`content-text ${data.type === 'CLUSTER' ? '' : 'can-right-click'}`} onContextMenu={(): void => {
+                    handleRightClick({ projectName, filePath: data.path });
+                }}>
+                    {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, filePath: data.path })}
+                </span>
+                <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
+                    {data.type === 'CLUSTER' || (<DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path}/>)}
+                </div>
+            </span>
+        </Tooltip>,
+    };
+    if (!isLeaf) {
+        node.children = data.children.filter((child) => child.type !== undefined)
+            .sort(createCompareRankIdFuncWithProjectName(projectName))
+            .map((child) => getTreeNode(child, projectName, projectIndex, session, depth + 1));
+    }
+    return node;
+};
+
 // 目录树数据
-const getTreeData = (session: Session): TreeDataNode[] => {
+const getTreeData = (session: Session): ProjectTreeDataNode[] => {
     return session.dataSources.map((dataSource, dataSourceIndex) => ({
         key: dataSource.projectName,
+        layerType: 'PROJECT',
+        layerData: dataSource,
         isLeaf: false,
         icon: <LocalImportIcon/>,
         title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={dataSource.projectName}>
@@ -153,22 +193,25 @@ const getTreeData = (session: Session): TreeDataNode[] => {
                 </div>
             </span>
         </Tooltip>,
-        children: dataSource.dataPath?.map((path, dataPathIndex) => ({
-            key: `${dataSource.projectName}-${path}`,
-            isLeaf: true,
-            title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={path}>
-                <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: path })}`}>
-                    <span className="content-text can-right-click"
-                        onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>
-                        {getFilePathName({ projectName: dataSource.projectName, filePath: path })}
-                    </span>
-                    <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
-                        <DeleteConfirm isProject={false} projectIndex={dataSourceIndex} dataPathIndex={dataPathIndex}/>
-                    </div>
-                </span>
-            </Tooltip>,
-        })),
+        children: dataSource.children?.filter((child) => child.type !== undefined)
+            .sort(createCompareRankIdFuncWithProjectName(dataSource.projectName))
+            .map((child) => getTreeNode(child, dataSource.projectName, dataSourceIndex, session, 0)),
     }));
+};
+
+const getAllTreeNodeKeysWithoutLeaf = (treeNode: ProjectTreeDataNode[]): string[] => {
+    const keys: string[] = [];
+    const getKeys = (nodes: ProjectTreeDataNode[], depth: number): void => {
+        if (depth >= 5) { return; }
+        nodes.forEach((node) => {
+            if (!node.isLeaf) {
+                keys.push(node.key as string);
+                getKeys(node.children as ProjectTreeDataNode[], depth + 1);
+            }
+        });
+    };
+    getKeys(treeNode, 0);
+    return keys;
 };
 
 // 文件名
@@ -179,18 +222,19 @@ const getFilePathName = (file: File): string => {
 
 // 目录
 const Contents = observer(({ session }: {session: Session}) => {
-    const treeData = useMemo<TreeDataNode[]>(() => getTreeData(session), [session.dataSources, JSON.stringify(session.compareSet), session.rankMap]);
-
+    const treeData = useMemo<ProjectTreeDataNode[]>(() => getTreeData(session), [session.dataSources, JSON.stringify(session.compareSet), session.rankMap]);
     // 展开情况: 默认展开所有工程，新导入工程默认展开
     const allProjectKeys = treeData.map(item => item.key);
     const [collapsedKeys, setCollapsedKeys] = useState(new Set());
-    const expandedKeys = useMemo(() => allProjectKeys.filter(item => !collapsedKeys.has(item)), [collapsedKeys, allProjectKeys]);
+    const expandedKeys = useMemo(() => {
+        return getAllTreeNodeKeysWithoutLeaf(treeData).filter(item => !collapsedKeys.has(item));
+    }, [collapsedKeys, treeData]);
 
     // 当前选中（打开）工程、文件
     const selectedKeys = useMemo(() => {
         if (session.activeDataSource.projectName !== '') {
-            const { projectName, dataPath } = session.activeDataSource;
-            return [projectName, `${projectName}-${dataPath[0]}`];
+            const { projectName, activeDataPath } = session.activeDataSource;
+            return [projectName, `${projectName}-${activeDataPath}`];
         }
         return [];
     }, [session.activeDataSource]);
@@ -205,33 +249,36 @@ const Contents = observer(({ session }: {session: Session}) => {
         setCheckedKeys(checked ? allProjectKeys : []);
     };
 
-    // 点击目录
-    const handleNodeClick = (keys: React.Key[], { node }: {node: EventDataNode<TreeDataNode>}): void => {
+    // 点击项目
+    const handleNodeClick = (keys: React.Key[],
+        { selectedNodes, node }: { selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode> }): void => {
         const { activeDataSource, dataSources } = session;
-        const [,projectIndex, dataPathIndex] = node.pos.split('-').map(index => Number(index));
+        if (node.pos.split('-').length <= 2) { return; }
+        const [,projectIndex] = node.pos.split('-').map(index => Number(index));
         const dataSource: DataSource = dataSources[projectIndex];
         // 如果点击其它工程或者其它工程下文件
         if (dataSource.projectName !== activeDataSource.projectName) {
             handleProjectAction(
-                { action: ProjectAction.SWITCH_PROJECT, project: dataSource, isConflict: false, selectedPath: dataSource.dataPath[dataPathIndex] });
+                { action: ProjectAction.SWITCH_PROJECT, project: dataSource, isConflict: false, selectedProjectPath: dataSource.projectPath[0] });
         }
         // 如果点击的是文件
         if (node.isLeaf) {
             runInAction(() => {
                 session.activeDataSource = {
                     ...GLOBAL_HOST,
-                    projectName: dataSource.projectName,
-                    dataPath: [dataSource.dataPath[dataPathIndex]],
+                    ...dataSource,
+                    activeDataPath: (selectedNodes[0].layerData as FileOrDirectory).path,
                 };
             });
             if (isInClusterCompare()) {
                 return;
             }
             cancelCompareData();
-        };
+        }
     };
 
-    const handleSingleClick = (keys: React.Key[], nodeEvent: { node: EventDataNode<TreeDataNode>; nativeEvent: MouseEvent}): void => {
+    const handleSingleClick = (keys: React.Key[],
+        nodeEvent: { selectedNodes: ProjectTreeDataNode[]; node: EventDataNode<ProjectTreeDataNode>; nativeEvent: MouseEvent}): void => {
         // 区分正常点击项目或文件还是点击Tooltip中的内容
         const targrt = nodeEvent.nativeEvent.target as HTMLElement;
         if (targrt.className === 'ant-tooltip-inner') {
@@ -249,7 +296,7 @@ const Contents = observer(({ session }: {session: Session}) => {
     };
 
     // 展开折叠
-    const handleExpand = (keys: React.Key[], { node, expanded }: {expanded: boolean;node: TreeDataNode}): void => {
+    const handleExpand = (keys: React.Key[], { node, expanded }: {expanded: boolean;node: ProjectTreeDataNode}): void => {
         if (expanded) {
             collapsedKeys.delete(node.key);
         } else {
@@ -273,7 +320,7 @@ const Contents = observer(({ session }: {session: Session}) => {
     }, [session.projectContentEditStatus]);
     return <ContentsContainer>
         <CheckMenu editStatus={session.projectContentEditStatus} isAll={isAllProjectChecked} toggleCheckAll={toggleCheckAll} checkedKeys={checkedProjectKeys}/>
-        <Tree
+        <Tree<ProjectTreeDataNode>
             checkable={session.projectContentEditStatus}
             checkedKeys={checkedKeys}
             onCheck={onCheck}

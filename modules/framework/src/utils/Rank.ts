@@ -6,9 +6,10 @@ import { store } from '@/store';
 import { runInAction } from 'mobx';
 import { ProjectAction } from './enum';
 import { Rank } from '@/entity/session';
+import { ImportRankInfo } from '@/centralServer/websocket/defs';
 
 // 导入数据，更新卡信息
-export const updateRankMap = (projectAction: ProjectAction, projectName: string, rankInfoList: Array<{ rankId: string; dataPathList: string[] }>): void => {
+export const updateRankMap = (projectAction: ProjectAction, projectName: string, rankInfoList: ImportRankInfo[]): void => {
     const session = store.sessionStore.activeSession;
     const { activeDataSource } = session;
 

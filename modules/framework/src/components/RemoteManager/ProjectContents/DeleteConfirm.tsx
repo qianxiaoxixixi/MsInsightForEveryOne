@@ -13,16 +13,17 @@ interface IProps {
     isProject: boolean;
     projectIndex: number;
     dataPathIndex?: number;
+    dataPath?: string;
 }
-const DeleteConfirm = observer(({ isProject, projectIndex, dataPathIndex }: IProps) => {
+const DeleteConfirm = observer(({ isProject, projectIndex, dataPath }: IProps) => {
     const { t } = useTranslation('framework');
     const confirm = (): void => {
         openLoading();
         if (isProject) {
             removeProject(projectIndex);
         } else {
-            if (dataPathIndex !== undefined) {
-                removeDataPath(projectIndex, dataPathIndex);
+            if (dataPath !== undefined) {
+                removeDataPath(projectIndex, dataPath);
             }
         }
     };

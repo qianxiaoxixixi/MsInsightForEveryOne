@@ -1,17 +1,35 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import { DataRequest, ModuleName, Host, GLOBAL_HOST, Project } from './websocket/defs';
-import { Connection } from './websocket/connection';
+import {
+    DataRequest,
+    ModuleName,
+    ConnectHost,
+    GLOBAL_HOST,
+    Project,
+    FileOrDirectory,
+    ImportResultBody,
+    DataSource,
+} from './websocket/defs';
+import { Connection, ErrorMsg } from './websocket/connection';
 import connector from '@/connection';
+import {
+    importProject,
+    ImportProjectParams,
+    ImportResult,
+} from '@/utils/Request';
 import { ProjectAction } from '@/utils/enum';
+import { updateRankMap } from '@/utils/Rank';
+import { transformFile, updateProject } from '@/utils/Project';
+import { closeLoading } from '@/utils/useLoading';
+import { updateDataScene } from '@/components/TabPane/Index';
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
-const getConnectionMapKey = (host: Host): string => {
+const getConnectionMapKey = (host: ConnectHost): string => {
     return `${host?.remote}:${host?.port}`;
 };
 
-export const connectRemote = async function (host: Host): Promise<boolean> {
+export const connectRemote = async function (host: ConnectHost): Promise<boolean> {
     const connection = new Connection(host);
     try {
         await connection.connect();
@@ -22,7 +40,7 @@ export const connectRemote = async function (host: Host): Promise<boolean> {
     return true;
 };
 
-export const isExistedRemote = function(host: Host): boolean {
+export const isExistedRemote = function(host: ConnectHost): boolean {
     return CONNECTION_MAP.has(getConnectionMapKey(host));
 };
 
@@ -36,19 +54,69 @@ export const addDataPath = async function(project: Project, action: ProjectActio
     const connection = CONNECTION_MAP.get(getConnectionMapKey(GLOBAL_HOST));
     if (connection) {
         connector.send({
-            event: 'remote/import',
-            body: { dataSource: { ...GLOBAL_HOST, ...project }, isConflict, action },
+            event: 'remote/savePageSetting',
+            body: {},
             target: 'plugin',
         });
+        const params: ImportProjectParams = {
+            projectName: project.projectName,
+            path: project.projectPath,
+            projectAction: action,
+            isConflict,
+        };
+        const result = await importProject(params);
+        if (!result || (result as ErrorMsg).error !== undefined) { return false; }
+        connector.send({
+            event: 'remote/import',
+            body: { dataSource: transformTimelineDataSource(project), importResult: transformTimelineResult(result as ImportResultBody) },
+            target: 'plugin',
+        });
+        afterImportProject(params, result as ImportResultBody);
     }
     return true;
 };
 
-export const request = function (
+const transformTimelineDataSource = (project: Project): DataSource => {
+    const data = { ...GLOBAL_HOST, ...project, dataPath: project.projectPath };
+    return data as DataSource;
+};
+
+const transformTimelineResult = (data: ImportResultBody): ImportResult => {
+    return data as unknown as ImportResult;
+};
+
+/**
+ * 导入项目后更新项目管理器操作
+ * @param params 请求体
+ * @param data 返回值
+ */
+const afterImportProject = (params: ImportProjectParams, data: ImportResultBody): void => {
+    try {
+        const projectAction = params.projectAction as ProjectAction;
+        const hasConflict = params.isConflict as boolean;
+        const projectName = params.projectName;
+        const projectPath = params.path;
+        const children = data.children?.map((child) => transformFile(child, 0))
+            ?.flat()?.filter((item) => item !== undefined) as FileOrDirectory[];
+        // 更新场景
+        updateDataScene(data);
+        // 更新rank信息
+        const rankInfoList = data.result;
+        updateRankMap(projectAction, projectName, rankInfoList);
+        // 更新项目目录
+        updateProject({ projectAction, projectName, children, hasConflict, projectPath });
+    } catch (error) {
+        console.error(error);
+    }
+    closeLoading();
+};
+
+export const request = function <T>(
     moduleName: ModuleName,
     args: DataRequest,
     voidResponse?: boolean,
-): Promise<unknown> {
+): Promise<T | ErrorMsg> {
     const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(GLOBAL_HOST));
-    return new Promise((resolve, reject) => connection?.fetch(moduleName, args, voidResponse)?.then(resolve, reject));
+    if (connection === undefined) { return Promise.reject(Error('no connection')); }
+    return new Promise((resolve: (v: T | ErrorMsg) => void, reject) => connection?.fetch<T>(moduleName, args, voidResponse)?.then(resolve, reject));
 };

@@ -25,11 +25,22 @@ declare global {
         requestData: (method: string | RequestParams, params?: any, module?: string, voidResponse?: boolean) => Promise<any>;
     }
 
+    type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB';
+
+    interface FileOrDirectory {
+        type?: LayerType;
+        name: string;
+        path: string;
+        children: FileOrDirectory[];
+    }
+
     interface DataSource {
         remote: string;
         port: number;
         projectName: string;
         dataPath: string[];
+        projectPath: string[];
+        children: FileOrDirectory[];
         isBaseLine?: boolean;
         baseLineCardId?: string;
     }

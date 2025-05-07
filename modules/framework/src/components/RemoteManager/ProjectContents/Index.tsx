@@ -13,7 +13,7 @@ const Index = observer(() => {
 
     useEffect(() => {
         sendDirectory();
-    }, [session.activeDataSource.dataPath, session.isCompareStatus, session.compareSet.comparison.rankId]);
+    }, [session.activeDataSource.children, session.isCompareStatus, session.compareSet.comparison.rankId]);
 
     return <>
         <Contents session={session}/>

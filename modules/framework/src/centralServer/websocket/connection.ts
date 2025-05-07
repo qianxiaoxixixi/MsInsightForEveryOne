@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { CONTENT_LENGTH_PREFIX, isResponse, PORT, LOCAL_HOST } from './defs';
-import type { DataRequest, ModuleName, Host, Notification, Response, Request, ResponseHandler } from './defs';
+import type { DataRequest, ModuleName, ConnectHost, Notification, Response, Request, ResponseHandler } from './defs';
 import connector from '@/connection';
 import { message as Message, Modal } from 'antd';
 import { customConsole as console } from 'ascend-utils';
@@ -28,14 +28,21 @@ const createRequestHead = function (
 
 const MAX_RESPONSE_HANDLERS = 1000;
 
+export interface ErrorMsg {
+    error: {
+        code: number;
+        message: string;
+    };
+};
+
 export class Connection {
     private readonly _ws: WebSocket | undefined;
-    private readonly _host: Host;
+    private readonly _host: ConnectHost;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _fetchFlag: boolean = true;
 
-    constructor(initHost: Host) {
+    constructor(initHost: ConnectHost) {
         console.info('[connector]', 'init');
         if (this._ws !== undefined) {
             // wedge: close and release the old websocket
@@ -121,7 +128,7 @@ export class Connection {
         }) as Promise<void>;
     }
 
-    async fetch(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false): Promise<unknown> {
+    async fetch<T>(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false): Promise<T | ErrorMsg> {
         if (!this.isConnected) {
             Message.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart MindStudio Insight.');
         }
@@ -133,7 +140,7 @@ export class Connection {
             // message process func
             this._ws.onmessage = this.fetchDataOnMessage;
         }
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve: (v: T | ErrorMsg) => void, reject) => {
             const id = this._msgId++;
             const msg: Request = createRequestHead(
                 id,
@@ -154,18 +161,18 @@ export class Connection {
         });
     }
 
-    getCallback(resolve: (p: unknown) => void): (res: Response) => void {
+    getCallback<T>(resolve: (p: T | ErrorMsg) => void): (res: Response) => void {
         return (res: Response): void => {
             if (res.result && res.body !== undefined) {
                 // wedge: return cache resolve
-                resolve(res.body);
+                resolve(res.body as T);
             } else {
                 if (res.error === undefined) {
                     throw new Error('malformed response');
                 }
                 const { code, message } = res.error;
                 console.error('[connector]', 'errorCode:', code, 'msg:', message || res.message);
-                resolve({ error: { code, message: message || res.message } });
+                resolve({ error: { code, message: message || res.message } } as ErrorMsg);
             }
         };
     }

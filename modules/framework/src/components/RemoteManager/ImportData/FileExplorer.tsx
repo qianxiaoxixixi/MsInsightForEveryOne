@@ -85,7 +85,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
         const path = selectedPath;
         // 若currentProject存在，在已有项目下导入数据，否则新增项目
         const projectName = currentProject !== '' ? currentProject : path;
-        const newProject: Project = { projectName, dataPath: [path] };
+        const newProject: Project = { projectName, projectPath: [path], children: [] };
 
         // 导入场景：拿到选择的文件路径，单独处理后续逻辑
         if (customImport) {
@@ -136,7 +136,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
 
     const onContinue = (): void => {
         const path = getTrimedPath(inputPath);
-        const project: Project = { projectName: currentProject, dataPath: [path] };
+        const project: Project = { projectName: currentProject, projectPath: [path], children: [] };
         handleProjectAction({ action: ProjectAction.ADD_FILE, project, isConflict: true });
         setConflictModalVis(false);
         setTimeout(() => {

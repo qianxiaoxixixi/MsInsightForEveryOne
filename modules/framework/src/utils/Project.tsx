@@ -1,13 +1,22 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
+import _ from 'lodash';
 import { runInAction } from 'mobx';
 import { customConsole as console } from 'ascend-utils';
 import { LocalStorageKey, localStorageService } from 'ascend-local-storage';
 import connector from '@/connection';
 import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
-import { DataSource, Project, ProjectDirectory, GLOBAL_HOST } from '@/centralServer/websocket/defs';
+import {
+    DataSource,
+    Project,
+    ProjectDirectory,
+    GLOBAL_HOST,
+    FileOrDirectory,
+    ActiveDataSource,
+    ImportTreeInfo,
+} from '@/centralServer/websocket/defs';
 import { addDataPath } from '@/centralServer/server';
 import {
     deleteDataPath, deleteProject, resetTimeline, getHistoryProject, updateProjectName as requestUpdateProjectName,
@@ -24,11 +33,63 @@ import { openLoading, closeLoading } from '@/utils/useLoading';
 export interface UpdateProjectParam {
     projectAction: ProjectAction;
     projectName: string;
-    dataPath: string[];
+    projectPath: string[];
+    children: FileOrDirectory[];
     hasConflict: boolean;
-    subdirectory: string[];
 }
 
+const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [] };
+
+export const transformFile = (tree: ImportTreeInfo | undefined, depth: number): FileOrDirectory[] | undefined => {
+    if (tree === undefined || depth >= 5) { return undefined; }
+    let result;
+    switch (tree.type) {
+        case 'CLUSTER':
+            result = [{
+                type: tree.type,
+                name: tree.fileDir,
+                path: tree.filePath,
+                children: tree.children.map((child) => transformFile(child, depth + 1))
+                    .flat().filter((item) => item !== undefined) as FileOrDirectory[],
+            }];
+            break;
+        case 'PROJECT': {
+            const clusterList = tree.children.filter((child) => child.type === 'CLUSTER');
+            const otherList = tree.children.filter((child) => child.type !== 'CLUSTER');
+            // 如果 PROJECT 下的內容 CLUSTER 只有一个，隐藏 CLUSTER 层
+            const children = [...(clusterList.length === 1 ? clusterList[0].children : clusterList), ...otherList];
+            result = children.map((child) => transformFile(child, depth))
+                .flat().filter((item) => item !== undefined) as FileOrDirectory[];
+            break;
+        }
+        case 'HOST': // 跳过 HOST
+            result = tree.children.map((child) => transformFile(child, depth))
+                .flat().filter((item) => item !== undefined) as FileOrDirectory[];
+            break;
+        case 'RANK':
+        case 'COMPUTE':
+        case 'IPYNB':
+            result = [{
+                type: tree.type,
+                name: tree.fileDir,
+                path: tree.filePath,
+                children: tree.children.map((child) => transformFile(child, depth + 1))
+                    .flat().filter((item) => item !== undefined) as FileOrDirectory[],
+            }];
+            break;
+        default:
+            break;
+    }
+    return result;
+};
+
+const transformProject = (data: ProjectDirectory): Project => {
+    return {
+        projectName: data.projectName,
+        projectPath: [data.children?.[0].filePath ?? ''],
+        children: data.children?.map((child) => transformFile(child, 0))?.flat()?.filter((item) => item !== undefined) as FileOrDirectory[],
+    };
+};
 // 历史项目
 export const loadHistoryProject = async(): Promise<void> => {
     const session = store.sessionStore.activeSession;
@@ -36,7 +97,7 @@ export const loadHistoryProject = async(): Promise<void> => {
     const result = await getHistoryProject() as {projectDirectoryList: ProjectDirectory[]};
     const projectDirectoryList = result?.projectDirectoryList ?? [];
     projectDirectoryList.forEach(item => {
-        const source: DataSource = { ...GLOBAL_HOST, projectName: item.projectName, dataPath: item.fileName };
+        const source: DataSource = { ...GLOBAL_HOST, ...transformProject(item) };
         sources.push(source);
     });
     runInAction(() => {
@@ -45,8 +106,8 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, project, isConflict, selectedPath }:
-{action: ProjectAction;project: Project;isConflict: boolean;selectedPath?: string}): Promise<void> {
+export async function handleProjectAction({ action, project, isConflict, selectedProjectPath }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedProjectPath?: string}): Promise<void> {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -58,15 +119,15 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         }
 
         // 如果目标内容就是当前选中内容，则不做任何处理直接返回
-        if (newProject.projectName === activeDataSource.projectName && arraysValueEqual(newProject.dataPath, activeDataSource.dataPath)) {
+        if (newProject.projectName === activeDataSource.projectName && arraysValueEqual(newProject.projectPath, activeDataSource.projectPath)) {
             return;
         }
         openLoading();
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
-            const firstDataPath = selectedPath ?? dataSources.find(data => data.projectName === newProject.projectName)?.dataPath[0];
+            const firstDataPath = selectedProjectPath ?? dataSources.find(data => data.projectName === newProject.projectName)?.projectPath[0];
             if (firstDataPath !== undefined) {
-                newProject.dataPath = [firstDataPath];
+                newProject.projectPath = [firstDataPath];
             }
         }
         const res = await addDataPath(newProject, action, isConflict);
@@ -76,7 +137,7 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         }
 
         // 保存文件路径
-        const path = newProject.dataPath[0].includes(newProject.projectName) ? newProject.projectName : newProject.dataPath[0];
+        const path = newProject.projectPath[0].includes(newProject.projectName) ? newProject.projectName : newProject.projectPath[0];
         localStorageService.setItem(LocalStorageKey.LAST_FILE_PATH, path);
     });
     cancelBaselineData();
@@ -89,26 +150,26 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 项目更新
 // 1、更新项目目录
 // 2、设置为打开(选中）项目
-export const updateProject = ({ projectAction, projectName, dataPath, hasConflict, subdirectory }: UpdateProjectParam): void => {
+export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath }: UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
+    const dataSource: DataSource = { ...GLOBAL_HOST, projectName, projectPath, children };
     runInAction(() => {
         try {
             if (projectAction === ProjectAction.ADD_FILE) {
                 // 更新项目目录
-                const dataSource = { ...GLOBAL_HOST, projectName, dataPath };
                 session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
                 // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
-                if (hasConflict || dataPath.length > 1) {
-                    session.activeDataSource = { ...dataSource, dataPath: [dataPath[0]] };
+                if (hasConflict || children.length > 1) {
+                    session.activeDataSource = { ...dataSource, activeDataPath: getProjectFirstFile(dataSource) };
                 }
                 // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
-                if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.dataPath.length > 0) {
+                if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.activeDataPath !== undefined) {
                     session.activeDataSource = dataSource;
                     return;
                 }
             }
             if (projectAction === ProjectAction.SWITCH_PROJECT) {
-                session.activeDataSource = { ...GLOBAL_HOST, projectName, dataPath: subdirectory };
+                session.activeDataSource = dataSource;
             }
         } catch {
             console.error('Update Project Explorer Failed');
@@ -128,13 +189,12 @@ function getMergedDataSources(oldDataSources: DataSource[], dataSource: DataSour
         // 项目存在，在已有项目下增加文件
         // 有冲突，替换项目的子文件
         if (hasConflict) {
-            dataSources[projectIndex].dataPath = dataSource.dataPath;
+            dataSources[projectIndex].children = dataSource.children;
         } else {
             // 新导入文件全部不在当前项目下
-            const oldDataPath = dataSources[projectIndex].dataPath;
-            const dataPathIdx = dataSource.dataPath.findIndex(path => oldDataPath.includes(path));
-            if (dataPathIdx === -1) {
-                dataSources[projectIndex].dataPath.push(...dataSource.dataPath);
+            if (!hasFileOverlap(dataSources[projectIndex], dataSource)) {
+                const merged = mergeProjects(dataSources[projectIndex], dataSource);
+                dataSources[projectIndex].children = merged.children;
             }
         }
     }
@@ -156,7 +216,7 @@ export const removeProject = (projectIndex: number): void => {
                 // 重置frame页面
                 session.reset(true);
                 // 设置当前打开（选中）项目空
-                session.activeDataSource = { ...GLOBAL_HOST, projectName: '', dataPath: [] };
+                session.activeDataSource = DEFAULT_ACTIVE_DATASOURCE;
             }
             // 通知后台
             await deleteProject(dataSource);
@@ -174,7 +234,6 @@ export const removeProjects = async (projectNameList: React.Key[] = []): Promise
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         try {
-            // 通知后台
             await clearProjects(projectNameList);
             // 目录更新
             session.dataSources = session.dataSources.filter(dataSource => !projectNameList.includes(dataSource.projectName));
@@ -187,7 +246,7 @@ export const removeProjects = async (projectNameList: React.Key[] = []): Promise
                 // framework重置
                 session.reset(true);
                 // 当前选中置空
-                session.activeDataSource = { ...GLOBAL_HOST, projectName: '', dataPath: [] };
+                session.activeDataSource = DEFAULT_ACTIVE_DATASOURCE;
             }
         } catch {
             console.error('remove error');
@@ -197,17 +256,17 @@ export const removeProjects = async (projectNameList: React.Key[] = []): Promise
 };
 
 // 移除文件
-export const removeDataPath = (projectIndex: number, dataPathIndex: number): void => {
+export const removeDataPath = (projectIndex: number, dataPath: string): void => {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         try {
             const dataSource = session.dataSources[projectIndex];
             // 项目只有一个文件
-            if (dataSource.dataPath.length === 1) {
+            if (dataSource.children.length === 1) {
                 removeProject(projectIndex);
                 return;
             }
-            const singleDataPath = dataSource.dataPath[dataPathIndex];
+            const singleDataPath = dataPath;
             // 通知各页签
             if (session.activeDataSource.projectName === dataSource.projectName) {
                 connector.send({ event: 'remote/removeSingle', body: { dataSource, singleDataPath } });
@@ -215,10 +274,10 @@ export const removeDataPath = (projectIndex: number, dataPathIndex: number): voi
             // 通知后台
             await deleteDataPath({ ...dataSource, dataPath: [singleDataPath] });
             // 目录更新
-            session.deleteDataPath(projectIndex, dataPathIndex);
+            session.deleteDataPath(projectIndex, singleDataPath);
             // 如果移除的是当前选中文件，默认选中第一个文件
-            if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.dataPath[0] === singleDataPath) {
-                session.activeDataSource = { ...dataSource, dataPath: [dataSource.dataPath[0]] };
+            if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.activeDataPath === singleDataPath) {
+                session.activeDataSource = { ...dataSource, activeDataPath: getProjectFirstFile(dataSource) };
             }
         } catch {
             console.error('removeSingle error');
@@ -237,7 +296,6 @@ export const updateProjectName = async (oldProjectName: string, newProjectName: 
         }
         // 更新卡信息
         updateRankMapByProjectName(oldProjectName, newProjectName);
-        // 通知后端
         await requestUpdateProjectName(oldProjectName, newProjectName);
         // 通知模块
         sendUpdateProjectName(oldProjectName, newProjectName);
@@ -250,4 +308,191 @@ export const updateProjectName = async (oldProjectName: string, newProjectName: 
         Message.warning(i18n.t('Update Project Name Failed', { ns: 'framework' }));
         return false;
     }
+};
+
+export const getProjectFirstFile = (project: Project): string | undefined => {
+    const getFirstFile = (files: FileOrDirectory[], depth: number): string | undefined => {
+        if (files.length === 0) { return undefined; }
+        if (depth === 5) {
+            console.error('over 5 layers of file，deleting fail!');
+            return undefined;
+        }
+        if (files[0].children.length === 0) {
+            return files[0].path;
+        } else {
+            return getFirstFile(files[0].children, depth + 1);
+        }
+    };
+
+    return getFirstFile(project.children, 0);
+};
+
+export const hasFileOverlap = (a: Project, b: Project): boolean => {
+    const pathSet = new Set<string>();
+    recursiveSearchEveryProjectFileThen(a, (file) => {
+        pathSet.add(file.path);
+    });
+
+    // 在第二个项目中查找是否有重复的路径
+    return recursiveSearchSomeProjectFileThen(b, (file) => pathSet.has(file.path));
+};
+
+// 构建一个 map，用于快速查找节点
+const createNodeMap = (nodes: FileOrDirectory[]): Map<string, FileOrDirectory> => {
+    const map: Map<string, FileOrDirectory> = new Map();
+    const addToMap = (node: FileOrDirectory, depth: number): void => {
+        if (depth >= 5) { return; }
+        map.set(node.path, node);
+        if (node.children) {
+            node.children.forEach(addToMap);
+        }
+    };
+    nodes.forEach(addToMap);
+    return map;
+};
+
+// 深拷贝并合并两个节点
+const mergeNodes = (nodeA: FileOrDirectory | undefined, nodeB: FileOrDirectory): FileOrDirectory => {
+    if (!nodeA) { return _.cloneDeep(nodeB); }
+    if (!nodeB) { return _.cloneDeep(nodeA); }
+
+    const merged = _.cloneDeep(nodeA) as FileOrDirectory; // 深拷贝
+    merged.children = [];
+
+    const allChildrenMap: Map<string, FileOrDirectory> = new Map();
+
+    // 收集 nodeA 子节点
+    if (nodeA.children) {
+        nodeA.children.forEach(child => {
+            allChildrenMap.set(child.path, child);
+        });
+    }
+
+    // 收集并可能覆盖或添加 nodeB 子节点
+    if (nodeB.children) {
+        nodeB.children.forEach(child => {
+            if (allChildrenMap.has(child.path)) {
+                allChildrenMap.set(child.path, mergeNodes(allChildrenMap.get(child.path), child));
+            } else {
+                allChildrenMap.set(child.path, child);
+            }
+        });
+    }
+
+    // 转换回数组
+    merged.children = Object.values(allChildrenMap).map(child => {
+        return _.cloneDeep(child); // 拷贝一份
+    });
+
+    return merged;
+};
+
+function findTopLevelPaths(paths: Set<string>): string[] {
+    if (!paths || paths.size === 0) { return []; }
+
+    // 去重并排序路径，确保较短（层级更高）的路径排在前面
+    const uniquePaths = [...paths];
+
+    const sep = uniquePaths[0].includes('\\') ? '\\' : '/';
+    // 根据路径长度排序，这样可以保证父级路径总是在子路径之前被处理
+    uniquePaths.sort((a, b) => a.split(sep).length - b.split(sep).length);
+
+    const result: string[] = [];
+
+    for (const currentPath of uniquePaths) {
+        if (result.some((pathString: string) => currentPath.startsWith(pathString))) {
+            continue;
+        }
+        result.push(currentPath);
+    }
+
+    return result;
+}
+
+export const mergeProjects = (projectA: Project, projectB: Project): Project => {
+    // 获取根路径集合，处理多 projectPath 场景
+    const allRootPaths = [...new Set([...projectA.projectPath, ...projectB.projectPath])];
+
+    // 构建根节点映射
+    const buildRootsFromProject = (project: Project): FileOrDirectory[] => {
+        return project.children;
+    };
+
+    const rootsA = buildRootsFromProject(projectA);
+    const rootsB = buildRootsFromProject(projectB);
+
+    const mapA = createNodeMap(rootsA);
+    const mapB = createNodeMap(rootsB);
+
+    const mergedRoots: FileOrDirectory[] = [];
+
+    const allPaths = new Set([...Object.keys(mapA), ...Object.keys(mapB)]);
+
+    findTopLevelPaths(allPaths).forEach(path => {
+        const nodeA = mapA.get(path);
+        const nodeB = mapB.get(path);
+
+        if (nodeA && nodeB) {
+            mergedRoots.push(mergeNodes(nodeA, nodeB));
+        } else if (nodeA) {
+            mergedRoots.push(_.cloneDeep(nodeA));
+        } else if (nodeB) {
+            mergedRoots.push(_.cloneDeep(nodeB));
+        } else { /* do nothing */ }
+    });
+
+    return {
+        projectName: `${projectA.projectName}+${projectB.projectName}`,
+        projectPath: allRootPaths,
+        children: mergedRoots,
+    };
+};
+
+export const deleteProjectDataPath = (project: Project, dataPath: string): void => {
+    recursiveSearchSomeProjectFileThen(project, (file) => file.path === dataPath, (__, foundIdx, files) => {
+        files.splice(foundIdx, 1);
+    });
+};
+
+const recursiveSearchSomeProjectFileThen = (project: Project,
+    searcher: (file: FileOrDirectory) => boolean,
+    action?: (file: FileOrDirectory, index: number, foundFiles: FileOrDirectory[]) => void): boolean => {
+    const searchFilesThen = (files: FileOrDirectory[], depth: number): boolean => {
+        if (depth >= 5) {
+            console.error('over 5 layers of file，deleting fail!');
+            return false;
+        }
+        if (files.length === 0) { return false; }
+        const foundIdx: number = files.findIndex((file: FileOrDirectory): boolean => searcher(file));
+        if (foundIdx !== -1) {
+            action?.(files[foundIdx], foundIdx, files);
+            return true;
+        }
+        for (let i = 0; i < files.length; i++) {
+            if (searchFilesThen(files[i].children, depth + 1)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    return searchFilesThen(project.children, 0);
+};
+
+const recursiveSearchEveryProjectFileThen = (project: Project, action?: (file: FileOrDirectory, index: number) => void): void => {
+    const searchFilesThen = (files: FileOrDirectory[], depth: number): void => {
+        if (depth >= 5) {
+            console.error('over 5 layers of file，deleting fail!');
+            return;
+        }
+        if (files.length === 0) { return; }
+        files.forEach((file, index) => {
+            action?.(file, index);
+        });
+        for (let i = 0; i < files.length; i++) {
+            searchFilesThen(files[i].children, depth + 1);
+        }
+    };
+
+    searchFilesThen(project.children, 0);
 };

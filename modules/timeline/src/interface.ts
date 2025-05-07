@@ -8,6 +8,7 @@ import {
     parseFailHandler,
     allSuccessHandler,
     importRemoteHandler,
+    savePageSettingRemoteHandler,
     removeRemoteHandler,
     setTheme,
     clusterCompletedHandler,
@@ -35,6 +36,7 @@ export interface InterfaceDefs {
 
 const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
 const OPERATOR_COMPLETED = 'parse/operatorCompleted';
+const REMOTE_SAVE_PAGE_SETTING = 'remote/savePageSetting';
 const REMOTE_IMPORT = 'remote/import';
 const REMOTE_REMOVE = 'remote/remove';
 const REMOTE_RESET = 'remote/reset';
@@ -47,6 +49,7 @@ const PARSE_CLUSTER_STEP2_COMPLETED = 'parse/clusterStep2Completed';
 const BASELINE_ADD = 'baseline/add';
 const BASELINE_REMOVE = 'baseline/remove';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
+    [REMOTE_SAVE_PAGE_SETTING]: savePageSettingRemoteHandler,
     [REMOTE_IMPORT]: importRemoteHandler,
     [REMOTE_REMOVE]: removeRemoteHandler,
     [REMOTE_RESET]: resetRemoteHandler,

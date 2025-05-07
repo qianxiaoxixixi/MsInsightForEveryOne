@@ -66,23 +66,66 @@ export interface Notification<T = Record<string, unknown>> {
 
 export type ModuleName = string;
 
-export interface Host {
+export interface ConnectHost {
     remote: string;
     port: number;
     jupyterlabProxy?: boolean;
-};
+}
+
+export interface FileOrDirectory {
+    type?: LayerType;
+    name: string;
+    path: string;
+    children: FileOrDirectory[];
+}
 
 export interface Project {
     projectName: string;
-    dataPath: string[];
+    projectPath: string[];
+    children: FileOrDirectory[];
+    // dataPath: string[];
 }
-export interface DataSource extends Host, Project {
+export interface DataSource extends ConnectHost, Project {
     isBaseLine?: boolean;
     baseLineCardId?: string;
-};
+}
+export interface ActiveDataSource extends DataSource {
+    activeDataPath?: string;
+}
+
+export type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB';
+
+export interface ImportResultBody {
+    reset: boolean;
+    isPending: boolean;
+    isSimulation: boolean;
+    isIpynb: boolean;
+    isCluster: boolean;
+    children: ImportTreeInfo[];
+    result: ImportRankInfo[];
+    subdirectoryList: string[];
+}
+
+export interface ImportRankInfo {
+    rankId: string;
+    dataPathList: string[];
+}
+
+export interface ImportTreeInfo {
+    type: LayerType;
+    filePath: string;
+    fileDir: string;
+    clusterId?: string;
+    host?: string;
+    cardName?: string;
+    rankId?: string;
+    children: ImportTreeInfo[];
+}
 
 export interface ProjectDirectory {
     projectName: string;
+    projectPath: string[];
+    children: ImportTreeInfo[];
     fileName: string[];
 };
 export enum ProjectActionEnum {
