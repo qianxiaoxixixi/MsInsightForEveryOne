@@ -1097,5 +1097,25 @@ void VirtualClusterDatabase::ReleaseStmt()
         insertHotspotStmt = nullptr;
     }
 }
+
+bool VirtualClusterDatabase::ExecuteQueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data,
+                                                            const std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query packet analyzer. Error:", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        PacketAnalyzerData singleOperator;
+        singleOperator.type = sqlite3_column_string(stmt, col++);
+        singleOperator.transitSize = sqlite3_column_double(stmt, col++);
+        singleOperator.transitTime = sqlite3_column_double(stmt, col++);
+        data.emplace_back(singleOperator);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
 }
 }

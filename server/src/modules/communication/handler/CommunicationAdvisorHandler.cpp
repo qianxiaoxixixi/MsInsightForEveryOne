@@ -6,6 +6,7 @@
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
+#include "CommunicationAdvisor.h"
 
 namespace Dic {
 namespace Module {
@@ -22,6 +23,7 @@ bool CommunicationAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     CommunicationAdvisorResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
+    CommunicationAdvisor::GenerateAdvisor(response.body.items);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     session.OnResponse(std::move(responsePtr));
     return true;

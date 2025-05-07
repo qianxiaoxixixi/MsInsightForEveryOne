@@ -74,6 +74,7 @@ include_directories(${SRC_HOME_DIR}/modules/communication/protocol)
 include_directories(${SRC_HOME_DIR}/modules/communication/handler)
 include_directories(${SRC_HOME_DIR}/modules/communication/parser)
 include_directories(${SRC_HOME_DIR}/modules/communication/core)
+include_directories(${SRC_HOME_DIR}/modules/communication/advisor)
 # Operator
 include_directories(${SRC_HOME_DIR}/modules/operator)
 include_directories(${SRC_HOME_DIR}/modules/operator/database)
@@ -143,6 +144,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/communication/handler DIC_MODULES_C
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/parser DIC_MODULES_COMMUNICATION_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication DIC_MODULES_COMMUNICATION_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/core DIC_MODULES_COMMUNICATION_CORE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/communication/advisor DIC_MODULES_COMMUNICATION_ADVISOR_SRC)
 # Operator
 aux_source_directory(${SRC_HOME_DIR}/modules/operator  DIC_MODULES_OPERATOR_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/operator/database DIC_MODULES_OPERATOR_DATABASE_SRC)
@@ -220,6 +222,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_COMMUNICATION_PROTOCOL_SRC}
         ${DIC_MODULES_COMMUNICATION_PARSER_SRC}
         ${DIC_MODULES_COMMUNICATION_CORE_SRC}
+        ${DIC_MODULES_COMMUNICATION_ADVISOR_SRC}
         ${DIC_MODULES_OPERATOR_SRC}
         ${DIC_MODULES_OPERATOR_DATABASE_SRC}
         ${DIC_MODULES_OPERATOR_PARSER_SRC}

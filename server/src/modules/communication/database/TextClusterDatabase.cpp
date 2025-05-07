@@ -1335,6 +1335,13 @@ std::vector<CommInfoUnderRank> TextClusterDatabase::GetCommTimeForRankDim(const 
     }
     return ExecuteGetCommTimeForRankDim(sql, stepId);
 }
+
+bool TextClusterDatabase::QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data)
+{
+    std::string sql = "SELECT transport_type, transit_size, transit_time FROM " + TABLE_BANDWIDTH +
+        " WHERE (transport_type = 'RDMA' OR transport_type = 'SDMA') AND transit_size > 0;";
+    return ExecuteQueryPacketAnalyzerData(data, sql);
+}
 } // end of namespace Module
 } // end of namespace Dic
 // LCOV_EXCL_BR_STOP

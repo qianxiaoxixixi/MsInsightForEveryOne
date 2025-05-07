@@ -321,3 +321,20 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)
     EXPECT_EQ(data.at(0).prepareTime, 0);
     EXPECT_NEAR(data.at(0).freeTime, 69909.504, 0.0001); // 69909.504 for result, 0.0001 for error
 }
+
+TEST_F(TestSuit, QueryPacketAnalyzerDataTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<Dic::Module::PacketAnalyzerData> data;
+    bool result = database->QueryPacketAnalyzerData(data);
+    int expectSize = 7; // 7
+    ASSERT_TRUE(result);
+    ASSERT_EQ(data.size(), expectSize);
+    EXPECT_EQ(data[0].type, "RDMA");
+    EXPECT_EQ(data[1].type, "RDMA");
+    EXPECT_EQ(data[2].type, "RDMA"); // 2
+    EXPECT_EQ(data[3].type, "RDMA"); // 3
+    EXPECT_EQ(data[4].type, "SDMA"); // 4
+    EXPECT_EQ(data[5].type, "SDMA"); // 5
+    EXPECT_EQ(data[6].type, "SDMA"); // 6
+}
