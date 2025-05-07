@@ -387,9 +387,9 @@ struct CommunicationSummaryInfoByThread {
             completeWaitTime = completeWaitTime > UINT64_MAX - completeTime ? 0 : completeWaitTime + completeTime;
             uncoveredWaitTime = uncoveredWaitTime > UINT64_MAX - uncoveredTime ? 0 : uncoveredWaitTime + uncoveredTime;
         } else {
-            completeTransmitTime += completeTransmitTime > UINT64_MAX - completeTime ? 0 :
+            completeTransmitTime = completeTransmitTime > UINT64_MAX - completeTime ? 0 :
                 completeTransmitTime + completeTime;
-            uncoveredTransmitTime += uncoveredTransmitTime > UINT64_MAX - uncoveredTime ? 0 :
+            uncoveredTransmitTime = uncoveredTransmitTime > UINT64_MAX - uncoveredTime ? 0 :
                 uncoveredTransmitTime + uncoveredTime;
         }
     }
