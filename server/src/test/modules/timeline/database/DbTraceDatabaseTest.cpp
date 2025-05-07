@@ -6,6 +6,7 @@
 #include "DataBaseManager.h"
 #include "DbSqlDefs.h"
 #include "NpuInfoRepoMock.h"
+#include "TraceDatabaseHelper.h"
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
 using namespace Dic::Module::Timeline;
@@ -1210,4 +1211,19 @@ TEST_F(DbTraceDatabaseTest, GetSearchCountWithLockSqlWhenHcclPlane)
         "main.depth from TASK main join COMMUNICATION_TASK_INFO ci on ci.globalTaskId = main.globalTaskId join ids on "
         "ids.id = ci.taskType WHERE main.deviceId = ? and ci.groupName = ? AND ci.planeId = ? AND main.startNs >= ? "
         "AND main.endNs <= ? ORDER BY timestamp DESC  LIMIT 1 OFFSET ?");
+}
+
+TEST_F(DbTraceDatabaseTest, ProcessByteAlignmentAnalyzerDataForDbTest)
+{
+    std::vector<Dic::Module::ByteAlignmentAnalyzerLargeOperatorInfo> largeOpInfo = {{"hcom1"}, {"hcom2"}};
+    std::vector<Dic::Module::ByteAlignmentAnalyzerSmallOperatorInfo> smallOpInfo = {
+        {"hcom3", "Memcpy", 2, "SDMA", "ON_CHIP"}, {"hcom1", "Memcpy", 2, "SDMA", "ON_CHIP"},
+        {"hcom1", "Reduce_Inline", 2, "SDMA", "ON_CHIP"}, {"hcom2", "Memcpy", 2, "SDMA", "ON_CHIP"}};
+    std::vector<Dic::Module::CommunicationLargeOperatorInfo> result;
+    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(result, largeOpInfo, smallOpInfo);
+    ASSERT_EQ(result.size(), 2); // 2
+    ASSERT_EQ(result[0].memcpyTasks.size(), 1);
+    ASSERT_EQ(result[0].reduceInlineTasks.size(), 1);
+    ASSERT_EQ(result[1].memcpyTasks.size(), 1);
+    ASSERT_EQ(result[1].reduceInlineTasks.size(), 0);
 }

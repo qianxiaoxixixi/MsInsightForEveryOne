@@ -4,6 +4,7 @@
 
 #include "CommunicationAdvisor.h"
 #include "PacketAnalyzer.h"
+#include "ByteAlignmentAnalyzer.h"
 
 namespace Dic {
 namespace Module {
@@ -15,6 +16,11 @@ void CommunicationAdvisor::GenerateAdvisor(std::vector<CommunicationAdvisorInfo>
     CommunicationAdvisorInfo packetAnalyzerInfo;
     if (packetAnalyzer.GenerateAdvisor(packetAnalyzerInfo)) {
         items.emplace_back(packetAnalyzerInfo);
+    }
+    ByteAlignmentAnalyzer byteAlignmentAnalyzer;
+    CommunicationAdvisorInfo byteAlignmentAnalyzerInfo;
+    if (byteAlignmentAnalyzer.GenerateAdvisor(byteAlignmentAnalyzerInfo)) {
+        items.emplace_back(byteAlignmentAnalyzerInfo);
     }
 }
 

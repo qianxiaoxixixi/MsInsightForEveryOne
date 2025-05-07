@@ -43,6 +43,19 @@ const std::string QUERY_P2P_COMMUNICATION_OP_DB_SQL =
     "WHERE (LOWER(str.value) like 'hcom_send%' or LOWER(str.value) like 'hcom_receive%' "
     "or LOWER(str.value) like 'hcom_batchsendrecv%') AND op.startNs >= ? AND op.endNs <= ? ORDER BY op.startNs ASC";
 
+const std::string QUERY_BYTE_ALIGNMENT_ANALYZER_LARGE_OPERATOR_FOR_DB_SQL =
+    "SELECT " + TABLE_STRING_IDS + ".value FROM " + TABLE_COMMUNICATION_OP + " INNER JOIN " + TABLE_STRING_IDS +
+    " ON " + TABLE_COMMUNICATION_OP + ".opName = " + TABLE_STRING_IDS + ".id WHERE SUBSTR(value, 1, 4) = 'hcom'";
+const std::string QUERY_BYTE_ALIGNMENT_ANALYZER_SMALL_OPERATOR_FOR_DB_SQL = "SELECT ID1.value, ID2.value, " +
+    TABLE_COMMUNICATION_TASK_INFO + ".size, " + TABLE_ENUM_HCCL_TRANSPORT_TYPE + ".name, " + TABLE_ENUM_HCCL_LINK_TYPE +
+    ".name FROM " + TABLE_COMMUNICATION_TASK_INFO + " INNER JOIN " + TABLE_STRING_IDS + " AS ID1 ON " +
+    TABLE_COMMUNICATION_TASK_INFO + ".name = ID1.id INNER JOIN " + TABLE_STRING_IDS +
+    " AS ID2 ON " + TABLE_COMMUNICATION_TASK_INFO + ".taskType = ID2.id INNER JOIN " +
+    TABLE_ENUM_HCCL_TRANSPORT_TYPE + " ON " + TABLE_COMMUNICATION_TASK_INFO + ".transportType = " +
+    TABLE_ENUM_HCCL_TRANSPORT_TYPE + ".id INNER JOIN " + TABLE_ENUM_HCCL_LINK_TYPE + " ON " +
+    TABLE_COMMUNICATION_TASK_INFO + ".linkType = " + TABLE_ENUM_HCCL_LINK_TYPE +
+    ".id WHERE (SUBSTR(ID2.value, 1, 6) = 'Memcpy' OR SUBSTR(ID2.value, 1, 6) = 'Reduce')";
+
 class TraceDatabaseHelper {
 public:
 /* Functions for BbTraceDataBase */
@@ -191,6 +204,12 @@ static uint64_t QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedSt
 static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t groupId,
     uint64_t offset, const std::vector<Protocol::ThreadTraces> &notOverlapData,
     std::vector<SameOperatorsDetails> &details);
+
+static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
+    std::vector<std::pair<std::string, std::string>> rawData);
+static void ProcessByteAlignmentAnalyzerDataForDb(std::vector<CommunicationLargeOperatorInfo> &result,
+    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
+    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
 
 private:
 /* Functions for BbTraceDataBase */

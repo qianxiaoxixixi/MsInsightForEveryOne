@@ -2053,4 +2053,60 @@ bool DbTraceDataBase::QueryP2PCommunicationOpData(const std::string &rankId, uin
     }
     return TraceDatabaseHelper::ExecuteQueryP2POpData(std::move(stmt), rankId, offset, range, p2pOpData);
 }
+
+bool DbTraceDataBase::QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data)
+{
+    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> largeOpInfo;
+    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> smallOpInfo;
+    QueryByteAlignmentAnalyzerRawData(largeOpInfo, smallOpInfo);
+    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForDb(data, largeOpInfo, smallOpInfo);
+    return true;
+}
+
+bool DbTraceDataBase::QueryByteAlignmentAnalyzerRawData(
+    std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
+    std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo)
+{
+    std::string sqlForLargeOp = QUERY_BYTE_ALIGNMENT_ANALYZER_LARGE_OPERATOR_FOR_DB_SQL;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sqlForLargeOp.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query byte alignment analyzer large operator data. Error: ",
+                         sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        ByteAlignmentAnalyzerLargeOperatorInfo item;
+        item.name = sqlite3_column_string(stmt, col++);
+        largeOpInfo.emplace_back(item);
+    }
+    sqlite3_finalize(stmt);
+
+    std::string sqlForSmallOp = QUERY_BYTE_ALIGNMENT_ANALYZER_SMALL_OPERATOR_FOR_DB_SQL;
+    sqlite3_stmt *stmt2 = nullptr;
+    int result2 = sqlite3_prepare_v2(db, sqlForSmallOp.c_str(), -1, &stmt2, nullptr);
+    if (result2 != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query byte alignment analyzer small operator data. Error: ",
+                         sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt2) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        ByteAlignmentAnalyzerSmallOperatorInfo item;
+        item.name = sqlite3_column_string(stmt2, col++);
+        item.taskType = sqlite3_column_string(stmt2, col++);
+        int64_t tempSize = sqlite3_column_int64(stmt2, col++);
+        if (tempSize < 0) {
+            item.size = 0;
+        } else {
+            item.size = static_cast<uint64_t>(tempSize);
+        }
+        item.transportType = sqlite3_column_string(stmt2, col++);
+        item.linkType = sqlite3_column_string(stmt2, col++);
+        smallOpInfo.emplace_back(item);
+    }
+    sqlite3_finalize(stmt2);
+    return true;
+}
 }

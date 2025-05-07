@@ -9,6 +9,7 @@
 #include "ProcessTable.h"
 #include "CounterTable.h"
 #include "TimelineProtocolResponse.h"
+#include "TraceDatabaseHelper.h"
 #include "TextTraceDatabase.h"
 
 using namespace Dic::Global::PROFILER::MockUtil;
@@ -1696,4 +1697,75 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryCounter)
     EXPECT_EQ(result, true);
     const uint64_t expectSize = 2;
     EXPECT_EQ(dataList.size(), expectSize);
+}
+
+TEST_F(TextTraceDatabaseMockTest, ProcessByteAlignmentAnalyzerDataForTextTest)
+{
+    std::vector<Dic::Module::CommunicationLargeOperatorInfo> result;
+    std::vector<std::pair<std::string, std::string>> rawData;
+    const std::string argsStringMemcpy = "{\"notify_id\": 1.8446744073709552e+19,"
+        " \"duration estimated(us)\": 0.6020725388601036, \"stream id\": 22, \"task id\": 224, \"context id\": 0,"
+        " \"task type\": \"Memcpy\", \"src rank\": 0, \"dst rank\": 0, \"transport type\": \"SDMA\","
+        " \"size(Byte)\": \"40\", \"data type\": \"INVALID_TYPE\", \"link type\": \"ON_CHIP\","
+        " \"bandwidth(GB/s)\": 0.04082706706962131}";
+    const std::string argsStringReduceInline = "{\"notify_id\": 0, \"duration estimated(us)\": 1087.2072538860102,"
+        " \"stream id\": 22, \"task id\": 234, \"context id\": 15, \"task type\": \"Reduce_Inline\", \"src rank\": 0,"
+        " \"dst rank\": 1, \"transport type\": \"SDMA\", \"size(Byte)\": \"20971520\", \"data type\": \"INT8\","
+        " \"link type\": \"HCCS\", \"bandwidth(GB/s)\": 18.109199702033724}";
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Reduce_Inline", argsStringReduceInline});
+    rawData.push_back({"hcom_broadcast__008_1_1", ""});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Reduce_Inline", argsStringReduceInline});
+    rawData.push_back({"hcom_broadcast__008_1_2", ""});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Reduce_Inline", argsStringReduceInline});
+    rawData.push_back({"Reduce_Inline", argsStringReduceInline});
+    rawData.push_back({"hcom_broadcast__008_1_3", ""});
+    rawData.push_back({"hcom_broadcast__008_1_4", ""});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(result, rawData);
+    const int forty = 40;
+    const int bigNumber = 20971520;
+    ASSERT_EQ(result.size(), 4); // 4
+    EXPECT_EQ(result[0].name, "hcom_broadcast__008_1_1");
+    ASSERT_EQ(result[0].memcpyTasks.size(), 1);
+    EXPECT_EQ(result[0].memcpyTasks[0].size, forty);
+    ASSERT_EQ(result[0].reduceInlineTasks.size(), 1);
+    EXPECT_EQ(result[0].reduceInlineTasks[0].size, bigNumber);
+    EXPECT_EQ(result[1].name, "hcom_broadcast__008_1_2");
+    ASSERT_EQ(result[1].memcpyTasks.size(), 1);
+    EXPECT_EQ(result[1].memcpyTasks[0].size, forty);
+    ASSERT_EQ(result[1].reduceInlineTasks.size(), 2); // 2
+    EXPECT_EQ(result[1].reduceInlineTasks[0].size, bigNumber);
+    EXPECT_EQ(result[1].reduceInlineTasks[1].size, bigNumber);
+    EXPECT_EQ(result[2].name, "hcom_broadcast__008_1_3"); // 2
+    ASSERT_EQ(result[2].memcpyTasks.size(), 0); // 2
+    ASSERT_EQ(result[2].reduceInlineTasks.size(), 0); // 2
+    EXPECT_EQ(result[3].name, "hcom_broadcast__008_1_4"); // 3
+    ASSERT_EQ(result[3].memcpyTasks.size(), 3); // 3
+    EXPECT_EQ(result[3].memcpyTasks[0].size, forty); // 3
+    EXPECT_EQ(result[3].memcpyTasks[1].size, forty); // 3
+    ASSERT_EQ(result[3].reduceInlineTasks.size(), 0);
+}
+
+TEST_F(TextTraceDatabaseMockTest, ProcessByteAlignmentAnalyzerDataForTextTestInvalidJson)
+{
+    std::vector<Dic::Module::CommunicationLargeOperatorInfo> result;
+    std::vector<std::pair<std::string, std::string>> rawData;
+    const std::string argsStringMemcpy = "{\"notify_id\": 1.8446744073709552e+19,"
+        " \"duration estimated(us)\": 0.6020725388601036, \"stream id\": 22, \"task id\": 224, \"context id\": 0,"
+        " \"task type\": \"Memcpy\", \"src rank\": 0, \"dst rank\": 0, \"transport type\": \"SDMA\","
+        " \"data type\": \"INVALID_TYPE\", \"link type\": \"ON_CHIP\","
+        " \"bandwidth(GB/s)\": 0.04082706706962131}";
+    rawData.push_back({"hcom_broadcast__008_1_1", ""});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    rawData.push_back({"Memcpy", argsStringMemcpy});
+    TraceDatabaseHelper::ProcessByteAlignmentAnalyzerDataForText(result, rawData);
+    ASSERT_EQ(result.size(), 1);
+    ASSERT_EQ(result[0].memcpyTasks.size(), 0);
+    ASSERT_EQ(result[0].reduceInlineTasks.size(), 0);
 }

@@ -1054,3 +1054,20 @@ TEST_F(TestSuit, QueryCommunicationGroupMapTest)
     EXPECT_EQ(groupMap.size(), 21); // 21
     EXPECT_EQ(groupMap.at("14083661400@17"), "Group 2 Communication");
 }
+
+TEST_F(TestSuit, QueryByteAlignmentAnalyzerRawDataTest)
+{
+    auto database = dynamic_pointer_cast<TextTraceDatabase>(
+        Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0"));
+    std::vector<std::pair<std::string, std::string>> rawData;
+    bool result = database->QueryByteAlignmentAnalyzerRawData(rawData);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(rawData.size(), 282); // 282
+    EXPECT_EQ(rawData[0].first, "Memcpy");
+    EXPECT_EQ(rawData[1].first, "hcom_broadcast__483_0");
+    EXPECT_EQ(rawData[2].first, "Memcpy"); // 2
+    EXPECT_EQ(rawData[3].first, "hcom_broadcast__483_1"); // 3
+    EXPECT_EQ(rawData[4].first, "Memcpy"); // 4
+    EXPECT_EQ(rawData[13].first, "Reduce_Inline"); // 13
+    EXPECT_EQ(rawData[281].first, "Memcpy"); // 281
+}

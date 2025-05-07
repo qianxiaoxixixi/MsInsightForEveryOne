@@ -131,6 +131,8 @@ public:
         std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
     bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) override;
+    bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) override;
+    bool QueryByteAlignmentAnalyzerRawData(std::vector<std::pair<std::string, std::string>> &rawData);
 
 private:
     const std::string sliceTable = "slice";

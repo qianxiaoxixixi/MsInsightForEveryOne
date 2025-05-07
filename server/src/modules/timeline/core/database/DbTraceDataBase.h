@@ -138,6 +138,9 @@ public:
         std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
     bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) override;
+    bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) override;
+    bool QueryByteAlignmentAnalyzerRawData(std::vector<ByteAlignmentAnalyzerLargeOperatorInfo> &largeOpInfo,
+        std::vector<ByteAlignmentAnalyzerSmallOperatorInfo> &smallOpInfo);
     static std::string GetHostPath(const std::string &filePath);
 
 private:
