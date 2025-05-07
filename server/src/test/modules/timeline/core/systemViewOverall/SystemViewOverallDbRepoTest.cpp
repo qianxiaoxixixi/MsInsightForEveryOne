@@ -142,6 +142,11 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhe
     EXPECT_EQ(responseBody.size(), 1);
     EXPECT_DOUBLE_EQ(responseBody[0].totalTime, 98071.947); // 98071.947
     EXPECT_DOUBLE_EQ(responseBody[0].ratio, 64.57); // 64.57
+    EXPECT_EQ(responseBody[0].children.size(), 1); // Group 0 Communication
+    EXPECT_DOUBLE_EQ(responseBody[0].children[0].totalTime, 98071.95); // 98071.95
+    EXPECT_EQ(responseBody[0].children[0].children.size(), 2); // 2 for "Wait Time" and "Transmit Time"
+    EXPECT_DOUBLE_EQ(responseBody[0].children[0].children[0].totalTime, 0); // 0 for Wait Time
+    EXPECT_DOUBLE_EQ(responseBody[0].children[0].children[1].totalTime, 98071.95); // 98071.95 for Transmit Time
 }
 
 TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTestWhenSuccess)
