@@ -67,7 +67,6 @@ public:
      */
     static std::vector<std::string> GetParentFileList(const std::string& prefix, const std::string& filePath);
 
-    static std::tuple<std::string, std::string> GetHostInfo(const std::vector<std::string>& folders);
     static std::tuple<std::string, std::string> GetClusterInfo(const std::vector<std::string>& folders);
 
 protected:

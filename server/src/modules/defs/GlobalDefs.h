@@ -40,7 +40,10 @@ inline std::string CastParserTypeToStr(ParserType type)
             return "IPYNB";
         case ParserType::OTHER:
             return "OTHER";
+        default:
+            return "";
     }
+    return "";
 }
 enum class ProjectTypeEnum {
     DB = 0,
