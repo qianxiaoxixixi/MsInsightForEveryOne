@@ -65,6 +65,7 @@ export async function clearAllData(page: Page): Promise<void> {
 
     const checkbtn = page.locator('.dragContainer').first().getByText('All');
     await checkbtn.waitFor({ state: 'hidden' });
+    await page.waitForTimeout(500);
     const elementText = await projectList.textContent();
     await expect(elementText?.trim()).toBe('');
     // 等待后端完成清理动作
