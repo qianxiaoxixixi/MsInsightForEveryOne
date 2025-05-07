@@ -342,25 +342,6 @@ std::vector<std::string> ProjectParserBase::GetParentFileList(const std::string 
     return res;
 }
 
-std::tuple<std::string, std::string> ProjectParserBase::GetHostInfo(const std::vector<std::string> &folders)
-{
-    if (folders.empty()) {
-        return {"HOST", ""};
-    }
-    auto back = folders.back();
-    auto fileName = FileUtil::GetFileName(back);
-    auto folder = FileUtil::GetParentPath(back);
-    constexpr uint64_t profFoldersLen = 2;
-    if (StringUtil::StartWith(back, "PROF") && folders.size() == profFoldersLen) {
-        return {FileUtil::GetFileName(folders.front()), folders.front()};
-    } else if (StringUtil::EndWith(back, "_ascend_pt") || StringUtil::EndWith(back, "_ascend_ms")) {
-        auto host = fileName.substr(0, fileName.find_first_of('_'));
-        return {host, FileUtil::SplicePath(folder, host)};
-    } else {
-        return {"HOST", back};
-    }
-}
-
 std::tuple<std::string, std::string> ProjectParserBase::GetClusterInfo(const std::vector<std::string> &folders)
 {
     if (folders.empty()) {
