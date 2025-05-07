@@ -66,12 +66,18 @@ Protocol::MemoryTable DetailsMemoryParser::ParseJsonToMemoryTable(const json_t &
     result.tableOpType = JsonUtil::GetString(json, "table_op_type");
     result.advice = JsonUtil::GetVector<std::string>(json, "advice");
     auto &tableDetailJson = const_cast<Value &>(json["table_detail"]);
+    if (!tableDetailJson.IsArray()) {
+        return result;
+    }
     for (auto &item: tableDetailJson.GetArray()) {
         Protocol::TableDetail<Protocol::CompareData<Protocol::TableRow>> tableDetail;
         tableDetail.tableName = JsonUtil::GetString(item, "table_name");
         tableDetail.size = JsonUtil::GetVector<std::string>(item, "size");
         tableDetail.headerName = JsonUtil::GetVector<std::string>(item, "header_name");
         Value &row = item["row"];
+        if (!row.IsArray()) {
+            continue;
+        }
         for (const auto &dataRow: row.GetArray()) {
             Protocol::TableRow memoryTableRow;
             memoryTableRow.name = JsonUtil::GetString(dataRow, "name");
