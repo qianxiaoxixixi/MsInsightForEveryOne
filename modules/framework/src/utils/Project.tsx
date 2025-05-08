@@ -34,6 +34,7 @@ export interface UpdateProjectParam {
     projectAction: ProjectAction;
     projectName: string;
     projectPath: string[];
+    rankPath: string;
     children: FileOrDirectory[];
     hasConflict: boolean;
 }
@@ -106,8 +107,8 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, project, isConflict, selectedProjectPath }:
-{action: ProjectAction;project: Project;isConflict: boolean;selectedProjectPath?: string}): Promise<void> {
+export async function handleProjectAction({ action, project, isConflict, selectedRankPath }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedRankPath?: string}): Promise<void> {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -125,9 +126,9 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         openLoading();
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
-            const firstDataPath = selectedProjectPath ?? dataSources.find(data => data.projectName === newProject.projectName)?.projectPath[0];
+            const firstDataPath = selectedRankPath ?? dataSources.find(data => data.projectName === newProject.projectName)?.projectPath[0];
             if (firstDataPath !== undefined) {
-                newProject.projectPath = [firstDataPath];
+                newProject.rankPath = firstDataPath;
             }
         }
         const res = await addDataPath(newProject, action, isConflict);
@@ -150,7 +151,7 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 项目更新
 // 1、更新项目目录
 // 2、设置为打开(选中）项目
-export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath }: UpdateProjectParam): void => {
+export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, rankPath }: UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
     const dataSource: DataSource = { ...GLOBAL_HOST, projectName, projectPath, children };
     runInAction(() => {
@@ -164,12 +165,12 @@ export const updateProject = ({ projectAction, projectName, children, hasConflic
                 }
                 // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
                 if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.activeDataPath !== undefined) {
-                    session.activeDataSource = dataSource;
+                    session.activeDataSource = { ...dataSource, activeDataPath: rankPath };
                     return;
                 }
             }
             if (projectAction === ProjectAction.SWITCH_PROJECT) {
-                session.activeDataSource = dataSource;
+                session.activeDataSource = { ...dataSource, activeDataPath: rankPath };
             }
         } catch {
             console.error('Update Project Explorer Failed');

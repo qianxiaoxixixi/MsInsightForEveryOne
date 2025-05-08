@@ -83,7 +83,7 @@ export interface Project {
     projectName: string;
     projectPath: string[];
     children: FileOrDirectory[];
-    // dataPath: string[];
+    rankPath?: string;
 }
 export interface DataSource extends ConnectHost, Project {
     isBaseLine?: boolean;

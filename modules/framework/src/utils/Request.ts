@@ -10,6 +10,7 @@ import { ErrorMsg } from '@/centralServer/websocket/connection';
 export interface ImportProjectParams extends Record<string, unknown> {
     projectName: string;
     path: string[];
+    rankPath?: string;
     projectAction: ProjectAction;
     isConflict: boolean;
 }
