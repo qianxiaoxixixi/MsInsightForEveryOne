@@ -13,6 +13,7 @@
 #include "unordered_map"
 #include <vector>
 #include <algorithm>
+#include <string>
 
 namespace Dic {
 using json_t = rapidjson::Value;
