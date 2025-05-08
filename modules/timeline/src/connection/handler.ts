@@ -344,7 +344,7 @@ const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
             if (metadata.dataSource.dataPath === undefined) {
                 return true;
             }
-            const isSameDataPath = dataSource?.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
+            const isSameDataPath = dataSource?.dataPath?.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
             return metadata.dataSource.remote === dataSource?.remote && isSameDataPath;
         });
         for (const unit of removeUnits) {
