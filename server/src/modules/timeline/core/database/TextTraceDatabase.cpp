@@ -1314,7 +1314,7 @@ bool TextTraceDatabase::QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t
         }
         // 确保 "MHz" 键存在且类型正确
         if (jsonArgs.HasMember("MHz") && jsonArgs["MHz"].IsString()) {
-            detail.second = NumberUtil::StringToDouble(jsonArgs["MHz"].GetString());
+            detail.second = NumberUtil::StringToInt(jsonArgs["MHz"].GetString());
         } else {
             ServerLog::Error("Invalid AI core freq data structure detected.");
             break;

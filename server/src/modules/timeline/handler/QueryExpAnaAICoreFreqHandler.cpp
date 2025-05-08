@@ -11,6 +11,7 @@ namespace Timeline {
 using namespace Dic::Server;
 bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
+    const uint64_t percentLimit = 5;
     ExpAnaAICoreFreqRequest &request = dynamic_cast<ExpAnaAICoreFreqRequest &>(*requestPtr.get());
  
     std::unique_ptr<ExpAnaAICoreFreqResponse> responsePtr = std::make_unique<ExpAnaAICoreFreqResponse>();
@@ -31,15 +32,11 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get system view AI core freq table response data.");
     }
-    for (auto freq : freqs) {
-        maxFreq = std::max(maxFreq, freq.second);
-        minFreq = std::min(minFreq, freq.second);
-    }
     if (maxFreq != 0) {
         // 计算百分比需要乘以100
-        response.body.percent = ((maxFreq - minFreq) / maxFreq) * 100;
+        response.body.percent = static_cast<uint64_t>(((float)(maxFreq - minFreq) / (float)maxFreq) * 100);
     }
-    if (response.body.percent > 5) { // 降频百分比超过5，需要提示用户关注
+    if (response.body.percent > percentLimit) { // 降频百分比超过5，需要提示用户关注
         response.body.hasProblem = true;
     }
  
