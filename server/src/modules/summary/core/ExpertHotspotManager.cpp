@@ -8,6 +8,7 @@
 #include "ClusterDef.h"
 #include "CollectionUtil.h"
 #include "NumberSafeUtil.h"
+#include "NumberUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -70,8 +71,8 @@ bool ExpertHotspotManager::MergeAndSaveModelInfo(const std::map<std::string, Mod
     // 配置信息保存
     if (!hotspotModelInfo.empty()) {
         // 计算总层数，从以下两个数据中取大的数据：1.导入数据的moe层数+已配置的稠密层数；2.已配置的总层数
-        int totalModelLayer = NumberUtil::CeilingClamp(
-            NumberSafe::Add(hotspot.moeLayer, curModelInfo.denseLayerList.size()), static_cast<uint64_t>(INT_MAX));
+        uint64_t totalModelLayerCeil = NumberSafe::Add(hotspot.moeLayer, curModelInfo.denseLayerList.size());
+        int totalModelLayer = NumberUtil::CeilingClamp(totalModelLayerCeil, static_cast<uint64_t>(INT_MAX));
         finalModelInfo.modelLayer = std::max(totalModelLayer, finalModelInfo.modelLayer);
         finalModelInfo.rankNumber = hotspot.rankNumber;
         finalModelInfo.moeLayer = hotspot.moeLayer;
@@ -79,8 +80,8 @@ bool ExpertHotspotManager::MergeAndSaveModelInfo(const std::map<std::string, Mod
     }
 
     if (!deploymentModelInfo.empty()) {
-        int totalModelLayer = NumberUtil::CeilingClamp(
-            NumberSafe::Add(deployment.moeLayer, curModelInfo.denseLayerList.size()), static_cast<uint64_t>(INT_MAX));
+        uint64_t totalModelLayerCeil = NumberSafe::Add(deployment.moeLayer, curModelInfo.denseLayerList.size());
+        int totalModelLayer = NumberUtil::CeilingClamp(totalModelLayerCeil, static_cast<uint64_t>(INT_MAX));
         finalModelInfo.modelLayer = std::max(totalModelLayer, finalModelInfo.modelLayer);
         finalModelInfo.rankNumber = deployment.rankNumber;
         finalModelInfo.moeLayer = deployment.moeLayer;
