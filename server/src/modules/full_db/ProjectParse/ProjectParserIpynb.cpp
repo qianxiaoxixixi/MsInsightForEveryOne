@@ -91,6 +91,7 @@ void ProjectParserIpynb::BuildProjectExploreInfo(ProjectExplorerInfo &projectInf
     for (const auto &file: parsedFiles) {
         auto parsedFileInfo = std::make_shared<ParseFileInfo>();
         parsedFileInfo->subId = FileUtil::GetFileName(file);
+        parsedFileInfo->parseFilePath = file;
         parsedFileInfo->type = ParseFileType::IPYNB;
         parsedFileInfo->curDirName = FileUtil::GetFileName(file);
         projectInfo.AddSubParseFileInfo(parsedFileInfo);
