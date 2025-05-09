@@ -14,6 +14,7 @@ class ExpertHotspotManagerTest : public ::testing::Test {
 protected:
     std::string filePath;
     std::string hotspotPath;
+    std::string deploymentPath;
     void SetUp() override
     {
         std::string  currPath = Dic::FileUtil::GetCurrPath();
@@ -21,6 +22,7 @@ protected:
         currPath = currPath.substr(0, index + 1);
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
         hotspotPath = currPath + R"(/src/test/test_data/expert_hotspot)";
+        deploymentPath = currPath + R"(/src/test/test_data/expert_deployment)";
     }
 
     static std::string InitParser(const std::string &dataPath, const std::string &uniqueKey)
@@ -100,5 +102,16 @@ TEST_F(ExpertHotspotManagerTest, QueryWithoutHotspotData)
     const int numberZero = 0;
     EXPECT_EQ(res.size(), exceptSize);
     EXPECT_EQ(res[1].visits, numberZero);
+    Clear();
+}
+
+TEST_F(ExpertHotspotManagerTest, InitExpertDeploymentDataSuccess)
+{
+    InitParser(filePath, Dic::COMPARE);
+    std::string error;
+    Dic::Module::Summary::ExpertHotspotManager::InitExpertHotspotData(deploymentPath, "1", error);
+    auto res = Dic::Module::Summary::ExpertHotspotManager::QueryExpertHotspotData("prefill", "1");
+    const int exceptSize = 18560;
+    EXPECT_EQ(res.size(), exceptSize);
     Clear();
 }
