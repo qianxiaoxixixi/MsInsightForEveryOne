@@ -230,8 +230,8 @@ const Contents = observer(({ session }: {session: Session}) => {
     // 当前选中（打开）工程、文件
     const selectedKeys = useMemo(() => {
         if (session.activeDataSource.projectName !== '') {
-            const { projectName, activeDataPath } = session.activeDataSource;
-            return [projectName, `${projectName}-${activeDataPath}`];
+            const { projectName, selectedFilePath } = session.activeDataSource;
+            return [projectName, `${projectName}-${selectedFilePath}`];
         }
         return [];
     }, [session.activeDataSource]);
@@ -259,7 +259,7 @@ const Contents = observer(({ session }: {session: Session}) => {
                 action: ProjectAction.SWITCH_PROJECT,
                 project: dataSource,
                 isConflict: false,
-                selectedRankPath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
+                selectedFilePath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
             });
         }
         // 如果点击的是文件
@@ -269,7 +269,7 @@ const Contents = observer(({ session }: {session: Session}) => {
                 session.activeDataSource = {
                     ...GLOBAL_HOST,
                     ...dataSource,
-                    activeDataPath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
+                    selectedFilePath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
                 };
             });
             if (isInClusterCompare()) {

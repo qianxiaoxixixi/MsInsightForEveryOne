@@ -87,15 +87,15 @@ export const sendShortcutKeys = (key: {hasCtrl: boolean;key: string}): void => {
 
 export const sendDirectory = (to?: number): void => {
     const session = store.sessionStore.activeSession;
-    const { projectName, activeDataPath } = session.activeDataSource;
+    const { projectName, selectedFilePath } = session.activeDataSource;
     let rankId: string = '';
     // 比对数据
     if (session.isCompareStatus) {
         rankId = session.compareSet.comparison.rankId;
     } else {
         // 切换目录
-        if (projectName !== '' && activeDataPath !== undefined) {
-            rankId = getRankId({ projectName, filePath: activeDataPath });
+        if (projectName !== '' && selectedFilePath !== undefined) {
+            rankId = getRankId({ projectName, filePath: selectedFilePath });
         }
     }
     // 通知页签

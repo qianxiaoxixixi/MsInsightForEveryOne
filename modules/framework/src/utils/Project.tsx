@@ -34,7 +34,7 @@ export interface UpdateProjectParam {
     projectAction: ProjectAction;
     projectName: string;
     projectPath: string[];
-    rankPath: string;
+    selectedFilePath: string;
     children: FileOrDirectory[];
     hasConflict: boolean;
 }
@@ -107,8 +107,8 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, project, isConflict, selectedRankPath }:
-{action: ProjectAction;project: Project;isConflict: boolean;selectedRankPath?: string}): Promise<void> {
+export async function handleProjectAction({ action, project, isConflict, selectedFilePath }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedFilePath?: string}): Promise<void> {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -126,9 +126,9 @@ export async function handleProjectAction({ action, project, isConflict, selecte
         openLoading();
         // 切换项目
         if (action === ProjectAction.SWITCH_PROJECT) {
-            const firstDataPath = selectedRankPath ?? dataSources.find(data => data.projectName === newProject.projectName)?.projectPath[0];
-            if (firstDataPath !== undefined) {
-                newProject.rankPath = firstDataPath;
+            const firstFilePath = selectedFilePath ?? dataSources.find(data => data.projectName === newProject.projectName)?.projectPath[0];
+            if (firstFilePath !== undefined) {
+                newProject.selectedFilePath = firstFilePath;
             }
         }
         const res = await addDataPath(newProject, action, isConflict);
@@ -151,7 +151,7 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 项目更新
 // 1、更新项目目录
 // 2、设置为打开(选中）项目
-export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, rankPath }: UpdateProjectParam): void => {
+export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, selectedFilePath }: UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
     const dataSource: DataSource = { ...GLOBAL_HOST, projectName, projectPath, children };
     runInAction(() => {
@@ -161,16 +161,16 @@ export const updateProject = ({ projectAction, projectName, children, hasConflic
                 session.dataSources = getMergedDataSources(session.dataSources, dataSource, hasConflict);
                 // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
                 if (hasConflict || children.length > 1) {
-                    session.activeDataSource = { ...dataSource, activeDataPath: getProjectFirstFile(dataSource) };
+                    session.activeDataSource = { ...dataSource, selectedFilePath: getProjectFirstFile(dataSource) };
                 }
                 // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
-                if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.activeDataPath !== undefined) {
-                    session.activeDataSource = { ...dataSource, activeDataPath: rankPath };
+                if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.selectedFilePath !== undefined) {
+                    session.activeDataSource = { ...dataSource, selectedFilePath };
                     return;
                 }
             }
             if (projectAction === ProjectAction.SWITCH_PROJECT) {
-                session.activeDataSource = { ...dataSource, activeDataPath: rankPath };
+                session.activeDataSource = { ...dataSource, selectedFilePath };
             }
         } catch {
             console.error('Update Project Explorer Failed');
@@ -277,8 +277,8 @@ export const removeDataPath = (projectIndex: number, dataPath: string): void => 
             // 目录更新
             session.deleteDataPath(projectIndex, singleDataPath);
             // 如果移除的是当前选中文件，默认选中第一个文件
-            if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.activeDataPath === singleDataPath) {
-                session.activeDataSource = { ...dataSource, activeDataPath: getProjectFirstFile(dataSource) };
+            if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.selectedFilePath === singleDataPath) {
+                session.activeDataSource = { ...dataSource, selectedFilePath: getProjectFirstFile(dataSource) };
             }
         } catch {
             console.error('removeSingle error');
@@ -345,10 +345,10 @@ const createNodeMap = (nodes: FileOrDirectory[]): Map<string, FileOrDirectory> =
         if (depth >= 5) { return; }
         map.set(node.path, node);
         if (node.children) {
-            node.children.forEach(addToMap);
+            node.children.forEach((child) => addToMap(child, depth + 1));
         }
     };
-    nodes.forEach(addToMap);
+    nodes.forEach((child) => addToMap(child, 0));
     return map;
 };
 
@@ -427,7 +427,7 @@ export const mergeProjects = (projectA: Project, projectB: Project): Project => 
 
     const mergedRoots: FileOrDirectory[] = [];
 
-    const allPaths = new Set([...Object.keys(mapA), ...Object.keys(mapB)]);
+    const allPaths = new Set([...mapA.keys(), ...mapB.keys()]);
 
     findTopLevelPaths(allPaths).forEach(path => {
         const nodeA = mapA.get(path);

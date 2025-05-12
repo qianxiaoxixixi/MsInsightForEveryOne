@@ -61,7 +61,7 @@ export const addDataPath = async function(project: Project, action: ProjectActio
         const params: ImportProjectParams = {
             projectName: project.projectName,
             path: project.projectPath,
-            rankPath: project.rankPath,
+            selectedFilePath: project.selectedFilePath,
             projectAction: action,
             isConflict,
         };
@@ -97,7 +97,7 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
         const hasConflict = params.isConflict as boolean;
         const projectName = params.projectName;
         const projectPath = params.path;
-        const rankPath = params.rankPath ?? data.subdirectoryList[0];
+        const selectedFilePath = params.selectedFilePath ?? data.subdirectoryList[0];
         const children = data.children?.map((child) => transformFile(child, 0))
             ?.flat()?.filter((item) => item !== undefined) as FileOrDirectory[];
         // 更新场景
@@ -106,7 +106,7 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
         const rankInfoList = data.result;
         updateRankMap(projectAction, projectName, rankInfoList);
         // 更新项目目录
-        updateProject({ projectAction, projectName, children, hasConflict, projectPath, rankPath });
+        updateProject({ projectAction, projectName, children, hasConflict, projectPath, selectedFilePath });
     } catch (error) {
         console.error(error);
     }

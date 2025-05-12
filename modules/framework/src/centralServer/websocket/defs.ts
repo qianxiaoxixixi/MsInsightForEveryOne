@@ -83,14 +83,13 @@ export interface Project extends Pick<FileOrDirectory, 'children'> {
     projectName: string;
     projectPath: string[];
     children: FileOrDirectory[];
-    rankPath?: string;
+    selectedFilePath?: string;
 }
 export interface DataSource extends ConnectHost, Project {
     isBaseLine?: boolean;
     baseLineCardId?: string;
 }
 export interface ActiveDataSource extends DataSource {
-    activeDataPath?: string;
 }
 
 export type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB';
