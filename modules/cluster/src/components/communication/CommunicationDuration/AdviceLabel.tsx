@@ -9,6 +9,7 @@ import { HelpIcon } from 'ascend-icon';
 import { type TableColumnsType } from 'antd';
 import { ResizeTable } from 'ascend-resize';
 import { DataType } from '../CommunicationTimeTable';
+import { queryCommunicationExpertAdvisor } from '../../../utils/RequestUtils';
 
 export interface CommunicationAdvice {
     type: string;
@@ -25,9 +26,9 @@ export interface CommunicationExpertAdvice {
     suggestions: string[];
 }
 
-const AdviceLabel = (props: {adviceData: CommunicationAdvice[]; expertAdviceData: CommunicationExpertAdvice}): JSX.Element => {
+const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element => {
     const { t } = useTranslation('communication');
-    const { adviceData, expertAdviceData } = props;
+    const { adviceData } = props;
     let overAllText = '';
     const issueList: Array<{title: string; content: string }> = [];
     const sdmaData = adviceData.find(item => item.type === 'SDMA');
@@ -41,6 +42,10 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]; expertAdviceData
             content: t('CommunicationAdvice', { ...data, issue: isBandwidthIssue ? t('BandwidthIssue') : t('CommunicationIssue') }),
         });
     });
+    const [expertAdviceData, setExpertAdviceData] = useState<CommunicationExpertAdvice>({} as CommunicationExpertAdvice);
+    const getCommunicationExpertAdvisorData = async (): Promise<void> => {
+        setExpertAdviceData(await queryCommunicationExpertAdvisor() ?? {});
+    };
     const [expertAdviceList, setDataList] = useState<Array<{title: string; content: string[]; tableColumns: object[]; tableDataSource: object[] }>>([]);
     const fetchDataAndSetData = (): void => {
         const dataList: any[] = [];
@@ -72,6 +77,9 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]; expertAdviceData
     useEffect(() => {
         fetchDataAndSetData();
     }, [JSON.stringify(expertAdviceData)]);
+    useEffect(() => {
+        getCommunicationExpertAdvisorData();
+    }, []);
     if (sdmaData && rdmaData) {
         overAllText += t('MoreFocus', { type: sdmaData.time >= rdmaData.time ? sdmaData.type : rdmaData.type });
     }
