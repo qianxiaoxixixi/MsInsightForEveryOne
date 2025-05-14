@@ -3,9 +3,9 @@
  */
 import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, InputNumber, InputGroup, InputSplit, Button, Select, Tabs, Tooltip } from 'ascend-components';
+import { Button, Form, InputGroup, InputNumber, InputSplit, Select, Tabs, Tooltip } from 'ascend-components';
 import { message, Popconfirm, Spin } from 'antd';
 import eventBus from '../../utils/eventBus';
 import styled from '@emotion/styled';
@@ -17,6 +17,7 @@ import { ParallelSwitchConditionsProvider, useParallelSwitchConditions } from '.
 import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
 import cls from 'classnames';
+import { isEqual } from 'lodash';
 
 const Legend = styled.div`
     .legendContainer {
@@ -138,10 +139,18 @@ interface CommunicatorHeaderProps {
     generateConditions: GenerateConditions;
     setGenerateConditions: (params: GenerateConditions) => void;
 }
+interface CollectedConfiguration {
+    dpSize: number;
+    ppSize: number;
+    tpSize: number;
+    epSize: number;
+    cpSize: number;
+    moeTpSize: number;
+}
 const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateConditions, setGenerateConditions }: CommunicatorHeaderProps) => {
     const [form] = Form.useForm();
-    const [isCollectedConfiguration, setIsCollectedConfiguration] = useState(false);
     const [activeTab, setActiveTab] = useState(generateConditions.dimension);
+    const collectedConfiguration = useRef<CollectedConfiguration | null>(null);
     const { t } = useTranslation('summary');
     const dimensionOptions = useMemo(() => {
         const options = getDimensionOptions(t, generateConditions);
@@ -161,9 +170,11 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
         const { dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize = 1, level, algorithm } = await getParallelStrategy();
         const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;
         if (level === 'collected') {
-            setIsCollectedConfiguration(true);
+            collectedConfiguration.current = {
+                dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize: moeTpSize ?? 1,
+            };
         } else {
-            setIsCollectedConfiguration(false);
+            collectedConfiguration.current = null;
         }
         if (level === 'undefined' || equal) {
             setShowRank(false);
@@ -200,7 +211,6 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             setGenerateConditions({ ...values, dimension: activeTab });
             setShowRank(true);
             eventBus.emit('activeCommunicator', undefined);
-            setIsCollectedConfiguration(false);
         } catch (e) {
             const errMsg = (e as ErrorInfo)?.message;
             if (errMsg !== undefined) {
@@ -218,7 +228,7 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     };
 
     return <>
-        <FormDom isCollectedConfiguration={isCollectedConfiguration} onClickGenerate={clickGenerate} form={form}/>
+        <FormDom collectedConfiguration={collectedConfiguration} onClickGenerate={clickGenerate} form={form}/>
         {showRank && <Tabs
             type="card"
             size="small"
@@ -255,18 +265,29 @@ const getDimensionOptions = (t: TFunction, generateConditions: GenerateCondition
 
 const FormDom = (
     {
-        isCollectedConfiguration,
+        collectedConfiguration,
         onClickGenerate,
         form,
     }:
     {
-        isCollectedConfiguration: boolean;
+        collectedConfiguration: React.MutableRefObject<CollectedConfiguration | null>;
         onClickGenerate: () => void;
         form: FormInstance<any>;
     },
 ): JSX.Element => {
     const { t } = useTranslation('summary');
     const algorithm = Form.useWatch('algorithm', form);
+    const [popconfirmVisible, setPopconfirmVisible] = useState(false);
+
+    const handleValueChange = useCallback((): void => {
+        if (collectedConfiguration.current === null) {
+            setPopconfirmVisible(false);
+            return;
+        }
+
+        const mismatchCollectedConfiguration = !isEqual(collectedConfiguration.current, form.getFieldsValue(['ppSize', 'tpSize', 'cpSize', 'dpSize', 'epSize', 'moeTpSize']));
+        setPopconfirmVisible(mismatchCollectedConfiguration);
+    }, []);
 
     return <Form
         data-testId="form-generate-parallelism"
@@ -275,6 +296,7 @@ const FormDom = (
         initialValues={{
             algorithm: 'megatron-lm(tp-cp-ep-dp-pp)',
         }}
+        onValuesChange={handleValueChange}
         onFinish={onClickGenerate}
     >
         <Form.Item name={'algorithm'} label={t('Algorithm')}>
@@ -305,14 +327,14 @@ const FormDom = (
         <Form.Item>
             <Popconfirm
                 placement="right"
-                disabled={!isCollectedConfiguration}
+                disabled={!popconfirmVisible}
                 title={<div style={{ maxWidth: 400 }}>{t('GenerateConfirm')}</div>}
                 onConfirm={onClickGenerate}
             >
                 <Button
                     type="primary"
                     htmlType="submit"
-                    onClick={isCollectedConfiguration ? undefined : onClickGenerate}
+                    onClick={popconfirmVisible ? undefined : onClickGenerate}
                 >
                     {t('Generate')}
                 </Button>
