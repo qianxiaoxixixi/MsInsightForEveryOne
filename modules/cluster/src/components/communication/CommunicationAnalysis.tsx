@@ -12,12 +12,12 @@ import CommunicationTimeTable from './CommunicationTimeTable';
 import CommunicationTimeChart, { type DataItem } from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import { notNullObj } from '../Common';
-import { queryCommunication, queryCommunicationExpertAdvisor, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
+import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
-import AdviceLabel, { type CommunicationAdvice, type CommunicationExpertAdvice } from './CommunicationDuration/AdviceLabel';
+import AdviceLabel, { type CommunicationAdvice } from './CommunicationDuration/AdviceLabel';
 import Operators from './CommunicationDuration/Opertators';
 
 interface showDataType {
@@ -25,24 +25,21 @@ interface showDataType {
     analysisChartData: AnalysisChartData;
     tableData: [];
     adviceData: CommunicationAdvice[];
-    expertData: CommunicationExpertAdvice[];
 }
 
 const searchData = async (conditions: ConditionDataType & {isCompare: boolean}): Promise<showDataType> => {
     const notNullKeys: string[] = ['stage', 'operatorName', 'type'];
     if (!notNullObj(conditions, notNullKeys)) {
-        return { chartData: [], analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [], adviceData: [], expertData: [] };
+        return { chartData: [], analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [], adviceData: [] };
     }
     const communicationOperatorData = await queryCommunicationOperatorLists({ ...conditions });
     const res = await queryCommunication(conditions);
-    const communicationExpertAdvisorData = await queryCommunicationExpertAdvisor();
     const { advice = [], items: data = [] } = res ?? {};
-    const expert = communicationExpertAdvisorData ?? {};
     // 默认按总时间降序排序
     data.sort((a: DataItem, b: DataItem) => conditions.isCompare
         ? b.compareData.diff.elapseTime - a.compareData.diff.elapseTime
         : b.compareData.compare.elapseTime - a.compareData.compare.elapseTime);
-    return { analysisChartData: communicationOperatorData, tableData: data, chartData: data, adviceData: advice, expertData: expert };
+    return { analysisChartData: communicationOperatorData, tableData: data, chartData: data, adviceData: advice };
 };
 
 const CommunicationAnalysis = observer(({ session, active = true }: { session: Session;active?: boolean }) => {
@@ -52,7 +49,6 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         analysisChartData: {} as AnalysisChartData,
         tableData: [],
         adviceData: [],
-        expertData: [],
     });
     const [conditions, setConditions] = useState<ConditionDataType>(defaultCondition);
     const showOperator = (newRankId: string): void => {
@@ -107,7 +103,7 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
                         conditions={conditions} updateSort={(data): void => {
                             setShowData({ ...showData, chartData: data });
                         }}/>
-                    { showData.adviceData.length > 0 && <AdviceLabel adviceData={showData.adviceData} expertAdviceData={showData.expertData}/> }
+                    { showData.adviceData.length > 0 && <AdviceLabel adviceData={showData.adviceData}/> }
                 </div>
             </div>
             {/* 通信矩阵 */}
