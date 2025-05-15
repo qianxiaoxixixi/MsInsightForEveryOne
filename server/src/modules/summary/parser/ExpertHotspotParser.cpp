@@ -3,6 +3,8 @@
  */
 #include "ExpertHotspotParser.h"
 #include "SafeFile.h"
+#include "NumberSafeUtil.h"
+#include "NumberUtil.h"
 
 namespace Dic::Module::Summary {
     bool ExpertHotspotParser::Parse(const std::string &filePath, const std::string &version)
@@ -40,10 +42,12 @@ namespace Dic::Module::Summary {
             }
             layer++;
         }
-        modelInfoMap[modelStage].rankNumber++;
+        modelInfoMap[modelStage].rankNumber = std::max(modelInfoMap[modelStage].rankNumber, rankId + 1);
         modelInfoMap[modelStage].moeLayer = layer;
         // 单独看热点数据，没有专家id，因此使用专家数量作为专家id的最大值
-        modelInfoMap[modelStage].expertNumber += expertCountPerRank;
+        uint64_t expertNumber = NumberSafe::Muls(modelInfoMap[modelStage].rankNumber, expertCountPerRank);
+        modelInfoMap[modelStage].expertNumber =
+            NumberUtil::CeilingClamp(expertNumber, static_cast<uint64_t>(INT_MAX));
         return true;
     }
 
