@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-#include "ExpertHotspotManager.h"
+#include <algorithm>
 #include "ExpertHotspotParser.h"
 #include "ExpertDeploymentParser.h"
 #include "DataBaseManager.h"
@@ -9,6 +9,7 @@
 #include "CollectionUtil.h"
 #include "NumberSafeUtil.h"
 #include "NumberUtil.h"
+#include "ExpertHotspotManager.h"
 
 namespace Dic {
 namespace Module {
@@ -205,23 +206,6 @@ ModelInfo ExpertHotspotManager::GetModelInfo(std::shared_ptr<VirtualClusterDatab
     return modelInfo;
 }
 
-int ExpertHotspotManager::CalColumnNumber(const std::vector<ExpertHotspotStruct> &hotspotInfos,
-    const ModelInfo &modelInfo, const std::vector<ExpertDeploymentStruct> &deployment)
-{
-    int colNumber = 0;
-    if (!hotspotInfos.empty() && modelInfo.moeLayer > 0 && hotspotInfos.size() % modelInfo.moeLayer == 0) {
-        // 如果热点数据存在，则：列数 = 热点数据总个数 / moe层数，需要保证moe层数大于0，并且能够整除，否则代表数据不正常
-        colNumber = hotspotInfos.size() / modelInfo.moeLayer;
-    } else if (!deployment.empty() && modelInfo.rankNumber != 0) {
-        // 热点数据不存在，但是配置文件存在，则 列数 = 每个rank专家数 * rank数量
-        colNumber = deployment[0].expertList.size() * modelInfo.rankNumber;
-    } else {
-        // 如果热点数据不存在，则使用专家个数作为列数
-        colNumber = modelInfo.expertNumber;
-    }
-    return colNumber;
-}
-
 std::vector<int> ExpertHotspotManager::CalMoeLayerMapping(const ModelInfo &modelInfo,
                                                           const std::set<int> &denseLayerSet)
 {
@@ -243,7 +227,7 @@ std::vector<int> ExpertHotspotManager::CalMoeLayerMapping(const ModelInfo &model
 bool ExpertHotspotManager::FillHotspotData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params)
 {
     for (auto &item: params.hotspotInfos) {
-        if (item.layer >= params.modelInfo.moeLayer) {
+        if (item.layer >= params.modelInfo.moeLayer || item.rankId >= params.modelInfo.rankNumber) {
             ServerLog::Error("Invalid hotspot data.");
             return false;
         }
@@ -253,7 +237,7 @@ bool ExpertHotspotManager::FillHotspotData(std::vector<ExpertHotspotStruct> &res
         item.expertIndex =
             NumberSafe::Add(NumberSafe::Muls(item.rankId, params.expertNumberPerRank), item.localExpertId);
         int index = NumberSafe::Add(item.expertIndex, NumberSafe::Muls(item.layer, params.colNumber));
-        if (index > NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer)) {
+        if (index >= NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer)) {
             return false;
         }
         res[index] = item;
@@ -264,7 +248,7 @@ bool ExpertHotspotManager::FillHotspotData(std::vector<ExpertHotspotStruct> &res
 bool ExpertHotspotManager::FillDeploymentData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params)
 {
     for (const auto &item: params.deployment) {
-        if (item.layer >= params.modelInfo.moeLayer) {
+        if (item.layer >= params.modelInfo.moeLayer || item.deviceId >= params.modelInfo.rankNumber) {
             ServerLog::Error("Invalid deployment data.");
             return false;
         }
@@ -272,7 +256,7 @@ bool ExpertHotspotManager::FillDeploymentData(std::vector<ExpertHotspotStruct> &
         for (size_t i = 0; i < item.expertList.size(); ++i) {
             int expertIndex = NumberSafe::Add(i, NumberSafe::Muls(params.expertNumberPerRank, item.deviceId));
             int index =  NumberSafe::Add(expertIndex, NumberSafe::Muls(aclLayer, params.colNumber));
-            if (index > NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer)) {
+            if (index >= NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer)) {
                 return false;
             }
             res[index].expertIndex = expertIndex;
@@ -286,24 +270,17 @@ bool ExpertHotspotManager::FillDeploymentData(std::vector<ExpertHotspotStruct> &
 
 void ExpertHotspotManager::FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params)
 {
-    // 空内容填充：空内容包含两部分，1.设置为稠密层的数据；2.总层数中最后几层未被稠密层和热点数据覆盖到的数据
-    if (!params.moeLayerMapping.empty() && !params.hotspotInfos.empty()) {
-        int index = params.moeLayerMapping.size() - 1;
-        for (int i = params.moeLayerMapping[index] + 1; i < params.modelInfo.modelLayer; ++i) {
-            params.denseLayerSet.insert(i);
-        }
-    } else {
-        // 如果没有没有moe层 也就是说所有层都是空层
-        for (size_t i = 0; i < params.modelInfo.modelLayer; ++i) {
-            params.denseLayerSet.insert(i);
-        }
-    }
-    for (const auto &item: params.denseLayerSet) {
+    for (int item = 0; item < params.modelInfo.modelLayer; ++item) {
         int startIndex = item * params.colNumber;
         for (int i = 0; i < params.colNumber; ++i) {
             int index = startIndex + i;
             res[index].expertIndex = i;
+            res[index].expertId = -1;
             res[index].layer = item;
+            if (params.expertNumberPerRank != 0) {
+                // rankId计算（向下取整）：列数 ÷ 每个rank的专家数
+                res[index].rankId = i / params.expertNumberPerRank;
+            }
         }
     }
 }
@@ -311,25 +288,25 @@ void ExpertHotspotManager::FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &
 bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hotspotInfos,
     const ModelInfo &modelInfo, const std::vector<ExpertDeploymentStruct> &deployment)
 {
-    // 校验并计算结果列表长度，行数为模型总层数（已知），列数需要根据情况来计算
-    int colNumber = CalColumnNumber(hotspotInfos, modelInfo, deployment);
-    if (colNumber == 0 || modelInfo.modelLayer == 0) {
-        return false;
-    }
-    // 获取每个rank的专家数，这里如果未导入热点数据或配置数据，则rank数量位置，该参数默认为0
+    // 获取每个rank的专家数，以及热力图的列数目
     int expertNumberPerRank = 0;
+    int colNumber = 0;
     if (!hotspotInfos.empty()) {
-        if (modelInfo.rankNumber == 0 || colNumber % modelInfo.rankNumber != 0) {
-            ServerLog::Error("Invalid model info: Rank number cannot be zero, "
-                             "and expert number should be divisible by rank number.");
-            return false;
-        }
-        // 如果有热点数据，则 专家数 = 列数 / rank数
-        expertNumberPerRank = colNumber / modelInfo.rankNumber;
+        std::vector<ExpertHotspotStruct> filteredHotspots;
+        std::copy_if(hotspotInfos.begin(), hotspotInfos.end(), std::back_inserter(filteredHotspots),
+            [hotspotInfos](const ExpertHotspotStruct& info) {
+                return info.layer == hotspotInfos[0].layer && info.rankId == hotspotInfos[0].rankId;
+            });
+        expertNumberPerRank = filteredHotspots.size();
+        colNumber = expertNumberPerRank * modelInfo.rankNumber;
     } else if (!deployment.empty()) {
         // 如果有配置文件，则专家数直接取自数据内
         expertNumberPerRank = deployment[0].expertList.size();
+        colNumber = expertNumberPerRank * modelInfo.rankNumber;
+    } else {
+        colNumber = modelInfo.expertNumber;
     }
+
     // 初始化结果列表
     std::vector<ExpertHotspotStruct> res(colNumber * modelInfo.modelLayer);
     std::set<int> denseLayerSet(modelInfo.denseLayerList.begin(), modelInfo.denseLayerList.end());
@@ -337,9 +314,12 @@ bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hots
     // 计算从moe层映射到整体层的映射
     std::vector<int> moeLayerMapping = CalMoeLayerMapping(modelInfo, denseLayerSet);
 
-    // 热点数据填充，如果热点数据不存在，会直接返回true，不阻塞整体流程
     FillExpertDataParams params{modelInfo, hotspotInfos, deployment, moeLayerMapping,
                                 colNumber, expertNumberPerRank, denseLayerSet};
+    // 所有数据填充空内容
+    FillDenseLayerInfo(res, params);
+
+    // 热点数据填充，如果热点数据不存在，会直接返回true，不阻塞整体流程
     if (!FillHotspotData(res, params)) {
         return false;
     }
@@ -348,8 +328,6 @@ bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hots
         return false;
     }
 
-    // 空内容填充：空内容包含两部分，1.设置为稠密层的数据；2.总层数中最后几层未被稠密层和热点数据覆盖到的数据
-    FillDenseLayerInfo(res, params);
     hotspotInfos = res;
     return true;
 }

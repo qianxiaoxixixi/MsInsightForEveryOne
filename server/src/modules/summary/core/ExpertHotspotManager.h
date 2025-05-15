@@ -37,8 +37,6 @@ private:
         const std::map<std::string, ModelInfo> &deploymentModelInfo, std::shared_ptr<VirtualClusterDatabase> &database);
     static bool SaveModelInfo(const ModelInfo &modelInfo, std::shared_ptr<VirtualClusterDatabase> &db);
     static ModelInfo GetModelInfo(std::shared_ptr<VirtualClusterDatabase> &db);
-    static int CalColumnNumber(const std::vector<ExpertHotspotStruct> &hotspotInfos, const ModelInfo &modelInfo,
-                               const std::vector<ExpertDeploymentStruct> &deployment);
     static std::vector<int> CalMoeLayerMapping(const ModelInfo &modelInfo, const std::set<int> &denseLayerSet);
     static bool FillHotspotData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
     static bool FillDeploymentData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
