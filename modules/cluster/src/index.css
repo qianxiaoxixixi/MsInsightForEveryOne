@@ -50,6 +50,11 @@
     padding: 0 12px 20px;
 }
 
+.communication-expert-index {
+    padding: 0 12px 20px;
+    white-space: pre;
+}
+
 .theme_dark .communication-advice-title {
     background-color: var(--grey70);
 }

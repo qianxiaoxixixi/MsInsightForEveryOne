@@ -79,7 +79,15 @@
       "Communication Operators Details": "Communication Operators Details",
       "see more": "see more",
       "Details": "Details",
-      "Source": "Source"
+      "Source": "Source",
+      "Category": "Category",
+      "Issue": "Issue",
+      "Small Size Duration(ms)": "Small Size Duration(ms)",
+      "Small Size Proportion(%)": "Small Size Proportion(%)",
+      "Small Size Proportion Standard(%)": "Small Size Proportion Standard(%)",
+      "Small Size Standard(MB)": "Small Size Standard(MB)",
+      "Abnormal Operator Count": "Abnormal Operator Count",
+      "Small Size(Byte)": "Small Size(Byte)"
     },
     "tableHeadTooltip": {
       "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",
@@ -102,6 +110,28 @@
     "Tooltip": "If the cluster data already includes the cluster_analysis_output folder, it will not be overwritten; if there is a mismatch between the cluster data and the single-card data, please delete the original cluster_analysis_output folder and the cluster.db file and re-import the data.",
     "Difference": "Difference",
     "Same": "Same",
-    "Different": "Different"
+    "Different": "Different",
+    "Packet Analysis": "Packet Analysis",
+    "Byte Alignment Analysis": "Byte Alignment Analysis",
+    "Bandwidth Contention Analysis": "Bandwidth Contention Analysis",
+    "Communication Retransmission Analysis": "Communication Retransmission Analysis",
+    "title": {
+      "Data Parallelism": "Data parallelism suggestion:",
+      "Memory Optimization": "Check the memory optimization policy:",
+      "Adopt": "Adopt fusion operators of affinity optimizer:",
+      "Byte Alignment Analysis": "Adjusting the Data Size",
+      "Bandwidth Contention": "Benchmark data comparison",
+      "RDMA Transmission Time": "Check RDMA transmission time:",
+      "Network Configuration": "Check the network configuration:"
+    },
+    "index": {
+      "Data Parallelism": "If abnormal communication is centralized in data parallelism domain, please 1. increase batch size; 2. increase gradient accumulation",
+      "Memory Optimization": "If the memory optimization policy is Zero3, it is recommended to set it to Zero2/Zero1 if memory conditions allow.",
+      "Adopt": "Using the affinity optimizers or fusion operators may reduce the number of communication operators.",
+      "Byte Alignment Analysis": "Please adjust data size to align the data volume of the communication operator.",
+      "Bandwidth Contention": "Compare the performance data before and after the convergence function is enabled to evaluate whether the impact of bandwidth preemption exceeds the convergence benefits.",
+      "RDMA Transmission Time": "Check whether the transmission time of the RDMA operator that is suspected to be retransmitted is correct.",
+      "Network Configuration": "Check the network configuration of the switch and compute node server."
+    }
   }
 }
