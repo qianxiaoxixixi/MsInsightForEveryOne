@@ -79,7 +79,15 @@
       "Communication Operators Details": "通信算子详情",
       "see more": "查看更多",
       "Details": "详情",
-      "Source": "来源"
+      "Source": "来源",
+      "Category": "类别",
+      "Issue": "异常",
+      "Small Size Duration(ms)": "小包持续时长（毫秒）",
+      "Small Size Proportion(%)": "小包占比（%）",
+      "Small Size Proportion Standard(%)": "小包占比正常值（%）",
+      "Small Size Standard(MB)": "小包标准（MB）",
+      "Abnormal Operator Count": "异常算子数量",
+      "Small Size(Byte)": "数据量小值（Byte）"
     },
     "tableHeadTooltip": {
       "Elapse Time": "通信算子所有事件消耗时间之和。公式：总时间 = 通信Events时间之和",
@@ -102,6 +110,28 @@
     "Tooltip": "导入集群数据中若已包含cluster_analysis_output文件夹，则不会对其进行覆盖；如果出现集群数据和单卡数据不对应，请删除原有cluster_analysis_output文件夹及cluster.db文件并重新导入。",
     "Difference": "差值",
     "Same": "相同",
-    "Different": "不同"
+    "Different": "不同",
+    "Packet Analysis": "小包分析",
+    "Byte Alignment Analysis": "字节对齐分析",
+    "Bandwidth Contention Analysis": "带宽分析",
+    "Communication Retransmission Analysis": "通信重传分析",
+    "title": {
+      "Data Parallelism": "数据并行建议:",
+      "Memory Optimization": "检查内存优化策略:",
+      "Adopt": "适配亲和优化器或融合算子:",
+      "Byte Alignment Analysis": "调整数据大小:",
+      "Bandwidth Contention": "基线数据对比:",
+      "RDMA Transmission Time": "检查RDMA传输时长:",
+      "Network Configuration": "检查网络配置:"
+    },
+    "index": {
+      "Data Parallelism": "如果异常通信集中在数据并行域，1.增加批量大小；2.增加梯度累积。",
+      "Memory Optimization": "如果内存优化策略为Zero3，建议在内存条件允许的情况下将其设置为Zero2/Zero1。",
+      "Adopt": "使用亲和优化器或融合算子可以减少通信算子的数量。",
+      "Byte Alignment Analysis": "请调整数据大小，对齐通信算子的数据量。",
+      "Bandwidth Contention": "比较启用融合功能之前和之后的性能数据，以评估是否带宽抢占的影响超过了融合的收益。",
+      "RDMA Transmission Time": "检查怀疑要重新传输的RDMA算子的传输时间是否正确。",
+      "Network Configuration": "检查交换机和计算节点服务器的网络配置。"
+    }
   }
 }

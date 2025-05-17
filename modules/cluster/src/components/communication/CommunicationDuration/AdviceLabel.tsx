@@ -10,6 +10,7 @@ import { type TableColumnsType } from 'antd';
 import { ResizeTable } from 'ascend-resize';
 import { DataType } from '../CommunicationTimeTable';
 import { queryCommunicationExpertAdvisor } from '../../../utils/RequestUtils';
+import { getPageConfigWithAllData } from '../../Common';
 
 export interface CommunicationAdvice {
     type: string;
@@ -46,21 +47,25 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     const getCommunicationExpertAdvisorData = async (): Promise<void> => {
         setExpertAdviceData(await queryCommunicationExpertAdvisor() ?? {});
     };
-    const [expertAdviceList, setDataList] = useState<Array<{title: string; content: string[]; tableColumns: object[]; tableDataSource: object[] }>>([]);
+    const [expertAdviceList, setDataList] = useState<Array<{title: string; tableColumns: object[]; tableDataSource: object[] }>>([]);
+    const getInTableHead = (key: string): string => {
+        const result = `tableHead.${key}`;
+        return result;
+    };
     const fetchDataAndSetData = (): void => {
         const dataList: any[] = [];
         Object.values(expertAdviceData).forEach(data => {
             data.forEach((obj: { name: string; statistics: any; suggestions: string[] }) => {
                 const tableColumns: TableColumnsType<DataType> = Object.keys(obj.statistics)?.map((key) => ({
-                    title: key,
-                    dataIndex: key,
-                    key,
+                    title: t(getInTableHead(key)),
+                    dataIndex: t(getInTableHead(key)),
+                    key: t(getInTableHead(key)),
                 }));
                 const firstKey = Object.keys(obj.statistics)[0];
                 const tableDataSource: any[] = obj.statistics[firstKey].map((_: any, index: string | number) => {
                     const rowData: Record<string, string | number> = { key: index };
                     Object.keys(obj.statistics).forEach((key) => {
-                        rowData[key] = obj.statistics[key][index]; // 按索引填充数据
+                        rowData[t(getInTableHead(key))] = obj.statistics[key][index]; // 按索引填充数据
                     });
                     return rowData;
                 });
@@ -68,7 +73,6 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                     title: obj.name,
                     tableColumns: tableColumns,
                     tableDataSource: tableDataSource,
-                    content: obj.suggestions,
                 });
             });
         });
@@ -76,7 +80,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     };
     useEffect(() => {
         fetchDataAndSetData();
-    }, [JSON.stringify(expertAdviceData)]);
+    }, [JSON.stringify(expertAdviceData), t]);
     useEffect(() => {
         getCommunicationExpertAdvisorData();
     }, []);
@@ -110,19 +114,64 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                     })
                 }
                 {
-                    expertAdviceList.map(item => {
-                        return (
-                            <>
-                                <div className="communication-advice-header">{item.title}</div>
-                                <div className="communication-advice-content">{item.content}</div>
-                                <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
-                            </>
-                        );
-                    })
+                    FetchExpertIndex(expertAdviceList)
                 }
             </CollapsiblePanel>
         </div>
     );
+};
+
+const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns: object[]; tableDataSource: object[] }>): JSX.Element[] => {
+    const { t } = useTranslation('communication');
+    const results: JSX.Element[] = [];
+    expertAdviceList.forEach(item => {
+        let content: JSX.Element;
+        if (item.title === 'Packet Analysis') {
+            const dataParallelism = `${t('title.Data Parallelism')} ${t('index.Data Parallelism')}\n\n`;
+            const memoryOptimization = `${t('title.Memory Optimization')} ${t('index.Memory Optimization')}\n\n`;
+            const adopt = `${t('title.Adopt')} ${t('index.Adopt')}\n\n`;
+            content = (
+                <>
+                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <div className="communication-expert-index">{dataParallelism + memoryOptimization + adopt}</div>
+                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small" pagination={getPageConfigWithAllData(item.tableDataSource.length)}></ResizeTable>
+                </>
+            );
+        } else if (item.title === 'Byte Alignment Analysis') {
+            const byteAlignmentAnalysis = `${t('title.Byte Alignment Analysis')} ${t('index.Byte Alignment Analysis')}\n\n`;
+            content = (
+                <>
+                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <div className="communication-expert-index">{byteAlignmentAnalysis}</div>
+                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small" pagination={getPageConfigWithAllData(item.tableDataSource.length)}></ResizeTable>
+                </>
+            );
+        } else if (item.title === 'Bandwidth Contention Analysis') {
+            const bandwidthContention = `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}\n\n`;
+            content = (
+                <>
+                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <div className="communication-expert-index">{bandwidthContention}</div>
+                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
+                </>
+            );
+        } else if (item.title === 'Communication Retransmission Analysis') {
+            const transmissionTime = `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}\n\n`;
+            const networkConfiguration = `${t('title.Network Configuration')} ${t('index.Network Configuration')}\n\n`;
+            content = (
+                <>
+                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <div className="communication-expert-index">{transmissionTime}</div>
+                    <div className="communication-expert-index">{networkConfiguration}</div>
+                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
+                </>
+            );
+        } else {
+            return;
+        }
+        results.push(content);
+    });
+    return results;
 };
 
 export default AdviceLabel;
