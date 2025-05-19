@@ -118,6 +118,16 @@ protected:
         ClearThreadLocal();
     }
 };
+
+class PythonGCTableMock : public PytorchApiTable, public TableDefaultMock {
+protected:
+    void ExcuteQuery(const std::string &fileId, std::vector<PytorchApiPO> &result) override
+    {
+        PytorchApiTable::ExcuteQuery(db, result);
+        ClearThreadLocal();
+    }
+};
+
 class EnumMstxEventTypeTableMock : public EnumMstxEventTypeTable, public TableDefaultMock {
 protected:
     void ExcuteQuery(const std::string &fileId, std::vector<EnumMstxEventTypePO> &result) override
@@ -154,6 +164,7 @@ protected:
         ClearThreadLocal();
     }
 };
+
 
 struct PytorchApiDependency {
     std::unique_ptr<StringIdsTableMock> stringIdsTableMock = std::make_unique<StringIdsTableMock>();

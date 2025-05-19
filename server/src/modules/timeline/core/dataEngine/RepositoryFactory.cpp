@@ -6,6 +6,7 @@
 #include "CannApiRepo.h"
 #include "PythonApiRepo.h"
 #include "MstxRepo.h"
+#include "PythonGcRepo.h"
 #include "TextRepository.h"
 #include "DbFlowRepo.h"
 #include "RepositoryFactory.h"
@@ -18,6 +19,7 @@ RepositoryFactory::RepositoryFactory()
     sliceRespoMap.emplace(PROCESS_TYPE::CANN_API, std::make_unique<CannApiRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::API, std::make_unique<PythonApiRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::MS_TX, std::make_unique<MstxRepo>());
+    sliceRespoMap.emplace(PROCESS_TYPE::PYTHON_GC, std::make_unique<PythonGcRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());
     flowRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());
     flowRespoMap.emplace(PROCESS_TYPE::DB, std::make_unique<DbFlowRepo>());
