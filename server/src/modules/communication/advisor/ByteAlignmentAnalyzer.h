@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_COMMUNICATION_BYTEALIGNMENT_ANALYZER_H
 #define PROFILER_SERVER_COMMUNICATION_BYTEALIGNMENT_ANALYZER_H
 
-#include "CommunicationProtocolResponse.h"
+#include "CommunicationBaseAnalyzer.h"
 #include "ClusterDef.h"
 
 namespace Dic {
@@ -22,14 +22,13 @@ struct ByteAlignmentAnalyzerStatistics {
     uint64_t abnormalOperatorCount = 0;
 };
 
-class ByteAlignmentAnalyzer {
+class ByteAlignmentAnalyzer : public CommunicationBaseAnalyzer {
 public:
     ByteAlignmentAnalyzer() = default;
-    ~ByteAlignmentAnalyzer() = default;
-    bool GenerateAdvisor(CommunicationAdvisorInfo &info);
-    bool QueryAdvisorData();
-    void ComputeStatistics();
-    void AssembleAdvisor(CommunicationAdvisorInfo &info);
+    ~ByteAlignmentAnalyzer() override = default;
+    bool QueryAdvisorData() override;
+    void ComputeStatistics() override;
+    void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
 private:
     std::vector<CommunicationLargeOperatorInfo> data;
     ByteAlignmentAnalyzerStatistics statistics;

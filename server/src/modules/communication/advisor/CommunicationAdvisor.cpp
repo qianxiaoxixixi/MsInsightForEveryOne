@@ -10,17 +10,19 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
+void CommunicationAdvisor::Register()
+{
+    advisorMap.emplace(PACKET_ANALYZER_TITLE, std::make_unique<PacketAnalyzer>());
+    advisorMap.emplace(BYTEALIGNMENT_ANALYZER_TITLE, std::make_unique<ByteAlignmentAnalyzer>());
+}
+
 void CommunicationAdvisor::GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items)
 {
-    PacketAnalyzer packetAnalyzer;
-    CommunicationAdvisorInfo packetAnalyzerInfo;
-    if (packetAnalyzer.GenerateAdvisor(packetAnalyzerInfo)) {
-        items.emplace_back(packetAnalyzerInfo);
-    }
-    ByteAlignmentAnalyzer byteAlignmentAnalyzer;
-    CommunicationAdvisorInfo byteAlignmentAnalyzerInfo;
-    if (byteAlignmentAnalyzer.GenerateAdvisor(byteAlignmentAnalyzerInfo)) {
-        items.emplace_back(byteAlignmentAnalyzerInfo);
+    for (const auto &analyzer : advisorMap) {
+        CommunicationAdvisorInfo info;
+        if (analyzer.second->GenerateAdvisor(info)) {
+            items.emplace_back(info);
+        }
     }
 }
 
