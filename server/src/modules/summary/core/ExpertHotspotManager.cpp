@@ -154,8 +154,9 @@ bool ExpertHotspotManager::UpdateModelInfo(ModelInfo &newModelInfo, std::string 
         return false;
     }
     ModelInfo curModelInfo = GetModelInfo(database);
-    // 专家数量不允许修改
-    if (curModelInfo.expertNumber != 0 && curModelInfo.expertNumber != newModelInfo.expertNumber) {
+    // 在已导入数据的场景下，专家数量不允许修改(这里通过rank数是否为0来判断是否导入过数据)
+    if (curModelInfo.rankNumber != 0 && curModelInfo.expertNumber != 0 &&
+        curModelInfo.expertNumber != newModelInfo.expertNumber) {
         errorMsg = "Fail to update model info, the number of expert number can't be modify.";
         return false;
     }
