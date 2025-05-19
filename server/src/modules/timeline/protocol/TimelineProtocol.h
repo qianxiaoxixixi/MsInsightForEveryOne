@@ -43,6 +43,8 @@ private:
     static std::unique_ptr<Request> ToEventsViewRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToKernelDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToOneKernelRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToTableDataNameListRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToTableDataDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsOperatorsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSearchAllSlicesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToCommunicationKernelRequest(const Dic::json_t &json, std::string &error);
@@ -71,6 +73,8 @@ private:
     static std::optional<document_t> ToCommunicationKernelResponseJson(const Dic::Protocol::Response &response);
     static std::optional<document_t> ToUnitThreadsOperatorsResponseJson(const Response &response);
     static std::optional<document_t> ToSearchAllSlicesResponseJson(const Response &response);
+    static std::optional<document_t> ToTableDataNameListResponseJson(const Response &response);
+    static std::optional<document_t> ToTableDataDetailResponseJson(const Response &response);
     static std::optional<document_t> ToParseCardsResponseJson(const Response &response);
     // event to json
     static std::optional<document_t> ToParseSuccessEventJson(const Event &event);

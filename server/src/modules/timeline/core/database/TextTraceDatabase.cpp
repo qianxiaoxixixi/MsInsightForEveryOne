@@ -2072,4 +2072,25 @@ bool TextTraceDatabase::DeleteEmptyFlow()
     ExecSql(sql);
     return true;
 }
+
+std::vector<std::pair<std::string, std::string>> TextTraceDatabase::QueryTableDataNameList()
+{
+    std::string sql = "Select name, view_name from data_table Order BY id;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (!TryOpt(stmt, "Query table data name failed!")) {
+        return {};
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (!TryOpt(resultSet, "Query table data name failed to get result!")) {
+        return {};
+    }
+    std::vector<std::pair<std::string, std::string>> res;
+    while (resultSet->Next()) {
+        std::string name = resultSet->GetString("name");
+        std::string viewName = resultSet->GetString("view_name");
+        std::pair<std::string, std::string> pair = std::make_pair(viewName, name);
+        res.emplace_back(pair);
+    }
+    return res;
+}
 } // end of namespace Dic::Module::Timeline

@@ -1699,6 +1699,56 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryCounter)
     EXPECT_EQ(dataList.size(), expectSize);
 }
 
+TEST_F(TextTraceDatabaseMockTest, TestQueryTableDataNameListNormal)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3* dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sqlTable = "CREATE TABLE \"data_table\" (\n"
+                           "\"id\" INTEGER NOT NULL,\n"
+                           "\"name\" TEXT,\n"
+                           "\"view_name\" TEXT,\n"
+                           "PRIMARY KEY (\"id\")\n"
+                           ");";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sqlTable);
+    std::string sqlData =
+        "INSERT INTO \"main\".\"data_table\" (\"id\", \"name\", \"view_name\") VALUES (1, 'batch', 'batch info');\n"
+        "INSERT INTO \"main\".\"data_table\" (\"id\", \"name\", \"view_name\") VALUES (2, 'kvcache', 'kvcache');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sqlData);
+    auto res = database.QueryTableDataNameList();
+    const uint64_t expectSize = 2;
+    EXPECT_EQ(res.size(), expectSize);
+    EXPECT_EQ(res.front().first, "batch info");
+    EXPECT_EQ(res.back().second, "kvcache");
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryTableDataNameListErr)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3* dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sqlTable = "CREATE TABLE \"data_table2\" (\n"
+                           "\"id\" INTEGER NOT NULL,\n"
+                           "\"name\" TEXT,\n"
+                           "\"view_name\" TEXT,\n"
+                           "PRIMARY KEY (\"id\")\n"
+                           ");";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sqlTable);
+    std::string sqlData =
+        "INSERT INTO \"main\".\"data_table2\" (\"id\", \"name\", \"view_name\") VALUES (1, 'batch', 'batch info');\n"
+        "INSERT INTO \"main\".\"data_table2\" (\"id\", \"name\", \"view_name\") VALUES (2, 'kvcache', 'kvcache');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sqlData);
+    auto res = database.QueryTableDataNameList();
+    const uint64_t expectSize = 0;
+    EXPECT_EQ(res.size(), expectSize);
+}
+
 TEST_F(TextTraceDatabaseMockTest, ProcessByteAlignmentAnalyzerDataForTextTest)
 {
     std::vector<Dic::Module::CommunicationLargeOperatorInfo> result;

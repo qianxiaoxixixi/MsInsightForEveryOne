@@ -13,6 +13,7 @@
 #include "FileUtil.h"
 #include "ProtocolDefs.h"
 #include "ProtocolParamUtil.h"
+#include "TimelineParamStrcut.h"
 #include "ProtocolMessage.h"
 
 namespace Dic {
@@ -130,15 +131,6 @@ struct UnitThreadTracesSummaryParams {
 struct UnitThreadTracesSummaryRequest : public Request {
     UnitThreadTracesSummaryRequest() : Request(REQ_RES_UNIT_THREAD_TRACES_SUMMARY){};
     UnitThreadTracesSummaryParams params;
-};
-
-struct Metadata {
-    std::string tid;
-    std::string pid;
-    std::string metaType;
-    std::string rankId;
-    uint64_t lockStartTime = 0;
-    uint64_t lockEndTime = 0;
 };
 
 struct UnitThreadsParams {
@@ -507,39 +499,19 @@ struct UnitThreadsOperatorsRequest : public Request {
     UnitThreadsOperatorsParams params;
 };
 
-struct SearchAllSliceParams {
-    bool isMatchCase = false;
-    bool isMatchExact = false;
-    std::string rankId;
-    std::string searchContent;
-    std::string orderBy;
-    std::string order;
-    uint64_t current = 0;
-    uint64_t pageSize = 0;
-    std::vector<Metadata> metadataList;
-    bool CheckParams(uint64_t minTime, std::string &warnMsg) const
-    {
-        for (const auto &item: metadataList) {
-            if (item.lockStartTime > item.lockEndTime) {
-                warnMsg = "Search all slice lock start time is bigger than lock end time";
-                return false;
-            }
-            if (item.lockEndTime > UINT64_MAX - minTime) {
-                warnMsg = "Search all slice lock end time is invalid";
-                return false;
-            }
-        }
-        if (!StringUtil::CheckSqlValid(orderBy)) {
-            warnMsg = "Search all slice order column name is invalid";
-            return false;
-        }
-        return CheckUnsignPageValid(pageSize, current, warnMsg);
-    }
-};
-
 struct SearchAllSlicesRequest : public Request {
     SearchAllSlicesRequest() : Request(REQ_RES_SEARCH_ALL_SLICES){};
     SearchAllSliceParams params;
+};
+
+struct TableDataNameListRequest : public Request {
+    TableDataNameListRequest() : Request(REQ_RES_TABLE_DATA_NAME_LIST){};
+    TableDataNameListParams params;
+};
+
+struct TableDataDetailRequest : public Request {
+    TableDataDetailRequest() : Request(REQ_RES_TABLE_DATA_DETAIL){};
+    TableDataDetailParams params;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

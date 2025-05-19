@@ -11,6 +11,8 @@
 
 namespace Dic {
 namespace Protocol {
+void SetBodyAtt(const ImportActionResponse& response, MemoryPoolAllocator<::rapidjson::CrtAllocator>& allocator,
+                json_t& body);
 // response
 template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response);
 template <>
@@ -42,6 +44,9 @@ template<> std::optional<document_t> ToResponseJson<OneKernelResponse>(const One
 template<> std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>
         (const UnitThreadsOperatorsResponse &response);
 template<> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(const SearchAllSlicesResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<TableDataNameListResponse>(const TableDataNameListResponse& response);
+template<> std::optional<document_t> ToResponseJson<TableDataDetailResponse>(const TableDataDetailResponse &response);
 template<> std::optional<document_t> ToResponseJson<ParseCardsResponse>(const ParseCardsResponse &response);
 template<>
 std::optional<document_t> ToResponseJson<CommunicationKernelResponse>(const CommunicationKernelResponse &response);

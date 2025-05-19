@@ -22,15 +22,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    JsonUtil::AddMember(body, "isOnlyTraceJson", response.body.isOnlyTraceJson, allocator);
-    JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
-    JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
-    JsonUtil::AddMember(body, "isSimulation", response.body.isSimulation, allocator);
-    JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
-    JsonUtil::AddMember(body, "isIpynb", response.body.isIpynb, allocator);
-    JsonUtil::AddMember(body, "isPending", response.body.isPending, allocator);
-    JsonUtil::AddMember(body, "hasCachelineRecords", response.body.hasCachelineRecords, allocator);
-    JsonUtil::AddMember(body, "instrVersion", response.body.version, allocator);
+    SetBodyAtt(response, allocator, body);
 
     json_t coreList(kArrayType);
     for (const auto &core : response.body.coreList) {
@@ -72,6 +64,21 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     JsonUtil::AddMember(body, "result", result, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
+}
+
+void SetBodyAtt(const ImportActionResponse& response, MemoryPoolAllocator<::rapidjson::CrtAllocator>& allocator,
+                json_t& body)
+{
+    JsonUtil::AddMember(body, "isOnlyTraceJson", response.body.isOnlyTraceJson, allocator);
+    JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
+    JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
+    JsonUtil::AddMember(body, "isSimulation", response.body.isSimulation, allocator);
+    JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
+    JsonUtil::AddMember(body, "isIpynb", response.body.isIpynb, allocator);
+    JsonUtil::AddMember(body, "isPending", response.body.isPending, allocator);
+    JsonUtil::AddMember(body, "hasCachelineRecords", response.body.hasCachelineRecords, allocator);
+    JsonUtil::AddMember(body, "instrVersion", response.body.version, allocator);
+    JsonUtil::AddMember(body, "isIE", response.body.isIE, allocator);
 }
 
 template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response)
@@ -593,6 +600,56 @@ template <> std::optional<document_t> ToResponseJson<SearchAllSlicesResponse>(co
     JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
+}
+
+template <>
+std::optional<document_t> ToResponseJson<TableDataNameListResponse>(const TableDataNameListResponse& response)
+{
+    document_t json(kObjectType);
+    auto& allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t layers(kArrayType);
+    for (const auto& item : response.body.layers) {
+        layers.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "layers", layers, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template <>
+std::optional<document_t> ToResponseJson<TableDataDetailResponse>(const TableDataDetailResponse& response)
+{
+    document_t json(kObjectType);
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    auto &allocator = json.GetAllocator();
+    json_t body(kObjectType);
+    json_t columnAttr(kArrayType);
+    for (const auto &attr : response.body.columnAttr) {
+        json_t attrJson = json_t(kObjectType);
+        JsonUtil::AddMember(attrJson, "name", attr.name, allocator);
+        JsonUtil::AddMember(attrJson, "type", attr.type, allocator);
+        JsonUtil::AddMember(attrJson, "key", attr.key, allocator);
+        columnAttr.PushBack(attrJson, allocator);
+    }
+    json_t tableData(kArrayType);
+    for (const auto &attr : response.body.columnData) {
+        json_t attrJson = json_t(kObjectType);
+        for (const auto &item : response.body.columnAttr) {
+            auto it = attr.find(item.key);
+            if (it == attr.end()) {
+                continue;
+            }
+            JsonUtil::AddMember(attrJson, item.key, it->second, allocator);
+        }
+        tableData.PushBack(attrJson, allocator);
+    }
+    JsonUtil::AddMember(body, "totalNum", response.body.totalNum, allocator);
+    JsonUtil::AddMember(body, "tableData", tableData, allocator);
+    JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{ std::move(json) };
 }
 
 json_t SystemViewOverallResToJson(const SystemViewOverallRes &res,

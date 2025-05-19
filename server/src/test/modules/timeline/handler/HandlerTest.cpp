@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include <gtest/gtest.h>
+#include "TextTraceDatabase.h"
 #include "WsSessionImpl.h"
 #include "WsSessionManager.h"
 class HandlerTest : public ::testing::Test {
@@ -26,4 +27,16 @@ public:
         ::testing::InitGoogleTest(&argc, argv);
         return RUN_ALL_TESTS();
     }
+
+protected:
+    class MockDatabase : public Dic::Module::Timeline::TextTraceDatabase {
+    public:
+        explicit MockDatabase(std::recursive_mutex &sqlMutex) : TextTraceDatabase(sqlMutex) {}
+        void SetDbPtr(sqlite3 *dbPtr)
+        {
+            isOpen = true;
+            db = dbPtr;
+            path = ":memory:";
+        }
+    };
 };

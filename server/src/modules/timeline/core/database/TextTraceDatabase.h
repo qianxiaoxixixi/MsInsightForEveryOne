@@ -48,6 +48,7 @@ public:
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
+    std::vector<std::pair<std::string, std::string>> QueryTableDataNameList();
 
     // search
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,

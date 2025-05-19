@@ -161,6 +161,41 @@ TEST_F(TimelineProtocolUtilTest, TestUnitCounterResponseToJson)
     EXPECT_EQ(json, jsonStr);
 }
 
+TEST_F(TimelineProtocolUtilTest, TestTableDataNameListResponseToJson)
+{
+    Dic::Protocol::TableDataNameListResponse response;
+    response.body.layers.emplace_back("llllllllllll");
+    auto jsonOp = Dic::Protocol::ToResponseJson(response);
+    EXPECT_EQ(jsonOp.has_value(), true);
+    const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
+    const std::string jsonStr =
+        "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"tableData/"
+        "nameList\",\"moduleName\":\"unknown\",\"body\":{\"layers\":[\"llllllllllll\"]}}";
+    EXPECT_EQ(json, jsonStr);
+}
+
+TEST_F(TimelineProtocolUtilTest, TestTableDataDatailResponseToJson)
+{
+    Dic::Protocol::TableDataDetailResponse response;
+    response.body.totalNum = 50;  // 50
+    Dic::Protocol::TableColumn col;
+    col.key = "ggg";
+    col.name = "ggg";
+    col.type = "ggg";
+    response.body.columnAttr.emplace_back(col);
+    std::map<std::string, std::string> datas;
+    datas["ggg"] = "ggggggggggggggggggggggggg";
+    response.body.columnData.emplace_back(datas);
+    auto jsonOp = Dic::Protocol::ToResponseJson(response);
+    EXPECT_EQ(jsonOp.has_value(), true);
+    const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
+    const std::string jsonStr =
+        "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"tableData/"
+        "detail\",\"moduleName\":\"unknown\",\"body\":{\"totalNum\":50,\"tableData\":[{\"ggg\":"
+        "\"ggggggggggggggggggggggggg\"}],\"columnAttr\":[{\"name\":\"ggg\",\"type\":\"ggg\",\"key\":\"ggg\"}]}}";
+    EXPECT_EQ(json, jsonStr);
+}
+
 TEST_F(TimelineProtocolUtilTest, TestUnitThreadsOperatorsResponseToJson)
 {
     Dic::Protocol::UnitThreadsOperatorsResponse response;
