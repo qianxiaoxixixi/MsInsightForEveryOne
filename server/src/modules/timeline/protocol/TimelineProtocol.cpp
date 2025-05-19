@@ -34,6 +34,8 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_KERNEL_DETAIL, ToCommunicationKernelRequest);
     jsonToReqFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsRequest);
+    jsonToReqFactory.emplace(REQ_RES_TABLE_DATA_NAME_LIST, ToTableDataNameListRequest);
+    jsonToReqFactory.emplace(REQ_RES_TABLE_DATA_DETAIL, ToTableDataDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallRequest);
     jsonToReqFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToSystemViewOverallMoreDetailsRequest);
@@ -64,6 +66,8 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_KERNEL_DETAIL, ToCommunicationKernelResponseJson);
     resToJsonFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesResponseJson);
+    resToJsonFactory.emplace(REQ_RES_TABLE_DATA_NAME_LIST, ToTableDataNameListResponseJson);
+    resToJsonFactory.emplace(REQ_RES_TABLE_DATA_DETAIL, ToTableDataDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL, ToSystemViewOverallResponseJson);
     resToJsonFactory.emplace(REQ_RES_SYSTEM_VIEW_OVERALL_MORE_DETAILS, ToOverallMoreDetailsResponseJson);
@@ -473,6 +477,33 @@ std::unique_ptr<Request> TimelineProtocol::ToOneKernelRequest(const Dic::json_t 
     return reqPtr;
 }
 
+std::unique_ptr<Request> TimelineProtocol::ToTableDataNameListRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<TableDataNameListRequest> reqPtr = std::make_unique<TableDataNameListRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToTableDataDetailRequest(const Dic::json_t& json, std::string& error)
+{
+    std::unique_ptr<TableDataDetailRequest> reqPtr = std::make_unique<TableDataDetailRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tableIndex, json["params"], "selectKey");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    return reqPtr;
+}
+
 std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<UnitThreadsOperatorsRequest> reqPtr = std::make_unique<UnitThreadsOperatorsRequest>();
@@ -680,6 +711,16 @@ std::optional<document_t> TimelineProtocol::ToUnitThreadsOperatorsResponseJson(c
 std::optional<document_t> TimelineProtocol::ToSearchAllSlicesResponseJson(const Response &response)
 {
     return ToResponseJson<SearchAllSlicesResponse>(dynamic_cast<const SearchAllSlicesResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToTableDataNameListResponseJson(const Response &response)
+{
+    return ToResponseJson<TableDataNameListResponse>(dynamic_cast<const TableDataNameListResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToTableDataDetailResponseJson(const Response& response)
+{
+    return ToResponseJson<TableDataDetailResponse>(dynamic_cast<const TableDataDetailResponse&>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToParseCardsResponseJson(const Response &response)

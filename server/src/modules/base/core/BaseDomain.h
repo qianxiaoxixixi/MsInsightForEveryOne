@@ -34,7 +34,7 @@ struct PageQuery {
         if (curPage == 0 || size == 0) {
             return 0;
         }
-        if (curPage - 1 < UINT64_MAX / size) {
+        if (curPage - 1 > UINT64_MAX / size) {
             return 0;
         }
         return (curPage - 1) * size;

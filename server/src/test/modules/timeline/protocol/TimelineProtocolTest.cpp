@@ -6,6 +6,7 @@
 #include "JsonUtil.h"
 #include "ProtocolDefs.h"
 #include "TimelineProtocolResponse.h"
+#include "TimelineProtocolRequest.h"
 #include "TimelineProtocolEvent.h"
 
 class TimelineProtocolTest : ProtocolTest {};
@@ -321,6 +322,58 @@ TEST_F(ProtocolTest, ToUnitThreadsOperatorsRequest)
     Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
     Dic::JsonUtil::AddMember(json, "params", params, allocator);
     unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
+    EXPECT_EQ(id, tempId);
+}
+
+TEST_F(ProtocolTest, ToTableDataNameListRequest)
+{
+    const uint64_t tempId = 89;
+    Dic::Protocol::TimelineProtocol timelineProtocol;
+    timelineProtocol.Register();
+    std::string error;
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
+    Dic::JsonUtil::AddMember(json, "command", Dic::Protocol::REQ_RES_TABLE_DATA_NAME_LIST, allocator);
+    timelineProtocol.FromJson(json, error);
+
+    Dic::json_t params(Dic::kObjectType);
+    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
+    Dic::JsonUtil::AddMember(json, "params", params, allocator);
+    unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
+    EXPECT_EQ(id, tempId);
+}
+
+TEST_F(ProtocolTest, ToTableDataDetailRequest)
+{
+    const uint64_t tempId = 89;
+    Dic::Protocol::TimelineProtocol timelineProtocol;
+    timelineProtocol.Register();
+    std::string error;
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
+    Dic::JsonUtil::AddMember(json, "command", Dic::Protocol::REQ_RES_TABLE_DATA_DETAIL, allocator);
+    timelineProtocol.FromJson(json, error);
+
+    Dic::json_t params(Dic::kObjectType);
+    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
+    Dic::JsonUtil::AddMember(json, "params", params, allocator);
+    auto requestPtr = timelineProtocol.FromJson(json, error);
+    auto& request = dynamic_cast<Dic::Protocol::TableDataDetailRequest&>(*requestPtr);
+    auto id = request.id;
+    std::string errMsg;
+    auto res = request.params.CommonCheck(errMsg);
+    EXPECT_EQ(res, false);
+    EXPECT_EQ(errMsg, "Page size invalid!");
+    request.params.pageSize = 50;  // 50
+    request.params.CommonCheck(errMsg);
+    EXPECT_EQ(errMsg, "Current page invalid!");
+    request.params.currentPage = 3;  // 3
+    auto res2 = request.params.CommonCheck(errMsg);
+    EXPECT_EQ(res2, true);
     EXPECT_EQ(id, tempId);
 }
 
