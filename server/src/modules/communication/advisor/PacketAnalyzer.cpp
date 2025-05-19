@@ -10,16 +10,6 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
-bool PacketAnalyzer::GenerateAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
-{
-    if (!QueryAdvisorData()) {
-        return false;
-    }
-    ComputeStatistics();
-    AssembleAdvisor(info);
-    return true;
-}
-
 bool PacketAnalyzer::QueryAdvisorData()
 {
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);

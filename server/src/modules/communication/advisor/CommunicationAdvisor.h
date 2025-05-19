@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_COMMUNICATION_ADVISOR_H
 #define PROFILER_SERVER_COMMUNICATION_ADVISOR_H
 
-#include "CommunicationProtocolResponse.h"
+#include "CommunicationBaseAnalyzer.h"
 
 namespace Dic {
 namespace Module {
@@ -16,7 +16,10 @@ class CommunicationAdvisor {
 public:
     CommunicationAdvisor() = default;
     ~CommunicationAdvisor() = default;
-    static void GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items);
+    void GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items);
+    void Register();
+protected:
+    std::map<std::string, std::unique_ptr<CommunicationBaseAnalyzer>> advisorMap;
 };
 } // end of namespace Communication
 } // end of namespace Module

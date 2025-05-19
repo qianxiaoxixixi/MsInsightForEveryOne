@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_COMMUNICATION_PACKET_ANALYZER_H
 #define PROFILER_SERVER_COMMUNICATION_PACKET_ANALYZER_H
 
-#include "CommunicationProtocolResponse.h"
+#include "CommunicationBaseAnalyzer.h"
 #include "ClusterDef.h"
 
 namespace Dic {
@@ -32,14 +32,13 @@ struct PacketAnalyzerStatistics {
     bool rdmaIssue{false};
 };
 
-class PacketAnalyzer {
+class PacketAnalyzer : public CommunicationBaseAnalyzer {
 public:
     PacketAnalyzer() = default;
-    ~PacketAnalyzer() = default;
-    bool GenerateAdvisor(CommunicationAdvisorInfo &info);
-    bool QueryAdvisorData();
-    void ComputeStatistics();
-    void AssembleAdvisor(CommunicationAdvisorInfo &info);
+    ~PacketAnalyzer() override = default;
+    bool QueryAdvisorData() override;
+    void ComputeStatistics() override;
+    void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
 private:
     std::vector<PacketAnalyzerData> data;
     PacketAnalyzerStatistics statistics;

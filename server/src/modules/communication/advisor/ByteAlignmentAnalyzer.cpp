@@ -10,16 +10,6 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
-bool ByteAlignmentAnalyzer::GenerateAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
-{
-    if (!QueryAdvisorData()) {
-        return false;
-    }
-    ComputeStatistics();
-    AssembleAdvisor(info);
-    return true;
-}
-
 bool ByteAlignmentAnalyzer::QueryAdvisorData()
 {
     std::vector<IterationsOrRanksObject> rankList;

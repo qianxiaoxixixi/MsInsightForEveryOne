@@ -23,7 +23,9 @@ bool CommunicationAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     CommunicationAdvisorResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    CommunicationAdvisor::GenerateAdvisor(response.body.items);
+    CommunicationAdvisor advisor;
+    advisor.Register();
+    advisor.GenerateAdvisor(response.body.items);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     session.OnResponse(std::move(responsePtr));
     return true;
