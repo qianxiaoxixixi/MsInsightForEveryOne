@@ -16,6 +16,7 @@ std::map<std::string, PROCESS_TYPE> metaTypeMap = {
     {"HCCL", PROCESS_TYPE::HCCL},
     {"Communication", PROCESS_TYPE::HCCL},
     {"Overlap Analysis", PROCESS_TYPE::OVERLAP_ANALYSIS},
+    {"Python GC", PROCESS_TYPE::PYTHON_GC},
 };
 
 const Protocol::EventsViewColumnAttr columnName = {"Name", "string", "name"};

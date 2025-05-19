@@ -148,6 +148,7 @@ enum class PROCESS_TYPE {
     TEXT,
     NONE,
     DB,
+    PYTHON_GC,
 };
 
 struct ParallelGroupInfo {

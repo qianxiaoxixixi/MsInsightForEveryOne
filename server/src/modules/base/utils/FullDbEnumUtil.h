@@ -35,7 +35,8 @@ const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWA
                                                    { PROCESS_TYPE::STARS_SOC, "SOC_BANDWIDTH_LEVEL" },
                                                    { PROCESS_TYPE::MS_TX, "MSTX_EVENTS" },
                                                    { PROCESS_TYPE::HBM, "HBM" },
-                                                   { PROCESS_TYPE::TEXT, "TEXT" }};
+                                                   { PROCESS_TYPE::TEXT, "TEXT" },
+                                                   { PROCESS_TYPE::PYTHON_GC, "GC_RECORD" }};
 
 template <typename E> std::optional<std::string> ENUM_TO_STR(const E &e)
 {

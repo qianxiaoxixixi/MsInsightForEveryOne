@@ -112,6 +112,8 @@ TEST_F(DataEngineTest, QuerySimpleSliceWithOutNameByTrackIdTestWithOutFactory)
         dataEngine.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
         sliceQuery.metaType = PROCESS_TYPE::TEXT;
         dataEngine.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
+        sliceQuery.metaType = PROCESS_TYPE::PYTHON_GC;
+        dataEngine.QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceVec);
     });
 }
 
@@ -285,6 +287,8 @@ TEST_F(DataEngineTest, QueryCompeteSliceByIdsTestWithOutFactory)
         sliceQuery.metaType = PROCESS_TYPE::NONE;
         dataEngine.QueryCompeteSliceByIds(sliceQuery, sliceIds, sliceVec);
         sliceQuery.metaType = PROCESS_TYPE::TEXT;
+        dataEngine.QueryCompeteSliceByIds(sliceQuery, sliceIds, sliceVec);
+        sliceQuery.metaType = PROCESS_TYPE::PYTHON_GC;
         dataEngine.QueryCompeteSliceByIds(sliceQuery, sliceIds, sliceVec);
     });
 }
