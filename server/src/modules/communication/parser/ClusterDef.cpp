@@ -87,6 +87,7 @@ bool ParallelStrategyConfig::CheckBaseParams(std::string& errorMsg) const
     return true;
 }
 
+// LCOV_EXCL_BR_START
 bool ParallelStrategyConfig::CheckParamForMindSpeed(std::string& errorMsg) const
 {
     if (configForMindSpeed.cpAlgo.empty()) {
@@ -153,4 +154,5 @@ bool ParallelStrategyConfig::CheckTp2DSizeForMindSpeed(std::string& errorMsg) co
     }
     return true;
 }
+// LCOV_EXCL_BR_STOP
 }

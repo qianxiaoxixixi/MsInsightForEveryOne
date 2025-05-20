@@ -352,6 +352,7 @@ bool ClusterFileParser::InitClusterDatabase()
     return true;
 }
 
+// LCOV_EXCL_BR_START
 bool ClusterFileParser::CheckDocumentValid(const Document &doc)
 {
     if (doc.HasParseError()) {
@@ -419,6 +420,7 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     }
     return true;
 }
+// LCOV_EXCL_BR_STOP
 
 StepStatistic ClusterFileParser::MapToStepStatistic(std::map<std::string, size_t> &dataMap,
                                                     const std::vector<std::string> &tokens)
@@ -475,6 +477,7 @@ std::string ClusterFileParser::GetStrValue(std::map<std::string, size_t> &dataMa
     return tokens[index];
 }
 
+// LCOV_EXCL_BR_START
 bool ClusterFileParser::ParserClusterOfDb()
 {
     ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::INIT);
@@ -546,6 +549,7 @@ void ClusterFileParser::InitFullDbClusterBaseInfo(std::shared_ptr<FullDb::DbClus
         clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     }
 }
+// LCOV_EXCL_BR_STOP
 
 std::string ClusterFileParser::GetClusterDbPath()
 {

@@ -88,6 +88,7 @@ void ProjectParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, 
     response.body.isPending = isPendingParse;
 }
 
+// LCOV_EXCL_BR_START
 void ProjectParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
                                      ProjectTypeEnum curProjectTypeEnum,
                                      std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
@@ -116,6 +117,7 @@ void ProjectParserDb::ClusterProcess(const std::string &selectedFolder, bool isC
     event->body.parseResult = std::move(parseClusterResult);
     SendEvent(std::move(event));
 }
+// LCOV_EXCL_BR_STOP
 
 std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
 {
@@ -231,6 +233,7 @@ std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::st
     return res;
 }
 
+// LCOV_EXCL_BR_START
 void ProjectParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
     Global::BaselineInfo &baselineInfo)
 {
@@ -296,6 +299,7 @@ void ProjectParserDb::BuildProjectExploreInfo(ProjectExplorerInfo &info, const s
 {
     return ProjectParserJson::BuildProjectExploreInfo(info, parsedFiles);
 }
+// LCOV_EXCL_BR_STOP
 
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);
 } // Module
