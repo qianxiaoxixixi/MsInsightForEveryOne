@@ -109,7 +109,7 @@ bool JupyterServerManager::Start(const std::string& path)
     // 获取路径的根目录，在根目录下启动
     std::string cmd = "jupyter-lab " + path + " --ip=localhost "
                 "--ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
-                "\"self\" * wry://localhost'}}\" ";
+                "\"self\" * wry://localhost'}}\" --ServerApp.disable_check_xsrf=True --ServerApp.token=\"\"";
 #ifdef WIN32
     cmd += " --ServerApp.cookie_options=\"{'SameSite': 'None', 'Secure': True}\"";
 #else
@@ -202,7 +202,7 @@ std::string JupyterServerManager::GetJupyterUrl(const std::string &filePath)
             FileUtil::GetRelativePath(filePath, jupyterServerInfo.startDirectory);
     if (relativePath != nullptr) {
         res = jupyterServerInfo.protocol + "://" + jupyterServerInfo.host + ":" + jupyterServerInfo.port +
-              "/lab/tree/" + *relativePath + "?" + jupyterServerInfo.query;
+              "/lab/tree/" + *relativePath;
     }
 
     return res;
@@ -246,8 +246,6 @@ void JupyterServerManager::ClearJupyterServerInfo()
     jupyterServerInfo.url = "";
     jupyterServerInfo.port = "";
     jupyterServerInfo.startDirectory = "";
-    jupyterServerInfo.query = "";
-    jupyterServerInfo.fragment = "";
     jupyterServerInfo.path = "";
 }
 
@@ -261,8 +259,6 @@ void JupyterServerManager::FillJupyterServerInfo(const std::string& url)
         jupyterServerInfo.host = url_match[urlHostPosition].str();
         jupyterServerInfo.port = url_match[urlPortPosition].str();
         jupyterServerInfo.path = url_match[urlPathPosition].str();
-        jupyterServerInfo.query = url_match[urlQueryPosition].str();
-        jupyterServerInfo.fragment = url_match[urlFragmentPosition].str();
     }
 }
 // LCOV_EXCL_BR_STOP
