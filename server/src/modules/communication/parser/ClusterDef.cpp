@@ -18,7 +18,7 @@ bool ParallelStrategyConfig::CheckParams(std::string &errorMsg) const
         return false;
     }
     if (algorithm == MINDSPEED_TP_CP_EP_DP_PP_ALG && dpSize * cpSize % epSize != 0) {
-        // 对于MindSpeed, 检查dpSize是否能被epSize * cpSize整除
+        // 对于MindSpeed, 检查dpSize * cpSize是否能被epSize整除
         errorMsg = "[Summary] The product of DP size and CP size must be evenly divided by EP Size.";
         return false;
     }
@@ -31,8 +31,18 @@ bool ParallelStrategyConfig::CheckParams(std::string &errorMsg) const
     if (algorithm == MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG && (moeTpSize * epSize != tpSize * dpSize)) {
         // 对于MindIE-LLM算法，需检查world_size = moeTpSize * epSize * ppSize = tpSize * dpSize * ppSize
         errorMsg = "[Summary] The product of MOE_TP size and EP size should match "
-                   "the product of TP size and DP size for the MOE algorithm.";
+                   "the product of TP size and DP size for the MindIE-LLM.";
         return false;
+    }
+    // 对于vLLM算法，需检查dpSize * tpSize是否能被epSize整除, epSize是否能被tpSize整除
+    if (algorithm == VLLM_TP_PP_DP_EP_ALG) {
+        if (dpSize * tpSize % epSize != 0) {
+            errorMsg = "[Summary] The product of DP size and TP size must be evenly divided by EP Size.";
+            return false;
+        } else if (epSize % tpSize != 0) {
+            errorMsg = "[Summary] EP size must be evenly divided by TP Size.";
+            return false;
+        }
     }
     uint64_t tmpProduct = static_cast<uint64_t>(dpSize) * cpSize * tpSize * ppSize;
     if (tmpProduct > UINT32_MAX) {

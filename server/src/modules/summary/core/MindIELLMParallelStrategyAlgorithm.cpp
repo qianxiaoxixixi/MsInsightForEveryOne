@@ -30,7 +30,7 @@ bool MindIELLMParallelStrategyAlgorithm::UpdateParallelDimension(const std::stri
         paraOrder = {TP_PARA, DP_PARA, PP_PARA};
         paraOrderWithEp = {TP_PARA, DP_PARA, PP_PARA, MOE_TP_PARA, EP_PARA};
     } else {
-        err = "Failed to update parallel view. Unexpected algorithm for the MOE algorithm.";
+        err = "Failed to update parallel view. Unexpected algorithm for the MindIE-LLM.";
         return false;
     }
     bool res = UpdateShowMap(err);
@@ -78,7 +78,7 @@ void MindIELLMParallelStrategyAlgorithm::SetIndicatorAttr()
     } else if (dimension == DIMENSIONS_DP) {
         SetDpIndicatorAttr();
     } else {
-        Server::ServerLog::Error("Failed to set indicator attributes for the MOE algorithm. Unexpected dimension.");
+        Server::ServerLog::Error("Failed to set indicator attributes for the MindIE-LLM. Unexpected dimension.");
     }
 }
 
@@ -176,7 +176,7 @@ bool MindIELLMParallelStrategyAlgorithm::GetConnectionsByToken(std::string &err,
 bool MindIELLMParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &err)
 {
     if (wordSize == 1) {
-        err = "Failed to get connections for the MOE algorithm. Parallel strategy configs have not been updated yet.";
+        err = "Failed to get connections for the MindIE-LLM. Parallel strategy configs have not been updated yet.";
         return false;
     }
     // 计算并行通信域, 先处理tp/dp/pp
@@ -227,7 +227,7 @@ bool MindIELLMParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     std::vector<IndicatorDataStruct> &indicatorData, std::string& err)
 {
     if (!(strategyConfig == performanceParams.config)) {
-        err = "Failed to get parallelism performance indicator for the MOE Algorithm. Unexpected parallel config.";
+        err = "Failed to get parallelism performance indicator for the MindIE-LLM. Unexpected parallel config.";
         return false;
     }
     tpSize = strategyConfig.tpSize;
@@ -251,7 +251,7 @@ bool MindIELLMParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
         GetPerformanceResponseDataWithDpDimension(reducePpStatistic, indicatorData);
         return true;
     }
-    err = "Failed to get parallelism performance indicator for the MOE Algorithm. Unexpected dimension.";
+    err = "Failed to get parallelism performance indicator for the MindIE-LLM. Unexpected dimension.";
     return false;
 }
 

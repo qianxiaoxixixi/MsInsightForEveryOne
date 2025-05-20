@@ -39,7 +39,7 @@ TEST_F(MindIELLMParallelStrategyAlgorithmTest, UpdateParallelDimension_ShouldRet
     std::string err;
     bool res = algorithm.UpdateParallelDimension(dimension, config, err);
     EXPECT_FALSE(res);
-    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm for the MOE algorithm.");
+    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm for the MindIE-LLM.");
     MindIELLMParallelStrategyAlgorithm algorithm2;
     config.algorithm = MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG;
     res = algorithm.UpdateParallelDimension(dimension, config, err);

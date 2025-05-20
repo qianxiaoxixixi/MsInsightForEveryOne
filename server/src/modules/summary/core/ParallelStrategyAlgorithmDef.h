@@ -34,6 +34,10 @@ const std::string MP_EP_GROUP_NAME = "mp_exp";
 const std::string MOE_TP_GROUP = "moeTp";
 const std::string MOE_TP_GROUP_NAME = "moeTp";
 
+// Token list for vLLM
+const std::string INNER_DP_GROUP = "innerDp";
+const std::string EXTERNAL_DP_GROUP = "externalDp";
+
 // Token list for MindSpeed
 // CP
 const std::string CP_ULYSSES_GROUP = "ulysses";
