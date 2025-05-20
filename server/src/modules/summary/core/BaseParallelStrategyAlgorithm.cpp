@@ -10,6 +10,7 @@ namespace Dic::Module::Summary {
 void BaseParallelStrategyAlgorithm::ClearStrategyConfigCache()
 {
     // arrangements data
+    orderIsTpPpDp = false;
     data.size = 0;
     data.indicators.clear();
     data.arrangements.clear();
@@ -61,6 +62,10 @@ void BaseParallelStrategyAlgorithm::CalStrategyConfig(const std::string &tmpDime
     const ParallelStrategyConfig &tmpConfig)
 {
     strategyConfig = tmpConfig;
+    static std::vector<std::string> algTpPpDpList = {MEGATRON_LM_TP_CP_PP_EP_DP_ALG, VLLM_TP_PP_DP_EP_ALG};
+    if (std::find(algTpPpDpList.begin(), algTpPpDpList.end(), strategyConfig.algorithm) != algTpPpDpList.end()) {
+        orderIsTpPpDp = true;
+    }
     dimension = tmpDimension;
     tpSize = tmpConfig.tpSize;
     tpCpSize = tpSize * tmpConfig.cpSize;
@@ -758,8 +763,8 @@ std::vector<uint32_t> BaseParallelStrategyAlgorithm::GetElementContainFormattedR
     uint32_t rankStart = 0;
     uint32_t rankEnd = 0;
     std::vector<uint32_t> ranks{};
-    // 若涉及pp折叠，且不为MEGATRON_LM_TP_CP_PP_EP_DP_ALG算法，则RankSet由若干个区间组成
-    if (details.ppIndexMax != details.ppIndexMin && strategyConfig.algorithm != MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
+    // 若涉及pp折叠，且算法排布顺序为TP-DP-PP类型，则RankSet由若干个区间组成
+    if (details.ppIndexMax != details.ppIndexMin && !orderIsTpPpDp) {
         std::vector<std::string> formatRanksForDpDimension;
         for (uint32_t ppIndex = details.ppIndexMin; ppIndex <= details.ppIndexMax; ++ppIndex) {
             rankStart = CalculateContainingRanksByAttrs(attrs[DP_INDEX], ppIndex, details.cpIndexMin,
@@ -780,8 +785,8 @@ std::vector<uint32_t> BaseParallelStrategyAlgorithm::GetElementContainFormattedR
                                                     details.tpIndexMin);
         rankEnd = CalculateContainingRanksByAttrs(attrs[DP_INDEX], attrs[PP_INDEX], details.cpIndexMax,
                                                   details.tpIndexMax);
-    } else if (strategyConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
-        // 若涉及pp折叠，且为MEGATRON_LM_TP_CP_PP_EP_DP_ALG算法, 则tp/cp/pp折叠卡序号都为一个连续区间
+    } else if (orderIsTpPpDp) {
+        // 若涉及pp折叠，且算法排布顺序为TP-PP-DP类型, 则tp/cp/pp折叠卡序号都为一个连续区间
         rankStart = CalculateContainingRanksByAttrs(attrs[DP_INDEX], details.ppIndexMin, details.cpIndexMin,
                                                     details.tpIndexMin);
         rankEnd = CalculateContainingRanksByAttrs(attrs[DP_INDEX], details.ppIndexMax, details.cpIndexMax,

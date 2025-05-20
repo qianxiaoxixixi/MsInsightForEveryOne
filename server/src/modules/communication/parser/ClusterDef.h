@@ -97,8 +97,14 @@ const std::string MINDSPEED_TP_CP_EP_DP_PP_ALG = "mindspeed(tp-cp-ep-dp-pp)";
  */
 const std::string MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG = "mindie-llm(tp-dp-ep-pp-moetp)";
 
+/**
+ * 5.TP+PP+DP+EP (EP cross TP and DP)
+ * 此排布方式来自于vLLM, 排布的顺序是TP->PP->DP, EP横跨TP+DP之上且不影响排布编号（即要求TP*DP能够被EP整除)
+ */
+const std::string VLLM_TP_PP_DP_EP_ALG = "vllm(tp-pp-dp-ep)";
+
 const std::vector<std::string> ALGORITHMS_ALLOWED = {MEGATRON_LM_TP_CP_EP_DP_PP_ALG, MEGATRON_LM_TP_CP_PP_EP_DP_ALG,
-    MINDSPEED_TP_CP_EP_DP_PP_ALG, MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG};
+    MINDSPEED_TP_CP_EP_DP_PP_ALG, MINDIE_LLM_TP_DP_EP_PP_MOETP_ALG, VLLM_TP_PP_DP_EP_ALG};
 
 // MindSpeed相关高级参数
 const std::string MINDSPEED_ULYSSES_CP_ALG = "ulysses_cp_algo";

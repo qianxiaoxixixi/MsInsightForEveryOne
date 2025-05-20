@@ -93,7 +93,7 @@ TEST_F(ClusterDefTest, TestMOEAlgorithmValidation)
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The product of MOE_TP size and EP size should match the product of TP size and "
-                     "DP size for the MOE algorithm.");
+                     "DP size for the MindIE-LLM.");
 }
 
 // Test for unsupported CP parallelism in MOE algorithm
@@ -103,6 +103,24 @@ TEST_F(ClusterDefTest, TestUnsupportedCPParallelismForMOEAlgorithm)
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The CP Parallelism is not supported by the MOE algorithm.");
+}
+
+// Test for DP and TP sizes being evenly divided by EP size
+TEST_F(ClusterDefTest, TestDPAndTPSizeEvenlyDividedByEPSize)
+{
+    ParallelStrategyConfig config = { VLLM_TP_PP_DP_EP_ALG, 5, 5, 5, 1, 2, 1 };
+    std::string error;
+    EXPECT_EQ(config.CheckParams(error), false);
+    EXPECT_EQ(error, "[Summary] The product of DP size and TP size must be evenly divided by EP Size.");
+}
+
+// Test for EP size being evenly divided by TP size
+TEST_F(ClusterDefTest, TestEPSizeEvenlyDividedByTPSize)
+{
+    ParallelStrategyConfig config = { VLLM_TP_PP_DP_EP_ALG, 2, 8, 2, 1, 2, 1 };
+    std::string error;
+    EXPECT_EQ(config.CheckParams(error), false);
+    EXPECT_EQ(error, "[Summary] EP size must be evenly divided by TP Size.");
 }
 
 // Test for valid configuration (all parameters are valid)
