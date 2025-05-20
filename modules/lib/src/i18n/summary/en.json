@@ -38,6 +38,8 @@
     "Generate": "Generate",
     "Target Index": "Target Index",
     "Find": "Find",
+    "MindIE Size Validate Message": "World Size ( PP × TP × DP ) must be greater than the device count",
+    "Megatron Size Validate Message": "World Size ( PP × TP × CP × DP ) must be greater than the device count",
     "Computation/CommunicationOverview": "Computation/Communication Overview",
     "Computation/CommunicationDescribe": [
       "Computing = Sum of kernel time on NPU",
