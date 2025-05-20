@@ -160,7 +160,8 @@ bool ExpertHotspotManager::UpdateModelInfo(ModelInfo &newModelInfo, std::string 
         errorMsg = "Fail to update model info, the number of expert number can't be modify.";
         return false;
     }
-    if (newModelInfo.modelLayer - curModelInfo.moeLayer < newModelInfo.denseLayerList.size()) {
+    uint64_t totalLayer = NumberSafe::Add(curModelInfo.moeLayer, newModelInfo.denseLayerList.size());
+    if (newModelInfo.modelLayer < 0 || static_cast<uint64_t>(newModelInfo.modelLayer) < totalLayer) {
         errorMsg = "Fail to update model info, "
                    "the sum of moe and dense layers is less than the total number of layers in the model.";
         return false;
@@ -213,7 +214,7 @@ std::vector<int> ExpertHotspotManager::CalMoeLayerMapping(const ModelInfo &model
     // 计算从moe层映射到整体层的映射
     std::vector<int> moeLayerMapping(modelInfo.moeLayer);
     int moeLayerIndex = 0;
-    for (size_t i = 0; i < modelInfo.modelLayer; ++i) {
+    for (int i = 0; i < modelInfo.modelLayer; ++i) {
         if (moeLayerIndex >= modelInfo.moeLayer) {
             break;
         }
