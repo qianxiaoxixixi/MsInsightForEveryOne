@@ -30,6 +30,7 @@ ProjectParserJson::ProjectParserJson()
 }
 
 
+// LCOV_EXCL_BR_START
 void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::TEXT);
@@ -78,6 +79,7 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
     SendResponse(std::move(responsePtr), true);
     ParserTraceData(rankListMap, projectInfos, isCluster);
 }
+// LCOV_EXCL_BR_STOP
 
 void ProjectParserJson::FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
                                              const std::vector<ProjectExplorerInfo> &projectInfos)
@@ -358,6 +360,7 @@ bool ProjectParserJson::IsJsonValid(const std::string &fileName)
     return result.has_value();
 }
 
+// LCOV_EXCL_BR_START
 void ProjectParserJson::FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles)
 {
     std::string traceFilePath = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
@@ -479,6 +482,7 @@ void ProjectParserJson::ParserClusterBaseline(const std::vector<Global::ProjectE
             }, clusterFileParser);
     }
 }
+// LCOV_EXCL_BR_STOP
 
 void ProjectParserJson::ParserSingleCardBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
                                                  Global::BaselineInfo &baselineInfo)

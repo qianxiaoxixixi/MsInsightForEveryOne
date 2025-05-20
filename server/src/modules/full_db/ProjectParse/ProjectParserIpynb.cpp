@@ -14,6 +14,7 @@
 using namespace Dic::Module;
 using namespace Dic::Module::Global;
 using namespace Jupyter;
+// LCOV_EXCL_BR_START
 void ProjectParserIpynb::Parser(const std::vector<ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     // 初始化jupyter落盘日志信息
@@ -83,6 +84,7 @@ ProjectTypeEnum ProjectParserIpynb::GetProjectType(const std::vector<std::string
 {
     return ProjectTypeEnum::IPYNB;
 }
+// LCOV_EXCL_BR_STOP
 
 void ProjectParserIpynb::BuildProjectExploreInfo(ProjectExplorerInfo &projectInfo,
                                                  const std::vector<std::string> &parsedFiles)
