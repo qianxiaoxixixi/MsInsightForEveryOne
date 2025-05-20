@@ -15,7 +15,7 @@ import { store } from '@/store';
 import type { File, Session } from '@/entity/session';
 import { type DataSource, FileOrDirectory, GLOBAL_HOST, LayerType, Project } from '@/centralServer/websocket/defs';
 import { ProjectAction, SessionAction } from '@/utils/enum';
-import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
+import { loadHistoryProject, handleProjectAction, getProjectFirstFile } from '@/utils/Project';
 import DeleteConfirm from './DeleteConfirm';
 import { isSameFile } from './ContextMenu';
 import { useTranslation } from 'react-i18next';
@@ -255,11 +255,14 @@ const Contents = observer(({ session }: {session: Session}) => {
         const dataSource: DataSource = dataSources[projectIndex];
         // 如果点击其它工程或者其它工程下文件
         if (dataSource.projectName !== activeDataSource.projectName) {
+            const selectedNodeData = selectedNodes[selectedNodes.length - 1].layerData;
+            const isProject = (selectedNodeData as FileOrDirectory).type === undefined;
+            const selectedPath = isProject ? (selectedNodeData as Project).projectPath[0] : (selectedNodeData as FileOrDirectory).path;
             handleProjectAction({
                 action: ProjectAction.SWITCH_PROJECT,
                 project: dataSource,
                 isConflict: false,
-                selectedFilePath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
+                selectedFilePath: isProject ? getProjectFirstFile(dataSource) ?? selectedPath : selectedPath,
             });
         }
         // 如果点击的是文件
