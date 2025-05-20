@@ -38,6 +38,8 @@
     "Generate": "生成",
     "Target Index": "目标编号",
     "Find": "查找",
+    "MindIE Size Validate Message": "总卡数（PP × TP × DP）必须大于设备数量",
+    "Megatron Size Validate Message": "总卡数（PP × TP × CP × DP）必须大于设备数量",
     "Computation/CommunicationOverview": "计算/通信概览",
     "Computation/CommunicationDescribe": [
       "计算时间 = NPU上的内核时间总和",

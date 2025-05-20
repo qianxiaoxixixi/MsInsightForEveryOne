@@ -18,6 +18,7 @@ import type { TFunction } from 'i18next';
 import { COLOR } from '../Common';
 import cls from 'classnames';
 import { isEqual } from 'lodash';
+import i18n from 'ascend-i18n';
 import { AimOutlined } from '@ant-design/icons';
 
 const ParallelismGraphHeader = styled.div`
@@ -214,12 +215,18 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
             cpSize: formData.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)' ? 1 : formData.cpSize,
         };
         // 设置的并行策略乘积需要>=导入的卡数
-        if (values.algorithm !== 'mindie-llm(tp-dp-ep-pp-moetp)') {
-            if (values.dpSize * values.tpSize * values.ppSize * values.cpSize < session.rankCount) {
-                message.error('The product of DP, CP, TP and PP size must be greater than the Device Count');
+        if (values.algorithm === 'mindie-llm(tp-dp-ep-pp-moetp)') {
+            if (values.ppSize * values.tpSize * values.dpSize < session.rankCount) {
+                message.error(i18n.t('MindIE Size Validate Message', { ns: 'summary' }));
+                return;
+            }
+        } else {
+            if (values.ppSize * values.tpSize * values.cpSize * values.dpSize < session.rankCount) {
+                message.error(i18n.t('Megatron Size Validate Message', { ns: 'summary' }));
                 return;
             }
         }
+
         try {
             await setParallelStrategy({ ...values });
             setGenerateConditions({ ...values, dimension: activeTab });
