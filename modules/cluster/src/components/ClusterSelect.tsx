@@ -9,6 +9,7 @@ import styled from '@emotion/styled';
 import { Select } from 'ascend-components';
 import type { Session } from '../entity/session';
 import { useTheme } from '@emotion/react';
+import { VoidFunction } from '../utils/interface';
 
 const Space = styled.div`
     display: flex;
@@ -31,7 +32,7 @@ interface ClusterSelectOptionType {
     parsing: boolean;
 }
 
-export const ClusterSelect = observer(({ width, session }: { width?: number; session: Session }): JSX.Element => {
+export const ClusterSelect = observer(({ width, session, onChange }: { width?: number; session: Session; onChange?: VoidFunction }): JSX.Element => {
     const theme = useTheme();
     const clusterOptions = useMemo(() => {
         return session.clusterList.map(({ name, path, parsed, durationParsed }) => ({
@@ -45,11 +46,13 @@ export const ClusterSelect = observer(({ width, session }: { width?: number; ses
         id={'cluster-select'}
         value={session.selectedClusterPath}
         style={{ width: width ?? 120 }}
-        onChange={(val: string): void => {
+        onChange={((val: string): void => {
             runInAction(() => {
+                session.resetForClusterChange();
                 session.selectedClusterPath = val;
             });
-        }}
+            onChange?.(val);
+        })}
         options={clusterOptions}
         optionRender={(option: ClusterSelectOptionType): JSX.Element => {
             return <Space>

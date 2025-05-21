@@ -100,9 +100,11 @@ interface CommunicatorContainerProps {
     generateConditions: GenerateConditions;
     onGenerateConditionsChange: (params: GenerateConditions) => void;
     loading: boolean;
+    clusterPath: string;
 }
 
-export const CommunicatorContainer = observer(({ session, generateConditions, onGenerateConditionsChange, loading }: CommunicatorContainerProps) => {
+export const CommunicatorContainer = observer(({ session, generateConditions, onGenerateConditionsChange, loading, clusterPath }:
+CommunicatorContainerProps) => {
     const { t } = useTranslation('summary');
     const [showRank, setShowRank] = useState(false);
 
@@ -113,6 +115,7 @@ export const CommunicatorContainer = observer(({ session, generateConditions, on
                 showRank={showRank}
                 setShowRank={setShowRank}
                 generateConditions={generateConditions}
+                clusterPath={clusterPath}
                 setGenerateConditions={onGenerateConditionsChange}
             />}
 
@@ -153,6 +156,7 @@ interface CommunicatorHeaderProps {
     setShowRank: React.Dispatch<React.SetStateAction<boolean>>;
     generateConditions: GenerateConditions;
     setGenerateConditions: (params: GenerateConditions) => void;
+    clusterPath: string;
 }
 interface CollectedConfiguration {
     dpSize: number;
@@ -162,7 +166,7 @@ interface CollectedConfiguration {
     cpSize: number;
     moeTpSize: number;
 }
-const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateConditions, setGenerateConditions }: CommunicatorHeaderProps) => {
+const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateConditions, setGenerateConditions, clusterPath }: CommunicatorHeaderProps) => {
     const [form] = Form.useForm();
     const [activeTab, setActiveTab] = useState(generateConditions.dimension);
     const collectedConfiguration = useRef<CollectedConfiguration | null>(null);
@@ -181,8 +185,8 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
         });
     }, [generateConditions.cpSize, t]);
 
-    const init = async (): Promise<void> => {
-        const { dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize = 1, level, algorithm } = await getParallelStrategy();
+    const init = async (path: string): Promise<void> => {
+        const { dpSize, tpSize, ppSize, cpSize, epSize, moeTpSize = 1, level, algorithm } = await getParallelStrategy({ clusterPath: path });
         const equal = dpSize === 1 && tpSize === 1 && tpSize === 1 && cpSize === 1;
         if (level === 'collected') {
             collectedConfiguration.current = {
@@ -202,8 +206,8 @@ const CommunicatorHeader = observer(({ session, showRank, setShowRank, generateC
     };
 
     useEffect(() => {
-        init();
-    }, []);
+        init(clusterPath);
+    }, [clusterPath]);
 
     const clickGenerate = async (): Promise<void> => {
         const formData: GenerateConditions = form.getFieldsValue();

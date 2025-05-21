@@ -21,6 +21,7 @@ export interface ClusterPageInfo {
 interface ProjectCreateInfo extends Record<string, any> {
     selectedFileType: LayerType;
     selectedFilePath: string;
+    selectedProjectName: string;
     pageInfo: {
         cluster: ClusterPageInfo;
     };
@@ -59,7 +60,12 @@ export const frameLoadedHandler: NotificationHandler<ProjectCreateInfo> = async 
 
 export const switchDirectoryHandler: NotificationHandler<ProjectUpdateInfo> = (data: ProjectUpdateInfo): void => {
     try {
-        resetStatus();
+        const session = store.sessionStore.activeSession;
+        if (data.selectedProjectName === session?.selectedProjectName) {
+            resetStatus('Cluster');
+        } else {
+            resetStatus('Project');
+        }
         updateClusterListAndSelectedClusterPath(data.pageInfo.cluster);
     } catch (error) {
         console.error(error);
@@ -101,13 +107,17 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
     });
 };
 
-const resetStatus = (): void => {
+const resetStatus = (type: 'Project' | 'Cluster' = 'Project'): void => {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        session.reset();
+        if (type === 'Cluster') {
+            session.resetForClusterChange();
+        } else {
+            session.resetForProjectChange();
+        }
     });
 };
 

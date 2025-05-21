@@ -96,7 +96,7 @@ const defaultGenerateConditions: GenerateConditions = {
     moeTpSize: 1,
 };
 
-export const Index = observer(({ session }: { session: Session }): JSX.Element => {
+export const Index = observer(({ session, clusterPath }: { session: Session; clusterPath: string }): JSX.Element => {
     const { t } = useTranslation('summary');
     const tips = useHit(true);
     const [isPipeline, setIsPipeline] = useState(false);
@@ -159,7 +159,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
 
     // 获取全展开的连线数据
     const getAllConnections = async (): Promise<void> => {
-        const { connections } = await queryAllConnections({ ...generateConditions, dimension: 'ep-dp-pp-cp-tp' });
+        const { connections } = await queryAllConnections({ ...generateConditions, dimension: 'ep-dp-pp-cp-tp', clusterPath });
         runInAction(() => {
             if (connections === undefined) {
                 return;
@@ -181,6 +181,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 { mode: key, communicators: value }
             ));
             session.communicatorData = {
+                clusterPath,
                 partitionModes,
                 defaultPPSize: 0,
             };
@@ -231,6 +232,10 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         generateConditions.epSize,
     ]);
 
+    useEffect(() => {
+        setGenerateConditions(defaultGenerateConditions);
+    }, [clusterPath]);
+
     return <Layout>
         <div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
             <Label name={t('Cluster')}/>
@@ -245,6 +250,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                 generateConditions={generateConditions}
                 onGenerateConditionsChange={handleGenerateConditionsChange}
                 loading={performanceLoading}
+                clusterPath={clusterPath}
             />
 
             {!isDefaultGenerateConditions && <CollapsiblePanel
@@ -267,6 +273,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
                             <FlowChart
                                 step={performanceChartConditions.step}
                                 stage={performanceChartConditions.group}
+                                clusterPath={clusterPath}
                             />
                         </FlowChartContainer>
                         : <>
@@ -295,7 +302,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         </CollapsiblePanel>
 
         <CollapsiblePanel title={t('MOE Expert Load Balancing Analysis')}>
-            <ExpertLoadBalancingBox/>
+            <ExpertLoadBalancingBox session={session} />
         </CollapsiblePanel>
     </Layout>;
 });

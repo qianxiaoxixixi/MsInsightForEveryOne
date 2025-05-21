@@ -41,55 +41,72 @@ export const isSameFile = (one: File, anotherOne: File): boolean => {
     return one.projectName === anotherOne.projectName && one.filePath === anotherOne.filePath;
 };
 
-// 判断基线是否是集群可对比数据
-function checkProjectFileIsClusterComparable<T extends { fileType: LayerType; projectName: string }>(projectFile: T, dataSources: DataSource[]): boolean {
-    const project = dataSources.find((item) => item.projectName === projectFile.projectName);
-    let clusterListNum = project?.children?.filter((item) => item.type === 'CLUSTER')?.length ?? 0;
+// 判断是否是集群可对比数据
+function checkProjectFileIsClusterComparable<T extends File>(projectFile: T, project?: DataSource): [boolean, string] {
+    const clusterList = project?.children?.filter((item) => item.type === 'CLUSTER') ?? [];
+    let clusterListNum = clusterList.length;
+    let clusterPath = '';
+    if (clusterListNum === 1) { // 单集群情况
+        clusterPath = clusterList[0].path;
+    }
     // 判断是否是 Project(Cluster) - Rank 的形式
     if (clusterListNum === 0 && (project?.children?.every((child) => child.type === 'RANK') ?? false)) {
         clusterListNum = 1;
     }
+    if (clusterPath === '') { clusterPath = projectFile.filePath; }
     if (clusterListNum <= 0) {
         // 不是 Project - Cluster - Rank 或者 Project(Cluster) - Rank 形式
-        return false;
+        return [false, clusterPath];
     } else if (clusterListNum === 1) {
         // 是 Project(Cluster) - Rank 形式
-        return projectFile.fileType === 'PROJECT';
+        return [projectFile.fileType === 'PROJECT', clusterPath];
     } else {
         // 是 Project - Cluster - Rank 形式
-        return projectFile.fileType === 'CLUSTER';
+        return [projectFile.fileType === 'CLUSTER', clusterPath];
     }
 }
 
-// 判断基线是否是其他可对比数据
+// 判断是否是其他可对比数据
 function checkProjectFileIsOtherComparable<T extends { fileType: LayerType; projectName: string }>(projectFile: T): boolean {
     return projectFile.fileType !== 'PROJECT' && projectFile.fileType !== 'CLUSTER';
 }
 
-// 右键菜单
-const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element[] => {
-    const { dataSources, activeDataSource, selectedFile, compareSet: { baseline, comparison } } = session;
-    if (selectedFile.fileType === 'UNKNOWN') { return []; }
+function getClusterIsComparableAndSelectedClusterPath(baseline: File, comparison: File, selectedFile: File, session: Session): {
+    isBaseline: boolean; isComparison: boolean; hasBaseline: boolean; isComparable: boolean; isCanBeBaseline: boolean; selectedClusterPath: string;
+} {
+    const baselineProject = session.getDataSourceByProjectName(baseline.projectName);
+    const selectedProject = session.getDataSourceByProjectName(selectedFile.projectName);
     // 选中的是否已被设为基线
     const isBaseline = selectedFile.projectName === baseline.projectName && selectedFile.filePath === baseline.filePath;
     // 选中的是否已被设为对比
     const isComparison = selectedFile.projectName === comparison.projectName && selectedFile.filePath === comparison.filePath;
     const hasBaseline = baseline.projectName !== '';
-
-    const isClusterComparableBaseline = checkProjectFileIsClusterComparable(baseline, dataSources);
-    const isClusterComparableSelected = checkProjectFileIsClusterComparable(selectedFile, dataSources);
+    const [isClusterComparableBaseline] = checkProjectFileIsClusterComparable(baseline, baselineProject);
+    const [isClusterComparableSelected, selectedClusterPath] = checkProjectFileIsClusterComparable(selectedFile, selectedProject);
     const isOtherComparableBaseline = checkProjectFileIsOtherComparable(baseline);
     const isOtherComparableSelected = checkProjectFileIsOtherComparable(selectedFile);
     // 可比较的定义：（要么基线是集群可比较类型自己也是集群可比较类型，要么基线是其他可比较类型自己也是其他可比较类型）
     const isComparable = (isClusterComparableBaseline && isClusterComparableSelected) || (isOtherComparableBaseline && isOtherComparableSelected);
     // 可设置为基线的定义：自己不是基线且（要么自己是集群可比较类型，要么自己是其他可比较类型）
     const isCanBeBaseline = !isBaseline && (isClusterComparableSelected || isOtherComparableSelected);
+    return { isBaseline, isComparison, hasBaseline, isComparable, isCanBeBaseline, selectedClusterPath };
+}
+
+// 右键菜单
+const getMenuItems = ({ session }: IProps, t: TFunction): MenuItemModel[] => {
+    const { activeDataSource, selectedFile, compareSet: { baseline, comparison } } = session;
+    if (selectedFile.fileType === 'UNKNOWN') { return []; }
+    const {
+        isBaseline, isComparison, hasBaseline, isComparable, isCanBeBaseline, selectedClusterPath,
+    } = getClusterIsComparableAndSelectedClusterPath(baseline, comparison, selectedFile, session);
+
+    const currentClusterPath = session.getClusterPath(activeDataSource);
 
     const allMenuItems: MenuItemModel[] = [
         {
             label: t('Set as Baseline Data'),
             key: 'setAsBaselineData',
-            action: (): void => { setBaselineData(selectedFile); },
+            action: (): void => { setBaselineData({ ...selectedFile, baselineClusterPath: selectedClusterPath, currentClusterPath }); },
             // 可设置为基线
             visible: isCanBeBaseline,
         },
@@ -118,17 +135,7 @@ const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element[] => {
         },
     ];
 
-    return allMenuItems.filter(menuItem => menuItem.visible !== false).map(item => (
-        <MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
-            onClick={(): void => {
-                if (item.disabled) {
-                    return;
-                }
-                item.action();
-                closeMenu(session);
-            }}>
-            {item.label}
-        </MenuItem>));
+    return allMenuItems.filter(menuItem => menuItem.visible !== false);
 };
 
 function openMenu(session: Session): void {
@@ -228,7 +235,17 @@ const Menu = ({ session }: IProps): JSX.Element => {
     return (
         session.contextMenu.visible && menuList.length > 0
             ? <MenuContainer ref={menuRef} style={{ left: `${menuPosition.x}px`, top: `${menuPosition.y}px` }} tabIndex={-1} onBlur={(): void => { closeMenu(session); }} >
-                {menuList}
+                {menuList.map((item: MenuItemModel): JSX.Element => (
+                    <MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
+                        onClick={(): void => {
+                            if (item.disabled) {
+                                return;
+                            }
+                            item.action();
+                            closeMenu(session);
+                        }}>
+                        {item.label}
+                    </MenuItem>))}
             </MenuContainer>
             : <></>
     );

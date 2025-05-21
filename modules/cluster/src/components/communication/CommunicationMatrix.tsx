@@ -352,6 +352,7 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
 const updateData = async(condition: ConditionDataType, setDataSource: VoidFunction, isCompare: boolean): Promise<void> => {
     const { iterationId, stage, operatorName, baselineIterationId, pgName } = condition;
     if (stage === '' || operatorName === '') {
+        setDataSource({ data: [], rankIds: [] });
         return;
     }
     const param = { iterationId, pgName, stage, operatorName, isCompare, baselineIterationId };
