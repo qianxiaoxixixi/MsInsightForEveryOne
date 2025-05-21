@@ -409,6 +409,24 @@ TEST_F(DbCommunicationTest, QueryPacketAnalyzerDataTest)
     EXPECT_EQ(data[1].type, "SDMA");
 }
 
+TEST_F(DbCommunicationTest, QueryBandwidthContentionAnalyzerDataTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<Dic::Module::BandwidthContentionSDMAInfo> res;
+    std::string rankId = "0";
+    bool result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(res.size(), 2452); // 2452
+    EXPECT_EQ(res[0].name, "Total Op Info");
+    EXPECT_EQ(res[1].name, "Total Op Info");
+    rankId = "1";
+    res.clear();
+    result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(res.size(), 2650); // 2650
+    EXPECT_EQ(res[0].name, "Total Op Info");
+    EXPECT_EQ(res[1].name, "Total Op Info");
+}
 TEST_F(DbCommunicationTest, PacketAnalyzerTest)
 {
     PacketAnalyzer analyzer;

@@ -15,6 +15,7 @@
 #include "TableDefs.h"
 #include "NumDefs.h"
 #include "CommonDefs.h"
+#include "ClusterDef.h"
 
 namespace Dic::Module::Summary {
 using namespace Dic::Server;
@@ -49,6 +50,27 @@ public:
                                Protocol::OperatorMoreInfoResponse& response) = 0;
     virtual bool QueryAllOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                std::vector<Protocol::OperatorStatisticInfoRes> &res) = 0;
+
+    virtual bool QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res) = 0;
+    bool ExecuteQueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res, std::string &sql)
+    {
+        sqlite3_stmt *stmt = nullptr;
+        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            ServerLog::Error("Failed to query bandwidth contention matmul data. Error: ", sqlite3_errmsg(db));
+            return false;
+        }
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int col = resultStartIndex;
+            BandwidthContentionMatMulInfo info;
+            info.name = sqlite3_column_string(stmt, col++);
+            info.startTime = sqlite3_column_double(stmt, col++);
+            info.duration = sqlite3_column_double(stmt, col++);
+            res.emplace_back(info);
+        }
+        sqlite3_finalize(stmt);
+        return true;
+    }
 
     uint64_t QueryMinStartTime();
     static inline std::string GetFileIdFromCombinationId(const std::string& str)

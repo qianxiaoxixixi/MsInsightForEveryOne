@@ -338,3 +338,21 @@ TEST_F(TestSuit, QueryPacketAnalyzerDataTest)
     EXPECT_EQ(data[5].type, "SDMA"); // 5
     EXPECT_EQ(data[6].type, "SDMA"); // 6
 }
+
+TEST_F(TestSuit, QueryBandwidthContentionAnalyzerDataTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<Dic::Module::BandwidthContentionSDMAInfo> res;
+    std::string rankId = "0";
+    bool result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(res.size(), 1);
+    EXPECT_EQ(res[0].name, "hcom_broadcast__483_1");
+    rankId = "1";
+    res.clear();
+    result = database->QueryBandwidthContentionAnalyzerData(res, rankId);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(res.size(), 2); // 2
+    EXPECT_EQ(res[0].name, "hcom_broadcast__483_0");
+    EXPECT_EQ(res[1].name, "hcom_broadcast__483_1");
+}

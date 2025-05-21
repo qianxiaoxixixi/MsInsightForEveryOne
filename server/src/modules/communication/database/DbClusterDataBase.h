@@ -67,6 +67,8 @@ public:
     bool QueryDistributedArgs(ParallelStrategyConfig &config, std::string &level);
 
     bool QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data) override;
+    bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
+        const std::string &rankId) override;
 private:
     std::string parseStatus = "UN_FINISH";
     // 标记初始状态的数据库是否有ClusterBaseInfo表

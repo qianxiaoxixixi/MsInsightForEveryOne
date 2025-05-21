@@ -157,3 +157,13 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
     EXPECT_EQ(response.level, "l1");
     EXPECT_EQ(response.datas.size(), total);
 }
+
+TEST_F(TestSuit, QueryBandwidthContentionMatMulDataTest)
+{
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
+    std::vector<Dic::Module::BandwidthContentionMatMulInfo> res;
+    bool result = db->QueryBandwidthContentionMatMulData(res);
+    size_t size = 0;
+    ASSERT_EQ(result, true);
+    ASSERT_EQ(res.size(), 0);
+}

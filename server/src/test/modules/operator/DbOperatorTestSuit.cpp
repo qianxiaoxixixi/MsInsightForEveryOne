@@ -134,3 +134,13 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorDetailInfoWhenPmuDataNotExi
     bool result = db->QueryOperatorDetailInfo(reqParams, response);
     EXPECT_EQ(result, true);
 }
+
+
+TEST_F(DbOperatorTestSuit, QueryBandwidthContentionMatMulDataTest)
+{
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("2");
+    std::vector<Dic::Module::BandwidthContentionMatMulInfo> info;
+    bool result = db->QueryBandwidthContentionMatMulData(info);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(info.size(), 0);
+}
