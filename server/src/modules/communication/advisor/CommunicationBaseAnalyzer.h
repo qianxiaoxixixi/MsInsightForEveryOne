@@ -16,8 +16,8 @@ class CommunicationBaseAnalyzer {
 public:
     CommunicationBaseAnalyzer() = default;
     virtual ~CommunicationBaseAnalyzer() = default;
-    bool GenerateAdvisor(CommunicationAdvisorInfo &info);
-    virtual bool QueryAdvisorData() = 0;
+    bool GenerateAdvisor(CommunicationAdvisorInfo &info, const std::string &clusterPath);
+    virtual bool QueryAdvisorData(const std::string &clusterPath) = 0;
     virtual void ComputeStatistics() = 0;
     virtual void AssembleAdvisor(CommunicationAdvisorInfo &info) = 0;
 };

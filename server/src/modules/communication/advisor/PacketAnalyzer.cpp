@@ -10,9 +10,9 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
-bool PacketAnalyzer::QueryAdvisorData()
+bool PacketAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (!database || !database->QueryPacketAnalyzerData(data)) {
         Server::ServerLog::Error("Failed to query packet analyzer data.");
         return false;

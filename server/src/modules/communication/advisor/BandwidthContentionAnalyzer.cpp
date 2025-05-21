@@ -10,10 +10,10 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
-bool BandwidthContentionAnalyzer::QueryAdvisorData()
+bool BandwidthContentionAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     std::vector<IterationsOrRanksObject> rankList;
-    auto communicationDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto communicationDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (!communicationDatabase || !communicationDatabase->QueryRanksHandler(rankList)) {
         Server::ServerLog::Error("Failed to get ranks data when query bandwidth contention data.");
         return false;
@@ -65,6 +65,9 @@ void BandwidthContentionAnalyzer::ComputeStatistics()
 void BandwidthContentionAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
 {
     info.name = BANDWIDTHCONTENTION_ANALYZER_TITLE;
+    info.statistics.insert({"name", {}});
+    info.statistics.insert({"duration(us)", {}});
+    info.statistics.insert({"bandwidth(GB/s)", {}});
     for (const auto &item : statistics) {
         info.statistics["name"].emplace_back(item.name);
         info.statistics["duration(us)"].emplace_back(std::to_string(item.duration));

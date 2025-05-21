@@ -16,7 +16,8 @@ class CommunicationAdvisor {
 public:
     CommunicationAdvisor() = default;
     ~CommunicationAdvisor() = default;
-    void GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items);
+    void GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items,
+            const std::string &clusterPath);
     void Register();
 protected:
     std::map<std::string, std::unique_ptr<CommunicationBaseAnalyzer>> advisorMap;

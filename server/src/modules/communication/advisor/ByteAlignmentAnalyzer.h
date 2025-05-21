@@ -26,7 +26,7 @@ class ByteAlignmentAnalyzer : public CommunicationBaseAnalyzer {
 public:
     ByteAlignmentAnalyzer() = default;
     ~ByteAlignmentAnalyzer() override = default;
-    bool QueryAdvisorData() override;
+    bool QueryAdvisorData(const std::string &clusterPath) override;
     void ComputeStatistics() override;
     void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
 private:

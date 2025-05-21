@@ -6,6 +6,7 @@
 #include "PacketAnalyzer.h"
 #include "ByteAlignmentAnalyzer.h"
 #include "BandwidthContentionAnalyzer.h"
+#include "RetransmissionAnalyzer.h"
 
 namespace Dic {
 namespace Module {
@@ -16,13 +17,14 @@ void CommunicationAdvisor::Register()
     advisorMap.emplace(PACKET_ANALYZER_TITLE, std::make_unique<PacketAnalyzer>());
     advisorMap.emplace(BYTEALIGNMENT_ANALYZER_TITLE, std::make_unique<ByteAlignmentAnalyzer>());
     advisorMap.emplace(BANDWIDTHCONTENTION_ANALYZER_TITLE, std::make_unique<BandwidthContentionAnalyzer>());
+    advisorMap.emplace(RETRANSMISSION_ANALYZER_TITLE, std::make_unique<RetransmissionAnalyzer>());
 }
 
-void CommunicationAdvisor::GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items)
+void CommunicationAdvisor::GenerateAdvisor(std::vector<CommunicationAdvisorInfo> &items, const std::string &clusterPath)
 {
     for (const auto &analyzer : advisorMap) {
         CommunicationAdvisorInfo info;
-        if (analyzer.second->GenerateAdvisor(info)) {
+        if (analyzer.second->GenerateAdvisor(info, clusterPath)) {
             items.emplace_back(info);
         }
     }

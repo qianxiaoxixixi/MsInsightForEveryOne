@@ -87,6 +87,7 @@ public:
     bool QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data) override;
     bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
         const std::string &rankId) override;
+    bool QueryRetransmissionAnalyzerData(std::vector<RetransmissionClassificationInfo> &data) override;
 
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;

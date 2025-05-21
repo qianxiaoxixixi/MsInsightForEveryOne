@@ -8,9 +8,9 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
-bool CommunicationBaseAnalyzer::GenerateAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
+bool CommunicationBaseAnalyzer::GenerateAdvisor(CommunicationAdvisorInfo &info, const std::string &clusterPath)
 {
-    if (!QueryAdvisorData()) {
+    if (!QueryAdvisorData(clusterPath)) {
         return false;
     }
     ComputeStatistics();
