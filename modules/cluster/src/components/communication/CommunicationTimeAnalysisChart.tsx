@@ -18,6 +18,7 @@ import { themeInstance } from 'ascend-theme';
 import { type Theme } from '@emotion/react';
 import { disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
 import { ClickOperatorItem, CompareData, type ErrorInfo, FormatterParams } from '../../utils/interface';
+import { queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -312,7 +313,7 @@ async function redirectToTimeline(): Promise<void> {
         rankId: rankId.toString(),
     };
     try {
-        const res = await window.requestData('unit/kernelDetail', params, 'timeline');
+        const res = await queryTimelineUnitKernelDetail(params);
         const resObj = res ?? {};
         connector.send({
             event: 'switchModule',

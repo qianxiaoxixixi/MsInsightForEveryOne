@@ -25,6 +25,8 @@ import {
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
+import { queryCommunicationBandwidth, queryCommunicationDistribution } from '../../../utils/RequestUtils';
+import { WrapBandwidthDataParams, PacketAndBandwidthChartsParams } from '../../../utils/interface';
 
 const ChartsContainer = styled.div`
   display: flex;
@@ -146,31 +148,13 @@ const BandwidthAnalysis = observer((props:
     );
 });
 
-async function getTableData({ iterationId, rankId, operatorName, stage, pgName }:
-{ iterationId: number; rankId: number; operatorName: string; stage: string; pgName: string }): Promise<any> {
-    const bandwidthDetails = await window.requestData('communication/bandwidth',
-        { iterationId, rankId, operatorName, stage, pgName });
-    return bandwidthDetails?.items ?? [];
+async function getTableData(params:
+{ iterationId: string; rankId: number; operatorName: string; stage: string; pgName: string }): Promise<any> {
+    return await queryCommunicationBandwidth(params);
 }
 
-async function getChartData({ domId, iterationId, rankId, operatorName, stage, pgName }: PacketAndBandwidthChartsParams): Promise<any> {
-    const distributions = await window.requestData('communication/distribution',
-        { iterationId, rankId, operatorName, transportType: domId, stage, pgName });
-    return distributions?.distributionData ?? '{}';
-}
-
-interface WrapBandwidthDataParams {
-    domId: string;
-    iterationId: number;
-    rankId: number;
-    operatorName: string;
-    stage: string;
-    isDark: boolean;
-    pgName: string;
-}
-
-interface PacketAndBandwidthChartsParams extends WrapBandwidthDataParams {
-    locale: string;
+async function getChartData(params: PacketAndBandwidthChartsParams): Promise<any> {
+    return await queryCommunicationDistribution(params);
 }
 
 async function InitPacketAndBandwidthCharts({

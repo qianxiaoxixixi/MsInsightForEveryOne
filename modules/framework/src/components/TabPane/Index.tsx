@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
 import type { Scene, Session } from '@/entity/session';
 import { type MenuProps, message, Menu } from 'antd';
@@ -13,6 +13,7 @@ import { SessionAction } from '@/utils/enum';
 import { useTranslation } from 'react-i18next';
 import { getModuleConfig } from '@/utils/Request';
 import { updateSession } from '@/connection/notificationHandler';
+import connector from '@/connection';
 
 const Container = styled.div`
     width: 100%;
@@ -89,6 +90,8 @@ const Index = observer(({ session }: {session: Session}) => {
     const [dataCompose, setDataCompose] = useState<Record<string, boolean>>({});
     const [activeModule, setActiveModule] = useState('Timeline');
     const [mergedModulesConfig, setMergedModulesConfig] = useState(modulesConfig);
+    const prevFrameIdsRef = useRef<string[]>([]);
+    const iframeLoadHandlersRef = useRef<Map<HTMLIFrameElement, () => void>>(new Map());
 
     const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene, dataCompose))
         , [scene, dataCompose, mergedModulesConfig]);
@@ -133,6 +136,57 @@ const Index = observer(({ session }: {session: Session}) => {
         setScene(session.scene);
         setDataCompose({ hasCachelineRecords: session.hasCachelineRecords });
     }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson]);
+
+    // 添加监听新的页签加载后发送当前工程
+    useEffect(() => {
+        const frames = document.querySelectorAll('iframe');
+        const frameIds = Array.prototype.map.call(frames, (frame: HTMLIFrameElement) => frame.id) as string[];
+        const newFrames = Array.prototype.filter.call(frames, (frame: HTMLIFrameElement) => !prevFrameIdsRef.current.includes(frame.id)) as HTMLIFrameElement[];
+
+        const sendBody = {
+            event: 'frame/loaded',
+            body: {
+                selectedFileType: session.activeDataSource.selectedFileType,
+                selectedFilePath: session.activeDataSource.selectedFilePath,
+                pageInfo: {
+                    cluster: session.clusterPageInfo,
+                },
+            },
+        };
+        newFrames.forEach((frame) => {
+            if (frame.contentWindow && frame.contentWindow.document.readyState === 'complete') {
+                // 如果 iframe 已经加载完成，则直接发送消息
+                connector.send({
+                    ...sendBody,
+                    to: frame.id,
+                });
+            } else {
+                // 否则设置 onload 监听器等待 iframe 加载完成
+                // 如果之前已经有监听器，先清除
+                if (iframeLoadHandlersRef.current.has(frame)) {
+                    frame.onload = null; // 清除已存在的监听器
+                }
+                // 创建并绑定新的监听器
+                const onLoadHandler = (): void => {
+                    connector.send({
+                        ...sendBody,
+                        to: frame.id,
+                    });
+                };
+                // 保存监听器用于后续清除
+                iframeLoadHandlersRef.current.set(frame, onLoadHandler);
+                frame.onload = onLoadHandler;
+            }
+        });
+        prevFrameIdsRef.current = frameIds;
+        return (): void => {
+            iframeLoadHandlersRef.current.forEach((handler, frame) => {
+                frame.onload = null; // 移除监听器
+            });
+            iframeLoadHandlersRef.current.clear(); // 清空 map
+        };
+    }, [availableModules]);
+
     useEffect(() => {
         const newActiveModule = getActive(session, scene, activeModule, availableModules);
         setActiveModule(newActiveModule);

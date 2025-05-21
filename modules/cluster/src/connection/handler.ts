@@ -8,7 +8,28 @@ import { updateData, AnalysisType } from '../components/communication/Filter';
 import type { ConditionDataType } from '../components/communication/Filter';
 import i18n from 'ascend-i18n';
 import type { communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
+import { ClusterInfo } from '../entity/session';
 import { customConsole as console } from 'ascend-utils';
+
+type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';
+
+export interface ClusterPageInfo {
+    clusterList: ClusterInfo[];
+    selectedClusterPath: string;
+}
+
+interface ProjectCreateInfo extends Record<string, any> {
+    selectedFileType: LayerType;
+    selectedFilePath: string;
+    pageInfo: {
+        cluster: ClusterPageInfo;
+    };
+}
+
+interface ProjectUpdateInfo extends ProjectCreateInfo {
+    rankId: string;
+    isCompare: boolean;
+}
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
@@ -18,9 +39,28 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     }
 };
 
-export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+function updateClusterListAndSelectedClusterPath(pageInfo: ClusterPageInfo): void {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) { return; }
+        session.clusterList = pageInfo.clusterList;
+        session.selectedClusterPath = pageInfo.selectedClusterPath;
+    });
+}
+
+export const frameLoadedHandler: NotificationHandler<ProjectCreateInfo> = async (data: ProjectCreateInfo): Promise<void> => {
     try {
         resetStatus();
+        updateClusterListAndSelectedClusterPath(data.pageInfo.cluster);
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const switchDirectoryHandler: NotificationHandler<ProjectUpdateInfo> = (data: ProjectUpdateInfo): void => {
+    try {
+        resetStatus();
+        updateClusterListAndSelectedClusterPath(data.pageInfo.cluster);
     } catch (error) {
         console.error(error);
     }
@@ -30,14 +70,15 @@ export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
 
-export const parseClusterSuccessHandler: NotificationHandler = (data): void => {
+export const updateClusterPageInfoHandler: NotificationHandler<ClusterPageInfo> = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        session.clusterCompleted = true;
+        session.clusterList = data.clusterList;
+        session.selectedClusterPath = data.selectedClusterPath;
         session.renderId = ++session.renderId % 1000;
     });
 };

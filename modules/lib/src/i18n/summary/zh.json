@@ -1,5 +1,6 @@
 {
   "summary": {
+    "Cluster": "集群",
     "BaseInfo": "基本信息",
     "Parallel Strategy Analysis": "并行策略分析",
     "ReportFile": "文件路径",

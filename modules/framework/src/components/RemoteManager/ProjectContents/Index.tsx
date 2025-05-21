@@ -13,7 +13,13 @@ const Index = observer(() => {
 
     useEffect(() => {
         sendDirectory();
-    }, [session.activeDataSource.children, session.activeDataSource.selectedFilePath, session.isCompareStatus, session.compareSet.comparison.rankId]);
+    }, [
+        session.activeDataSource.children,
+        session.activeDataSource.selectedFilePath,
+        session.isCompareStatus,
+        session.compareSet.comparison.rankId,
+        session.clusterPageInfo.clusterList,
+    ]);
 
     return <>
         <Contents session={session}/>

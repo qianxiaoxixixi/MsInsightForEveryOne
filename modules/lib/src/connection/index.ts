@@ -35,6 +35,9 @@ abstract class BaseConnector {
                 } else {
                     res.data = event.data;
                 }
+                if (res.data?.source === 'react-devtools-content-script') {
+                    return; // 调试模式不处理 react-devtools 发送的消息
+                }
                 const listener = this._listeners.get(res.data.event);
                 if (res.data.event === 'request') {
                     this.awaitFetch(res);

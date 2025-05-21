@@ -27,7 +27,7 @@ export interface Notification<T = Record<string, unknown>> {
 
 export type ResponseHandler = (res: Response) => void;
 
-export type NotificationHandler = (notification: Record<string, unknown>) => void;
+export type NotificationHandler<T = Record<string, unknown>> = (notification: T) => void;
 
 export const isResopnse = (msg: Response | Notification): msg is Response => {
     return (msg as Response).id !== undefined;

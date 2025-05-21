@@ -11,16 +11,23 @@ import { ClickOperatorItem, IndicatorsItem, PerformanceDataItem } from '../utils
 
 export type PerformanceDataMap = Map<number, PerformanceDataItem>;
 
+export interface ClusterInfo {
+    name: string;
+    path: string;
+    dbPath?: string;
+    parsed: boolean;
+    durationParsed: boolean;
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     parseCompleted: boolean = false;
-    clusterCompleted: boolean = false;
-    durationFileCompleted: boolean = false;
     unitcount: number = 0;
     renderId: number = 1;
     isFullDb: boolean = false;
     id = '';
 
+    selectedClusterPath: string = '';
     allRankIds: any[] = [];
     communicatorData: communicatorContainerData = {
         partitionModes: [],
@@ -43,12 +50,12 @@ export class Session {
     isCompare: boolean = false;
     // 右键选中的算子
     targetOperator: ClickOperatorItem | undefined = undefined;
+    private _clusterList: ClusterInfo[] = [];
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this);
 
         window.closeWaiting = (): void => {
-            this.clusterCompleted = true;
             this.parseCompleted = true;
         };
     }
@@ -79,6 +86,22 @@ export class Session {
         return map;
     }
 
+    get clusterCompleted(): boolean {
+        return this._clusterList.find(({ path }) => path === this.selectedClusterPath)?.parsed ?? false;
+    }
+
+    get durationFileCompleted(): boolean {
+        return this._clusterList.find(({ path }) => path === this.selectedClusterPath)?.durationParsed ?? false;
+    }
+
+    get clusterList(): ClusterInfo[] {
+        return this._clusterList;
+    }
+
+    set clusterList(value) {
+        this._clusterList = value;
+    }
+
     // 设置着色数据图例
     setRankDyeingData(): void {
         const data: Record<string, { min: number; max: number }> = {};
@@ -104,10 +127,10 @@ export class Session {
     }
 
     reset(): void {
-        this.clusterCompleted = false;
+        this._clusterList = [];
+        this.selectedClusterPath = '';
         this.parseCompleted = false;
         this.unitcount = 0;
-        this.durationFileCompleted = false;
         this.allRankIds = [];
         this.communicatorData = { partitionModes: [], defaultPPSize: 0 };
         this.activeCommunicator = undefined;

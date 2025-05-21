@@ -28,6 +28,8 @@ import connector from '../../connection';
 import { IndicatorsItem, PerformanceDataItem } from '../../utils/interface';
 import { isEqual } from 'lodash';
 import { ExpertLoadBalancingBox } from './expert-load-balancing';
+import { ClusterSelect } from '../ClusterSelect';
+import { Label } from '../Common';
 
 const FlowChartContainer = styled.div`
     margin-top: 24px;
@@ -230,6 +232,11 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
     ]);
 
     return <Layout>
+        <div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
+            <Label name={t('Cluster')}/>
+            <ClusterSelect width={300} session={session}/>
+        </div>
+
         <BaseInfo session={session}/>
 
         <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
@@ -288,7 +295,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         </CollapsiblePanel>
 
         <CollapsiblePanel title={t('MOE Expert Load Balancing Analysis')}>
-            <ExpertLoadBalancingBox />
+            <ExpertLoadBalancingBox/>
         </CollapsiblePanel>
     </Layout>;
 });

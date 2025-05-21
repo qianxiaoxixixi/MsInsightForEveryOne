@@ -28,7 +28,6 @@ export const updateSessionHandler = (e: NotificationMessage): void => {
     setTimeout(() => {
         const isSend =
             (updateState.parseCompleted !== undefined ||
-                updateState.clusterCompleted !== undefined ||
                 updateState.unitcount !== undefined ||
                 updateState.isBinary === true ||
                 updateState.durationFileCompleted === true ||
@@ -40,7 +39,6 @@ export const updateSessionHandler = (e: NotificationMessage): void => {
                 event: 'updateSession',
                 body: {
                     parseCompleted: session.parseCompleted,
-                    clusterCompleted: session.clusterCompleted,
                     unitcount: session.unitcount,
                     instrVersion: session.instrVersion,
                     ...updateState,
@@ -155,4 +153,31 @@ export const openImportDialogHandler = (): void => {
     const session = store.sessionStore.activeSession;
 
     session.actionListener = { type: SessionAction.IMPORT_MOE_LOAD_DATA, value: '' };
+};
+
+export const clusterCompletedHandler = (e: any): void => {
+    const data = e.data.body;
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        session.setClusterParsed(data.clusterPath);
+        connector.send({ // 初始加载 Communication Summary 页面时无法未注册监听事件，因此无法接收，这段代码用处在切换集群的情况
+            event: 'updateClusterPageInfo',
+            body: session.clusterPageInfo,
+        });
+    });
+};
+
+export const clusterDurationCompletedHandler = (e: any): void => {
+    const data = e.data.body;
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        session.setClusterDurationParsed(data.clusterPath);
+        if (data.isCluster !== undefined) {
+            session.isCluster = data.isCluster;
+        }
+        connector.send({ // 初始加载 Communication Summary 页面时无法未注册监听事件，因此无法接收，这段代码用处在切换集群的情况
+            event: 'updateClusterPageInfo',
+            body: session.clusterPageInfo,
+        });
+    });
 };

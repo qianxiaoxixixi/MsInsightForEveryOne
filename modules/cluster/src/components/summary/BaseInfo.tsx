@@ -106,7 +106,7 @@ const BaseInfo = observer(({ session }: { session: Session}): JSX.Element => {
         setTimeout(() => {
             updateBaseInfoData(setBaseinfo, session);
         });
-    }, [session.parseCompleted, session.isCompare, session.renderId]);
+    }, [session.isCompare, session.renderId]);
 
     return <CollapsiblePanel title={t('BaseInfo')}>
         <MIDescriptions>
