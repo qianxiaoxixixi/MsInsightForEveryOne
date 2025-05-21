@@ -85,6 +85,8 @@ public:
                                        std::unordered_map<std::uint32_t, StepStatistic> &data) override;
 
     bool QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data) override;
+    bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
+        const std::string &rankId) override;
 
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;

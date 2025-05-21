@@ -1179,5 +1179,30 @@ bool VirtualClusterDatabase::ExecuteQueryPacketAnalyzerData(std::vector<PacketAn
     sqlite3_finalize(stmt);
     return true;
 }
+
+bool VirtualClusterDatabase::ExecuteQueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
+                                                                         const std::string &rankId,
+                                                                         const std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query bandwidth contention analyzer."
+            " Error:", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        BandwidthContentionSDMAInfo info;
+        info.name = sqlite3_column_string(stmt, col++);
+        info.startTime = sqlite3_column_double(stmt, col++);
+        info.duration = sqlite3_column_double(stmt, col++);
+        info.bandwidth = sqlite3_column_double(stmt, col++);
+        res.emplace_back(info);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
 }
 }

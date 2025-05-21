@@ -1342,6 +1342,18 @@ bool TextClusterDatabase::QueryPacketAnalyzerData(std::vector<PacketAnalyzerData
         " WHERE (transport_type = 'RDMA' OR transport_type = 'SDMA') AND transit_size > 0;";
     return ExecuteQueryPacketAnalyzerData(data, sql);
 }
+
+bool TextClusterDatabase::QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
+                                                               const std::string &rankId)
+{
+    std::string sql = "SELECT t1.op_name, ROUND(start_time / 1000.0, 3) AS startTime,"
+        " ROUND(elapse_time * 1000.0, 3), bandwidth_size"
+        " FROM " + TABLE_BANDWIDTH + "  AS t1 INNER JOIN " + TABLE_TIME_INFO + " AS t2 ON "
+        " t1.iteration_id = t2.iteration_id AND t1.rank_id = t2.rank_id AND"
+        " t1.op_name = t2.op_name AND t1.op_suffix = t2.op_suffix "
+        " WHERE t1.rank_id = ? AND transport_type = 'SDMA' AND transit_size > 0 ORDER BY startTime;";
+    return ExecuteQueryBandwidthContentionAnalyzerData(res, rankId, sql);
+}
 } // end of namespace Module
 } // end of namespace Dic
 // LCOV_EXCL_BR_STOP

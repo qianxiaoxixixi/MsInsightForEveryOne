@@ -36,6 +36,8 @@ public:
                                Protocol::OperatorMoreInfoResponse& response) override;
     static void ParserEnd(const std::string &fileId, bool result, const std::string &msg);
     static void Reset();
+
+    bool QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res);
 private:
     std::set<std::string> FetchPmuColumnNames();
     std::string GenerateQueryDetailSqlForOperator();

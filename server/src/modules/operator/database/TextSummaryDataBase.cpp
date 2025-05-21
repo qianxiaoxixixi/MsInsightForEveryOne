@@ -1149,6 +1149,13 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP;
     }
 
+    bool TextSummaryDataBase::QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res)
+    {
+        std::string sql = "SELECT name, ROUND(start_time / 1000.0, 3) AS startTime, duration FROM " + TABLE_KERNEL +
+            " WHERE name LIKE '%matmul%' ORDER BY startTime";
+        return ExecuteQueryBandwidthContentionMatMulData(res, sql);
+    }
+
 } // end of namespace Summary
 // end of namespace Module
 // end of namespace Dic

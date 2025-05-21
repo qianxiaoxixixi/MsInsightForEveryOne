@@ -50,6 +50,8 @@ public:
     bool QueryAllOperatorStatisticInfo(OperatorStatisticReqParams &reqParams,
                                        std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
 
+    bool QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res) override;
+
 private:
     const std::string kernelParseState = "Kernel files parsing status";
     bool hasInitStmt = false;

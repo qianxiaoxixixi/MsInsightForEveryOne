@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_CLUSTER_DEF_H
 
 #include <string>
+#include <map>
 #include <optional>
 #include <fstream>
 #include <unordered_map>
@@ -464,6 +465,23 @@ struct ByteAlignmentAnalyzerSmallOperatorInfo {
     uint64_t size = 0;
     std::string transportType;
     std::string linkType;
+};
+
+const std::string BANDWIDTHCONTENTION_ANALYZER_TITLE = "Bandwidth Contention Analysis";
+struct BandwidthContentionMatMulInfo {
+    std::string name;
+    double startTime = 0.0;
+    double duration = 0.0;
+};
+struct BandwidthContentionSDMAInfo {
+    std::string name;
+    double startTime = 0.0;
+    double duration = 0.0;
+    double bandwidth = 0.0;
+};
+struct BandwidthContentionData {
+    std::map<std::string, std::vector<BandwidthContentionMatMulInfo>> matMulData;
+    std::map<std::string, std::vector<BandwidthContentionSDMAInfo>> SDMAData;
 };
 } // end of namespace Module
 } // end of namespace Dic
