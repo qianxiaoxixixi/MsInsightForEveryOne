@@ -59,6 +59,7 @@ export function updateDataScene(data: Record<string, any>): void {
         hasCachelineRecords: data.hasCachelineRecords ?? false,
         isOnlyTraceJson: data.isOnlyTraceJson ?? false,
         instrVersion: data.instrVersion ?? -1,
+        isLeaks: data.isLeaks ?? false,
         isIE: data.isIE ?? false,
     };
     updateSession(scenceInfo);
@@ -136,7 +137,7 @@ const Index = observer(({ session }: {session: Session}) => {
         }
         setScene(session.scene);
         setDataCompose({ hasCachelineRecords: session.hasCachelineRecords });
-    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE]);
+    }, [session.isBinary, session.isCluster, session.isIpynb, session.hasCachelineRecords, session.isOnlyTraceJson, session.isIE, session.isLeaks]);
 
     // 添加监听新的页签加载后发送当前工程
     useEffect(() => {

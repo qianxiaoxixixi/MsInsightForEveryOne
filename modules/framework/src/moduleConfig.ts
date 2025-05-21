@@ -11,6 +11,7 @@ export interface ModuleConfig {
     isCluster?: boolean;
     isCompute?: boolean;
     isJupyter?: boolean;
+    isLeaks?: boolean;
     isIE?: boolean;
     hasCachelineRecords?: boolean;
     isOnlyTraceJson?: boolean;
@@ -100,11 +101,20 @@ export const modulesConfig: ModuleConfig[] = [
         isJupyter: true,
     },
     {
+
         name: 'Statistic',
         requestName: 'statistic',
         attributes: {
             src: isDev ? 'http://localhost:3006/' : './plugins/statistic/index.html',
         },
         isIE: true,
+    },
+    {
+        name: 'Leaks',
+        requestName: 'leaks',
+        attributes: {
+            src: isDev ? 'http://localhost:3007/' : './plugins/Leaks/index.html',
+        },
+        isLeaks: true,
     },
 ];

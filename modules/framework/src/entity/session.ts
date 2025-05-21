@@ -13,8 +13,8 @@ import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
-// Scene：数据场景：默认、集群、算子调优、Jupter、只trace.json文件
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson' | 'IE';
+// Scene：数据场景：默认、集群、算子调优、Jupter、Leaks、只trace.json文件
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson' | 'IE' | 'Leaks';
 
 interface ContextMenu {
     visible: boolean;
@@ -55,7 +55,7 @@ export const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, pro
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     defaultConnected?: boolean;
-    actionListener: {type: SessionAction;value: string} = { type: SessionAction.NO_ACTION, value: '' };
+    actionListener: { type: SessionAction; value: string } = { type: SessionAction.NO_ACTION, value: '' };
     // 加载状态
     loading: boolean = false;
     // 数据源/项目管理
@@ -70,6 +70,7 @@ export class Session {
     isReset: boolean = false;
     isFullDb: boolean = false;
     isOnlyTraceJson: boolean = false;
+    isLeaks: boolean = false;
     hasCachelineRecords: boolean = false;
     instrVersion: number = -1;
     // 解析状态
@@ -89,7 +90,7 @@ export class Session {
     contextMenu: ContextMenu = { visible: false };
     // 对比功能
     selectedFile: File = { projectName: '', fileType: 'UNKNOWN', filePath: '' };
-    compareSet: {baseline: CompareData;comparison: CompareData} = {
+    compareSet: { baseline: CompareData; comparison: CompareData } = {
         baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
         comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
     };
@@ -115,6 +116,8 @@ export class Session {
         let scene: Scene;
         if (this.isOnlyTraceJson) {
             scene = 'OnlyTraceJson';
+        } else if (this.isLeaks) {
+            scene = 'Leaks';
         } else if (this.isBinary) {
             scene = 'Compute';
         } else if (this.isCluster) {

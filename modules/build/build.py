@@ -26,6 +26,7 @@ MODULES_MAP = {
     'compute': 'Compute',
     'jupyter': 'Jupyter',
     'statistic': 'Statistic',
+    'leaks': 'Leaks',
 }
 
 
