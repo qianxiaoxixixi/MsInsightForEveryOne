@@ -370,7 +370,7 @@ void ProjectParserDb::ParseClusterInfo(const std::vector<Global::ProjectExplorer
             projectInfos[0].projectName);
     };
     std::for_each(clusterFilePath.begin(), clusterFilePath.end(), clusterParse);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess, clusterFilePath);
 }
 // LCOV_EXCL_BR_STOP
 ProjectAnalyzeRegister<ProjectParserDb>  pRegDB(ParserType::DB);

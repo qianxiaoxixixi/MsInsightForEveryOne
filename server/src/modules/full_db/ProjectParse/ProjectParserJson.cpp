@@ -212,7 +212,7 @@ void ProjectParserJson::ParserTraceData(const std::map<std::string, std::vector<
             projectInfos[0].projectName);
     };
     std::for_each(clusterInfos.begin(), clusterInfos.end(), clusterParse);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ParsePostProcess, clusterInfos);
 }
 
 bool ProjectParserJson::isSimulation(std::string filePath)

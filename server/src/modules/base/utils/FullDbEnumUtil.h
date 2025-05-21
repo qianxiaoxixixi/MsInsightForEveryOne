@@ -82,7 +82,7 @@ const std::map<std::string, PROCESS_TYPE> PROCESS_NAME_MAP_TO_PROCESS_TYPE = {
     { "CANN", PROCESS_TYPE::CANN_API }
 };
 
-inline PROCESS_TYPE PROCESS_NAME_TO_TYPE(const std::string processName)
+inline PROCESS_TYPE PROCESS_NAME_TO_TYPE(const std::string &processName)
 {
     if (PROCESS_NAME_MAP_TO_PROCESS_TYPE.count(processName) == 0) {
         return PROCESS_TYPE::NONE;

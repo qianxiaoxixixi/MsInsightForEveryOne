@@ -139,6 +139,16 @@ struct ParseProgressEvent : public Event {
     ParseProgressEvent() : Event(EVENT_PARSE_PROGRESS) {}
     ParseProgressEventBody body;
 };
+
+struct ParseHeatmapCompletedBody {
+    bool parseResult = false;
+    std::string errorMsg;
+};
+
+struct ParseHeatmapCompletedEvent : public Event {
+    ParseHeatmapCompletedEvent() : Event(EVENT_PARSE_HEATMAP_COMPLETED) {}
+    ParseHeatmapCompletedBody body;
+};
 } // end of namespace Protocol
 } // end if namespace Dic
 

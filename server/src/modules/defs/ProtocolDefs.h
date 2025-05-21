@@ -43,6 +43,7 @@ const std::string EVENT_PARSE_IE_COMPLETED = "parse/statisticCompleted";
 const std::string EVENT_PARSE_LEAKS_MEMORY_COMPLETED = "parse/leaksMemoryCompleted";
 const std::string EVENT_MODULE_RESET = "module.reset";
 const std::string EVENT_PARSE_PROGRESS = "parse/progress";
+const std::string EVENT_PARSE_HEATMAP_COMPLETED = "parse/heatmapCompleted";
 #pragma endregion
 
 #pragma region << Request / Response Command>>

@@ -84,6 +84,7 @@ public:
         }
         return {};
     }
+    std::string GetRankIdByFileId(const std::string &fileId);
 
     std::string GetAnyTraceDatabaseId();
 
