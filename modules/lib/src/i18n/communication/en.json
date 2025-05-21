@@ -88,7 +88,11 @@
       "Small Size Proportion Standard(%)": "Small Size Proportion Standard(%)",
       "Small Size Standard(MB)": "Small Size Standard(MB)",
       "Abnormal Operator Count": "Abnormal Operator Count",
-      "Small Size(Byte)": "Small Size(Byte)"
+      "Small Size(Byte)": "Small Size(Byte)",
+      "bandwidth(GB/s)": "bandwidth(GB/s)",
+      "duration(us)": "duration(us)",
+      "name ": "name",
+      "group name": "group name"
     },
     "tableHeadTooltip": {
       "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",
@@ -121,7 +125,7 @@
       "Memory Optimization": "Check the memory optimization policy:",
       "Adopt": "Adopt fusion operators of affinity optimizer:",
       "Byte Alignment Analysis": "Adjusting the Data Size",
-      "Bandwidth Contention": "Benchmark data comparison",
+      "Bandwidth Contention": "Benchmark data comparison:",
       "RDMA Transmission Time": "Check RDMA transmission time:",
       "Network Configuration": "Check the network configuration:"
     },
@@ -133,6 +137,12 @@
       "Bandwidth Contention": "Compare the performance data before and after the convergence function is enabled to evaluate whether the impact of bandwidth preemption exceeds the convergence benefits.",
       "RDMA Transmission Time": "Check whether the transmission time of the RDMA operator that is suspected to be retransmitted is correct.",
       "Network Configuration": "Check the network configuration of the switch and compute node server."
+    },
+    "tooltip": {
+      "Packet Analysis": "A small packet in communication refers to the transmission size of a communication operator being smaller than the standard for small packets. The proportion of small packets is the proportion of the number of communication operators that are small packets to the total number of communication operators. The duration of small packets is the sum of duration of communication operators which are small packets.",
+      "Byte Alignment Analysis": "If a communication large operator contains a Memcpy or Reduce_Inline communication small operator with the transport type SDMA, and the transit size is greater than 512 bytes and cannot be evenly divided by 512 bytes, then this communication large operator is said to have a byte alignment issue.",
+      "Bandwidth Contention Analysis": "If [Start Time, End Time] of a communication operator overlap with [Start Time, End Time] of a matmul operator, and the SDMA bandwidth of the communication operator is less than 14.4 GB/s, the communication operator is said to have a bandwidth contention issue.",
+      "Communication Retransmission Analysis": "The object of communication retransmission is the communication domain. Ignoring the Total Op operator, if there exists a communication operator in the communication domain, and considering all ranks, the minimum elapse time is greater than 4000 ms, and the maximum RDMA transit time is greater than 4000 ms, then it is determined that there is a communication retransmission issue."
     }
   }
 }

@@ -132,7 +132,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
             const adopt = `${t('title.Adopt')} ${t('index.Adopt')}\n\n`;
             content = (
                 <>
-                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <CommunicationAdviceHeader title={item.title}/>
                     <div className="communication-expert-index">{dataParallelism + memoryOptimization + adopt}</div>
                     <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small" pagination={getPageConfigWithAllData(item.tableDataSource.length)}></ResizeTable>
                 </>
@@ -141,7 +141,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
             const byteAlignmentAnalysis = `${t('title.Byte Alignment Analysis')} ${t('index.Byte Alignment Analysis')}\n\n`;
             content = (
                 <>
-                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <CommunicationAdviceHeader title={item.title}/>
                     <div className="communication-expert-index">{byteAlignmentAnalysis}</div>
                     <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small" pagination={getPageConfigWithAllData(item.tableDataSource.length)}></ResizeTable>
                 </>
@@ -150,7 +150,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
             const bandwidthContention = `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}\n\n`;
             content = (
                 <>
-                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <CommunicationAdviceHeader title={item.title}/>
                     <div className="communication-expert-index">{bandwidthContention}</div>
                     <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
                 </>
@@ -160,7 +160,7 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
             const networkConfiguration = `${t('title.Network Configuration')} ${t('index.Network Configuration')}\n\n`;
             content = (
                 <>
-                    <div className="communication-advice-header">{t(item.title)}</div>
+                    <CommunicationAdviceHeader title={item.title}/>
                     <div className="communication-expert-index">{transmissionTime}</div>
                     <div className="communication-expert-index">{networkConfiguration}</div>
                     <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
@@ -172,6 +172,27 @@ const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns:
         results.push(content);
     });
     return results;
+};
+
+const CommunicationAdviceHeader = ({ title }: {title: string}): JSX.Element => {
+    const { t } = useTranslation('communication');
+    const tooltipContent = (
+        <div style={{ padding: '10px' }}>
+            {t(`tooltip.${title}`)}
+        </div>
+    );
+
+    return (
+        <div className="communication-advice-header">
+            {t(title)}
+            <Tooltip
+                placement="left"
+                title={tooltipContent}
+            >
+                <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20} />
+            </Tooltip>
+        </div>
+    );
 };
 
 export default AdviceLabel;
