@@ -27,6 +27,7 @@ const std::string MODULE_SOURCE = "source";
 const std::string MODULE_ADVISOR = "advisor";
 const std::string MODULE_JUPYTER = "jupyter";
 const std::string MODULE_IE = "IE";
+const std::string MODULE_LEAKS = "leaks";
 #pragma endregion
 
 #pragma region << Event Name>>
@@ -39,6 +40,7 @@ const std::string EVENT_ALL_SUCCESS = "allPagesSuccess";
 const std::string EVENT_PARSE_CLUSTER_STEP2_COMPLETED = "parse/clusterStep2Completed";
 const std::string EVENT_PARSE_MEMORY_COMPLETED = "parse/memoryCompleted";
 const std::string EVENT_PARSE_IE_COMPLETED = "parse/statisticCompleted";
+const std::string EVENT_PARSE_LEAKS_MEMORY_COMPLETED = "parse/leaksMemoryCompleted";
 const std::string EVENT_MODULE_RESET = "module.reset";
 const std::string EVENT_PARSE_PROGRESS = "parse/progress";
 #pragma endregion
@@ -135,7 +137,7 @@ const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX = "Memory/view/staticO
 const std::string REQ_RES_MEMORY_FIND_SLICE = "Memory/find/slice";
 // memory leaks
 const std::string REQ_RES_LEAKS_MEMORY_BLOCKS = "Memory/leaks/blocks";
-const std::string REQ_RES_LEAKS_MEMORY_ALLOCATIONS = "Memory/leaks/allocation";
+const std::string REQ_RES_LEAKS_MEMORY_ALLOCATIONS = "Memory/leaks/allocations";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";

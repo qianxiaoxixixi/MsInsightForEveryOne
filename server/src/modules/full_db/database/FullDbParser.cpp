@@ -12,6 +12,8 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "BaselineManager.h"
 #include "CollectionTimeService.h"
+#include "LeaksMemoryDatabase.h"
+#include "LeaksMemoryService.h"
 #include "FullDbParser.h"
 
 namespace Dic::Module::FullDb {
@@ -64,6 +66,7 @@ void FullDbParser::Reset()
     FullDb::DbMemoryDataBase::Reset();
     FullDb::DbSummaryDataBase::Reset();
     FullDb::DbTraceDataBase::Reset();
+    FullDb::LeaksMemoryDatabase::Reset();
     ServerLog::Info("End Reset trace Parser");
     CollectionTimeService::Instance().Reset();
 }
@@ -92,54 +95,27 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     }
     auto &threadPool = FullDbParser::Instance().threadPool;
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
-    futures->emplace_back(threadPool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
-            return;
-        }
-        GetTraceDatabase(dbId)->InitStringsCache();
-    }));
-    futures->emplace_back(threadPool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
-            return;
-        }
-        GetTraceDatabase(dbId)->InitMetaDataInfo();
-    }));
-    futures->emplace_back(threadPool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
-            return;
-        }
-        GetTraceDatabase(dbId)->UpdateAllDepth();
-    }));
-    futures->emplace_back(threadPool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
-            return;
-        }
-        GetTraceDatabase(dbId)->UpdateWaitTime();
-    }));
-    futures->emplace_back(threadPool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
-            return;
-        }
-        GetTraceDatabase(dbId)->InitConnectionCats();
-    }));
-    futures->emplace_back(threadPool->AddTask([dbId]() {
-        if (!GetTraceDatabase(dbId)) {
-            return;
-        }
-        GetTraceDatabase(dbId)->GenerateOverlapAnalysis();
-    }));
-
-    threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
-
-    database->UpdateStartTime(rankIds[0]);
-
     FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
+    if (type != FileType::LEAKS) {
+        BuildProfilingInitTask(futures, dbId, threadPool);
+        threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
+        database->UpdateStartTime(rankIds[0]);
+    } else {
+        threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
+    }
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
             FullDb::DbMemoryDataBase::ParseCallBack(rankId, false, "");
         }
         ServerLog::Error("There is no Memory Data in this db file");
+    } else if (type == FileType::LEAKS && !database->CheckTableDataInvalid(TABLE_LEAKS_DUMP)) {
+        std::string errMsg = "There is no Leaks Memory Data in this db file";
+        for (const auto& rankId: rankIds) {
+            Memory::LeaksMemoryService::ParserEnd(rankId, false);
+            Memory::LeaksMemoryService::ParseCallBack(rankId, false, errMsg);
+        }
+        ServerLog::Error(errMsg);
     } else {
         InitMemory(rankIds, filePath);
     }
@@ -152,7 +128,46 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         InitSummary(rankIds, filePath);
     }
 }
-
+void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::future<void>>> &futures, std::string &dbId,
+                                          std::unique_ptr<ThreadPool> &pool)
+{
+    futures->emplace_back(pool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->InitStringsCache();
+    }));
+    futures->emplace_back(pool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->InitMetaDataInfo();
+    }));
+    futures->emplace_back(pool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->UpdateAllDepth();
+    }));
+    futures->emplace_back(pool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->UpdateWaitTime();
+    }));
+    futures->emplace_back(pool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->InitConnectionCats();
+    }));
+    futures->emplace_back(pool->AddTask([dbId]() {
+        if (!GetTraceDatabase(dbId)) {
+            return;
+        }
+        GetTraceDatabase(dbId)->GenerateOverlapAnalysis();
+    }));
+}
 void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
     const std::shared_ptr<std::vector<std::future<void>>>& futures,
     std::chrono::time_point<std::chrono::high_resolution_clock> start)
@@ -162,8 +177,9 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     }
     std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) ?
         rankIds[0] : filePath;
-    bool isNotSendMessage = Global::BaselineManager::Instance().IsBaselineId(rankIds[0])
-            && DataBaseManager::Instance().IsContainDatabasePath(filePath);
+    bool isNotSendMessage = (Global::BaselineManager::Instance().IsBaselineId(rankIds[0])
+            && DataBaseManager::Instance().IsContainDatabasePath(filePath))
+                    || DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0])==FileType::LEAKS;
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
     }
@@ -230,6 +246,11 @@ void FullDbParser::InitSummary(const std::vector<std::string> &rankIds, const st
 
 void FullDbParser::InitMemory(const std::vector<std::string> &rankIds, const std::string &path)
 {
+    FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
+    if (type == FileType::LEAKS) {
+        InitLeaksMemory(rankIds, path);
+        return;
+    }
     for (const std::string& id : rankIds) {
         bool result = false;
         auto memoryDatabase = std::dynamic_pointer_cast<FullDb::DbMemoryDataBase, Memory::VirtualMemoryDataBase>(
@@ -252,5 +273,30 @@ bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::str
                          const std::string &selectedFolder)
 {
     return false;
+}
+
+void FullDbParser::InitLeaksMemory(const std::vector<std::string> &rankIds, const std::string &path)
+{
+    for (const std::string& id : rankIds) {
+        auto leaksMemoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase(id);
+        if (leaksMemoryDatabase != nullptr && leaksMemoryDatabase->OpenDb(path, false)) {
+            if (Memory::LeaksMemoryService::ParseMemoryLeaksDumpEvents(id)) {
+                Memory::LeaksMemoryService::ParserEnd(id, true);
+                Memory::LeaksMemoryService::ParseCallBack(id, true, "");
+            } else {
+                Memory::LeaksMemoryService::ParserEnd(id, false);
+                Memory::LeaksMemoryService::ParseCallBack(id, false,
+                                                          "An exception occurred while parsing the DB data: "
+                                                          "Please check the logs for details.");
+                ServerLog::Error("Failed to connect or open leaks memory database.");
+            }
+        } else {
+            Memory::LeaksMemoryService::ParserEnd(id, false);
+            Memory::LeaksMemoryService::ParseCallBack(id, false,
+                                                      "An exception occurred while parsing the DB data: "
+                                                      "The database failed to open properly.");
+            ServerLog::Error("Failed to connect or open leaks memory database.");
+        }
+    }
 }
 }

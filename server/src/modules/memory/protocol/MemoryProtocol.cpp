@@ -23,6 +23,8 @@ void MemoryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH, ToMemoryStaticOperatorGraphRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST, ToMemoryStaticOperatorListRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX, ToMemoryStaticOperatorSizeRequest);
+    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, ToLeaksMemoryAllocationRequest);
+    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ToLeaksMemoryBlockRequest);
 }
 
 void MemoryProtocol::RegisterResponseToJsonFuncs()
@@ -37,12 +39,15 @@ void MemoryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH, ToMemoryStaticOperatorGraphResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST, ToMemoryStaticOperatorListResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX, ToMemoryStaticOperatorSizeResponseJson);
+    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_ALLOCATIONS, ToLeaksMemoryAllocationsResponse);
+    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ToLeaksMemoryBlocksResponse);
 }
 
 void MemoryProtocol::RegisterEventToJsonFuncs()
 {
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, TimelineProtocol::ToModuleResetEventJson);
     eventToJsonFactory.emplace(EVENT_ALL_SUCCESS, TimelineProtocol::ToAllSuccessEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_LEAKS_MEMORY_COMPLETED, TimelineProtocol::ToLeaksParseSuccessEventJson);
 }
 
 #pragma region << Json To Request>>
@@ -126,6 +131,47 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryComponentRequest(const Dic::jso
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryAllocationRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<LeaksMemoryAllocationRequest> reqPtr = std::make_unique<LeaksMemoryAllocationRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (!json.HasMember("params") || !json["params"].HasMember("deviceId")) {
+        error = "Request json lacks member deviceId.";
+        return nullptr;
+    }
+    const json_t &param_json = json["params"];
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.optimized, param_json, "optimized");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> MemoryProtocol::ToLeaksMemoryBlockRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<LeaksMemoryBlockRequest> reqPtr = std::make_unique<LeaksMemoryBlockRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (!json.HasMember("params") || !json["params"].HasMember("deviceId")) {
+        error = "Request json lacks member deviceId.";
+        return nullptr;
+    }
+    const json_t &param_json = json["params"];
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "minSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "maxSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
     return reqPtr;
 }
 
@@ -291,6 +337,17 @@ std::optional<document_t> MemoryProtocol::ToMemoryStaticOperatorSizeResponseJson
 {
     return ToResponseJson<MemoryStaticOperatorSizeResponse>(
         dynamic_cast<const MemoryStaticOperatorSizeResponse &>(response));
+}
+std::optional<document_t> MemoryProtocol::ToLeaksMemoryAllocationsResponse(const Response &response)
+{
+    return ToResponseJson<LeaksMemoryAllocationsResponse>(
+        dynamic_cast<const LeaksMemoryAllocationsResponse &>(response));
+}
+
+std::optional<document_t> MemoryProtocol::ToLeaksMemoryBlocksResponse(const Response &response)
+{
+    return ToResponseJson<LeaksMemoryBlocksResponse>(
+            dynamic_cast<const LeaksMemoryBlocksResponse &>(response));
 }
 #pragma endregion
 } // end of namespace Protocol

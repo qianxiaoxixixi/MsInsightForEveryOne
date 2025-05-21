@@ -29,6 +29,7 @@ private:
     const int maxThreadNum = 4;
 
     static void InitMemory(const std::vector<std::string> &rankIds, const std::string &path);
+    static void InitLeaksMemory(const std::vector<std::string> &rankIds, const std::string &path);
     static void InitSummary(const std::vector<std::string> &rankIds, const std::string &path);
 
     static void ParserCallBack(std::string fileId, bool result);
@@ -37,6 +38,8 @@ private:
     static void EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
                              const std::shared_ptr<std::vector<std::future<void>>>& futures,
                              std::chrono::time_point<std::chrono::high_resolution_clock> start);
+    static void BuildProfilingInitTask(std::shared_ptr<std::vector<std::future<void>>> &futures, std::string &dbId,
+                                       std::unique_ptr<ThreadPool> &pool);
 };
 }
 

@@ -47,6 +47,7 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     ProjectTypeEnum curProjectTypeEnum = Global::ProjectExplorerManager::GetProjectType(projectInfos);
     response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, curProjectTypeEnum,
                                                     projectInfos[0].projectName);
+    response.body.isLeaks = DataBaseManager::Instance().GetFileTypeByRankId("") == FileType::LEAKS;
     bool isCluster = response.body.isCluster;
     bool isPending = response.body.isPending;
     // add response to response queue in session
@@ -125,6 +126,15 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
     for (const auto &file : reportFiles) {
         if (!FileUtil::IsFolder(file)) {
             dbFiles.push_back(file);
+            if (std::regex_match(FileUtil::GetFileName(file), std::regex(leaksMemDbReg))) {
+                DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+            }
+            continue;
+        }
+        std::vector<std::string> leaksFiles = FileUtil::FindFilesWithFilter(file, std::regex(leaksMemDbReg));
+        if (!leaksFiles.empty()) {
+            dbFiles.insert(dbFiles.end(), leaksFiles.begin(), leaksFiles.end());
+            DataBaseManager::Instance().SetFileType(FileType::LEAKS);
             continue;
         }
         std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(file, std::regex(pytorchDBReg));
@@ -152,13 +162,11 @@ std::map<std::string, HostInfo> ProjectParserDb::GetReportFiles(const std::vecto
             continue;
         }
         auto host = database->QueryHostInfo();
-        std::vector<std::string> rankIds = database->QueryRankId();
-        std::unordered_map<std::string, std::string> rankAndDeviceMap = database->QueryRankIdAndDeviceMap();
-        for (const auto &rank : rankIds) {
+        for (const auto &rank : database->QueryRankId()) {
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
-            TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankAndDeviceMap);
+            TrackInfoManager::Instance().UpdateDeviceMap(host + rank, database->QueryRankIdAndDeviceMap());
             TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
         }
     }
@@ -192,6 +200,10 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
     if (dataPath.empty()) {
         return ProjectTypeEnum::DB;
     }
+    std::vector<std::string> leaksFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(leaksMemDbReg));
+    if (!leaksFiles.empty()) {
+        return ProjectTypeEnum::DB;
+    }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(dataPath, std::regex(mindsporeDBReg));
@@ -206,6 +218,11 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
 
 std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::string &importFile, std::string &error)
 {
+    std::vector<std::string> leaksFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(leaksMemDbReg));
+    if (!leaksFiles.empty()) {
+        DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+        return leaksFiles;
+    }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(mindsporeDBReg));

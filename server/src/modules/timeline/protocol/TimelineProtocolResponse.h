@@ -44,6 +44,7 @@ struct ImportActionResBody {
     bool reset = true;
     bool isSimulation = false;
     bool isIpynb = false;
+    bool isLeaks = false;
     // 导入文件是否待解析
     bool isPending = false;
     bool hasCachelineRecords = false;

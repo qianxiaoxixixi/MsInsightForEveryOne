@@ -42,6 +42,15 @@ TEST_F(LeaksMemoryDatabaseTest, QueryEntireEventsTable)
     size_t expectSize = 15128;
     EXPECT_EQ(events.size(), expectSize);
 }
+
+TEST_F(LeaksMemoryDatabaseTest, QueryDeviceIds)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    std::set<std::string> deviceIds;
+    memoryDatabase->QueryDeviceIds(deviceIds);
+    size_t expectSize = 3;
+    EXPECT_EQ(deviceIds.size(), expectSize);
+}
 TEST_F(LeaksMemoryDatabaseTest, QueryMinAndMaxTimestamp)
 {
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");

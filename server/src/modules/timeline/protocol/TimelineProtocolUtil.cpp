@@ -16,6 +16,25 @@ template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESP
     return std::nullopt;
 }
 
+static void BuildImportActionJson(const std::vector<Action> &actions,
+                                  json_t &result, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+{
+    for (const Action &action : actions) {
+        json_t actionJson(kObjectType);
+        JsonUtil::AddMember(actionJson, "cardName", action.cardName, allocator);
+        JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
+        JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
+        JsonUtil::AddMember(actionJson, "result", action.result, allocator);
+        json_t dataPathList(kArrayType);
+        for (const auto &item: action.dataPathList) {
+            dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+        }
+        JsonUtil::AddMember(actionJson, "dataPathList", dataPathList, allocator);
+        JsonUtil::AddMember(actionJson, "host", action.host, allocator);
+        result.PushBack(actionJson, allocator);
+    }
+}
+
 template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const ImportActionResponse &response)
 {
     document_t json(kObjectType);
@@ -47,20 +66,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     }
     JsonUtil::AddMember(body, "children", projectFileTree, allocator);
     json_t result(kArrayType);
-    for (const Action &action : response.body.result) {
-        json_t actionJson(kObjectType);
-        JsonUtil::AddMember(actionJson, "cardName", action.cardName, allocator);
-        JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
-        JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
-        JsonUtil::AddMember(actionJson, "result", action.result, allocator);
-        json_t dataPathList(kArrayType);
-        for (const auto &item: action.dataPathList) {
-            dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
-        }
-        JsonUtil::AddMember(actionJson, "dataPathList", dataPathList, allocator);
-        JsonUtil::AddMember(actionJson, "host", action.host, allocator);
-        result.PushBack(actionJson, allocator);
-    }
+    BuildImportActionJson(response.body.result, result, allocator);
     JsonUtil::AddMember(body, "result", result, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::optional<document_t>{std::move(json)};
@@ -78,6 +84,7 @@ void SetBodyAtt(const ImportActionResponse& response, MemoryPoolAllocator<::rapi
     JsonUtil::AddMember(body, "isPending", response.body.isPending, allocator);
     JsonUtil::AddMember(body, "hasCachelineRecords", response.body.hasCachelineRecords, allocator);
     JsonUtil::AddMember(body, "instrVersion", response.body.version, allocator);
+    JsonUtil::AddMember(body, "isLeaks", response.body.isLeaks, allocator);
     JsonUtil::AddMember(body, "isIE", response.body.isIE, allocator);
 }
 
@@ -813,6 +820,27 @@ template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSucc
     JsonUtil::AddMember(body, "cardOffsets", dataType, allocator);
     JsonUtil::AddMember(body, "minTime", event.body.minTime, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template <> std::optional<document_t> ToEventJson<LeaksParseSuccessEvent>(const LeaksParseSuccessEvent &event)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json_t body(kObjectType);
+    json_t deviceIds(kArrayType);
+    json_t &moduleName = json["moduleName"];
+    moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
+    if (!event.body.deviceIds.empty()) {
+        for (auto &deviceId : event.body.deviceIds) {
+            deviceIds.PushBack(json_t().SetString(deviceId.c_str(), allocator), allocator);
+        }
+    }
+    JsonUtil::AddMember(body, "errMsg", event.body.errMsg, allocator);
+    JsonUtil::AddMember(body, "deviceIds", deviceIds, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+
     return std::optional<document_t>{std::move(json)};
 }
 

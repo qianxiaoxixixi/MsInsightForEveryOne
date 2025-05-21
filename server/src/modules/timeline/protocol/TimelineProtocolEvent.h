@@ -101,6 +101,17 @@ struct AllSuccessEvent : public Event {
     AllSuccessEventEventBody body;
 };
 
+struct LeaksParseSuccessEventBody {
+    std::set<std::string> deviceIds;
+    std::string errMsg;
+};
+
+struct LeaksParseSuccessEvent : public Event {
+    LeaksParseSuccessEvent() : Event(EVENT_PARSE_LEAKS_MEMORY_COMPLETED) {}
+    LeaksParseSuccessEventBody body;
+    bool reset;
+};
+
 struct ParseClusterStep2CompletedEvent : public Event {
     ParseClusterStep2CompletedEvent() : Event(EVENT_PARSE_CLUSTER_STEP2_COMPLETED) {}
     ParseClusterCompletedEventBody body;
@@ -111,6 +122,7 @@ struct ParseMemoryCompletedEvent : public Event {
     bool isCluster = false;
     std::vector<MemorySuccess> memoryResult;
 };
+
 
 struct ModuleResetEvent : public Event {
     ModuleResetEvent() : Event(EVENT_MODULE_RESET) {}
