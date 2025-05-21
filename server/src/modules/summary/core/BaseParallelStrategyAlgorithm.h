@@ -75,6 +75,7 @@ protected:
     virtual void CalculatePerformanceDataWithCpDimension(std::vector<IndicatorDataStruct> &indicatorData);
     void ReduceCpPerformance();
     void CalculatePerformanceDataWithPpDimension(std::vector<IndicatorDataStruct> &indicatorData);
+    void ReducePpPerformanceForDpLast();
     void ReducePpPerformanceForPpLast();
     void ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& dpGroupIdx);
     static void GetPerformanceResponseDataWithDpDimension(

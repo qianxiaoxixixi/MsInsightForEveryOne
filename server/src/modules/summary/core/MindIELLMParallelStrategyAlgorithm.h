@@ -10,7 +10,6 @@
 #include "ParallelStrategyAlgorithmDef.h"
 
 namespace Dic::Module::Summary {
-using CommInfoMap = std::unordered_map<std::string, std::vector<CommInfoUnderRank>>;
 class MindIELLMParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
     static const std::unordered_map<std::string, std::string> tokenExceptEp;

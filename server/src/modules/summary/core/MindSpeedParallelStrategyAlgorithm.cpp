@@ -105,11 +105,6 @@ bool MindSpeedParallelStrategyAlgorithm::UpdateParallelDimension(const std::stri
     paraOrderWithEp.insert(paraOrderWithEp.begin() + epPosPpLast, EP_PARA);
 
     bool res = UpdateShowMap(err);
-    // epSize > dpSize时，ep框只在cp不被折叠的情况下有意义，则若cp被折叠，ep也应被折叠
-    if (strategyConfig.epSize > strategyConfig.dpSize && !paraDetailsMap[CP_PARA].isShown) {
-        paraDetailsMap[EP_PARA].isShown = false;
-        paraDetailsMap[EP_PARA].size = 1;
-    }
     if (res) {
         // 根据 paraDetailsMap[para].isShown 删除不存在的通信域
         UpdateOrderAndParallelSize();
@@ -124,15 +119,8 @@ bool MindSpeedParallelStrategyAlgorithm::GenerateArrangementByDimension(std::str
     ClearArrangementData();
     SetIndicatorAttr();
     std::unordered_map<std::string, uint32_t> indexAttributes;
-    if (strategyConfig.epSize > strategyConfig.dpSize && !paraDetailsMap[CP_PARA].isShown) {
-        // epSize > dpSize时，ep框只在cp不被折叠的情况下有意义，则若cp被折叠，ep也应被折叠, 后端不返回epIndex
-        for (const auto& para : paraOrder) {
-            indexAttributes[para + STR_INDEX] = 0;
-        }
-    } else {
-        for (const auto& para : paraOrderWithEp) {
-            indexAttributes[para + STR_INDEX] = 0;
-        }
+    for (const auto& para : paraOrderWithEp) {
+        indexAttributes[para + STR_INDEX] = 0;
     }
     // get arrangements
     for (uint32_t index = 0; index < elementSize; index++) {
@@ -350,8 +338,9 @@ bool MindSpeedParallelStrategyAlgorithm::GetConnectionsByTokenList(std::string &
             return false;
         }
     }
-    // 然后把cp置为1，dpSize * cpSize作为dpSize，生成ep相关通信域
-    if (paraDetailsMap[EP_PARA].isShown && !GetConnectionsByMegatronToken(err, true)) {
+    // 然后把cp置为1，dpSize * cpSize作为dpSize，生成ep相关通信域, EP相关连线信息在CP被折叠视图不返回
+    if (paraDetailsMap[EP_PARA].isShown && (dimension == DIMENSIONS_TP || dimension == DIMENSIONS_CP) &&
+        !GetConnectionsByMegatronToken(err, true)) {
         return false;
     }
     if (dimension == DIMENSIONS_TP) {

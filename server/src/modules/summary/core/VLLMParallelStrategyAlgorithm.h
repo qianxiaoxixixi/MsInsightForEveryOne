@@ -25,6 +25,9 @@ public:
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         std::vector<IndicatorDataStruct> &indicatorData, std::string& err) override;
     std::vector<Connection> GetAllCommunicationGroups(std::string &err) override;
+    CommInfoMap GetCommInfoByDimension(const CommInfoMap &expandCommInfos, const std::string &dimension) override;
+    void CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
+        std::vector<IndicatorDataStruct> &indicatorData) override;
 private:
     void UpdateOrderAndParallelSize();
     void SetIndicatorAttr();

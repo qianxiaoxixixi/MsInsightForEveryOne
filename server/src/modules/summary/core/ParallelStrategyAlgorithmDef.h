@@ -63,5 +63,7 @@ const std::string TP_GROUP_FOR_ND2_DIM1_NAME = "nd2_dim1";
 const std::string TP_GROUP_FOR_ND2_DIM2 = "nd2dim2";
 const std::string TP_GROUP_FOR_ND2_DIM2_NAME = "nd2_dim2";
 const std::vector<std::string> TP2D_ND2_TOKEN = {TP_GROUP_FOR_ND2_DIM1, TP_GROUP_FOR_ND2_DIM2};
+
+using CommInfoMap = std::unordered_map<std::string, std::vector<CommInfoUnderRank>>;
 }
 #endif // PROFILER_SERVER_PARALLELSTRATEGYALGORITHMDEF_H

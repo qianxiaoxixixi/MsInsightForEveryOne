@@ -144,6 +144,7 @@ struct ParallelStrategyConfigForMindSpeed {
     int64_t ulyssesDegree = 1;
     int64_t winSize = 1;
 };
+bool operator==(const ParallelStrategyConfigForMindSpeed& lhs, const ParallelStrategyConfigForMindSpeed& rhs);
 
 struct ParallelStrategyConfig {
     std::string algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
@@ -158,19 +159,13 @@ struct ParallelStrategyConfig {
     bool CheckParams(std::string &errorMsg) const;
     bool CheckBaseParams(std::string &errorMsg) const;
     bool CheckParamForMindSpeed(std::string& errorMsg) const;
+    bool CheckWinSizeForMindSpeed(std::string& errorMsg) const;
     bool CheckTp2DSizeForMindSpeed(std::string& errorMsg) const;
-    bool operator==(const ParallelStrategyConfig& conf) const
-    {
-        if (algorithm != conf.algorithm) {
-            return false;
-        }
-        if (ppSize != conf.ppSize || tpSize != conf.tpSize || cpSize != conf.cpSize
-                || dpSize != conf.dpSize || epSize != conf.epSize) {
-            return false;
-        }
-        return true;
-    }
+    bool CheckParamForMegatron(std::string& errorMsg) const;
+    bool CheckParamForMindIELLM(std::string& errorMsg) const;
+    bool CheckParamForVLLM(std::string& errorMsg) const;
 };
+bool operator==(const ParallelStrategyConfig& lhs, const ParallelStrategyConfig& rhs);
 
 struct ClusterBaseInfo {
     std::string filePath;

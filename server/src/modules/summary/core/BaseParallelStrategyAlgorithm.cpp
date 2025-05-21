@@ -513,6 +513,14 @@ void BaseParallelStrategyAlgorithm::CalculatePerformanceDataWithPpDimension(
     }
 }
 
+void BaseParallelStrategyAlgorithm::ReducePpPerformanceForDpLast()
+{
+    uint32_t dpGroupIdx = 0;
+    for (uint32_t i = 0; i < wordSize / tpCpSize; i += strategyConfig.ppSize) {
+        ReducePpPerformance(i, 1, dpGroupIdx);
+    }
+}
+
 void BaseParallelStrategyAlgorithm::ReducePpPerformanceForPpLast()
 {
     uint32_t dpGroupIdx = 0;
@@ -725,8 +733,7 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStra
 uint32_t BaseParallelStrategyAlgorithm::CalculateContainingRanksByAttrs(
     uint32_t dpIndex, uint32_t ppIndex, uint32_t cpIndex, uint32_t tpIndex)
 {
-    return strategyConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ?
-           tpCpPpSize * dpIndex + tpCpSize * ppIndex + tpSize * cpIndex + tpIndex :
+    return orderIsTpPpDp ? tpCpPpSize * dpIndex + tpCpSize * ppIndex + tpSize * cpIndex + tpIndex :
            tpCpDpSize * ppIndex + tpCpSize * dpIndex + tpSize * cpIndex + tpIndex;
 }
 
