@@ -171,7 +171,7 @@ void ParserIE::BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const s
         auto parseFileInfoRank = std::make_shared<ParseFileInfo>();
         parseFileInfoRank->parseFilePath = file;
         parseFileInfoRank->type = ParseFileType::RANK;
-        parseFileInfoRank->subId = file;
+        parseFileInfoRank->subId = FileUtil::GetFileName(file);
         parseFileInfoRank->curDirName = FileUtil::GetFileName(file);
         projectInfo.AddSubParseFileInfo(projectInfo.fileName, ParseFileType::PROJECT, parseFileInfoRank);
     });
