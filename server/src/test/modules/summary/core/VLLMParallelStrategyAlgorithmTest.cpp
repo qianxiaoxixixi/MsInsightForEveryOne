@@ -141,3 +141,88 @@ TEST_F(VLLMParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGetArr
         EXPECT_EQ(item.indexes, EXPECT_INDEXES[i++]);
     }
 }
+
+void PrepareParametersForVLLMGetPerformanceByDimensionTest(ParallelStrategyConfig& config,
+    std::unordered_map<std::uint32_t, StepStatistic>& statistic)
+{
+    config.ppSize = 2; // 2
+    config.tpSize = 2; // 2
+    config.dpSize = 4; // 4
+    config.epSize = 2; // 2
+    config.algorithm = VLLM_TP_PP_DP_EP_ALG;
+    StepStatistic statisticOne;
+    statisticOne.computingTime = 90; // 90
+    statisticOne.pureCommunicationTime = 60; // 60
+    statisticOne.overlapCommunicationTime = 20; // 20
+    statisticOne.communicationTime = 80; // 80
+    statisticOne.freeTime = 50; // 50
+    statisticOne.prepareTime = 10; // 10
+    statisticOne.pureCommunicationExcludeReceiveTime = 40; // 40
+    uint32_t wordSize = config.ppSize * config.tpSize * config.dpSize; // 16
+    for (uint32_t i = 0; i < wordSize; i++) {
+        if (i == 4 || i == 5) { // 4 5 空数据卡
+            continue;
+        }
+        statistic[i] = statisticOne;
+    }
+}
+
+TEST_F(VLLMParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithTpDimension)
+{
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForVLLMGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    std::string projectName = "testProject";
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, config, err);
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("testProject");
+    algorithm->UpdateParallelDimension(dimension, config, err);
+    GetPerformanceIndicatorParam params;
+    params.config = config;
+    params.dimension = dimension;
+    std::vector<IndicatorDataStruct> responseData;
+    bool res = algorithm->GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.size(), 14); // 14 = 16 - 2(empty rank)
+}
+
+TEST_F(VLLMParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithPpDimension)
+{
+    std::string dimension = DIMENSIONS_PP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForVLLMGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    std::string projectName = "testProject";
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, config, err);
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("testProject");
+    algorithm->UpdateParallelDimension(dimension, config, err);
+    GetPerformanceIndicatorParam params;
+    params.config = config;
+    params.dimension = dimension;
+    std::vector<IndicatorDataStruct> responseData;
+    bool res = algorithm->GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.size(), 7); // 7 = 8 - 1 pp groups
+}
+
+TEST_F(VLLMParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithDpDimension)
+{
+    std::string dimension = DIMENSIONS_DP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForVLLMGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    std::string projectName = "testProject";
+    ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(projectName, config, err);
+    auto algorithm = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName("testProject");
+    algorithm->UpdateParallelDimension(dimension, config, err);
+    GetPerformanceIndicatorParam params;
+    params.config = config;
+    params.dimension = dimension;
+    std::vector<IndicatorDataStruct> responseData;
+    bool res = algorithm->GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.size(), 4); // 4 dp groups
+}

@@ -11,7 +11,13 @@ const std::unordered_map<std::string, std::string> VLLMParallelStrategyAlgorithm
 const std::unordered_map<std::string, std::string> VLLMParallelStrategyAlgorithm::tokenWithEp = {
     {VLLM_EP_GROUP, VLLM_EP_GROUP_NAME}};
 
-VLLMParallelStrategyAlgorithm::VLLMParallelStrategyAlgorithm() = default;
+VLLMParallelStrategyAlgorithm::VLLMParallelStrategyAlgorithm()
+{
+    commInfoHandlers[DIMENSIONS_TP] =
+        std::bind(&VLLMParallelStrategyAlgorithm::ReduceCommTpDimensionDef, this, std::placeholders::_1);
+    commInfoHandlers[DIMENSIONS_PP] =
+        std::bind(&VLLMParallelStrategyAlgorithm::ReduceCommPpDimensionDef, this, std::placeholders::_1);
+}
 
 VLLMParallelStrategyAlgorithm::~VLLMParallelStrategyAlgorithm() = default;
 
@@ -125,9 +131,11 @@ bool VLLMParallelStrategyAlgorithm::GetConnectionsByToken(std::string &err, bool
         tmpToken = tokenWithEp;
     } else if (!independentEp) {
         tmpToken = tokenExceptEp;
-        for (const auto& [token, groupName] : tmpToken) {
-            if (!paraDetailsMap[token].isShown) {
-                tmpToken.erase(token);
+        for (auto it = tmpToken.begin(); it != tmpToken.end();) {
+            if (!paraDetailsMap[it->first].isShown) {
+                it = tmpToken.erase(it);
+            } else {
+                ++it;
             }
         }
     }
@@ -230,6 +238,56 @@ bool VLLMParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
     std::vector<IndicatorDataStruct> &indicatorData, std::string& err)
 {
+    if (!(strategyConfig == performanceParams.config)) {
+        err = "Failed to get parallelism performance indicator for the vLLM. Unexpected parallel config.";
+        return false;
+    }
+    tpSize = strategyConfig.tpSize;
+    wordSize = strategyConfig.tpSize * strategyConfig.ppSize * strategyConfig.dpSize;
+    if (performanceParams.dimension == DIMENSIONS_TP) {
+        CalculatePerformanceDataWithTpDimension(statistic, indicatorData);
+        return true;
+    }
+    // 折叠TP
+    ReduceTpPerformance(statistic);
+    if (performanceParams.dimension == DIMENSIONS_PP) {
+        // DP+PP视图时，折叠TP，计算最大值、最小值、极差等统计值, 此处因CP Size必为1，复用以往CP维度逻辑
+        CalculatePerformanceDataWithCpDimension(indicatorData);
+        return true;
+    }
+    // CP恒为1，无需折叠，但需把reduceTpMax reduceTpMin传递给reduceCpMax reduceCpMin
+    ReduceCpPerformance();
+    // 折叠PP
+    ReducePpPerformanceForDpLast();
+    if (performanceParams.dimension == DIMENSIONS_DP) {
+        GetPerformanceResponseDataWithDpDimension(reducePpStatistic, indicatorData);
+        return true;
+    }
+    err = "Failed to get parallelism performance indicator for the vLLM. Unexpected dimension.";
     return false;
+}
+
+CommInfoMap VLLMParallelStrategyAlgorithm::GetCommInfoByDimension(const CommInfoMap &expandCommInfos,
+    const std::string &dimension)
+{
+    auto res =  BaseParallelStrategyAlgorithm::GetCommInfoByDimension(expandCommInfos, dimension);
+    if (dimension == DIMENSIONS_TP) {
+        return res;
+    }
+    // 折叠场景暂不展示按ep拆解通信时间结果
+    for (auto& item : res) {
+        auto& commInfo = item.second;
+        commInfo.erase(std::remove_if(commInfo.begin(), commInfo.end(),
+            [](const CommInfoUnderRank& info) {
+                return info.pgName == VLLM_EP_GROUP_NAME;
+            }), commInfo.end());
+    }
+    return res;
+}
+
+void VLLMParallelStrategyAlgorithm::CalAdviceInfo(const std::string &dimension, std::vector<std::string> &advices,
+    std::vector<IndicatorDataStruct> &indicatorData)
+{
+    BaseParallelStrategyAlgorithm::CalAdviceInfo(dimension, advices, indicatorData);
 }
 }

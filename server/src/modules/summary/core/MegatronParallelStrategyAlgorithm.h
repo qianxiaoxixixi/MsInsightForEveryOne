@@ -42,8 +42,6 @@ private:
     void GetConnections(Element &curEle);
     void AddConnection(std::vector<Connection> &connections, const std::string &paraType, uint32_t len,
                        uint32_t stepSize, Element &curEle);
-    // get performance data
-    void ReducePpPerformanceForDpLast();
     const static inline int epPosDpLast = 3; // tp-cp-pp-ep-dp
 };
 }

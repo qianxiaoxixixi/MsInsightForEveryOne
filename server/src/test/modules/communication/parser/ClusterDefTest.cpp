@@ -64,7 +64,7 @@ TEST_F(ClusterDefTest, TestDPSizeEvenlyDividedByEPSize)
     ParallelStrategyConfig config = { MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 5, 5, 100, 100, 254 };
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
-    EXPECT_EQ(error, "[Summary] DP size must be evenly divided by EP Size.");
+    EXPECT_EQ(error, "[Summary] DP size must be evenly divided by EP Size for the Megatron.");
 }
 
 // Test for product of PP, TP, DP, CP sizes being less than MAX_WORLD_SIZE
@@ -83,7 +83,8 @@ TEST_F(ClusterDefTest, TestDPAndCPSizeEvenlyDividedByEPSize)
     ParallelStrategyConfig config = { MINDSPEED_TP_CP_EP_DP_PP_ALG, 5, 5, 10, 10, 254 };
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
-    EXPECT_EQ(error, "[Summary] The product of DP size and CP size must be evenly divided by EP Size.");
+    EXPECT_EQ(error, "[Summary] The product of DP size and CP size must be evenly divided by EP Size for the "
+                     "MindSpeed.");
 }
 
 // Test for MOE algorithm validation (MOE_TP and EP sizes match TP and DP sizes)
@@ -111,7 +112,7 @@ TEST_F(ClusterDefTest, TestDPAndTPSizeEvenlyDividedByEPSize)
     ParallelStrategyConfig config = { VLLM_TP_PP_DP_EP_ALG, 5, 5, 5, 1, 2, 1 };
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
-    EXPECT_EQ(error, "[Summary] The product of DP size and TP size must be evenly divided by EP Size.");
+    EXPECT_EQ(error, "[Summary] The product of DP size and TP size must be evenly divided by EP Size for the vLLM.");
 }
 
 // Test for EP size being evenly divided by TP size
@@ -120,7 +121,7 @@ TEST_F(ClusterDefTest, TestEPSizeEvenlyDividedByTPSize)
     ParallelStrategyConfig config = { VLLM_TP_PP_DP_EP_ALG, 2, 8, 2, 1, 2, 1 };
     std::string error;
     EXPECT_EQ(config.CheckParams(error), false);
-    EXPECT_EQ(error, "[Summary] EP size must be evenly divided by TP Size.");
+    EXPECT_EQ(error, "[Summary] EP size must be evenly divided by TP Size for the vLLM.");
 }
 
 // Test for valid configuration (all parameters are valid)

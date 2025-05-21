@@ -275,17 +275,6 @@ void MegatronParallelStrategyAlgorithm::CalAdviceInfo(const std::string &dimensi
     BaseParallelStrategyAlgorithm::CalAdviceInfo(dimension, advices, indicatorData);
 }
 
-void MegatronParallelStrategyAlgorithm::ReducePpPerformanceForDpLast()
-{
-    uint32_t dpGroupIdx = 0;
-    uint32_t  cpPpWordSize = strategyConfig.cpSize * strategyConfig.ppSize;
-    for (uint32_t i = 0; i < wordSize; i += cpPpWordSize) {
-        for (uint32_t j = i; j < i + strategyConfig.dpSize && j < wordSize; j++) {
-            ReducePpPerformance(j, strategyConfig.dpSize, dpGroupIdx);
-        }
-    }
-}
-
 bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
     const GetPerformanceIndicatorParam &performanceParams,
     const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
