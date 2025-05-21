@@ -23,11 +23,11 @@ namespace Dic::Module::Operator {
         ~QueryOpStatisticInfoHandler() override = default;
 
         bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+        bool HandleCompareDataRequest(OperatorStatisticInfoRequest &request, OperatorStatisticInfoResponse &response);
     private:
         std::vector<Protocol::OperatorStatisticCmpInfoRes> GetCmpDataVec(std::string &group, OpStaticResVec &base,
                                                                          OpStaticResVec &cmp);
         std::string GetGroup(const std::string &paramsGroup, OperatorStatisticInfoRes &data);
-        bool HandleCompareDataRequest(OperatorStatisticInfoRequest &request, OperatorStatisticInfoResponse &response);
         bool HandleStatisticcDataRequest(OperatorStatisticInfoRequest &request,
                                          OperatorStatisticInfoResponse &response);
         void GroupingData(const std::string &paramsGroup, OpStaticResVec &datFromDb,

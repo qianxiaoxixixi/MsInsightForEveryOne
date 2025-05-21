@@ -108,6 +108,58 @@ namespace Dic::Protocol {
         std::vector<std::pair<std::string, std::string>> filters;
     };
 
+    // 导出算子的请求参数
+    struct ExportOperatorDetailsReqParams {
+        bool isCompare{false};
+        std::string rankId;
+        std::string group;
+        int64_t topK{0};
+
+        bool CommonCheck(std::string &errorMsg)
+        {
+            if (!CheckStrParamValid(this->rankId, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check rankId in export op detail.") + errorMsg;
+                return false;
+            }
+            if (!CheckStrParamValid(this->group, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check group in export op detail.") + errorMsg;
+                return false;
+            }
+            if (this->topK < -1) {
+                errorMsg = std::string("[Operator]Failed to check topK in export op detail.") + errorMsg;
+                return false;
+            }
+            return true;
+        }
+        bool IsStatisticGroup()
+        {
+            OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(this->group);
+            if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
+                return false;
+            }
+            return true;
+        }
+        bool IsNotStatisticGroup()
+        {
+            OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(this->group);
+            if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_NAME_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::COMMUNICATION_NAME_GROUP) {
+                return false;
+            }
+            return true;
+        }
+        bool StatisticGroupCheck(std::string &errorMsg)
+        {
+            if (!IsStatisticGroup() && !IsNotStatisticGroup()) {
+                errorMsg = "[Operator]Wrong group type in export op detail.";
+                return false;
+            }
+            return true;
+        }
+    };
+
     // 获取算子按类型耗时信息
     struct OperatorCategoryInfoRequest : public Request {
         OperatorCategoryInfoRequest() : Request(REQ_RES_OPERATOR_CATEGORY_INFO) {};
@@ -136,6 +188,12 @@ namespace Dic::Protocol {
     struct OperatorMoreInfoRequest : public Request {
         OperatorMoreInfoRequest() : Request(REQ_RES_OPERATOR_MORE_INFO) {};
         OperatorMoreInfoReqParams params;
+    };
+
+    // 导出算子全量信息请求
+    struct OperatorExportDetailsRequest : public Request {
+        OperatorExportDetailsRequest() : Request(REQ_RES_OPERATOR_EXPORT_DETAILS) {};
+        ExportOperatorDetailsReqParams params;
     };
 }
 

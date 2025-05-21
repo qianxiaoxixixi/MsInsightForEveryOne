@@ -14,6 +14,7 @@
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
 #include "QueryOpMoreInfoHandler.h"
+#include "ExportOpDetailsHandler.h"
 #include "ParamsParser.h"
 #include "ProjectExplorerManager.h"
 #include "WsSessionImpl.h"
@@ -318,5 +319,176 @@ TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWhenBsesLineIsN
     requestPtr.get()->params.current = 1;
 
     EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+}
+
+// ExportOpDetailsHandler 测试
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByOperatorIsNotCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Operator";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByOperatorTypeIsNotCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Operator Type";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByInputShapeIsNotCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Input Shape";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunicationOperatorIsNotCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Communication Operator";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunicationOperatorTypeIsNotCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Communication Operator Type";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByOperatorTypeIsCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.isCompare = true;
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Operator Type";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByInputShapeIsCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.isCompare = true;
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Input Shape";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunicationOperatorIsCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.isCompare = true;
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Communication Operator";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunicationOperatorTypeIsCompare)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.isCompare = true;
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Communication Operator Type";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_TRUE(SetBaseLineManager());
+    EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerFailTopKIsIllegal)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.isCompare = true;
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "Communication Operator Type";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MIN;
+
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
+}
+
+TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerGroupByIsIllegal)
+{
+    InitDbManager();
+    Dic::Module::Operator::ExportOpDetailsHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
+    requestPtr.get()->params.isCompare = true;
+    requestPtr.get()->params.rankId = "2";
+    requestPtr.get()->params.group = "UnKnow";
+    // topK给一个极大值
+    requestPtr.get()->params.topK = INT64_MAX;
+
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+    ClearProjectExplorerData();
 }
 

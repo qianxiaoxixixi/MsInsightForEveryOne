@@ -58,6 +58,11 @@
       "Memory-related: Unified use of bytes (Byte).",
       "Bandwidth-related: Unified use of bytes per second (Byte/s).",
       "Frequency-related: Unified use of megahertz (MHz)."
-    ]
+    ],
+    "export": "Export",
+    "exportSuccess": "Export Successful.",
+    "exportFilePath": "File path: {{filePath}}",
+    "exceedingFileLimit": "The file exceeds the maximum limit.",
+    "exportFail": "Export Failed."
   }
 }

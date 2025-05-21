@@ -28,6 +28,9 @@ std::optional<document_t> ToResponseJson<OperatorDetailInfoResponse>(const Opera
 template<>
 std::optional<document_t> ToResponseJson<OperatorMoreInfoResponse>(const OperatorMoreInfoResponse &res);
 
+template<>
+std::optional<document_t> ToResponseJson<OperatorExportDetailsResponse>(const OperatorExportDetailsResponse &res);
+
 template<typename EVENT>
 std::optional<document_t> ToEventJson(const EVENT &event);
 

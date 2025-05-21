@@ -30,12 +30,14 @@ namespace Dic::Protocol {
         static std::unique_ptr<Request> ToOperatorStatisticInfoRequest(const json_t &json, std::string &error);
         static std::unique_ptr<Request> ToOperatorDetailInfoRequest(const json_t &json, std::string &error);
         static std::unique_ptr<Request> ToOperatorMoreInfoRequest(const json_t &json, std::string &error);
+        static std::unique_ptr<Request> ToOperatorExportDetailsRequest(const json_t &json, std::string &error);
 
         static std::optional<document_t> ToOperatorCategoryInfoResponse(const Response &response);
         static std::optional<document_t> ToOperatorComputeUnitInfoResponse(const Response &response);
         static std::optional<document_t> ToOperatorStatisticInfoResponse(const Response &response);
         static std::optional<document_t> ToOperatorDetailInfoResponse(const Response &response);
         static std::optional<document_t> ToOperatorMoreInfoResponse(const Response &response);
+        static std::optional<document_t> ToOperatorExportDetailsResponse(const Response &response);
 
         template <typename T>
         static void ToOperatorInfoRequestFilters(std::unique_ptr<T> &reqPtr, const json_t &json, std::string &error);

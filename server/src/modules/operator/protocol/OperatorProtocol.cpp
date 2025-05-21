@@ -18,6 +18,7 @@ namespace Dic::Protocol {
         jsonToReqFactory.emplace(REQ_RES_OPERATOR_STATISTIC_INFO, ToOperatorStatisticInfoRequest);
         jsonToReqFactory.emplace(REQ_RES_OPERATOR_DETAIL_INFO, ToOperatorDetailInfoRequest);
         jsonToReqFactory.emplace(REQ_RES_OPERATOR_MORE_INFO, ToOperatorMoreInfoRequest);
+        jsonToReqFactory.emplace(REQ_RES_OPERATOR_EXPORT_DETAILS, ToOperatorExportDetailsRequest);
     }
 
     void OperatorProtocol::RegisterResponseToJsonFuncs()
@@ -27,6 +28,7 @@ namespace Dic::Protocol {
         resToJsonFactory.emplace(REQ_RES_OPERATOR_STATISTIC_INFO, ToOperatorStatisticInfoResponse);
         resToJsonFactory.emplace(REQ_RES_OPERATOR_DETAIL_INFO, ToOperatorDetailInfoResponse);
         resToJsonFactory.emplace(REQ_RES_OPERATOR_MORE_INFO, ToOperatorMoreInfoResponse);
+        resToJsonFactory.emplace(REQ_RES_OPERATOR_EXPORT_DETAILS, ToOperatorExportDetailsResponse);
     }
 
     void OperatorProtocol::RegisterEventToJsonFuncs()
@@ -122,6 +124,20 @@ namespace Dic::Protocol {
         return reqPtr;
     }
 
+    std::unique_ptr<Request> OperatorProtocol::ToOperatorExportDetailsRequest(const json_t &json, std::string &error)
+    {
+        std::unique_ptr<OperatorExportDetailsRequest> reqPtr = std::make_unique<OperatorExportDetailsRequest>();
+        if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+            error = "Failed to set request base info in export op detail.";
+            return nullptr;
+        }
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.group, json["params"], "group");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.topK, json["params"], "topK");
+        return reqPtr;
+    }
+
     template <typename T>
     void OperatorProtocol::ToOperatorInfoRequestFilters(std::unique_ptr<T> &reqPtr,
                                                         const json_t &json, std::string &error)
@@ -172,6 +188,12 @@ namespace Dic::Protocol {
     std::optional<document_t> OperatorProtocol::ToOperatorMoreInfoResponse(const Response &response)
     {
         return ToResponseJson<OperatorMoreInfoResponse>(dynamic_cast<const OperatorMoreInfoResponse &>(response));
+    }
+    
+    std::optional<document_t> OperatorProtocol::ToOperatorExportDetailsResponse(const Response &response)
+    {
+        return ToResponseJson<OperatorExportDetailsResponse>(
+                dynamic_cast<const OperatorExportDetailsResponse &>(response));
     }
 
     std::optional<document_t> OperatorProtocol::ToOperatorParseStatusEvent(const Event &event)
