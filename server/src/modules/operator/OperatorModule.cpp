@@ -7,6 +7,7 @@
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
 #include "QueryOpMoreInfoHandler.h"
+#include "ExportOpDetailsHandler.h"
 #include "ProtocolDefs.h"
 #include "OperatorModule.h"
 
@@ -31,6 +32,7 @@ namespace Dic::Module {
         requestHandlerMap.emplace(REQ_RES_OPERATOR_STATISTIC_INFO, std::make_unique<QueryOpStatisticInfoHandler>());
         requestHandlerMap.emplace(REQ_RES_OPERATOR_DETAIL_INFO, std::make_unique<QueryOpDetailInfoHandler>());
         requestHandlerMap.emplace(REQ_RES_OPERATOR_MORE_INFO, std::make_unique<QueryOpMoreInfoHandler>());
+        requestHandlerMap.emplace(REQ_RES_OPERATOR_EXPORT_DETAILS, std::make_unique<ExportOpDetailsHandler>());
     }
 
     void OperatorModule::OnRequest(std::unique_ptr<Protocol::Request> request)

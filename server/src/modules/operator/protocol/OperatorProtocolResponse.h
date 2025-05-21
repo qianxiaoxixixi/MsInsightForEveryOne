@@ -100,6 +100,13 @@ namespace Dic::Protocol {
         std::set<std::string> pmuHeaders;
         std::vector<OperatorDetailInfoRes> datas;
     };
+
+    // 导出算子全量信息的响应
+    struct OperatorExportDetailsResponse : public Response {
+        OperatorExportDetailsResponse() : Response(REQ_RES_OPERATOR_EXPORT_DETAILS) {};
+        bool exceedingFileLimit{false};
+        std::string filePath;
+    };
 }
 
 #endif // PROFILER_SERVER_OPERATORPROTOCOLRESPONSE_H

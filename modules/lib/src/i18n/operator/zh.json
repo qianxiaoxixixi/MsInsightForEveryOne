@@ -58,6 +58,11 @@
       "内存相关. 统一使用字节（Byte）",
       "带宽相关. 统一使用Byte/s",
       "频率相关. 统一只用MHZ"
-    ]
+    ],
+    "export": "导出",
+    "exportSuccess": "导出成功。",
+    "exportFilePath": "文件路径：{{filePath}}",
+    "exceedingFileLimit": "文件超出最大限制。",
+    "exportFail": "导出失败。"
   }
 }

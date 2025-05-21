@@ -189,6 +189,19 @@ std::optional<document_t> ToResponseJson<OperatorMoreInfoResponse>(const Operato
 }
 
 template<>
+std::optional<document_t> ToResponseJson<OperatorExportDetailsResponse>(const OperatorExportDetailsResponse &res)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(res, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "exceedingFileLimit", res.exceedingFileLimit, allocator);
+    JsonUtil::AddMember(body, "filePath", res.filePath, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+template<>
 std::optional<document_t> ToEventJson<OperatorParseStatusEvent>(const OperatorParseStatusEvent &event)
 {
     document_t json(kObjectType);

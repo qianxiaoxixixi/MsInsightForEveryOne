@@ -145,6 +145,7 @@ const std::string REQ_RES_OPERATOR_COMPUTE_UNIT_INFO = "operator/compute_unit";
 const std::string REQ_RES_OPERATOR_STATISTIC_INFO = "operator/statistic";
 const std::string REQ_RES_OPERATOR_DETAIL_INFO = "operator/details";
 const std::string REQ_RES_OPERATOR_MORE_INFO  = "operator/more_info";
+const std::string REQ_RES_OPERATOR_EXPORT_DETAILS = "operator/exportDetails";
 
 // Operator Event
 const std::string EVENT_PARSE_OPERATOR_STATUS = "parse/operatorCompleted";

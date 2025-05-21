@@ -97,3 +97,16 @@ export const queryOperatorStatic = async(param: StaticParam): Promise<any> => {
 export const queryOperatorsInStatic = async(param: DetailParam): Promise<any> => {
     return window.requestData('operator/more_info', param);
 };
+
+/**
+ * 导出算子详情
+ *
+ * @param {rankId} rankId RankID
+ * @param {number} group
+ * @param {number} topK
+ * @param {boolean} isCompare
+ * @return {exceedingFileLimit:boolean;filePath:string}
+ */
+export const exportOperatorDetail = async(param: ShortParam & { isCompare: boolean }): Promise<any> => {
+    return window.requestData('operator/exportDetails', param);
+};

@@ -5,11 +5,11 @@ import { ResizeTable } from 'ascend-resize';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Button, Tooltip } from 'ascend-components';
+import { Button, Tooltip, message } from 'ascend-components';
 import { DownOutlined } from '@ant-design/icons';
 import { getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';
-import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../RequestUtils';
+import { queryOperators, queryOperatorsInStatic, queryOperatorStatic, exportOperatorDetail } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
@@ -18,7 +18,7 @@ import { HelpIcon } from 'ascend-icon';
 
 interface FullConditionType {
     isCompare: boolean;
-    rankId: string ;
+    rankId: string;
     group: string;
     topK: number;
     current: number;
@@ -39,8 +39,10 @@ interface CompInfo {
 }
 
 const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputShape, compInfo, session }:
-{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;opName?: string;
-    inputShape?: string;compInfo?: CompInfo;session: Session;}): JSX.Element => {
+{
+    condition: ConditionType; filterType: FilterType; opType?: string; accCore?: string; opName?: string;
+    inputShape?: string; compInfo?: CompInfo; session: Session;
+}): JSX.Element => {
     return <BaseTable
         condition={condition}
         filterType={filterType}
@@ -53,7 +55,7 @@ const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputSh
     />;
 };
 
-const OperatorTypeTable = ({ condition, filterType, session }: {condition: ConditionType;filterType: FilterType;session: Session}): JSX.Element => {
+const OperatorTypeTable = ({ condition, filterType, session }: { condition: ConditionType; filterType: FilterType; session: Session }): JSX.Element => {
     return <BaseTable condition={condition} filterType={filterType} session={session} />;
 };
 
@@ -79,7 +81,7 @@ function modifyTitle(item: string): string {
 }
 
 const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend, pmuHeaders }:
-{group: string;columnLevel: string;btnCol: any;colMap: any;condition: ConditionType;isExpend: boolean; pmuHeaders: any[]}): any[] => {
+{ group: string; columnLevel: string; btnCol: any; colMap: any; condition: ConditionType; isExpend: boolean; pmuHeaders: any[] }): any[] => {
     const isCompare = condition.isCompare as boolean;
     let result = [];
     switch (group) {
@@ -152,7 +154,7 @@ const fetchData = async (fullCondition: FullConditionType, condition: ConditionT
 };
 
 const getHcclOperatorTypeCols = ({ group, columnLevel, btnCol, colMap, isCompare, isExpend }:
-{group: string;columnLevel: string;btnCol: any;colMap: any;isCompare: boolean;isExpend: boolean}): any[] => {
+{ group: string; columnLevel: string; btnCol: any; colMap: any; isCompare: boolean; isExpend: boolean }): any[] => {
     if (columnLevel === undefined) {
         if (isCompare && isExpend) {
             return [...colMap[group].l0 ?? []];
@@ -181,7 +183,7 @@ const setFilterTypes = (fullCondition: FullConditionType): string[] => {
 };
 
 const queryOperatorData = async ({ condition, fullCondition, filterTypes }:
-{condition: ConditionType;fullCondition: FullConditionType;filterTypes: string[]}): Promise<any> => {
+{ condition: ConditionType; fullCondition: FullConditionType; filterTypes: string[] }): Promise<any> => {
     let res;
     if (condition.group === OperatorGroup.OPERATOR || condition.group === OperatorGroup.HCCL_OPERATOR) {
         const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes, isCompare: condition.isCompare };
@@ -194,7 +196,7 @@ const queryOperatorData = async ({ condition, fullCondition, filterTypes }:
 };
 
 const queryOperatorDetailData = async ({ fullCondition, filterTypes, opType, opName, accCore, inputShape }:
-{fullCondition: FullConditionType;filterTypes: string[];opType?: string;opName?: string;accCore?: string;inputShape?: string}): Promise<any> => {
+{ fullCondition: FullConditionType; filterTypes: string[]; opType?: string; opName?: string; accCore?: string; inputShape?: string }): Promise<any> => {
     const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes, opType: opType ?? '', opName, shape: inputShape ?? '', accCore: accCore ?? '' };
     return await queryOperatorsInStatic(param);
 };
@@ -237,8 +239,10 @@ const handleCompareData = (data: any, t: TFunction): any[] => {
 
 // eslint-disable-next-line max-lines-per-function
 const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape, compInfo, session }:
-{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;
-    opName?: string;inputShape?: string;compInfo?: CompInfo;session: Session;}): JSX.Element => {
+{
+    condition: ConditionType; filterType: FilterType; opType?: string; accCore?: string;
+    opName?: string; inputShape?: string; compInfo?: CompInfo; session: Session;
+}): JSX.Element => {
     const isCompare = condition.isCompare as boolean;
     const { t } = useTranslation();
     const [cols, setCols] = useState<any[]>(useColMap(isCompare)[OperatorGroup.OPERATOR].l0);
@@ -270,11 +274,11 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                     }
                     return list;
                 });
-            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined/></Button>),
+            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined /></Button>),
     };
     const colMap = useColMap(isCompare && compInfo === undefined);
     const compareSourceCol = useCompareSourceColumn();
-    const updateData = async(): Promise<void> => {
+    const updateData = async (): Promise<void> => {
         const { res, isExpend } = await fetchData(fullCondition, condition, { opType, opName, accCore, inputShape }, { isCompare, compInfo });
         if (res === null || res === undefined) {
             return;
@@ -429,29 +433,62 @@ export const useHit = (condition: ConditionType): React.ReactElement => {
                 </div>
             )
         }>
-        <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
+        <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20} />
     </Tooltip>);
 };
 
-const DetailTable = ({ condition, filterType, session }: {condition: ConditionType;filterType: FilterType;session: Session}): JSX.Element => {
+const DetailTable = ({ condition, filterType, session }: { condition: ConditionType; filterType: FilterType; session: Session }): JSX.Element => {
     const { t } = useTranslation('operator');
     let table;
     switch (condition.group) {
         case OperatorGroup.OPERATOR:
         case OperatorGroup.HCCL_OPERATOR:
-            table = <OperatorTable condition={condition} filterType={filterType} session={session}/>;
+            table = <OperatorTable condition={condition} filterType={filterType} session={session} />;
             break;
         case OperatorGroup.OPERATOR_TYPE:
         case OperatorGroup.HCCL_OPERATOR_TYPE:
-            table = <OperatorTypeTable condition={condition} filterType={filterType} session={session}/>;
+            table = <OperatorTypeTable condition={condition} filterType={filterType} session={session} />;
             break;
         default:
-            table = <BaseTable condition={condition} filterType={filterType} session={session}/>;
+            table = <BaseTable condition={condition} filterType={filterType} session={session} />;
             break;
     }
-    return <CollapsiblePanel title={<div className={'flex items-center'}>{t('sessionTitle.OperatorDetails')}{useHit(condition)}</div>} secondary>
+    return <CollapsiblePanel
+        title={<div className={'flex items-center'}>
+            {t('sessionTitle.OperatorDetails')}{useHit(condition)}
+            <ExportBtn condition={condition} />
+        </div>} secondary>
         {table}
     </CollapsiblePanel>;
+};
+
+const ExportBtn = ({ condition }: { condition: ConditionType }): JSX.Element => {
+    const { t } = useTranslation('operator');
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const exportOp = async (): Promise<void> => {
+        setLoading(true);
+        try {
+            const res = await exportOperatorDetail({
+                rankId: condition.rankId,
+                group: condition.group,
+                topK: condition.topK,
+                isCompare: condition.isCompare,
+            });
+            if (res.filePath.length === 0) {
+                message.error(t('exportFail'));
+            } else {
+                const exceedingFileLimitTip = res.exceedingFileLimit ? `${t('exceedingFileLimit')}` : '';
+                const filePathTip = t('exportFilePath', { filePath: res.filePath });
+                message.success(`${t('exportSuccess')}${exceedingFileLimitTip}${filePathTip}`);
+            }
+        } catch {
+            message.error(t('exportFail'));
+        }
+        setLoading(false);
+    };
+
+    return <Button onClick={exportOp} type="primary" size="middle" style={{ marginLeft: 'auto' }} loading={loading}>{t('export')}</Button>;
 };
 
 export default DetailTable;

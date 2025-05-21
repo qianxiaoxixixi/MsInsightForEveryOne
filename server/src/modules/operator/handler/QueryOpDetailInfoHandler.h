@@ -21,9 +21,9 @@ namespace Dic::Module::Operator {
         ~QueryOpDetailInfoHandler() override = default;
 
         bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-    private:
         bool HandleCompareDataRequest(OperatorDetailInfoRequest &request,
                                       OperatorDetailInfoResponse &response);
+    private:
         bool HandleDetailDataRequest(OperatorDetailInfoRequest &request,
                                      OperatorDetailInfoResponse &response);
         std::vector<Protocol::OperatorDetailCmpInfoRes> GetCmpDataVec(
