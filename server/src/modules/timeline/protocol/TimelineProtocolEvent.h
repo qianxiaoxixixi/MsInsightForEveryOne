@@ -123,7 +123,6 @@ struct ParseMemoryCompletedEvent : public Event {
     std::vector<MemorySuccess> memoryResult;
 };
 
-
 struct ModuleResetEvent : public Event {
     ModuleResetEvent() : Event(EVENT_MODULE_RESET) {}
     bool reset = false;

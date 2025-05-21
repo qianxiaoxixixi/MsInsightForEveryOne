@@ -29,6 +29,10 @@ using namespace Dic::Module::Global;
 std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::string &path)
 {
+    if (!FileUtil::IsFolder(path) && std::regex_match(FileUtil::GetFileName(path),
+                                                      std::regex(leaksMemDbReg))) {
+        return std::make_pair(path, ParserType::DB);
+    }
     if (StringUtil::EndWith(path, computeBinSuffix)) {
         return std::make_pair(path, ParserType::BIN);
     }
