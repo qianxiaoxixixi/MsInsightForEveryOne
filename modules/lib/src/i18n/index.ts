@@ -26,6 +26,8 @@ import jupyterEn from './jupyter/en.json';
 import jupyterZh from './jupyter/zh.json';
 import libEn from './lib/en.json';
 import libZh from './lib/zh.json';
+import leaksEn from './leaks/en.json';
+import leaksZh from './leaks/zh.json';
 import statisticEn from './statistic/en.json';
 import statisticZh from './statistic/zh.json';
 export const resources = {
@@ -41,6 +43,7 @@ export const resources = {
         ...timelineEn,
         ...jupyterEn,
         ...libEn,
+        ...leaksEn,
         ...statisticEn,
     },
     zhCN: {
@@ -55,6 +58,7 @@ export const resources = {
         ...timelineZh,
         ...jupyterZh,
         ...libZh,
+        ...leaksZh,
         ...statisticZh,
     },
 };

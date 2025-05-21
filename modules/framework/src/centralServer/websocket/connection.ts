@@ -16,13 +16,15 @@ const createRequestHead = function (
     command: string,
     args: Request['params'],
 ): Request {
+    const params = {};
+    Object.assign(params, args);
     return {
         id,
         moduleName: module,
         type: 'request',
         command,
         projectName: store.sessionStore.activeSession?.activeDataSource?.projectName ?? '',
-        params: { ...args },
+        params,
     };
 };
 
@@ -48,7 +50,6 @@ export class Connection {
             // wedge: close and release the old websocket
         }
         this._msgId = 0;
-
         const session = store.sessionStore.activeSession;
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (initHost.jupyterlabProxy) {

@@ -76,7 +76,14 @@ abstract class BaseConnector {
         body.from = this.getCurWindowIndex();
         const postBody = body.keepRawData === true ? body : JSON.stringify(body);
         targetWindows.forEach(targetWindow => {
-            targetWindow.postMessage(postBody, this.getTargetOrigin());
+            // leaks场景渲染速度远小于后端信息返回的速度
+            if (body.event === 'parse/leaksMemoryCompleted') {
+                setTimeout(() => {
+                    targetWindow.postMessage(postBody, this.getTargetOrigin());
+                }, 1000);
+            } else {
+                targetWindow.postMessage(postBody, this.getTargetOrigin());
+            }
         });
     }
 

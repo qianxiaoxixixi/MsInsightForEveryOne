@@ -1,0 +1,6 @@
+{
+  "leaks": {
+    "MemoryAllocations":"Memory Allocations",
+    "MemoryBlocks":"Memory Blocks"
+  }
+}
