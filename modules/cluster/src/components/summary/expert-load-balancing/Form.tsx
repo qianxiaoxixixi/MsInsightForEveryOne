@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { Form, Radio } from 'antd';
+import { Form } from 'antd';
 import React, { useEffect } from 'react';
 import { Button, InputNumber, Select, Tooltip } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
@@ -23,8 +23,9 @@ const useDataVersionOptions = (): SelectProps['options'] => {
     const { t } = useTranslation('summary');
 
     return [
-        { label: t('Unbalanced'), value: 'unbalanced' },
-        { label: t('Balanced'), value: 'balanced' },
+        { label: t('Profiling'), value: 'profiling' },
+        { label: t('Dump unbalanced'), value: 'unbalanced' },
+        { label: t('Dump balanced'), value: 'balanced' },
     ];
 };
 
@@ -96,26 +97,23 @@ export const ExpertLoadBalancingForm = ({ data, loading, onFormChange, onFormSub
             />
         </Form.Item>
         <Form.Item label={t('Data Version')} name="version">
-            <Radio.Group>
-                <div className={'flex'} style={{ gap: 10 }}>
-                    {
-                        dataVersionOptions?.map(({ value, label }) => {
-                            return <div key={value} className={'flex items-center'}>
-                                <Radio value={value}> {label} </Radio>
-                                <Tooltip title={t('Import data')}>
-                                    <Button
-                                        style={{ minWidth: 'auto', marginLeft: -5 }}
-                                        disabled={data.version !== value}
-                                        type="primary"
-                                        icon={<ImportOutlined/>}
-                                        onClick={onImport}/>
-                                </Tooltip>
-                            </div>;
-                        })
-                    }
-                </div>
-            </Radio.Group>
+            <Select
+                options={dataVersionOptions}
+                style={{ minWidth: 100 }}
+            />
         </Form.Item>
+        {
+            data.version !== 'profiling' &&
+                <Form.Item>
+                    <Tooltip title={t('Import data')}>
+                        <Button
+                            style={{ minWidth: 'auto' }}
+                            type="primary"
+                            icon={<ImportOutlined/>}
+                            onClick={onImport}/>
+                    </Tooltip>
+                </Form.Item>
+        }
         <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading}>
                 {t('Search')}

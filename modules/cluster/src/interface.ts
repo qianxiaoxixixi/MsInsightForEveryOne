@@ -10,6 +10,7 @@ import {
     switchLanguageHandler,
     updateCommunicatorDataHandler,
     baselineToggleHandler,
+    profilingExpertDataParsedHandler,
     switchDirectoryHandler,
     frameLoadedHandler,
     updateClusterPageInfoHandler,
@@ -18,11 +19,13 @@ import {
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
     request: Request;
     response: Response;
-};
+}
 
 export interface InterfaceDefs {
     'chart/cpu': InsightInterface<{ chartId: number }, { data: Array<{ ts: number; value: number }>}>;
-};
+}
+
+const HEATMAP_COMPLETED = 'parse/heatmapCompleted';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler<any>> = {
     'frame/loaded': frameLoadedHandler,
@@ -36,5 +39,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler<any>> = {
     switchLanguage: switchLanguageHandler,
     updateCommunicatorData: updateCommunicatorDataHandler,
     clusterBaselineToggle: baselineToggleHandler,
+    [HEATMAP_COMPLETED]: profilingExpertDataParsedHandler,
     switchDirectory: switchDirectoryHandler,
 };

@@ -121,14 +121,14 @@ export interface CompareData<T> {
 
 export interface ImportExpertDataParams {
     filePath: string;
-    version: 'unbalanced' | 'balanced';
+    version: 'unbalanced' | 'balanced' | 'profiling';
 }
 
 export interface QueryExpertHotspotParams {
     layerNum: number;
     expertNum: number;
     modelStage: 'prefill' | 'decode';
-    version: 'unbalanced' | 'balanced';
+    version: 'unbalanced' | 'balanced' | 'profiling';
     denseLayerList: number[];
 }
 

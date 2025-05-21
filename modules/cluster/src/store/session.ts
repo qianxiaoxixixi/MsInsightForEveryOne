@@ -6,7 +6,7 @@ import { makeAutoObservable } from 'mobx';
 import { Session } from '../entity/session';
 
 export class SessionStore {
-    private _activeSession: Session | undefined;
+    private _activeSession: Session;
 
     constructor() {
         makeAutoObservable(this);
@@ -18,11 +18,11 @@ export class SessionStore {
      *
      * @returns Whether session store is locked
      */
-    get activeSession(): Session | undefined {
+    get activeSession(): Session {
         return this._activeSession;
     }
 
-    set activeSession(value: Session | undefined) {
+    set activeSession(value: Session) {
         this._activeSession = value;
     }
 

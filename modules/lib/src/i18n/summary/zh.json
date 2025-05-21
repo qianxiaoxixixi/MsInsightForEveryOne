@@ -139,9 +139,9 @@
     "Expert Num": "专家数",
     "Model Stage": "模型阶段",
     "Data Version": "数据类型",
-    "Unbalanced": "均衡前",
-    "Balanced": "均衡后",
-    "Import data": "导入数据",
+    "Dump unbalanced": "Dump-均衡前",
+    "Dump balanced": "Dump-均衡后",
+    "Import data": "导入{{version}} dump 数据",
     "Search": "查询"
   }
 }
