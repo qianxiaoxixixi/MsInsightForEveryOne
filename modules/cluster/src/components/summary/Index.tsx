@@ -302,7 +302,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
         </CollapsiblePanel>
 
         <CollapsiblePanel title={t('MoE Expert Load Balancing Analysis')}>
-            <ExpertLoadBalancingBox session={session} />
+            <ExpertLoadBalancingBox />
         </CollapsiblePanel>
     </Layout>;
 });

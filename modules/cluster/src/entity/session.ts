@@ -52,6 +52,7 @@ export class Session {
     isCompare: boolean = false;
     // 右键选中的算子
     targetOperator: ClickOperatorItem | undefined = undefined;
+    profilingExpertDataParsed: boolean | null = null; // 专家热力图数据解析结果
     private _clusterList: ClusterInfo[] = [];
 
     constructor(conf?: Partial<Session>) {
@@ -150,5 +151,6 @@ export class Session {
         this.rankDyeingData = {};
         this.arrangementRankCount = 0;
         this.targetOperator = undefined;
+        this.profilingExpertDataParsed = null;
     }
 }

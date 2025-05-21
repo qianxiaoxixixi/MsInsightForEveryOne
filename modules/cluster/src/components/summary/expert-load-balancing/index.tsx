@@ -9,26 +9,29 @@ import connector from '../../../connection';
 import { importExpertData, queryModelInfo, queryExpertHotspot } from '../../../utils/RequestUtils';
 import { QueryExpertHotspotItem } from '../../../utils/interface';
 import { message } from 'antd';
-import { Session } from '../../../entity/session';
+import { useRootStore } from '../../../context/context';
+import { observer } from 'mobx-react';
 
 export interface FormData {
     layerNum: number | null;
     denseLayerList: number[];
     expertNum: number | null;
     modelStage: 'prefill' | 'decode';
-    version: 'unbalanced' | 'balanced';
+    version: 'unbalanced' | 'balanced' | 'profiling';
 }
 
-export const ExpertLoadBalancingBox = ({ session }: { session: Session }): React.ReactElement => {
+export const ExpertLoadBalancingBox = observer((): React.ReactElement => {
     const [formData, setFormData] = useState<FormData>({
         layerNum: null,
         denseLayerList: [],
         expertNum: null,
         modelStage: 'prefill',
-        version: 'unbalanced',
+        version: 'profiling',
     });
     const [chartData, setChartData] = useState<QueryExpertHotspotItem[]>([]);
     const [chartLoading, setChartLoading] = useState(false);
+    const { sessionStore } = useRootStore();
+    const session = sessionStore.activeSession;
 
     // 请求图表热点数据
     const fetchChatData = async (params?: FormData): Promise<void> => {
@@ -114,7 +117,6 @@ export const ExpertLoadBalancingBox = ({ session }: { session: Session }): React
     const handleImport = (): void => {
         connector.send({
             event: 'openImportDialog',
-            keepRawData: true,
             body: {},
         });
     };
@@ -128,8 +130,10 @@ export const ExpertLoadBalancingBox = ({ session }: { session: Session }): React
     }, [handleExpertDataImport]);
 
     useEffect(() => {
-        initLoad();
-    }, [session.renderId]);
+        if (session.profilingExpertDataParsed && formData.version === 'profiling') {
+            initLoad();
+        }
+    }, [session.profilingExpertDataParsed, session.renderId]);
 
     return <>
         <ExpertLoadBalancingForm
@@ -144,4 +148,4 @@ export const ExpertLoadBalancingBox = ({ session }: { session: Session }): React
             data={chartData}
         />
     </>;
-};
+});

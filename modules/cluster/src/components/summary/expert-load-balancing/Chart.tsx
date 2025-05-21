@@ -205,7 +205,7 @@ export const ExpertLoadBalancingChart = ({ loading, data: dataSource }: ExpertLo
 
     return <MIChart
         ref={chartRef}
-        width={'100vw - 80px'}
+        width={'calc(100vw - 80px)'}
         height={chartHeight}
         loading={loading}
         options={chartOptions}

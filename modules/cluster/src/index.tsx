@@ -8,15 +8,18 @@ import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
 import { customConsole as console, disableShortcuts } from 'ascend-utils';
+import { store } from './store';
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
+    const session = store.sessionStore.activeSession;
+
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;
         if (res.body === undefined || typeof res.body !== 'object') {
             console.error('[notify]', 'Wrong notify format.');
             return;
         }
-        callback(res.body);
+        callback(res.body, session);
     });
 });
 

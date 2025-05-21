@@ -139,8 +139,8 @@
     "Expert Num": "Expert Num",
     "Model Stage": "Model Stage",
     "Data Version": "Data Version",
-    "Unbalanced": "Unbalanced",
-    "Balanced": "Balanced",
+    "Dump unbalanced": "Dump unbalanced",
+    "Dump balanced": "Dump balanced",
     "Import data": "Import data",
     "Search": "Search"
   }

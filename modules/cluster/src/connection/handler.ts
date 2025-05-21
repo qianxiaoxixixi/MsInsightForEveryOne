@@ -174,3 +174,13 @@ function forceRender(): void {
         session.renderId = ++session.renderId % 1000;
     });
 }
+
+export const profilingExpertDataParsedHandler: NotificationHandler = (data, session): void => {
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+
+        session.profilingExpertDataParsed = data.parseResult as boolean ?? false;
+    });
+};
