@@ -6,7 +6,7 @@ import { runInAction } from 'mobx';
 import i18n from 'ascend-i18n';
 import connector from '@/connection';
 import { GLOBAL_HOST } from '@/centralServer/websocket/defs';
-import type { File } from '@/entity/session';
+import { ClusterFile, File } from '@/entity/session';
 import { store } from '@/store';
 import { cancelBaseline, setBaseline } from '@/utils/Request';
 import { sendClusterBaselineStatus } from '@/connection/sendNotification';
@@ -47,22 +47,24 @@ export const sendTabRemoveBaseline = function(dataSource: any, singleDataPath: s
  * @param projectName 工程名
  * @param fileType 文件类型
  * @param filePath 路径
+ * @param baselineClusterPath 基线项目的集群路径
+ * @param selectedClusterPath 当前选中项目的集群路径
  */
-export const setBaselineData = async ({ projectName, fileType, filePath }: File): Promise<void> => {
+export const setBaselineData = async ({ projectName, fileType, filePath, baselineClusterPath, currentClusterPath }: ClusterFile): Promise<void> => {
     const session = store.sessionStore.activeSession;
     // 取消原来的基线数据
     cancelBaselineData();
 
     // 设置新的基线
     // 通知后台
-    const result: any = await setBaseline({ projectName, fileType, filePath });
+    const result: any = await setBaseline({ projectName, fileType, filePath, baselineClusterPath, currentClusterPath });
     // 基线是工程或者集群文件(cluster_analysis_output)，进入集群对比
-    const isProject = projectName !== '' && filePath === '';
+    const isProject = projectName !== '' && fileType === 'PROJECT';
     const isClusterCompare = isProject || result.isCluster === true;
     if (notNull(result.errorMessage) || notNull(result?.error?.code)) {
         Message.warning(result.errorMessage as string ?? result.error?.code);
     } else if (isClusterCompare) {
-        handleClusterCompare({ projectName, filePath, ...result });
+        handleClusterCompare({ projectName, fileType, filePath, ...result });
     } else {
         const { rankId, cardName, host } = result as CompareData;
         const timelineCard: TimelineCard = {

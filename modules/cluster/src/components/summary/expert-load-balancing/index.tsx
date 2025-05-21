@@ -9,6 +9,7 @@ import connector from '../../../connection';
 import { importExpertData, queryModelInfo, queryExpertHotspot } from '../../../utils/RequestUtils';
 import { QueryExpertHotspotItem } from '../../../utils/interface';
 import { message } from 'antd';
+import { Session } from '../../../entity/session';
 
 export interface FormData {
     layerNum: number | null;
@@ -18,7 +19,7 @@ export interface FormData {
     version: 'unbalanced' | 'balanced';
 }
 
-export const ExpertLoadBalancingBox = (): React.ReactElement => {
+export const ExpertLoadBalancingBox = ({ session }: { session: Session }): React.ReactElement => {
     const [formData, setFormData] = useState<FormData>({
         layerNum: null,
         denseLayerList: [],
@@ -128,7 +129,7 @@ export const ExpertLoadBalancingBox = (): React.ReactElement => {
 
     useEffect(() => {
         initLoad();
-    }, []);
+    }, [session.renderId]);
 
     return <>
         <ExpertLoadBalancingForm

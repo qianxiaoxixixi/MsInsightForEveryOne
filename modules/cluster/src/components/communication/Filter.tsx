@@ -28,7 +28,6 @@ export const totalOperator = 'Total Op Info';
 export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
 
 export const defaultCondition = {
-    clusterPath: '',
     iterationId: '',
     baselineIterationId: '',
     stage: '',
@@ -77,6 +76,10 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     if (key !== undefined) {
         const condition = { ...initObj, [key]: val };
         const optionMap = initOptionMap;
+        if (condition.stage === '') {
+            // stage === '' 时，页面不显示单选框，此时应该恢复 type 的默认值
+            condition.type = defaultCondition.type;
+        }
         if (['iterationId', 'baselineIterationId'].includes(key as string)) {
             const stageOptions: optionDataType[] = await getStageOptions(condition, session);
             const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage);
@@ -109,7 +112,8 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     const pgName = getPgNameByStage(stageOptions, stage.toString());
 
     // type
-    const type = initObj.type ?? defaultCondition.type;
+    // stage === '' 时，页面不显示单选框，此时应该恢复 type 的默认值
+    const type = stage !== '' ? initObj.type ?? defaultCondition.type : defaultCondition.type;
 
     // Operator Name
     const operatorOptions: optionDataType[] =
@@ -194,7 +198,7 @@ function compareStageInfo(stageA: string, stageB: string): number {
 const getStageOptions = async (condition: {iterationId: string;baselineIterationId: string}, session: Session): Promise<optionDataType[]> => {
     const res: {data: [{group: string}] } = await queryStages({ ...condition, isCompare: session.isCompare });
     const list = res?.data ?? [];
-    const modes = session.communicatorData.partitionModes;
+    const modes = session.selectedClusterPath === session.communicatorData.clusterPath ? session.communicatorData.partitionModes : [];
     const options: optionDataType[] = list
         .map(item => {
             // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
@@ -273,7 +277,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
     useEffect(() => {
         updateCondition(condition);
-    }, [session.clusterCompleted, session.communicatorData.partitionModes, session.isCompare, session.targetOperator]);
+    }, [session.clusterCompleted, session.selectedClusterPath, session.communicatorData.partitionModes, session.isCompare, session.targetOperator]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {
@@ -282,7 +286,8 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         });
     }, [activeCommunicator]);
     useEffect(() => {
-        handleFilterChange(condition);
+        const realCondition = { ...condition, clusterPath: session.selectedClusterPath };
+        handleFilterChange(realCondition);
     }, [condition]);
 
     return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap} session={session}/>);
@@ -356,7 +361,7 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                     disabled={session.isCompare}
                     dropdownMatchSelectWidth
                 />)}/>
-        { condition.stage &&
+        { condition.stage !== '' &&
             <FormItem content={(
                 <Radio.Group value={condition.type}
                     onChange={(e: RadioChangeEvent): void => {

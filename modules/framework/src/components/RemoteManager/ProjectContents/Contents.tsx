@@ -176,28 +176,42 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
 // 目录树数据
 const getTreeData = (session: Session): ProjectTreeDataNode[] => {
     const layerType: LayerType = 'PROJECT';
-    return session.dataSources.map((dataSource, dataSourceIndex) => ({
-        key: dataSource.projectName,
-        layerType,
-        layerData: dataSource,
-        isLeaf: false,
-        icon: <LocalImportIcon/>,
-        title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={dataSource.projectName}>
-            <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, fileType: layerType, filePath: '' })}`}>
-                <span className="content-name" onContextMenu={
-                    (): void => handleRightClick({ projectName: dataSource.projectName, fileType: layerType, filePath: '' })
-                }>
-                    <EditableText text={dataSource.projectName}/></span>
-                <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
-                    <ImportDataBtn projectName={dataSource.projectName} session={session}/>
-                    <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} />
-                </div>
-            </span>
-        </Tooltip>,
-        children: dataSource.children?.filter((child) => child.type !== undefined)
-            .sort(createCompareRankIdFuncWithProjectName(dataSource.projectName))
-            .map((child) => getTreeNode(child, dataSource.projectName, dataSourceIndex, session, 0)),
-    }));
+    return session.dataSources.map((dataSource, dataSourceIndex) => {
+        const clusterList = dataSource.children.filter((child) => child.type === 'CLUSTER');
+        const otherList = dataSource.children.filter((child) => child.type !== 'CLUSTER');
+        // 如果 PROJECT 下的內容 CLUSTER 只有一个，隐藏 CLUSTER 层
+        const children = [...(clusterList.length === 1 ? clusterList[0].children : clusterList), ...otherList];
+        return {
+            key: dataSource.projectName,
+            layerType,
+            layerData: dataSource,
+            isLeaf: false,
+            icon: <LocalImportIcon/>,
+            title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={dataSource.projectName}>
+                <span className={`content-body ${getNodeClass(session, {
+                    projectName: dataSource.projectName,
+                    fileType: layerType,
+                    filePath: dataSource.projectPath[0],
+                })}`}>
+                    <span className="content-name" onContextMenu={
+                        (): void => handleRightClick({
+                            projectName: dataSource.projectName,
+                            fileType: layerType,
+                            filePath: dataSource.projectPath[0],
+                        })
+                    }>
+                        <EditableText text={dataSource.projectName}/></span>
+                    <div className="btn-box" onClick={(e): void => e.stopPropagation()}>
+                        <ImportDataBtn projectName={dataSource.projectName} session={session}/>
+                        <DeleteConfirm isProject={true} projectIndex={dataSourceIndex}/>
+                    </div>
+                </span>
+            </Tooltip>,
+            children: children?.filter((child) => child.type !== undefined)
+                .sort(createCompareRankIdFuncWithProjectName(dataSource.projectName))
+                .map((child) => getTreeNode(child, dataSource.projectName, dataSourceIndex, session, 0)),
+        };
+    });
 };
 
 const getAllTreeNodeKeysWithoutLeaf = (treeNode: ProjectTreeDataNode[]): string[] => {

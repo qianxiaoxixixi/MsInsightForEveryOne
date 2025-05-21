@@ -127,7 +127,7 @@ const StyledMISelect = styled(BaseMISelect)`
     }
 `;
 
-// 强制类型断言，使 StyledMITree 支持泛型 T
+// 强制类型断言，使 StyledMISelected 支持泛型 T
 type GenericSelectComponent = <T extends DefaultOptionType = DefaultOptionType>(
     props: React.PropsWithChildren<MISelectProps<T>> & { ref?: React.Ref<BaseSelectRef> }
 ) => JSX.Element;

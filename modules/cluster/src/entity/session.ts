@@ -27,9 +27,11 @@ export class Session {
     isFullDb: boolean = false;
     id = '';
 
+    selectedProjectName: string = '';
     selectedClusterPath: string = '';
     allRankIds: any[] = [];
     communicatorData: communicatorContainerData = {
+        clusterPath: '',
         partitionModes: [],
         defaultPPSize: 0,
     };
@@ -126,13 +128,18 @@ export class Session {
         this.rankDyeingData = data;
     }
 
-    reset(): void {
-        this._clusterList = [];
+    resetForProjectChange(): void {
+        this.selectedProjectName = '';
         this.selectedClusterPath = '';
+        this._clusterList = [];
         this.parseCompleted = false;
         this.unitcount = 0;
+        this.communicatorData = { clusterPath: '', partitionModes: [], defaultPPSize: 0 };
+        this.resetForClusterChange();
+    }
+
+    resetForClusterChange(): void {
         this.allRankIds = [];
-        this.communicatorData = { partitionModes: [], defaultPPSize: 0 };
         this.activeCommunicator = undefined;
         this.indicatorList = [];
         this.performanceData = [];

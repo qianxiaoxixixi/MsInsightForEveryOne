@@ -54,15 +54,7 @@ export const transformFile = (tree: ImportTreeInfo | undefined, depth: number): 
                     .flat().filter((item) => item !== undefined) as FileOrDirectory[],
             }];
             break;
-        case 'PROJECT': {
-            const clusterList = tree.children.filter((child) => child.type === 'CLUSTER');
-            const otherList = tree.children.filter((child) => child.type !== 'CLUSTER');
-            // 如果 PROJECT 下的內容 CLUSTER 只有一个，隐藏 CLUSTER 层
-            const children = [...(clusterList.length === 1 ? clusterList[0].children : clusterList), ...otherList];
-            result = children.map((child) => transformFile(child, depth))
-                .flat().filter((item) => item !== undefined) as FileOrDirectory[];
-            break;
-        }
+        case 'PROJECT': // 跳过 PROJECT
         case 'HOST': // 跳过 HOST
             result = tree.children.map((child) => transformFile(child, depth))
                 .flat().filter((item) => item !== undefined) as FileOrDirectory[];

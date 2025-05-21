@@ -38,6 +38,13 @@ export const App = observer(() => {
         });
     };
 
+    /* 添加 selectedClusterPath 属性事件监听，保证切换 selectedClusterPath 时页面能整体更新 */
+    useEffect(() => {
+        if (!session) { return; }
+        session.resetForClusterChange();
+        session.renderId = ++session.renderId % 1000;
+    }, [session?.selectedClusterPath]);
+
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
         <GlobalStyles />
         <SharedConfigProvider locale={locale}>

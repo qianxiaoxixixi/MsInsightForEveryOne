@@ -8,6 +8,7 @@ import { ArrangementItem, ConnectionsItem, ParallelismType } from '../../utils/i
 import { hexToRgb } from 'ascend-utils';
 
 export interface communicatorContainerData {
+    clusterPath: string;
     partitionModes: partitionMode[];
     defaultPPSize: number;
 }

@@ -201,10 +201,11 @@ const baseOptions: EChartsOption = {
 interface FlowChartProps {
     step: string;
     stage: string;
+    clusterPath: string;
 }
 
 export const FlowChart = (props: FlowChartProps): JSX.Element => {
-    const { step, stage } = props;
+    const { step, stage, clusterPath } = props;
     const chartRef = useRef<ChartsHandle>(null);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
     const theme = useTheme();
@@ -236,6 +237,7 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
             const dataSource = await queryFwpBwdTimeline({
                 stepId: step,
                 stageId: stage,
+                clusterPath,
             }).finally(() => {
                 setLoading(false);
             });
@@ -253,7 +255,7 @@ export const FlowChart = (props: FlowChartProps): JSX.Element => {
         };
 
         fetchData();
-    }, [step, stage]);
+    }, [step, stage, clusterPath]);
 
     // echarts配置项中设置zoomOnMouseWheel: 'ctrl' 后, 滚轮在图表上无法触发滚动，此处需要手动处理滚动
     useEffect(() => {

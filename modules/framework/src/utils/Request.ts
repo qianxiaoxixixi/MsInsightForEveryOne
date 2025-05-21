@@ -3,7 +3,7 @@
  */
 import { request } from '@/centralServer/server';
 import { ImportResultBody, LayerType, Project, ProjectDirectory } from '@/centralServer/websocket/defs';
-import { File } from '@/entity/session';
+import { ClusterFile } from '@/entity/session';
 import { ProjectAction } from '@/utils/enum';
 import { ErrorMsg } from '@/centralServer/websocket/connection';
 
@@ -121,7 +121,7 @@ export const deleteDataPath = async (project: { projectName: string; dataPath: s
 /**
  * 设置基线数据
  */
-export const setBaseline = async (file: File): Promise<unknown> => {
+export const setBaseline = async (file: ClusterFile): Promise<unknown> => {
     return request('global', {
         command: 'global/setBaseline',
         params: { ...file },

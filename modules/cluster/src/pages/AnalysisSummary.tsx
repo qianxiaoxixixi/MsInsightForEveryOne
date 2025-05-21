@@ -6,7 +6,7 @@ import Index from '../components/summary/Index';
 import type { Session } from '../entity/session';
 
 const AnalysisSummary = ({ session }: { session: Session;active?: boolean }): JSX.Element => {
-    return <Index session={session} />;
+    return <Index session={session} clusterPath={session.selectedClusterPath} />;
 };
 
 export default AnalysisSummary;

@@ -26,6 +26,11 @@ export interface File {
     rankId?: string;
 }
 
+export interface ClusterFile extends File {
+    baselineClusterPath: string;
+    currentClusterPath: string;
+}
+
 export interface Rank extends File {
     rankId: string;
     cardName: string;
@@ -95,6 +100,7 @@ export class Session {
 
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
+    private _dataSourceIndexMap: Map<string, number> = new Map();
 
     private _activeDataSource: ActiveDataSource = DEFAULT_ACTIVE_DATASOURCE;
 
@@ -136,11 +142,23 @@ export class Session {
 
     set dataSources(data: DataSource[]) {
         this._dataSources = data;
+        this._dataSourceIndexMap = new Map();
+        data.forEach((item, index): void => {
+            this._dataSourceIndexMap.set(item.projectName, index);
+        });
     }
 
     set activeDataSource(data: ActiveDataSource) {
         this._activeDataSource = data;
         this.updateClusterPageInfo(data);
+    }
+
+    getDataSourceByProjectName(name: string): DataSource | undefined {
+        const idx = this._dataSourceIndexMap.get(name);
+        if (idx === undefined) {
+            return undefined;
+        }
+        return this._dataSources[idx];
     }
 
     setClusterParsed(clusterPath: string): void {
@@ -181,20 +199,20 @@ export class Session {
 
     // 数据源管理
     deleteDataSource(projectIndex: number): void {
-        this._dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
+        this.dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
     }
 
     deleteDataPath(projectIndex: number, dataPath: string): void {
         const dataSources = JSON.parse(JSON.stringify(this._dataSources));
         deleteProjectDataPath(dataSources[projectIndex], dataPath);
-        this._dataSources = dataSources;
+        this.dataSources = dataSources;
     }
 
     /**
      * 获取 cluster 类型的 path
      * @param selectedProject 选中的工程项目
      */
-    private getClusterPath(selectedProject: ActiveDataSource): string {
+    getClusterPath(selectedProject: ActiveDataSource): string {
         const selectedFilePath = selectedProject.selectedFilePath;
         let clusterPath: string = '';
         const findClusterPath = (children: FileOrDirectory[], depth: number): string => {

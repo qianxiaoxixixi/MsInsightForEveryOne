@@ -127,7 +127,7 @@ export const queryOperatorDetails = async(param: {
  * @param {string} timeFlag 类型：SCMA、
  * @return {[]} 返回数组
  */
-export const querySummaryStatistics = async (param: {rankId: string; timeFlag: string;stepId: string}): Promise<any> => {
+export const querySummaryStatistics = async (param: ParamsWithClusterPath<{rankId: string; timeFlag: string;stepId: string}>): Promise<any> => {
     return window.requestData('summary/statistic', withClusterPath(param));
 };
 
@@ -140,14 +140,14 @@ export const querySummaryStatistics = async (param: {rankId: string; timeFlag: s
  * @param {number} currentPage
  * @return {[]} 返回数组
  */
-export const queryComputeDetail = async (param: {
+export const queryComputeDetail = async (param: ParamsWithClusterPath<{
     rankId: string; timeFlag: string; pageSize: number;currentPage: number;orderBy: string;order: string;
-}): Promise<any> => {
+}>): Promise<any> => {
     return window.requestData('summary/queryComputeDetail', withClusterPath(param));
 };
 
-export const queryCommunicationDetail = async (param: {
-    rankId: string; pageSize: number;currentPage: number;orderBy: string;order: string;}): Promise<any> => {
+export const queryCommunicationDetail = async (param: ParamsWithClusterPath<{
+    rankId: string; pageSize: number;currentPage: number;orderBy: string;order: string;}>): Promise<any> => {
     return window.requestData('summary/queryCommunicationDetail', withClusterPath(param));
 };
 
@@ -159,7 +159,7 @@ export const queryCommunicationDetail = async (param: {
  *  orderBy: string ;
  *  top: number;
  */
-export const queryTopSummary = async (param: {isCompare?: boolean}): Promise<any> => {
+export const queryTopSummary = async (param: ParamsWithClusterPath<{isCompare?: boolean}>): Promise<any> => {
     return window.requestData('summary/queryTopData', withClusterPath({
         ...param,
         stepIdList: [],
@@ -206,12 +206,12 @@ export interface QueryFwpBwdTimelineRes {
     rankList: RankItem[];
 }
 
-export const queryFwpBwdTimeline = async(params: QueryFwpBwdTimelineParams): Promise<QueryFwpBwdTimelineRes> => {
+export const queryFwpBwdTimeline = async(params: ParamsWithClusterPath<QueryFwpBwdTimelineParams>): Promise<QueryFwpBwdTimelineRes> => {
     return window.requestData('parallelism/pipeline/fwdBwdTimeline', withClusterPath(params), 'summary');
 };
 
-export const getParallelStrategy = async (): Promise<GetParallelStrategyRes> => {
-    return await window.requestData('summary/query/parallelStrategy', withClusterPath({}), 'summary');
+export const getParallelStrategy = async (params: ParamsWithClusterPath<Record<string, unknown>>): Promise<GetParallelStrategyRes> => {
+    return await window.requestData('summary/query/parallelStrategy', params, 'summary');
 };
 
 export const setParallelStrategy = async (params: SetParallelStrategyParams): Promise<void> => {
@@ -224,12 +224,12 @@ export const setParallelStrategy = async (params: SetParallelStrategyParams): Pr
  * @return {ParallelismArrangementResult}
  */
 export const queryParallelismArrangementCancelable = createCancelableApi(
-    async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
+    async(params: ParamsWithClusterPath<ParallelismArrangementParams>): Promise<ParallelismArrangementResult> => {
         return await window.requestData('parallelism/arrangement/all', withClusterPath(params), 'summary');
     },
 );
 
-export const queryAllConnections = async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
+export const queryAllConnections = async(params: ParamsWithClusterPath<ParallelismArrangementParams>): Promise<ParallelismArrangementResult> => {
     return await window.requestData('parallelism/arrangement/all', withClusterPath(params), 'summary');
 };
 
