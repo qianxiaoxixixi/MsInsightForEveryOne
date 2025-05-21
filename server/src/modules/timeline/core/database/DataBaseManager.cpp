@@ -212,6 +212,8 @@ void DataBaseManager::Clear()
     dbFilePathMap.clear();
     host2DbPath.clear();
     databasePathSet.clear();
+    leaksMemoryDatabaseMap.clear();
+    fileType = FileType::PYTORCH;
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -420,6 +422,9 @@ bool DataBaseManager::IsContainDatabasePath(const std::string &databasePath)
 std::shared_ptr<FullDb::LeaksMemoryDatabase> DataBaseManager::GetLeaksMemoryDatabase(const std::string &fileId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
+    if (fileId.empty() && !leaksMemoryDatabaseMap.empty()) {
+        return leaksMemoryDatabaseMap.begin()->second;
+    }
     if (leaksMemoryDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         leaksMemoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::LeaksMemoryDatabase>(dbMutex));

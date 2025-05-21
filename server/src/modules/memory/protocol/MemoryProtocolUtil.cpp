@@ -4,11 +4,13 @@
 
 #include "ProtocolMessage.h"
 #include "JsonUtil.h"
+#include "MemoryDef.h"
 #include "MemoryProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {
 using namespace rapidjson;
+using namespace Dic::Module::Memory;
 #pragma region <<Response to json>>
 template <> std::optional<document_t> ToResponseJson<MemoryOperatorComparisonResponse>(
     const MemoryOperatorComparisonResponse &response)
@@ -131,6 +133,37 @@ std::optional<document_t> ToMemoryComponentJson(const MemoryComponent &component
     JsonUtil::AddMember(json, "timestamp", component.timestamp, allocator);
     JsonUtil::AddMember(json, "totalReserved", component.totalReserved, allocator);
     JsonUtil::AddMember(json, "device", component.device, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+std::optional<document_t> ToLeaksMemoryAllocationJson(const MemoryAllocation &allocation,
+                                                      Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    JsonUtil::AddMember(json, "id", allocation.id, allocator);
+    JsonUtil::AddMember(json, "timestamp", allocation.timestamp, allocator);
+    JsonUtil::AddMember(json, "totalSize", allocation.totalSize, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+std::optional<document_t> ToLeaksMemoryBlockJson(const MemoryBlockItem &blockItem, Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    JsonUtil::AddMember(json, "id", blockItem.id, allocator);
+    JsonUtil::AddMember(json, "addr", blockItem.ptr, allocator);
+    JsonUtil::AddMember(json, "size", blockItem.size, allocator);
+    JsonUtil::AddMember(json, "startTimestamp", blockItem.startTimestamp, allocator);
+    JsonUtil::AddMember(json, "endTimestamp", blockItem.endTimestamp, allocator);
+    JsonUtil::AddMember(json, "owner", blockItem.owner, allocator);
+    JsonUtil::AddMember(json, "attr", blockItem.otherAttr, allocator);
+    document_t path(kArrayType);
+    for (auto &point : blockItem.path) {
+        document_t pointJson(kArrayType);
+        pointJson.PushBack(json_t().SetUint64(point.first), allocator);
+        pointJson.PushBack(json_t().SetUint64(point.second), allocator);
+        path.PushBack(pointJson, allocator);
+    }
+    JsonUtil::AddMember(json, "path", path, allocator);
     return std::optional<document_t>{std::move(json)};
 }
 
@@ -311,6 +344,54 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorSizeResponse>
     return std::optional<document_t>{std::move(json)};
 }
 
+template<>
+std::optional<document_t> ToResponseJson<LeaksMemoryAllocationsResponse>
+    (const LeaksMemoryAllocationsResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t &moduleName = json["moduleName"];
+    moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
+    json_t body(kObjectType);
+    json_t allocations(kArrayType);
+    JsonUtil::AddMember(body, "minTimestamp", response.minTimestamp, allocator);
+    JsonUtil::AddMember(body, "maxTimestamp", response.maxTimestamp, allocator);
+    for (const auto& allocation : response.allocations) {
+        auto allocationJson = ToLeaksMemoryAllocationJson(allocation, allocator);
+        if (allocationJson.has_value()) {
+            allocations.PushBack(allocationJson.value(), allocator);
+        }
+    }
+    JsonUtil::AddMember(body, "allocations", allocations, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+template<>
+std::optional<document_t> ToResponseJson<LeaksMemoryBlocksResponse>
+                (const LeaksMemoryBlocksResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t &moduleName = json["moduleName"];
+    moduleName.SetString(Protocol::MODULE_LEAKS.c_str(), allocator);
+    json_t body(kObjectType);
+    json_t blocks(kArrayType);
+    JsonUtil::AddMember(body, "minTimestamp", response.minTimestamp, allocator);
+    JsonUtil::AddMember(body, "maxTimestamp", response.maxTimestamp, allocator);
+    JsonUtil::AddMember(body, "minSize", response.minSize, allocator);
+    JsonUtil::AddMember(body, "maxSize", response.maxSize, allocator);
+    for (const auto &block : response.blocks) {
+        auto blockJson = ToLeaksMemoryBlockJson(block, allocator);
+        if (blockJson.has_value()) {
+            blocks.PushBack(blockJson.value(), allocator);
+        }
+    }
+    JsonUtil::AddMember(body, "blocks", blocks, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

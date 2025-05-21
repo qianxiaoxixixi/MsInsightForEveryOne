@@ -160,6 +160,28 @@ struct MemoryStaticOperatorSizeResponse : public Response {
     MemoryStaticOperatorSizeResponse() : Response(REQ_RES_MEMORY_STATIC_OP_MEMORY_MIN_MAX) {}
     StaticOperatorSize size;
 };
+struct MemoryBlockItem : Dic::Module::Memory::MemoryBlock {
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> path;
+    MemoryBlockItem() = default;
+    explicit MemoryBlockItem(const MemoryBlock &block)
+        : MemoryBlock(block) {}
+};
+struct LeaksMemoryBlocksResponse : public Response {
+    LeaksMemoryBlocksResponse() : Response (REQ_RES_LEAKS_MEMORY_BLOCKS) {}
+    std::vector<MemoryBlockItem> blocks;
+    uint64_t minTimestamp;
+    uint64_t maxTimestamp;
+    uint64_t minSize;
+    uint64_t maxSize;
+    uint64_t totalNum;
+};
+
+struct LeaksMemoryAllocationsResponse : public Response {
+    LeaksMemoryAllocationsResponse() : Response(REQ_RES_LEAKS_MEMORY_ALLOCATIONS) {}
+    uint64_t minTimestamp;
+    uint64_t maxTimestamp;
+    std::vector<Dic::Module::Memory::MemoryAllocation> allocations;
+};
 
 struct ComponentDto {
     std::string component;

@@ -8,6 +8,7 @@
 #include "pch.h"
 #include "WsSender.h"
 #include "Database.h"
+#include "MemoryProtocolRequest.h"
 #include "TimelineProtocolEvent.h"
 #include "ServerLog.h"
 #include "TraceTime.h"
@@ -17,6 +18,7 @@
 namespace Dic {
 namespace Module {
 namespace FullDb {
+using namespace Dic::Protocol;
 class LeaksMemoryDatabase : public Database {
 public:
     explicit LeaksMemoryDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex){};
@@ -32,6 +34,7 @@ public:
     bool CreateMemoryAllocationAndBlockTable();
     bool DropMemoryAllocationAndBlockTable();
     bool QueryEntireEventsTable(std::vector<Memory::MemoryEvent> &eventDetails);
+    void QueryDeviceIds(std::set<std::string> &deviceIdSet);
     void QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams, std::vector<Memory::MemoryBlock> &blocks);
     void QueryMemoryAllocations(const LeaksMemoryAllocationParams &queryParams,
                                 std::vector<Memory::MemoryAllocation> &allocations);
