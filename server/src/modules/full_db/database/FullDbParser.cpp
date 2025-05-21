@@ -168,6 +168,7 @@ void FullDbParser::BuildProfilingInitTask(std::shared_ptr<std::vector<std::futur
         GetTraceDatabase(dbId)->GenerateOverlapAnalysis();
     }));
 }
+
 void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
     const std::shared_ptr<std::vector<std::future<void>>>& futures,
     std::chrono::time_point<std::chrono::high_resolution_clock> start)

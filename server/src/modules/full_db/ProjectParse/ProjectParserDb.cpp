@@ -216,11 +216,31 @@ ProjectTypeEnum ProjectParserDb::GetProjectType(const std::string &dataPath)
     return isCluster ? ProjectTypeEnum::DB_CLUSTER : ProjectTypeEnum::DB;
 }
 
+static bool IsSingleLeaksDbFile(const std::string &importFile)
+{
+    if (FileUtil::IsFolder(importFile)) {
+        return false;
+    }
+    return std::regex_match(FileUtil::GetFileName(importFile), std::regex(leaksMemDbReg));
+}
+
+bool TryGetLeaksByImportFolderOrFile(const std::string &importFile, std::vector<std::string> &leaksFiles)
+{
+    leaksFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(leaksMemDbReg));
+    if (IsSingleLeaksDbFile(importFile) || !leaksFiles.empty()) {
+        DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+        if (leaksFiles.empty()) {
+            leaksFiles.push_back(importFile);
+        }
+        return true;
+    }
+    return false;
+}
+
 std::vector<std::string> ProjectParserDb::GetParseFileByImportFile(const std::string &importFile, std::string &error)
 {
-    std::vector<std::string> leaksFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(leaksMemDbReg));
-    if (!leaksFiles.empty()) {
-        DataBaseManager::Instance().SetFileType(FileType::LEAKS);
+    std::vector<std::string> leaksFiles;
+    if (TryGetLeaksByImportFolderOrFile(importFile, leaksFiles) && !leaksFiles.empty()) {
         return leaksFiles;
     }
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));

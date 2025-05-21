@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2024-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
 #ifndef PROFILER_SERVER_LEAKSMEMORYSERVICE_H
@@ -32,6 +32,10 @@ private:
     static bool SingleDeviceEventParse(const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db, const MemoryEvent &event,
                                        std::map<std::string, const MemoryEvent *> &allocMap,
                                        const BlockEventAttr &eventExtendAttr);
+
+    inline static const std::string BLOCK_EVENT_ATTR_SIZE_FIELD = "size";
+    inline static const std::string BLOCK_EVENT_ATTR_OWNER_FIELD = "owner";
+    inline static const std::string BLOCK_EVENT_ATTR_ADDR_FIELD = "addr";
 };
 }  // Memory
 }  // Module

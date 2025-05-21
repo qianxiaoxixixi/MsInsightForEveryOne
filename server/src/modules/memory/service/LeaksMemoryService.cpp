@@ -179,16 +179,18 @@ void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, 
         return;
     }
     auto &json = jsonDoc.value();
-    if (!JsonUtil::IsJsonKeyValid(json, "size") || !JsonUtil::IsJsonKeyValid(json, "owner")) {
-        Server::ServerLog::Warn("The 'attr' field does not contain the required fields 'size' and 'owner'.");
+    if (!JsonUtil::IsJsonKeyValid(json, BLOCK_EVENT_ATTR_SIZE_FIELD) ||
+    !JsonUtil::IsJsonKeyValid(json, BLOCK_EVENT_ATTR_OWNER_FIELD)) {
+        Server::ServerLog::Warn("The 'attr' field does not contain the required fields % and %.",
+                                BLOCK_EVENT_ATTR_SIZE_FIELD, BLOCK_EVENT_ATTR_OWNER_FIELD);
         return;
     }
-    std::string size_str = JsonUtil::GetString(json, "size");
+    std::string size_str = JsonUtil::GetString(json, BLOCK_EVENT_ATTR_SIZE_FIELD);
     eventAttr.size = NumberUtil::StringToLongLong(size_str);
-    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, "owner");
+    JsonUtil::SetByJsonKeyValue(eventAttr.owner, json, BLOCK_EVENT_ATTR_OWNER_FIELD);
 
-    if (JsonUtil::IsJsonKeyValid(json, "addr")) {
-        JsonUtil::SetByJsonKeyValue(eventAttr.addr, json, "addr");
+    if (JsonUtil::IsJsonKeyValid(json, BLOCK_EVENT_ATTR_ADDR_FIELD)) {
+        JsonUtil::SetByJsonKeyValue(eventAttr.addr, json, BLOCK_EVENT_ATTR_ADDR_FIELD);
     } else {
         eventAttr.addr = event.ptr;
     }
