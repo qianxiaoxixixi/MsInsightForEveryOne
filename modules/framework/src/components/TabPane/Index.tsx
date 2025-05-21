@@ -154,29 +154,21 @@ const Index = observer(({ session }: {session: Session}) => {
             },
         };
         newFrames.forEach((frame) => {
-            if (frame.contentWindow && frame.contentWindow.document.readyState === 'complete') {
-                // 如果 iframe 已经加载完成，则直接发送消息
+            // 设置 onload 监听器等待 iframe 加载完成
+            // 如果之前已经有监听器，先清除
+            if (iframeLoadHandlersRef.current.has(frame)) {
+                frame.onload = null; // 清除已存在的监听器
+            }
+            // 创建并绑定新的监听器
+            const onLoadHandler = (): void => {
                 connector.send({
                     ...sendBody,
                     to: frame.id,
                 });
-            } else {
-                // 否则设置 onload 监听器等待 iframe 加载完成
-                // 如果之前已经有监听器，先清除
-                if (iframeLoadHandlersRef.current.has(frame)) {
-                    frame.onload = null; // 清除已存在的监听器
-                }
-                // 创建并绑定新的监听器
-                const onLoadHandler = (): void => {
-                    connector.send({
-                        ...sendBody,
-                        to: frame.id,
-                    });
-                };
-                // 保存监听器用于后续清除
-                iframeLoadHandlersRef.current.set(frame, onLoadHandler);
-                frame.onload = onLoadHandler;
-            }
+            };
+            // 保存监听器用于后续清除
+            iframeLoadHandlersRef.current.set(frame, onLoadHandler);
+            frame.onload = onLoadHandler;
         });
         prevFrameIdsRef.current = frameIds;
         return (): void => {
