@@ -9,6 +9,8 @@
 #include "CollectionUtil.h"
 #include "NumberSafeUtil.h"
 #include "NumberUtil.h"
+#include "RenderEngine.h"
+#include "CollectionUtil.h"
 #include "ExpertHotspotManager.h"
 
 namespace Dic {
@@ -353,34 +355,123 @@ std::vector<ExpertHotspotStruct> ExpertHotspotManager::QueryExpertHotspotData(co
     return hotspotRes;
 }
 
-bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const std::string &fileId, const FullDb::DataType &dataType)
+bool ExpertHotspotManager::ExtractHeatMapFromTraceDb(const ExtractHeatMapParams &params, ModelInfo &modelInfo,
+                                                     std::string &errorMsg)
 {
-    if (fileId.empty()) {
+    if (params.fileId.empty()) {
+        errorMsg = "Fail to get extract heat map, file id is empty.";
+        return false;
+    }
+    auto clusterDb = Timeline::DataBaseManager::Instance().GetClusterDatabase(params.clusterPath);
+    if (clusterDb == nullptr) {
+        errorMsg = "Fail to get extract heat map, database not exist.";
         return false;
     }
     // 获取cann层数据内容
-
+    std::vector<FullDb::CompeteSliceDomain> cannApiSliceList = FullDb::RenderEngine::Instance()->
+        QuerySliceDetailByNameList(params.fileId, params.dataType, "CANN", params.cannApiList);
+    if (cannApiSliceList.empty()) {
+        return false;
+    }
     // 获取计算算子数据内容
-
-    // 映射
+    std::vector<FullDb::CompeteSliceDomain> hardwareSliceList = FullDb::RenderEngine::Instance()->
+        QuerySliceDetailByNameList(params.fileId, params.dataType, "Ascend Hardware", params.hardwareOperatorList);
+    if (hardwareSliceList.empty()) {
+        return false;
+    }
+    std::string rankIdStr = Timeline::DataBaseManager::Instance().GetRankIdByFileId(params.fileId);
+    int rankId = NumberUtil::StringToInt(rankIdStr);
+    modelInfo.rankNumber = std::max(rankId + 1, modelInfo.rankNumber);
+    auto heatMapData = CalHeatMap(rankId, cannApiSliceList, hardwareSliceList, modelInfo);
+    for (const auto &item: heatMapData) {
+        clusterDb->InsertExpertHotspotDataForCache(item.second);
+    }
     return true;
 }
 
-bool ExpertHotspotManager::UpdateHeatMapFromProfiling()
+std::map<std::string, ExpertHotspotStruct> ExpertHotspotManager::CalHeatMap(
+    const int &rankId, const std::vector<FullDb::CompeteSliceDomain> &cannApiSliceList,
+    const std::vector<FullDb::CompeteSliceDomain> &hardwareSliceList, ModelInfo &modelInfo)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    // 遍历数据并映射
+    std::vector<int> denseLayerList;
+    int layer = -1;
+    size_t hardwareIndex = 0;
+    size_t index = 0;
+    std::string modelStage;
+    std::map<std::string, ExpertHotspotStruct> res;
+    while (index < cannApiSliceList.size()) {
+        FullDb::CompeteSliceDomain curSlice = cannApiSliceList[index];
+        // 是lmhead算子 说明一个模型的结束，此时保存模型信息
+        if (CollectionUtil::IsEleInContainer(curSlice.name, lmHeadApiNameList)) {
+            modelInfo.modelLayer = layer + 1;
+            modelInfo.denseLayerList = denseLayerList;
+            denseLayerList.clear();
+            layer = -1;
+            modelStage = "";
+            index++;
+            continue;
+        }
+        // 是excute的api，代表是一个新的层
+        if (!CollectionUtil::IsEleInContainer(curSlice.name, layerExecuteApiNameList)) {
+            return {};
+        }
+        if (modelStage.empty()) {
+            modelStage = StringUtil::ContainsIgnoreCase(curSlice.name, "prefill") ? "prefill" : "decode";
+        }
+        index++;
+        layer++;
+        bool isDenseLayer = true;
+        while (index < cannApiSliceList.size() && hardwareIndex < hardwareSliceList.size() &&
+            CollectionUtil::IsEleInContainer(cannApiSliceList[index].name, groupedMatmulApiNameList)) {
+            std::string key = modelStage + "_" + std::to_string(rankId) + "_" + std::to_string(layer);
+            res[key].modelStage = modelStage;
+            res[key].rankId = rankId;
+            res[key].layer = NumberSafe::Sub(layer, denseLayerList.size());
+            res[key].visits += hardwareSliceList[hardwareIndex++].duration;
+            res[key].version = "profiling";
+            isDenseLayer = false;
+            index++;
+        }
+        if (isDenseLayer) {
+            denseLayerList.push_back(layer);
+        }
+    }
+    return res;
+}
+
+bool ExpertHotspotManager::UpdateHeatMapFromProfiling(std::string &errorMsg, const std::string &clusterPath)
+{
+    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     // 集群db不存在则直接返回
     if (database == nullptr) {
+        errorMsg = "Fail to update heatmap from profiling, the cluster database not exist.";
         return false;
     }
-    // todo-yqs:检查数据是否已经存在，已存在则不重复处理
-
+    // 删除已有数据（后续优化，通过状态表来记录状态）
+    if (!database->DeleteExpertHotspot("", "profiling")) {
+        errorMsg = "Failed to clear old expert hotspot data, version: profiling";
+        return false;
+    }
+    ModelInfo modelInfo;
     FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataType();
+    std::vector<std::string> cannApiList;
+    cannApiList.insert(cannApiList.end(), layerExecuteApiNameList.begin(), layerExecuteApiNameList.end());
+    cannApiList.insert(cannApiList.end(), groupedMatmulApiNameList.begin(), groupedMatmulApiNameList.end());
+    cannApiList.insert(cannApiList.end(), lmHeadApiNameList.begin(), lmHeadApiNameList.end());
     for (const auto &fileId: Timeline::DataBaseManager::Instance().GetAllFileId()) {
-        if (!ExtractHeatMapFromTraceDb(fileId, dataType)) {
+        ExtractHeatMapParams params{fileId, dataType, cannApiList, groupedMatmulComputeNameList, clusterPath};
+        if (!ExtractHeatMapFromTraceDb(params, modelInfo, errorMsg)) {
             return false;
         }
     }
+    modelInfo.moeLayer = NumberSafe::Sub(modelInfo.modelLayer, modelInfo.denseLayerList.size());
+    modelInfo.expertNumber = modelInfo.rankNumber;
+    ModelInfo curModelInfo = GetModelInfo(clusterPath);
+    modelInfo.rankNumber = std::max(modelInfo.rankNumber, curModelInfo.rankNumber);
+    modelInfo.expertNumber = std::max(modelInfo.expertNumber, curModelInfo.expertNumber);
+    modelInfo.modelLayer = std::max(modelInfo.modelLayer, curModelInfo.modelLayer);
+    SaveModelInfo(modelInfo, database);
     database->SaveExpertHotspot();
     return true;
 }

@@ -84,6 +84,7 @@ void TimelineProtocol::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_PARSE_LEAKS_MEMORY_COMPLETED, ToLeaksParseSuccessEventJson);
     eventToJsonFactory.emplace(EVENT_MODULE_RESET, ToModuleResetEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_PROGRESS, ToParseProgressEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_HEATMAP_COMPLETED, ToParseHeatmapCompletedEventJson);
 }
 
 #pragma region << Json To Request>>
@@ -775,6 +776,11 @@ std::optional<document_t> TimelineProtocol::ToModuleResetEventJson(const Event &
 std::optional<document_t> TimelineProtocol::ToParseProgressEventJson(const Event &event)
 {
     return ToEventJson<ParseProgressEvent>(dynamic_cast<const ParseProgressEvent &>(event));
+}
+
+std::optional<document_t> TimelineProtocol::ToParseHeatmapCompletedEventJson(const Event &event)
+{
+    return ToEventJson<ParseHeatmapCompletedEvent>(dynamic_cast<const ParseHeatmapCompletedEvent &>(event));
 }
 
 std::optional<document_t> TimelineProtocol::ToSystemViewOverallResponseJson(const Response &response)

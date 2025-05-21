@@ -9,12 +9,21 @@
 #include "ExpertHotspotManager.h"
 #include "ClusterDef.h"
 #include "TimeUtil.h"
+#include "DataBaseManager.h"
+#include "TraceFileParser.h"
+#include "ParserStatusManager.h"
+#include "RepositoryFactory.h"
+#include "DataEngine.h"
+#include "RenderEngine.h"
+#include "ProjectParserFactory.h"
 
+using namespace Dic::Module::FullDb;
 class ExpertHotspotManagerTest : public ::testing::Test {
 protected:
     std::string filePath;
     std::string hotspotPath;
     std::string deploymentPath;
+    std::string heatMapProfilingPath;
     void SetUp() override
     {
         std::string  currPath = Dic::FileUtil::GetCurrPath();
@@ -23,6 +32,7 @@ protected:
         filePath = currPath + R"(/src/test/test_data/cluster_analysis_output)";
         hotspotPath = currPath + R"(/src/test/test_data/expert_hotspot)";
         deploymentPath = currPath + R"(/src/test/test_data/expert_deployment)";
+        heatMapProfilingPath = currPath + R"(/src/test/test_data/heatMap/)";
     }
 
     static std::string InitParser(const std::string &dataPath, const std::string &uniqueKey)
@@ -38,6 +48,34 @@ protected:
         return database->GetDbPath();
     }
 
+    static void WaitParseEnd(std::vector<std::string> statusList)
+    {
+        while (true) {
+            int i = 0;
+            for (const auto& tmp : statusList) {
+                if (ParserStatusManager::Instance().GetParserStatus(tmp) != ParserStatus::FINISH) {
+                    break;
+                } else {
+                    i++;
+                }
+            }
+            if (i < statusList.size()) {
+                continue;
+            } else {
+                Dic::Server::ServerLog::Info("parse end");
+                return;
+            }
+        }
+    }
+
+    static void InitProfiling(const std::string &filePath)
+    {
+        DataBaseManager::Instance().SetDataType(DataType::TEXT);
+        DataBaseManager::Instance().CreatConnectionPool("100", filePath + "mindstudio_insight_data.db");
+        TraceFileParser::Instance().Parse({filePath + "trace_view.json"}, "100", "");
+        WaitParseEnd({"100"});
+    }
+
     static void Clear()
     {
         auto db = Dic::Module::FullDb::DataBaseManager::Instance().GetClusterDatabase(Dic::COMPARE);
@@ -45,6 +83,7 @@ protected:
             // 清空热点数据
             db->DeleteExpertHotspot("decode", "1");
             db->DeleteExpertHotspot("prefill", "1");
+            db->DeleteExpertHotspot("", "profiling");
             // baseinfo内容置0
             std::map<std::string, std::string> baseInfoMap;
             baseInfoMap[Dic::Module::KEY_DENSE_LAYER_LIST] = "";
@@ -55,6 +94,7 @@ protected:
             db->InsertDuplicateUpdateBaseInfo(baseInfoMap);
         }
         Dic::Module::FullDb::DataBaseManager::Instance().EraseClusterDb(Dic::COMPARE);
+        TraceFileParser::Instance().DeleteParseFiles({"100"});
     }
 };
 
@@ -114,4 +154,20 @@ TEST_F(ExpertHotspotManagerTest, InitExpertDeploymentDataSuccess)
     const int exceptSize = 18560;
     EXPECT_EQ(res.size(), exceptSize);
     Clear();
+}
+
+TEST_F(ExpertHotspotManagerTest, ParseHeatMapFromProfilingWithoutTraceDb)
+{
+    Dic::Module::ParserFactory::Reset();
+    InitParser(filePath, Dic::COMPARE);
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    std::string errorMsg;
+    bool res = Dic::Module::Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, Dic::COMPARE);
+    EXPECT_EQ(res, true);
+    Clear();
+    Dic::Module::ParserFactory::Reset();
 }

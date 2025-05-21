@@ -62,6 +62,7 @@ template <> std::optional<document_t> ToEventJson<LeaksParseSuccessEvent>(const 
 template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event);
 template <> std::optional<document_t> ToEventJson<ModuleResetEvent>(const ModuleResetEvent &event);
 template <> std::optional<document_t> ToEventJson<ParseProgressEvent>(const ParseProgressEvent &event);
+template <> std::optional<document_t> ToEventJson<ParseHeatmapCompletedEvent>(const ParseHeatmapCompletedEvent &event);
 } // end of namespace Protocol
 } // end of namespace Dic
 

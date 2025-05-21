@@ -70,6 +70,27 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
     return it->second->GetConnection();
 }
 
+std::string DataBaseManager::GetRankIdByFileId(const std::string &fileId)
+{
+    if (dataType == DataType::TEXT) {
+        return fileId;
+    }
+    std::string hostRankStr;
+    for (const auto &item: dbFilePathMap) {
+        if (item.second == fileId) {
+            hostRankStr = item.first;
+            break;
+        }
+    }
+    std::vector<std::string> hostRankVec = StringUtil::Split(hostRankStr, " ");
+    // db场景下，格式为“host rankId”，因此按空格分割后取第二个
+    const int expectSpliceSize = 2;
+    if (hostRankVec.size() != expectSpliceSize) {
+        return "";
+    }
+    return hostRankVec[1];
+}
+
 std::shared_ptr<Summary::VirtualSummaryDataBase> DataBaseManager::GetSummaryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);

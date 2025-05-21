@@ -21,6 +21,11 @@ public:
         }
         return it->second;
     }
+
+    static inline bool IsEleInContainer(const std::string &ele, const std::vector<std::string> &container)
+    {
+        return std::find(container.begin(), container.end(), ele) != container.end();
+    }
     /**
      * 模板方法，求两个基础类型集合的差集
      *

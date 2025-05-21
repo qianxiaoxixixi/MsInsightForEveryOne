@@ -276,13 +276,26 @@ std::string ProjectParserBase::GetDbPath(const std::string &filePath, const int 
     return path;
 }
 
-void ProjectParserBase::ParsePostProcess()
+void ProjectParserBase::ParsePostProcess(const std::vector<std::shared_ptr<ParseFileInfo>> &clusterInfos)
 {
     // 发送解析成功消息
     SendAllParseSuccess();
 
     // 数据统计内容
-    bool res = Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling();
+    auto event = std::make_unique<ParseHeatmapCompletedEvent>();
+    if (!clusterInfos.empty()) {
+        std::string errorMsg;
+        bool res = Summary::ExpertHotspotManager::UpdateHeatMapFromProfiling(errorMsg, clusterInfos[0]->parseFilePath);
+        event->body.parseResult = res;
+        event->result = true;
+        event->body.errorMsg = errorMsg;
+    } else {
+        event->result = false;
+        event->body.parseResult = false;
+        event->body.errorMsg = "No cluster data exists.";
+    }
+    event->moduleName = MODULE_TIMELINE;
+    SendEvent(std::move(event));
 }
 
 void ProjectParserBase::SendAllParseSuccess()

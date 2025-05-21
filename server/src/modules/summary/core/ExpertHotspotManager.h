@@ -22,6 +22,15 @@ struct FillExpertDataParams {
     int expertNumberPerRank = 0;
     std::set<int> denseLayerSet;
 };
+
+struct ExtractHeatMapParams {
+    std::string fileId;
+    FullDb::DataType dataType;
+    std::vector<std::string> cannApiList;
+    std::vector<std::string> hardwareOperatorList;
+    std::string clusterPath;
+};
+
 class ExpertHotspotManager {
 public:
     static bool InitExpertHotspotData(const std::string &filePath, const std::string &version,
@@ -30,8 +39,20 @@ public:
             const std::string &modelStage, const std::string &version);
     static ModelInfo GetModelInfo(const std::string &clusterPath);
     static bool UpdateModelInfo(const std::string &clusterPath, ModelInfo &newModelInfo, std::string &errorMsg);
-    static bool UpdateHeatMapFromProfiling();
+    static bool UpdateHeatMapFromProfiling(std::string &errorMsg, const std::string &clusterPath);
 private:
+    // CANN层，每一个layer执行API
+    const static inline std::vector<std::string> layerExecuteApiNameList = {"Prefill_layer::Execute",
+        "AscendCL@Decoder_layer::Execute", "AscendCL@Prefill_layer::Execute", "Decoder_layer::Execute"};
+    // CANN层，每一个groupedMatmul执行API
+    const static inline std::vector<std::string> groupedMatmulApiNameList = {
+        "AscendCL@aclnnGroupedMatmulV4", "AscendCL@aclnnGroupedMatmulSwiglu", "aclnnGroupedMatmulV4"};
+    // CANN层，每一个LmHead执行API，代表一个模型的结束
+    const static inline std::vector<std::string> lmHeadApiNameList = {"AscendCL@LmHead::Execute", "LmHead::Execute"};
+    // Hardware层，每一个groupedMatmul算子名
+    const static inline std::vector<std::string> groupedMatmulComputeNameList = {
+        "aclnnGroupedMatmulV4_GroupedMatmul_GroupedMatmul",
+        "aclnnGroupedMatmulSwiglu_GroupedMatmulSwiglu_GroupedMatmulSwiglu"};
     static bool FillExpertInfo(std::vector<ExpertHotspotStruct> &hotspotInfos, const ModelInfo &modelInfo,
                                const std::vector<ExpertDeploymentStruct> &deployment);
     static std::map<std::string, ModelInfo> ParseHotspotData(const std::vector<std::string> &hotspotFiles,
@@ -46,7 +67,11 @@ private:
     static bool FillHotspotData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
     static bool FillDeploymentData(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
     static void FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &res, FillExpertDataParams &params);
-    static bool ExtractHeatMapFromTraceDb(const std::string &fileId, const FullDb::DataType &dataType);
+    static bool ExtractHeatMapFromTraceDb(const ExtractHeatMapParams &params, ModelInfo &modelInfo,
+                                          std::string &errorMsg);
+    static std::map<std::string, ExpertHotspotStruct> CalHeatMap(
+        const int &rankId, const std::vector<FullDb::CompeteSliceDomain> &cannApiSliceList,
+        const std::vector<FullDb::CompeteSliceDomain> &hardwareSliceList, ModelInfo &modelInfo);
 };
 }
 }

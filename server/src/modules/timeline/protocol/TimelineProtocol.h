@@ -85,6 +85,7 @@ private:
     static std::optional<document_t> ToParseProgressEventJson(const Event &event);
     static std::optional<document_t> ToSystemViewOverallResponseJson(const Response &response);
     static std::optional<document_t> ToOverallMoreDetailsResponseJson(const Response &response);
+    static std::optional<document_t> ToParseHeatmapCompletedEventJson(const Event &event);
 };
 } // namespace Protocol
 } // namespace Dic
