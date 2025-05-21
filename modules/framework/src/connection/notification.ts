@@ -9,6 +9,8 @@ import {
     updateSessionHandler,
     getLanguageHandler,
     openImportDialogHandler,
+    clusterCompletedHandler,
+    clusterDurationCompletedHandler,
 } from './notificationHandler';
 import { sendWakeupPlugin } from '@/connection/sendNotification';
 
@@ -32,6 +34,9 @@ export interface NotificationMessage {
 
 type ListenerCallback = (res: NotificationMessage) => void;
 
+const PARSE_CLUSTER_COMPLETED = 'frame:parseClusterCompleted';
+const PARSE_CLUSTER_STEP2_COMPLETED = 'frame:parseClusterDurationCompleted';
+
 export const listenerMap: Record<string, ListenerCallback> = {
     updateSession: updateSessionHandler,
     getParseStatus: getParseStatusHandler,
@@ -41,4 +46,6 @@ export const listenerMap: Record<string, ListenerCallback> = {
     getLanguage: getLanguageHandler,
     pluginMounted: sendWakeupPlugin,
     openImportDialog: openImportDialogHandler,
+    [PARSE_CLUSTER_COMPLETED]: clusterCompletedHandler,
+    [PARSE_CLUSTER_STEP2_COMPLETED]: clusterDurationCompletedHandler,
 };

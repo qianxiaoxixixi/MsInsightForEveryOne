@@ -25,7 +25,7 @@ declare global {
         requestData: (method: string | RequestParams, params?: any, module?: string, voidResponse?: boolean) => Promise<any>;
     }
 
-    type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB';
+    type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';
 
     interface FileOrDirectory {
         type?: LayerType;

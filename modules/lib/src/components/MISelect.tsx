@@ -4,6 +4,8 @@
 
 import * as React from 'react';
 import { Select } from 'antd';
+import type { DefaultOptionType } from 'rc-select/lib/Select';
+import type { BaseSelectRef } from 'rc-select/lib/BaseSelect';
 import styled from '@emotion/styled';
 import caretDownIcon from 'ascend-icon/img/caret-down.svg';
 import removeIcon from '../icon/img/select_multiple_remove.svg';
@@ -34,9 +36,17 @@ const StyledRemoveIcon = styled.div`
     background-size: cover;
 `;
 
-export const MISelect = styled((props: SelectProps & { width?: number | string; height?: number; name?: string }): JSX.Element => {
+interface MISelectProps<T extends DefaultOptionType = DefaultOptionType> extends SelectProps {
+    width?: number | string;
+    height?: number;
+    name?: string;
+    options?: T[];
+    optionRender?: (option: T) => JSX.Element;
+}
+
+const BaseMISelect = <T extends DefaultOptionType>(props: MISelectProps<T>): JSX.Element => {
     const { t } = useTranslation('lib');
-    const { size, dropdownMatchSelectWidth, ...restProps } = props;
+    const { size, dropdownMatchSelectWidth, options, optionRender, ...restProps } = props;
     return <Select
         suffixIcon={<StyledSuffixIcon />}
         removeIcon={<StyledRemoveIcon />}
@@ -44,8 +54,24 @@ export const MISelect = styled((props: SelectProps & { width?: number | string; 
         dropdownMatchSelectWidth={dropdownMatchSelectWidth ?? false}
         notFoundContent={<NoDataContent>{t('No data')}</NoDataContent>}
         {...restProps}
-    />;
-})`
+    >
+        {Array.isArray(options) && options.map(option =>
+            optionRender
+                ? (
+                    <Select.Option key={option.value} value={option.value} label={option.label}>
+                        {optionRender(option as T)}
+                    </Select.Option>
+                )
+                : (
+                    <Select.Option key={option.value} value={option.value} label={option.label}>
+                        {option.label}
+                    </Select.Option>
+                ),
+        )}
+    </Select>;
+};
+
+const StyledMISelect = styled(BaseMISelect)`
     height: ${(props): number => props.height ?? 32}px;
     width: ${(props): string => {
         if (typeof props.width === 'string') {
@@ -100,3 +126,10 @@ export const MISelect = styled((props: SelectProps & { width?: number | string; 
         }
     }
 `;
+
+// 强制类型断言，使 StyledMITree 支持泛型 T
+type GenericSelectComponent = <T extends DefaultOptionType = DefaultOptionType>(
+    props: React.PropsWithChildren<MISelectProps<T>> & { ref?: React.Ref<BaseSelectRef> }
+) => JSX.Element;
+
+export const MISelect = StyledMISelect as GenericSelectComponent;

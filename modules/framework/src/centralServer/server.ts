@@ -17,7 +17,6 @@ import connector from '@/connection';
 import {
     importProject,
     ImportProjectParams,
-    ImportResult,
 } from '@/utils/Request';
 import { ProjectAction } from '@/utils/enum';
 import { updateRankMap } from '@/utils/Rank';
@@ -71,9 +70,9 @@ export const addDataPath = async function(project: Project, action: ProjectActio
         if (!result || (result as ErrorMsg).error !== undefined) { return false; }
         connector.send({
             event: 'remote/import',
-            body: { dataSource: transformTimelineDataSource(project), importResult: transformTimelineResult(result as ImportResultBody) },
+            body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody },
             target: 'plugin',
-        });
+        }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
         afterImportProject(params, result as ImportResultBody);
     }
     return true;
@@ -82,10 +81,6 @@ export const addDataPath = async function(project: Project, action: ProjectActio
 const transformTimelineDataSource = (project: Project): DataSource => {
     const data = { ...GLOBAL_HOST, ...project, dataPath: project.projectPath };
     return data as DataSource;
-};
-
-const transformTimelineResult = (data: ImportResultBody): ImportResult => {
-    return data as unknown as ImportResult;
 };
 
 /**

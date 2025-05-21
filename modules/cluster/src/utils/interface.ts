@@ -151,3 +151,17 @@ export interface QueryModelInfoResult {
     expertNum: number;
     denseLayerList: number[];
 }
+
+export interface WrapBandwidthDataParams {
+    domId: string;
+    iterationId: number;
+    rankId: number;
+    operatorName: string;
+    stage: string;
+    isDark: boolean;
+    pgName: string;
+}
+
+export interface PacketAndBandwidthChartsParams extends WrapBandwidthDataParams {
+    locale: string;
+}

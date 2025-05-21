@@ -562,21 +562,23 @@ export const setTheme: NotificationHandler = (data): void => {
 
 export const clusterCompletedHandler: NotificationHandler = (data): void => {
     const clusterRes = (data?.parseResult === 'ok' || data?.parseResult === 'none');
+    const clusterPath = data?.clusterPath as string ?? '';
     const isShowCluster = data?.isShowCluster as boolean;
     const session = store.sessionStore.activeSession as Session;
     session.isCluster = isShowCluster;
     const clusterCompleted = isShowCluster && clusterRes;
     connector.send({
-        event: 'updateSession',
-        body: { clusterCompleted },
+        event: 'frame:parseClusterCompleted',
+        body: { isCluster: clusterCompleted, clusterPath },
     });
 };
 
 export const clusterDurationCompletedHandler: NotificationHandler = (data): void => {
     const clusterRes = data?.parseResult === 'ok';
+    const clusterPath = data?.clusterPath as string ?? '';
     connector.send({
-        event: 'updateSession',
-        body: { isCluster: clusterRes, durationFileCompleted: clusterRes },
+        event: 'frame:parseClusterDurationCompleted',
+        body: { isCluster: clusterRes, clusterPath },
     });
 };
 

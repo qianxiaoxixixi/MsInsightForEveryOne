@@ -31,12 +31,11 @@ export function sendStatus(): void {
         event: 'updateSession',
         body: {
             parseCompleted: session.parseCompleted,
-            clusterCompleted: session.clusterCompleted,
+            clusterPageInfo: session.clusterPageInfo,
             isFullDb: session.isFullDb,
             unitcount: session.unitcount,
             coreList: session.coreList,
             sourceList: session.sourceList,
-            durationFileCompleted: session.durationFileCompleted,
             isIpynb: session.isIpynb,
             ipynbUrl: session.ipynbUrl,
             instrVersion: session.instrVersion,
@@ -88,27 +87,34 @@ export const sendShortcutKeys = (key: {hasCtrl: boolean;key: string}): void => {
 
 export const sendDirectory = (to?: number): void => {
     const session = store.sessionStore.activeSession;
-    const { projectName, selectedFileType, selectedFilePath } = session.activeDataSource;
     let rankId: string = '';
-    let fileType: LayerType;
-    let filePath: string;
+    let selectedFileType: LayerType;
+    let selectedFilePath: string;
     // 比对数据
     if (session.isCompareStatus) {
         rankId = session.compareSet.comparison.rankId;
-        fileType = session.compareSet.comparison.fileType;
-        filePath = session.compareSet.comparison.filePath;
+        selectedFileType = session.compareSet.comparison.fileType;
+        selectedFilePath = session.compareSet.comparison.filePath;
     } else {
+        const { projectName } = session.activeDataSource;
         // 切换目录
-        if (projectName !== '' && selectedFilePath !== '') {
-            rankId = getRankId({ projectName, filePath: selectedFilePath });
+        if (projectName !== '' && session.activeDataSource.selectedFilePath !== '') {
+            rankId = getRankId({ projectName, filePath: session.activeDataSource.selectedFilePath });
         }
-        fileType = selectedFileType;
-        filePath = selectedFilePath;
+        selectedFileType = session.activeDataSource.selectedFileType;
+        selectedFilePath = session.activeDataSource.selectedFilePath;
     }
     // 通知页签
     connector.send({
         event: 'switchDirectory',
-        body: { rankId, fileType, filePath, isCompare: session.isCompareStatus },
+        body: {
+            rankId,
+            selectedFileType,
+            selectedFilePath,
+            // 比对数据存在时，比对数据所属的项目就是 session.activeDataSource，比对数据的 clusterPageInfo 就是 session.clusterPageInfo
+            pageInfo: { cluster: session.clusterPageInfo },
+            isCompare: session.isCompareStatus,
+        },
         to,
     });
 };

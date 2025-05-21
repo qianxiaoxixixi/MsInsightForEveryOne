@@ -31,6 +31,7 @@
       "BandwidthAnalysis": "带宽分析"
     },
     "searchCriteria": {
+      "Cluster": "集群",
       "Step": "迭代ID",
       "BaselineStep": "基线迭代ID",
       "CommunicationGroup": "通信域",

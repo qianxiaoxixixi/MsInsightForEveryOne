@@ -4,15 +4,16 @@
 import { observer } from 'mobx-react';
 import { observable, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
+import type { RadioChangeEvent } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Select, Radio } from 'ascend-components';
-import type { RadioChangeEvent } from 'antd';
 import { getUsableVal, delayExecute } from 'ascend-utils';
 import { Label, toSortedStage, getAllNumberFromString } from '../Common';
 import type { CompareData, optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
 import type { partitionMode } from '../communicatorContainer/ContainerUtils';
+import { ClusterSelect } from '../ClusterSelect';
 
 export interface ConditionDataType {
     iterationId: string ;
@@ -27,6 +28,7 @@ export const totalOperator = 'Total Op Info';
 export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
 
 export const defaultCondition = {
+    clusterPath: '',
     iterationId: '',
     baselineIterationId: '',
     stage: '',
@@ -35,6 +37,7 @@ export const defaultCondition = {
     pgName: '',
 };
 const defaultOptionMap = {
+    clusterOptions: [],
     iterationOptions: [],
     baselineIterationOptions: [],
     operatorOptions: [],
@@ -293,7 +296,11 @@ interface IcomProps {
 }
 function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): JSX.Element {
     const { t } = useTranslation('communication');
+
     return (<div data-testid="filters">
+        <FormItem
+            name={t('searchCriteria.Cluster')}
+            content={(<ClusterSelect width={200} session={session} />)}/>
         <FormItem
             name={t('searchCriteria.Step')}
             content={(<Select

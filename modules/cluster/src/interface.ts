@@ -4,13 +4,15 @@
 import type { NotificationHandler } from './connection/defs';
 import {
     removeRemoteHandler,
-    parseClusterSuccessHandler,
     setTheme,
     updateSessionHandler,
     locateCommunication,
     switchLanguageHandler,
     updateCommunicatorDataHandler,
     baselineToggleHandler,
+    switchDirectoryHandler,
+    frameLoadedHandler,
+    updateClusterPageInfoHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -22,15 +24,17 @@ export interface InterfaceDefs {
     'chart/cpu': InsightInterface<{ chartId: number }, { data: Array<{ ts: number; value: number }>}>;
 };
 
-export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
+export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler<any>> = {
+    'frame/loaded': frameLoadedHandler,
     'remote/remove': removeRemoteHandler,
     'remote/reset': removeRemoteHandler,
     'module.reset': removeRemoteHandler,
     setTheme,
-    'parse/clusterCompleted': parseClusterSuccessHandler,
+    updateClusterPageInfo: updateClusterPageInfoHandler,
     updateSession: updateSessionHandler,
     locateCommunication,
     switchLanguage: switchLanguageHandler,
     updateCommunicatorData: updateCommunicatorDataHandler,
     clusterBaselineToggle: baselineToggleHandler,
+    switchDirectory: switchDirectoryHandler,
 };

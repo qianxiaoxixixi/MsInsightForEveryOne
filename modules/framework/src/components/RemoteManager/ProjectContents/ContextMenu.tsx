@@ -68,7 +68,7 @@ function checkProjectFileIsOtherComparable<T extends { fileType: LayerType; proj
 
 // 右键菜单
 const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element[] => {
-    const { dataSources, selectedFile, compareSet: { baseline, comparison } } = session;
+    const { dataSources, activeDataSource, selectedFile, compareSet: { baseline, comparison } } = session;
     if (selectedFile.fileType === 'UNKNOWN') { return []; }
     // 选中的是否已被设为基线
     const isBaseline = selectedFile.projectName === baseline.projectName && selectedFile.filePath === baseline.filePath;
@@ -106,6 +106,8 @@ const getMenuItems = ({ session }: IProps, t: TFunction): JSX.Element[] => {
             action: (): void => { setCompareData(selectedFile); },
             // 有基线，且自己不是基线也不是比对，且基线和自己是可比较的
             visible: hasBaseline && !isBaseline && !isComparison && isComparable,
+            // 选中的内容所属的 projectName 必须是激活的数据源
+            disabled: activeDataSource.projectName !== selectedFile.projectName,
         },
         {
             label: t('Unset as Comparison Data'),
@@ -221,7 +223,7 @@ const Menu = ({ session }: IProps): JSX.Element => {
 
     const menuList = React.useMemo(() => {
         return getMenuItems({ session }, t);
-    }, [session.dataSources, session.selectedFile, session.compareSet.baseline, session.compareSet.comparison, t]);
+    }, [session.dataSources, session.activeDataSource, session.selectedFile, session.compareSet.baseline, session.compareSet.comparison, t]);
 
     return (
         session.contextMenu.visible && menuList.length > 0
