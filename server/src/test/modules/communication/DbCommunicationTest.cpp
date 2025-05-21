@@ -10,6 +10,7 @@
 #include "ParamsParser.h"
 #include "PacketAnalyzer.h"
 #include "ByteAlignmentAnalyzer.h"
+
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
 using namespace Dic;
@@ -430,10 +431,10 @@ TEST_F(DbCommunicationTest, QueryBandwidthContentionAnalyzerDataTest)
 TEST_F(DbCommunicationTest, PacketAnalyzerTest)
 {
     PacketAnalyzer analyzer;
-    analyzer.QueryAdvisorData();
+    analyzer.QueryAdvisorData("compare");
     analyzer.ComputeStatistics();
     CommunicationAdvisorInfo info;
-    analyzer.GenerateAdvisor(info);
+    analyzer.GenerateAdvisor(info, "compare");
     EXPECT_EQ(info.name, "Packet Analysis");
     EXPECT_EQ(info.statistics.size(), 6); // expect size 6
     analyzer.AssembleAdvisor(info);
@@ -444,13 +445,23 @@ TEST_F(DbCommunicationTest, PacketAnalyzerTest)
 TEST_F(DbCommunicationTest, ByteAlignmentAnalyzerTest)
 {
     ByteAlignmentAnalyzer analyzer;
-    analyzer.QueryAdvisorData();
+    analyzer.QueryAdvisorData("compare");
     analyzer.ComputeStatistics();
     CommunicationAdvisorInfo info;
     analyzer.AssembleAdvisor(info);
     EXPECT_EQ(info.name, "Byte Alignment Analysis");
     EXPECT_EQ(info.statistics.size(), 2); // expect size 2
-    analyzer.GenerateAdvisor(info);
+    analyzer.GenerateAdvisor(info, "compare");
     EXPECT_EQ(info.name, "Byte Alignment Analysis");
     EXPECT_EQ(info.statistics.size(), 2); // expect size 2
+}
+
+TEST_F(DbCommunicationTest, QueryRetransmissionAnalyzerClassificationData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<Dic::Module::RetransmissionClassificationInfo> data;
+    bool result = database->QueryRetransmissionAnalyzerData(data);
+    int expectSize = 0;
+    ASSERT_TRUE(result);
+    ASSERT_EQ(data.size(), expectSize);
 }

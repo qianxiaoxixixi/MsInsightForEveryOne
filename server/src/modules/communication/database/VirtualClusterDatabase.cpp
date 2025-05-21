@@ -1204,5 +1204,28 @@ bool VirtualClusterDatabase::ExecuteQueryBandwidthContentionAnalyzerData(std::ve
     sqlite3_finalize(stmt);
     return true;
 }
+
+bool VirtualClusterDatabase::ExecuteQueryRetransmissionAnalyzerData(
+    std::vector<RetransmissionClassificationInfo> &data, const std::string &sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for query retransmission analyzer detail data. Error:",
+                         sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        RetransmissionClassificationInfo info;
+        int col = resultStartIndex;
+        info.iterationId = sqlite3_column_string(stmt, col++);
+        info.groupId = sqlite3_column_string(stmt, col++);
+        info.opName = sqlite3_column_string(stmt, col++);
+        info.minElapseTime = sqlite3_column_double(stmt, col++);
+        info.maxRDMATransitTime = sqlite3_column_double(stmt, col++);
+        data.emplace_back(info);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
 }
 }

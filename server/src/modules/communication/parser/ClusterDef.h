@@ -483,6 +483,15 @@ struct BandwidthContentionData {
     std::map<std::string, std::vector<BandwidthContentionMatMulInfo>> matMulData;
     std::map<std::string, std::vector<BandwidthContentionSDMAInfo>> SDMAData;
 };
+
+const std::string RETRANSMISSION_ANALYZER_TITLE = "Communication Retransmission Analysis";
+struct RetransmissionClassificationInfo {
+    std::string iterationId;
+    std::string groupId;
+    std::string opName;
+    double minElapseTime;
+    double maxRDMATransitTime;
+};
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

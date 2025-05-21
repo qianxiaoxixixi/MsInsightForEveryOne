@@ -36,7 +36,7 @@ class PacketAnalyzer : public CommunicationBaseAnalyzer {
 public:
     PacketAnalyzer() = default;
     ~PacketAnalyzer() override = default;
-    bool QueryAdvisorData() override;
+    bool QueryAdvisorData(const std::string &clusterPath) override;
     void ComputeStatistics() override;
     void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
 private:

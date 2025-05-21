@@ -12,7 +12,7 @@ class CommunicationBaseAnalyzerTest : public CommunicationBaseAnalyzer, public t
 public:
     CommunicationBaseAnalyzerTest() = default;
     ~CommunicationBaseAnalyzerTest() override = default;
-    bool QueryAdvisorData() override
+    bool QueryAdvisorData(const std::string &clusterPath) override
     {
         return true;
     }
@@ -29,7 +29,7 @@ public:
 TEST_F(CommunicationBaseAnalyzerTest, GenerateAdvisorTest)
 {
     Dic::Protocol::CommunicationAdvisorInfo info;
-    bool result = GenerateAdvisor(info);
+    bool result = GenerateAdvisor(info, "compare");
     ASSERT_TRUE(result);
 }
 }

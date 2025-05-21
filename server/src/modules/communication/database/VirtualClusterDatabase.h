@@ -75,6 +75,7 @@ public:
     virtual bool QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data) = 0;
     virtual bool QueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
         const std::string &rankId) = 0;
+    virtual bool QueryRetransmissionAnalyzerData(std::vector<RetransmissionClassificationInfo> &data) = 0;
     bool BatchInsertExpertHotspotData(const std::vector<ExpertHotspotStruct> &expertHotspotInfos);
     bool BatchInsertExpertDeployment(const std::vector<ExpertDeploymentStruct> &expertDeploymentInfos);
     void InsertExpertHotspotDataForCache(const ExpertHotspotStruct &info);
@@ -155,6 +156,8 @@ protected:
     bool ExecuteQueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data, const std::string &sql);
     bool ExecuteQueryBandwidthContentionAnalyzerData(std::vector<BandwidthContentionSDMAInfo> &res,
         const std::string &rankId, const std::string &sql);
+    bool ExecuteQueryRetransmissionAnalyzerData(
+        std::vector<RetransmissionClassificationInfo> &data, const std::string &sql);
 
     sqlite3_stmt *GetExpertHotspotInsertStmt(uint64_t paramLen);
     sqlite3_stmt *InitExpertHotspotInsertStmt(uint64_t paramLen);

@@ -10,10 +10,10 @@ namespace Dic {
 namespace Module {
 namespace Communication {
 
-bool ByteAlignmentAnalyzer::QueryAdvisorData()
+bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     std::vector<IterationsOrRanksObject> rankList;
-    auto communicationDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    auto communicationDatabase = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
     if (!communicationDatabase || !communicationDatabase->QueryRanksHandler(rankList)) {
         Server::ServerLog::Error("Failed to get ranks data when query byte alignment data.");
         return false;

@@ -26,7 +26,7 @@ class BandwidthContentionAnalyzer : public CommunicationBaseAnalyzer {
 public:
     BandwidthContentionAnalyzer() = default;
     ~BandwidthContentionAnalyzer() override = default;
-    bool QueryAdvisorData() override;
+    bool QueryAdvisorData(const std::string& clusterPath) override;
     void ComputeStatistics() override;
     void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
 private:

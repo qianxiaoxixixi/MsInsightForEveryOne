@@ -31,7 +31,7 @@ bool CommunicationAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     SetResponseResult(response, true);
     CommunicationAdvisor advisor;
     advisor.Register();
-    advisor.GenerateAdvisor(response.body.items);
+    advisor.GenerateAdvisor(response.body.items, request.params.clusterPath);
     WsSession &session = *WsSessionManager::Instance().GetSession();
     session.OnResponse(std::move(responsePtr));
     return true;

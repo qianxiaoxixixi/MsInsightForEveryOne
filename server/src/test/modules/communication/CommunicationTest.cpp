@@ -356,3 +356,13 @@ TEST_F(TestSuit, QueryBandwidthContentionAnalyzerDataTest)
     EXPECT_EQ(res[0].name, "hcom_broadcast__483_0");
     EXPECT_EQ(res[1].name, "hcom_broadcast__483_1");
 }
+
+TEST_F(TestSuit, QueryRetransmissionAnalyzerClassificationData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
+    std::vector<Dic::Module::RetransmissionClassificationInfo> data;
+    bool result = database->QueryRetransmissionAnalyzerData(data);
+    int expectSize = 0;
+    ASSERT_TRUE(result);
+    ASSERT_EQ(data.size(), expectSize);
+}

@@ -648,6 +648,17 @@ bool DbClusterDataBase::QueryBandwidthContentionAnalyzerData(std::vector<Bandwid
         " WHERE t1.rank_id = ? AND band_type = 'SDMA' AND transit_size > 0 ORDER BY startTime;";
     return ExecuteQueryBandwidthContentionAnalyzerData(res, rankId, sql);
 }
+
+bool DbClusterDataBase::QueryRetransmissionAnalyzerData(std::vector<RetransmissionClassificationInfo> &data)
+{
+    std::string sql = "SELECT t1.step, t3.rank_set, t1.hccl_op_name, MIN(t2.elapsed_time), MAX(t1.transit_time) "
+        " FROM " + TABLE_COMM_ANALYZER_BANDWIDTH + " AS t1 INNER JOIN " + TABLE_COMM_ANALYZER_TIME + " AS t2 ON "
+        " t1.step = t2.step AND t1.group_name = t2.group_name AND "
+        " t1.hccl_op_name = t2.hccl_op_name AND t1.rank_id = t2.rank_id INNER JOIN " + TABLE_COMM_GROUP + " AS t3 ON "
+        " t1.group_name = t3.group_name WHERE band_type = 'RDMA' AND t1.hccl_op_name != 'Total Op Info' "
+        " GROUP BY t1.step, t3.rank_set, t1.hccl_op_name";
+    return ExecuteQueryRetransmissionAnalyzerData(data, sql);
+}
 }
 }
 }
