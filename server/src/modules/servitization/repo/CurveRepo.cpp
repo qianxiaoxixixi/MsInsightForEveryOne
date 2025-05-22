@@ -44,18 +44,15 @@ std::vector<std::map<std::string, std::string>> CurveRepo::QueryDataByColumn(con
                                                                              const std::string& tableName,
                                                                              const std::vector<ColumnAtt>& columns)
 {
-    std::vector<std::string> columnName;
-    for (const auto& item : columns) {
-        if (!StringUtil::CheckSqlValid(item.key)) {
-            return {};
-        }
-        columnName.emplace_back(item.key);
-    }
     if (!StringUtil::CheckSqlValid(tableName) || columns.empty()) {
         return {};
     }
+    std::vector<std::string> columnName;
+    for (const auto& item : columns) {
+        columnName.emplace_back("\"" + item.key + "\"");
+    }
     const std::string columnNames = StringUtil::join(columnName, ",");
-    std::string sql = "SELECT " + columnNames + " FROM " + tableName + " ORDER BY " + columns.front().key;
+    std::string sql = "SELECT " + columnNames + " FROM " + tableName + " ORDER BY " + columnName.front();
     auto dataBase = context->GetDatabase(fileId);
     if (!TryOpt(dataBase, "Query data by column get connection failed!")) {
         return {};
@@ -84,6 +81,10 @@ std::vector<std::map<std::string, std::string>> CurveRepo::QueryDataByColumnPage
 {
     std::vector<std::string> columnName = ComputeColNames(query, columns);
     if (std::empty(columnName)) {
+        return {};
+    }
+    if (!query.orderBy.empty() &&
+        std::find(columnName.begin(), columnName.end(), "\"" + query.orderBy + "\"") == columnName.end()) {
         return {};
     }
     const std::string conditionName = columns[0].key;
@@ -132,9 +133,9 @@ std::vector<std::map<std::string, std::string>> CurveRepo::QueryDataByColumnPage
 std::string& CurveRepo::AppendConditionSql(const PageQuery& query, std::string& sql) const
 {
     std::string orderBySql;
-    if (!std::empty(query.order) && !std::empty(query.orderBy) && StringUtil::CheckSqlValid(query.orderBy)) {
-        orderBySql = query.order == "descend" ? " ORDER BY " + query.orderBy + " DESC " :
-                                                " ORDER BY " + query.orderBy + " ASC ";
+    if (!std::empty(query.order) && !std::empty(query.orderBy)) {
+        orderBySql = query.order == "descend" ? " ORDER BY \"" + query.orderBy + "\" DESC " :
+                                                " ORDER BY \"" + query.orderBy + "\" ASC ";
     }
     sql += orderBySql;
     const std::string limitSql =
@@ -150,10 +151,7 @@ std::vector<std::string> CurveRepo::ComputeColNames(const PageQuery& query, cons
     }
     std::vector<std::string> columnName;
     for (const auto& item : columns) {
-        if (!StringUtil::CheckSqlValid(item.key)) {
-            return {};
-        }
-        columnName.emplace_back(item.key);
+        columnName.emplace_back("\"" + item.key + "\"");
     }
     if (!StringUtil::CheckSqlValid(query.viewName)) {
         return {};
