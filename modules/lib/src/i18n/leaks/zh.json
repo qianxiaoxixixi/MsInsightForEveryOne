@@ -1,6 +1,8 @@
 {
   "leaks": {
     "MemoryAllocations":"内存申请总量折线图",
-    "MemoryBlocks":"内存块图"
+    "MemoryBlocks":"内存块图",
+    "DeviceID":"设备ID",
+    "Leaks":"内存详情"
   }
 }

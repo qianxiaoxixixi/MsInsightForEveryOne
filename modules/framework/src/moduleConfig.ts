@@ -31,6 +31,7 @@ export const modulesConfig: ModuleConfig[] = [
         isJupyter: true,
         isOnlyTraceJson: true,
         isIE: true,
+        isLeaks: true,
     },
     {
         name: 'Memory',
