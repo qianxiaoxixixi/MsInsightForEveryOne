@@ -97,8 +97,14 @@ const Index = observer(({ session }: {session: Session}) => {
 
     const availableModules = useMemo(() => mergedModulesConfig.filter(config => isAvailable(config, scene, dataCompose))
         , [scene, dataCompose, mergedModulesConfig]);
-    const items: MenuProps['items'] = useMemo(() => availableModules.map(config => ({ label: t(config.name, { defaultValue: config.name }), key: config.name }))
-        , [availableModules, t]);
+    const isLeaks = availableModules.some(module => module.isLeaks && module.name === 'Leaks');
+    if (isLeaks) {
+        setActiveModule('Leaks');
+    };
+    const items: MenuProps['items'] = useMemo(() => {
+        const modules = availableModules.map(config => ({ label: t(config.name, { defaultValue: config.name }), key: config.name }));
+        return isLeaks ? modules.filter(module => module.key === 'Leaks') : modules;
+    }, [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
         setActiveModule(e.key);
     };

@@ -12,7 +12,7 @@ import type { BlockData, AllocationData } from '../utils/RequestUtils';
 import { observer } from 'mobx-react';
 
 const MemoryStack = observer(({ session, isDark }: { session: any; isDark: boolean }): React.ReactElement => {
-    const { t } = useTranslation('memory');
+    const { t } = useTranslation('leaks');
     const [options, setOptions] = useState([]);
     const [deviceId, setDeviceId] = useState('');
     const [blockData, setBlockData] = useState<BlockData>();
@@ -42,7 +42,7 @@ const MemoryStack = observer(({ session, isDark }: { session: any; isDark: boole
     return (
         <div>
             <div style={{ marginLeft: 24, marginTop: 24 }}>
-                <Label name={t('searchCriteria.RankId')} />
+                <Label name={t('DeviceID')} />
                 <Select
                     id={'select-host'}
                     value={deviceId}

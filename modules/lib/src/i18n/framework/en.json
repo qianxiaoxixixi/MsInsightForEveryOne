@@ -56,7 +56,8 @@
       "Source": "Source",
       "Details": "Details",
       "Cache": "Cache",
-      "Statistic": "Curve"
+      "Statistic": "Curve",
+      "Leaks":"Leaks"
     },
     "Keyboard shortcuts": "Keyboard shortcuts",
     "shortcuts": {

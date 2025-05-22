@@ -1,6 +1,8 @@
 {
   "leaks": {
     "MemoryAllocations":"Memory Allocations",
-    "MemoryBlocks":"Memory Blocks"
+    "MemoryBlocks":"Memory Blocks",
+    "DeviceID":"Device ID",
+    "Leaks":"Leaks"
   }
 }
