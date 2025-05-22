@@ -139,6 +139,7 @@ test.describe('Communication', () => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const advice = communicationFrame.getByTestId('communicationAdvice');
+        await waitForResponse(await ws, (res) => res?.command === 'communication/advisor');
         await page.mouse.move(0, 0);
         await expect(advice).toHaveScreenshot('communication-advice.png');
     });
