@@ -743,6 +743,11 @@ bool Database::UpdateMetaDataTableWithNoPrimaryKey(const std::string &name, cons
     return true;
 }
 
+/**
+ * 此方法能保证返回的列名没有sql注入，运行时白名单
+ * @param tableName
+ * @return
+ */
 std::vector<ColumnAtt> Database::QueryTableInfoByName(const std::string& tableName)
 {
     if (!StringUtil::CheckSqlValid(tableName)) {
@@ -788,28 +793,32 @@ uint64_t Database::QueryCountByTableName(const std::string& tableName)
     return 0;
 }
 
+/**
+ * 此处需要调用方自行保证columns没有sql注入
+ * @param query
+ * @param columns
+ * @return
+ */
 std::vector<std::map<std::string, std::string>> Database::QueryDataByPage(const PageQuery& query,
                                                                           const std::vector<ColumnAtt>& columns)
 {
-    if (columns.empty()) {
+    if (columns.empty() || !StringUtil::CheckSqlValid(query.viewName)) {
         return {};
     }
     std::vector<std::string> columnName;
     for (const auto& item : columns) {
-        if (!StringUtil::CheckSqlValid(item.key)) {
-            return {};
-        }
-        columnName.emplace_back(item.key);
+        columnName.emplace_back("\"" + item.key + "\"");
     }
-    if (!StringUtil::CheckSqlValid(query.viewName)) {
+    if (!query.orderBy.empty() &&
+        std::find(columnName.begin(), columnName.end(), "\"" + query.orderBy + "\"") == columnName.end()) {
         return {};
     }
     const std::string columnNames = StringUtil::join(columnName, ",");
     std::string sql = "SELECT " + columnNames + " FROM " + query.viewName + " WHERE 1=1 ";
     std::string orderBySql;
-    if (!std::empty(query.order) && !std::empty(query.orderBy) && StringUtil::CheckSqlValid(query.orderBy)) {
-        orderBySql = query.order == "descend" ? " ORDER BY " + query.orderBy + " DESC " :
-                                                " ORDER BY " + query.orderBy + " ASC ";
+    if (!std::empty(query.order) && !std::empty(query.orderBy)) {
+        orderBySql = query.order == "descend" ? " ORDER BY \"" + query.orderBy + "\" DESC " :
+                                                " ORDER BY \"" + query.orderBy + "\" ASC ";
     }
     sql += orderBySql;
     const std::string limitSql =
