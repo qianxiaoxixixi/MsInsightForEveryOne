@@ -40,19 +40,20 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     }
 };
 
-function updateClusterListAndSelectedClusterPath(pageInfo: ClusterPageInfo): void {
+function updateClusterListAndSelected(pageInfo: ClusterPageInfo, selectedProjectName: string): void {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
         if (!session) { return; }
         session.clusterList = pageInfo.clusterList;
         session.selectedClusterPath = pageInfo.selectedClusterPath;
+        session.selectedProjectName = selectedProjectName;
     });
 }
 
 export const frameLoadedHandler: NotificationHandler<ProjectCreateInfo> = async (data: ProjectCreateInfo): Promise<void> => {
     try {
         resetStatus();
-        updateClusterListAndSelectedClusterPath(data.pageInfo.cluster);
+        updateClusterListAndSelected(data.pageInfo.cluster, data.selectedProjectName);
     } catch (error) {
         console.error(error);
     }
@@ -66,7 +67,7 @@ export const switchDirectoryHandler: NotificationHandler<ProjectUpdateInfo> = (d
         } else {
             resetStatus('Project');
         }
-        updateClusterListAndSelectedClusterPath(data.pageInfo.cluster);
+        updateClusterListAndSelected(data.pageInfo.cluster, data.selectedProjectName);
     } catch (error) {
         console.error(error);
     }
