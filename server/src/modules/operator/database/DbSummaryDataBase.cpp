@@ -1073,7 +1073,8 @@ void DbSummaryDataBase::Reset()
 bool DbSummaryDataBase::QueryBandwidthContentionMatMulData(std::vector<BandwidthContentionMatMulInfo> &res)
 {
     std::string sql = "SELECT " + TABLE_STRING_IDS + ".value, ROUND(startNs / 1000.0, 3) AS startTime,"
-        " ROUND(endNs - startNs, 3) FROM " + TABLE_COMPUTE_TASK_INFO + " INNER JOIN " + TABLE_STRING_IDS + " ON " +
+        " ROUND((endNs - startNs) / 1000.0, 3) FROM " + TABLE_COMPUTE_TASK_INFO +
+        " INNER JOIN " + TABLE_STRING_IDS + " ON " +
         TABLE_COMPUTE_TASK_INFO + ".name = " + TABLE_STRING_IDS + ".id INNER JOIN " + TABLE_TASK + " ON " +
         TABLE_COMPUTE_TASK_INFO + ".globalTaskId = " + TABLE_TASK + ".globalTaskId WHERE " + TABLE_STRING_IDS +
         ".value LIKE '%matmul%' ORDER BY startTime";
