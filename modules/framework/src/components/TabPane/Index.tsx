@@ -150,6 +150,7 @@ const Index = observer(({ session }: {session: Session}) => {
             body: {
                 selectedFileType: session.activeDataSource.selectedFileType,
                 selectedFilePath: session.activeDataSource.selectedFilePath,
+                selectedProjectName: session.activeDataSource.projectName,
                 pageInfo: {
                     cluster: session.clusterPageInfo,
                 },
