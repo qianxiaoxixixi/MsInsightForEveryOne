@@ -2,25 +2,30 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { test as baseTest, expect } from '@playwright/test';
+import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { SummaryPage, FrameworkPage } from '@/page-object';
-import { clearAllData, importData, waitForWebSocketEvent } from '@/utils';
+import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { SelectHelpers } from '@/components';
 
 interface TestFixtures {
     summaryPage: SummaryPage;
+    ws: Promise<WebSocket>;
 }
 const test = baseTest.extend<TestFixtures>({
     summaryPage: async ({ page }, use) => {
         const summaryPage = new SummaryPage(page);
         await use(summaryPage);
     },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
+    },
 });
 
 let waitFwdBwdTimelineResponse: Promise<unknown>;
 
 test.describe('Summary', () => {
-    test.beforeEach(async ({ page, summaryPage }) => {
+    test.beforeEach(async ({ page, summaryPage, ws }) => {
         const { loadingDialog } = new FrameworkPage(page);
         const { fullmask } = summaryPage;
         waitFwdBwdTimelineResponse = waitForWebSocketEvent(page, (res) => res?.type === 'response' && res?.command === 'parallelism/pipeline/fwdBwdTimeline');
@@ -36,8 +41,8 @@ test.describe('Summary', () => {
         }
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 基础数据展示

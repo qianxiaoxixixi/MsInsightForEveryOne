@@ -44,7 +44,7 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
 }
 
 // 清除数据
-export async function clearAllData(page: Page): Promise<void> {
+export async function clearAllData(page: Page, ws?: Promise<WebSocket>): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
     const { settingsBtn, deleteAllBtn, deleteAllDialog, deleteAllConfirmBtn, projectList } = frameworkPage;
     const isSettingsBtnDisabled = await settingsBtn.evaluate((el) => el.classList.contains('disabled'));
@@ -63,9 +63,14 @@ export async function clearAllData(page: Page): Promise<void> {
     await expect(deleteAllDialog).toBeVisible();
     await deleteAllConfirmBtn.click();
 
+    if (ws) {
+        await waitForResponse(await ws, (res) => res?.command === 'remote/reset');
+    }
+
     const checkbtn = page.locator('.dragContainer').first().getByText('All');
     await checkbtn.waitFor({ state: 'hidden' });
     await page.waitForTimeout(500);
+
     const elementText = await projectList.textContent();
     await expect(elementText?.trim()).toBe('');
     // 等待后端完成清理动作

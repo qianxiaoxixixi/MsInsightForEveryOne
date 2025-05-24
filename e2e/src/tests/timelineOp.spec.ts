@@ -2,14 +2,15 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { test as baseTest, expect } from '@playwright/test';
+import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { TimelinePage } from '@/page-object';
-import { clearAllData, importData } from '@/utils';
+import { clearAllData, importData, setupWebSocketListener } from '@/utils';
 import { FilePath } from '@/utils/constants';
 import { InputHelpers } from '@/components';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
+    ws: Promise<WebSocket>;
 }
 
 const test = baseTest.extend<TestFixtures>({
@@ -17,17 +18,21 @@ const test = baseTest.extend<TestFixtures>({
         const timelinePage = new TimelinePage(page);
         await use(timelinePage);
     },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
+    },
 });
 
 test.describe('Timeline(Operator)', () => {
-    test.beforeEach(async ({ page, timelinePage }) => {
+    test.beforeEach(async ({ page, timelinePage, ws }) => {
         await timelinePage.goto();
         await clearAllData(page);
         await importData(page, FilePath.SOURCE);
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 算子调优-框选

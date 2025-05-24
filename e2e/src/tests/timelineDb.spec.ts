@@ -10,32 +10,33 @@ import { InputHelpers, SelectHelpers } from '@/components';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
+    ws: Promise<WebSocket>;
 }
 const test = baseTest.extend<TestFixtures>({
     timelinePage: async ({ page }, use) => {
         const timelinePage = new TimelinePage(page);
         await use(timelinePage);
     },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
+    },
 });
-let ws: WebSocket;
-let parseClusterCompletedRes;
+
 test.describe('Timeline(DB)', () => {
-    test.beforeEach(async ({ page, timelinePage }) => {
-        const setupWebSocketListenerRes = setupWebSocketListener(page);
+    test.beforeEach(async ({ page, timelinePage, ws }) => {
         const { timelineFrame } = timelinePage;
         await timelinePage.goto();
-        ws = await setupWebSocketListenerRes;
         await clearAllData(page);
-        const allPagesSuccessRes = waitForResponse(ws, (res) => res?.event === 'allPagesSuccess');
-        parseClusterCompletedRes = waitForResponse(ws, (res) => res?.event === 'parse/clusterCompleted');
+        const allPagesSuccessRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
         await importData(page, FilePath.DB_2025330);
         await allPagesSuccessRes;
         const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Host', { exact: true });
         await expect(secondLayerUnit).toBeVisible();
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // System View - Stats System View 数据展示
@@ -160,8 +161,8 @@ test.describe('Timeline(DB)', () => {
     });
 
     // 右键菜单--右键点击通信算子跳转至通信页面
-    test('test_db_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage }) => {
-        await parseClusterCompletedRes;
+    test('test_db_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage, ws }) => {
+        await waitForResponse(await ws, (res) => res?.event === 'parse/clusterCompleted');
         test.setTimeout(30_000);
         const { communicationFrame } = new CommunicationPage(page);
         const { filterBtn, timelineFrame, selectFilterType,

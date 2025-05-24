@@ -1,20 +1,25 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import { expect, test as baseTest } from '@playwright/test';
+import { expect, test as baseTest, WebSocket } from '@playwright/test';
 import { FrameworkPage, SourcePage } from '@/page-object';
-import { clearAllData, importData } from '@/utils';
+import { clearAllData, importData, setupWebSocketListener } from '@/utils';
 import { FilePath } from '@/utils/constants';
 import { SelectHelpers } from '@/components';
 
 interface TestFixtures {
     sourcePage: SourcePage;
+    ws: Promise<WebSocket>;
 }
 
 const test = baseTest.extend<TestFixtures>({
     sourcePage: async ({ page }, use) => {
         const sourcePage = new SourcePage(page);
         await use(sourcePage);
+    },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
     },
 });
 
@@ -33,7 +38,7 @@ const resMap = {
 };
 
 test.describe('Source', () => {
-    test.beforeEach(async ({ page, sourcePage }, testInfo) => {
+    test.beforeEach(async ({ page, sourcePage, ws }, testInfo) => {
         await page.goto('/');
         const filePath = testInfo.title === 'test_source_sourceSelectChange' ? FilePath.SOURCE_MULTIFILE : FilePath.SOURCE;
         await importData(page, filePath);
@@ -42,8 +47,8 @@ test.describe('Source', () => {
         await expect(coreValue).toBeVisible();
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 源码数据导入成功

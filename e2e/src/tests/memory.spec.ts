@@ -2,19 +2,24 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { expect, test as baseTest } from '@playwright/test';
+import { expect, test as baseTest, WebSocket } from '@playwright/test';
 import { FrameworkPage, MemoryPage, TimelinePage } from '@/page-object';
-import { clearAllData, importData, setCompare, waitForWebSocketEvent } from '@/utils';
+import { clearAllData, importData, setCompare, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { CheckboxHelpers, InputHelpers, SelectHelpers } from '@/components';
 import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     memoryPage: MemoryPage;
+    ws: Promise<WebSocket>;
 }
 const test = baseTest.extend<TestFixtures>({
     memoryPage: async ({ page }, use) => {
         const memoryPage = new MemoryPage(page);
         await use(memoryPage);
+    },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
     },
 });
 
@@ -39,7 +44,7 @@ const memoryImgMap = {
 };
 
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
-    test.beforeEach(async ({ page, memoryPage }) => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
@@ -183,14 +188,14 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         });
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });
 
 test.describe('Memory(MindSpore)', () => {
     test.describe.configure({ timeout: 120_000 });
-    test.beforeEach(async ({ page, memoryPage }) => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
@@ -247,13 +252,13 @@ test.describe('Memory(MindSpore)', () => {
         });
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });
 
 test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
-    test.beforeEach(async ({ page, memoryPage }) => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
@@ -338,13 +343,13 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });
 
 test.describe('Memory(Pytorch_SwitchProject)', () => {
-    test.beforeEach(async ({ page, memoryPage }) => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
@@ -395,13 +400,13 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         });
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });
 
 test.describe('Memory(Pytorch_Group_By_Component', () => {
-    test.beforeEach(async ({ page, memoryPage }) => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
         await clearAllData(page);
@@ -450,7 +455,7 @@ test.describe('Memory(Pytorch_Group_By_Component', () => {
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });
