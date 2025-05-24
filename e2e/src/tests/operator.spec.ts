@@ -2,18 +2,23 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { test as baseTest, expect } from '@playwright/test';
+import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { OperatorPage } from '@/page-object';
-import { clearAllData, importData, setCompare, waitForWebSocketEvent } from '@/utils';
+import { clearAllData, importData, setCompare, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { SelectHelpers } from '@/components';
 
 interface TestFixtures {
     operatorPage: OperatorPage;
+    ws: Promise<WebSocket>;
 }
 const test = baseTest.extend<TestFixtures>({
     operatorPage: async ({ page }, use) => {
         const memoryPage = new OperatorPage(page);
         await use(memoryPage);
+    },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
     },
 });
 
@@ -24,7 +29,7 @@ const operatorImgMap = {
 };
 
 test.describe('Operator', () => {
-    test.beforeEach(async ({ page, operatorPage }) => {
+    test.beforeEach(async ({ page, operatorPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await operatorPage.goto();
         await clearAllData(page);
@@ -75,7 +80,7 @@ test.describe('Operator', () => {
         await page.waitForTimeout(2000); // 对比场景需要加延时，确保稳定
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 });

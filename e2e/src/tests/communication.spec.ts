@@ -10,21 +10,24 @@ import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     communicationPage: CommunicationPage;
+    ws: Promise<WebSocket>;
 }
 const test = baseTest.extend<TestFixtures>({
     communicationPage: async ({ page }, use) => {
         const communicationPage = new CommunicationPage(page);
         await use(communicationPage);
     },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
+    },
 });
 let requestDurationListResp: Promise<unknown>;
 let requestTableDataResp: Promise<unknown>;
 let allPagesSuccessRes: Promise<unknown>;
-let ws: Promise<WebSocket>;
 
 test.describe('Communication', () => {
-    test.beforeEach(async ({ page, communicationPage }) => {
-        ws = setupWebSocketListener(page);
+    test.beforeEach(async ({ page, communicationPage, ws }) => {
         requestDurationListResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/duration/list');
         requestTableDataResp = waitForWebSocketEvent(page, (res) => res?.command === 'communication/operatorDetails');
         allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
@@ -38,8 +41,8 @@ test.describe('Communication', () => {
         }
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 【case】数据展示配置
@@ -135,7 +138,7 @@ test.describe('Communication', () => {
     });
 
     // 【case】专家建议
-    test('communication advice', async ({ page, communicationPage }) => {
+    test('communication advice', async ({ page, communicationPage, ws }) => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
         const advice = communicationFrame.getByTestId('communicationAdvice');
@@ -179,7 +182,7 @@ test.describe('Communication', () => {
     });
 
     // 【case】通信时长数据分析：展示对应通信域和算子 通信算子详情子表格排序和分页
-    test('communication operator details sub table', async ({ page, communicationPage }) => {
+    test('communication operator details sub table', async ({ page, communicationPage, ws }) => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         // 切换到通信耗时分析并点击icon展开子表格
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
@@ -250,7 +253,7 @@ test.describe('Communication', () => {
 });
 
 test.describe('Communication(cluster)', () => {
-    test.beforeEach(async ({ page, communicationPage }) => {
+    test.beforeEach(async ({ page, communicationPage, ws }) => {
         const { loadingDialog } = new FrameworkPage(page);
         await page.goto('/');
         await importData(page, FilePath.TEXT_CLUSTER);
@@ -260,8 +263,8 @@ test.describe('Communication(cluster)', () => {
         }
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 【case】p2p矩阵检查

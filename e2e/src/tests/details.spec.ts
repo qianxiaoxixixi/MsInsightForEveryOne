@@ -1,20 +1,25 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import { expect, test as baseTest } from '@playwright/test';
+import { expect, test as baseTest, WebSocket } from '@playwright/test';
 import { DetailsPage, FrameworkPage } from '@/page-object';
-import { clearAllData, importData, setCompare, waitForAllParsed } from '@/utils';
+import { clearAllData, importData, setCompare, setupWebSocketListener, waitForAllParsed } from '@/utils';
 import { FilePath } from '@/utils/constants';
 import { SelectHelpers } from '@/components';
 
 interface TestFixtures {
     detailsPage: DetailsPage;
+    ws: Promise<WebSocket>;
 }
 
 const test = baseTest.extend<TestFixtures>({
     detailsPage: async ({ page }, use) => {
         const sourcePage = new DetailsPage(page);
         await use(sourcePage);
+    },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
     },
 });
 
@@ -43,7 +48,7 @@ const inputMap = {
 };
 
 test.describe('Details', () => {
-    test.beforeEach(async ({ page, detailsPage }, testInfo) => {
+    test.beforeEach(async ({ page, detailsPage, ws }, testInfo) => {
         await page.goto('/');
         await clearAllData(page);
         const filePath = testInfo.title.includes('roofline') ? FilePath.DETAILS_ROOFLINE : FilePath.DETAILS;
@@ -53,8 +58,8 @@ test.describe('Details', () => {
         await expect(opType).toBeVisible();
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 基本信息
@@ -149,7 +154,7 @@ test.describe('Details', () => {
 });
 
 test.describe('Details(Compare)', () => {
-    test.beforeEach(async ({ page, detailsPage }) => {
+    test.beforeEach(async ({ page, detailsPage, ws }) => {
         const { detailsFrame } = detailsPage;
         await page.goto('/');
         await clearAllData(page);
@@ -163,8 +168,8 @@ test.describe('Details(Compare)', () => {
         await page.waitForTimeout(1000);
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 基本信息-对比

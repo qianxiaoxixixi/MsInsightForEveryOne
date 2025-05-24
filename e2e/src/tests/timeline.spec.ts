@@ -2,24 +2,28 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { test as baseTest, expect } from '@playwright/test';
+import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { TimelinePage, SystemView, CommunicationPage } from '@/page-object';
 import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { InputHelpers, SelectHelpers } from '@/components';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
+    ws: Promise<WebSocket>;
 }
 const test = baseTest.extend<TestFixtures>({
     timelinePage: async ({ page }, use) => {
         const timelinePage = new TimelinePage(page);
         await use(timelinePage);
     },
+    ws: async ({ page }, use) => {
+        const ws = setupWebSocketListener(page);
+        await use(ws);
+    },
 });
 let allPagesSuccessRes: Promise<unknown>;
 test.describe('Timeline', () => {
-    test.beforeEach(async ({ page, timelinePage }) => {
-        setupWebSocketListener(page);
+    test.beforeEach(async ({ page, timelinePage, ws }) => {
         allPagesSuccessRes = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         const { timelineFrame } = timelinePage;
         await timelinePage.goto();
@@ -29,8 +33,8 @@ test.describe('Timeline', () => {
         await expect(secondLayerUnit).toBeVisible();
     });
 
-    test.afterEach(async ({ page }) => {
-        await clearAllData(page);
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
     });
 
     // 树状图 - 泳道展开收缩
