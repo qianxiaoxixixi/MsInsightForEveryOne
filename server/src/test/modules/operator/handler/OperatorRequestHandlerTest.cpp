@@ -145,9 +145,9 @@ TEST_F(OperatorRequestHandlerTest, QueryOpCategoryInfoHandlerNormalTest)
 {
     Dic::Module::Operator::QueryOpCategoryInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorCategoryInfoRequest>();
-    requestPtr.get()->params.rankId = "0";
-    requestPtr.get()->params.group = "Operator";
-    requestPtr.get()->params.topK = -1;
+    requestPtr->params.rankId = "0";
+    requestPtr->params.group = "Operator";
+    requestPtr->params.topK = -1;
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
@@ -155,7 +155,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpComputeUnitHandlerNormalTest)
 {
     Dic::Module::Operator::QueryOpComputeUnitHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorComputeUnitInfoRequest>();
-    requestPtr.get()->params.rankId = "0";
+    requestPtr->params.rankId = "0";
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
@@ -170,13 +170,13 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerCmplTest)
 {
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
-    requestPtr.get()->params.rankId = "0";
-    requestPtr.get()->params.group = "Operator Type";
-    requestPtr.get()->params.topK = -1;
-    requestPtr.get()->params.isCompare = true;
+    requestPtr->params.rankId = "0";
+    requestPtr->params.group = "Operator Type";
+    requestPtr->params.topK = -1;
+    requestPtr->params.isCompare = true;
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
@@ -228,13 +228,13 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessWhenBaselin
     InitDbManager();
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Operator Type";
-    requestPtr.get()->params.topK = -1; // -1 表示topK取全部数据
-    requestPtr.get()->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Operator Type";
+    requestPtr->params.topK = -1; // -1 表示topK取全部数据
+    requestPtr->params.isCompare = true;
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -246,14 +246,14 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessAndOrderByO
     InitDbManager();
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Input Shape";
-    requestPtr.get()->params.topK = 15;  // 15表示topK取15条数据
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.orderBy = "opType";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Input Shape";
+    requestPtr->params.topK = 15;  // 15表示topK取15条数据
+    requestPtr->params.isCompare = true;
+    requestPtr->params.orderBy = "opType";
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -265,16 +265,16 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessWhenBaselin
     InitDbManager();
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator Type";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = 10000000; // 10000000表示topK是一个极大值
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.orderBy = "count";
-    requestPtr.get()->params.order = "ascend";
+    requestPtr->params.topK = 10000000; // 10000000表示topK是一个极大值
+    requestPtr->params.isCompare = true;
+    requestPtr->params.orderBy = "count";
+    requestPtr->params.order = "ascend";
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -286,16 +286,16 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessGroupByHCCL
     InitDbManager();
     Dic::Module::Operator::QueryOpStatisticInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorStatisticInfoRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator Type";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = 10000000; // 10000000表示topK是一个极大值
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.orderBy = "count";
-    requestPtr.get()->params.order = "descend";
+    requestPtr->params.topK = 10000000; // 10000000表示topK是一个极大值
+    requestPtr->params.isCompare = true;
+    requestPtr->params.orderBy = "count";
+    requestPtr->params.order = "descend";
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -307,16 +307,16 @@ TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWhenBsesLineIsN
 {
     Dic::Module::Operator::QueryOpDetailInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Operator";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Operator";
     // topK给一个极大值
-    requestPtr.get()->params.topK = 10000000; // 10000000表示topK是一个极大值
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.orderBy = "count";
-    requestPtr.get()->params.order = "descend";
+    requestPtr->params.topK = 10000000; // 10000000表示topK是一个极大值
+    requestPtr->params.isCompare = true;
+    requestPtr->params.orderBy = "count";
+    requestPtr->params.order = "descend";
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
 
     EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
 }
@@ -327,10 +327,10 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByOperatorI
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Operator";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Operator";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -342,10 +342,10 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByOperatorT
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Operator Type";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -357,10 +357,10 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByInputShap
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Input Shape";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Input Shape";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -372,10 +372,10 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunica
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -387,10 +387,10 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunica
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator Type";
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -403,11 +403,11 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByOperatorT
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Operator Type";
+    requestPtr->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -419,11 +419,11 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByInputShap
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Input Shape";
+    requestPtr->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Input Shape";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -435,11 +435,11 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunica
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator";
+    requestPtr->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -451,11 +451,11 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerSuccessGroupByCommunica
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator Type";
+    requestPtr->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
@@ -467,11 +467,11 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerFailTopKIsIllegal)
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "Communication Operator Type";
+    requestPtr->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "Communication Operator Type";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MIN;
+    requestPtr->params.topK = INT64_MIN;
 
     EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
     ClearProjectExplorerData();
@@ -482,13 +482,93 @@ TEST_F(OperatorRequestHandlerTest, ExportOpDetailsHandlerGroupByIsIllegal)
     InitDbManager();
     Dic::Module::Operator::ExportOpDetailsHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorExportDetailsRequest>();
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.rankId = "2";
-    requestPtr.get()->params.group = "UnKnow";
+    requestPtr->params.isCompare = true;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.group = "UnKnow";
     // topK给一个极大值
-    requestPtr.get()->params.topK = INT64_MAX;
+    requestPtr->params.topK = INT64_MAX;
 
     EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
     ClearProjectExplorerData();
 }
 
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalTopK)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    requestPtr->params.group = "Operator";
+    // abnormal topK -5
+    requestPtr->params.topK = -5;
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalPagesize)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    requestPtr->params.group = "Operator";
+    // normal topK 10
+    requestPtr->params.topK = 10;
+    requestPtr->params.pageSize = MAX_PAGESIZE + 1;
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalCurrent)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    requestPtr->params.group = "Operator";
+    // normal topK 10
+    requestPtr->params.topK = 10;
+    // normal pageSize 10
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = MIN_CURRENT_PAGE;
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalRankid)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    requestPtr->params.group = "Operator";
+    // normal topK 10
+    requestPtr->params.topK = 10;
+    // normal pageSize 10
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
+    requestPtr->params.rankId = "";
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalOrder)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    requestPtr->params.group = "Operator";
+    // normal topK 10
+    requestPtr->params.topK = 10;
+    // normal pageSize 10
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
+    requestPtr->params.rankId = "2";
+    requestPtr->params.orderBy = "";
+    requestPtr->params.order = "";
+    ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerFailedWithabnormalQuery)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    requestPtr->params.group = "Operator";
+    // normal topK 10
+    requestPtr->params.topK = 10;
+    // normal pageSize 10
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
+    requestPtr->params.rankId = "0";
+    requestPtr->params.orderBy = "count";
+    requestPtr->params.order = "descend";
+    requestPtr->params.isCompare = false;
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+}

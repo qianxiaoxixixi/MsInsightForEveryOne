@@ -114,13 +114,18 @@ namespace Dic::Module::Operator {
         OperatorDetailInfoRequest &request = dynamic_cast<OperatorDetailInfoRequest &>(*requestPtr);
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &response = *responsePtr;
-        bool rst = true;
         std::string errorMsg;
-        if (request.params.CommonCheck(errorMsg)) {
-            rst = request.params.isCompare ?
-                HandleCompareDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr)) :
-                HandleDetailDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr));
+        if (!request.params.CommonCheck(errorMsg)) {
+            ServerLog::Error(errorMsg);
+            SetBaseResponse(request, response);
+            SetResponseResult(response, false);
+            SendResponse(std::move(responsePtr), false);
+            return false;
         }
+        
+        bool rst = request.params.isCompare ?
+              HandleCompareDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr)) :
+              HandleDetailDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr));
         SetBaseResponse(request, response);
         SetResponseResult(response, rst);
         SendResponse(std::move(responsePtr), rst);

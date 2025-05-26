@@ -126,16 +126,16 @@ TEST_F(OperatorDetailRequestHandlerTest, QueryOpDetailInfoHandlerFailedWhenBsesL
 {
     Dic::Module::Operator::QueryOpDetailInfoHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
-    requestPtr.get()->params.rankId = "1";
-    requestPtr.get()->params.group = "Operator";
+    requestPtr->params.rankId = "1";
+    requestPtr->params.group = "Operator";
     // topK给一个极大值
-    requestPtr.get()->params.topK = 10000000; // 10000000表示topK是一个极大值
-    requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.orderBy = "count";
-    requestPtr.get()->params.order = "descend";
+    requestPtr->params.topK = 10000000; // 10000000表示topK是一个极大值
+    requestPtr->params.isCompare = true;
+    requestPtr->params.orderBy = "count";
+    requestPtr->params.order = "descend";
     // 10 表示分页最小是10条
-    requestPtr.get()->params.pageSize = 10;
-    requestPtr.get()->params.current = 1;
+    requestPtr->params.pageSize = 10;
+    requestPtr->params.current = 1;
 
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
