@@ -68,6 +68,7 @@ const replaceMap = new Map([
     ['_us_', '(us)'],
     ['_GB_s_', '(GB/s)'],
     ['_PCT_', '(%)'],
+    ['_KB_', '(KB)'],
 ]);
 
 function modifyTitle(item: string): string {

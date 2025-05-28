@@ -235,6 +235,7 @@ bool KernelParse::GetUtilizationColumns(const std::vector<std::string> &rowVecto
             {"(us)", "_us_"},
             {"(%)", "_PCT_"},
             {"(GB/s)", "_GB_s_"},
+            {"(KB)", "_KB_"},
             {"\r", ""}
         };
         for (const auto& item : strPairs) {
