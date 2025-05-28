@@ -106,7 +106,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Statistic',
         requestName: 'statistic',
         attributes: {
-            src: isDev ? 'http://localhost:3006/' : './plugins/statistic/index.html',
+            src: isDev ? 'http://localhost:3006/' : './plugins/Statistic/index.html',
         },
         isIE: true,
     },
