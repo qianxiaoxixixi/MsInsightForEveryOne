@@ -6,6 +6,7 @@
 #define DATA_INSIGHT_CORE_NUMBER_UTIL_H
 
 #include <string>
+#include <regex>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -446,6 +447,32 @@ public:
         } else {
             return bound;
         }
+    }
+    // 此方法用于取数值类型的整数部分(主要为浮点数,整数部分不可超过INT64范围)
+    static std::string TruncateNumberString(const std::string& numberStr)
+    {
+        std::string s = numberStr;
+        // 去除前后空格
+        s.erase(0, s.find_first_not_of(" \t\n\r"));
+        s.erase(s.find_last_not_of(" \t\n\r") + 1);
+
+        // 正则表达式匹配合法的数字：支持正负号、小数点、整数和浮点数
+        std::regex pattern(R"([+-]?(\d+\.?\d*|\.\d+))");
+        if (std::regex_match(s, pattern)) {
+            long double num = StringToLongDouble(numberStr);
+            int64_t truncated;
+            if (num > INT64_MAX) {
+                truncated = INT64_MAX;
+            } else if (num < INT64_MIN) {
+                truncated = INT64_MIN;
+            } else {
+                // 截断取整
+                truncated = static_cast<int64_t>(num);
+            }
+            return std::to_string(truncated);
+        }
+
+        return "0";
     }
 };
 } // end of namespace Dic

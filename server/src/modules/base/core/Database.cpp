@@ -166,12 +166,14 @@ std::string Database::sqlite3_column_string(sqlite3_stmt *stmt, int iCol)
 
 std::string Database::Sqlite3ColumnConvertStr(int colType, sqlite3_stmt *stmt, int iCol)
 {
+    const int retainDecimaPlaces = 3;
     std::ostringstream oss;
     if (colType == SQLITE_INTEGER) {
         int value = sqlite3_column_int(stmt, iCol);
         oss << value;
     } else if (colType == SQLITE_FLOAT) {
         double value = sqlite3_column_double(stmt, iCol);
+        oss << std::fixed << std::setprecision(retainDecimaPlaces);
         oss << value;
     } else {
         oss << "Unknown type";

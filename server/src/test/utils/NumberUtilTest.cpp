@@ -252,3 +252,20 @@ TEST(NumberUtil, IsGreaterWithNormalInputReturnValidString)
     EXPECT_EQ(NumberUtil::IsGreater(-3.1415, -3.1416), true);
     EXPECT_EQ(NumberUtil::IsGreater(-3.1415, -3.1415), false);
 }
+
+TEST(NumberUtil, TruncateNumberString)
+{
+    std::unordered_map<std::string, std::string> testMap = {
+            {"123.456", "123"},
+            {"-123.987", "-123"},
+            {"abc", "0"},
+            {"0.000", "0"},
+            {"-0.1", "0"},
+            {"0", "0"},
+            {std::to_string(std::numeric_limits<uint64_t>::max()), std::to_string(std::numeric_limits<int64_t>::max())},
+            {std::to_string(std::numeric_limits<uint64_t>::min()), std::to_string(std::numeric_limits<int64_t>::min())}
+    };
+    for (auto& testItem: testMap) {
+        EXPECT_EQ(NumberUtil::TruncateNumberString(testItem.first), testItem.second);
+    }
+}

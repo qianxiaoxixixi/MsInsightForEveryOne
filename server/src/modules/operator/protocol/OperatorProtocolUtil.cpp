@@ -54,7 +54,7 @@ void AddStatisticMemberWithLabel(rapidjson::Value& parent, const char* label, co
     JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
     JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
     JsonUtil::AddMember(dataJson, "totalTime", ele.totalTime, allocator);
-    JsonUtil::AddMember(dataJson, "count", ele.count, allocator);
+    JsonUtil::AddMember(dataJson, "count", NumberUtil::TruncateNumberString(ele.count), allocator);
     JsonUtil::AddMember(dataJson, "avgTime", ele.avgTime, allocator);
     JsonUtil::AddMember(dataJson, "maxTime", ele.maxTime, allocator);
     JsonUtil::AddMember(dataJson, "minTime", ele.minTime, allocator);
