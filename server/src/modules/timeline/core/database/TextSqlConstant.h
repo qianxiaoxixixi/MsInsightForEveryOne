@@ -78,7 +78,7 @@ const std::string QUERY_UNITS_META_SQL =
     " ORDER BY pt.process_sort_index ASC,pt.process_name ASC,pt.pid ASC, pt.thread_sort_index ASC, pt.name ASC;";
 const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalMinTimestamp, max(maxTimestamp) AS "
     "totalMaxTimestamp FROM ("
-    "    SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + SLICE_TABLE +
+    "    SELECT min(timestamp) as minTimestamp, max(end_time) as maxTimestamp FROM " + SLICE_TABLE +
     "    UNION SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + COUNTER_TABLE +
     ")";
 const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, args FROM " + COUNTER_TABLE + " "
