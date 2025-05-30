@@ -105,6 +105,8 @@ export class Session {
 
     // 资源目录的编辑状态
     projectContentEditStatus: boolean = false;
+    // [summary] MoE 热力图数据解析结果
+    profilingExpertDataParsed: boolean | null = null;
 
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
@@ -213,6 +215,7 @@ export class Session {
             baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
             comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
         };
+        this.profilingExpertDataParsed = null;
     }
 
     // 数据源管理
