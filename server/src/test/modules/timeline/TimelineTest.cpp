@@ -644,6 +644,7 @@ TEST_F(TestSuit, QueryEventsViewData4PythonThread)
     params.pageSize = PAGE_SIZE;
     params.currentPage = CUR_PAGE_2;
     params.rankId = "0";
+    params.threadIdList.emplace_back(params.tid);
 
     EventsViewBody body;
     database->QueryEventsViewData(params, body, 0);
@@ -707,6 +708,7 @@ TEST_F(TestSuit, QueryEventsViewData4CANNThread)
     params.pageSize = PAGE_SIZE;
     params.currentPage = CUR_PAGE_2;
     params.rankId = "0";
+    params.threadIdList.emplace_back(params.tid);
 
     EventsViewBody body;
     database->QueryEventsViewData(params, body, 0);
@@ -771,7 +773,7 @@ TEST_F(TestSuit, QueryEventsViewData4HardwareStream)
     params.pageSize = PAGE_SIZE;
     params.currentPage = CUR_PAGE_2;
     params.rankId = "0";
-
+    params.threadIdList.emplace_back(params.tid);
     EventsViewBody body;
     database->QueryEventsViewData(params, body, 0);
     const uint64_t EXPECT_COUNT = 879;
@@ -872,7 +874,7 @@ TEST_F(TestSuit, QueryEventsViewData4HCCLGroup)
     params.rankId = "0";
     params.orderBy = "duration";
     params.order = "descend";
-
+    params.threadIdList.emplace_back(params.tid);
     EventsViewBody body;
     database->QueryEventsViewData(params, body, 0);
     const uint64_t EXPECT_COUNT = 20;
@@ -907,7 +909,7 @@ TEST_F(TestSuit, QueryEventsViewData4CommunicationGroup)
     params.rankId = "0";
     params.orderBy = "duration";
     params.order = "descend";
-
+    params.threadIdList.emplace_back(params.tid);
     EventsViewBody body;
     database->QueryEventsViewData(params, body, 0);
     const uint64_t EXPECT_COUNT = 20;
@@ -975,7 +977,7 @@ TEST_F(TestSuit, QueryEventsViewData4OverlapComputing)
     params.rankId = "0";
     params.orderBy = "duration";
     params.order = "descend";
-
+    params.threadIdList.emplace_back(params.tid);
     EventsViewBody body;
     database->QueryEventsViewData(params, body, 0);
     const uint64_t EXPECT_COUNT = 586;
