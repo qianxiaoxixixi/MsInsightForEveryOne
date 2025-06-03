@@ -221,6 +221,22 @@ export function FormItem({ name, style, content, nameStyle }:
     </div>);
 };
 
+export function GroupCardInfosByHost<T extends { cardId: string; dbPath: string } = { cardId: string; dbPath: string }>(
+    rankInfos: T[]): { hosts: string[]; cardsMap: Map<string, T[]> } {
+    const host = new Set<string>();
+    const cardsMap = new Map<string, T[]>();
+    rankInfos.forEach((item): void => {
+        const list = item.cardId.split(' ');
+        if (list.length > 1) {
+            host.add(list[0]);
+            cardsMap.set(list[0], [...cardsMap.get(list[0]) ?? [], item]);
+        } else {
+            cardsMap.set('', [...cardsMap.get('') ?? [], item]);
+        }
+    });
+    return { hosts: Array.from(host), cardsMap };
+}
+
 export function GroupRankIdsByHost(rankIds: string[]): { hosts: string[]; ranks: Map<string, string[]> } {
     const host = new Set<string>();
     const ranks = new Map<string, string[]>();

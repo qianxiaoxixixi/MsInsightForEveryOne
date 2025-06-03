@@ -6,13 +6,14 @@ import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, InputNumber } from 'ascend-components';
-import { GroupRankIdsByHost, Label } from 'ascend-utils';
-import type { optionMapType, VoidFunction } from '../../utils/interface';
-import type { Session } from '../../entity/session';
+import { GroupCardInfosByHost, Label } from 'ascend-utils';
+import type { OptionDataType, OptionMapType, VoidFunction } from '../../utils/interface';
+import type { CardInfo, Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
 
 export interface ConditionType {
-    rankId: string ;
+    rankId: string;
+    dbPath: string;
     group: string;
     topK: number;
     custom: number;
@@ -22,6 +23,7 @@ export interface ConditionType {
 
 export const defaultCondition = {
     rankId: '',
+    dbPath: '',
     group: OPERATOR_TYPE,
     topK: 15,
     custom: 0,
@@ -46,8 +48,8 @@ export const defaultFilterType = {
 };
 
 const defaultOptionMap = {
-    rankIdOptions: [],
-    hostsOptions: [],
+    rankOptions: [],
+    hostOptions: [],
     groupOptions: [
         { label: 'Computing Operator', value: 'Operator' },
         { label: 'Computing Operator Type', value: 'Operator Type' },
@@ -61,13 +63,13 @@ const defaultOptionMap = {
     ],
 };
 const condition: ConditionType = observable(defaultCondition);
-const optionMap: optionMapType = observable(defaultOptionMap);
+const optionMap: OptionMapType = observable(defaultOptionMap);
 
-const setOptions = async(initOptionMap: optionMapType = {}): Promise<void> => {
+const setOptions = (initOptionMap: Partial<OptionMapType> = {}): void => {
     runInAction(() => {
-        const keys = Object.keys(initOptionMap);
+        const keys = Object.keys(initOptionMap) as Array<(keyof OptionMapType)>;
         keys.forEach(key => {
-            optionMap[key] = initOptionMap[key] ?? [];
+            optionMap[key] = initOptionMap[key] as any ?? [];
         });
     });
 };
@@ -78,12 +80,13 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
         keys.forEach(key => {
             (condition as any)[key] = (initCondition as any)[key];
         });
-        if (condition.host === '' || !optionMap.hostsOptions.find(item => item.value === condition.host)) {
-            condition.host = optionMap.hostsOptions[0]?.value as string ?? '';
-        };
+        if (condition.host === '' || !optionMap.hostOptions.find(item => item.value === condition.host)) {
+            condition.host = optionMap.hostOptions[0]?.value as string ?? '';
+        }
         if (condition.rankId === '') {
-            condition.rankId = optionMap.rankIdOptions[0]?.value as string ?? '';
-        };
+            condition.rankId = optionMap.rankOptions[0]?.value as string ?? '';
+            condition.dbPath = optionMap.rankOptions[0]?.dbPath as string ?? '';
+        }
     });
 };
 
@@ -92,16 +95,30 @@ function handleChange<T>(key: keyof ConditionType, val: T): void {
         condition[key] = val as never;
         if (key === 'topK' && val === 0) {
             condition.custom = 15;
+        } else if (key === 'rankId') {
+            condition.dbPath = optionMap.rankOptions.find(({ value }) => value === val)?.dbPath ?? '';
         }
     });
 };
 
 function checkRankId(rankId: string): boolean {
-    if (rankId !== '' && optionMap.rankIdOptions.some((item) => rankId === item.value as string)) {
+    if (rankId !== '' && optionMap.rankOptions.some((item) => rankId === item.value as string)) {
         return true;
     }
     return false;
-};
+}
+
+function getRankOptions(cards: CardInfo[], host: string): Array<OptionDataType & { dbPath: string }> {
+    return cards.map((item) => {
+        const label = (!item.cardId.startsWith('[MSPROF]') ? item.cardId : item.cardId.substring(item.cardId.lastIndexOf('__') + 2)).replace(`${host} `, '');
+        return {
+            label,
+            value: item.cardId,
+            dbPath: item.dbPath ?? '',
+            index: Number.isNaN(label) ? 0 : Number(label),
+        };
+    }).sort((a, b) => a.index - b.index);
+}
 
 const Filter = observer(({ session, handleFilterChange }: {session: Session;handleFilterChange: VoidFunction}) => {
     // 初始化
@@ -115,35 +132,34 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
 
     useEffect(() => {
-        const { hosts, ranks }: { hosts: string[]; ranks: Map<string, string[]> } = GroupRankIdsByHost(session.allRankIds);
-        const hostsOptions = hosts.map(item => (
-            { label: item, value: item, data: ranks.get(item) }
-        ));
-        const host = hosts[0] ?? '';
-        const rankIdOptions = (ranks.get(host) ?? []).map((item, index) => (
-            { label: (!item.startsWith('[MSPROF]') ? item : item.substring(item.lastIndexOf('__') + 2)).replace(`${host} `, ''), value: item }
-        ));
-        setOptions({ hostsOptions, rankIdOptions });
-        if (session.allRankIds.length === 0) {
+        if (session.allCardInfos.length === 0) {
             setOptions(defaultOptionMap);
             setCondition(defaultCondition);
+            return;
         }
-    }, [session.allRankIds]);
+        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, CardInfo[]> } = GroupCardInfosByHost(session.allCardInfos);
+        const hostOptions = hosts.map(item => (
+            { label: item, value: item, cards: cardsMap.get(item) }
+        ) as OptionDataType);
+        const host = hosts[0] ?? '';
+        const rankOptions = getRankOptions(cardsMap.get(host) ?? [], host);
+        setOptions({ hostOptions, rankOptions });
+    }, [session.allCardInfos]);
 
     useEffect(() => {
         runInAction(() => {
-            condition.rankId = checkRankId(session.dirInfo.rankId) ? session.dirInfo.rankId : optionMap.rankIdOptions[0]?.value as string ?? '';
+            condition.rankId = checkRankId(session.dirInfo.rankId) ? session.dirInfo.rankId : optionMap.rankOptions[0]?.value as string ?? '';
+            const found = optionMap.rankOptions.find(({ value }) => value === condition.rankId);
+            condition.dbPath = found?.dbPath ?? '';
             condition.isCompare = session.dirInfo.isCompare ?? false;
         });
         handleFilterChange({ ...condition, topK: condition.topK !== 0 ? condition.topK : condition.custom });
     }, [session.dirInfo]);
 
     useEffect(() => {
-        const hostOption = optionMap.hostsOptions.find(item => item.value === condition.host);
-        const rankIdOptions = (hostOption?.data ?? [] as string[]).map((item: string) => (
-            { label: (!item.startsWith('[MSPROF]') ? item : item.substring(item.lastIndexOf('__') + 2)).replace(`${condition.host} `, ''), value: item }
-        ));
-        setOptions({ rankIdOptions });
+        const hostOption = optionMap.hostOptions.find(item => item.value === condition.host);
+        const rankOptions = getRankOptions(hostOption?.cards ?? [], condition.host);
+        setOptions({ rankOptions });
     }, [condition.host]);
 
     useEffect(() => {
@@ -177,14 +193,14 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
     }));
     return (<div>
         {
-            optionMap.hostsOptions.length > 0
+            optionMap.hostOptions.length > 0
                 ? <FormItem
                     name={t('Host')}
                     content={(<Select
                         value={condition.host}
                         style={{ width: 250 }}
                         onChange={(val: string): void => handleChange('host', val)}
-                        options={optionMap.hostsOptions}
+                        options={optionMap.hostOptions}
                         disabled={condition.isCompare}
                     />
                     )}/>
@@ -206,8 +222,8 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 id={'select-rankId'}
                 value={condition.rankId}
                 style={{ width: 200 }}
-                onChange={(val: string): void => handleChange('rankId', val)}
-                options={optionMap.rankIdOptions}
+                onChange={(val: string): void => handleChange('rankId', val)} // rankId 修改，要联动 dbPath
+                options={optionMap.rankOptions}
                 showSearch={true}
                 disabled={condition.isCompare}
             />

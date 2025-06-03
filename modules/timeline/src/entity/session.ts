@@ -207,8 +207,6 @@ export class Session {
 
     zoom?: {zoomCount: number; zoomPoint?: number };
     doReset: boolean = false;
-    memoryRankIds: string[] = [];
-    operatorRankIds: string[] = [];
     eventUnits: InsightUnit[] = [];
     projectName?: string;
     pageSetting: Record<string, {

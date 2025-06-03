@@ -6,15 +6,20 @@ import { makeAutoObservable } from 'mobx';
 export interface DirInfo {
     rankId: string;
     isCompare: boolean;
-};
+}
+
+export interface CardInfo {
+    cardId: string;
+    dbPath: string;
+    index: number;
+}
 
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
-    allRankIds: string[] = [];
+    allCardInfos: CardInfo[] = [];
     renderId: number = 0;
     total: number = 0;
     isDark: boolean = true;
-    parseCompleted: boolean = false;
     // global param
     dirInfo: DirInfo = { rankId: '', isCompare: false };
     constructor() {
