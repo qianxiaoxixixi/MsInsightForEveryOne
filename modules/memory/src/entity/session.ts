@@ -9,12 +9,19 @@ export interface ICompareRankInfo {
     isCompare: boolean;
 }
 
+export interface CardInfo {
+    cardId: string;
+    dbPath: string;
+    index: number;
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     unitcount = 0;
-    memoryRankIds: string[] = [];
+    memoryCardInfos: CardInfo[] = [];
     isCluster: boolean = false;
-    isClusterMemoryCompletedSwitch: boolean = false;
+    isAllMemoryCompletedSwitch: boolean = false;
+    // rankId 实际是 cardId: `{host} {rankId}`
     compareRank: ICompareRankInfo = { rankId: '', isCompare: false };
 
     constructor() {

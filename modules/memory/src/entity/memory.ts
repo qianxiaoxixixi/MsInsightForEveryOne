@@ -16,6 +16,12 @@ export interface RankInfo {
      */
     rankId: string;
     /**
+     * 数据库路径
+     * @type {string}
+     * @memberof RankInfo
+     */
+    dbPath?: string;
+    /**
      *
      * @type {boolean}
      * @memberof RankInfo
@@ -241,6 +247,10 @@ export interface OperatorMemoryCondition {
      */
     rankId: string;
     /**
+     * dbPath，数据库路径
+     */
+    dbPath: string;
+    /**
      * 开始时间
      */
     startTime?: number;
@@ -300,6 +310,10 @@ export interface StaticMemoryCondition {
      * rankId
      */
     rankId: string;
+    /**
+     * dbPath，数据库路径
+     */
+    dbPath: string;
     /**
      * deviceId，通过deviceId条件筛选时需要传入
      */
@@ -501,7 +515,8 @@ export interface GetTableDataParams {
     order?: string;
     orderBy?: string;
     rankId?: string;
-};
+    dbPath?: string;
+}
 
 /**
  * 查找算子在timeline的位置信息
@@ -511,6 +526,7 @@ export interface GetSlicePositionParams {
     id?: string;
     name: string;
     rankId: string;
+    dbPath: string;
 };
 
 /**
@@ -556,6 +572,7 @@ export interface OrderPageInfo {
  */
 export interface MemorySizeQueryCondition {
     rankId: string;
+    dbPath: string; // 数据库路径
     type: GroupBy;
     isCompare: boolean;
     graphId?: string;

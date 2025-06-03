@@ -89,7 +89,7 @@ export function getInitStatus(): void {
         event: 'getParseStatus',
         body: {
             from: 'Memory',
-            requests: ['language', 'theme', 'memoryRankIds', 'directory'],
+            requests: ['language', 'theme', 'memoryCardInfos', 'directory'],
         },
     });
 };

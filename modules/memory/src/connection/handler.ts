@@ -6,8 +6,24 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import type { RankInfo } from '../entity/memory';
+import type { CardInfo } from '../entity/session';
 import i18n from 'ascend-i18n';
 import { customConsole as console } from 'ascend-utils';
+import { DEFAULT_CARD_VALUE } from '../entity/memorySession';
+
+function addMemoryCardInfos(before: CardInfo[], addList: RankInfo[]): CardInfo[] {
+    const current = [...before];
+    const currentCardIds: Set<string> = new Set(current.map(({ cardId }) => cardId));
+    addList.forEach((item) => {
+        if (!currentCardIds.has(item.rankId) && (item.hasMemory as boolean)) {
+            current.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: Number.isNaN(item.rankId) ? 0 : Number(item.rankId) });
+            currentCardIds.add(item.rankId);
+        }
+    });
+    return current;
+}
+
+/** framework 过滤器中也有拦截，逻辑一致 {@link parseMemorySuccessHandler} */
 export const parseMemoryCompletedHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;
@@ -17,11 +33,7 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                 return;
             }
             const memoryResult = data.memoryResult as RankInfo[];
-            memoryResult.forEach((item) => {
-                if (!session.memoryRankIds.includes(item.rankId) && (item.hasMemory as boolean)) {
-                    session.memoryRankIds.push(item.rankId);
-                }
-            });
+            session.memoryCardInfos = addMemoryCardInfos(session.memoryCardInfos, memoryResult);
         });
     } catch (err) {
         console.error(err);
@@ -37,10 +49,11 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             if (!session || !memorySession) {
                 return;
             }
-            session.memoryRankIds = [];
+            session.memoryCardInfos = [];
+            session.isAllMemoryCompletedSwitch = false;
             session.isCluster = false;
             session.compareRank.rankId = '';
-            memorySession.rankIdCondition = { options: [], value: '' };
+            memorySession.rankCondition = { options: [], value: DEFAULT_CARD_VALUE };
         });
     } catch (error) {
         console.error(error);
@@ -62,9 +75,10 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             const dataKeys = Object.keys(data);
             const usableKeys: string[] = ['isCluster', 'unitcount'];
             dataKeys.forEach((key: any) => {
-                if (key === 'memoryRankIds') {
-                    const memoryRankIds = data.memoryRankIds as string[];
-                    session.memoryRankIds = [...new Set([...session.memoryRankIds, ...memoryRankIds])];
+                if (key === 'memoryCardInfos') {
+                    const memoryCardInfos = data.memoryCardInfos as CardInfo[];
+                    // cardId 不能转成数字时排序不会报错，但是会出现逻辑错误（排序失效）
+                    session.memoryCardInfos = [...memoryCardInfos].sort((a, b) => Number(a.index) - Number(b.index));
                     return;
                 }
                 if (usableKeys.includes(key)) {
@@ -86,7 +100,7 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
                 return;
             }
             if (data.isAllPageParsed as boolean) {
-                session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
+                session.isAllMemoryCompletedSwitch = !session.isAllMemoryCompletedSwitch;
             }
         });
     } catch (error) {
@@ -94,7 +108,7 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
     }
 };
 
-export const deleteRankHandler: NotificationHandler = async (data): Promise<void> => {
+export const deleteCardHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
@@ -102,9 +116,9 @@ export const deleteRankHandler: NotificationHandler = async (data): Promise<void
             if (!session) {
                 return;
             }
-            const deleteIds: string[] = data.rankId as string[];
-            if (deleteIds.length > 0) {
-                session.memoryRankIds = session.memoryRankIds.filter((item: string) => !deleteIds?.includes(item));
+            const deleteIds: Set<string> = new Set((data.info as CardInfo[]).map(({ cardId }) => cardId));
+            if (deleteIds.size > 0) {
+                session.memoryCardInfos = session.memoryCardInfos.filter((item) => !deleteIds.has(item.cardId));
             }
         });
     } catch (error) {

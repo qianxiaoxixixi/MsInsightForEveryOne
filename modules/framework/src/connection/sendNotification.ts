@@ -142,6 +142,6 @@ export const sendMap: Record<string, (to?: number) => void> = {
     status: sendStatus,
     theme: sendTheme,
     language: sendLanguage,
-    memoryRankIds: (to) => sendSessionKey('memoryRankIds', to),
+    memoryCardInfos: (to) => sendSessionKey('memoryCardInfos', to),
     operatorCardInfos: (to) => sendSessionKey('operatorCardInfos', to),
 };

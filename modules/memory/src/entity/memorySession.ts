@@ -4,12 +4,16 @@
 
 import { makeAutoObservable } from 'mobx';
 import { OperatorDetail, StaticOperatorListDetail } from './memory';
+import type { CardInfo } from './session';
 
-export interface ConditionType {
-    options: string[];
-    value: string;
-    ranks?: Map<string, string[]>;
-};
+export interface ConditionType<T> {
+    options: T[];
+    value: T;
+}
+
+export interface HostConditionType extends ConditionType<string> {
+    cardsMap?: Map<string, CardInfo[]>;
+}
 
 export const enum MemoryGraphType {
     DYNAMIC = 'dynamic',
@@ -27,6 +31,7 @@ export interface SelectedRange {
 };
 
 export const DEFAULT_SHOW_WITHIN_INTERVAL = false;
+export const DEFAULT_CARD_VALUE = { cardId: '', dbPath: '', index: 0 };
 
 export const enum GroupBy {
     DEFAULT = 'Overall',
@@ -44,8 +49,8 @@ export class MemorySession {
     memoryGraphId: string = '';
 
     // 顶部筛选条件相关变量
-    hostCondition: ConditionType = { options: [], value: '' };
-    rankIdCondition: ConditionType = { options: [], value: '' };
+    hostCondition: HostConditionType = { options: [], value: '' };
+    rankCondition: ConditionType<CardInfo> = { options: [], value: DEFAULT_CARD_VALUE };
     groupId: GroupBy = GroupBy.DEFAULT;
 
     // 中部折线图框选和下方表格联动

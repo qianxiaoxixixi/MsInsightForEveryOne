@@ -71,14 +71,14 @@ export const resetHandler: NotificationHandler = (data): void => {
     });
 };
 
-export const deleteRankHandler: NotificationHandler = (data): void => {
+export const deleteCardHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        const deleteIds: Set<string> = new Set(data.rankId as string[]);
+        const deleteIds: Set<string> = new Set((data.info as any[]).map(({ cardId }) => cardId));
         if (deleteIds.size > 0) {
             session.allCardInfos = session.allCardInfos.filter((item) => !deleteIds.has(item.cardId));
         }

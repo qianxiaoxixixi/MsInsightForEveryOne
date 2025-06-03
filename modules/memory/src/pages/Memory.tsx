@@ -17,11 +17,11 @@ import { memoryTypeGet, resourceTypeGet } from '../utils/RequestUtils';
 import { customConsole as console } from 'ascend-utils';
 
 const fetchMemoryType = (memorySession: MemorySession): void => {
-    const memoryRankId = memorySession.rankIdCondition.value;
-    if (memoryRankId === '') {
+    const memoryCard = memorySession.rankCondition.value;
+    if (memoryCard.cardId === '') {
         return;
     }
-    memoryTypeGet({ rankId: memoryRankId }).then((resp) => {
+    memoryTypeGet({ rankId: memoryCard.cardId, dbPath: memoryCard.dbPath }).then((resp) => {
         const type = resp.type;
         const graphIdList = resp.graphId;
         runInAction(() => {
@@ -37,11 +37,11 @@ const fetchMemoryType = (memorySession: MemorySession): void => {
 };
 
 const fetchResourceType = (memorySession: MemorySession): void => {
-    const memoryRankId = memorySession.rankIdCondition.value;
-    if (memoryRankId === '') {
+    const memoryCard = memorySession.rankCondition.value;
+    if (memoryCard.cardId === '') {
         return;
     }
-    resourceTypeGet({ rankId: memoryRankId }).then((resp) => {
+    resourceTypeGet({ rankId: memoryCard.cardId, dbPath: memoryCard.dbPath }).then((resp) => {
         const type = resp.type;
         runInAction(() => {
             if (type === DataResourceType.MINDSPORE) {
@@ -77,7 +77,7 @@ const Memory = observer(({ session, isDark }: { session: Session; isDark: boolea
         };
         fetchMemoryType(memorySession);
         fetchResourceType(memorySession);
-    }, [memorySession?.rankIdCondition.value]);
+    }, [memorySession?.rankCondition.value]);
 
     useEffect(() => {
         if (!memorySession) {

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import {
-    deleteRankHandler,
+    deleteCardHandler,
     getParseStatusHandler,
     getThemeHandler,
     switchModuleHandler,
@@ -41,7 +41,7 @@ export const listenerMap: Record<string, ListenerCallback> = {
     updateSession: updateSessionHandler,
     getParseStatus: getParseStatusHandler,
     getTheme: getThemeHandler,
-    deleteRank: deleteRankHandler,
+    deleteCard: deleteCardHandler,
     switchModule: switchModuleHandler,
     getLanguage: getLanguageHandler,
     pluginMounted: sendWakeupPlugin,

@@ -18,7 +18,7 @@ import { type Theme, useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useRootStore } from '../context/context';
 import { fetchOperatorPosition, fetchTableDataByComponent } from '../utils/RequestUtils';
-import type { Session } from '../entity/session';
+import type { CardInfo, Session } from '../entity/session';
 import { handleOperatorDetails } from './MemoryDetailTable';
 import connector from '../connection';
 
@@ -32,7 +32,7 @@ interface IProps {
     onOrderByChange: (orderBy: string) => void;
     total: number;
     isCompare: boolean;
-    rankId: string;
+    selectedCard: CardInfo;
 }
 
 interface IColName {
@@ -154,11 +154,12 @@ const getTableColumns = function (
 
 let selectedRecord: OperatorDetail | undefined;
 
-async function redirectToTimeline(record: OperatorDetail, rankId: string): Promise<void> {
+async function redirectToTimeline(record: OperatorDetail, card: CardInfo): Promise<void> {
     const res = await fetchOperatorPosition({
         id: record.id,
         name: record.name,
-        rankId,
+        rankId: card.cardId,
+        dbPath: card.dbPath,
     });
     connector.send({
         event: 'switchModule',
@@ -179,7 +180,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,
-        onPageChange, total, onOrderChange, onOrderByChange, isCompare, rankId,
+        onPageChange, total, onOrderChange, onOrderByChange, isCompare, selectedCard,
     } = props;
     const [open, setOpen] = useState<boolean>(false);
     const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
@@ -201,7 +202,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                 key: 'findInTimeline',
                 onClick: (): void => {
                     if (selectedRecord !== undefined) {
-                        redirectToTimeline(selectedRecord, rankId);
+                        redirectToTimeline(selectedRecord, selectedCard);
                     }
                 },
             },
@@ -318,7 +319,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
     };
     const getTableData = async (value: OrderPageInfo = { currentPage: 1, pageSize: 10 }): Promise<void> => {
         setTableSpin(true);
-        if (memorySession === undefined || memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '') {
+        if (memorySession === undefined || memorySession.rankCondition.value === undefined || memorySession.rankCondition.value.cardId === '') {
             setTableSpin(false);
             setTableData([]);
             return;
@@ -326,7 +327,8 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
         try {
             const res = await fetchTableDataByComponent({
                 ...value,
-                rankId: memorySession.rankIdCondition.value,
+                rankId: memorySession.rankCondition.value.cardId,
+                dbPath: memorySession.rankCondition.value.dbPath,
                 isCompare: session.compareRank.isCompare,
             });
             setResponse({ ...res });
@@ -338,7 +340,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
 
     useEffect(() => {
         getTableData();
-    }, [memorySession?.rankIdCondition.value, session.compareRank.isCompare]);
+    }, [memorySession?.rankCondition.value.cardId, session.compareRank.isCompare, session.isAllMemoryCompletedSwitch]);
     useEffect(() => {
         pagination = { ...pagination, total: response.totalNum };
         setColumns(getTableColumns(response.columnAttr, theme, t, session.compareRank.isCompare, setExpandedKeys) as TableColumnsType<ComponentMemory>);

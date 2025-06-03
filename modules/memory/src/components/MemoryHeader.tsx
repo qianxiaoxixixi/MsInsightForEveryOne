@@ -7,11 +7,11 @@ import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { SearchBox, FlexDiv } from '../utils/styleUtils';
 import { MemoryHeaderStrategy } from '../utils/strategyUtils';
-import { Session } from '../entity/session';
-import { MemorySession, GroupBy } from '../entity/memorySession';
+import type { CardInfo, Session } from '../entity/session';
+import { MemorySession, GroupBy, DEFAULT_CARD_VALUE } from '../entity/memorySession';
 import { Label, useHit } from './Common';
 import { Select } from 'ascend-components';
-import { GroupRankIdsByHost, notNull } from 'ascend-utils';
+import { GroupCardInfosByHost, notNull } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
 import _ from 'lodash';
 
@@ -37,23 +37,23 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         label: t(`searchCriteria.${item.label}`),
     }));
 
-    const getRankIdOptions = (value: string, ranks?: Map<string, string[]>): string[] => {
+    const getRankOptions = (value: string, ranks?: Map<string, CardInfo[]>): CardInfo[] => {
         const tempRanks = _.cloneDeep(ranks);
         // 将db格式中rankId内的host名称剔除，只对RankId为数字做排序，不能转为数字的字符串则不排序
-        return (tempRanks?.get(value) ?? []).sort((a: any, b: any) => Number(a.replace(`${value} `, '')) - Number(b.replace(`${value} `, '')));
+        return (tempRanks?.get(value) ?? []).sort((a, b) => Number(a.cardId.replace(`${value} `, '')) - Number(b.cardId.replace(`${value} `, '')));
     };
 
     const onHostChanged = (value: string): void => {
-        const rankIdOptions = getRankIdOptions(value, memorySession.hostCondition.ranks);
+        const rankOptions = getRankOptions(value, memorySession.hostCondition.cardsMap);
         runInAction(() => {
             memorySession.hostCondition = { ...memorySession.hostCondition, value };
-            memorySession.rankIdCondition = { options: rankIdOptions, value: rankIdOptions[0] ?? '' };
+            memorySession.rankCondition = { options: rankOptions, value: rankOptions[0] ?? DEFAULT_CARD_VALUE };
         });
     };
 
-    const onRankIdChanged = (value: string): void => {
+    const onRankValueChanged = (value: CardInfo): void => {
         runInAction(() => {
-            memorySession.rankIdCondition = { ...memorySession.rankIdCondition, value };
+            memorySession.rankCondition = { ...memorySession.rankCondition, value };
         });
     };
 
@@ -64,47 +64,50 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     };
 
     useEffect(() => {
-        const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
+        const { hosts, cardsMap } = GroupCardInfosByHost(session.memoryCardInfos);
         // 判断是否为db场景（host存在compareRank中)，若是则取出host，否则hostCondition.value为空
         const list = session.compareRank.rankId.split(' ');
         const hostInRank = list.length > 1 ? list[0] : '';
         const host = notNull(memorySession.hostCondition.value) ? memorySession.hostCondition.value : hostInRank;
-        const rankIdOptions = getRankIdOptions(host, ranks);
+        const rankOptions = getRankOptions(host, cardsMap);
         runInAction(() => {
-            memorySession.hostCondition = { ...memorySession.hostCondition, options: hosts, ranks };
+            memorySession.hostCondition = { ...memorySession.hostCondition, options: hosts, cardsMap };
             if (!hosts.includes(host)) {
                 memorySession.hostCondition.value = '';
             } else {
                 memorySession.hostCondition.value = host ?? '';
             }
-            memorySession.rankIdCondition.options = rankIdOptions;
-            if (rankIdOptions.includes(session.compareRank.rankId)) {
-                memorySession.rankIdCondition.value = notNull(session.compareRank.rankId) ? session.compareRank.rankId : (rankIdOptions[0] ?? '');
+            memorySession.rankCondition.options = rankOptions;
+            const foundIdx = rankOptions.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
+            if (foundIdx >= 0) {
+                memorySession.rankCondition.value = rankOptions[foundIdx] ?? DEFAULT_CARD_VALUE;
             } else {
-                memorySession.rankIdCondition.value = '';
+                memorySession.rankCondition.value = rankOptions[0] ?? DEFAULT_CARD_VALUE;
             }
         });
-    }, [session.memoryRankIds.join('')]);
+    }, [session.memoryCardInfos]);
 
     useEffect(() => {
         runInAction(() => {
-            memorySession.rankIdCondition = { options: memorySession.rankIdCondition.options, value: session.compareRank.rankId };
+            memorySession.rankCondition.options = [...memorySession.rankCondition.options]; // 为了刷新页面
         });
-    }, [session.isClusterMemoryCompletedSwitch]);
+    }, [session.isAllMemoryCompletedSwitch]);
 
     useEffect(() => {
         const hostSetted = memorySession.hostCondition.options.length === 0 || memorySession.hostCondition.value !== '';
-        if (session.compareRank.rankId === memorySession.rankIdCondition.value && hostSetted) {
+        if (session.compareRank.rankId === memorySession.rankCondition.value.cardId && hostSetted) {
             return;
         }
         const list = session.compareRank.rankId.split(' ');
         if (list.length > 1) {
-            const rankIdOptions = getRankIdOptions(list[0], memorySession.hostCondition.ranks);
+            const rankOptions = getRankOptions(list[0], memorySession.hostCondition.cardsMap);
+            const hostCondition = { ...memorySession.hostCondition, value: memorySession.hostCondition.options.includes(list[0]) ? list[0] : '' };
+            const foundIdx = rankOptions.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
             runInAction(() => {
-                memorySession.hostCondition = { ...memorySession.hostCondition, value: memorySession.hostCondition.options.includes(list[0]) ? list[0] : '' };
-                memorySession.rankIdCondition = {
-                    options: rankIdOptions,
-                    value: rankIdOptions.includes(session.compareRank.rankId) ? session.compareRank.rankId : '',
+                memorySession.hostCondition = hostCondition;
+                memorySession.rankCondition = {
+                    options: rankOptions,
+                    value: foundIdx >= 0 ? rankOptions[foundIdx] : DEFAULT_CARD_VALUE,
                 };
             });
         } else {
@@ -112,8 +115,9 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                 memorySession.hostCondition.value = '';
             });
         }
-        if (session.memoryRankIds.includes(session.compareRank.rankId)) {
-            onRankIdChanged(session.compareRank.rankId);
+        const foundIdx = session.memoryCardInfos.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
+        if (foundIdx >= 0) {
+            onRankValueChanged(session.memoryCardInfos[foundIdx]);
         }
     }, [session.compareRank.rankId]);
 
@@ -124,59 +128,71 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
             });
         }
     }, [isCompare]);
+    const renderHostField = (): { key: string; element: JSX.Element } => {
+        return {
+            key: 'host',
+            element:
+                <FlexDiv>
+                    <Label name={t('searchCriteria.Host')} />
+                    <Select
+                        id={'select-host'}
+                        value={memorySession.hostCondition.value}
+                        size="middle"
+                        onChange={onHostChanged}
+                        disabled={isCompare}
+                        options={memorySession.hostCondition.options.map((host: string) => {
+                            return { value: host, label: host };
+                        })}
+                    />
+                </FlexDiv>,
+        };
+    };
+    const renderRankField = (): { key: string; element: JSX.Element } => {
+        return {
+            key: 'rankId',
+            element:
+                <FlexDiv>
+                    <Label name={t('searchCriteria.RankId')} />
+                    <Select
+                        id={'select-rankId'}
+                        value={memorySession.rankCondition.value.cardId}
+                        size="middle"
+                        onChange={(cardId: string): void => {
+                            const found = memorySession.rankCondition.options.find((item) => item.cardId === cardId);
+                            if (found) { onRankValueChanged(found); }
+                        }}
+                        disabled={isCompare}
+                        options={memorySession.rankCondition.options.map((item) => {
+                            return {
+                                value: item.cardId,
+                                label: item.cardId.replace(`${memorySession.hostCondition.value} `, ''),
+                            };
+                        })}
+                    />
+                </FlexDiv>,
+        };
+    };
+    const renderGroupIdField = (): { key: string; element: JSX.Element } => {
+        return {
+            key: 'groupId',
+            element:
+                <FlexDiv>
+                    <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
+                    <Select
+                        id={'select-groupId'}
+                        value={memorySession.groupId}
+                        style={{ width: 180 }}
+                        onChange={onGroupByChanged}
+                        options={groupByCondition}
+                    />
+                </FlexDiv>,
+        };
+    };
     const renderFields = (): JSX.Element[] => {
         const fields = [
-            {
-                key: 'host',
-                element:
-                    <FlexDiv>
-                        <Label name={t('searchCriteria.Host')} />
-                        <Select
-                            id={'select-host'}
-                            value={memorySession.hostCondition.value}
-                            size="middle"
-                            onChange={onHostChanged}
-                            disabled={isCompare}
-                            options={memorySession.hostCondition.options.map((host: string) => {
-                                return { value: host, label: host };
-                            })}
-                        />
-                    </FlexDiv>,
-            },
-            {
-                key: 'rankId',
-                element:
-                    <FlexDiv>
-                        <Label name={t('searchCriteria.RankId')} />
-                        <Select
-                            id={'select-rankId'}
-                            value={memorySession.rankIdCondition.value}
-                            size="middle"
-                            onChange={onRankIdChanged}
-                            disabled={isCompare}
-                            options={memorySession.rankIdCondition.options.map((rankId: string) => {
-                                return {
-                                    value: rankId,
-                                    label: rankId.replace(`${memorySession.hostCondition.value} `, ''),
-                                };
-                            })}
-                        />
-                    </FlexDiv>,
-            },
-            {
-                key: 'groupId',
-                element:
-                    <FlexDiv>
-                        <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
-                        <Select
-                            id={'select-groupId'}
-                            value={memorySession.groupId}
-                            style={{ width: 180 }}
-                            onChange={onGroupByChanged}
-                            options={groupByCondition}
-                        />
-                    </FlexDiv>,
-            },
+            renderHostField(),
+            renderRankField(),
+            renderGroupIdField(),
         ];
         return fields
             .filter((field) => strategy.shouldDisplay(field.key))

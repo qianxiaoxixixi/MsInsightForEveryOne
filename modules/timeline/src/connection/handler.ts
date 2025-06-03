@@ -489,7 +489,7 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         const singleDataPath = getPropFromData(data, 'singleDataPath') as string;
         const session = store.sessionStore.activeSession as Session;
         const removeUnits = getRemoveUnits(session, dataSource, singleDataPath);
-        const removeCardIds = getRemoveCardIds(removeUnits);
+        const removeCardInfos = getRemoveCardInfos(removeUnits);
         session.units = session?.units.filter((unit) => {
             const metadata = unit.metadata as any;
             if ((metadata.dataSource.dataPath as string[]) === undefined) {
@@ -518,10 +518,10 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
             const metadata = unit.metadata as any;
             return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
         });
-        await remoteDeleteRequest(session, dataSource, removeCardIds);
+        await remoteDeleteRequest(session, dataSource, removeCardInfos);
         clearTimeMarkerFlags(session);
         clearIpynbInfo(session);
-        connector.send({ event: 'deleteRank', body: { rankId: removeCardIds } });
+        connector.send({ event: 'deleteCard', body: { info: removeCardInfos } });
         // 更新已保存的页面设置
         updatePageSetting({ type: 'removeSingleDataPath', data });
     } catch (error) {
@@ -541,10 +541,10 @@ const getRemoveUnits = (session: Session, dataSource: DataSource, singleDataPath
     });
 };
 
-const getRemoveCardIds = (removeUnits: any[]): any[] => {
+const getRemoveCardInfos = (removeUnits: any[]): Array<{ cardId: string; dbPath: string }> => {
     return removeUnits.map((unit) => {
         const metadata = unit.metadata as any;
-        return metadata.cardId;
+        return { cardId: metadata.cardId, dbPath: metadata.dbPath };
     });
 };
 
