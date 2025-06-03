@@ -39,6 +39,7 @@ export interface Request {
     moduleName: string;
     params?: Record<string, unknown>;
     command: string;
+    fileId?: string; // 传递卡数据库路径 dbPath
     projectName?: string;
     token?: string;
 };

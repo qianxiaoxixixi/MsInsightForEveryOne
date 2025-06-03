@@ -44,6 +44,7 @@ export class Session {
     performanceData: PerformanceDataItem[] = []; // 性能数据
     performanceDataMap: PerformanceDataMap = new Map(); // 性能数据map
     rankDyeingData: RankDyeingData = {}; // 着色图例数据
+    rankDbPathMap: Map<string, string> = new Map(); // rank: `{clusterId} {host} {rankId} {deviceId}` -> dbPath: string
     communicationDomains: string[] = []; // 通信域（包含所有连线、框）
     ppCommunicationDomains: string[] = []; // PP 通信域（仅包含所有 PP 连线）
     stepList: string[] = [];

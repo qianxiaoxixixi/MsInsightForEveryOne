@@ -52,15 +52,16 @@ const ChartsContainer = styled.div`
 
 const chartDomIds = ['HCCS', 'PCIE', 'RDMA', 'SIO'];
 
-const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
+type BandwidthElementProps = Omit<WrapBandwidthDataParams, 'isDark' | 'domId'>;
+
+const BandwidthTable: React.FC<BandwidthElementProps> = (props: BandwidthElementProps) => {
     const [data, setData] = useState([]);
     useEffect(() => {
         updateData();
     }, []);
 
     const updateData = async(): Promise<void> => {
-        const result = await getTableData(
-            { iterationId: props.iterationId, rankId: props.rankId, operatorName: props.operatorName, stage: props.stage, pgName: props.pgName });
+        const result = await getTableData(props);
         const newData = wrapData(result ?? []);
         setData(newData);
     };
@@ -94,19 +95,19 @@ function wrapData(data: any): any {
     return rdma !== undefined ? [{ ...sdma, children: hp }, rdma] : [{ ...sdma, children: hp }];
 }
 
-const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string;
-    stage: string; pgName: string; }> = (props: any) => {
-    const { iterationId, rankId, operatorName, stage, pgName } = props;
+const BandwidthChart: React.FC<BandwidthElementProps> = (props: BandwidthElementProps) => {
+    const { iterationId, rankId, dbPath, operatorName, stage, pgName } = props;
     const { t } = useTranslation('communication');
     const theme = useTheme();
     const isDark = theme.mode === 'dark';
     const locale = i18n.language?.slice(0, 2);
 
     useEffect(() => {
-        InitPacketAndBandwidthCharts({ domId: 'HCCS', iterationId, rankId, operatorName, stage, isDark, locale, pgName });
-        InitPacketAndBandwidthCharts({ domId: 'PCIE', iterationId, rankId, operatorName, stage, isDark, locale, pgName });
-        InitPacketAndBandwidthCharts({ domId: 'RDMA', iterationId, rankId, operatorName, stage, isDark, locale, pgName });
-        InitPacketAndBandwidthCharts({ domId: 'SIO', iterationId, rankId, operatorName, stage, isDark, locale, pgName });
+        const params = { iterationId, rankId, dbPath, operatorName, stage, isDark, locale, pgName };
+        InitPacketAndBandwidthCharts({ ...params, domId: 'HCCS' });
+        InitPacketAndBandwidthCharts({ ...params, domId: 'PCIE' });
+        InitPacketAndBandwidthCharts({ ...params, domId: 'RDMA' });
+        InitPacketAndBandwidthCharts({ ...params, domId: 'SIO' });
     }, [t, theme]);
     return (
         <ChartsContainer>
@@ -134,7 +135,7 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
 };
 
 const BandwidthAnalysis = observer((props:
-{ iterationId: string; rankId: number; operatorName: string; stage: string; pgName: string }) => {
+{ iterationId: string; rankId: number; dbPath: string; operatorName: string; stage: string; pgName: string }) => {
     const { t } = useTranslation('communication');
     return (
         <div>
@@ -148,8 +149,7 @@ const BandwidthAnalysis = observer((props:
     );
 });
 
-async function getTableData(params:
-{ iterationId: string; rankId: number; operatorName: string; stage: string; pgName: string }): Promise<any> {
+async function getTableData(params: BandwidthElementProps): Promise<any> {
     return await queryCommunicationBandwidth(params);
 }
 
@@ -161,6 +161,7 @@ async function InitPacketAndBandwidthCharts({
     domId,
     iterationId,
     rankId,
+    dbPath,
     operatorName,
     stage,
     isDark,
@@ -169,7 +170,7 @@ async function InitPacketAndBandwidthCharts({
 }: PacketAndBandwidthChartsParams): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
-        const res = await wrapBandwidthData({ domId, iterationId, rankId, operatorName, stage, isDark, pgName });
+        const res = await wrapBandwidthData({ domId, iterationId, rankId, dbPath, operatorName, stage, isDark, pgName });
         if (res === null || res === undefined) {
             const root = createRoot(chartDom);
             root.render(<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>);
@@ -188,9 +189,9 @@ const translateList = <T extends Record<string, any>>(list: T[]): T[] => {
     }));
 };
 
-async function wrapBandwidthData({ domId, iterationId, rankId, operatorName, stage, isDark, pgName }: WrapBandwidthDataParams):
+async function wrapBandwidthData({ domId, iterationId, rankId, dbPath, operatorName, stage, isDark, pgName }: WrapBandwidthDataParams):
 Promise<echarts.EChartsOption | null> {
-    const distributionData = await getChartData({ domId, iterationId, rankId, operatorName, stage, pgName } as PacketAndBandwidthChartsParams);
+    const distributionData = await getChartData({ domId, iterationId, rankId, dbPath, operatorName, stage, pgName } as PacketAndBandwidthChartsParams);
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];

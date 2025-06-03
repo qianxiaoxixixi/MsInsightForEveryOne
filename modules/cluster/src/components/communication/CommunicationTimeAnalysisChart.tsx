@@ -250,6 +250,7 @@ export interface OperatorTimeItem {
 }
 export interface OperatorTimeInfo {
     rankId: string;
+    dbPath: string;
     lists: CompareData<OperatorTimeItem[]>;
 }
 
@@ -262,6 +263,7 @@ export interface AnalysisChartData {
 interface OpDetail {
     name: string;
     rankId: number;
+    dbPath: string;
     timestamp: number;
     duration: number;
 }
@@ -274,6 +276,8 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     }
     disposeAdaptiveEchart(chartDom);
     const myChart = getAdaptiveEchart(chartDom);
+    const rankDbPathMap: Map<string, string> = new Map();
+    dataSource?.data?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
     myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
         setDropDownVisible(true);
 
@@ -281,6 +285,7 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
         selectedOpDetail = {
             name: e.name,
             rankId,
+            dbPath: rankDbPathMap.get(rankId.toString()) ?? '',
             timestamp: msToNs(timestamp),
             duration: msToNs(duration),
         };
@@ -307,10 +312,11 @@ async function redirectToTimeline(): Promise<void> {
     if (selectedOpDetail === null) {
         return;
     }
-    const { name, rankId, duration } = selectedOpDetail;
+    const { name, rankId, dbPath, duration } = selectedOpDetail;
     const params = {
         name,
         rankId: rankId.toString(),
+        dbPath,
     };
     try {
         const res = await queryTimelineUnitKernelDetail(params);

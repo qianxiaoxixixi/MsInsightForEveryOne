@@ -12,7 +12,7 @@ import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
 import { type ErrorInfo, VoidFunction } from '../../utils/interface';
-import { queryOperatorDetails } from '../../utils/RequestUtils';
+import { queryOperatorDetails, queryTimelineUnitKernelDetail } from '../../utils/RequestUtils';
 import { type ConditionDataType, totalOperator, updateData } from './Filter';
 import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
@@ -22,9 +22,11 @@ import { CompareNumber } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import type { DataItem, Duration } from './CommunicationTimeChart';
 import connector from '../../connection';
+import { CardInfo } from './CommunicationAnalysis';
 
 export type DataType = Duration & {
     rankId: string;
+    dbPath: string;
     expanded: boolean;
     source: Source;
     index: number;
@@ -87,6 +89,7 @@ const useCommonColumns = (): ColumnsType<DataType> => {
 interface OpDetail {
     operatorName: string;
     rankId: number;
+    dbPath: string;
     elapseTime: number;
 }
 let selectedOpDetail: OpDetail | null;
@@ -96,14 +99,16 @@ async function redirectToTimeline(): Promise<void> {
     }
     const name = selectedOpDetail.operatorName;
     const rankId = selectedOpDetail.rankId;
+    const dbPath = selectedOpDetail.dbPath;
     const NS_TO_MS_FACTOR = 0.000001;
     const duration = Math.round(selectedOpDetail.elapseTime / NS_TO_MS_FACTOR);
     const params = {
         name,
         rankId: rankId.toString(),
+        dbPath,
     };
     try {
-        const res = await window.requestData('unit/kernelDetail', params, 'timeline');
+        const res = await queryTimelineUnitKernelDetail(params);
         const resObj = res ?? {};
         connector.send({
             event: 'switchModule',
@@ -116,6 +121,7 @@ async function redirectToTimeline(): Promise<void> {
                     processId: resObj.pid,
                     startTime: resObj.startTime,
                     rankId: resObj.rankId,
+                    dbPath,
                     duration,
                 },
             },
@@ -178,6 +184,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
         const res = await queryOperatorDetails({
             iterationId: record.source === Source.COMPARISON ? conditions.iterationId : conditions.baselineIterationId,
             rankId: record.rankId,
+            dbPath: record.dbPath ?? '',
             currentPage: _page.current,
             pageSize: _page.pageSize,
             orderBy: _sorter.field,
@@ -277,7 +284,10 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: ConditionDataT
         {
             title: t('tableHead.Bandwidth Analysis'),
             ...commonColumnConfig,
-            render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { showOperator(record.rankId); }}>{t('tableHead.see more')}</Button>),
+            render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => showOperator({
+                cardId: record.rankId,
+                dbPath: record.dbPath,
+            } as CardInfo)}>{t('tableHead.see more')}</Button>),
             display: tableLevel === TableLevel.RANK,
         },
         {

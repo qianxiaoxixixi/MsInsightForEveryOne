@@ -211,11 +211,12 @@ const useTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     return { rowKey, columns };
 };
 
-const searchData = async({ rankId, record, page, sorter, name, step, clusterPath }: any): Promise<{total: number;data: object[]}> => {
+const searchData = async({ rankId, dbPath, record, page, sorter, name, step, clusterPath }: any): Promise<{total: number;data: object[]}> => {
     let data;
     let total;
     const param = {
         rankId,
+        dbPath,
         timeFlag: record.acceleratorCore,
         currentPage: page.current,
         pageSize: page.pageSize,
@@ -254,7 +255,7 @@ const searchData = async({ rankId, record, page, sorter, name, step, clusterPath
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: 'descend' };
-const DetailTable = ({ rankId, record, name, step, clusterPath }: any): JSX.Element => {
+const DetailTable = ({ rankId, dbPath, record, name, step, clusterPath }: any): JSX.Element => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
@@ -263,7 +264,7 @@ const DetailTable = ({ rankId, record, name, step, clusterPath }: any): JSX.Elem
         updateData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId]);
     const updateData = async(_page: any, _sorter: any): Promise<void> => {
-        const { data, total } = await searchData({ rankId, record, page: _page, sorter: _sorter, name, step, clusterPath });
+        const { data, total } = await searchData({ rankId, dbPath, record, page: _page, sorter: _sorter, name, step, clusterPath });
         setDataSource(data);
         setPage({ ..._page, total });
     };
@@ -298,7 +299,7 @@ function getTitle(timeFlag: string, t: TFunction): string {
 
 export const ComputeStatisticsTable = (props: any): JSX.Element => {
     const timeFlag = 'compute';
-    const { rankId = '', step = '', session } = props;
+    const { rankId = '', dbPath = '', step = '', session } = props;
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const { columns, rowKey } = useTableSet(timeFlag, setExpandedKeys);
@@ -308,7 +309,8 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
     }, [props.rankId, props.step, session.selectedClusterPath]);
     const updateData = async (): Promise<void> => {
         try {
-            const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step, clusterPath: session.selectedClusterPath });
+            const res = await querySummaryStatistics(
+                { timeFlag, rankId, dbPath, stepId: step === 'All' ? '' : step, clusterPath: session.selectedClusterPath });
             let data = res?.summaryStatisticsItemList ?? [];
             data = data.map((item: any) => ({
                 ...item,
@@ -326,7 +328,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         columns={columns}
         expandable={{
             expandedRowRender: (record: any) => <DetailTable record={record}
-                name={`${timeFlag}Detail`} rankId={ rankId} step={step} clusterPath={session.selectedClusterPath} />,
+                name={`${timeFlag}Detail`} rankId={rankId} dbPath={dbPath} step={step} clusterPath={session.selectedClusterPath} />,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}
@@ -337,7 +339,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
 
 export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     const timeFlag = 'communication';
-    const { rankId = '', step = '', session } = props;
+    const { rankId = '', dbPath = '', step = '', session } = props;
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const { columns, rowKey } = useTableSet(timeFlag, setExpandedKeys);
@@ -348,7 +350,8 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     const updateData = async (): Promise<void> => {
         let list: any[] = [];
         try {
-            const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step, clusterPath: session.selectedClusterPath });
+            const res = await querySummaryStatistics(
+                { timeFlag, rankId, dbPath, stepId: step === 'All' ? '' : step, clusterPath: session.selectedClusterPath });
             list = res?.summaryStatisticsItemList ?? [];
         } catch (e) {
             list = [];
@@ -367,7 +370,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         columns={columns}
         expandable={{
             expandedRowRender: (record: any) => <DetailTable record={record}
-                name={'communicationDetail' } rankId={ rankId} step={step} clusterPath={session.selectedClusterPath} />,
+                name={'communicationDetail' } rankId={rankId} dbPath={dbPath} step={step} clusterPath={session.selectedClusterPath} />,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}
@@ -376,8 +379,8 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     />;
 };
 
-export const StatisticsTable = (props: {step: string; rankId: string;session: Session }): JSX.Element => {
-    const { rankId = '', step = '', session } = props;
+export const StatisticsTable = (props: {step: string; rankId: string; dbPath: string; session: Session }): JSX.Element => {
+    const { rankId = '', dbPath = '', step = '', session } = props;
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
@@ -389,7 +392,7 @@ export const StatisticsTable = (props: {step: string; rankId: string;session: Se
                         headerStyle={{ padding: 0 }}
                         contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
                         {session.parseCompleted
-                            ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
+                            ? (<ComputeStatisticsTable rankId={rankId} dbPath={dbPath} step={step} session={session}/>)
                             : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>
                         }
                     </CollapsiblePanel>
@@ -404,7 +407,7 @@ export const StatisticsTable = (props: {step: string; rankId: string;session: Se
                                     headerStyle={{ padding: 0 }}
                                     contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
                                     {session.parseCompleted
-                                        ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>
+                                        ? <CommunicationStatisticsTable rankId={rankId} dbPath={dbPath} step={step} session={session}/>
                                         : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>
                                     }
                                 </CollapsiblePanel>
