@@ -560,8 +560,26 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
         " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
         " LEFT JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
         " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, mstx.message, main.taskType) "
-        "WHERE main.deviceId = ? AND main.streamId = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, params.tid);
+        "WHERE main.deviceId = ? ";
+    std::vector<std::string> temp = std::vector<std::string>(params.threadIdList.size(), "?");
+    std::string tempSql = StringUtil::join(temp, ",");
+    sql.append("AND main.streamId IN ( ");
+    sql.append(tempSql);
+    sql.append(" ) ");
+    sql.append(orderByCondition);
+    stmt->Prepare(sql);
+    if (stmt == nullptr) {
+        throw DatabaseException("Failed to prepare sql.");
+    }
+    stmt->BindParams(rankId);
+    for (const auto &item: params.threadIdList) {
+        stmt->BindParams(item);
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        throw DatabaseException("Failed to ExecuteQuery.");
+    }
+    return resultSet;
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -745,7 +763,7 @@ std::unique_ptr<SqliteResultSet> QueryEventsViewResultSet(std::unique_ptr <Sqlit
         case Protocol::PROCESS_TYPE::CANN_API:
             return GetEventsViewResult4CANNAPI(stmt, orderByCondition, params);
         case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
-            if (params.tid.empty() && params.threadName.empty()) {
+            if (params.threadIdList.empty() && params.threadName.empty()) {
                 return QueryEventsView4Hardware(stmt, orderByCondition, params, rankId);
             } else {
                 return QueryEventsView4Stream(stmt, orderByCondition, params, rankId);
@@ -894,8 +912,12 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
 
     // 拼接SQL语句
     sql4Details.append("WHERE t.pid = ? ");
-    if (!params.tid.empty()) {
-        sql4Details.append("AND t.tid = ? ");
+    if (!params.threadIdList.empty()) {
+        std::vector<std::string> temp = std::vector<std::string>(params.threadIdList.size(), "?");
+        std::string tempSql = StringUtil::join(temp, ",");
+        sql4Details.append("AND t.tid IN ( ");
+        sql4Details.append(tempSql);
+        sql4Details.append(" ) ");
     }
 
     // 拼接分页相关的条件
@@ -905,10 +927,21 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
     // 查询数据库
     std::unique_ptr<SqliteResultSet> resultSet;
     try {
-        if (params.tid.empty()) {
+        if (params.threadIdList.empty()) {
             resultSet = ExecuteQuery(stmt, sql4Details, params.pid);
         } else {
-            resultSet = ExecuteQuery(stmt, sql4Details, params.pid, params.tid);
+            stmt->Prepare(sql4Details);
+            if (stmt == nullptr) {
+                throw DatabaseException("Failed to prepare sql.");
+            }
+            stmt->BindParams(params.pid);
+            for (const auto &item: params.threadIdList) {
+                stmt->BindParams(item);
+            }
+            resultSet = stmt->ExecuteQuery();
+            if (resultSet == nullptr) {
+                throw DatabaseException("Failed to ExecuteQuery.");
+            }
         }
     } catch (DatabaseException &e) {
         ServerLog::Error("Query events view data for text. Execute query failed: ", e.What());

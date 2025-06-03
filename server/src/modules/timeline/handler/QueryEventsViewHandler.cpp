@@ -33,6 +33,9 @@ bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    if (!request.params.tid.empty()) {
+        request.params.threadIdList.emplace_back(request.params.tid);
+    }
     if (!database->QueryEventsViewData(request.params, responsePtr->body,
         TraceTime::Instance().GetStartTime())) {
         ServerLog::Warn("Failed to get events view table response data.");
