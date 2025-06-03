@@ -1,6 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+import { CardInfo } from '../entity/session';
+
 export interface StringMap {
     [prop: string]: string;
 }
@@ -9,13 +11,16 @@ export interface VoidFunction {
     (...rest: any[]): void;
 }
 
-export interface optionDataType {
-    data?: any;
+export interface OptionDataType {
+    cards?: CardInfo[];
     key?: string;
     label: React.ReactNode;
     value: string | number;
 }
 
-export interface optionMapType {
-    [props: string]: optionDataType[];
+export interface OptionMapType {
+    rankOptions: Array<OptionDataType & { dbPath: string }>;
+    hostOptions: OptionDataType[];
+    groupOptions: OptionDataType[];
+    topKOptions: OptionDataType[];
 }

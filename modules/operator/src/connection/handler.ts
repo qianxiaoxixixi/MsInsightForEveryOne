@@ -5,7 +5,7 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from 'ascend-i18n';
-import { DirInfo } from '../entity/session';
+import type { CardInfo, DirInfo } from '../entity/session';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -23,9 +23,8 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
             if (sessionKeys.includes(key)) {
                 (session as any)[key] = data[key];
             }
-            if (key === 'operatorRankIds') {
-                const ids = [...session.allRankIds, ...data[key] as string[]].sort((a, b) => Number(a) - Number(b));
-                session.allRankIds = ids;
+            if (key === 'operatorCardInfos') {
+                session.allCardInfos = [...data[key] as CardInfo[]].sort((a, b) => Number(a.index) - Number(b.index));
             }
         });
         session.renderId = session.renderId++ % 1000;
@@ -43,6 +42,7 @@ export const switchDirectoryHandler: NotificationHandler = async (data): Promise
     });
 };
 
+/** framework 过滤器中也有拦截，逻辑一致 {@link parseOperatorSuccessHandler} */
 export const parseSuccessHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
@@ -50,9 +50,12 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        if (!session.allRankIds.includes(String(data.rankId))) {
-            const ids = [...session.allRankIds, String(data.rankId)].sort((a, b) => Number(a) - Number(b));
-            session.allRankIds = ids;
+        if (session.allCardInfos.every(({ cardId }) => cardId !== String(data.rankId))) {
+            session.allCardInfos = [...session.allCardInfos, {
+                cardId: String(data.rankId),
+                dbPath: data.dbPath ?? '',
+                index: Number.isNaN(data.rankId) ? 0 : Number(data.rankId),
+            } as CardInfo].sort((a, b) => a.index - b.index);
         }
     });
 };
@@ -64,7 +67,7 @@ export const resetHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        session.allRankIds = [];
+        session.allCardInfos = [];
     });
 };
 
@@ -75,10 +78,9 @@ export const deleteRankHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        const deleteIds: string[] = data.rankId as string[];
-        if (deleteIds.length > 0) {
-            const rankIds = session.allRankIds.filter((item: string) => !deleteIds?.includes(item));
-            session.allRankIds = rankIds;
+        const deleteIds: Set<string> = new Set(data.rankId as string[]);
+        if (deleteIds.size > 0) {
+            session.allCardInfos = session.allCardInfos.filter((item) => !deleteIds.has(item.cardId));
         }
     });
 };

@@ -4,9 +4,10 @@
 
 export interface ShortParam {
     rankId: string;
+    dbPath: string;
     group: string;
     topK: number;
-};
+}
 export type StaticParam = ShortParam & {
     current: number;
     pageSize: number;

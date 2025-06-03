@@ -402,8 +402,6 @@ function resetSession(): void {
         const session = store.sessionStore.activeSession as Session;
         Object.assign(session, {
             doReset: !session.doReset,
-            memoryRankIds: [],
-            operatorRankIds: [],
             expandedUnitKeys: [],
             contextMenu: defaultSessionData.contextMenu,
             unitsConfig: defaultSessionData.unitsConfig,
@@ -524,13 +522,6 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         clearTimeMarkerFlags(session);
         clearIpynbInfo(session);
         connector.send({ event: 'deleteRank', body: { rankId: removeCardIds } });
-        if (removeCardIds.length > 0) {
-            const memoryRankIds = session.memoryRankIds.filter((item: string) => !removeCardIds?.includes(item));
-            session.memoryRankIds = memoryRankIds;
-            const operatorRankIds = session.operatorRankIds.filter((item: string) => !removeCardIds?.includes(item));
-            session.operatorRankIds = operatorRankIds;
-            connector.send({ event: 'updateSession', body: { operatorRankIds, memoryRankIds, broadcast: false } });
-        }
         // 更新已保存的页面设置
         updatePageSetting({ type: 'removeSingleDataPath', data });
     } catch (error) {
@@ -637,19 +628,6 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
         });
     }
     i18n.changeLanguage(lang);
-};
-
-export const parseOperatorSuccessHandler: NotificationHandler = (data): void => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
-    runInAction(() => {
-        if (!session) {
-            return;
-        }
-        const ids = [...session.operatorRankIds, String(data.rankId)].sort((a, b) => Number(a) - Number(b));
-        session.operatorRankIds = ids;
-        connector.send({ event: 'updateSession', body: { operatorRankIds: session.operatorRankIds, broadcast: false } });
-    });
 };
 
 interface CardOffset {

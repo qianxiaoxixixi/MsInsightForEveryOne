@@ -17,7 +17,6 @@ import {
     locateUnitHandler,
     jupyterCompletedHandler,
     switchLanguageHandler,
-    parseOperatorSuccessHandler,
     baselineAddHandler,
     removeBaselineHandler,
     updateProjectNameHandler,
@@ -35,7 +34,6 @@ export interface InterfaceDefs {
 };
 
 const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
-const OPERATOR_COMPLETED = 'parse/operatorCompleted';
 const REMOTE_SAVE_PAGE_SETTING = 'remote/savePageSetting';
 const REMOTE_IMPORT = 'remote/import';
 const REMOTE_REMOVE = 'remote/remove';
@@ -61,7 +59,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [PARSE_CLUSTER_COMPLETED]: clusterCompletedHandler,
     [PARSE_CLUSTER_STEP2_COMPLETED]: clusterDurationCompletedHandler,
     [JUPYTER_COMPLETED]: jupyterCompletedHandler,
-    [OPERATOR_COMPLETED]: parseOperatorSuccessHandler,
     [BASELINE_ADD]: baselineAddHandler,
     [BASELINE_REMOVE]: removeBaselineHandler,
     setTheme,

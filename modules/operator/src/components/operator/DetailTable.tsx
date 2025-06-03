@@ -19,6 +19,7 @@ import { HelpIcon } from 'ascend-icon';
 interface FullConditionType {
     isCompare: boolean;
     rankId: string;
+    dbPath: string;
     group: string;
     topK: number;
     current: number;
@@ -255,7 +256,20 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [fullCondition, setFullCondition] = useState<FullConditionType>({
-        isCompare: false, current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
+        isCompare: false,
+        current: 1,
+        pageSize: 10,
+        field: '',
+        order: '',
+        group: '',
+        rankId: '',
+        dbPath: '',
+        topK: 0,
+        type: [],
+        opType: [],
+        name: [],
+        opName: [],
+        accCore: [],
     });
     const [compareColumnLevel, setCompareColumnLevel] = useState<string>();
     const [comparePmuColumns, setComparePmuColumns] = useState<string[]>([]);
@@ -329,7 +343,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const updateFullCondition = (obj: FullConditionType): void => {
         setTimeout(() => {
             const newFullCondition = { ...fullCondition };
-            const keys = ['group', 'rankId', 'topK', 'current', 'pageSize',
+            const keys = ['group', 'rankId', 'dbPath', 'topK', 'current', 'pageSize',
                 'field', 'order', 'type', 'opType', 'name', 'opName', 'accCore', 'isCompare'];
             Object.keys(obj).forEach(key => {
                 if (keys.includes(key)) {
@@ -472,6 +486,7 @@ const ExportBtn = ({ condition }: { condition: ConditionType }): JSX.Element => 
         try {
             const res = await exportOperatorDetail({
                 rankId: condition.rankId,
+                dbPath: condition.dbPath,
                 group: condition.group,
                 topK: condition.topK,
                 isCompare: condition.isCompare,

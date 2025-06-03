@@ -25,7 +25,7 @@ const App = observer(() => {
     useEffect(() => {
         session = sessionStore.activeSession;
         window.setTheme(true);
-        connector.send({ event: 'getParseStatus', body: { from: 'Operator', requests: ['language', 'theme', 'operatorRankIds', 'directory'] } });
+        connector.send({ event: 'getParseStatus', body: { from: 'Operator', requests: ['language', 'theme', 'operatorCardInfos', 'directory'] } });
     }, []);
 
     return session !== undefined

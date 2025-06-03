@@ -5,6 +5,7 @@ import type { NotificationInterceptor } from './defs';
 import { type DataSource } from '@/centralServer/websocket/defs';
 import { updateSession } from '@/connection/notificationHandler';
 import { store } from '@/store';
+import type { CardInfo } from '@/entity/session';
 import { runInAction } from 'mobx';
 
 interface ImportActionBody {
@@ -31,7 +32,10 @@ interface MemoryResult {
 interface ParseMemoryNotification {
     memoryResult: MemoryResult[];
 }
-
+interface ParseOperatorNotification {
+    rankId: string; // 实际是 cardId, rankId 应该只有数字，而 cardId 可能在前面带有 host，形如: `{host} {rankId}`
+    dbPath?: string;
+}
 interface ParseStatisticNotification {
     rankIds: string[];
 }
@@ -49,6 +53,20 @@ export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotif
         }
     });
     updateSession({ memoryRankIds });
+};
+
+export const parseOperatorSuccessHandler: NotificationInterceptor<ParseOperatorNotification> = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    if (!session) {
+        return;
+    }
+    const ids = [...session.operatorCardInfos, {
+        cardId: String(data.rankId),
+        dbPath: data.dbPath ?? '',
+        index: Number.isNaN(data.rankId) ? 0 : Number(data.rankId),
+    } as CardInfo].sort((a, b) => a.index - b.index);
+    updateSession({ operatorCardInfos: ids });
 };
 
 export const parseStatisticSuccessHandler: NotificationInterceptor<ParseStatisticNotification> = (data): void => {
