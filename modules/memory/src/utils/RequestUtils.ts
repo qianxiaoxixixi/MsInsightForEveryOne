@@ -22,11 +22,11 @@ import { GroupBy } from '../entity/memorySession';
  * @param params 查询条件
  * @returns { 'dynamic' | 'static' | 'mix' } 查询结果
  */
-export const memoryTypeGet = async (params: { rankId: string }): Promise<MemoryType> => {
+export const memoryTypeGet = async (params: { rankId: string; dbPath: string }): Promise<MemoryType> => {
     return window.request({ command: 'Memory/view/type', params });
 };
 
-export const resourceTypeGet = async (params: { rankId: string }): Promise<ResourceType> => {
+export const resourceTypeGet = async (params: { rankId: string; dbPath: string }): Promise<ResourceType> => {
     return window.request({ command: 'Memory/view/resourceType', params });
 };
 
@@ -45,7 +45,7 @@ export const staticOpMemoryListGet = (params: StaticMemoryCondition): Promise<St
  * @returns {StaticOperatorGraph[]} 查询结果
  */
 export const staticOpMemoryGraphGet = async (params: {
-    rankId: string; graphId: string; modelName?: string; isCompare: boolean;
+    rankId: string; dbPath: string; graphId: string; modelName?: string; isCompare: boolean;
 }): Promise<StaticOperatorCurve> => {
     return window.request({ command: 'Memory/view/staticOpMemoryGraph', params: { ...params } });
 };
@@ -64,7 +64,7 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
  * @param params 查询条件
  * @returns {OperatorDetail[]} 查询结果
  */
-export const memoryCurveGet = async (params: { rankId: string; type: GroupBy; isCompare: boolean }): Promise<MemoryCurve> => {
+export const memoryCurveGet = async (params: { rankId: string; dbPath: string; type: GroupBy; isCompare: boolean }): Promise<MemoryCurve> => {
     return window.request({ command: 'Memory/view/memoryUsage', params });
 };
 

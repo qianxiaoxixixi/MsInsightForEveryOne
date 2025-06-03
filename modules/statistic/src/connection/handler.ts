@@ -90,7 +90,7 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
     }
 };
 
-export const deleteRankHandler: NotificationHandler = async (data): Promise<void> => {
+export const deleteCardHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
@@ -98,9 +98,9 @@ export const deleteRankHandler: NotificationHandler = async (data): Promise<void
             if (!session) {
                 return;
             }
-            const deleteIds: string[] = data.rankId as string[];
-            if (deleteIds.length > 0) {
-                session.iERankIds = session.iERankIds.filter((item: string) => !deleteIds?.includes(item));
+            const deleteIds: Set<string> = new Set((data.info as Array<{ cardId: string; dbPath: string }>).map(({ cardId }) => cardId));
+            if (deleteIds.size > 0) {
+                session.iERankIds = session.iERankIds.filter((item: string) => !deleteIds.has(item));
             }
         });
     } catch (error) {

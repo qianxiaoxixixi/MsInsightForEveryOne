@@ -8,7 +8,7 @@ import {
     switchDirectoryHandler,
     parseSuccessHandler,
     resetHandler,
-    deleteRankHandler,
+    deleteCardHandler,
     switchLanguageHandler,
 } from './connection/handler';
 
@@ -20,6 +20,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'remote/remove': resetHandler,
     'remote/reset': resetHandler,
     'module.reset': resetHandler,
-    deleteRank: deleteRankHandler,
+    deleteCard: deleteCardHandler,
     switchLanguage: switchLanguageHandler,
 };

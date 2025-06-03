@@ -140,8 +140,13 @@ function ImportDataBtn({ projectName, session }: {projectName: string;session: S
     </Tooltip>;
 };
 
-const createCompareRankIdFuncWithProjectName = (projectName: string): (a: FileOrDirectory, b: FileOrDirectory) => number =>
-    (a, b) => getRankId({ projectName, filePath: a.path }).localeCompare(getRankId({ projectName, filePath: b.path }));
+const createCompareRankIdFuncWithProjectName = (projectName: string):
+(a: FileOrDirectory, b: FileOrDirectory) => number => (a, b) => {
+    const aRankId = getRankId({ projectName, filePath: a.path });
+    const bRankId = getRankId({ projectName, filePath: b.path });
+    const deltaLen = aRankId.length - bRankId.length;
+    return deltaLen === 0 ? aRankId.localeCompare(bRankId) : deltaLen;
+};
 
 const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: number, session: Session, depth: number): ProjectTreeDataNode => {
     const isLeaf = depth >= 5 || data.children.length <= 0;

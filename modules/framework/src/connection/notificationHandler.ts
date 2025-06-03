@@ -3,7 +3,7 @@
  */
 import { runInAction } from 'mobx';
 import { store } from '@/store';
-import type { Session } from '@/entity/session';
+import type { CardInfo, Session } from '@/entity/session';
 import connector from '@/connection';
 import { firstLetterUpper } from '@/utils';
 import {
@@ -112,18 +112,21 @@ export const getThemeHandler = (): void => {
     sendTheme();
 };
 
-export const deleteRankHandler = (e: NotificationMessage): void => {
+// 接收从 timeline removeSingleRemoteHandler 传来的删除卡消息
+export const deleteCardHandler = (e: NotificationMessage): void => {
     const receiver = e.data.body;
     if (receiver === null || receiver === undefined) {
         console.warn('data.body is undefined, please check your params');
         return;
     }
-    connector.send({ event: 'deleteRank', body: receiver });
-    const deleteIds: string[] = receiver.rankId as string[];
-    if (deleteIds.length > 0) {
+    connector.send({ event: 'deleteCard', body: receiver });
+    const removeCardInfos = receiver.info as CardInfo[];
+    const removeCardIds: Set<string> = new Set(removeCardInfos.map(({ cardId }) => cardId));
+    if (removeCardIds.size > 0) {
         const session = store.sessionStore.activeSession;
-        const memoryRankIds = session.memoryRankIds.filter((item: string) => !deleteIds?.includes(item));
-        updateSession({ memoryRankIds });
+        const memoryCardInfos = session.memoryCardInfos.filter((item) => !removeCardIds.has(item.cardId));
+        const operatorCardInfos = session.operatorCardInfos.filter((item) => !removeCardIds.has(item.cardId));
+        updateSession({ memoryCardInfos, operatorCardInfos });
     }
 };
 

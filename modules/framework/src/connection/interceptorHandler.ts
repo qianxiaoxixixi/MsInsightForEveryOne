@@ -27,7 +27,9 @@ export interface ImportActionResponse {
 
 interface MemoryResult {
     hasMemory: boolean;
-    rankId: string;
+    rankId: string; // 实际是 cardId, rankId 应该只有数字，而 cardId 可能在前面带有 host，形如: `{host} {rankId}`
+    dbPath?: string;
+    index: number;
 }
 interface ParseMemoryNotification {
     memoryResult: MemoryResult[];
@@ -35,6 +37,7 @@ interface ParseMemoryNotification {
 interface ParseOperatorNotification {
     rankId: string; // 实际是 cardId, rankId 应该只有数字，而 cardId 可能在前面带有 host，形如: `{host} {rankId}`
     dbPath?: string;
+    index: number;
 }
 interface ParseStatisticNotification {
     rankIds: string[];
@@ -46,13 +49,15 @@ interface ParseHeatmapNotification {
 
 export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotification> = (data): void => {
     const session = store.sessionStore.activeSession;
-    const memoryRankIds: string[] = [...session.memoryRankIds];
+    const currentCardInfos: CardInfo[] = [...session.memoryCardInfos];
+    const memoryCardIdSet: Set<string> = new Set(currentCardInfos.map(({ cardId }): string => cardId));
     data.memoryResult.forEach((item) => {
-        if (!memoryRankIds.includes(item.rankId) && item.hasMemory) {
-            memoryRankIds.push(item.rankId);
+        if (!memoryCardIdSet.has(item.rankId) && item.hasMemory) {
+            currentCardInfos.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: Number.isNaN(item.rankId) ? 0 : Number(item.rankId) });
+            memoryCardIdSet.add(item.rankId);
         }
     });
-    updateSession({ memoryRankIds });
+    updateSession({ memoryCardInfos: currentCardInfos });
 };
 
 export const parseOperatorSuccessHandler: NotificationInterceptor<ParseOperatorNotification> = (data): void => {
@@ -65,7 +70,7 @@ export const parseOperatorSuccessHandler: NotificationInterceptor<ParseOperatorN
         cardId: String(data.rankId),
         dbPath: data.dbPath ?? '',
         index: Number.isNaN(data.rankId) ? 0 : Number(data.rankId),
-    } as CardInfo].sort((a, b) => a.index - b.index);
+    } as Required<CardInfo>].sort((a, b) => a.index - b.index);
     updateSession({ operatorCardInfos: ids });
 };
 

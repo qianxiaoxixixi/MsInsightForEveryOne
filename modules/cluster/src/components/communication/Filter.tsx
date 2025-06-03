@@ -40,7 +40,6 @@ const defaultOptionMap = {
     iterationOptions: [],
     baselineIterationOptions: [],
     operatorOptions: [],
-    rankIdOptions: [],
     stageOptions: [],
 };
 

@@ -57,7 +57,7 @@ export interface TimelinePageInfo {
 export interface CardInfo {
     cardId: string;
     dbPath: string;
-    index: number;
+    index?: number;
 }
 
 export const DEFAULT_ACTIVE_DATASOURCE: ActiveDataSource = { ...GLOBAL_HOST, projectName: '', projectPath: [], children: [], selectedFileType: 'UNKNOWN', selectedFilePath: '' };
@@ -91,8 +91,8 @@ export class Session {
     startTime: number = -1;
     endTimeAll: number = -1;
     unitcount: number = 0;
-    memoryRankIds: string[] = [];
-    operatorCardInfos: CardInfo[] = [];
+    memoryCardInfos: Array<Required<CardInfo>> = [];
+    operatorCardInfos: Array<Required<CardInfo>> = [];
     iERankIds: string[] = [];
     // 模块数据-算子调优
     coreList: string[] = [];
@@ -215,7 +215,7 @@ export class Session {
         this.unitcount = 0;
         this.coreList = [];
         this.sourceList = [];
-        this.memoryRankIds = [];
+        this.memoryCardInfos = [];
         this.operatorCardInfos = [];
         this.compareSet = {
             baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },

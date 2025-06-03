@@ -6,7 +6,7 @@ import {
     removeRemoteHandler,
     setTheme,
     updateSessionHandler,
-    deleteRankHandler,
+    deleteCardHandler,
     allSuccessHandler,
     switchLanguageHandler,
     switchDirectoryHandler,
@@ -21,7 +21,7 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'module.reset': removeRemoteHandler,
     updateSession: updateSessionHandler,
     setTheme,
-    deleteRank: deleteRankHandler,
+    deleteCard: deleteCardHandler,
     switchLanguage: switchLanguageHandler,
     switchDirectory: switchDirectoryHandler,
 };
