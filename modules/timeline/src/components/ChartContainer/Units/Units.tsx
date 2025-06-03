@@ -328,7 +328,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     // 监听滚动事件，计算虚拟滚动的泳道
     useEventBus(eventType, (value) => setScrollTop(value as number));
     const flattenUnitsAll = computed(() => orderOptions.preOrderFlatten(getRootUnit(session.units), 0, orderOptions.options)).get();
-    const flattenUnits = computed(() => flattenUnitsAll.filter(unit => unit.isUnitVisible)).get();
+    const flattenUnits = computed(() => flattenUnitsAll.filter(unit => unit.isUnitVisible && !unit.isMerged)).get();
     const [first, last] = React.useMemo(() => computeVisibleUnitRange(flattenUnits, height, scrollTop),
         [session.pinnedUnits, flattenUnits, height, scrollTop],
     );

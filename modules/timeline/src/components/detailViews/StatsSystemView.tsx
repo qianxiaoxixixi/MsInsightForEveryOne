@@ -3,7 +3,6 @@
 */
 
 import { observer } from 'mobx-react';
-import { runInAction } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,17 +14,15 @@ import {
     pythonApiSummaryColumns,
     layerTypes,
 } from './Common';
-import type { CardMetaData, ThreadMetaData } from '../../entity/data';
-import type { InsightUnit } from '../../entity/insight';
-import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
-import { colorPalette, getTimeOffset } from '../../insight/units/utils';
-import { calculateDomainRange } from '../CategorySearch';
-import { hashToNumber } from '../../utils/colorUtils';
+import type { CardMetaData } from '../../entity/data';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { getTimeOffset } from '../../insight/units/utils';
 import { Button } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { StyledEmpty } from 'ascend-utils';
 import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary } from './SystemView';
 import { OverallMetrics } from './OverallMetrics';
+import { jumpToUnitOperator } from '../../utils';
 
 const filterColumn = [
     'name', 'type', 'acceleratorCore', 'taskId', 'inputShapes', 'inputDataTypes',
@@ -39,33 +36,16 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
         timestamp: rowData.startTime,
         duration: Number((rowData.duration * 1000).toFixed(0)),
     });
-    runInAction(() => {
-        props.session.locateUnit = {
-            target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId === props.rankId &&
-                    unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
-            },
-            onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.startTime - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
-                // 此处duration单位为us,计算和跳转时需要转换为ns
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, Number((rowData.duration * 1000).toFixed(0)));
-                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                props.session.selectedData = {
-                    id: props.session.isFullDb as boolean ? rowData.id : res.id,
-                    startTime,
-                    name: rowData.name,
-                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
-                    duration: Number((rowData.duration * 1000).toFixed(0)),
-                    depth: res.depth,
-                    threadId: res.threadId,
-                    processId: res.pid,
-                    cardId: props.rankId,
-                    startRecordTime: props.session.startRecordTime,
-                    metaType: res.pid,
-                    showDetail: false,
-                };
-            },
-        };
+
+    jumpToUnitOperator({
+        ...res,
+        name: rowData.name,
+        id: props.session.isFullDb as boolean ? rowData.id : res.id,
+        cardId: props.rankId,
+        tid: res.threadId,
+        duration: Number((rowData.duration * 1000).toFixed(0)),
+        timestamp: rowData.startTime,
+        metaType: res.pid,
     });
 };
 

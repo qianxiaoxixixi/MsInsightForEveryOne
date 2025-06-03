@@ -14,7 +14,7 @@ export interface PaginationModel extends PaginationParams {
 
 // 算子详情信息
 export interface OpDetail {
-    id: number;
+    id?: string;
     cardId: string;
     tid: string;
     pid: string;
@@ -22,6 +22,7 @@ export interface OpDetail {
     duration: number;
     name: string;
     timestamp: number;
+    metaType?: string;
 }
 
 // parseCards
@@ -112,6 +113,20 @@ interface OperatorDispatchResultItem {
 export interface OperatorDispatchResult extends OperatorDispatchResultItem {
     count: number;
 };
+
+export interface EventViewParams {
+    currentPage: number;
+    pageSize: number;
+    rankId: string;
+    processName: string;
+    orderBy: string;
+    metaType: string;
+    pid: string;
+    tid: string;
+    threadIdList?: string[];
+    threadName: string;
+    order: string;
+}
 
 export interface QueryAllSameOperatorsDurationParams {
     rankId: string;

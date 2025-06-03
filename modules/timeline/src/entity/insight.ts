@@ -233,6 +233,7 @@ export interface InsightUnit extends InsightUnitParams<MetaDataBase, Record<stri
     type: 'basic' | 'transparent';
     phase: string;
     isUnitVisible: boolean;
+    isMerged: boolean; // 是否被合并
     parent?: InsightUnit;
     isParseLoading: boolean;
     shouldParse: boolean; // 判断timeline卡是否需要解析
@@ -297,6 +298,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         parent?: InsightUnit;
         _children?: InsightUnit[];
         isUnitVisible = true;
+        isMerged = false;
         type = 'basic' as const;
         pinType = params.pinType ?? 'copied';
         name = params.name;
@@ -365,6 +367,7 @@ export const transparentUnit = <T extends MetaDataBase = MetaDataBase>(params:
 Pick<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
     const transparentUnitClass = class implements InsightUnit {
         isUnitVisible = true;
+        isMerged = false;
         isParseLoading = false; // 是否正在解析
         shouldParse: boolean = false; // 是否需要解析
         progress: number = 0; // 解析进度：实际解析进度

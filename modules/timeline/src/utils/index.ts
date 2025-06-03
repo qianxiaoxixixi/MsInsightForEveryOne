@@ -46,8 +46,19 @@ export const getRootUnit = (units: InsightUnit[]): InsightUnit[] => {
  * @param {OpDetail} opDetail 算子详情信息
  */
 export const jumpToUnitOperator = (opDetail: OpDetail): void => {
-    const { id, cardId, tid, pid, depth, duration, name, timestamp } = opDetail;
+    const {
+        id,
+        cardId: cid,
+        tid,
+        pid,
+        depth,
+        duration,
+        name,
+        timestamp,
+        metaType,
+    } = opDetail;
     const session = store.sessionStore.activeSession;
+
     if (session === undefined) {
         return;
     }
@@ -55,10 +66,12 @@ export const jumpToUnitOperator = (opDetail: OpDetail): void => {
     runInAction(() => {
         session.locateUnit = {
             target: (unit: InsightUnit): boolean => {
-                return unit instanceof ThreadUnit &&
-                    unit.metadata.cardId === cardId &&
-                    unit.metadata.threadId === tid &&
-                    unit.metadata.processId === pid;
+                if (!(unit instanceof ThreadUnit)) { return false; }
+
+                const { cardId, threadId, threadIdList, processId } = unit.metadata;
+                return cid === cardId &&
+                    processId === pid &&
+                    (threadId === tid || threadIdList?.includes(tid));
             },
             onSuccess: (unit): void => {
                 const startTime = timestamp - getTimeOffset(session, unit.metadata as ThreadMetaData);
@@ -73,9 +86,10 @@ export const jumpToUnitOperator = (opDetail: OpDetail): void => {
                     depth,
                     threadId: tid,
                     processId: pid,
-                    cardId,
+                    cardId: cid,
                     startRecordTime: session.startRecordTime,
                     showSelectedData: true,
+                    metaType: metaType ?? (unit.metadata as ThreadMetaData).metaType,
                 };
             },
             showDetail: false,

@@ -697,7 +697,8 @@ export interface CounterMetaData extends MetaDataInnerBase {
 export interface ThreadMetaData extends MetaDataInnerBase {
     processId?: string;
     processName?: string;
-    threadId?: string;
+    threadId: string;
+    threadIdList?: string[];
     threadName: string;
     groupNameValue: string;
     maxDepth?: number;
@@ -751,7 +752,7 @@ export interface SliceMeta extends MetaDataBase {
 export interface SliceData {
     rankId: string;
     pid: string;
-    tid: number;
+    tid: string;
     id?: string;
     name: string;
     startTime: number;

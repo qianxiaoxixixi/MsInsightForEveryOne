@@ -13,12 +13,11 @@ import type { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';
 import type { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
-import { ThreadUnit } from '../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import type { ProcessMetaData, SliceData, ThreadMetaData } from '../entity/data';
-import { generateFlowParam } from '../insight/units/details';
 import { getTimeOffset } from '../insight/units/utils';
+import { jumpToUnitOperator } from '../utils';
 
 const CloseIcon = AntdCloseIcon as SvgType;
 
@@ -146,44 +145,13 @@ const jumpSlice = async ({ session, searchContent, index, isMatchExact, isMatchC
         .finally(() => {
             setIsSearching(false);
         });
-    doJumpSlice(session, slice, currentIndex === 0);
-};
-
-const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): void => {
-    if (slice === undefined) {
-        // slice is undefined.
-        return;
-    }
-    runInAction(() => {
-        session.locateUnit = {
-            target: (unit): boolean => {
-                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) &&
-                    unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
-            },
-            onSuccess: (unit): void => {
-                if (isGlobal) {
-                    session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
-                    session.selectedData = undefined;
-                    session.linkFlow = undefined;
-                } else {
-                    const [rangeStart, rangeEnd] = calculateDomainRange(session,
-                        slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData), slice.duration);
-                    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                    session.selectedData = {
-                        startTime: slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData),
-                        duration: slice.duration,
-                        depth: slice.depth,
-                        threadId: slice.tid,
-                        processId: slice.pid,
-                        cardId: slice.rankId,
-                        id: slice.id,
-                        name: slice.name,
-                        metaType: (unit.metadata as ThreadMetaData).metaType,
-                    };
-                    session.linkFlow = generateFlowParam(unit.metadata as ThreadMetaData, slice);
-                }
-            },
-        };
+    if (slice === undefined) { return; }
+    jumpToUnitOperator({
+        ...slice,
+        cardId: slice.rankId,
+        timestamp: slice.startTime,
+        name: slice.name ?? searchContent,
+        tid: slice.tid.toString(),
     });
 };
 

@@ -13,6 +13,8 @@ import { fetchColumnFilterProps } from 'ascend-resize';
 import i18n from 'ascend-i18n';
 import type { TableColumnsType } from 'antd';
 import { ColumnFilterIcon } from 'ascend-icon';
+import type { EventViewParams } from '../../api/interface';
+
 interface ColumData {
     title: string;
     dataIndex: string;
@@ -283,12 +285,8 @@ export const queryACLNNOperators = async (param: {
     return window.requestData('advisor/aclnn_operator', param);
 };
 
-export const eventViewData = async (param: {
-    currentPage: number; rankId: string; processName: string;
-    pageSize: number; orderBy: string; metaType: string; pid: string; tid: string;
-    threadName: string; order: string;
-}): Promise<any> => {
-    return window.requestData('unit/eventView', param, 'timeline');
+export const eventViewData = async (params: EventViewParams): Promise<any> => {
+    return window.requestData('unit/eventView', params, 'timeline');
 };
 
 export const Loading = ({ size = 20, style = {} }: { size?: number; style?: object }): JSX.Element => {

@@ -6,17 +6,14 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { eventViewData, getDefaultColumData, getPageData, queryOneKernel } from './Common';
 import { ResizeTable } from 'ascend-resize';
-import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
 import { Button } from 'ascend-components';
-import type { InsightUnit } from '../../entity/insight';
-import { colorPalette, getTimeOffset } from '../../insight/units/utils';
-import { calculateDomainRange } from '../CategorySearch';
-import { hashToNumber } from '../../utils/colorUtils';
-import { runInAction } from 'mobx';
+import { getTimeOffset } from '../../insight/units/utils';
 import { useTranslation } from 'react-i18next';
 import i18n from 'ascend-i18n';
 import { DETAIL_HEADER_HEIGHT_ETC_PX } from './SystemView';
+import { jumpToUnitOperator } from '../../utils';
 export interface EventTableData {
     eventDetails: EventDetails[];
     columnList: EventTableColumn[];
@@ -177,32 +174,13 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
         duration: Number((rowData.duration * 1000).toFixed(0)),
     });
     const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
-    runInAction(() => {
-        props.session.locateUnit = {
-            target: (unit: any): boolean => {
-                // 能否跳转到某个算子：判断是否是ThreadUnit、卡号能否对上、线程号、进程号是否一致，如果都能对上，说明在timeline上找到了
-                return unit instanceof ThreadUnit && unit.metadata.cardId === rankId &&
-                    unit.metadata.threadId === rowData.threadId && unit.metadata.processId === rowData.processId;
-            },
-            onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.start - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
-                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                props.session.selectedData = {
-                    id: rowData.id,
-                    startTime,
-                    name: rowData.name,
-                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
-                    duration: rowData.duration,
-                    depth,
-                    threadId: rowData.threadId,
-                    processId: rowData.processId,
-                    cardId: rankId,
-                    startRecordTime: props.session.startRecordTime,
-                    showDetail: false,
-                };
-            },
-        };
+    jumpToUnitOperator({
+        ...rowData,
+        cardId: rankId,
+        timestamp: rowData.start,
+        tid: rowData.threadId,
+        pid: rowData.processId,
+        depth,
     });
 };
 
@@ -216,6 +194,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         order: sorters.order ?? defaultSorter.order,
         pid: requestData.processId as string,
         tid: requestData.threadId as string,
+        threadIdList: requestData.threadIdList,
         threadName: requestData.threadName,
         processName: requestData.processName as string,
         metaType: requestData.metaType as string,
