@@ -22,7 +22,7 @@ import { getRootUnit } from '../../../../utils';
 const searchUnit = (units: InsightUnit[], matcher: UnitMatcher['target'], path: InsightUnit[]): boolean => {
     for (const unit of units) {
         path.push(unit);
-        if (matcher(unit)) {
+        if (unit.isUnitVisible && !unit.isMerged && matcher(unit)) {
             return true;
         }
         if (unit.children && searchUnit(unit.children, matcher, path)) {
@@ -51,7 +51,7 @@ const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher['target']): In
 };
 
 const getNormalUnitHeight = (unitsArea: InsightUnit[], orderOptions: OrderOptions, targetUnit: InsightUnit): number | undefined => {
-    const flattenUnits = orderOptions.preOrderFlatten(getRootUnit(unitsArea), 0, orderOptions.options).filter(unit => unit.isUnitVisible);
+    const flattenUnits = orderOptions.preOrderFlatten(getRootUnit(unitsArea), 0, orderOptions.options).filter(unit => unit.isUnitVisible && !unit.isMerged);
     let findResult = false;
     let height = 0;
     for (const unit of flattenUnits) {

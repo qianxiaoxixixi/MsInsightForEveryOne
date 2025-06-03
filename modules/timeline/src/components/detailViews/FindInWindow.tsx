@@ -7,19 +7,17 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Button } from 'ascend-components';
-import { runInAction } from 'mobx';
 import { getDefaultColumData, getPageData, queryOneKernel, searchAllSlices } from './Common';
 import { ResizeTable } from 'ascend-resize';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import styled from '@emotion/styled';
 import { RankFilter } from './SystemView';
-import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
+import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { InsightUnit } from '../../entity/insight';
-import { colorPalette, getTimeOffset } from '../../insight/units/utils';
-import { hashToNumber } from '../../utils/colorUtils';
+import { getTimeOffset } from '../../insight/units/utils';
 import type { ThreadMetaData } from '../../entity/data';
-import { calculateDomainRange } from '../CategorySearch';
 import { ProcessMetaData } from '../../entity/data';
+import { jumpToUnitOperator } from '../../utils';
 
 const CONTAINER = styled.div`
     height: calc(100% - 50px);
@@ -265,31 +263,10 @@ const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
         duration: rowData.duration,
     });
     const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
-    runInAction(() => {
-        props.session.locateUnit = {
-            target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId === rowData.rankId)) &&
-                unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
-            },
-            onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.timestamp - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
-                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                props.session.selectedData = {
-                    id: rowData.id,
-                    startTime,
-                    name: queryName,
-                    color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
-                    duration: rowData.duration,
-                    depth,
-                    threadId: rowData.tid,
-                    processId: rowData.pid,
-                    cardId: rowData.rankId,
-                    startRecordTime: props.session.startRecordTime,
-                    metaType: rowData.pid,
-                    showDetail: false,
-                };
-            },
-        };
+    jumpToUnitOperator({
+        ...rowData,
+        name: queryName,
+        depth,
+        cardId: rowData.rankId,
     });
 };

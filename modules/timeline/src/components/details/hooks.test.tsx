@@ -18,6 +18,7 @@ describe('hooks test', () => {
         isExpanded: false,
         isDisplay: true,
         isUnitVisible: true,
+        isMerged: false,
         type: 'basic',
         phase: 'download',
         isParseLoading: false,

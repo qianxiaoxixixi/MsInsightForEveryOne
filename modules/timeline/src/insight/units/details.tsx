@@ -44,14 +44,24 @@ export const slicesListDetail = detail({
         let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const timestampOffset = getTimeOffset(session, metadata);
-        const metadataList = session.selectedUnits.map(selectUnit => {
-            const { threadId, processId, metaType } = selectUnit?.metadata as ThreadMetaData ?? {};
-            return {
+        const metadataList = session.selectedUnits.flatMap(selectUnit => {
+            const { threadId, threadIdList, processId, metaType } = selectUnit?.metadata as ThreadMetaData;
+
+            if (Array.isArray(threadIdList)) {
+                return threadIdList.map(tid => ({
+                    tid,
+                    pid: processId,
+                    metaType,
+                }));
+            }
+
+            return [{
                 tid: threadId,
                 pid: processId,
                 metaType,
-            };
+            }];
         });
+
         const params = {
             rankId: metadata.cardId,
             startTime: Math.floor(startTime + timestampOffset),
@@ -113,7 +123,7 @@ const Link = styled.span`
 export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string): Record<string, unknown> {
     return {
         rankId: metadata.cardId ?? '',
-        tid: data.tid ?? (metadata.threadId ?? ''),
+        tid: data.tid ?? data.threadId ?? (metadata.threadId ?? ''),
         pid: data.pid ?? (metadata.processId ?? ''),
         id: data.id,
         metaType: metaType ?? metadata?.metaType ?? '',

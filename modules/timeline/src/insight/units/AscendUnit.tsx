@@ -12,7 +12,7 @@ import {
 import type {
     ChartDesc, InsightUnit, LinkDataDesc, LinkLine, LinkLines, MetaData, renderFieldsType,
 } from '../../entity/insight';
-import type { Session } from '../../entity/session';
+import type { SelectedDataType, Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import type {
     AscendSliceDetail,
@@ -40,9 +40,9 @@ import type { Theme } from '@emotion/react';
 import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
 import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData, PageType } from '../../components/detailViews/Common';
-import { calculateDomainRange } from '../../components/CategorySearch';
 import { safeJSONParse } from 'ascend-utils';
 import { SorterResult } from 'antd/lib/table/interface';
+import { jumpToUnitOperator } from '../../utils';
 import { queryAllSameOperatorsDuration } from '../../api/request';
 import type { OpData } from '../../api/interface';
 
@@ -221,6 +221,7 @@ const getThreadTracesRequestParams = (session: Session, threadMetaData: ThreadMe
         cardId: threadMetaData.cardId,
         processId: threadMetaData.processId,
         threadId: threadMetaData.threadId,
+        threadIdList: threadMetaData.threadIdList,
         metaType: threadMetaData.metaType,
         startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
         endTime: Math.ceil(session.domainRange.domainEnd + timestampOffset),
@@ -230,6 +231,16 @@ const getThreadTracesRequestParams = (session: Session, threadMetaData: ThreadMe
         isHideFlagEvents: session.areFlagEventsHidden,
     };
 };
+
+function isSameUnit(selectedMeta?: SelectedDataType, currentMeta?: ThreadMetaData): boolean {
+    if (!selectedMeta || !currentMeta) {
+        return false;
+    }
+
+    return Boolean(selectedMeta?.threadId === currentMeta.threadId || currentMeta.threadIdList?.includes(selectedMeta.threadId)) &&
+        selectedMeta.processId === currentMeta.processId &&
+        selectedMeta.cardId === currentMeta.cardId;
+}
 
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
@@ -304,10 +315,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     if (ctx === null) {
                         return;
                     }
-                    const check = selectedUnitMetaData !== undefined && selectedData !== undefined &&
-                        selectedUnitMetaData.threadId === threadMetaData.threadId &&
-                        selectedUnitMetaData.processId === threadMetaData.processId &&
-                        selectedUnitMetaData.cardId === threadMetaData.cardId;
+
+                    const check = selectedData !== undefined && isSameUnit(selectedUnitMetaData, threadMetaData);
                     // 来自本泳道点击的数据，给数据描边+画线
                     ctx.strokeStyle = theme.textColorPrimary;
                     if (check) {
@@ -762,39 +771,6 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
         loadData();
     }, [sorter.field, sorter.order, page.current, page.pageSize]);
 
-    const jumpTo = async (record: OpData): Promise<void> => {
-        if (slice === undefined) {
-            return;
-        }
-        runInAction(() => {
-            session.locateUnit = {
-                target: (iunit: InsightUnit): boolean => {
-                    return iunit instanceof ThreadUnit && (Boolean(iunit.metadata.cardId === (metadata as MetaData).cardId)) &&
-                        (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
-                },
-                onSuccess: (iunit): void => {
-                    const startTime = record.timestamp - getTimeOffset(session, iunit.metadata as ThreadMetaData);
-                    const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
-                    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                    session.selectedData = {
-                        id: record.id,
-                        startTime,
-                        name: slice.name,
-                        color: colorPalette[hashToNumber(slice.name, colorPalette.length)],
-                        duration: record.duration,
-                        depth: record.depth,
-                        threadId: record.tid,
-                        processId: record.pid,
-                        cardId: (metadata as MetaData).cardId as string,
-                        startRecordTime: session.startRecordTime,
-                        showSelectedData: true,
-                    };
-                },
-                showDetail: false,
-            };
-        });
-    };
-
     return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
         <ResizeTable
             onChange={(pagination, filters, newSorter, extra): void => {
@@ -810,7 +786,11 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
             onRow={(record: OpData): {onClick: () => void} => {
                 return {
                     onClick: (): void => {
-                        jumpTo(record);
+                        jumpToUnitOperator({
+                            ...record,
+                            name: slice?.name,
+                            cardId: (metadata as ThreadMetaData).cardId,
+                        });
                         setSelectedRowKey(record.id);
                     },
                 };

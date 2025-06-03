@@ -4,7 +4,6 @@
 
 import { observer } from 'mobx-react';
 import React from 'react';
-import { runInAction } from 'mobx';
 import {
     queryOneKernel,
     queryAffinityOptimizer,
@@ -19,15 +18,10 @@ import {
     fusionOperatorColumns,
     operatorDispatchColumns,
 } from './Common';
-import type { ThreadMetaData } from '../../entity/data';
-import { calculateDomainRange } from '../CategorySearch';
-import { ThreadUnit } from '../../insight/units/AscendUnit';
-import type { InsightUnit } from '../../entity/insight';
-import { hashToNumber } from '../../utils/colorUtils';
-import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { BaseSummary } from './SystemView';
 import { ExpertSummary } from './ExpertSummary';
 import { queryExpertAnalysis, queryOperatorDispatch } from '../../api/request';
+import { jumpToUnitOperator } from '../../utils';
 
 const ExpertAnalysis = observer((props: any) => {
     return <ExpertSummary request={queryExpertAnalysis} {...props} />;
@@ -67,32 +61,15 @@ export const handleAdvisorSelected = async(rowData: any, props: any): Promise<vo
         duration: nsDuration,
     });
     const depth = rowData.depth > res.depth ? rowData.depth : res.depth;
-    runInAction(() => {
-        props.session.locateUnit = {
-            target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId === rowData.rankId &&
-                    unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
-            },
-            onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.startTime - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, nsDuration);
-                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                props.session.selectedData = {
-                    id: props.session.isFullDb as boolean ? rowData.id : res.id,
-                    startTime,
-                    name: queryName,
-                    color: colorPalette[hashToNumber(queryName, colorPalette.length)],
-                    duration: nsDuration,
-                    metaType: rowData.pid,
-                    threadId: rowData.tid,
-                    processId: rowData.pid,
-                    cardId: rowData.rankId,
-                    startRecordTime: props.session.startRecordTime,
-                    showDetail: false,
-                    depth,
-                };
-            },
-        };
+
+    jumpToUnitOperator({
+        ...rowData,
+        id: props.session.isFullDb as boolean ? rowData.id : res.id,
+        cardId: rowData.rankId,
+        timestamp: rowData.startTime,
+        depth,
+        duration: nsDuration,
+        name: queryName,
     });
 };
 

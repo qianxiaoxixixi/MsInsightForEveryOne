@@ -71,7 +71,7 @@ interface UnitsConfig {
 }
 
 export interface SelectedDataType extends Pick<ThreadTrace, 'duration' | 'startTime' | 'name'> {
-    id?: SliceData['id'] | number;
+    id?: SliceData['id'];
     type?: string;
     depth?: ThreadTrace['depth'];
     threadId: SliceMeta['threadId'] | SliceData['tid'];
