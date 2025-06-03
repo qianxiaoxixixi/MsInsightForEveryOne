@@ -42,8 +42,14 @@ const searchData = async (conditions: ConditionDataType & {isCompare: boolean}):
     return { analysisChartData: communicationOperatorData, tableData: data, chartData: data, adviceData: advice };
 };
 
+export interface CardInfo {
+    cardId: string;
+    dbPath: string;
+}
+const DEFAULT_CARD_INFO = { cardId: '', dbPath: '' };
+
 const CommunicationAnalysis = observer(({ session, active = true }: { session: Session;active?: boolean }) => {
-    const [rankId, setRankId] = useState('');
+    const [card, setCard] = useState(DEFAULT_CARD_INFO);
     const [showData, setShowData] = useState<showDataType>({
         chartData: [],
         analysisChartData: {} as AnalysisChartData,
@@ -51,10 +57,10 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         adviceData: [],
     });
     const [conditions, setConditions] = useState<ConditionDataType>(defaultCondition);
-    const showOperator = (newRankId: string): void => {
-        setRankId(newRankId);
+    const showOperator = (newCard: CardInfo): void => {
+        setCard(newCard);
     };
-    const returnHome = (): void => { setRankId(''); };
+    const returnHome = (): void => { setCard(DEFAULT_CARD_INFO); };
     const handleFilterChange = async(newConditions: ConditionDataType): Promise<void> => {
         setConditions({ ...conditions, ...newConditions });
         if (newConditions.type !== AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
@@ -80,14 +86,14 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         session={session}
         handleFilterChange={handleFilterChange} showData={showData}
         active={active} showOperator={showOperator} setShowData={setShowData} conditions={conditions}
-        rankId={rankId} returnHome={returnHome}
+        rankId={card.cardId} dbPath={card.dbPath} returnHome={returnHome}
     />;
 });
 
 const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element => {
     const {
         session, handleFilterChange, showData, active, showOperator,
-        setShowData, conditions, rankId, returnHome,
+        setShowData, conditions, rankId, dbPath, returnHome,
     } = props;
     const { t } = useTranslation('communication');
     return (
@@ -109,7 +115,7 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
             {/* 通信矩阵 */}
             <CommunicationMatrix isShow={conditions.type === AnalysisType.COMMUNICATION_MATRIX && active} conditions={conditions} session={session}/>
             {/* 带宽分析 */}
-            { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
+            { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId} dbPath={dbPath}
                 session={session} returnHome={returnHome}
                 operatorName={conditions.operatorName} stage={conditions.stage} pgName={conditions.pgName} /> }
             <div style={{ position: 'absolute', top: '15px', right: '20px' }}>

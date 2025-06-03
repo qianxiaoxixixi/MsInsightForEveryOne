@@ -88,6 +88,7 @@ export interface ParallelismArrangementResult {
     indicators: IndicatorsItem[];
     connections: ConnectionsItem[];
     domains: string[];
+    rankDbPathList: Array<{ rankId: string; dbPath: string }>;
 }
 
 export interface GetParallelismPerformanceData extends ParallelismArrangementParams {
@@ -154,8 +155,9 @@ export interface QueryModelInfoResult {
 
 export interface WrapBandwidthDataParams {
     domId: string;
-    iterationId: number;
+    iterationId: string;
     rankId: number;
+    dbPath: string;
     operatorName: string;
     stage: string;
     isDark: boolean;

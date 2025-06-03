@@ -23,6 +23,7 @@ const createRequestHead = function (
         moduleName: module,
         type: 'request',
         command,
+        fileId: (params as any).dbPath ?? '',
         projectName: store.sessionStore.activeSession?.activeDataSource?.projectName ?? '',
         params,
     };

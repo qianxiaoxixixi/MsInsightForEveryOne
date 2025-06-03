@@ -69,7 +69,7 @@ export interface PerformanceChartConditions {
     baselineStep?: string;
     orderBy: string;
     top: string;
-    group: string;
+    group: string; // 形式如：{rankId,rankId,...}
 }
 
 export interface CommunicatorData {
@@ -293,6 +293,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
                                     session={session}
                                     step={performanceChartConditions.step}
                                     rankId={activeRankId}
+                                    dbPath={session.rankDbPathMap.get(activeRankId) ?? ''}
                                 />
                             }
                         </>

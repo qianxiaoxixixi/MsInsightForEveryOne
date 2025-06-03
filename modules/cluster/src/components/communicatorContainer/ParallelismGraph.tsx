@@ -321,6 +321,8 @@ export const ParallelismGraph = observer(({ session, generateConditions, targetR
             setTimeout(() => {
                 drawer.render(canvasContainerRef.current?.scrollLeft ?? 0, canvasContainerRef.current?.scrollTop ?? 0);
             });
+            const rankDbPathMap: Map<string, string> = new Map();
+            data.rankDbPathList?.forEach((item) => rankDbPathMap.set(item.rankId, item.dbPath));
 
             // 更新所有通信域数据、指标数据
             runInAction(() => {
@@ -329,6 +331,7 @@ export const ParallelismGraph = observer(({ session, generateConditions, targetR
                 const frames = groupFrames(data.arrangements, ['dp', 'ep', 'cp'])
                     .map(frameGroup => frameGroup.list.map(item => item.index).toString());
 
+                session.rankDbPathMap = rankDbPathMap;
                 session.communicationDomains = [...new Set([...connections, ...frames])];
                 session.ppCommunicationDomains = ppConnections;
                 session.indicatorList = data?.indicators.map(indicator => {

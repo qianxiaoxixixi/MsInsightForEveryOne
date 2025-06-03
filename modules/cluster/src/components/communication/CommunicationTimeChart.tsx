@@ -17,6 +17,7 @@ import { CompareData, FormatterParams } from '../../utils/interface';
 export interface DataItem {
     index: number;
     rankId: string;
+    dbPath: string;
     compareData: CompareData<Duration>;
 }
 

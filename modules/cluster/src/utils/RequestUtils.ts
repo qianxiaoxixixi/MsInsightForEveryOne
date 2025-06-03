@@ -113,7 +113,7 @@ export const queryCommunicationOperatorLists = async(param: { iterationId: strin
  * @return {[]} 返回数组
  */
 export const queryOperatorDetails = async(param: {
-    iterationId: number; rankId: number; pageSize: number;currentPage: number;orderBy: string;order: string;
+    iterationId: number; rankId: number; dbPath: string; pageSize: number;currentPage: number;orderBy: string;order: string;
     stage: string;queryType?: string;pgName: string;
 }): Promise<any> => {
     return window.requestData('communication/operatorDetails', withClusterPath(param));
@@ -126,7 +126,7 @@ export const queryOperatorDetails = async(param: {
  * @param {string} timeFlag 类型：SCMA、
  * @return {[]} 返回数组
  */
-export const querySummaryStatistics = async (param: ParamsWithClusterPath<{rankId: string; timeFlag: string;stepId: string}>): Promise<any> => {
+export const querySummaryStatistics = async (param: ParamsWithClusterPath<{rankId: string; dbPath: string; timeFlag: string;stepId: string}>): Promise<any> => {
     return window.requestData('summary/statistic', withClusterPath(param));
 };
 
@@ -140,13 +140,13 @@ export const querySummaryStatistics = async (param: ParamsWithClusterPath<{rankI
  * @return {[]} 返回数组
  */
 export const queryComputeDetail = async (param: ParamsWithClusterPath<{
-    rankId: string; timeFlag: string; pageSize: number;currentPage: number;orderBy: string;order: string;
+    rankId: string; dbPath: string; timeFlag: string; pageSize: number;currentPage: number;orderBy: string;order: string;
 }>): Promise<any> => {
     return window.requestData('summary/queryComputeDetail', withClusterPath(param));
 };
 
 export const queryCommunicationDetail = async (param: ParamsWithClusterPath<{
-    rankId: string; pageSize: number;currentPage: number;orderBy: string;order: string;}>): Promise<any> => {
+    rankId: string; dbPath: string; pageSize: number;currentPage: number;orderBy: string;order: string;}>): Promise<any> => {
     return window.requestData('summary/queryCommunicationDetail', withClusterPath(param));
 };
 
@@ -260,22 +260,23 @@ export const queryModelInfo = async(): Promise<QueryModelInfoResult> => {
 };
 
 export async function queryCommunicationBandwidth({ iterationId, rankId, operatorName, stage, pgName }:
-{ iterationId: string; rankId: number; operatorName: string; stage: string; pgName: string }): Promise<any> {
+{ iterationId: string; rankId: number; dbPath: string; operatorName: string; stage: string; pgName: string }): Promise<any> {
     const bandwidthDetails = await window.requestData('communication/bandwidth',
         withClusterPath({ iterationId, rankId, operatorName, stage, pgName }));
     return bandwidthDetails?.items ?? [];
 }
 
-export async function queryCommunicationDistribution({ domId, iterationId, rankId, operatorName, stage, pgName }:
+export async function queryCommunicationDistribution({ domId, iterationId, rankId, dbPath, operatorName, stage, pgName }:
 PacketAndBandwidthChartsParams): Promise<any> {
     const distributions = await window.requestData('communication/distribution',
-        withClusterPath({ iterationId, rankId, operatorName, transportType: domId, stage, pgName }));
+        withClusterPath({ iterationId, rankId, dbPath, operatorName, transportType: domId, stage, pgName }));
     return distributions?.distributionData ?? '{}';
 }
 
 export async function queryTimelineUnitKernelDetail(params: {
     name: string;
     rankId: string;
+    dbPath: string;
 }): Promise<any> {
     return await window.requestData('unit/kernelDetail', withClusterPath(params), 'timeline');
 }
