@@ -58,7 +58,7 @@ constexpr std::string_view ARGS = "args";
 
 namespace KernelDetailColumn {
 constexpr std::string_view ID = "id";
-constexpr std::string_view RANK_ID = "rank_id";
+constexpr std::string_view RANK_ID = "deviceId";
 constexpr std::string_view STEP_ID = "step_id";
 constexpr std::string_view NAME = "name";
 constexpr std::string_view OP_TYPE = "op_type";

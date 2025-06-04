@@ -434,7 +434,7 @@ public:
         const Timeline::FuseableOpRule &rule)
     {
         std::string sql = "WITH data AS ( "
-            "SELECT kd.rank_id, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
+            "SELECT kd.deviceId, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
             "s.duration / 1000 as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
             "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
             "FROM " +
