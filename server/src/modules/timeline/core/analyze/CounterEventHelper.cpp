@@ -20,14 +20,35 @@ void CounterEventHelper::RegisterHostMap()
 void CounterEventHelper::RegisterDeviceMap()
 {
     RegisterDeviceNICMap();
-    RegisterDeviceRoCEMap();
     RegisterDevicePCIeMap();
     RegisterDeviceHCCSMap();
 }
 
-// NIC和RoCE数据db格式的来源是NETDEV_STATS表，而不是NIC表和ROCE表
+// NIC数据db格式的来源是NETDEV_STATS表，而不是NIC表
 void CounterEventHelper::RegisterDeviceNICMap()
 {
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceTxPkt", "NIC/roceTxPkt", "Pkt"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceRxPkt", "NIC/roceRxPkt", "Pkt"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceTxErrPkt", "NIC/roceTxErrPkt", "Pkt"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceRxErrPkt", "NIC/roceRxErrPkt", "Pkt"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceTxCnpPkt", "NIC/roceTxCnpPkt", "Pkt"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceRxCnpPkt", "NIC/roceRxCnpPkt", "Pkt"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "roceNewPktRty", "NIC/roceNewPktRty", "Rty"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "nicTxByte", "NIC/nicTxByte", "Byte"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "nicTxBandwidth", "NIC/nicTxBandwidth", "Bandwidth(B/s)"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "nicRxByte", "NIC/nicRxByte", "Byte"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
+        {"NIC", "NETDEV_STATS", "nicRxBandwidth", "NIC/nicRxBandwidth", "Bandwidth(B/s)"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
         {"NIC", "NETDEV_STATS", "macTxPfcPkt", "NIC/macTxPfcPkt", "Pkt"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
@@ -44,33 +65,6 @@ void CounterEventHelper::RegisterDeviceNICMap()
         {"NIC", "NETDEV_STATS", "macTxBadByte", "NIC/macTxBadByte", "Byte"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
         {"NIC", "NETDEV_STATS", "macRxBadByte", "NIC/macRxBadByte", "Byte"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
-        {"NIC", "NETDEV_STATS", "nicTxByte", "NIC/nicTxByte", "Byte"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
-        {"NIC", "NETDEV_STATS", "nicTxBandwidth", "NIC/nicTxBandwidth", "Bandwidth(B/s)"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
-        {"NIC", "NETDEV_STATS", "nicRxByte", "NIC/nicRxByte", "Byte"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::NIC,
-        {"NIC", "NETDEV_STATS", "nicRxBandwidth", "NIC/nicRxBandwidth", "Bandwidth(B/s)"}});
-}
-
-// NIC和RoCE数据db格式的来源是NETDEV_STATS表，而不是NIC表和ROCE表
-void CounterEventHelper::RegisterDeviceRoCEMap()
-{
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceTxPkt", "RoCE/roceTxPkt", "Pkt"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceRxPkt", "RoCE/roceRxPkt", "Pkt"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceTxErrPkt", "RoCE/roceTxErrPkt", "Pkt"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceRxErrPkt", "RoCE/roceRxErrPkt", "Pkt"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceTxCnpPkt", "RoCE/roceTxCnpPkt", "Pkt"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceRxCnpPkt", "RoCE/roceRxCnpPkt", "Pkt"}});
-    deviceCounterEventMap.insert({PROCESS_TYPE::ROCE,
-        {"RoCE", "NETDEV_STATS", "roceNewPktRty", "RoCE/roceNewPktRty", "Rty"}});
 }
 
 void CounterEventHelper::RegisterDevicePCIeMap()

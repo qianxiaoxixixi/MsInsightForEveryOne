@@ -47,7 +47,6 @@ public:
     std::multimap<PROCESS_TYPE, CounterEventConfig> deviceCounterEventMap;
 protected:
     void RegisterDeviceNICMap();
-    void RegisterDeviceRoCEMap();
     void RegisterDevicePCIeMap();
     void RegisterDeviceHCCSMap();
     std::string SubstituteThreadNameFormat(const std::string &format);
