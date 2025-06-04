@@ -42,6 +42,7 @@ export const parseCompletedHandler = (data: any): void => {
     if (session) {
         runInAction(() => {
             session.deviceIds = data.deviceIds;
+            session.threadIds = data.threadIds;
         });
     }
 };

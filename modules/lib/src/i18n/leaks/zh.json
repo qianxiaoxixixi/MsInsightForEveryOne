@@ -1,8 +1,21 @@
 {
   "leaks": {
-    "MemoryAllocations":"内存申请总量折线图",
-    "MemoryBlocks":"内存块图",
-    "DeviceID":"设备ID",
-    "Leaks":"内存详情"
+    "MemoryAllocations": "内存申请总量折线图",
+    "MemoryBlocks": "内存块图",
+    "DeviceID": "设备ID",
+    "Leaks": "内存详情",
+    "Type": "类型",
+    "ThreadID": "线程ID",
+    "MemoryDisassembly": "内存拆解",
+    "Process_Total_Memory_Allocation": "进程占用",
+    "CANN_Total_Memory_Allocation": "CANN",
+    "ATB_Reserved": "ATB预留",
+    "MindSpore_Reserved": "MindSpore预留",
+    "PTA_Reserved": "PTA预留",
+    "PTA_Operator": "算子占用",
+    "PTA_Model": "模型占用",
+    "Optimizer": "优化器",
+    "Weight": "模型权重",
+    "Gradient": "梯度"
   }
 }

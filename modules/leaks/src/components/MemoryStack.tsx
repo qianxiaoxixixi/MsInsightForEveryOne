@@ -4,54 +4,135 @@
 import React, { useEffect, useState } from 'react';
 import { Select } from 'ascend-components';
 import MemoryBarChart from './MemoryBarChart';
+import MemorySliceChart from './MemorySliceChart';
+import MemoryFunctionCall from './MemoryFunctionCall';
 import { Label } from './Common';
 import { useTranslation } from 'react-i18next';
-import { GetLeaksGraphData } from '../utils/RequestUtils';
-import { message } from 'antd';
-import type { BlockData, AllocationData } from '../utils/RequestUtils';
 import { observer } from 'mobx-react';
-
-const MemoryStack = observer(({ session, isDark }: { session: any; isDark: boolean }): React.ReactElement => {
+import { runInAction } from 'mobx';
+import { getFuncNewData, getBarNewData } from './dataHandler';
+import { Line, initLine, cancelLine } from './LineHandler';
+interface TypeOption {
+    label: string | number;
+    value: string | number;
+}
+const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');
-    const [options, setOptions] = useState([]);
-    const [deviceId, setDeviceId] = useState('');
-    const [blockData, setBlockData] = useState<BlockData>();
-    const [allocationData, setAllocationData] = useState<AllocationData>();
-    const init = async (): Promise<void> => {
-        try {
-            const blockDatas = await GetLeaksGraphData({ deviceId, graph: 'blocks' });
-            const allocationDatas = await GetLeaksGraphData({ deviceId, graph: 'allocations' });
-            setBlockData(blockDatas as BlockData);
-            setAllocationData(allocationDatas as AllocationData);
-        } catch (error: any) {
-            message.error(error.message);
+    const [idOpts, setIdOpts] = useState<TypeOption[]>([]);
+    const [threadOps, setThreadOps] = useState<TypeOption[]>([]);
+    const [typeOpts, setTypeOpts] = useState<TypeOption[]>([]);
+    const [funcIns, setFuncIns] = useState<echarts.ECharts | null>();
+    const [barIns, setBarIns] = useState<echarts.ECharts | null>();
+    const [lineShow, setLineshow] = useState('none');
+    const [offset, setOffset] = useState(0);
+    const mouseEnter = (): void => {
+        setLineshow('block');
+    };
+    const mouseMove = (e: MouseEvent): void => {
+        requestAnimationFrame(() => {
+            setOffset(e.clientX - 16);
+        });
+    };
+    const mouseLeave = (): void => {
+        setLineshow('none');
+        setOffset(0);
+    };
+    const linkageHandle = (): void => {
+        if (!funcIns || !barIns) {
+            return;
         }
+        [funcIns, barIns].forEach((ins) => {
+            ins.off('restore');
+            ins.off('dataZoom');
+            ins.on('restore', () => {
+                getFuncNewData(session);
+                getBarNewData(session);
+            });
+            ins.on('dataZoom', (params: any) => {
+                const { startValue, endValue } = params.batch[0];
+                getFuncNewData(session, Math.floor(startValue), Math.ceil(endValue));
+                getBarNewData(session, Math.floor(startValue), Math.ceil(endValue));
+            });
+        });
     };
     useEffect(() => {
-        if (deviceId !== '') {
-            init();
+        const newIdOpts = Object.keys(session.deviceIds).map((id: string) => ({ label: id, value: id }));
+        if (newIdOpts.length) {
+            const newTypeOpts = session.deviceIds[newIdOpts[0].value].map((type: string) => ({ label: type, value: type }));
+            const newThreadOpts = session.threadIds.map((thread: number) => ({ label: thread, value: thread }));
+            setIdOpts(newIdOpts);
+            setThreadOps(newThreadOpts);
+            setTypeOpts(newTypeOpts);
+            initLine(mouseEnter, mouseMove, mouseLeave);
+            runInAction(() => {
+                session.deviceId = newIdOpts[0].value;
+                session.eventType = newTypeOpts[0].value;
+                session.threadId = newThreadOpts[0].value;
+            });
         }
-    }, [deviceId]);
-    useEffect(() => {
-        const opts = session.deviceIds.map((id: string) => ({ label: id, value: id }));
-        if (opts.length) {
-            setOptions(opts);
-            setDeviceId(opts[0].value);
-        }
+        return () => {
+            cancelLine(mouseEnter, mouseMove, mouseLeave);
+        };
     }, [session.deviceIds]);
+
+    useEffect(() => {
+        linkageHandle();
+    }, [funcIns, barIns]);
+
     return (
         <div>
             <div style={{ marginLeft: 24, marginTop: 24 }}>
-                <Label name={t('DeviceID')} />
+                <Label name={t('ThreadID')} />
                 <Select
-                    id={'select-host'}
-                    value={deviceId}
+                    id={'threadId'}
+                    value={session.threadId}
                     size="middle"
-                    onChange={(value): void => { setDeviceId(value); }}
-                    options={options}
+                    onChange={(value): void => {
+                        runInAction(() => {
+                            session.threadId = value;
+                        });
+                    }}
+                    options={threadOps}
                 />
             </div>
-            <MemoryBarChart blockData={blockData} allocationData={allocationData} isDark={isDark} />
+            <div id='funcContent' style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
+                <Line id='funcLine' lineShow={lineShow} offset={offset} />
+                {<MemoryFunctionCall session={session} setFuncIns={setFuncIns} />}
+            </div>
+            <div style={{ marginLeft: 24 }}>
+                <Label name={t('DeviceID')} />
+                <Select
+                    id={'deviceId'}
+                    style={{ marginRight: 20 }}
+                    value={session.deviceId}
+                    size="middle"
+                    onChange={(value): void => {
+                        setTypeOpts(session.deviceIds[value].map((type: string) => ({ label: type, value: type })));
+                        runInAction(() => {
+                            session.deviceId = value;
+                            session.eventType = session.deviceIds[value][0];
+                        });
+                    }}
+                    options={idOpts}
+                />
+                <Label name={t('Type')} />
+                <Select
+                    id={'type'}
+                    value={session.eventType}
+                    size="middle"
+                    onChange={(value): void => {
+                        runInAction(() => {
+                            session.eventType = value;
+                        });
+                    }}
+                    options={typeOpts}
+                />
+            </div>
+            <div id='barContent' style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
+                <Line id='barLine' lineShow={lineShow} offset={offset} />
+                <MemoryBarChart session={session} setBarIns={setBarIns} />
+            </div>
+            {session.memoryStamp ? <MemorySliceChart session={session} /> : <></>}
         </div>
     );
 });

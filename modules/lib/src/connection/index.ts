@@ -76,14 +76,7 @@ abstract class BaseConnector {
         body.from = this.getCurWindowIndex();
         const postBody = body.keepRawData === true ? body : JSON.stringify(body);
         targetWindows.forEach(targetWindow => {
-            // leaks场景渲染速度远小于后端信息返回的速度
-            if (body.event === 'parse/leaksMemoryCompleted') {
-                setTimeout(() => {
-                    targetWindow.postMessage(postBody, this.getTargetOrigin());
-                }, 2000);
-            } else {
-                targetWindow.postMessage(postBody, this.getTargetOrigin());
-            }
+            targetWindow.postMessage(postBody, this.getTargetOrigin());
         });
     }
 
@@ -155,7 +148,7 @@ interface FetchRequest {
 }
 export class ClientConnector extends BaseConnector {
     protected readonly _level: string = 'client';
-    private readonly _msgSequence: Map<FetchSequenceID, {resolve: (value: unknown) => void; reject: (value: unknown) => void}> = new Map();
+    private readonly _msgSequence: Map<FetchSequenceID, { resolve: (value: unknown) => void; reject: (value: unknown) => void }> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
     private readonly _module: string;
 

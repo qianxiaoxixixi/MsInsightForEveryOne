@@ -42,6 +42,10 @@ interface ParseOperatorNotification {
 interface ParseStatisticNotification {
     rankIds: string[];
 }
+interface ParseLeaksNotification {
+    deviceIds: object;
+    threadIds: number[];
+}
 
 interface ParseHeatmapNotification {
     parseResult: boolean;
@@ -83,6 +87,10 @@ export const parseStatisticSuccessHandler: NotificationInterceptor<ParseStatisti
         }
     });
     updateSession({ iERankIds: [...iERankIds] });
+};
+
+export const parseLeaksSuccessHandler: NotificationInterceptor<ParseLeaksNotification> = (data): void => {
+    updateSession({ deviceIds: data.deviceIds, threadIds: data.threadIds });
 };
 
 export const profilingExpertDataParsedHandler: NotificationInterceptor<ParseHeatmapNotification> = (data): void => {

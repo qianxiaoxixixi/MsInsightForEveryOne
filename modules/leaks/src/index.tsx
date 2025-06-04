@@ -87,8 +87,8 @@ export function getInitStatus(): void {
     connector.send({
         event: 'getParseStatus',
         body: {
-            from: 'Memory',
-            requests: ['language', 'theme', 'memoryRankIds', 'directory'],
+            from: 'Leaks',
+            requests: ['language', 'theme', 'deviceIds', 'threadIds'],
         },
     });
 };

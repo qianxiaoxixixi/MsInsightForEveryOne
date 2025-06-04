@@ -1,0 +1,67 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+
+import { getLeaksGraphData, getMemoryDetailData, getFuncData, type GraphParam, FuncParam } from '../utils/RequestUtils';
+import { message } from 'antd';
+import { runInAction } from 'mobx';
+
+export const getFuncNewData = async (session: any, startTimestamp?: number, endTimestamp?: number): Promise<void> => {
+    try {
+        const funcParam: FuncParam = { deviceId: session.deviceId, relativeTime: true, threadId: session.threadId };
+        if (startTimestamp !== undefined && endTimestamp !== undefined) {
+            funcParam.startTimestamp = startTimestamp;
+            funcParam.endTimestamp = endTimestamp;
+            runInAction(() => {
+                session.maxTime = endTimestamp;
+                session.minTime = startTimestamp;
+            });
+        }
+        const funcDatas = await getFuncData(funcParam);
+        runInAction(() => {
+            session.funcData = funcDatas;
+        });
+    } catch (error: any) {
+        message.error(error.message);
+    }
+};
+export const getBarNewData = async (session: any, startTimestamp?: number, endTimestamp?: number): Promise<void> => {
+    try {
+        const blockParam: GraphParam = { deviceId: session.deviceId, graph: 'blocks', relativeTime: true, eventType: session.eventType };
+        const allocationParam: GraphParam = { deviceId: session.deviceId, graph: 'allocations', relativeTime: true, eventType: session.eventType };
+        if (startTimestamp !== undefined && endTimestamp !== undefined) {
+            blockParam.startTimestamp = startTimestamp;
+            blockParam.endTimestamp = endTimestamp;
+            allocationParam.startTimestamp = startTimestamp;
+            allocationParam.endTimestamp = endTimestamp;
+            runInAction(() => {
+                session.maxTime = endTimestamp;
+                session.minTime = startTimestamp;
+            });
+        }
+        const [blockDatas, allocationDatas] = await Promise.all([
+            getLeaksGraphData(blockParam),
+            getLeaksGraphData(allocationParam),
+        ]);
+        runInAction(() => {
+            session.blockData = blockDatas;
+            session.allocationData = allocationDatas;
+            if (startTimestamp === undefined && endTimestamp === undefined) {
+                session.maxTime = Math.max(blockDatas.maxTimestamp, allocationDatas.maxTimestamp, session.funcData.maxTimestamp);
+                session.minTime = Math.min(blockDatas.minTimestamp, allocationDatas.minTimestamp, session.funcData.minTimestamp);
+            }
+        });
+    } catch (error: any) {
+        message.error(error.message);
+    }
+};
+export const getNewDetailData = async (session: any): Promise<void> => {
+    try {
+        const memoryDatas = await getMemoryDetailData(session.deviceId, session.memoryStamp);
+        runInAction(() => {
+            session.memoryData = memoryDatas;
+        });
+    } catch (error: any) {
+        message.error(error.message);
+    }
+};

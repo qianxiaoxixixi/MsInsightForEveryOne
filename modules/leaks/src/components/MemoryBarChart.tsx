@@ -1,38 +1,44 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as echarts from 'echarts';
 import * as d3 from 'd3';
 import { useTranslation } from 'react-i18next';
-import { chartColors, getDefaultChartOptions, getLegendStyle, safeStr } from 'ascend-utils';
-import { type Theme, useTheme } from '@emotion/react';
-import type { BarData } from '../utils/RequestUtils';
+import { MIChart } from 'ascend-components';
+import type { ChartsHandle } from 'ascend-components/MIChart';
+import { safeStr } from 'ascend-utils';
+import { type EChartsOption } from 'echarts';
+import type { BlockData } from '../utils/RequestUtils';
+import { observer } from 'mobx-react';
+import { runInAction } from 'mobx';
+import { getBarNewData } from './dataHandler';
+
 const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 interface InitParam {
-    chartRef: React.RefObject<HTMLDivElement>;
-    myChart: React.MutableRefObject<echarts.ECharts | null>;
-    theme: Theme;
-    blockData: BarData['blockData'];
+    session: any;
+    blockData: BlockData;
     lineSource: number[][];
     source: number[][];
-    isDark: boolean;
     t: any;
 };
-const getXAxis = (blockData: InitParam['blockData']): echarts.XAXisComponentOption => {
+const getXAxis = (session: InitParam['session']): echarts.XAXisComponentOption => {
     return {
         type: 'value',
-        min: blockData.minTimestamp,
-        max: blockData.maxTimestamp,
+        min: session.maxTime,
+        max: session.minTime,
         axisLine: {
             show: true,
+            lineStyle: {
+                type: 'solid',
+            },
         },
         axisTick: {
             show: false,
         },
         axisLabel: {
             formatter: function (value: number): string {
-                return `${(value / 1000000).toFixed(3)}s`;
+                return `${(value / 1000000000).toFixed(3)}s`;
             },
         },
         splitLine: {
@@ -58,6 +64,9 @@ const getYAxis = (): echarts.YAXisComponentOption => {
             show: false,
         },
         scale: true,
+        axisPointer: {
+            show: false,
+        },
     };
 };
 const getSeries = (t: InitParam['t'], source: InitParam['source'], lineSource: InitParam['lineSource']): any => {
@@ -106,70 +115,61 @@ const getSeries = (t: InitParam['t'], source: InitParam['source'], lineSource: I
         },
     ]);
 };
-const getLegend = (t: InitParam['t'], theme: InitParam['theme']): echarts.LegendComponentOption => {
+const getLegend = (t: InitParam['t']): echarts.LegendComponentOption => {
     return {
         data: [t('MemoryAllocations'), t('MemoryBlocks')],
-        selected: {
-            [t('MemoryAllocations')]: true,
-            [t('MemoryBlocks')]: false,
-        },
-        ...getLegendStyle(theme),
     };
 };
-const init = ({ chartRef, myChart, theme, blockData, lineSource, source, isDark, t }: InitParam): void => {
-    myChart.current = echarts.init(chartRef.current);
-    const option = {
-        textStyle: getDefaultChartOptions().textStyle,
-        tooltip: {
-            trigger: 'item',
-            formatter: function (params: any): string {
-                const info = blockData.blocks[params.dataIndex];
-                return safeStr(`Addr: ${info.addr} Size: ${(info.size / 1024 / 1024).toFixed(3)}MB Life: ${((info.endTimestamp - info.startTimestamp) / 1000000).toFixed(3)}s`);
-            },
-            ...getDefaultChartOptions(isDark).tooltip,
+const getTooltip = (blockData: InitParam['blockData']): echarts.TooltipComponentOption => {
+    return {
+        trigger: 'item',
+        formatter: function (params: any): string {
+            const info = blockData.blocks[params.dataIndex];
+            if (!info) {
+                return '';
+            }
+            return safeStr(`Addr: ${info.addr} Size: ${(info.size / 1024 / 1024).toFixed(3)}MB Life: ${((info.endTimestamp - info.startTimestamp) / 1000000).toFixed(3)}s`);
         },
-        xAxis: getXAxis(blockData),
+    };
+};
+const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): EChartsOption => {
+    return {
+        tooltip: getTooltip(blockData),
+        xAxis: getXAxis(session),
         yAxis: getYAxis(),
-        legend: getLegend(t, theme),
-        dataZoom: [
-            {
-                type: 'slider',
-                show: true,
-                xAxisIndex: 0,
-                start: 0,
-                end: 100,
-                filterMode: 'weakFilter',
-            },
-            {
-                type: 'inside',
-                xAxisIndex: 0,
-            },
-        ],
+        legend: getLegend(t),
         series: getSeries(t, source, lineSource),
         toolbox: {
+            show: true,
             feature: {
                 dataZoom: {
                     yAxisIndex: false,
                     filterMode: 'weakFilter',
+                    icon: {
+                        back: 'none',
+                    },
                 },
                 restore: {
                     show: true,
                 },
+                dataView: {
+                    show: false,
+                },
             },
             right: 150,
-            top: 10,
+            top: 20,
         },
-        color: chartColors,
+        axisPointer: {
+            show: true,
+        },
     };
-    myChart.current?.setOption(option, { notMerge: true });
 };
-const MemoryBarChart: any = (data: BarData) => {
+const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarIns: (value: echarts.ECharts | null) => void }): React.ReactElement => {
     const { t } = useTranslation('leaks');
-    const theme = useTheme();
-    const chartRef = React.useRef<HTMLDivElement>(null);
-    const initBlockData = { blocks: [], minSize: 0, maxSize: 0, minTimestamp: 0, maxTimestamp: 0 };
-    const initAllocData = { allocations: [], maxTimestamp: 0, minTimestamp: 0 };
-    const { blockData = initBlockData, allocationData = initAllocData, isDark }: BarData = data;
+    const chartRef = useRef<ChartsHandle>(null);
+    const [loading, setLoading] = useState(false);
+    const [chartOptions, setChartOptions] = useState<EChartsOption>({});
+    const { blockData, allocationData, deviceId, eventType } = session;
     const lineSource = allocationData.allocations.map((line: any) => [line.timestamp, line.totalSize]);
     const source: number[][] = useMemo(() => {
         const blockSource: number[][] = [];
@@ -187,18 +187,56 @@ const MemoryBarChart: any = (data: BarData) => {
         });
         return blockSource;
     }, [JSON.stringify(blockData.blocks)]);
-    const myChart = useRef<echarts.ECharts | null>(null);
-    const initParam = { chartRef, myChart, theme, blockData, lineSource, source, isDark, t };
+    const initParam: InitParam = { session, blockData, lineSource, source, t };
     useEffect(() => {
-        init(initParam);
-        return () => {
-            myChart.current?.dispose();
-        };
-    }, [blockData.blocks, allocationData.allocations, t]);
+        const param: EChartsOption = getOptions(initParam);
+        setChartOptions(param);
+        if (chartRef.current !== null && chartRef.current !== undefined) {
+            setBarIns(chartRef.current?.getInstance());
+        }
+        setLoading(false);
+        chartRef.current?.getInstance()?.getZr().off('click');
+        chartRef.current?.getInstance()?.getZr().on('click', (params) => {
+            if (params.target?.constructor?.name === 'ECPolyline' || params.target?.constructor?.name === 'Polygon' ||
+                params.target?.constructor?.name === undefined) {
+                const pointInPixel = [params.offsetX, params.offsetY];
+                const pointInGrid = chartRef.current?.getInstance()?.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
+                const xValue = pointInGrid?.[0];
+                if (xValue && xValue >= session.minTime && xValue <= session.maxTime) {
+                    runInAction(() => {
+                        session.memoryStamp = Number(xValue?.toFixed(0));
+                    });
+                }
+            }
+        });
+    }, [JSON.stringify(blockData), session.maxTime, session.minTime, t]);
+
+    useEffect(() => {
+        if (deviceId !== '') {
+            setLoading(true);
+            getBarNewData(session);
+        }
+    }, [deviceId, eventType]);
+
     return (
-        <div>
-            <div ref={chartRef} style={{ width: 1600, height: 350 }}></div>
-        </div>
+        <MIChart
+            ref={chartRef}
+            width={'calc(100vw - 80px)'}
+            height={'350px'}
+            loading={loading}
+            options={chartOptions}
+            onEvents={
+                {
+                    datazoom: (params): void => {
+                        const { startValue, endValue } = params.batch[0];
+                        getBarNewData(session, Math.floor(startValue), Math.ceil(endValue));
+                    },
+                    restore: (): void => {
+                        getBarNewData(session);
+                    },
+                }
+            }
+        />
     );
-};
+});
 export default MemoryBarChart;
