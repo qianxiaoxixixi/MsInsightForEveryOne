@@ -24,6 +24,7 @@ const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
 export const PAGE_PADDING = 16;
+const MAX_RECURSIVE_COUNT = 10;
 
 interface DrawArrowOptions {
     toX: number;
@@ -325,7 +326,7 @@ const processIsCol: Map<string, boolean> = new Map();
 // 泳道是否已隐藏
 const unitIsHidden: Map<string, boolean> = new Map();
 
-const setHiddenUnit = (unit: InsightUnit, metadata: ThreadMetaData): void => {
+const markUnitHidden = (unit: InsightUnit, metadata: ThreadMetaData): void => {
     if (isNil(metadata.cardId) || metadata.cardId === '') {
         return;
     }
@@ -340,39 +341,69 @@ const setHiddenUnit = (unit: InsightUnit, metadata: ThreadMetaData): void => {
         unitIsHidden.set(key, true);
     }
 };
-const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
-    const height = pinnedAreaHeight;
 
-    const computeUnitHeight = (props: {units: InsightUnit[]; height: number}): number => {
-        for (const unit of props.units) {
-            if (!unit.isDisplay) {
+const markUnitCollapsed = (metadata: ThreadMetaData): void => {
+    if (metadata.threadIdList?.length) {
+        for (const threadId of metadata.threadIdList) {
+            threadIsCol.set(`${metadata.cardId}-${metadata.processId}-${threadId}`, true);
+        }
+    } else if (metadata.threadId !== undefined) {
+        threadIsCol.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, true);
+    }
+};
+
+const recordUnitHeight = (unit: InsightUnit, height: number): void => {
+    const metadata = unit.metadata as ThreadMetaData;
+
+    if (metadata.cardId !== undefined) {
+        heightMap.set(`${metadata.cardId}`, height);
+    }
+    if (metadata.processId !== undefined) {
+        heightMap.set(`${metadata.cardId}-${metadata.processId}`, height);
+    }
+    if (metadata.threadId !== undefined && metadata.processId !== undefined) {
+        if (metadata.threadIdList) {
+            for (const threadId of metadata.threadIdList) {
+                heightMap.set(`${metadata.cardId}-${metadata.processId}-${threadId}`, height);
+            }
+        } else {
+            heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, height);
+        }
+
+        if (unit.collapsible && !unit.isExpanded) {
+            markUnitCollapsed(metadata);
+        }
+    }
+};
+
+const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
+    const rootUnits = Array.from(new Set<InsightUnit>(session.units.flatMap(unit => unit.parent ?? unit)));
+
+    const computeUnitHeight = (units: InsightUnit[], initialHeight: number, count: number = 1): number => {
+        let height = initialHeight;
+
+        for (const unit of units) {
+            if (!unit.isDisplay || unit.isMerged) {
                 continue;
             }
+
             const metadata = unit.metadata as ThreadMetaData;
-            if (metadata.cardId !== undefined) {
-                heightMap.set(`${metadata.cardId}`, props.height);
-            }
-            if (metadata.processId !== undefined) {
-                heightMap.set(`${metadata.cardId}-${metadata.processId}`, props.height);
-            }
-            if (metadata.threadId !== undefined && metadata.processId !== undefined) {
-                heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, props.height);
-                if (unit.collapsible && !unit.isExpanded) {
-                    threadIsCol.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, true);
-                }
-            }
+
+            recordUnitHeight(unit, height);
+
             if (unit.isUnitVisible) {
-                props.height += unit.height() + 1;
+                height += unit.height() + 1;
             }
-            if (unit.children && unit.isExpanded) {
-                props.height = computeUnitHeight({ ...props, units: unit.children });
+
+            if (unit.children && unit.isExpanded && count <= MAX_RECURSIVE_COUNT) {
+                height = computeUnitHeight(unit.children, height, count + 1);
             }
-            setHiddenUnit(unit, metadata);
+            markUnitHidden(unit, metadata);
         }
-        return props.height;
+        return height;
     };
-    const rootUnits = Array.from(new Set<InsightUnit>(session.units.flatMap(unit => unit.parent ?? unit)));
-    computeUnitHeight({ units: rootUnits, height });
+
+    computeUnitHeight(rootUnits, pinnedAreaHeight);
 };
 
 export interface DrawCanvasArgs {

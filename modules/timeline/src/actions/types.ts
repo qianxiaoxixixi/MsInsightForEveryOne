@@ -50,7 +50,9 @@ export type ActionName =
   | 'toggleBottomPanel'
   | 'lockSelection'
   | 'unlockSelection'
-  | 'setCardAlias';
+  | 'setCardAlias'
+  | 'mergeUnits'
+  | 'unmergeUnits';
 
 export interface Action {
     name: ActionName;

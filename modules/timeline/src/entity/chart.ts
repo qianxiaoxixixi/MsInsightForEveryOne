@@ -124,6 +124,7 @@ export interface StackStatusData {
     depth: number;
     cname: string;
     id?: string;
+    threadId?: string;
 };
 
 export interface FilledLineConfig {
