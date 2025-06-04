@@ -228,7 +228,7 @@ namespace Dic::Protocol {
     std::string OperatorProtocol::GetDetailColumName(const std::string& originName)
     {
         std::map<std::string, std::string> relation {
-                {"rank", "rank_id"},
+                {"rank", "deviceId"},
                 {"step", "step_id"},
                 {"name", "name"},
                 {"type", "op_type"},

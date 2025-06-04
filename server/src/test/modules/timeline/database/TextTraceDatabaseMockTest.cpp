@@ -43,7 +43,7 @@ protected:
     const std::string processSql =
         "CREATE TABLE process (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT, process_sort_index INTEGER);";
     const std::string kernelSql =
-        "CREATE TABLE kernel_detail (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, name TEXT, "
+        "CREATE TABLE kernel_detail (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, step_id TEXT, name TEXT, "
         "op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time INTEGER, block_dim "
         "INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, output_data_types "
         "TEXT, output_formats TEXT, aicore_time_us_ TEXT, aic_total_cycles TEXT, aic_mac_time_us_ TEXT, aic_mac_ratio "
@@ -1209,7 +1209,7 @@ TEST_F(TextTraceDatabaseMockTest, TestQueryFuseableOpDataWhenDbOpen)
     DatabaseTestCaseMockUtil::OpenDB(dbPtr);
     DatabaseTestCaseMockUtil::CreateTable(dbPtr, kernelSql);
     std::string kerData =
-        "INSERT INTO \"main\".\"kernel_detail\" (\"id\", \"rank_id\", \"step_id\", \"name\", \"op_type\", "
+        "INSERT INTO \"main\".\"kernel_detail\" (\"id\", \"deviceId\", \"step_id\", \"name\", \"op_type\", "
         "\"accelerator_core\", \"start_time\", \"duration\", \"wait_time\", \"block_dim\", \"input_shapes\", "
         "\"input_data_types\", \"input_formats\", \"output_shapes\", \"output_data_types\", \"output_formats\", "
         "\"aicore_time_us_\", \"aic_total_cycles\", \"aic_mac_time_us_\", \"aic_mac_ratio\", \"aic_scalar_time_us_\", "

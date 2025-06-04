@@ -12,13 +12,13 @@ class KernelDetailTableTest : public ::testing::Test {};
 TEST_F(KernelDetailTableTest, testMstxEventsTableColumnMaping)
 {
     sqlite3 *db = nullptr;
-    std::string sql = "CREATE TABLE kernel_detail (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, "
+    std::string sql = "CREATE TABLE kernel_detail (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, step_id TEXT, "
         "name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time "
         "INTEGER, block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, "
         "output_shapes TEXT, output_data_types TEXT, output_formats TEXT);";
     TestCaseDatabaseUtil::CreateDatabse(db, sql);
     std::string sqlInsert =
-        "INSERT INTO \"main\".\"kernel_detail\" (\"id\", \"rank_id\", \"step_id\", \"name\", \"op_type\", "
+        "INSERT INTO \"main\".\"kernel_detail\" (\"id\", \"deviceId\", \"step_id\", \"name\", \"op_type\", "
         "\"accelerator_core\", \"start_time\", \"duration\", \"wait_time\", \"block_dim\", \"input_shapes\", "
         "\"input_data_types\", \"input_formats\", \"output_shapes\", \"output_data_types\", \"output_formats\") VALUES "
         "(1, '0', '1', 'aclnnInplaceZero_ZerosLikeAiCore_ZerosLike', 'ZerosLike', 'AI_VECTOR_CORE', "

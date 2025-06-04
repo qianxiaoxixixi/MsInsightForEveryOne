@@ -34,11 +34,11 @@ bool TextSummaryDataBase::CreateTable()
         return false;
     }
     std::string sql =
-        "CREATE TABLE " + TABLE_KERNEL + " (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, " +
+        "CREATE TABLE " + TABLE_KERNEL + " (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, step_id TEXT, " +
         "task_id TEXT, name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, " +
         "wait_time INTEGER, block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, " +
         "output_shapes TEXT, output_data_types TEXT, output_formats TEXT);" +
-        "CREATE INDEX rank_index ON " + TABLE_KERNEL + " (rank_id);";
+        "CREATE INDEX rank_index ON " + TABLE_KERNEL + " (deviceId);";
     std::lock_guard<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -64,7 +64,7 @@ bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
         }
     }
     std::string sql =
-            "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, task_id, name, op_type, accelerator_core, " +
+            "INSERT INTO " + TABLE_KERNEL + " (deviceId, step_id, task_id, name, op_type, accelerator_core, " +
             "start_time, duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, " +
             "output_shapes, output_data_types, output_formats" + columnSql + ") " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
@@ -169,7 +169,7 @@ sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen, const std::v
             }
         }
         std::string sql =
-                "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, task_id, name, op_type, accelerator_core, " +
+                "INSERT INTO " + TABLE_KERNEL + " (deviceId, step_id, task_id, name, op_type, accelerator_core, " +
                 "start_time, duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, " +
                 "output_shapes, output_data_types, output_formats" + columnSql + ") " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
@@ -392,7 +392,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             operatorGroup == OperatorGroupConverter::OperatorGroup::COMMUNICATION_NAME_GROUP) {
             std::string name = "name";
             sql = " SELECT " + name + " as name , ROUND(duration, 2) as duration FROM " + TABLE_KERNEL +
-                " WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                " WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 " ORDER BY duration DESC LIMIT ?";
         } else {
             std::string name;
@@ -405,7 +405,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
             }
             sql = " SELECT " + name + " as name, ROUND(sum(duration), 2) as duration FROM " + TABLE_KERNEL +
-                " WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                " WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 " GROUP by " + group +
                 " ORDER BY duration DESC LIMIT ?";
         }
@@ -429,7 +429,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     SELECT " + group + ", accelerator_core," + (reqParams.group == Protocol::OPERATOR_GROUP ?
                 "     ROUND(duration, 2) as duration" : " ROUND(SUM(duration), 2) as duration") +
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(false) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(false) +
                 (reqParams.group == Protocol::OPERATOR_GROUP ? "     " : (" GROUP BY " + group)) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery" +
@@ -497,7 +497,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 "     ORDER by ROUND(SUM(duration), 2) DESC LIMIT ?"
                 " ) subquery";
@@ -578,7 +578,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT ?"
                 " ) subquery ";
@@ -603,7 +603,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     GROUP by " + group +
                 " ) subquery";
 
@@ -707,7 +707,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
         GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql);
@@ -775,7 +775,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
         std::string sql;
         std::string sqlTab =
-                " SELECT rank_id, step_id, name, op_type, accelerator_core,"
+                " SELECT deviceId, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
                 " END AS startTime, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats " +
@@ -783,13 +783,13 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::string conditionalQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
         std::string allQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
+                "     WHERE deviceId = ? AND accelerator_core " + GetAcceleratorCoreSql(isCommunication) +
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
         std::string baseAllQuerySql =
@@ -940,7 +940,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core = ? AND" + condition +
+                "     WHERE deviceId = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
         GenerateQueryFiltersSql<Protocol::OperatorMoreInfoReqParams>(reqParams, sql);
@@ -976,14 +976,14 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         std::set<std::string> pmuClos = FetchPmuColumnNames();
         std::string pmuColumnNames = JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end()));
         std::string sql =
-                " SELECT rank_id, step_id, name, op_type, accelerator_core,"
+                " SELECT deviceId, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
                 " END AS startTime, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats " +
                 pmuColumnNames +
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
-                "     WHERE rank_id = ? AND accelerator_core = ?"
+                "     WHERE deviceId = ? AND accelerator_core = ?"
                 "     ORDER by duration DESC"
                 " ) subquery ";
 
@@ -1125,7 +1125,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     std::set<std::string> TextSummaryDataBase::QueryRankIds()
     {
         std::set<std::string> rankIds = {};
-        std::string sql = "SELECT rank_id FROM " + TABLE_KERNEL + " GROUP BY rank_id";
+        std::string sql = "SELECT deviceId FROM " + TABLE_KERNEL + " GROUP BY deviceId";
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {

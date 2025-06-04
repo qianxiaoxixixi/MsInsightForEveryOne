@@ -16,7 +16,7 @@ namespace {
 
     using DetailCmpFun = std::function<bool(const DetailCmpRes&, const DetailCmpRes&)>;
     static std::unordered_map<std::string, DetailCmpFun> DetailDescCompareFunctions = {
-        {"rank_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"deviceId", [](const DetailCmpRes& a, const DetailCmpRes& b)
                     { return a.diff.rankId > b.diff.rankId; }},
         {"step_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
                     { return a.diff.stepId > b.diff.stepId; }},
@@ -48,7 +48,7 @@ namespace {
                            { return a.diff.outputFormat > b.diff.outputFormat; }},
     };
     static std::unordered_map<std::string, DetailCmpFun> DetailAsceCompareFunctions = {
-        {"rank_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
+        {"deviceId", [](const DetailCmpRes& a, const DetailCmpRes& b)
                     { return a.diff.rankId < b.diff.rankId; }},
         {"step_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
                     { return a.diff.stepId < b.diff.stepId; }},

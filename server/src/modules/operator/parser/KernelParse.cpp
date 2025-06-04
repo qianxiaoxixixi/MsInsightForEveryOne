@@ -292,7 +292,11 @@ bool KernelParse::CheckHeaderFieldAndFilterParseFunc(std::vector<std::string> ro
 inline void KernelParse::ParsePyTorchOpBaseInfoData(const std::map<std::string, size_t> &dataMap,
     const std::vector<std::string> &row, const std::string &fileId, Kernel &kernel)
 {
-    kernel.rankId = fileId;
+    if (dataMap.count(DEVICE_ID)) {
+        kernel.rankId = row[dataMap.at(DEVICE_ID)];
+    } else {
+        kernel.rankId = fileId;
+    }
     kernel.name = row[dataMap.at(FIELD_NAME)];
     kernel.type = row[dataMap.at(FIELD_TYPE)];
     kernel.acceleratorCore = row[dataMap.at(FIELD_ACCELERATOR_CORE)];
