@@ -1527,7 +1527,7 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::HBM, PROCESS_TYPE::LLC, PROCESS_TYPE::SAMPLE_PMU,
-                            PROCESS_TYPE::NIC, PROCESS_TYPE::ROCE, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
+                            PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
     for (const auto &type : types) {
         std::string tableName;
         std::string processName;
@@ -1571,9 +1571,6 @@ bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeli
     if (type == PROCESS_TYPE::NIC) {
         processName = "NIC";
         tableName = "NETDEV_STATS";
-    } else if (type == PROCESS_TYPE::ROCE) {
-        processName = "RoCE";
-        tableName = "NETDEV_STATS";
     } else {
         tableName = ENUM_TO_STR(type).value_or("");
         processName = tableName;
@@ -1593,7 +1590,6 @@ bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeli
             sql = StringUtil::ReplaceFirst(SAMPLE_PMU_MEAT_DATA_SQL, "#", tableName);
             break;
         case PROCESS_TYPE::NIC:
-        case PROCESS_TYPE::ROCE:
         case PROCESS_TYPE::PCIE:
         case PROCESS_TYPE::HCCS:
             sql = helper.GenerateDeviceMetadataSQL(type);

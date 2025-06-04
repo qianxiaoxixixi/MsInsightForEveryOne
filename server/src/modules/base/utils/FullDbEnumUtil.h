@@ -24,7 +24,6 @@ const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWA
                                                    { PROCESS_TYPE::OSRT_API, "OSRT_API"},
                                                    { PROCESS_TYPE::LLC, "LLC" },
                                                    { PROCESS_TYPE::PCIE, "PCIE" },
-                                                   { PROCESS_TYPE::ROCE, "RoCE" },
                                                    { PROCESS_TYPE::NIC, "NIC" },
                                                    { PROCESS_TYPE::SAMPLE_PMU, "SAMPLE_PMU_TIMELINE" },
                                                    { PROCESS_TYPE::HCCS, "HCCS" },

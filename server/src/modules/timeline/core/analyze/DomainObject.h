@@ -139,7 +139,6 @@ enum class PROCESS_TYPE {
     NPU_MEM,
     HCCS,
     PCIE,
-    ROCE,
     NIC,
     SAMPLE_PMU,
     AI_CORE,

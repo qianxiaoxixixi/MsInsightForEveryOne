@@ -70,6 +70,17 @@ TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForNICTest)
     Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::NIC;
     std::string sql = helper.GenerateDeviceMetadataSQL(type);
     const std::string nicSQL =
+        "SELECT DISTINCT 'NIC/roceTxPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/roceRxPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/roceTxErrPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/roceRxErrPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/roceTxCnpPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/roceRxCnpPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/roceNewPktRty' AS name, 'Rty' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/nicTxByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/nicTxBandwidth' AS name, 'Bandwidth(B/s)' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/nicRxByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
+        "SELECT DISTINCT 'NIC/nicRxBandwidth' AS name, 'Bandwidth(B/s)' AS types FROM NETDEV_STATS UNION ALL "
         "SELECT DISTINCT 'NIC/macTxPfcPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
         "SELECT DISTINCT 'NIC/macRxPfcPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
         "SELECT DISTINCT 'NIC/macTxByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
@@ -77,11 +88,7 @@ TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForNICTest)
         "SELECT DISTINCT 'NIC/macRxByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
         "SELECT DISTINCT 'NIC/macRxBandwidth' AS name, 'Bandwidth(B/s)' AS types FROM NETDEV_STATS UNION ALL "
         "SELECT DISTINCT 'NIC/macTxBadByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'NIC/macRxBadByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'NIC/nicTxByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'NIC/nicTxBandwidth' AS name, 'Bandwidth(B/s)' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'NIC/nicRxByte' AS name, 'Byte' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'NIC/nicRxBandwidth' AS name, 'Bandwidth(B/s)' AS types FROM NETDEV_STATS;";
+        "SELECT DISTINCT 'NIC/macRxBadByte' AS name, 'Byte' AS types FROM NETDEV_STATS;";
     EXPECT_EQ(sql, nicSQL);
 }
 
@@ -175,70 +182,53 @@ TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForNICTestPartTwo)
     EXPECT_EQ(sql, nicSQL6);
 }
 
-TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForRoCETest)
+TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForNICTestPartThree)
 {
     CounterEventHelper helper;
     helper.RegisterDeviceMap();
-    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::ROCE;
-    std::string sql = helper.GenerateDeviceMetadataSQL(type);
-    const std::string roceSQL =
-        "SELECT DISTINCT 'RoCE/roceTxPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'RoCE/roceRxPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'RoCE/roceTxErrPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'RoCE/roceRxErrPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'RoCE/roceTxCnpPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'RoCE/roceRxCnpPkt' AS name, 'Pkt' AS types FROM NETDEV_STATS UNION ALL "
-        "SELECT DISTINCT 'RoCE/roceNewPktRty' AS name, 'Rty' AS types FROM NETDEV_STATS;";
-    EXPECT_EQ(sql, roceSQL);
-}
-
-TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForRoCETest)
-{
-    CounterEventHelper helper;
-    helper.RegisterDeviceMap();
-    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::ROCE;
-    std::string threadId = "RoCE/roceTxPkt";
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::NIC;
+    std::string threadId = "NIC/roceTxPkt";
     std::string sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL1 =
+    const std::string nicSQL1 =
         "SELECT timestampNs - ? AS startTime, '{\"Pkt\":' || roceTxPkt || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceTxPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL1);
-    threadId = "RoCE/roceRxPkt";
+        "WHERE 'NIC/roceTxPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL1);
+    threadId = "NIC/roceRxPkt";
     sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL2 =
+    const std::string nicSQL2 =
         "SELECT timestampNs - ? AS startTime, '{\"Pkt\":' || roceRxPkt || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceRxPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL2);
-    threadId = "RoCE/roceTxErrPkt";
+        "WHERE 'NIC/roceRxPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL2);
+    threadId = "NIC/roceTxErrPkt";
     sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL3 =
+    const std::string nicSQL3 =
         "SELECT timestampNs - ? AS startTime, '{\"Pkt\":' || roceTxErrPkt || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceTxErrPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL3);
-    threadId = "RoCE/roceRxErrPkt";
+        "WHERE 'NIC/roceTxErrPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL3);
+    threadId = "NIC/roceRxErrPkt";
     sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL4 =
+    const std::string nicSQL4 =
         "SELECT timestampNs - ? AS startTime, '{\"Pkt\":' || roceRxErrPkt || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceRxErrPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL4);
-    threadId = "RoCE/roceTxCnpPkt";
+        "WHERE 'NIC/roceRxErrPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL4);
+    threadId = "NIC/roceTxCnpPkt";
     sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL5 =
+    const std::string nicSQL5 =
         "SELECT timestampNs - ? AS startTime, '{\"Pkt\":' || roceTxCnpPkt || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceTxCnpPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL5);
-    threadId = "RoCE/roceRxCnpPkt";
+        "WHERE 'NIC/roceTxCnpPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL5);
+    threadId = "NIC/roceRxCnpPkt";
     sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL6 =
+    const std::string nicSQL6 =
         "SELECT timestampNs - ? AS startTime, '{\"Pkt\":' || roceRxCnpPkt || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceRxCnpPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL6);
-    threadId = "RoCE/roceNewPktRty";
+        "WHERE 'NIC/roceRxCnpPkt' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL6);
+    threadId = "NIC/roceNewPktRty";
     sql = helper.GenerateDeviceCounterSQL(type, threadId);
-    const std::string roceSQL7 =
+    const std::string nicSQL7 =
         "SELECT timestampNs - ? AS startTime, '{\"Rty\":' || roceNewPktRty || '}' AS args FROM NETDEV_STATS "
-        "WHERE 'RoCE/roceNewPktRty' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
-    EXPECT_EQ(sql, roceSQL7);
+        "WHERE 'NIC/roceNewPktRty' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, nicSQL7);
 }
 
 TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForPCIeTest)
