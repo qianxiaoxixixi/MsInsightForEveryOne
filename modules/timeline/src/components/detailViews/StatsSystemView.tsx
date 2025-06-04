@@ -20,7 +20,7 @@ import { getTimeOffset } from '../../insight/units/utils';
 import { Button } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { StyledEmpty } from 'ascend-utils';
-import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary } from './SystemView';
+import { DETAIL_HEADER_HEIGHT_ETC_PX, BaseSummary, SelectContentViewProps } from './SystemView';
 import { OverallMetrics } from './OverallMetrics';
 import { jumpToUnitOperator } from '../../utils';
 
@@ -29,9 +29,10 @@ const filterColumn = [
     'inputFormats', 'outputShapes', 'outputDataTypes', 'outputFormats',
 ];
 
-const handleSelected = async(rowData: any, props: any): Promise<void> => {
+const handleSelected = async(rowData: any, props: SelectContentViewProps): Promise<void> => {
     const res = await queryOneKernel({
-        rankId: props.rankId,
+        rankId: props.card.cardId,
+        dbPath: props.card.dbPath,
         name: rowData.name,
         timestamp: rowData.startTime,
         duration: Number((rowData.duration * 1000).toFixed(0)),
@@ -41,7 +42,8 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
         ...res,
         name: rowData.name,
         id: props.session.isFullDb as boolean ? rowData.id : res.id,
-        cardId: props.rankId,
+        cardId: props.card.cardId,
+        dbPath: props.card.dbPath,
         tid: res.threadId,
         duration: Number((rowData.duration * 1000).toFixed(0)),
         timestamp: rowData.startTime,
@@ -62,7 +64,7 @@ const defaultFilters = {
     outputFormats: [],
 };
 
-const KernelDetails = observer((props: any) => {
+const KernelDetails = observer((props: SelectContentViewProps) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = { field: 'duration', order: 'descend' };
     const [dataSource, setDataSource] = useState<any[]>([]);
@@ -73,17 +75,17 @@ const KernelDetails = observer((props: any) => {
     const kernelDetails = useKernelDetails();
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
-    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
+    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.card.cardId)?.phase;
     useEffect(() => {
         updateData(page, sorter, filters);
-    }, [sorter, filters, props.rankId]);
+    }, [sorter, filters, props.card.cardId]);
     useEffect(() => {
         if (status === 'download') {
             updateData(page, sorter, filters);
         }
     }, [status]);
     const updateData = async(pages: any, sorters: {field: string;order: string}, filtersConditions: any): Promise<void> => {
-        if (props.rankId === undefined) {
+        if (props.card === undefined || props.card.cardId === '') {
             setDataSource([]);
             setPage(defaultPage);
             return;
@@ -98,7 +100,8 @@ const KernelDetails = observer((props: any) => {
             }
         });
         const res = await queryKernelDetails({
-            rankId: props.rankId,
+            rankId: props.card.cardId,
+            dbPath: props.card.dbPath,
             pageSize: pages.pageSize,
             current: pages.current,
             orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
@@ -106,7 +109,7 @@ const KernelDetails = observer((props: any) => {
             coreType: '',
             filterCondition: filterTypes,
         });
-        const timestampoffset = getTimeOffset(props.session, props.rankId);
+        const timestampoffset = getTimeOffset(props.session, props.card);
         const data = res.kernelDetails.map((item: {
             startTimeLabel: string;
             startTime: number;}) => {
@@ -138,7 +141,7 @@ const KernelDetails = observer((props: any) => {
         handleSelected(rowData, props);
     }, [rowData]);
     return (
-        (status === 'download' || props.rankId === undefined)
+        (status === 'download' || props.card === undefined || props.card.cardId === '')
             ? <ResizeTable
                 onChange={(pagination: any, newFilters: any, newSorter: any): void => {
                     setSorter(newSorter);
@@ -159,7 +162,7 @@ const KernelDetails = observer((props: any) => {
 });
 
 export const StatsSystemView = [OverallMetrics, ...layerTypes.map((type) => {
-    return observer((props: any) => {
+    return observer((props: SelectContentViewProps) => {
         return (
             <BaseSummary
                 layerType={type}

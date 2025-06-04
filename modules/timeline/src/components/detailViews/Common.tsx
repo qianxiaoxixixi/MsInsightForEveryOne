@@ -13,7 +13,7 @@ import { fetchColumnFilterProps } from 'ascend-resize';
 import i18n from 'ascend-i18n';
 import type { TableColumnsType } from 'antd';
 import { ColumnFilterIcon } from 'ascend-icon';
-import type { EventViewParams } from '../../api/interface';
+import type { EventViewParams, BaseSummaryRowItemType } from '../../api/interface';
 
 interface ColumData {
     title: string;
@@ -34,6 +34,7 @@ interface SearchData {
 
 export interface IQueryCondition {
     rankId: string;
+    dbPath: string;
     pageSize: number;
     current: number;
     orderBy: string;
@@ -218,70 +219,70 @@ export const getPageData = (page: PageType, setPage: VoidFunction): object => {
 };
 
 export const querySystemViewDetails = async (param: {
-    isQueryTotal: boolean; rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+    isQueryTotal: boolean; rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
     layer: string; searchName: string;
-}): Promise<any> => {
+}): Promise<{ systemViewDetails: BaseSummaryRowItemType[] }> => {
     return window.requestData('unit/systemView', param, 'timeline');
 };
 
-export const queryTableDataNameList = async (param: { rankId: string }): Promise<any> => {
+export const queryTableDataNameList = async (param: { rankId: string; dbPath: string }): Promise<any> => {
     return window.requestData('tableData/nameList', param, 'timeline');
 };
 
 export const queryTableDataDetails = async (param: {
-    rankId: string; pageSize: number; currentPage: number; orderBy?: string; order?: string;
+    rankId: string; dbPath: string; pageSize: number; currentPage: number; orderBy?: string; order?: string;
     selectKey: number;
 }): Promise<any> => {
     return window.requestData('tableData/detail', param, 'timeline');
 };
 
 export const queryKernelDetails = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
     coreType: string; filterCondition: string[];
 }): Promise<any> => {
     return window.requestData('unit/kernelDetails', param, 'timeline');
 };
 
 export const queryOneKernel = async (param: {
-    rankId: string; name: string; timestamp: number; duration: number;
+    rankId: string; dbPath: string; name: string; timestamp: number; duration: number;
 }): Promise<any> => {
     return window.requestData('unit/one/kernelDetail', param, 'timeline');
 };
 
 export const searchAllSlices = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-    searchContent: string; isMatchCase: boolean; isMatchExact: boolean; metadataList: any;
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+    searchContent?: string; isMatchCase?: boolean; isMatchExact?: boolean; metadataList: any;
 }): Promise<any> => {
     return window.requestData('search/all/slices', param, 'timeline');
 };
 
 export const queryAffinityOptimizer = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-}): Promise<any> => {
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/affinity_optimizer', param);
 };
 
 export const queryAffinityAPI = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-}): Promise<any> => {
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/affinity_api', param);
 };
 
 export const queryOperatorFusion = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-}): Promise<any> => {
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/operator_fusion', param);
 };
 
 export const queryAICPUOperators = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-}): Promise<any> => {
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/aicpu_operator', param);
 };
 
 export const queryACLNNOperators = async (param: {
-    rankId: string; pageSize: number; current: number; orderBy: string; order: string;
-}): Promise<any> => {
+    rankId: string; dbPath: string; pageSize: number; current: number; orderBy: string; order: string;
+}): Promise<{ data: BaseSummaryRowItemType[] }> => {
     return window.requestData('advisor/aclnn_operator', param);
 };
 

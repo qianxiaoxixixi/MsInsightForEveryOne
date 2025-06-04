@@ -77,6 +77,7 @@ export interface SelectedDataType extends Pick<ThreadTrace, 'duration' | 'startT
     threadId: SliceMeta['threadId'] | SliceData['tid'];
     processId: SliceMeta['processId'];
     cardId?: SliceMeta['cardId'];
+    dbPath?: string;
     metaType?: ThreadMetaData['metaType'];
     color?: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
     startRecordTime?: number;

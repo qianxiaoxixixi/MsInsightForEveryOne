@@ -313,10 +313,11 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         }
     }, [session.isParserLoading]);
     const handleStartClick = (): void => {
-        const param: ParseCardsParam = { cards: [] };
+        const param: ParseCardsParam = { cards: [], dbPaths: [] };
         if (unit instanceof CardUnit && unit.metadata?.cardName !== '' && unit.metadata?.cardName !== 'Host') {
             param.cards.push(unit.metadata.cardId);
-        };
+            param.dbPaths.push(unit.metadata.dbPath);
+        }
         parseCards(param).then(() => {
             runInAction((): void => {
                 unit.isParseLoading = true;

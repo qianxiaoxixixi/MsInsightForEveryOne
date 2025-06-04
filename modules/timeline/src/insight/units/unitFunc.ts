@@ -69,14 +69,14 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
     switch (insightMetaData.type) {
         case 'label': {
             const parentMetaDataFromTree = parentMetaDataTree.get(insightMetaData.metadata);
-            const meta = generateMetaData<LabelMetaData>({ cardId: parentMetaDataFromTree.cardId, filePath: parentMetaDataFromTree.filePath },
+            const meta = generateMetaData<LabelMetaData>({ cardId: parentMetaDataFromTree.cardId, dbPath: parentMetaDataFromTree.dbPath },
                 insightMetaData.metadata.processId, insightMetaData.metadata.processName);
             meta.dataSource = parentMetaDataFromTree.dataSource;
             meta.metaType = insightMetaData.metadata.metaType;
             return new LabelUnit(meta);
         }
         case 'process': {
-            const meta = generateMetaData<ProcessMetaData>({ cardId: insightMetaData.metadata.cardId, filePath: insightMetaData.metadata.filePath },
+            const meta = generateMetaData<ProcessMetaData>({ cardId: insightMetaData.metadata.cardId, dbPath: insightMetaData.metadata.dbPath },
                 insightMetaData.metadata.processId, insightMetaData.metadata.processName, insightMetaData.metadata.threadId);
             meta.dataSource = parentMetaDataTree.get(insightMetaData.metadata).dataSource;
             meta.label = insightMetaData.metadata.label;
@@ -84,7 +84,7 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
             return new ProcessUnit(meta);
         }
         case 'thread': {
-            const meta = generateMetaData<ThreadMetaData>({ cardId: insightMetaData.metadata.cardId, filePath: insightMetaData.metadata.filePath },
+            const meta = generateMetaData<ThreadMetaData>({ cardId: insightMetaData.metadata.cardId, dbPath: insightMetaData.metadata.dbPath },
                 (parentMetaData as ProcessMetaData).processId, (parentMetaData as ProcessMetaData).processName,
                 insightMetaData.metadata.threadId, insightMetaData.metadata.threadName);
             meta.dataSource = parentMetaDataTree.get(insightMetaData.metadata).dataSource;
@@ -103,7 +103,7 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
         }
         case 'counter': {
             const grandParentMetaData = parentMetaDataTree.get(parentMetaDataTree.get(insightMetaData.metadata));
-            const meta = generateMetaData<CounterMetaData>({ cardId: grandParentMetaData.cardId, filePath: grandParentMetaData.filePath },
+            const meta = generateMetaData<CounterMetaData>({ cardId: grandParentMetaData.cardId, dbPath: grandParentMetaData.dbPath },
                 (parentMetaData as ProcessMetaData).processId, insightMetaData.metadata.processName, insightMetaData.metadata.threadId,
                 insightMetaData.metadata.threadName,
             );
@@ -118,10 +118,10 @@ function newLane(insightMetaData: InsightMetaData<any>, parentMetaData: any): In
 }
 
 function generateMetaData<T extends MetaDataInnerBase = MetaDataInnerBase>(
-    cardInfo: { cardId: string; filePath: string }, processId: string, processName: string, threadId: string = '', threadName: string = ''): T {
+    cardInfo: { cardId: string; dbPath: string }, processId: string, processName: string, threadId: string = '', threadName: string = ''): T {
     return {
         cardId: cardInfo.cardId,
-        filePath: cardInfo.filePath,
+        dbPath: cardInfo.dbPath,
         metaType: '',
         processId,
         processName,

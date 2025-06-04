@@ -134,7 +134,7 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                     continue;
                 }
                 const metadata = unit.metadata as ProcessMetaData;
-                let { dataSource, cardId } = metadata;
+                let { dataSource, cardId, dbPath } = metadata;
                 if (cardId?.endsWith('Host')) {
                     const hostUnits: InsightUnit[] = [];
                     hostUnits.push(unit);
@@ -155,6 +155,7 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 const params =
                     {
                         rankId: cardId,
+                        dbPath,
                         startTime: start,
                         endTime: end,
                         category,
@@ -190,8 +191,8 @@ const useGetCategories = (session: Session, isSuspend: boolean): {categories: st
         cardIdsRef.current = parsedCardIdsString;
         const fetchList: Array<Promise<{ category: string[] }>> = [];
         for (const unit of cardUnitsParsed) {
-            const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
-            fetchList.push(window.request(dataSource, { command: 'flow/categoryList', params: { rankId: cardId } }));
+            const { dataSource, cardId, dbPath } = unit.metadata as CardMetaData;
+            fetchList.push(window.request(dataSource, { command: 'flow/categoryList', params: { rankId: cardId, dbPath } }));
         }
         setLoading(true);
         Promise.all(fetchList).then((results) => {

@@ -674,7 +674,7 @@ export type MetaDataBase = { dataSource: DataSource } & Record<string, unknown>;
 
 export interface MetaDataInnerBase extends MetaDataBase {
     cardId: string;
-    filePath: string; // 卡对应信息所在 DB 的文件路径
+    dbPath: string; // 卡对应信息所在 DB 的文件路径
     metaType: string; // db 格式数据下有效, text 格式数据下始终是 TEXT
     processId?: string;
     processName?: string;
@@ -713,6 +713,7 @@ export interface ProcessMetaData extends MetaDataInnerBase {
 
 export interface CardMetaData extends MetaDataBase {
     cardId: string;
+    dbPath: string;
     cardName: string;
     cardPath: string;
     label?: string;
@@ -751,6 +752,7 @@ export interface SliceMeta extends MetaDataBase {
 
 export interface SliceData {
     rankId: string;
+    dbPath: string;
     pid: string;
     tid: string;
     id?: string;
@@ -818,6 +820,7 @@ export interface AscendMultiSliceList {
     avgWallDuration?: number;
     occurrences?: number;
     rankId?: string;
+    dbPath?: string;
     tid?: string;
     pid?: string;
     startTime?: number;

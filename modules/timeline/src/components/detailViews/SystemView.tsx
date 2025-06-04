@@ -16,7 +16,7 @@ import {
     SystemViewItem, queryTableDataNameList,
 } from './Common';
 import { ResizeTable } from 'ascend-resize';
-import { limitInput, GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
+import { limitInput, GroupCardInfosByHost, StyledEmpty } from 'ascend-utils';
 import type { CardMetaData } from '../../entity/data';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { getTimeOffset } from '../../insight/units/utils';
@@ -26,6 +26,8 @@ import { StatsSystemView } from './StatsSystemView';
 import { ExpertSystemView, handleAdvisorSelected } from './ExpertSystemView';
 import { EventView } from './EventsView';
 import { TableDataView } from './TableDataView';
+import { Session } from '../../entity/session';
+import type { BaseSummaryRowItemType } from '../../api/interface';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
@@ -98,11 +100,30 @@ const AsideSelectList = styled.div`
     }
 `;
 
-interface ConditionType {
-    options: string[];
-    value: string;
-    ranks?: Map<string, string[]>;
+export interface SelectedCardInfo {
+    cardId: string;
+    dbPath: string;
 }
+
+interface ConditionType<T> {
+    options: T[];
+    value: T;
+}
+
+interface HostConditionType extends ConditionType<string> {
+    cardsMap?: Map<string, SelectedCardInfo[]>;
+}
+
+export interface SelectContentViewProps {
+    key: string | number;
+    card: SelectedCardInfo;
+    session: Session;
+    bottomHeight: number;
+}
+
+type SelectContentViewComponent<T extends SelectContentViewProps = SelectContentViewProps> = React.FC<T>;
+
+export const DEFAULT_CARD_VALUE = { cardId: '', dbPath: '' };
 
 export const SystemView = observer((props: any) => {
     const [viewOption, setViewOption] = useState(0);
@@ -115,9 +136,9 @@ export const SystemView = observer((props: any) => {
         }
         return contentList[viewOption][key];
     }, [viewOption, key]);
-    const [conditions, setConditions] = useState<{ rankId: string }>({ rankId: '' });
-    const handleChange = (rankId: string): void => {
-        setConditions({ rankId });
+    const [conditions, setConditions] = useState<SelectedCardInfo>(DEFAULT_CARD_VALUE);
+    const handleChange = (card: SelectedCardInfo): void => {
+        setConditions(card);
     };
     const handleViewChange = (value: number): void => {
         setViewOption(value);
@@ -133,15 +154,15 @@ export const SystemView = observer((props: any) => {
         <AsideSelectContainer>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
-            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} rankId={conditions.rankId}></SelectList>
+            <SelectList viewOption={viewOption} selectKey={key} setKey={setKey} card={conditions}></SelectList>
         </AsideSelectContainer>
         <ChartErrorBoundary>
             <SelectContentContainer>
                 {viewOption === 3
-                    ? <TableDataView key={key} selectKey={key} rankId={conditions.rankId} session={props.session}
+                    ? <TableDataView key={key} selectKey={key} card={conditions} session={props.session}
                         bottomHeight={props.bottomHeight}></TableDataView>
-                    : <SelectContent key={key} rankId={conditions.rankId} session={props.session}
-                        bottomHeight={props.bottomHeight}></SelectContent>}
+                    : SelectContent && (<SelectContent key={key} card={conditions} session={props.session}
+                        bottomHeight={props.bottomHeight}></SelectContent>)}
             </SelectContentContainer>
         </ChartErrorBoundary>
     </Container>);
@@ -159,35 +180,37 @@ const ViewSelect = observer((props: any) => {
 });
 
 // eslint-disable-next-line max-lines-per-function
-export const RankFilter = observer((props: any): JSX.Element => {
-    const [rankIdCondition, setRankIdCondition] = useState<ConditionType>({ options: [], value: '' });
-    const [hostCondition, setHostCondition] = useState<ConditionType>({ options: [], value: '' });
+export const RankFilter = observer((props: { session: Session; viewOption?: number; handleChange: (v: SelectedCardInfo) => void }): JSX.Element => {
+    const [rankCondition, setRankCondition] = useState<ConditionType<SelectedCardInfo>>({ options: [], value: DEFAULT_CARD_VALUE });
+    const [hostCondition, setHostCondition] = useState<HostConditionType>({ options: [], value: '' });
     const { t } = useTranslation('timeline');
     useEffect(() => {
-        const rankList: any[] = [];
+        const cardList: Array<{ cardId: string; dbPath: string }> = [];
         for (const unit of props.session.units) {
             const cardId = (unit.metadata as CardMetaData).cardId;
+            const dbPath = (unit.metadata as CardMetaData).dbPath ?? '';
             if (!cardId.endsWith('Host')) {
-                rankList.push(cardId);
+                cardList.push({ cardId, dbPath });
             }
         }
-        const { hosts, ranks }: { hosts: string[]; ranks: Map<string, string[]> } = GroupRankIdsByHost(rankList);
-        setHostCondition({ options: hosts, value: hosts[0] ?? '', ranks });
+        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, SelectedCardInfo[]> } = GroupCardInfosByHost(cardList);
+        setHostCondition({ options: hosts, value: hosts[0] ?? '', cardsMap });
     }, [props.session.units]);
 
     useEffect(() => {
-        const rankIdOptions = hostCondition.ranks?.get(hostCondition.value) ?? [];
-        setRankIdCondition({ options: rankIdOptions, value: rankIdOptions[0] ?? '' });
+        const rankOptions = hostCondition.cardsMap?.get(hostCondition.value) ?? [];
+        setRankCondition({ options: rankOptions, value: rankOptions[0] ?? DEFAULT_CARD_VALUE });
     }, [hostCondition]);
 
     useEffect(() => {
-        props.handleChange(rankIdCondition.value);
-    }, [rankIdCondition]);
+        props.handleChange(rankCondition.value);
+    }, [rankCondition]);
     useEffect(() => {
         limitInput();
     }, []);
     const onRankIdChanged = (value: string): void => {
-        setRankIdCondition({ ...rankIdCondition, value });
+        const found = rankCondition.options.find(({ cardId }) => cardId === value) ?? DEFAULT_CARD_VALUE;
+        setRankCondition({ ...rankCondition, value: found });
     };
     return (<div className={'rank-filter'} >
         {hostCondition.options.length > 0
@@ -203,13 +226,13 @@ export const RankFilter = observer((props: any): JSX.Element => {
         }
         <FormItem label={t('Rank ID')} contentStyle={{ flex: 1 }}>
             <Select
-                value={rankIdCondition.value}
+                value={rankCondition.value.cardId}
                 width={'100%'}
                 onChange={onRankIdChanged}
-                options={rankIdCondition.options.map((rankId) => {
+                options={rankCondition.options.map((card) => {
                     return {
-                        value: rankId,
-                        label: rankId.replace(`${hostCondition.value} `, ''),
+                        value: card.cardId,
+                        label: card.cardId.replace(`${hostCondition.value} `, ''),
                     };
                 })}
                 showSearch={true}
@@ -217,16 +240,17 @@ export const RankFilter = observer((props: any): JSX.Element => {
         </FormItem>
     </div>);
 });
-const SelectList = observer((props: any) => {
+const SelectList = observer((props: { viewOption: number; selectKey: number; setKey: (v: number) => void; card: SelectedCardInfo }) => {
     const [selectedKey, setSelectedKey] = useState(0);
     const [systemViewItems, setSystemViewItems] = useState<SystemViewItem[]>([]);
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const rankId = props.rankId as string;
-    const param = { rankId };
     const handleClick = (key: number): void => {
         props.setKey(key);
         setSelectedKey(key);
     };
+    const params = useMemo(() => {
+        return { rankId: props.card.cardId, dbPath: props.card.dbPath };
+    }, [props.card]);
     useEffect(() => {
         setSelectedKey(props.selectKey);
     }, [props.selectKey]);
@@ -242,7 +266,7 @@ const SelectList = observer((props: any) => {
                 setSystemViewItems([]);
                 break;
             case 3:
-                queryTableDataNameList(param).then((res) => {
+                queryTableDataNameList(params).then((res) => {
                     const names = res.layers as string[];
                     const layers = names.map((item) => {
                         return { name: item };
@@ -253,7 +277,7 @@ const SelectList = observer((props: any) => {
             default:
                 break;
         }
-    }, [props.viewOption]);
+    }, [props.viewOption, params]);
     return (<AsideSelectList>
         {
             systemViewItems.map((item, index) =>
@@ -276,8 +300,15 @@ const SelectList = observer((props: any) => {
     );
 });
 
+export interface BaseSummaryProps extends SelectContentViewProps {
+    layerType?: string;
+    request: (...rest: any[]) => any;
+    isStats?: boolean;
+    columns: any;
+}
+
 // eslint-disable-next-line max-lines-per-function
-export const BaseSummary = observer((props: any) => {
+export const BaseSummary = observer((props: BaseSummaryProps) => {
     const isStats = props.isStats as boolean;
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = isStats ? { field: 'totalTime', order: 'descend' } : { field: 'duration', order: 'descend' };
@@ -287,9 +318,9 @@ export const BaseSummary = observer((props: any) => {
     const [isLoading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [searchedColumn, setSearchedColumn] = useState('');
-    const [rowData, setRowData] = useState<any>({});
+    const [rowData, setRowData] = useState<Partial<BaseSummaryRowItemType>>({});
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
-    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
+    const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.card.cardId)?.phase;
     let columns = props.columns?.map((col: any) => ({
         ...col,
         title: t(col.title),
@@ -314,16 +345,17 @@ export const BaseSummary = observer((props: any) => {
                 }}>{t('Click')}</Button>),
         }];
     }
-    const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
+    const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: BaseSummaryProps): Promise<void> => {
         const _isStats = prop.isStats as boolean;
-        if (props.rankId === undefined || props.rankId === '') {
+        if (props.card === undefined || props.card.cardId === '') {
             setDataSource([]);
             setPage(defaultPage);
             return;
         }
         setLoading(true);
         let params: IQueryCondition = {
-            rankId: prop.rankId,
+            rankId: prop.card.cardId,
+            dbPath: prop.card.dbPath,
             pageSize: pages.pageSize,
             current: pages.current,
             orderBy: sorters.field === 'startTimeLabel' ? 'startTime' : sorters.field ?? defaultSorter.field,
@@ -336,7 +368,7 @@ export const BaseSummary = observer((props: any) => {
         if (_isStats) {
             setDataSource(res.systemViewDetails);
         } else {
-            const timestampoffset = getTimeOffset(props.session, props.rankId);
+            const timestampoffset = getTimeOffset(props.session, props.card);
             const data = res.data.map((item: any) => {
                 item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
                 return item;
@@ -349,16 +381,16 @@ export const BaseSummary = observer((props: any) => {
         if (status === 'download') {
             updateData(searchText, page, sorter, props);
         }
-    }, [sorter, props.rankId, status]);
+    }, [sorter, props.card.cardId, status]);
     useEffect(() => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
         }
-        handleAdvisorSelected(rowData, props);
+        handleAdvisorSelected(rowData as BaseSummaryRowItemType, props);
     }, [rowData]);
 
     return (
-        (status === 'download' || props.rankId === undefined)
+        (status === 'download' || props.card === undefined || props.card.cardId === '')
             ? <ResizeTable
                 onChange={(pagination: any, filters: any, nwSorter: any): void => {
                     setSorter(nwSorter);
@@ -378,4 +410,4 @@ export const BaseSummary = observer((props: any) => {
     );
 });
 
-const contentList: any[][] = [StatsSystemView, ExpertSystemView, [EventView]];
+const contentList: SelectContentViewComponent[][] = [StatsSystemView, ExpertSystemView, [EventView]];

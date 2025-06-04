@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
+import { runInAction } from 'mobx';
 import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
@@ -41,8 +42,10 @@ export const App = observer(() => {
     /* 添加 selectedClusterPath 属性事件监听，保证切换 selectedClusterPath 时页面能整体更新 */
     useEffect(() => {
         if (!session) { return; }
-        session.resetForClusterChange();
-        session.renderId = ++session.renderId % 1000;
+        runInAction(() => {
+            session.resetForClusterChange();
+            session.renderId = ++session.renderId % 1000;
+        });
     }, [session?.selectedClusterPath]);
 
     return (<ThemeProvider theme={themeInstance.getThemeType()}>

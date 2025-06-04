@@ -22,13 +22,14 @@ const test = baseTest.extend<TestFixtures>({
         await use(ws);
     },
 });
-
+let parseClusterCompletedRes;
 test.describe('Timeline(DB)', () => {
     test.beforeEach(async ({ page, timelinePage, ws }) => {
         const { timelineFrame } = timelinePage;
         await timelinePage.goto();
         await clearAllData(page);
         const allPagesSuccessRes = waitForResponse(await ws, (res) => res?.event === 'allPagesSuccess');
+        parseClusterCompletedRes = waitForResponse(await ws, (res) => res?.event === 'parse/clusterCompleted');
         await importData(page, FilePath.DB_2025330);
         await allPagesSuccessRes;
         const secondLayerUnit = timelineFrame.locator('#main-container').getByText('Host', { exact: true });
@@ -109,6 +110,7 @@ test.describe('Timeline(DB)', () => {
         await input.press('Enter');
         await openInWindows.waitFor({ state: 'attached' });
         await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('search-deep-operator.png', { maxDiffPixels: 200 });
     });
 
@@ -162,7 +164,7 @@ test.describe('Timeline(DB)', () => {
 
     // 右键菜单--右键点击通信算子跳转至通信页面
     test('test_db_redirectToCommunication_when_rightClickHCCLOperator', async ({ page, timelinePage, ws }) => {
-        await waitForResponse(await ws, (res) => res?.event === 'parse/clusterCompleted');
+        await parseClusterCompletedRes;
         test.setTimeout(30_000);
         const { communicationFrame } = new CommunicationPage(page);
         const { filterBtn, timelineFrame, selectFilterType,

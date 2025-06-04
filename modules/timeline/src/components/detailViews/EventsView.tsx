@@ -12,7 +12,7 @@ import { Button } from 'ascend-components';
 import { getTimeOffset } from '../../insight/units/utils';
 import { useTranslation } from 'react-i18next';
 import i18n from 'ascend-i18n';
-import { DETAIL_HEADER_HEIGHT_ETC_PX } from './SystemView';
+import { DETAIL_HEADER_HEIGHT_ETC_PX, SelectContentViewProps } from './SystemView';
 import { jumpToUnitOperator } from '../../utils';
 export interface EventTableData {
     eventDetails: EventDetails[];
@@ -65,7 +65,7 @@ const getColumns = (tableColumns: EventTableColumn[]): any => {
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: 'duration', order: 'descend' };
-export const EventDetail = observer((props: any) => {
+export const EventDetail = observer((props: SelectContentViewProps & { request: any }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
@@ -165,10 +165,13 @@ const generateEventColumns = (
         },
     ];
 
-const handleSelected = async(rowData: any, props: any): Promise<void> => {
-    const rankId = props.session.eventUnits[0].metadata.cardId;
+const handleSelected = async(rowData: any, props: SelectContentViewProps): Promise<void> => {
+    if (!Array.isArray(props.session.eventUnits) || props.session.eventUnits.length <= 0) { return; }
+    const rankId = props.session.eventUnits[0].metadata.cardId as string;
+    const dbPath = props.session.eventUnits[0].metadata.dbPath as string;
     const res = await queryOneKernel({
         rankId,
+        dbPath,
         name: rowData.name,
         timestamp: rowData.start,
         duration: Number((rowData.duration * 1000).toFixed(0)),
@@ -177,6 +180,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
     jumpToUnitOperator({
         ...rowData,
         cardId: rankId,
+        dbPath,
         timestamp: rowData.start,
         tid: rowData.threadId,
         pid: rowData.processId,
@@ -188,6 +192,7 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
     const requestData = prop.session.eventUnits?.[0]?.metadata as ThreadMetaData;
     return await eventViewData({
         rankId: requestData.cardId as string,
+        dbPath: requestData.dbPath as string,
         pageSize: pages.pageSize,
         currentPage: pages.current,
         orderBy: sorters.field === 'startTime' ? 'start' : sorters.field ?? defaultSorter.field,
@@ -201,6 +206,6 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
     });
 };
 
-export const EventView = observer((props: any) => {
+export const EventView = observer((props: SelectContentViewProps) => {
     return <EventDetail request={eventViewData} {...props} />;
 });

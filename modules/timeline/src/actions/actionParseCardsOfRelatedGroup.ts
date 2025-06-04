@@ -74,8 +74,9 @@ export const actionParseCardsOfRelatedGroup = register({
         const rankList = getSelectedRankList(session);
         const unparsedCards = getUnparsedCards(session, rankList);
         const unparsedCardIds = unparsedCards.map((item) => (item.metadata as CardMetaData).cardId);
+        const unparsedCardFilePaths = unparsedCards.map((item) => (item.metadata as CardMetaData).dbPath);
 
-        parseCards({ cards: unparsedCardIds }).then((): void => {
+        parseCards({ cards: unparsedCardIds, dbPaths: unparsedCardFilePaths }).then((): void => {
             runInAction((): void => {
                 unparsedCards.forEach((item): void => {
                     item.isParseLoading = true;

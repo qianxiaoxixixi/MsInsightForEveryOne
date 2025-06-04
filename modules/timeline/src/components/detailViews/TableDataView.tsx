@@ -4,7 +4,7 @@
 
 import { observer } from 'mobx-react';
 import React, { useState, useEffect } from 'react';
-import { DETAIL_HEADER_HEIGHT_ETC_PX } from './SystemView';
+import { DETAIL_HEADER_HEIGHT_ETC_PX, type SelectContentViewProps } from './SystemView';
 import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData, queryTableDataDetails } from './Common';
 interface TableData {
@@ -13,7 +13,7 @@ interface TableData {
     totalNum: number;
 }
 // eslint-disable-next-line camelcase
-export const TableDataDetail = observer((props: any) => {
+export const TableDataDetail = observer((props: SelectContentViewProps & { selectKey: number }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const [page, setPage] = useState(defaultPage);
@@ -27,7 +27,8 @@ export const TableDataDetail = observer((props: any) => {
     }, [sorter, page.current, page.pageSize]);
     useEffect(() => {
         const param = {
-            rankId: props.rankId,
+            rankId: props.card.cardId,
+            dbPath: props.card.dbPath,
             pageSize: condition.page.pageSize,
             currentPage: condition.page.current,
             selectKey: props.selectKey as number,
@@ -46,7 +47,7 @@ export const TableDataDetail = observer((props: any) => {
             setLoading(false);
         });
     }, [condition.page.current, condition.page.pageSize,
-        condition.sorter.field, condition.sorter.order, props.selectKey, props.rankId]);
+        condition.sorter.field, condition.sorter.order, props.selectKey, props.card]);
     return (
         <div style={{ height: '100%' }}>
             <ResizeTable
@@ -65,7 +66,7 @@ export const TableDataDetail = observer((props: any) => {
     );
 });
 // eslint-disable-next-line camelcase
-export const TableDataView = observer((props: any) => {
+export const TableDataView = observer((props: SelectContentViewProps & { selectKey: number }) => {
     return (
         <TableDataDetail {...props} />
     );
