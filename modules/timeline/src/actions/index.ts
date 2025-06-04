@@ -31,3 +31,4 @@ export { actionToggleBottomPanel } from './actionToggleBottomPanel';
 export { actionLockSelection, actionUnLockSelection } from './actionLockSelection';
 export { actionSetCardAlias } from './actionSetCardAlias';
 export { actionParseCardsOfRelatedGroup } from './actionParseCardsOfRelatedGroup';
+export { actionMergeUnits, actionUnmergeUnits } from './actionMergeUnits';

@@ -135,16 +135,16 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
             onMouseDown={props.mouseDown}
         >
             <div className={cls('insight-lane-info-outer-name', { noTag: isEmpty(tag) })}>
-                <Tooltip title={tooltip}>
-                    <span className="insight-lane-info-name">{name}</span>
-                </Tooltip>
                 { [...unit.notifications ?? []]?.map((item, index) => {
                     const notifyRes = item(unit.metadata);
                     if (notifyRes !== false) {
-                        return <Tooltip key={index} title={notifyRes}><Supported style={{ marginLeft: 8 }}/></Tooltip>;
+                        return <Tooltip key={index} title={notifyRes}><Supported style={{ flex: 'none', marginRight: 8 }}/></Tooltip>;
                     }
                     return null;
                 })}
+                <Tooltip title={tooltip}>
+                    <span className="insight-lane-info-name">{name}</span>
+                </Tooltip>
             </div>
             { !isEmpty(tag) && <div className={ 'insight-lane-info-tag-info' }>
                 <span className="insight-lane-info-tag-text">{tag}</span>
@@ -343,7 +343,7 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
                     </div>
                     {
                         (unit instanceof CardUnit && unit.metadata?.label !== '') && <TagDiv>
-                            <div className='tag-content'>
+                            <div className="tag-content">
                                 {unit.metadata.label}
                             </div>
                         </TagDiv>

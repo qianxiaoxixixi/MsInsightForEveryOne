@@ -40,6 +40,8 @@ import {
     actionPinByGroupNameValue,
     actionUnpinByGroupNameValue,
     actionParseCardsOfRelatedGroup,
+    actionMergeUnits,
+    actionUnmergeUnits,
 } from '../actions';
 import { Action } from '../actions/types';
 import { getShortcutFromShortcutName, ShortcutName } from '../actions/shortcuts';
@@ -166,6 +168,8 @@ const contextMenuItems: Action[] = [
     actionPinByGroupNameValue,
     actionUnpinByGroupNameValue,
     actionParseCardsOfRelatedGroup,
+    actionMergeUnits,
+    actionUnmergeUnits,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
@@ -193,7 +197,9 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
                     onClick={(e): void => {
                         if (disabled) { return; }
                         item.perform(session);
-                        session.contextMenu.isVisible = false;
+                        runInAction(() => {
+                            session.contextMenu.isVisible = false;
+                        });
                     }}
                 >
                     <div className="menu-item__label">{label}</div>

@@ -43,7 +43,9 @@
       "Lock selection area": "锁定框选区域",
       "Unlock selection area": "解锁框选区域",
       "Set alias": "设置别名",
-      "Alias": "别名"
+      "Alias": "别名",
+      "Merge Units": "合并泳道",
+      "Unmerge Units": "取消合并泳道"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",
@@ -153,6 +155,9 @@
       "AI Core unproblematic": "频率最大降频不超过{{percent}}%",
       "AI Core reduction" :"频率最大降频超过{{percent}}%，可能会导致计算时间变长，具体请查看AI Core Freq泳道"
     },
-    "RenderError": "渲染失败，请检查数据是否正确"
+    "RenderError": "渲染失败，请检查数据是否正确",
+    "Merged unit": "合并的泳道",
+    "MergeStreamOnly": "只允许合并 Stream 泳道",
+    "MergeInSameCardOnly": "请选择同一张卡内的 Stream 泳道"
   }
 }

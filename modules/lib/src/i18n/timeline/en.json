@@ -43,7 +43,9 @@
       "Lock selection area": "Lock selection area",
       "Unlock selection area": "Unlock selection area",
       "Set alias": "Set Alias",
-      "Alias": "Alias"
+      "Alias": "Alias",
+      "Merge Units": "Merge Units",
+      "Unmerge Units": "Unmerge Units"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",
@@ -153,6 +155,9 @@
       "AI Core unproblematic": "The maximum frequency reduction does not exceed {{percent}}%",
       "AI Core reduction": "The maximum frequency reduction exceeds {{percent}}%, which may lead to longer computation time. Please refer to the AI Core Freq lane for details"
     },
-    "RenderError": "Rendering failed. Please check if the data is correct"
+    "RenderError": "Rendering failed. Please check if the data is correct",
+    "Merged unit": "Merged unit",
+    "MergeStreamOnly": "Only Stream units can be merged",
+    "MergeInSameCardOnly": "Please select Stream units from the same card"
   }
 }
