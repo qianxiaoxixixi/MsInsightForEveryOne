@@ -7,9 +7,9 @@ import { Session } from '../../entity/session';
 import { Layout } from 'ascend-layout';
 import MemoryStack from '../MemoryStack';
 
-const index = observer((props: { session: Session; isDark: boolean }) => {
-    const { session, isDark } = props;
-    return (<Layout> <MemoryStack session={session} isDark={isDark} /> </Layout>);
+const index = observer((props: { session: Session }) => {
+    const { session } = props;
+    return (<Layout> <MemoryStack session={session} /> </Layout>);
 });
 
 export default index;

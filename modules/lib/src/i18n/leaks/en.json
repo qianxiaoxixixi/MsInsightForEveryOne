@@ -1,8 +1,21 @@
 {
   "leaks": {
-    "MemoryAllocations":"Memory Allocations",
-    "MemoryBlocks":"Memory Blocks",
-    "DeviceID":"Device ID",
-    "Leaks":"Leaks"
+    "MemoryAllocations": "Memory Allocations",
+    "MemoryBlocks": "Memory Blocks",
+    "DeviceID": "Device ID",
+    "Leaks": "Leaks",
+    "Type": "Type",
+    "ThreadID": "Thread ID",
+    "MemoryDisassembly": "Memory Disassembly",
+    "Process_Total_Memory_Allocation": "Process Total Memory Allocation",
+    "CANN_Total_Memory_Allocation": "CANN Total Memory Allocation",
+    "ATB_Reserved": "ATB Reserved",
+    "MindSpore_Reserved": "MindSpore Reserved",
+    "PTA_Reserved": "PTA Reserved",
+    "PTA_Operator": "PTA Operator",
+    "PTA_Model": "PTA Model",
+    "Optimizer": "Optimizer",
+    "Weight": "Weight",
+    "Gradient": "Gradient"
   }
 }

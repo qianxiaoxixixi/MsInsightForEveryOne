@@ -5,6 +5,7 @@ export interface BarData {
     blockData: BlockData;
     allocationData: AllocationData;
     isDark: boolean;
+    getNewGraphData: any;
 };
 export interface BlockData {
     minTimestamp: number;
@@ -33,12 +34,59 @@ export interface Allocation {
     timestamp: number;
     totalSize: number;
 }
-
+export interface GraphParam {
+    deviceId: string;
+    graph: 'blocks' | 'allocations';
+    relativeTime?: boolean;
+    startTimestamp?: number;
+    endTimestamp?: number;
+    eventType: string;
+}
+export interface FuncParam {
+    deviceId: string;
+    threadId: number;
+    relativeTime?: boolean;
+    startTimestamp?: number;
+    endTimestamp?: number;
+}
+export interface DetailData {
+    size: number;
+    name: string;
+    subNodes?: DetailData[];
+}
+export interface Trace {
+    depth: number;
+    endTimestamp: number;
+    startTimestamp: number;
+    func: string;
+}
+export interface FuncData {
+    minTimestamp: number;
+    maxTimestamp: number;
+    traces: Trace[];
+}
 /**
  * 获取图表信息
  * @param params 查询条件
  * @returns 查询结果
  */
-export const GetLeaksGraphData = async ({ deviceId, graph }: { deviceId: string; graph: string }): Promise<BlockData | AllocationData> => {
-    return window.request({ command: `Memory/leaks/${graph}`, params: { deviceId, relativeTime: true } });
+export const getLeaksGraphData = async (params: GraphParam): Promise<BlockData | AllocationData> => {
+    const { graph, ...rest } = params;
+    return window.request({ command: `Memory/leaks/${graph}`, params: { ...rest } });
+};
+/**
+ * 获取内存拆解详情
+ * @param params 查询条件
+ * @returns 查询结果
+ */
+export const getMemoryDetailData = async (deviceId: string, timestamp: number): Promise<DetailData> => {
+    return window.request({ command: 'Memory/leaks/details', params: { deviceId, timestamp, relativeTime: true } });
+};
+/**
+ * 获取函数调用详情
+ * @param params 查询条件
+ * @returns 查询结果
+ */
+export const getFuncData = async (params: FuncParam): Promise<FuncData> => {
+    return window.request({ command: 'Memory/leaks/traces', params: { ...params } });
 };

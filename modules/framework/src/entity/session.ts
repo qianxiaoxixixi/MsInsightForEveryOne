@@ -94,6 +94,8 @@ export class Session {
     memoryCardInfos: Array<Required<CardInfo>> = [];
     operatorCardInfos: Array<Required<CardInfo>> = [];
     iERankIds: string[] = [];
+    deviceIds: any = {};
+    threadIds: number[] = [];
     // 模块数据-算子调优
     coreList: string[] = [];
     sourceList: string[] = [];
