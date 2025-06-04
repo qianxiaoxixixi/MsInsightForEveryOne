@@ -183,7 +183,8 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             }
             const curDataSource = cloneDeep(dataSource);
             curDataSource.dataPath = item.dataPathList;
-            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
+            const cardUnit = new CardUnit(
+                { dataSource: curDataSource, cardId: item.rankId, dbPath: item.dbPath, cardName: item.cardName, cardPath: item.cardPath });
             if (item.result as boolean) {
                 cardUnit.isParseLoading = !(result.isPending as boolean);
                 cardUnit.shouldParse = item.cardName !== 'Host';
@@ -230,7 +231,8 @@ const createBaselineCard = (session: Session | undefined, result: any, dataSourc
         forEach(cards, (item: CardInfo) => {
             const curDataSource = cloneDeep(dataSource);
             curDataSource.dataPath = item.dataPathList;
-            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
+            const cardUnit = new CardUnit(
+                { dataSource: curDataSource, cardId: item.rankId, dbPath: item.dbPath, cardName: item.cardName, cardPath: item.cardPath });
             if (item.result as boolean) {
                 cardUnit.shouldParse = false;
                 cardUnit.phase = 'analyzing';
@@ -425,8 +427,13 @@ const clearTimeMarkerFlags = (session: Session): void => {
     session.timelineMaker.timelineFlagList.splice(0);
 };
 
-const remoteDeleteRequest = async (session: Session, dataSource: DataSource, removeCardIds: any[]): Promise<void> => {
-    const result = await window.request(dataSource, { command: 'remote/delete', params: { rankId: removeCardIds } });
+const remoteDeleteRequest = async (session: Session, dataSource: DataSource, removeCardInfos: Array<{ cardId: string; dbPath: string }>): Promise<void> => {
+    const [removeCardIds, removeCardDbPaths] = removeCardInfos.reduce((acc, { cardId, dbPath }) => {
+        acc[0].push(cardId);
+        acc[1].push(dbPath);
+        return acc;
+    }, [[] as string[], [] as string[]]);
+    const result = await window.request(dataSource, { command: 'remote/delete', params: { rankId: removeCardIds, dbPaths: removeCardDbPaths } });
     if (result?.startTimeUpdated as boolean) {
         session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: result.maxTimeStamp });
 

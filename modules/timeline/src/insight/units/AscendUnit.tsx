@@ -129,6 +129,7 @@ const singleSliceDetail = singleData({
         // 因为泳道chart数据减去了偏移，所有点选的时候得把偏移加回来
         const params = {
             rankId: metadata.cardId,
+            dbPath: metadata.dbPath,
             metaType: metadata.metaType,
             pid: metadata.processId,
             tid: metadata.threadId,
@@ -219,6 +220,7 @@ const getThreadTracesRequestParams = (session: Session, threadMetaData: ThreadMe
     const isFilterPythonFunction = key !== null ? (session?.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[key] ?? false : false;
     return {
         cardId: threadMetaData.cardId,
+        dbPath: threadMetaData.dbPath,
         processId: threadMetaData.processId,
         threadId: threadMetaData.threadId,
         threadIdList: threadMetaData.threadIdList,
@@ -295,6 +297,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                         depth: data.depth,
                         threadId: data.threadId,
                         cardId: threadMetaData.cardId,
+                        dbPath: threadMetaData.dbPath,
                         cname: data.cname,
                         id: data.id,
                     } as StackStatusData;
@@ -487,6 +490,7 @@ const SummaryChart = chart({
         const timestampOffset = getTimeOffset(session, processMetaData);
         const requestParam = {
             cardId: processMetaData.cardId,
+            dbPath: processMetaData.dbPath,
             processId: processMetaData.processId,
             metaType: processMetaData.metaType,
             startTime: Math.floor(Math.max(0, timestampOffset)),
@@ -582,6 +586,7 @@ export const CounterUnit = unit<CounterMetaData>({
             // 查询泳道chart参数加上时间偏移
             const requestParam = {
                 rankId: countMetaData.cardId,
+                dbPath: countMetaData.dbPath,
                 pid: countMetaData.processId,
                 threadName: countMetaData.threadName,
                 threadId: countMetaData.threadId,
@@ -660,7 +665,7 @@ const handleNonArrayResult = (result: Record<string, unknown>, state: Array<[str
         }
     });
 };
-
+// @deprecated
 const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>,
     linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
     const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
@@ -695,7 +700,7 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
     React.useEffect(loadData, [selectedUnits, linkFlow, detail, session.linkDetail]);
     return renderFields;
 };
-
+// @deprecated
 export const SliceRight = observer(({ session, detail, metadata }: { session: Session; detail: LinkDataDesc<Record<string, unknown>>; metadata: unknown }) => {
     const renderFields = useSliceRightDataUpdator(session, detail, session.linkFlow, metadata);
     return <SelectedDataBase renderer={renderFields} hasTitle />;
@@ -790,6 +795,7 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
                             ...record,
                             name: slice?.name,
                             cardId: (metadata as ThreadMetaData).cardId,
+                            dbPath: (metadata as ThreadMetaData).dbPath,
                         });
                         setSelectedRowKey(record.id);
                     },

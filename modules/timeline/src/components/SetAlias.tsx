@@ -60,8 +60,8 @@ const handleConfirmSetAlias = (session: Session, newCardAlias: string): void => 
     runInAction(async () => {
         try {
             (session.selectedUnits[0].metadata as CardMetaData).label = newCardAlias;
-            const { cardId } = session.selectedUnits[0].metadata as CardMetaData;
-            await setCardAliasReq({ rankId: cardId, cardAlias: newCardAlias });
+            const { cardId, dbPath } = session.selectedUnits[0].metadata as CardMetaData;
+            await setCardAliasReq({ rankId: cardId, dbPath, cardAlias: newCardAlias });
         } catch (error) {
             message.error('Set card alias error!');
         }

@@ -24,11 +24,7 @@ import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { StyledEmpty } from 'ascend-utils';
-
-interface OverallMetricsProps {
-    rankId: string;
-    bottomHeight: number;
-}
+import type { SelectContentViewProps } from './SystemView';
 
 export const overallMetricsColumns = (t: TFunction): ColumnsType<GetOverallMetricsResultItem> => [
     { title: t('Category'), dataIndex: 'name', ellipsis: true },
@@ -64,27 +60,29 @@ const overallMetricsMoreColumns = (t: TFunction): ColumnsType<GetOverallMetricsM
     },
 ];
 
-interface OverallMetricsTableProps extends OverallMetricsProps {
+interface OverallMetricsTableProps extends SelectContentViewProps {
     session: Session;
     selectedRow?: GetOverallMetricsResultItem | null;
     setSelectedRow: (row: GetOverallMetricsResultItem | null) => void;
 }
 
-const OverallMetricsTable = observer(({ bottomHeight, rankId, session, selectedRow, setSelectedRow }: OverallMetricsTableProps) => {
+const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow, setSelectedRow }: OverallMetricsTableProps) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const [tableData, setTableData] = useState<GetOverallMetricsResultItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(defaultPage);
-    const cardPhase = session.units.find((unit) => (unit.metadata as CardMetaData).cardId === rankId)?.phase;
+    const cardPhase = session.units.find((unit) => (unit.metadata as CardMetaData).cardId === card.cardId)?.phase;
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
     async function getOverallMetricsData(): Promise<void> {
-        if (!rankId) {
+        if (!card || card.cardId === '') {
             return;
         }
         setLoading(true);
         try {
-            const { data, count: total } = await getOverallMetrics({ rankId, pageSize: page.pageSize, current: page.current }).finally(() => {
+            const rankId = card.cardId;
+            const dbPath = card.dbPath;
+            const { data, count: total } = await getOverallMetrics({ rankId, dbPath, pageSize: page.pageSize, current: page.current }).finally(() => {
                 setLoading(false);
                 setTableData([]);
             });
@@ -98,7 +96,7 @@ const OverallMetricsTable = observer(({ bottomHeight, rankId, session, selectedR
     useEffect(() => {
         getOverallMetricsData();
         setSelectedRow(null);
-    }, [rankId]);
+    }, [card.cardId]);
 
     useEffect(() => {
         if (cardPhase === 'download') {
@@ -133,19 +131,15 @@ const OverallMetricsTable = observer(({ bottomHeight, rankId, session, selectedR
     ></ResizeTable>;
 });
 
-interface OverallMetricsMoreProps {
-    rankId: string;
-    session: Session;
-    bottomHeight?: number;
+interface OverallMetricsMoreProps extends SelectContentViewProps {
     selectedRow?: GetOverallMetricsResultItem | null;
 }
-const OverallMetricsMoreTable = observer(({ rankId, session, selectedRow, bottomHeight }: OverallMetricsMoreProps) => {
+const OverallMetricsMoreTable = observer(({ card, session, selectedRow, bottomHeight }: OverallMetricsMoreProps) => {
     const [selectedRowId, setSelectedRowId] = useState<string>();
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
     const { page, setPage, setSorter, setFilters, loading, tableData } = useMetricsMoreUpdater({
-        session,
-        rankId,
+        card,
         selectedRow,
     });
 
@@ -153,12 +147,13 @@ const OverallMetricsMoreTable = observer(({ rankId, session, selectedRow, bottom
         const { id, name, duration, timestamp } = record;
         return {
             onClick: async (): Promise<void> => {
-                const res = await queryOneKernel({ rankId, name, timestamp, duration });
+                const res = await queryOneKernel({ rankId: card.cardId, dbPath: card.dbPath, name, timestamp, duration });
                 jumpToUnitOperator({
                     ...record,
                     ...res,
                     duration,
-                    cardId: rankId,
+                    cardId: card.cardId,
+                    dbPath: card.dbPath,
                     tid: res.threadId,
                     id: res.id,
                 });
@@ -189,7 +184,7 @@ const OverallMetricsMoreTable = observer(({ rankId, session, selectedRow, bottom
     ></ResizeTable>;
 });
 
-export type MetricsMoreUpdaterType = ({ session, rankId, selectedRow }: OverallMetricsMoreProps) => ({
+export type MetricsMoreUpdaterType = ({ card, selectedRow }: Pick<OverallMetricsMoreProps, 'card' | 'selectedRow'>) => ({
     page: PageType;
     setPage: (args: PageType) => void;
     sorter: SorterResult<GetOverallMetricsMoreListResultItem>;
@@ -199,7 +194,7 @@ export type MetricsMoreUpdaterType = ({ session, rankId, selectedRow }: OverallM
     tableData: GetOverallMetricsMoreListResultItem[];
 });
 
-const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ rankId, selectedRow }) => {
+const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ card, selectedRow }) => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter: SorterResult<GetOverallMetricsMoreListResultItem> = { field: 'duration', order: 'descend' };
     const [page, setPage] = useState<PageType>(defaultPage);
@@ -210,12 +205,13 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ rankId, selectedRow }) 
     const requestTrigger = useRef(true);
 
     async function getMoreListData(): Promise<void> {
-        if (!rankId) {
+        if (!card || card.cardId === '') {
             return;
         }
         setLoading(true);
         const { sameOperatorsDetails, count: total, pageSize, currentPage: current } = await getOverallMetricsMoreList({
-            rankId,
+            rankId: card.cardId,
+            dbPath: card.dbPath,
             name: filters.name?.[0] as string | undefined,
             categoryList: selectedRow?.categoryList ?? [],
             order: sorter.order,
@@ -247,19 +243,19 @@ const useMetricsMoreUpdater: MetricsMoreUpdaterType = ({ rankId, selectedRow }) 
     useEffect(() => {
         setPage(defaultPage);
         requestTrigger.current = !requestTrigger.current;
-    }, [rankId, selectedRow?.id]);
+    }, [card?.cardId, selectedRow?.id]);
 
     return { page, setPage, sorter, setSorter, setFilters, loading, tableData };
 };
 
-export const OverallMetrics = observer((props: OverallMetricsProps) => {
+export const OverallMetrics = observer((props: SelectContentViewProps) => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: 400 });
     const [selectedRow, setSelectedRow] = useState<GetOverallMetricsResultItem | null>();
     const { t } = useTranslation();
 
-    return props.rankId !== undefined && props.rankId !== ''
+    return props.card !== undefined && props.card.cardId !== ''
         ? view({
             mainContainer: session !== undefined
                 ? <OverallMetricsTable {...props} selectedRow={selectedRow} setSelectedRow={setSelectedRow}
@@ -271,7 +267,7 @@ export const OverallMetrics = observer((props: OverallMetricsProps) => {
                 bordered={false}>
                 <ChartErrorBoundary className={'more-error'}>
                     <MoreContainer>
-                        {session && <OverallMetricsMoreTable session={session} {...props} selectedRow={selectedRow}/>}
+                        {session && <OverallMetricsMoreTable {...props} session={session} selectedRow={selectedRow}/>}
                     </MoreContainer>
                 </ChartErrorBoundary>
             </StyledMoreCard>,

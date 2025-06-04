@@ -64,6 +64,7 @@ export const slicesListDetail = detail({
 
         const params = {
             rankId: metadata.cardId,
+            dbPath: metadata.dbPath,
             startTime: Math.floor(startTime + timestampOffset),
             endTime: Math.ceil(endTime + timestampOffset),
             metadataList,
@@ -73,6 +74,7 @@ export const slicesListDetail = detail({
 
         res.forEach((element: AscendMultiSliceList) => {
             element.rankId = metadata.cardId;
+            element.dbPath = metadata.dbPath;
             element.startTime = Math.floor(startTime + timestampOffset);
             element.endTime = Math.ceil(endTime + timestampOffset);
         });
@@ -99,6 +101,7 @@ export const slicesListDetail = detail({
     clickCallback: async ({ row, session }): Promise<void> => {
         const data = {
             rankId: row.rankId,
+            dbPath: row.dbPath,
             tid: row.tid,
             pid: row.pid,
             startTime: row.startTime,
@@ -123,6 +126,7 @@ const Link = styled.span`
 export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string): Record<string, unknown> {
     return {
         rankId: metadata.cardId ?? '',
+        dbPath: metadata.dbPath ?? '',
         tid: data.tid ?? data.threadId ?? (metadata.threadId ?? ''),
         pid: data.pid ?? (metadata.processId ?? ''),
         id: data.id,
@@ -175,7 +179,7 @@ const generateFlowData = function (data: any, timeOffset: number): SelectedDataT
     };
 };
 
-/* eslint-disable */
+/* eslint-disable */ // @deprecated
 export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, unknown>> => {
     return linkData({
         renderFields: [],
@@ -226,6 +230,7 @@ export const calculateDomainRange = (session: Session, from: any, to: any, rankI
     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
 };
 
+// @deprecated
 const doJumpSlice = (session: Session, data: any, rankId: string): void => {
     if (data === undefined) {
         return;

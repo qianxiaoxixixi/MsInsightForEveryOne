@@ -61,6 +61,7 @@ const SearchContainer = styled.div`
 
 interface RankCount {
     rankId: string;
+    dbPath: string;
     count: number;
 };
 
@@ -73,7 +74,7 @@ let remoteCntArray: RemoteCount[] = [];
 
 const getLockRangeMetaList = (session: Session): any => {
     return session.lockUnit.map(selectUnit => {
-        const { threadId, processId, metaType, cardId } = selectUnit?.metadata as ThreadMetaData ?? {};
+        const { threadId, processId, metaType, cardId, dbPath } = selectUnit?.metadata as ThreadMetaData ?? {};
         const timestampOffset = getTimeOffset(session, selectUnit?.metadata as ProcessMetaData);
         const lockStartTime = session.lockRange === undefined ? 0 : Math.floor(session.lockRange[0] + timestampOffset);
         const lockEndTime = session.lockRange === undefined ? 0 : Math.ceil(session.lockRange[1] + timestampOffset);
@@ -82,6 +83,7 @@ const getLockRangeMetaList = (session: Session): any => {
             pid: processId,
             metaType,
             rankId: cardId,
+            dbPath,
             lockStartTime,
             lockEndTime,
         };
@@ -101,7 +103,10 @@ const queryDataCount = async (session: Session, searchContent: string, isMatchCa
             continue;
         }
         const metadata = unit.metadata as any;
-        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent, isMatchCase, isMatchExact, metadataList } });
+        const res = await window.request(metadata.dataSource, {
+            command: 'search/count',
+            params: { rankId: metadata.cardId, dbPath: metadata.dbPath, searchContent, isMatchCase, isMatchExact, metadataList },
+        });
         if (res.totalCount === 0) {
             continue;
         }
@@ -123,6 +128,7 @@ interface JumpSliceParams {
 const jumpSlice = async ({ session, searchContent, index, isMatchExact, isMatchCase, setIsSearching }: JumpSliceParams): Promise<void> => {
     let finalDataSource;
     let finalRankId;
+    let finalDbPath;
     let flag = false;
     let currentIndex = index;
     for (const remoteCount of remoteCntArray) {
@@ -132,6 +138,7 @@ const jumpSlice = async ({ session, searchContent, index, isMatchExact, isMatchC
         for (const rankCount of remoteCount.countList) {
             if (currentIndex <= rankCount.count) {
                 finalRankId = rankCount.rankId;
+                finalDbPath = rankCount.dbPath;
                 finalDataSource = remoteCount.dataSource;
                 flag = true;
                 break;
@@ -141,14 +148,17 @@ const jumpSlice = async ({ session, searchContent, index, isMatchExact, isMatchC
     }
     setIsSearching(true);
     const metadataList = getLockRangeMetaList(session);
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact, metadataList } })
-        .finally(() => {
-            setIsSearching(false);
-        });
+    const slice: SliceData = await window.request(finalDataSource as DataSource, {
+        command: 'search/slice',
+        params: { rankId: finalRankId, dbPath: finalDbPath, searchContent, index: Math.max(1, currentIndex), isMatchCase, isMatchExact, metadataList },
+    }).finally(() => {
+        setIsSearching(false);
+    });
     if (slice === undefined) { return; }
     jumpToUnitOperator({
         ...slice,
         cardId: slice.rankId,
+        dbPath: slice.dbPath,
         timestamp: slice.startTime,
         name: slice.name ?? searchContent,
         tid: slice.tid.toString(),

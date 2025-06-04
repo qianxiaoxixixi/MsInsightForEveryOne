@@ -18,44 +18,46 @@ import {
     fusionOperatorColumns,
     operatorDispatchColumns,
 } from './Common';
-import { BaseSummary } from './SystemView';
+import { BaseSummary, type BaseSummaryProps, type SelectContentViewProps } from './SystemView';
 import { ExpertSummary } from './ExpertSummary';
 import { queryExpertAnalysis, queryOperatorDispatch } from '../../api/request';
+import type { BaseSummaryRowItemType } from '../../api/interface';
 import { jumpToUnitOperator } from '../../utils';
 
-const ExpertAnalysis = observer((props: any) => {
+const ExpertAnalysis = observer((props: SelectContentViewProps) => {
     return <ExpertSummary request={queryExpertAnalysis} {...props} />;
 });
 
-const AffinityAPI = observer((props: any) => {
+const AffinityAPI = observer((props: SelectContentViewProps) => {
     return <BaseSummary request={queryAffinityAPI} columns={affinityAPIColumns} {...props} />;
 });
 
-const AffinityOptimizer = observer((props: any) => {
+const AffinityOptimizer = observer((props: SelectContentViewProps) => {
     return <BaseSummary request={queryAffinityOptimizer} columns={affinityOptimizerColumns} {...props} />;
 });
 
-const AICPUOperator = observer((props: any) => {
+const AICPUOperator = observer((props: SelectContentViewProps) => {
     return <BaseSummary request={queryAICPUOperators} columns={aicpuOperatorColumns} {...props} />;
 });
 
-const ACLNNOperator = observer((props: any) => {
+const ACLNNOperator = observer((props: SelectContentViewProps) => {
     return <BaseSummary request={queryACLNNOperators} columns={aclnnOperatorColumns} {...props} />;
 });
 
-const FusedOperator = observer((props: any) => {
+const FusedOperator = observer((props: SelectContentViewProps) => {
     return <BaseSummary request={queryOperatorFusion} columns={fusionOperatorColumns} {...props} />;
 });
 
-const OperatorDispatch = observer((props: any) => {
+const OperatorDispatch = observer((props: SelectContentViewProps) => {
     return <BaseSummary request={queryOperatorDispatch} columns={operatorDispatchColumns} {...props} />;
 });
 
-export const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => {
-    const queryName = rowData.name ?? rowData.originOptimizer;
+export const handleAdvisorSelected = async (rowData: BaseSummaryRowItemType, props: BaseSummaryProps): Promise<void> => {
+    const queryName = rowData.name ?? rowData.originOptimizer ?? '';
     const nsDuration = Number((rowData.duration * 1000).toFixed(0));
     const res = await queryOneKernel({
         rankId: rowData.rankId,
+        dbPath: rowData.dbPath,
         name: queryName,
         timestamp: rowData.startTime,
         duration: nsDuration,
@@ -66,6 +68,7 @@ export const handleAdvisorSelected = async(rowData: any, props: any): Promise<vo
         ...rowData,
         id: props.session.isFullDb as boolean ? rowData.id : res.id,
         cardId: rowData.rankId,
+        dbPath: rowData.dbPath,
         timestamp: rowData.startTime,
         depth,
         duration: nsDuration,

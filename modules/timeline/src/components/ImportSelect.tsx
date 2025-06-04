@@ -41,10 +41,11 @@ const ImportModeSelect = observer((props: SelectProps) => {
 export interface CardInfo {
     cardName: string;
     rankId: string;
+    dbPath: string;
     result: boolean;
     cardPath: string;
     host?: string;
     dataPathList: string[];
-};
+}
 
 export default ImportModeSelect;

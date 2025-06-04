@@ -11,7 +11,7 @@ import { getDefaultColumData, getPageData, queryOneKernel, searchAllSlices } fro
 import { ResizeTable } from 'ascend-resize';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import styled from '@emotion/styled';
-import { RankFilter } from './SystemView';
+import { DEFAULT_CARD_VALUE, RankFilter, SelectedCardInfo } from './SystemView';
 import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import type { InsightUnit } from '../../entity/insight';
 import { getTimeOffset } from '../../insight/units/utils';
@@ -106,6 +106,24 @@ export interface SearchAllSlicesDetails {
      * @memberof depth
      */
     depth: number;
+    /**
+     *
+     * @type {string}
+     * @memberof originOptimizer
+     */
+    originOptimizer: string;
+    /**
+     * 实际是 card: `{host} {rankId}`
+     * @type {string}
+     * @memberof rankId
+     */
+    rankId: string;
+    /**
+     * 卡的数据库路径
+     * @type {string}
+     * @memberof dbPath
+     */
+    dbPath: string;
 }
 
 export function useFindDetail(session: Session, bottomHeight: number): any {
@@ -126,16 +144,16 @@ const useColumns = (): any => {
     ];
 };
 
-export const FindDetailView = observer((props: any) => {
-    const [conditions, setConditions] = useState<{ rankId: string }>({ rankId: '' });
-    const handleChange = (rankId: string): void => {
-        setConditions({ rankId });
+export const FindDetailView = observer((props: { session: Session; bottomHeight: number }) => {
+    const [conditions, setConditions] = useState<SelectedCardInfo>(DEFAULT_CARD_VALUE);
+    const handleChange = (card: SelectedCardInfo): void => {
+        setConditions(card);
     };
     return (
         <FindDetailContainer>
             <RankFilter session={props.session} handleChange={handleChange}></RankFilter>
             <ChartErrorBoundary>
-                <FindDetail rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}></FindDetail>
+                <FindDetail card={conditions} session={props.session} bottomHeight={props.bottomHeight}></FindDetail>
             </ChartErrorBoundary>
         </FindDetailContainer>
     );
@@ -144,14 +162,28 @@ export const FindDetailView = observer((props: any) => {
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: 'duration', order: 'descend' };
 
+export interface FindDetailProps {
+    card: SelectedCardInfo;
+    session: Session;
+    bottomHeight: number;
+}
+
+interface AllConditionType {
+    doContextSearch?: boolean;
+    page: typeof defaultPage;
+    sorter: typeof defaultSorter;
+    selectCard: SelectedCardInfo;
+}
+
 // eslint-disable-next-line max-lines-per-function
-const FindDetail = observer((props: any) => {
-    const [dataSource, setDataSource] = useState<any[]>([]);
+const FindDetail = observer((props: FindDetailProps) => {
+    const [dataSource, setDataSource] = useState<SearchAllSlicesDetails[]>([]);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [isLoading, setLoading] = useState(false);
-    const [rowData, setRowData] = useState<any>({});
-    const [allCondition, setAllCondition] = useState({ doContextSearch: props.session.doContextSearch, page, sorter, selectRank: props.rankId });
+    const [rowData, setRowData] = useState<Partial<SearchAllSlicesDetails>>({});
+    const [allCondition, setAllCondition] = useState<AllConditionType>(
+        { doContextSearch: props.session.doContextSearch, page, sorter, selectCard: props.card });
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
     let columns = [];
     columns = [...useColumns(), {
@@ -167,21 +199,21 @@ const FindDetail = observer((props: any) => {
         setAllCondition({ ...allCondition, page, sorter });
     }, [sorter, page.current, page.pageSize]);
     useEffect(() => {
-        setAllCondition({ ...allCondition, doContextSearch: props.session.doContextSearch, page: defaultPage, selectRank: props.rankId });
+        setAllCondition({ ...allCondition, doContextSearch: props.session.doContextSearch, page: defaultPage, selectCard: props.card });
         setPage(defaultPage);
-    }, [props.session.doContextSearch, props.rankId]);
+    }, [props.session.doContextSearch, props.card.cardId]);
     useEffect(() => {
         updateData(allCondition.page, allCondition.sorter, props);
-    }, [allCondition.sorter, allCondition.selectRank, allCondition.page.current,
+    }, [allCondition.sorter, allCondition.selectCard.cardId, allCondition.page.current,
         allCondition.page.pageSize, allCondition.doContextSearch, props.session.doReset]);
     useEffect(() => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
         }
-        handleFindSelected(rowData, props);
+        handleFindSelected(rowData as SearchAllSlicesDetails, props);
     }, [rowData]);
-    const updateData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
-        if (props.rankId === undefined || props.rankId === '') {
+    const updateData = async(pages: any, sorters: {field: string;order: string}, prop: FindDetailProps): Promise<void> => {
+        if (props.card === undefined || props.card.cardId === '') {
             setDataSource([]);
             setPage(defaultPage);
             setSorter(defaultSorter);
@@ -197,7 +229,7 @@ const FindDetail = observer((props: any) => {
         }
         setLoading(true);
         const res = await searchData(pages, sorters, prop).finally(() => setLoading(false));
-        const timestampoffset = getTimeOffset(props.session, props.rankId);
+        const timestampoffset = getTimeOffset(props.session, props.card);
         const data = res.searchAllSlicesDetails.map(item => {
             item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
             return item;
@@ -225,7 +257,7 @@ const FindDetail = observer((props: any) => {
     </CONTAINER>;
 });
 
-const searchData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<SearchTableData> => {
+const searchData = async(pages: any, sorters: {field: string;order: string}, prop: FindDetailProps): Promise<SearchTableData> => {
     const metadataList = (prop.session.lockUnit as InsightUnit[]).map(selectUnit => {
         const { threadId, processId, metaType, cardId } = selectUnit?.metadata as ThreadMetaData ?? {};
         const timestampOffset = getTimeOffset(prop.session, selectUnit?.metadata as ProcessMetaData);
@@ -241,23 +273,25 @@ const searchData = async(pages: any, sorters: {field: string;order: string}, pro
         };
     });
     const res = await searchAllSlices({
-        rankId: prop.rankId,
+        rankId: prop.card.cardId,
+        dbPath: prop.card.dbPath,
         pageSize: pages.pageSize,
         current: pages.current,
         orderBy: sorters.field === 'startTime' ? 'timestamp' : sorters.field ?? defaultSorter.field,
         order: sorters.order ?? defaultSorter.order,
-        searchContent: prop.session.searchData.content,
-        isMatchCase: prop.session.searchData.isMatchCase,
-        isMatchExact: prop.session.searchData.isMatchExact,
+        searchContent: prop.session.searchData?.content,
+        isMatchCase: prop.session.searchData?.isMatchCase,
+        isMatchExact: prop.session.searchData?.isMatchExact,
         metadataList,
     });
     return res;
 };
 
-const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
+const handleFindSelected = async(rowData: SearchAllSlicesDetails & { originOptimizer: string }, props: FindDetailProps): Promise<void> => {
     const queryName = rowData.name ?? rowData.originOptimizer;
     const res = await queryOneKernel({
         rankId: rowData.rankId,
+        dbPath: rowData.dbPath,
         name: queryName,
         timestamp: rowData.timestamp,
         duration: rowData.duration,
@@ -268,5 +302,6 @@ const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
         name: queryName,
         depth,
         cardId: rowData.rankId,
+        dbPath: rowData.dbPath,
     });
 };

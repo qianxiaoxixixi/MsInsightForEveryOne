@@ -16,6 +16,7 @@ export interface PaginationModel extends PaginationParams {
 export interface OpDetail {
     id?: string;
     cardId: string;
+    dbPath?: string;
     tid: string;
     pid: string;
     depth: number;
@@ -28,11 +29,13 @@ export interface OpDetail {
 // parseCards
 export interface ParseCardsParam {
     cards: string[];
+    dbPaths: string[];
 }
 
 // getOverallMetrics
 export interface GetOverallMetricsParams extends PaginationParams {
     rankId: string;
+    dbPath: string;
 }
 
 export interface GetOverallMetricsResultItem {
@@ -56,6 +59,7 @@ export interface GetOverallMetricsResult extends PaginationModel {
 // getOverallMetricsMoreList
 export interface GetOverallMetricsMoreListParams extends PaginationParams {
     rankId: string;
+    dbPath: string;
     categoryList: string[];
     orderBy?: keyof GetOverallMetricsMoreListResultItem;
     order?: 'ascend' | 'descend' | null;
@@ -80,11 +84,13 @@ export interface GetOverallMetricsMoreListResult extends PaginationModel {
 
 export interface SetCardAliasParams {
     rankId: string;
+    dbPath: string;
     cardAlias: string;
 }
 
 export interface GetAICoreParams {
     rankId: string;
+    dbPath: string;
 }
 
 export interface GetAICoreParamsResult {
@@ -94,19 +100,25 @@ export interface GetAICoreParamsResult {
 
 export interface QueryOperatorDispatchParams extends PaginationParams {
     rankId: string;
+    dbPath: string;
     orderBy: string;
     order: string;
 };
 
-interface OperatorDispatchResultItem {
+export interface BaseSummaryRowItemType {
     id: string;
     rankId: string;
+    dbPath: string;
     startTime: number;
     duration: number;
     pid: string;
     tid: string;
     depth: number;
-    name: string;
+    name?: string;
+    originOptimizer?: string;
+}
+
+interface OperatorDispatchResultItem extends BaseSummaryRowItemType {
     note: string;
 }
 
@@ -118,6 +130,7 @@ export interface EventViewParams {
     currentPage: number;
     pageSize: number;
     rankId: string;
+    dbPath: string;
     processName: string;
     orderBy: string;
     metaType: string;
@@ -130,6 +143,7 @@ export interface EventViewParams {
 
 export interface QueryAllSameOperatorsDurationParams {
     rankId: string;
+    dbPath: string;
     tid: string[];
     pid: string;
     startTime: number;
@@ -165,6 +179,7 @@ export interface QueryAllSameOperatorsDurationResult {
 
 export interface QueryCommunicationKernelDetailParams {
     rankId?: string;
+    dbPath?: string;
     name: string;
 }
 

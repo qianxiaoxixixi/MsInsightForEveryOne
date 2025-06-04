@@ -9,7 +9,7 @@ import type { Session } from '../../entity/session';
 import type { SingleDataDesc } from '../../entity/insight';
 import { useSelectedDataDetailUpdater } from './hooks';
 import { SelectedDataBase } from '../details/base/SelectedData';
-
+// @deprecated
 export const SimpleSelectedDetail = observer(
     ({ session, detail }: {session: Session; detail: SingleDataDesc<Record<string, unknown>, unknown>}): JSX.Element => {
     useEffect(() => {

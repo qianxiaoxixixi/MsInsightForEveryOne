@@ -12,9 +12,10 @@ async function findInCommunication(session: Session): Promise<void> {
     if (!session.selectedData) {
         return;
     }
-    const { name, cardId: rankId } = session.selectedData;
+    const { name, cardId: rankId, dbPath } = session.selectedData;
     const params = {
         rankId,
+        dbPath,
         name,
     };
     const res = await queryCommunicationKernelDetail(params);

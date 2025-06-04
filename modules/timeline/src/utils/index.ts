@@ -49,6 +49,7 @@ export const jumpToUnitOperator = (opDetail: OpDetail): void => {
     const {
         id,
         cardId: cid,
+        dbPath,
         tid,
         pid,
         depth,
@@ -87,6 +88,7 @@ export const jumpToUnitOperator = (opDetail: OpDetail): void => {
                     threadId: tid,
                     processId: pid,
                     cardId: cid,
+                    dbPath,
                     startRecordTime: session.startRecordTime,
                     showSelectedData: true,
                     metaType: metaType ?? (unit.metadata as ThreadMetaData).metaType,

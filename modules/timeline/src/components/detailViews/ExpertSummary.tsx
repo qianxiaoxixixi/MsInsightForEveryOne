@@ -7,24 +7,25 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from '@emotion/styled';
 import { message } from 'ascend-components';
+import type { SelectContentViewProps } from './SystemView';
 
 const ExpertAnalysisContainer = styled.div`
     .expert-analysis-header {
         margin-bottom: 8px;
         font-weight: bold;
     }
-    
+
     .expert-analysis-content {
         padding: 0 12px 20px;
     }
 `;
 
-export const ExpertSummary = observer((props: any): JSX.Element => {
+export const ExpertSummary = observer((props: SelectContentViewProps & { request: (...rest: any[]) => any }): JSX.Element => {
     const { t } = useTranslation('timeline');
     const [hasProblem, setProblem] = useState(false);
     const [number, setNumber] = useState(0);
     const req = async (): Promise<void> => {
-        const res = await props.request({ rankId: props.rankId });
+        const res = await props.request({ rankId: props.card.cardId, dbPath: props.card.dbPath });
         if (res.error !== undefined) {
             setProblem(false);
             message.error(t('expertSummary.AI Core Request Error'));
@@ -36,7 +37,7 @@ export const ExpertSummary = observer((props: any): JSX.Element => {
 
     useEffect(() => {
         req();
-    }, [props.rankId]);
+    }, [props.card.cardId]);
 
     return <>
         {
