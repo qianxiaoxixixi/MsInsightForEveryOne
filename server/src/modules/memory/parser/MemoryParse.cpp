@@ -115,11 +115,13 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
     size_t allocationTimeIndex = dataMap[ALLOCATION_TIME];
     size_t sizeIndex = dataMap[SIZE];
     size_t durationIndex = dataMap[DURATION];
+    size_t deviceIndex = dataMap.count(Dic::DEVICE_ID) ? dataMap[DEVICE] : dataMap[DEVICETYPE];
     anOperator.name = row[nameIndex];
     anOperator.size = NumberUtil::StringToDouble(row[sizeIndex]);
     anOperator.allocationTime = NumberUtil::TimestampUsToNs(
         NumberUtil::StringToLongDouble(row[allocationTimeIndex]));
     anOperator.duration = NumberUtil::StringToDouble(row[durationIndex]);
+    anOperator.deviceType = DeleteNPUPrefix(row[deviceIndex]);
 
     if (dataMap.count(RELEASE_TIME)) {
         size_t releaseTimeIndex = dataMap[RELEASE_TIME];
@@ -169,7 +171,7 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
         record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]) / KB_TO_MB;
         record.totalActivated = dataMap.count(TOTAL_ACTIVE_KB) == 0 ?
                 0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_KB]]) / KB_TO_MB;
-        record.deviceType = row[deviceTypeIndex];
+        record.deviceType = DeleteNPUPrefix(row[deviceTypeIndex]);
     } else {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_MB];
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
@@ -178,7 +180,7 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
         record.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
         record.totalActivated = dataMap.count(TOTAL_ACTIVE_MB) == 0 ?
                 0 : NumberUtil::StringToDouble(row[dataMap[TOTAL_ACTIVE_MB]]);
-        record.deviceType = row[deviceTypeIndex];
+        record.deviceType = DeleteNPUPrefix(row[deviceTypeIndex]);
     }
     if (dataMap.find(STREAM_PTR) != dataMap.end()) {
         record.streamId = row[dataMap[STREAM_PTR]];
@@ -194,7 +196,7 @@ StaticOp MemoryParse::mapperToStaticOpDetail(std::map<std::string, size_t> dataM
     size_t opName = dataMap[OP_NAME];
     size_t modelName = dataMap[MODEL_NAME];
     size_t graphId = dataMap[GRAPH_ID];
-    staticOp.deviceId = row[deviceId];
+    staticOp.deviceId = DeleteNPUPrefix(row[deviceId]);
     staticOp.opName = row[opName];
     staticOp.modelName = row[modelName];
     staticOp.graphId = row[graphId];
@@ -216,7 +218,7 @@ Component MemoryParse::mapperToComponentDetail(std::map<std::string, size_t> dat
     size_t deviceIndex = dataMap[DEVICE];
     component.component = row[componentIndex];
     component.timestamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timestampIndex]));
-    component.device = row[deviceIndex];
+    component.device = DeleteNPUPrefix(row[deviceIndex]);
     if (dataMap.find(TOTAL_RESERVED_MB) != dataMap.end()) {
         size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
         component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
@@ -695,6 +697,15 @@ void MemoryParse::ParseCallBack(const std::string &rankId,
         event->memoryResult = memoryResult;
         SendEvent(std::move(event));
     }
+}
+
+std::string MemoryParse::DeleteNPUPrefix(const std::string &str)
+{
+    const std::string npuPrefix = "NPU:";
+    if (StringUtil::StartWith(str, npuPrefix)) {
+        return str.substr(npuPrefix.size());
+    }
+    return str;
 }
 
 } // end of namespace Memory
