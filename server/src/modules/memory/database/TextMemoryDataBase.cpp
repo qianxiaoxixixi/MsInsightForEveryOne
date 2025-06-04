@@ -45,15 +45,15 @@ bool TextMemoryDataBase::CreateTable()
         "size INTEGER, allocation_time INTEGER, release_time INTEGER, duration INTEGER, "
         "active_release_time INTEGER, active_duration INTEGER, "
         "allocation_allocated INTEGER, allocation_reserve INTEGER, allocation_active INTEGER, "
-        "release_allocated INTEGER, release_reserve INTEGER, release_active INTEGER, stream TEXT);" +
+        "release_allocated INTEGER, release_reserve INTEGER, release_active INTEGER, stream TEXT, deviceId TEXT);" +
         "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
         "total_allocated INTEGER, total_reserve INTEGER, total_active INTEGER, "
-        "device_type TEXT, stream TEXT, timestamp INTEGER);" +
-        "CREATE TABLE " + staticOpTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, device_id TEXT, " +
+        "deviceId TEXT, stream TEXT, timestamp INTEGER);" +
+        "CREATE TABLE " + staticOpTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, deviceId TEXT, " +
         "op_name TEXT, model_name TEXT, graph_id TEXT, node_index_start INTEGER, " +
         "node_index_end INTEGER, size INTEGER);" +
         "CREATE TABLE " + componentTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
-        "timestamp INTEGER, total_reserved INTEGER, device TEXT);";
+        "timestamp INTEGER, total_reserved INTEGER, deviceId TEXT);";
     std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
@@ -73,10 +73,10 @@ bool TextMemoryDataBase::InitStmt()
 
     std::string sql = "INSERT INTO " + operatorTable + " (name, size, allocation_time, release_time, duration, "
           "active_release_time, active_duration, allocation_allocated, allocation_reserve, allocation_active, "
-          "release_allocated, release_reserve, release_active, stream)" +
-          " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+          "release_allocated, release_reserve, release_active, stream, deviceId)" +
+          " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertOperatorStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert Operator statement. Error: ", sqlite3_errmsg(db));
@@ -84,7 +84,7 @@ bool TextMemoryDataBase::InitStmt()
     }
 
     sql = "INSERT INTO " + recordTable +
-            " (component, total_allocated, total_reserve, total_active, device_type, stream, timestamp)" +
+            " (component, total_allocated, total_reserve, total_active, deviceId, stream, timestamp)" +
             " VALUES (?,?,?,?,?,?,?)";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?)");
@@ -95,7 +95,7 @@ bool TextMemoryDataBase::InitStmt()
     }
 
     sql = "INSERT INTO " + staticOpTable +
-            " (device_id, op_name, model_name, graph_id, node_index_start, node_index_end, size)" +
+            " (deviceId, op_name, model_name, graph_id, node_index_start, node_index_end, size)" +
             " VALUES (?,?,?,?,?,?,?)";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?)");
@@ -106,7 +106,7 @@ bool TextMemoryDataBase::InitStmt()
     }
 
     sql = "INSERT INTO " + componentTable +
-        " (component, timestamp, total_reserved, device)" +
+        " (component, timestamp, total_reserved, deviceId)" +
         " VALUES (?,?,?,?)";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?)");
@@ -163,6 +163,7 @@ void TextMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
         sqlite3_bind_double(stmt, idx++, event.releaseReserved);
         sqlite3_bind_double(stmt, idx++, event.releaseActive);
         sqlite3_bind_text(stmt, idx++, event.streamId.c_str(), event.streamId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
@@ -396,7 +397,7 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
 std::string  TextMemoryDataBase::GetStaticOperatorSql(Protocol::StaticOperatorListParams &requestParams)
 {
     std::string sql =
-        "SELECT device_id, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
+        "SELECT deviceId, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
         " FROM " + staticOpTable +
         " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
     AddStableOperatorSql(requestParams, sql);
@@ -541,7 +542,7 @@ bool TextMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperator
                                                         std::vector<Protocol::StaticOperatorItem>& opDetails)
 {
     std::string sql =
-        "SELECT device_id, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
+        "SELECT deviceId, op_name, node_index_start, node_index_end, ROUND(size / 1024.0, 2) as size"
         " FROM " + staticOpTable +
         " WHERE op_name <> 'TOTAL'";
     if (!requestParams.graphId.empty()) {
@@ -609,10 +610,10 @@ sqlite3_stmt *TextMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
     } else {
         std::string sql = "INSERT INTO " + operatorTable + " (name, size, allocation_time, release_time, duration, "
                 "active_release_time, active_duration, allocation_allocated, allocation_reserve, allocation_active, "
-                "release_allocated, release_reserve, release_active, stream)"
-                          " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                "release_allocated, release_reserve, release_active, stream, deviceId)"
+                          " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insertOperator stat. Error: ", sqlite3_errmsg(db));
@@ -632,7 +633,7 @@ sqlite3_stmt *TextMemoryDataBase::GetRecordStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + recordTable +
-                " (component, total_allocated, total_reserve, total_active, device_type, stream, timestamp)"
+                " (component, total_allocated, total_reserve, total_active, deviceId, stream, timestamp)"
                 " VALUES (?,?,?,?,?,?,?)";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?)");
@@ -655,7 +656,7 @@ sqlite3_stmt *TextMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + staticOpTable +
-                          " (device_id, op_name, model_name, graph_id, node_index_start, node_index_end, size)"
+                          " (deviceId, op_name, model_name, graph_id, node_index_start, node_index_end, size)"
                           " VALUES (?,?,?,?,?,?,?)";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?)");
@@ -679,7 +680,7 @@ sqlite3_stmt *TextMemoryDataBase::GetComponentStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + componentTable +
-            " (component, timestamp, total_reserved, device)" +
+            " (component, timestamp, total_reserved, deviceId)" +
             " VALUES (?,?,?,?)";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?)");

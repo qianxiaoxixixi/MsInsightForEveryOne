@@ -67,6 +67,7 @@ private:
     static void PreParseTask(const MemoryFilePairs& filePair, const std::string& fileId);
     static bool ParseTask(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message);
     static bool InitParser(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message);
+    static std::string DeleteNPUPrefix(const std::string &str);
 };
 } // end of namespace Memory
 } // end of namespace Module
