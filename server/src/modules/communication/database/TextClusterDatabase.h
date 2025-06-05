@@ -128,6 +128,7 @@ private:
                                       const std::optional<document_t> &p2pData);
     Protocol::BandwidthDataResBody MergeBandwidthData(const Protocol::BandwidthDataResBody &collective,
                                                       const Protocol::BandwidthDataResBody &p2p);
+    void BindTextForClusterBaseInfo(ClusterBaseInfo &baseInfo, sqlite3_stmt *stmt);
 };
 } // end of namespace Module
 } // end of namespace Dic

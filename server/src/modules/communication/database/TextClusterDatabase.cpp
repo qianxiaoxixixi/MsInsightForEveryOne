@@ -389,33 +389,17 @@ void TextClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
     }
 }
 
-void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
+void TextClusterDatabase::BindTextForClusterBaseInfo(ClusterBaseInfo &baseInfo, sqlite3_stmt *stmt)
 {
-    sqlite3_stmt *stmt;
-    std::string sql = "INSERT INTO " + TABLE_BASE_INFO +
-                      " (key, value) VALUES ('file_path', ?), "
-                      " ('ranks', (SELECT json_group_array(rank_id) FROM "
-                      " (SELECT DISTINCT rank_id FROM step_statistic_info WHERE rank_id !=''))), "
-                      " ('steps', (SELECT json_group_array(step_id) FROM "
-                      " (SELECT DISTINCT step_id FROM step_statistic_info WHERE rank_id !=''))), "
-                      " ('collect_start_time', ?), ('collect_duration', ?), ('data_size', ?), "
-                      " ('stages', ?), ('pp_stages', ?), ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
-                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('moe_tp_size', '1'), "
-                      " ('level', ?), ('parse_status', NULL);";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare baseInfoTable statement. error:", sqlite3_errmsg(db));
-        return;
-    }
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to get baseInfoTable stmt.");
-        return;
-    }
     std::string stringStartTime = std::to_string(baseInfo.collectStartTime);
     std::string stringDuration = std::to_string(baseInfo.collectDuration);
     std::string stringDataSize = std::to_string(baseInfo.dataSize);
     std::string stringDpSize = std::to_string(baseInfo.config.dpSize);
     std::string stringPpSize = std::to_string(baseInfo.config.ppSize);
     std::string stringTpSize = std::to_string(baseInfo.config.tpSize);
+    std::string stringCpSize = std::to_string(baseInfo.config.cpSize);
+    std::string stringEpSize = std::to_string(baseInfo.config.epSize);
+    std::string stringMoeTpSize = std::to_string(baseInfo.config.moeTpSize);
     int idx = bindStartIndex;
     sqlite3_bind_text(stmt, idx++, baseInfo.filePath.c_str(), baseInfo.filePath.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringStartTime.c_str(), stringStartTime.length(), SQLITE_TRANSIENT);
@@ -428,7 +412,34 @@ void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
     sqlite3_bind_text(stmt, idx++, stringDpSize.c_str(), stringDpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringPpSize.c_str(), stringPpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringTpSize.c_str(), stringTpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringCpSize.c_str(), stringCpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringEpSize.c_str(), stringEpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringMoeTpSize.c_str(), stringMoeTpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.level.c_str(), baseInfo.level.length(), SQLITE_TRANSIENT);
+}
+
+void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
+{
+    sqlite3_stmt *stmt;
+    std::string sql = "INSERT INTO " + TABLE_BASE_INFO +
+                      " (key, value) VALUES ('file_path', ?), "
+                      " ('ranks', (SELECT json_group_array(rank_id) FROM "
+                      " (SELECT DISTINCT rank_id FROM step_statistic_info WHERE rank_id !=''))), "
+                      " ('steps', (SELECT json_group_array(step_id) FROM "
+                      " (SELECT DISTINCT step_id FROM step_statistic_info WHERE rank_id !=''))), "
+                      " ('collect_start_time', ?), ('collect_duration', ?), ('data_size', ?), "
+                      " ('stages', ?), ('pp_stages', ?), ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
+                      " ('tp_size', ?), ('cp_size', ?), ('ep_size', ?), ('moe_tp_size', ?), "
+                      " ('level', ?), ('parse_status', NULL);";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare baseInfoTable statement. error:", sqlite3_errmsg(db));
+        return;
+    }
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get baseInfoTable stmt.");
+        return;
+    }
+    BindTextForClusterBaseInfo(baseInfo, stmt);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert baseInfoTable data fail. ", sqlite3_errmsg(db));

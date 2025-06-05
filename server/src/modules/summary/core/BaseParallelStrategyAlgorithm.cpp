@@ -583,8 +583,7 @@ double BaseParallelStrategyAlgorithm::Reserved3DecimalPlaces(double num)
     if (num == 0.0 || num == DBL_MAX) {
         return 0.0;
     }
-    const int placeNum = 3;
-    return NumberUtil::DoubleReservedNDigits(num, placeNum);
+    return NumberUtil::DoubleReservedNDigits(num, reservedNum);
 }
 
 void BaseParallelStrategyAlgorithm::AnalyzePerformanceAdviceWithDpCpPpTpDimension(Protocol::TraceStatistic &max,
@@ -851,7 +850,8 @@ void BaseParallelStrategyAlgorithm::CalSynchronizeTime(const std::string& para, 
         adviceInfoForSlowRank.name = GetElementNameForTopNAdvice(tmpConfig, adviceInfo.indexAttributes);
         adviceInfoForSlowRank.indexAttributes = adviceInfo.indexAttributes;
         adviceInfoForSlowRank.maxCommTime[para] = maxCommTime;
-        adviceInfoForSlowRank.synchronizeTime[para] = maxCommTime - commInfoList[0].commTime;
+        adviceInfoForSlowRank.synchronizeTime[para] = NumberUtil::DoubleReservedNDigits(
+            maxCommTime - commInfoList[0].commTime, reservedNum);
         // 任一类型通信同步时间超过阈值，视为慢卡/慢分组，需插入专家建议堆, 837行已确保maxCommTime不为0
         bool needInsert = false;
         if ((adviceInfoForSlowRank.synchronizeTime[para] / maxCommTime) > thresholdForSlowRankAdvice) {
@@ -861,6 +861,7 @@ void BaseParallelStrategyAlgorithm::CalSynchronizeTime(const std::string& para, 
         for (const auto& item : commTimeListForAdvice) {
             if (adviceInfo.synchronizeTime.find(item) != adviceInfo.synchronizeTime.end()) {
                 adviceInfoForSlowRank.synchronizeTime[item] = adviceInfo.synchronizeTime[item];
+                adviceInfoForSlowRank.maxCommTime[item] = adviceInfo.maxCommTime[item];
                 needInsert = true;
             }
         }
@@ -989,7 +990,7 @@ std::unordered_map<std::string, std::vector<CommInfoUnderRank>> BaseParallelStra
         for (const auto &info: item.second) {
             // 这里从countMap的key值就是由resMap的两层key值拼接成的，不会出现0的情况
             double avgComm =
-                NumberUtil::DoubleReservedNDigits(info.second / countMap[item.first + "-" + info.first], 3);
+                NumberUtil::DoubleReservedNDigits(info.second / countMap[item.first + "-" + info.first], reservedNum);
             commInfos.push_back({avgComm, item.first, "", info.first});
         }
         res[item.first] = commInfos;
