@@ -453,7 +453,7 @@ void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
                       " (key, value) VALUES ('ranks', NULL), ('steps', NULL), "
                       " ('collect_start_time', NULL), ('collect_duration', NULL), "
                       " ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
-                      " ('tp_size', ?), ('cp_size', '1'), ('ep_size', '1'), ('moe_tp_size', '1'), ('level', ?); ";
+                      " ('tp_size', ?), ('cp_size', ?), ('ep_size', ?), ('moe_tp_size', ?), ('level', ?); ";
     auto result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK || stmt == nullptr) {
         ServerLog::Error("Failed to prepare inserting cluster base info statement. error:", sqlite3_errmsg(db));
@@ -464,11 +464,17 @@ void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
     std::string stringDpSize = std::to_string(baseInfo.config.dpSize);
     std::string stringPpSize = std::to_string(baseInfo.config.ppSize);
     std::string stringTpSize = std::to_string(baseInfo.config.tpSize);
+    std::string stringCpSize = std::to_string(baseInfo.config.cpSize);
+    std::string stringEpSize = std::to_string(baseInfo.config.epSize);
+    std::string stringMoeTpSize = std::to_string(baseInfo.config.moeTpSize);
     sqlite3_bind_text(stmt, idx++, baseInfo.config.algorithm.c_str(),
                       baseInfo.config.algorithm.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringDpSize.c_str(), stringDpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringPpSize.c_str(), stringPpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringTpSize.c_str(), stringTpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringCpSize.c_str(), stringCpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringEpSize.c_str(), stringEpSize.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, stringMoeTpSize.c_str(), stringMoeTpSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.level.c_str(), baseInfo.level.length(), SQLITE_TRANSIENT);
     result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {

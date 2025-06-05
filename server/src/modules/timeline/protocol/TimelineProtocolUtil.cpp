@@ -689,7 +689,6 @@ json_t SystemViewOverallResToJson(const SystemViewOverallRes &res,
     if (!children.Empty()) {
         JsonUtil::AddMember(json, "children", children, allocator);
     }
-    std::string jsonString = JsonUtil::JsonDump(json);
     return json;
 }
 

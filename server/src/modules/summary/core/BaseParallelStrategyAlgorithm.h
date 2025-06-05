@@ -151,7 +151,7 @@ protected:
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpMin;
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
     const static inline int cpSizeWithEp = 1;
-    const static inline int reservedNum = 2; // 保留2位小数
+    const static inline int reservedNum = 3; // 保留3位小数
     const static inline int epPosPpLast = 2; // tp-cp-ep-dp-pp
     const static inline uint32_t maxLengthOfAdvice = 10; // 专家建议优先队列最大容量
     const static inline uint32_t topN = 3; // 专家建议取TopN慢卡
