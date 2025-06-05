@@ -28,6 +28,14 @@ namespace Dic::Module::Operator {
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        if (deviceId.empty()) {
+            ServerLog::Error("[Operator]Failed to query More Info by empty deviceId.");
+            SetResponseResult(response, false);
+            session.OnResponse(std::move(responsePtr));
+            return false;
+        }
+        request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorMoreInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query More Info by rankId.");
             SetResponseResult(response, false);
@@ -44,6 +52,10 @@ namespace Dic::Module::Operator {
         std::string errMsg;
         if (!CheckStrParamValid(params.rankId, errMsg)) {
             ServerLog::Error(std::string("[Operator]Failed to check rankId in query op more info.") + errMsg);
+            return false;
+        }
+        if (!CheckStrParamValid(params.deviceId, errMsg)) {
+            ServerLog::Error(std::string("[Operator]Failed to check deviceId in query op more info.") + errMsg);
             return false;
         }
         if (!CheckStrParamValid(params.opName, errMsg) && !CheckStrParamValid(params.opType, errMsg)) {

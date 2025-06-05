@@ -444,7 +444,7 @@ bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &req
     std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql = GetOperatorSql(requestParams);
-    return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
+    return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql, "deviceId");
 }
 
 bool TextMemoryDataBase::QueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
@@ -528,7 +528,7 @@ bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestPara
         recordTable + " WHERE deviceId = ? ";
     std::vector<Protocol::ComponentDto> componentDtoVec;
     std::vector<std::string> streams;
-    if (!ExecuteQueryMemoryViewExecuteSql(requestParams, componentDtoVec, streams, sql)) {
+    if (!ExecuteQueryMemoryViewExecuteSql(requestParams, componentDtoVec, streams, sql, "deviceId")) {
         return false;
     }
     return ExecuteQueryMemoryViewGetGraph(requestParams, componentDtoVec, streams, operatorBody);

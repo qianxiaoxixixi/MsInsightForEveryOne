@@ -141,6 +141,11 @@ namespace Dic::Module::Operator {
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        if (deviceId.empty()) {
+            return false;
+        }
+        request.params.deviceId = deviceId;
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
         if (!database || !database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query current detail info by rankId.");
@@ -155,7 +160,7 @@ namespace Dic::Module::Operator {
         }
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
-        request.params.rankId = "";
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "operator");
         if (!database ||
             !databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
             ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
@@ -186,6 +191,11 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        if (deviceId.empty()) {
+            return false;
+        }
+        request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorDetailInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query detail Info by rankId");
             return false;

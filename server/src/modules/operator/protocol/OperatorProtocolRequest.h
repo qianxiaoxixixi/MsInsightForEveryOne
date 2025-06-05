@@ -21,6 +21,7 @@ namespace Dic::Protocol {
     // 算子视图饼图的请求参数
     struct OperatorDurationReqParams {
         std::string rankId;
+        std::string deviceId;
         std::string group; // Operator、Operator Type、Input Shape
         int64_t topK{0};
 
@@ -29,6 +30,10 @@ namespace Dic::Protocol {
             if (!CheckStrParamValid(this->rankId, errorMsg)) {
                 errorMsg = StringUtil::StrJoin("[Operator]Failed to check rankId in Query Compute Unit Info.",
                                                errorMsg);
+                return false;
+            }
+            if (!CheckStrParamValidEmptyAllowed(this->deviceId, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check deviceId in Query Compute Unit Info.") + errorMsg;
                 return false;
             }
             if (!CheckStrParamValid(this->group, errorMsg)) {
@@ -47,6 +52,7 @@ namespace Dic::Protocol {
     struct OperatorStatisticReqParams {
         bool isCompare{false};
         std::string rankId;
+        std::string deviceId;
         std::string group; // Operator、Operator Type、Input Shape
         int64_t topK{0};
         int64_t current;
@@ -66,6 +72,10 @@ namespace Dic::Protocol {
             }
             if (!CheckStrParamValid(rankId, errorMsg)) {
                 errorMsg = std::string("[Operator]Failed to check rankId in Query Op Statistic Info.") + errorMsg;
+                return false;
+            }
+            if (!CheckStrParamValidEmptyAllowed(deviceId, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check deviceId in Query Op Statistic Info.") + errorMsg;
                 return false;
             }
             if (!this->orderBy.empty()) {
@@ -96,6 +106,7 @@ namespace Dic::Protocol {
     // Operator Type、Operator Name + Input Shape类型时See More的请求参数
     struct OperatorMoreInfoReqParams {
         std::string rankId;
+        std::string deviceId;
         std::string group;
         int64_t topK;
         std::string opType;
@@ -113,6 +124,7 @@ namespace Dic::Protocol {
     struct ExportOperatorDetailsReqParams {
         bool isCompare{false};
         std::string rankId;
+        std::string deviceId;
         std::string group;
         int64_t topK{0};
 
@@ -120,6 +132,10 @@ namespace Dic::Protocol {
         {
             if (!CheckStrParamValid(this->rankId, errorMsg)) {
                 errorMsg = std::string("[Operator]Failed to check rankId in export op detail.") + errorMsg;
+                return false;
+            }
+            if (!CheckStrParamValidEmptyAllowed(this->deviceId, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check deviceId in export op detail.") + errorMsg;
                 return false;
             }
             if (!CheckStrParamValid(this->group, errorMsg)) {

@@ -69,7 +69,7 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorCategoryInfoRequestTest)
 {
     std::string reqJson = R"({"id": 2, "moduleName": "operator", "type": "request", "command": "operator/category",
         "resultCallbackId": 0, "params": {"rankId": "1", "group": "Operator", "topK": 15}})";
-    OperatorDurationReqParams expect = {"1", "Operator", 15};
+    OperatorDurationReqParams expect = {"1", "1", "Operator", 15};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -83,7 +83,7 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorComputeUnitInfoRequestTest)
 {
     std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/compute_unit",
         "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": -1}})";
-    OperatorDurationReqParams expect = {"2", "Operator Type", -1};
+    OperatorDurationReqParams expect = {"2", "2", "Operator Type", -1};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -99,7 +99,7 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoRequestTest)
         {"id": 4, "moduleName": "operator", "type": "request", "command": "operator/statistic", "resultCallbackId": 0,
         "params": {"rankId": "2", "group": "Input Shape", "topK": -1, "current": 2, "pageSize": 20,
         "orderBy": "avg_time", "order": "Asc", "filters": [{"columnName": "name", "value": "MatMul"}]}})";
-    OperatorStatisticReqParams expect = {false, "2", "Input Shape", -1, 2, 20, "avg_time",  "Asc",
+    OperatorStatisticReqParams expect = {false, "2", "2", "Input Shape", -1, 2, 20, "avg_time",  "Asc",
                                          {{"name", "MatMul"}}};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
@@ -119,7 +119,7 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestTest)
     std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/details",
         "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": 100, "current": 3,
         "pageSize": 50, "orderBy": "cnt", "order": "Desc", "filters": [{"columnName": "opType", "value": "MatMul"}]}})";
-    OperatorStatisticReqParams expect = {false, "2", "Operator Type", 100, 3, 50, "cnt",  "Desc",
+    OperatorStatisticReqParams expect = {false, "2", "2", "Operator Type", 100, 3, 50, "cnt",  "Desc",
                                          {{"op_type", "MatMul"}}};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
@@ -141,7 +141,7 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorMoreInfoRequestTest)
         "opType": "MatMul", "opName": "MatMul", "shape": "", "accCore": "AI_CORE",
         "current": 3, "pageSize": 50, "orderBy": "cnt", "order": "Desc", "filters": []}})";
     OperatorMoreInfoReqParams expect = {
-        "2", "Operator Type", 100, "MatMul", "MatMul", "", "AI_CORE", 3, 50, "cnt",  "Desc", {}
+        "2", "2", "Operator Type", 100, "MatMul", "MatMul", "", "AI_CORE", 3, 50, "cnt",  "Desc", {}
     };
     Dic::document_t json;
     json.Parse(reqJson.c_str());

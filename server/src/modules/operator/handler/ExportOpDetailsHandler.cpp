@@ -176,6 +176,7 @@ namespace Dic::Module::Operator {
         operatorStatisticCompareReq.params = {
                 isCompare: request.params.isCompare,
                 rankId: request.params.rankId,
+                deviceId: request.params.deviceId,
                 group: request.params.group,
                 topK: request.params.topK,
                 current: 1,
@@ -214,6 +215,7 @@ namespace Dic::Module::Operator {
         operatorNotStatisticCompareReq.params = {
                 isCompare: request.params.isCompare,
                 rankId: request.params.rankId,
+                deviceId: request.params.deviceId,
                 group: request.params.group,
                 topK: request.params.topK,
                 current: 1,
@@ -272,6 +274,7 @@ namespace Dic::Module::Operator {
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
+            deviceId: request.params.deviceId,
             group: request.params.group,
             topK: request.params.topK,
             current: 0,
@@ -318,6 +321,7 @@ namespace Dic::Module::Operator {
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
+            deviceId: request.params.deviceId,
             group: request.params.group,
             topK: request.params.topK,
             current: 0,

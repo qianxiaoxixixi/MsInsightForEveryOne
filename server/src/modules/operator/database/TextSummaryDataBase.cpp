@@ -7,11 +7,11 @@
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
 #include "ConstantDefs.h"
+#include "DataBaseManager.h"
 #include "TextSummaryDataBase.h"
 
 namespace Dic::Module::Summary {
 using namespace Server;
-const std::string FIELD_AICORE_TIME = "aicore_time_us_";
 TextSummaryDataBase::TextSummaryDataBase(std::recursive_mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
 
 TextSummaryDataBase::~TextSummaryDataBase()
@@ -77,6 +77,30 @@ bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
     }
     hasInitStmt = true;
     return true;
+}
+
+std::string TextSummaryDataBase::QueryDeviceId()
+{
+    FullDb::FileType type = FullDb::DataBaseManager::Instance().GetFileType();
+    std::string sql = "";
+    if (type == FullDb::FileType::PYTORCH) {
+        sql += "SELECT deviceId FROM " + TABLE_KERNEL + " LIMIT 1 ";
+    } else {
+        return "";
+    }
+    std::string deviceId;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        return "";
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string res = sqlite3_column_string(stmt, col++);
+        deviceId = res;
+    }
+    sqlite3_finalize(stmt);
+    return deviceId;
 }
 
 void TextSummaryDataBase::ReleaseStmt()
@@ -457,8 +481,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
 
         int index = bindStartIndex;
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), reqParams.deviceId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
 
         std::vector<Protocol::OperatorDurationRes> res;
@@ -508,9 +531,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             ServerLog::Error("Failed to get Statistic Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
         BindQueryFilters(reqParams, stmt, index);
 
@@ -610,10 +632,10 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         if (!reqParams.isCompare) {
             return limitSql;
         }
-        if (reqParams.isCompare && !reqParams.rankId.empty()) {
+        if (reqParams.isCompare && !reqParams.deviceId.empty()) {
             return noLimitsql;
         }
-        if (reqParams.isCompare && reqParams.rankId.empty()) {
+        if (reqParams.isCompare && reqParams.deviceId.empty()) {
             return  baseNolimitSql;
         }
         return "";
@@ -666,9 +688,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
 
         int index = bindStartIndex;
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        if (!reqParams.rankId.empty()) {
-            sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        if (!reqParams.deviceId.empty()) {
+            sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), reqParams.deviceId.length(), SQLITE_TRANSIENT);
         }
 
         if (!reqParams.isCompare) {
@@ -716,9 +737,8 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             ServerLog::Error("Failed to get Detail Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
         BindQueryFilters(reqParams, stmt, index);
 
@@ -799,10 +819,10 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
 
-        if (isLimit && !reqParams.rankId.empty()) {
+        if (isLimit && !reqParams.deviceId.empty()) {
             sql = sqlTab + conditionalQuerySql;
         } else {
-            if (reqParams.rankId.empty()) {
+            if (reqParams.deviceId.empty()) {
                 sql = sqlTab + baseAllQuerySql;
             } else {
                 sql = sqlTab + allQuerySql;
@@ -844,12 +864,11 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
             return false;
         }
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(
             Timeline::TraceTime::Instance().GetStartTime(), (uint64_t)INT64_MAX));
-        if (!reqParams.rankId.empty()) {
-            sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        if (!reqParams.deviceId.empty()) {
+            sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), reqParams.deviceId.length(), SQLITE_TRANSIENT);
         }
         if (!reqParams.isCompare) {
             sqlite3_bind_int64(stmt, index++, reqParams.topK);
@@ -952,8 +971,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             return false;
         }
         int index = bindStartIndex;
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), reqParams.deviceId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), reqParams.accCore.length(), SQLITE_TRANSIENT);
         if (IsOperatorGroupInType(operatorGroup)) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), reqParams.opType.length(), SQLITE_TRANSIENT);
@@ -1076,10 +1094,9 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
     void TextSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
     {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime, (uint64_t)INT64_MAX));
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.deviceId.c_str(), reqParams.deviceId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), reqParams.accCore.length(), SQLITE_TRANSIENT);
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         if (IsOperatorGroupInType(operatorGroup)) {

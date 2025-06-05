@@ -20,7 +20,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
 {
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_OPERATOR_TYPE, 15};
+    Dic::Protocol::OperatorDurationReqParams params = {"0", "0", GROUP_OPERATOR_TYPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
@@ -36,7 +36,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
 TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_INPUT_SHAPE, 15};
+    Dic::Protocol::OperatorDurationReqParams params = {"0", "0", GROUP_INPUT_SHAPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
@@ -52,7 +52,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
 TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_OPERATOR, 15};
+    Dic::Protocol::OperatorDurationReqParams params = {"0", "0", GROUP_OPERATOR, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
@@ -68,7 +68,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", "0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -80,7 +80,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {true, "0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {true, "0", "0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
     bool result = db->QueryAllOperatorStatisticInfo(reqParams, compareRes);
@@ -92,7 +92,7 @@ TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpType)
 TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_INPUT_SHAPE, 15, 1, 5, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", "0", GROUP_INPUT_SHAPE, 15, 1, 5, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -105,7 +105,7 @@ TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
 TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_OPERATOR, 15, 1, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", "0", GROUP_OPERATOR, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorDetailInfoResponse response = {};
     bool result = db->QueryOperatorDetailInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -119,7 +119,7 @@ TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 TEST_F(TestSuit, QueryAllOperatorDetailInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", GROUP_OPERATOR, 15, 1, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "0", "0", GROUP_OPERATOR, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorDetailInfoResponse response = {};
     std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
     bool result = db->QueryAllOperatorDetailInfo(reqParams, baselineRes, response.level);
@@ -133,7 +133,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 1, 10, "", ""};
+        "0", "0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 1, 10, "", ""};
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -147,7 +147,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 1, 10, "", ""
+        "0", "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 1, 10, "", ""
     };
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);

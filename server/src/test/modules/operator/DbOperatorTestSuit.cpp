@@ -44,7 +44,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOpType)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB);
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorDurationReqParams params = {"2", GROUP_OPERATOR_TYPE, 15};
+    Dic::Protocol::OperatorDurationReqParams params = {"2", "2", GROUP_OPERATOR_TYPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
@@ -60,7 +60,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOpType)
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorDurationReqParams params = {"2", GROUP_INPUT_SHAPE, 15};
+    Dic::Protocol::OperatorDurationReqParams params = {"2", "2", GROUP_INPUT_SHAPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
@@ -76,7 +76,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOpTypeAndInputSh
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorDurationReqParams params = {"2", GROUP_OPERATOR, 15};
+    Dic::Protocol::OperatorDurationReqParams params = {"2", "2", GROUP_OPERATOR, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
@@ -92,7 +92,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOperator)
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorStatisticInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", GROUP_OPERATOR_TYPE, 15, 0, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", "2", GROUP_OPERATOR_TYPE, 15, 0, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -105,7 +105,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorStatisticInfoByOpType)
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorStatisticInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", "2", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -118,7 +118,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorStatisticInfoByOpTypeAndInputS
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {true, "2", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {true, "2", "2", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
     bool result = db->QueryAllOperatorStatisticInfo(reqParams, compareRes);
@@ -130,7 +130,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorStatisticInfoByOpTypeAndInp
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorDetailInfoWhenPmuDataNotExist)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId("2");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", GROUP_OPERATOR, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", "2", GROUP_OPERATOR, 15, 0, 5, "", ""};
     Dic::Protocol::OperatorDetailInfoResponse response = {};
     bool result = db->QueryOperatorDetailInfo(reqParams, response);
     EXPECT_EQ(result, true);

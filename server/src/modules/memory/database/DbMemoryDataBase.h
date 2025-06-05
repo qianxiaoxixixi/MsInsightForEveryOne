@@ -59,6 +59,7 @@ public:
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
     std::string BuildOperatorDetailSql(const std::string& startTimeString, const std::string& offsetTimeString);
+    std::string deviceIdColumnName;
 };
 
 }

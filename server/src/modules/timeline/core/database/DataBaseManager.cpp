@@ -536,6 +536,13 @@ std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, co
         }
         return database->QueryDeviceId();
     }
+    if (module == "operator") {
+        auto database = DataBaseManager::GetSummaryDatabaseByRankId(rankId);
+        if (database == nullptr) {
+            return "";
+        }
+        return database->QueryDeviceId();
+    }
     return "";
 }
 } // end of namespace Timeline
