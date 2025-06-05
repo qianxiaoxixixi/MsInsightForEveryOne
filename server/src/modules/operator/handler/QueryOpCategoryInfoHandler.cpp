@@ -26,6 +26,14 @@ namespace Dic::Module::Operator {
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        if (deviceId.empty()) {
+            ServerLog::Error("[Operator]Failed to query Category Info by empty deviceId.");
+            SetResponseResult(response, false);
+            session.OnResponse(std::move(responsePtr));
+            return false;
+        }
+        request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
             ServerLog::Error("[Operator]Failed to query Category Info by rankId.");
             SetResponseResult(response, false);

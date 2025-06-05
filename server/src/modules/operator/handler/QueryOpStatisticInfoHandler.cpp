@@ -112,6 +112,11 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        if (deviceId.empty()) {
+            return false;
+        }
+        request.params.deviceId = deviceId;
         std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
         if (!database || !database->QueryAllOperatorStatisticInfo(request.params, compareRes)) {
             ServerLog::Error("[Operator]Failed to query current Statistic Info by rankId.");
@@ -124,7 +129,7 @@ namespace Dic::Module::Operator {
         }
         auto databaseBaseline = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(baselineId);
         std::vector<Protocol::OperatorStatisticInfoRes> baselineRes;
-        request.params.rankId = "";
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(baselineId, "operator");
         if (!databaseBaseline || !databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {
             ServerLog::Error("[Operator]Failed to query baseline Statistic Info by baselineId.");
             return false;
@@ -147,6 +152,11 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
+        if (deviceId.empty()) {
+            return false;
+        }
+        request.params.deviceId = deviceId;
         if (!database || !database->QueryOperatorStatisticInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query Statistic Info by rankId.");
             return false;

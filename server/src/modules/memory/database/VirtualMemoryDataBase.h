@@ -129,7 +129,7 @@ protected:
     const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
     const std::string MIND_SPORE_GE = "MindSpore+GE";
 
-    std::vector<std::string> GetStreamLists(std::string deviceId);
+    std::vector<std::string> GetStreamLists(std::string deviceId, std::string deviceIdColumnName);
     bool ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type);
     bool ExecuteMemoryResourceType(std::string &type, std::string sql);
     bool ExecuteOperatorSize(Protocol::MemoryOperatorSizeParams &requestParams, double &min,
@@ -143,14 +143,14 @@ protected:
     bool ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryViewParams &requestParams,
                                    std::vector<Protocol::ComponentDto> &componentDtoVec,
                                    std::vector<std::string> &streams,
-                                   std::string &sql);
+                                   std::string &sql, std::string deviceIdColumnName);
     bool ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewParams &requestParams,
                                          std::vector<Protocol::ComponentDto> &componentDtoVec,
                                          std::vector<std::string> &streams,
                                          Protocol::MemoryViewData &operatorBody);
     bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
-        std::string sql);
+        std::string sql, std::string deviceIdColumnName);
     bool ExecuteQueryEntireOperatorTable(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryOperator> &opDetails, const std::string &sql);
     bool ExecuteComponentDetail(Protocol::MemoryComponentParams &requestParams,

@@ -16,6 +16,7 @@ public:
     explicit DbSummaryDataBase(std::recursive_mutex &sqlMutex) : Summary::VirtualSummaryDataBase(sqlMutex) {};
     virtual ~DbSummaryDataBase() {};
 
+    std::string QueryDeviceId() override;
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool QueryComputeOpDetail(Protocol::ComputeDetailParams params,
         std::vector<Protocol::ComputeDetail> &computeDetails) override;
@@ -48,6 +49,9 @@ private:
     std::string GetPMUTmpTableColSql(const std::set<std::string> &cols);
     bool QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total);
     std::string GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams);
+    std::string GenStatSqlWithCommunication();
+    std::string GenStatSqlWithDeviceId(const std::string group);
+    std::string GenStatSql(const std::string group);
     std::string GenComputeSql(const Protocol::ComputeDetailParams& request);
     static std::string GenerateQueryCategoryDurationSql(OperatorDurationReqParams &reqParams);
     static std::string GenerateQueryComputeUnitDurationSql(OperatorDurationReqParams &reqParams);

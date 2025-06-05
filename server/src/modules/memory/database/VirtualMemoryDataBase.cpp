@@ -29,7 +29,7 @@ std::string VirtualMemoryDataBase::ExecuteQueryDeviceId(std::string &sql)
     return deviceId;
 }
 
-std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string deviceId)
+std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string deviceId, std::string deviceIdColumnName)
 {
     std::vector<std::string> streams = {};
     DataType type = DataBaseManager::Instance().GetDataType();
@@ -43,7 +43,7 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string devic
             std::string streamPtrColumnName = isLowCamel ? "streamPtr" : "stream_ptr";
             std::string timeColumnName = isLowCamel ? "timestamp" : "time_stamp";
             sql += "SELECT " + streamPtrColumnName + " FROM " + TABLE_MEMORY_RECORD +
-                " WHERE device_id = ? AND " + streamPtrColumnName + " <> ''"
+                " WHERE " + deviceIdColumnName + " = ? AND " + streamPtrColumnName + " <> ''"
                 " Group BY " + streamPtrColumnName + " ORDER BY " + timeColumnName + " ASC";
         } else {
             ServerLog::Error("Memory tab does not support msprof data.");
@@ -263,8 +263,8 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
 }
 
 bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryViewParams &requestParams,
-                                                             std::vector<Protocol::ComponentDto> &componentDtoVec,
-                                                             std::vector<std::string> &streams, std::string &sql)
+    std::vector<Protocol::ComponentDto> &componentDtoVec, std::vector<std::string> &streams,
+    std::string &sql, std::string deviceIdColumnName)
 {
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " AND stream <> ''";
@@ -304,7 +304,7 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryVie
     }
 
     // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
-    streams = GetStreamLists(requestParams.deviceId);
+    streams = GetStreamLists(requestParams.deviceId, deviceIdColumnName);
     return true;
 }
 
@@ -328,7 +328,8 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewP
 
 bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                                   std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string sql)
+                                                  std::vector<Protocol::MemoryOperator> &opDetails,
+                                                  std::string sql, std::string deviceIdColumnName)
 {
     int64_t pageSize = requestParams.pageSize == 0 ? defaultPageSize : requestParams.pageSize;
     int64_t currentPage = requestParams.currentPage - 1;
@@ -356,7 +357,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
     opDetails = QueryOperatorDetail(stmt);
-    std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
+    std::vector<std::string> streams = GetStreamLists(requestParams.rankId, deviceIdColumnName);
     std::vector<std::string> columns = activeRelatedColumn;
     for (const auto& column : tableColumnAttr) {
         if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {

@@ -27,6 +27,7 @@ public:
     explicit VirtualSummaryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualSummaryDataBase() override = default;
 
+    virtual std::string QueryDeviceId() = 0;
     virtual bool QueryComputeOpDetail(Protocol::ComputeDetailParams params,
         std::vector<Protocol::ComputeDetail> &computeDetails) = 0;
     virtual bool QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum) = 0;

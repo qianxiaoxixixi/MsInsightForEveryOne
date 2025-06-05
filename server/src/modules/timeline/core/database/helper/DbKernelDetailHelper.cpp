@@ -92,7 +92,7 @@ std::string DbKernelDetailHelper::GetKernelDetailSqlWithHCCL(const Protocol::Ker
       " inputDataTypes, 'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats,"
       " TASK.connectionId as taskId"
       "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
-      "       join nameIds on opName = nameIds.id group by info.opName), "
+      "       join nameIds on opName = nameIds.id group by info.opName ), "
       " main_hccl as ( select * from main_hccl_tmp " + filterSql + ") ";
 }
 
