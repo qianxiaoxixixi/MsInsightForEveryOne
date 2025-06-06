@@ -32,6 +32,14 @@ bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    if (deviceId.empty()) {
+        ServerLog::Error("Query kernel detail failed to get deviceId. ");
+        session.OnResponse(std::move(responsePtr));
+        return false;
+    }
+    request.params.deviceId = deviceId;
     if (!database->QueryKernelDetailData(request.params, response.body, TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get kernel detail response data.");

@@ -6,6 +6,7 @@
 #include "CounterEventHelper.h"
 #include "NpuInfoRepo.h"
 #include "TraceDatabaseHelper.h"
+#include "Database.h"
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {
@@ -164,11 +165,13 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
 }
 
-bool TraceDatabaseHelper::QueryFusibleOpDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt,
+bool TraceDatabaseHelper::QueryFusibleOpDataForDB(const KernelDetailsParams &params,
+                                                  std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                   const Dic::Module::Timeline::FuseableOpRule &rule,
                                                   std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
-    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    int deviceId = StringUtil::StringToInt(params.deviceId);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for query Fusible Operator.", stmt->GetErrorMessage());
         return false;
@@ -1005,6 +1008,26 @@ void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<Sq
     ServerLog::Info("Summary Size is: ", responseBody.data.size());
 }
 
+void TraceDatabaseHelper::SetSystemViewHelpler(std::unique_ptr<SqliteResultSet> resultSet, const LayerStatData &data,
+    const Protocol::SystemViewParams &requestParams, Protocol::SystemViewBody &responseBody)
+{
+    while (resultSet->Next()) {
+        Protocol::SystemViewDetail systemViewDetail;
+        int col = 0;
+        systemViewDetail.name = resultSet->GetString(col++);
+        systemViewDetail.time = resultSet->GetDouble(col++);
+        systemViewDetail.totalTime = resultSet->GetDouble(col++);
+        systemViewDetail.numberCalls = resultSet->GetUint64(col++);
+        systemViewDetail.avg = resultSet->GetDouble(col++);
+        systemViewDetail.min = resultSet->GetDouble(col++);
+        systemViewDetail.max = resultSet->GetDouble(col++);
+        responseBody.systemViewDetail.emplace_back(systemViewDetail);
+    }
+    responseBody.total = data.total;
+    responseBody.pageSize = requestParams.pageSize;
+    responseBody.currentPage = requestParams.current;
+}
+
 void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                                                  Protocol::KernelDetailsBody &responseBody)
 {
@@ -1070,8 +1093,8 @@ std::string TraceDatabaseHelper::GeneratorCommunicationSummarySql4Text(
         "    row_number() OVER (ORDER by s.track_id ASC, s.timestamp ASC) as row_num FROM " + SLICE_TABLE + " s "
         "    JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id WHERE s.track_id in ( "
         "        SELECT track_id FROM " + THREAD_TABLE + " WHERE pid in ( "
-        "            SELECT pid FROM " + PROCESS_TABLE + " WHERE process_name in "
-                                                         " ('HCCL', 'COMMUNICATION', 'Communication') "
+        "            SELECT pid FROM " + PROCESS_TABLE +
+        " WHERE (pid & 0x1f) = ? AND process_name in ('HCCL', 'COMMUNICATION', 'Communication') "
         "        ) "
         "    ) "
         ") "
@@ -1407,56 +1430,6 @@ uint64_t TraceDatabaseHelper::CalculateUncoveredTime(const std::vector<Protocol:
         }
     }
     return totalUncoveredTime;
-}
-
-uint64_t TraceDatabaseHelper::QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                              const std::string& name)
-{
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for Query Communication Group Id By Name.", stmt->GetErrorMessage());
-        return UINT64_MAX;
-    }
-    while (resultSet->Next()) {
-        std::string tmpName = resultSet->GetString("groupName");
-        uint64_t groupId = resultSet->GetUint64("groupId");
-        if (tmpName == name) {
-            return groupId;
-        }
-    }
-
-    return UINT64_MAX;
-}
-
-bool TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    uint64_t groupId, uint64_t offset, const std::vector<Protocol::ThreadTraces> &notOverlapData,
-    std::vector<SameOperatorsDetails> &details)
-{
-    auto resultSet = stmt->ExecuteQuery(offset, offset, groupId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query communication ops time data.",
-                         stmt->GetErrorMessage());
-        return false;
-    }
-    size_t index = 0;
-    while (resultSet->Next()) {
-        Protocol::ThreadTraces one{};
-        one.name = resultSet->GetString("name");
-        one.duration = resultSet->GetUint64("duration");
-        one.startTime = resultSet->GetUint64("startNs");
-        one.endTime = resultSet->GetUint64("endNs");
-        if (!notOverlapData.empty()) { // calculate not overlapped time
-            uint64_t time = CalculateUncoveredTime(notOverlapData, index, one);
-            // 与未掩盖部分无交集，说明此通信算子被掩盖，无需计入数据
-            if (time == 0) {
-                continue;
-            }
-        }
-        SameOperatorsDetails tmp = {one.startTime, one.duration, "", one.name, 0, ""};
-        details.push_back(tmp);
-    }
-
-    return true;
 }
 
 void TraceDatabaseHelper::SetNpuInfoRepo(std::unique_ptr<NpuInfoRepo> npuInfoRepoPtr)

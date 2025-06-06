@@ -29,6 +29,12 @@ bool QuerySystemViewOverallHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         SendResponse(std::move(responsePtr), false, error);
         return false;
     }
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    if (deviceId.empty()) {
+        SendResponse(std::move(responsePtr), false, "Failed to get deviceId for system view overall statistics.");
+        return false;
+    }
+    request.params.deviceId = deviceId;
     SystemViewOverallHelper overallHelper;
     // 执行一层级Overlap查询，结果存放在overallHelper.overlapInfos, 并显式返回e2eTime
     overallHelper.e2eTime = GetOverlapAnalysisData(overallHelper, database, request, response.details);

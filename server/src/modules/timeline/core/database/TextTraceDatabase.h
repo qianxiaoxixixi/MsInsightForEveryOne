@@ -50,6 +50,7 @@ public:
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
     std::vector<std::pair<std::string, std::string>> QueryTableDataNameList();
 
+    std::string GetDeviceId(const std::string& fileId) override;
     // search
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
         Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
@@ -79,9 +80,9 @@ public:
     bool QueryStepDuration(const std::string &stepId, uint64_t &min, uint64_t &max) override;
     bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
         Protocol::SystemViewBody &responseBody) override;
-    bool QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
-                                   uint64_t &maxFreq, uint64_t &minFreq) override;
-    LayerStatData QueryLayerData(const std::string &layer, const std::string &name) override;
+    bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+        std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) override;
+    LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) override;
     std::vector<std::string> QueryCoreType() override;
 
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,

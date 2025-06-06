@@ -25,10 +25,18 @@ bool QueryExpAnaAICoreFreqHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    if (deviceId.empty()) {
+        ServerLog::Error("Query system view AI core freq failed to get deviceId.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
+    }
+    request.params.deviceId = deviceId;
     uint64_t maxFreq = 0;
     uint64_t minFreq = UINT64_MAX;
     std::vector<std::pair<uint64_t, uint64_t>> freqs;
-    if (!database->QueryExpAnaAICoreFreqData(freqs, maxFreq, minFreq) || freqs.empty()) {
+    if (!database->QueryExpAnaAICoreFreqData(request.params, freqs, maxFreq, minFreq)
+        || freqs.empty()) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get system view AI core freq table response data.");
     }

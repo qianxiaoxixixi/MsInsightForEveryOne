@@ -24,6 +24,16 @@
 
 namespace Dic::Module::Timeline {
 const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
+
+struct ParamsForCalCSData {
+    const std::string &sql;
+    double e2eTime;
+};
+struct ParamsForOAData {
+    const std::string &sql;
+    const std::string &type;
+    uint64_t offset;
+};
 /*
  * timeline数据库抽象类，定义所有查询接口调用的数据库查询纯虚函数，
  */
@@ -32,6 +42,7 @@ public:
     explicit VirtualTraceDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualTraceDatabase() override = default;
 
+    virtual std::string GetDeviceId(const std::string& fileId) = 0;
     // search
     virtual bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                               uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) = 0;
@@ -60,9 +71,9 @@ public:
     virtual bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) = 0;
     virtual bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
         Protocol::SystemViewBody &responseBody) = 0;
-    virtual bool QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
-                                           uint64_t &maxFreq, uint64_t &minFreq) = 0;
-    virtual LayerStatData QueryLayerData(const std::string &layer, const std::string &name) = 0;
+    virtual bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+        std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) = 0;
+    virtual LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) = 0;
     virtual std::vector<std::string> QueryCoreType() = 0;
     virtual bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) = 0;
@@ -101,16 +112,118 @@ public:
     virtual bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) = 0;
     virtual bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) = 0;
-
+// LCOV_EXCL_BR_START
     // 调用前需保证uncovered、sql等不为空
+    template<class T>
     bool CalculateCommunicationSummaryData(const std::vector<Protocol::ThreadTraces> &uncovered,
-        const std::map<std::string, std::string> &groupInfoMap, const std::string &sql, double e2eTime,
-        Protocol::SystemViewOverallRes &result);
+        const std::map<std::string, std::string> &groupInfoMap, ParamsForCalCSData paramsForCalCsData,
+        T &deviceId, Protocol::SystemViewOverallRes &result)
+    {
+        auto stmt = CreatPreparedStatement(paramsForCalCsData.sql);
+        if (stmt == nullptr) {
+            Server::ServerLog::Error("Failed to prepare sql for query communication detail info.");
+            return false;
+        }
+        stmt->BindParams(deviceId);
+        auto resultSet = stmt->ExecuteQuery();
+        if (resultSet == nullptr) {
+            Server::ServerLog::Error("Failed to get result set for query communication detail info.",
+                                     stmt->GetErrorMessage());
+            return false;
+        }
+        std::map<std::string, Protocol::CommunicationSummaryInfoByGroup> summaryInfoMap{};
+        ExecuteQueryCommunicationSummaryData(summaryInfoMap, resultSet, groupInfoMap, uncovered);
+
+        // 最终数据整理，按Group整理出Wait和Transmit时间
+        ComputeCommunicationWaitAndTransmitTimeByGroup(summaryInfoMap, paramsForCalCsData.e2eTime, result);
+
+        return true;
+    };
 
     // 查询所有通信未掩盖的时间段，用于后续计算落在通信未掩盖区间的等待时间
-    bool QueryOverlapAnalysisData(const std::string &sql, const std::string &type, uint64_t offset,
-        std::vector<Protocol::ThreadTraces> &overlapData, uint64_t &totalTime);
-    bool QueryCommunicationGroupMap(const std::string &sql, std::map<std::string, std::string> &groupMap);
+    template<class T>
+    bool QueryOverlapAnalysisData(ParamsForOAData paramsForOaData, T &deviceId,
+        std::vector<Protocol::ThreadTraces> &overlapData, uint64_t &totalTime)
+    {
+        if (paramsForOaData.sql.empty() || paramsForOaData.type.empty()) {
+            Server::ServerLog::Error("Failed to get overlap analysis data due to empty sqlite cmd.");
+            return false;
+        }
+        auto stmt = CreatPreparedStatement(paramsForOaData.sql);
+        if (stmt == nullptr) {
+            Server::ServerLog::Error("Failed to prepare sql for query overlap analysis data.");
+            return false;
+        }
+        auto resultSet = stmt->ExecuteQuery(paramsForOaData.offset, paramsForOaData.offset,
+                                            deviceId, paramsForOaData.type);
+        if (resultSet == nullptr) {
+            Server::ServerLog::Error("Failed to get result set for query overlap analysis data.",
+                                     stmt->GetErrorMessage());
+            return false;
+        }
+        while (resultSet->Next()) {
+            Protocol::ThreadTraces ele{};
+            ele.name = resultSet->GetString("name"); // at the moment, no used
+            ele.startTime = resultSet->GetUint64("startNs");
+            ele.endTime = resultSet->GetUint64("endNs");
+            ele.duration = resultSet->GetUint64("duration");
+            if (totalTime > UINT64_MAX - ele.duration) {
+                totalTime = 0;
+            } else {
+                totalTime += ele.duration;
+            }
+            overlapData.push_back(ele);
+        }
+        if (overlapData.empty()) {
+            Server::ServerLog::Error("Failed to get overlap analysis data due to no data.");
+            return false;
+        }
+        return true;
+    };
+
+    template<class T>
+    bool QueryCommunicationGroupMap(const std::string &sql, T &deviceId,
+        std::map<std::string, std::string> &groupMap)
+    {
+        if (sql.empty()) {
+            Server::ServerLog::Error("Failed to get communication group data due to empty sql.");
+            return false;
+        }
+        auto stmt = CreatPreparedStatement(sql);
+        if (stmt == nullptr) {
+            Server::ServerLog::Error("Failed to prepare sql for query communication group data.");
+            return false;
+        }
+        stmt->BindParams(deviceId);
+        auto resultSet = stmt->ExecuteQuery();
+        if (resultSet == nullptr) {
+            Server::ServerLog::Error("Failed to get result set for query communication group data.",
+                                     stmt->GetErrorMessage());
+            return false;
+        }
+        std::string lastGroup;
+        // sql中保证按照通信组和plane升序排列
+        while (resultSet->Next()) {
+            std::string groupName = std::to_string(resultSet->GetUint64("groupName"));
+            std::string plane = std::to_string(resultSet->GetInt64("planeId"));
+            std::string threadName = resultSet->GetString("threadName");
+            if (StringUtil::StartWith(threadName, "Group ") && StringUtil::EndWith(threadName, " Communication")) {
+                groupMap.emplace(groupName.append("@").append(plane), threadName);
+                lastGroup = threadName;
+            } else {
+                if (lastGroup.empty()) {
+                    continue;
+                }
+                groupMap.emplace(groupName.append("@").append(plane), lastGroup);
+            }
+        }
+        if (groupMap.empty()) {
+            Server::ServerLog::Error("Failed to get communication group data due to no data.");
+            return false;
+        }
+        return true;
+    };
+// LCOV_EXCL_BR_STOP
     bool hasMacTime = false;
 private:
     // 给定一个通信算子或Task，计算其未被通信掩盖部分的耗时

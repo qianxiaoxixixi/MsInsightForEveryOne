@@ -99,7 +99,7 @@ const std::string QUERY_FWDBWD_FLOW_DATA_SQL =
     "d2.nextFpEnd - d1.prevFpStart as fpDuration, d1.prevBpEnd - d2.nextBpStart as bpDuration \n"
     "FROM possibleData d1 JOIN possibleData d2 ON d2.rowNum = d1.rowNum + 1 \n"
     "WHERE d1.prevFpStart >= ? AND d1.prevFpStart <= ?";
-
+// LCOV_EXCL_BR_START
 const std::string QUERY_HOST_METADATA_CANN_SQL =
     " select EAL.name, globalTid, type, max(depth) as maxDepth from CANN_API"
     " a join ENUM_API_TYPE EAL on a.type = EAL.id "
@@ -119,27 +119,29 @@ const std::string QUERY_HOST_METADATA_PYTHONGC_SQL =
     " group by globalTid order by globalTid";
 
 // 兼容老版本（1.0.0）
-    const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_1_0_SQL =
-        "SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM " + TABLE_COMMUNICATION_TASK_INFO + " "
-        "GROUP BY groupName || planeId "
-        "UNION "
-        "SELECT op.groupName, -1 as planeId, 'Group ' || row_num || ' Communication' as threadName "
-        "FROM " + TABLE_COMMUNICATION_OP + " op JOIN ( "
-        "    SELECT groupName, row_number() OVER (ORDER BY groupName ASC) - 1 as row_num "
-        "    FROM " + TABLE_COMMUNICATION_OP + " GROUP BY groupName "
-        ") grp ON op.groupName = grp.groupName "
-        "GROUP BY op.groupName";
-    const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_SQL =
-        "    SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM COMMUNICATION_TASK_INFO "
-        "    GROUP BY groupName || planeId  "
-        "    UNION "
-        "    SELECT op.groupName, -1 as planeId, 'Group ' || strGroup.value || ' Communication' as threadName "
-        "    FROM COMMUNICATION_OP op JOIN ( "
-        "        SELECT groupName "
-        "        FROM  COMMUNICATION_OP  GROUP BY groupName "
-        "    ) grp ON op.groupName = grp.groupName "
-        "    JOIN STRING_IDS strGroup ON op.groupName = strGroup.id "
-        "    GROUP BY op.groupName ";
+const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_1_0_SQL =
+    "SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM " + TABLE_COMMUNICATION_TASK_INFO + " cti "
+    "JOIN " + TABLE_TASK + " task ON cti.globalTaskId = task.globalTaskId WHERE task.deviceId = ? "
+    "GROUP BY groupName || planeId "
+    "UNION "
+    "SELECT op.groupName, -1 as planeId, 'Group ' || row_num || ' Communication' as threadName "
+    "FROM " + TABLE_COMMUNICATION_OP + " op JOIN ( "
+    "    SELECT groupName, row_number() OVER (ORDER BY groupName ASC) - 1 as row_num "
+    "    FROM " + TABLE_COMMUNICATION_OP + " GROUP BY groupName "
+    ") grp ON op.groupName = grp.groupName "
+    "GROUP BY op.groupName";
+const std::string QUERY_COMMUNICATION_GROUP_MAP_DB_SQL =
+    "    SELECT groupName, planeId, 'Plane ' || planeId as threadName FROM COMMUNICATION_TASK_INFO cti "
+    "JOIN " + TABLE_TASK + " task ON cti.globalTaskId = task.globalTaskId WHERE task.deviceId = ? "
+    "    GROUP BY groupName || planeId  "
+    "    UNION "
+    "    SELECT op.groupName, -1 as planeId, 'Group ' || strGroup.value || ' Communication' as threadName "
+    "    FROM COMMUNICATION_OP op JOIN ( "
+    "        SELECT groupName "
+    "        FROM  COMMUNICATION_OP  GROUP BY groupName "
+    "    ) grp ON op.groupName = grp.groupName "
+    "    JOIN STRING_IDS strGroup ON op.groupName = strGroup.id "
+    "    GROUP BY op.groupName ";
 
 // 兼容老版本（1.0.0）
 const std::string QUERY_COMMUNICATION_SUMMARY_DB_1_0_SQL =
@@ -151,6 +153,7 @@ const std::string QUERY_COMMUNICATION_SUMMARY_DB_1_0_SQL =
     "        FROM " + TABLE_COMMUNICATION_TASK_INFO + " info "
     "        JOIN " + TABLE_STRING_IDS + " str1 ON info.taskType = str1.id "
     "        JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
+    "        WHERE task.deviceId = ? "
     "        UNION "
     "        SELECT str2.value as name, startNs as start_time, endNs - startNs as duration, "
     "        endNs as end_time, op.groupName, -1 as planeId, "
@@ -172,6 +175,7 @@ const std::string QUERY_COMMUNICATION_SUMMARY_DB_SQL =
     "      FROM COMMUNICATION_TASK_INFO info "
     "      JOIN STRING_IDS str1 ON info.taskType = str1.id "
     "      JOIN TASK task ON info.globalTaskId = task.globalTaskId "
+    "      WHERE task.deviceId = ? "
     "      UNION "
     "      SELECT str2.value as name, startNs as start_time, endNs - startNs as duration, "
     "      endNs as end_time, op.groupName, -1 as planeId,  "
@@ -187,7 +191,48 @@ const std::string QUERY_COMMUNICATION_SUMMARY_DB_SQL =
     "      grp ON op.groupName = grp.groupName "
     "      )"
     " ) ";
+
+const std::string QUERY_AFFINITY_API_DB_SQL =
+    "SELECT py.ROWID as id, str.value as name, py.startNs - ? as startTime, "
+    "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
+    "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
+    "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' ORDER BY py.globalTid ASC, py.startNs ASC ";
+
+const std::string QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL =
+    "SELECT deviceId as name, startNs - ? as startNs, endNs - ? as endNs, endNs - startNs as duration "
+    "FROM " + TABLE_OVERLAP_ANALYSIS + " WHERE deviceId = ? AND type = ? ORDER BY deviceId ASC, startNs ASC";
+
+const std::string QUERY_COMMUNICATION_OP_BY_GROUP_ID_DB_SQL =
+    "SELECT DISTINCT op.opId as id, str.value as name, op.startNs - ? as startNs, "
+    "op.endNs - op.startNs as duration, op.endNs - ? as endNs "
+    "FROM " + TABLE_COMMUNICATION_OP + " op JOIN " + TABLE_STRING_IDS + " str ON op.opName = str.id "
+    "JOIN " + TABLE_COMMUNICATION_TASK_INFO + " cti ON op.opId = cti.opId "
+    "JOIN " + TABLE_TASK + " t ON cti.globalTaskId = t.globalTaskId "
+    "WHERE t.deviceId = ? AND op.groupName = ? ORDER BY op.startNs ASC";
+
+// 兼容老版本（1.0.0）
+const std::string QUERY_COMMUNICATION_GROUP_ID_DB_1_0_SQL =
+    "SELECT groupId, 'Group ' || row_num || ' Communication' as groupName "
+    "FROM ( "
+    "    SELECT co.groupName as groupId, row_number() OVER (ORDER BY co.groupName ASC) -1 as row_num "
+    "    FROM " + TABLE_COMMUNICATION_OP + " co"
+    "    JOIN " + TABLE_COMMUNICATION_TASK_INFO + " cti ON co.opId = cti.opId"
+    "    JOIN " + TABLE_TASK + " t ON cti.globalTaskId = t.globalTaskId"
+    "    WHERE t.deviceId = ?"
+    " GROUP BY co.groupName )";
+
+const std::string QUERY_COMMUNICATION_GROUP_ID_DB_SQL =
+    "SELECT op.groupName as groupId, 'Group ' || str.value || ' Communication' as groupName "
+    "FROM ( "
+    "    SELECT co.groupName FROM " + TABLE_COMMUNICATION_OP + " co"
+    "    JOIN " + TABLE_COMMUNICATION_TASK_INFO + " cti ON co.opId = cti.opId"
+    "    JOIN " + TABLE_TASK + " t ON cti.globalTaskId = t.globalTaskId"
+    "    WHERE t.deviceId = ?"
+    " GROUP BY co.groupName ORDER BY co.groupName ASC "
+    ") op JOIN " + TABLE_STRING_IDS + " str on op.groupName = str.id";
+// LCOV_EXCL_BR_STOP
 class TraceDatabaseSqlConst {
+// LCOV_EXCL_BR_START
 public:
     static std::string GenerateAclnnQueryDbSql(const Protocol::KernelDetailsParams &params)
     {
@@ -199,7 +244,7 @@ public:
             "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
             "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
             "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
-            "WHERE s1.value IN ("
+            "WHERE task.deviceId = ? AND s1.value IN ("
             "    SELECT str.value FROM " + TABLE_COMPUTE_TASK_INFO + " info "
             "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
             "    WHERE str.value LIKE 'aclnn%' "
@@ -226,6 +271,98 @@ public:
             "ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
+
+    static std::string GenerateAICpuQueryDbSql(const std::vector<std::string> &replace,
+        const Protocol::KernelDetailsParams &params,
+        const std::map<std::string, Timeline::AICpuCheckDataType> &dataTypeMap)
+    {
+        std::vector<std::string> opTypeList{};
+        for (const auto &item : dataTypeMap) { // 获取除other以外的算子类型列表
+            if (item.first != "other") {
+                opTypeList.emplace_back(item.first);
+            }
+        }
+        std::vector<std::string> dataTypeCheck{};
+        for (const auto &item : dataTypeMap) {
+            std::string opType = item.first;
+            if (item.first == "other") { // 对于other，使用Not IN排除opTypeList以外的算子类型
+                opType = StringUtil::Join4SqlGroup(opTypeList);
+            }
+            dataTypeCheck.emplace_back(GenerateAICpuOpFilterSqlDB(opType, item.second));
+        }
+        std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
+
+        std::string sql = "SELECT info.ROWID as id, s2.value as name, s1.value as type, s0.value as unit, "
+            "t.startNs - ? as startTime, (t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "t.streamId as tid, t.depth as depth, lower(s3.value) as input, lower(s4.value) as output "
+            "FROM COMPUTE_TASK_INFO info "
+            "JOIN STRING_IDS s0 ON info.taskType = s0.id "
+            "JOIN TASK t ON info.globalTaskId = t.globalTaskId "
+            "JOIN STRING_IDS s1 ON info.opType = s1.id "
+            "JOIN STRING_IDS s2 ON info.name = s2.id "
+            "JOIN STRING_IDS s3 ON info.inputDataTypes = s3.id "
+            "JOIN STRING_IDS s4 ON info.outputDataTypes = s4.id "
+            "WHERE t.deviceId = ? AND s0.value ='AI_CPU' AND ("
+            "    lower(s1.value) IN (" +  StringUtil::Join4SqlGroup(replace) +
+            ") " // 特定类型的算子可以修改代码
+            "    OR ("
+            "    " +
+            dataTypeCheckSql + // 检查数据类型是否符合要求
+            "    ) OR "
+            "    duration >= ?" // 执行时间超过20us
+            ") ORDER BY " + params.orderBy + " " + params.order;
+        return sql;
+    }
+
+    static std::string GenerateFuseableOpFilterDbSql(const Protocol::KernelDetailsParams &params,
+        const Timeline::FuseableOpRule &rule)
+    {
+        std::string sql = "WITH data AS ( "
+            "SELECT info.ROWID as id, task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
+            "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
+            "task.streamId as tid, task.depth as depth, "
+            "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
+            "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
+            "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
+            "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
+            "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
+            "WHERE task.deviceId = ? ) "
+            "SELECT d0.* FROM data d0 ";
+        for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
+            std::string table = "d" + std::to_string(i);
+            sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
+                " AND " + table + ".op_type = '" + rule.opList.at(i) + "' ";
+        }
+        sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
+        return sql;
+    }
+
+    static std::string QueryAffinityOptimizerDbSql(const std::string &optimizers, const std::string &orderBy,
+        const std::string &order)
+    {
+        std::string sql =
+            "SELECT py.ROWID as id, py.startNs - ? as startTime, (py.endNs - py.startNs) / 1000 as duration, "
+            "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
+            "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
+            "WHERE str.value IN (" + optimizers + ") ORDER BY " + orderBy + " " + order;
+        return sql;
+    }
+
+private:
+    static std::string GenerateAICpuOpFilterSqlDB(const std::string &opType,
+        const Timeline::AICpuCheckDataType &dataType)
+    {
+        std::string sql = " ( ";
+        if (std::find(opType.begin(), opType.end(), ',') == opType.end()) { // 输入为单个算子类型
+            sql += "lower(s1.value) = '" + opType + "' AND ";
+        } else { // 输入为算子类型组
+            sql += "lower(s1.value) NOT IN ( " + opType + " ) AND ";
+        }
+        sql += "lower(s3.value) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.input) + " ) AND "
+            "lower(s4.value) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.output) + " )) ";
+        return sql;
+    }
+// LCOV_EXCL_BR_STOP
 };
 }
 #endif // PROFILER_SERVER_TRACEDATABASESQLCONST_H

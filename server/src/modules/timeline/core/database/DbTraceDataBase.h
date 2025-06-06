@@ -80,9 +80,9 @@ public:
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) override;
     bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
                              Protocol::SystemViewBody &responseBody) override;
-    bool QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
-                                   uint64_t &maxFreq, uint64_t &minFreq) override;
-    LayerStatData QueryLayerData(const std::string &layer, const std::string &name) override;
+    bool QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+        std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq) override;
+    LayerStatData QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name) override;
     std::vector<std::string> QueryCoreType() override;
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) override;
@@ -105,7 +105,7 @@ public:
     std::vector<std::string> QueryRankId();
     std::string QueryHostInfo() override;
     std::string QueryHostInfoWithHostPath(const std::string &path);
-    std::string GetDeviceId(const std::string& fileId);
+    std::string GetDeviceId(const std::string& fileId) override;
     std::unordered_map<std::string, std::string> QueryRankIdAndDeviceMap();
 
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,

@@ -50,29 +50,6 @@ uint64_t VirtualTraceDatabase::CalculateUncoveredTime(const std::vector<Protocol
     return totalUncoveredTime;
 }
 
-bool VirtualTraceDatabase::CalculateCommunicationSummaryData(const std::vector<Protocol::ThreadTraces> &uncovered,
-    const std::map<std::string, std::string> &groupInfoMap, const std::string &sql, double e2eTime,
-    Protocol::SystemViewOverallRes &result)
-{
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query communication detail info.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query communication detail info.", stmt->GetErrorMessage());
-        return false;
-    }
-    std::map<std::string, Protocol::CommunicationSummaryInfoByGroup> summaryInfoMap{};
-    ExecuteQueryCommunicationSummaryData(summaryInfoMap, resultSet, groupInfoMap, uncovered);
-
-    // 最终数据整理，按Group整理出Wait和Transmit时间
-    ComputeCommunicationWaitAndTransmitTimeByGroup(summaryInfoMap, e2eTime, result);
-
-    return true;
-}
-
 void VirtualTraceDatabase::ExecuteQueryCommunicationSummaryData(
     std::map<std::string, Protocol::CommunicationSummaryInfoByGroup>& summaryInfoMap,
     const std::unique_ptr<SqliteResultSet>& resultSet, const std::map<std::string, std::string> &groupInfoMap,
@@ -121,83 +98,6 @@ void VirtualTraceDatabase::ExecuteQueryCommunicationSummaryData(
             groupInfo->op.UpdateData(false, ele.duration, uncoveredTime);
         }
     }
-}
-
-bool VirtualTraceDatabase::QueryOverlapAnalysisData(const std::string &sql, const std::string &type, uint64_t offset,
-    std::vector<Protocol::ThreadTraces> &overlapData, uint64_t &totalTime)
-{
-    if (sql.empty() || type.empty()) {
-        ServerLog::Error("Failed to get overlap analysis data due to empty sqlite cmd.");
-        return false;
-    }
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query overlap analysis data.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(offset, offset, type);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query overlap analysis data.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        Protocol::ThreadTraces ele{};
-        ele.name = resultSet->GetString("name"); // at the moment, no used
-        ele.startTime = resultSet->GetUint64("startNs");
-        ele.endTime = resultSet->GetUint64("endNs");
-        ele.duration = resultSet->GetUint64("duration");
-        if (totalTime > UINT64_MAX - ele.duration) {
-            totalTime = 0;
-        } else {
-            totalTime += ele.duration;
-        }
-        overlapData.push_back(ele);
-    }
-    if (overlapData.empty()) {
-        ServerLog::Error("Failed to get overlap analysis data due to no data.");
-        return false;
-    }
-    return true;
-}
-
-bool VirtualTraceDatabase::QueryCommunicationGroupMap(const std::string &sql,
-                                                      std::map<std::string, std::string> &groupMap)
-{
-    if (sql.empty()) {
-        ServerLog::Error("Failed to get communication group data due to empty sql.");
-        return false;
-    }
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for query communication group data.");
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for query communication group data.", stmt->GetErrorMessage());
-        return false;
-    }
-    std::string lastGroup;
-    // sql中保证按照通信组和plane升序排列
-    while (resultSet->Next()) {
-        std::string groupName = std::to_string(resultSet->GetUint64("groupName"));
-        std::string plane = std::to_string(resultSet->GetInt64("planeId"));
-        std::string threadName = resultSet->GetString("threadName");
-        if (StringUtil::StartWith(threadName, "Group ") && StringUtil::EndWith(threadName, " Communication")) {
-            groupMap.emplace(groupName.append("@").append(plane), threadName);
-            lastGroup = threadName;
-        } else {
-            if (lastGroup.empty()) {
-                continue;
-            }
-            groupMap.emplace(groupName.append("@").append(plane), lastGroup);
-        }
-    }
-    if (groupMap.empty()) {
-        ServerLog::Error("Failed to get communication group data due to no data.");
-        return false;
-    }
-    return true;
 }
 
 void VirtualTraceDatabase::ComputeCommunicationWaitAndTransmitTimeByGroup(

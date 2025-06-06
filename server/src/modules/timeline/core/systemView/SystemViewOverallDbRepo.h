@@ -8,6 +8,12 @@
 #include <mutex>
 #include "SystemViewOverallRepoInterface.h"
 namespace Dic::Module::Timeline {
+
+struct BindParamsForGMAndCS {
+    int deviceId;
+    double e2eTime;
+};
+
 class SystemViewOverallDbRepo : public SystemViewOverallRepoInterface {
 public:
     std::vector<OverallTmpInfo> QueryOverlapAnalysisDataForOverallMetric(
@@ -18,14 +24,14 @@ public:
     void QueryCommunicationOverlapOverallInfos(const Protocol::SystemViewOverallReqParam &requestParams,
         double e2eTime, std::vector<Protocol::SystemViewOverallRes> &responseBody,
         const std::shared_ptr<VirtualTraceDatabase> &database) override;
-    bool QueryCommunicationOpsTimeDataByGroupName(const std::string &name, uint64_t offset,
+    bool QueryCommunicationOpsTimeDataByGroupName(const SystemViewOverallReqParam &params, uint64_t offset,
         const std::vector<Protocol::ThreadTraces> &notOverlapData, std::vector<SameOperatorsDetails> &opsDetails,
         const std::shared_ptr<VirtualTraceDatabase> &database) override;
 private:
     static void QueryGroupMapAndCalculateSummary(const std::shared_ptr<VirtualTraceDatabase> &database,
         std::vector<Protocol::SystemViewOverallRes> &responseBody,
         std::vector<Protocol::SystemViewOverallRes>::iterator it,
-        const std::vector<Protocol::ThreadTraces>& uncovered, double e2eTime);
+        const std::vector<Protocol::ThreadTraces>& uncovered, BindParamsForGMAndCS bindParamsForGmAndCs);
     static bool CheckDataForSystemViewOverall(const std::shared_ptr<VirtualTraceDatabase> &database);
     static bool GetTmpTableForOverall(const std::shared_ptr<VirtualTraceDatabase> &database);
     static std::map<uint64_t, uint64_t> QueryFlowDict(const std::shared_ptr<VirtualTraceDatabase> &database,

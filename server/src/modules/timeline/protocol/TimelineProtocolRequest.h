@@ -344,6 +344,7 @@ struct UnitCounterRequest : public Request {
 
 struct SystemViewOverallReqParam {
     std::string rankId;
+    std::string deviceId;
     std::vector<std::string> categoryList;
     std::string name;
     OrderParam order;
@@ -367,6 +368,7 @@ struct SystemViewParams {
     uint64_t pageSize = 0;
     std::string type;
     std::string rankId;
+    std::string deviceId;
     uint64_t endTime = 0;
     bool isQueryTotal = false;
     std::string layer;
@@ -391,6 +393,7 @@ struct SystemViewRequest : public Request {
 
 struct SystemViewAICoreFreqParams {
     std::string rankId;
+    std::string deviceId;
 };
 
 struct ExpAnaAICoreFreqRequest : public Request {
@@ -427,6 +430,7 @@ struct KernelDetailsParams {
     uint64_t current{};
     uint64_t pageSize{};
     std::string rankId;
+    std::string deviceId;
     std::string coreType;
     std::string searchName;
     std::vector<std::pair<std::string, std::string>> filters;

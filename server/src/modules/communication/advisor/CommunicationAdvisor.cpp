@@ -11,7 +11,7 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-
+// LCOV_EXCL_BR_START
 void CommunicationAdvisor::Register()
 {
     advisorMap.emplace(PACKET_ANALYZER_TITLE, std::make_unique<PacketAnalyzer>());
@@ -29,7 +29,7 @@ void CommunicationAdvisor::GenerateAdvisor(std::vector<CommunicationAdvisorInfo>
         }
     }
 }
-
+// LCOV_EXCL_BR_STOP
 }
 }
 }

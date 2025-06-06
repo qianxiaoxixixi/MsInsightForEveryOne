@@ -12,6 +12,7 @@
 #include "WsSessionImpl.h"
 #include "WsSessionManager.h"
 #include "SystemViewOverallRepoFactory.h"
+#include "TraceDatabaseSqlConst.h"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -169,9 +170,14 @@ TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOpsTimeDataByGroupNameTest
                        "Communication(Not Overlapped)" : "2";
     uint64_t totalTime = 0;
     std::vector<Protocol::ThreadTraces> notOverlapData{};
-    bool result = database->QueryOverlapAnalysisData(sql, type, minTimestamp, notOverlapData, totalTime);
+    std::string deviceId = Dic::Module::Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId("0", "timeline");
+    requestParams.deviceId = deviceId;
+    int deviceIdInt = StringUtil::StringToInt(deviceId);
+    ParamsForOAData paramsForOaData = { sql, type, minTimestamp };
+    bool result = database->QueryOverlapAnalysisData(paramsForOaData, deviceIdInt, notOverlapData, totalTime);
     EXPECT_TRUE(result);
-    repoPtr->QueryCommunicationOpsTimeDataByGroupName("Group 0 Communication", minTimestamp, notOverlapData,
+    requestParams.categoryList = {"", "Group 0 Communication"};
+    repoPtr->QueryCommunicationOpsTimeDataByGroupName(requestParams, minTimestamp, notOverlapData,
                                                       response.body.sameOperatorsDetails, database);
     EXPECT_EQ(response.body.sameOperatorsDetails.size(), 4); // 4
     int index = 0;

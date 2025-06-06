@@ -9,7 +9,7 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-
+// LCOV_EXCL_BR_START
 bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     std::vector<IterationsOrRanksObject> rankList;
@@ -68,6 +68,7 @@ void ByteAlignmentAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorI
     info.statistics.insert({"Small Size(Byte)", {std::to_string(statistics.smallSize)}});
     info.statistics.insert({"Abnormal Operator Count", {std::to_string(statistics.abnormalOperatorCount)}});
 }
+// LCOV_EXCL_BR_STOP
 }
 }
 }

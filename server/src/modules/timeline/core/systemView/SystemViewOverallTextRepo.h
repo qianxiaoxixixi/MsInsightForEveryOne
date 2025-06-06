@@ -18,14 +18,16 @@ public:
     void QueryCommunicationOverlapOverallInfos(const Protocol::SystemViewOverallReqParam &requestParams,
         double e2eTime, std::vector<Protocol::SystemViewOverallRes> &responseBody,
         const std::shared_ptr<VirtualTraceDatabase> &database) override;
-    bool QueryCommunicationOpsTimeDataByGroupName(const std::string &name, uint64_t offset,
+    bool QueryCommunicationOpsTimeDataByGroupName(const SystemViewOverallReqParam &params, uint64_t offset,
         const std::vector<Protocol::ThreadTraces> &notOverlapData, std::vector<SameOperatorsDetails> &opsDetails,
         const std::shared_ptr<VirtualTraceDatabase> &database) override;
 private:
     static bool CheckDataForSystemViewOverall(const std::shared_ptr<VirtualTraceDatabase> &database);
-    static std::map<uint64_t, uint64_t> QueryFlowDict(const std::shared_ptr<VirtualTraceDatabase> &database);
+    static std::map<uint64_t, uint64_t> QueryFlowDict(const Protocol::SystemViewOverallReqParam &requestParams,
+        const std::shared_ptr<VirtualTraceDatabase> &database);
     static std::vector<CpuCubeOpInfo> QueryCpuCubeOp(const std::shared_ptr<VirtualTraceDatabase> &database);
     static std::vector<OverallTmpInfo> QueryKernelEventsForSystemViewOverall(
+        const Protocol::SystemViewOverallReqParam &requestParams,
         const std::map<uint64_t, uint64_t> &flowDict, const std::shared_ptr<VirtualTraceDatabase> &database);
     static void QueryBwdTrackIdForComputingOverall(uint64_t& bwdTrackId,
         const std::shared_ptr<VirtualTraceDatabase> &database);

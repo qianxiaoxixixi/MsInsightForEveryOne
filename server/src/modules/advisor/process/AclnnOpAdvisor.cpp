@@ -18,7 +18,8 @@ bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Ac
     }
 
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
-        .current = params.currentPage, .pageSize = params.pageSize, .rankId = params.rankId};
+        .current = params.currentPage, .pageSize = params.pageSize,
+        .rankId = params.rankId, .deviceId = params.deviceId};
     param.order = params.orderType == "ascend" ? "ASC" : "DESC";
     if (std::count(SINGLE_OP_ORDER_BY_NAME_LIST.begin(), SINGLE_OP_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
         param.orderBy = "duration";
@@ -31,8 +32,14 @@ bool AclnnOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Ac
 }
 
 bool AclnnOpAdvisor::AclnnOpProcess(const std::shared_ptr<Timeline::VirtualTraceDatabase>& database,
-    const Protocol::KernelDetailsParams &param, Protocol::AclnnOperatorResBody &resBody)
+    Protocol::KernelDetailsParams &param, Protocol::AclnnOperatorResBody &resBody)
 {
+    std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(param.rankId, "timeline");
+    if (deviceId.empty()) {
+        ServerLog::Error("Query Aclnn op advice failed to get deviceId.");
+        return false;
+    }
+    param.deviceId = deviceId;
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::vector<Protocol::KernelBaseInfo> data{};
     if (!database->QueryAclnnOpCountExceedThreshold(param, ACLNN_OP_CNT_THRESHOLD, data, startTime)) {
