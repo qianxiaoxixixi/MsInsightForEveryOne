@@ -86,6 +86,8 @@ public:
 
     static std::vector<std::string> SearchDeviceInfo(ProjectExplorerInfo &info, const std::string &searchPath);
     static void AddRankDeviceParseFileInfo(ProjectExplorerInfo& info, std::shared_ptr<ParseFileInfo> rankInfo);
+    std::string GetRankIdFromPath(const std::string &filePath, const std::string &importPath);
+    static std::string GetDbPath(const std::string &filePath, const int index);
 
 protected:
     std::string curScene;
@@ -96,8 +98,6 @@ protected:
     static void SearchMetaData(const std::string &rankId, const std::string &fileId,
                                std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static void ProcessMetadata(std::vector<std::unique_ptr<UnitTrack>> &metaData);
-    std::string GetRankIdFromPath(const std::string &filePath, const std::string &importPath);
-    static std::string GetDbPath(const std::string &filePath, const int index);
     static void SendParseSuccessEvent(const std::string &rankId, const std::string &fileId);
     static void SendParseFailEvent(const std::string &rankId,
                                    const std::string &fileId,

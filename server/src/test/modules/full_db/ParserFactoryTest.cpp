@@ -160,3 +160,11 @@ TEST_F(ParserFactoryTest, GetImportTypeOtherTest)
     system(rmCommand.c_str());
 #endif
 }
+
+TEST_F(ParserFactoryTest, ParserBaseSendFail)
+{
+    ProjectParserBase parser;
+    EXPECT_EQ(parser.GetSubId("test", ParseFileType::RANK), "test");
+    EXPECT_EQ(parser.GetRankIdFromPath("test", "test/rank0"), "test");
+    EXPECT_EQ(ProjectParserBase::GetDbPath("test", 0), "test_0.db");
+}

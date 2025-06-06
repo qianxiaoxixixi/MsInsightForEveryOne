@@ -11,7 +11,7 @@ class QueryCommunicationKernelHandlerTest : HandlerTest {
 TEST_F(HandlerTest, QueryCommunicationKernelHandlerTestParamIsEmpty)
 {
     Dic::Module::Timeline::QueryCommunicationKernelHandler handler;
-    std::unique_ptr<Dic::Protocol::Request> requestPtr = std::make_unique<Dic::Protocol::CommunicationKernelRequest>();
+    auto requestPtr = std::make_unique<Dic::Protocol::CommunicationKernelRequest>();
     bool result = handler.HandleRequest(std::move(requestPtr));
     EXPECT_EQ(result, false);
 }
