@@ -151,6 +151,7 @@ struct RankEntry {
     {}
     std::string fileId;
     std::string rankId;
+    std::string deviceId;
     std::vector<RankInfo> rankInfo;  // rankInfo：cluster + host + rankId + deviceId
     std::string parseFolder;
     std::vector<std::string> parseFileList;

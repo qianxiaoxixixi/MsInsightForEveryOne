@@ -108,6 +108,7 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
     // 获取单卡文件，并根据单卡所在目录获取其单卡信息
     std::map<std::string, RankEntry> rankToTraceMap;
     for (const auto &project : projectInfos) {
+        bool isMultiCluster = project.GetClusterInfos().size() > 1;
         for (const auto &parseFileInfo : project.subParseFileInfo) {
             std::string fileId = parseFileInfo->fileId;
             bool isDevice = parseFileInfo->type == ParseFileType::DEVICE_CHIP;
@@ -116,15 +117,21 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
                 continue;
             }
             std::string rankId = FileUtil::GetRankIdFromFile(jsonFiles[0]);
+            std::string deviceId = rankId;
             if (isDevice) {
                 rankId = parseFileInfo->deviceId;
+            }
+            parseFileInfo->deviceId = rankId;
+            if (isMultiCluster) {
+                rankId = StringUtil::StrJoin(parseFileInfo->clusterId, "_", rankId);
             }
             if (isBaseline) {
                 rankId = StringUtil::StrJoin("Baseline_", rankId);
             }
-            parseFileInfo->rankId = rankId;
             std::string rankName = rankId;
             RankEntry& entry = rankToTraceMap[rankId];
+            entry.deviceId = deviceId;
+            parseFileInfo->rankId = rankId;
             entry.rankId = rankId;
             entry.fileId = fileId;
             entry.parseFolder = parseFileInfo->parseFilePath;
@@ -748,7 +755,7 @@ void ProjectParserJson::UpdateRankIdToDevice(std::map<std::string, RankEntry> &r
 {
     for (auto &[rankId, entry]: rankEntry) {
         DataBaseManager::Instance().CreatConnectionPool(rankId, entry.fileId);
-        DataBaseManager::Instance().UpdateRankIdToDeviceId(entry.fileId, rankId, entry.rankId);
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(entry.fileId, rankId, entry.deviceId);
     }
 }
 
