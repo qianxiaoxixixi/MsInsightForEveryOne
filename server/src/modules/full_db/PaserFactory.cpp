@@ -432,9 +432,9 @@ std::vector<std::string> ProjectParserBase::SearchDeviceInfo(ProjectExplorerInfo
     }
     std::smatch match;
     std::vector<std::string> res;
-    auto subDir = FileUtil::GetSubDirs(profDir);
+    auto subDir = FileUtil::GetSubDirs(FileUtil::SplicePath(searchPath, profDir));
     for (const auto &dir: subDir) {
-        std::string fileName = FileUtil::GetFileName(dir);
+        std::string fileName = dir;
         if (!std::regex_search(fileName, match, deviceRegex)) {
             continue;
         }

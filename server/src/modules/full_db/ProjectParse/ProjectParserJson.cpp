@@ -120,6 +120,7 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
             std::string deviceId = rankId;
             if (isDevice) {
                 rankId = parseFileInfo->deviceId;
+                deviceId = rankId;
             }
             parseFileInfo->deviceId = rankId;
             if (isMultiCluster) {

@@ -4,11 +4,16 @@
 #include <gtest/gtest.h>
 #include "QueryOverallMoreDetailsHandler.h"
 #include "HandlerTest.cpp"
+#include "DataBaseManager.h"
 
+using namespace Dic::Module::Timeline;
 TEST_F(HandlerTest, QueryOverallMoreDetailsHandlerTestNormal)
 {
     Dic::Module::Timeline::QueryOverallMoreDetailsHandler handler;
-    std::unique_ptr<Dic::Protocol::Request> requestPtr =
+    auto requestPtr =
         std::make_unique<Dic::Protocol::SystemViewOverallMoreDetailsRequest>();
+    requestPtr->params.rankId = "0";
+    DataBaseManager::Instance().CreatConnectionPool("0", "test");
     handler.HandleRequest(std::move(requestPtr));
+    DataBaseManager::Instance().Clear();
 }
