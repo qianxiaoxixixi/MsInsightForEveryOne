@@ -19,7 +19,7 @@ public:
     static bool Process(const Protocol::APITypeParams& params, Protocol::AclnnOperatorResBody& resBody);
 private:
     static bool AclnnOpProcess(const std::shared_ptr<Timeline::VirtualTraceDatabase>& database,
-        const Protocol::KernelDetailsParams &param, Protocol::AclnnOperatorResBody& resBody);
+        Protocol::KernelDetailsParams &param, Protocol::AclnnOperatorResBody& resBody);
 };
 
 } // Dic::Module::Advisor

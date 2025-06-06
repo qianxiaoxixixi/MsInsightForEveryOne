@@ -60,8 +60,7 @@ std::vector<OverallTmpInfo> SystemViewOverallDbRepo::QueryOverlapAnalysisDataFor
         ServerLog::Error("Failed to prepare sql while querying overlap analysis data for overall metrics.");
         return {};
     }
-    std::string deviceId = TrackInfoManager::Instance().GetDeviceId(requestParams.rankId);
-    stmt->BindParams(StringUtil::StringToInt(deviceId));
+    stmt->BindParams(StringUtil::StringToInt(requestParams.deviceId));
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to execute query while querying overlap analysis data for overall metrics.");
@@ -88,7 +87,7 @@ bool SystemViewOverallDbRepo::QueryDataForComputingOverallMetric(
     if (!GetTmpTableForOverall(database)) {
         return false;
     }
-    int deviceId = StringUtil::StringToInt(TrackInfoManager::Instance().GetDeviceId(requestParams.rankId));
+    int deviceId = StringUtil::StringToInt(requestParams.deviceId);
     // <key: flow end time, value: flow start time>
     std::map<uint64_t, uint64_t> flowDict = QueryFlowDict(database, deviceId);
     computeHelper.cpuCubeOps = QueryCpuCubeOp(database);
@@ -284,8 +283,10 @@ void SystemViewOverallDbRepo::QueryCommunicationOverlapOverallInfos(
     // 查询通信未掩盖数据
     std::vector<Protocol::ThreadTraces> uncovered{};
     uint64_t totalTime = 0;
+    int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+    ParamsForOAData paramsForOaData = { QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL, "2", 0 };
     // "2" for not overlap
-    if (!database->QueryOverlapAnalysisData(QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL, "2", 0, uncovered, totalTime)) { // 2
+    if (!database->QueryOverlapAnalysisData(paramsForOaData, deviceId, uncovered, totalTime)) { // 2
         return; // QueryOverlapAnalysisData has all needed log
     }
     auto it = std::find_if(responseBody.begin(), responseBody.end(), [](const Protocol::SystemViewOverallRes &item) {
@@ -304,11 +305,12 @@ void SystemViewOverallDbRepo::QueryCommunicationOverlapOverallInfos(
         };
         responseBody.emplace_back(notOverlapped);
     }
-    QueryGroupMapAndCalculateSummary(database, responseBody, it, uncovered, e2eTime);
+    BindParamsForGMAndCS bindParamsForGmAndCs = { deviceId, e2eTime };
+    QueryGroupMapAndCalculateSummary(database, responseBody, it, uncovered, bindParamsForGmAndCs);
 }
 void SystemViewOverallDbRepo::QueryGroupMapAndCalculateSummary(const std::shared_ptr<VirtualTraceDatabase> &database,
     std::vector<Protocol::SystemViewOverallRes> &responseBody, std::vector<Protocol::SystemViewOverallRes>::iterator it,
-    const std::vector<Protocol::ThreadTraces>& uncovered, double e2eTime)
+    const std::vector<Protocol::ThreadTraces>& uncovered, BindParamsForGMAndCS bindParamsForGmAndCs)
 {
     // 查询泳道与通信Group间的对应关系
     std::map<std::string, std::string> groupMap{};
@@ -318,7 +320,7 @@ void SystemViewOverallDbRepo::QueryGroupMapAndCalculateSummary(const std::shared
     } else {
         groupMapSql = QUERY_COMMUNICATION_GROUP_MAP_DB_SQL;
     }
-    if (!database->QueryCommunicationGroupMap(groupMapSql, groupMap)) {
+    if (!database->QueryCommunicationGroupMap(groupMapSql, bindParamsForGmAndCs.deviceId, groupMap)) {
         return;
     }
 
@@ -334,11 +336,13 @@ void SystemViewOverallDbRepo::QueryGroupMapAndCalculateSummary(const std::shared
     it = std::find_if(responseBody.begin(), responseBody.end(), [](const Protocol::SystemViewOverallRes &item) {
         return item.name == COMMUNICATION_NOT_OVERLAP_TIME;
     });
-    database->CalculateCommunicationSummaryData(uncovered, groupMap, sql4Summary, e2eTime, *it);
+    ParamsForCalCSData paramsForCalCsData = { sql4Summary, bindParamsForGmAndCs.e2eTime };
+    database->CalculateCommunicationSummaryData(uncovered, groupMap, paramsForCalCsData,
+        bindParamsForGmAndCs.deviceId, *it);
 }
-bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const std::string &name, uint64_t offset,
-    const std::vector<Protocol::ThreadTraces> &notOverlapData, std::vector<SameOperatorsDetails> &opsDetails,
-    const std::shared_ptr<VirtualTraceDatabase> &database)
+bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const SystemViewOverallReqParam &params,
+    uint64_t offset, const std::vector<Protocol::ThreadTraces> &notOverlapData,
+    std::vector<SameOperatorsDetails> &opsDetails, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
     std::vector<std::string> tables = {TABLE_COMMUNICATION_OP, TABLE_STRING_IDS, TABLE_META_DATA};
     if (!database->CheckTablesExist(tables)) {
@@ -359,10 +363,12 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const std
         ServerLog::Error("Failed to prepare sql for Query Communication Group Id By Name.");
         return false;
     }
-
-    uint64_t groupId = TraceDatabaseHelper::QueryCommunicationGroupIdByName(stmt, name);
+    int deviceId = StringUtil::StringToInt(params.deviceId);
+    uint64_t groupId = TraceDatabaseHelper::QueryCommunicationGroupIdByName(stmt, params.categoryList[1],
+                                                                            deviceId);
     if (groupId == UINT64_MAX) {
-        ServerLog::Error("Group Name doesn't exist for Query Communication Ops Time Data By Group Name: ", name);
+        ServerLog::Error("Group Name doesn't exist for Query Communication Ops Time Data By Group Name: ",
+                         params.categoryList[1]);
         return false;
     }
 
@@ -371,9 +377,11 @@ bool SystemViewOverallDbRepo::QueryCommunicationOpsTimeDataByGroupName(const std
         ServerLog::Error("Failed to prepare sql for query communication ops time data for db scene.");
         return false;
     }
-    if (!TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(stmt2,
-                                                                    groupId, offset, notOverlapData, opsDetails)) {
-        ServerLog::Error("Failed to query data for Query Communication Ops Time Data By Group Name: ", name);
+    ParamsForCOTData paramsForCotData = { groupId, offset };
+    if (!TraceDatabaseHelper::QueryCommunicationOpTimeDataByGroupId(stmt2, paramsForCotData, deviceId,
+                                                                    notOverlapData, opsDetails)) {
+        ServerLog::Error("Failed to query data for Query Communication Ops Time Data By Group Name: ",
+                         params.categoryList[1]);
         return false;
     }
     return true;

@@ -6,6 +6,7 @@
 #include "TraceTime.h"
 #include "SystemViewOverallRepoInterface.h"
 #include "SystemViewOverallRepoFactory.h"
+#include "TraceDatabaseSqlConst.h"
 #include "QueryOverallMoreDetailsHandler.h"
 using namespace Dic::Server;
 namespace Dic::Module::Timeline {
@@ -32,6 +33,13 @@ bool QueryOverallMoreDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Req
                      "Failed to handle overall more details request due to empty category list.");
         return false;
     }
+
+    std::string deviceId = DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "timeline");
+    if (deviceId.empty()) {
+        SendResponse(std::move(responsePtr), false, "Failed to get deviceId for system view overall statistics.");
+        return false;
+    }
+    request.params.deviceId = deviceId;
     SystemViewOverallHelper overallHelper;
 
     if (request.params.categoryList[0] == OVERALL_CAT_COMPUTING) {
@@ -129,7 +137,8 @@ void QueryOverallMoreDetailsHandler::GetCommunicationOverallMetricDetails(
             QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL : QUERY_OVERLAP_ANALYSIS_BY_TYPE_DB_SQL;
         std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
             "Communication(Not Overlapped)" : "2";
-        if (!database->QueryOverlapAnalysisData(sql, type, minTimestamp, notOverlapData, totalTime)) {
+        ParamsForOAData paramsForOaData = { sql, type, minTimestamp };
+        if (!database->QueryOverlapAnalysisData(paramsForOaData, params.deviceId, notOverlapData, totalTime)) {
             ServerLog::Error("Failed to query Communication Overall Metrics due to incorrect not overlapped data.");
             return;
         }
@@ -141,7 +150,7 @@ void QueryOverallMoreDetailsHandler::GetCommunicationOverallMetricDetails(
         // GetSystemViewOverallRepo中已有日志报错
         return;
     }
-    if (!repoPtr->QueryCommunicationOpsTimeDataByGroupName(params.categoryList[1], minTimestamp,
+    if (!repoPtr->QueryCommunicationOpsTimeDataByGroupName(params, minTimestamp,
         notOverlapData, response.body.sameOperatorsDetails, database)) {
         ServerLog::Error("Failed to query Communication Overall Metrics due to incorrect time data query.");
         return;

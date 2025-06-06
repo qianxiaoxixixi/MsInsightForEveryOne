@@ -379,18 +379,19 @@ bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requ
     return true;
 }
 
-bool DbTraceDataBase::QueryExpAnaAICoreFreqData(std::vector<std::pair<uint64_t, uint64_t>> &freqs,
-                                                uint64_t &maxFreq, uint64_t &minFreq)
+bool DbTraceDataBase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICoreFreqParams &requestParams,
+    std::vector<std::pair<uint64_t, uint64_t>> &freqs, uint64_t &maxFreq, uint64_t &minFreq)
 {
     std::unique_ptr<SqliteResultSet> resultSet;
-    std::string sql = "select timestampNs, freq from AICORE_FREQ "
-                      " ORDER BY timestampNs ASC;";
+    std::string sql = "SELECT timestampNs, freq FROM AICORE_FREQ "
+                      "WHERE deviceId = ? ORDER BY timestampNs ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Query system view AI core freq data failed!.");
         return false;
     }
-    resultSet = stmt->ExecuteQuery();
+    int deviceId = StringUtil::StringToInt(requestParams.deviceId);
+    resultSet = stmt->ExecuteQuery(deviceId);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query AI core freq.", stmt->GetErrorMessage());
         return 0;
@@ -420,9 +421,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         std::string bindFilter = "%" + filter.second + "%";
         stmt->BindParams(bindFilter);
     }
-    if (!requestParams.rankId.empty()) {
-        stmt->BindParams(GetDeviceId(requestParams.rankId));
-    }
+    stmt->BindParams(StringUtil::StringToInt(requestParams.deviceId));
     for (const auto& filter : requestParams.filters) {  // 第二次绑定filter
         std::string bindFilter = "%" + filter.second + "%";
         stmt->BindParams(bindFilter);
@@ -583,7 +582,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     return true;
 }
 
-LayerStatData DbTraceDataBase::QueryLayerData(const std::string &layer, const std::string &name)
+LayerStatData DbTraceDataBase::QueryLayerData(const Protocol::SystemViewParams &requestParams, const std::string &name)
 {
     return LayerStatData();
 }
@@ -1767,7 +1766,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
         ServerLog::Warn("The PYTORCH_API table isn't exist.");
         return false;
     }
-    std::string sql = TextSqlConstant::QueryAffinityOptimizerDbSql(optimizers, params.orderBy, params.order);
+    std::string sql = TraceDatabaseSqlConst::QueryAffinityOptimizerDbSql(optimizers, params.orderBy, params.order);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Query Affinity Optimizer by DB.", sqlite3_errmsg(db));
@@ -1796,13 +1795,14 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    std::string sql = TextSqlConstant::GenerateAICpuQueryDbSql(replace, params, dataType);
+    std::string sql = TraceDatabaseSqlConst::GenerateAICpuQueryDbSql(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for AICpuOpCanBeOptimized.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
+    int deviceId = StringUtil::StringToInt(params.deviceId);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for AICpuOpCanBeOptimized.", stmt->GetErrorMessage());
         return false;
@@ -1878,7 +1878,8 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    int deviceId = StringUtil::StringToInt(params.deviceId);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
@@ -1945,13 +1946,13 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
 bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
-    std::string sql = TextSqlConstant::GenerateFuseableOpFilterDbSql(params, rule);
+    std::string sql = TraceDatabaseSqlConst::GenerateFuseableOpFilterDbSql(params, rule);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusible Operator.");
         return false;
     }
-    return TraceDatabaseHelper::QueryFusibleOpDataForDB(stmt, rule, data, minTimestamp);
+    return TraceDatabaseHelper::QueryFusibleOpDataForDB(params, stmt, rule, data, minTimestamp);
 }
 
 bool DbTraceDataBase::QueryOperatorDispatchData(const Protocol::KernelDetailsParams &params,

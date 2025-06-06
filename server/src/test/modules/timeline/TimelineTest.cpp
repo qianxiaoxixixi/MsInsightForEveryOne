@@ -22,6 +22,8 @@ TEST_F(TestSuit, QuerySystemViewData)
     Dic::Protocol::SystemViewParams requestParams;
     Dic::Protocol::SystemViewBody responseBody;
     uint64_t PAGE = 10;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.layer = "Python";
     requestParams.current = 1;
     requestParams.order = "descend";
@@ -35,10 +37,11 @@ TEST_F(TestSuit, QuerySystemViewData)
 TEST_F(TestSuit, QuerySystemViewAICoreFreqData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
+    Dic::Protocol::SystemViewAICoreFreqParams requestParams;
     std::vector<std::pair<uint64_t, uint64_t>> freqs;
     uint64_t maxFreq = 0;
     uint64_t minFreq = UINT64_MAX;
-    database->QueryExpAnaAICoreFreqData(freqs, maxFreq, minFreq);
+    database->QueryExpAnaAICoreFreqData(requestParams, freqs, maxFreq, minFreq);
     int expectSize = 0;
     EXPECT_EQ(freqs.size(), expectSize);
 }
@@ -49,6 +52,8 @@ TEST_F(TestSuit, QueryPythonViewWithTotalNum)
     Dic::Protocol::SystemViewParams requestParams;
     Dic::Protocol::SystemViewBody responseBody;
     uint64_t PAGE = 10;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     requestParams.layer = "Python";
     requestParams.current = 1;
     requestParams.order = "descend";
@@ -63,8 +68,11 @@ TEST_F(TestSuit, QueryPythonViewWithTotalNum)
 TEST_F(TestSuit, QueryLayerOperatorTimeWithCann)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
-
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("CANN", "%%");
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "0";
+    requestParams.layer = "CANN";
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
     int expectSize = 158266100;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -72,8 +80,11 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithCann)
 TEST_F(TestSuit, QueryLayerOperatorTimeWithPython)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
-
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Python", "%%");
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "0";
+    requestParams.layer = "Python";
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
     int expectSize = 851869940;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -81,8 +92,11 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithPython)
 TEST_F(TestSuit, QueryLayerOperatorTimeWithAscend)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
-
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Ascend Hardware", "%%");
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "12";
+    requestParams.layer = "Ascend Hardware";
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
     int expectSize = 842011262;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
     EXPECT_EQ(data.total, 57); // total operator = 57
@@ -91,8 +105,11 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithAscend)
 TEST_F(TestSuit, QueryLayerOperatorTimeWithHCCL)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
-
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("HCCL", "%%");
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "24";
+    requestParams.layer = "HCCL";
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
     int expectSize = 449202040;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -100,8 +117,11 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithHCCL)
 TEST_F(TestSuit, QueryLayerOperatorTimeWithCommunication)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
-
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("COMMUNICATION", "%%");
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "24";
+    requestParams.layer = "COMMUNICATION";
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
     int expectSize = 449202040;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -109,8 +129,11 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithCommunication)
 TEST_F(TestSuit, QueryLayerOperatorTimeWithOverlap)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
-
-    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Overlap Analysis", "%%");
+    Dic::Protocol::SystemViewParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.deviceId = "4";
+    requestParams.layer = "Overlap Analysis";
+    const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData(requestParams, "%%");
     int expectSize = 292195068;
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }
@@ -130,6 +153,7 @@ TEST_F(TestSuit, QueryKernelDetailData)
     Dic::Protocol::KernelDetailsParams requestParams;
     Dic::Protocol::KernelDetailsBody responseBody;
     uint64_t PAGE = 10;
+    requestParams.deviceId = "0";
     requestParams.current = 1;
     requestParams.order = "descend";
     requestParams.orderBy = "name";
@@ -1043,12 +1067,16 @@ TEST_F(TestSuit, QueryOverlapAnalysisDataTest)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     std::vector<Protocol::ThreadTraces> notOverlapData{};
+    int intDeviceId = 4;
     uint64_t totalTime = 0;
-    bool result = database->QueryOverlapAnalysisData("", "", 0, notOverlapData, totalTime);
+    ParamsForOAData paramsForOaData = { "", "", 0 };
+    bool result = database->QueryOverlapAnalysisData(paramsForOaData, intDeviceId, notOverlapData, totalTime);
     EXPECT_EQ(result, false);
     EXPECT_EQ(notOverlapData.empty(), true);
-    result = database->QueryOverlapAnalysisData(QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL,
-        OVERLAP_TYPES.at(2), 0, notOverlapData, totalTime); // 2 for not overlap
+    ParamsForOAData newParamsForOaData = { QUERY_OVERLAP_ANALYSIS_BY_TYPE_TEXT_SQL,
+        OVERLAP_TYPES.at(2), 0 };
+    result = database->QueryOverlapAnalysisData(newParamsForOaData, intDeviceId,
+        notOverlapData, totalTime); // 2 for not overlap
     EXPECT_EQ(result, true);
     EXPECT_EQ(notOverlapData.size(), 34); // 34
 }
@@ -1057,10 +1085,11 @@ TEST_F(TestSuit, QueryCommunicationGroupMapTest)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
     std::map<std::string, std::string> groupMap{};
-    bool result = database->QueryCommunicationGroupMap("", groupMap);
+    int intDeviceId = 24;
+    bool result = database->QueryCommunicationGroupMap("", intDeviceId, groupMap);
     EXPECT_EQ(result, false);
     EXPECT_EQ(groupMap.empty(), true);
-    result = database->QueryCommunicationGroupMap(QUERY_COMMUNICATION_GROUP_MAP_TEXT_SQL, groupMap);
+    result = database->QueryCommunicationGroupMap(QUERY_COMMUNICATION_GROUP_MAP_TEXT_SQL, intDeviceId, groupMap);
     EXPECT_EQ(result, true);
     EXPECT_EQ(groupMap.size(), 21); // 21
     EXPECT_EQ(groupMap.at("14083661400@17"), "Group 2 Communication");

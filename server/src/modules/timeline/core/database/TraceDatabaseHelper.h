@@ -56,6 +56,11 @@ const std::string QUERY_BYTE_ALIGNMENT_ANALYZER_SMALL_OPERATOR_FOR_DB_SQL = "SEL
     TABLE_COMMUNICATION_TASK_INFO + ".linkType = " + TABLE_ENUM_HCCL_LINK_TYPE +
     ".id WHERE (SUBSTR(ID2.value, 1, 6) = 'Memcpy' OR SUBSTR(ID2.value, 1, 6) = 'Reduce')";
 
+struct ParamsForCOTData {
+    uint64_t groupId;
+    uint64_t offset;
+};
+
 class TraceDatabaseHelper {
 public:
 /* Functions for BbTraceDataBase */
@@ -75,7 +80,8 @@ static std::unique_ptr<SqliteResultSet> QueryDeviceUnitCounter(std::unique_ptr<S
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                             const Protocol::SystemViewParams &requestParams,
                                                             const std::string& rankId);
-static bool QueryFusibleOpDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
+static bool QueryFusibleOpDataForDB(const KernelDetailsParams &params,
+                                    std::unique_ptr<SqlitePreparedStatement> &stmt, const FuseableOpRule &rule,
                                     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp);
 static bool QueryOpDispatchDataForDB(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t minTimestamp,
                                      uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data,
@@ -183,6 +189,8 @@ static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
 static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
     uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody);
+static void SetSystemViewHelpler(std::unique_ptr<SqliteResultSet> resultSet, const LayerStatData &data,
+    const Protocol::SystemViewParams &requestParams, Protocol::SystemViewBody &responseBody);
 static void SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                             Protocol::KernelDetailsBody &responseBody);
 static void FilterTopLevelApi(std::vector<Protocol::FlowLocation> &originData, const std::set<std::string> &pattern,
@@ -208,11 +216,57 @@ static std::string GeneratorCommunicationSummarySql4Db(const OrderParam &orderPa
 // 给定一个通信算子或Task，计算其未被通信掩盖部分的耗时
 static uint64_t CalculateUncoveredTime(const std::vector<Protocol::ThreadTraces> &uncovered, size_t &index,
                                 const Protocol::ThreadTraces &element);
+template<class T>
 static uint64_t QueryCommunicationGroupIdByName(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                const std::string& name);
-static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t groupId,
-    uint64_t offset, const std::vector<Protocol::ThreadTraces> &notOverlapData,
-    std::vector<SameOperatorsDetails> &details);
+    const std::string& name, T &deviceId)
+{
+    auto resultSet = stmt->ExecuteQuery(deviceId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Query Communication Group Id By Name.", stmt->GetErrorMessage());
+        return UINT64_MAX;
+    }
+    while (resultSet->Next()) {
+        std::string tmpName = resultSet->GetString("groupName");
+        uint64_t groupId = resultSet->GetUint64("groupId");
+        if (tmpName == name) {
+            return groupId;
+        }
+    }
+
+    return UINT64_MAX;
+};
+template<class T>
+static bool QueryCommunicationOpTimeDataByGroupId(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    ParamsForCOTData paramsForCotData, T &deviceId, const std::vector<Protocol::ThreadTraces> &notOverlapData,
+    std::vector<SameOperatorsDetails> &details)
+{
+    auto resultSet = stmt->ExecuteQuery(paramsForCotData.offset, paramsForCotData.offset,
+                                        deviceId, paramsForCotData.groupId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for query communication ops time data.",
+                         stmt->GetErrorMessage());
+        return false;
+    }
+    size_t index = 0;
+    while (resultSet->Next()) {
+        Protocol::ThreadTraces one{};
+        one.name = resultSet->GetString("name");
+        one.duration = resultSet->GetUint64("duration");
+        one.startTime = resultSet->GetUint64("startNs");
+        one.endTime = resultSet->GetUint64("endNs");
+        if (!notOverlapData.empty()) { // calculate not overlapped time
+            uint64_t time = CalculateUncoveredTime(notOverlapData, index, one);
+            // 与未掩盖部分无交集，说明此通信算子被掩盖，无需计入数据
+            if (time == 0) {
+                continue;
+            }
+        }
+        SameOperatorsDetails tmp = {one.startTime, one.duration, "", one.name, 0, ""};
+        details.push_back(tmp);
+    }
+
+    return true;
+};
 
 static void ProcessByteAlignmentAnalyzerDataForText(std::vector<CommunicationLargeOperatorInfo> &result,
     std::vector<std::pair<std::string, std::string>> rawData);

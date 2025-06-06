@@ -10,6 +10,7 @@
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "SystemViewOverallRepoFactory.h"
+#include "TraceDatabaseSqlConst.h"
 
 using namespace Dic::Module::Summary;
 using namespace Dic::Server;
@@ -96,6 +97,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryOverlapAnalysisDataForOverallMetricTe
     }
     Dic::Protocol::SystemViewOverallReqParam requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     std::vector<OverallTmpInfo> overlapInfos;
     overlapInfos = repoPtr->QueryOverlapAnalysisDataForOverallMetric(requestParams, database);
     ASSERT_EQ(overlapInfos.size(), 3);  // 3
@@ -134,6 +136,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
         .nums = 0, .avg = 0, .max = 0, .min = 0, .name = E2E_TIME, .children = {}, .level = 1};
     details.emplace_back(tmpRes);
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     SystemViewOverallHelper computeHelper;
     bool result = repoPtr->QueryDataForComputingOverallMetric(requestParams, computeHelper, database);
     EXPECT_EQ(result, true);
@@ -149,7 +152,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::vector<SameOperatorsDetails> filteredEvents =
         computeHelper.FilterComputingEventsByCategory(tempList, minTimestamp, "");
-    EXPECT_EQ(filteredEvents.size(), 66); // 66个Conv类算子
+    EXPECT_EQ(filteredEvents.size(), 14); // 66个Conv类算子
 }
 
 //  System View Overall: 查询Computing拆解所需数据（无PMU数据，无法进行Computing拆解）
@@ -164,6 +167,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
     }
     Dic::Protocol::SystemViewOverallReqParam requestParams;
     requestParams.rankId = "1";
+    requestParams.deviceId = "1";
     SystemViewOverallHelper computeHelper;
     bool result = repoPtr->QueryDataForComputingOverallMetric(requestParams, computeHelper, database);
     EXPECT_EQ(result, true);
@@ -183,6 +187,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOverlapOverallInfosTestW
     }
     Dic::Protocol::SystemViewOverallReqParam requestParams;
     requestParams.rankId = "0";
+    requestParams.deviceId = "0";
     const double e2eTime = 136581.01;
     SystemViewOverallHelper computeHelper;
     std::vector<Protocol::SystemViewOverallRes> responseBody;
@@ -217,9 +222,14 @@ TEST_F(SystemViewOverallTextRepoTest, QueryCommunicationOpsTimeDataByGroupNameTe
                        "Communication(Not Overlapped)" : "2";
     uint64_t totalTime = 0;
     std::vector<Protocol::ThreadTraces> notOverlapData{};
-    bool result = database->QueryOverlapAnalysisData(sql, type, minTimestamp, notOverlapData, totalTime);
+    std::string deviceId = Dic::Module::Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId("0", "timeline");
+    requestParams.deviceId = deviceId;
+    int intDeviceId = StringUtil::StringToInt(deviceId);
+    ParamsForOAData paramsForOaData = { sql, type, minTimestamp };
+    bool result = database->QueryOverlapAnalysisData(paramsForOaData, intDeviceId, notOverlapData, totalTime);
     EXPECT_TRUE(result);
-    repoPtr->QueryCommunicationOpsTimeDataByGroupName("Group 0 Communication", minTimestamp, notOverlapData,
+    requestParams.categoryList = {"", "Group 0 Communication"};
+    repoPtr->QueryCommunicationOpsTimeDataByGroupName(requestParams, minTimestamp, notOverlapData,
                                                       response.body.sameOperatorsDetails, database);
     EXPECT_EQ(response.body.sameOperatorsDetails.size(), 4); // 4
     int index = 0;

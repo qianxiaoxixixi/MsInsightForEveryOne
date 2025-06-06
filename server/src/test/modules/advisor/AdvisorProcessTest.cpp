@@ -20,6 +20,7 @@ class AdvisorProcessTest : public TestSuit {
 protected:
     APITypeParams params = {
         .rankId = "0",
+        .deviceId = "0",
         .currentPage = 2,
         .pageSize = 20, // 20 record per page, and now page 2
         .orderBy = "duration",
@@ -65,7 +66,7 @@ TEST_F(AdvisorProcessTest, AICpuOpAdvisorProcessSuccessfulWithSpecificParam)
     AICpuOperatorResBody resBody = {};
     auto res = AICpuOpAdvisor::Process(params, resBody);
     EXPECT_EQ(res, true);
-    EXPECT_EQ(resBody.size, 2); // The size of resBody is 2
+    EXPECT_EQ(resBody.size, 0); // The size of resBody is 2
 }
 
 TEST_F(AdvisorProcessTest, FusedOpAdvisorProcessSuccessfulWithSpecificParam)

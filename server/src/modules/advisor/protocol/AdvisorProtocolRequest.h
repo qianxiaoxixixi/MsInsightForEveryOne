@@ -10,6 +10,7 @@
 namespace Dic::Protocol {
 struct APITypeParams {
     std::string rankId;
+    std::string deviceId;
     uint32_t currentPage{};
     uint32_t pageSize{};
     std::string orderBy;
@@ -22,6 +23,10 @@ struct APITypeParams {
         std::string paramError;
         if (!CheckStrParamValid(this->rankId, paramError)) {
             errorMsg = "[Advisor] Failed to check rankId." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->deviceId, paramError)) {
+            errorMsg = "[Advisor] Failed to check deviceId." + paramError;
             return false;
         }
         if (!CheckStrParamValid(this->orderBy, paramError)) {
