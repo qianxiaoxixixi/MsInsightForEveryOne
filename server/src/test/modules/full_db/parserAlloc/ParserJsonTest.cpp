@@ -225,3 +225,22 @@ TEST_F(ParserJsonTest, BuildProjectInfoWithAscendProfilerOutputDir)
     EXPECT_EQ(file->type, ParseFileType::RANK);
     EXPECT_EQ(file->subId, "ASCEND_PROFILER_OUTPUT");
 }
+
+TEST_F(ParserJsonTest, GetParseFileByImportFile)
+{
+    ProjectParserJson parser;
+    std::string msg;
+    auto files = parser.GetParseFileByImportFile(
+        GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)", msg);
+    EXPECT_EQ(files.size(), 1);
+    EXPECT_EQ(files[0], GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)");
+    auto files2 = parser.GetParseFileByImportFile(GetTestDataDir() + R"(/test_rank_0/ASCEND_PROFILER_OUTPUT)", msg);
+    EXPECT_EQ(files2.size(), 1);
+}
+
+TEST_F(ParserJsonTest, BuildProjectCluster)
+{
+    ProjectExplorerInfo projectInfo;
+    ProjectParserJson::BuildProjectExploreInfo(projectInfo, {GetTestDataDir()});
+    EXPECT_EQ(projectInfo.GetClusterInfos().size(), 1);
+}

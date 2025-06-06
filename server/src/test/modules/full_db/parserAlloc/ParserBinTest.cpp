@@ -66,3 +66,8 @@ TEST_F(ParserBinTest, ParserWithValidData)
     BinFileGenerator::RemoveFile(fileName);
     SourceFileParser::Instance().Reset();
 }
+
+TEST_F(ParserBinTest, GetFileId)
+{
+    EXPECT_EQ(ProjectParserBin::GetFileIdWithDb("test"), "test_mindstudio_insight_data.db");
+}

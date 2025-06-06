@@ -735,7 +735,13 @@ void ProjectParserJson::BuildProjectFromParseFile(ProjectExplorerInfo &info, con
 std::string ProjectParserJson::GetFileIdWithDb(const std::string &filePath)
 {
     std::string rankId = FileUtil::GetProfilerFileId(FileUtil::SplicePath(filePath, "mindstudio_data.db"));
-    return FileUtil::GetDbPath(FileUtil::SplicePath(filePath, "mindstudio_data.db"), rankId);
+    std::string dbPath;
+    if (FileUtil::IsFolder(filePath)) {
+        dbPath = FileUtil::SplicePath(filePath, "mindstudio_data.db");
+    } else {
+        dbPath = FileUtil::SplicePath(FileUtil::GetParentPath(filePath), "mindstudio_data.db");
+    }
+    return FileUtil::GetDbPath(dbPath, rankId);
 }
 
 void ProjectParserJson::UpdateRankIdToDevice(std::map<std::string, RankEntry> &rankEntry)

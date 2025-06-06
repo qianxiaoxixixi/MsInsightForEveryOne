@@ -9,6 +9,7 @@
 #include "EventNotifyThreadPoolExecutor.h"
 #include "ServitizationOpenApi.h"
 #include "ProjectAnalyze.h"
+#include "TrackInfoManager.h"
 
 namespace Dic::Module {
 using namespace Timeline;
@@ -75,6 +76,12 @@ std::unordered_map<std::string, std::string> ParserIE::GetRankListMap(
             std::unique_ptr<Database> tempDataBase = std::make_unique<Database>(sqlMutex);
             tempDataBase->OpenDb(tasks[0].filePath, false);
             tempDataBase->SetDataBaseVersion();
+            parseFileInfo->rankId = fileId;
+            parseFileInfo->fileId = tasks[0].filePath;
+            RankInfo rankInfo;
+            rankInfo.rankId = fileId;
+            rankInfo.rankName = fileId;
+            TrackInfoManager::Instance().SetRankListByFileId(tasks[0].filePath, rankInfo);
             if (!DataBaseManager::Instance().CreatConnectionPool(fileId, tasks[0].filePath)) {
                 ServerLog::Error("Failed to create connection pool. fileId:", fileId);
                 return rankToTraceMap;
@@ -101,7 +108,7 @@ void ParserIE::ParserTraceData(const std::unordered_map<std::string, std::string
         Timeline::TraceFileParser::Instance().Parse({rankEntry.second},
                                                     rankEntry.first,
                                                     rankEntry.second,
-                                                    rankEntry.first);
+                                                    rankEntry.second);
     }
     Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
