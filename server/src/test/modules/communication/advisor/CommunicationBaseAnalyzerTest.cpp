@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "CommunicationBaseAnalyzer.h"
+#include "RetransmissionAnalyzer.h"
 
 namespace Dic {
 namespace Module {
@@ -31,6 +32,14 @@ TEST_F(CommunicationBaseAnalyzerTest, GenerateAdvisorTest)
     Dic::Protocol::CommunicationAdvisorInfo info;
     bool result = GenerateAdvisor(info, "compare");
     ASSERT_TRUE(result);
+}
+
+TEST_F(CommunicationBaseAnalyzerTest, RetransmissionAnalyzer)
+{
+    RetransmissionAnalyzer analyzer;
+    Dic::Protocol::CommunicationAdvisorInfo info;
+    EXPECT_NO_THROW(analyzer.QueryAdvisorData(""));
+    EXPECT_NO_THROW(analyzer.AssembleAdvisor(info));
 }
 }
 }

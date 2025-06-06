@@ -24,7 +24,6 @@ public:
     static void BuildProjectExploreInfo(ProjectExplorerInfo& projectInfo, const std::vector<std::string>& parsedFiles);
 
     static std::string GetFileIdWithDb(const std::string& filePath);
-private:
     static void IpynbImportResponse(ImportActionRequest &request, const ProjectExplorerInfo &projectInfo,
                                     bool isDisplay);
     static void JupyterProcess(const std::string &file);
