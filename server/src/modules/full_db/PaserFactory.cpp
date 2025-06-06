@@ -104,10 +104,10 @@ void ProjectParserBase::SetBaseActionOfResponse(ImportActionResponse &response,
 {
     auto rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
     Action action;
-    action.cardName = rankId;
-    if (!rankList.empty() && !rankList[0].cluster.empty()) {
-        action.cardName += rankList[0].cluster;
+    if (!rankList.empty()) {
+        action.cluster = rankList[0].cluster;
     }
+    action.cardName = rankId;
     action.rankId = rankId;
     action.result = true;
     action.fileId = fileId;
