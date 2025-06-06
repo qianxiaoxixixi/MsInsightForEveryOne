@@ -8,7 +8,7 @@ import { updateDataSourceAndParentMetaDataMap, recursiveExpandUnit } from '../in
 import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
-import type { CardInfo } from '../components/ImportSelect';
+import type { ImportCardInfo } from '../components/ImportSelect';
 import { Session } from '../entity/session';
 import { ImportResult, NotificationHandler } from './defs';
 import connector from '../connection/index';
@@ -18,8 +18,9 @@ import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from 'ascend-i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
 import { savePageSetting, recoverPageSetting, updatePageSetting } from '../utils/PageSetting';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console, getRankInfoKey } from 'ascend-utils';
 import React from 'react';
+import { RankInfo } from '../api/interface';
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
@@ -28,22 +29,44 @@ const getPropFromData = function <T extends keyof U, U extends Record<string, un
     }
     return data[key];
 };
+function updateRankDbPathMap(rankList: RankInfo[], dbPath: string): void {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        rankList.forEach((rankInfo) => {
+            session.rankCardInfoMap.set(getRankInfoKey(rankInfo), { rankInfo, dbPath });
+        });
+    });
+}
+
+/**
+ * 更新 dbPath label 到 unit
+ * @param unit
+ * @param unitData
+ */
+function updateDbPathAndLabelForCardUnit(unit: InsightUnit, unitData: any): void {
+    (unit.metadata as CardMetaData).label = unitData.unit.metadata.cardAlias;
+    (unit.metadata as CardMetaData).dbPath = unitData.dbPath;
+    unitData.unit.metadata.dbPath = unitData.dbPath;
+}
 export const parseSuccessHandler: NotificationHandler = (data): void => {
     try {
         const unitData = data as any;
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
+        updateRankDbPathMap(unitData.rankList ?? [], unitData.dbPath);
         runInAction(() => {
-            if (!session) {
-                return;
-            }
+            if (!session) { return; }
             session.isFullDb = unitData.isFullDb;
             // parse suceess之后关闭进度条
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
-                    (unit.metadata as CardMetaData).label = unitData.unit.metadata.cardAlias;
+                    updateDbPathAndLabelForCardUnit(unit, unitData);
                     unit.alignStartTimestamp = unitData.offset as number;
                     const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
                     if (unitData.unit.children !== undefined && unitData.unit.children.length > 0) {
@@ -159,32 +182,35 @@ const initUnitSessionInfo = (session: Session, result: ImportResult, dataSource:
     session.isIE = result.isIE;
     session.isIpynb = result.isIpynb;
     session.isCluster = result.isCluster;
+    session.isMultiCluster = new Set(result.result.map(({ cluster }) => cluster)).size > 1;
 };
 
 const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSource: DataSource): void => {
-    if (!session) {
-        return;
-    }
+    if (!session) { return; }
     if (result.reset as boolean) {
         resetPage({ dataSource });
     }
     initUnitSessionInfo(session, result, dataSource);
-    const hostInfo = groupBy(result.result, (item: CardInfo) => item.host ?? '');
+    const hostInfo = groupBy(result.result, (item: ImportCardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
         const unit = getRootUnit(session, host, dataSource);
         const cardUnits: InsightUnit[] = [];
         if (unit?.children !== undefined) {
             cardUnits.push(...unit.children);
         }
-        forEach(cards, (item: CardInfo) => {
+        forEach(cards, (item: ImportCardInfo) => {
             const oldUnit = session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === item.rankId);
-            if (oldUnit !== undefined) {
-                return;
-            }
+            if (oldUnit !== undefined) { return; }
             const curDataSource = cloneDeep(dataSource);
             curDataSource.dataPath = item.dataPathList;
-            const cardUnit = new CardUnit(
-                { dataSource: curDataSource, cardId: item.rankId, dbPath: item.dbPath, cardName: item.cardName, cardPath: item.cardPath });
+            const cardUnit = new CardUnit({
+                dataSource: curDataSource,
+                cardId: item.rankId,
+                dbPath: item.dbPath,
+                cluster: item.cluster,
+                cardName: item.cardName,
+                cardPath: item.cardPath,
+            });
             if (item.result as boolean) {
                 cardUnit.isParseLoading = !(result.isPending as boolean);
                 cardUnit.shouldParse = item.cardName !== 'Host';
@@ -199,6 +225,7 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
             }
             cardUnits.push(cardUnit);
             session.units = session.units.concat([cardUnit]);
+            session.rankCardInfoMap.clear();
         });
         if (unit) {
             unit.isExpanded = cardUnits.length > 0 ? cardUnits[0].isExpanded : false;
@@ -208,10 +235,8 @@ const initUnitInfo = (session: Session | undefined, result: ImportResult, dataSo
     session.sortUnits();
 };
 
-const createBaselineCard = (session: Session | undefined, result: any, dataSource: DataSource): void => {
-    if (!session) {
-        return;
-    }
+const createBaselineCard = (session: Session | undefined, result: TimelineCard[], dataSource: DataSource): void => {
+    if (!session) { return; }
     const singleDataPath = dataSource.dataPath[0];
     const isSamePath = session?.units.some((unit) => {
         const metadata = unit.metadata as any;
@@ -220,21 +245,26 @@ const createBaselineCard = (session: Session | undefined, result: any, dataSourc
         }
         return metadata.dataSource.remote !== dataSource.remote || (metadata.dataSource.dataPath as string[]).includes(singleDataPath);
     });
-    if (isSamePath) {
-        return;
-    }
+    if (isSamePath) { return; }
     session.phase = 'download';
-    const hostInfo = groupBy(result, (item: CardInfo) => item.host ?? '');
+    const hostInfo = groupBy(result, (item: TimelineCard) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
         const unit = isEmpty(host) ? undefined : new ROOT_UNIT({ dataSource, host });
         const cardUnits: InsightUnit[] = [];
-        forEach(cards, (item: CardInfo) => {
+        forEach(cards, (item: TimelineCard) => {
             const curDataSource = cloneDeep(dataSource);
-            curDataSource.dataPath = item.dataPathList;
-            const cardUnit = new CardUnit(
-                { dataSource: curDataSource, cardId: item.rankId, dbPath: item.dbPath, cardName: item.cardName, cardPath: item.cardPath });
+            curDataSource.dataPath = [item.cardPath];
+            const cardUnit = new CardUnit({
+                dataSource: curDataSource,
+                cardId: item.rankId,
+                dbPath: item.dbPath ?? '',
+                cluster: item.cluster,
+                cardName: item.cardName,
+                cardPath: item.cardPath,
+            });
             if (item.result as boolean) {
-                cardUnit.shouldParse = false;
+                cardUnit.isParseLoading = true;
+                cardUnit.shouldParse = true;
                 cardUnit.phase = 'analyzing';
                 cardUnit.progress = 0;
                 cardUnit.showProgress = true;
@@ -285,10 +315,20 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
     }
 };
 
+export interface TimelineCard {
+    cardName: string;
+    cardPath: string;
+    cluster: string;
+    host: string;
+    rankId: string;
+    dbPath?: string;
+    result: boolean;
+}
+
 export const baselineAddHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
-        const baseLineInfo = getPropFromData(data, 'baseLine');
+        const baseLineInfo = getPropFromData(data, 'baseLine') as TimelineCard[];
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         runInAction(() => {
@@ -365,6 +405,7 @@ const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
     } else {
         session.remoteAttrs.clear();
         session.units = [];
+        session.rankCardInfoMap.clear();
         session.pinnedUnits = [];
     }
 };
@@ -454,7 +495,7 @@ export const removeBaselineHandler: NotificationHandler = async (data): Promise<
             const removeUnits = getRemoveUnits(session, dataSource, singleDataPath);
             session.units = session?.units.filter((unit) => {
                 const metadata = unit.metadata as any;
-                if (!((metadata.cardName.startsWith('baseline')) as boolean)) {
+                if (!((metadata.cardName.startsWith('Baseline')) as boolean)) {
                     return true;
                 }
                 if ((metadata.dataSource.dataPath as string[]) === undefined) {

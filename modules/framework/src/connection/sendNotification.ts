@@ -6,7 +6,6 @@ import { themeInstance } from 'ascend-theme';
 import { store } from '@/store';
 import { localStorageService, LocalStorageKey } from 'ascend-local-storage';
 import { ThemeName, Language } from '@/utils/enum';
-import { getRankId } from '@/utils/Rank';
 import type { LayerType } from '@/centralServer/websocket/defs';
 
 export function sendTheme(to?: number): void {
@@ -99,7 +98,7 @@ export const sendDirectory = (to?: number): void => {
         const { projectName } = session.activeDataSource;
         // 切换目录
         if (projectName !== '' && session.activeDataSource.selectedFilePath !== '') {
-            rankId = getRankId({ projectName, filePath: session.activeDataSource.selectedFilePath });
+            rankId = session.activeDataSource.selectedRankId ?? '';
         }
         selectedFileType = session.activeDataSource.selectedFileType;
         selectedFilePath = session.activeDataSource.selectedFilePath;

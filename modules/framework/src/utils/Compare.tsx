@@ -15,6 +15,7 @@ import { getRankInfo } from '@/utils/Rank';
 
 export interface CompareData extends File {
     rankId: string;
+    dbPath?: string;
     host?: string;
     cardName?: string;
     isCluster?: boolean;
@@ -25,6 +26,7 @@ export interface TimelineCard {
     cardPath: string;
     host: string;
     rankId: string;
+    dbPath?: string;
     result: boolean;
 }
 
@@ -50,25 +52,26 @@ export const sendTabRemoveBaseline = function(dataSource: any, singleDataPath: s
  * @param baselineClusterPath 基线项目的集群路径
  * @param selectedClusterPath 当前选中项目的集群路径
  */
-export const setBaselineData = async ({ projectName, fileType, filePath, baselineClusterPath, currentClusterPath }: ClusterFile): Promise<void> => {
+export const setBaselineData = async ({ projectName, fileType, filePath, rankId, baselineClusterPath, currentClusterPath }: ClusterFile): Promise<void> => {
     const session = store.sessionStore.activeSession;
     // 取消原来的基线数据
     cancelBaselineData();
 
     // 设置新的基线
     // 通知后台
-    const result: any = await setBaseline({ projectName, fileType, filePath, baselineClusterPath, currentClusterPath });
+    const result = await setBaseline({ projectName, fileType, filePath, rankId, baselineClusterPath, currentClusterPath });
     // 基线是工程或者集群文件(cluster_analysis_output)，进入集群对比
     const isProject = projectName !== '' && fileType === 'PROJECT';
     const isClusterCompare = isProject || result.isCluster === true;
     if (notNull(result.errorMessage) || notNull(result?.error?.code)) {
         Message.warning(result.errorMessage as string ?? result.error?.code);
     } else if (isClusterCompare) {
-        handleClusterCompare({ projectName, fileType, filePath, ...result });
+        handleClusterCompare({ projectName, fileType, filePath, ...result } as CompareData);
     } else {
-        const { rankId, cardName, host } = result as CompareData;
+        const { rankId: resultRankId, dbPath, cardName, host } = result as CompareData;
         const timelineCard: TimelineCard = {
-            rankId,
+            rankId: resultRankId,
+            dbPath,
             result: true,
             cardName: cardName ?? '',
             host: host ?? '',
@@ -79,7 +82,7 @@ export const setBaselineData = async ({ projectName, fileType, filePath, baselin
         sendTabAddBaseline(dataSourceForTimeline, [timelineCard]);
         // 选中基线
         runInAction(() => {
-            session.compareSet.baseline = { projectName, fileType, filePath, rankId };
+            session.compareSet.baseline = { projectName, fileType, filePath, rankId: resultRankId };
         });
     }
 };
@@ -144,8 +147,9 @@ export const cancelBaselineData = async (): Promise<void> => {
  * @param projectName 工程名
  * @param fileType 文件类型
  * @param filePath 路径
+ * @param rankId 卡ID clusterId+host+realRankId+deviceId
  */
-export const setCompareData = ({ projectName, fileType, filePath }: File): void => {
+export const setCompareData = ({ projectName, fileType, filePath, rankId }: File): void => {
     const session = store.sessionStore.activeSession;
     const { activeDataSource } = session;
     if (projectName !== activeDataSource.projectName) {
@@ -166,7 +170,7 @@ export const setCompareData = ({ projectName, fileType, filePath }: File): void 
         });
     } else {
         runInAction(() => {
-            const rank = getRankInfo({ projectName, filePath });
+            const rank = getRankInfo({ projectName, filePath, rankId });
             session.compareSet.comparison = {
                 projectName,
                 fileType,

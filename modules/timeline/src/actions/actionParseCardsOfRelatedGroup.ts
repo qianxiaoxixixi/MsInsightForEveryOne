@@ -2,10 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { register } from './register';
-import { parseCards } from '../api/request';
 import { runInAction } from 'mobx';
 import { message } from 'antd';
+import { transformCardIdInfo } from 'ascend-utils';
+import { register } from './register';
+import { parseCards } from '../api/request';
 import type { InsightUnit } from '../entity/insight';
 import type { CardMetaData, ThreadMetaData } from '../entity/data';
 import type { Session } from '../entity/session';
@@ -14,15 +15,8 @@ import { getRootUnit } from '../utils';
 import { CardUnit } from '../insight/units/AscendUnit';
 
 function getRankIdByCardId(cardId: string): string {
-    // text 场景：rankId = cardId，直接返回
-    // db 场景：cardId = '{文件名} {rankId}'，需特殊处理
-    // 匹配最后一个空格之后的所有数字
-    const match = cardId.match(/ (?<rankId>\d+)$/);
-    if ((match?.groups?.rankId) !== undefined) {
-        return match.groups.rankId;
-    } else {
-        return cardId;
-    }
+    const cardIdInfo = transformCardIdInfo(cardId);
+    return cardIdInfo.rankName !== '' ? cardIdInfo.rankName : cardIdInfo.deviceId;
 }
 
 function getSelectedRankList(session: Session): string[] {

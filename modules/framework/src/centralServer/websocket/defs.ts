@@ -77,6 +77,7 @@ export interface FileOrDirectory {
     type?: LayerType;
     name: string;
     path: string;
+    rankId?: string; // type === 'RANK' 时有值
     children: FileOrDirectory[];
 }
 
@@ -86,6 +87,7 @@ export interface Project extends Pick<FileOrDirectory, 'children'> {
     children: FileOrDirectory[];
     selectedFileType?: LayerType;
     selectedFilePath?: string;
+    selectedRankId?: string;
 }
 export interface DataSource extends ConnectHost, Project {
     isBaseLine?: boolean;
@@ -105,13 +107,11 @@ export interface ImportResultBody {
     isIpynb: boolean;
     isCluster: boolean;
     children: ImportTreeInfo[];
-    result: ImportRankInfo[];
-    subdirectoryList: string[];
 }
 
 export interface ImportRankInfo {
     rankId: string;
-    dataPathList: string[];
+    filePath: string;
 }
 
 export interface ImportTreeInfo {

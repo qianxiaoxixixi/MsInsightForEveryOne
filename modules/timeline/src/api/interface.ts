@@ -12,6 +12,20 @@ export interface PaginationModel extends PaginationParams {
     count: number;
 }
 
+export interface RankInfo {
+    clusterId: string;
+    host: string;
+    rankName: string;
+    rankId: string;
+    deviceId: string;
+}
+
+export interface CardRankInfo {
+    rankInfo: RankInfo;
+    dbPath: string;
+    index?: number;
+}
+
 // 算子详情信息
 export interface OpDetail {
     id?: string;

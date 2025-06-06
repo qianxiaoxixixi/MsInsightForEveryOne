@@ -3,7 +3,7 @@
  */
 
 export enum FilePath {
-    TEXT = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level1_ACLAICORE_text',
+    TEXT = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level1_ACLAICORE_text\\profiling_data',
     DB = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_8.0.RC2.B050_GPT3_level2_ACLAICORE_db',
     MIND_SPORE = 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\CANNB063_MindSpore620master_profile\\profile',
     DB_2025330 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_9.0.RC1.B090_db',

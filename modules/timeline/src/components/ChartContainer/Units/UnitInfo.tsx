@@ -302,6 +302,7 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
         ? <Tooltip placement="leftBottom" title={(unit.metadata as CardMetaData).cardPath}>{children}</Tooltip>
         : children;
     React.useEffect(() => {
+        if ((unit.metadata as CardMetaData).cardName.startsWith('Baseline')) { return; }
         if (session.isParserLoading) {
             runInAction((): void => {
                 unit.isParseLoading = true;

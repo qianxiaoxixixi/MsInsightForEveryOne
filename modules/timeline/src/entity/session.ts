@@ -18,6 +18,7 @@ import { SimpleCache } from '../cache/simplecache';
 import { InsightUnitSet } from '../utils/PageSetting';
 import { getTimeOffsetKey } from '../insight/units/utils';
 import { CardMetaData, SliceData, SliceMeta, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from './data';
+import { CardRankInfo } from '../api/interface';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -104,6 +105,7 @@ export class Session {
     // 快捷键对齐触发渲染
     alignRender: boolean = false;
     isCluster: boolean = false;
+    isMultiCluster: boolean = false;
     // 页面可视范围的Card的CardId
     viewedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';
@@ -229,6 +231,7 @@ export class Session {
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];
+    private readonly _rankCardInfoMap: Map<string, CardRankInfo> = new Map(); // rank key(clusterId+host+realRankId+deviceId) -> CardInfo
     private _availableUnits: InsightUnit[] = [];
     private _selectedData?: SelectedDataType;
     private _benchMarkData?: Record<string, unknown>;
@@ -258,6 +261,7 @@ export class Session {
         this._domain = new Domain(this.isNsMode, this.endTimeAll, this.debouncedSetZoomingHistory);
         this.buttons = conf?.buttons ?? [];
         this.simpleCache = new SimpleCache();
+        this.isMultiCluster = false;
         // 录制时长大于等于5min，建议结束录制
         const MAXTIME = this.isNsMode ? 5 * 60 * 1e9 : 5 * 60 * 1e3;
         when(
@@ -317,6 +321,10 @@ export class Session {
 
     get units(): InsightUnit[] {
         return this._units;
+    }
+
+    get rankCardInfoMap(): Map<string, CardRankInfo> {
+        return this._rankCardInfoMap;
     }
 
     get availableUnits(): InsightUnit[] {

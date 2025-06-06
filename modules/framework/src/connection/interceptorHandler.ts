@@ -7,6 +7,7 @@ import { updateSession } from '@/connection/notificationHandler';
 import { store } from '@/store';
 import type { CardInfo } from '@/entity/session';
 import { runInAction } from 'mobx';
+import { transformCardIdInfo } from 'ascend-utils';
 
 interface ImportActionBody {
     subdirectoryList: string[];
@@ -57,7 +58,8 @@ export const parseMemorySuccessHandler: NotificationInterceptor<ParseMemoryNotif
     const memoryCardIdSet: Set<string> = new Set(currentCardInfos.map(({ cardId }): string => cardId));
     data.memoryResult.forEach((item) => {
         if (!memoryCardIdSet.has(item.rankId) && item.hasMemory) {
-            currentCardInfos.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: Number.isNaN(item.rankId) ? 0 : Number(item.rankId) });
+            const cardIdInfo = transformCardIdInfo(item.rankId);
+            currentCardInfos.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: cardIdInfo.index });
             memoryCardIdSet.add(item.rankId);
         }
     });
@@ -70,10 +72,11 @@ export const parseOperatorSuccessHandler: NotificationInterceptor<ParseOperatorN
     if (!session) {
         return;
     }
+    const cardIdInfo = transformCardIdInfo(String(data.rankId));
     const ids = [...session.operatorCardInfos, {
         cardId: String(data.rankId),
         dbPath: data.dbPath ?? '',
-        index: Number.isNaN(data.rankId) ? 0 : Number(data.rankId),
+        index: cardIdInfo.index,
     } as Required<CardInfo>].sort((a, b) => a.index - b.index);
     updateSession({ operatorCardInfos: ids });
 };

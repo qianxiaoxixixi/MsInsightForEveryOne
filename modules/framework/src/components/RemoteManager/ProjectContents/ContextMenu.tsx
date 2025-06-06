@@ -38,7 +38,7 @@ const MenuItem = styled.div`
 `;
 
 export const isSameFile = (one: File, anotherOne: File): boolean => {
-    return one.projectName === anotherOne.projectName && one.filePath === anotherOne.filePath;
+    return one.projectName === anotherOne.projectName && one.filePath === anotherOne.filePath && one.rankId?.replace('Baseline_', '') === anotherOne.rankId?.replace('Baseline_', '');
 };
 
 // 判断是否是集群可对比数据
@@ -77,9 +77,9 @@ function getClusterIsComparableAndSelectedClusterPath(baseline: File, comparison
     const baselineProject = session.getDataSourceByProjectName(baseline.projectName);
     const selectedProject = session.getDataSourceByProjectName(selectedFile.projectName);
     // 选中的是否已被设为基线
-    const isBaseline = selectedFile.projectName === baseline.projectName && selectedFile.filePath === baseline.filePath;
+    const isBaseline = isSameFile(selectedFile, baseline);
     // 选中的是否已被设为对比
-    const isComparison = selectedFile.projectName === comparison.projectName && selectedFile.filePath === comparison.filePath;
+    const isComparison = isSameFile(selectedFile, comparison);
     const hasBaseline = baseline.projectName !== '';
     const [isClusterComparableBaseline] = checkProjectFileIsClusterComparable(baseline, baselineProject);
     const [isClusterComparableSelected, selectedClusterPath] = checkProjectFileIsClusterComparable(selectedFile, selectedProject);

@@ -556,9 +556,9 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) =>
+    renderInfo: (session: Session, metadata: { cardName: string; cluster: string; cardPath: string }) =>
         <span style={{ marginLeft: 6 }}>
-            {metadata.cardName}
+            {(session.isMultiCluster ? `${metadata.cluster} ` : '') + metadata.cardName}
         </span>,
     spreadUnits: on(
         'create',
