@@ -16,7 +16,7 @@ import {
     SystemViewItem, queryTableDataNameList,
 } from './Common';
 import { ResizeTable } from 'ascend-resize';
-import { limitInput, GroupCardInfosByHost, StyledEmpty } from 'ascend-utils';
+import { limitInput, StyledEmpty, GroupCardRankInfosByHost, getRankInfoLabel } from 'ascend-utils';
 import type { CardMetaData } from '../../entity/data';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { getTimeOffset } from '../../insight/units/utils';
@@ -27,7 +27,7 @@ import { ExpertSystemView, handleAdvisorSelected } from './ExpertSystemView';
 import { EventView } from './EventsView';
 import { TableDataView } from './TableDataView';
 import { Session } from '../../entity/session';
-import type { BaseSummaryRowItemType } from '../../api/interface';
+import type { BaseSummaryRowItemType, CardRankInfo } from '../../api/interface';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
@@ -105,13 +105,13 @@ export interface SelectedCardInfo {
     dbPath: string;
 }
 
-interface ConditionType<T> {
+interface ConditionType<T, K> {
     options: T[];
-    value: T;
+    value: K;
 }
 
-interface HostConditionType extends ConditionType<string> {
-    cardsMap?: Map<string, SelectedCardInfo[]>;
+interface HostConditionType extends ConditionType<string, string> {
+    cardsMap?: Map<string, CardRankInfo[]>;
 }
 
 export interface SelectContentViewProps {
@@ -181,36 +181,34 @@ const ViewSelect = observer((props: any) => {
 
 // eslint-disable-next-line max-lines-per-function
 export const RankFilter = observer((props: { session: Session; viewOption?: number; handleChange: (v: SelectedCardInfo) => void }): JSX.Element => {
-    const [rankCondition, setRankCondition] = useState<ConditionType<SelectedCardInfo>>({ options: [], value: DEFAULT_CARD_VALUE });
+    const [rankCondition, setRankCondition] = useState<ConditionType<CardRankInfo, number>>({ options: [], value: 0 });
     const [hostCondition, setHostCondition] = useState<HostConditionType>({ options: [], value: '' });
     const { t } = useTranslation('timeline');
     useEffect(() => {
-        const cardList: Array<{ cardId: string; dbPath: string }> = [];
-        for (const unit of props.session.units) {
-            const cardId = (unit.metadata as CardMetaData).cardId;
-            const dbPath = (unit.metadata as CardMetaData).dbPath ?? '';
-            if (!cardId.endsWith('Host')) {
-                cardList.push({ cardId, dbPath });
+        const cardList: CardRankInfo[] = [];
+        for (const v of props.session.rankCardInfoMap.values()) {
+            if (!v.rankInfo.rankId.endsWith('Host')) {
+                cardList.push(v);
             }
         }
-        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, SelectedCardInfo[]> } = GroupCardInfosByHost(cardList);
+        const { hosts, cardsMap }: { hosts: string[]; cardsMap: Map<string, CardRankInfo[]> } = GroupCardRankInfosByHost(cardList);
         setHostCondition({ options: hosts, value: hosts[0] ?? '', cardsMap });
-    }, [props.session.units]);
+    }, [props.session.rankCardInfoMap.size]);
 
     useEffect(() => {
         const rankOptions = hostCondition.cardsMap?.get(hostCondition.value) ?? [];
-        setRankCondition({ options: rankOptions, value: rankOptions[0] ?? DEFAULT_CARD_VALUE });
+        setRankCondition({ options: rankOptions, value: 0 });
     }, [hostCondition]);
 
     useEffect(() => {
-        props.handleChange(rankCondition.value);
+        const cardRankInfo = rankCondition.options[rankCondition.value];
+        props.handleChange({ cardId: cardRankInfo.rankInfo.rankId, dbPath: cardRankInfo.dbPath });
     }, [rankCondition]);
     useEffect(() => {
         limitInput();
     }, []);
-    const onRankIdChanged = (value: string): void => {
-        const found = rankCondition.options.find(({ cardId }) => cardId === value) ?? DEFAULT_CARD_VALUE;
-        setRankCondition({ ...rankCondition, value: found });
+    const onRankIdChanged = (value: number): void => {
+        setRankCondition({ ...rankCondition, value });
     };
     return (<div className={'rank-filter'} >
         {hostCondition.options.length > 0
@@ -226,13 +224,13 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
         }
         <FormItem label={t('Rank ID')} contentStyle={{ flex: 1 }}>
             <Select
-                value={rankCondition.value.cardId}
+                value={rankCondition.value}
                 width={'100%'}
                 onChange={onRankIdChanged}
-                options={rankCondition.options.map((card) => {
+                options={rankCondition.options.map((card, index) => {
                     return {
-                        value: card.cardId,
-                        label: card.cardId.replace(`${hostCondition.value} `, ''),
+                        value: index,
+                        label: getRankInfoLabel(card.rankInfo),
                     };
                 })}
                 showSearch={true}
@@ -369,8 +367,10 @@ export const BaseSummary = observer((props: BaseSummaryProps) => {
             setDataSource(res.systemViewDetails);
         } else {
             const timestampoffset = getTimeOffset(props.session, props.card);
+            const dbPath = res.dbPath;
             const data = res.data.map((item: any) => {
                 item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
+                item.dbPath = dbPath;
                 return item;
             });
             setDataSource(data);

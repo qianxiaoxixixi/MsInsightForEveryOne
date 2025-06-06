@@ -714,6 +714,7 @@ export interface ProcessMetaData extends MetaDataInnerBase {
 export interface CardMetaData extends MetaDataBase {
     cardId: string;
     dbPath: string;
+    cluster: string;
     cardName: string;
     cardPath: string;
     label?: string;

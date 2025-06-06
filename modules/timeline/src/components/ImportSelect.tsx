@@ -38,8 +38,9 @@ const ImportModeSelect = observer((props: SelectProps) => {
     );
 });
 
-export interface CardInfo {
+export interface ImportCardInfo {
     cardName: string;
+    cluster: string;
     rankId: string;
     dbPath: string;
     result: boolean;

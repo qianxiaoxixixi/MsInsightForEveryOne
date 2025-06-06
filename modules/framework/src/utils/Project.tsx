@@ -37,6 +37,7 @@ export interface UpdateProjectParam {
     projectPath: string[];
     selectedFileType: LayerType;
     selectedFilePath: string;
+    selectedRankId?: string;
     children: FileOrDirectory[];
     hasConflict: boolean;
 }
@@ -66,6 +67,7 @@ export const transformFile = (tree: ImportTreeInfo | undefined, depth: number): 
                 type: tree.type,
                 name: tree.fileDir,
                 path: tree.filePath,
+                rankId: tree.rankId,
                 children: tree.children.map((child) => transformFile(child, depth + 1))
                     .flat().filter((item) => item !== undefined) as FileOrDirectory[],
             }];
@@ -99,8 +101,8 @@ export const loadHistoryProject = async(): Promise<void> => {
 };
 
 // 导入数据、切换项目
-export async function handleProjectAction({ action, project, isConflict, selectedFileType, selectedFilePath }:
-{action: ProjectAction;project: Project;isConflict: boolean;selectedFileType?: LayerType;selectedFilePath?: string}): Promise<void> {
+export async function handleProjectAction({ action, project, isConflict, selectedFileType, selectedFilePath, selectedRankId }:
+{action: ProjectAction;project: Project;isConflict: boolean;selectedFileType?: LayerType;selectedFilePath?: string;selectedRankId?: string}): Promise<void> {
     const session = store.sessionStore.activeSession;
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
@@ -123,6 +125,7 @@ export async function handleProjectAction({ action, project, isConflict, selecte
             if (firstFilePath !== undefined) {
                 newProject.selectedFileType = firstFileType;
                 newProject.selectedFilePath = firstFilePath;
+                newProject.selectedRankId = selectedRankId;
             }
         }
         const res = await addDataPath(newProject, action, isConflict);
@@ -145,7 +148,7 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 项目更新
 // 1、更新项目目录
 // 2、设置为打开(选中）项目
-export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, selectedFileType, selectedFilePath }:
+export const updateProject = ({ projectAction, projectName, children, hasConflict, projectPath, selectedFileType, selectedFilePath, selectedRankId }:
 UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
     const dataSource: DataSource = { ...GLOBAL_HOST, projectName, projectPath, children };
@@ -156,16 +159,21 @@ UpdateProjectParam): void => {
             // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
             if (hasConflict || children.length > 1) {
                 const firstFile = getProjectFirstFile(dataSource);
-                session.activeDataSource = { ...dataSource, selectedFileType: firstFile?.type ?? 'UNKNOWN', selectedFilePath: firstFile?.path ?? '' };
+                session.activeDataSource = {
+                    ...dataSource,
+                    selectedFileType: firstFile?.type ?? 'UNKNOWN',
+                    selectedFilePath: firstFile?.path ?? '',
+                    selectedRankId: firstFile?.rankId,
+                };
             }
             // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
             if (session.activeDataSource.projectName !== dataSource.projectName || session.activeDataSource.selectedFilePath !== '') {
-                session.activeDataSource = { ...dataSource, selectedFileType, selectedFilePath };
+                session.activeDataSource = { ...dataSource, selectedFileType, selectedFilePath, selectedRankId };
                 return;
             }
         }
         if (projectAction === ProjectAction.SWITCH_PROJECT) {
-            session.activeDataSource = { ...dataSource, selectedFileType, selectedFilePath };
+            session.activeDataSource = { ...dataSource, selectedFileType, selectedFilePath, selectedRankId };
         }
     });
 };
@@ -254,8 +262,9 @@ export const removeDataPath = (projectIndex: number, dataPath: string): void => 
     runInAction(async() => {
         try {
             const dataSource = session.dataSources[projectIndex];
+            const childrenNum = calculateRemovableChildren(dataSource);
             // 项目只有一个文件
-            if (dataSource.children.length === 1) {
+            if (childrenNum === 1) {
                 removeProject(projectIndex);
                 return;
             }
@@ -267,11 +276,16 @@ export const removeDataPath = (projectIndex: number, dataPath: string): void => 
             // 通知后台
             await deleteDataPath({ ...dataSource, dataPath: [singleDataPath] });
             // 目录更新
-            session.deleteDataPath(projectIndex, singleDataPath);
+            const nextDataSource = session.deleteDataPath(projectIndex, singleDataPath);
             // 如果移除的是当前选中文件，默认选中第一个文件
             if (session.activeDataSource.projectName === dataSource.projectName && session.activeDataSource.selectedFilePath === singleDataPath) {
-                const firstFile = getProjectFirstFile(dataSource);
-                session.activeDataSource = { ...dataSource, selectedFileType: firstFile?.type ?? 'UNKNOWN', selectedFilePath: firstFile?.path ?? '' };
+                const firstFile = getProjectFirstFile(nextDataSource);
+                session.activeDataSource = {
+                    ...dataSource,
+                    selectedFileType: firstFile?.type ?? 'UNKNOWN',
+                    selectedFilePath: firstFile?.path ?? '',
+                    selectedRankId: firstFile?.rankId,
+                };
             }
         } catch {
             console.error('removeSingle error');
@@ -451,6 +465,16 @@ export const deleteProjectDataPath = (project: Project, dataPath: string): void 
         }
     });
 };
+
+function calculateRemovableChildren(project: Project): number {
+    let result = 0;
+    recursiveSearchEveryProjectFileThen(project, (file) => {
+        if (file.type !== 'PROJECT' && file.type !== 'CLUSTER') {
+            result++;
+        }
+    });
+    return result;
+}
 
 interface ParentInfo {
     parent: FileOrDirectory | null;

@@ -21,7 +21,6 @@ import { isSameFile } from './ContextMenu';
 import { useTranslation } from 'react-i18next';
 import EditableText from './EditableText';
 import CheckMenu from './CheckMenu';
-import { getRankId } from '@/utils/Rank';
 import { cancelCompareData, isInClusterCompare } from '@/utils/Compare';
 
 interface ProjectTreeDataNode extends DataNode {
@@ -142,27 +141,29 @@ function ImportDataBtn({ projectName, session }: {projectName: string;session: S
 
 const createCompareRankIdFuncWithProjectName = (projectName: string):
 (a: FileOrDirectory, b: FileOrDirectory) => number => (a, b) => {
-    const aRankId = getRankId({ projectName, filePath: a.path });
-    const bRankId = getRankId({ projectName, filePath: b.path });
+    const aRankId = a.rankId ?? '';
+    const bRankId = b.rankId ?? '';
     const deltaLen = aRankId.length - bRankId.length;
     return deltaLen === 0 ? aRankId.localeCompare(bRankId) : deltaLen;
 };
+
+const getTreeNodeKey = (projectName: string, path: string, rankId?: string): string => `${projectName}-${path}-${rankId ?? ''}`;
 
 const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: number, session: Session, depth: number): ProjectTreeDataNode => {
     const isLeaf = depth >= 5 || data.children.length <= 0;
     const layerType: LayerType = data.type as LayerType;
     const node: ProjectTreeDataNode = {
-        key: `${projectName}-${data.path}`,
+        key: getTreeNodeKey(projectName, data.path, data.rankId),
         layerType,
         layerData: data,
         checkable: false,
         isLeaf,
         title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={data.path}>
-            <span className={`content-body ${getNodeClass(session, { projectName, fileType: layerType, filePath: data.path })}`}>
+            <span className={`content-body ${getNodeClass(session, { projectName, fileType: layerType, filePath: data.path, rankId: data.rankId })}`}>
                 <span className="content-text can-right-click" onContextMenu={(): void => {
-                    handleRightClick({ projectName, fileType: layerType, filePath: data.path });
+                    handleRightClick({ projectName, fileType: layerType, filePath: data.path, rankId: data.rankId ?? '' });
                 }}>
-                    {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, fileType: layerType, filePath: data.path })}
+                    {data.type === 'CLUSTER' ? data.name : getFilePathName({ projectName, fileType: layerType, filePath: data.path, rankId: data.rankId })}
                 </span>
                 {data.type === 'CLUSTER' || (<div className={`btn-box ${isLeaf ? 'leaf' : ''}`} onClick={(e): void => e.stopPropagation()}>
                     <DeleteConfirm isProject={false} projectIndex={projectIndex} dataPath={data.path}/>
@@ -203,6 +204,7 @@ const getTreeData = (session: Session): ProjectTreeDataNode[] => {
                             projectName: dataSource.projectName,
                             fileType: layerType,
                             filePath: dataSource.projectPath[0],
+                            rankId: '',
                         })
                     }>
                         <EditableText text={dataSource.projectName}/></span>
@@ -236,7 +238,7 @@ const getAllTreeNodeKeysWithoutLeaf = (treeNode: ProjectTreeDataNode[]): string[
 
 // 文件名
 const getFilePathName = (file: File): string => {
-    const rankId = getRankId(file);
+    const rankId = file.rankId ?? '';
     return `${rankId}${rankId === '' ? '' : ' : '}${file.filePath}`;
 };
 
@@ -270,8 +272,8 @@ const Contents = observer(({ session }: {session: Session}) => {
     // 当前选中（打开）工程、文件
     const selectedKeys = useMemo(() => {
         if (session.activeDataSource.projectName !== '') {
-            const { projectName, selectedFilePath } = session.activeDataSource;
-            const key: string = `${projectName}-${selectedFilePath}`;
+            const { projectName, selectedFilePath, selectedRankId } = session.activeDataSource;
+            const key: string = getTreeNodeKey(projectName, selectedFilePath, selectedRankId);
             return getSelectedTreePathList(treeData, key);
         }
         return [];
@@ -300,13 +302,16 @@ const Contents = observer(({ session }: {session: Session}) => {
             const isProject = (selectedNodeData as FileOrDirectory).type === undefined;
             let selectedPath;
             let selectedType;
+            let selectedRankId;
             if (isProject) {
                 const file = getProjectFirstFile(dataSource);
                 selectedPath = file?.path ?? (selectedNodeData as Project).projectPath[0];
                 selectedType = file?.type ?? 'PROJECT';
+                selectedRankId = file?.rankId ?? '';
             } else {
                 selectedPath = (selectedNodeData as FileOrDirectory).path;
                 selectedType = (selectedNodeData as FileOrDirectory).type;
+                selectedRankId = (selectedNodeData as FileOrDirectory).rankId ?? '';
             }
             handleProjectAction({
                 action: ProjectAction.SWITCH_PROJECT,
@@ -314,6 +319,7 @@ const Contents = observer(({ session }: {session: Session}) => {
                 isConflict: false,
                 selectedFileType: selectedType,
                 selectedFilePath: selectedPath,
+                selectedRankId,
             });
         }
         // 如果点击的不是项目
@@ -325,6 +331,7 @@ const Contents = observer(({ session }: {session: Session}) => {
                     ...dataSource,
                     selectedFileType: selectedNodes[selectedNodes.length - 1].layerType,
                     selectedFilePath: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).path,
+                    selectedRankId: (selectedNodes[selectedNodes.length - 1].layerData as FileOrDirectory).rankId,
                 };
             });
             if (isInClusterCompare()) {

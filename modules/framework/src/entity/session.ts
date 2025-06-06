@@ -69,7 +69,6 @@ export class Session {
     // 加载状态
     loading: boolean = false;
     // 数据源/项目管理
-    rankList: Rank[] = [];
     rankMap: Map<string, Rank> = new Map();
     // 场景
     isCluster: boolean | null = false;
@@ -102,7 +101,7 @@ export class Session {
     // 右键菜单
     contextMenu: ContextMenu = { visible: false };
     // 对比功能
-    selectedFile: File = { projectName: '', fileType: 'UNKNOWN', filePath: '' };
+    selectedFile: File = { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' };
     compareSet: { baseline: CompareData; comparison: CompareData } = {
         baseline: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
         comparison: { projectName: '', fileType: 'UNKNOWN', filePath: '', rankId: '' },
@@ -231,10 +230,11 @@ export class Session {
         this.dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
     }
 
-    deleteDataPath(projectIndex: number, dataPath: string): void {
+    deleteDataPath(projectIndex: number, dataPath: string): DataSource {
         const dataSources = JSON.parse(JSON.stringify(this._dataSources));
         deleteProjectDataPath(dataSources[projectIndex], dataPath);
         this.dataSources = dataSources;
+        return dataSources[projectIndex];
     }
 
     /**

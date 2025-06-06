@@ -6,12 +6,14 @@ import { ImportResultBody, LayerType, Project, ProjectDirectory } from '@/centra
 import { ClusterFile } from '@/entity/session';
 import { ProjectAction } from '@/utils/enum';
 import { ErrorMsg } from '@/centralServer/websocket/connection';
+import { CompareData } from '@/utils/Compare';
 
 export interface ImportProjectParams extends Record<string, unknown> {
     projectName: string;
     path: string[];
     selectedFileType?: LayerType;
     selectedFilePath?: string;
+    selectedRankId?: string;
     projectAction: ProjectAction;
     isConflict: boolean;
 }
@@ -121,8 +123,8 @@ export const deleteDataPath = async (project: { projectName: string; dataPath: s
 /**
  * 设置基线数据
  */
-export const setBaseline = async (file: ClusterFile): Promise<unknown> => {
-    return request('global', {
+export const setBaseline = async (file: ClusterFile): Promise<Partial<CompareData & { errorMessage: string } & ErrorMsg>> => {
+    return request<CompareData & { errorMessage: string }>('global', {
         command: 'global/setBaseline',
         params: { ...file },
     });

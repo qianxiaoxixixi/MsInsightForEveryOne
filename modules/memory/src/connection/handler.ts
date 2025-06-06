@@ -8,7 +8,7 @@ import type { NotificationHandler } from './defs';
 import type { RankInfo } from '../entity/memory';
 import type { CardInfo } from '../entity/session';
 import i18n from 'ascend-i18n';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console, transformCardIdInfo } from 'ascend-utils';
 import { DEFAULT_CARD_VALUE } from '../entity/memorySession';
 
 function addMemoryCardInfos(before: CardInfo[], addList: RankInfo[]): CardInfo[] {
@@ -16,7 +16,8 @@ function addMemoryCardInfos(before: CardInfo[], addList: RankInfo[]): CardInfo[]
     const currentCardIds: Set<string> = new Set(current.map(({ cardId }) => cardId));
     addList.forEach((item) => {
         if (!currentCardIds.has(item.rankId) && (item.hasMemory as boolean)) {
-            current.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: Number.isNaN(item.rankId) ? 0 : Number(item.rankId) });
+            const cardIdInfo = transformCardIdInfo(item.rankId);
+            current.push({ cardId: item.rankId, dbPath: item.dbPath ?? '', index: cardIdInfo.index });
             currentCardIds.add(item.rankId);
         }
     });

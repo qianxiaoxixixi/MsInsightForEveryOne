@@ -6,6 +6,7 @@ import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import i18n from 'ascend-i18n';
 import type { CardInfo, DirInfo } from '../entity/session';
+import { transformCardIdInfo } from 'ascend-utils';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -51,10 +52,11 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             return;
         }
         if (session.allCardInfos.every(({ cardId }) => cardId !== String(data.rankId))) {
+            const cardIdInfo = transformCardIdInfo(String(data.rankId));
             session.allCardInfos = [...session.allCardInfos, {
                 cardId: String(data.rankId),
                 dbPath: data.dbPath ?? '',
-                index: Number.isNaN(data.rankId) ? 0 : Number(data.rankId),
+                index: cardIdInfo.index,
             } as CardInfo].sort((a, b) => a.index - b.index);
         }
     });

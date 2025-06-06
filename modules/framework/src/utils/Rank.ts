@@ -17,11 +17,9 @@ export const updateRankMap = (projectAction: ProjectAction, projectName: string,
     const needReset = projectAction !== ProjectAction.ADD_FILE || activeDataSource.projectName !== projectName;
     const newRankMap = needReset ? new Map() : session.rankMap;
     rankInfoList.forEach((rankInfo) => {
-        if (rankInfo.dataPathList.length !== 0) {
-            const filePath = rankInfo.dataPathList[0];
-            const info = { projectName, filePath, rankId: rankInfo.rankId };
-            newRankMap.set(getUniqueKeyByProjectInfo(projectName, filePath), info);
-        }
+        const filePath = rankInfo.filePath;
+        const info = { projectName, filePath, rankId: rankInfo.rankId };
+        newRankMap.set(getUniqueKeyByProjectInfo(projectName, filePath, rankInfo.rankId), info);
     });
     runInAction(() => {
         session.rankMap = newRankMap;
@@ -35,8 +33,8 @@ export const updateRankMapByProjectName = (oldProjectName: string, newProjectNam
     for (const [, value] of rankMap) {
         if (value.projectName === oldProjectName) {
             value.projectName = newProjectName;
-            rankMap.delete(getUniqueKeyByProjectInfo(oldProjectName, value.filePath));
-            rankMap.set(getUniqueKeyByProjectInfo(newProjectName, value.filePath), value);
+            rankMap.delete(getUniqueKeyByProjectInfo(oldProjectName, value.filePath, value.rankId));
+            rankMap.set(getUniqueKeyByProjectInfo(newProjectName, value.filePath, value.rankId), value);
         }
     }
     runInAction(() => {
@@ -45,19 +43,14 @@ export const updateRankMapByProjectName = (oldProjectName: string, newProjectNam
 };
 
 const UNDERLINE: string = '_';
-const getUniqueKeyByProjectInfo = (projectName: string, filePath: string): string => {
-    return projectName + UNDERLINE + filePath;
+const getUniqueKeyByProjectInfo = (projectName: string, filePath: string, rankId?: string): string => {
+    return projectName + UNDERLINE + filePath + UNDERLINE + (rankId ?? '');
 };
 
 // 查找对应文件卡信息
-export const getRankInfo = ({ projectName, filePath }: {projectName: string; filePath: string}): Rank | undefined => {
+export const getRankInfo = ({ projectName, filePath, rankId }: {projectName: string; filePath: string; rankId?: string}): Rank | undefined => {
     const session = store.sessionStore.activeSession;
     const { rankMap } = session;
-    const key = getUniqueKeyByProjectInfo(projectName, filePath);
+    const key = getUniqueKeyByProjectInfo(projectName, filePath, rankId);
     return rankMap.get(key);
-};
-
-// 查找对应文件卡ID
-export const getRankId = (file: {projectName: string; filePath: string}): string => {
-    return getRankInfo(file)?.rankId ?? '';
 };

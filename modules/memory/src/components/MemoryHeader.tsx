@@ -11,7 +11,7 @@ import type { CardInfo, Session } from '../entity/session';
 import { MemorySession, GroupBy, DEFAULT_CARD_VALUE } from '../entity/memorySession';
 import { Label, useHit } from './Common';
 import { Select } from 'ascend-components';
-import { GroupCardInfosByHost, notNull } from 'ascend-utils';
+import { GroupCardInfosByHost, notNull, transformCardIdInfo } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
 import _ from 'lodash';
 
@@ -40,7 +40,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     const getRankOptions = (value: string, ranks?: Map<string, CardInfo[]>): CardInfo[] => {
         const tempRanks = _.cloneDeep(ranks);
         // 将db格式中rankId内的host名称剔除，只对RankId为数字做排序，不能转为数字的字符串则不排序
-        return (tempRanks?.get(value) ?? []).sort((a, b) => Number(a.cardId.replace(`${value} `, '')) - Number(b.cardId.replace(`${value} `, '')));
+        return (tempRanks?.get(value) ?? []).sort((a, b) => a.index - b.index);
     };
 
     const onHostChanged = (value: string): void => {
@@ -66,9 +66,9 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     useEffect(() => {
         const { hosts, cardsMap } = GroupCardInfosByHost(session.memoryCardInfos);
         // 判断是否为db场景（host存在compareRank中)，若是则取出host，否则hostCondition.value为空
-        const list = session.compareRank.rankId.split(' ');
-        const hostInRank = list.length > 1 ? list[0] : '';
-        const host = notNull(memorySession.hostCondition.value) ? memorySession.hostCondition.value : hostInRank;
+        // rankId 实际是 cardId
+        const cardIdInfo = transformCardIdInfo(session.compareRank.rankId);
+        const host = notNull(memorySession.hostCondition.value) ? memorySession.hostCondition.value : cardIdInfo.host;
         const rankOptions = getRankOptions(host, cardsMap);
         runInAction(() => {
             memorySession.hostCondition = { ...memorySession.hostCondition, options: hosts, cardsMap };
@@ -98,10 +98,12 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         if (session.compareRank.rankId === memorySession.rankCondition.value.cardId && hostSetted) {
             return;
         }
-        const list = session.compareRank.rankId.split(' ');
-        if (list.length > 1) {
-            const rankOptions = getRankOptions(list[0], memorySession.hostCondition.cardsMap);
-            const hostCondition = { ...memorySession.hostCondition, value: memorySession.hostCondition.options.includes(list[0]) ? list[0] : '' };
+        // rankId 实际是 cardId
+        const cardIdInfo = transformCardIdInfo(session.compareRank.rankId);
+        if (cardIdInfo.host !== '') {
+            const rankOptions = getRankOptions(cardIdInfo.host, memorySession.hostCondition.cardsMap);
+            const hostCondition =
+                { ...memorySession.hostCondition, value: memorySession.hostCondition.options.includes(cardIdInfo.host) ? cardIdInfo.host : '' };
             const foundIdx = rankOptions.findIndex(({ cardId }) => cardId === session.compareRank.rankId);
             runInAction(() => {
                 memorySession.hostCondition = hostCondition;

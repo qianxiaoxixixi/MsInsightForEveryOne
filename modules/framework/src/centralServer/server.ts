@@ -10,7 +10,7 @@ import {
     FileOrDirectory,
     ImportResultBody,
     DataSource,
-    LayerType,
+    LayerType, ImportTreeInfo,
 } from './websocket/defs';
 import { Connection, ErrorMsg } from './websocket/connection';
 import connector from '@/connection';
@@ -63,6 +63,7 @@ export const addDataPath = async function(project: Project, action: ProjectActio
             path: project.projectPath,
             selectedFileType: project.selectedFileType,
             selectedFilePath: project.selectedFilePath,
+            selectedRankId: project.selectedRankId,
             projectAction: action,
             isConflict,
         };
@@ -84,6 +85,25 @@ const transformTimelineDataSource = (project: Project): DataSource => {
 };
 
 /**
+ * 递归查找 rank 列表
+ * @param children
+ */
+const reduceImportRankInfoList = (children: ImportTreeInfo[] = []): Array<{ rankId: string; filePath: string }> => {
+    const reduceFunc = (item: ImportTreeInfo, depth: number): Array<{ rankId: string; filePath: string }> => {
+        if (depth >= 5) { // 设置最大递归深度为 5
+            return [];
+        }
+        if (item.type === 'RANK') {
+            return [{ rankId: item.rankId ?? '', filePath: item.filePath }];
+        } else {
+            return item.children.flatMap((child) => reduceFunc(child, depth + 1));
+        }
+    };
+
+    return children.flatMap((child) => reduceFunc(child, 0));
+};
+
+/**
  * 导入项目后更新项目管理器操作
  * @param params 请求体
  * @param data 返回值
@@ -94,17 +114,18 @@ const afterImportProject = (params: ImportProjectParams, data: ImportResultBody)
         const hasConflict = params.isConflict as boolean;
         const projectName = params.projectName;
         const projectPath = params.path;
-        const selectedFilePath = params.selectedFilePath ?? data.subdirectoryList[0];
+        const importRankList = reduceImportRankInfoList(data.children);
+        const selectedFilePath = params.selectedFilePath ?? importRankList?.[0]?.filePath;
+        const selectedRankId = params.selectedRankId ?? importRankList?.[0]?.rankId;
         const selectedFileType: LayerType = params.selectedFileType ?? 'RANK'; // 此处暂时用 RANK，实际应该和 data.subdirectoryList[0] 中应该带有的类型相同
         const children = data.children?.map((child) => transformFile(child, 0))
             ?.flat()?.filter((item) => item !== undefined) as FileOrDirectory[];
         // 更新场景
         updateDataScene(data);
         // 更新rank信息
-        const rankInfoList = data.result;
-        updateRankMap(projectAction, projectName, rankInfoList);
+        updateRankMap(projectAction, projectName, importRankList);
         // 更新项目目录
-        updateProject({ projectAction, projectName, children, hasConflict, projectPath, selectedFileType, selectedFilePath });
+        updateProject({ projectAction, projectName, children, hasConflict, projectPath, selectedFileType, selectedFilePath, selectedRankId });
     } catch (error) {
         console.error(error);
     }

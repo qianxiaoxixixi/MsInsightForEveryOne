@@ -221,19 +221,84 @@ export function FormItem({ name, style, content, nameStyle }:
     </div>);
 };
 
-export function GroupCardInfosByHost<T extends { cardId: string; dbPath: string } = { cardId: string; dbPath: string }>(
+export function getIndexByRankNameAndDeviceId(rankName: string, deviceId: string): number {
+    if (Number.isNaN(rankName) || rankName === '') {
+        return Number.isNaN(deviceId) ? 0 : Number(deviceId);
+    } else {
+        return Number(rankName);
+    }
+}
+
+/**
+ * 将 cardId 转化成 cardIdInfo
+ * @param cardId 有三种可能：1 - rankName; 2 - host+deviceId;
+ */
+export function transformCardIdInfo(cardId: string): { host: string; rankName: string; deviceId: string; index: number } {
+    const list = cardId.split(' ');
+    const len = list.length;
+    const result = { host: '', rankName: '', deviceId: '', index: 0 };
+    switch (len) {
+        case 1: // rankId
+            result.rankName = list[0];
+            break;
+        case 2: // host+deviceId
+            result.host = list[0];
+            result.deviceId = list[1];
+            break;
+        default: break;
+    }
+    result.index = getIndexByRankNameAndDeviceId(result.rankName, result.deviceId);
+    return result;
+}
+
+export function GroupCardInfosByHost<T extends { cardId: string; dbPath: string } = { cardId: string; dbPath: string; index: number }>(
     rankInfos: T[]): { hosts: string[]; cardsMap: Map<string, T[]> } {
     const host = new Set<string>();
     const cardsMap = new Map<string, T[]>();
     rankInfos.forEach((item): void => {
-        const list = item.cardId.split(' ');
-        if (list.length > 1) {
-            host.add(list[0]);
-            cardsMap.set(list[0], [...cardsMap.get(list[0]) ?? [], item]);
-        } else {
-            cardsMap.set('', [...cardsMap.get('') ?? [], item]);
+        const cardIdInfo = transformCardIdInfo(item.cardId);
+        if (cardIdInfo.host !== '') {
+            host.add(cardIdInfo.host);
         }
+        cardsMap.set(cardIdInfo.host, [
+            ...cardsMap.get(cardIdInfo.host) ?? [],
+            { ...item, index: getIndexByRankNameAndDeviceId(cardIdInfo.rankName, cardIdInfo.deviceId) },
+        ]);
     });
+    return { hosts: Array.from(host), cardsMap };
+}
+
+interface RankInfo {
+    clusterId: string;
+    host: string;
+    rankName: string;
+    rankId: string;
+    deviceId: string;
+}
+
+export function getRankInfoKey({ clusterId, host, rankName, deviceId }: RankInfo): string {
+    return `${clusterId}_${host}_${rankName}_${deviceId}`;
+}
+
+export function getRankInfoLabel({ clusterId, rankName, deviceId }: RankInfo): string {
+    return `${clusterId} ${rankName} ${deviceId}`.trim();
+}
+
+export function GroupCardRankInfosByHost<T extends { rankInfo: RankInfo; dbPath: string } = { rankInfo: RankInfo; dbPath: string }>(
+    cardRankInfos: T[]): { hosts: string[]; cardsMap: Map<string, Array<T & { index: number }>> } {
+    const host = new Set<string>();
+    const cardsMap = new Map<string, Array<T & { index: number }>>();
+    cardRankInfos.forEach((item): void => {
+        const info = item.rankInfo;
+        if (info.host !== '') {
+            host.add(info.host);
+        }
+        cardsMap.set(info.host, [
+            ...cardsMap.get(info.host) ?? [],
+            { ...item, index: getIndexByRankNameAndDeviceId(info.rankName, info.deviceId) },
+        ]);
+    });
+    cardsMap.forEach((v) => v.sort((a, b) => a.index - b.index));
     return { hosts: Array.from(host), cardsMap };
 }
 
