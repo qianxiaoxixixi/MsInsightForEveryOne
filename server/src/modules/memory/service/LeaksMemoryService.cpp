@@ -32,6 +32,13 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
         Protocol::LeaksParseSuccessEventBody body;
         if (event->result) {
             auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+            if (memoryDatabase == nullptr) {
+                Server::ServerLog::Error("Cannot get leaks db connections from database manager");
+                event->errMsg = "Failed parse leaks dump data.";
+                event->result = false;
+                SendEvent(std::move(event));
+                return;
+            }
             memoryDatabase->QueryMallocOrFreeEventTypeWithDeviceId(body.deviceIds);
             memoryDatabase->QueryThreadIds(body.threadIds);
             memoryDatabase->SetDataBaseVersion();
@@ -45,7 +52,7 @@ void LeaksMemoryService::ParseCallBack(const std::string &fileId, bool result, c
 }
 bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
 {
-    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase(fileId);
+    auto database = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
     if (database == nullptr) {
         Server::ServerLog::Error("Cannot get leaks db connections from database manager");
         return false;

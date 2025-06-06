@@ -283,7 +283,7 @@ bool FullDbParser::Parse(const std::vector<std::string> &fileIds,
 void FullDbParser::InitLeaksMemory(const std::vector<std::string> &rankIds, const std::string &path)
 {
     for (const std::string& id : rankIds) {
-        auto leaksMemoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase(id);
+        auto leaksMemoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
         if (leaksMemoryDatabase != nullptr && leaksMemoryDatabase->OpenDb(path, false)) {
             if (Memory::LeaksMemoryService::ParseMemoryLeaksDumpEvents(id)) {
                 Memory::LeaksMemoryService::ParserEnd(id, true);
