@@ -193,7 +193,7 @@ export const actionHideUnits = register({
 
 export const actionShowHiddenUnits = register({
     name: 'showHiddenUnits',
-    label: 'timeline:contextMenu.Show All Hidden',
+    label: 'timeline:contextMenu.Show all',
     visible: (session: Session) => isShowUnitsMenuVisible(session),
     disabled: (session: Session) => session.selectedRangeIsLock,
     perform: (session): void => {
