@@ -59,7 +59,10 @@ interface Props {
     chartInteractorRef: React.RefObject<ChartInteractorHandles>;
 }
 
+export type ContextMenuItem = typeof CONTEXT_MENU_SEPARATOR | Action;
+
 const MenuContainer = styled.div`
+    font-size: 12px;
     padding: 3px 0;
     min-width: 200px;
     border-radius: ${(props): string => props.theme.borderRadiusBase};
@@ -97,6 +100,11 @@ const MenuItem = styled.div`
     .menu-item__shortcut {
         opacity: 0.6;
     }
+`;
+
+const Separator = styled.hr`
+    border: none;
+    border-top: 1px solid ${(props): string => props.theme.borderColorLight};
 `;
 
 function closeMenu(session: Session): void {
@@ -141,35 +149,53 @@ function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
     menu.focus();
 }
 
-const contextMenuItems: Action[] = [
-    actionFitToScreen,
+export const CONTEXT_MENU_SEPARATOR = 'separator';
+const contextMenuItems: ContextMenuItem[] = [
+    // 特定操作
     actionFindInCommunication,
+    actionSetCardAlias,
+    actionParseCardsOfRelatedGroup,
+    CONTEXT_MENU_SEPARATOR,
+    // 泳道缩放
+    actionFitToScreen,
     actionZoomIntoSelection,
-    actionUndoZoom,
-    actionResetZoom,
-    actionUnpinAll,
-    actionHideUnits,
-    actionShowHiddenUnits,
-    actionShowInEventsView,
-    actionShowPythonCallStack,
-    actionHidePythonCallStack,
-    actionCollapseAllUnits,
-    actionExpandAllUnits,
-    actionHideFlagEvents,
-    actionShowFlagEvents,
-    actionEnableAutoUnitHeight,
-    actionDisableAutoUnitHeight,
-    actionRecoverDefaultOffset,
-    actionSetBenchmarkSlice,
-    actionClearBenchmarkSlice,
     actionLockSelection,
     actionUnLockSelection,
-    actionSetCardAlias,
+    actionUndoZoom,
+    actionResetZoom,
+    CONTEXT_MENU_SEPARATOR,
+    // 泳道置顶
+    actionUnpinAll,
     actionPinByGroupNameValue,
     actionUnpinByGroupNameValue,
-    actionParseCardsOfRelatedGroup,
+    CONTEXT_MENU_SEPARATOR,
+    // 泳道偏移（对齐）
+    actionSetBenchmarkSlice,
+    actionClearBenchmarkSlice,
+    actionRecoverDefaultOffset,
+    CONTEXT_MENU_SEPARATOR,
+    // 泳道收缩
+    actionCollapseAllUnits,
+    actionExpandAllUnits,
+    CONTEXT_MENU_SEPARATOR,
+    // 泳道隐藏
     actionMergeUnits,
     actionUnmergeUnits,
+    actionHideUnits,
+    actionShowHiddenUnits,
+    CONTEXT_MENU_SEPARATOR,
+    // 隐藏相关事件
+    actionShowPythonCallStack,
+    actionHidePythonCallStack,
+    actionHideFlagEvents,
+    actionShowFlagEvents,
+    CONTEXT_MENU_SEPARATOR,
+    // 高度自适应
+    actionEnableAutoUnitHeight,
+    actionDisableAutoUnitHeight,
+    CONTEXT_MENU_SEPARATOR,
+    // 在 Events View 中显示
+    actionShowInEventsView,
 ];
 
 const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
@@ -178,10 +204,27 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         return <></>;
     }
 
+    const filteredItems = contextMenuItems
+        .filter(menuItem => menuItem === CONTEXT_MENU_SEPARATOR || (menuItem.visible?.(session) ?? true));
+
+    if (filteredItems[filteredItems.length - 1] === CONTEXT_MENU_SEPARATOR) {
+        filteredItems.pop();
+    }
+
     return <>
-        {[contextMenuItems
-            .filter(menuItem => menuItem.visible?.(session) ?? true)
-            .map(item => {
+        {
+            filteredItems.map((item, index) => {
+                if (
+                    item === CONTEXT_MENU_SEPARATOR &&
+                    (!filteredItems[index - 1] || filteredItems[index - 1] === CONTEXT_MENU_SEPARATOR)
+                ) {
+                    return null;
+                }
+
+                if (item === CONTEXT_MENU_SEPARATOR) {
+                    return <Separator key={index} />;
+                }
+
                 const disabled = item.disabled?.(session) ?? false;
                 let label = '';
                 if (typeof item.label === 'function') {
@@ -205,8 +248,8 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
                     <div className="menu-item__label">{label}</div>
                     <kbd className="menu-item__shortcut">{item.name ? getShortcutFromShortcutName(item.name as ShortcutName) : ''}</kbd>
                 </MenuItem>;
-            }),
-        ]}
+            })
+        }
     </>;
 };
 

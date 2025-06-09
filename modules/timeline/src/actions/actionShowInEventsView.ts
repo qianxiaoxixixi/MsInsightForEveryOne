@@ -34,7 +34,7 @@ const isEventMenuVisible = (session: Session): boolean => {
 
 export const actionShowInEventsView = register({
     name: 'showInEventsView',
-    label: 'timeline:contextMenu.Show in events view',
+    label: 'timeline:contextMenu.Show in Events View',
     visible: (session) => isEventMenuVisible(session),
     perform: (session): void => {
         runInAction(() => {
