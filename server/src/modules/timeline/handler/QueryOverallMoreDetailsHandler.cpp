@@ -138,7 +138,8 @@ void QueryOverallMoreDetailsHandler::GetCommunicationOverallMetricDetails(
         std::string type = DataBaseManager::Instance().GetDataType() == DataType::TEXT ?
             "Communication(Not Overlapped)" : "2";
         ParamsForOAData paramsForOaData = { sql, type, minTimestamp };
-        if (!database->QueryOverlapAnalysisData(paramsForOaData, params.deviceId, notOverlapData, totalTime)) {
+        int deviceId = StringUtil::StringToInt(params.deviceId);
+        if (!database->QueryOverlapAnalysisData(paramsForOaData, deviceId, notOverlapData, totalTime)) {
             ServerLog::Error("Failed to query Communication Overall Metrics due to incorrect not overlapped data.");
             return;
         }

@@ -1304,7 +1304,7 @@ bool TextTraceDatabase::QueryExpAnaAICoreFreqData(const Protocol::SystemViewAICo
         ServerLog::Error("Query system view AI core freq data, fail to prepare sql.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.deviceId);
+    auto resultSet = stmt->ExecuteQuery(StringUtil::StringToInt(requestParams.deviceId));
     if (resultSet == nullptr) {
         ServerLog::Error("Query system view AI core freq data. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1871,7 +1871,8 @@ bool TextTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.deviceId, threshold);
+    int deviceId = StringUtil::StringToInt(params.deviceId);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, deviceId, threshold);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
