@@ -46,7 +46,7 @@ public:
     std::vector<AdviceInfoForSlowRank> GetTopNAdviceInfo(bool &matchSuccess);
 
 protected:
-    int64_t GetParallelSizeByType(const std::string& type) const;
+    uint32_t GetParallelSizeByType(const std::string& type) const;
     void CalStrategyConfig(const std::string &tmpDimension, const ParallelStrategyConfig &tmpConfig);
 
     // get arrangements
@@ -99,7 +99,7 @@ protected:
                              const ParallelStrategyConfig &tmpConfig) const;
     static std::string GetElementNameForTopNAdvice(const ParallelStrategyConfig& tmpConfig,
         std::unordered_map<std::string, uint32_t> &indexAttributes);
-    static int64_t GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
+    static uint32_t GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
                                                           const ParallelStrategyConfig& config);
     TopNAdviceMaintainer CalAdviceInfoByCpDim(const TopNAdviceMaintainer& topNAdviceForPpDim,
         const CommInfoMap &commInTpDimension);

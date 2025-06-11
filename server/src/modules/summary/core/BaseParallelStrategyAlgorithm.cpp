@@ -77,7 +77,7 @@ void BaseParallelStrategyAlgorithm::CalStrategyConfig(const std::string &tmpDime
     wordSize = tpCpSize * tmpConfig.dpSize * tmpConfig.ppSize;
 }
 
-int64_t BaseParallelStrategyAlgorithm::GetParallelSizeByType(const std::string& type) const
+uint32_t BaseParallelStrategyAlgorithm::GetParallelSizeByType(const std::string& type) const
 {
     if (type == DP_PARA) {
         return strategyConfig.dpSize;
@@ -906,7 +906,7 @@ std::string BaseParallelStrategyAlgorithm::GetElementNameForTopNAdvice(const Par
     return name;
 }
 
-int64_t BaseParallelStrategyAlgorithm::GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
+uint32_t BaseParallelStrategyAlgorithm::GetTempParallelSizeByTypeForTopNAdvice(const std::string& type,
     const ParallelStrategyConfig& config)
 {
     if (type == DP_PARA) {
