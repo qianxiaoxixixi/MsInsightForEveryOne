@@ -28,7 +28,7 @@ public:
     bool QueryAdvisorData(const std::string &clusterPath) override;
     void ComputeStatistics() override;
     void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
-private:
+protected:
     std::vector<RetransmissionClassificationInfo> data;
     std::vector<RetransmissionAnalyzerStatistics> statistics;
 };

@@ -9,7 +9,6 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-// LCOV_EXCL_BR_START
 bool PacketAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
@@ -73,7 +72,6 @@ void PacketAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &in
     info.statistics.insert({"Issue",
         {statistics.sdmaIssue ? "Yes" : "No", statistics.rdmaIssue ? "Yes" : "No"}});
 }
-// LCOV_EXCL_BR_STOP
 }
 }
 }

@@ -29,7 +29,7 @@ public:
     bool QueryAdvisorData(const std::string &clusterPath) override;
     void ComputeStatistics() override;
     void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
-private:
+protected:
     std::vector<CommunicationLargeOperatorInfo> data;
     ByteAlignmentAnalyzerStatistics statistics;
 };

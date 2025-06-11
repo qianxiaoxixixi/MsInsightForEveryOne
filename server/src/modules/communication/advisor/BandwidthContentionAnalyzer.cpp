@@ -9,7 +9,6 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-// LCOV_EXCL_BR_START
 bool BandwidthContentionAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     std::vector<IterationsOrRanksObject> rankList;
@@ -74,7 +73,6 @@ void BandwidthContentionAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAd
         info.statistics["bandwidth(GB/s)"].emplace_back(std::to_string(item.bandwidth));
     }
 }
-// LCOV_EXCL_BR_STOP
 }
 }
 }
