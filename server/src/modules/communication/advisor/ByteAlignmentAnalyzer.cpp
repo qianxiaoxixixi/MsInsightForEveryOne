@@ -9,7 +9,6 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-// LCOV_EXCL_BR_START
 bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     std::vector<IterationsOrRanksObject> rankList;
@@ -18,7 +17,7 @@ bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
         Server::ServerLog::Error("Failed to get ranks data when query byte alignment data.");
         return false;
     }
-    for (const auto rank : rankList) {
+    for (const auto &rank : rankList) {
         auto timelineDatabase = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(rank.iterationOrRankId);
         if (!timelineDatabase) {
             timelineDatabase =
@@ -39,7 +38,7 @@ void ByteAlignmentAnalyzer::ComputeStatistics()
     for (const auto &item : data) {
         bool flag = false;
         for (const auto &memcpyItem : item.memcpyTasks) {
-            if (memcpyItem.transportType != "SDMA" || memcpyItem.linkType == "ON CHIP" ||
+            if (memcpyItem.transportType != "SDMA" || memcpyItem.linkType == "ON_CHIP" ||
                 memcpyItem.size <= BYTE_ALIGNMENT_SMALL_SIZE) {
                 continue;
             }
@@ -48,7 +47,7 @@ void ByteAlignmentAnalyzer::ComputeStatistics()
             }
         }
         for (const auto &reduceItem : item.reduceInlineTasks) {
-            if (reduceItem.transportType != "SDMA" || reduceItem.linkType == "ON CHIP" ||
+            if (reduceItem.transportType != "SDMA" || reduceItem.linkType == "ON_CHIP" ||
                 reduceItem.size <= BYTE_ALIGNMENT_SMALL_SIZE) {
                 continue;
             }
@@ -68,7 +67,6 @@ void ByteAlignmentAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorI
     info.statistics.insert({"Small Size(Byte)", {std::to_string(statistics.smallSize)}});
     info.statistics.insert({"Abnormal Operator Count", {std::to_string(statistics.abnormalOperatorCount)}});
 }
-// LCOV_EXCL_BR_STOP
 }
 }
 }

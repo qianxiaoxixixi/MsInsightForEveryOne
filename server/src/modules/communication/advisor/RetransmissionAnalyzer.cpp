@@ -9,7 +9,6 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-// LCOV_EXCL_BR_START
 bool RetransmissionAnalyzer::QueryAdvisorData(const std::string &clusterPath)
 {
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(clusterPath);
@@ -43,7 +42,6 @@ void RetransmissionAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisor
         info.statistics["name"].emplace_back(item.opName);
     }
 }
-// LCOV_EXCL_BR_STOP
 }
 }
 }
