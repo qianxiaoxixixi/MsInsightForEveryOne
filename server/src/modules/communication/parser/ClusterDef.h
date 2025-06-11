@@ -134,27 +134,27 @@ const std::string DP_INDEX = "dpIndex";
 const std::string TP_INDEX = "tpIndex";
 const std::string EP_INDEX = "epIndex";
 const std::string MOE_TP_INDEX = "moeTpIndex";
-const int64_t MAX_PARALLEL_SIZE = 10000;
-const int64_t MAX_WORLD_SIZE = 1000000;
+const uint32_t MAX_PARALLEL_SIZE = 10000;
+const uint64_t MAX_WORLD_SIZE = 1000000;
 
 struct ParallelStrategyConfigForMindSpeed {
     bool useTp2D = false;
-    int64_t nd1dim1 = 1;
-    int64_t nd2dim1 = 1;
+    uint32_t nd1dim1 = 1;
+    uint32_t nd2dim1 = 1;
     std::string cpAlgo;
-    int64_t ulyssesDegree = 1;
-    int64_t winSize = 1;
+    uint32_t ulyssesDegree = 1;
+    uint32_t winSize = 1;
 };
 bool operator==(const ParallelStrategyConfigForMindSpeed& lhs, const ParallelStrategyConfigForMindSpeed& rhs);
 
 struct ParallelStrategyConfig {
     std::string algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
-    int64_t ppSize{};
-    int64_t tpSize{};
-    int64_t dpSize{};
-    int64_t cpSize = 1;
-    int64_t epSize = 1;
-    int64_t moeTpSize = 1;
+    uint32_t ppSize{};
+    uint32_t tpSize{};
+    uint32_t dpSize{};
+    uint32_t cpSize = 1;
+    uint32_t epSize = 1;
+    uint32_t moeTpSize = 1;
     std::string clusterPath;
     ParallelStrategyConfigForMindSpeed configForMindSpeed;
     bool CheckParams(std::string &errorMsg) const;
@@ -327,7 +327,7 @@ struct RankMap {
 };
 
 struct ArrangementAndConnectionData {
-    uint32_t size;
+    uint32_t size{};
     std::vector<IndicatorAttr> indicators;
     std::vector<Element> arrangements; // rank or group arrangement and performance data
     std::vector<Connection> connections; // connection between ranks or groups

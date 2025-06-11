@@ -758,15 +758,19 @@ bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &
         return false;
     }
     bool flag = false;
-    int64_t ppSize{};
-    int64_t dpSize{};
-    int64_t prePpIndex{};
-    int64_t preDpIndex{};
+    uint32_t prePpIndex{};
+    uint32_t preDpIndex{};
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        dpSize = sqlite3_column_int64(stmt, col++);
-        ppSize = sqlite3_column_int64(stmt, col++);
-        config.tpSize = std::max(config.tpSize, (int64_t)sqlite3_column_int64(stmt, col++));
+        int rawDpSize = sqlite3_column_int(stmt, col++);
+        int rawPpSize = sqlite3_column_int(stmt, col++);
+        int rawTpSize = sqlite3_column_int(stmt, col++);
+        if (rawDpSize < 0 || rawPpSize < 0 || rawTpSize < 0) {
+            return false;
+        }
+        auto dpSize = static_cast<uint32_t>(rawDpSize);
+        auto ppSize = static_cast<uint32_t>(rawPpSize);
+        config.tpSize = std::max(config.tpSize, static_cast<uint32_t>(rawTpSize));
         config.dpSize = std::max(config.dpSize, dpSize);
         config.ppSize = std::max(config.ppSize, ppSize);
         // 通过判断dp和pp哪个先增加，来判断tp-dp-pp还是tp-pp-dp

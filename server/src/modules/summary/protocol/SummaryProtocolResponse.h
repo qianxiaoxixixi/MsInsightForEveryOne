@@ -192,7 +192,7 @@ struct QueryParallelStrategyResponse : public Response {
     QueryParallelStrategyResponse() : Response(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {}
     Module::ParallelStrategyConfig config;
     std::string level;
-    const int64_t validValue = 1;
+    const uint32_t validValue = 1;
     bool IsValid() const
     {
         if (config.ppSize < validValue || config.tpSize < validValue || config.dpSize < validValue) {
