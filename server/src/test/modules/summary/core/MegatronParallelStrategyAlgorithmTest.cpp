@@ -416,3 +416,228 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldRe
         EXPECT_EQ(item.indicators[VALUE_SUM_OF_MAX + KEY_TOTAL_COMPUTING_TIME], EXPECTED_COMPUTING[i++]);
     }
 }
+
+ /**
+ * using CommInfoMap = std::unordered_map<std::string, std::vector<CommInfoUnderRank>>;
+ * CommInfoMap: key: rankId, value: CommInfoUnderRankList
+ * rank0-6: commTime = 123.45, rank7: commTime = 0.01
+  * @param pgName
+  */
+CommInfoMap PrepareCommDataForTestCalAdviceInfoByCommInfo(const std::string& pgName)
+{
+    CommInfoMap commInTpDimension;
+    CommInfoUnderRank info;
+    info.commTime = 123.45; // 123.45
+    info.pgName = pgName;
+    info.rankSet = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    info.rankId = "0";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "1";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "2";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "3";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "4";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "5";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "6";
+    commInTpDimension[info.rankId].push_back(info);
+    info.rankId = "7";
+    info.commTime = 0.01; // 0.01
+    commInTpDimension[info.rankId].push_back(info);
+    return commInTpDimension;
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, CalAdviceInfoByCommInfo_ShouldReturnTrue_TestWithDP8)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.dpSize = 8; // 8
+    config.ppSize = 1;
+    config.tpSize = 1;
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    CommInfoMap commInTpDimension = PrepareCommDataForTestCalAdviceInfoByCommInfo("dp");
+    algorithm.CalAdviceInfoByCommInfo(commInTpDimension);
+    bool matchSuccess;
+    std::vector<AdviceInfoForSlowRank> adviceList = algorithm.GetTopNAdviceInfo(matchSuccess);
+    EXPECT_TRUE(matchSuccess);
+    EXPECT_EQ(adviceList.size(), 1);
+    EXPECT_EQ(adviceList[0].index, 7); // 7
+    EXPECT_EQ(adviceList[0].name, "dp7");
+    EXPECT_EQ(adviceList[0].synchronizeTime["dp"], 123.44); // 123.44 = 123.45 - 0.01
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, CalAdviceInfoByCommInfo_ShouldReturnTrue_TestWithCP8)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.dpSize = 1;
+    config.ppSize = 1;
+    config.tpSize = 1;
+    config.cpSize = 8; // 8
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    CommInfoMap commInTpDimension = PrepareCommDataForTestCalAdviceInfoByCommInfo("cp");
+    algorithm.CalAdviceInfoByCommInfo(commInTpDimension);
+    bool matchSuccess;
+    std::vector<AdviceInfoForSlowRank> adviceList = algorithm.GetTopNAdviceInfo(matchSuccess);
+    EXPECT_TRUE(matchSuccess);
+    EXPECT_EQ(adviceList.size(), 1);
+    EXPECT_EQ(adviceList[0].index, 7); // 7
+    EXPECT_EQ(adviceList[0].name, "cp7");
+    EXPECT_EQ(adviceList[0].synchronizeTime["cp"], 123.44); // 123.44 = 123.45 - 0.01
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, CalAdviceInfoByCommInfo_ShouldReturnTrue_TestWithTP8)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.dpSize = 1;
+    config.ppSize = 1;
+    config.tpSize = 8; // 8
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    CommInfoMap commInTpDimension = PrepareCommDataForTestCalAdviceInfoByCommInfo("tp");
+    algorithm.CalAdviceInfoByCommInfo(commInTpDimension);
+    bool matchSuccess;
+    std::vector<AdviceInfoForSlowRank> adviceList = algorithm.GetTopNAdviceInfo(matchSuccess);
+    EXPECT_TRUE(matchSuccess);
+    EXPECT_EQ(adviceList.size(), 1);
+    EXPECT_EQ(adviceList[0].index, 7); // 7
+    EXPECT_EQ(adviceList[0].name, "tp7");
+    EXPECT_EQ(adviceList[0].synchronizeTime["tp"], 123.44); // 123.44 = 123.45 - 0.01
+}
+
+/**
+ * DIMENSION_CP: slow group:cp0, contain ranks: 0-7
+ * DIMENSION_TP: slow rank:tp0-tp7
+ */
+TEST_F(MegatronParallelStrategyAlgorithmTest, CalAdviceInfoByCommInfo_ShouldReturnTrue_TestWithCP2TP8)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.dpSize = 1;
+    config.ppSize = 1;
+    config.tpSize = 8; // 8
+    config.cpSize = 2; // 2
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    CommInfoMap commInTpDimension = PrepareCommDataForTestCalAdviceInfoByCommInfo("tp");
+    CommInfoUnderRank info;
+    info.commTime = 0.01; // 0.01
+    info.pgName = "cp";
+    info.rankSet = "(0, 8)";
+    info.rankId = "0";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 100.01; // 100.01
+    info.rankId = "8";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 0.01; // 0.01
+    info.rankSet = "(1, 9)";
+    info.rankId = "1";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 100.01; // 100.01
+    info.rankId = "9";
+    commInTpDimension[info.rankId].push_back(info);
+    algorithm.CalAdviceInfoByCommInfo(commInTpDimension);
+    bool matchSuccess;
+    std::vector<AdviceInfoForSlowRank> adviceList = algorithm.GetTopNAdviceInfo(matchSuccess);
+    EXPECT_TRUE(matchSuccess);
+    EXPECT_EQ(adviceList.size(), 3);
+    EXPECT_EQ(adviceList[0].index, 7); // 7
+    EXPECT_EQ(adviceList[0].name, "cp0-tp7");
+    EXPECT_EQ(adviceList[0].synchronizeTime["tp"], 123.44); // 123.44 = 123.45 - 0.01
+    EXPECT_EQ(adviceList[0].synchronizeTime["cp"], 100); // 100 = 100.01 - 0.01
+}
+
+/**
+ * DIMENSION_PP: slow group:dp0, contain ranks: 0-7
+ * DIMENSION_TP: slow rank:tp0-tp7
+ */
+TEST_F(MegatronParallelStrategyAlgorithmTest, CalAdviceInfoByCommInfo_ShouldReturnTrue_TestWithDP2TP8)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.dpSize = 2; // 2
+    config.ppSize = 1;
+    config.tpSize = 8; // 8
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    CommInfoMap commInTpDimension = PrepareCommDataForTestCalAdviceInfoByCommInfo("tp");
+    CommInfoUnderRank info;
+    info.commTime = 0.01; // 0.01
+    info.pgName = "dp";
+    info.rankSet = "(0, 8)";
+    info.rankId = "0";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 100.01; // 100.01
+    info.rankId = "8";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 0.01; // 0.01
+    info.rankSet = "(1, 9)";
+    info.rankId = "1";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 100.01; // 100.01
+    info.rankId = "9";
+    commInTpDimension[info.rankId].push_back(info);
+    algorithm.CalAdviceInfoByCommInfo(commInTpDimension);
+    bool matchSuccess;
+    std::vector<AdviceInfoForSlowRank> adviceList = algorithm.GetTopNAdviceInfo(matchSuccess);
+    EXPECT_TRUE(matchSuccess);
+    EXPECT_EQ(adviceList.size(), 3);
+    EXPECT_EQ(adviceList[0].index, 7); // 7
+    EXPECT_EQ(adviceList[0].name, "dp0-tp7");
+    EXPECT_EQ(adviceList[0].synchronizeTime["tp"], 123.44); // 123.44 = 123.45 - 0.01
+    EXPECT_EQ(adviceList[0].synchronizeTime["dp"], 100); // 100 = 100.01 - 0.01
+}
+
+/**
+ * DIMENSION_PP: slow group:dp0, contain ranks: 0-7
+ * DIMENSION_CP: slow rank:cp0-cp7
+ */
+TEST_F(MegatronParallelStrategyAlgorithmTest, CalAdviceInfoByCommInfo_ShouldReturnTrue_TestWithDP2CP8)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.dpSize = 2; // 2
+    config.ppSize = 1;
+    config.tpSize = 1;
+    config.cpSize = 8; // 8
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    CommInfoMap commInTpDimension = PrepareCommDataForTestCalAdviceInfoByCommInfo("cp");
+    CommInfoUnderRank info;
+    info.commTime = 0.01; // 0.01
+    info.pgName = "dp";
+    info.rankSet = "(0, 8)";
+    info.rankId = "0";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 100.01; // 100.01
+    info.rankId = "8";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 0.01; // 0.01
+    info.rankSet = "(1, 9)";
+    info.rankId = "1";
+    commInTpDimension[info.rankId].push_back(info);
+    info.commTime = 100.01; // 100.01
+    info.rankId = "9";
+    commInTpDimension[info.rankId].push_back(info);
+    algorithm.CalAdviceInfoByCommInfo(commInTpDimension);
+    bool matchSuccess;
+    std::vector<AdviceInfoForSlowRank> adviceList = algorithm.GetTopNAdviceInfo(matchSuccess);
+    EXPECT_TRUE(matchSuccess);
+    EXPECT_EQ(adviceList.size(), 3);
+    EXPECT_EQ(adviceList[0].index, 7); // 7
+    EXPECT_EQ(adviceList[0].name, "dp0-cp7");
+    EXPECT_EQ(adviceList[0].synchronizeTime["cp"], 123.44); // 123.44 = 123.45 - 0.01
+    EXPECT_EQ(adviceList[0].synchronizeTime["dp"], 100); // 100 = 100.01 - 0.01
+}
