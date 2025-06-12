@@ -13,10 +13,9 @@ strip = "symbols"
 
 [dependencies]
 wry = { registry = "openSources", version="0.24.3", features = ["file-drop"], optional = true }
-uuid = { registry = "openSources", version = "1.7.0", features = ["v4"], optional = true }
 
 [features]
-default = ["wry", "uuid"]
+default = ["wry"]
 http = []
 
 [package.metadata.bundle]

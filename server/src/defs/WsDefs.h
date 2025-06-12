@@ -11,10 +11,8 @@
 namespace Dic {
 // websocket close code & reason
 static const unsigned short URL_NULL_CODE = 1;
-static const unsigned short SID_UN_CORRECT_CODE = 2;
 static const std::map<unsigned short, std::string> WS_CLOSE_CODE_REASON = {
     { URL_NULL_CODE, "url is null" },
-    { SID_UN_CORRECT_CODE, "sid is not correct" },
     { 1000, "Connection was closed normally." },
     { 1001, "An endpoint is going away." },
     { 1002, "An endpoint is terminating the connection due to a protocol error." },

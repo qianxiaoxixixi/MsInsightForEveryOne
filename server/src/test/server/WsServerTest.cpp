@@ -38,7 +38,7 @@ public:
 TEST_F(WsServerTest, ws_server_test_001)
 {
     int port = 8080;
-    WsServerDerived wsServer("localhost", port, "sid");
+    WsServerDerived wsServer("localhost", port);
     WsChannel* ws = nullptr;
     EXPECT_NO_THROW(wsServer.OnOpenCb(ws));
 }
@@ -52,7 +52,7 @@ TEST_F(WsServerTest, ws_server_on_close_cb_test_001)
 {
     int port = 8080;
     int code = 1000;
-    WsServerDerived wsServer("localhost", port, "sid");
+    WsServerDerived wsServer("localhost", port);
     wsServer.OnCloseCb(nullptr, code, "Normal closure");
     // No assertions needed as the function should return immediately
 }
@@ -65,7 +65,7 @@ TEST_F(WsServerTest, ws_server_on_close_cb_test_001)
 TEST_F(WsServerTest, ws_server_on_message_cb_test_001)
 {
     int port = 8080;
-    WsServerDerived wsServer("localhost", port, "sid");
+    WsServerDerived wsServer("localhost", port);
     wsServer.OnMessageCb(nullptr, "test message", uWS::OpCode::TEXT);
     // No assertions needed as the function should return immediately
 }
@@ -78,7 +78,7 @@ TEST_F(WsServerTest, ws_server_on_message_cb_test_001)
 TEST_F(WsServerTest, ws_server_on_message_cb_test_002)
 {
     int port = 8080;
-    WsServerDerived wsServer("localhost", port, "sid");
+    WsServerDerived wsServer("localhost", port);
     Dic::Server::WsChannel wsChannel;
     wsServer.OnMessageCb(&wsChannel, "test message", uWS::OpCode::TEXT);
     // No assertions needed as the function should log an error

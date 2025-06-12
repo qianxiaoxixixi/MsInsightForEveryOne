@@ -18,7 +18,7 @@ namespace Dic {
 namespace Server {
 class WsServer : public BaseServer {
 public:
-    WsServer(const std::string &host, int port, const std::string &sid);
+    WsServer(const std::string &host, int port);
 
     ~WsServer() noexcept override = default;
 

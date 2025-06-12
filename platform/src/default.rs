@@ -61,8 +61,7 @@ fn server_path(root_path: &PathBuf) -> Option<PathBuf> {
 fn run_server(
     root_path: &PathBuf,
     cache_path: &PathBuf,
-    port: &mut String,
-    sid: &String,
+    port: &mut String
 ) -> Option<Mutex<Child>> {
     let binding = server_path(root_path)?;
     let Some(path) = binding.to_str() else { return None };
@@ -89,7 +88,6 @@ fn run_server(
     match server_command
         .arg(format!("--wsPort={}", port))
         .arg(format!("--logPath={}", cache_path.display()))
-        .arg(format!("--sid={}", sid))
         .spawn()
     {
         Ok(child) => Some(Mutex::new(child)),
@@ -190,9 +188,8 @@ pub fn main() {
     }
 
     let mut port: String = String::new();
-    let sid = uuid::Uuid::new_v4().to_string();
 
-    if let Some(child) = run_server(&root_path, &cache_path, &mut port, &sid) {
-        let _ = webview::run_script(Arc::new(child), &root_path, &port.as_str(), &sid);
+    if let Some(child) = run_server(&root_path, &cache_path, &mut port) {
+        let _ = webview::run_script(Arc::new(child), &root_path, &port.as_str());
     }
 }
