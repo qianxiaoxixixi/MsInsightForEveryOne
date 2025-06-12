@@ -165,23 +165,23 @@ interface PinButtonProps {
     hasPinButton: boolean;
     isPinned: boolean;
 }
-const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }: PinButtonProps): JSX.Element => {
+const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned: _isPinned }: PinButtonProps): JSX.Element => {
     const { t } = useTranslation();
     const style = { backgroundColor: 'transparent', marginLeft: 1 };
     const placeholder = <StyledButton style={style} icon={<StickyIcon fill="transparent" />} />;
     return <>
-        {shouldDisplayStickyButton(session, isHovered, hasPinButton, isPinned)
-            ? <Tooltip title={t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
+        {shouldDisplayStickyButton(session, isHovered, hasPinButton, _isPinned)
+            ? <Tooltip title={t(`headerButtonTooltip:${_isPinned ? 'UnpinButton' : 'PinButton'}`)}>
                 <StyledButton
                     data-testid={'pin-btn'}
                     style={style}
-                    icon={isPinned ? <PinIcon/> : <UnPinIcon/>}
+                    icon={_isPinned ? <PinIcon/> : <UnPinIcon/>}
                     onClick={(e: React.MouseEvent): void => {
                         e.stopPropagation();
                         e.preventDefault();
                         let execute = (): void => {};
                         const { pinnedUnits } = session;
-                        if (!isPinned) {
+                        if (!_isPinned) {
                             execute = (): void => {
                                 platform.trace('stickyLane', {});
                                 pinnedUnits.push(unit);
