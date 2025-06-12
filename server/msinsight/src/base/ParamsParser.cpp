@@ -47,10 +47,6 @@ bool ParamsParser::ParseField(const std::string &data)
     if (pos != std::string::npos) {
         return ParseLogSize(data.substr(pos + symbolLogSize.length()));
     }
-    pos = data.find(symbolSid);
-    if (pos != std::string::npos) {
-        return ParseSid(data.substr(pos + symbolSid.length()));
-    }
     pos = data.find(symbolScan);
     if (pos != std::string::npos) {
         ParseScan(data.substr(pos + symbolScan.length()));
@@ -135,14 +131,6 @@ bool ParamsParser::ParseLogLevel(const std::string &logLevel)
 {
     if (!logLevel.empty()) {
         option.logLevel = logLevel;
-    }
-    return true;
-}
-
-bool ParamsParser::ParseSid(const std::string &sid)
-{
-    if (!sid.empty()) {
-        option.sid = sid;
     }
     return true;
 }

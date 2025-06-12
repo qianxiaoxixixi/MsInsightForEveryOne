@@ -52,7 +52,7 @@ void ParamsOptionInfo()
 void StartServer(const ParamsOption &option)
 {
     ServerLog::Info("=============================== Server Start ===============================");
-    WsServer server(option.host, option.wsPort, option.sid);
+    WsServer server(option.host, option.wsPort);
     server.Start();
     const int checkInterval = 1000;
     while (server.IsStart()) {

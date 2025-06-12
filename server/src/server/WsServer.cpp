@@ -14,7 +14,7 @@
 
 namespace Dic {
 namespace Server {
-WsServer::WsServer(const std::string &host, int port, const std::string &sid) : BaseServer(host, port, sid) {}
+WsServer::WsServer(const std::string &host, int port) : BaseServer(host, port) {}
 
 bool WsServer::Start()
 {
@@ -78,11 +78,9 @@ uWS::App::WebSocketBehavior<WsUserData> WsServer::CreateWsBehavior()
         .maxLifetime = 0,
         .upgrade =
             [](auto *res, uWS::HttpRequest *req, auto *context) {
-                std::string_view sid = req->getQuery("sid");
                 std::string_view url = req->getUrl();
                 res->template upgrade<WsUserData>(
-                    {
-                        .reqUrl = url.data(), .sid = std::string(sid) },
+                    { .reqUrl = url.data() },
                     req->getHeader("sec-websocket-key"), req->getHeader("sec-websocket-protocol"),
                     req->getHeader("sec-websocket-extensions"), context);
             },
@@ -123,11 +121,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
         ws->end(URL_NULL_CODE, "url is null");
         return;
     }
-    if (!sid.empty() && sid != ws->getUserData()->sid) {
-        ServerLog::Info("Accept new session failed, channel = ", ws, " sid is not correct");
-        ws->end(SID_UN_CORRECT_CODE, WS_CLOSE_CODE_REASON.at(SID_UN_CORRECT_CODE));
-        return;
-    }
+
     if (WsSessionManager::Instance().GetSession() != nullptr) {
         ServerLog::Error("Not Connect, already connecting");
         return;

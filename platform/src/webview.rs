@@ -28,7 +28,6 @@ fn create_webview(
     window: Window,
     resource_path: Arc<PathBuf>,
     port: &str,
-    sid: &String,
     proxy: Arc<EventLoopProxy<PathBuf>>,
 ) -> wry::Result<WebView> {
     WebViewBuilder::new(window)?
@@ -46,7 +45,7 @@ fn create_webview(
                 .body(content)
                 .map_err(Into::into)
         })
-        .with_url(format!("wry://localhost/resources/profiler/frontend/index.html?port={}&sid={}", port, sid).as_str())?
+        .with_url(format!("wry://localhost/resources/profiler/frontend/index.html?port={}", port).as_str())?
         .with_file_drop_handler(move |_, ev| {
             match ev {
                 FileDropEvent::Dropped(paths) => {
@@ -136,8 +135,7 @@ fn macos_menu() -> MenuBar {
 pub fn run_script(
     server_process: Arc<Mutex<Child>>,
     root_path: &PathBuf,
-    port: &str,
-    sid: &String,
+    port: &str
 ) -> wry::Result<()> {
     let event_loop = EventLoop::with_user_event();
 
@@ -162,7 +160,7 @@ pub fn run_script(
     #[cfg(windows)]
     set_windows_icon(&window, root_path);
 
-    let webview = create_webview(window, resource_path, port, sid, proxy)?;
+    let webview = create_webview(window, resource_path, port, proxy)?;
 
     Ok(run_event_loop(event_loop, server_process, webview))
 }

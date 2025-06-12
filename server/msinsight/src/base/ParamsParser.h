@@ -16,7 +16,6 @@ struct ParamsOption {
     int wsPort = -1;
     int logSize = 10 * 1024 * 1024;
     string host = "127.0.0.1";
-    string sid;
     string logLevel = "INFO";
     string logPath = "./";
     string eventDir;
@@ -40,7 +39,6 @@ private:
     bool ParseLogPath(const std::string &logPath);
     bool ParseLogSize(const std::string &logSize);
     bool ParseLogLevel(const std::string &logLevel);
-    bool ParseSid(const std::string &sid);
     void ParseScan(const std::string &scan);
     bool ParseEventDir(const string &eventDir);
 
@@ -49,7 +47,6 @@ private:
     const string symbolLogPath = "--logPath=";
     const string symbolLogSize = "--logSize=";
     const string symbolLogLevel = "--logLevel=";
-    const string symbolSid = "--sid=";
     const string symbolScan = "--scan=";
     const string symbolEventDir = "--eventDir=";
     const int minPortNum = 9000;
