@@ -271,7 +271,11 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
-
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "operator");
+        if (request.params.deviceId.empty()) {
+            ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
+            return false;
+        }
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
@@ -320,6 +324,11 @@ namespace Dic::Module::Operator {
     {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId);
+        request.params.deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "operator");
+        if (request.params.deviceId.empty()) {
+            ServerLog::Error("[Operator]Failed to get CsvHandle in export op detail because empty device id.");
+            return false;
+        }
         OperatorStatisticReqParams statisticReqParams = {
             isCompare: request.params.isCompare,
             rankId: request.params.rankId,
