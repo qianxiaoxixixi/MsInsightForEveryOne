@@ -760,7 +760,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
                                      "WHERE cid >= ( "
                                      "    SELECT cid "
                                      "    FROM pragma_table_info('" + TABLE_KERNEL + "') "
-                                     "    WHERE name = '" + FIELD_AICORE_TIME + "'"
+                                     "    WHERE name = 'aicore_time_us_'"
                                      ");";
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, queryColumnSql.c_str(), -1, &stmt, nullptr);

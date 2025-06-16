@@ -323,6 +323,8 @@ const heightMap = new Map();
 const threadIsCol: Map<string, boolean> = new Map();
 // 是否是进程缩略图
 const processIsCol: Map<string, boolean> = new Map();
+// 是否是卡折叠
+const cardIsCol: Map<string, boolean> = new Map();
 // 泳道是否已隐藏
 const unitIsHidden: Map<string, boolean> = new Map();
 
@@ -442,6 +444,7 @@ export const draw = (props: DrawCanvasArgs): void => {
     heightMap.clear();
     threadIsCol.clear();
     processIsCol.clear();
+    cardIsCol.clear();
     unitIsHidden.clear();
     const pinnedScrollArea = document.querySelector('#main-container .topC');
     const pinnedAreaHeight = pinnedScrollArea?.clientHeight ?? 0;
@@ -475,21 +478,35 @@ export const drawMEventMask = (props: DrawCanvasArgs): void => {
     }
 };
 
-const UNDRAW_HEIGHT = 45;
+const UNDRAW_HEIGHT = 45 + 2; // 45 指时间轴+旗帜轴的高度之和，2 指 useDraggableContainerEx css 中的 border-top: ${(p): string => p.theme.dividerColor} 2px solid;
 const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
     const processHeight = heightMap.get(`${cardId}-${data.pid}`);
-    const cardHeight = heightMap.get(`${cardId}`);
+    let cardHeight = heightMap.get(`${cardId}`);
+    let isUsingHostCardHeight = false;
+    // 如果是全量db，卡结尾是 .db (说明是 Host 下的 ProcessUnit 卡)，且没有高度（说明 Host 折叠了），那么取 Host 的高度作为卡高度
+    if (session.isFullDb && cardId.endsWith('.db') && cardHeight === undefined) {
+        const key = [...heightMap.keys()].find((key) => key.endsWith('Host'));
+        if (key !== undefined) {
+            cardHeight = heightMap.get(key);
+            isUsingHostCardHeight = true;
+        }
+    }
     // 卡折叠的情况
     if (unitHeight === undefined && processHeight === undefined) {
-        height = UNDRAW_HEIGHT + cardHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
+        height = UNDRAW_HEIGHT + cardHeight - session.scrollTop + (0.5 * (isUsingHostCardHeight ? UnitHeight.STANDARD : UnitHeight.UPPER));
+        if (session.isFullDb) { // 全量 db 情况，卡折叠时隐藏
+            cardIsCol.set(`${cardId}`, true);
+        }
         return height;
     }
     // 进程折叠的情况
     if (unitHeight === undefined && processHeight !== undefined) {
         height = UNDRAW_HEIGHT + processHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
-        processIsCol.set(`${cardId}-${data.pid}`, true);
+        if (!session.isFullDb) { // 非全量 db 情况，进程折叠时隐藏
+            processIsCol.set(`${cardId}-${data.pid}`, true);
+        }
         return height;
     }
     const isCol = threadIsCol.get(`${cardId}-${data.pid}-${data.tid}`);
@@ -538,7 +555,8 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     if (sourceOrTargetLinkUnitIsHidden({ targetCardId, sourceCardId, to, from })) {
         return;
     }
-    if (processIsCol.get(`${targetCardId}-${to.pid}`) && processIsCol.get(`${sourceCardId}-${from.pid}`)) {
+    if ((cardIsCol.get(`${targetCardId}`) ?? processIsCol.get(`${targetCardId}-${to.pid}`)) &&
+        (cardIsCol.get(`${sourceCardId}`) ?? processIsCol.get(`${sourceCardId}-${from.pid}`))) {
         return;
     }
     if ((sourceY === undefined || targetY === undefined)) {

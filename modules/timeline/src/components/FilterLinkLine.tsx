@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import styled from '@emotion/styled';
+import _ from 'lodash';
 import { Button, Checkbox, Input, Tooltip } from 'ascend-components';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useRef, useState } from 'react';
@@ -12,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { StyledEmpty } from './base/StyledEmpty';
 import { action, runInAction } from 'mobx';
 import type { InsightUnit, LinkLines } from '../entity/insight';
-import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
+import { CardUnit, ProcessUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
 import { CardMetaData, type HostMetaData, ProcessMetaData, ThreadMetaData } from '../entity/data';
@@ -71,18 +72,21 @@ const getCardUnits = (units: InsightUnit[]): InsightUnit[] => {
     });
 };
 
-const getHostChildUnitCardId = (units: InsightUnit[], viewedCardIdSet: Set<string>): string[] => {
-    return units.flatMap(unit => {
-        const res: string[] = [];
-        if (unit instanceof ThreadUnit) {
-            const { cardId } = unit.metadata as { cardId: string };
-            res.push(cardId);
+/**
+ * 找到 host unit 下的打开的 ProcessUnit(相当于 host 下的卡)
+ * @param unit
+ */
+const getHostChildUnitCardInfos = (unit: InsightUnit): Array<{ cardId: string; dbPath: string }> => {
+    if (!Array.isArray(unit.children) || unit.children.length <= 0) {
+        return [];
+    }
+    return unit.children.reduce<Array<{ cardId: string; dbPath: string }>>((openedProcessUnitCardInfos, unit) => {
+        if (unit instanceof ProcessUnit && unit.isExpanded) { // 如果 ProcessUnit 是打开的，则应该显示它所代表的卡的连线数据
+            const { cardId, dbPath } = unit.metadata;
+            openedProcessUnitCardInfos.push({ cardId, dbPath });
         }
-        if (unit.isExpanded && unit.children) {
-            res.push(...getHostChildUnitCardId(unit.children, viewedCardIdSet));
-        }
-        return res;
-    });
+        return openedProcessUnitCardInfos;
+    }, []);
 };
 
 export interface DataBlock {
@@ -122,6 +126,90 @@ const getLockRangeMetaList = (session: Session, cardId: string | undefined): any
     });
 };
 
+interface QueryFlowLinesConfig extends Pick<ProcessMetaData, 'dataSource' | 'cardId' | 'dbPath'> {
+    host: string;
+    category: string;
+    timestampOffset: number;
+    domainStart: number;
+    domainEnd: number;
+    timePerPx: number;
+}
+
+/**
+ * 查询一张卡的连线
+ * @param viewedCardIdSet
+ * @param session
+ * @param config
+ */
+const fetchLinkLineForCard = async (viewedCardIdSet: Set<string>, session: Session,
+    config: QueryFlowLinesConfig): Promise<CategoryEvents['flowDetailList']> => {
+    const { host, dataSource, cardId, dbPath, category, timestampOffset, domainStart, domainEnd, timePerPx } = config;
+    // 如果不在可视范围内就不查询
+    if (!viewedCardIdSet.has(cardId)) {
+        return [];
+    }
+    const start = Math.floor(domainStart + timestampOffset);
+    const end = Math.ceil(domainEnd + timestampOffset);
+    const metadataList = getLockRangeMetaList(session, cardId);
+    const lockStartTime = session.lockRange === undefined ? 0 : Math.floor(session.lockRange[0] + timestampOffset);
+    const lockEndTime = session.lockRange === undefined ? 0 : Math.ceil(session.lockRange[1] + timestampOffset);
+    const params = {
+        rankId: cardId,
+        dbPath,
+        startTime: start,
+        endTime: end,
+        category,
+        timePerPx,
+        isSimulation: session.isSimulation,
+        host,
+        metadataList,
+        lockStartTime,
+        lockEndTime,
+    };
+    return (await window.request(dataSource,
+        { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
+        .map(data => ({ ...data, cardId }));
+};
+/**
+ * 查询 host 下打开的卡的连线
+ * @param unit
+ * @param viewedCardIdSet
+ * @param session
+ * @param config
+ */
+const queryLinkLinesForHostCards = async (unit: InsightUnit, viewedCardIdSet: Set<string>, session: Session, config: Omit<QueryFlowLinesConfig, 'cardId' | 'dbPath'>):
+Promise<CategoryEvents['flowDetailList']> => {
+    const hostProcessCardInfos = getHostChildUnitCardInfos(unit);
+    const chunkedList = _.chunk(hostProcessCardInfos, 8); // 8个为一组分组
+    let res: CategoryEvents['flowDetailList'] = [];
+    for (const batch of chunkedList) {
+        const results = await Promise.all(batch.map(({ cardId, dbPath }) => fetchLinkLineForCard(viewedCardIdSet, session, {
+            ...config,
+            cardId,
+            dbPath,
+        })));
+        res = res.concat(results.flat());
+    }
+    return res;
+};
+
+/**
+ * 去除重复的连线对象
+ * @param arr
+ */
+function uniqueLinkLines(arr: CategoryEvents['flowDetailList']): CategoryEvents['flowDetailList'] {
+    const uniqueArray: CategoryEvents['flowDetailList'] = [];
+    arr.forEach(obj => {
+        const isDuplicate = uniqueArray.some(existingObj => {
+            return existingObj.category === obj.category && _.isEqual(existingObj.from, obj.from) && _.isEqual(existingObj.to, obj.to);
+        });
+        if (!isDuplicate) {
+            uniqueArray.push(obj);
+        }
+    });
+    return uniqueArray;
+}
+
 const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<string>): UseFetchLinkLines => React.useMemo(() => new Map(
     displayCategories.map(category => [
         category,
@@ -134,43 +222,30 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                     continue;
                 }
                 const metadata = unit.metadata as ProcessMetaData;
-                let { dataSource, cardId, dbPath } = metadata;
-                if (cardId?.endsWith('Host')) {
-                    const hostUnits: InsightUnit[] = [];
-                    hostUnits.push(unit);
-                    const hostThreadCardIds = getHostChildUnitCardId(hostUnits, viewedCardIdSet);
-                    cardId = hostThreadCardIds[0];
-                }
-                // 如果不在可视范围内就不查询
-                if (cardId !== undefined && !viewedCardIdSet.has(cardId)) {
-                    continue;
-                }
                 const timestampOffset = getTimeOffset(session, metadata);
-                const start = Math.floor(domainStart + timestampOffset);
-                const end = Math.ceil(domainEnd + timestampOffset);
                 const host = (unit.parent?.metadata as HostMetaData)?.host ?? '';
-                const metadataList = getLockRangeMetaList(session, cardId);
-                const lockStartTime = session.lockRange === undefined ? 0 : Math.floor(session.lockRange[0] + timestampOffset);
-                const lockEndTime = session.lockRange === undefined ? 0 : Math.ceil(session.lockRange[1] + timestampOffset);
-                const params =
-                    {
-                        rankId: cardId,
-                        dbPath,
-                        startTime: start,
-                        endTime: end,
-                        category,
-                        timePerPx,
-                        isSimulation: session.isSimulation,
-                        host,
-                        metadataList,
-                        lockStartTime,
-                        lockEndTime,
-                    };
-                res = res.concat((await window.request(dataSource,
-                    { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
-                    .map(data => ({ ...data, cardId })));
-            };
-            return res;
+                const { dataSource, cardId, dbPath } = metadata;
+                const config = {
+                    dataSource,
+                    host,
+                    category,
+                    timestampOffset,
+                    domainStart,
+                    domainEnd,
+                    timePerPx,
+                };
+                if (cardId === undefined) { continue; }
+                let cardLinkLines: CategoryEvents['flowDetailList'] = [];
+                if (cardId?.endsWith('Host')) {
+                    cardLinkLines = await queryLinkLinesForHostCards(unit, viewedCardIdSet, session, config);
+                } else if (session.isFullDb && (category === 'fwdbwd' || category === 'async_task_queue')) {
+                    // 全量db情况下，只允许 host 下的卡查询 'fwdbwd'、'async_task_queue' 连线，作为 device 的卡不做任何查询操作
+                } else {
+                    cardLinkLines = await fetchLinkLineForCard(viewedCardIdSet, session, { ...config, cardId, dbPath });
+                }
+                res = res.concat(cardLinkLines);
+            }
+            return uniqueLinkLines(res);
         }),
     ]),
 ), [displayCategories, viewedCardIdSet]);
@@ -252,10 +327,10 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
     let { categories: displayCategories, loading } = useGetCategories(session, isSuspend);
     const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
     const [inputValue, setInput] = React.useState<string>();
-    const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedCardIdSet);
+    const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedExpandedCardIdSet);
     const isEmptyData = displayCategories.length === 0;
     const updateLinkLines = React.useCallback(updateSessionLineData(checkedCategories, fetchLinkLinesMap, session),
-        [checkedCategories, session.viewedCardIdSet]);
+        [checkedCategories, session.viewedExpandedCardIdSet]);
     const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
         const trimmedValue = inputContent.trim();
@@ -268,7 +343,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         session.domainRange.domainEnd,
         checkedCategories,
         session?.unitsConfig.offsetConfig.timestampOffset,
-        session.viewedCardIdSet];
+        session.viewedExpandedCardIdSet];
     const updateLineData = (): void => {
         updateLinkLines();
     };

@@ -178,6 +178,10 @@ void FlowAnalyzer::ComputeScreenFlowPoint(const std::vector<FlowPoint> &flowEven
 
 /**
  * 根据连线点组装连线
+ * 连线存在四种类型：1 - S-F; 2 - S-T; 3 - S-T-T-...T-F; 4 - S-F-F-...-F
+ * S - Protocol::LINE_START
+ * T - Protocol::LINE_END_OPTIONAL
+ * F - Protocol::LINE_END
  * @param flowEventsVec 连线点
  * @param category 连线类别
  * @param flowDetailList 结果集
@@ -187,7 +191,8 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
 {
     std::string curFlowId;
     Protocol::FlowLocation location;
-    Protocol::FlowLocation pointTlocation;
+    Protocol::FlowLocation onePointer;
+    Protocol::FlowLocation twoPointer;
     for (const auto &flow : flowEventsVec) {
         std::string type = flow.type;
         std::string flowId = flow.flowId;
@@ -199,25 +204,35 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
             location.type = type;
             location.rankId = flow.rankId;
             // 连线中 起点对终点是一对多关系，因此每一个新的起点都会对上一个起点进行覆盖
-            pointTlocation = location;
+            onePointer = location;
         } else if ((type == Protocol::LINE_END_OPTIONAL || type == Protocol::LINE_END) && flowId == curFlowId) {
             auto flowEvent = std::make_unique<Protocol::UnitSingleFlow>();
             flowEvent->cat = category;
-            flowEvent->from.pid = pointTlocation.pid;
-            flowEvent->from.tid = pointTlocation.tid;
-            flowEvent->from.depth = pointTlocation.depth;
-            flowEvent->from.timestamp = pointTlocation.timestamp;
-            flowEvent->from.rankId = pointTlocation.rankId;
+            Protocol::FlowLocation fromPointer;
+            if (onePointer.type != Protocol::LINE_END) {
+                fromPointer = onePointer;
+                // onePointer 将更新为当前的 flow，更新 twoPointer 为现在的 onePointer
+                twoPointer = onePointer;
+            } else {
+                fromPointer = twoPointer;
+            }
+            // 更新 onePointer
+            onePointer.pid = flow.pid;
+            onePointer.tid = flow.tid;
+            onePointer.depth = flow.depth;
+            onePointer.type = flow.type;
+            onePointer.timestamp = flow.timestamp;
+            onePointer.rankId = flow.rankId;
+            flowEvent->from.pid = fromPointer.pid;
+            flowEvent->from.tid = fromPointer.tid;
+            flowEvent->from.depth = fromPointer.depth;
+            flowEvent->from.timestamp = fromPointer.timestamp;
+            flowEvent->from.rankId = fromPointer.rankId;
             flowEvent->to.pid = flow.pid;
             flowEvent->to.tid = flow.tid;
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
             flowEvent->to.rankId = flow.rankId;
-            pointTlocation.pid = flow.pid;
-            pointTlocation.tid = flow.tid;
-            pointTlocation.depth = flow.depth;
-            pointTlocation.timestamp = flow.timestamp;
-            pointTlocation.rankId = flow.rankId;
             flowDetailList.emplace_back(std::move(flowEvent));
         }
         curFlowId = flowId;

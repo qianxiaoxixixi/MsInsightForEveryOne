@@ -23,6 +23,7 @@ export function recursiveExpandUnit<T extends keyof MetaDataEnumType>(metaDataLi
         return;
     }
     for (const metaData of metaDataList) {
+        metaData.metadata.dbPath = parentUnit.metadata.dbPath as string;
         if (parentUnit.children !== undefined) {
             const existingUnit = parentUnit.children.find(unit => checkMetaData(unit.metadata, metaData));
             if (!existingUnit) {
