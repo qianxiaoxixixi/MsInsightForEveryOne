@@ -281,7 +281,7 @@ export function getRankInfoKey({ clusterId, host, rankName, deviceId }: RankInfo
 }
 
 export function getRankInfoLabel({ clusterId, rankName, deviceId }: RankInfo): string {
-    return `${clusterId} ${rankName} ${deviceId}`.trim();
+    return `${clusterId} ${rankName !== '' ? rankName : deviceId}`.trim();
 }
 
 function transformRankInfo(rankInfo: RankInfo): { clusterId: string; host: string; rankName: string; deviceId: string } {
