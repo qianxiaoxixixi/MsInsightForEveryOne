@@ -152,9 +152,8 @@ const static std::string MSTX_UNIT_FLOW_SQL =
         "     where api.connectionId = constValue.connectionId and api.connectionId != 4294967295";
 const static std::string TASK_UNIT_FLOW_SQL =
       " select task.ROWID as id, streamId as tid, depth, startNs - constValue.minTime as startTime, "
-      "     endNs - startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, name, "
-      "     deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
-      "     on task.globalTaskId = CTI.globalTaskId where task.connectionId = constValue.connectionId "
+      "     endNs - startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, '' as name, "
+      "     deviceId from TASK task join constValue where task.connectionId = constValue.connectionId "
       " and task.connectionId != " + WRONG_DATA + " "
       " union all select task.ROWID as id, streamId as tid, task.depth,task.startNs - constValue.minTime as startTime, "
       " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, taskType, "

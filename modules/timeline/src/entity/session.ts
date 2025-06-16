@@ -107,8 +107,8 @@ export class Session {
     alignRender: boolean = false;
     isCluster: boolean = false;
     isMultiCluster: boolean = false;
-    // 页面可视范围的Card的CardId
-    viewedCardIdSet: Set<string> = new Set<string>();
+    // 页面可视范围的打开的Card的CardId
+    viewedExpandedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';
     isMultiDevice: boolean = false; // 判断项目是否是单Host多Device
     isFullDb: boolean = false;

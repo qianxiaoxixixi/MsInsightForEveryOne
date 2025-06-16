@@ -291,23 +291,10 @@ const updateListener = (element: HTMLDivElement): any => {
     };
 };
 
-const updateSession = (session: Session, totalHeight: number, cardIdSet: Set<string>): void => {
+const updateSession = (session: Session, totalHeight: number, expandedCardIdSet: Set<string>): void => {
     session.totalHeight = totalHeight;
-    let isSameSet = true;
-    for (const cardId of cardIdSet) {
-        if (!session.viewedCardIdSet.has(cardId)) {
-            isSameSet = false;
-            break;
-        }
-    }
-    for (const cardId of session.viewedCardIdSet) {
-        if (!cardIdSet.has(cardId)) {
-            isSameSet = false;
-            break;
-        }
-    }
-    if (!isSameSet) {
-        session.viewedCardIdSet = cardIdSet;
+    if (session.viewedExpandedCardIdSet.size !== expandedCardIdSet.size || [...expandedCardIdSet].some((id) => !session.viewedExpandedCardIdSet.has(id))) {
+        session.viewedExpandedCardIdSet = expandedCardIdSet;
     }
 };
 
@@ -315,11 +302,14 @@ interface MetaDataWithCardId extends MetaDataBase {
     cardId: string;
 }
 
-const computeOnScreenCardIdSet = (flattenUnits: InsightUnit[], first: number, last: number): Set<string> => {
+const computeOnScreenExpandedCardIdSet = (flattenUnits: InsightUnit[], first: number, last: number): Set<string> => {
     return new Set(
         flattenUnits
-            .map(unit => (unit?.metadata as MetaDataWithCardId)?.cardId)
-            .filter((id, i) => first <= i && i < last && id !== undefined && !id.endsWith('Host')),
+            .filter((unit, i) => {
+                const id = (unit?.metadata as MetaDataWithCardId)?.cardId;
+                const isExpanded = unit.isExpanded;
+                return first <= i && i < last && id !== undefined && !id.endsWith('Host') && isExpanded;
+            }).map(unit => (unit?.metadata as MetaDataWithCardId)?.cardId),
     );
 };
 
@@ -345,7 +335,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         [flattenUnits, last],
     );
     const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
-    const cardIdSet = computeOnScreenCardIdSet(flattenUnits, first, last);
+    const expandedCardIdSet = computeOnScreenExpandedCardIdSet(flattenUnits, first, last);
 
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectedUnitKeys, setSelectedUnitKeys] = useState<Set<string>>(new Set());
@@ -353,7 +343,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     const unitsRefs = useRef(new Map());
 
     runInAction(() => {
-        updateSession(session, totalHeight, cardIdSet);
+        updateSession(session, totalHeight, expandedCardIdSet);
     });
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {

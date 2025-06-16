@@ -235,7 +235,7 @@ const ContainerTop = styled(ContainerBase)`
 
     & > .bottomC {
         width: 100%;
-        border-top: ${(p): string => p.theme.dividerColor} 2px solid;
+        border-top: ${(p): string => p.theme.dividerColor} 2px solid; // 联动 UNDRAW_HEIGHT 的 + 2
         flex: 1;
         flex-flow: row;
         overflow: hidden;

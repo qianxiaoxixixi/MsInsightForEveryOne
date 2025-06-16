@@ -11,6 +11,7 @@ void HostFlowRepo::QueryFwdbwd(const FlowQuery &flowQuery, std::vector<FlowPoint
     std::unordered_map<uint64_t, uint64_t> connectionIdMap = QueryConnectionIdMap(flowQuery);
     auto &instance = TrackInfoManager::Instance();
     std::unordered_map<std::string, PytorchApiPO> pytorchApiPOLog;
+    std::string dbPath = pytorchApiTable->GetDbPath(flowQuery.fileId);
     for (const auto &item : pythonApiPOS) {
         if (connectionIdMap.count(item.connectionId) == 0) {
             continue;
@@ -27,12 +28,14 @@ void HostFlowRepo::QueryFwdbwd(const FlowQuery &flowQuery, std::vector<FlowPoint
         startPoint.id = start.id;
         startPoint.timestamp = start.timestamp - flowQuery.minTimestamp; // 业务上 timestamp > minTimestamp
         startPoint.trackId = instance.GetTrackId(flowQuery.fileId, std::to_string(start.globalTid), pythonApiTid);
+        startPoint.rankId = dbPath;
         FlowPoint endPoint;
         endPoint.type = "f";
         endPoint.flowId = flowId;
         endPoint.id = item.id;
         endPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
         endPoint.trackId = instance.GetTrackId(flowQuery.fileId, std::to_string(item.globalTid), pythonApiTid);
+        endPoint.rankId = dbPath;
         flowPointVec.emplace_back(startPoint);
         flowPointVec.emplace_back(endPoint);
         pytorchApiPOLog.erase(flowId);
@@ -89,6 +92,7 @@ void HostFlowRepo::QueryAsyncTaskQueue(const FlowQuery &flowQuery, std::vector<F
         .ExcuteQuery(flowQuery.fileId, pythonApiPOS);
     std::unordered_set<std::string> connectionIdLog;
     auto &instance = TrackInfoManager::Instance();
+    std::string dbPath = pytorchApiTable->GetDbPath(flowQuery.fileId);
     for (auto &item : pythonApiPOS) {
         FlowPoint flowPoint;
         flowPoint.flowId = std::to_string(connectionIdMap[item.connectionId]);
@@ -101,6 +105,7 @@ void HostFlowRepo::QueryAsyncTaskQueue(const FlowQuery &flowQuery, std::vector<F
         flowPoint.id = item.id;
         flowPoint.trackId = instance.GetTrackId(flowQuery.fileId, std::to_string(item.globalTid), pythonApiTid);
         flowPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
+        flowPoint.rankId = dbPath;
         flowPointVec.emplace_back(flowPoint);
     }
     std::sort(flowPointVec.begin(), flowPointVec.end());
@@ -236,6 +241,9 @@ void HostFlowRepo::AddCannFlowPoint(const FlowQuery &flowQuery, std::vector<Flow
         startPoint.type = "s";
         startPoint.id = item.id;
         startPoint.flowId = std::to_string(item.id);
+        if (item.timestamp < flowQuery.minTimestamp) {
+            ServerLog::Warn("Cann flow timestamp invalid! id: %", item.id);
+        }
         startPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
         startPoint.rankId = dbPath;
         startPoint.trackId = instance.GetTrackId(dbPath, std::to_string(item.globalTid), std::to_string(item.type));
