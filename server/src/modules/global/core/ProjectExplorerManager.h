@@ -36,6 +36,8 @@ public:
     static std::vector<std::shared_ptr<ParseFileInfo>> GetClusterFilePath(
         const std::vector<ProjectExplorerInfo> &projectInfo);
 
+    bool IsTextMultiCluster(const std::string& projectName);
+
 private:
     std::string systemMemoryDbPath;
     std::recursive_mutex mutex;

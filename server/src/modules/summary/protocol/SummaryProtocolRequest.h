@@ -37,6 +37,7 @@ struct SummaryStatisticParams {
     std::string rankId;
     std::string timeFlag;
     std::string stepId;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -251,6 +252,7 @@ struct ComputeDetailParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {
@@ -289,6 +291,7 @@ struct CommunicationDetailParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
+    std::string clusterPath;
     bool CheckParams(std::string &errorMsg) const
     {
         if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {

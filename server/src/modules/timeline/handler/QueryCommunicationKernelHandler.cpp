@@ -17,7 +17,10 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::unique_ptr<CommunicationKernelResponse> responsePtr = std::make_unique<CommunicationKernelResponse>();
     CommunicationKernelResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
+    if (ProjectExplorerManager::Instance().IsTextMultiCluster(request.projectName)) {
+        request.params.rankId = StringUtil::StrJoin(FileUtil::GetFileName(request.params.clusterPath), "_",
+                                                    request.params.rankId);
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);

@@ -379,5 +379,18 @@ void ProjectExplorerManager::RebuildParseFileInfo(ProjectExplorerInfo &projectIn
     });
 }
 
+bool ProjectExplorerManager::IsTextMultiCluster(const std::string &projectName)
+{
+    if (projectName.empty()) {
+        return false;
+    }
+    auto projectInfos = QueryProjectExplorer(projectName, {});
+    if (projectInfos.empty()) {
+        return false;
+    }
+    bool isText =  projectInfos[0].projectType == static_cast<int>(ProjectTypeEnum::TEXT_CLUSTER);
+    bool isMultiCluster = projectInfos[0].GetClusterInfos().size() > 0;
+    return isText && isMultiCluster;
+}
 }
 

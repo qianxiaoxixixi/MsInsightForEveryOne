@@ -80,6 +80,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStatisticsRequest(const json_t &json
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.timeFlag, json["params"], "timeFlag");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -97,6 +98,7 @@ std::unique_ptr<Request> SummaryProtocol::ToComputeDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
@@ -162,6 +164,7 @@ std::unique_ptr<Request> SummaryProtocol::ToCommunicationRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
 
