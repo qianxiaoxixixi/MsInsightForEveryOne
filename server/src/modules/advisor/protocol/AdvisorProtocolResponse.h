@@ -27,7 +27,7 @@ struct AffinityOptimizerData {
 };
 
 struct AffinityOptimizerResBody {
-    uint32_t size{};
+    uint64_t size{};
     std::string dbPath;
     std::vector<AffinityOptimizerData> datas;
 };
@@ -46,7 +46,7 @@ struct AffinityAPIData {
 };
 
 struct AffinityAPIResBody {
-    uint32_t size{};
+    uint64_t size{};
     std::string dbPath;
     std::vector<AffinityAPIData> datas;
 };
@@ -65,7 +65,7 @@ struct OperatorFusionData {
 };
 
 struct OperatorFusionResBody {
-    uint32_t size{};
+    uint64_t size{};
     std::string dbPath;
     std::vector<OperatorFusionData> datas;
 };
@@ -82,7 +82,7 @@ struct AICpuOperatorData {
 };
 
 struct AICpuOperatorResBody {
-    uint32_t size{};
+    uint64_t size{};
     std::string dbPath;
     std::vector<AICpuOperatorData> datas;
 };
@@ -99,7 +99,7 @@ struct AclnnOperatorData {
 };
 
 struct AclnnOperatorResBody {
-    uint32_t size{};
+    uint64_t size{};
     std::string dbPath;
     std::vector<AclnnOperatorData> datas;
 };
@@ -116,7 +116,7 @@ struct OperatorDispatchData {
 };
 
 struct OperatorDispatchResBody {
-    uint32_t size{};
+    uint64_t size{};
     std::string dbPath;
     std::vector<OperatorDispatchData> data;
 };
