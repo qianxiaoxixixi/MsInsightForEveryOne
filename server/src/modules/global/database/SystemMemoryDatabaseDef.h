@@ -298,6 +298,7 @@ struct BaselineInfo {
     bool isCluster = false;
     std::string clusterBaseLine;
     std::string fileId;
+    std::string parsedFilePath;
 };
 }
 #endif // PROFILER_SERVER_FILEMENUDATABASEDEF_H

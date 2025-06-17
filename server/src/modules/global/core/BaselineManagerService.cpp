@@ -31,13 +31,21 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     if (!filePath.empty()) {
         filePathList.push_back(filePath);
     }
+    // 多集群场景下需要把所有的信息查出来
     std::vector<ProjectExplorerInfo> projectExplorerList =
-        ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, filePathList);
+        ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, {});
     if (projectExplorerList.empty()) {
         baselineInfo.errorMessage = "The project does not exist, baseline setting failed.";
         return false;
     }
-    if (projectExplorerList.size() > 1 || projectExplorerList[0].subParseFileInfo.size() > 1) {
+
+    // 多device场景不支持对比
+    bool isAllSamePath = std::all_of(projectExplorerList[0].subParseFileInfo.begin(),
+                                     projectExplorerList[0].subParseFileInfo.end(),
+                                     [&filePath](const auto &fileInfo) {
+                                         return fileInfo->parseFilePath == filePath;
+                                     });
+    if (projectExplorerList[0].subParseFileInfo.size() > 1 && isAllSamePath) {
         baselineInfo.errorMessage = "Multi device scenario does not support setting comparison.";
         return false;
     }
@@ -53,7 +61,7 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     // 只有部分数据类型支持设置对比，如果非预期数据类型，则直接给前端返回错误提示
     auto projectTypeEnum = ProjectExplorerManager::GetProjectType(projectExplorerList);
     // 根据二级目录判断是否为集群数据
-    baselineInfo.isCluster = IsClusterBaseline(projectTypeEnum, projectExplorerList);
+    baselineInfo.isCluster = IsClusterBaseline(projectTypeEnum, projectExplorerList, filePath);
     if (baselineInfo.isCluster) {
         BaselineManager::Instance().SetBaselineClusterPath(baselineInfo.clusterBaseLine);
     }
@@ -77,21 +85,26 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
 }
 
 bool BaselineManagerService::IsClusterBaseline(ProjectTypeEnum projectTypeEnum,
-                                               const std::vector<ProjectExplorerInfo> &projectInfoList)
+                                               const std::vector<ProjectExplorerInfo> &projectInfoList,
+                                               const std::string &filePath)
 {
     // 如果非text和db场景，则直接判断为非集群场景，返回false
     if (projectTypeEnum != ProjectTypeEnum::TEXT_CLUSTER && projectTypeEnum != ProjectTypeEnum::DB_CLUSTER) {
         return false;
     }
-    bool isCluster = std::any_of(projectInfoList.begin(), projectInfoList.end(), [](const auto &item) {
+    bool isCluster = std::any_of(projectInfoList.begin(), projectInfoList.end(), [filePath](const auto &item) {
         auto cluster = item.GetClusterInfos();
-        return !cluster.empty();
+        if (cluster.empty()) {
+            return false;
+        }
+        return cluster[0]->parseFilePath == filePath;
     });
     if (isCluster) {
         return true;
     }
+    // 整个项目当作集群
     if (!projectInfoList.empty() && !projectInfoList[0].projectFileTree.empty() &&
-        projectInfoList[0].projectFileTree[0]->type == ParseFileType::PROJECT) {
+        projectInfoList[0].fileName == filePath) {
         return true;
     }
     return false;

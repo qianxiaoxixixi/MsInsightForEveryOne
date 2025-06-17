@@ -373,16 +373,16 @@ bool KernelParse::ProcessHeaderGetParseFunc(std::shared_ptr<TextSummaryDataBase>
     return true;
 }
 
-bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
+bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string &rankId, const std::string& statusId,
                                  std::string &message, std::set<std::string>& devices)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Start to parse kernel detail. fileId: ", fileId, ", file path: ", fileId);
+    ServerLog::Info("Start to parse kernel detail. rankId: ", rankId, ", file path: ", filePath);
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     auto db = std::dynamic_pointer_cast<TextSummaryDataBase, VirtualSummaryDataBase>(
-        Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(fileId));
+        Timeline::DataBaseManager::Instance().GetSummaryDatabaseByRankId(rankId));
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
@@ -391,8 +391,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseProcessList;
 
-    std::string realFileId = Global::BaselineManager::Instance().IsBaselineRankId(fileId) ?
-        FileUtil::GetProfilerFileId(filePath) : fileId;
+    std::string realDeviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(rankId, "operator");
     std::vector<std::string> columns;
     uint64_t lineNumber = 0;
     while (getline(file, line)) {
@@ -413,7 +412,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
         // 解析非表头数据存储在db里
         Kernel kernel {};
         for (const auto& parseFunc : parseProcessList) {
-            parseFunc(dataMap, rowVector, realFileId, kernel);
+            parseFunc(dataMap, rowVector, realDeviceId, kernel);
         }
         // 如果这列数据和列名个数对不上，说明可能有数据缺了，不存储这一行
         if (rowVector.size() != dataMap.size() || kernel.utilizationInfo.size() != columns.size()) {
@@ -421,7 +420,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
             continue;
         }
         // 记录有多少device
-        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : fileId);
+        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : rankId);
         // 读取每一行数据写入kernel内
         db->InsertKernelDetail(kernel, columns);
     }

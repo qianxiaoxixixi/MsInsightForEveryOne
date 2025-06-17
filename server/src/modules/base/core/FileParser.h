@@ -77,6 +77,10 @@ public:
     virtual std::string GetError();
     virtual void Reset();
 
+    inline bool HasCallbackFuncSet()
+    {
+        return parseEndCallback && parseProgressCallback;
+    }
 protected:
     std::string error;
     std::function<void(const std::string, const std::string, bool result, const std::string)> parseEndCallback;

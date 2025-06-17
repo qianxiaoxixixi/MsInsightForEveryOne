@@ -26,9 +26,10 @@ TEST_F(HandlerTest, SetBaselineHandler)
     request->params.projectName = "test";
     request->params.filePath = "COMPARE";
     request->params.currentClusterPath = "Baseline";
+    request->fileId = "COMPARE";
     SetBaselineHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(HandlerTest, GetModuleConfigHandler)
