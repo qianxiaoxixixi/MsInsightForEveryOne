@@ -519,35 +519,17 @@ void DataBaseManager::UpdateRankIdToDeviceId(const std::string &fileId,
     }
     std::string deviceIdTmp = deviceId;
     if (deviceId.empty()) {
-        deviceIdTmp = rankId;
-    }
-    if (auto pos = rankId.find("Baseline_"); pos != std::string::npos) {
-        deviceIdTmp = rankId.substr(pos + strlen("Baseline_"));
+        if (auto pos = rankId.find("Baseline_"); pos != std::string::npos) {
+            deviceIdTmp = rankId.substr(pos + strlen("Baseline_"));
+        }
     }
     rankIdToDeviceIdMap[fileId + rankId] = deviceIdTmp;
 }
 
 std::string DataBaseManager::GetDeviceIdFromRankId(const std::string &rankId, const std::string& module)
 {
-    if (module == "memory") {
-        std::string fileId = GetFileIdByRankId(rankId);
-        return rankIdToDeviceIdMap[fileId + rankId];
-    }
-    if (module == "operator") {
-        auto database = DataBaseManager::GetSummaryDatabaseByRankId(rankId);
-        if (database == nullptr) {
-            return "";
-        }
-        return database->QueryDeviceId();
-    }
-    if (module == "timeline") {
-        auto database = DataBaseManager::GetTraceDatabaseByRankId(rankId);
-        if (database == nullptr) {
-            return "";
-        }
-        return database->GetDeviceId(rankId);
-    }
-    return "";
+    std::string fileId = GetFileIdByRankId(rankId);
+    return rankIdToDeviceIdMap[fileId + rankId];
 }
 } // end of namespace Timeline
 } // end of namespace Module

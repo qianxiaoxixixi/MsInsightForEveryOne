@@ -74,7 +74,7 @@ public:
 
 protected:
     static std::vector<std::string> GetKernelFiles(const std::vector<std::string>& paths);
-    static bool ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
+    static bool ParseKernelCsv(const std::string& filePath, const std::string &rankId, const std::string& statusId,
                                std::string &message, std::set<std::string>& devices);
     static bool CheckHeaderFieldAndFilterParseFunc(std::vector<std::string> rowVector,
         std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,

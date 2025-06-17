@@ -53,6 +53,7 @@ public:
         std::string filePathText = currPath.substr(0, index + 1) +
                                    R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
         BaselineInfo baselineInfo;
+        baselineInfo.parsedFilePath = filePathText;
         bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo,
                                                                COMPARE);
         std::string notFinishTask = "";

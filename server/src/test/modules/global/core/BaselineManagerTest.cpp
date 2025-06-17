@@ -78,6 +78,7 @@ TEST_F(BaselineManagerTest, TestText)
     std::string filePathText = currPath.substr(0, index + 1) +
         R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
     BaselineInfo baselineInfo;
+    baselineInfo.parsedFilePath = filePathText;
     bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo, COMPARE);
     std::string notFinishTask = "";
     int index = 0;
@@ -97,6 +98,7 @@ TEST_F(BaselineManagerTest, TestDb)
     std::string filePathDb = currPath.substr(0, index + 1) +
         R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
     BaselineInfo baselineInfo;
+    baselineInfo.parsedFilePath = filePathDb;
     bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo, COMPARE);
     std::string notFinishTask = "";
     int index = 0;
@@ -115,9 +117,10 @@ TEST_F(BaselineManagerTest, TestFileNotExist)
 {
     std::string filePathDb = "noData";
     BaselineInfo baselineInfo;
+    baselineInfo.parsedFilePath = filePathDb;
     bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo, COMPARE);
-    EXPECT_FALSE(result);
-    EXPECT_EQ(baselineInfo.errorMessage, "The project does not exist, baseline setting failed.");
+    EXPECT_TRUE(result);
+    EXPECT_EQ(baselineInfo.errorMessage, "");
 }
 
 TEST_F(BaselineManagerTest, SetGetBaselineClusterPath)

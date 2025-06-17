@@ -177,6 +177,7 @@ TEST_F(TestSuit, QueryKernelDetailDataWithCoreType)
     requestParams.rankId = "0";
     requestParams.coreType = "AI_CORE";
     requestParams.searchName = "";
+    requestParams.deviceId = "0";
     database->QueryKernelDetailData(requestParams, responseBody, 0);
     int expectSize = 0;
     EXPECT_EQ(responseBody.count, expectSize);

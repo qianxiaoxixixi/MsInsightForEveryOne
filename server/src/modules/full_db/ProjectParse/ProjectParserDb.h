@@ -45,6 +45,7 @@ private:
     static void ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos, BaselineInfo &baselineInfo);
     void ParseClusterInfo(const std::vector<Global::ProjectExplorerInfo> &projectInfos, bool isCluster,
                           ProjectTypeEnum projectType);
+    static void FilterHostMap(std::map<std::string, HostInfo>& hostInfoMap, const std::string& filePath);
 };
 } // end of namespace Module
 } // end of namespace Dic

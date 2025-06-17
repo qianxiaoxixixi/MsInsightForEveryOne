@@ -60,6 +60,7 @@ public:
             std::dynamic_pointer_cast<DbSummaryDataBase, Dic::Module::Summary::VirtualSummaryDataBase>(
                 DataBaseManager::Instance().CreateSummaryDatabase("2", fullDbPath));
         summeryDatabase->OpenDb(fullDbPath, false);
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(fullDbPath, "2", "2");
     }
 
     static void InitBaseLineManager()
@@ -76,6 +77,7 @@ public:
         std::string filePathText = currPath.substr(0, index + 1) +
                                    R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
         BaselineInfo baselineInfo;
+        baselineInfo.parsedFilePath = filePathText;
         bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo,
                                                                COMPARE);
         std::string notFinishTask = "";
@@ -152,6 +154,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpCategoryInfoHandlerNormalTest)
     requestPtr->params.rankId = "0";
     requestPtr->params.group = "Operator";
     requestPtr->params.topK = -1;
+    requestPtr->fileId = DataBaseManager::Instance().GetFileIdByRankId("0");
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
@@ -162,6 +165,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpCategoryInfoHandleEmptyRankId)
     requestPtr.get()->params.rankId = "";
     requestPtr.get()->params.group = "Operator";
     requestPtr.get()->params.topK = -1;
+    requestPtr->fileId = "";
     std::string errMsg;
     EXPECT_EQ(false, requestPtr->params.CommonCheck(errMsg));
 }
@@ -171,6 +175,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpComputeUnitHandlerNormalTest)
     Dic::Module::Operator::QueryOpComputeUnitHandler handler;
     auto requestPtr = std::make_unique<Dic::Protocol::OperatorComputeUnitInfoRequest>();
     requestPtr->params.rankId = "0";
+    requestPtr->fileId = DataBaseManager::Instance().GetFileIdByRankId("0");
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
@@ -250,7 +255,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessWhenBaselin
     // 10 表示分页最小是10条
     requestPtr->params.pageSize = 10;
     requestPtr->params.current = 1;
-
+    requestPtr->fileId = DataBaseManager::Instance().GetFileIdByRankId("2");
     EXPECT_TRUE(SetBaseLineManager());
     EXPECT_TRUE(handler.HandleRequest(std::move(requestPtr)));
     ClearProjectExplorerData();

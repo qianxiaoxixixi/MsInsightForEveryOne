@@ -294,7 +294,7 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         ProjectParserDb::ParseBaselineClusterInfo(projectInfo, baselineInfo);
         return;
     }
-    std::string parseFilePath = projectInfo.subParseFileInfo[0]->parseFilePath;
+    std::string parseFilePath = baselineInfo.parsedFilePath;
     std::vector<std::string> frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(pytorchDBReg));
     if (frameworkFiles.empty()) {
         frameworkFiles = FileUtil::FindFilesWithFilter(parseFilePath, std::regex(mindsporeDBReg));
@@ -318,6 +318,7 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         baselineInfo.errorMessage = "Db get host info failed!";
         return;
     }
+    FilterHostMap(hostInfoMap, parseFilePath);
     if (std::empty(hostInfoMap.begin()->second) || std::empty(hostInfoMap.begin()->second.begin()->second)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "Db get rank info failed!";
@@ -334,6 +335,26 @@ void ProjectParserDb::ParserBaseline(const Global::ProjectExplorerInfo &projectI
         ServerLog::Error("Failed to create baseline connection pool. ");
     }
     FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ baselineInfo.rankId }, file);
+}
+
+void ProjectParserDb::FilterHostMap(std::map<std::string, HostInfo> &hostInfoMap, const std::string &filePath)
+{
+    // filter files
+    for (auto hostIt = hostInfoMap.begin(); hostIt != hostInfoMap.end();) {
+        auto &ranksInfo = hostIt->second;
+        for (auto it = ranksInfo.begin(); it != ranksInfo.end();) {
+            if (it->first.find(filePath) == std::string::npos) {
+                it = ranksInfo.erase(it);
+            } else {
+                it ++;
+            }
+        }
+        if (hostIt->second.empty()) {
+            hostIt = hostInfoMap.erase(hostIt);
+        } else {
+            hostIt++;
+        }
+    }
 }
 
 void ProjectParserDb::ParseBaselineClusterInfo(const Global::ProjectExplorerInfo &projectInfos,

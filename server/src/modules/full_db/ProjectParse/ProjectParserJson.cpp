@@ -555,7 +555,7 @@ void ProjectParserJson::ParserClusterBaseline(const Global::ProjectExplorerInfo 
 void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerInfo &projectInfos,
                                                  Global::BaselineInfo &baselineInfo)
 {
-    std::string filePath = projectInfos.subParseFileInfo[0]->parseFilePath;
+    std::string filePath = baselineInfo.parsedFilePath;
     std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(filePath);
     if (std::empty(jsonFiles)) {
         return;
@@ -565,6 +565,14 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     // 创建db连接池
     std::string dbPath = FileUtil::GetDbPath(jsonFiles[0]);
     std::map<std::string, RankEntry> rankListMap = GetRankEntryMap({projectInfos}, true);
+    // 过滤非目标目录下的节点
+    for (auto it = rankListMap.begin(); it != rankListMap.end();) {
+        if (it->second.parseFolder != filePath) {
+            it = rankListMap.erase(it);
+        } else {
+            it++;
+        }
+    }
     if (std::empty(rankListMap)) {
         Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
         baselineInfo.errorMessage = "Json get rank id failed!";
@@ -573,7 +581,6 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     std::string rankId = rankListMap.begin()->first;
     baselineInfo.rankId = rankId;
     baselineInfo.cardName = rankId;
-    std::string fileId = dbPath;
     baselineInfo.fileId = dbPath;
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
     bool isParsed = DataBaseManager::Instance().IsContainDatabasePath(dbPath);
@@ -587,13 +594,24 @@ void ProjectParserJson::ParserSingleCardBaseline(const Global::ProjectExplorerIn
     }
 
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
+        if (!TraceFileSimulationParser::Instance().HasCallbackFuncSet()) {
+            SetParseCallBack(TraceFileSimulationParser::Instance());
+        }
         Timeline::TraceFileSimulationParser::Instance().Parse(jsonFiles,
                                                               rankId,
                                                               filePath,
-                                                              fileId);
+                                                              baselineInfo.fileId);
         return;
     }
+    if (!TraceFileParser::Instance().HasCallbackFuncSet()) {
+        SetParseCallBack(TraceFileParser::Instance());
+    }
+    ParseBaselineTraceFile(jsonFiles, rankId, baselineInfo.fileId, filePath);
+}
 
+void ProjectParserJson::ParseBaselineTraceFile(const std::vector<std::string> &jsonFiles, const std::string &rankId,
+                                               const std::string &fileId, const std::string &filePath)
+{
     // 如果是系统调优数据，分别解析trace、kernel和memory数据
     if (!Timeline::TraceFileParser::Instance().Parse(jsonFiles, rankId, filePath, fileId)) {
         ServerLog::Warn("Failed to parse baseline trace files.");

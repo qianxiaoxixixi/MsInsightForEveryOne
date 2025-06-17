@@ -35,21 +35,25 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string refPath0 = R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
         std::string refPath1 = R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
+        std::string dbPath0 = currPath + refPath0 + "mindstudio_insight_data.db";
+        std::string dbPath1 = currPath + refPath1 + "mindstudio_insight_data.db";
         DataBaseManager::Instance().SetDataType(DataType::TEXT);
-        DataBaseManager::Instance().CreatConnectionPool("0", currPath + refPath0 + "mindstudio_insight_data.db");
-        DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPath1 + "mindstudio_insight_data.db");
+        DataBaseManager::Instance().CreatConnectionPool("0", dbPath0);
+        DataBaseManager::Instance().CreatConnectionPool("1", dbPath1);
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath0, "0", "0");
+        DataBaseManager::Instance().UpdateRankIdToDeviceId(dbPath1, "1", "1");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "",
-                                          currPath + refPath0 + "mindstudio_insight_data.db");
+                                          dbPath0);
         WaitParseEnd({"0"});
         TraceFileParser::Instance().Parse({currPath + refPath1 + "trace_view.json"}, "1", "",
-                                          currPath + refPath1 + "mindstudio_insight_data.db");
+                                          dbPath1);
         WaitParseEnd({"1"});
         std::string testDataPath = currPath + R"(/src/test/test_data)";
-        KernelParse::Instance().Parse({currPath + refPath0 + "mindstudio_insight_data.db", "0", currPath + refPath0});
-        KernelParse::Instance().Parse({currPath + refPath1 + "mindstudio_insight_data.db", "1", currPath + refPath1});
+        KernelParse::Instance().Parse({dbPath0, "0", currPath + refPath0});
+        KernelParse::Instance().Parse({dbPath1, "1", currPath + refPath1});
         WaitParseEnd({KERNEL_PREFIX + "0", KERNEL_PREFIX + "1"});
-        MemoryParse::Instance().Parse({currPath + refPath0 + "mindstudio_insight_data.db", "0", currPath + refPath0});
-        MemoryParse::Instance().Parse({currPath + refPath1 + "mindstudio_insight_data.db", "1", currPath + refPath1});
+        MemoryParse::Instance().Parse({dbPath0, "0", currPath + refPath0});
+        MemoryParse::Instance().Parse({dbPath1, "1", currPath + refPath1});
         WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
         std::string clusterPath = testDataPath + R"(/cluster_analysis_output)";
