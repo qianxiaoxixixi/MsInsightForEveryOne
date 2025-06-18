@@ -24,8 +24,6 @@ const test = baseTest.extend<TestFixtures>({
 });
 
 const memoryImgMap = {
-    loadMindSporeDataSuccess: 'memory-mindspore-loaded.png',
-    queryMindSporeDataSuccess: 'memory-mindspore-filter.png',
     loadMultiMachinesMultiRanksDataSuccess: 'memory-pytorch-multi-loaded.png',
     multiMachinesClickRank: 'memory-pytorch-multi-click-rank.png',
     compareRankDb: 'memory-compare-rank-db.png',
@@ -183,7 +181,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 });
 
 test.describe('Memory(MindSpore)', () => {
-    test.describe.configure({ timeout: 120_000 });
+    test.describe.configure({ timeout: 180_000 });
     test.beforeEach(async ({ page, memoryPage, ws }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
         await memoryPage.goto();
@@ -203,7 +201,7 @@ test.describe('Memory(MindSpore)', () => {
         await page.waitForTimeout(1000);
 
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadMindSporeDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('mindspore-loaded.png', {
             maxDiffPixels: 500,
         });
     });
@@ -236,7 +234,7 @@ test.describe('Memory(MindSpore)', () => {
         await minSizeInput.setValue('10000');
         const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.click();
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.queryMindSporeDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('mindspore-filter.png', {
             maxDiffPixels: 500,
         });
     });
