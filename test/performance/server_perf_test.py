@@ -58,7 +58,7 @@ def build_project():
     if result != 0:
         logging.error('Failed to clean last build.')
         return -1
-    result = exec_command([Const.PYTHON, 'build.py', 'build', '--release'], build_path)
+    result = exec_command([Const.PYTHON, 'build.py', 'build', '--Release'], build_path)
     if result != 0:
         logging.error('Failed to build project.')
         return -1
