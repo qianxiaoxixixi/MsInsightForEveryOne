@@ -62,8 +62,8 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
         baseInfo.stepList = JsonUtil::JsonToVector(valueSteps);
     }
     baseInfo.dataSize = NumberUtil::StringToDouble(valueDataSize) / MB_SIZE;
-    baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(INT_MAX));
-    baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(INT_MAX));
+    baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(UINT_MAX));
+    baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(UINT_MAX));
     sqlite3_finalize(stmtBaseInfo);
     return true;
 }
@@ -274,13 +274,13 @@ bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uin
         if (tempMin <= 0) {
             min = 0;
         } else {
-            min = tempMin;
+            min = static_cast<uint64_t>(tempMin);
         }
         int64_t tempMax = sqlite3_column_int64(stmt, col++);
         if (tempMax <= 0) {
             max = 0;
         } else {
-            max = tempMax;
+            max = static_cast<uint64_t>(tempMax);
         }
     }
     sqlite3_finalize(stmt);
@@ -603,13 +603,13 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         if (tempStartTime <= 0) {
             object.startTime = 0;
         } else {
-            object.startTime = tempStartTime;
+            object.startTime = static_cast<uint64_t>(tempStartTime);
         }
         int64_t tempElapseTime = sqlite3_column_int64(stmt, col++);
         if (tempElapseTime <= 0) {
             object.elapseTime = 0;
         } else {
-            object.elapseTime = tempElapseTime;
+            object.elapseTime = static_cast<uint64_t>(tempElapseTime);
         }
         operatorTimeDoList.push_back(object);
     }

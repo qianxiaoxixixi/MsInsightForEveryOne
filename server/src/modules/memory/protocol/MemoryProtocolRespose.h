@@ -133,13 +133,13 @@ struct MemoryViewResponse : public Response {
 };
 
 struct OperatorSize {
-    double minSize;
-    double maxSize;
+    double minSize = 0.0;
+    double maxSize = 0.0;
 };
 
 struct StaticOperatorSize {
-    double minSize;
-    double maxSize;
+    double minSize = 0.0;
+    double maxSize = 0.0;
 };
 
 struct MemoryOperatorSizeResponse : public Response {

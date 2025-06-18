@@ -41,7 +41,7 @@ bool CommunicationRapidSaxHandler::Int(int i)
 bool CommunicationRapidSaxHandler::Uint(unsigned int u)
 {
     if (currentDepth == sizeDistributionDepth) {
-        tempInt = NumberUtil::CeilingClamp(u, static_cast<unsigned int>(INT_MAX));
+        tempInt = u;
     } else {
         rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
         currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
@@ -84,7 +84,13 @@ bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool
     if (StringUtil::Contains(numberStr, ".")) {
         tempTransitSize = NumberUtil::StringToDouble(numberStr);
     } else {
-        tempInt = NumberUtil::StringToInt(numberStr);
+        int temporary = NumberUtil::StringToInt(numberStr);
+        if (temporary < 0) {
+            ServerLog::Error("Packet number is smaller than 0.");
+            tempInt = 0;
+        } else {
+            tempInt = static_cast<unsigned int>(temporary);
+        }
     }
     return true;
 }
@@ -240,7 +246,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     if (tempStartTime <= 0) {
         timeInfo.startTime = 0;
     } else {
-        timeInfo.startTime = tempStartTime;
+        timeInfo.startTime = static_cast<uint64_t>(tempStartTime);
     }
     timeInfo.elapseTime = JsonUtil::GetDouble(json, "Elapse Time(ms)");
     timeInfo.idleTime = JsonUtil::GetDouble(json, "Idle Time(ms)");

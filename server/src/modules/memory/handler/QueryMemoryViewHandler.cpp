@@ -22,6 +22,10 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+    if (!database) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        return false;
+    }
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
     if (deviceId.empty()) {
@@ -31,7 +35,7 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-        if (!database || !database->QueryMemoryView(request.params, response.data, offsetTime)) {
+        if (!database->QueryMemoryView(request.params, response.data, offsetTime)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory view data.");
             return false;
         }

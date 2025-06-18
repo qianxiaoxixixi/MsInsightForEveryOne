@@ -1540,7 +1540,11 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
             ServerLog::Error("Query counter metadata failed!.");
             return false;
         }
-        uint64_t countOfQuestionMark = std::count(sql.begin(), sql.end(), '?');
+        uint64_t countOfQuestionMark = 0;
+        auto tempCount = std::count(sql.begin(), sql.end(), '?');
+        if (tempCount > 0) {
+            countOfQuestionMark = static_cast<uint64_t>(tempCount);
+        }
         for (uint64_t i = 0; i < countOfQuestionMark; ++i) {
             stmt->BindParams(GetDeviceId(fileId));
         }

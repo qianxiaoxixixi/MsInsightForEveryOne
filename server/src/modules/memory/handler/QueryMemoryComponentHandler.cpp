@@ -25,6 +25,10 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+    if (!database) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        return false;
+    }
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
     if (deviceId.empty()) {
@@ -34,7 +38,7 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
         std::vector<MemoryComponent> componentDetails;
-        if (!database || !database->QueryComponentDetail(request.params, response.columnAttr, componentDetails) ||
+        if (!database->QueryComponentDetail(request.params, response.columnAttr, componentDetails) ||
         !database->QueryComponentsTotalNum(request.params, response.totalNum)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory component data.");
             return false;

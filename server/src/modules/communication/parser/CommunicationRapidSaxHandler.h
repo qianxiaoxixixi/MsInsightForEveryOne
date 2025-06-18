@@ -41,7 +41,7 @@ public:
     std::string GetIndexByStage(const std::string &stage);
 private:
     double tempTransitSize = 0;
-    int tempInt = 0;
+    unsigned int tempInt = 0;
     rapidjson::Document currentObject;
     rapidjson::Value sizeDistribution;
     std::string currentKey;

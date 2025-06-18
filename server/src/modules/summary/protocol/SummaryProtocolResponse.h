@@ -32,13 +32,13 @@ struct TraceStatistic {
 };
 
 struct SummaryBaseInfo {
-    int rankCount = 0;
+    unsigned int rankCount = 0;
     std::vector<std::string> rankList;
     double dataSize = 0;
     int64_t collectStartTime = 0;
     std::string filePath;
     double collectDuration = 0;
-    int stepNum = 0;
+    unsigned int stepNum = 0;
     std::vector<std::string> stepList;
 };
 
