@@ -22,6 +22,10 @@ bool QueryMemoryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Req
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+    if (!database) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        return false;
+    }
 
     std::string deviceId = Timeline::DataBaseManager::Instance().GetDeviceIdFromRankId(request.params.rankId, "memory");
     if (deviceId.empty()) {
@@ -30,7 +34,7 @@ bool QueryMemoryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Req
     }
     request.params.deviceId = deviceId;
     if (!request.params.isCompare) {
-        if (!database || !database->QueryOperatorSize(request.params, response.size.minSize, response.size.maxSize)) {
+        if (!database->QueryOperatorSize(request.params, response.size.minSize, response.size.maxSize)) {
             SendResponse(std::move(responsePtr), false, "Failed to query operator size data.");
             return false;
         }

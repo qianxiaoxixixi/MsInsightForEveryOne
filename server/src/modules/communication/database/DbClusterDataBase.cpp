@@ -67,8 +67,8 @@ bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
             baseInfo.stepList = JsonUtil::JsonToVector(steps);
         }
         baseInfo.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
-        baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(INT_MAX));
-        baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(INT_MAX));
+        baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(UINT_MAX));
+        baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(UINT_MAX));
     }
     sqlite3_finalize(stmtBaseInfo);
     return true;

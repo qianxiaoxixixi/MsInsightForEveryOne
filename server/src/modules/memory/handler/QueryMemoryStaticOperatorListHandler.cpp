@@ -26,10 +26,14 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+    if (!database) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        return false;
+    }
 
     if (!request.params.isCompare) {
         std::vector<StaticOperatorItem> opDetails;
-        if (!database || !database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or
+        if (!database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or
             !database->QueryStaticOperatorsTotalNum(request.params, response.totalNum)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator data.");
             return false;

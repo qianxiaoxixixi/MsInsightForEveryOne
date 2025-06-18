@@ -23,10 +23,13 @@ bool QueryMemoryStaticOperatorSizeHandler::HandleRequest(std::unique_ptr<Protoco
         return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabaseByRankId(request.params.rankId);
+    if (!database) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database.");
+        return false;
+    }
 
     if (!request.params.isCompare) {
-        if (!database
-            || !database->QueryStaticOperatorSize(request.params, response.size.minSize, response.size.maxSize)) {
+        if (!database->QueryStaticOperatorSize(request.params, response.size.minSize, response.size.maxSize)) {
             SendResponse(std::move(responsePtr), false, "Failed to query static operator size data.");
             return false;
         }
