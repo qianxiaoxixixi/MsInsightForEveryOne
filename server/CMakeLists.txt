@@ -32,6 +32,7 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Werror=return-type -Werror=implicit-fa
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -D_FORTIFY_SOURCE=2 -O2 -ftrapv -fstack-protector-strong -fPIE -fPIC")
 
+# 构建脚本中使用的是release
 if (CMAKE_BUILD_TYPE MATCHES "Release")
     set(CMAKE_CXX_VISIBILITY_PRESET hidden)
     set(CMAKE_C_VISIBILITY_PRESET hidden)

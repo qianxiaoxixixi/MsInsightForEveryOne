@@ -98,7 +98,7 @@ def build():
         os.makedirs(build_dir)
 
     build_cmds = [
-        'cmake', HOME_DIR, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=release'
+        'cmake', HOME_DIR, '-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release'
     ]
 
     result = execute_cmd(build_cmds, build_dir)
@@ -162,7 +162,7 @@ def build_test():
         os.makedirs(build_dir)
 
     build_cmds = [
-        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=release',
+        'cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=Release',
         '-D_PROJECT_TYPE=test'
     ]
 
