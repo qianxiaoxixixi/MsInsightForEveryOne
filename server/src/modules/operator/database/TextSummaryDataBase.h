@@ -24,7 +24,6 @@ public:
     bool InitStmt(const std::vector<std::string> &columns);
     void ReleaseStmt();
 
-    std::string QueryDeviceId() override;
     void InsertKernelDetail(const Kernel &kernel, const std::vector<std::string> &columns);
     void SaveKernelDetail(const std::vector<std::string> &columns);
     uint64_t QueryMinStartTime();

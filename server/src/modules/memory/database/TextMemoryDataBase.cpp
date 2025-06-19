@@ -799,18 +799,6 @@ bool TextMemoryDataBase::QueryStaticOperatorSize(Protocol::StaticOperatorSizePar
     return ExecuteStaticOperatorSize(requestParams, min, max, sql);
 }
 
-std::string TextMemoryDataBase::QueryDeviceId()
-{
-    FullDb::FileType type = FullDb::DataBaseManager::Instance().GetFileType();
-    std::string sql = "";
-    if (type == FullDb::FileType::PYTORCH) {
-        sql += "SELECT deviceId FROM " + recordTable + " LIMIT 1 ";
-    } else {
-        return "";
-    }
-    return ExecuteQueryDeviceId(sql);
-};
-
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

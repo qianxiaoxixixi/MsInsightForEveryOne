@@ -79,30 +79,6 @@ bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
     return true;
 }
 
-std::string TextSummaryDataBase::QueryDeviceId()
-{
-    FullDb::FileType type = FullDb::DataBaseManager::Instance().GetFileType();
-    std::string sql = "";
-    if (type == FullDb::FileType::PYTORCH) {
-        sql += "SELECT deviceId FROM " + TABLE_KERNEL + " LIMIT 1 ";
-    } else {
-        return "";
-    }
-    std::string deviceId;
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        return "";
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        deviceId = res;
-    }
-    sqlite3_finalize(stmt);
-    return deviceId;
-}
-
 void TextSummaryDataBase::ReleaseStmt()
 {
     if (insertKernelStmt != nullptr) {

@@ -50,7 +50,6 @@ public:
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
     std::vector<std::pair<std::string, std::string>> QueryTableDataNameList();
 
-    std::string GetDeviceId(const std::string& fileId) override;
     // search
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
         Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
