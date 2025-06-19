@@ -181,7 +181,7 @@ private:
                                          std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryCounterMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryCounterMetadataGenerateInfo(const PROCESS_TYPE &type,
-                                          std::string &processName, std::string &tableName, std::string &sql);
+        std::string &processName, std::string &metaType, std::string &sql);
     bool NeedUpdateDepth(const std::string &table);
     void GenerateCounterMetadata(const std::string &fileId,
                                  std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);

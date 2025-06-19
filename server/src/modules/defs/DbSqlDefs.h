@@ -74,19 +74,6 @@ const static std::string LLC_UNIT_COUNTER_SQL = "with main as (select timestampN
      " AND startTime >= ? AND startTime <= ? and glob(modeName||'*', processName)) select startTime, "
      " case when glob('*Throughput', processName) then format('{\"Throughput(B/s)\":%s}', throughput) "
      " else format('{\"Hit Rate(%%)\":%s}', hitRate) end as args from main ORDER BY startTime ASC";
-const static std::string DDR_UNIT_COUNTER_SQL = "select timestampNs-? as startTime, case when ? = 'Read' "
-     " then format('{\"Read(B/s)\":%s}', read) else format('{\"Write(B/s)\":%s}', write) end as args from DDR "
-     " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC";
-const static std::string SOC_UNIT_COUNTER_SQL = "select timestampNs - ? as startTime, case when ? ='L2 Buffer Bw Level'"
-     " then format('{\"L2 Buffer Bw Level\":%s}', l2BufferBwLevel) else "
-     " format('{\"Mata Bw Level\":%s}', mataBwLevel) end as args from SOC_BANDWIDTH_LEVEL"
-     " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
-const static std::string ACC_PMU_UNIT_COUNTER_SQL =
-     "with pn as (select ? as value) select timestampNs - ? as startTime, "
-     " format('{\"value\":%s, \"acc_id\":%s}', case when pn.value='readBwLevel' then readBwLevel "
-     " when pn.value = 'writeBwLevel' then writeBwLevel when pn.value = 'readOstLevel' then readOstLevel "
-     " else writeOstLevel end, accId) as args  from ACC_PMU join pn "
-     " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string NPU_UNIT_COUNTER_SQL = "with pn as (select ? as value) select timestampNs - ? as startTime, "
      " case s.value when 'app' then 'APP*'  else 'Device*' end as typeName, format('{\"B\":%s}',"
      " case when glob('*DDR', pn.value) then ddr when glob('*HBM', pn.value) then "
@@ -97,10 +84,6 @@ const static std::string SAMPLE_PMU_UNIT_COUNTER_SQL =
         " format('{\"freq(Mhz)\":%s, \"usage(%%)\":%s, \"totalCycle\":%s}', freq, usage, totalCycle) as args "
         " from SAMPLE_PMU_TIMELINE join STRING_IDS on coreType = id  where deviceId = ? and "
         "        format('%s Core %s', value, coreId) = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
-
-const static std::string AI_CORE_UNIT_COUNTER_SQL =
-    "select timestampNs - ? as startTime, json_object('Mhz',round(freq, 4)) as args "
-    "     from AICORE_FREQ where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
 
 // sql of same operate detail
 const static std::string ASCEND_SAME_NAME_DETAIL_SQL =

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+#include "TraceDatabaseHelper.h"
 #include <sstream>
 #include <algorithm>
 #include "CounterEventHelper.h"
@@ -238,24 +239,12 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::uniq
         case PROCESS_TYPE::LLC:
             return ExecuteQuery(stmt, LLC_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
                                 rankId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::DDR:
-            return ExecuteQuery(stmt, DDR_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
-                                rankId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::STARS_SOC:
-            return ExecuteQuery(stmt, SOC_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
-                                rankId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::ACC_PMU:
-            return ExecuteQuery(stmt, ACC_PMU_UNIT_COUNTER_SQL, requestParams.threadId, minTimestamp,
-                                rankId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::NPU_MEM:
             return ExecuteQuery(stmt, NPU_UNIT_COUNTER_SQL, requestParams.threadId, minTimestamp,
                                 rankId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::SAMPLE_PMU:
             return ExecuteQuery(stmt, SAMPLE_PMU_UNIT_COUNTER_SQL, minTimestamp, rankId,
                                 requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::AI_CORE:
-            return ExecuteQuery(stmt, AI_CORE_UNIT_COUNTER_SQL, minTimestamp,
-                                rankId, requestParams.startTime, requestParams.endTime);
         default:
             throw DatabaseException("unsupported type!");
     }
