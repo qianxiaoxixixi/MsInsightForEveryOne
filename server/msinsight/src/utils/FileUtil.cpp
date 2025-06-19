@@ -645,7 +645,7 @@ bool FileUtil::CheckPathInvalidChar(const std::string &filePath)
     return false;
 }
 
-bool FileUtil::CheckPathOwner(const std::string &filePath)
+bool FileUtil::CheckWritableByOther(const std::string &filePath)
 {
 #ifdef _WIN32
     return true;
@@ -660,6 +660,23 @@ bool FileUtil::CheckPathOwner(const std::string &filePath)
     }
     if (fileStat.st_mode & S_IWOTH) {
         return false;
+    }
+    return true;
+#endif
+}
+
+bool FileUtil::CheckPathOwner(const std::string &filePath)
+{
+#ifdef _WIN32
+    return true;
+#else
+    struct stat fileStat{};
+    if (stat(filePath.c_str(), &fileStat) != 0) {
+        Server::ServerLog::Warn("Get file info failed when check owner");
+        return false;
+    }
+    if (geteuid() == 0) {
+        return true;
     }
     if (fileStat.st_uid == 0) {
         return true;

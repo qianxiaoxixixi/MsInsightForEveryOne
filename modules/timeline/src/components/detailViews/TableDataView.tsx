@@ -12,7 +12,6 @@ interface TableData {
     tableData: any[];
     totalNum: number;
 }
-// eslint-disable-next-line camelcase
 export const TableDataDetail = observer((props: SelectContentViewProps & { selectKey: number }) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
@@ -65,7 +64,6 @@ export const TableDataDetail = observer((props: SelectContentViewProps & { selec
         </div>
     );
 });
-// eslint-disable-next-line camelcase
 export const TableDataView = observer((props: SelectContentViewProps & { selectKey: number }) => {
     return (
         <TableDataDetail {...props} />
