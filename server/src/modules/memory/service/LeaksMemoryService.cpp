@@ -316,7 +316,7 @@ bool LeaksMemoryService::ParseMemoryAllocDetailTreeByTimestamp(const std::string
         return false;
     }
     detailTree.size = latestHALAllocation->totalSize;
-    if (latestHALAllocation->totalSize <= 0) {
+    if (latestHALAllocation->totalSize == 0) {
         Server::ServerLog::Warn("Parse memory alloc details: empty data.");
         return true;
     }

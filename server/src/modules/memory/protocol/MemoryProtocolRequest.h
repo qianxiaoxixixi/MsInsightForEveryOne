@@ -383,6 +383,8 @@ struct LeaksMemoryDetailParams {
     bool relativeTime;
     std::string deviceId;
 
+    LeaksMemoryDetailParams() : timestamp(0), relativeTime(false) {}
+
     bool CommonCheck(std::string &errorMsg)
     {
         if (!CheckStrParamValid(deviceId, errorMsg)) {
