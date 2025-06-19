@@ -786,7 +786,7 @@ bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &
             prePpIndex = ppSize;
         }
     }
-    if (config.dpSize <= 0 && config.ppSize <= 0 && config.tpSize <= 0) {
+    if (config.dpSize == 0 && config.ppSize == 0 && config.tpSize == 0) {
         level = PARALLEL_CONFIG_LEVEL_UNDEFINED;
     } else {
         level = PARALLEL_CONFIG_LEVEL_COLLECTED;

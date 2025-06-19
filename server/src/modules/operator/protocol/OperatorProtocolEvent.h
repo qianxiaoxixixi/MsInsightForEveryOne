@@ -13,7 +13,7 @@
 namespace Dic::Protocol {
     struct OperatorRank {
         std::string rankId;
-        bool status;
+        bool status{false};
         std::string error;
     };
 
