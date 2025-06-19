@@ -52,6 +52,7 @@ struct ImportActionResBody {
     bool hasCachelineRecords = false;
     uint16_t version = 0x5a;
     bool isIE = false;
+    bool isMultiDevice{false};
 };
 
 struct ImportActionResponse : public Response {

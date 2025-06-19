@@ -287,6 +287,33 @@ struct ProjectExplorerInfo {
         }
         return res;
     }
+
+    std::vector<std::shared_ptr<ParseFileInfo>>  GetDeviceInfos()
+    {
+        if (projectFileTree.empty()) {
+            return {};
+        }
+        std::queue<std::shared_ptr<ParseFileInfo>> que;
+        std::for_each(projectFileTree.begin(), projectFileTree.end(), [&que](const auto &item) {
+            que.push(item);
+        });
+        std::vector<std::shared_ptr<ParseFileInfo>> res;
+        while (!que.empty()) {
+            auto fileInfo = que.front();
+            que.pop();
+            if (fileInfo->type < ParseFileType::DEVICE_CHIP) {
+                std::for_each(fileInfo->subParseFile.begin(), fileInfo->subParseFile.end(), [&que](const auto &item) {
+                    que.push(item);
+                });
+                continue;
+            }
+            if (fileInfo->type == ParseFileType::DEVICE_CHIP) {
+                res.emplace_back(fileInfo);
+                continue;
+            }
+        }
+        return res;
+    }
 };
 
 

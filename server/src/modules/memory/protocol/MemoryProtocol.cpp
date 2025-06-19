@@ -247,7 +247,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryFindSliceRequest(const json_t &
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
     return reqPtr;

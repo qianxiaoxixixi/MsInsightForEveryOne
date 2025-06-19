@@ -285,12 +285,12 @@ struct MemoryViewParams {
 };
 
 struct MemoryFindSliceParams {
-    std::string fileId;
+    std::string rankId;
     std::string id;
     std::string name;
     bool CommonCheck(std::string &errorMsg)
     {
-        if (!CheckStrParamValid(fileId, errorMsg)) {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
             errorMsg = "The value of request param [fileId] is invalid, detail:" + errorMsg;
             return false;
         }

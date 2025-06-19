@@ -17,16 +17,21 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::unique_ptr<CommunicationKernelResponse> responsePtr = std::make_unique<CommunicationKernelResponse>();
     CommunicationKernelResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    if (ProjectExplorerManager::Instance().IsTextMultiCluster(request.projectName)) {
-        request.params.rankId = StringUtil::StrJoin(FileUtil::GetFileName(request.params.clusterPath), "_",
-                                                    request.params.rankId);
-    }
-    auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
-    if (database == nullptr) {
-        database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
+    std::shared_ptr<VirtualTraceDatabase> database = nullptr;
+    if (!request.fileId.empty()) {
+        database = DataBaseManager::Instance().GetTraceDatabaseByFileId(request.fileId);
+    } else {
+        if (ProjectExplorerManager::Instance().IsTextMultiCluster(request.projectName)) {
+            request.params.rankId = StringUtil::StrJoin(FileUtil::GetFileName(request.params.clusterPath), "_",
+                                                        request.params.rankId);
+        }
+        database = DataBaseManager::Instance().GetTraceDatabaseByRankId(request.params.rankId);
         if (database == nullptr) {
-            SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get connection.");
-            return false;
+            database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
+            if (database == nullptr) {
+                SendResponse(std::move(responsePtr), false, "Query communication kernel failed to get connection.");
+                return false;
+            }
         }
     }
     if (!database->QueryCommunicationKernelInfo(request.params.name, request.params.rankId, response.body)) {
