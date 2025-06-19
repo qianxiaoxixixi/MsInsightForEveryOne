@@ -240,9 +240,13 @@ bool ExpertHotspotManager::FillHotspotData(std::vector<ExpertHotspotStruct> &res
         }
         // 更新layer为全局layer（包含稠密层的情况）
         item.layer = params.moeLayerMapping[item.layer];
-        item.expertId = NumberSafe::Add(NumberSafe::Muls(item.rankId, params.expertNumberPerRank), item.localExpertId);
+        uint64_t expertId = NumberSafe::Add(NumberSafe::Muls(item.rankId, params.expertNumberPerRank),
+                                            item.localExpertId);
+        uint64_t expertIndex =  NumberSafe::Add(NumberSafe::Muls(item.rankId, params.expertNumberPerRank),
+                                                item.localExpertId);
+        item.expertId = static_cast<int>(NumberUtil::CeilingClamp(expertId, static_cast<uint64_t>(INT_MAX)));
         item.expertIndex =
-            NumberSafe::Add(NumberSafe::Muls(item.rankId, params.expertNumberPerRank), item.localExpertId);
+            static_cast<int>(NumberUtil::CeilingClamp(expertIndex, static_cast<uint64_t>(INT_MAX)));
         int index = NumberSafe::Add(item.expertIndex, NumberSafe::Muls(item.layer, params.colNumber));
         if (index >= NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer)) {
             return false;
@@ -266,7 +270,8 @@ bool ExpertHotspotManager::FillDeploymentData(std::vector<ExpertHotspotStruct> &
             if (index >= static_cast<uint64_t>(NumberSafe::Muls(params.colNumber, params.modelInfo.modelLayer))) {
                 return false;
             }
-            res[index].expertIndex = expertIndex;
+            res[index].expertIndex = static_cast<int>(NumberUtil::CeilingClamp(expertIndex,
+                                                                               static_cast<uint64_t>(INT_MAX)));
             res[index].layer = aclLayer;
             res[index].expertId = item.expertList[i];
             res[index].rankId = item.deviceId;
@@ -286,7 +291,7 @@ void ExpertHotspotManager::FillDenseLayerInfo(std::vector<ExpertHotspotStruct> &
             res[index].layer = item;
             if (params.expertNumberPerRank != 0) {
                 // rankId计算（向下取整）：列数 ÷ 每个rank的专家数
-                res[index].rankId = i / params.expertNumberPerRank;
+                res[index].rankId = static_cast<uint64_t>(i) / params.expertNumberPerRank;
             }
         }
     }
@@ -306,11 +311,13 @@ bool ExpertHotspotManager::FillExpertInfo(std::vector<ExpertHotspotStruct> &hots
                 return info.layer == hotspotInfos[0].layer && info.rankId == hotspotInfos[0].rankId;
             });
         expertNumberPerRank = filteredHotspots.size();
-        colNumber = expertNumberPerRank * modelInfo.rankNumber;
+        colNumber = static_cast<int>(NumberUtil::CeilingClamp(expertNumberPerRank * modelInfo.rankNumber,
+                                                              static_cast<uint64_t>(INT_MAX)));
     } else if (!deployment.empty()) {
         // 如果有配置文件，则专家数直接取自数据内
         expertNumberPerRank = deployment[0].expertList.size();
-        colNumber = expertNumberPerRank * modelInfo.rankNumber;
+        colNumber = static_cast<int>(NumberUtil::CeilingClamp(expertNumberPerRank * modelInfo.rankNumber,
+                                                              static_cast<uint64_t>(INT_MAX)));
     } else {
         colNumber = modelInfo.expertNumber;
     }
