@@ -1527,15 +1527,16 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::HBM, PROCESS_TYPE::LLC, PROCESS_TYPE::SAMPLE_PMU,
-                            PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
+                            PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS, PROCESS_TYPE::AI_CORE,
+                            PROCESS_TYPE::ACC_PMU, PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC};
     for (const auto &type : types) {
-        std::string tableName;
         std::string processName;
+        std::string metaType;
         std::string sql;
-        if (!QueryCounterMetadataGenerateInfo(type, processName, tableName, sql)) {
+        if (!QueryCounterMetadataGenerateInfo(type, processName, metaType, sql)) {
             continue;
         }
-        auto counter = GenerateBaseUnitTrack("label", fileId, processName, processName, processName);
+        auto counter = GenerateBaseUnitTrack("label", fileId, processName, processName, metaType);
         auto stmt = CreatPreparedStatement(sql);
         if (stmt == nullptr) {
             ServerLog::Error("Query counter metadata failed!.");
@@ -1555,7 +1556,7 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
             return false;
         }
         while (resultSet->Next()) {
-            auto thread = GenerateBaseUnitTrack("counter", fileId, processName, "", processName);
+            auto thread = GenerateBaseUnitTrack("counter", fileId, processName, "", metaType);
             thread->metaData.threadId = resultSet->GetString("name");
             thread->metaData.threadName = thread->metaData.threadId;
             thread->metaData.dataType = StringUtil::Split(resultSet->GetString("types"), ",");
@@ -1567,17 +1568,27 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
 }
 
 bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeline::PROCESS_TYPE &type,
-                                                       std::string &processName, std::string &tableName,
-                                                       std::string &sql)
+    std::string &processName, std::string &metaType, std::string &sql)
 {
+    std::string tableName;
     CounterEventHelper helper;
     helper.RegisterDeviceMap();
     if (type == PROCESS_TYPE::NIC) {
         processName = "NIC";
+        metaType = "NIC";
         tableName = "NETDEV_STATS";
+    } else if (type == PROCESS_TYPE::AI_CORE) {
+        processName = "AI Core Freq";
+        metaType = "AICORE_FREQ";
+        tableName = "AICORE_FREQ";
+    } else if (type == PROCESS_TYPE::STARS_SOC) {
+        processName = "Stars Soc";
+        metaType = "SOC_BANDWIDTH_LEVEL";
+        tableName = "SOC_BANDWIDTH_LEVEL";
     } else {
         tableName = ENUM_TO_STR(type).value_or("");
         processName = tableName;
+        metaType = tableName;
     }
     if (!CheckTableExist(tableName)) {
         ServerLog::Info("Query counter metadata failed, table ", tableName, " Not Exist.");
@@ -1593,6 +1604,10 @@ bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeli
         case PROCESS_TYPE::SAMPLE_PMU:
             sql = StringUtil::ReplaceFirst(SAMPLE_PMU_MEAT_DATA_SQL, "#", tableName);
             break;
+        case PROCESS_TYPE::AI_CORE:
+        case PROCESS_TYPE::ACC_PMU:
+        case PROCESS_TYPE::DDR:
+        case PROCESS_TYPE::STARS_SOC:
         case PROCESS_TYPE::NIC:
         case PROCESS_TYPE::PCIE:
         case PROCESS_TYPE::HCCS:
@@ -1607,8 +1622,7 @@ bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeli
 void DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    PROCESS_TYPE types[] = {PROCESS_TYPE::ACC_PMU, PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC,
-                            PROCESS_TYPE::NPU_MEM, PROCESS_TYPE::AI_CORE};
+    PROCESS_TYPE types[] = {PROCESS_TYPE::NPU_MEM};
     for (const auto &type : types) {
         auto typeName = ENUM_TO_STR(type).value_or("");
         if (!CheckTableExist(typeName)) {
@@ -1635,27 +1649,9 @@ void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector
     std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter)
 {
     switch (type) { // 此处type调用场景固定，不会出现特殊情况
-        case PROCESS_TYPE::ACC_PMU:
-            units = { "readBwLevel", "readOstLevel", "writeBwLevel", "writeOstLevel"};
-            dataTypes = { { "value", "acc_id" } };
-            break;
-        case PROCESS_TYPE::DDR:
-            units = { "Read", "Write" };
-            dataTypes = { { "Read(B/s)" }, { "Write(B/s)" } };
-            break;
-        case PROCESS_TYPE::STARS_SOC:
-            counter->metaData.processName = "Stars Soc";
-            units = {"L2 Buffer Bw Level", "Mata Bw Level"};
-            dataTypes = {{"L2 Buffer Bw Level"}, {"Mata Bw Level"}};
-            break;
         case PROCESS_TYPE::NPU_MEM:
             units = {"APP/DDR", "APP/HBM", "APP/MEMORY", "Device/DDR", "Device/HBM", "Device/MEMORY"};
             dataTypes = {{"B"}};
-            break;
-        case PROCESS_TYPE::AI_CORE:
-            counter->metaData.processName = "AI Core Freq";
-            units = { "AI Core Freq" };
-            dataTypes = {{ "Mhz" }};
             break;
         default:
             break;

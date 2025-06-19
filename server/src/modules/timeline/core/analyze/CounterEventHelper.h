@@ -20,7 +20,9 @@ namespace Dic::Module::Timeline {
  * 如果有多个列需要作为值进行展示，每一个展示的值需要新增一项配置项，所以会有multimap的数据结构
  * threadNameForamt 泳道线程名称，为格式字符串，{}外是固定内容，{}内的内容会被对应表中字段替换
  * 比如"CPU {cpuId}"表示列名固定字段为"CPU "，看tableName表中有多少个不同的cpuId值，假设有0 1两个值，泳道线程名称就会返回CPU 0和CPU 1两个泳道
- * 以"/列名"结尾，这是为了保证当请求unit/counter时，同一进程的不同线程泳道请求的threadId一定不同
+ * 该字符串可能含有/或者不含有/，当含有/时，/后的部分是展示的列名，当不含有/时，整个字符串表示展示的列名
+ * 展示的列名和valueName为了可读性会有所不同，具体见displayNameToValueName，如果该map没有展示的列名对应的key，则valueName就是展示的列名
+ * 保证当请求unit/counter时，同一进程的不同线程泳道请求的threadId一定不同
  * type 前端展示需要的信息
  * 即鼠标移动到柱状图上，展示的key-value内容中的key
  * SQL的具体例子可以看DT
@@ -46,10 +48,15 @@ public:
     std::map<PROCESS_TYPE, CounterEventConfig> hostCounterEventMap;
     std::multimap<PROCESS_TYPE, CounterEventConfig> deviceCounterEventMap;
 protected:
+    void RegisterDeviceAICoreFreqMap();
+    void RegisterDeviceAccPMUMap();
+    void RegisterDeviceDDRMap();
+    void RegisterDeviceStarsSocMap();
     void RegisterDeviceNICMap();
     void RegisterDevicePCIeMap();
     void RegisterDeviceHCCSMap();
     std::string SubstituteThreadNameFormat(const std::string &format);
+    const static std::map<std::string, std::string> displayNameToValueName;
 };
 }
 #endif // PROFILER_SERVER_COUNTEREVENTHELPER_H

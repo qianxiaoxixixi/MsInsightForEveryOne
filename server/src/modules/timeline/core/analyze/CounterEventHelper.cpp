@@ -5,6 +5,13 @@
 #include "CounterEventHelper.h"
 namespace Dic::Module::Timeline {
 using namespace Dic::Protocol;
+const std::map<std::string, std::string> CounterEventHelper::displayNameToValueName = {
+    {"AI Core Freq", "freq"},
+    {"Read", "read"},
+    {"Write", "write"},
+    {"L2 Buffer Bw Level", "l2BufferBwLevel"},
+    {"Mata Bw Level", "mataBwLevel"}
+};
 void CounterEventHelper::RegisterHostMap()
 {
     hostCounterEventMap.insert({PROCESS_TYPE::CPU_USAGE,
@@ -19,9 +26,47 @@ void CounterEventHelper::RegisterHostMap()
 
 void CounterEventHelper::RegisterDeviceMap()
 {
+    RegisterDeviceAICoreFreqMap();
+    RegisterDeviceAccPMUMap();
+    RegisterDeviceDDRMap();
+    RegisterDeviceStarsSocMap();
     RegisterDeviceNICMap();
     RegisterDevicePCIeMap();
     RegisterDeviceHCCSMap();
+}
+
+void CounterEventHelper::RegisterDeviceAICoreFreqMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::AI_CORE,
+        {"AI Core Freq", "AICORE_FREQ", "freq", "AI Core Freq", "Mhz"}});
+}
+
+void CounterEventHelper::RegisterDeviceAccPMUMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
+        {"ACC_PMU", "ACC_PMU", "readBwLevel", "Accelerator {accId}/readBwLevel", "Level"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
+        {"ACC_PMU", "ACC_PMU", "writeBwLevel", "Accelerator {accId}/writeBwLevel", "Level"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
+        {"ACC_PMU", "ACC_PMU", "readOstLevel", "Accelerator {accId}/readOstLevel", "Level"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::ACC_PMU,
+        {"ACC_PMU", "ACC_PMU", "writeOstLevel", "Accelerator {accId}/writeOstLevel", "Level"}});
+}
+
+void CounterEventHelper::RegisterDeviceDDRMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::DDR,
+        {"DDR", "DDR", "read", "Read", "Bandwidth(B/s)"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::DDR,
+        {"DDR", "DDR", "write", "Write", "Bandwidth(B/s)"}});
+}
+
+void CounterEventHelper::RegisterDeviceStarsSocMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::STARS_SOC,
+        {"Stars Soc", "SOC_BANDWIDTH_LEVEL", "l2BufferBwLevel", "L2 Buffer Bw Level", "Level"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::STARS_SOC,
+        {"Stars Soc", "SOC_BANDWIDTH_LEVEL", "mataBwLevel", "Mata Bw Level", "Level"}});
 }
 
 // NIC数据db格式的来源是NETDEV_STATS表，而不是NIC表
@@ -153,7 +198,7 @@ std::string CounterEventHelper::GenerateDeviceMetadataSQL(Dic::Module::Timeline:
         sql += "SELECT DISTINCT ";
         std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat);
         sql += substitutedFormat;
-        sql += " AS name, '" + config.type + "' AS types FROM " + config.tableName; //+ " WHERE deviceId = ?";
+        sql += " AS name, '" + config.type + "' AS types FROM " + config.tableName + " WHERE deviceId = ?";
     }
     sql += ";";
     return sql;
@@ -162,11 +207,19 @@ std::string CounterEventHelper::GenerateDeviceMetadataSQL(Dic::Module::Timeline:
 std::string CounterEventHelper::GenerateDeviceCounterSQL(Dic::Module::Timeline::PROCESS_TYPE type,
     const std::string &threadId)
 {
+    std::string expectedDisplayName;
     size_t index = threadId.find_last_of('/');
     if (index == std::string::npos) {
-        return "";
+        expectedDisplayName = threadId;
+    } else {
+        expectedDisplayName = threadId.substr(index + 1);
     }
-    std::string expectedValueName = threadId.substr(index + 1);
+    std::string expectedValueName;
+    if (displayNameToValueName.find(expectedDisplayName) == displayNameToValueName.end()) {
+        expectedValueName = expectedDisplayName;
+    } else {
+        expectedValueName = displayNameToValueName.at(expectedDisplayName);
+    }
     auto beg = deviceCounterEventMap.lower_bound(type);
     auto end = deviceCounterEventMap.upper_bound(type);
     for (; beg != end; ++beg) {
