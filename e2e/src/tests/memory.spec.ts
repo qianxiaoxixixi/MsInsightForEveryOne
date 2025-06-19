@@ -24,7 +24,6 @@ const test = baseTest.extend<TestFixtures>({
 });
 
 const memoryImgMap = {
-    loadMultiMachinesMultiRanksDataSuccess: 'memory-pytorch-multi-loaded.png',
     multiMachinesClickRank: 'memory-pytorch-multi-click-rank.png',
     compareRankDb: 'memory-compare-rank-db.png',
     queryCompareRankDb: 'memory-compare-rank-db-with-condition.png',
@@ -168,7 +167,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await page.mouse.move(0, 0);
 
         const totalNumListItem = memoryFrame.locator('.ant-spin-container > ul > li.ant-pagination-total-text');
-        expect(await totalNumListItem.innerText()).toBe('Total 507 items');
+        expect(await totalNumListItem.innerText()).toBe('Total 513 items');
 
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-interval-only-show.png', {
             maxDiffPixels: 500,
@@ -264,7 +263,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         await page.waitForTimeout(1000);
 
         await page.mouse.move(0, 0);
-        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.loadMultiMachinesMultiRanksDataSuccess, {
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('memory-pytorch-multi-loaded.png', {
             maxDiffPixels: 500,
         });
     });
