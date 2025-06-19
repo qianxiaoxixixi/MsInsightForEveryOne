@@ -133,7 +133,7 @@ const MemorySliceChart: any = observer(({ session }: { session: Session }): Reac
         setChartData([transformData(session.memoryData, t, 0)]);
     }, [session.memoryData, t]);
     return (
-        <MIChart ref={chartRef} height={'350px'} loading={loading} options={chartOptions} />
+        <MIChart ref={chartRef} height='350px' loading={loading} options={chartOptions} />
     );
 });
 export default MemorySliceChart;
