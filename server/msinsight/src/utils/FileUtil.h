@@ -557,6 +557,8 @@ public:
     * @brief 检查文件权限，后续替换现有实现
     */
     static bool CheckPathPermission(const std::string &filePath, fs::perms permission);
-};
+
+    static bool CheckWritableByOther(const std::string &filePath);
+    };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

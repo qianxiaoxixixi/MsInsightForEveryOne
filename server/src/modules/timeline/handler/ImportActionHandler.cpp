@@ -113,7 +113,18 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
     ProjectTypeEnum projectType = projectParser->GetProjectType(importPath);
     Global::ProjectExplorerInfo projectExplorerInfo;
     // 获取文件列表
-    std::vector<std::string> parseFileList = projectParser->GetParseFileByImportFile(importPath, warnMsg);
+    std::vector<std::string> tempFiles = projectParser->GetParseFileByImportFile(importPath, warnMsg);
+    std::vector<std::string> parseFileList;
+    for (const auto &item: tempFiles) {
+        if (FileUtil::CheckWritableByOther(item)) {
+            parseFileList.emplace_back(item);
+        }
+    }
+    if (parseFileList.size() != tempFiles.size()) {
+        warnMsg = "Other users have write permissions to the file or subfiles";
+        SendParseFailEvent(warnMsg);
+        warnMsg = "";
+    }
     bool isNotCluster = parseFileList.size() == 1 && !ClusterFileParser::CheckIsCluster(parseFileList[0]);
     // 如果没有找到文件（warnMag不为空），并且不是集群数据，则需要发送错误提示给前端
     if (!warnMsg.empty() && isNotCluster) {
