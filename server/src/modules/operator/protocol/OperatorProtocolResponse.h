@@ -95,7 +95,7 @@ namespace Dic::Protocol {
     // 获取See More时算子详情信息的响应
     struct OperatorMoreInfoResponse : public Response {
         OperatorMoreInfoResponse() : Response(REQ_RES_OPERATOR_MORE_INFO) {};
-        int64_t total;
+        int64_t total{0};
         std::string level; // l0, l1, l2
         std::set<std::string> pmuHeaders;
         std::vector<OperatorDetailInfoRes> datas;

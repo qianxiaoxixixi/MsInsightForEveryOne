@@ -55,8 +55,8 @@ namespace Dic::Protocol {
         std::string deviceId;
         std::string group; // Operator、Operator Type、Input Shape
         int64_t topK{0};
-        int64_t current;
-        int64_t pageSize;
+        int64_t current{1};
+        int64_t pageSize{0};
         std::string orderBy;
         std::string order;
         std::vector<std::pair<std::string, std::string>> filters;
@@ -108,13 +108,13 @@ namespace Dic::Protocol {
         std::string rankId;
         std::string deviceId;
         std::string group;
-        int64_t topK;
+        int64_t topK{0};
         std::string opType;
         std::string opName;
         std::string shape;
         std::string accCore;
-        int64_t current;
-        int64_t pageSize;
+        int64_t current{1};
+        int64_t pageSize{0};
         std::string orderBy;
         std::string order;
         std::vector<std::pair<std::string, std::string>> filters;
