@@ -20,7 +20,6 @@ export type Caches = Record<any, Cache | null>;
  * @returns new caches for session
  */
 
-// const nullObj = {};
 export const createCaches = (session: ValidSession): Caches => {
     return {};
 };

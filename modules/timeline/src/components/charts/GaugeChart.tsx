@@ -23,7 +23,7 @@ interface GaugeChartProps {
     dataFormat: (data: number) => string;
     mapFunc: () => Promise<Array<[number, string]>>;
     palette: Array<keyof Theme['colorPalette']>;
-    totalFormat?: [ () => Promise<string>, string? ]; // [ totalValue, unit ]
+    totalFormat?: [ () => Promise<string>, string? ];
 };
 
 const margin = 30;
