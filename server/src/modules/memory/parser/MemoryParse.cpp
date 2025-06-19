@@ -64,12 +64,14 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
         if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
             Timeline::ParserStatus::RUNNING) {
             ServerLog::Error("Parsing process of operator_memory.csv is interrupted.");
+            file.close();
             return false;
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of operator_memory.csv is not header.");
+                file.close();
                 return false;
             }
             for (size_t i = 0; i < row.size(); i++) {
@@ -77,6 +79,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
             }
             bool columnExist = GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
             if (!columnExist) {
+                file.close();
                 return false;
             }
             isHeader = false;
@@ -247,12 +250,14 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
         if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
             Timeline::ParserStatus::RUNNING) {
             ServerLog::Error("Parsing process of memory_record.csv is interrupted.");
+            file.close();
             return false;
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of memory_record.csv is not header.");
+                file.close();
                 return false;
             }
             for (size_t i = 0; i < row.size(); i++) {
@@ -260,6 +265,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
             }
             bool columnExist = GetMapValid((row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF), dataMap);
             if (!columnExist) {
+                file.close();
                 return false;
             }
             isHeader = false;
@@ -297,12 +303,14 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
         if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
             Timeline::ParserStatus::RUNNING) {
             ServerLog::Error("Parsing process of static_op_mem.csv is interrupted.");
+            file.close();
             return false;
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of static_op_mem.csv is not header.");
+                file.close();
                 return false;
             }
             for (size_t i = 0; i < row.size(); i++) {
@@ -310,6 +318,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
             }
             bool columnExist = GetMapValid(STATIC_OP_MEM_CSV, dataMap);
             if (!columnExist) {
+                file.close();
                 return false;
             }
             isHeader = false;
@@ -351,20 +360,22 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
         if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
             Timeline::ParserStatus::RUNNING) {
             ServerLog::Error("Parsing process of npu_module_mem.csv is interrupted.");
+            file.close();
             return false;
         }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
                 ServerLog::Error("The first line of npu_module_mem.csv is not header.");
+                file.close();
                 return false;
             }
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
-            bool columnExist = GetMapValid(NPU_MODULE_MEM_CSV_PYTORCH, dataMap) ||
-                GetMapValid(NPU_MODULE_MEM_CSV_MINDSPORE, dataMap);
-            if (!columnExist) {
+            if (!GetMapValid(NPU_MODULE_MEM_CSV_PYTORCH, dataMap) &&
+            !GetMapValid(NPU_MODULE_MEM_CSV_MINDSPORE, dataMap)) {
+                file.close();
                 return false;
             }
             isHeader = false;
@@ -380,11 +391,9 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
     }
     // 读取剩下的数据并插入到module内
     memoryDatabase->SaveComponentDetail();
-    auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("End parsing Npu Module Mem: ", filePath, ", cost time: ",
-                    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    uint64_t minStartTime = memoryDatabase->QueryMinComponentTimestamp();
-    Timeline::TraceTime::Instance().UpdateCardMinTimestamp(fileId, minStartTime);
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count());
+    Timeline::TraceTime::Instance().UpdateCardMinTimestamp(fileId, memoryDatabase->QueryMinComponentTimestamp());
     return true;
 }
 
