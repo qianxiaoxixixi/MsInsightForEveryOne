@@ -159,7 +159,7 @@ const getTreeNode = (data: FileOrDirectory, projectName: string, projectIndex: n
         checkable: false,
         isLeaf,
         title: <Tooltip mouseEnterDelay={0.3} placement="bottom" title={data.path}>
-            <span className={`content-body ${getNodeClass(session, { projectName, fileType: layerType, filePath: data.path, rankId: data.rankId })}`}>
+            <span className={`content-body ${getNodeClass(session, { projectName, fileType: layerType, filePath: data.path, rankId: data.rankId ?? '' })}`}>
                 <span className="content-text can-right-click" onContextMenu={(): void => {
                     handleRightClick({ projectName, fileType: layerType, filePath: data.path, rankId: data.rankId ?? '' });
                 }}>

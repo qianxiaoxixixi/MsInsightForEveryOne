@@ -79,9 +79,19 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
     const [hit, setHit] = useState<{alert: boolean;message: string;options?: Record<string, string | number>}>({ alert: false, message: 'FileSearchDescribe' });
     const [conflictModalVis, setConflictModalVis] = useState<boolean>(false);
     const [checkResult, setCheckResult] = useState<ProjectError>(ProjectError.NO_ERRORS);
+    const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
 
     // 点击确认
-    const handleConfirm = async(): Promise<void> => {
+    const handleConfirm = async (): Promise<void> => {
+        setConfirmLoading(true);
+        try {
+            await confirmFile();
+        } finally {
+            setConfirmLoading(false);
+        }
+    };
+
+    const confirmFile = async (): Promise<void> => {
         const path = selectedPath;
         // 若currentProject存在，在已有项目下导入数据，否则新增项目
         const projectName = currentProject !== '' ? currentProject : path;
@@ -175,7 +185,7 @@ const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject, custom
     return <><StyledModal title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
         width={800}
         footer={<div>
-            <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} disabled={selectedPath === ''}>{t('Confirm')}</Button>
+            <Button onClick={handleConfirm} loading={confirmLoading} type="primary" style={{ marginRight: 8 }} disabled={selectedPath === ''}>{t('Confirm')}</Button>
             <Button onClick={closeDialog}>{t('Cancel')}</Button>
         </div>}>
         <FileExplorerContainer>
