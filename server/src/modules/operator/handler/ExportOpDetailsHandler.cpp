@@ -17,8 +17,8 @@
 #include "ProjectExplorerManager.h"
 #include "QueryOpStatisticInfoHandler.h"
 #include "QueryOpDetailInfoHandler.h"
-#include "ExportOpDetailsHandler.h"
 #include "NumberSafeUtil.h"
+#include "ExportOpDetailsHandler.h"
 
 namespace {
     using namespace Dic;
