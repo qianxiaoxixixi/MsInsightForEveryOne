@@ -826,7 +826,7 @@ TEST_F(MemoryProtocolTest, ToMemoryFindSliceRequest)
     Dic::JsonUtil::AddMember(json, "params", params, allocator);
     unsigned int id = protocol.FromJson(json, error)->id;
     std::string memoryId = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.id;
-    std::string memoryRankId = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.fileId;
+    std::string memoryRankId = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.rankId;
     std::string memoryName = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.name;
     EXPECT_EQ(id, tempId);
     EXPECT_EQ(memoryId, "89");
