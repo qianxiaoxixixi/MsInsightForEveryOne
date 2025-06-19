@@ -403,9 +403,6 @@ static std::string GetPrintAbleString(const std::string &input)
  */
 static std::string CreateQuestionMarkString(uint64_t n)
 {
-    if (n <= 0) {
-        return "";
-    }
     std::stringstream res;
     for (uint64_t i = 0; i < n; ++i) {
         res << "?";
