@@ -602,12 +602,12 @@ bool DbClusterDataBase::ExecuteQueryDistributedArgs(Dic::Module::ParallelStrateg
             return false;
         }
     }
-    args.config.tpSize = json["tensor_model_parallel_size"].GetInt64();
-    args.config.ppSize = json["pipeline_model_parallel_size"].GetInt64();
-    args.config.dpSize = json["data_parallel_size"].GetInt64();
-    args.config.cpSize = json["context_parallel_size"].GetInt64();
-    args.config.epSize = json["expert_model_parallel_size"].GetInt64();
-    args.worldSize = json["world_size"].GetInt64();
+    args.config.tpSize = NumberUtil::IntToUint32(json["tensor_model_parallel_size"].GetInt());
+    args.config.ppSize = NumberUtil::IntToUint32(json["pipeline_model_parallel_size"].GetInt());
+    args.config.dpSize = NumberUtil::IntToUint32(json["data_parallel_size"].GetInt());
+    args.config.cpSize = NumberUtil::IntToUint32(json["context_parallel_size"].GetInt());
+    args.config.epSize = NumberUtil::IntToUint32(json["expert_model_parallel_size"].GetInt());
+    args.worldSize = NumberUtil::IntToUint32(json["world_size"].GetInt());
     args.sequenceParallel = json["sequence_parallel"].GetBool();
     config = args.config;
     level = PARALLEL_CONFIG_LEVEL_COLLECTED;

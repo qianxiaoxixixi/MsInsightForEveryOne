@@ -557,7 +557,7 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
             return false;
         }
         size_t fileSize = static_cast<size_t>(fileStat.st_size);
-        if (fileSize <= fileMinSize) {
+        if (fileSize == fileMinSize) {
             Server::ServerLog::Error("This file % is an empty file.", filePath);
             return false;
         }
