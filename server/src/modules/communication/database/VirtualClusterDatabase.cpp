@@ -704,12 +704,12 @@ bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql
     std::string valueMoeTpSize = CollectionUtil::FindValueByKey(info, "moe_tp_size", CollectionUtil::EMPTY_STRING);
     std::string valueLevel = CollectionUtil::FindValueByKey(info, "level", CollectionUtil::EMPTY_STRING);
     config.algorithm = valueAlgorithm;
-    config.dpSize = NumberUtil::StringToLongLong(valueDpSize);
-    config.ppSize = NumberUtil::StringToLongLong(valuePpSize);
-    config.tpSize = NumberUtil::StringToLongLong(valueTpSize);
-    config.cpSize = NumberUtil::StringToLongLong(valueCpSize);
-    config.epSize = NumberUtil::StringToLongLong(valueEpSize);
-    config.moeTpSize = NumberUtil::StringToLongLong(valueMoeTpSize);
+    config.dpSize = NumberUtil::StringToUint32(valueDpSize);
+    config.ppSize = NumberUtil::StringToUint32(valuePpSize);
+    config.tpSize = NumberUtil::StringToUint32(valueTpSize);
+    config.cpSize = NumberUtil::StringToUint32(valueCpSize);
+    config.epSize = NumberUtil::StringToUint32(valueEpSize);
+    config.moeTpSize = NumberUtil::StringToUint32(valueMoeTpSize);
     level = valueLevel;
     sqlite3_finalize(stmt);
     return true;

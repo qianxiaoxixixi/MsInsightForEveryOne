@@ -70,8 +70,8 @@ TEST_F(MetaDataParserTest, TestParserParallelGroupInfoByTextReturnSuccess)
 TEST_F(MetaDataParserTest, TestParserDistributedArgsByFilePathReturnSuccess)
 {
     std::optional<DistributedArgs> args = MetaDataParser::ParserDistributedArgsByFilePath(filePath);
-    const int two = 2;
-    const int eight = 8;
+    const unsigned int two = 2;
+    const unsigned int eight = 8;
     ASSERT_TRUE(args.has_value());
     EXPECT_EQ(args.value().config.tpSize, two);
     EXPECT_EQ(args.value().config.ppSize, two);

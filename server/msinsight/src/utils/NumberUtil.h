@@ -268,6 +268,22 @@ public:
         }
     }
 
+    static inline uint32_t StringToUint32(const std::string& usStr)
+    {
+        if (usStr.empty()) {
+            return 0;
+        }
+        try {
+            int temp = std::stoi(usStr);
+            if (temp < 0) {
+                return 0;
+            }
+            return static_cast<uint32_t>(temp);
+        } catch (std::exception &) {
+            return 0;
+        }
+    }
+
     static inline std::string StringDoubleMinus(const std::string &str1, const std::string &str2, int precision = 3)
     {
         long double num1 = StringToLongDouble(str1);
@@ -478,6 +494,14 @@ public:
         }
 
         return "0";
+    }
+
+    static inline uint32_t IntToUint32(const int num)
+    {
+        if (num < 0) {
+            return 0;
+        }
+        return static_cast<uint32_t>(num);
     }
 };
 } // end of namespace Dic

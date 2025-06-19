@@ -393,7 +393,7 @@ const std::string RATIO_AXIS = "ratio";
 // db格式数据，当初始状态的数据库有ClusterBaseInfo表时，存储distributed_args列的并行策略信息
 struct DistributedArgs {
     ParallelStrategyConfig config{MEGATRON_LM_TP_CP_EP_DP_PP_ALG, 1, 1, 1, 1, 1};
-    int64_t worldSize = 1;
+    uint32_t worldSize = 1;
     bool sequenceParallel = false;
 };
 const std::vector<std::string> DISTRIBUTED_ARGS_INT_KEY{"tensor_model_parallel_size", "pipeline_model_parallel_size",
