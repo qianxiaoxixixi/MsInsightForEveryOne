@@ -42,7 +42,6 @@ public:
     explicit VirtualTraceDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualTraceDatabase() override = default;
 
-    virtual std::string GetDeviceId(const std::string& fileId) = 0;
     // search
     virtual bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                               uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) = 0;

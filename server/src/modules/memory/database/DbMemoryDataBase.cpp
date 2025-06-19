@@ -442,18 +442,6 @@ void DbMemoryDataBase::Reset()
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
 }
 
-std::string DbMemoryDataBase::QueryDeviceId()
-{
-    FileType type = DataBaseManager::Instance().GetFileType();
-    std::string sql = "";
-    if (type == FileType::PYTORCH) {
-        sql += "SELECT deviceId FROM " + TABLE_OPERATOR_MEMORY + " LIMIT 1 ";
-    } else {
-        return "";
-    }
-    return ExecuteQueryDeviceId(sql);
-};
-
 }
 }
 }

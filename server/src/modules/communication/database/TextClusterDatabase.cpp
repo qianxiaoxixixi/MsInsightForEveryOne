@@ -17,7 +17,7 @@ using namespace Server;
 using namespace rapidjson;
 TextClusterDatabase::~TextClusterDatabase()
 {
-    SaveLastData();
+    SaveLastDataSafe();
     if (isInitStmt) {
         ReleaseStmt();
     }
@@ -177,6 +177,16 @@ void TextClusterDatabase::SaveLastData()
     if (!matrixCache.empty()) {
         InsertCommunicationMatrixInfo(matrixCache);
         matrixCache.clear();
+    }
+}
+
+void TextClusterDatabase::SaveLastDataSafe()
+{
+    try {
+        SaveLastData();
+    } catch (const std::exception &ex) {
+        // 处理异常，例如记录日志
+        ServerLog::Error("Failed to save last data: ", ex.what());
     }
 }
 

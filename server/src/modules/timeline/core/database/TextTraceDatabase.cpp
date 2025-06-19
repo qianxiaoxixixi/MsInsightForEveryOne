@@ -1246,20 +1246,6 @@ bool TextTraceDatabase::QueryEventsViewData(const EventsViewParams &params, Even
     return TraceDatabaseHelper::QueryEventsViewData4Text(stmt, params, body, minTimestamp);
 }
 
-std::string TextTraceDatabase::GetDeviceId(const std::string &fileId)
-{
-    std::string deviceId;
-    std::string sql = "SELECT (pid & 0x1f) as deviceId FROM " + PROCESS_TABLE +
-        " WHERE process_name = 'Ascend Hardware' LIMIT 1 ";
-    auto stmt = CreatPreparedStatement(sql);
-    auto resultSet = stmt->ExecuteQuery();
-    while (resultSet->Next()) {
-        std::string res = resultSet->GetString("deviceId");
-        deviceId = res;
-    }
-    return deviceId;
-}
-
 bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
     Protocol::SystemViewBody &responseBody)
 {

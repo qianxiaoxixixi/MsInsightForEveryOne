@@ -77,7 +77,6 @@ public:
 
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
-    std::string QueryDeviceId() override;
 
 private:
     // 动态图表格数据在数据库中存储表名为operator，全量DB对应表名OP_MEMORY

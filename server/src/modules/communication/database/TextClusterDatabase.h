@@ -58,6 +58,7 @@ public:
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody) override;
     bool QueryDistributionData(Protocol::DistributionDataParam &param, Protocol::DistributionResBody &resBody) override;
     void SaveLastData();
+    void SaveLastDataSafe();
 
     bool QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody) override;
     bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,

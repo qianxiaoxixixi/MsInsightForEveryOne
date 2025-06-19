@@ -49,7 +49,6 @@ public:
         std::vector<Protocol::MemoryComponent> &componentDetails, uint64_t offsetTime) = 0;
     virtual bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
-    virtual std::string QueryDeviceId() = 0;
 protected:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";

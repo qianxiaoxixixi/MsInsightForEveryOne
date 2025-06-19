@@ -55,7 +55,6 @@ public:
                               const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();
     static void Reset();
-    std::string QueryDeviceId() override;
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
     std::string BuildOperatorDetailSql(const std::string& startTimeString, const std::string& offsetTimeString);

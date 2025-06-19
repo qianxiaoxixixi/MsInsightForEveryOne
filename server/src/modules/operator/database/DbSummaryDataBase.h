@@ -16,7 +16,6 @@ public:
     explicit DbSummaryDataBase(std::recursive_mutex &sqlMutex) : Summary::VirtualSummaryDataBase(sqlMutex) {};
     virtual ~DbSummaryDataBase() {};
 
-    std::string QueryDeviceId() override;
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
     bool QueryComputeOpDetail(Protocol::ComputeDetailParams params,
         std::vector<Protocol::ComputeDetail> &computeDetails) override;

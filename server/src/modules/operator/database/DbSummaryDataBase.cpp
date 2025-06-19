@@ -23,30 +23,6 @@ bool DbSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
     return result;
 }
 
-std::string DbSummaryDataBase::QueryDeviceId()
-{
-    FileType type = DataBaseManager::Instance().GetFileType();
-    std::string sql = "";
-    if (type == FileType::PYTORCH) {
-        sql += "SELECT deviceId FROM " + TABLE_TASK + " LIMIT 1 ";
-    } else {
-        return "";
-    }
-    std::string deviceId;
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        return "";
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        deviceId = res;
-    }
-    sqlite3_finalize(stmt);
-    return deviceId;
-}
-
 bool DbSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams params,
     std::vector<Protocol::ComputeDetail> &computeDetails)
 {
