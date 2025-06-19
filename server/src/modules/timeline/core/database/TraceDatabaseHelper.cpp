@@ -5,8 +5,8 @@
 #include <algorithm>
 #include "CounterEventHelper.h"
 #include "NpuInfoRepo.h"
-#include "TraceDatabaseHelper.h"
 #include "Database.h"
+#include "TraceDatabaseHelper.h"
 
 namespace Dic::Module::Timeline {
 std::map<std::string, PROCESS_TYPE> metaTypeMap = {

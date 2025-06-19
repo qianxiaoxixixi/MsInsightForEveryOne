@@ -39,27 +39,27 @@ bool ParallelStrategyConfig::CheckParams(std::string &errorMsg) const
 bool ParallelStrategyConfig::CheckBaseParams(std::string& errorMsg) const
 {
     // 检查ppSize, tpSize, dpSize的范围
-    if (ppSize <= 0 || ppSize > MAX_PARALLEL_SIZE) {
+    if (ppSize == 0 || ppSize > MAX_PARALLEL_SIZE) {
         errorMsg = "[Summary] PP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
         return false;
     }
-    if (tpSize <= 0 || tpSize > MAX_PARALLEL_SIZE) {
+    if (tpSize == 0 || tpSize > MAX_PARALLEL_SIZE) {
         errorMsg = "[Summary] TP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
         return false;
     }
-    if (dpSize <= 0 || dpSize > MAX_PARALLEL_SIZE) {
+    if (dpSize == 0 || dpSize > MAX_PARALLEL_SIZE) {
         errorMsg = "[Summary] DP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
         return false;
     }
-    if (cpSize <= 0 || cpSize > MAX_PARALLEL_SIZE) {
+    if (cpSize == 0 || cpSize > MAX_PARALLEL_SIZE) {
         errorMsg = "[Summary] CP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
         return false;
     }
-    if (epSize <= 0 || epSize > MAX_PARALLEL_SIZE) {
+    if (epSize == 0 || epSize > MAX_PARALLEL_SIZE) {
         errorMsg = "[Summary] EP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
         return false;
     }
-    if (moeTpSize <= 0 || moeTpSize > MAX_PARALLEL_SIZE) {
+    if (moeTpSize == 0 || moeTpSize > MAX_PARALLEL_SIZE) {
         errorMsg = "[Summary] MOE_TP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
         return false;
     }
@@ -131,7 +131,7 @@ bool ParallelStrategyConfig::CheckParamForMindSpeed(std::string& errorMsg) const
     // 检查cpSize是否能被ulyssesDegree整除
     if (configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_CP_ALG ||
         configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_ADAPTIVE_CP_ALG) {
-        if (configForMindSpeed.ulyssesDegree <= 0) {
+        if (configForMindSpeed.ulyssesDegree == 0) {
             errorMsg = "[Summary] Ulysses degree must be greater than 0.";
             return false;
         }
@@ -147,7 +147,7 @@ bool ParallelStrategyConfig::CheckParamForMindSpeed(std::string& errorMsg) const
 bool ParallelStrategyConfig::CheckWinSizeForMindSpeed(std::string& errorMsg) const
 {
     if (!configForMindSpeed.useTp2D && configForMindSpeed.cpAlgo == MINDSPEED_HYBIRD_CP_ALG) {
-        if (configForMindSpeed.winSize <= 0) {
+        if (configForMindSpeed.winSize == 0) {
             errorMsg = "[Summary] CP Window size must be greater than 0.";
             return false;
         }
@@ -157,7 +157,7 @@ bool ParallelStrategyConfig::CheckWinSizeForMindSpeed(std::string& errorMsg) con
         }
     }
     if (!configForMindSpeed.useTp2D && configForMindSpeed.cpAlgo == MINDSPEED_MEGATRON_CP_ALG) {
-        if (configForMindSpeed.winSize <= 0) {
+        if (configForMindSpeed.winSize == 0) {
             errorMsg = "[Summary] CP Window size must be greater than 0.";
             return false;
         }
@@ -172,7 +172,7 @@ bool ParallelStrategyConfig::CheckWinSizeForMindSpeed(std::string& errorMsg) con
 bool ParallelStrategyConfig::CheckTp2DSizeForMindSpeed(std::string& errorMsg) const
 {
     if (configForMindSpeed.useTp2D) {
-        if (configForMindSpeed.nd1dim1 <= 0 || configForMindSpeed.nd2dim1 <= 0) {
+        if (configForMindSpeed.nd1dim1 == 0 || configForMindSpeed.nd2dim1 == 0) {
             errorMsg = "[Summary] Nd1dim1 or nd2dim1 must be greater than 0.";
             return false;
         }
