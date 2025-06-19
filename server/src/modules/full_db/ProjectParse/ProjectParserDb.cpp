@@ -164,11 +164,15 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             }
             parsefileInfo->host = host;
             parsefileInfo->rankId = host + rank;
+            auto rankIdDeviceMap = database->QueryRankIdAndDeviceMap();
+            if (rankIdDeviceMap.find(rank) != rankIdDeviceMap.end()) {
+                parsefileInfo->deviceId = rankIdDeviceMap[rank];
+            }
             std::string rankName = rank;
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
-            TrackInfoManager::Instance().UpdateDeviceMap(host + rank, database->QueryRankIdAndDeviceMap());
+            TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankIdDeviceMap);
             TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
             TrackInfoManager::Instance().SetRankListByFileId(file,
                                                              {parsefileInfo->clusterId,
@@ -176,7 +180,7 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
                                                               parsefileInfo->rankId,
                                                               parsefileInfo->deviceId,
                                                               rankName});
-            DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, rank);
+            DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, parsefileInfo->deviceId);
         }
         TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
     }
