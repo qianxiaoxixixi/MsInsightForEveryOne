@@ -68,7 +68,10 @@ export const addDataPath = async function(project: Project, action: ProjectActio
             isConflict,
         };
         const result = await importProject(params);
-        if (!result || (result as ErrorMsg).error !== undefined) { return false; }
+        if (!result || (result as ErrorMsg).error !== undefined) {
+            connector.send({ event: 'remote/reset', body: {}, target: 'plugin' }); // 由于发送时页签应该只有 时间线、内存、算子 存在，所以这个事件只能被这三个页签收到
+            return false;
+        }
         connector.send({
             event: 'remote/import',
             body: { dataSource: transformTimelineDataSource(project), importResult: result as ImportResultBody },
