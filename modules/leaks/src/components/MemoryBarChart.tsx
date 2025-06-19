@@ -115,9 +115,10 @@ const getSeries = (t: InitParam['t'], source: InitParam['source'], lineSource: I
         },
     ]);
 };
-const getLegend = (t: InitParam['t']): echarts.LegendComponentOption => {
+const getLegend = (t: InitParam['t'], session: InitParam['session']): echarts.LegendComponentOption => {
     return {
         data: [t('MemoryAllocations'), t('MemoryBlocks')],
+        selected: session.legendSelect,
     };
 };
 const getTooltip = (blockData: InitParam['blockData']): echarts.TooltipComponentOption => {
@@ -137,7 +138,7 @@ const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): E
         tooltip: getTooltip(blockData),
         xAxis: getXAxis(session),
         yAxis: getYAxis(),
-        legend: getLegend(t),
+        legend: getLegend(t, session),
         series: getSeries(t, source, lineSource),
         toolbox: {
             show: true,
@@ -226,21 +227,10 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
     return (
         <MIChart
             ref={chartRef}
-            width={'calc(100vw - 80px)'}
-            height={'350px'}
+            width='calc(100vw - 80px)'
+            height='500px'
             loading={loading}
             options={chartOptions}
-            onEvents={
-                {
-                    datazoom: (params): void => {
-                        const { startValue, endValue } = params.batch[0];
-                        getBarNewData(session, Math.floor(startValue), Math.ceil(endValue));
-                    },
-                    restore: (): void => {
-                        getBarNewData(session);
-                    },
-                }
-            }
         />
     );
 });

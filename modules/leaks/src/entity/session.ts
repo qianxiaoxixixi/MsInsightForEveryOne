@@ -23,6 +23,7 @@ export class Session {
     deviceIdOpts: TypeOption[] = [];
     typeOpts: TypeOption[] = [];
     threadOps: TypeOption[] = [];
+    legendSelect: any = {};
     constructor() {
         makeAutoObservable(this);
     }

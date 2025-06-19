@@ -45,10 +45,10 @@ const getSeries = (session: Session): any => {
     return [
         {
             type: 'custom',
-            renderItem: (params: any, api: any): echarts.CustomSeriesRenderItemReturn => {
+            renderItem: (params: any, api: any): any => {
                 const level = api.value(0);
-                const start = api.coord([api.value(1), level]);
-                const end = api.coord([api.value(2), level]);
+                const start = api.coord([Math.max(api.value(1), session.minTime), level]);
+                const end = api.coord([Math.min(api.value(2), session.maxTime), level]);
                 const height = ((api.size([0, 1]) || [0, 20]) as number[])[1];
                 const width = end[0] - start[0];
                 return {
@@ -56,14 +56,29 @@ const getSeries = (session: Session): any => {
                     transition: ['shape'],
                     shape: {
                         x: start[0],
-                        y: start[1] - (height / 2),
+                        y: start[1],
                         width,
                         height: height - 2,
-                        r: 2,
                     },
-                    style: { fill: api.visual('color') },
                     emphasis: { style: { stroke: '#000' } },
-                    textConfig: { position: 'insideLeft' },
+                    textContent: {
+                        type: 'text',
+                        style: {
+                            text: api.value(3),
+                            fill: '#000',
+                            overflow: 'truncate',
+                            width,
+                            fontSize: 11,
+                        },
+                    },
+                    textConfig: {
+                        position: 'inside',
+                        inside: true,
+                        local: true,
+                    },
+                    style: {
+                        fill: api.visual('color'),
+                    },
                 };
             },
             encode: {
@@ -97,7 +112,6 @@ const getOptions = (session: Session): EChartsOption => {
                 show: false,
             },
         },
-
         yAxis: {
             show: false,
             inverse: true,
@@ -144,21 +158,11 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
     return (
         <MIChart
             ref={chartRef}
-            height={'350px'}
-            width={'calc(100vw - 80px)'}
+            height='500px'
+            width='calc(100vw - 80px)'
             loading={loading}
             options={chartOptions}
-            onEvents={
-                {
-                    datazoom: (params): void => {
-                        const { startValue, endValue } = params.batch[0];
-                        getFuncNewData(session, Math.floor(startValue), Math.ceil(endValue));
-                    },
-                    restore: (): void => {
-                        getFuncNewData(session);
-                    },
-                }
-            } />
+        />
     );
 });
 export default MemoryFunctionCall;

@@ -31,16 +31,28 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         setLineshow('none');
         setOffset(0);
     };
+    const restoreSelect = (): void => {
+        runInAction(() => {
+            Object.keys(session.legendSelect).forEach(key => { session.legendSelect[key] = true; });
+        });
+    };
     const linkageHandle = (): void => {
         if (!funcIns || !barIns) {
             return;
         }
+        barIns.off('legendselectchanged');
+        barIns.on('legendselectchanged', (params: any) => {
+            runInAction(() => {
+                session.legendSelect = params.selected;
+            });
+        });
         [funcIns, barIns].forEach((ins) => {
             ins.off('restore');
             ins.off('dataZoom');
             ins.on('restore', () => {
                 getFuncNewData(session);
                 getBarNewData(session);
+                restoreSelect();
             });
             ins.on('dataZoom', (params: any) => {
                 const { startValue, endValue } = params.batch[0];

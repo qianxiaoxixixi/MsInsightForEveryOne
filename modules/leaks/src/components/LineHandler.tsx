@@ -8,7 +8,7 @@ export const Line = styled.div<{ lineShow: string; offset: number }>`
     position: absolute;
     top: 20px;
     width: 1.2px;
-    height:260px;
+    height: 410px;
     background-color: #999;
     pointer-events: none;
     display: ${(props): string => props.lineShow};
