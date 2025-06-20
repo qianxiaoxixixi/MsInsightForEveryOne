@@ -20,7 +20,7 @@ namespace Module {
 class TextClusterDatabase : public VirtualClusterDatabase {
 public:
     explicit TextClusterDatabase(std::recursive_mutex &sqlMutex) : VirtualClusterDatabase(sqlMutex) {};
-    ~TextClusterDatabase() override;
+    ~TextClusterDatabase() noexcept override;
 
     bool SetConfig() override;
     bool SetDbVersion();
