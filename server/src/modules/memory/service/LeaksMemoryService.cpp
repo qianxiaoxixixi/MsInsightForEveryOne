@@ -77,6 +77,23 @@ bool LeaksMemoryService::ParseMemoryLeaksDumpEvents(const std::string &fileId)
     Memory::LeaksMemoryService::ParseEventsToBlockAndAllocations(events, database);
     return true;
 }
+
+uint64_t SafeCalculateAllocationSize(uint64_t currentSize, int64_t eventSize)
+{
+    if (eventSize >= 0) {
+        if (currentSize > UINT64_MAX - eventSize) {
+            Server::ServerLog::Warn("Allocation total size is too large.");
+            return UINT64_MAX;
+        }
+        return currentSize + eventSize;
+    }
+    uint64_t tmpSize = static_cast<uint64_t>(-eventSize);
+    if (currentSize > tmpSize) {
+        return currentSize - tmpSize;
+    }
+    return  0;
+}
+
 void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<MemoryEvent> &events,
                                                           const std::shared_ptr<FullDb::LeaksMemoryDatabase> &db)
 {
@@ -95,7 +112,9 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
         if (!SingleDeviceEventParse(db, event, allocMap, eventExtendAttr)) {
             continue;
         }
-        deviceTotalSize[event.deviceId + event.eventType] += eventExtendAttr.size;
+        deviceTotalSize[event.deviceId + event.eventType] =
+                SafeCalculateAllocationSize(deviceTotalSize[event.deviceId + event.eventType],
+                                            eventExtendAttr.size);
         // 构造allocation折线图元素
         MemoryAllocation allocation(event.timestamp, deviceTotalSize[event.deviceId + event.eventType], event.deviceId,
                                     event.eventType, false);
@@ -205,6 +224,12 @@ void LeaksMemoryService::BuildBlockEventAttrFromEvent(const MemoryEvent &event, 
     }
     auto &json = jsonDoc.value();
     GetEventAttrWithDefaultValueByJson(json, eventAttr);
+    if (event.event == "FREE") {
+        eventAttr.size = -std::abs(eventAttr.size);
+    }
+    if (event.event == "MALLOC") {
+        eventAttr.size = std::abs(eventAttr.size);
+    }
 }
 // 该方法用于寻找当前owner set中两两字符串的最长相同前缀，并添加到owners中, 暴力枚举,时间复杂度O(n^2), 后续考虑优化为Trie树
 static void HandleOwnerSet(std::set<std::string> &owners)
