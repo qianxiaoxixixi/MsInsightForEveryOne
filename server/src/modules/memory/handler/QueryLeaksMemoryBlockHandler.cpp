@@ -94,14 +94,14 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
         if (eventPtr->type == SimpleBlockEventType::MALLOC) {
             currentBlockStack.push(eventPtr->blockItemPtr);
             eventPtr->blockItemPtr->AddPathPoint(eventPtr->timestamp, currentTotalSize);
-            currentTotalSize += eventPtr->blockItemPtr->size;
+            currentTotalSize = NumberSafe::Add(currentTotalSize, eventPtr->blockItemPtr->size);
             response.maxSize = std::max(response.maxSize, currentTotalSize);
             continue;
         }
         while (!currentBlockStack.empty()) {
             std::shared_ptr<MemoryBlockItem> tempItemPtr = currentBlockStack.top();
             currentBlockStack.pop();
-            currentTotalSize -= tempItemPtr->size;
+            currentTotalSize = NumberSafe::Sub(currentTotalSize, tempItemPtr->size);
             tempItemPtr->AddPathPoint(eventPtr->timestamp, currentTotalSize);
             if (tempItemPtr->id != eventPtr->blockItemPtr->id) {
                 tempBlockStack.push(tempItemPtr);
@@ -115,7 +115,7 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
             uint64_t  tmpTimestamp = idx + 1 < sortedEvents.size() ?
                     (eventPtr->timestamp + sortedEvents[idx+1]->timestamp)/2 : response.maxTimestamp;
             tempItemPtr->AddPathPoint(tmpTimestamp, currentTotalSize);
-            currentTotalSize += tempItemPtr->size;
+            currentTotalSize = NumberSafe::Add(currentTotalSize, tempItemPtr->size);
         }
     }
     // 处理剩余块
@@ -123,7 +123,7 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
         std::shared_ptr<MemoryBlockItem> tempItemPtr = currentBlockStack.top();
         currentBlockStack.pop();
         tempItemPtr->AddPathPoint(response.maxTimestamp, currentTotalSize);
-        currentTotalSize -= tempItemPtr->size;
+        currentTotalSize = NumberSafe::Sub(currentTotalSize, tempItemPtr->size);
     }
     response.totalNum = response.blocks.size();
 }
