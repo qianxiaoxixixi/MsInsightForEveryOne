@@ -15,7 +15,7 @@ namespace Dic {
 namespace Module {
 using namespace Server;
 using namespace rapidjson;
-TextClusterDatabase::~TextClusterDatabase()
+TextClusterDatabase::~TextClusterDatabase() noexcept
 {
     SaveLastDataSafe();
     if (isInitStmt) {
@@ -185,8 +185,7 @@ void TextClusterDatabase::SaveLastDataSafe()
     try {
         SaveLastData();
     } catch (const std::exception &ex) {
-        // 处理异常，例如记录日志
-        ServerLog::Error("Failed to save last data: ", ex.what());
+        // 忽略所有异常，因为即使保存失败，也不会影响后续操作
     }
 }
 
