@@ -44,47 +44,6 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
     {TABLE_NPU_INFO, "create TEMPORARY table if not exists NPU_INFO(id INTEGER primary key, name TEXT);"}
 };
 
-    // sql of metadata counter
-const static std::string HBM_MEAT_DATA_SQL =
-        "select case when value='read' then 'Read(B/s)' else 'Write(B/s)' end as types, "
-        "    hbmId || '/' || case when value='read' then 'Read' else 'Write' end as name "
-        "FROM # join STRING_IDS on type = id WHERE deviceId = ? GROUP BY hbmId, type";
-const static std::string LLC_MEAT_DATA_SQL =
-        "with main as (select llcId, mode from # where deviceId = ? group by llcId, mode)"
-        " select 'Throughput(B/s)' as types, llcId || ' ' || case when value='read' then 'Read' else"
-        " 'Write' end || '/Throughput' as name  from main join STRING_IDS on mode = id "
-        " UNION select 'Hit Rate(%)' as types, llcId || ' ' || case when value='read' then 'Read' else"
-        " 'Write' end || '/Hit Rate' as name  from main join STRING_IDS on mode = id ";
-const static std::string SAMPLE_PMU_MEAT_DATA_SQL =
-        "with main as (select coreId, coreType from # "
-        " where deviceId = ? group by coreType, coreId) "
-        "  select 'freq(Mhz),usage(%),totalCycle' as types, format('%s Core %s', value, coreId) as name  "
-        " from main join STRING_IDS on coreType = id";
-
-
-    // sql of timeline unit/counter
-const static std::string HBM_UNIT_COUNTER_SQL = "select timestampNs-? as startTime,hbmId||'/'|| case when value='read' "
-     " then 'Read' else 'Write' end as processName, case when value='read' then '{\"Read(B/s)\":' || bandwidth || '}' "
-     " else '{\"Write(B/s)\":' || bandwidth || '}' end as args from HBM main join STRING_IDS on type = id "
-     " where deviceId= ? and processName = ? AND startTime >= ? AND startTime <= ? ORDER BY timestampNs ASC";
-
-const static std::string LLC_UNIT_COUNTER_SQL = "with main as (select timestampNs - ? as startTime, "
-     " format('%s %s', llcId, case when value='read' then 'Read' else 'Write' end) as modeName,? as processName, "
-     " throughput,hitRate from LLC join STRING_IDS on mode = id where deviceId = ?"
-     " AND startTime >= ? AND startTime <= ? and glob(modeName||'*', processName)) select startTime, "
-     " case when glob('*Throughput', processName) then format('{\"Throughput(B/s)\":%s}', throughput) "
-     " else format('{\"Hit Rate(%%)\":%s}', hitRate) end as args from main ORDER BY startTime ASC";
-const static std::string NPU_UNIT_COUNTER_SQL = "with pn as (select ? as value) select timestampNs - ? as startTime, "
-     " case s.value when 'app' then 'APP*'  else 'Device*' end as typeName, format('{\"B\":%s}',"
-     " case when glob('*DDR', pn.value) then ddr when glob('*HBM', pn.value) then "
-     " hbm else hbm + ddr end) as args from NPU_MEM join STRING_IDS s on type = s.id join pn where deviceId = ? and "
-     " glob(typeName, pn.value) and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
-const static std::string SAMPLE_PMU_UNIT_COUNTER_SQL =
-        "select timestampNs - ? as startTime, "
-        " format('{\"freq(Mhz)\":%s, \"usage(%%)\":%s, \"totalCycle\":%s}', freq, usage, totalCycle) as args "
-        " from SAMPLE_PMU_TIMELINE join STRING_IDS on coreType = id  where deviceId = ? and "
-        "        format('%s Core %s', value, coreId) = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
-
 // sql of same operate detail
 const static std::string ASCEND_SAME_NAME_DETAIL_SQL =
     "with nameIds as (select id, value as realName from STRING_IDS where value = ?) "

@@ -228,28 +228,6 @@ bool TraceDatabaseHelper::QueryOpDispatchDataForDB(std::unique_ptr<SqlitePrepare
     return true;
 }
 
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId)
-{
-    auto processType = GetProcessType(requestParams.metaType);
-    switch (processType) {
-        case PROCESS_TYPE::HBM:
-            return ExecuteQuery(stmt, HBM_UNIT_COUNTER_SQL, minTimestamp, rankId,
-                                requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::LLC:
-            return ExecuteQuery(stmt, LLC_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
-                                rankId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::NPU_MEM:
-            return ExecuteQuery(stmt, NPU_UNIT_COUNTER_SQL, requestParams.threadId, minTimestamp,
-                                rankId, requestParams.startTime, requestParams.endTime);
-        case PROCESS_TYPE::SAMPLE_PMU:
-            return ExecuteQuery(stmt, SAMPLE_PMU_UNIT_COUNTER_SQL, minTimestamp, rankId,
-                                requestParams.threadId, requestParams.startTime, requestParams.endTime);
-        default:
-            throw DatabaseException("unsupported type!");
-    }
-}
-
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryHostUnitCounter(
     std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp)

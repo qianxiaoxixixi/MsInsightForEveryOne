@@ -59,7 +59,6 @@ bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
         GenerateOverlapAnalysisMetadata(fileId, metaData);
     }
     QueryCounterMetadata(fileId, metaData);
-    GenerateCounterMetadata(fileId, metaData);
     return false;
 }
 
@@ -1528,7 +1527,7 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::HBM, PROCESS_TYPE::LLC, PROCESS_TYPE::SAMPLE_PMU,
                             PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS, PROCESS_TYPE::AI_CORE,
-                            PROCESS_TYPE::ACC_PMU, PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC};
+                            PROCESS_TYPE::ACC_PMU, PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC, PROCESS_TYPE::NPU_MEM};
     for (const auto &type : types) {
         std::string processName;
         std::string metaType;
@@ -1573,91 +1572,21 @@ bool DbTraceDataBase::QueryCounterMetadataGenerateInfo(const Dic::Module::Timeli
     std::string tableName;
     CounterEventHelper helper;
     helper.RegisterDeviceMap();
-    if (type == PROCESS_TYPE::NIC) {
-        processName = "NIC";
-        metaType = "NIC";
-        tableName = "NETDEV_STATS";
-    } else if (type == PROCESS_TYPE::AI_CORE) {
-        processName = "AI Core Freq";
-        metaType = "AICORE_FREQ";
-        tableName = "AICORE_FREQ";
-    } else if (type == PROCESS_TYPE::STARS_SOC) {
-        processName = "Stars Soc";
-        metaType = "SOC_BANDWIDTH_LEVEL";
-        tableName = "SOC_BANDWIDTH_LEVEL";
-    } else {
-        tableName = ENUM_TO_STR(type).value_or("");
-        processName = tableName;
-        metaType = tableName;
+
+    metaType = ENUM_TO_STR(type).value_or("");
+    processName = helper.GetDeviceProcessName(type);
+    tableName = helper.GetDeviceTableName(type);
+    if (metaType.empty() || processName.empty() || tableName.empty()) {
+        ServerLog::Error("Counter event type % is not supported.", static_cast<int>(type));
+        return false;
     }
     if (!CheckTableExist(tableName)) {
         ServerLog::Info("Query counter metadata failed, table ", tableName, " Not Exist.");
         return false;
     }
-    switch (type) {
-        case PROCESS_TYPE::HBM:
-            sql = StringUtil::ReplaceFirst(HBM_MEAT_DATA_SQL, "#", tableName);
-            break;
-        case PROCESS_TYPE::LLC:
-            sql = StringUtil::ReplaceFirst(LLC_MEAT_DATA_SQL, "#", tableName);
-            break;
-        case PROCESS_TYPE::SAMPLE_PMU:
-            sql = StringUtil::ReplaceFirst(SAMPLE_PMU_MEAT_DATA_SQL, "#", tableName);
-            break;
-        case PROCESS_TYPE::AI_CORE:
-        case PROCESS_TYPE::ACC_PMU:
-        case PROCESS_TYPE::DDR:
-        case PROCESS_TYPE::STARS_SOC:
-        case PROCESS_TYPE::NIC:
-        case PROCESS_TYPE::PCIE:
-        case PROCESS_TYPE::HCCS:
-            sql = helper.GenerateDeviceMetadataSQL(type);
-            break;
-        default:
-            break;
-    }
+    sql = helper.GenerateDeviceMetadataSQL(type);
     return true;
 }
-
-void DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
-    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
-{
-    PROCESS_TYPE types[] = {PROCESS_TYPE::NPU_MEM};
-    for (const auto &type : types) {
-        auto typeName = ENUM_TO_STR(type).value_or("");
-        if (!CheckTableExist(typeName)) {
-            ServerLog::Info("Generate counter metadata failed, table ", typeName, " Not Exist.");
-            continue;
-        }
-        auto counter = GenerateBaseUnitTrack("label", fileId, typeName, typeName, typeName);
-        std::vector<std::string> units;
-        std::vector<std::vector<std::string>> dataTypes;
-        GetCounterUnitsAndDataTypes(type, units, dataTypes, counter);
-        for (size_t index = 0; index < units.size(); index++) {
-            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName, units.at(index), typeName);
-            thread->metaData.threadName = units.at(index);
-            thread->metaData.threadId = units.at(index);
-            auto dataType = dataTypes.size() == 1 ? dataTypes[0] : dataTypes[index];
-            thread->metaData.dataType.insert(thread->metaData.dataType.end(), dataType.begin(), dataType.end());
-            counter->children.emplace_back(std::move(thread));
-        }
-        metaData.emplace_back(std::move(counter));
-    }
-}
-// LCOV_EXCL_BR_START
-void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
-    std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter)
-{
-    switch (type) { // 此处type调用场景固定，不会出现特殊情况
-        case PROCESS_TYPE::NPU_MEM:
-            units = {"APP/DDR", "APP/HBM", "APP/MEMORY", "Device/DDR", "Device/HBM", "Device/MEMORY"};
-            dataTypes = {{"B"}};
-            break;
-        default:
-            break;
-    }
-}
-// LCOV_EXCL_BR_STOP
 
 bool DbTraceDataBase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
     Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp)

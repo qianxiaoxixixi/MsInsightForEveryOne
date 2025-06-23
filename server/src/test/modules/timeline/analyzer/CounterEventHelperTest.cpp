@@ -14,22 +14,22 @@ TEST_F(CounterEventHelperTest, GenerateHostMetaDataSQLTest)
     Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::CPU_USAGE;
     std::string sql = helper.GenerateHostMetadataSQL(type);
     const std::string cpuUsageSQL =
-        "SELECT DISTINCT 'CPU ' || cpuId || '' AS name, 'usage(%)' AS types FROM CPU_USAGE;";
+        "SELECT DISTINCT 'CPU ' || cpuId || '' AS name, 'Usage(%)' AS types FROM CPU_USAGE;";
     EXPECT_EQ(sql, cpuUsageSQL);
     type = Dic::Protocol::PROCESS_TYPE::HOST_DISK_USAGE;
     sql = helper.GenerateHostMetadataSQL(type);
     const std::string diskUsageSQL =
-        "SELECT DISTINCT 'Disk Usage' AS name, 'usage(%)' AS types FROM HOST_DISK_USAGE;";
+        "SELECT DISTINCT 'Disk Usage' AS name, 'Usage(%)' AS types FROM HOST_DISK_USAGE;";
     EXPECT_EQ(sql, diskUsageSQL);
     type = Dic::Protocol::PROCESS_TYPE::HOST_MEM_USAGE;
     sql = helper.GenerateHostMetadataSQL(type);
     const std::string memUsageSQL =
-        "SELECT DISTINCT 'Memory Usage' AS name, 'usage(%)' AS types FROM HOST_MEM_USAGE;";
+        "SELECT DISTINCT 'Memory Usage' AS name, 'Usage(%)' AS types FROM HOST_MEM_USAGE;";
     EXPECT_EQ(sql, memUsageSQL);
     type = Dic::Protocol::PROCESS_TYPE::HOST_NETWORK_USAGE;
     sql = helper.GenerateHostMetadataSQL(type);
     const std::string networkUsageSQL =
-        "SELECT DISTINCT 'Network Usage' AS name, 'usage(%)' AS types FROM HOST_NETWORK_USAGE;";
+        "SELECT DISTINCT 'Network Usage' AS name, 'Usage(%)' AS types FROM HOST_NETWORK_USAGE;";
     EXPECT_EQ(sql, networkUsageSQL);
 }
 
@@ -40,25 +40,25 @@ TEST_F(CounterEventHelperTest, GenerateHostCounterSQLTest)
     Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::CPU_USAGE;
     std::string sql = helper.GenerateHostCounterSQL(type);
     const std::string cpuUsageSQL =
-        "SELECT timestampNs - ? AS startTime, '{\"usage(%)\":' || usage || '}' AS args FROM CPU_USAGE"
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM CPU_USAGE"
         " WHERE 'CPU ' || cpuId || '' = ? AND startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
     EXPECT_EQ(sql, cpuUsageSQL);
     type = Dic::Protocol::PROCESS_TYPE::HOST_DISK_USAGE;
     sql = helper.GenerateHostCounterSQL(type);
     const std::string diskUsageSQL =
-        "SELECT timestampNs - ? AS startTime, '{\"usage(%)\":' || usage || '}' AS args FROM HOST_DISK_USAGE"
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM HOST_DISK_USAGE"
         " WHERE 'Disk Usage' = ? AND startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
     EXPECT_EQ(sql, diskUsageSQL);
     type = Dic::Protocol::PROCESS_TYPE::HOST_MEM_USAGE;
     sql = helper.GenerateHostCounterSQL(type);
     const std::string memUsageSQL =
-        "SELECT timestampNs - ? AS startTime, '{\"usage(%)\":' || usage || '}' AS args FROM HOST_MEM_USAGE"
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM HOST_MEM_USAGE"
         " WHERE 'Memory Usage' = ? AND startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
     EXPECT_EQ(sql, memUsageSQL);
     type = Dic::Protocol::PROCESS_TYPE::HOST_NETWORK_USAGE;
     sql = helper.GenerateHostCounterSQL(type);
     const std::string networkUsageSQL =
-        "SELECT timestampNs - ? AS startTime, '{\"usage(%)\":' || usage || '}' AS args FROM HOST_NETWORK_USAGE"
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM HOST_NETWORK_USAGE"
         " WHERE 'Network Usage' = ? AND startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
     EXPECT_EQ(sql, networkUsageSQL);
 }
@@ -204,6 +204,264 @@ TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForStarsSocTest)
         "WHERE 'Mata Bw Level' = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? "
         "ORDER BY startTime ASC;";
     EXPECT_EQ(sql, starsSocSQL2);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForNPUMEMTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::NPU_MEM;
+    std::string sql = helper.GenerateDeviceMetadataSQL(type);
+    const std::string npuMemSQL =
+        "SELECT DISTINCT '' || id0.value || '/DDR' AS name, 'B' AS types FROM NPU_MEM "
+        "INNER JOIN STRING_IDS AS id0 ON NPU_MEM.type = id0.id WHERE deviceId = ? UNION ALL "
+        "SELECT DISTINCT '' || id0.value || '/HBM' AS name, 'B' AS types FROM NPU_MEM "
+        "INNER JOIN STRING_IDS AS id0 ON NPU_MEM.type = id0.id WHERE deviceId = ?;";
+    EXPECT_EQ(sql, npuMemSQL);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForNPUMEMTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::NPU_MEM;
+    std::string threadId = "app/DDR";
+    std::string sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string npuMemSQL1 =
+        "SELECT timestampNs - ? AS startTime, '{\"B\":' || ddr || '}' AS args FROM NPU_MEM "
+        "INNER JOIN STRING_IDS AS id0 ON NPU_MEM.type = id0.id WHERE '' || id0.value || '/DDR' = ? AND startTime >= ? "
+        "AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, npuMemSQL1);
+    threadId = "device/DDR";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string npuMemSQL2 =
+        "SELECT timestampNs - ? AS startTime, '{\"B\":' || ddr || '}' AS args FROM NPU_MEM "
+        "INNER JOIN STRING_IDS AS id0 ON NPU_MEM.type = id0.id WHERE '' || id0.value || '/DDR' = ? AND startTime >= ? "
+        "AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, npuMemSQL2);
+    threadId = "app/HBM";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string npuMemSQL3 =
+        "SELECT timestampNs - ? AS startTime, '{\"B\":' || hbm || '}' AS args FROM NPU_MEM "
+        "INNER JOIN STRING_IDS AS id0 ON NPU_MEM.type = id0.id WHERE '' || id0.value || '/HBM' = ? AND startTime >= ? "
+        "AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, npuMemSQL3);
+    threadId = "device/HBM";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string npuMemSQL4 =
+        "SELECT timestampNs - ? AS startTime, '{\"B\":' || hbm || '}' AS args FROM NPU_MEM "
+        "INNER JOIN STRING_IDS AS id0 ON NPU_MEM.type = id0.id WHERE '' || id0.value || '/HBM' = ? AND startTime >= ? "
+        "AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, npuMemSQL4);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForHBMTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::HBM;
+    std::string sql = helper.GenerateDeviceMetadataSQL(type);
+    const std::string hbmSQL =
+        "SELECT DISTINCT 'HBM ' || hbmId || ' ' || id0.value || '/Bandwidth' AS name, 'Bandwidth(B/s)' AS types "
+        "FROM HBM INNER JOIN STRING_IDS AS id0 ON HBM.type = id0.id WHERE deviceId = ?;";
+    EXPECT_EQ(sql, hbmSQL);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForHBMTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::HBM;
+    std::string threadId = "HBM 0 read/Bandwidth";
+    std::string sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string hbmSQL1 =
+        "SELECT timestampNs - ? AS startTime, '{\"Bandwidth(B/s)\":' || bandwidth || '}' AS args FROM HBM "
+        "INNER JOIN STRING_IDS AS id0 ON HBM.type = id0.id "
+        "WHERE 'HBM ' || hbmId || ' ' || id0.value || '/Bandwidth' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, hbmSQL1);
+    threadId = "HBM 0 write/Bandwidth";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string hbmSQL2 =
+        "SELECT timestampNs - ? AS startTime, '{\"Bandwidth(B/s)\":' || bandwidth || '}' AS args FROM HBM "
+        "INNER JOIN STRING_IDS AS id0 ON HBM.type = id0.id "
+        "WHERE 'HBM ' || hbmId || ' ' || id0.value || '/Bandwidth' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, hbmSQL2);
+    threadId = "HBM 1 read/Bandwidth";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string hbmSQL3 =
+        "SELECT timestampNs - ? AS startTime, '{\"Bandwidth(B/s)\":' || bandwidth || '}' AS args FROM HBM "
+        "INNER JOIN STRING_IDS AS id0 ON HBM.type = id0.id "
+        "WHERE 'HBM ' || hbmId || ' ' || id0.value || '/Bandwidth' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, hbmSQL3);
+    threadId = "HBM 1 write/Bandwidth";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string hbmSQL4 =
+        "SELECT timestampNs - ? AS startTime, '{\"Bandwidth(B/s)\":' || bandwidth || '}' AS args FROM HBM "
+        "INNER JOIN STRING_IDS AS id0 ON HBM.type = id0.id "
+        "WHERE 'HBM ' || hbmId || ' ' || id0.value || '/Bandwidth' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, hbmSQL4);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForLLCTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::LLC;
+    std::string sql = helper.GenerateDeviceMetadataSQL(type);
+    const std::string llcSQL =
+        "SELECT DISTINCT 'LLC ' || llcId || ' ' || id0.value || '/Hit Rate' AS name, 'Hit Rate(%)' AS types FROM LLC "
+        "INNER JOIN STRING_IDS AS id0 ON LLC.mode = id0.id WHERE deviceId = ? UNION ALL "
+        "SELECT DISTINCT 'LLC ' || llcId || ' ' || id0.value || '/Throughput' AS name, 'Throughput(B/s)' AS types "
+        "FROM LLC INNER JOIN STRING_IDS AS id0 ON LLC.mode = id0.id WHERE deviceId = ?;";
+    EXPECT_EQ(sql, llcSQL);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForLLCTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::LLC;
+    std::string threadId = "LLC 0 read/Hit Rate";
+    std::string sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string llcSQL1 =
+        "SELECT timestampNs - ? AS startTime, '{\"Hit Rate(%)\":' || hitRate || '}' AS args FROM LLC "
+        "INNER JOIN STRING_IDS AS id0 ON LLC.mode = id0.id "
+        "WHERE 'LLC ' || llcId || ' ' || id0.value || '/Hit Rate' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, llcSQL1);
+    threadId = "LLC 0 write/Hit Rate";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string llcSQL2 =
+        "SELECT timestampNs - ? AS startTime, '{\"Hit Rate(%)\":' || hitRate || '}' AS args FROM LLC "
+        "INNER JOIN STRING_IDS AS id0 ON LLC.mode = id0.id "
+        "WHERE 'LLC ' || llcId || ' ' || id0.value || '/Hit Rate' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, llcSQL2);
+    threadId = "LLC 0 read/Throughput";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string llcSQL3 =
+        "SELECT timestampNs - ? AS startTime, '{\"Throughput(B/s)\":' || throughput || '}' AS args FROM LLC "
+        "INNER JOIN STRING_IDS AS id0 ON LLC.mode = id0.id "
+        "WHERE 'LLC ' || llcId || ' ' || id0.value || '/Throughput' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, llcSQL3);
+    threadId = "LLC 0 write/Throughput";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string llcSQL4 =
+        "SELECT timestampNs - ? AS startTime, '{\"Throughput(B/s)\":' || throughput || '}' AS args FROM LLC "
+        "INNER JOIN STRING_IDS AS id0 ON LLC.mode = id0.id "
+        "WHERE 'LLC ' || llcId || ' ' || id0.value || '/Throughput' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, llcSQL4);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForSamplePMUTest)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::SAMPLE_PMU;
+    std::string sql = helper.GenerateDeviceMetadataSQL(type);
+    const std::string samplePmuSQL =
+        "SELECT DISTINCT '' || id0.value || ' Core ' || coreId || '/Freq' AS name, 'Mhz' AS types "
+        "FROM SAMPLE_PMU_TIMELINE INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE deviceId = ? UNION ALL "
+        "SELECT DISTINCT '' || id0.value || ' Core ' || coreId || '/Usage' AS name, 'Usage(%)' AS types "
+        "FROM SAMPLE_PMU_TIMELINE INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE deviceId = ? UNION ALL "
+        "SELECT DISTINCT '' || id0.value || ' Core ' || coreId || '/Total Cycle' AS name, 'Cycle' AS types "
+        "FROM SAMPLE_PMU_TIMELINE INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE deviceId = ?;";
+    EXPECT_EQ(sql, samplePmuSQL);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForSamplePMUTestPartOne)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::SAMPLE_PMU;
+    std::string threadId = "AIC Core 0/Freq";
+    std::string sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL1 =
+        "SELECT timestampNs - ? AS startTime, '{\"Mhz\":' || freq || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Freq' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL1);
+    threadId = "AIV Core 0/Freq";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL2 =
+        "SELECT timestampNs - ? AS startTime, '{\"Mhz\":' || freq || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Freq' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL2);
+    threadId = "AIC Core 10/Freq";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePMUSQL3 =
+        "SELECT timestampNs - ? AS startTime, '{\"Mhz\":' || freq || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Freq' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePMUSQL3);
+    threadId = "AIC Core 0/Usage";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL4 =
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Usage' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL4);
+    threadId = "AIV Core 0/Usage";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL5 =
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Usage' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL5);
+}
+
+TEST_F(CounterEventHelperTest, GenerateDeviceCounterSQLForSamplePMUTestPartTwo)
+{
+    CounterEventHelper helper;
+    helper.RegisterDeviceMap();
+    Dic::Protocol::PROCESS_TYPE type = Dic::Protocol::PROCESS_TYPE::SAMPLE_PMU;
+    std::string threadId = "AIC Core 10/Usage";
+    std::string sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL1 =
+        "SELECT timestampNs - ? AS startTime, '{\"Usage(%)\":' || usage || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Usage' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL1);
+    threadId = "AIC Core 0/Total Cycle";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL2 =
+        "SELECT timestampNs - ? AS startTime, '{\"Cycle\":' || totalCycle || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Total Cycle' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL2);
+    threadId = "AIV Core 0/Total Cycle";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePMUSQL3 =
+        "SELECT timestampNs - ? AS startTime, '{\"Cycle\":' || totalCycle || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Total Cycle' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePMUSQL3);
+    threadId = "AIC Core 10/Total Cycle";
+    sql = helper.GenerateDeviceCounterSQL(type, threadId);
+    const std::string samplePmuSQL4 =
+        "SELECT timestampNs - ? AS startTime, '{\"Cycle\":' || totalCycle || '}' AS args FROM SAMPLE_PMU_TIMELINE "
+        "INNER JOIN STRING_IDS AS id0 ON SAMPLE_PMU_TIMELINE.coreType = id0.id "
+        "WHERE '' || id0.value || ' Core ' || coreId || '/Total Cycle' = ? AND startTime >= ? AND startTime <= ? "
+        "AND deviceId = ? ORDER BY startTime ASC;";
+    EXPECT_EQ(sql, samplePmuSQL4);
 }
 
 TEST_F(CounterEventHelperTest, GenerateDeviceMetaDataSQLForNICTest)

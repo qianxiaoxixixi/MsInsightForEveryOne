@@ -21,7 +21,8 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
     const std::vector<PROCESS_TYPE> hostCounterEvents = {PROCESS_TYPE::CPU_USAGE,
         PROCESS_TYPE::HOST_DISK_USAGE, PROCESS_TYPE::HOST_MEM_USAGE, PROCESS_TYPE::HOST_NETWORK_USAGE};
     const std::vector<PROCESS_TYPE> deviceCounterEvents = {PROCESS_TYPE::AI_CORE, PROCESS_TYPE::ACC_PMU,
-        PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC, PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
+        PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC, PROCESS_TYPE::NPU_MEM, PROCESS_TYPE::HBM, PROCESS_TYPE::LLC,
+        PROCESS_TYPE::SAMPLE_PMU, PROCESS_TYPE::NIC, PROCESS_TYPE::PCIE, PROCESS_TYPE::HCCS};
     if (std::find(hostCounterEvents.begin(), hostCounterEvents.end(),
                   Timeline::TraceDatabaseHelper::GetProcessType(params.metaType)) != hostCounterEvents.end()) {
         try {
@@ -40,12 +41,8 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
             return false;
         }
     } else {
-        try {
-            resultSet = TraceDatabaseHelper::QueryUnitCounter(stmt, params, minTimestamp, GetDeviceId(params.rankId));
-        } catch (DatabaseException &e) {
-            ServerLog::Error("Query unit counter failed, ", e.What());
-            return false;
-        }
+        ServerLog::Error("Counter event type % is not supported.", params.metaType);
+        return false;
     }
     while (resultSet->Next()) {
         Protocol::UnitCounterData unitCounterData;
@@ -61,7 +58,7 @@ void DbTraceDataBase::ProcessHostCounterEventsMetadata(std::vector<std::unique_p
     CounterEventHelper helper;
     helper.RegisterHostMap();
     for (const auto &element : helper.hostCounterEventMap) {
-        std::string progressName = element.second.progressName;
+        std::string progressName = element.second.processName;
         std::string metaDataSQL = helper.GenerateHostMetadataSQL(element.first);
         auto counter = GenerateBaseUnitTrack("label", path, progressName, progressName,
                                              ENUM_TO_STR(element.first).value());

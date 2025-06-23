@@ -851,7 +851,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSoc)
     requestParams.metaType = "SOC_BANDWIDTH_LEVEL";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -864,7 +864,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenAcc)
     requestParams.metaType = "ACC_PMU";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -877,7 +877,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPU)
     requestParams.metaType = "NPU_MEM";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -902,7 +902,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
     auto stmt = database.CreatPreparedStatement();
     Dic::Protocol::UnitCounterParams requestParams;
     requestParams.metaType = "NPU_MEM";
-    requestParams.threadId = "APP/HBM";
+    requestParams.threadId = "app/HBM";
     const uint64_t expectStartTime = 1725542118206101090;
     const uint64_t rangeTime = 1000000;
     requestParams.startTime = expectStartTime - rangeTime;
@@ -910,7 +910,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNPUQuerySuccess)
     const uint64_t minTimestamp = 0;
     const std::string rankId = "0";
 
-    auto resultSet = Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId);
+    auto resultSet = Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId);
     resultSet->Next();
     auto startTime = resultSet->GetUint64("startTime");
     auto args = resultSet->GetString("args");
@@ -927,7 +927,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenSimple)
     requestParams.metaType = "SAMPLE_PMU_TIMELINE";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -940,7 +940,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenRoce)
     requestParams.metaType = "RoCE";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -953,7 +953,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenRoH)
     requestParams.metaType = "RoH";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -966,7 +966,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenNIC)
     requestParams.metaType = "NIC";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -979,7 +979,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenHCCS)
     requestParams.metaType = "HCCS";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -992,7 +992,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenPCIE)
     requestParams.metaType = "PCIE";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 
@@ -1005,7 +1005,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitCounterWhenAICORE)
     requestParams.metaType = "AICORE_FREQ";
     const uint64_t minTimestamp = 0;
     const std::string rankId;
-    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryUnitCounter(stmt, requestParams, minTimestamp, rankId),
+    EXPECT_THROW(Dic::Protocol::TraceDatabaseHelper::QueryDeviceUnitCounter(stmt, requestParams, minTimestamp, rankId),
         Dic::Module::DatabaseException);
 }
 

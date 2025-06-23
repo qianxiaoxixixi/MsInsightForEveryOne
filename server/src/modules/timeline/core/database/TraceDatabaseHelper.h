@@ -70,8 +70,6 @@ static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePrepar
 static std::unique_ptr<SqliteResultSet>
 QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt, uint64_t startTime, uint64_t endTime,
                   const Dic::Protocol::Metadata &metaData, const std::string &rankId);
-static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
-      const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId);
 
 static std::unique_ptr<SqliteResultSet> QueryHostUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp);

@@ -3,6 +3,8 @@
  */
 
 #include "CounterEventHelper.h"
+#include "StringUtil.h"
+#include "TableDefs.h"
 namespace Dic::Module::Timeline {
 using namespace Dic::Protocol;
 const std::map<std::string, std::string> CounterEventHelper::displayNameToValueName = {
@@ -10,18 +12,26 @@ const std::map<std::string, std::string> CounterEventHelper::displayNameToValueN
     {"Read", "read"},
     {"Write", "write"},
     {"L2 Buffer Bw Level", "l2BufferBwLevel"},
-    {"Mata Bw Level", "mataBwLevel"}
+    {"Mata Bw Level", "mataBwLevel"},
+    {"DDR", "ddr"},
+    {"HBM", "hbm"},
+    {"Bandwidth", "bandwidth"},
+    {"Hit Rate", "hitRate"},
+    {"Throughput", "throughput"},
+    {"Freq", "freq"},
+    {"Usage", "usage"},
+    {"Total Cycle", "totalCycle"}
 };
 void CounterEventHelper::RegisterHostMap()
 {
     hostCounterEventMap.insert({PROCESS_TYPE::CPU_USAGE,
-        {"CPU Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::CPU_USAGE), "usage", "CPU {cpuId}", "usage(%)"}});
+        {"CPU Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::CPU_USAGE), "usage", "CPU {cpuId}", "Usage(%)"}});
     hostCounterEventMap.insert({PROCESS_TYPE::HOST_DISK_USAGE,
-        {"Disk Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::HOST_DISK_USAGE), "usage", "Disk Usage", "usage(%)"}});
+        {"Disk Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::HOST_DISK_USAGE), "usage", "Disk Usage", "Usage(%)"}});
     hostCounterEventMap.insert({PROCESS_TYPE::HOST_NETWORK_USAGE,
-        {"Network Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::HOST_NETWORK_USAGE), "usage", "Network Usage", "usage(%)"}});
+        {"Network Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::HOST_NETWORK_USAGE), "usage", "Network Usage", "Usage(%)"}});
     hostCounterEventMap.insert({PROCESS_TYPE::HOST_MEM_USAGE,
-        {"Memory Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::HOST_MEM_USAGE), "usage", "Memory Usage", "usage(%)"}});
+        {"Memory Usage", PROCESS_TYPE_ES.at(PROCESS_TYPE::HOST_MEM_USAGE), "usage", "Memory Usage", "Usage(%)"}});
 }
 
 void CounterEventHelper::RegisterDeviceMap()
@@ -30,6 +40,10 @@ void CounterEventHelper::RegisterDeviceMap()
     RegisterDeviceAccPMUMap();
     RegisterDeviceDDRMap();
     RegisterDeviceStarsSocMap();
+    RegisterDeviceNPUMEMMap();
+    RegisterDeviceHBMMap();
+    RegisterDeviceLLCMap();
+    RegisterDeviceSamplePMUMap();
     RegisterDeviceNICMap();
     RegisterDevicePCIeMap();
     RegisterDeviceHCCSMap();
@@ -67,6 +81,39 @@ void CounterEventHelper::RegisterDeviceStarsSocMap()
         {"Stars Soc", "SOC_BANDWIDTH_LEVEL", "l2BufferBwLevel", "L2 Buffer Bw Level", "Level"}});
     deviceCounterEventMap.insert({PROCESS_TYPE::STARS_SOC,
         {"Stars Soc", "SOC_BANDWIDTH_LEVEL", "mataBwLevel", "Mata Bw Level", "Level"}});
+}
+
+void CounterEventHelper::RegisterDeviceNPUMEMMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::NPU_MEM,
+        {"NPU_MEM", "NPU_MEM", "ddr", "{type:s}/DDR", "B"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::NPU_MEM,
+        {"NPU_MEM", "NPU_MEM", "hbm", "{type:s}/HBM", "B"}});
+}
+
+void CounterEventHelper::RegisterDeviceHBMMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::HBM,
+        {"HBM", "HBM", "bandwidth", "HBM {hbmId} {type:s}/Bandwidth", "Bandwidth(B/s)"}});
+}
+
+void CounterEventHelper::RegisterDeviceLLCMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::LLC,
+        {"LLC", "LLC", "hitRate", "LLC {llcId} {mode:s}/Hit Rate", "Hit Rate(%)"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::LLC,
+        {"LLC", "LLC", "throughput", "LLC {llcId} {mode:s}/Throughput", "Throughput(B/s)"}});
+}
+
+void CounterEventHelper::RegisterDeviceSamplePMUMap()
+{
+    deviceCounterEventMap.insert({PROCESS_TYPE::SAMPLE_PMU,
+        {"SAMPLE_PMU_TIMELINE", "SAMPLE_PMU_TIMELINE", "freq", "{coreType:s} Core {coreId}/Freq", "Mhz"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::SAMPLE_PMU,
+        {"SAMPLE_PMU_TIMELINE", "SAMPLE_PMU_TIMELINE", "usage", "{coreType:s} Core {coreId}/Usage", "Usage(%)"}});
+    deviceCounterEventMap.insert({PROCESS_TYPE::SAMPLE_PMU,
+        {"SAMPLE_PMU_TIMELINE", "SAMPLE_PMU_TIMELINE", "totalCycle", "{coreType:s} Core {coreId}/Total Cycle",
+         "Cycle"}});
 }
 
 // NIC数据db格式的来源是NETDEV_STATS表，而不是NIC表
@@ -166,28 +213,57 @@ void CounterEventHelper::RegisterDeviceHCCSMap()
         {"HCCS", "HCCS", "rxThroughput", "HCCS/rxThroughput", "Bandwidth(B/s)"}});
 }
 
-std::string CounterEventHelper::GenerateHostMetadataSQL(PROCESS_TYPE type)
+std::string CounterEventHelper::GenerateHostMetadataSQL(const PROCESS_TYPE type)
 {
     CounterEventConfig config = hostCounterEventMap.at(type);
     std::string sql = "SELECT DISTINCT ";
-    std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat);
+    std::vector<std::string> valueNamesToJoin;
+    std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat, valueNamesToJoin);
     sql += substitutedFormat;
-    sql += " AS name, '" + config.type + "' AS types FROM " + config.tableName + ";";
+    sql += " AS name, '" + config.type + "' AS types FROM " + config.tableName;
+    for (size_t i = 0; i < valueNamesToJoin.size(); ++i) {
+        sql += " INNER JOIN " + TABLE_STRING_IDS + " AS id" + std::to_string(i) + " ON "
+            + config.tableName + "." + valueNamesToJoin[i] + " = id" + std::to_string(i) + ".id";
+    }
+    sql += ";";
     return sql;
 }
 
-std::string CounterEventHelper::GenerateHostCounterSQL(Dic::Module::Timeline::PROCESS_TYPE type)
+std::string CounterEventHelper::GenerateHostCounterSQL(const Dic::Module::Timeline::PROCESS_TYPE type)
 {
     CounterEventConfig config = hostCounterEventMap.at(type);
     std::string sql = "SELECT timestampNs - ? AS startTime, '{\"" + config.type + "\":' || " + config.valueName +
-        " || '}' AS args FROM " + config.tableName + " WHERE ";
-    std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat);
-    sql += substitutedFormat;
+        " || '}' AS args FROM " + config.tableName;
+    std::vector<std::string> valueNamesToJoin;
+    std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat, valueNamesToJoin);
+    for (size_t i = 0; i < valueNamesToJoin.size(); ++i) {
+        sql += " INNER JOIN " + TABLE_STRING_IDS + " AS id" + std::to_string(i) + " ON "
+            + config.tableName + "." + valueNamesToJoin[i] + " = id" + std::to_string(i) + ".id";
+    }
+    sql += " WHERE " + substitutedFormat;
     sql += " = ? AND startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
     return sql;
 }
 
-std::string CounterEventHelper::GenerateDeviceMetadataSQL(Dic::Module::Timeline::PROCESS_TYPE type)
+std::string CounterEventHelper::GetDeviceProcessName(const Dic::Module::Timeline::PROCESS_TYPE type)
+{
+    auto it = deviceCounterEventMap.find(type);
+    if (it == deviceCounterEventMap.end()) {
+        return "";
+    }
+    return it->second.processName;
+}
+
+std::string CounterEventHelper::GetDeviceTableName(const Dic::Module::Timeline::PROCESS_TYPE type)
+{
+    auto it = deviceCounterEventMap.find(type);
+    if (it == deviceCounterEventMap.end()) {
+        return "";
+    }
+    return it->second.tableName;
+}
+
+std::string CounterEventHelper::GenerateDeviceMetadataSQL(const Dic::Module::Timeline::PROCESS_TYPE type)
 {
     std::string sql;
     for (auto [beg, end] = deviceCounterEventMap.equal_range(type); beg != end; ++beg) {
@@ -196,15 +272,21 @@ std::string CounterEventHelper::GenerateDeviceMetadataSQL(Dic::Module::Timeline:
             sql += " UNION ALL ";
         }
         sql += "SELECT DISTINCT ";
-        std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat);
+        std::vector<std::string> valueNamesToJoin;
+        std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat, valueNamesToJoin);
         sql += substitutedFormat;
-        sql += " AS name, '" + config.type + "' AS types FROM " + config.tableName + " WHERE deviceId = ?";
+        sql += " AS name, '" + config.type + "' AS types FROM " + config.tableName;
+        for (size_t i = 0; i < valueNamesToJoin.size(); ++i) {
+            sql += " INNER JOIN " + TABLE_STRING_IDS + " AS id" + std::to_string(i) + " ON "
+                + config.tableName + "." + valueNamesToJoin[i] + " = id" + std::to_string(i) + ".id";
+        }
+        sql += " WHERE deviceId = ?";
     }
     sql += ";";
     return sql;
 }
 
-std::string CounterEventHelper::GenerateDeviceCounterSQL(Dic::Module::Timeline::PROCESS_TYPE type,
+std::string CounterEventHelper::GenerateDeviceCounterSQL(const Dic::Module::Timeline::PROCESS_TYPE type,
     const std::string &threadId)
 {
     std::string expectedDisplayName;
@@ -233,14 +315,20 @@ std::string CounterEventHelper::GenerateDeviceCounterSQL(Dic::Module::Timeline::
 
     CounterEventConfig config = beg->second;
     std::string sql = "SELECT timestampNs - ? AS startTime, '{\"" + config.type + "\":' || " + config.valueName +
-        " || '}' AS args FROM " + config.tableName + " WHERE ";
-    std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat);
-    sql += substitutedFormat;
+        " || '}' AS args FROM " + config.tableName;
+    std::vector<std::string> valueNamesToJoin;
+    std::string substitutedFormat = SubstituteThreadNameFormat(config.threadNameFormat, valueNamesToJoin);
+    for (size_t i = 0; i < valueNamesToJoin.size(); ++i) {
+        sql += " INNER JOIN " + TABLE_STRING_IDS + " AS id" + std::to_string(i) + " ON "
+            + config.tableName + "." + valueNamesToJoin[i] + " = id" + std::to_string(i) + ".id";
+    }
+    sql += " WHERE " + substitutedFormat;
     sql += " = ? AND startTime >= ? AND startTime <= ? AND deviceId = ? ORDER BY startTime ASC;";
     return sql;
 }
 
-std::string CounterEventHelper::SubstituteThreadNameFormat(const std::string &format)
+std::string CounterEventHelper::SubstituteThreadNameFormat(const std::string &format,
+    std::vector<std::string> &valueNamesToJoin)
 {
     std::string substitutedFormat = "'";
     size_t index = 0;
@@ -248,7 +336,14 @@ std::string CounterEventHelper::SubstituteThreadNameFormat(const std::string &fo
         size_t nextIndex = format.find("{", index);
         substitutedFormat += format.substr(index, nextIndex - index) + "' || ";
         size_t nextBackBraceIndex = format.find("}", index);
-        substitutedFormat += format.substr(nextIndex + 1, nextBackBraceIndex - nextIndex - 1) + " || '";
+        std::string contentInBrace = format.substr(nextIndex + 1, nextBackBraceIndex - nextIndex - 1);
+        if (StringUtil::EndWith(contentInBrace, ":s")) {
+            substitutedFormat += "id" + std::to_string(valueNamesToJoin.size()) + ".value";
+            valueNamesToJoin.emplace_back(contentInBrace.substr(0, contentInBrace.size() - 2)); // 2 is the size of :s
+        } else {
+            substitutedFormat += contentInBrace;
+        }
+        substitutedFormat += " || '";
         index = nextBackBraceIndex + 1;
     }
     substitutedFormat += format.substr(index, format.size() - index) +"'";
