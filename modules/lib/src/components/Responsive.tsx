@@ -32,7 +32,9 @@ export const Responsive: React.FC<ResponsiveProps> = ({ children, onChange }) =>
     }, []);
 
     useEffect(() => {
-        if (!ResizeObserverImpl) {
+        const el = ref.current;
+
+        if (!ResizeObserverImpl || !el) {
             return () => {};
         }
 
@@ -50,16 +52,8 @@ export const Responsive: React.FC<ResponsiveProps> = ({ children, onChange }) =>
             }
         });
 
-        const currentElement = ref.current;
-        if (currentElement) {
-            resizeObserver.observe(currentElement);
-        }
-
-        return (): void => {
-            if (currentElement) {
-                resizeObserver.disconnect();
-            }
-        };
+        resizeObserver.observe(el);
+        return (): void => resizeObserver.disconnect();
     }, [ResizeObserverImpl]);
 
     return (

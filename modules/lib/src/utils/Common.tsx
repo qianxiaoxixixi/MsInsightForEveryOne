@@ -32,7 +32,7 @@ export {
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 export const StyledEmpty = ({ descriptor, style }:
-    { descriptor?: string; style?: object; translation?: any }): JSX.Element => {
+{ descriptor?: string; style?: object; translation?: any }): JSX.Element => {
     const theme = useTheme();
     const { t } = useTranslation();
     return (
@@ -208,7 +208,7 @@ export const safeStr = (val: string | number, ignore?: string): string => {
 };
 
 export function FormItem({ name, style, content, nameStyle }:
-    { name: React.ReactNode; nameStyle?: React.CSSProperties; style?: React.CSSProperties; content: React.ReactElement }): JSX.Element {
+{ name: React.ReactNode; nameStyle?: React.CSSProperties; style?: React.CSSProperties; content: React.ReactElement }): JSX.Element {
     return (<div style={{
         display: 'inline-block',
         height: '30px',
@@ -635,20 +635,18 @@ interface ObjectKeyString {
     [key: string]: any;
 };
 
-export const copyToClipboard = async (columns: any[], dataSource: any[]): Promise<void> => {
+export const copyToClipboard = async (text: string): Promise<void> => {
     if (navigator.clipboard === undefined && document.execCommand === undefined) {
         message.warning(i18nextT('NotSupportCopy'));
         return;
     }
-    const header = getTableHeader(columns);
-    const data = getTableData(columns, dataSource);
-    const formatStr = dataFormat({ header, data });
+
     try {
         if (navigator.clipboard !== undefined) {
-            await navigator.clipboard.writeText(formatStr);
+            await navigator.clipboard.writeText(text);
         } else {
             const input = document.createElement('textarea');
-            input.value = formatStr;
+            input.value = text;
             document.body.appendChild(input);
             input.select();
             document.execCommand('copy');
@@ -657,6 +655,38 @@ export const copyToClipboard = async (columns: any[], dataSource: any[]): Promis
         message.success({ content: i18nextT('CopySuccessful'), key: 'copyToClipboard' });
     } catch (err) {
         message.error({ content: i18nextT('CopyFailed', { err }), key: 'copyToClipboard' });
+    }
+};
+
+export const copyTableToClipboard = async (columns: any[], dataSource: any[]): Promise<void> => {
+    const header = getTableHeader(columns);
+    const data = getTableData(columns, dataSource);
+    const formatStr = dataFormat({ header, data });
+    await copyToClipboard(formatStr);
+};
+
+/**
+ * 格式化并复制对象到剪贴板
+ * @param obj 任意可序列化对象
+ * @param pretty 是否美化输出（默认 true）
+ */
+export const copyObjectToClipboard = async (
+    obj: unknown,
+    pretty: boolean = true,
+): Promise<void> => {
+    if (obj === undefined || obj === null) {
+        message.warning('Copy content is empty');
+        return;
+    }
+
+    try {
+        const text = JSON.stringify(obj, null, pretty ? 2 : 0);
+        await copyToClipboard(text);
+    } catch (err) {
+        message.error({
+            content: i18nextT('CopyFailed', { err: (err as Error).message }),
+            key: 'copyToClipboard',
+        });
     }
 };
 
