@@ -183,8 +183,6 @@ private:
     bool QueryCounterMetadataGenerateInfo(const PROCESS_TYPE &type,
         std::string &processName, std::string &metaType, std::string &sql);
     bool NeedUpdateDepth(const std::string &table);
-    void GenerateCounterMetadata(const std::string &fileId,
-                                 std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName,
@@ -195,8 +193,6 @@ private:
                                 std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt);
     void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &deviceId);
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
-    void GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
-         std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
     std::vector<Protocol::SimpleSlice>
     QueryThreadByPid(const Protocol::Metadata &metaData, uint64_t startTime, uint64_t endTime,
                      const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);
