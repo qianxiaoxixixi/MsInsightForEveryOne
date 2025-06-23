@@ -30,7 +30,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
 
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
         runInAction(() => {
-            memorySession.searchEventOperatorName = event.target.value as string;
+            memorySession.searchEventOperatorName = (event.target.value as string).trim();
         });
     };
 
