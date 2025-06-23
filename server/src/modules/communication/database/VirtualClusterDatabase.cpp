@@ -54,14 +54,12 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &bas
     }
     std::string valueRanks = CollectionUtil::FindValueByKey(info, "ranks", CollectionUtil::EMPTY_STRING);
     std::string valueSteps = CollectionUtil::FindValueByKey(info, "steps", CollectionUtil::EMPTY_STRING);
-    std::string valueDataSize = CollectionUtil::FindValueByKey(info, "data_size", CollectionUtil::EMPTY_STRING);
     if (!valueRanks.empty()) {
         baseInfo.rankList = JsonUtil::JsonToVector(valueRanks);
     }
     if (!valueSteps.empty()) {
         baseInfo.stepList = JsonUtil::JsonToVector(valueSteps);
     }
-    baseInfo.dataSize = NumberUtil::StringToDouble(valueDataSize) / MB_SIZE;
     baseInfo.stepNum = NumberUtil::CeilingClamp(baseInfo.stepList.size(), static_cast<size_t>(UINT_MAX));
     baseInfo.rankCount = NumberUtil::CeilingClamp(baseInfo.rankList.size(), static_cast<size_t>(UINT_MAX));
     sqlite3_finalize(stmtBaseInfo);

@@ -176,7 +176,6 @@ struct ClusterBaseInfo {
     std::string stages;
     long long collectStartTime;
     double collectDuration;
-    long long dataSize  =  0;
     ParallelStrategyConfig config;
     std::string level;
 };
