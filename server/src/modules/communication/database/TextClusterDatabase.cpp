@@ -408,7 +408,6 @@ void TextClusterDatabase::BindTextForClusterBaseInfo(ClusterBaseInfo &baseInfo, 
 {
     std::string stringStartTime = std::to_string(baseInfo.collectStartTime);
     std::string stringDuration = std::to_string(baseInfo.collectDuration);
-    std::string stringDataSize = std::to_string(baseInfo.dataSize);
     std::string stringDpSize = std::to_string(baseInfo.config.dpSize);
     std::string stringPpSize = std::to_string(baseInfo.config.ppSize);
     std::string stringTpSize = std::to_string(baseInfo.config.tpSize);
@@ -419,7 +418,6 @@ void TextClusterDatabase::BindTextForClusterBaseInfo(ClusterBaseInfo &baseInfo, 
     sqlite3_bind_text(stmt, idx++, baseInfo.filePath.c_str(), baseInfo.filePath.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringStartTime.c_str(), stringStartTime.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, stringDuration.c_str(), stringDuration.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, idx++, stringDataSize.c_str(), stringDataSize.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.stages.c_str(), baseInfo.stages.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.ppStages.c_str(), baseInfo.ppStages.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.config.algorithm.c_str(),
@@ -442,7 +440,7 @@ void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
                       " (SELECT DISTINCT rank_id FROM step_statistic_info WHERE rank_id !=''))), "
                       " ('steps', (SELECT json_group_array(step_id) FROM "
                       " (SELECT DISTINCT step_id FROM step_statistic_info WHERE rank_id !=''))), "
-                      " ('collect_start_time', ?), ('collect_duration', ?), ('data_size', ?), "
+                      " ('collect_start_time', ?), ('collect_duration', ?), "
                       " ('stages', ?), ('pp_stages', ?), ('algorithm', ?), ('dp_size', ?), ('pp_size', ?), "
                       " ('tp_size', ?), ('cp_size', ?), ('ep_size', ?), ('moe_tp_size', ?), "
                       " ('level', ?), ('parse_status', NULL);";
@@ -530,8 +528,9 @@ std::string TextClusterDatabase::GetMatrixStmtSql(int len)
 bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
 {
     baseInfo.filePath = GetDbPath();
+    baseInfo.dataSize = static_cast<double>(FileUtil::GetFileSize(baseInfo.filePath.c_str())) / MB_SIZE;
     std::string baseInfoSql = "SELECT key, value FROM " + TABLE_BASE_INFO +
-        " WHERE key IN ('ranks', 'steps', 'data_size');";
+        " WHERE key IN ('ranks', 'steps');";
     return ExecuteQueryBaseInfo(baseInfo, baseInfoSql);
 }
 

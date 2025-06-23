@@ -134,7 +134,6 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
 void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 {
     ClusterBaseInfo baseInfo;
-    FileUtil::CalculateDirSize(selectedPath, baseInfo.dataSize, 0);
     baseInfo.filePath = selectedPath;
     baseInfo.collectDuration = 0;
     auto now = std::chrono::system_clock::now();
