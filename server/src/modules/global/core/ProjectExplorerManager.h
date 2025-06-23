@@ -38,6 +38,9 @@ public:
 
     bool IsTextMultiCluster(const std::string& projectName);
 
+    bool UpdateParseFileInfo(const std::string &projectName,
+                             const std::vector<std::shared_ptr<ParseFileInfo>> &parseFileInfo);
+
 private:
     std::string systemMemoryDbPath;
     std::recursive_mutex mutex;
