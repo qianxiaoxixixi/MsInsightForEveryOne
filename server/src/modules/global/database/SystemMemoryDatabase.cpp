@@ -84,14 +84,12 @@ bool SystemMemoryDatabase::InsertDuplicateUpdateParsedFile(const std::vector<std
         }
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    std::string sql = "INSERT INTO " + parseFileInfoTable +
+    std::string sql = "INSERT OR REPLACE INTO " + parseFileInfoTable +
                         "(projectExplorerId, parseFilePath, fileId, subId, type, clusterPath, host, rankId, deviceId)"
                         " VALUES(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     for (size_t i = 1; i < parseFileInfoList.size(); ++i) {
         sql += ",(?, ?, ?, ? ,? ,? ,? , ? ,?)";
     }
-    sql += " ON CONFLICT(projectExplorerId, parseFilePath, subId, type) DO UPDATE SET"
-           " fileId = EXCLUDED.fileId;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to save FileMenuData, prepared statement failed.");

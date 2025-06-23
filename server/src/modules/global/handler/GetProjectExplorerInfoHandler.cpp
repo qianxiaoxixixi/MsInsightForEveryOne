@@ -30,9 +30,6 @@ bool GetProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> reque
         infoMap[info.projectName] = info;
     }
     for (const auto &[name, info]: infoMap) {
-        if (info.subParseFileInfo.empty()) {
-            continue;
-        }
         Protocol::ProjectDirectoryInfo temp;
         temp.projectName = name;
         temp.fileName = info.subParseFileInfo;

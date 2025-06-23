@@ -54,7 +54,8 @@ void ProjectParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &pro
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
     std::for_each(projectInfos.begin(), projectInfos.end(), [](const auto& project) {
-        if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(project, true)) {
+        if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(project.projectName,
+                                                                            project.subParseFileInfo)) {
             ServerLog::Error("Failed to update project in parsing");
         }
     });

@@ -168,7 +168,8 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
         projectIdList.push_back(project.id);
         bool isNeedDeleteImportData = true;
         for (const auto &item: project.subParseFileInfo) {
-            if (std::find(filePathList.begin(), filePathList.end(), item->parseFilePath) != filePathList.end()) {
+            if (filePathList.empty() ||
+                std::find(filePathList.begin(), filePathList.end(), item->parseFilePath) != filePathList.end()) {
                 auto deleteList = project.GetFileIdsToDelete(item);
                 std::copy(deleteList.begin(), deleteList.end(), std::back_inserter(needDeleteParseFileIdList));
             } else if (!filePathList.empty()) {
@@ -391,6 +392,15 @@ bool ProjectExplorerManager::IsTextMultiCluster(const std::string &projectName)
     bool isText =  projectInfos[0].projectType == static_cast<int>(ProjectTypeEnum::TEXT_CLUSTER);
     bool isMultiCluster = projectInfos[0].GetClusterInfos().size() > 0;
     return isText && isMultiCluster;
+}
+
+bool ProjectExplorerManager::UpdateParseFileInfo(const std::string &projectName,
+                                                 const std::vector<std::shared_ptr<ParseFileInfo>> &parseFileInfo)
+{
+    if (projectName.empty() || parseFileInfo.empty()) {
+        return false;
+    }
+    return db->InsertDuplicateUpdateParsedFile(parseFileInfo);
 }
 }
 
