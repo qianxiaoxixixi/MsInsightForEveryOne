@@ -68,6 +68,14 @@ struct ThreadDetailParams {
     std::string metaType;
     uint64_t startTime = 0;
     uint32_t depth = 0;
+    bool CheckParams(std::string &errMsg) const
+    {
+        if (!StringUtil::CheckSqlValid(id)) {
+            errMsg = "Id Invalid!";
+            return false;
+        }
+        return true;
+    }
 };
 
 struct SetCardAliasParams {

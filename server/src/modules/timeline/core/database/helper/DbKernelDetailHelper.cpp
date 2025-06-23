@@ -34,7 +34,7 @@ std::string DbKernelDetailHelper::GetKernelDetailSql(const Protocol::KernelDetai
     } catch (DatabaseException&) {
         return "";
     } catch (const std::exception& e) {
-        ServerLog::Error("An unexpected exception occurred: %s", e.what());
+        ServerLog::Error("An unexpected exception occurred: %", e.what());
         return "";
     }
 }
