@@ -15,3 +15,10 @@ TEST_F(HandlerTest, QueryThreadDetailHandlerTestNormal)
     handler.HandleRequest(std::move(requestPtr));
 }
 
+TEST_F(HandlerTest, QueryThreadDetailHandlerTestIdInvalid)
+{
+    Dic::Module::Timeline::QueryThreadDetailHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::ThreadDetailRequest>();
+    requestPtr->params.id = " where 1=1; DROP TABLES;";
+    EXPECT_EQ(handler.HandleRequest(std::move(requestPtr)), false);
+}

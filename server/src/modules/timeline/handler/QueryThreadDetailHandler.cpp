@@ -18,6 +18,12 @@ bool QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<UnitThreadDetailResponse> responsePtr = std::make_unique<UnitThreadDetailResponse>();
     UnitThreadDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    if (std::string errMsg; !request.params.CheckParams(errMsg)) {
+        ServerLog::Error("Query thread detail failed: " + errMsg);
+        SetResponseResult(response, false);
+        session.OnResponse(std::move(responsePtr));
+        return false;
+    }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query thread detail failed to get connection.");
         SetResponseResult(response, false);

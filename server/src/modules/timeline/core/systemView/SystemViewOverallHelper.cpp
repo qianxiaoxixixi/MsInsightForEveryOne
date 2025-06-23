@@ -39,14 +39,19 @@ std::vector<SameOperatorsDetails> SystemViewOverallHelper::FilterComputingEvents
     if (expectList.empty()) {
         return filteredEvents;
     }
-    for (auto& kernelEvent : kernelEvents) {
+    for (auto const& kernelEvent : kernelEvents) {
         if (kernelEvent.IsCategoryListEqual(expectList)) {
             if (!opName.empty() && !StringUtil::Contains(StringUtil::ToLower(kernelEvent.opName),
                                                          StringUtil::ToLower(opName))) {  // 按name过滤
                 continue;
             }
             SameOperatorsDetails details;
-            details.duration = static_cast<uint64_t>(kernelEvent.duration * timeScale);
+            const double scaled = kernelEvent.duration * timeScale;
+            if (scaled < 0 || scaled > static_cast<double>(UINT64_MAX)) { // 判断 duration * timeScale(固定为1000) 不能超过 UINT64_MAX
+                ServerLog::Warn("Unexpected condition: kernel duration is too long. Duration: ", kernelEvent.duration);
+                continue;
+            }
+            details.duration = static_cast<uint64_t>(scaled);
             details.name = kernelEvent.opName;
             if (kernelEvent.startTime < minTimeStamp) {
                 ServerLog::Warn("Unexpected condition: kernel event start time is less than min timestamp. "
