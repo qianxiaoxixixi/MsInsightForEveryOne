@@ -8,9 +8,9 @@ import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/tab
 import { isArray } from 'lodash';
 import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
-import { copyToClipboard, limitInput, StyledEmpty } from '../utils/Common';
+import { copyTableToClipboard, limitInput, StyledEmpty } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
-import { CaretDownIcon, CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
+import { CaretRightIcon, CopyOutlinedIcon } from '../icon/Icon';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 const Support = React.forwardRef(
@@ -269,7 +269,7 @@ const resizableTitle: React.FC<IResizableTitleProps> = (props) => {
     }
     return cloneElement(th, {},
         [...th.props.children,
-        <Resizor key={th.props.children.length} onResize={onResize} />]);
+            <Resizor key={th.props.children.length} onResize={onResize} />]);
 };
 
 interface ResizeTableProps<T> extends TableProps<T> {
@@ -302,7 +302,7 @@ const resizeColumns = ({ columns, setColumns, index, width, nextWidth, minThWidt
     setColumns(newColumns);
 };
 const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variableTotalWidth }:
-    { columns: any[]; index: number; width: number; nextWidth?: number; minThWidth: number; variableTotalWidth: boolean }): any[] => {
+{ columns: any[]; index: number; width: number; nextWidth?: number; minThWidth: number; variableTotalWidth: boolean }): any[] => {
     const newColumns = [...columns];
     newColumns[index] = {
         ...newColumns[index],
@@ -319,7 +319,7 @@ const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variab
 
 // ============================ virtual ============================
 const getVirtualElement = (dom: Element, boxRef: React.RefObject<HTMLElement>, targetRef: React.RefObject<HTMLElement>):
-    [Element | null, Element | null] => {
+[Element | null, Element | null] => {
     const box = dom.querySelector('.ant-table-body');
     const target = dom.querySelector('.ant-table-body table');
     if (box !== null && target !== null) {
@@ -346,7 +346,7 @@ const getFullExpandable = (expandable?: any): any => {
         return null;
     }
     const expandIcon = <T extends { children?: unknown[] }>({ expanded, onExpand, record }:
-        { expanded: boolean; onExpand: (record: T, event: React.MouseEvent<any>) => void; record: T }): React.ReactNode => {
+    { expanded: boolean; onExpand: (record: T, event: React.MouseEvent<any>) => void; record: T }): React.ReactNode => {
         if (record.children !== null && record.children !== undefined && record.children.length > 0) {
             return <CaretRightIcon onClick={(e): void => {
                 e.stopPropagation();
@@ -412,7 +412,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
     const fullExpandable = useMemo(() => getFullExpandable(expandable), [expandable]);
 
     const copyTable = async (): Promise<void> => {
-        await copyToClipboard(columns, dataSource as any[]);
+        await copyTableToClipboard(columns, dataSource as any[]);
     };
 
     // 出现分页跳转输入框
@@ -422,7 +422,7 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
 
     return (
         <ResizeTableContainer id={id} style={{ ...(style ?? {}), position: 'relative' }} ref={ref}>
-            {(allowCopy && (dataSource ?? []).length > 0) && <div className='exportTableBtn' onClick={copyTable}>
+            {(allowCopy && (dataSource ?? []).length > 0) && <div className="exportTableBtn" onClick={copyTable}>
                 <CopyOutlinedIcon style={{ width: '100%', height: '100%', lineHeight: '32px', display: 'inline-block' }} />
             </div>}
             <StyledTable {...restProps} onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}

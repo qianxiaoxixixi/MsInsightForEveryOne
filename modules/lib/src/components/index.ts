@@ -18,6 +18,7 @@ export { MIPopover as Popover } from './MIPopover';
 export { MIDropdown as Dropdown } from './MIDropdown';
 export { MIDynamicTooltip as DynamicTooltip } from './MIDynamicTooltip';
 export { MITabs as Tabs } from './MITabs';
+export { ContextMenu } from './MIContextMenu';
 export {
     Col,
     Row,

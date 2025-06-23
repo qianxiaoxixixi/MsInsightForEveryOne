@@ -25,6 +25,11 @@ export interface optionMapDataType {
     [props: string]: optionDataType[];
 }
 
+export interface ContextMenuItem {
+    label: string;
+    action?: () => void;
+}
+
 export interface FormatterParams {
     marker: string;
     name: string;
