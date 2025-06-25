@@ -56,11 +56,16 @@ const actionExpandDimension: MenuItemAction = ({ activeRect }) => {
     const { activeDimension, dimensionLevels } = parallelismStore;
 
     return {
-        name: 'expandDimension',
-        label: 'summary:contextMenu.Expand dimension',
-        visible: false,
+        name: 'expand',
+        label: 'summary:contextMenu.Expand',
+        visible: activeRect?.index !== undefined,
         disabled: activeDimension === dimensionLevels[dimensionLevels.length - 1],
-        action: () => parallelismStore.expandDimension(activeRect),
+        action: () => {
+            if (activeRect === null) {
+                return;
+            }
+            parallelismStore.expandDimension(activeRect);
+        },
     };
 };
 
@@ -69,11 +74,16 @@ const actionCollapseDimension: MenuItemAction = ({ activeRect }) => {
     const { activeDimension, dimensionLevels } = parallelismStore;
 
     return {
-        name: 'collapseDimension',
-        label: 'summary:contextMenu.Collapse dimension',
-        visible: false,
+        name: 'collapse',
+        label: 'summary:contextMenu.Collapse',
+        visible: activeRect?.index !== undefined,
         disabled: activeDimension === dimensionLevels[0],
-        action: () => parallelismStore.collapseDimension(activeRect),
+        action: () => {
+            if (activeRect === null) {
+                return;
+            }
+            parallelismStore.collapseDimension(activeRect);
+        },
     };
 };
 
