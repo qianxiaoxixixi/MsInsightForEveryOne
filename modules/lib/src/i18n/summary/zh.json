@@ -152,8 +152,8 @@
     "No problem": "当前维度无明显快慢卡问题",
     "contextMenu": {
       "Copy attributes": "复制属性",
-      "Expand dimension": "展开维度",
-      "Collapse dimension": "折叠维度",
+      "Expand": "展开",
+      "Collapse": "折叠",
       "View Communication Duration Analysis": "查看通信耗时分析",
       "Set as Upper Bound": "设为最大筛选值",
       "Set as Lower Bound": "设为最小筛选值"

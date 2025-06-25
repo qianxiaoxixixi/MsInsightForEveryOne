@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { makeAutoObservable } from 'mobx';
+import { configure, makeAutoObservable } from 'mobx';
 import { ParallelismArrangementParams } from '../utils/interface';
 import { Rectangle } from '../components/communicatorContainer/shape';
 
@@ -25,8 +25,11 @@ export interface DimensionOption {
     label: string;
 }
 
+configure({ enforceActions: 'always' });
 class ParallelismStore {
     generateConditions: GenerateConditions = defaultGenerateConditions;
+    rectToExpand: Rectangle | null = null;
+    rectToCollapsed: Rectangle | null = null;
 
     constructor() {
         makeAutoObservable(this);
@@ -70,10 +73,8 @@ class ParallelismStore {
         Object.assign(this.generateConditions, value);
     }
 
-    expandDimension(activeRect: Rectangle | null): void {
-        if (activeRect === null) {
-            return;
-        }
+    expandDimension(activeRect: Rectangle): void {
+        this.rectToExpand = activeRect;
 
         const index = this.dimensionLevels.indexOf(this.activeDimension);
         if (index < this.dimensionLevels.length - 1) {
@@ -81,15 +82,17 @@ class ParallelismStore {
         }
     }
 
-    collapseDimension(activeRect: Rectangle | null): void {
-        if (activeRect === null) {
-            return;
-        }
+    collapseDimension(activeRect: Rectangle): void {
+        this.rectToCollapsed = activeRect;
 
         const index = this.dimensionLevels.indexOf(this.activeDimension);
         if (index > 0) {
             this.activeDimension = this.dimensionLevels[index - 1];
         }
+    }
+
+    reset(): void {
+        this.generateConditions = defaultGenerateConditions;
     }
 }
 

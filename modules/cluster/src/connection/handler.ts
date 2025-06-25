@@ -10,6 +10,7 @@ import i18n from 'ascend-i18n';
 import type { communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
 import { ClusterInfo } from '../entity/session';
 import { customConsole as console } from 'ascend-utils';
+import parallelismStore from '../store/parallelism';
 
 type LayerType = 'PROJECT' | 'CLUSTER' | 'HOST' | 'RANK' | 'COMPUTE' | 'IPYNB' | 'UNKNOWN';
 
@@ -125,6 +126,7 @@ const resetStatus = (type: 'Project' | 'Cluster' = 'Project'): void => {
         } else {
             session.resetForProjectChange();
         }
+        parallelismStore.reset();
     });
 };
 

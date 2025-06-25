@@ -51,25 +51,29 @@ export const Loading = styled.div`
     }
 `;
 
-export const useLocateAnim = (containerRef: React.RefObject<HTMLElement>): (pos: [number, number]) => void => {
-    return useCallback(([left, top]: [number, number]) => {
+interface Position {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+export const useLocateAnim = (containerRef: React.RefObject<HTMLElement>): (pos: Position) => void => {
+    return useCallback(({ top, left, width, height }: Position) => {
         const animBox = document.createElement('div');
         animBox.className = 'zoom-anim';
 
         Object.assign(animBox.style, {
             position: 'absolute',
-            left: 0,
-            top: 0,
-            width: `${containerRef.current?.clientWidth ?? 0}px`,
-            height: `${containerRef.current?.clientHeight ?? 0}px`,
-            border: '2px solid #1677ff',
+            top: `${top}px`,
+            left: `${left}px`,
+            width: `${width}px`,
+            height: `${height}px`,
+            border: '2px solid rgb(100, 220, 150)',
             pointerEvents: 'none',
             zIndex: '999999',
-            animation: 'zoomToTarget 1s ease-out forwards',
+            animation: 'blink 1.2s ease-out forwards',
         });
 
-        animBox.style.setProperty('--tx', `${left}px`);
-        animBox.style.setProperty('--ty', `${top}px`);
         containerRef.current?.appendChild(animBox);
 
         setTimeout((): void => {
@@ -141,7 +145,10 @@ const useTooltipsData = ({ hoveredRectIndex, data, session, dimension }: Tooltip
             const { name, index, formattedRanks } = data.arrangements[hoveredRectIndex];
             const currentData = session.performanceDataMap?.get(hoveredRectIndex);
             if (currentData === undefined) {
-                return null;
+                return {
+                    [t('Index')]: index,
+                    [t('Name')]: name,
+                };
             }
 
             const updatedData: Record<string, any> = {};
@@ -174,6 +181,27 @@ const useTooltipsData = ({ hoveredRectIndex, data, session, dimension }: Tooltip
         },
         [hoveredRectIndex],
     );
+};
+
+const getFirstAndLastRect = (drawer: CanvasDrawer): [Rectangle | undefined, Rectangle | undefined] => {
+    const { rectToExpand, rectToCollapsed } = parallelismStore;
+
+    if (rectToExpand) {
+        const first = drawer.rectangles.find(r => r.name.startsWith(rectToExpand.name));
+        const last = drawer.rectangles.slice().reverse().find(r => r.name.startsWith(rectToExpand.name));
+        return [first, last];
+    }
+
+    if (rectToCollapsed) {
+        let first = drawer.rectangles.find(r => r.name === rectToCollapsed.name);
+        if (!first) {
+            const name = rectToCollapsed.name.substring(0, rectToCollapsed.name.lastIndexOf('-'));
+            first = drawer.rectangles.find(r => r.name.startsWith(name));
+        }
+        return [first, undefined];
+    }
+
+    return [undefined, undefined];
 };
 
 interface ParallelismGraphProps {
@@ -325,15 +353,23 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
             return;
         }
 
-        const { originalX, originalY } = targetRank;
-        const xCoord = Math.floor(originalX - (responsiveSize.width / 2));
-        const yCoord = Math.floor(originalY - (responsiveSize.height / 2));
+        const { originalX, originalY, width: rectWidth, height: rectHeight } = targetRank;
+        const { width: containerWidth, height: containerHeight } = responsiveSize;
+        const xCoord = Math.floor(originalX - (containerWidth / 2));
+        const yCoord = Math.floor(originalY - (containerHeight / 2));
 
         canvasContainerRef.current?.scrollTo(xCoord, yCoord);
 
         const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
+        const top = originalY - scrollTop;
+        const left = originalX - scrollLeft;
 
-        locateTargetAnim([originalX - scrollLeft, originalY - scrollTop]);
+        locateTargetAnim({
+            top,
+            left,
+            width: rectWidth,
+            height: rectHeight,
+        });
     }, [canvasDrawer, targetRankIndex]);
 
     useEffect(() => {
@@ -345,6 +381,7 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
             setLastRect(drawer.rectangleList[drawer.rectangleList.length - 1]);
             setTimeout(() => {
                 drawer.render(canvasContainerRef.current?.scrollLeft ?? 0, canvasContainerRef.current?.scrollTop ?? 0);
+                scrollToRect(drawer);
             });
             const rankDbPathMap: Map<string, string> = new Map();
             const getRealRankId = (cardId: string): string => {
@@ -378,6 +415,45 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
             resetPerformanceConditions();
         }
     }, [isUpdated.current]);
+
+    const scrollToRect = (drawer: CanvasDrawer): void => {
+        const [firstExpandedRect, lastExpandedRect] = getFirstAndLastRect(drawer);
+
+        if (!firstExpandedRect) {
+            return;
+        }
+
+        const { originalX, originalY, width: rectWidth, height: rectHeight } = firstExpandedRect;
+        const { width: containerWidth, height: containerHeight } = responsiveSize;
+
+        const xCoord = Math.floor(originalX - (containerWidth / 4));
+        const yCoord = Math.floor(originalY - (containerHeight / 4));
+        canvasContainerRef.current?.scrollTo(xCoord, yCoord);
+
+        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
+        const top = originalY - scrollTop;
+        const left = originalX - scrollLeft;
+
+        let width = rectWidth;
+        let height = rectHeight;
+
+        if (lastExpandedRect) {
+            width += lastExpandedRect.originalX - originalX;
+            height += lastExpandedRect.originalY - originalY;
+        }
+
+        locateTargetAnim({
+            top,
+            left,
+            width,
+            height,
+        });
+
+        runInAction(() => {
+            parallelismStore.rectToExpand = null;
+            parallelismStore.rectToCollapsed = null;
+        });
+    };
 
     useEffect(() => {
         if (data !== undefined && canvasDrawer !== null) {
