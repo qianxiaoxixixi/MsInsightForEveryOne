@@ -247,7 +247,6 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 res = res.concat(cardLinkLines);
             }
             return uniqueLinkLines(res);
-            // return res;
         }),
     ]),
 ), [displayCategories, viewedCardIdSet]);
