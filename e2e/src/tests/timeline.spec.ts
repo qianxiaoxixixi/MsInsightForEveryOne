@@ -389,7 +389,7 @@ test.describe('Timeline', () => {
             });
         await timelineFrame.getByText('Fit to screen').click();
         await page.mouse.move(0, 0);
-
+        await page.waitForTimeout(2000);
         await expect(mainContainer).toHaveScreenshot('fit-to-screen.png', { maxDiffPixels: 100 });
     });
 
@@ -593,6 +593,7 @@ test.describe('Timeline', () => {
         await page.mouse.up();
         // 右键锁定
         await clickMenu(chart.first(), timelineFrame, 'Lock selection area');
+        await chart.first().click();
         await page.mouse.move(0, 0);
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test_lock_selected_area.png', { maxDiffPixels:100 });
         // 点击算子
