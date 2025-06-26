@@ -68,18 +68,17 @@ fn handle_user_event(webview: &WebView, path: PathBuf) {
 }
 
 fn run_event_loop(event_loop: EventLoop<PathBuf>, webview: WebView) {
-    use Event::{UserEvent, WindowEvent};
     use WindowEvent::{CloseRequested, Destroyed};
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
         match event {
-            WindowEvent { event: CloseRequested, .. }
-            | WindowEvent { event: Destroyed, .. } => {
+            Event::WindowEvent { event: CloseRequested, .. }
+            | Event::WindowEvent { event: Destroyed, .. } => {
                 cleanup::handle_close_requested();
                 *control_flow = ControlFlow::Exit;
             }
-            UserEvent(path) => handle_user_event(&webview, path),
+            Event::UserEvent(path) => handle_user_event(&webview, path),
             _ => (),
         }
     });
