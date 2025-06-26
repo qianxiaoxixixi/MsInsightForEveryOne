@@ -17,7 +17,7 @@ import type { InsightUnit } from '../../../entity/insight';
 import type { ThreadMetaData } from '../../../entity/data';
 import { colorPalette } from '../../../insight/units/utils';
 import { handlerEmptyString } from '../../../utils/string';
-import { forEach, groupBy, isNil } from 'lodash';
+import { forEach, groupBy, isNil, keys } from 'lodash';
 import { calculateLinkLines, LinkLineData } from './calculateLinkLines';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -560,7 +560,13 @@ function filterToShowLinkLine(data: Record<string, unknown>, checkedCategory: st
     return true;
 }
 
-function batchDrawLinkLine(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], theme: Theme): void {
+function asyncDrawLinkLines(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], theme: Theme): void {
+    const layerMap = groupBy(dataList, ({ targetY }) => targetY);
+    const sortedKeys = keys(layerMap).sort((a, b) => Number(a) - Number(b));
+    forEach(sortedKeys, (key) => batchDrawLinkLines(ctx, layerMap[key], theme.selectedChartColor));
+}
+
+function batchDrawLinkLines(ctx: CanvasRenderingContext2D, dataList: LinkLineData[], fillStyle: string): void {
     const arrowOptions: Array<Omit<DrawArrowOption, 'color'>> = dataList.map(({ targetX, targetY, targetPos, offset }) => {
         const len = targetPos.length;
         let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
@@ -589,7 +595,7 @@ function batchDrawLinkLine(ctx: CanvasRenderingContext2D, dataList: LinkLineData
     ctx.stroke();
     ctx.closePath();
     // draw arrow
-    ctx.fillStyle = theme.selectedChartColor;
+    ctx.fillStyle = fillStyle;
     ctx.beginPath();
     for (const option of arrowOptions) {
         drawArrowPath(ctx, option);
@@ -611,7 +617,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
         const rawList = Object.values(session.linkLines).flatMap((list) => list === undefined ? [] : list)
             .filter((data) => filterToShowLinkLine(data, checkedCategory));
         const dataList = calculateLinkLines(rawList, session, ctx);
-        batchDrawLinkLine(ctx, dataList, theme);
+        asyncDrawLinkLines(ctx, dataList, theme);
     }
     const lineList: LinkLine = Object.values(session.singleLinkLine)
         .flatMap((list) => list === undefined ? [] as LinkLine : list);
@@ -619,7 +625,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     forEach(categoryMap, (list: any[], category: string): void => {
         ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
         const dataList = calculateLinkLines(list, session, ctx);
-        batchDrawLinkLine(ctx, dataList, theme);
+        asyncDrawLinkLines(ctx, dataList, theme);
     });
     ctx.restore();
 };
