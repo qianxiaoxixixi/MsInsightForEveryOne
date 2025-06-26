@@ -334,7 +334,7 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
     const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedExpandedCardIdSet);
     const isEmptyData = displayCategories.length === 0;
     const updateLinkLines = React.useCallback(updateSessionLineData(checkedCategories, fetchLinkLinesMap, session),
-        [checkedCategories, fetchLinkLinesMap]);
+        [checkedCategories, session.viewedExpandedCardIdSet]);
     const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
         const trimmedValue = inputContent.trim();
@@ -348,9 +348,10 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         checkedCategories,
         session?.unitsConfig.offsetConfig.timestampOffset,
         session.viewedExpandedCardIdSet];
-    React.useEffect((): void => {
+    const updateLineData = (): void => {
         updateLinkLines();
-    }, dependencyParam);
+    };
+    React.useEffect(updateLineData, dependencyParam);
     React.useEffect(() => {
         setCheckedCategories([]);
     }, [session.doReset]);
