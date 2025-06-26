@@ -76,6 +76,27 @@ function InitChart(data: ChartData, t: TFunction): void {
         disposeAdaptiveEchart(chartDom);
         const myChart = getAdaptiveEchart(chartDom);
         myChart.setOption(wrapData(data, t), { replaceMerge: ['series', 'xAxis', 'yAxis'] });
+        myChart.on('dataZoom', (): void => {
+            const option = myChart.getOption();
+            const xAxisData = (option as any).xAxis[0].data;
+            const dataZoom = (option as any).dataZoom[0];
+
+            // 当前显示的区间
+            const start = dataZoom.start ?? 0;
+            const end = dataZoom.end ?? 100;
+
+            const total = xAxisData.length;
+            const visibleCount = Math.round((end - start) / 100 * total);
+
+            const showLabel = visibleCount <= 16;
+            myChart.setOption({
+                series: [{
+                    label: {
+                        show: showLabel,
+                    },
+                }],
+            }, false);
+        });
     }
 }
 
