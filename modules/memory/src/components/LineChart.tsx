@@ -76,7 +76,7 @@ const _getOriginOption = (props: IProps, theme: Theme): echarts.EChartsOption =>
         legend: {
             itemGap: 20,
             data: legendDatas,
-            type: legendDatas.length > MAX_PLAIN_LEGENDS_COUNT ? 'scroll' : 'plain',
+            type: (legendDatas.length > MAX_PLAIN_LEGENDS_COUNT && !legendDatas.includes('')) ? 'scroll' : 'plain',
             ...getLegendStyle(theme),
         },
         grid: { left: '100', right: '100', bottom: 40 },

@@ -11,6 +11,8 @@
     "Operators Allocated": "算子分配",
     "Operators Reserved": "算子保留",
     "Operators Activated": "算子持有",
+    "Workspace Allocated": "WORKSPACE分配",
+    "Workspace Reserved": "WORKSPACE保留",
     "PTA Allocated": "PTA分配",
     "PTA Reserved": "PTA保留",
     "PTA Activated": "PTA持有",
@@ -20,6 +22,8 @@
     "Operators Allocated of Compare": "比对卡算子分配",
     "Operators Reserved of Compare": "比对卡算子保留",
     "Operators Activated of Compare": "比对卡算子持有",
+    "Workspace Allocated of Compare": "比对卡WORKSPACE分配",
+    "Workspace Reserved of Compare": "比对卡WORKSPACE保留",
     "PTA Allocated of Compare": "比对卡PTA分配",
     "PTA Reserved of Compare": "比对卡PTA保留",
     "PTA Activated of Compare": "比对卡PTA持有",
@@ -30,6 +34,8 @@
     "Operators Allocated of Baseline": "基线卡算子分配",
     "Operators Reserved of Baseline": "基线卡算子保留",
     "Operators Activated of Baseline": "基线卡算子持有",
+    "Workspace Allocated of Baseline": "基线卡WORKSPACE分配",
+    "Workspace Reserved of Baseline": "基线卡WORKSPACE保留",
     "PTA Allocated of Baseline": "基线卡PTA分配",
     "PTA Reserved of Baseline": "基线卡PTA保留",
     "PTA Activated of Baseline": "基线卡PTA持有",
@@ -79,7 +85,8 @@
         "算子分配: 算子分配曲线表示算子在申请device内存时采集到的内存信息随采集时间的变化趋势，代表所有算子总的占用内存，此处采集到的device内存数据由PTA和GE申请",
         "算子持有: 算子持有曲线表示所申请的总device内存，包括被其他流复用未释放的内存，此处采集到的内存数据由PTA中的流的申请",
         "算子保留: 算子保留曲线表示算子在释放device内存时采集到的内存信息随采集时间的变化趋势，代表所有算子总的保留内存，此处采集到的内存数据由PTA和GE申请",
-        "进程保留: 进程保留曲线表示整个进程申请的device内存趋势"
+        "进程保留: 进程保留曲线表示整个进程申请的device内存趋势",
+        "WORKSPACE: Workspace是device侧Global Memory上的一块内存"
       ],
       "CurveDescribeByCompenent": [
         "PTA分配: PTA分配曲线表示PTA在申请device内存时采集到的内存信息随采集时间的变化趋势",
