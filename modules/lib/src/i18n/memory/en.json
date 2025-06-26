@@ -11,6 +11,8 @@
     "Operators Allocated": "Operators Allocated",
     "Operators Reserved": "Operators Reserved",
     "Operators Activated": "Operators Activated",
+    "Workspace Allocated": "WORKSPACE Allocated",
+    "Workspace Reserved": "WORKSPACE Reserved",
     "PTA Allocated": "PTA Allocated",
     "PTA Reserved": "PTA Reserved",
     "PTA Activated": "PTA Activated",
@@ -20,6 +22,8 @@
     "Operators Allocated of Compare": "Operators Allocated in Comparison",
     "Operators Reserved of Compare": "Operators Reserved in Comparison",
     "Operators Activated of Compare": "Operators Activated in Comparison",
+    "Workspace Allocated of Compare": "WORKSPACE Allocated in Comparison",
+    "Workspace Reserved of Compare": "WORKSPACE Reserved in Comparison",
     "PTA Allocated of Compare": "PTA Allocated in Comparison",
     "PTA Reserved of Compare": "PTA Reserved in Comparison",
     "PTA Activated of Compare": "PTA Activated in Comparison",
@@ -30,6 +34,8 @@
     "Operators Allocated of Baseline": "Operators Allocated in Baseline",
     "Operators Reserved of Baseline": "Operators Reserved in Baseline",
     "Operators Activated of Baseline": "Operators Activated in Baseline",
+    "Workspace Allocated of Baseline": "WORKSPACE Allocated in Baseline",
+    "Workspace Reserved of Baseline": "WORKSPACE Reserved in Baseline",
     "PTA Allocated of Baseline": "PTA Allocated in Baseline",
     "PTA Reserved of Baseline": "PTA Reserved in Baseline",
     "PTA Activated of Baseline": "PTA Activated in Baseline",
@@ -79,7 +85,8 @@
         "Operators Allocated: This curve illustrates the device memory trend derived from data collected from operators during memory allocation, encompassing the total memory usage of all operators. The memory data presented here is requested by PTA and GE",
         "Operators Activated: This curve illustrates the total device memory requested, encompassing unreleased memory reused by other pipelines. The collected memory data is requested by pipelines in PTA",
         "Operators Reserved: This curve illustrates the device memory trend derived from data collected from operators during memory release, encompassing the total reserved memory of all operators. The memory data presented here is requested by PTA and GE",
-        "App Reserved: This curve depicts the device memory allocation trend of the entire process"
+        "App Reserved: This curve depicts the device memory allocation trend of the entire process",
+        "WORKSPACE: A workspace is a memory block on Global Memory on the device."
       ],
       "CurveDescribeByCompenent": [
         "PTA Allocated: This curve illustrates the device memory trend derived from data collected from PTA during memory allocation",
