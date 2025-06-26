@@ -14,8 +14,6 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::default::PID;
-
 #[cfg(windows)]
 fn query_child_pids(parent_pid: u32) -> Result<Vec<String>> {
     let wmic_output = Command::new("wmic")
@@ -142,11 +140,17 @@ fn kill_child_pids(child_pids: Vec<String>) {
     }
 }
 
-pub fn handle_close_requested() {
-    unsafe {
-        match query_child_pids(PID) {
+pub(crate) fn handle_close_requested(server_process: Arc<Mutex<Child>>) {
+    let mut server_process_guard =
+        server_process.lock().expect("Failed to lock server-process mutex");
+    let pid = server_process_guard.id();
+
+    match query_child_pids(pid) {
         Ok(child_pids) => kill_child_pids(child_pids),
         Err(e) => eprintln!("Err when query child pids {e}"),
     }
+
+    if let Err(e) = server_process_guard.kill() {
+        eprintln!("server process could not be killed: {e}");
     }
 }
