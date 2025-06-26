@@ -179,7 +179,7 @@ const fetchLinkLineForCard = async (viewedCardIdSet: Set<string>, session: Sessi
  */
 const queryLinkLinesForHostCards = async (unit: InsightUnit, viewedCardIdSet: Set<string>, session: Session, config: Omit<QueryFlowLinesConfig, 'cardId' | 'dbPath'>):
 Promise<CategoryEvents['flowDetailList']> => {
-    const hostProcessCardInfos = getHostChildUnitCardInfos(unit);
+    const hostProcessCardInfos = getHostChildUnitCardInfos(unit).filter(({ cardId }) => viewedCardIdSet.has(cardId));
     const chunkedList = _.chunk(hostProcessCardInfos, 8); // 8个为一组分组
     let res: CategoryEvents['flowDetailList'] = [];
     for (const batch of chunkedList) {
@@ -198,16 +198,17 @@ Promise<CategoryEvents['flowDetailList']> => {
  * @param arr
  */
 function uniqueLinkLines(arr: CategoryEvents['flowDetailList']): CategoryEvents['flowDetailList'] {
-    const uniqueArray: CategoryEvents['flowDetailList'] = [];
+    const uniqueLinkLineMap: Map<string, CategoryEvents['flowDetailList'][number]> = new Map();
+    const generateKey = (obj: CategoryEvents['flowDetailList'][number]): string => {
+        return `${obj.category}_${obj.from.timestamp}/${obj.from.pid}-${obj.from.tid}-${obj.from.depth}_${obj.to.timestamp}/${obj.to.pid}-${obj.to.tid}-${obj.to.depth}`;
+    };
     arr.forEach(obj => {
-        const isDuplicate = uniqueArray.some(existingObj => {
-            return existingObj.category === obj.category && _.isEqual(existingObj.from, obj.from) && _.isEqual(existingObj.to, obj.to);
-        });
-        if (!isDuplicate) {
-            uniqueArray.push(obj);
+        const key = generateKey(obj);
+        if (!uniqueLinkLineMap.has(key)) {
+            uniqueLinkLineMap.set(key, obj);
         }
     });
-    return uniqueArray;
+    return [...uniqueLinkLineMap.values()];
 }
 
 const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<string>): UseFetchLinkLines => React.useMemo(() => new Map(
@@ -299,12 +300,15 @@ const useGetCategories = (session: Session, isSuspend: boolean): {categories: st
 const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: Map<string, FetchLinkLines>, session: Session): any => {
     return async () => {
         const newLines: LinkLines = {};
-        for (const category of checkedCategories) {
-            const datas = await fetchLinkLinesMap.get(category)?.(session);
-            if (datas === undefined) {
+        const results = await Promise.all(checkedCategories.map((category) => {
+            return fetchLinkLinesMap.get(category)?.(session);
+        }));
+        for (let i = 0; i < results.length; ++i) {
+            const res = results[i];
+            if (res === undefined) {
                 return;
             }
-            newLines[category] = datas;
+            newLines[checkedCategories[i]] = res;
         }
         Object.values(session.singleLinkLine)
             .forEach(datas => {
