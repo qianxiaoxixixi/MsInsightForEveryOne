@@ -6,11 +6,12 @@ mod cleanup;
 #[cfg(windows)]
 pub mod webview2err;
 
-use std::{fs::read, path::PathBuf, sync::Arc};
-
+use std::fs::read;
+use std::path::PathBuf;
+use std::process::Child;
+use std::sync::{Arc, Mutex};
 #[cfg(target_os = "macos")]
 use wry::application::menu::{MenuBar, MenuItem};
-pub use wry::webview::webview_version;
 use wry::{
     application::{
         event::{Event, WindowEvent},
@@ -20,12 +21,13 @@ use wry::{
     http::{header::CONTENT_TYPE, Response},
     webview::{FileDropEvent, WebView, WebViewBuilder},
 };
+pub use wry::webview::webview_version;
 const MIMETYPE_HTML: &str = "text/html";
 
 fn create_webview(
     window: Window,
     resource_path: Arc<PathBuf>,
-    port: u16,
+    port: &str,
     proxy: Arc<EventLoopProxy<PathBuf>>,
 ) -> wry::Result<WebView> {
     WebViewBuilder::new(window)?
@@ -43,7 +45,7 @@ fn create_webview(
                 .body(content)
                 .map_err(Into::into)
         })
-        .with_url(&format!("wry://localhost/resources/profiler/frontend/index.html?port={port}"))?
+        .with_url(format!("wry://localhost/resources/profiler/frontend/index.html?port={}", port).as_str())?
         .with_file_drop_handler(move |_, ev| {
             match ev {
                 FileDropEvent::Dropped(paths) => {
@@ -67,15 +69,18 @@ fn handle_user_event(webview: &WebView, path: PathBuf) {
     }
 }
 
-fn run_event_loop(event_loop: EventLoop<PathBuf>, webview: WebView) {
-    use WindowEvent::{CloseRequested, Destroyed};
-
+fn run_event_loop(
+    event_loop: EventLoop<PathBuf>,
+    server_process: Arc<Mutex<Child>>,
+    webview: WebView,
+) {
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
         match event {
-            Event::WindowEvent { event: CloseRequested, .. }
-            | Event::WindowEvent { event: Destroyed, .. } => {
-                cleanup::handle_close_requested();
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested, ..
+            } => {
+                cleanup::handle_close_requested(server_process.clone());
                 *control_flow = ControlFlow::Exit;
             }
             Event::UserEvent(path) => handle_user_event(&webview, path),
@@ -95,7 +100,7 @@ fn set_windows_icon(window: &Window, root_path: &PathBuf) {
                 .join("resources/images/icons/mindstudio.ico"),
             None,
         )
-        .ok(),
+            .ok(),
     );
 }
 
@@ -127,7 +132,11 @@ fn macos_menu() -> MenuBar {
 }
 
 // run script
-pub fn run_script(root_path: &PathBuf, port: u16) -> wry::Result<()> {
+pub fn run_script(
+    server_process: Arc<Mutex<Child>>,
+    root_path: &PathBuf,
+    port: &str
+) -> wry::Result<()> {
     let event_loop = EventLoop::with_user_event();
 
     let proxy = Arc::new(event_loop.create_proxy());
@@ -153,7 +162,7 @@ pub fn run_script(root_path: &PathBuf, port: u16) -> wry::Result<()> {
 
     let webview = create_webview(window, resource_path, port, proxy)?;
 
-    Ok(run_event_loop(event_loop, webview))
+    Ok(run_event_loop(event_loop, server_process, webview))
 }
 
 fn extract_mimetype(path: &str) -> &str {
