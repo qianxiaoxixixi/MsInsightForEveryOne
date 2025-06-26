@@ -329,9 +329,9 @@ const heightMap = new Map();
 // 是否是线程缩略图
 const threadIsCol: Map<string, boolean> = new Map();
 // 是否是进程缩略图
-const processIsCol: Map<string, boolean> = new Map();
+export const processIsCol: Map<string, boolean> = new Map();
 // 是否是卡折叠
-const cardIsCol: Map<string, boolean> = new Map();
+export const cardIsCol: Map<string, boolean> = new Map();
 // 泳道是否已隐藏
 const unitIsHidden: Map<string, boolean> = new Map();
 
@@ -485,7 +485,7 @@ export const drawMEventMask = (props: DrawCanvasArgs): void => {
     }
 };
 
-const UNDRAW_HEIGHT = 45 + 2; // 45 指时间轴+旗帜轴的高度之和，2 指 useDraggableContainerEx css 中的 border-top: ${(p): string => p.theme.dividerColor} 2px solid;
+export const UNDRAW_HEIGHT = 45 + 2; // 45 指时间轴+旗帜轴的高度之和，2 指 useDraggableContainerEx css 中的 border-top: ${(p): string => p.theme.dividerColor} 2px solid;
 export const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
@@ -557,21 +557,6 @@ function filterToShowLinkLine(data: Record<string, unknown>, checkedCategory: st
     if (sourceOrTargetLinkUnitIsHidden({ targetCardId, sourceCardId, to, from })) {
         return false;
     }
-    if ((cardIsCol.get(`${targetCardId}`) ?? processIsCol.get(`${targetCardId}-${to.pid}`)) &&
-        (cardIsCol.get(`${sourceCardId}`) ?? processIsCol.get(`${sourceCardId}-${from.pid}`))) {
-        return false;
-    }
-    return true;
-}
-
-function filterInvalidYOfLinkLine(data: LinkLineData): boolean {
-    const { sourceY, targetY } = data;
-    if ((sourceY === undefined || targetY === undefined)) {
-        return false;
-    }
-    if (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) {
-        return false;
-    }
     return true;
 }
 
@@ -625,7 +610,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
         ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(checkedCategory, colorPalette.length)]];
         const rawList = Object.values(session.linkLines).flatMap((list) => list === undefined ? [] : list)
             .filter((data) => filterToShowLinkLine(data, checkedCategory));
-        const dataList = calculateLinkLines(rawList, session, ctx).filter(filterInvalidYOfLinkLine);
+        const dataList = calculateLinkLines(rawList, session, ctx);
         batchDrawLinkLine(ctx, dataList, theme);
     }
     const lineList: LinkLine = Object.values(session.singleLinkLine)
@@ -633,7 +618,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, theme: T
     const categoryMap = groupBy(lineList, (item: FlowEvent) => item.category ?? '');
     forEach(categoryMap, (list: any[], category: string): void => {
         ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
-        const dataList = calculateLinkLines(list, session, ctx).filter(filterInvalidYOfLinkLine);
+        const dataList = calculateLinkLines(list, session, ctx);
         batchDrawLinkLine(ctx, dataList, theme);
     });
     ctx.restore();
