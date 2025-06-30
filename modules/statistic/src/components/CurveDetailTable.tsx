@@ -119,6 +119,8 @@ const CurveDetailTable = observer(({ session, curveSession }:
     };
 
     useEffect(() => {
+        setOrder(undefined);
+        setOrderBy(undefined);
         setDetailTableData();
     }, [curveSession.rankIdCondition.value, curveSession.groupId]);
     useEffect(() => {
