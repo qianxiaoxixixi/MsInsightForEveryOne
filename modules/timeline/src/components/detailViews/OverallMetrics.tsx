@@ -82,14 +82,14 @@ const OverallMetricsTable = observer(({ bottomHeight, card, session, selectedRow
         try {
             const rankId = card.cardId;
             const dbPath = card.dbPath;
-            const { data, count: total } = await getOverallMetrics({ rankId, dbPath, pageSize: page.pageSize, current: page.current }).finally(() => {
-                setLoading(false);
-                setTableData([]);
-            });
+            const { data, count: total } = await getOverallMetrics({ rankId, dbPath, pageSize: page.pageSize, current: page.current });
             setPage({ ...page, total });
             setTableData(data ?? []);
+            setLoading(false);
         } catch (e) {
             setLoading(false);
+            setTableData([]);
+            setPage(defaultPage);
         }
     }
 
