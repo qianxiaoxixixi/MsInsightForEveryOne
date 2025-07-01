@@ -111,6 +111,8 @@ protected:
                                  std::vector<std::string> dataPath);
     static void SaveDbPath(const std::string &curProjectName,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
+
+    static bool IsMindFormsRankData(const std::vector<std::string>& parentFolders);
 };
 
 class ParserFactory {
