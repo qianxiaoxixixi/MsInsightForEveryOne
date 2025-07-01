@@ -155,7 +155,7 @@ TEST_F(SystemViewOverallTextRepoTest, QueryDataForComputingOverallMetricTestWith
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::vector<SameOperatorsDetails> filteredEvents =
         computeHelper.FilterComputingEventsByCategory(tempList, minTimestamp, "");
-    EXPECT_EQ(filteredEvents.size(), 14); // 66个Conv类算子
+    EXPECT_EQ(filteredEvents.size(), 66); // 66个Conv类算子
 }
 
 // System View Overall: 查询过滤 duration > UINT64_MAX / 1000 的值

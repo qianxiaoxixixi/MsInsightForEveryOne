@@ -72,17 +72,25 @@ bool SystemViewOverallTextRepo::CheckDataForSystemViewOverall(const std::shared_
     return false;
 }
 
+/**
+ * Npu层算子正确拆解依赖于下发该算子的Python API，两者依靠连线关联。对于async_npu类型连线，其s端（即start）在Python侧，
+ * f端（即final）在NPU侧
+ * @return 下发连线信息std::map<uint64_t, uint64_t> flowDict，其中key：end，value：start
+ */
 std::map<uint64_t, uint64_t> SystemViewOverallTextRepo::QueryFlowDict(
     const Protocol::SystemViewOverallReqParam &requestParams, const std::shared_ptr<VirtualTraceDatabase> &database)
 {
+    // 单Host多Device需求中，Text场景下，NPU侧需按照deviceID过滤，过滤规则为：相应PID按位与0x1f(即31)所得结果为deviceID，
+    // 即(p.pid & 0x1f) = deviceID。而Python侧pid并不满足这一规律。因此需在Having处按组过滤，而不能在where处过滤，
+    // 否则所有s端都会被过滤掉。
     std::string sql =
         "select max(case when f.type = 's' then f.timestamp end) as start, "
         "max(case when f.type = 'f' then f.timestamp end) "
         " as end from " + FLOW_TABLE + " f "
         " join " + THREAD_TABLE + " t on f.track_id = t.track_id "
         " join " + PROCESS_TABLE + " p on p.pid = t.pid "
-        " where (p.pid & 0x1f) = ? and f.cat = 'async_npu' group by f.flow_id having "
-        " count(case when f.type = 's' then 1 end) = 1 and count (case when f.type = 'f' then 1 end) = 1 order by end;";
+        " where f.cat = 'async_npu' group by f.flow_id having count(case when f.type = 's' then 1 end) = 1 and "
+        " count (case when f.type = 'f' then 1 end) = 1 and (p.pid & 0x1f) = ? order by end;";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to query flow dictionary for system view overall.");
