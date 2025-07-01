@@ -413,7 +413,7 @@ void ProjectParserDb::BuildProjectFromParseFile(Dic::Module::Global::ProjectExpl
     std::string cluster;
     std::string clusterPrefix;
     constexpr uint64_t clusterFolderCount = 2;
-    if (parentFolders.size() >= clusterFolderCount) {
+    if (parentFolders.size() >= clusterFolderCount && !IsMindFormsRankData(parentFolders)) {
         std::tie(cluster, clusterPrefix) = GetClusterInfo(parentFolders);
         if (info.GetSubParseFileInfo(clusterPrefix, ParseFileType::CLUSTER) == nullptr) {
             auto clusterInfo = std::make_shared<ParseFileInfo>();

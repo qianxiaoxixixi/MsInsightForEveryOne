@@ -468,5 +468,14 @@ void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, st
                   });
 }
 
+bool ProjectParserBase::IsMindFormsRankData(const std::vector<std::string> &parentFolders)
+{
+    // mindforms profiling data:   rank_xx/xxx_acend_ms
+    if (parentFolders.empty()) {
+        return false;
+    }
+    return RegexUtil::RegexSearch(FileUtil::GetFileName(parentFolders.back()), "^rank_[0-9]+$").has_value();
+}
+
 ProjectAnalyzeRegister<ProjectParserBase> pReg(ParserType::OTHER);
 }
