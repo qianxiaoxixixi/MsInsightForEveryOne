@@ -35,6 +35,16 @@ public:
 
     static std::string GetSubId(const std::string &filePath, ParseFileType type);
 
+    static std::string GetDeviceId(const std::string &parseFolder, const std::string &rankId);
+
+    static std::string GetDeviceIdFromMemory(const std::string& parseFolder);
+
+    static std::string GetDeviceIdFromKernel(const std::string& parseFolder);
+
+    static std::string GetDeviceIdFromCSVFile(const std::string& filePath);
+
+    static std::string GetDeviceIdFromPath(const std::string& parseFolder);
+
 protected:
     bool CheckParseFileInfoSize(const std::shared_ptr<Global::ParseFileInfo> &parseFileInfo,
                                 std::vector<std::string> &jsonFiles) const;
@@ -93,8 +103,6 @@ private:
 
     void ParseBaselineTraceFile(const std::vector<std::string> &jsonFiles, const std::string &rankId,
                                 const std::string &fileId, const std::string &filePath);
-
-    static std::string GetDeviceIdFromCSVFile(const std::string &parseFolder, const std::string &rankId);
 };
 } // end of namespace Module
 } // end of namespace Dic

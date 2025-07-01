@@ -84,7 +84,7 @@ public:
         return FileUtil::GetFileName(str);
     }
 
-    static std::vector<std::string> SearchDeviceInfo(ProjectExplorerInfo &info, const std::string &searchPath);
+    static std::vector<std::string> SearchDeviceInfo(const std::string &searchPath);
     static void AddRankDeviceParseFileInfo(ProjectExplorerInfo& info, std::shared_ptr<ParseFileInfo> rankInfo);
     std::string GetRankIdFromPath(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);

@@ -10,6 +10,7 @@
 #include "ParallelStrategyAlgorithmManager.h"
 #include "MegatronParallelStrategyAlgorithm.h"
 #include "MindSpeedParallelStrategyAlgorithm.h"
+#include <algorithm>
 #include "BaselineManagerService.h"
 using namespace Dic::Module::Summary;
 namespace Dic {
@@ -97,7 +98,10 @@ bool BaselineManagerService::IsClusterBaseline(ProjectTypeEnum projectTypeEnum,
         if (cluster.empty()) {
             return false;
         }
-        return cluster[0]->parseFilePath == filePath;
+        return std::any_of(cluster.begin(), cluster.end(),
+                           [&filePath](const std::shared_ptr<ParseFileInfo> &clusterInfo) {
+                               return clusterInfo->parseFilePath == filePath;
+                           });
     });
     if (isCluster) {
         return true;

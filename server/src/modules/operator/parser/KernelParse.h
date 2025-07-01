@@ -72,8 +72,9 @@ public:
                const std::string &fileId) override;
     bool Parse(const RankEntry& rankEntry);
 
-protected:
     static std::vector<std::string> GetKernelFiles(const std::vector<std::string>& paths);
+
+protected:
     static bool ParseKernelCsv(const std::string& filePath, const std::string &rankId, const std::string& statusId,
                                std::string &message, std::set<std::string>& devices);
     static bool CheckHeaderFieldAndFilterParseFunc(std::vector<std::string> rowVector,

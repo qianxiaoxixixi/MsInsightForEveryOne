@@ -20,6 +20,7 @@
 #include "TimeUtil.h"
 #include "FileReader.h"
 #include "ProjectAnalyze.h"
+#include "KernelParse.h"
 #include "TrackInfoManager.h"
 
 namespace Dic::Module {
@@ -118,7 +119,7 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
                 continue;
             }
             std::string rankId = FileUtil::GetRankIdFromFile(jsonFiles[0]);
-            std::string deviceId = isDevice ? rankId : GetDeviceIdFromCSVFile(parseFileInfo->parseFilePath, rankId);
+            std::string deviceId = isDevice ? rankId : GetDeviceId(parseFileInfo->parseFilePath, rankId);
             if (isDevice) {
                 rankId = parseFileInfo->deviceId;
                 deviceId = rankId;
@@ -792,37 +793,77 @@ void ProjectParserJson::SetBaseAction(const std::map<std::string, RankEntry> &ra
     }
 }
 
-std::string ProjectParserJson::GetDeviceIdFromCSVFile(const std::string &parseFolder,
-                                                      const std::string &rankId)
+std::string ProjectParserJson::GetDeviceId(const std::string &parseFolder,
+                                           const std::string &rankId)
 {
-    std::string operatorMemoryFile;
-    auto memoryFiles = MemoryParse::Instance().GetMemoryFile(parseFolder);
-    for (const auto& file : memoryFiles.operatorFiles) {
-        if (RegexUtil::RegexSearch(file, memoryOperatorReg)) {
-            operatorMemoryFile = file;
-            break;
-        }
+    auto deviceIdFromMemoryFile = GetDeviceIdFromMemory(parseFolder);
+    if (!deviceIdFromMemoryFile.empty()) {
+        return deviceIdFromMemoryFile;
     }
-    auto file = OpenReadFileSafely(operatorMemoryFile);
-    if (!file.is_open()) {
-        return rankId;
+    auto deviceIdFromKernelFile = GetDeviceIdFromKernel(parseFolder);
+    if (!deviceIdFromKernelFile.empty()) {
+        return deviceIdFromKernelFile;
     }
-    std::string line;
-    bool isHeader = true;
-    std::map<std::string, size_t> dataMap;
-    while (getline(file, line)) {
-        std::vector<std::string> row = StringUtil::StringSplit(line);
-        if (isHeader) {
-            if (!MemoryParse::ParseOperatorHeaderLine(dataMap, row)) {
-                return rankId;
-            }
-            isHeader = false;
-        } else {
-            auto op = MemoryParse::ParseOperatorDataLine(dataMap, row);
-            return op.deviceType;
-        }
+    auto deviceIdFromPath = GetDeviceIdFromPath(parseFolder);
+    if (!deviceIdFromPath.empty()) {
+        return deviceIdFromPath;
     }
     return rankId;
+}
+
+std::string ProjectParserJson::GetDeviceIdFromMemory(const std::string &parseFolder)
+{
+    auto memoryFiles = MemoryParse::Instance().GetMemoryFile(parseFolder);
+    if (memoryFiles.operatorFiles.empty()) {
+        return "";
+    }
+    std::string operatorFile = *memoryFiles.operatorFiles.begin();
+    return GetDeviceIdFromCSVFile(operatorFile);
+}
+
+std::string ProjectParserJson::GetDeviceIdFromKernel(const std::string &parseFolder)
+{
+    auto kernelFiles = Summary::KernelParse::GetKernelFiles({parseFolder});
+    if (kernelFiles.empty()) {
+        return "";
+    }
+    return GetDeviceIdFromCSVFile(kernelFiles[0]);
+}
+
+std::string ProjectParserJson::GetDeviceIdFromCSVFile(const std::string &filePath)
+{
+    auto file = OpenReadFileSafely(filePath);
+    if (!file.is_open()) {
+        return "";
+    }
+    std::string line;
+    std::map<std::string, std::string> dataMap;
+    getline(file, line);
+    auto headerRow = StringUtil::StringSplit(line);
+    getline(file, line);
+    auto dataRow = StringUtil::StringSplit(line);
+    for (size_t i = 0; i < headerRow.size(); i++) {
+        dataMap[headerRow[i]] = dataRow[i];
+    }
+    std::string deviceId;
+    if (dataMap.find(DEVICE_ID) != dataMap.end()) {
+        deviceId = dataMap[DEVICE_ID];
+    } else if (dataMap.find(DEVICETYPE) != dataMap.end()) {
+        deviceId = dataMap[DEVICETYPE];
+    }
+    if (StringUtil::StartWith(deviceId, "NPU:")) {
+        return deviceId.substr(strlen("NPU:"));
+    }
+    return deviceId;
+}
+
+std::string ProjectParserJson::GetDeviceIdFromPath(const std::string &parseFolder)
+{
+    auto deviceIds = ProjectParserBase::SearchDeviceInfo(FileUtil::GetParentPath(parseFolder));
+    if (deviceIds.empty()) {
+        return "";
+    }
+    return deviceIds[0];
 }
 
 ProjectAnalyzeRegister<ProjectParserJson> pRegJson(ParserType::JSON);
