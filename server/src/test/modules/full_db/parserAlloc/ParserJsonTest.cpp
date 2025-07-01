@@ -13,7 +13,7 @@ protected:
     {
         static std::string currPath = FileUtil::GetCurrPath();
         static auto index = currPath.find_last_of("server");
-        static std::string testDataDir = currPath.substr(0, index + 1) + R"(src/test/test_data)";
+        static std::string testDataDir = currPath.substr(0, index + 1) + R"(/src/test/test_data)";
         return testDataDir;
     }
 };
@@ -243,4 +243,25 @@ TEST_F(ParserJsonTest, BuildProjectCluster)
     ProjectExplorerInfo projectInfo;
     ProjectParserJson::BuildProjectExploreInfo(projectInfo, {GetTestDataDir()});
     EXPECT_EQ(projectInfo.GetClusterInfos().size(), 1);
+}
+
+TEST_F(ParserJsonTest, GetDeviceIdFromMemory)
+{
+    std::string parseFolder = GetTestDataDir() + R"(/test_rank_0)";
+    auto deviceId = ProjectParserJson::GetDeviceIdFromMemory(parseFolder);
+    EXPECT_EQ(deviceId, "0");
+}
+
+TEST_F(ParserJsonTest, GetDeviceIdFromOperator)
+{
+    std::string parseFolder = GetTestDataDir() + R"(/test_rank_0)";
+    auto deviceId = ProjectParserJson::GetDeviceIdFromKernel(parseFolder);
+    EXPECT_EQ(deviceId, "");
+}
+
+TEST_F(ParserJsonTest, GetDeviceIdFromPath)
+{
+    std::string parseFolder = GetTestDataDir() + R"(/msprof/normal/PROF_20250620)";
+    auto deviceId = ProjectParserJson::GetDeviceIdFromPath(parseFolder);
+    EXPECT_EQ(deviceId, "");
 }

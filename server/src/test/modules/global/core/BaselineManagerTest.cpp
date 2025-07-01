@@ -45,6 +45,27 @@ protected:
         }
         return info;
     }
+
+    static ProjectExplorerInfo CreateMultiClusterProject(const std::string &projectName, const std::string &fileName,
+                                                         Dic::ProjectTypeEnum projectType, int clusterCount)
+    {
+        ProjectExplorerInfo info;
+        info.projectName = projectName;
+        info.fileName = fileName;
+        info.importType = "import";
+        info.projectType = static_cast<int>(projectType);
+        for (int i = 0; i < clusterCount; i++) {
+            auto cluster = std::make_shared<ParseFileInfo>();
+            std::string clusterName = "cluster_" + std::to_string(i);
+            cluster->parseFilePath = clusterName;
+            cluster->clusterId = clusterName;
+            cluster->type = ParseFileType::CLUSTER;
+            cluster->subId = projectName + "/" + clusterName;
+            info.AddSubParseFileInfo(cluster);
+        }
+        return info;
+    }
+
     static void InitProjectExplorerData()
     {
         std::string filePathText = currPath.substr(0, index + 1) +
@@ -61,6 +82,10 @@ protected:
         ProjectExplorerInfo dbInfo = CreateProjectData("testProjectDb", "projectFilePathDb",
                                                        "import", Dic::ProjectTypeEnum::DB, parseDbFileList);
         ProjectExplorerManager::Instance().SaveProjectExplorer(dbInfo, false);
+        ProjectExplorerInfo multiClusterInfo = CreateMultiClusterProject("multiCluster", "projectFilePath",
+                                                                         Dic::ProjectTypeEnum::DB_CLUSTER,
+                                                                         4); // generator 4 cluster
+        ProjectExplorerManager::Instance().SaveProjectExplorer(multiClusterInfo, false);
     }
 
     static void ClearProjectExplorerData()
@@ -133,4 +158,14 @@ TEST_F(BaselineManagerTest, GetCompareClusterPath)
 {
     BaselineManager::Instance().SetCompareClusterPath("compare");
     EXPECT_EQ(BaselineManager::Instance().GetCompareClusterPath(), "compare");
+}
+
+TEST_F(BaselineManagerTest, MultiCluster)
+{
+    std::string filePath = "cluster_2";
+    BaselineInfo baselineInfo;
+    baselineInfo.parsedFilePath = filePath;
+    bool result = BaselineManagerService::InitBaselineData("multiCluster", filePath, baselineInfo, filePath);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(baselineInfo.isCluster, true);
 }

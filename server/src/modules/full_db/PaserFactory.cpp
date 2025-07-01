@@ -415,7 +415,7 @@ std::tuple<std::string, std::string> ProjectParserBase::GetClusterInfo(const std
     return {folders.back(), folders.back()};
 }
 
-std::vector<std::string> ProjectParserBase::SearchDeviceInfo(ProjectExplorerInfo &info, const std::string &searchPath)
+std::vector<std::string> ProjectParserBase::SearchDeviceInfo(const std::string &searchPath)
 {
     // 在PROF_目录下寻找device_x
     static std::regex profRegex("^PROF_");
@@ -448,7 +448,7 @@ std::vector<std::string> ProjectParserBase::SearchDeviceInfo(ProjectExplorerInfo
 
 void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, std::shared_ptr<ParseFileInfo> rankInfo)
 {
-    auto deviceIds = ProjectParserBase::SearchDeviceInfo(info, FileUtil::GetParentPath(rankInfo->parseFilePath));
+    auto deviceIds = ProjectParserBase::SearchDeviceInfo(FileUtil::GetParentPath(rankInfo->parseFilePath));
     if (deviceIds.size() < 2) { // deviceIds size > 2, multi device
         info.AddSubParseFileInfo(rankInfo);
         return;
