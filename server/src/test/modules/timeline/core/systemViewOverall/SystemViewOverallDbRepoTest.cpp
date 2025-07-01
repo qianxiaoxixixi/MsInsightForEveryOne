@@ -116,6 +116,19 @@ TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPm
         return;
     }
     Dic::Protocol::SystemViewOverallReqParam requestParams;
+    std::vector<SystemViewOverallRes> details;
+    Protocol::SystemViewOverallRes tmpRes = { .totalTime = 8903.43, .ratio = 6.73, // Computing Time = 8903.43, 6.73%
+        .nums = 0, .avg = 0, .max = 0, .min = UINT32_MAX, .name = COMPUTING_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    tmpRes = { .totalTime = 98071.95, .ratio = 74.17, // Comm(Not Overlapped) = 98071.95, 74.17%
+        .nums = 0, .avg = 0, .max = 0, .min = 0, .name = COMMUNICATION_NOT_OVERLAP_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    tmpRes = { .totalTime = 25258.14, .ratio = 19.1, // Free = 25258.14, 19.1%
+        .nums = 0, .avg = 0, .max = 0, .min = 0, .name = FREE_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
+    tmpRes = { .totalTime = 132233.52, .ratio = 100, // E2E = 132233.52, 100%
+        .nums = 0, .avg = 0, .max = 0, .min = 0, .name = E2E_TIME, .children = {}, .level = 1};
+    details.emplace_back(tmpRes);
     requestParams.rankId = "0";
     SystemViewOverallHelper computeHelper;
     bool result = repoPtr->QueryDataForComputingOverallMetric(requestParams, computeHelper, database);
@@ -123,6 +136,16 @@ TEST_F(SystemViewOverallDbRepoTest, QueryDataForComputingOverallMetricTestWithPm
     EXPECT_EQ(computeHelper.cpuCubeOps.size(), 24);  // 24
     EXPECT_EQ(computeHelper.kernelEvents.size(), 185);  // 185
     EXPECT_EQ(computeHelper.bwdTrackId, 13471134862279280); // globalTid in PYTORCH_API = 13471134862279280
+    computeHelper.CategorizeComputingEvents();
+    computeHelper.AggregateComputingOverallMetrics(details);
+    EXPECT_EQ(details.size(), 4); // 4
+    EXPECT_EQ(details[0].children.size(), 5); // 5
+    // more details
+    std::vector<std::string> tempList = {"Conv"};
+    uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<SameOperatorsDetails> filteredEvents =
+        computeHelper.FilterComputingEventsByCategory(tempList, minTimestamp, "");
+    EXPECT_EQ(filteredEvents.size(), 66); // 66个Conv类算子
 }
 
 TEST_F(SystemViewOverallDbRepoTest, QueryCommunicationOverlapOverallInfosTestWhenSuccess)
