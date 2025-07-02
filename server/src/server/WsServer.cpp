@@ -66,7 +66,7 @@ uWS::App::WebSocketBehavior<WsUserData> WsServer::CreateWsBehavior()
 {
     const int maxPayLoadSize = 16 * 1024 * 1024;
     const int idleTimeout = 120;
-    const int maxBackPressureSize = 1 * 1024 * 1024;
+    const int maxBackPressureSize = 100 * 1024 * 1024;
     uWS::App::WebSocketBehavior<WsUserData> wsBehavior = {
         .compression = uWS::SHARED_COMPRESSOR,
         .maxPayloadLength = maxPayLoadSize,
@@ -123,6 +123,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
     }
 
     if (WsSessionManager::Instance().GetSession() != nullptr) {
+        ws->end(REDUNDANT_CONNECTION_CODE, WS_CLOSE_CODE_REASON.at(REDUNDANT_CONNECTION_CODE));
         ServerLog::Error("Not Connect, already connecting");
         return;
     }
@@ -137,7 +138,7 @@ void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
         return;
     }
     WsSessionImpl *session = dynamic_cast<WsSessionImpl *>(WsSessionManager::Instance().GetSession());
-    if (session != nullptr) {
+    if (session != nullptr && ws == session->GetChannel()) {
         session->SetStatus(WsSessionImpl::Status::CLOSED);
         session->WaitForExit();
         WsSessionManager::Instance().RemoveSession();
