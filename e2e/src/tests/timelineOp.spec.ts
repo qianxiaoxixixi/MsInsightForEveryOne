@@ -35,7 +35,7 @@ test.describe('Timeline(Operator)', () => {
         await clearAllData(page, ws);
     });
 
-    // 算子调优-框选
+    // 算子调优-图形化窗格-框选
     test('test_compute_timeline_selectUnitsRange', async ({ timelinePage, page }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -57,7 +57,28 @@ test.describe('Timeline(Operator)', () => {
         expect(rows).toBeGreaterThan(0);
     });
 
-    // 算子调优-点击算子
+    // 算子调优-Slice List-框选-算子统计项
+    test('test_compute_timeline_selectUnitsRange_slice_list_total', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const boundingBox = await chart.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.up();
+        const tfoot = await timelineFrame.locator('tfoot');
+        expect(await tfoot.locator('tr > td').nth(1).innerText()).toBe('0.008114 ms');
+        expect(await tfoot.locator('tr > td').nth(2).innerText()).toBe('0.000021 ms');
+        expect(await tfoot.locator('tr > td').nth(3).innerText()).toBe('387');
+    });
+
+    // 算子调优-图形化窗格-点击算子
     test('test_compute_timeline_operator_click', async ({ timelinePage }) => {
         const { timelineFrame } = timelinePage;
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
@@ -75,7 +96,7 @@ test.describe('Timeline(Operator)', () => {
         await expect(timelineFrame.getByText('Start')).toBeVisible();
     });
 
-    // 搜索
+    // 算子调优-工具栏-搜索
     test('test_Search_when_EnterInstr', async ({ page, timelinePage }) => {
         const { searchBtn, timelineFrame, openInWindows } = timelinePage;
         await searchBtn.click();

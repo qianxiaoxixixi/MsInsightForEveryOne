@@ -1,20 +1,33 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { Table } from 'antd';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import type { MoreTableProps, TableViewProps } from './types';
+import { MoreTableProps, TableState, TableViewProps } from './types';
 import { useDetailUpdater, useMoreUpdater } from './hooks';
 import { selectRow } from './utils';
 import type { CommonStateProto, TabProto } from './base/Tabs';
 import { ResizeTable } from 'ascend-resize';
-import { getAutoKey } from '../../utils/dataAutoKey';
+import { AutoKey, getAutoKey } from '../../utils/dataAutoKey';
 import { SorterResult } from 'antd/lib/table/interface';
 
 const TABLE_HEAD_HEIGHT = 35;
 const TABLE_SUMMARY_HEIGHT = 30;
 const TABLE_MIN_WIDTH = 900;
+
+const generateSummary = (state: TableState, dataSource: Array<AutoKey<object>>): ReactNode => (
+    <Table.Summary fixed={'top'}>
+        <Table.Summary.Row>
+            { state.columns.map((column, index) => (
+                <Table.Summary.Cell key={column.key} index={index}>
+                    {column.summary?.(dataSource)}
+                </Table.Summary.Cell>
+            ))}
+        </Table.Summary.Row>
+    </Table.Summary>
+);
 
 export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     { session, height, detail, tabState, commonState, depsList, summaryBuilder }: TableViewProps<TabProto, T>) => {
@@ -32,7 +45,7 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
         setDataSource(state.dataSource);
     }, [state.dataSource]);
     // 新增Summary(Totals)行
-    const summary = (): React.ReactNode => (summaryBuilder === undefined) ? undefined : summaryBuilder(state, dataSource);
+    const summary = (): React.ReactNode => generateSummary(state, dataSource);
     return <ResizeTable {...state} summary={summary} dataSource={dataSource} allowCopy
         scroll={{ y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT, x: TABLE_MIN_WIDTH }} virtual
         rowClassName={(row): string => {
