@@ -43,7 +43,7 @@ export const chart = <T extends ChartType>(param: ChartDesc<T>): ChartDesc<Chart
 // #endregion
 
 // #region detail desc
-export type MoreDescriptor = MoreDesc<Record<string, unknown>, string>;
+export type MoreDescriptor = MoreDesc<Record<string, any[]>, string>;
 
 interface MoreDesc<DataType extends object, Field extends keyof DataType> {
     field: Field;
@@ -61,9 +61,12 @@ export type ColumnDef<DataType> = // name, renderer, width?, fixed?
     [string, CellRenderer<DataType>, ColumnWidth, FixedType] |
     [string, CellRenderer<DataType>, ColumnWidth, FixedType | undefined, (p: any) => boolean];
 
+export type SummaryFunction<DataType> = (dataSource: DataType[]) => (string | JSX.Element);
+
 export interface TableDataAdapter<DataType extends Record<string, unknown>> {
     columns: Array<ColumnDef<DataType>>;
     actions?: Array<FilterDef<DataType> & SorterDef<DataType>>;
+    summaries?: Map<string, SummaryFunction<DataType>>;
 };
 
 interface FilterDef<DataType extends Record<string, unknown>> {

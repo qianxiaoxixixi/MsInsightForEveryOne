@@ -5,12 +5,12 @@
 import { runInAction } from 'mobx';
 import * as React from 'react';
 import type { TreeNode } from '../../entity/common';
-import type { SorterDef, TableDataAdapter } from '../../entity/insight';
+import { SorterDef, SummaryFunction, TableDataAdapter } from '../../entity/insight';
 import type { Session } from '../../entity/session';
 import type { TabState } from '../../entity/tabDependency';
 import { type AutoKey, getAutoKey } from '../../utils/dataAutoKey';
 import { getOrigin } from '../../utils/traceOrigin';
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnType } from 'antd/es/table';
 import type { FixedType } from '../base/rc-table/types';
 import { Abbreviature } from './base/Abbreviature';
 import { parseFilterDef } from './tableFilter';
@@ -23,15 +23,15 @@ const parseSorterDef = <T extends Record<string, unknown>>(sorterDef?: SorterDef
     return {};
 };
 
-export const parseColDef = <T extends Record<string, unknown>>(
+export const parseColDef = <T extends Record<string, unknown> = Record<string, unknown>>(
     def: TableDataAdapter<T>,
     session: Session,
     tabState?: TabState | undefined,
-): ColumnsType<Record<string, unknown>> => {
+): Array<ColumnType<T> & { summary?: SummaryFunction<T> }> => {
     if (def.columns.every(col => typeof (col[2]) === 'number')) {
         throw new Error('columnsWidth at least one of the columns should have width "max-content" or "auto"');
     }
-    const cols = [] as ColumnsType<Record<string, unknown>>;
+    const cols = [] as Array<ColumnType<T> & { summary?: SummaryFunction<T> }>;
     def.columns.forEach((col, index) => {
         if (col[4]?.(session)) {
             return;
@@ -44,6 +44,7 @@ export const parseColDef = <T extends Record<string, unknown>>(
             ellipsis: { showTitle: true },
             ...parseFilterDef(actionDef?.filterKey),
             ...parseSorterDef(actionDef),
+            summary: def.summaries?.get(col[0]),
         };
         if (col[3] !== 'scroll') {
             const render = col[1];
@@ -70,7 +71,7 @@ export const selectRow = (row: AutoKey<Record<string, unknown>>, session: Sessio
 
 export type OnExpandAction = (expanded: boolean, r: Record<string, unknown>) => void;
 
-type OnExpandConfig = ((session: Session, data: TreeNode<Record<string, unknown>>) => Promise<TreeNode<Record<string, unknown>> | undefined>);
+type OnExpandConfig<T> = ((session: Session, data: TreeNode<Record<string, T>>) => Promise<TreeNode<Record<string, T>> | undefined>);
 
 export function treeAttachInfo<T>(root?: TreeNode<T>): TreeNode<T> | undefined {
     if (!root) { return root; }
@@ -80,7 +81,7 @@ export function treeAttachInfo<T>(root?: TreeNode<T>): TreeNode<T> | undefined {
     return root;
 };
 
-export const onExpandForChildren = (session: Session, onExpand: OnExpandConfig | undefined,
+export const onExpandForChildren = (session: Session, onExpand: OnExpandConfig<any> | undefined,
     setTableState: React.Dispatch<React.SetStateAction<TableState>>): OnExpandAction | undefined => {
     if (!onExpand) {
         return undefined;

@@ -2,11 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-import { detail, linkData } from '../../entity/insight';
+import { detail, linkData, SummaryFunction } from '../../entity/insight';
 import type { DetailDescriptor, LinkDataDesc } from '../../entity/insight';
 import { isEmpty } from 'lodash';
 import styled from '@emotion/styled';
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { action, runInAction } from 'mobx';
 import type { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
 import type { SelectedDataType, Session } from '../../entity/session';
@@ -14,9 +14,6 @@ import { getSliceTimeDisplay, ThreadUnit } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
 import { colorPalette, getTimeOffset } from './utils';
 import { hashToNumber } from '../../utils/colorUtils';
-import { TableState } from '../../components/details/types';
-import { Table } from 'antd';
-import { AutoKey } from '../../utils/dataAutoKey';
 
 const isSelfTimeHidden = (session: Session): boolean => {
     return session.isSimulation;
@@ -38,6 +35,16 @@ export const slicesListDetail = detail({
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.avgWallDuration ?? 0) - (b.avgWallDuration ?? 0) },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.occurrences ?? 0) - (b.occurrences ?? 0) },
     ],
+    summaries: new Map<string, SummaryFunction<AscendMultiSliceList>>([
+        ['Name', () => 'Totals'],
+        ['Wall Duration', (dataSource) => getSliceTimeDisplay(dataSource.reduce((acc, { wallDuration }) => acc + (wallDuration ?? 0), 0))],
+        ['Self Time', (dataSource) => getSliceTimeDisplay(dataSource.reduce((acc, { selfTime }) => acc + (selfTime ?? 0), 0))],
+        ['Average Wall Duration', (dataSource) => {
+            const [totalA, totalB] = dataSource.reduce(([a, b], { wallDuration, occurrences }) => [a + (wallDuration ?? 0), b + (occurrences ?? 0)], [0, 0]);
+            return getSliceTimeDisplay(totalB === 0 ? totalA : totalA / totalB);
+        }],
+        ['Occurrences', (dataSource) => `${dataSource.reduce((acc, { occurrences }) => acc + (occurrences ?? 0), 0)}`],
+    ]),
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         let startTime = session.selectedRange?.[0] ?? 0;
         startTime = startTime < 0 ? 0 : startTime;
@@ -134,34 +141,6 @@ export const generateFlowParam = function(metadata: ThreadMetaData, data: any, m
         startTime: data.startTime ?? data.timestamp,
         endTime: (data.startTime ?? data.timestamp) + data.duration,
     };
-};
-
-export const generateSummary = (state: TableState, dataSource: Array<AutoKey<object>>): ReactNode => (
-    <Table.Summary fixed={'top'}>
-        <Table.Summary.Row>
-            { state.columns.map((column, index) => (
-                <Table.Summary.Cell key={column.key} index={index}>
-                    {doSummary(dataSource)[index]}
-                </Table.Summary.Cell>
-            ))}
-        </Table.Summary.Row>
-    </Table.Summary>
-);
-
-const doSummary = (datas: ReadonlyArray<AutoKey<object>>): ReactNode[] => {
-    let totalWallDuration = 0;
-    let totalSelfTime = 0;
-    let totalOccurrences = 0;
-    datas.forEach((slice) => {
-        const mSlice = slice as AscendMultiSliceList;
-        totalWallDuration += mSlice.wallDuration ?? 0;
-        totalSelfTime += mSlice.selfTime ?? 0;
-        totalOccurrences += mSlice.occurrences ?? 0;
-    });
-    const averageWallDuration = totalOccurrences === 0 ? totalWallDuration : totalWallDuration / totalOccurrences;
-    // 将时间format为ms字符串
-    const tmp = [totalWallDuration, totalSelfTime, averageWallDuration].map(item => getSliceTimeDisplay(item));
-    return ['Totals', ...tmp, totalOccurrences];
 };
 
 const generateFlowData = function (data: any, timeOffset: number): SelectedDataType {

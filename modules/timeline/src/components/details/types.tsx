@@ -1,10 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnType } from 'antd/es/table';
 import type { AutoKey } from '../../utils/dataAutoKey';
 import type { Session } from '../../entity/session';
-import type { DetailDescriptor, MoreDescriptor } from '../../entity/insight';
+import { DetailDescriptor, MoreDescriptor, SummaryFunction } from '../../entity/insight';
 import type { TabComponentProps, TabProto, CommonStateProto } from './base/Tabs';
 import type { TabState } from '../../entity/tabDependency';
 import React from 'react';
@@ -30,11 +30,11 @@ export interface MoreTableProps {
     isTree?: boolean;
 };
 
-export interface TableState {
+export interface TableState<T = any> {
     dataSource: Array<AutoKey<object>>;
-    columns: ColumnsType<Record<string, unknown>>;
+    columns: Array<ColumnType<T> & { summary?: SummaryFunction<T> }>;
     rowKey?: (row: object) => string;
-    onExpand?: (expanded: boolean, record: Record<string, unknown>) => void;
+    onExpand?: (expanded: boolean, record: T) => void;
     loading: boolean;
 };
 
