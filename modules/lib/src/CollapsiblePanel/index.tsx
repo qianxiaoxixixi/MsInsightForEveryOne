@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import React, { type ReactNode, type CSSProperties, useState } from 'react';
+import React, { type ReactNode, type CSSProperties, useState, forwardRef, useRef, useImperativeHandle } from 'react';
 import styled from '@emotion/styled';
 import { ExpandIcon, CollapseIcon } from '../icon/Icon';
 
@@ -33,9 +33,12 @@ const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
     padding: 24px;
   }
 `;
-export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.Element => {
+export const CollapsiblePanel = forwardRef<HTMLDivElement, CollapsiblePanelProps>((props, ref): JSX.Element => {
     const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true, id } = props;
     const [isOpen, setIsOpen] = useState(defaultOpen);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
     const togglePanel = (): void => {
         if (collapsible) {
@@ -52,13 +55,15 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.El
     }
 
     return (
-        <PanelContainer secondary={secondary} style={style} id={id} className="mi-collapsible-panel">
+        <PanelContainer ref={containerRef} secondary={secondary} style={style} id={id} className="mi-collapsible-panel">
             <div className="panel-header" onClick={togglePanel} style={headerStyle}>
                 {icon}{title}
             </div>
             {isOpen && <div className="panel-content" style={contentStyle}>{children}</div>}
         </PanelContainer>
     );
-};
+});
+
+CollapsiblePanel.displayName = 'CollapsiblePanel';
 
 export default CollapsiblePanel;

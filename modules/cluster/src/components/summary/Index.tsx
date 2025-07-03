@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2025. All rights reserved.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { ExclamationCircleFilled } from '@ant-design/icons';
@@ -107,6 +107,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
     const isDefaultGenerateConditions: boolean = useMemo(() => {
         return isEqual(generateConditions, defaultGenerateConditions);
     }, [JSON.stringify(generateConditions)]);
+    const performancePanelRef = useRef<HTMLDivElement>(null);
 
     const getPerformanceData = async (): Promise<void> => {
         setPerformanceLoading(true);
@@ -207,6 +208,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
         const ppGroup = (data as CommunicatorData)?.value;
         if (ppGroup !== undefined) {
             setPerformanceChartConditions((prevState) => ({ ...prevState, group: ppGroup }));
+            performancePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 
@@ -259,6 +261,7 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
                 slowRankRes={slowRankData}
             />
             {!isDefaultGenerateConditions && <CollapsiblePanel
+                ref={performancePanelRef}
                 id="communication-overview-panel"
                 secondary
                 title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{tips}</div>}
