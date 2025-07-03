@@ -31,8 +31,7 @@ const baseOptions: EChartsOption = {
         type: 'category',
         name: 'Rank',
         data: [],
-        nameLocation: 'start',
-        nameGap: 15,
+        nameGap: 40,
     },
     yAxis: [
         {
