@@ -273,17 +273,6 @@ function getVisualMap({ dataLength, min, max, type, isCompare = false, t }: {
     if (type === MatrixType.TRANSPORT_TYPE) {
         return getTransportTypeVisualMap(isCompare, t);
     }
-    if (isCompare) {
-        return {
-            ...baseVisualMap,
-            type: 'piecewise',
-            pieces: [
-                { lt: 0, color: COLOR.BAND_0 },
-                { value: 0, color: COLOR.GREY_20 },
-                { gt: 0, color: COLOR.BAND_4 },
-            ],
-        };
-    }
     if (dataLength > 0 || isFinite(max)) {
         let inRange = { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] };
 
