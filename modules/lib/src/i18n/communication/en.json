@@ -121,6 +121,8 @@
     "Bandwidth Contention Analysis": "Bandwidth Contention Analysis",
     "Communication Retransmission Analysis": "Communication Retransmission Analysis",
     "title": {
+      "Advice": " Advice",
+      "Data": " Data",
       "Data Parallelism": "Data parallelism suggestion:",
       "Memory Optimization": "Check the memory optimization policy:",
       "Adopt": "Adopt fusion operators of affinity optimizer:",
@@ -130,6 +132,7 @@
       "Network Configuration": "Check the network configuration:"
     },
     "index": {
+      "No problematic operators": "No problematic operators have been found",
       "Data Parallelism": "If abnormal communication is centralized in data parallelism domain, please 1. increase batch size; 2. increase gradient accumulation",
       "Memory Optimization": "If the memory optimization policy is Zero3, it is recommended to set it to Zero2/Zero1 if memory conditions allow.",
       "Adopt": "Using the affinity optimizers or fusion operators may reduce the number of communication operators.",
