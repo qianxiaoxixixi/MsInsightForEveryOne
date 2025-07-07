@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { Tooltip } from 'ascend-components';
 import { HelpIcon } from 'ascend-icon';
-import { type TableColumnsType } from 'antd';
+import { type TableColumnsType, Spin } from 'antd';
 import { ResizeTable } from 'ascend-resize';
 import { DataType } from '../CommunicationTimeTable';
 import { queryCommunicationExpertAdvisor } from '../../../utils/RequestUtils';
@@ -34,6 +34,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     const issueList: Array<{title: string; content: string }> = [];
     const sdmaData = adviceData.find(item => item.type === 'SDMA');
     const rdmaData = adviceData.find(item => item.type === 'RDMA');
+    const [loading, setLoading] = useState(false);
     adviceData.forEach(data => {
         overAllText += t('OverallDuration', { type: data.type, time: data.time });
         // 比较经验带宽（最大带宽的0.8）与平均带宽
@@ -45,7 +46,11 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     });
     const [expertAdviceData, setExpertAdviceData] = useState<CommunicationExpertAdvice>({} as CommunicationExpertAdvice);
     const getCommunicationExpertAdvisorData = async (): Promise<void> => {
-        setExpertAdviceData(await queryCommunicationExpertAdvisor() ?? {});
+        setLoading(true);
+        const communicationExpertData = await queryCommunicationExpertAdvisor().finally(() => {
+            setLoading(false);
+        });
+        setExpertAdviceData(communicationExpertData ?? {});
     };
     const [expertAdviceList, setDataList] = useState<Array<{title: string; tableColumns: object[]; tableDataSource: object[] }>>([]);
     const getInTableHead = (key: string): string => {
@@ -97,34 +102,36 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     }
     return (
         <div style={{ marginBottom: '20px' }} data-testid={'communicationAdvice'}>
-            <CollapsiblePanel title={<div>
-                {t('Advice')}
-                <Tooltip title={
-                    (
-                        <div style={{ padding: '1rem' }}>
-                            {t('AdviceTip')}
-                        </div>
-                    )
-                }>
-                    <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
-                </Tooltip>
-            </div>}>
-                <div className="communication-advice-header">{t('Overall')}</div>
-                <div className="communication-advice-content">{overAllText}</div>
-                {
-                    issueList.map(item => {
-                        return (
-                            <>
-                                <div className="communication-advice-header">{item.title}</div>
-                                <div className="communication-advice-content">{item.content}</div>
-                            </>
-                        );
-                    })
-                }
-                {
-                    FetchExpertIndex(expertAdviceList)
-                }
-            </CollapsiblePanel>
+            <Spin spinning={loading}>
+                <CollapsiblePanel title={<div>
+                    {t('Advice')}
+                    <Tooltip title={
+                        (
+                            <div style={{ padding: '1rem' }}>
+                                {t('AdviceTip')}
+                            </div>
+                        )
+                    }>
+                        <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
+                    </Tooltip>
+                </div>}>
+                    <div className="communication-advice-header">{t('Overall')}</div>
+                    <div className="communication-advice-content">{overAllText}</div>
+                    {
+                        issueList.map(item => {
+                            return (
+                                <>
+                                    <div className="communication-advice-header">{item.title}</div>
+                                    <div className="communication-advice-content">{item.content}</div>
+                                </>
+                            );
+                        })
+                    }
+                    {
+                        FetchExpertIndex(expertAdviceList)
+                    }
+                </CollapsiblePanel>
+            </Spin>
         </div>
     );
 };
@@ -132,57 +139,49 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
 const FetchExpertIndex = (expertAdviceList: Array<{ title: string; tableColumns: object[]; tableDataSource: object[] }>): JSX.Element[] => {
     const { t } = useTranslation('communication');
     const results: JSX.Element[] = [];
+    const getContent = (title: string): string => {
+        switch (title) {
+            case 'Byte Alignment Analysis':
+                return `${t('title.Byte Alignment Analysis')} ${t('index.Byte Alignment Analysis')}`;
+            case 'Bandwidth Contention Analysis':
+                return `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}`;
+            case 'Communication Retransmission Analysis':
+                return `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}\n\n${t('title.Network Configuration')} ${t('index.Network Configuration')}`;
+            case 'Packet Analysis':
+                return `${t('title.Data Parallelism')} ${t('index.Data Parallelism')}\n\n${t('title.Memory Optimization')} ${t('index.Memory Optimization')}\n\n${t('title.Adopt')} ${t('index.Adopt')}`;
+            default:
+                return '';
+        }
+    };
     expertAdviceList.forEach(item => {
-        let content: JSX.Element;
-        if (item.title === 'Packet Analysis') {
-            const dataParallelism = `${t('title.Data Parallelism')} ${t('index.Data Parallelism')}\n\n`;
-            const memoryOptimization = `${t('title.Memory Optimization')} ${t('index.Memory Optimization')}\n\n`;
-            const adopt = `${t('title.Adopt')} ${t('index.Adopt')}\n`;
-            content = (
-                <>
-                    <CommunicationAdviceHeader title={item.title}/>
-                    <div className="communication-expert-index">{dataParallelism + memoryOptimization + adopt}</div>
-                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small" pagination={getPageConfigWithAllData(item.tableDataSource.length)}></ResizeTable>
-                </>
-            );
-        } else if (item.title === 'Byte Alignment Analysis') {
-            const byteAlignmentAnalysis = `${t('title.Byte Alignment Analysis')} ${t('index.Byte Alignment Analysis')}\n`;
-            content = (
-                <>
-                    <CommunicationAdviceHeader title={item.title}/>
-                    <div className="communication-expert-index">{byteAlignmentAnalysis}</div>
-                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small" pagination={getPageConfigWithAllData(item.tableDataSource.length)}></ResizeTable>
-                </>
-            );
-        } else if (item.title === 'Bandwidth Contention Analysis') {
-            const bandwidthContention = `${t('title.Bandwidth Contention')} ${t('index.Bandwidth Contention')}\n`;
-            content = (
-                <>
-                    <CommunicationAdviceHeader title={item.title}/>
-                    <div className="communication-expert-index">{bandwidthContention}</div>
-                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
-                </>
-            );
-        } else if (item.title === 'Communication Retransmission Analysis') {
-            const transmissionTime = `${t('title.RDMA Transmission Time')} ${t('index.RDMA Transmission Time')}`;
-            const networkConfiguration = `${t('title.Network Configuration')} ${t('index.Network Configuration')}\n`;
-            content = (
-                <>
-                    <CommunicationAdviceHeader title={item.title}/>
-                    <div className="communication-expert-index">{transmissionTime}</div>
-                    <div className="communication-expert-index">{networkConfiguration}</div>
-                    <ResizeTable columns={item.tableColumns} dataSource={item.tableDataSource} size="small"></ResizeTable>
-                </>
-            );
-        } else {
+        const content = getContent(item.title);
+        if (content.length === 0) {
             return;
         }
-        results.push(content);
+        results.push(
+            <>
+                <CommunicationAdviceHeader title={item.title} suffix={`${t('title.Data')}`} />
+                {
+                    item.tableDataSource.length === 0
+                        ? <div className="communication-expert-index">{t('index.No problematic operators')}</div>
+                        : (
+                            <ResizeTable
+                                columns={item.tableColumns}
+                                dataSource={item.tableDataSource}
+                                size="small"
+                                pagination={getPageConfigWithAllData(item.tableDataSource.length)}
+                            />
+                        )
+                }
+                <div className="communication-advice-header">{`${t(item.title)}${t('title.Advice')}`}</div>
+                <div className="communication-expert-index">{content}</div>
+            </>,
+        );
     });
     return results;
 };
 
-const CommunicationAdviceHeader = ({ title }: {title: string}): JSX.Element => {
+const CommunicationAdviceHeader = ({ title, suffix }: {title: string; suffix: string}): JSX.Element => {
     const { t } = useTranslation('communication');
     const tooltipContent = (
         <div style={{ padding: '10px' }}>
@@ -192,7 +191,7 @@ const CommunicationAdviceHeader = ({ title }: {title: string}): JSX.Element => {
 
     return (
         <div className="communication-advice-header">
-            {t(title)}
+            {`${t(title)}${t(suffix)}`}
             <Tooltip
                 placement="left"
                 title={tooltipContent}
