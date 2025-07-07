@@ -280,7 +280,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                 ? <TableByComponent session={session} />
                 : <>
                     <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData}></MemoryDetailTableFilter>
-                    <Spin spinning={tableSpin} tip={t('Loading')}>
+                    <Spin spinning={tableSpin}>
                         <AntTableChart
                             tableData={{
                                 columns: memoryTableHead,

@@ -101,7 +101,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
                     />
                 </div>
             </SearchBox>
-            <Spin spinning={staticCurveSpin} tip="loading...">
+            <Spin spinning={staticCurveSpin}>
                 { staticLineChartData
                     ? <LineChart
                         hAxisTitle={t('Node Index')}

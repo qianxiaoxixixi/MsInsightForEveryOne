@@ -268,7 +268,7 @@ export const MIChart = forwardRef<ChartsHandle, ChartProps>(
         useEffect(() => {
             if (loading) {
                 chartInstanceRef.current?.showLoading({
-                    text: 'loading',
+                    text: '',
                     color: theme.primaryColor,
                     textColor: theme.textColorPrimary,
                     maskColor: theme.maskColor,
