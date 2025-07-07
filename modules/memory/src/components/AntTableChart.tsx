@@ -348,7 +348,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
         setTableData(handleOperatorDetails(response.componentDetail, session.compareRank.isCompare, t));
     }, [response, session.language]);
 
-    return <Spin spinning={tableSpin} tip={t('Loading')}>
+    return <Spin spinning={tableSpin}>
         <ResizeTable columns={columns} dataSource={tableData.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))} pagination={pagination} onChange={onTableChange}
             expandable={{ expandIcon: () => <></>, expandedRowKeys }} />
     </Spin>;

@@ -105,7 +105,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     return (
         <div className="mb-30">
             <CollapsiblePanel title={t('Memory Analysis')}>
-                <Spin spinning={curveSpin} tip="loading...">
+                <Spin spinning={curveSpin}>
                     { lineChartData
                         ? <LineChart
                             hAxisTitle={t('Time (ms)')}
