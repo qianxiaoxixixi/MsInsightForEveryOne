@@ -187,8 +187,8 @@ const getFirstAndLastRect = (drawer: CanvasDrawer): [Rectangle | undefined, Rect
     const { rectToExpand, rectToCollapsed } = parallelismStore;
 
     if (rectToExpand) {
-        const first = drawer.rectangles.find(r => r.name.startsWith(rectToExpand.name));
-        const last = drawer.rectangles.slice().reverse().find(r => r.name.startsWith(rectToExpand.name));
+        const first = drawer.rectangles.find(r => r.name.startsWith(`${rectToExpand.name}-`));
+        const last = drawer.rectangles.slice().reverse().find(r => r.name.startsWith(`${rectToExpand.name}-`));
         return [first, last];
     }
 
