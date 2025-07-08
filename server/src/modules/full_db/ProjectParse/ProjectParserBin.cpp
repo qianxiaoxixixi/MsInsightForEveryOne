@@ -12,6 +12,7 @@
 #include "BaselineManager.h"
 #include "ProjectAnalyze.h"
 #include "DataBaseManager.h"
+#include "TrackInfoManager.h"
 #include "ProjectParserBin.h"
 
 namespace Dic::Module {
@@ -83,6 +84,8 @@ void ProjectParserBin::HandleCompute(ImportActionResponse &response, const std::
     }
     response.body.isSimulation = true;
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
+    RankInfo rankInfo("", "", rankId, rankId, rankId);
+    Timeline::TrackInfoManager::Instance().SetRankListByFileId(fileId, rankInfo);
     sourceFileParser.Parse(empty, rankId, selectedFolder, fileId);
     for (const auto &rankEntry: rankListMap) {
         if (rankEntry.second.empty()) {
@@ -142,17 +145,19 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
     }
     std::string filePath = projectInfo.subParseFileInfo[0]->parseFilePath;
     std::string fileId = GetFileIdWithDb(filePath);
-    std::string dbPath = FileUtil::GetDbPath(filePath, fileId);
-    baselineInfo.rankId = fileId;
-    baselineInfo.cardName = "baseline" + fileId;
+    std::string rankId = FileUtil::GetDbPath(filePath, fileId);
+    baselineInfo.rankId = rankId;
+    baselineInfo.cardName = "baseline" + rankId;
+    baselineInfo.fileId = fileId;
+    Timeline::TrackInfoManager::Instance().SetRankListByFileId(fileId, {"", "", rankId, rankId, rankId});
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath)) {
-        ServerLog::Error("Fail to create connection pool, fileId:", fileId, ", path:", dbPath, '.');
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(rankId, fileId)) {
+        ServerLog::Error("Fail to create connection pool, fileId:", fileId, ", path:", rankId, '.');
         return;
     }
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
     // 如果文件已经被解析则直接返回
-    if (sourceFileParser.IsBaselineParsed(filePath)) {
+    if (sourceFileParser.IsBaselineParsed(rankId)) {
         sourceFileParser.SynchronizeBaselineInfo();
         return;
     }
@@ -160,7 +165,7 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
     std::string message;
     if (sourceFileParser.CheckOperatorBinary(filePath, message)) {
         sourceFileParser.SetBaselineFilePath(filePath);
-        sourceFileParser.Parse(std::vector<std::string>(), fileId, filePath, "");
+        sourceFileParser.Parse(std::vector<std::string>(), rankId, filePath, fileId);
     } else {
         ServerLog::Error("Failed to parse baseline bin file cause ", message);
     }

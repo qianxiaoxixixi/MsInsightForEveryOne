@@ -54,9 +54,6 @@ void ProjectParserJson::Parser(const std::vector<ProjectExplorerInfo> &projectIn
         response.body.isOnlyTraceJson = hasTraceJson && !hasMemoryData && !hasOperatorData;
         SendResponse(std::move(responsePtr), true);
         for (const auto &rankEntry : rankListMap) {
-            if (!rankEntry.second.rankInfo.empty()) {
-                continue;
-            }
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second.parseFileList,
                                                                   rankEntry.first,
                                                                   rankEntry.second.parseFolder,
@@ -120,6 +117,7 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
             }
             std::string rankId = FileUtil::GetRankIdFromFile(jsonFiles[0]);
             std::string deviceId = isDevice ? rankId : GetDeviceId(parseFileInfo->parseFilePath, rankId);
+            std::string cluster = parseFileInfo->clusterId;
             if (isDevice) {
                 rankId = parseFileInfo->deviceId;
                 deviceId = rankId;
@@ -127,6 +125,8 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
             parseFileInfo->deviceId = deviceId;
             if (isMultiCluster) {
                 rankId = StringUtil::StrJoin(parseFileInfo->clusterId, "_", rankId);
+            } else {
+                parseFileInfo->clusterId.clear();
             }
             if (isBaseline) {
                 rankId = StringUtil::StrJoin("Baseline_", rankId);
@@ -146,7 +146,7 @@ std::map<std::string, RankEntry> ProjectParserJson::GetRankEntryMap(
                               rankName};
             entry.rankInfo.emplace_back(rankInfo);
             TrackInfoManager::Instance().SetRankListByFileId(fileId, rankInfo);
-            TrackInfoManager::Instance().AddRankToCluster(parseFileInfo->clusterId, parseFileInfo->rankId);
+            TrackInfoManager::Instance().AddRankToCluster(cluster, parseFileInfo->rankId);
             entry.parseFileList = jsonFiles;
         }
     }
