@@ -123,7 +123,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorStatisticInfoByOpTypeAndInp
     std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
     bool result = db->QueryAllOperatorStatisticInfo(reqParams, compareRes);
     EXPECT_EQ(result, true);
-    int size = 5;
+    int size = 11;
     EXPECT_EQ(compareRes.size(), size);
 }
 

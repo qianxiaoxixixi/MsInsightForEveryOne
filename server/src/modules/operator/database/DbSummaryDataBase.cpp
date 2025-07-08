@@ -181,9 +181,10 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
     }
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
     BindQueryFilters(reqParams, stmt, index);
-    sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
-    sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
-
+    if (!reqParams.isCompare) {
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
+    }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         Protocol::OperatorStatisticInfoRes one{};
         int col = 0;
@@ -261,8 +262,9 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
-
-    sql += " LIMIT ? OFFSET ?";
+    if (!reqParams.isCompare) {
+        sql += " LIMIT ? OFFSET ?";
+    }
     return sql;
 }
 

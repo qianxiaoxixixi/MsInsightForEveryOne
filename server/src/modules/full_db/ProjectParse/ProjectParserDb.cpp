@@ -143,6 +143,10 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
                                             std::shared_ptr<ParseFileInfo> parsefileInfo)
 {
     std::vector<std::string> dbFiles = GetDbFilesInDir(parsefileInfo->parseFilePath);
+    std::string cluster = parsefileInfo->clusterId;
+    if (project.GetClusterInfos().empty()) {
+        parsefileInfo->clusterId.clear();
+    }
     for (const auto &file: dbFiles) {
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
             ServerLog::Error("Failed to create connection pool. ", file);
@@ -183,7 +187,7 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
                                                               rankName});
             DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, parsefileInfo->deviceId);
         }
-        TrackInfoManager::Instance().AddRankToCluster(parsefileInfo->clusterId, parsefileInfo->rankId);
+        TrackInfoManager::Instance().AddRankToCluster(cluster, parsefileInfo->rankId);
         TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
     }
 }

@@ -169,8 +169,10 @@ namespace Dic::Module::Operator {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(paramsGroup);
         switch (operatorGroup) {
             case OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP:
-            case OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP:
                 return data.opType + data.accCore;
+            case OperatorGroupConverter::OperatorGroup::COMMUNICATION_TYPE_GROUP:
+                // communication_type 计算算子类型场景 ACC_CORE固定为HCCL或COMMUNICATION，无实际意义，无需拼接
+                return data.opType;
             case OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP:
                 return data.opName + data.inputShape + data.accCore;
             default:
