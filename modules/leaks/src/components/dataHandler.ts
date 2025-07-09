@@ -12,14 +12,12 @@ export const getFuncNewData = async (session: any, startTimestamp?: number, endT
         if (startTimestamp !== undefined && endTimestamp !== undefined) {
             funcParam.startTimestamp = startTimestamp;
             funcParam.endTimestamp = endTimestamp;
-            runInAction(() => {
-                session.maxTime = endTimestamp;
-                session.minTime = startTimestamp;
-            });
         }
         const funcDatas = await getFuncData(funcParam);
         runInAction(() => {
             session.funcData = funcDatas;
+            session.maxTime = endTimestamp;
+            session.minTime = startTimestamp;
         });
     } catch (error: any) {
         message.error(error.message);
@@ -34,10 +32,6 @@ export const getBarNewData = async (session: any, startTimestamp?: number, endTi
             blockParam.endTimestamp = endTimestamp;
             allocationParam.startTimestamp = startTimestamp;
             allocationParam.endTimestamp = endTimestamp;
-            runInAction(() => {
-                session.maxTime = endTimestamp;
-                session.minTime = startTimestamp;
-            });
         }
         const [blockDatas, allocationDatas] = await Promise.all([
             getLeaksGraphData(blockParam),
@@ -49,6 +43,10 @@ export const getBarNewData = async (session: any, startTimestamp?: number, endTi
             if (startTimestamp === undefined && endTimestamp === undefined) {
                 session.maxTime = Math.max(blockDatas.maxTimestamp, allocationDatas.maxTimestamp, session.funcData.maxTimestamp);
                 session.minTime = Math.min(blockDatas.minTimestamp, allocationDatas.minTimestamp, session.funcData.minTimestamp);
+            }
+            if (startTimestamp !== undefined && endTimestamp !== undefined) {
+                session.maxTime = endTimestamp;
+                session.minTime = startTimestamp;
             }
         });
     } catch (error: any) {

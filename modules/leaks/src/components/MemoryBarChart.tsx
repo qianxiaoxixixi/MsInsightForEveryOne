@@ -13,7 +13,8 @@ import type { BlockData } from '../utils/RequestUtils';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { getBarNewData } from './dataHandler';
-
+import { chartResize } from '../utils/utils';
+import { useTheme } from '@emotion/react';
 const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 interface InitParam {
     session: any;
@@ -157,11 +158,15 @@ const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): E
                     show: false,
                 },
             },
-            right: 150,
+            right: 80,
             top: 20,
         },
         axisPointer: {
             show: true,
+        },
+        grid: {
+            left: '6%',
+            right: '4%',
         },
     };
 };
@@ -189,6 +194,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
         return blockSource;
     }, [JSON.stringify(blockData.blocks)]);
     const initParam: InitParam = { session, blockData, lineSource, source, t };
+    const theme = useTheme();
     useEffect(() => {
         if (deviceId !== '') {
             setLoading(true);
@@ -216,6 +222,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
                 }
             }
         });
+        chartResize(chartRef.current?.getInstance());
     }, [threadId, JSON.stringify(blockData), JSON.stringify(allocationData), session.maxTime, session.minTime, t]);
     useEffect(() => {
         chartRef.current?.getInstance()?.dispatchAction({
@@ -223,7 +230,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: any; setBarI
             key: 'dataZoomSelect',
             dataZoomSelectActive: true,
         });
-    }, [chartOptions]);
+    }, [chartOptions, theme]);
     return (
         <MIChart
             ref={chartRef}
