@@ -9,6 +9,9 @@ import { type EChartsOption } from 'echarts';
 import { Session } from '../entity/session';
 import { observer } from 'mobx-react';
 import { getFuncNewData } from './dataHandler';
+import { chartResize } from '../utils/utils';
+import { useTheme } from '@emotion/react';
+
 const colorTypes: string[] = ['#8fd3e8', '#d95850', '#eb8146', '#ffb248', '#f2d643', '#ebdba4', '#fcce10', '#b5c334', '#1bca93'];
 const transData = (data: any): any => {
     return data.map((item: any, index: number) => ({
@@ -37,7 +40,7 @@ const getToolbox = (): echarts.ToolboxComponentOption => {
                 show: false,
             },
         },
-        right: 150,
+        right: 80,
         top: 20,
     };
 };
@@ -67,7 +70,7 @@ const getSeries = (session: Session): any => {
                             text: api.value(3),
                             fill: '#000',
                             overflow: 'truncate',
-                            width,
+                            width: width - 4,
                             fontSize: 11,
                         },
                     },
@@ -125,6 +128,10 @@ const getOptions = (session: Session): EChartsOption => {
             show: true,
         },
         series: getSeries(session),
+        grid: {
+            left: '6%',
+            right: '4%',
+        },
     };
 };
 
@@ -135,6 +142,7 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
+    const theme = useTheme();
     useEffect(() => {
         if (session.deviceId !== '') {
             setLoading(true);
@@ -147,6 +155,7 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
             setFuncIns(chartRef.current.getInstance());
         }
         setLoading(false);
+        chartResize(chartRef?.current?.getInstance());
     }, [session.deviceId, session.eventType, JSON.stringify(session.funcData.traces), session.maxTime, session.minTime]);
     useEffect(() => {
         chartRef.current?.getInstance()?.dispatchAction({
@@ -154,7 +163,7 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
             key: 'dataZoomSelect',
             dataZoomSelectActive: true,
         });
-    }, [chartOptions]);
+    }, [chartOptions, theme]);
     return (
         <MIChart
             ref={chartRef}

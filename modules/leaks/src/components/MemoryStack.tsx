@@ -12,6 +12,7 @@ import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { getFuncNewData, getBarNewData } from './dataHandler';
 import { Line, initLine, cancelLine } from './LineHandler';
+import { chartResize } from '../utils/utils';
 
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');
@@ -40,8 +41,17 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         if (!funcIns || !barIns) {
             return;
         }
+        funcIns.off('click');
         barIns.off('legendselectchanged');
+        funcIns.on('click', (params: any) => {
+            const data = params.value;
+            const start: number = data[1];
+            const end: number = data[2];
+            getFuncNewData(session, start, end);
+            getBarNewData(session, start, end);
+        });
         barIns.on('legendselectchanged', (params: any) => {
+            chartResize(barIns);
             runInAction(() => {
                 session.legendSelect = params.selected;
             });
