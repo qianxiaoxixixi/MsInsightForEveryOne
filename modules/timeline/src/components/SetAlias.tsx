@@ -12,7 +12,7 @@ import { useTheme } from '@emotion/react';
 import { themeInstance } from 'ascend-theme';
 import { Input, Button } from 'ascend-components';
 import { runInAction } from 'mobx';
-import { Modal, message } from 'antd';
+import { Modal, message, type InputRef } from 'antd';
 import { setCardAliasReq } from '../api/request';
 
 const SetAliasTitleDiv = styled.div`
@@ -73,11 +73,16 @@ export const SetAlias = observer(({ session }: {session: Session}) => {
     const [cardAlias, setCardAlias] = useState<string>('');
     const { t } = useTranslation('timeline');
     const [theme, setTheme] = useState(useTheme());
+    const inputRef = React.useRef<InputRef>(null);
     React.useEffect(() => {
         if (theme !== themeInstance.getThemeType()) {
             setTheme(themeInstance.getThemeType());
         }
     }, [themeInstance.getThemeType()]);
+
+    React.useEffect(() => {
+        inputRef.current?.focus({ cursor: 'end' });
+    }, []);
 
     const cancelSetAlias = (): void => { handleCancelSetAlias(session); };
     const confirmSetAlias = (): void => { handleConfirmSetAlias(session, cardAlias); };
@@ -93,9 +98,11 @@ export const SetAlias = observer(({ session }: {session: Session}) => {
                 </FlexDiv>
                 <FlexDiv>
                     <Input
+                        ref={inputRef}
                         style={{ color: theme.textColorPrimary, backgroundColor: theme.bgColorLight }}
                         value={cardAlias}
                         onChange={(e): void => { setCardAlias(e.target.value); }}
+                        onPressEnter={confirmSetAlias}
                     />
                 </FlexDiv>
             </AliasInputBox>
