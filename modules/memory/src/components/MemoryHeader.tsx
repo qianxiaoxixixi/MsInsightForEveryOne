@@ -112,7 +112,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
             runInAction(() => {
                 memorySession.hostCondition.value = '';
             });
-            const foundIdx = session.memoryCardInfos.findIndex(({ rankInfo }) => rankInfo.rankId === session.compareRank.rankId);
+            const foundIdx = memorySession.rankCondition.options.findIndex(({ rankInfo }) => rankInfo.rankId === session.compareRank.rankId);
             if (foundIdx >= 0) {
                 onRankValueChanged(foundIdx);
             }
