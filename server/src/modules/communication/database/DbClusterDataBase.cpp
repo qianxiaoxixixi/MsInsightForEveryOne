@@ -639,7 +639,7 @@ std::vector<CommInfoUnderRank> DbClusterDataBase::GetCommTimeForRankDim(const st
 bool DbClusterDataBase::QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data)
 {
     std::string sql = "SELECT band_type, transit_size, transit_time FROM " + TABLE_COMM_ANALYZER_BANDWIDTH +
-        " WHERE (band_type = 'RDMA' OR band_type = 'SDMA') AND transit_size > 0;";
+        " WHERE (band_type = 'RDMA' OR band_type = 'SDMA') AND transit_size > 0 AND hccl_op_name != 'Total Op Info';";
     return ExecuteQueryPacketAnalyzerData(data, sql);
 }
 

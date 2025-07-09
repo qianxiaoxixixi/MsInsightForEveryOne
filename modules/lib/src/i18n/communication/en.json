@@ -92,7 +92,8 @@
       "bandwidth(GB/s)": "bandwidth(GB/s)",
       "duration(us)": "duration(us)",
       "name": "name",
-      "group name": "group name"
+      "group name": "group name",
+      "rankId": "rank id"
     },
     "tableHeadTooltip": {
       "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",

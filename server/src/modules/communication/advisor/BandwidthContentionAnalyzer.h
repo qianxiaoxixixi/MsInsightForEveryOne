@@ -17,6 +17,7 @@ using namespace Dic::Module;
 const double BANDWIDTH_CONTENTION_ANALYZER_THRESHOLD = 14.4;
 
 struct BandwidthContentionAnalyzerStatistics {
+    std::string rankId;
     std::string name;
     double duration;
     double bandwidth;

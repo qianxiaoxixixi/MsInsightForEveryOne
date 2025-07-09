@@ -179,7 +179,7 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
         int deviceId = StringUtil::StringToInt(reqParams.deviceId);
         sqlite3_bind_int64(stmt, index++, deviceId);
     }
-    sqlite3_bind_int64(stmt, index++, reqParams.topK);
+    sqlite3_bind_int64(stmt, index++, reqParams.isCompare ? -1 : reqParams.topK);
     BindQueryFilters(reqParams, stmt, index);
     if (!reqParams.isCompare) {
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
@@ -436,7 +436,7 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     if (!isCommunication && !reqParams.deviceId.empty()) {
         sqlite3_bind_int64(stmt, index++, StringUtil::StringToInt(reqParams.deviceId));
     }
-    sqlite3_bind_int64(stmt, index++, reqParams.topK);
+    sqlite3_bind_int64(stmt, index++, reqParams.isCompare ? -1 : reqParams.topK);
     BindQueryFilters(reqParams, stmt, index);
     if (!reqParams.isCompare) {
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
