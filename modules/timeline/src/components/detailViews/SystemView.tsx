@@ -59,6 +59,7 @@ const AsideSelectContainer = styled.div`
     margin-right: 8px;
     border-radius: 4px;
     background-color: ${(p): string => p.theme.bgColor};
+    max-width: 400px;
 
   .view-select{
     margin-bottom: 8px;
@@ -216,7 +217,7 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
     };
     return (<div className={'rank-filter'} >
         {hostCondition.options.length > 0
-            ? <FormItem label={t('Host')} contentStyle={{ flex: 1 }}>
+            ? <FormItem label={t('Host')} style={{ display: 'flex' }} contentStyle={{ flex: 1, width: 0 }}>
                 <Select
                     value={hostCondition.value}
                     width={'100%'}
@@ -226,7 +227,7 @@ export const RankFilter = observer((props: { session: Session; viewOption?: numb
             </FormItem>
             : <></>
         }
-        <FormItem label={t('Rank ID')} contentStyle={{ flex: 1 }}>
+        <FormItem label={t('Rank ID')} style={{ display: 'flex' }} contentStyle={{ flex: 1, width: 0 }}>
             <Select
                 value={rankCondition.value}
                 width={'100%'}

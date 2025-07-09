@@ -721,6 +721,8 @@ export type SameOperatorsUpdaterType = (session: Session, metadata: unknown) => 
     sorter: SorterResult<OpData>;
     setSorter: React.Dispatch<React.SetStateAction<SorterResult<OpData>>>;
     slice: any;
+    defaultPage: PageType;
+    defaultSorter: SorterResult<OpData>;
 });
 
 const useSliceListMoreUpdater: SameOperatorsUpdaterType = (session) => {
@@ -729,20 +731,21 @@ const useSliceListMoreUpdater: SameOperatorsUpdaterType = (session) => {
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : safeJSONParse(session.selectedMultiSlice), [session.selectedMultiSlice]);
-    return { page, setPage, sorter, setSorter, slice };
+    return { page, setPage, sorter, setSorter, slice, defaultPage, defaultSorter };
 };
 
 export const SameOperatorsList = observer(({ session, metadata, updater }: { session: Session; metadata: unknown; updater: SameOperatorsUpdaterType }) => {
-    const { page, setPage, sorter, setSorter, slice } = updater(session, metadata);
-    const defaultPage = { current: 1, pageSize: 10, total: 0 };
+    const { page, setPage, sorter, setSorter, slice, defaultPage, defaultSorter } = updater(session, metadata);
     const [selectedRowKey, setSelectedRowKey] = useState('');
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    async function loadData(): Promise<void> {
+    const loadData = React.useCallback(_.debounce(async (slice: any, page: PageType, sorter: SorterResult<OpData>): Promise<void> => {
+        setLoading(true);
         if (slice === undefined || slice.name === 'Totals') {
             setDataSource([]);
             setPage(defaultPage);
+            setLoading(false);
             return;
         }
         const params = {
@@ -751,30 +754,31 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
             ...page,
             orderBy: sorter.field === 'startTime' ? 'timestamp' : sorter.field,
         };
-        const res = await queryAllSameOperatorsDuration(params);
-        const { currentPage, pageSize, sameOperatorsDetails } = res;
-        const data = sameOperatorsDetails as OpData[];
-        const timestampoffset = getTimeOffset(session, metadata as ThreadMetaData);
-        data.forEach(item => {
-            item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
-            item.pid = slice.pid;
-        });
-        setDataSource((data).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
-        setPage({ total: slice.count, current: currentPage, pageSize });
-        setLoading(false);
-    }
+        try {
+            const res = await queryAllSameOperatorsDuration(params);
+            const { currentPage, pageSize, sameOperatorsDetails } = res;
+            const data = sameOperatorsDetails as OpData[];
+            const timestampoffset = getTimeOffset(session, metadata as ThreadMetaData);
+            data.forEach(item => {
+                item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
+                item.pid = slice.pid;
+            });
+            setDataSource((data).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
+            setPage({ total: slice.count, current: currentPage, pageSize });
+        } finally {
+            setLoading(false);
+        }
+    }, 100), []);
 
     useEffect(() => {
-        if (page.current !== 1) {
-            setPage({ ...page, current: 1 });
-        } else {
-            loadData();
-        }
+        setDataSource([]);
+        setPage(defaultPage);
+        setSorter(defaultSorter);
     }, [slice]);
 
     useEffect(() => {
-        loadData();
-    }, [sorter.field, sorter.order, page.current, page.pageSize]);
+        loadData(slice, page, sorter);
+    }, [slice, sorter.field, sorter.order, page.current, page.pageSize]);
 
     return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
         <ResizeTable<OpData>
