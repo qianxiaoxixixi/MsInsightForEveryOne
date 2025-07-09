@@ -18,8 +18,8 @@ const unsigned int BYTE_ALIGNMENT_SMALL_SIZE = 512;
 const unsigned int BYTE_ALIGNMENT_BASE_SIZE = 512;
 
 struct ByteAlignmentAnalyzerStatistics {
-    const unsigned int smallSize = BYTE_ALIGNMENT_SMALL_SIZE;
-    uint64_t abnormalOperatorCount = 0;
+    std::string rankId;
+    std::string name;
 };
 
 class ByteAlignmentAnalyzer : public CommunicationBaseAnalyzer {
@@ -30,8 +30,9 @@ public:
     void ComputeStatistics() override;
     void AssembleAdvisor(CommunicationAdvisorInfo &info) override;
 protected:
-    std::vector<CommunicationLargeOperatorInfo> data;
-    ByteAlignmentAnalyzerStatistics statistics;
+    bool Check(const CommunicationLargeOperatorInfo &item);
+    std::map<std::string, std::vector<CommunicationLargeOperatorInfo>> data;
+    std::vector<ByteAlignmentAnalyzerStatistics> statistics;
 };
 } // end of namespace Communication
 } // end of namespace Module

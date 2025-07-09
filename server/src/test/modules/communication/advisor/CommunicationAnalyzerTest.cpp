@@ -34,15 +34,15 @@ public:
 
 class ByteAlignmentAnalyzerInheritance : public ByteAlignmentAnalyzer {
 public:
-    void SetData(const std::vector<CommunicationLargeOperatorInfo> &inputData)
+    void SetData(const std::map<std::string, std::vector<CommunicationLargeOperatorInfo>> &inputData)
     {
         data = inputData;
     }
-    void SetStatistics(const uint64_t count)
+    void SetStatistics(const std::vector<ByteAlignmentAnalyzerStatistics> &inputStatistics)
     {
-        statistics.abnormalOperatorCount = count;
+        statistics = inputStatistics;
     }
-    ByteAlignmentAnalyzerStatistics GetStatistics()
+    std::vector<ByteAlignmentAnalyzerStatistics> GetStatistics()
     {
         return statistics;
     }
@@ -162,24 +162,43 @@ TEST_F(CommunicationAnalyzerTest, ByteAlignmentAnalyzerComputeStatisticsTest)
         {1024, "SDMA", "HCCS"}, {1026, "SDMA", "HCCS"}},
         {{790, "RDMA", "HCCS"}, {9247, "SDMA", "ON_CHIP"}, {256, "SDMA", "HCCS"},
         {1024, "SDMA", "HCCS"}}};
-    std::vector<CommunicationLargeOperatorInfo> inputData{info1, info2, info3};
+    std::map<std::string, std::vector<CommunicationLargeOperatorInfo>> inputData;
+    inputData["0"].emplace_back(info1);
+    inputData["0"].emplace_back(info2);
+    inputData["0"].emplace_back(info3);
     analyzer.SetData(inputData);
     analyzer.ComputeStatistics();
-    ByteAlignmentAnalyzerStatistics statistics = analyzer.GetStatistics();
-    EXPECT_EQ(statistics.abnormalOperatorCount, 2); // 2
+    std::vector<ByteAlignmentAnalyzerStatistics> statistics = analyzer.GetStatistics();
+    ASSERT_EQ(statistics.size(), 2); // 2
+    EXPECT_EQ(statistics[0].name, "hcom_allGather_1");
+    EXPECT_EQ(statistics[1].name, "hcom_allGather_2");
 }
 
 TEST_F(CommunicationAnalyzerTest, ByteAlignmentAnalyzerAssembleAdvisorTest)
 {
     ByteAlignmentAnalyzerInheritance analyzer;
-    analyzer.SetStatistics(4); // 4
+    std::vector<ByteAlignmentAnalyzerStatistics> inputStatistics;
+    analyzer.SetStatistics(inputStatistics);
     CommunicationAdvisorInfo advisor;
     analyzer.AssembleAdvisor(advisor);
     EXPECT_EQ(advisor.name, "Byte Alignment Analysis");
-    ASSERT_EQ(advisor.statistics["Small Size(Byte)"].size(), 1);
-    EXPECT_EQ(advisor.statistics["Small Size(Byte)"][0], "512");
-    ASSERT_EQ(advisor.statistics["Abnormal Operator Count"].size(), 1);
-    EXPECT_EQ(advisor.statistics["Abnormal Operator Count"][0], "4");
+    ASSERT_NE(advisor.statistics.find("name"), advisor.statistics.end());
+    ASSERT_NE(advisor.statistics.find("rankId"), advisor.statistics.end());
+
+    ByteAlignmentAnalyzerStatistics item1{"0", "hcom_allReduce_1"};
+    ByteAlignmentAnalyzerStatistics item2{"1", "hcom_allReduce_15"};
+    inputStatistics = {item1, item2};
+    analyzer.SetStatistics(inputStatistics);
+    advisor.name.clear();
+    advisor.statistics.clear();
+    analyzer.AssembleAdvisor(advisor);
+    EXPECT_EQ(advisor.name, "Byte Alignment Analysis");
+    ASSERT_EQ(advisor.statistics["rankId"].size(), 2); // 2
+    EXPECT_EQ(advisor.statistics["rankId"][0], "0");
+    EXPECT_EQ(advisor.statistics["rankId"][1], "1");
+    ASSERT_EQ(advisor.statistics["name"].size(), 2); // 2
+    EXPECT_EQ(advisor.statistics["name"][0], "hcom_allReduce_1");
+    EXPECT_EQ(advisor.statistics["name"][1], "hcom_allReduce_15");
 }
 
 TEST_F(CommunicationAnalyzerTest, BandwidthContentionAnalyzerComputeStatisticsTest)
@@ -219,6 +238,8 @@ TEST_F(CommunicationAnalyzerTest, BandwidthContentionAnalyzerComputeStatisticsTe
     analyzer.ComputeStatistics();
     statistics = analyzer.GetStatistics();
     ASSERT_EQ(statistics.size(), 2); // 2
+    EXPECT_EQ(statistics[0].rankId, "0");
+    EXPECT_EQ(statistics[1].rankId, "0");
     EXPECT_EQ(statistics[0].name, "hcom_allGather_2");
     EXPECT_EQ(statistics[1].name, "hcom_allGather_5");
 }
@@ -235,14 +256,17 @@ TEST_F(CommunicationAnalyzerTest, BandwidthContentionAnalyzerAssembleAdvisorTest
     ASSERT_NE(advisor.statistics.find("duration(us)"), advisor.statistics.end());
     ASSERT_NE(advisor.statistics.find("bandwidth(GB/s)"), advisor.statistics.end());
 
-    BandwidthContentionAnalyzerStatistics item1{"hcom_allReduce_1", 2.0, 16.0};
-    BandwidthContentionAnalyzerStatistics item2{"hcom_allReduce_2", 19.0, 25.0};
+    BandwidthContentionAnalyzerStatistics item1{"0", "hcom_allReduce_1", 2.0, 16.0};
+    BandwidthContentionAnalyzerStatistics item2{"0", "hcom_allReduce_2", 19.0, 25.0};
     inputStatistics = {item1, item2};
     analyzer.SetStatistics(inputStatistics);
     advisor.name.clear();
     advisor.statistics.clear();
     analyzer.AssembleAdvisor(advisor);
     EXPECT_EQ(advisor.name, "Bandwidth Contention Analysis");
+    ASSERT_EQ(advisor.statistics["rankId"].size(), 2); // 2
+    EXPECT_EQ(advisor.statistics["rankId"][0], "0");
+    EXPECT_EQ(advisor.statistics["rankId"][1], "0");
     ASSERT_EQ(advisor.statistics["name"].size(), 2); // 2
     EXPECT_EQ(advisor.statistics["name"][0], "hcom_allReduce_1");
     EXPECT_EQ(advisor.statistics["name"][1], "hcom_allReduce_2");

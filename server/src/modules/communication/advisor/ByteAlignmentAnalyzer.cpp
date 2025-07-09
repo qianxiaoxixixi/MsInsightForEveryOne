@@ -18,6 +18,7 @@ bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
         return false;
     }
     for (const auto &rank : rankList) {
+        data.insert({rank.iterationOrRankId, {}});
         auto timelineDatabase = Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId(rank.iterationOrRankId);
         if (!timelineDatabase) {
             timelineDatabase =
@@ -27,45 +28,58 @@ bool ByteAlignmentAnalyzer::QueryAdvisorData(const std::string &clusterPath)
                 continue;
             }
         }
-        timelineDatabase->QueryByteAlignmentAnalyzerData(data);
+        timelineDatabase->QueryByteAlignmentAnalyzerData(data[rank.iterationOrRankId]);
     }
     return true;
 }
 
 void ByteAlignmentAnalyzer::ComputeStatistics()
 {
-    statistics.abnormalOperatorCount = 0;
-    for (const auto &item : data) {
-        bool flag = false;
-        for (const auto &memcpyItem : item.memcpyTasks) {
-            if (memcpyItem.transportType != "SDMA" || memcpyItem.linkType == "ON_CHIP" ||
-                memcpyItem.size <= BYTE_ALIGNMENT_SMALL_SIZE) {
-                continue;
+    for (const auto &itemsForEachRank : data) {
+        for (const auto &item : itemsForEachRank.second) {
+            if (Check(item)) {
+                ByteAlignmentAnalyzerStatistics op;
+                op.rankId = itemsForEachRank.first;
+                op.name = item.name;
+                statistics.emplace_back(op);
             }
-            if (memcpyItem.size % BYTE_ALIGNMENT_BASE_SIZE > 0) {
-                flag = true;
-            }
-        }
-        for (const auto &reduceItem : item.reduceInlineTasks) {
-            if (reduceItem.transportType != "SDMA" || reduceItem.linkType == "ON_CHIP" ||
-                reduceItem.size <= BYTE_ALIGNMENT_SMALL_SIZE) {
-                continue;
-            }
-            if (reduceItem.size % BYTE_ALIGNMENT_BASE_SIZE > 0) {
-                flag = true;
-            }
-        }
-        if (flag) {
-            ++statistics.abnormalOperatorCount;
         }
     }
+}
+
+bool ByteAlignmentAnalyzer::Check(const Dic::Module::CommunicationLargeOperatorInfo &item)
+{
+    bool flag = false;
+    for (const auto &memcpyItem : item.memcpyTasks) {
+        if (memcpyItem.transportType != "SDMA" || memcpyItem.linkType == "ON_CHIP" ||
+            memcpyItem.size <= BYTE_ALIGNMENT_SMALL_SIZE) {
+            continue;
+        }
+        if (memcpyItem.size % BYTE_ALIGNMENT_BASE_SIZE > 0) {
+            flag = true;
+        }
+    }
+    for (const auto &reduceItem : item.reduceInlineTasks) {
+        if (reduceItem.transportType != "SDMA" || reduceItem.linkType == "ON_CHIP" ||
+            reduceItem.size <= BYTE_ALIGNMENT_SMALL_SIZE) {
+            continue;
+        }
+        if (reduceItem.size % BYTE_ALIGNMENT_BASE_SIZE > 0) {
+            flag = true;
+        }
+    }
+    return flag;
 }
 
 void ByteAlignmentAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
 {
     info.name = BYTEALIGNMENT_ANALYZER_TITLE;
-    info.statistics.insert({"Small Size(Byte)", {std::to_string(statistics.smallSize)}});
-    info.statistics.insert({"Abnormal Operator Count", {std::to_string(statistics.abnormalOperatorCount)}});
+    info.statistics.insert({"rankId", {}});
+    info.statistics.insert({"name", {}});
+    for (const auto &item : statistics) {
+        info.statistics["rankId"].emplace_back(item.rankId);
+        info.statistics["name"].emplace_back(item.name);
+    }
 }
 }
 }

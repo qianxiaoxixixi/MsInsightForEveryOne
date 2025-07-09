@@ -55,6 +55,7 @@ void BandwidthContentionAnalyzer::ComputeStatistics()
             }
             if (data.SDMAData[item.first][HCCLIndex].bandwidth < BANDWIDTH_CONTENTION_ANALYZER_THRESHOLD) {
                 BandwidthContentionAnalyzerStatistics op;
+                op.rankId = item.first;
                 op.name = data.SDMAData[item.first][HCCLIndex].name;
                 op.duration = data.SDMAData[item.first][HCCLIndex].duration;
                 op.bandwidth = data.SDMAData[item.first][HCCLIndex].bandwidth;
@@ -68,10 +69,12 @@ void BandwidthContentionAnalyzer::ComputeStatistics()
 void BandwidthContentionAnalyzer::AssembleAdvisor(Dic::Protocol::CommunicationAdvisorInfo &info)
 {
     info.name = BANDWIDTHCONTENTION_ANALYZER_TITLE;
+    info.statistics.insert({"rankId", {}});
     info.statistics.insert({"name", {}});
     info.statistics.insert({"duration(us)", {}});
     info.statistics.insert({"bandwidth(GB/s)", {}});
     for (const auto &item : statistics) {
+        info.statistics["rankId"].emplace_back(item.rankId);
         info.statistics["name"].emplace_back(item.name);
         info.statistics["duration(us)"].emplace_back(std::to_string(item.duration));
         info.statistics["bandwidth(GB/s)"].emplace_back(std::to_string(item.bandwidth));

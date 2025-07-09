@@ -92,7 +92,8 @@
       "bandwidth(GB/s)": "带宽（GB/s）",
       "duration(us)": "持续时间（微秒）",
       "name": "算子名称",
-      "group name": "通信域名称"
+      "group name": "通信域名称",
+      "rankId": "卡序号"
     },
     "tableHeadTooltip": {
       "Elapse Time": "通信算子所有事件消耗时间之和。公式：总时间 = 通信Events时间之和",

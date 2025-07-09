@@ -1364,7 +1364,8 @@ std::vector<CommInfoUnderRank> TextClusterDatabase::GetCommTimeForRankDim(const 
 bool TextClusterDatabase::QueryPacketAnalyzerData(std::vector<PacketAnalyzerData> &data)
 {
     std::string sql = "SELECT transport_type, transit_size, transit_time FROM " + TABLE_BANDWIDTH +
-        " WHERE (transport_type = 'RDMA' OR transport_type = 'SDMA') AND transit_size > 0;";
+        " WHERE (transport_type = 'RDMA' OR transport_type = 'SDMA') AND transit_size > 0 AND"
+        " op_name != 'Total Op Info';";
     return ExecuteQueryPacketAnalyzerData(data, sql);
 }
 

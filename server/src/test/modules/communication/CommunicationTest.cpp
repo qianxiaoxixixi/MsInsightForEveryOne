@@ -327,16 +327,14 @@ TEST_F(TestSuit, QueryPacketAnalyzerDataTest)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::vector<Dic::Module::PacketAnalyzerData> data;
     bool result = database->QueryPacketAnalyzerData(data);
-    int expectSize = 7; // 7
+    int expectSize = 5; // 5
     ASSERT_TRUE(result);
     ASSERT_EQ(data.size(), expectSize);
     EXPECT_EQ(data[0].type, "RDMA");
     EXPECT_EQ(data[1].type, "RDMA");
-    EXPECT_EQ(data[2].type, "RDMA"); // 2
-    EXPECT_EQ(data[3].type, "RDMA"); // 3
+    EXPECT_EQ(data[2].type, "SDMA"); // 2
+    EXPECT_EQ(data[3].type, "SDMA"); // 3
     EXPECT_EQ(data[4].type, "SDMA"); // 4
-    EXPECT_EQ(data[5].type, "SDMA"); // 5
-    EXPECT_EQ(data[6].type, "SDMA"); // 6
 }
 
 TEST_F(TestSuit, QueryBandwidthContentionAnalyzerDataTest)
