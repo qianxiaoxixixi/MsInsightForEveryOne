@@ -28,6 +28,7 @@ const ParallelismGraphHeader = styled.div`
     align-items: center;
     gap: 20px;
     padding: 20px 0 10px;
+    margin-bottom: 10px;
 `;
 
 const Legend = styled.div`
