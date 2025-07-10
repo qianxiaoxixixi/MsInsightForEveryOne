@@ -22,19 +22,21 @@ import { transformCardIdInfo } from 'ascend-utils';
 import parallelismStore, { type GenerateConditions } from '../../store/parallelism';
 import { useContextMenuItems } from './useContextMenuItems';
 
+const SCROLL_BAR_WIDTH = 10;
+
 const CanvasContainer = styled.div`
-    max-height: 720px;
+    max-height: 800px;
     overflow: auto;
-    margin-top: 10px;
     background-color: ${(props): string => props.theme.rankContainerBackgroudColor};
 `;
 
 const Canvas = styled.canvas`
     position: absolute;
-    top: 0;
+    right: ${SCROLL_BAR_WIDTH}px;
+    bottom: ${SCROLL_BAR_WIDTH}px;
+    width: calc(100% - ${SCROLL_BAR_WIDTH}px);
+    height: calc(100% - ${SCROLL_BAR_WIDTH}px);
     pointer-events: none;
-    width: 100%;
-    height: 100%;
 `;
 
 export const Loading = styled.div`
@@ -584,13 +586,13 @@ export const ParallelismGraph = observer(({ session, targetRankIndex, targetTrig
                     return <CanvasContainer ref={canvasContainerRef} onScroll={onScroll}>
                         <Canvas
                             ref={mainCanvasRef}
-                            width={width * devicePixelRatio}
-                            height={height * devicePixelRatio}
+                            width={(width - SCROLL_BAR_WIDTH) * devicePixelRatio}
+                            height={(height - SCROLL_BAR_WIDTH) * devicePixelRatio}
                         ></Canvas>
                         <Canvas
                             ref={hoverCanvasRef}
-                            width={width * devicePixelRatio}
-                            height={height * devicePixelRatio}
+                            width={(width - SCROLL_BAR_WIDTH) * devicePixelRatio}
+                            height={(height - SCROLL_BAR_WIDTH) * devicePixelRatio}
                         ></Canvas>
                         <ContextMenu
                             menuItems={contextMenuItems}
