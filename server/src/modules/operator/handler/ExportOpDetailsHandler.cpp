@@ -390,6 +390,11 @@ const std::string_view MSVP_SLASH = "\\";
 #else
 const std::string_view MSVP_SLASH = "/";
 #endif
+        if (projectInfo.empty()) {
+            ServerLog::Error("[Operator]Project information is missing when exporting operator details.",
+                             "The project may have been deleted.");
+            return false;
+        }
         std::string filePath = projectInfo[0].fileName + std::string(MSVP_SLASH) + "operator_detail_group_by_"
                 + request.params.group + "_" + rankId + "_" + std::to_string(timestamp) + ".csv";
         bool isInvalidPath = FileUtil::CheckPathInvalidChar(filePath);
