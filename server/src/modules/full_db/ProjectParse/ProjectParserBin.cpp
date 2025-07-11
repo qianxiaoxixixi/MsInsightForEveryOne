@@ -37,6 +37,16 @@ void ProjectParserBin::Parser(const std::vector<ProjectExplorerInfo> &projectInf
     response.moduleName = MODULE_TIMELINE;
     response.body.reset = true;
     response.body.subParseFileInfo = projectInfos[0].subParseFileInfo;
+    // 导入bin文件时，只会有二层文件树，且二级目录数量为1，因此这里直接对rankId进行赋值
+    for (auto &item: projectInfos[0].projectFileTree) {
+        for (auto &subItem: item->subParseFile) {
+            subItem->rankId = subItem->parseFilePath;
+        }
+    }
+    if (!Global::ProjectExplorerManager::Instance().UpdateParseFileInfo(projectInfos[0].projectName,
+                                                                        projectInfos[0].subParseFileInfo)) {
+        ServerLog::Error("Failed to update project in parsing");
+    }
     response.body.projectFileTree = projectInfos[0].projectFileTree;
 
     std::string selectedFolder = projectInfos[0].fileName;
@@ -108,7 +118,7 @@ std::vector<std::pair<std::string, std::string>> ProjectParserBin::GetSimulation
 {
     body.isCluster = false;
     std::vector<std::pair<std::string, std::string>> files;
-    std::string fileId = GetFileIdWithDb(selectFilePath);
+    std::string fileId = FileUtil::GetBinFileIdWithDb(selectFilePath);
     if (fileId.empty()) {
         ServerLog::Error("File id is empty");
         return files;
@@ -144,22 +154,23 @@ void ProjectParserBin::ParserBaseline(const Global::ProjectExplorerInfo &project
         return;
     }
     std::string filePath = projectInfo.subParseFileInfo[0]->parseFilePath;
-    std::string fileId = GetFileIdWithDb(filePath);
-    std::string rankId = FileUtil::GetDbPath(filePath, fileId);
+    std::string fileId = FileUtil::GetBinFileIdWithDb(filePath);
+    std::string rankId = filePath;
     baselineInfo.rankId = rankId;
-    baselineInfo.cardName = "baseline" + rankId;
+    baselineInfo.cardName = "Baseline_" + rankId;
     baselineInfo.fileId = fileId;
     Timeline::TrackInfoManager::Instance().SetRankListByFileId(fileId, {"", "", rankId, rankId, rankId});
     Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
-    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(rankId, fileId)) {
-        ServerLog::Error("Fail to create connection pool, fileId:", fileId, ", path:", rankId, '.');
-        return;
-    }
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
     // 如果文件已经被解析则直接返回
     if (sourceFileParser.IsBaselineParsed(rankId)) {
+        baselineInfo.errorMessage = "Can't set oneself as baseline.";
         sourceFileParser.SynchronizeBaselineInfo();
         return;
+    }
+    // 创建数据库连接池
+    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(rankId, fileId)) {
+        ServerLog::Warn("Fail to create connection pool, fileId:", fileId, ", path:", rankId, '.');
     }
     // 只需要对比timeline和details页面内容，因此不需要对source相关的内容做处理
     std::string message;
@@ -188,17 +199,8 @@ void ProjectParserBin::BuildProjectInfoFromParseFile(ProjectExplorerInfo &projec
     parseFileInfo->type = ParseFileType::COMPUTE;
     parseFileInfo->curDirName = FileUtil::GetFileName(parsedFile);
     parseFileInfo->subId = parsedFile;
-    parseFileInfo->fileId = GetFileIdWithDb(parsedFile);
+    parseFileInfo->fileId = FileUtil::GetBinFileIdWithDb(parsedFile);
     projectInfo.AddSubParseFileInfo(parseFileInfo);
-}
-
-std::string ProjectParserBin::GetFileIdWithDb(const std::string &filePath)
-{
-    // 避免一个目录下有多个bin文件，这里通过文件名做区分
-    std::string fileNameWithoutEx = FileUtil::StemFile(filePath);
-    std::string dbFileName = StringUtil::StrJoin(fileNameWithoutEx, "_mindstudio_insight_data.db");
-    std::string dir = FileUtil::GetParentPath(filePath);
-    return FileUtil::SplicePath(dir, dbFileName);
 }
 
 static ProjectAnalyzeRegister<ProjectParserBin> pRegBIN(ParserType::BIN);
