@@ -50,6 +50,7 @@ const DEFAULT_CARD_INFO = { cardId: '', dbPath: '' };
 
 const CommunicationAnalysis = observer(({ session, active = true }: { session: Session;active?: boolean }) => {
     const [card, setCard] = useState(DEFAULT_CARD_INFO);
+    const [loading, setLoading] = useState(false);
     const [showData, setShowData] = useState<showDataType>({
         chartData: [],
         analysisChartData: {} as AnalysisChartData,
@@ -66,7 +67,10 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         if (newConditions.type !== AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
             return;
         }
-        const res = await searchData({ ...newConditions, isCompare: session.isCompare });
+        setLoading(true);
+        const res = await searchData({ ...newConditions, isCompare: session.isCompare }).finally(() => {
+            setLoading(false);
+        });
         setShowData(res);
     };
 
@@ -84,6 +88,7 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
 
     return <CommunicationAnalysisCom
         session={session}
+        loading={loading}
         handleFilterChange={handleFilterChange} showData={showData}
         active={active} showOperator={showOperator} setShowData={setShowData} conditions={conditions}
         rankId={card.cardId} dbPath={card.dbPath} returnHome={returnHome}
@@ -93,7 +98,7 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
 const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element => {
     const {
         session, handleFilterChange, showData, active, showOperator,
-        setShowData, conditions, rankId, dbPath, returnHome,
+        setShowData, conditions, rankId, dbPath, returnHome, loading,
     } = props;
     const { t } = useTranslation('communication');
     return (
@@ -103,7 +108,7 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
             {/* 通信用时分析 */}
             <div className={'communication'} style={{ display: conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS ? 'block' : 'none' }}>
                 <div>
-                    <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
+                    <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} loading={loading} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
                         conditions={conditions} updateSort={(data): void => {

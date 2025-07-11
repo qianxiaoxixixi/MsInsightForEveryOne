@@ -10,7 +10,7 @@ import { observer } from 'mobx-react-lite';
 import { getBaselineName, getCompareName, Loading } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'ascend-components';
-import { type MenuProps, message } from 'antd';
+import { type MenuProps, message, Spin } from 'antd';
 import connector from '../../connection';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
@@ -386,7 +386,7 @@ const useMenuItems = (session: Session): MenuProps['items'] => {
     ];
 };
 
-const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
+const CommunicationTimeAnalysisChart = observer(({ dataSource, session, loading }: { dataSource: AnalysisChartData; session: Session; loading: boolean}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDropDownVisible] = useState(false);
     const menuItems = useMenuItems(session);
@@ -436,7 +436,9 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                 open={dropDownVisible}
                 autoFocus
             >
-                <div ref={chartRef} id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
+                <Spin spinning={loading} delay={400}>
+                    <div ref={chartRef} id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
+                </Spin>
             </Dropdown>
             : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div>}
     </CollapsiblePanel>;
