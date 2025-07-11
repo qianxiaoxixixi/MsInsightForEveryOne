@@ -96,7 +96,7 @@ const reduceImportRankInfoList = (children: ImportTreeInfo[] = []): Array<{ rank
         if (depth >= 5) { // 设置最大递归深度为 5
             return [];
         }
-        if (item.type === 'RANK') {
+        if (item.type === 'RANK' || item.type === 'COMPUTE' || item.type === 'IPYNB') {
             return [{ rankId: item.rankId ?? '', filePath: item.filePath }];
         } else {
             return item.children.flatMap((child) => reduceFunc(child, depth + 1));

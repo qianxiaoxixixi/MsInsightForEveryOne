@@ -612,8 +612,20 @@ long long FileUtil::GetFileSize(const char *fileName)
 #endif
 }
 
+std::string FileUtil::GetBinFileIdWithDb(const std::string &filePath)
+{
+    // 避免一个目录下有多个bin文件，这里通过文件名做区分
+    std::string fileNameWithoutEx = FileUtil::StemFile(filePath);
+    std::string dbFileName = StringUtil::StrJoin(fileNameWithoutEx, "_mindstudio_insight_data.db");
+    std::string dir = FileUtil::GetParentPath(filePath);
+    return FileUtil::SplicePath(dir, dbFileName);
+}
+
 std::string FileUtil::GetDbPath(const std::string &filePath)
 {
+    if (StringUtil::EndWith(filePath, ".bin")) {
+        return FileUtil::GetBinFileIdWithDb(filePath);
+    }
     std::string grandparentPath = FileUtil::GetParentPath(FileUtil::GetParentPath(filePath));
     if (grandparentPath.empty()) {
         return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
