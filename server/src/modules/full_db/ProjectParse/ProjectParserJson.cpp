@@ -845,7 +845,11 @@ std::string ProjectParserJson::GetDeviceIdFromCSVFile(const std::string &filePat
     auto headerRow = StringUtil::StringSplit(line);
     getline(file, line);
     auto dataRow = StringUtil::StringSplit(line);
-    for (size_t i = 0; i < headerRow.size(); i++) {
+    // 如果data行缺列数据，则为异常数据。
+    if (dataRow.size() < headerRow.size()) {
+        ServerLog::Warn("Some columns in the first row of this CSV file are missing.File path: %", filePath);
+    }
+    for (size_t i = 0; i < std::min(dataRow.size(), headerRow.size()); i++) {
         dataMap[headerRow[i]] = dataRow[i];
     }
     std::string deviceId;
