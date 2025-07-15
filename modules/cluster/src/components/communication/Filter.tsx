@@ -6,7 +6,7 @@ import { observable, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import type { RadioChangeEvent } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Select, Radio } from 'ascend-components';
+import { Select, Radio, Form } from 'ascend-components';
 import { getUsableVal, delayExecute } from 'ascend-utils';
 import { Label, toSortedStage, getAllNumberFromString } from '../Common';
 import type { CompareData, optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
@@ -299,14 +299,14 @@ interface IcomProps {
 }
 function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): JSX.Element {
     const { t } = useTranslation('communication');
+    const tooltipOperatorName = t('OperatorNameTooltip', { returnObjects: true }) as string[];
 
-    return (<div data-testid="filters">
-        <FormItem
-            name={t('searchCriteria.Cluster')}
-            content={(<ClusterSelect width={200} session={session} />)}/>
-        <FormItem
-            name={t('searchCriteria.Step')}
-            content={(<Select
+    return <Form data-testid="filters" layout="inline">
+        <Form.Item label={t('searchCriteria.Cluster')}>
+            <ClusterSelect width={200} session={session} />
+        </Form.Item>
+        <Form.Item label={t('searchCriteria.Step')}>
+            <Select
                 id={'step-select'}
                 value={condition.iterationId}
                 style={{ width: 120 }}
@@ -314,25 +314,23 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                     handleChange('iterationId', val);
                 }}
                 options={optionMap.iterationOptions}
-            />)}/>
+            />
+        </Form.Item>
         {
-            session.isCompare
-                ? <FormItem
-                    name={t('searchCriteria.BaselineStep')}
-                    content={(<Select
-                        id={'baseline-step-select'}
-                        value={condition.baselineIterationId}
-                        style={{ width: 120 }}
-                        onChange={(val: string): void => {
-                            handleChange('baselineIterationId', val);
-                        }}
-                        options={optionMap.baselineIterationOptions}
-                    />)}/>
-                : <></>
+            session.isCompare && <Form.Item label={t('searchCriteria.BaselineStep')}>
+                <Select
+                    id={'baseline-step-select'}
+                    value={condition.baselineIterationId}
+                    style={{ width: 120 }}
+                    onChange={(val: string): void => {
+                        handleChange('baselineIterationId', val);
+                    }}
+                    options={optionMap.baselineIterationOptions}
+                />
+            </Form.Item>
         }
-        <FormItem
-            name={t('searchCriteria.CommunicationGroup')}
-            content={(<Select
+        <Form.Item label={t('searchCriteria.CommunicationGroup')}>
+            <Select
                 id={'communicationGroup-select'}
                 value={condition.stage}
                 style={{ width: 200 }}
@@ -343,24 +341,33 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                 options={optionMap.stageOptions}
                 showSearch
                 dropdownMatchSelectWidth
-            />)}/>
-        <FormItem
-            name={t('searchCriteria.OperatorName')}
-            content={(
-                <Select
-                    id={'operatorName-select'}
-                    value={condition.operatorName}
-                    style={{ width: 300 }}
-                    onChange={(val: string): void => {
-                        handleChange('operatorName', val);
-                    }}
-                    options={optionMap.operatorOptions}
-                    showSearch={true}
-                    disabled={session.isCompare}
-                    dropdownMatchSelectWidth
-                />)}/>
+            />
+        </Form.Item>
+        <Form.Item
+            label={t('searchCriteria.OperatorName')}
+            tooltip={
+                condition.type === AnalysisType.COMMUNICATION_MATRIX
+                    ? <div style={{ padding: 6 }}>
+                        {tooltipOperatorName.map((item, index) => <div style={{ padding: '4px 0' }} key={index}>{item}</div>)}
+                    </div>
+                    : false
+            }
+        >
+            <Select
+                id={'operatorName-select'}
+                value={condition.operatorName}
+                style={{ width: 300 }}
+                onChange={(val: string): void => {
+                    handleChange('operatorName', val);
+                }}
+                options={optionMap.operatorOptions}
+                showSearch={true}
+                disabled={session.isCompare}
+                dropdownMatchSelectWidth
+            />
+        </Form.Item>
         { condition.stage !== '' &&
-            <FormItem content={(
+            <Form.Item>
                 <Radio.Group value={condition.type}
                     onChange={(e: RadioChangeEvent): void => {
                         handleChange('type', e.target.value);
@@ -368,11 +375,10 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
                     <Radio value={AnalysisType.COMMUNICATION_MATRIX}>{t('searchCriteria.CommunicationMatrix')}</Radio>
                     <Radio
                         value={AnalysisType.COMMUNICATION_DURATION_ANALYSIS}>{t('searchCriteria.CommunicationDurationAnalysis')}</Radio>
-                </Radio.Group>)}/>
+                </Radio.Group>
+            </Form.Item>
         }
-        <div>
-        </div>
-    </div>);
+    </Form>;
 }
 
 export function FormItem(props: any): JSX.Element {

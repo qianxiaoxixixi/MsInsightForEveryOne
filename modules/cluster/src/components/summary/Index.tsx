@@ -14,7 +14,7 @@ import { CommunicatorContainer } from '../communicatorContainer/CommunicatorCont
 import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Tooltip } from 'ascend-components';
+import { Tooltip, FormItem } from 'ascend-components';
 import { PerformanceChart } from './PerformanceChart';
 import { FlowChart } from './FlowChart';
 import styled from '@emotion/styled';
@@ -30,7 +30,6 @@ import { GetSlowRankAdviseRes, IndicatorsItem, PerformanceDataItem } from '../..
 import { isEqual } from 'lodash';
 import { ExpertLoadBalancingBox } from './expert-load-balancing';
 import { ClusterSelect } from '../ClusterSelect';
-import { Label } from '../Common';
 import { SlowRankTable } from './SlowRankTable';
 import parallelismStore, { defaultGenerateConditions } from '../../store/parallelism';
 
@@ -243,9 +242,10 @@ export const Index = observer(({ session, clusterPath }: { session: Session; clu
     }, [clusterPath]);
 
     return <Layout>
-        <div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
-            <Label name={t('Cluster')}/>
-            <ClusterSelect width={300} session={session}/>
+        <div style={{ padding: '0 24px 6px' }}>
+            <FormItem label={t('Cluster')}>
+                <ClusterSelect width={300} session={session}/>
+            </FormItem>
         </div>
 
         <BaseInfo session={session}/>

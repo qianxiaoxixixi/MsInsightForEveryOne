@@ -5,7 +5,7 @@
 export { MIInput as Input, MIInputGroup as InputGroup, MIInputSplit as InputSplit, MIInputNumber as InputNumber } from './MIInput';
 export { MISelect as Select } from './MISelect';
 export { MIButton as Button } from './MIButton';
-export { MITooltip as Tooltip } from './MITooltip';
+export { MITooltip as Tooltip, MITooltipHelp } from './MITooltip';
 export { MIPagination as Pagination } from './MIPagination';
 export { MICheckbox as Checkbox } from './MICheckbox';
 export { MICheckboxGroup as CheckboxGroup } from './MICheckbox';

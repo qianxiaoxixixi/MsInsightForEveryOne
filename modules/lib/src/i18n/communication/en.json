@@ -147,6 +147,14 @@
       "Byte Alignment Analysis": "If a communication large operator contains a Memcpy or Reduce_Inline communication small operator with the transport type SDMA, and the transit size is greater than 512 bytes and cannot be evenly divided by 512 bytes, then this communication large operator is said to have a byte alignment issue.",
       "Bandwidth Contention Analysis": "If [Start Time, End Time] of a communication operator overlap with [Start Time, End Time] of a matmul operator, and the SDMA bandwidth of the communication operator is less than 14.4 GB/s, the communication operator is said to have a bandwidth contention issue.",
       "Communication Retransmission Analysis": "The object of communication retransmission is the communication domain. Ignoring the Total Op operator, if there exists a communication operator in the communication domain, and considering all ranks, the minimum elapse time is greater than 4000 ms, and the maximum RDMA transit time is greater than 4000 ms, then it is determined that there is a communication retransmission issue."
-    }
+    },
+    "OperatorNameTooltip": [
+      "For easier analysis, operators are grouped into categories, such as allreduce-total:",
+      "total: Average bandwidth of all operators in the same category (total volume / total time), recommended for priority viewing",
+      "top: Operator with the highest bandwidth; topN shows the N highest ones",
+      "middle: Operator at the median bandwidth level",
+      "bottom: Operator with the lowest bandwidth; bottomN shows the N lowest ones",
+      "When the category is not 'total', hover over the heatmap to see the specific operator names"
+    ]
   }
 }

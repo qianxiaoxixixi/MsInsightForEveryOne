@@ -6,6 +6,7 @@ import React from 'react';
 import { Tooltip } from 'antd';
 import type { TooltipProps } from 'antd/lib/tooltip';
 import { useTheme } from '@emotion/react';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export const MITooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle, ...props }: TooltipProps) => {
     const theme = useTheme();
@@ -29,4 +30,10 @@ export const MITooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle,
     >
         {children}
     </Tooltip>;
+};
+
+export const MITooltipHelp: React.FC<TooltipProps> = ({ ...props }: TooltipProps) => {
+    return <MITooltip {...props}>
+        <QuestionCircleOutlined />
+    </MITooltip>;
 };
