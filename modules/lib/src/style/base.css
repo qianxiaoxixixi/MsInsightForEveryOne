@@ -190,6 +190,9 @@ body {
 .justify-around{justify-content: space-around;}
 .justify-evenly{justify-content: space-evenly;}
 
+.ml-24{margin-left: 24px}
+.mr-24{margin-right: 24px}
+.mt-20{margin-top: 20px}
 .mb-20{margin-bottom: 20px}
 .mb-30{margin-bottom: 30px}
 .mi-page {padding: 16px;height: 100vh;min-width: 900px;background: var(--mi-bg-color-dark);}

@@ -104,7 +104,9 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element
     return (
         <Layout>
             {/* 筛选条件 */}
-            <Filter handleFilterChange={handleFilterChange} session={session} />
+            <div className="ml-24 mr-24">
+                <Filter handleFilterChange={handleFilterChange} session={session} />
+            </div>
             {/* 通信用时分析 */}
             <div className={'communication'} style={{ display: conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS ? 'block' : 'none' }}>
                 <div>

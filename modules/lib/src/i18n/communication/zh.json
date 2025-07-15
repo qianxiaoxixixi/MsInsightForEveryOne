@@ -147,6 +147,14 @@
       "Byte Alignment Analysis": "如果一个通信大算子含有的某个Memcpy类或者Reduce_Inline类通信小算子传输方式为SDMA，传输大小大于512字节且不能被512字节整除，称该通信大算子存在字节对齐问题。",
       "Bandwidth Contention Analysis": "如果通信算子的[开始时间, 结束时间]和某个matmul算子的[开始时间, 结束时间]有重叠，且它的SDMA带宽小于14.4GB/s，则认为该通信算子带宽抢占。",
       "Communication Retransmission Analysis": "通信重传的对象是通信域，不考虑Total Op算子，如果通信域存在某个通信算子，则对所有的rank取最小持续时间和最大RDMA传输时间，如果最小持续时间大于4000ms且最大RDMA传输时间大于4000m，则认定存在通信重传问题。"
-    }
+    },
+    "OperatorNameTooltip": [
+      "为方便查看，会对通信算子进行聚类统计，例如 allreduce-total 等分类：",
+      "total：表示该类算子的平均带宽水平（某类通信算子的总传输量 / 总传输时间），推荐优先查看",
+      "top：带宽最高的通信算子，topN 即为前 N 高",
+      "middle：带宽处于中位数的通信算子",
+      "bottom：带宽最低的通信算子，bottomN 即为前 N 低",
+      "在分类不为 total 时，将鼠标悬停在热力图上可查看具体通信算子名称"
+    ]
   }
 }
