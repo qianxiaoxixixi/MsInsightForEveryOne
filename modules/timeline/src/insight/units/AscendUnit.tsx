@@ -10,7 +10,7 @@ import {
     UnitHeight,
 } from '../../entity/insight';
 import type {
-    ChartDesc, InsightUnit, LinkDataDesc, LinkLine, LinkLines, MetaData, renderFieldsType,
+    ChartDesc, InsightUnit, LinkLine, LinkLines,
 } from '../../entity/insight';
 import type { SelectedDataType, Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
@@ -33,7 +33,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import _ from 'lodash';
 import { runInAction } from 'mobx';
-import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
@@ -628,84 +627,6 @@ export const CounterUnit = unit<CounterMetaData>({
     }),
 });
 
-const getFlowName = (res: any): string | undefined => {
-    let flowName;
-    if (res.type === 's') {
-        flowName = 'Outgoing flow';
-    } else if (res.type === 'f') {
-        flowName = 'Incoming flow';
-    } else {
-        flowName = undefined;
-    }
-    return flowName;
-};
-
-const handleArrayResult = (result: Array<Record<string, unknown>>, templateField: renderFieldsType<Record<string, unknown>>,
-    state: Array<[string, string | JSX.Element]>, metadata: unknown): void => {
-    result.forEach(res => {
-        const render = templateField[1];
-        if (templateField[2] !== undefined) {
-            const isHiden = templateField[2];
-            if (isHiden(res)) { state.push([templateField[0], render(res, session, metadata)]); }
-        } else {
-            state.push([getFlowName(res) ?? templateField[0], render(res, session, metadata)]);
-        }
-    });
-};
-
-const handleNonArrayResult = (result: Record<string, unknown>, state: Array<[string, (string | JSX.Element)]>,
-    detailDesc: LinkDataDesc<Record<string, unknown>>, metadata: unknown): void => {
-    detailDesc.renderFields.forEach(renderField => {
-        const render = renderField[1];
-        if (renderField[2] !== undefined) {
-            const isHiden = renderField[2];
-            if (isHiden(result)) { state.push([renderField[0], render(result, session, metadata)]); }
-        } else {
-            state.push([renderField[0], render(result, session, metadata)]);
-        }
-    });
-};
-// @deprecated
-const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>,
-    linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
-    const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
-    const { selectedUnits } = session;
-    const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
-    const detail = (session.linkDetail as unknown as LinkDataDesc<Record<string, unknown>>) ?? originDetail;
-    const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
-    const onDataFetched = React.useMemo(() => ([selectedUnits, linkFlow].filter(_.isEmpty).length === 0
-        ? fetchData?.(session, selectedUnit?.metadata as MetaData)
-        : undefined), [selectedUnits, linkFlow, detail, session.linkDetail]);
-
-    const recentUnits = React.useRef(selectedUnits);
-    const recentData = React.useRef(linkFlow);
-    recentUnits.current = selectedUnits;
-    recentData.current = linkFlow;
-    const loadData = (): void => {
-        if (onDataFetched !== undefined && linkFlow !== undefined) {
-            onDataFetched?.then(result => {
-                if (recentUnits.current !== selectedUnits || recentData.current !== linkFlow) { return; }
-                const state: Array<[string, string | JSX.Element]> = [];
-                if (Array.isArray(result)) {
-                    const templateField = detail.templateField;
-                    if (!templateField) { return; }
-                    handleArrayResult(result, templateField, state, metadata);
-                } else {
-                    handleNonArrayResult(result, state, detail, metadata);
-                }
-                setRenderFields(state);
-            });
-        }
-    };
-    React.useEffect(loadData, [selectedUnits, linkFlow, detail, session.linkDetail]);
-    return renderFields;
-};
-// @deprecated
-export const SliceRight = observer(({ session, detail, metadata }: { session: Session; detail: LinkDataDesc<Record<string, unknown>>; metadata: unknown }) => {
-    const renderFields = useSliceRightDataUpdator(session, detail, session.linkFlow, metadata);
-    return <SelectedDataBase renderer={renderFields} hasTitle />;
-});
-
 const useColumns = (): any => {
     const { t } = useTranslation('timeline', { keyPrefix: 'sliceList' });
     return [
@@ -737,7 +658,7 @@ const useSliceListMoreUpdater: SameOperatorsUpdaterType = (session) => {
 export const SameOperatorsList = observer(({ session, metadata, updater }: { session: Session; metadata: unknown; updater: SameOperatorsUpdaterType }) => {
     const { page, setPage, sorter, setSorter, slice, defaultPage, defaultSorter } = updater(session, metadata);
     const [selectedRowKey, setSelectedRowKey] = useState('');
-    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [dataSource, setDataSource] = useState<OpData[]>([]);
     const [loading, setLoading] = useState(false);
 
     const loadData = React.useCallback(_.debounce(async (slice: any, page: PageType, sorter: SorterResult<OpData>): Promise<void> => {
@@ -761,7 +682,6 @@ export const SameOperatorsList = observer(({ session, metadata, updater }: { ses
             const timestampoffset = getTimeOffset(session, metadata as ThreadMetaData);
             data.forEach(item => {
                 item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
-                item.pid = slice.pid;
             });
             setDataSource((data).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
             setPage({ total: slice.count, current: currentPage, pageSize });

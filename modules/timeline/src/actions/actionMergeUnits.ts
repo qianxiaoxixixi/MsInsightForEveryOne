@@ -14,7 +14,6 @@ import i18n from 'ascend-i18n';
 
 const clearSelectedUnits = (session: Session): void => {
     session.selectedUnits = [];
-    session.selectedUnitKeys = [];
 };
 
 const findInsertIndex = (allUnits: InsightUnit[], selectedUnits: InsightUnit[]): number => {

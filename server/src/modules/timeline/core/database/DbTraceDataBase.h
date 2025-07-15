@@ -47,6 +47,14 @@ struct OVERLAP_INFO {
         return false;
     }
 };
+
+struct QUERY_THREAD_SAME_OPERATORS_PARAMS {
+    std::string rankId;
+    uint64_t minTimestamp;
+    std::string orderBy;
+    std::vector<std::string> pidList;
+    std::vector<std::string> tidList;
+};
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
     explicit DbTraceDataBase(std::recursive_mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
@@ -100,7 +108,7 @@ public:
                                 uint64_t minTimestamp, const std::vector<TrackQuery> &trackQueryVec) override;
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
                                          Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
-                                         const std::vector<std::string> &trackIdList) override;
+                                         const std::vector<uint64_t> &trackIdList) override;
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();

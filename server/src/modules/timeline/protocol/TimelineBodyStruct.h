@@ -54,6 +54,7 @@ struct SameOperatorsDetails {
     std::string name;
     uint64_t depth{};
     std::string tid;
+    std::string pid;
 };
 
 struct UnitThreadsOperatorsBody {

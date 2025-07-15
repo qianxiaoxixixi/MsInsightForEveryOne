@@ -586,7 +586,7 @@ TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
     requestParam.pageSize = PAGE_SIZE;
     Protocol::UnitThreadsOperatorsBody responseBody;
     uint64_t minTimestamp = 0;
-    std::vector<string> traceId = {"65"};
+    std::vector<uint64_t> traceId = {65};
 
     // response data
     uint64_t TIMESTAMP1 = 1695115378714082800;

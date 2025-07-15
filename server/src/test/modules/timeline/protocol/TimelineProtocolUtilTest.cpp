@@ -68,14 +68,14 @@ TEST_F(TimelineProtocolUtilTest, TestThreadTracesResponseToJsonError)
 TEST_F(TimelineProtocolUtilTest, TestUnitThreadsResponseToJsonError)
 {
     Dic::Protocol::UnitThreadsResponse response;
-    Dic::Protocol::Threads threads;
-    response.body.data.emplace_back(threads);
+    Dic::Protocol::SliceGroupItem sliceGroupItem;
+    response.body.data.emplace_back(sliceGroupItem);
     auto jsonOp = Dic::Protocol::ToResponseJson(response);
     EXPECT_EQ(jsonOp.has_value(), true);
     const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
     const std::string jsonStr = "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"unit/"
         "threads\",\"moduleName\":\"unknown\",\"body\":{\"emptyFlag\":false,\"data\":[{\"title\":\"\",\"wallDuration\":"
-        "0,\"occurrences\":0,\"avgWallDuration\":0,\"selfTime\":0,\"tid\":[],\"pid\":\"\",\"metaType\":\"\"}]}}";
+        "0,\"occurrences\":0,\"avgWallDuration\":0,\"selfTime\":0,\"processes\":[],\"metaType\":\"\"}]}}";
     EXPECT_EQ(json, jsonStr);
 }
 

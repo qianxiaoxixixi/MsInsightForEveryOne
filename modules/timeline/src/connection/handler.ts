@@ -460,7 +460,7 @@ function resetSession(): void {
         session.selectedRangeIsLock = false;
         session.lockUnitCount = 0;
         session.lockRange = undefined;
-        session.selectedUnitKeys = [];
+        session.selectedUnits = [];
         session.singleLinkLine = {};
     });
 }

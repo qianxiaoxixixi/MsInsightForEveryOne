@@ -10,8 +10,6 @@ type SelectUnit = (unit: KeyedInsightUnit) => void;
 export const useSelectUnit = (session: Session): SelectUnit => {
     return (unit: KeyedInsightUnit): void => runInAction(() => {
         session.selectedData = undefined;
-        session.linkData = undefined;
-        session.selectedUnitKeys = [getAutoKey(unit)];
         session.selectedUnits = [unit];
     });
 };
@@ -24,7 +22,7 @@ export const useSelectUnits = (session: Session): SelectUnit => {
         if (session.selectedRangeIsLock) {
             return;
         }
-        session.selectedUnitKeys.push(getAutoKey(unit));
+        session.selectedUnitKeys = [...session.selectedUnitKeys, getAutoKey(unit)];
         session.selectedUnits.push(unit);
     });
 };
@@ -39,10 +37,7 @@ export const useDeselectUnits = (session: Session): SelectUnit => {
 
         if (unitIndex !== -1) {
             session.selectedUnits.splice(unitIndex, 1);
-            const keyIndex = session.selectedUnitKeys.indexOf(unitKey);
-            if (keyIndex !== -1) {
-                session.selectedUnitKeys.splice(keyIndex, 1);
-            }
+            session.selectedUnitKeys = session.selectedUnitKeys.filter((key) => key !== unitKey);
         }
     });
 };

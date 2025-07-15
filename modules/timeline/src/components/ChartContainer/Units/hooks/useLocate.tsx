@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import type { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
 import { InsightUnit, UnitHeight, UnitMatcher } from '../../../../entity/insight';
 import type { Session } from '../../../../entity/session';
-import { getAutoKey } from '../../../../utils/dataAutoKey';
 import { getRootUnit } from '../../../../utils';
 /**
  * Searches a list of given @param units recursively in pre-order, comparing them with @param matcher, and save the result path in @path
@@ -80,13 +79,6 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
     };
 
     const handleUnitSelection = (targetUnit: InsightUnit): void => {
-        const unitKey = getAutoKey(targetUnit);
-
-        if (session.locateUnit?.showDetail === false) {
-            session.setSelectedUnitKeys([unitKey]);
-        } else {
-            session.selectedUnitKeys = [unitKey];
-        }
         session.selectedUnits = [targetUnit];
     };
 

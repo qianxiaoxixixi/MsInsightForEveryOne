@@ -150,20 +150,26 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const 
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "emptyFlag", response.body.emptyFlag, allocator);
     json_t data(kArrayType);
-    for (const Threads &threads : response.body.data) {
+    for (const SliceGroupItem &sliceGroupItem : response.body.data) {
         json_t threadsJson(kObjectType);
-        JsonUtil::AddMember(threadsJson, "title", threads.title, allocator);
-        JsonUtil::AddMember(threadsJson, "wallDuration", threads.wallDuration, allocator);
-        JsonUtil::AddMember(threadsJson, "occurrences", threads.occurrences, allocator);
-        JsonUtil::AddMember(threadsJson, "avgWallDuration", threads.avgWallDuration, allocator);
-        JsonUtil::AddMember(threadsJson, "selfTime", threads.selfTime, allocator);
-        json_t tidJson(kArrayType);
-        for (const auto &item: threads.tid) {
-            tidJson.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+        JsonUtil::AddMember(threadsJson, "title", sliceGroupItem.title, allocator);
+        JsonUtil::AddMember(threadsJson, "wallDuration", sliceGroupItem.wallDuration, allocator);
+        JsonUtil::AddMember(threadsJson, "occurrences", sliceGroupItem.occurrences, allocator);
+        JsonUtil::AddMember(threadsJson, "avgWallDuration", sliceGroupItem.avgWallDuration, allocator);
+        JsonUtil::AddMember(threadsJson, "selfTime", sliceGroupItem.selfTime, allocator);
+        json_t processesJson(kArrayType);
+        for (const auto &[key, value]: sliceGroupItem.processMap) {
+            json_t processJson(kObjectType);
+            JsonUtil::AddMember(processJson, "pid", key, allocator);
+            json_t tidJson(kArrayType);
+            for (const auto &item: value) {
+                tidJson.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+            }
+            JsonUtil::AddMember(processJson, "tidList", tidJson, allocator);
+            processesJson.PushBack(processJson, allocator);
         }
-        JsonUtil::AddMember(threadsJson, "tid", tidJson, allocator);
-        JsonUtil::AddMember(threadsJson, "pid", threads.pid, allocator);
-        JsonUtil::AddMember(threadsJson, "metaType", threads.metaType, allocator);
+        JsonUtil::AddMember(threadsJson, "processes", processesJson, allocator);
+        JsonUtil::AddMember(threadsJson, "metaType", sliceGroupItem.metaType, allocator);
         data.PushBack(threadsJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
@@ -576,6 +582,7 @@ std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const Uni
             JsonUtil::AddMember(itemJson, "id", index++, allocator);
         }
         JsonUtil::AddMember(itemJson, "tid", sameOperators.tid, allocator);
+        JsonUtil::AddMember(itemJson, "pid", sameOperators.pid, allocator);
         sameOperatorsDetails.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "sameOperatorsDetails", sameOperatorsDetails, allocator);

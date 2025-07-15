@@ -145,8 +145,7 @@ export function detail<
     K extends Record<string, unknown>,
     V extends Record<string, unknown>,
     MetaData,
-    Field extends keyof T,
->(desc: DetailDesc<T, K, V, MetaData, Field>): DetailDescriptor<MetaData> {
+>(desc: DetailDesc<T, K, V, MetaData, keyof T>): DetailDescriptor<MetaData> {
     return {
         ...desc,
         childrenColumnName: desc.childrenColumnName ?? 'children',

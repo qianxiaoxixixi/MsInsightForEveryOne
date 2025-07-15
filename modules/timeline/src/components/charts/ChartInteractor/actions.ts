@@ -68,11 +68,6 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     if (session.contextMenu.isVisible) {
         return;
     }
-    // when selected range changes, the 'more' panel should be cleared (by resetting session.selectedDetailKeys)
-    runInAction(() => {
-        session.selectedDetailKeys = [];
-        session.selectedDetails = [];
-    });
 
     const clickPosX = xReverseScaleRef.current(clickPos.timeAxisX);
     if (Math.abs(lastPos.x - clickPosX) >= MIN_BRUSH_SIZE) {

@@ -1563,19 +1563,13 @@ OneKernelData TextTraceDatabase::QueryKernelTid(const uint64_t trackId)
 
 bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
     Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
-    const std::vector<std::string> &trackIdList)
+    const std::vector<uint64_t> &trackIdList)
 {
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack in request parameter orderBy.");
         return false;
-    }
-    for (const auto& trackId : trackIdList) {
-        if (!StringUtil::CheckSqlValid(trackId)) {
-            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", trackId);
-            return false;
-        }
     }
     std::string sql = TextSqlConstant::GetThreadSameOperatorsDetailsSql(requestParams.order, requestParams.orderBy,
                                                                         trackIdList);
@@ -1615,6 +1609,7 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
         TrackInfo trackInfo;
         TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
         sameOperatorsDetail.tid = trackInfo.threadId;
+        sameOperatorsDetail.pid = trackInfo.processId;
         SliceQuery sliceQuery;
         sliceQuery.rankId = requestParams.rankId;
         sliceQuery.trackId = trackId;
@@ -1625,7 +1620,7 @@ void TextTraceDatabase::ExecuteQueryThreadSameOperatorsDetails(const std::unique
     }
 }
 
-uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, const std::vector<std::string> &trackIdList,
+uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, const std::vector<uint64_t> &trackIdList,
                                                uint64_t &startTime, uint64_t &endTime)
 {
     uint64_t total = 0;

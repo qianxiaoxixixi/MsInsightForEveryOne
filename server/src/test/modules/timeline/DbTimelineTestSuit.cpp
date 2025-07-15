@@ -663,7 +663,7 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenHccl)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
+    requestParams.processes.push_back(SimpleProcess {"HCCL", {"0"}});
     requestParams.rankId = "2";
     requestParams.metaType = "HCCL";
     requestParams.orderBy = "duration";
@@ -672,7 +672,7 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenHccl)
     requestParams.pageSize = 10; // pageSize = 10
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    const std::vector<uint64_t> traceId = {0};
     bool result = database->QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
@@ -682,14 +682,13 @@ TEST_F(FullDbTestSuit, TestQueryThreadSameOperatorsDetailsWhenOverlap)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("FullDb");
 
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
-    requestParams.pid = "17738580008830245";
+    requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
     requestParams.metaType = "OVERLAP_ANALYSIS";
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    const std::vector<uint64_t> traceId = {0};
     bool result = database->QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }

@@ -110,6 +110,12 @@ const ChartBody = observer((props: ChartBodyProps) => {
             session.renderTrigger = !session.renderTrigger;
         });
     }, [session.pinnedUnits]);
+    // 监听 selectedUnitKeys 变化表示选中泳道变化，需要重绘
+    useEffect(() => {
+        runInAction(() => {
+            session.renderTrigger = !session.renderTrigger;
+        });
+    }, [session.selectedUnitKeys]);
     return (<>
         {
             view({

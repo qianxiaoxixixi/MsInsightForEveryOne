@@ -473,10 +473,14 @@ struct CommunicationKernelRequest : public Request {
     CommunicationKernelParams params;
 };
 
+struct SimpleProcess {
+    std::string pid;
+    std::set<std::string> tidList;
+};
+
 struct UnitThreadsOperatorsParams {
     std::string rankId;
-    std::vector<std::string> tid;
-    std::string pid;
+    std::vector<SimpleProcess> processes;
     std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
@@ -495,8 +499,15 @@ struct UnitThreadsOperatorsParams {
             warnMsg = "unit threads operators end time is invalid";
             return false;
         }
-        if (tid.empty()) {
-            warnMsg = "Failed to query threads same operator. Track id list is empty.";
+        if (processes.empty()) {
+            warnMsg = "Failed to query threads same operator. process list is empty.";
+            return false;
+        }
+        for (const auto& process : processes) {
+            if (process.pid.empty() || process.tidList.empty()) {
+                warnMsg = "Failed to query threads same operator. process list is invalid.";
+                return false;
+            }
         }
         return CheckUnsignPageValid(pageSize, current, warnMsg);
     }
