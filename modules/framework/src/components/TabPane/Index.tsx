@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
 import type { Scene, Session } from '@/entity/session';
-import { type MenuProps, message, Menu } from 'antd';
+import { type MenuProps, message, Menu, Tooltip } from 'antd';
 import { safeJSONParse } from 'ascend-utils';
 
 import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
@@ -101,8 +101,24 @@ const Index = observer(({ session }: {session: Session}) => {
     if (isLeaks) {
         setActiveModule('Leaks');
     };
+    const getIcon = (tabTitle: string): React.ReactElement => {
+        return <Tooltip mouseEnterDelay={1} title={
+            tabTitle === 'Timeline'
+                ? <div style={{ padding: '1rem' }}>
+                    <div>{t('TimelineSystemTooltip')}</div>
+                    <div style={{ marginTop: '2rem' }}>{t('TimelineOperatorTooltip')}</div>
+                    <div style={{ marginTop: '2rem' }}>{t('TimelineServiceTooltip')}</div>
+                </div>
+                : <div style={{ padding: '1rem' }}>{t(`${tabTitle}Tooltip`)}</div>
+        }>
+            <span>{t(tabTitle, { defaultValue: tabTitle })}</span>
+        </Tooltip>;
+    };
     const items: MenuProps['items'] = useMemo(() => {
-        const modules = availableModules.map(config => ({ label: t(config.name, { defaultValue: config.name }), key: config.name }));
+        const modules = availableModules.map(config => ({
+            label: getIcon(config.name),
+            key: config.name,
+        }));
         return isLeaks ? modules.filter(module => module.key === 'Leaks') : modules;
     }, [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
