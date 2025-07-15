@@ -814,7 +814,12 @@ export interface AscendSliceDetail extends Record<string, unknown> {
     attrInfo?: string;
 };
 
-export interface AscendMultiSliceList {
+export interface SimpleProcessItem {
+    pid: string;
+    tidList: string[];
+}
+
+export interface AscendMultiSliceList extends Record<string, unknown> {
     title?: string;
     wallDuration?: number;
     selfTime?: number;
@@ -822,9 +827,8 @@ export interface AscendMultiSliceList {
     occurrences?: number;
     rankId?: string;
     dbPath?: string;
-    tid?: string;
-    pid?: string;
+    processes?: SimpleProcessItem[];
     startTime?: number;
     endTime?: number;
     metaType?: string;
-};
+}

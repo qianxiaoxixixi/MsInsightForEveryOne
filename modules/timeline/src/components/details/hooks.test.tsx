@@ -3,7 +3,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useDetailUpdater, useMoreUpdater, useSelectedParamsDetailUpdater, useExtraDataUpdater, useSelectedDataDetailUpdater } from './hooks';
+import { useDetailUpdater, useSelectedParamsDetailUpdater, useExtraDataUpdater, useSelectedDataDetailUpdater } from './hooks';
 import { EMPTY_TABLE_STATE } from './types';
 import type { ColumnDef, DetailDescriptor, InsightUnit, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
 import { FilterType, TabState } from '../../entity/tabDependency';
@@ -100,25 +100,6 @@ describe('hooks test', () => {
         });
         expect(detailDescriptor.fetchData).toBeCalled();
         expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
-    });
-
-    it('useMoreUpdater test', async () => {
-        const moreDescriptor: MoreDescriptor = {
-            field: 'name',
-            columns: [
-                col,
-            ],
-        };
-        const { result, rerender } = renderHook(
-            ({ session, more }) => useMoreUpdater(session, more),
-            { initialProps: { session, more: moreDescriptor } },
-        );
-        expect(result.current).toStrictEqual(EMPTY_TABLE_STATE);
-
-        session.selectedDetails = [{ name: [{}] }];
-        session.selectedDetailKeys = [''];
-        rerender({ session, more: moreDescriptor });
-        expect(JSON.stringify(result.current)).toEqual(JSON.stringify({ ...expectedTablestate, dataSource: [{}] }));
     });
 
     it('useSelectedParamsDetailUpdater test', async () => {

@@ -4,7 +4,7 @@
 import _ from 'lodash';
 import { autorun, runInAction } from 'mobx';
 import * as React from 'react';
-import type { DetailDescriptor, InsightUnit, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
+import type { DetailDescriptor, InsightUnit, SingleDataDesc } from '../../entity/insight';
 import type { SelectedParams, Session } from '../../entity/session';
 import type { TabState } from '../../entity/tabDependency';
 import { useTranslation } from 'react-i18next';
@@ -13,33 +13,6 @@ import { logger } from '../../utils/Logger';
 import { EMPTY_TABLE_STATE, type TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
 import i18n from 'ascend-i18n';
-
-const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigger: any[], depsList: unknown[]): boolean => {
-    const [triggerHook, setTriggerHook] = React.useState(false);
-    const selectedDetailKeysRef = React.useRef(selectedDetailKeys);
-    const triggerRef = React.useRef(trigger);
-    const depsListRef = React.useRef(depsList);
-
-    const isChangedArray = (raw: unknown[], target: unknown[]): boolean => {
-        if (raw.length !== target.length) { return true; }
-        for (let i = 0; i < raw.length; i++) {
-            if (raw[i] !== target[i]) { return true; }
-        }
-        return false;
-    };
-
-    if (isChangedArray(selectedDetailKeys, selectedDetailKeysRef.current) ||
-        isChangedArray(trigger, triggerRef.current) ||
-        isChangedArray(depsList, depsListRef.current)) {
-        setTriggerHook((prev) => !prev);
-    }
-
-    selectedDetailKeysRef.current = selectedDetailKeys;
-    triggerRef.current = trigger;
-    depsListRef.current = depsList;
-
-    return triggerHook;
-};
 
 interface HandleFetchDataParams {
     result: Array<Record<string, unknown>>;
@@ -56,6 +29,9 @@ interface HandleFetchDataParams {
 const handleFetchedData = ({
     result, session, recentUnits, recentRange, tabState, selectedUnit, detail, setState, onDataLoaded,
 }: HandleFetchDataParams): void => {
+    runInAction(() => {
+        session.selectedMultiSlice = '';
+    }); // 更新表格后，More表格需要删除数据
     const { selectedUnits, selectedRange } = session;
     if (recentUnits.current !== selectedUnits || recentRange.current !== selectedRange) { return; }
     result.forEach(treeAttachInfo);
@@ -80,16 +56,15 @@ const handleFetchedData = ({
 export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unknown> | undefined, tabState: TabState | undefined,
     dep: unknown = [], onDataLoaded?: (data: unknown[]) => void): TableState => {
     const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
-    const { selectedUnits, selectedRange, selectedDetailKeys } = session;
+    const { selectedUnitKeys, selectedUnits, selectedRange } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
     const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
     const trigger = tabState?.trigger !== undefined ? Object.values(tabState.trigger) : [];
     const depsList = Array.isArray(dep) ? dep : [dep];
-    const hookTrigger = useFilterDeps(selectedDetailKeys, trigger, depsList);
 
     const onDataFetched = React.useMemo(() => ([selectedUnits, selectedRange].filter(_.isEmpty).length === 0
         ? fetchData?.(session, selectedUnit?.metadata)
-        : undefined), [selectedUnits, selectedRange, hookTrigger, detail]);
+        : undefined), [selectedUnitKeys, selectedRange, detail]);
 
     const recentUnits = React.useRef(selectedUnits);
     const recentRange = React.useRef(selectedRange);
@@ -115,7 +90,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
         if (session.selectedData?.showSelectedData !== true) {
             loadData();
         }
-    }, [selectedUnits, selectedRange, detail, ...trigger, ...depsList, session.language]);
+    }, [selectedUnitKeys, selectedRange, detail, ...trigger, ...depsList, session.language]);
     // 需要进行多选过滤的才会执行下面的代码
     React.useEffect(() =>
         autorun(() => {
@@ -128,28 +103,6 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
                 loading: false,
             });
         }), []);
-    return state;
-};
-
-export const useMoreUpdater = (session: Session, more: MoreDescriptor | undefined): TableState => {
-    const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
-    const { selectedUnits, selectedDetailKeys, selectedDetails } = session;
-
-    React.useEffect(() => {
-        const selectedDetail = selectedDetails.length > 0 ? selectedDetails[0] : undefined;
-        setState({ ...EMPTY_TABLE_STATE, loading: true });
-        if (more && selectedDetail) {
-            setState({
-                dataSource: selectedDetail[more.field] as Array<Record<string, unknown>>,
-                columns: parseColDef(more, session),
-                rowKey: (more.rowKey ?? undefined) as (row: object) => string,
-                onExpand: onExpandForChildren(session, more.onExpand, setState),
-                loading: false,
-            });
-        } else {
-            setState(EMPTY_TABLE_STATE);
-        }
-    }, [selectedUnits, selectedDetailKeys, more]);
     return state;
 };
 

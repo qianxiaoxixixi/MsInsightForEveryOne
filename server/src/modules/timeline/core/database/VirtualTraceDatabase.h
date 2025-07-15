@@ -89,7 +89,7 @@ public:
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) = 0;
     virtual bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
         Protocol::UnitThreadsOperatorsBody &responseBody,
-        uint64_t minTimestamp, const std::vector<std::string> &trackIdList) = 0;
+        uint64_t minTimestamp, const std::vector<uint64_t> &trackIdList) = 0;
     virtual bool QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
         const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;

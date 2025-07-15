@@ -530,12 +530,20 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    if (json["params"].HasMember("tid") && json["params"]["tid"].IsArray()) {
-        for (const auto &tid : json["params"]["tid"].GetArray()) {
-            reqPtr->params.tid.emplace_back(JsonUtil::GetStringWithoutKey(tid));
+    if (json["params"].HasMember("processes") && json["params"]["processes"].IsArray()) {
+        for (const auto &process : json["params"]["processes"].GetArray()) {
+            SimpleProcess p;
+            JsonUtil::SetByJsonKeyValue(p.pid, process, "pid");
+            if (!process.HasMember("tidList") || !process["tidList"].IsArray()) {
+                reqPtr->params.processes.emplace_back(p);
+                continue;
+            }
+            for (const auto &tid : process["tidList"].GetArray()) {
+                p.tidList.emplace(JsonUtil::GetStringWithoutKey(tid));
+            }
+            reqPtr->params.processes.emplace_back(p);
         }
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");

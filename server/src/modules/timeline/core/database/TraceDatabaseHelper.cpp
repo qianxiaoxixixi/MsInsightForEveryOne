@@ -254,75 +254,56 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryDeviceUnitCounter(
 
 std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsDetails(
     std::unique_ptr <SqlitePreparedStatement> &stmt, const Protocol::UnitThreadsOperatorsParams &requestParams,
-    const std::string& rankId, uint64_t minTimestamp, const std::string& orderBy)
+    const QUERY_THREAD_SAME_OPERATORS_PARAMS& params)
 {
-    auto processType = GetProcessType(requestParams.metaType);
+    const auto rankId = params.rankId;
+    const auto minTimestamp = params.minTimestamp;
+    const auto orderBy = params.orderBy;
+    // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
+    const std::string tidListStr = StringUtil::Join4SqlGroup(params.tidList);
+    // pid 从内部数据中获取，无sql注入风险
+    const std::string pidListStr = StringUtil::Join4SqlGroup(params.pidList);
     std::string sql;
     uint64_t offset = (requestParams.current - 1) > UINT64_MAX / requestParams.pageSize ? 0 :
         (requestParams.current - 1) * requestParams.pageSize;
-    auto sameOperatorsDetailsSql = GetQueryThreadSameOperatorsDetailsSql(requestParams.tid, processType, requestParams);
-    switch (processType) {
-        case PROCESS_TYPE::ASCEND_HARDWARE:
-            Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(requestParams.name, minTimestamp);
-            return Execute(stmt, rankId, requestParams.startTime, requestParams.endTime, requestParams.pageSize,
-                           offset);
-        case PROCESS_TYPE::HCCL:
-            Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(minTimestamp, rankId);
-            return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.name,
-                           requestParams.pageSize, offset);
-        case PROCESS_TYPE::CANN_API:
-            sql = sameOperatorsDetailsSql + orderBy;
-            return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
-                                requestParams.startTime, requestParams.endTime, requestParams.pageSize, offset);
-        case PROCESS_TYPE::MS_TX:
-            sql = "with nameIds as (select id from STRING_IDS where value = ?) "
-                  " select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
-                  " from MSTX_EVENTS main join  nameIds on message = id where globalTid = ? "
-                  " and timestamp + duration >= ? AND timestamp <= ?" + orderBy;
-            return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
-                                requestParams.startTime, requestParams.endTime, requestParams.pageSize, offset);
-        case PROCESS_TYPE::API:
-            sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
-                  " select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
-                  " from PYTORCH_API main join  nameIds on name = id\n"
-                  "     where globalTid = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
-            return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
-                                requestParams.startTime, requestParams.endTime, requestParams.pageSize, offset);
-        case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            sql = sameOperatorsDetailsSql + orderBy;
-            return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.startTime, requestParams.endTime,
-                                requestParams.pageSize, offset);
-        default:
-            throw DatabaseException("unsupported type!");
+    std::string withHeadSql = "with params as (SELECT ? as rankId, ? as minTime, ? as startTime, ? as endTime), "
+        "  nameIds as (select id from STRING_IDS where value = ?) ";
+    std::vector<PROCESS_TYPE> types = { PROCESS_TYPE::ASCEND_HARDWARE, PROCESS_TYPE::HCCL, PROCESS_TYPE::CANN_API,
+        PROCESS_TYPE::MS_TX, PROCESS_TYPE::API, PROCESS_TYPE::OVERLAP_ANALYSIS
+    };
+    const bool uniqueDevice = IsDeviceIdUnique(requestParams.rankId);
+    for (const auto type : types) {
+        withHeadSql += ", " + GetQueryThreadSameOperatorsDetailsHeadSql(tidListStr, pidListStr, type, uniqueDevice);
     }
+    const auto sameOperatorsDetailsSql = withHeadSql +
+        " , all_same_operator_detail as (SELECT * from ascend UNION ALL " // PROCESS_TYPE::ASCEND_HARDWARE
+        "   SELECT * from hccl UNION ALL " // PROCESS_TYPE::HCCL
+        "   SELECT * from cann UNION ALL " // PROCESS_TYPE::CANN_API
+        "   SELECT * from mstx UNION ALL " // PROCESS_TYPE::MS_TX
+        "   SELECT * from python UNION ALL " // PROCESS_TYPE::API
+        "   SELECT * from overlap)\n" // PROCESS_TYPE::OVERLAP_ANALYSIS
+        " SELECT * from all_same_operator_detail ";
+    Prepare(stmt, sameOperatorsDetailsSql + orderBy)->BindParams(rankId, minTimestamp,
+        requestParams.startTime, requestParams.endTime, requestParams.name);
+    return Execute(stmt, requestParams.pageSize, offset);
 }
 
-std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsSql(const std::vector<std::string> &tidList,
-    PROCESS_TYPE type, const Protocol::UnitThreadsOperatorsParams &requestParams)
+std::string TraceDatabaseHelper::GetQueryThreadSameOperatorsDetailsHeadSql(const std::string &tidListStr,
+    const std::string &pidListStr, const PROCESS_TYPE type, const bool uniqueDevice)
 {
-    std::string tidPlaceholders = StringUtil::Join4SqlGroup(tidList);
-    // 已经在DbTraceDataBase::QueryThreadSameOperatorsDetails中检查过tid sql注入风险
-    std::string comSql;
     switch (type) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            return ASCEND_SAME_NAME_DETAIL_SQL + tidPlaceholders
-            + ") and timestamp + duration >= ? AND timestamp <= ? ";
+            return GetAscendSameNameDetailSql(tidListStr);
         case PROCESS_TYPE::HCCL:
-            comSql = IsDeviceIdUnique(requestParams.rankId) ? COM_OP_SAME_NAME_DETAIL_SQL_UNIQUE_DEVICE :
-                     COM_OP_SAME_NAME_DETAIL_SQL_NOT_UNIQUE_DEVICE;
-            return HCCL_SAME_NAME_DETAIL_SQL_PART1 + tidPlaceholders + comSql + tidPlaceholders
-                   + ") and timestamp + duration >= startTime AND timestamp <= endTime group by op.opId ";
+            return GetHcclSameNameDetailSql(tidListStr, uniqueDevice);
         case PROCESS_TYPE::CANN_API:
-            return " with nameIds as (select id from STRING_IDS where value = ?) "
-                   " select startNs - ? as timestamp, endNs - startNs as duration, depth, "
-                   " main.ROWID as id , type as tid"
-                   " from CANN_API main join nameIds on name = id where globalTid = ? and type in (" + tidPlaceholders
-                   + ") and timestamp + duration >= ? AND timestamp <= ? ";
+            return GetCannSameNameDetailSql(pidListStr, tidListStr);
+        case PROCESS_TYPE::MS_TX:
+            return GetMstxSameNameDetailSql(pidListStr);
+        case PROCESS_TYPE::API:
+            return GetPythonSameNameDetailSql(pidListStr);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            return "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, "
-                   " main.ROWID as id , type as tid"
-                   " from OVERLAP_ANALYSIS main where deviceId = ? and type in (" + tidPlaceholders
-                   + ") and timestamp + duration >= ? AND timestamp <= ? ";
+            return GetOverlapAnalysisSameNameDetailSql(tidListStr);
         default:
             return "";
     }
@@ -416,7 +397,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
 std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
 {
-    // pid匹配的入参为globalTid的高32位
+    // pid匹配的入参为globalTid的高32位 // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT pa.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, "
         "'pytorch' as threadId FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
@@ -436,7 +417,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Process(std::unique_ptr <Sqlit
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
-{
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT pa.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, (globalTid / 4294967296) AS pid, depth, globalTid as processId, "
         "'pytorch' as threadId FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
@@ -456,7 +437,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Thread(std::unique_ptr <Sqlite
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4MSTX(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
-{
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT me.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'MsTx' as threadId, "
         "(globalTid / 4294967296) AS pid FROM MSTX_EVENTS AS me LEFT JOIN STRING_IDS AS si ON me.message = si.id "
@@ -466,7 +447,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4MSTX(std::unique_ptr <SqlitePr
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Pytorch(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
-{
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT pa.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, 'pytorch' as threadId, "
         "(globalTid / 4294967296) AS pid FROM PYTORCH_API AS pa LEFT JOIN STRING_IDS AS si ON pa.name = si.id "
@@ -476,7 +457,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Pytorch(std::unique_ptr <Sqlit
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4HostHccl(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
-{
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT ca.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
@@ -486,7 +467,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4HostHccl(std::unique_ptr <Sqli
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4CANN(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
-{
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT ca.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
@@ -496,7 +477,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4CANN(std::unique_ptr <SqlitePr
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params)
-{
+{   // pid, tid 实际用于展示，processId, threadId 才是跳转用的 pid, tid
     std::string sql = "SELECT ca.ROWID as id, value AS name, startNs AS start, (endNs - startNs) AS duration, "
         "(globalTid & 0xFFFFFFFF) AS tid, depth, globalTid as processId, type as threadId, "
         "(globalTid / 4294967296) AS pid FROM CANN_API AS ca LEFT JOIN STRING_IDS AS si ON ca.name = si.id "
@@ -1302,26 +1283,29 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<Protocol::SimpleSlice> 
             }
         }
         if (!find) {
-            Protocol::Threads threads {};
-            threads.title = cur.name;
-            threads.wallDuration = cur.duration;
-            threads.occurrences = 1;
-            threads.avgWallDuration = cur.duration;
+            Protocol::SliceGroupItem sliceGroupItem {};
+            sliceGroupItem.title = cur.name;
+            sliceGroupItem.wallDuration = cur.duration;
+            sliceGroupItem.occurrences = 1;
+            sliceGroupItem.avgWallDuration = cur.duration;
             if (cur.name.empty()) {
                 continue;
             } else {
-                threads.selfTime = selfTimeKeyValue.at(cur.name);
+                sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
             }
-            threads.tid.insert(cur.tid);
-            threads.pid = cur.pid;
-            threads.metaType = cur.metaType;
-            responseBody.data.emplace_back(threads);
+            sliceGroupItem.processMap[cur.pid] = { cur.tid };
+            sliceGroupItem.metaType = cur.metaType;
+            responseBody.data.emplace_back(sliceGroupItem);
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
                 responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
-            responseBody.data[index].tid.insert(cur.tid);
+            if (responseBody.data[index].processMap.count(cur.pid)) {
+                responseBody.data[index].processMap[cur.pid].insert(cur.tid);
+            } else {
+                responseBody.data[index].processMap[cur.pid] = { cur.tid };
+            }
         }
     }
 }
@@ -1339,22 +1323,25 @@ void TraceDatabaseHelper::ReduceThread(const std::vector<CompeteSliceDomain> &ro
             }
         }
         if (!find) {
-            Protocol::Threads threads {};
-            threads.title = cur.name;
-            threads.wallDuration = cur.duration;
-            threads.occurrences = 1;
-            threads.avgWallDuration = cur.duration;
-            threads.selfTime = selfTimeKeyValue.at(cur.name);
-            threads.tid.insert(cur.tid);
-            threads.pid = cur.pid;
-            threads.metaType = cur.metaType;
-            responseBody.data.emplace_back(threads);
+            Protocol::SliceGroupItem sliceGroupItem {};
+            sliceGroupItem.title = cur.name;
+            sliceGroupItem.wallDuration = cur.duration;
+            sliceGroupItem.occurrences = 1;
+            sliceGroupItem.avgWallDuration = cur.duration;
+            sliceGroupItem.selfTime = selfTimeKeyValue.at(cur.name);
+            sliceGroupItem.processMap[cur.pid] = { cur.tid };
+            sliceGroupItem.metaType = cur.metaType;
+            responseBody.data.emplace_back(sliceGroupItem);
         } else {
             responseBody.data[index].wallDuration += cur.duration;
             responseBody.data[index].occurrences += 1;
             responseBody.data[index].avgWallDuration = responseBody.data[index].occurrences == 0 ? 0 :
                 responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
-            responseBody.data[index].tid.insert(cur.tid);
+            if (responseBody.data[index].processMap.count(cur.pid)) {
+                responseBody.data[index].processMap[cur.pid].insert(cur.tid);
+            } else {
+                responseBody.data[index].processMap[cur.pid] = { cur.tid };
+            }
         }
     }
 }
@@ -1855,7 +1842,7 @@ std::string TraceDatabaseHelper::GetSearchAllSlicesDetailsSql(bool isMatchExact,
         " tasks as (select deviceId, TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
         " startNs - minTime.value as startTime,endNs - startNs as duration,depth,connectionId from TASK join minTime "
         " where deviceId = ? ORDER BY startTime),\n"
-        " com as (select deviceId, opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid,"
+        " com as (select deviceId, opId, tasks.ROWID as id, 'HCCL' as pid, groupName || '_' || planeId as tid,"
         " startTime, duration, 0 as depth, info.taskType as name"
         " from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
         " ORDER BY startTime)\n"
@@ -1912,8 +1899,8 @@ std::string TraceDatabaseHelper::GetSearchSliceNameSql(bool isMatchExact, bool i
             " tasks as (select ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, connectionId, "
             " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
             " where deviceId = ? ORDER BY startTime), "
-            " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
-            " info.taskType as name from COMMUNICATION_TASK_INFO info "
+            " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, groupName || '_' || planeId as tid, "
+            " startTime, duration, 0 as depth, info.taskType as name from COMMUNICATION_TASK_INFO info "
             " join tasks on info.globalTaskId=tasks.globalTaskId ORDER BY startTime) "
             " select * from ( select coalesce(compute.name, schedule.name, main.taskType) as name, main.pid, main.pid "
             " as metaType, main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main "

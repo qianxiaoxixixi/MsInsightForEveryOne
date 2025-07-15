@@ -177,8 +177,7 @@ static inline PROCESS_TYPE GetProcessType(const std::string &metaType)
     return processType.value();
 }
 static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::unique_ptr<SqlitePreparedStatement> &stmt,
-     const Protocol::UnitThreadsOperatorsParams &requestParams, const std::string& rankId,
-     uint64_t minTimestamp, const std::string& orderBy);
+     const Protocol::UnitThreadsOperatorsParams &requestParams, const QUERY_THREAD_SAME_OPERATORS_PARAMS& params);
 static bool QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
     const std::string& rankId);
@@ -298,8 +297,8 @@ private:
 
     static std::string GetOrderByCondition(const EventsViewParams &params);
     static std::string GetSystemViewSqlByLayer(const std::string &layer, const std::string &rankId);
-    static std::string GetQueryThreadSameOperatorsDetailsSql(const std::vector<std::string> &tidList,
-        PROCESS_TYPE type, const Protocol::UnitThreadsOperatorsParams &requestParams);
+    static std::string GetQueryThreadSameOperatorsDetailsHeadSql(const std::string &tidListStr,
+        const std::string &pidListStr, PROCESS_TYPE type, bool uniqueDevice);
 
     static std::string GetSingleSearchNameWithLockRangeSql(const std::string &path, const TrackQuery &singleQuery);
 

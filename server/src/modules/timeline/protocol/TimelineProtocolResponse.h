@@ -98,20 +98,19 @@ struct UnitThreadTracesSummaryResponse : public Response {
     UnitThreadTracesSummaryBody body;
 };
 
-struct Threads {
+struct SliceGroupItem {
     std::string title;
     uint64_t wallDuration = 0;
     uint64_t occurrences = 0;
     uint64_t avgWallDuration = 0;
     uint64_t selfTime = 0;
-    std::set<std::string> tid;
-    std::string pid;
+    std::map<std::string, std::set<std::string>> processMap;
     std::string metaType;
 };
 
 struct UnitThreadsBody {
     bool emptyFlag = false;
-    std::vector<Threads> data;
+    std::vector<SliceGroupItem> data;
 };
 
 struct UnitThreadsResponse : public Response {

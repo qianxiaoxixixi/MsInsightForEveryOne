@@ -5,9 +5,8 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import { Table } from 'antd';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { MoreTableProps, TableState, TableViewProps } from './types';
-import { useDetailUpdater, useMoreUpdater } from './hooks';
-import { selectRow } from './utils';
+import { TableState, TableViewProps } from './types';
+import { useDetailUpdater } from './hooks';
 import type { CommonStateProto, TabProto } from './base/Tabs';
 import { ResizeTable } from 'ascend-resize';
 import { AutoKey, getAutoKey } from '../../utils/dataAutoKey';
@@ -30,17 +29,16 @@ const generateSummary = (state: TableState, dataSource: Array<AutoKey<object>>):
 );
 
 export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
-    { session, height, detail, tabState, commonState, depsList, summaryBuilder }: TableViewProps<TabProto, T>) => {
+    { session, height, detail, tabState, commonState, depsList }: TableViewProps<TabProto, T>) => {
     useEffect(() => {
         runInAction(() => {
-            session.selectedDetailKeys = [];
-            session.selectedDetails = [];
             session.selectedMultiSlice = '';
         });
     }, [session.selectedRange]);
     const state = useDetailUpdater(session, detail, tabState, depsList);
     const unit = session.selectedUnits[0];
     const [dataSource, setDataSource] = useState(state.dataSource);
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
     useEffect(() => {
         setDataSource(state.dataSource);
     }, [state.dataSource]);
@@ -49,20 +47,20 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     return <ResizeTable {...state} summary={summary} dataSource={dataSource} allowCopy
         scroll={{ y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT, x: TABLE_MIN_WIDTH }} virtual
         rowClassName={(row): string => {
-            return session.selectedDetailKeys[0] === getAutoKey(row) ? 'selected-row' : 'click-able';
+            return selectedKey !== null && selectedKey === getAutoKey(row) ? 'selected-row' : 'click-able';
         }}
         showSorterTooltip={false}
         expandable={{ showExpandColumn: false }}
         onRow={(row): React.HTMLAttributes<any> => ({
             onClick: async (): Promise<void> => {
                 detail?.clickCallback?.({ row, session, detail, unit, commonState });
-                selectRow(row, session, state);
+                setSelectedKey(state.rowKey?.(row) ?? getAutoKey(row));
                 if (detail?.fetchMoreData !== undefined && detail.more?.field !== undefined) {
                     row[detail.more?.field] = await detail?.fetchMoreData(session, row).catch(() => []);
                 }
             },
             onDoubleClick: (): void => {
-                selectRow(row, session, state);
+                setSelectedKey(state.rowKey?.(row) ?? getAutoKey(row));
                 detail?.doubleClickCallback?.({ row, session, detail, unit, commonState });
             },
             onMouseEnter: (): void => {
@@ -101,10 +99,4 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
             setDataSource(filteredData);
         }}
     />;
-});
-
-export const SelectSimpleTabularMore = observer(({ more, height, session }: MoreTableProps) => {
-    const state = useMoreUpdater(session, more);
-    return <ResizeTable {...state}
-        expandable={{ showExpandColumn: false }}/>;
 });

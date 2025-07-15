@@ -100,10 +100,10 @@ public:
 
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
                                          Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
-                                         const std::vector<std::string> &trackIdList) override;
+                                         const std::vector<uint64_t> &trackIdList) override;
 
     std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
-    uint64_t SameOperatorsCount(const std::string &name, const std::vector<std::string> &trackIdList,
+    uint64_t SameOperatorsCount(const std::string &name, const std::vector<uint64_t> &trackIdList,
                                 uint64_t &startTime, uint64_t &endTime);
     void ExecuteQueryThreadSameOperatorsDetails(const std::unique_ptr<SqliteResultSet>& resultSet,
         uint64_t minTimestamp, const Protocol::UnitThreadsOperatorsParams &requestParams,

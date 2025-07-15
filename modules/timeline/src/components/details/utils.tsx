@@ -1,14 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
-import { runInAction } from 'mobx';
 import * as React from 'react';
 import type { TreeNode } from '../../entity/common';
 import { SorterDef, SummaryFunction, TableDataAdapter } from '../../entity/insight';
 import type { Session } from '../../entity/session';
 import type { TabState } from '../../entity/tabDependency';
-import { type AutoKey, getAutoKey } from '../../utils/dataAutoKey';
+import { getAutoKey } from '../../utils/dataAutoKey';
 import { getOrigin } from '../../utils/traceOrigin';
 import type { ColumnType } from 'antd/es/table';
 import type { FixedType } from '../base/rc-table/types';
@@ -64,11 +62,6 @@ export const parseColDef = <T extends Record<string, unknown> = Record<string, u
     return cols;
 };
 
-export const selectRow = (row: AutoKey<Record<string, unknown>>, session: Session, state: TableState): void => runInAction(() => {
-    session.selectedDetailKeys = [state.rowKey?.(row) ?? getAutoKey(row)];
-    session.selectedDetails = [row];
-});
-
 export type OnExpandAction = (expanded: boolean, r: Record<string, unknown>) => void;
 
 type OnExpandConfig<T> = ((session: Session, data: TreeNode<Record<string, T>>) => Promise<TreeNode<Record<string, T>> | undefined>);
@@ -95,10 +88,6 @@ export const onExpandForChildren = (session: Session, onExpand: OnExpandConfig<a
             if (!tree) { return; }
             // data is updated in place, which won't trigger ui refreshing, so force refresh the ui
             setTableState(state => ({ ...state, data: [...state.dataSource] }));
-            // force refresh more panel in case data is updated in place
-            if (session.selectedDetailKeys.length > 0) {
-                runInAction(() => { session.selectedDetailKeys = [...session.selectedDetailKeys]; });
-            }
         });
     };
 };

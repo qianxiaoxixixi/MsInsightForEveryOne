@@ -7,6 +7,7 @@
 #include "DbSqlDefs.h"
 #include "NpuInfoRepoMock.h"
 #include "TraceDatabaseHelper.h"
+#include "TrackInfoManager.h"
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
 using namespace Dic::Module::Timeline;
@@ -33,6 +34,8 @@ protected:
     std::string taskSql = "CREATE TABLE TASK (startNs INTEGER,endNs INTEGER,deviceId INTEGER,connectionId "
         "INTEGER,globalTaskId INTEGER,globalPid INTEGER,taskType INTEGER,contextId INTEGER,streamId "
         "INTEGER,taskId INTEGER,modelId INTEGER, depth integer);";
+    std::string schedulerTable = "CREATE table COMMUNICATION_SCHEDULE_TASK_INFO("
+         "name INTEGER, globalTaskId INTEGER primary key, taskType INTEGER, opType INTEGER);";
     std::string comcaInfoSql =
         "CREATE TABLE COMMUNICATION_TASK_INFO (name INTEGER,globalTaskId INTEGER,taskType INTEGER,planeId "
         "INTEGER,groupName INTEGER,notifyId INTEGER,rdmaType INTEGER,srcRank INTEGER,dstRank INTEGER,transportType "
@@ -424,7 +427,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenSqlInject)
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     requestParams.orderBy = "lll@#";
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    const std::vector<uint64_t> traceId = {0};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, false);
 }
@@ -436,7 +439,7 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbNotOpen)
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    const std::vector<uint64_t> traceId = {0};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, false);
 }
@@ -452,14 +455,13 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenDbOpenHardWar
     DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
-    requestParams.pid = "17738580008830245";
+    requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
     requestParams.metaType = "Ascend Hardware";
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    const std::vector<uint64_t> traceId = {0};
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, false);
 }
@@ -471,17 +473,30 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenCANN)
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
     DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
-    requestParams.pid = "17738580008830245";
+    requestParams.rankId = "";
+    requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
     requestParams.metaType = "CANN_API";
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    std::vector<uint64_t> traceId;
+    for (const auto& process : requestParams.processes) {
+        for (const auto& tid : process.tidList) {
+            traceId.emplace_back(TrackInfoManager::Instance().GetTrackId(requestParams.rankId, process.pid, tid));
+        }
+    }
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
@@ -492,18 +507,31 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenMstx)
     MockDatabase2 database(testMutex);
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
-    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
     DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
-    requestParams.pid = "17738580008830245";
+    requestParams.rankId = "";
+    requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
     requestParams.metaType = "MSTX_EVENTS";
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    std::vector<uint64_t> traceId;
+    for (const auto& process : requestParams.processes) {
+        for (const auto& tid : process.tidList) {
+            traceId.emplace_back(TrackInfoManager::Instance().GetTrackId(requestParams.rankId, process.pid, tid));
+        }
+    }
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }
@@ -515,7 +543,15 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     sqlite3 *db = nullptr;
     DatabaseTestCaseMockUtil::OpenDB(db);
     DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, schedulerTable);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
     DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, overlap);
     std::string pyData =
         "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
         "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"type\", \"depth\") "
@@ -526,8 +562,8 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     DatabaseTestCaseMockUtil::InsertData(db, strData);
     database.SetDbPtr(db);
     Dic::Protocol::UnitThreadsOperatorsParams requestParams;
-    requestParams.tid = {"0"};
-    requestParams.pid = "17738580008830245";
+    requestParams.rankId = "";
+    requestParams.processes.push_back(SimpleProcess {"17738580008830245", {"0"}});
     requestParams.metaType = "PYTORCH_API";
     requestParams.orderBy = "duration";
     requestParams.order = "DESC";
@@ -538,7 +574,12 @@ TEST_F(DbTraceDatabaseTest, TestQueryThreadSameOperatorsDetailsWhenApi)
     requestParams.name = "FORMAT_ND";
     Dic::Protocol::UnitThreadsOperatorsBody responseBody;
     const uint64_t minTimestamp = 0;
-    const std::vector<std::string> traceId = {"0"};
+    std::vector<uint64_t> traceId;
+    for (const auto& process : requestParams.processes) {
+        for (const auto& tid : process.tidList) {
+            traceId.emplace_back(TrackInfoManager::Instance().GetTrackId(requestParams.rankId, process.pid, tid));
+        }
+    }
     bool result = database.QueryThreadSameOperatorsDetails(requestParams, responseBody, minTimestamp, traceId);
     EXPECT_EQ(result, true);
 }

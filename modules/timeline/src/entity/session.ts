@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { makeAutoObservable, runInAction, when } from 'mobx';
+import { makeAutoObservable, when } from 'mobx';
 import type { FC } from 'react';
 import type { Theme } from '@emotion/react';
 import { debounce, omit } from 'lodash';
@@ -10,7 +10,7 @@ import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { type TimeStamp } from './common';
 import { Domain, DomainRange } from './domain';
-import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insight';
+import type { InsightUnit, UnitMatcher, LinkLines } from './insight';
 import { type TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { platform } from '../platforms';
 import { type Phase, stateTexts } from '../utils/constant';
@@ -20,6 +20,7 @@ import { getTimeOffsetKey } from '../insight/units/utils';
 import { CardMetaData, SliceData, SliceMeta, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from './data';
 import { CardRankInfo } from '../api/interface';
 import { getRootUnit } from '../utils';
+import { getAutoKey } from '../utils/dataAutoKey';
 
 export const MAX_ZOOM_COUNT = 10000;
 
@@ -140,9 +141,6 @@ export class Session {
     scrollTop: number = 0;
     // Timeline模块键盘滚动区域
     scrollArea: string = '';
-    expandedUnitKeys: string[] | [] = [];
-    selectedDetailKeys: [string] | [] = [];
-    selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: UnitsConfig = {
         jsAllocationUsage: {
             isRecordStackTraces: false,
@@ -162,7 +160,6 @@ export class Session {
     searchData?: { [x: string]: unknown; content: string; isMatchCase: boolean; isMatchExact: boolean };
     doContextSearch?: boolean;
     showEvent?: boolean;
-    linkData?: LinkData;
     linkLines: LinkLines = {};
 
     totalHeight: number = 0;
@@ -194,9 +191,6 @@ export class Session {
      * 锁定的泳道
      */
     lockUnit: InsightUnit[] = [];
-
-    linkFlow?: Record<string, unknown>;
-    linkDetail?: LinkDataDesc<Record<string, unknown>>;
     buttons: Array<FC<{ session: Session }>>;
 
     // set this field with a new matcher to trigger jump-to-target-lane
@@ -226,7 +220,6 @@ export class Session {
 
     private _selectedRange?: [ TimeStamp, TimeStamp ];
     private readonly _domain: Domain;
-    private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
     private _initEndTimeAll: TimeStamp | undefined;
     private _endTimeAll: TimeStamp | undefined;
@@ -240,6 +233,7 @@ export class Session {
     private _alignSliceData: SliceData[] = [];
     private _selectedRangeData?: Array<Record<string, unknown>>;
     private _interval: number;
+    private _selectedUnitKeys: string[] = [];
     private _selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
     private _disableZoomingHistory: boolean = false; // 禁止生成缩放历史记录
 
@@ -247,7 +241,6 @@ export class Session {
         makeAutoObservable(this, {
             timer: false,
             selectedUnits: false,
-            selectedDetails: false,
             caches: false,
             isNsMode: false,
             printSessionInfo: false,
@@ -374,11 +367,6 @@ export class Session {
             return;
         }
         this._selectedUnitKeys = value;
-        // 'More' panel should be cleared when selected unit is changed
-        runInAction(() => {
-            this.selectedDetailKeys = [];
-            this.selectedDetails = [];
-        });
     }
 
     set domainRange(domainRange: DomainRange) {
@@ -406,9 +394,6 @@ export class Session {
 
     set selectedData(data: SelectedDataType | undefined) {
         this._selectedData = data;
-        this.linkFlow = undefined;
-        this.linkData = undefined;
-        this.linkDetail = undefined;
     }
 
     set benchMarkData(data: Record<string, unknown> | undefined) {
@@ -428,6 +413,7 @@ export class Session {
             return;
         }
         this._selectedUnits = data;
+        this._selectedUnitKeys = this._selectedUnits.map(getAutoKey);
     }
 
     set selectedRange(data: [TimeStamp, TimeStamp] | undefined) {
@@ -501,13 +487,6 @@ export class Session {
         for (let i = 1; i < len; ++i) {
             this.setUnitMultiDeviceHidden(rootUnits[i], true);
         }
-    }
-
-    setSelectedUnitKeys(value: [string] | []): void {
-        if (this.selectedRangeIsLock) {
-            return;
-        }
-        this._selectedUnitKeys = value;
     }
 
     setDomainWithoutHistory(domainRange: DomainRange): void {

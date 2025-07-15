@@ -1,5 +1,6 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 #include "DbTraceDataBase.h"
+#include "TrackInfoManager.h"
 #include "pch.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
@@ -549,16 +550,24 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " 0 as depth from COMMUNICATION_OP info "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500 "
           " UNION all "
+          " select T.ROWID as id, groupName || '_' || planeId as tid, info.taskType as name, 'HCCL' as pid, 0 AS depth "
+          " from COMMUNICATION_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
+          " where info.taskType = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+          " UNION all "
           " select T.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth "
           " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
           " UNION all "
-          " select info.ROWID as id, (globalTid & 0xFFFFFFFF) AS tid, message as name, (globalTid / 4294967296) AS pid,"
+          " select info.ROWID as id, 'MsTx' as tid, message as name, globalTid AS pid,"
           " depth from MSTX_EVENTS info"
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
           " UNION all "
           " select ca.ROWID as id, ca.type AS tid, ca.name as name, ca.globalTid AS pid,"
           " depth from CANN_API ca"
+          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500"
+          " UNION all "
+          " SELECT pa.ROWID AS id, 'pytorch' AS tid, name, globalTid AS pid, depth "
+          " from PYTORCH_API pa "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -568,7 +577,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
     resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp, params.name, timestamp,
-                                   params.name, timestamp);
+                                   params.name, timestamp, params.name, timestamp, params.name, timestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set to query kernel depth and thread.", stmt->GetErrorMessage());
         return false;
@@ -1758,18 +1767,24 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
 
 bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
     Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp,
-    const std::vector<std::string> &trackIdList)
+    const std::vector<uint64_t> &trackIdList)
 {
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack in request parameter orderBy. Error param: % ",
                          requestParams.orderBy);
         return false;
     }
-    for (const auto& tidItem : requestParams.tid) {
-        if (!StringUtil::CheckSqlValid(tidItem)) {
-            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", tidItem);
+    std::vector<std::string> pidList;
+    std::vector<std::string> tidList;
+    for (const auto& trackId : trackIdList) {
+        TrackInfo trackInfo;
+        TrackInfoManager::Instance().GetTrackInfo(trackId, trackInfo);
+        if (!StringUtil::CheckSqlValid(trackInfo.threadId)) {
+            ServerLog::Error("There is an SQL injection attack in track id. Error param: % ", trackInfo.threadId);
             return false;
         }
+        pidList.emplace_back(trackInfo.processId);
+        tidList.emplace_back(trackInfo.threadId);
     }
     std::string orderBy = " ORDER BY " + requestParams.orderBy;
     orderBy.append(requestParams.order == "descend" ? " DESC " : " ASC ");
@@ -1778,7 +1793,7 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
         resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams,
-            GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage);
+            { GetDeviceId(requestParams.rankId), minTimestamp, orderByAndPage, pidList, tidList });
     } catch (DatabaseException &e) {
         ServerLog::Error("Query thread same operators details fail, ", e.What());
         return false;
@@ -1792,8 +1807,9 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
         sameOperatorsDetail.id = resultSet->GetString(col++);
         sameOperatorsDetail.tid = resultSet->GetString(col++);
         if (sameOperatorsDetail.tid.empty()) {  // some process not have tid, use request.tid[0], ex:pytorch
-            sameOperatorsDetail.tid = requestParams.tid[0];
+            sameOperatorsDetail.tid = tidList[0];
         }
+        sameOperatorsDetail.pid = resultSet->GetString(col++);
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
     responseBody.currentPage = requestParams.current;
