@@ -9,6 +9,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import re
 import shutil
 import subprocess
 import stat
@@ -16,6 +17,7 @@ import sys
 from datetime import datetime, timezone
 import json
 import zipfile
+from typing import List
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 WORKSPACE_PATH = os.getenv("OCTOPUS_WORKSPACE")
@@ -517,6 +519,69 @@ def create_version_info_file(version, modify_time):
         f.write(json.dumps(data))
 
 
+def extract_numeric_part(version: str) -> List:
+    parts = version.split('.')
+    numeric_part_list = []
+    for p in parts:
+        if p.isdigit():
+            numeric_part_list.append(p)
+        else:
+            break
+    # eg. VERSIONINFO -> FILEVERSION: 8, 2, 0, 0
+    while len(numeric_part_list) < 4:
+        numeric_part_list.append('0')
+    return numeric_part_list
+
+
+def replace_version_block(content: str, version_info: str, version_info_value: str, version: str) -> str:
+    lines = content.splitlines()
+    new_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("FILEVERSION"):
+            new_lines.append(re.sub(r'^(\s*)FILEVERSION\s+[\d,\s]+$',
+                                    f'\\1FILEVERSION {version_info}', line))
+        elif stripped.startswith("PRODUCTVERSION"):
+            new_lines.append(re.sub(r'^(\s*)PRODUCTVERSION\s+[\d,\s]+$',
+                                    f'\\1PRODUCTVERSION {version_info}', line))
+        elif re.match(r'^\s*VALUE\s+"FileVersion"', line):
+            new_lines.append(re.sub(r'^(\s*)VALUE\s+"FileVersion",\s*".*?"$',
+                                    f'\\1VALUE "FileVersion", "{version_info_value}"', line))
+        elif re.match(r'^\s*VALUE\s+"ProductVersion"', line):
+            new_lines.append(re.sub(r'^(\s*)VALUE\s+"ProductVersion",\s*".*?"$',
+                                    f'\\1VALUE "ProductVersion", "{version}"', line))
+        else:
+            new_lines.append(line)
+
+    return "\n".join(new_lines)
+
+
+# 更新Windows产物exe版本信息，文件platform\bundle\main.rc
+def update_winexe_version_info(version: str) -> None:
+    numeric_part_list = extract_numeric_part(version)
+    version_info = ', '.join(numeric_part_list[:4])
+    version_info_value = '.'.join(numeric_part_list[:4])
+
+    platform_bundle_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle', 'main.rc')
+    try:
+        with open(platform_bundle_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except FileNotFoundError:
+        logging.error('Failed to find main.rc file.')
+    except Exception as e:
+        logging.error('Failed to read main.rc because %s', e)
+
+    content = replace_version_block(content, version_info, version_info_value, version)
+
+    try:
+        with open(platform_bundle_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+    except Exception as e:
+        logging.error('Failed to write main.rc because %s', e)
+
+
 def build_product_parallel(vscode_version, idea_version, os_name):
     logging.info('Start to build products')
     funcs = [build_package, build_jupyterlab]
@@ -656,6 +721,8 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1].lower() == 'clean':
         return clean_build_cache()
     idea_version = load_version_info('7.0.RC3')
+    # 修改Windows产物exe版本信息
+    update_winexe_version_info(idea_version)
     update_plugins_version(idea_version)
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
     vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
