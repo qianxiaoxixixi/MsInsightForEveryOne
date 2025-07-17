@@ -69,7 +69,7 @@ inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
     ProjectTypeEnum::BIN,
 };
 
-static inline bool IsBaseLineConfigurableType(ProjectTypeEnum projectTypeEnum)
+static inline bool IsSupportCompareType(ProjectTypeEnum projectTypeEnum)
 {
     auto it = std::find(projectTypeSupportCompare.begin(), projectTypeSupportCompare.end(),
                         projectTypeEnum);

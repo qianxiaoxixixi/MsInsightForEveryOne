@@ -54,8 +54,12 @@ public:
                                    R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
         BaselineInfo baselineInfo;
         baselineInfo.parsedFilePath = filePathText;
-        bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo,
-                                                               COMPARE);
+        BaselineSettingRequest request;
+        request.projectName = "testProject";
+        request.params.projectName = "testProject";
+        request.params.filePath = filePathText;
+        request.params.currentClusterPath = COMPARE;
+        bool result = BaselineManagerService::InitBaselineData(request, baselineInfo);
         std::string notFinishTask = "";
         int index = 0;
         while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
