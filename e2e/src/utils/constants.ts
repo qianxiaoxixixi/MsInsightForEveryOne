@@ -12,6 +12,7 @@ export enum FilePath {
     DB_2025330 = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\CANN_9.0.RC1.B090_db',
     DB_memory = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\test_level1_Memory_db',
     MULTI_MACHINES = 'D:\\GUI_TEST_DATA 路徑测试\\多机多卡\\MultiProfLevel2MemoryUB_db',
+    TRACE_JSON='D:\\GUI_TEST_DATA 路徑测试\\算子调优\\trace_json\\trace.json',
     SOURCE = 'D:\\GUI_TEST_DATA 路徑测试\\算子调优\\source\\visualize_data.bin',
     SOURCE_MULTIFILE = 'D:\\GUI_TEST_DATA 路徑测试\\算子调优\\source\\visualize_data_multifile.bin',
     DETAILS = 'D:\\GUI_TEST_DATA 路徑测试\\算子调优\\details\\visualize_data_910_mix.bin',
