@@ -23,33 +23,68 @@ void BaselineManagerService::ResetBaseline()
     Source::SourceFileParser::Instance().ResetBaseline();
 }
 
-bool BaselineManagerService::InitBaselineData(const std::string &projectName, const std::string &filePath,
-                                              BaselineInfo &baselineInfo, const std::string &compareClusterPath)
+bool BaselineManagerService::CheckIsSupportCompare(const std::vector<ProjectExplorerInfo> &baseline,
+                                                   const std::vector<ProjectExplorerInfo> &cur,
+                                                   std::string &errorMsg, const std::string &filePath)
+{
+    // 多device场景不允许设置基线
+    bool isAllSamePath = std::all_of(baseline[0].subParseFileInfo.begin(),
+                                     baseline[0].subParseFileInfo.end(),
+                                     [&filePath](const auto &fileInfo) {
+                                         return fileInfo->parseFilePath == filePath;
+                                     });
+    if (baseline[0].subParseFileInfo.size() > 1 && isAllSamePath) {
+        errorMsg = "Multi device scenario does not support setting comparison.";
+        return false;
+    }
+    // leaks不支持对比
+    bool isBaselineLeaks = std::any_of(baseline[0].subParseFileInfo.begin(), baseline[0].subParseFileInfo.end(),
+        [](const auto &fileInfo) {
+            return std::regex_match(FileUtil::GetFileName(fileInfo->parseFilePath), std::regex(leaksMemDbReg));
+        });
+    auto isCurLeaks = std::any_of(cur[0].subParseFileInfo.begin(), cur[0].subParseFileInfo.end(),
+        [](const auto &fileInfo) {
+            return std::regex_match(FileUtil::GetFileName(fileInfo->parseFilePath), std::regex(leaksMemDbReg));
+        });
+    if (isBaselineLeaks || isCurLeaks) {
+        errorMsg = "Leaks data does not support comparison function.";
+        return false;
+    }
+
+    // 只有部分数据类型支持设置对比，如果非预期数据类型，则直接给前端返回错误提示
+    auto projectTypeEnum = ProjectExplorerManager::GetProjectType(baseline);
+    if (!IsSupportCompareType(projectTypeEnum)) {
+        errorMsg = "Not supported to set the project type for baseline!";
+        return false;
+    }
+
+    auto curProjectTypeEnum = ProjectExplorerManager::GetProjectType(cur);
+    if (!IsSupportCompareType(curProjectTypeEnum)) {
+        errorMsg = "The current project type does not support comparison function.";
+        return false;
+    }
+    return true;
+}
+
+bool BaselineManagerService::InitBaselineData(const Protocol::BaselineSettingRequest &request,
+                                              BaselineInfo &baselineInfo)
 {
     ResetBaseline();
     // 查询详细数据
     std::vector<std::string> filePathList;
-    if (!filePath.empty()) {
-        filePathList.push_back(filePath);
+    if (!request.params.filePath.empty()) {
+        filePathList.push_back(request.params.filePath);
     }
     // 多集群场景下需要把所有的信息查出来
     std::vector<ProjectExplorerInfo> projectExplorerList =
-        ProjectExplorerManager::Instance().QueryProjectExplorer(projectName, {});
-    if (projectExplorerList.empty()) {
+        ProjectExplorerManager::Instance().QueryProjectExplorer(request.params.projectName, {});
+    std::vector<ProjectExplorerInfo> curProject =
+        ProjectExplorerManager::Instance().QueryProjectExplorer(request.projectName, {});
+    if (projectExplorerList.empty() || curProject.empty()) {
         baselineInfo.errorMessage = "The project does not exist, baseline setting failed.";
         return false;
     }
 
-    // 多device场景不支持对比
-    bool isAllSamePath = std::all_of(projectExplorerList[0].subParseFileInfo.begin(),
-                                     projectExplorerList[0].subParseFileInfo.end(),
-                                     [&filePath](const auto &fileInfo) {
-                                         return fileInfo->parseFilePath == filePath;
-                                     });
-    if (projectExplorerList[0].subParseFileInfo.size() > 1 && isAllSamePath) {
-        baselineInfo.errorMessage = "Multi device scenario does not support setting comparison.";
-        return false;
-    }
     // 移除追加的工程项目,如果仍有多个项目记录，以第一个为准
     projectExplorerList.erase(
         std::remove_if(projectExplorerList.begin(), projectExplorerList.end(),
@@ -58,17 +93,15 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
                        }),
         projectExplorerList.end()
     );
-
-    // 只有部分数据类型支持设置对比，如果非预期数据类型，则直接给前端返回错误提示
+    // 检查是否支持对比，返回true是因为目前如果返回false则错误信息前端获取不到，返回false但errorMessage不为空，前端能正确识别到错误并提示
+    if (!CheckIsSupportCompare(projectExplorerList, curProject, baselineInfo.errorMessage, request.params.filePath)) {
+        return true;
+    }
     auto projectTypeEnum = ProjectExplorerManager::GetProjectType(projectExplorerList);
     // 根据二级目录判断是否为集群数据
-    baselineInfo.isCluster = IsClusterBaseline(projectTypeEnum, projectExplorerList, filePath);
+    baselineInfo.isCluster = IsClusterBaseline(projectTypeEnum, projectExplorerList, request.params.filePath);
     if (baselineInfo.isCluster) {
         BaselineManager::Instance().SetBaselineClusterPath(baselineInfo.clusterBaseLine);
-    }
-    if (!IsBaseLineConfigurableType(projectTypeEnum)) {
-        baselineInfo.errorMessage = "Not supported to set the project type for baseline!";
-        return false;
     }
     // 获取解析类型（以进一步调用对应解析类）
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
@@ -80,7 +113,7 @@ bool BaselineManagerService::InitBaselineData(const std::string &projectName, co
     parser->ParserBaseline(projectExplorerList[0], baselineInfo);
     // 集群场景 初始化并行策略
     if (baselineInfo.isCluster) {
-        InitBaselineParallelStrategy(compareClusterPath);
+        InitBaselineParallelStrategy(request.params.currentClusterPath);
     }
     return true;
 }

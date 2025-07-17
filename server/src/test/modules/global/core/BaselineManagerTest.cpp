@@ -104,7 +104,12 @@ TEST_F(BaselineManagerTest, TestText)
         R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
     BaselineInfo baselineInfo;
     baselineInfo.parsedFilePath = filePathText;
-    bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo, COMPARE);
+    BaselineSettingRequest request;
+    request.projectName = "testProject";
+    request.params.projectName = "testProject";
+    request.params.filePath = filePathText;
+    request.params.currentClusterPath = COMPARE;
+    bool result = BaselineManagerService::InitBaselineData(request, baselineInfo);
     std::string notFinishTask = "";
     int index = 0;
     while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -124,7 +129,12 @@ TEST_F(BaselineManagerTest, TestDb)
         R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
     BaselineInfo baselineInfo;
     baselineInfo.parsedFilePath = filePathDb;
-    bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo, COMPARE);
+    BaselineSettingRequest request;
+    request.projectName = "testProjectDb";
+    request.params.projectName = "testProjectDb";
+    request.params.filePath = filePathDb;
+    request.params.currentClusterPath = COMPARE;
+    bool result = BaselineManagerService::InitBaselineData(request, baselineInfo);
     std::string notFinishTask = "";
     int index = 0;
     while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -143,7 +153,12 @@ TEST_F(BaselineManagerTest, TestFileNotExist)
     std::string filePathDb = "noData";
     BaselineInfo baselineInfo;
     baselineInfo.parsedFilePath = filePathDb;
-    bool result = BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo, COMPARE);
+    BaselineSettingRequest request;
+    request.projectName = "testProjectDb";
+    request.params.projectName = "testProjectDb";
+    request.params.filePath = filePathDb;
+    request.params.currentClusterPath = COMPARE;
+    bool result = BaselineManagerService::InitBaselineData(request, baselineInfo);
     EXPECT_TRUE(result);
     EXPECT_EQ(baselineInfo.errorMessage, "");
 }
@@ -165,7 +180,12 @@ TEST_F(BaselineManagerTest, MultiCluster)
     std::string filePath = "cluster_2";
     BaselineInfo baselineInfo;
     baselineInfo.parsedFilePath = filePath;
-    bool result = BaselineManagerService::InitBaselineData("multiCluster", filePath, baselineInfo, filePath);
+    BaselineSettingRequest request;
+    request.projectName = "multiCluster";
+    request.params.projectName = "multiCluster";
+    request.params.filePath = filePath;
+    request.params.currentClusterPath = COMPARE;
+    bool result = BaselineManagerService::InitBaselineData(request, baselineInfo);
     EXPECT_TRUE(result);
     EXPECT_EQ(baselineInfo.isCluster, true);
 }
