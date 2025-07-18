@@ -47,15 +47,13 @@ test.describe('Communication', () => {
 
     // 【case】数据展示配置
     test('data display configuration', async ({ page, communicationPage }) => {
-        test.setTimeout(60_000);
+        test.setTimeout(90_000);
         const {
+            fullPage,
             stepSelector,
             communicationFrame,
             communicationGroupSelector,
             operatorNameSelector,
-            switchDurationAnalysis,
-            communicationMatrixRadio,
-            durationAnalysisRadio,
         } = communicationPage;
         // 筛选迭代id
         const stepSelect = new SelectHelpers(page, stepSelector, communicationFrame);
@@ -78,8 +76,9 @@ test.describe('Communication', () => {
         const operatorNameSelect = new SelectHelpers(page, operatorNameSelector, communicationFrame);
         await operatorNameSelect.open();
         await operatorNameSelect.selectOption('allgather-top1');
-        // 通信矩阵和通信耗时分析单选开关
-        await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
+        await page.waitForTimeout(1000);
+        await page.mouse.move(0, 0);
+        await expect(fullPage).toHaveScreenshot('page-loaded.png');
         await allPagesSuccessRes;
     });
 
@@ -98,13 +97,29 @@ test.describe('Communication', () => {
         const communicationMatrixTypeSelect = new SelectHelpers(page, communicationMatrixTypeSelector, communicationFrame);
         await communicationMatrixTypeSelect.open();
         await communicationMatrixTypeSelect.selectOption('Bandwidth(GB/s)'); // 带宽
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
+        await expect(matrixChart).toHaveScreenshot('matrix-bandwidth.png');
+
         await communicationMatrixTypeSelect.open();
         await communicationMatrixTypeSelect.selectOption('Transit Size(MB)'); // 传输大小
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
+        await expect(matrixChart).toHaveScreenshot('matrix-transit-size.png');
+
         await communicationMatrixTypeSelect.open();
         await communicationMatrixTypeSelect.selectOption('Transport Type'); // 链路方式
-        expect(communicationMatrixMinRangeInput).toBeHidden(); // 切换到链路方式，筛选范围不可见
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
+        await expect(matrixChart).toHaveScreenshot('matrix-transit-type.png');
+        await expect(communicationMatrixMinRangeInput).toBeHidden(); // 切换到链路方式，筛选范围不可见
+
         await communicationMatrixTypeSelect.open();
         await communicationMatrixTypeSelect.selectOption('Transit Time(ms)'); // 传输时长
+        await page.mouse.move(0, 0);
+        await page.waitForTimeout(1000);
+        await expect(matrixChart).toHaveScreenshot('matrix-transit-time.png');
+
         // 显示卡内通信开关（默认：不显示）
         const showInnerCommunicationCheckbox = communicationFrame.getByTestId('showInnerCommunication');
         await expect(showInnerCommunicationCheckbox).not.toBeChecked();
@@ -113,28 +128,22 @@ test.describe('Communication', () => {
         // 根据输入控制所显示数据的范围并截图对比
         await communicationMatrixMinRangeInput.press('ArrowUp');
         await communicationMatrixMaxRangeInput.press('ArrowDown');
-        const confrimBtn = communicationFrame.locator('button.ant-btn-primary').first();
-        await confrimBtn.click();
+        const confirmBtn = communicationFrame.locator('button.ant-btn-primary').first();
+        await confirmBtn.click();
         await page.mouse.move(0, 0);
         await page.waitForTimeout(1000);
-        await expect(matrixChart).toHaveScreenshot('communication-matrix.png');
+        await expect(matrixChart).toHaveScreenshot('matrix-show-inner.png');
     });
 
-    // 【case】HCCL图表
+    // HCCL 图表、通信时长图表
     test('HCCL chart', async ({ page, communicationPage }) => {
         const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
         await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
+        const visualizedCommunicationTimeChart = communicationFrame.locator('#main');
+
         await page.mouse.move(0, 0);
         await expect(communicationFrame.locator('#hccl')).toHaveScreenshot('communication-hccl.png', { maxDiffPixels: 500 });
-    });
-
-    // 【case】通信时长图表：展示对应通信域和算子的通信信息
-    test('visualized communication time chart', async ({ page, communicationPage }) => {
-        const { communicationMatrixRadio, durationAnalysisRadio, communicationFrame, switchDurationAnalysis } = communicationPage;
-        await switchDurationAnalysis(communicationMatrixRadio, durationAnalysisRadio);
-        const communicationTime = communicationFrame.locator('#main');
-        await page.mouse.move(0, 0);
-        await expect(communicationTime).toHaveScreenshot('visualized-communication-time.png');
+        await expect(visualizedCommunicationTimeChart).toHaveScreenshot('visualized-communication-time.png');
     });
 
     // 【case】专家建议
@@ -144,7 +153,7 @@ test.describe('Communication', () => {
         const advice = communicationFrame.getByTestId('communicationAdvice');
         await waitForResponse(await ws, (res) => res?.command === 'communication/advisor');
         await page.mouse.move(0, 0);
-        await expect(advice).toHaveScreenshot('communication-advice.png');
+        await expect(advice).toHaveScreenshot('advice.png');
     });
 
     // 【case】通信时长数据分析：展示对应通信域和算子 表头排序
@@ -233,8 +242,8 @@ test.describe('Communication', () => {
         await operatorPage.waitFor({
             state: 'visible',
         });
-        const operatorPageHeaderText = operatorPage.getByTestId('operatorRankId');
-        await expect(operatorPageHeaderText).toHaveText('Total Op Info(RankId 6)');
+        await page.waitForTimeout(1000);
+        await expect(operatorPage).toHaveScreenshot('page-bandwidth-analysis.png');
     });
 
     // 右键点击 HCCL 图表，跳转至Timeline
@@ -281,6 +290,6 @@ test.describe('Communication(cluster)', () => {
         await communicationGroupSelect.setValue('p2p');
         await communicationGroupSelect.selectOption('p2p');
         await page.waitForTimeout(1000); // 延时确保 echarts 动画完成
-        await expect(matrixChart).toHaveScreenshot('communication-matrix-p2p.png');
+        await expect(matrixChart).toHaveScreenshot('matrix-p2p.png');
     });
 });

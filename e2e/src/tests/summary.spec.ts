@@ -6,6 +6,7 @@ import { test as baseTest, expect, WebSocket } from '@playwright/test';
 import { SummaryPage, FrameworkPage } from '@/page-object';
 import { clearAllData, importData, setupWebSocketListener, waitForWebSocketEvent } from '@/utils';
 import { SelectHelpers } from '@/components';
+import { FilePath } from '@/utils/constants';
 
 interface TestFixtures {
     summaryPage: SummaryPage;
@@ -195,5 +196,36 @@ test.describe('Summary', () => {
 
         await page.mouse.move(0, 0);
         await expect(statisticsTableContainer).toHaveScreenshot('statistics-table.png');
+    });
+});
+
+// 专家负载均衡功能
+test.describe('Summary(MoE)', () => {
+    test.beforeEach(async ({ page, summaryPage, ws }) => {
+        const { loadingDialog } = new FrameworkPage(page);
+        const { fullmask } = summaryPage;
+
+        await page.goto('/');
+        await importData(page, FilePath.MOE_PROFILING);
+        await summaryPage.goto();
+        if (await loadingDialog.count()) {
+            await loadingDialog.waitFor({ state: 'attached' });
+        }
+        if (await fullmask.count()) {
+            await fullmask.waitFor({ state: 'hidden' });
+        }
+    });
+
+    test.afterEach(async ({ page, ws }) => {
+        await clearAllData(page, ws);
+    });
+
+    // 展示专家负载均衡-profiling数据
+    test('test_MoE_balancing_chart_display', async ({ page, summaryPage }) => {
+        const { modelLayerNumInput, moeChartPanel } = summaryPage;
+
+        await page.mouse.move(0, 0);
+        await expect(modelLayerNumInput).toHaveValue('61', { timeout: 60_000 });
+        await expect(moeChartPanel).toHaveScreenshot('MoE-balancing-profiling.png');
     });
 });

@@ -9,6 +9,7 @@ import { TableHelpers } from '../components';
 export class CommunicationPage {
     readonly page: Page;
     readonly communicationFrame: FrameLocator;
+    readonly fullPage: Locator;
     readonly filters: Locator; // 筛选条件区域
     readonly hcclChart: Locator;
     readonly stepSelector: Locator;
@@ -25,6 +26,7 @@ export class CommunicationPage {
     constructor(page: Page) {
         this.page = page;
         this.communicationFrame = page.frameLocator('#Communication');
+        this.fullPage = this.communicationFrame.locator('#root');
         this.filters = this.communicationFrame.getByTestId('filters');
         this.hcclChart = this.communicationFrame.locator('#hccl');
         this.stepSelector = this.communicationFrame.locator('#step-select'); // 迭代id

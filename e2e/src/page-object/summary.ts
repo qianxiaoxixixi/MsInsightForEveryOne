@@ -32,6 +32,8 @@ export class SummaryPage {
     readonly selectOrderBy: Locator;
     readonly selectTop: Locator;
     readonly statisticsTableContainer: Locator;
+    readonly modelLayerNumInput: Locator;
+    readonly moeChartPanel: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -49,6 +51,8 @@ export class SummaryPage {
         this.selectRankGroup = this.summaryFrame.locator('#select-rank-group');
         this.selectTop = this.summaryFrame.locator('#select-top');
         this.statisticsTableContainer = this.summaryFrame.getByTestId('statistics-table-container');
+        this.modelLayerNumInput = this.summaryFrame.locator('#layerNum');
+        this.moeChartPanel = this.summaryFrame.getByTestId('panel-moe-balancing');
     }
 
     async configureParallel(value: ParallelValue): Promise<void> {
