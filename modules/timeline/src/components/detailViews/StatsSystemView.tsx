@@ -72,6 +72,7 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
     const [sorter, setSorter] = useState(defaultSorter);
     const [filters, setFilters] = useState(defaultFilters);
     const [rowData, setRowData] = useState<any>({});
+    const [loading, setLoading] = useState(false);
     const kernelDetails = useKernelDetails();
     const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
 
@@ -99,6 +100,7 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
                 }
             }
         });
+        setLoading(true);
         const res = await queryKernelDetails({
             rankId: props.card.cardId,
             dbPath: props.card.dbPath,
@@ -108,6 +110,8 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
             order: sorters.order ?? defaultSorter.order,
             coreType: '',
             filterCondition: filterTypes,
+        }).finally(() => {
+            setLoading(false);
         });
         const timestampoffset = getTimeOffset(props.session, props.card);
         const data = res.kernelDetails.map((item: {
@@ -147,6 +151,7 @@ const KernelDetails = observer((props: SelectContentViewProps) => {
                     setSorter(newSorter);
                     setFilters(newFilters);
                 }}
+                loading={loading}
                 pagination={getPageData(page, setPage)}
                 dataSource={dataSource}
                 columns={colums}
