@@ -9,9 +9,9 @@ namespace Dic {
 using namespace Dic::Server;
 void ThreadPool::ThreadFunc(ThreadPool &threadPool, int index)
 {
-    std::function<void()> func;
     bool hasTask = false;
     while (threadPool.running) {
+        std::function<void()> func;
         {
             std::unique_lock<std::mutex> lock(threadPool.taskMutex);
             if (threadPool.taskQueue.Empty()) {
