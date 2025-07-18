@@ -1397,7 +1397,7 @@ uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
             Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
             return total;
         }
-        sql += " AND lower(" + filter.first + ") LIKE lower(?) ";
+        sql += " WHERE lower(" + filter.first + ") LIKE lower(?) ";
     }
     if (!requestParams.coreType.empty()) {
         sql += " AND accelerator_core = ? ";
