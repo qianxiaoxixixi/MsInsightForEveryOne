@@ -25,6 +25,9 @@ export enum FilePath {
     DB_HOST_0_RANK_1 = 'D:\\GUI_TEST_DATA 路徑测试\\多机多卡\\MultiProfLevel2MemoryUB_db\\node1_2166652_20240619060505059_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     DB_HOST_1_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\多机多卡\\MultiProfLevel2MemoryUB_db\\ubuntu2204_1660963_20240619060440181_ascend_pt\\ASCEND_PROFILER_OUTPUT',
     DB_HOST_1_RANK_1 = 'D:\\GUI_TEST_DATA 路徑测试\\多机多卡\\MultiProfLevel2MemoryUB_db\\ubuntu2204_1660964_20240619060440179_ascend_pt\\ASCEND_PROFILER_OUTPUT',
+    // 专家负载均衡数据
+    MOE_PROFILING = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\profiling',
+    MOE_DUMP = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\dump',
 }
 
 export const WEBSOCKET_URL = 'ws://localhost:9000/';

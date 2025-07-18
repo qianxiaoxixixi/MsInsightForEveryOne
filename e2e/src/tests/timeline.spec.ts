@@ -328,13 +328,13 @@ test.describe('Timeline', () => {
         const { markerBtn, timelineFrame } = timelinePage;
         const mainContainer = timelineFrame.locator('#main-container');
 
-        await timelineFrame.locator('canvas:nth-child(4)').click({
+        await timelineFrame.locator('canvas').nth(4).click({
             position: {
                 x: 233,
                 y: 4,
             },
         });
-        await timelineFrame.locator('canvas:nth-child(4)').click({
+        await timelineFrame.locator('canvas').nth(4).click({
             position: {
                 x: 449,
                 y: 8,

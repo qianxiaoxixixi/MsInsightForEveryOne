@@ -44,7 +44,7 @@ const Operators = ({ returnHome, rankId, dbPath, operatorName, iterationId, stag
                     <div>{t('Back')}</div>
                 </div>
                 <div className="delimiter">|</div>
-                <div data-testid={'operatorRankId'}>{operatorName}(RankId {rankId})</div>
+                <div>{operatorName}(RankId {rankId})</div>
             </BreadcrumbBox>
             <BandwidthAnalysis iterationId={iterationId} rankId={rankId} dbPath={dbPath} operatorName={operatorName} stage={stage} pgName={pgName}/>
         </FixedBox>

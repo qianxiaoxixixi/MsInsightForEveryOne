@@ -17,6 +17,7 @@ interface CollapsiblePanelProps {
     padding?: string;
     defaultOpen?: boolean;
     id?: string;
+    testId?: string; // 用于 playwright 用例
 }
 
 const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
@@ -34,7 +35,7 @@ const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
   }
 `;
 export const CollapsiblePanel = forwardRef<HTMLDivElement, CollapsiblePanelProps>((props, ref): JSX.Element => {
-    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true, id } = props;
+    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true, id, testId } = props;
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +56,7 @@ export const CollapsiblePanel = forwardRef<HTMLDivElement, CollapsiblePanelProps
     }
 
     return (
-        <PanelContainer ref={containerRef} secondary={secondary} style={style} id={id} className="mi-collapsible-panel">
+        <PanelContainer ref={containerRef} secondary={secondary} style={style} id={id} data-testid={testId} className="mi-collapsible-panel">
             <div className="panel-header" onClick={togglePanel} style={headerStyle}>
                 {icon}{title}
             </div>
