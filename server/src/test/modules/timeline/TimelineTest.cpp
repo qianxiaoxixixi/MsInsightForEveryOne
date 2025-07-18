@@ -165,6 +165,25 @@ TEST_F(TestSuit, QueryKernelDetailData)
     EXPECT_EQ(responseBody.count, expectSize);
 }
 
+TEST_F(TestSuit, QueryTotalKernel)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
+    Dic::Protocol::KernelDetailsParams requestParams;
+    uint64_t PAGE = 10;
+    requestParams.deviceId = "0";
+    requestParams.current = 1;
+    requestParams.order = "descend";
+    requestParams.orderBy = "name";
+    requestParams.pageSize = PAGE;
+    requestParams.rankId = "0";
+    requestParams.filters.emplace_back("type", "hcom");
+
+    auto result = database->QueryTotalKernel(requestParams);
+    const uint64_t EXPECT_COUNT = 4;
+
+    EXPECT_EQ(result, EXPECT_COUNT);
+}
+
 TEST_F(TestSuit, QueryKernelDetailDataWithCoreType)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabaseByRankId("0");
