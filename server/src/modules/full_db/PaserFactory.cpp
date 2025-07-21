@@ -469,6 +469,11 @@ void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, st
 {
     auto deviceIds = ProjectParserBase::SearchDeviceInfo(FileUtil::GetParentPath(rankInfo->parseFilePath));
     if (deviceIds.size() < 2) { // deviceIds size > 2, multi device
+        if (!deviceIds.empty()) {
+            rankInfo->deviceId = deviceIds[0];
+        } else {
+            rankInfo->deviceId = rankInfo->rankId;
+        }
         info.AddSubParseFileInfo(rankInfo);
         return;
     }
