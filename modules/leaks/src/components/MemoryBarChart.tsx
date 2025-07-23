@@ -130,7 +130,7 @@ const getTooltip = (blockData: InitParam['blockData']): echarts.TooltipComponent
             if (!info) {
                 return '';
             }
-            return safeStr(`Addr: ${info.addr} Size: ${(info.size / 1024 / 1024).toFixed(3)}MB Life: ${((info.endTimestamp - info.startTimestamp) / 1000000).toFixed(3)}s`);
+            return safeStr(`Addr: ${info.addr} Size: ${(info.size / 1024 / 1024).toFixed(3)}MB Life: ${((info.endTimestamp - info.startTimestamp) / 1000000000).toFixed(3)}s`);
         },
     };
 };
