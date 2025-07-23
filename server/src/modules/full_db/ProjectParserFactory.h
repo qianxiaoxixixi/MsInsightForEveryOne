@@ -86,6 +86,9 @@ public:
     }
 
     static std::vector<std::string> SearchDeviceInfo(const std::string &searchPath);
+    static std::vector<std::string> ParseDeviceInfo(ProjectExplorerInfo& info, const std::string& searchPath);
+    static std::set<std::string> ParseDeviceIdSetFromCsv(const std::string& filePath);
+    static std::set<std::string> ParseDeviceIdSetFromDb(const std::string& dbPath);
     static void AddRankDeviceParseFileInfo(ProjectExplorerInfo& info, std::shared_ptr<ParseFileInfo> rankInfo);
     std::string GetRankIdFromPath(const std::string &filePath, const std::string &importPath);
     static std::string GetDbPath(const std::string &filePath, const int index);

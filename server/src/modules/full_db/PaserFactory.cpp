@@ -462,23 +462,28 @@ std::vector<std::string> ProjectParserBase::SearchDeviceInfo(const std::string &
             res.emplace_back(match[1].str());
         }
     }
+    std::sort(res.begin(), res.end());
     return res;
 }
 
 void ProjectParserBase::AddRankDeviceParseFileInfo(ProjectExplorerInfo &info, std::shared_ptr<ParseFileInfo> rankInfo)
 {
-    auto deviceIds = ProjectParserBase::SearchDeviceInfo(FileUtil::GetParentPath(rankInfo->parseFilePath));
-    if (deviceIds.size() < 2) { // deviceIds size > 2, multi device
-        if (!deviceIds.empty()) {
-            rankInfo->deviceId = deviceIds[0];
+    auto deviceIdsGetFromDir = ProjectParserBase::SearchDeviceInfo(FileUtil::GetParentPath(rankInfo->parseFilePath));
+    auto deviceIdsFromFile = ProjectParserBase::ParseDeviceInfo(info, rankInfo->parseFilePath);
+    if (deviceIdsGetFromDir.size() < 2 || deviceIdsFromFile.size() < 2) { // deviceIds size > 2, multi device
+        if (!deviceIdsFromFile.empty()) {
+            rankInfo->deviceId = deviceIdsFromFile[0];
+        } else if (!deviceIdsGetFromDir.empty()) {
+            rankInfo->deviceId = deviceIdsGetFromDir.back();
         } else {
             rankInfo->deviceId = rankInfo->rankId;
         }
         info.AddSubParseFileInfo(rankInfo);
         return;
     }
-    std::for_each(deviceIds.begin(),
-                  deviceIds.end(),
+    std::vector<std::string> deviceId = deviceIdsFromFile;
+    std::for_each(deviceId.begin(),
+                  deviceId.end(),
                   [&info, &rankInfo](const std::string &deviceId) {
                       auto deviceInfo = std::make_shared<ParseFileInfo>();
                       deviceInfo->subId = FileUtil::SplicePath(rankInfo->subId, deviceId);
@@ -499,6 +504,71 @@ bool ProjectParserBase::IsMindFormsRankData(const std::vector<std::string> &pare
         return false;
     }
     return RegexUtil::RegexSearch(FileUtil::GetFileName(parentFolders.back()), "^rank_[0-9]+$").has_value();
+}
+
+std::vector<std::string> ProjectParserBase::ParseDeviceInfo(Dic::Module::Global::ProjectExplorerInfo &info, const std::string &searchPath)
+{
+    if (info.projectType == static_cast<int64_t>(ProjectTypeEnum::DB_CLUSTER) ||
+        info.projectType == static_cast<int64_t>(ProjectTypeEnum::DB)) {
+        std::vector<std::string> dbFiles = FileUtil::FindFilesWithFilter(searchPath, std::regex{"analysis.db"});
+        if (dbFiles.empty()) {
+            return {};
+        }
+        std::set<std::string> deviceIds = ProjectParserBase::ParseDeviceIdSetFromDb(dbFiles[0]);
+        return std::vector<std::string>(deviceIds.begin(), deviceIds.end());
+    }
+    std::vector<std::string> stepTraceTimeCsvFiles = FileUtil::FindFirstFileByRegex(searchPath, std::regex("^step_trace_time.csv$"));
+    if (stepTraceTimeCsvFiles.empty()) {
+        return {};
+    }
+    std::string stepTraceTimeCsvFile = stepTraceTimeCsvFiles[0];
+    auto deviceIdSet = ProjectParserBase::ParseDeviceIdSetFromCsv(stepTraceTimeCsvFile);
+    return std::vector<std::string>(deviceIdSet.begin(), deviceIdSet.end());
+}
+
+std::set<std::string> ProjectParserBase::ParseDeviceIdSetFromCsv(const std::string &filePath)
+{
+    auto file = OpenReadFileSafely(filePath);
+    if (!file.is_open()) {
+        ServerLog::Error("Failed to open step_trace_time.csv.");
+        return {};
+    }
+    std::string line;
+    uint64_t index = -1;
+    getline(file, line);
+    auto headerRow = StringUtil::StringSplit(line);
+    auto it = std::find(headerRow.begin(), headerRow.end(), DEVICE_ID);
+    if (it == headerRow.end()) {
+        ServerLog::Info("No DeviceId col in step_trace_time.csv.");
+        return {};
+    }
+    index = std::distance(headerRow.begin(), it);
+    std::set<std::string> deviceIds;
+    while (getline(file, line)) {
+        auto dataRow = StringUtil::StringSplit(line);
+        if (dataRow.size() <= index) {
+            continue;
+        }
+        if (!dataRow[index].empty()) {
+            deviceIds.insert(dataRow[index]);
+        }
+    }
+    return deviceIds;
+}
+
+std::set<std::string> ProjectParserBase::ParseDeviceIdSetFromDb(const std::string &dbPath)
+{
+    std::recursive_mutex mutex;
+    auto database = std::make_shared<DbTraceDataBase>(mutex);
+    std::set<std::string> deviceId;
+    try {
+        database->OpenDb(dbPath, false);
+        database->QueryDeviceIdInStepTraceTime(deviceId);
+    } catch (std::exception &e) {
+        ServerLog::Error("Failed to query deviceId from StepTraceTimeTable.");
+        return deviceId;
+    }
+    return deviceId;
 }
 
 ProjectAnalyzeRegister<ProjectParserBase> pReg(ParserType::OTHER);
