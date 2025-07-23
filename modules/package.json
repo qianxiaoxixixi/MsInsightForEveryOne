@@ -21,6 +21,8 @@
         "buildComputeLinux": "cd ./compute && npm run build && npm run publishLinux",
         "buildJupyterWin": "cd .\\jupyter && npm run build && npm run publishWin",
         "buildJupyterLinux": "cd ./jupyter && npm run build && npm run publishLinux",
+        "buildLeaksWin": "cd .\\leaks && npm run build && npm run publishWin",
+        "buildLeaksLinux": "cd ./leaks && npm run build && npm run publishLinux",
         "test": "npm install --force && npm run buildLibLinux && npm run testMemory && npm run testTimeline",
         "testCluster": "cd cluster && npm run test",
         "testMemory": "cd memory && npm run test",
