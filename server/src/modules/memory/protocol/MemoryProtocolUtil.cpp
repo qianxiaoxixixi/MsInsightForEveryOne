@@ -156,6 +156,8 @@ std::optional<document_t> ToLeaksMemoryBlockJson(const MemoryBlockItem &blockIte
     JsonUtil::AddMember(json, "endTimestamp", blockItem.endTimestamp, allocator);
     JsonUtil::AddMember(json, "owner", blockItem.owner, allocator);
     JsonUtil::AddMember(json, "attr", blockItem.otherAttr, allocator);
+    JsonUtil::AddMember(json, "processId", blockItem.processId, allocator);
+    JsonUtil::AddMember(json, "threadId", blockItem.threadId, allocator);
     document_t path(kArrayType);
     for (auto &point : blockItem.path) {
         document_t pointJson(kArrayType);
