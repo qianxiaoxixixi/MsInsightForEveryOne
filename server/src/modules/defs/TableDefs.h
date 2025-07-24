@@ -54,6 +54,7 @@ namespace Dic {
     const static std::string TABLE_ENUM_MEMCPY_OPERATION = "ENUM_MEMCPY_OPERATION";
     const static std::string TABLE_ENUM_HCCL_TRANSPORT_TYPE = "ENUM_HCCL_TRANSPORT_TYPE";
     const static std::string TABLE_ENUM_HCCL_LINK_TYPE = "ENUM_HCCL_LINK_TYPE";
+    const static std::string TABLE_STEP_TASK_INFO = "StepTaskInfo";
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";

@@ -8,6 +8,8 @@
 #include <map>
 #include "SummaryProtocolResponse.h"
 #include "SummaryRequestHandler.h"
+#include "VirtualTraceDatabase.h"
+
 namespace Dic::Module::Summary {
 
 class QueryFwdBwdTimelineHandler : public SummaryRequestHandler {
@@ -22,6 +24,10 @@ private:
     static bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId,
                                           const std::string &clusterPath);
     static std::map<std::string, PipelineFwdBwdTimelineByRank> dataMap;
+    static bool QueryFwdBwdTimelineFromFlow(const std::string &rankId, const std::string &stepId,
+        const std::shared_ptr<Dic::Module::Timeline::VirtualTraceDatabase> &database);
+    static bool QueryFwdBwdTimelineFromMstx(const std::string &rankId, const std::string &stepId,
+        const std::shared_ptr<Dic::Module::Timeline::VirtualTraceDatabase> &database);
 };
 
 } // Dic::Module::Summary

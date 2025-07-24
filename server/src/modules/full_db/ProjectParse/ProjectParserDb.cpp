@@ -143,10 +143,8 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
                                             std::shared_ptr<ParseFileInfo> parsefileInfo)
 {
     std::vector<std::string> dbFiles = GetDbFilesInDir(parsefileInfo->parseFilePath);
-    std::string cluster = parsefileInfo->clusterId;
-    if (project.GetClusterInfos().empty()) {
-        parsefileInfo->clusterId.clear();
-    }
+    // 非RL数据不下发集群
+    std::string clusterId = project.GetClusterInfos().empty() ? "" : parsefileInfo->clusterId;
     for (const auto &file: dbFiles) {
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
             ServerLog::Error("Failed to create connection pool. ", file);
@@ -180,14 +178,14 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankIdDeviceMap);
             TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
             TrackInfoManager::Instance().SetRankListByFileId(file,
-                                                             {parsefileInfo->clusterId,
+                                                             {clusterId,
                                                               parsefileInfo->host,
                                                               parsefileInfo->rankId,
                                                               parsefileInfo->deviceId,
                                                               rankName});
             DataBaseManager::Instance().UpdateRankIdToDeviceId(file, host + rank, parsefileInfo->deviceId);
         }
-        TrackInfoManager::Instance().AddRankToCluster(cluster, parsefileInfo->rankId);
+        TrackInfoManager::Instance().AddRankToCluster(parsefileInfo->clusterId, parsefileInfo->rankId);
         TrackInfoManager::Instance().SetClusterByFileId(file, parsefileInfo->clusterId);
     }
 }

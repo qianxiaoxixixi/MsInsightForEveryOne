@@ -158,12 +158,16 @@ public:
     void ProcessHostCounterEventsMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     void QueryDeviceIdInStepTraceTime(std::set<std::string>& deviceIds);
 
+    bool QueryFwdBwdFromMstx(std::vector<Protocol::ThreadTraces> &traceList) override;
+    bool QueryP2PCommunicationOpHaveConnectionId(std::vector<Protocol::ThreadTraces> &traceList) override;
+
 private:
     const uint32_t cacheSize = 5000;
     bool initStmt = false;
     bool isExistPytorch = false;
     bool isExistCann = false;
     bool isExistMstx = false;
+    bool isExistCommOp = false;
 
     std::string host;
     std::string hostPath; // 记录到 card 之前的文件路径
