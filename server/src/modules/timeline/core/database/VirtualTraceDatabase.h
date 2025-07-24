@@ -112,7 +112,15 @@ public:
     virtual bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
         const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) = 0;
     virtual bool QueryByteAlignmentAnalyzerData(std::vector<CommunicationLargeOperatorInfo> &data) = 0;
-// LCOV_EXCL_BR_START
+    virtual bool QueryFwdBwdFromMstx(std::vector<Protocol::ThreadTraces> &traceList)
+    {
+        return false;
+    }
+    virtual bool QueryP2PCommunicationOpHaveConnectionId(std::vector<Protocol::ThreadTraces> &traceList)
+    {
+        return false;
+    }
+    // LCOV_EXCL_BR_START
     // 调用前需保证uncovered、sql等不为空
     template<class T>
     bool CalculateCommunicationSummaryData(const std::vector<Protocol::ThreadTraces> &uncovered,

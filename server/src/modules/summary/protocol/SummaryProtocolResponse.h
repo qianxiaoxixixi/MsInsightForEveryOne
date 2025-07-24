@@ -116,11 +116,23 @@ struct PipelineFwdBwdTimelineByRank {
     std::vector<PipelineFwdBwdTimelineByComponent> componentDataList;
 };
 
+// pp流水线中连线的点信息 衡坐标为时间戳，纵坐标是rankId
+struct FlowPointInfo {
+    std::string rankId;
+    uint64_t startTime;
+};
+
+struct FlowInfo {
+    FlowPointInfo to;
+    FlowPointInfo from;
+};
+
 struct PipelineFwdBwdTimelineResponseBody {
     uint64_t minTime = UINT64_MAX;
     uint64_t maxTime = 0;
     std::vector<std::string> rankLists;
     std::vector<PipelineFwdBwdTimelineByRank> rankDataList;
+    std::vector<FlowInfo> flowList;
 };
 
 struct PipelineFwdBwdTimelineResponse : public Response {

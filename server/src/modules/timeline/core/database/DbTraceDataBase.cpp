@@ -1283,6 +1283,7 @@ bool DbTraceDataBase::SetConfig()
     isExistPytorch = CheckTableExist(TABLE_API);
     isExistCann = CheckTableExist(TABLE_CANN_API);
     isExistMstx = CheckTableExist(TABLE_MSTX_EVENTS);
+    isExistCommOp = CheckTableExist(TABLE_COMMUNICATION_OP);
     // 初始化所有全量查询功能需要的表，空表不影响展示，方便sql扩展
     for (const auto &item: FULL_DB_TABLE_MAP) {
         if (!CheckTableExist(item.first)) {
@@ -1311,8 +1312,11 @@ bool DbTraceDataBase::SetConfig()
         if (CheckTableExist(TABLE_COMPUTE_TASK_INFO) && !CheckColumnExist(TABLE_COMPUTE_TASK_INFO, "waitNs")) {
             ExecSql("alter table " + TABLE_COMPUTE_TASK_INFO + " add column waitNs INTEGER;");
         }
-        if (CheckTableExist(TABLE_COMMUNICATION_OP) && !CheckColumnExist(TABLE_COMMUNICATION_OP, "waitNs")) {
+        if (isExistCommOp && !CheckColumnExist(TABLE_COMMUNICATION_OP, "waitNs")) {
             ExecSql("alter table " + TABLE_COMMUNICATION_OP + " add column waitNs INTEGER;");
+        }
+        if (isExistCommOp && !CheckColumnExist(TABLE_COMMUNICATION_OP, "opConnectionId")) {
+            ExecSql("alter table " + TABLE_COMMUNICATION_OP + " add column opConnectionId TEXT;");
         }
         for (const auto &status: DB_STATUS_LIST) {
             UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);

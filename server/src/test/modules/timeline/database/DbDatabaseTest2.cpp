@@ -21,7 +21,7 @@ protected:
     const std::string commucationOpSql =
         "CREATE TABLE COMMUNICATION_OP (opName INTEGER,startNs INTEGER,endNs INTEGER,connectionId INTEGER,groupName "
         "INTEGER,opId INTEGER PRIMARY KEY,relay INTEGER,retry INTEGER,dataType INTEGER,algType INTEGER,count "
-        "NUMERIC,opType INTEGER, waitNs INTEGER);";
+        "NUMERIC,opType INTEGER, waitNs INTEGER, opConnectionId TEXT);";
     const std::string pytorchApiSql =
         "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, connectionId INTEGER, name INTEGER, "
         "sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, inputShapes INTEGER, callchainId INTEGER, "
@@ -774,6 +774,40 @@ TEST_F(DbDatabaseTest2, TestQueryFwdBwdDataByFlowWhenTableNotRight)
     bool result = database.QueryFwdBwdDataByFlow(rankId, offset, range, fwdBwdData);
     EXPECT_EQ(result, false);
     EXPECT_EQ(fwdBwdData.size(), 0);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryFwdBwdFromMstxSucceess)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    std::string mstxInfoSql = "CREATE TABLE StepTaskInfo (name TEXT, startNs INTEGER, endNs INTEGER, type INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxInfoSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    database.SetDbPtr(db);
+    std::vector<Protocol::ThreadTraces> traceList;
+    bool res = database.QueryFwdBwdFromMstx(traceList);
+    const int expectSize = 0;
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(traceList.size(), expectSize);
+}
+
+TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpHaveConnectionIdSucceess)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, commucationOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    database.SetDbPtr(db);
+    std::vector<Protocol::ThreadTraces> traceList;
+    bool res = database.QueryP2PCommunicationOpHaveConnectionId(traceList);
+    const int expectSize = 0;
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(traceList.size(), expectSize);
 }
 
 TEST_F(DbDatabaseTest2, TestQueryP2PCommunicationOpDataWhenDbNotOpen)

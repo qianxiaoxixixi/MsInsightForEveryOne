@@ -74,8 +74,6 @@ bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &ra
     if (dataMap.find(rankId) == dataMap.end()) {
         return false;
     }
-    auto rank = &dataMap.at(rankId);
-    uint64_t offset = Timeline::TraceTime::Instance().GetStartTime();
     auto database = DataBaseManager::Instance().GetTraceDatabaseByRankId(rankId);
     if (database == nullptr) {
         // DB场景下无法根据rankId获取database
@@ -85,6 +83,45 @@ bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineByRank(const std::string &ra
             return false;
         }
     }
+    if (QueryFwdBwdTimelineFromMstx(rankId, stepId, database)) {
+        return true;
+    }
+    // 如果mstx没有获取到想要的数据，就从手动从timeline计算
+    return QueryFwdBwdTimelineFromFlow(rankId, stepId, database);
+}
+
+bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineFromMstx(const std::string &rankId, const std::string &stepId,
+    const std::shared_ptr<Dic::Module::Timeline::VirtualTraceDatabase> &database)
+{
+    // 校验表格是否存在，表格不存在，则直接返回，该表不存在属于正常现象
+    if (!database->CheckTableExist(TABLE_STEP_TASK_INFO)) {
+        ServerLog::Warn("The table of step task is not exist, skip to query fwd/bwd info from mstx.");
+        return false;
+    }
+    auto rank = &dataMap.at(rankId);
+    rank->rankId = rankId;
+    // 前反向内容
+    PipelineFwdBwdTimelineByComponent fwdBwdData = {LANE_FP_BP, {}};
+    if (!database->QueryFwdBwdFromMstx(fwdBwdData.traceList) || fwdBwdData.traceList.empty()) {
+        ServerLog::Error("Fail to query fwd/bwd info from mstx.");
+        return false;
+    }
+    // 从COMMUNICATION_OP表查询算子内容
+    PipelineFwdBwdTimelineByComponent p2pOpData = {LANE_P2P_OP, {}};
+    if (!database->QueryP2PCommunicationOpHaveConnectionId(p2pOpData.traceList)) {
+        ServerLog::Error("Fail to query p2p communication op.");
+        return false;
+    }
+    rank->componentDataList.push_back(fwdBwdData);
+    rank->componentDataList.push_back(p2pOpData);
+    return true;
+}
+
+bool QueryFwdBwdTimelineHandler::QueryFwdBwdTimelineFromFlow(const std::string &rankId, const std::string &stepId,
+    const std::shared_ptr<Dic::Module::Timeline::VirtualTraceDatabase> &database)
+{
+    uint64_t offset = Timeline::TraceTime::Instance().GetStartTime();
+    auto rank = &dataMap.at(rankId);
     Protocol::ExtremumTimestamp range = {offset, (uint64_t)INT64_MAX};
     // 此处不检查返回值，原因为如果查询失败，则以offset为最小值，INT64_MAX为最大值，对应ALL场景
     database->QueryStepDuration(stepId, range.minTimestamp, range.maxTimestamp);
