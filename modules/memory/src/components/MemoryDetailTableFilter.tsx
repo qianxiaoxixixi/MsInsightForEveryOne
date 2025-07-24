@@ -36,13 +36,13 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
 
     const onFilterEventMinSizeInputChanged = (value: number | string | null): void => {
         runInAction(() => {
-            memorySession.minSize = value as number;
+            memorySession.minSize = (value as number) ?? 0;
         });
     };
 
     const onFilterEventMaxSizeInputChanged = (value: number | string | null): void => {
         runInAction(() => {
-            memorySession.maxSize = value as number;
+            memorySession.maxSize = (value as number) ?? 0;
         });
     };
 

@@ -3,7 +3,7 @@
  */
 
 import type { TableProps } from 'antd/es/table';
-import type { SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import type { SortOrder, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -28,7 +28,7 @@ interface IProps {
     current: number;
     pageSize: number;
     onPageChange: (newCurrent: number, newPageSize: number) => void;
-    onOrderChange: (order: string | undefined) => void;
+    onOrderChange: (order: SortOrder) => void;
     onOrderByChange: (orderBy: string) => void;
     total: number;
     isCompare: boolean;
@@ -57,7 +57,7 @@ interface IColName {
 }
 
 const orderByColName: IColName = {
-    deviceId: 'device_id',
+    deviceId: 'deviceId',
     name: 'name',
     opName: 'op_name',
     nodeIndexStart: 'node_index_start',
@@ -221,10 +221,10 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         sorter: SorterResult<OperatorDetail> | Array<SorterResult<OperatorDetail>>) => {
         if ((sorter as SorterResult<OperatorDetail>).order) {
             const orderByCol = `${(sorter as SorterResult<OperatorDetail>).field}`;
-            onOrderChange((sorter as SorterResult<OperatorDetail>).order as string);
+            onOrderChange((sorter as SorterResult<OperatorDetail>).order as SortOrder);
             onOrderByChange(orderByColName[orderByCol as keyof IColName]);
         } else {
-            onOrderChange(undefined);
+            onOrderChange(null);
         }
     };
 

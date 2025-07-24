@@ -67,7 +67,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
     // 【case】memory底部表格条件查询后结果加载
     test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
+        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor, queryBtn } = memoryPage;
         const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
         const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
         const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
@@ -75,7 +75,6 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         expect(await nameInput.expectValueToBe('aten::empty_strided'));
         expect(await minSizeInput.expectValueToBe('0'));
         expect(await maxSizeInput.expectValueToBe('421916'));
-        const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
         await page.mouse.move(0, 0);
@@ -86,10 +85,8 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
     // 【case】memory底部表格条件重置后结果加载
     test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
-        const { memoryFrame, maxSizeInputor } = memoryPage;
+        const { memoryFrame, maxSizeInputor, queryBtn, resetBtn } = memoryPage;
         const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
-        const resetBtn = memoryFrame.getByTestId('reset-btn');
-        const queryBtn = memoryFrame.getByTestId('query-btn');
 
         const tableWrapper = memoryFrame.locator('.mi-page').locator('.panel-content').nth(1);
 
@@ -140,7 +137,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
     // 【case】memory中间调整区间，底部表格仅查看在选中时间区间分配或释放内存的数据时的结果展示
     test('query_memoryDetailTable_by_tableFilterConditionOnlyShowAllocatedOrReleasedWithinInterval', async ({ page, memoryPage }) => {
-        const { memoryFrame, isOnlyShowAllocatedOrReleasedWithinIntervalChecker } = memoryPage;
+        const { memoryFrame, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, queryBtn } = memoryPage;
         const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox = new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
 
         const chart = memoryFrame.locator('.ant-spin-container > div > div:nth-child(2) > div:nth-child(1) > canvas');
@@ -158,7 +155,6 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
         await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.click();
         expect(await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.isChecked()).toBe(true);
-        const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
         const spin = memoryFrame.locator('.panel-content .ant-spin-dot-spin');
@@ -207,7 +203,7 @@ test.describe('Memory(MindSpore)', () => {
 
     // 测试鼠标滚动、框选、查询
     test('test_staticChartDisplay_with_conditions', async ({ page, memoryPage }) => {
-        const { memoryFrame, nameInputor, minSizeInputor, rankIdSelector } = memoryPage;
+        const { memoryFrame, nameInputor, minSizeInputor, rankIdSelector, queryBtn } = memoryPage;
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         await rankIdSelect.open();
         await rankIdSelect.selectOption('0');
@@ -231,7 +227,6 @@ test.describe('Memory(MindSpore)', () => {
         expect(await minSizeInput.expectValueToBe('0'));
         await nameInput.setValue('attention');
         await minSizeInput.setValue('10000');
-        const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.click();
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('mindspore-filter.png', {
             maxDiffPixels: 500,
@@ -308,7 +303,7 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
 
     // 多机多卡db类型数据比对场景
     test('test_pageDisplay_compare_rank_db', async ({ page, memoryPage }) => {
-        const { minSizeInputor, maxSizeInputor, memoryFrame } = memoryPage;
+        const { minSizeInputor, maxSizeInputor, memoryFrame, queryBtn, resetBtn } = memoryPage;
         await setCompare(page, memoryFrame, { baseline: FilePath.DB_HOST_0_RANK_0, comparison: FilePath.DB_HOST_1_RANK_0 });
         await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankDb, {
@@ -316,8 +311,6 @@ test.describe('Memory(Pytorch_MultiMachinesMultiRanksData)', () => {
         });
         const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
         const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
-        const queryBtn = memoryFrame.getByTestId('query-btn');
-        const resetBtn = memoryFrame.getByTestId('reset-btn');
         await minSizeInput.expectValueToBe('-243840');
         await maxSizeInput.expectValueToBe('243840');
         await minSizeInput.setValue('0');
@@ -373,7 +366,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         await textRank0.click();
         const dbRank1 = frameworkPage.getRankLocator(FilePath.DB_HOST_0_RANK_1);
         await dbRank1.click();
-        const { memoryFrame, hostSelector, rankIdSelector } = memoryPage;
+        const { memoryFrame, hostSelector, rankIdSelector, queryBtn } = memoryPage;
         await hostSelector.waitFor({ state: 'attached' });
         const hostSelect = new SelectHelpers(page, hostSelector, memoryFrame);
         const hostText = await hostSelect.getValue();
@@ -381,6 +374,7 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
         const rankIdSelect = new SelectHelpers(page, rankIdSelector, memoryFrame);
         const selectedText = await rankIdSelect.getValue();
         expect(selectedText).toBe('1');
+        await expect(queryBtn).toBeEnabled({ timeout: 20_000 });
         // 等待 echarts 动画结束
         await page.waitForTimeout(2000);
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-text-to-db.png', {
@@ -390,6 +384,49 @@ test.describe('Memory(Pytorch_SwitchProject)', () => {
 
     test.afterEach(async ({ page, ws }) => {
         await clearAllData(page, ws);
+    });
+});
+
+test.describe('Memory(Switch_Dynamic_and_Static)', () => {
+    test.beforeEach(async ({ page, memoryPage, ws }) => {
+        const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
+        await memoryPage.goto();
+        await clearAllData(page);
+        await importData(page, FilePath.MIND_SPORE);
+        await allCardParsedPromise;
+        await importData(page, FilePath.TEXT_330);
+        await allCardParsedPromise;
+    });
+
+    // 测试在表头排序时从动态图和静态图数据切换时的界面展示
+    test('test_pageDisplay_when_dynamic_to_static', async ({ page, memoryPage }) => {
+        const frameworkPage = new FrameworkPage(page);
+        const { memoryFrame, graphIdSelector, queryBtn } = memoryPage;
+        const textRank0 = frameworkPage.getRankLocator(FilePath.TEXT_330_RANK_0);
+        // 点击Name列排序
+        await memoryFrame.getByRole('table').getByText('Name').click();
+        const msRank0 = frameworkPage.getRankLocator(FilePath.MS_RANK_0);
+        await msRank0.click();
+        await graphIdSelector.waitFor({ state: 'attached' });
+        const graphIdSelect = new SelectHelpers(page, graphIdSelector, memoryFrame);
+        const graphIdText = await graphIdSelect.getValue();
+        expect(graphIdText).toBe('1');
+        // 等待表格加载完成
+        await expect(queryBtn).toBeEnabled({ timeout: 20_000 });
+        // 等待 echarts 动画结束
+        await page.waitForTimeout(2000);
+        // 点击Device ID表头排序，再切换
+        await memoryFrame.getByRole('table').getByText('Device ID').click();
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('mindspore_rank0_loaded.png', {
+            maxDiffPixels: 500,
+        });
+        await textRank0.click();
+        await graphIdSelector.waitFor({ state: 'detached' });
+        // 等待 echarts 动画结束
+        await page.waitForTimeout(1000);
+        await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot('pytorch-single-rank-0.png', {
+            maxDiffPixels: 500,
+        });
     });
 });
 
