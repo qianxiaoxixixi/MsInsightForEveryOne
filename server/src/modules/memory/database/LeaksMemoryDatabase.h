@@ -89,6 +89,15 @@ private:
     // 火焰图数据
     const std::string pythonTraceTablePrefix = "python_trace_";
 
+    const std::string allocationColumnPattern =
+            StringUtil::GenerateColumnString(Memory::MemoryAllocationTableColumn::FULL_COLUMNS_WITHOUT_ID);
+    const std::string allocationValuePattern =
+            StringUtil::CreateQuestionMarkString(std::size(Memory::MemoryAllocationTableColumn::FULL_COLUMNS_WITHOUT_ID));
+    const std::string blockColumnPattern =
+            StringUtil::GenerateColumnString(Memory::MemoryBlockTableColumn::FULL_COLUMNS_WITHOUT_ID);
+    const std::string blockValuePattern =
+            StringUtil::CreateQuestionMarkString(std::size(Memory::MemoryBlockTableColumn::FULL_COLUMNS_WITHOUT_ID));
+
     // Parse status info
     const std::string leaksMemoryParseStatus = "LEAKS_PARSE_STATUS";
     const uint64_t cacheSize = 100;

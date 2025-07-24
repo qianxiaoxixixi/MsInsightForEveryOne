@@ -65,21 +65,15 @@ std::string LeaksMemoryDatabase::GetCreateMemoryAllocationTableSql()
                             "  {} text(255),"
                             "  {} text(255)"
                             ");";
-    std::string errMsg;
-    createSql = StringUtil::FormatSqlUsingPlaceHolder(createSql,
-                                                      {memoryAllocationTable,
-                                                       memoryAllocationTable,
-                                                       std::string(ALLOCATION::ID),
-                                                       std::string(ALLOCATION::TIMESTAMP),
-                                                       std::string(ALLOCATION::TOTAL_SIZE),
-                                                       std::string(ALLOCATION::OPTIMIZED),
-                                                       std::string(ALLOCATION::DEVICE_ID),
-                                                       std::string(ALLOCATION::EVENT_TYPE)},
-                                                      errMsg);
-    if (!errMsg.empty()) {
-        ServerLog::Error("Failed to prepare sql for creating memory allocation table: ", errMsg);
-        return "";
-    }
+    createSql = StringUtil::FormatString(createSql,
+                                         memoryAllocationTable,
+                                         memoryAllocationTable,
+                                         ALLOCATION::ID,
+                                         ALLOCATION::TIMESTAMP,
+                                         ALLOCATION::TOTAL_SIZE,
+                                         ALLOCATION::OPTIMIZED,
+                                         ALLOCATION::DEVICE_ID,
+                                         ALLOCATION::EVENT_TYPE);
     return createSql;
 }
 
@@ -96,26 +90,24 @@ std::string LeaksMemoryDatabase::GetCreateMemoryBlockTableSql()
                             "  {} integer,"
                             "  {} text(255),"
                             "  {} text(255),"
-                            "  {} TEXT(255)"
+                            "  {} TEXT(255),"
+                            "  {} integer,"
+                            "  {} integer"
                             ");";
-    std::string errMsg;
-    createSql = StringUtil::FormatSqlUsingPlaceHolder(createSql,
-                                                      {memoryBlockTable,
-                                                       memoryBlockTable,
-                                                       std::string(BLOCK::ID),
-                                                       std::string(BLOCK::DEVICE_ID),
-                                                       std::string(BLOCK::ADDR),
-                                                       std::string(BLOCK::SIZE),
-                                                       std::string(BLOCK::START_TIMESTAMP),
-                                                       std::string(BLOCK::END_TIMESTAMP),
-                                                       std::string(BLOCK::EVENT_TYPE),
-                                                       std::string(BLOCK::OWNER),
-                                                       std::string(BLOCK::ATTR)},
-                                                      errMsg);
-    if (!errMsg.empty()) {
-        ServerLog::Error("Failed to prepare sql for creating memory block table: ", errMsg);
-        return "";
-    }
+    createSql = StringUtil::FormatString(createSql,
+                                         memoryBlockTable,
+                                         memoryBlockTable,
+                                         BLOCK::ID,
+                                         BLOCK::DEVICE_ID,
+                                         BLOCK::ADDR,
+                                         BLOCK::SIZE,
+                                         BLOCK::START_TIMESTAMP,
+                                         BLOCK::END_TIMESTAMP,
+                                         BLOCK::EVENT_TYPE,
+                                         BLOCK::OWNER,
+                                         BLOCK::ATTR,
+                                         BLOCK::PROCESS_ID,
+                                         BLOCK::THREAD_ID);
     return createSql;
 }
 
@@ -206,14 +198,11 @@ bool LeaksMemoryDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
 bool LeaksMemoryDatabase::QueryEntireEventsTable(std::vector<Memory::MemoryEvent> &eventDetails)
 {
     std::string sql = "select * from {} where {} not in ('N/A', '', 'host') order by {};";
-    std::string errMsg;
-    sql = StringUtil::FormatSqlUsingPlaceHolder(sql,
-                                                {TABLE_LEAKS_DUMP,
-                                                 std::string(EVENT::DEVICE_ID),
-                                                 std::string(EVENT::TIMESTAMP)},
-                                                 errMsg);
-    if (!errMsg.empty() || sql.empty()) {
-        ServerLog::Error("Query entire events table. Failed to format sql. Error: " + errMsg);
+    sql = StringUtil::FormatString(sql, TABLE_LEAKS_DUMP,
+                                   EVENT::DEVICE_ID,
+                                   EVENT::TIMESTAMP);
+    if (sql.empty()) {
+        ServerLog::Error("Query entire events table. Failed to format sql.");
         return false;
     }
     sqlite3_stmt *stmt = nullptr;
@@ -281,6 +270,8 @@ void LeaksMemoryDatabase::InsertMemoryBlockList(const std::vector<Memory::Memory
         sqlite3_bind_text(stmt, idx++, block.eventType.c_str(), block.eventType.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, block.owner.c_str(), block.owner.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, block.otherAttr.c_str(), block.otherAttr.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, block.processId > INT64_MAX ? INT64_MAX : block.processId);
+        sqlite3_bind_int64(stmt, idx++, block.threadId > INT64_MAX ? INT64_MAX : block.threadId);
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
@@ -309,12 +300,12 @@ bool LeaksMemoryDatabase::InitStmt()
     }
     // LCOV_EXCL_BR_START
     std::string insertAllocationsSql = "INSERT INTO " + memoryAllocationTable +
-            " (timestamp, totalSize, optimized, deviceId, eventType) VALUES (?,?,?,?,?)";
+            "(" + allocationColumnPattern +") VALUES (" + allocationValuePattern +")";
     std::string insertBlocksSql = "INSERT INTO " + memoryBlockTable +
-            "(deviceId, addr, size, startTimestamp, endTimestamp, eventType, owner, attr) VALUES (?,?,?,?,?,?,?,?)";
+            "("+ blockColumnPattern +") VALUES (" + blockValuePattern + ")";
     for (uint64_t i = 0; i < cacheSize - 1; ++i) {
-        insertAllocationsSql.append(",(?,?,?,?,?)");
-        insertBlocksSql.append(",(?,?,?,?,?,?,?,?)");
+        insertAllocationsSql.append(",("+allocationValuePattern+")");
+        insertBlocksSql.append(",("+blockValuePattern+")");
     }
     // LCOV_EXCL_BR_STOP
     if (sqlite3_prepare_v2(db, insertAllocationsSql.c_str(), -1, &insertAllocationStmt, nullptr) != SQLITE_OK) {
@@ -366,11 +357,10 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertAllocationsStmt(uint64_t allocations
         sqlite3_reset(stmt);
     } else {
         // LCOV_EXCL_BR_START
-        std::string insertAllocationsSql =
-            "INSERT INTO " + memoryAllocationTable +
-            " (timestamp, totalSize, optimized, deviceId, eventType) VALUES (?,?,?,?,?)";
+        std::string insertAllocationsSql = "INSERT INTO " + memoryAllocationTable +
+                                           "(" + allocationColumnPattern +") VALUES (" + allocationValuePattern +")";
         for (uint64_t i = 0; i < allocationsLen - 1; ++i) {
-            insertAllocationsSql.append(",(?,?,?,?,?)");
+            insertAllocationsSql.append(",("+allocationValuePattern+")");
         }
         // LCOV_EXCL_BR_STOP
         if (sqlite3_prepare_v2(db, insertAllocationsSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -395,11 +385,10 @@ sqlite3_stmt *LeaksMemoryDatabase::GetInsertBlocksStmt(uint64_t blocksLen)
         sqlite3_reset(stmt);
     } else {
         // LCOV_EXCL_BR_START
-        std::string insertBlocksSql =
-            "INSERT INTO " + memoryBlockTable +
-            " (deviceId, addr, size, startTimestamp, endTimestamp, eventType, owner, attr) VALUES (?,?,?,?,?,?,?,?)";
+        std::string insertBlocksSql = "INSERT INTO " + memoryBlockTable +
+                                      "("+ blockColumnPattern +") VALUES (" + blockValuePattern + ")";
         for (uint64_t i = 0; i < blocksLen - 1; ++i) {
-            insertBlocksSql.append(",(?,?,?,?,?,?,?,?)");
+            insertBlocksSql.append(",("+blockValuePattern+")");
         }
         // LCOV_EXCL_BR_STOP
         if (sqlite3_prepare_v2(db, insertBlocksSql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -457,23 +446,15 @@ void LeaksMemoryDatabase::AppendMemoryBlockQueryConditionSqlByParams(const Leaks
     if (queryParams.endTimestamp > 0) {
         querySql += " AND ((({} - {}) BETWEEN {} AND {}) OR (({} - {}) BETWEEN {} AND {}))";
 
-        querySql = StringUtil::FormatSqlUsingPlaceHolder(querySql,
-                                                         {std::string(BLOCK::START_TIMESTAMP),
-                                                          minTimestampStr,
-                                                          std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp),
-                                                          std::string(BLOCK::END_TIMESTAMP),
-                                                          minTimestampStr,
-                                                          std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp)},
-                                                         errMsg);
+        querySql = StringUtil::FormatString(querySql, BLOCK::START_TIMESTAMP, minTimestampStr,
+                                            std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp),
+                                            BLOCK::END_TIMESTAMP, minTimestampStr,
+                                            std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp));
     }
     if (queryParams.maxSize > 0) {
         querySql += " AND {} >= {} AND {} <= {}";
-        querySql = StringUtil::FormatSqlUsingPlaceHolder(querySql,
-                                                         {std::string(BLOCK::SIZE),
-                                                          std::to_string(queryParams.minSize),
-                                                          std::string(BLOCK::SIZE),
-                                                          std::to_string(queryParams.maxSize)},
-                                                         errMsg);
+        querySql = StringUtil::FormatString(querySql, BLOCK::SIZE, std::to_string(queryParams.minSize),
+                                            BLOCK::SIZE, std::to_string(queryParams.maxSize));
     }
 }
 
@@ -493,6 +474,8 @@ bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vecto
         block.endTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.owner = sqlite3_column_string(stmt, col++);
         block.otherAttr = sqlite3_column_string(stmt, col++);
+        block.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         blocks.emplace_back(block);
     }
     return true;
@@ -510,22 +493,19 @@ void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryP
     querySql = "SELECT {}, {}, {}, "
                "({} - {}) AS {},"
                "({} - {}) AS {},"
-               "{}, {} "
+               "{}, {}, {}, {} "
                "FROM {} where {}=? AND {}=? ";
     std::string errMsg;
-    std::string startTimestampStr = std::string(BLOCK::START_TIMESTAMP);
-    std::string endTimestampStr = std::string(BLOCK::END_TIMESTAMP);
     std::string minTimestampStr = std::to_string(minTimestamp);
-    querySql = StringUtil::FormatSqlUsingPlaceHolder(querySql,
-                                                     {std::string(BLOCK::ID), std::string(BLOCK::ADDR),
-                                                      std::string(BLOCK::SIZE), startTimestampStr,
-                                                      minTimestampStr, startTimestampStr, endTimestampStr,
-                                                      minTimestampStr, endTimestampStr, std::string(BLOCK::OWNER),
-                                                      std::string(BLOCK::ATTR), memoryBlockTable,
-                                                      std::string(BLOCK::DEVICE_ID), std::string(BLOCK::EVENT_TYPE)},
-                                                     errMsg);
+    querySql = StringUtil::FormatString(querySql,
+                                        BLOCK::ID, BLOCK::ADDR,
+                                        BLOCK::SIZE, BLOCK::START_TIMESTAMP,
+                                        minTimestampStr, BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
+                                        minTimestampStr, BLOCK::END_TIMESTAMP, BLOCK::OWNER,
+                                        BLOCK::ATTR, BLOCK::PROCESS_ID, BLOCK::THREAD_ID,
+                                        memoryBlockTable, BLOCK::DEVICE_ID, BLOCK::EVENT_TYPE);
     AppendMemoryBlockQueryConditionSqlByParams(queryParams, querySql);
-    querySql += " ORDER BY " + startTimestampStr +" ASC";
+    querySql += " ORDER BY " + std::string(BLOCK::START_TIMESTAMP) + " ASC";
     int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query blocks table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
@@ -570,41 +550,34 @@ void LeaksMemoryDatabase::QueryMemoryAllocations(const LeaksMemoryAllocationPara
     }
     int optimized = queryParams.optimized ? 1 : 0;
     std::string minTimestampStr = std::to_string(minTimestamp);
-    std::string TIMESTAMP(ALLOCATION::TIMESTAMP);
-    std::string DEVICE_ID(ALLOCATION::DEVICE_ID);
-    std::string OPTIMIZED(ALLOCATION::OPTIMIZED);
-    std::string EVENT_TYPE(ALLOCATION::EVENT_TYPE);
     querySql = "SELECT {},"
                "({} - {}) AS {}, "
                "{}, {}, {}, {} "
                "FROM {} WHERE {}=? AND {}=? AND {}=? ";
     std::string errMsg;
-    querySql = StringUtil::FormatSqlUsingPlaceHolder(querySql,
-                                                     {std::string(ALLOCATION::ID),
-                                                      TIMESTAMP, minTimestampStr, TIMESTAMP,
-                                                      std::string(ALLOCATION::TOTAL_SIZE),
-                                                      OPTIMIZED, DEVICE_ID, EVENT_TYPE,
-                                                      memoryAllocationTable,
-                                                      DEVICE_ID, OPTIMIZED, EVENT_TYPE,
-                                                      },
-                                                     errMsg);
+    querySql = StringUtil::FormatString(querySql,
+                                        ALLOCATION::ID,
+                                        ALLOCATION::TIMESTAMP, minTimestampStr, ALLOCATION::TIMESTAMP,
+                                        ALLOCATION::TOTAL_SIZE,
+                                        ALLOCATION::OPTIMIZED, ALLOCATION::DEVICE_ID, ALLOCATION::EVENT_TYPE,
+                                        memoryAllocationTable,
+                                        ALLOCATION::OPTIMIZED, ALLOCATION::DEVICE_ID, ALLOCATION::EVENT_TYPE);
     if (queryParams.endTimestamp > 0) {
-        querySql.append(StringUtil::FormatSqlUsingPlaceHolder(" AND ({} - {}) >= {} AND ({} - {}) <= {} ",
-                                                              {TIMESTAMP, minTimestampStr,
-                                                               std::to_string(queryParams.startTimestamp),
-                                                               TIMESTAMP, minTimestampStr,
-                                                               std::to_string(queryParams.endTimestamp)},
-                                                              errMsg));
+        querySql.append(StringUtil::FormatString(" AND ({} - {}) >= {} AND ({} - {}) <= {} ",
+                                                 ALLOCATION::TIMESTAMP, minTimestampStr,
+                                                 std::to_string(queryParams.startTimestamp),
+                                                 ALLOCATION::TIMESTAMP, minTimestampStr,
+                                                 std::to_string(queryParams.endTimestamp)));
     }
-    querySql += " ORDER BY " + TIMESTAMP + " ASC";
+    querySql += " ORDER BY " + std::string(ALLOCATION::TIMESTAMP) + " ASC";
     int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query allocations table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return;
     }
     int bindIdx = bindStartIndex;
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, bindIdx++, optimized);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
     QueryMemoryAllocationsByStep(stmt, allocations);
     sqlite3_finalize(stmt);
@@ -618,12 +591,11 @@ uint64_t LeaksMemoryDatabase::QueryMemoryEventExtremumTimestamp(const std::strin
     }
     std::string sql;
     std::string errMsg;
-    sql = StringUtil::FormatSqlUsingPlaceHolder("select {}({}) from {} where {} == ?;",
-                                                {isMinimum ? "min" : "max",
-                                                 std::string(EVENT::TIMESTAMP),
-                                                 TABLE_LEAKS_DUMP,
-                                                 std::string(EVENT::DEVICE_ID)},
-                                                errMsg);
+    sql = StringUtil::FormatString("select {}({}) from {} where {} == ?;",
+                                   isMinimum ? "min" : "max",
+                                   EVENT::TIMESTAMP,
+                                   TABLE_LEAKS_DUMP,
+                                   EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -643,11 +615,8 @@ void LeaksMemoryDatabase::QueryDeviceIds(std::set<std::string> &deviceIdSet)
 {
     std::string sql;
     std::string errMsg;
-    std::string COL_DEVICE_ID(EVENT::DEVICE_ID);
-    sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT DISTINCT({}) FROM {} WHERE {} NOT IN ('N/A', '', 'host')",
-                                                {std::string(EVENT::DEVICE_ID), TABLE_LEAKS_DUMP,
-                                                 COL_DEVICE_ID},
-                                                errMsg);
+    sql = StringUtil::FormatString("SELECT DISTINCT({}) FROM {} WHERE {} NOT IN ('N/A', '', 'host')",
+                                   EVENT::DEVICE_ID, TABLE_LEAKS_DUMP, EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -666,14 +635,8 @@ using array_map = std::unordered_map<std::string, std::vector<std::string>>;
 void LeaksMemoryDatabase::QueryMallocOrFreeEventTypeWithDeviceId(array_map &resultMap)
 {
     std::string sql = "SELECT DISTINCT {}, {} FROM {} WHERE {} in ('MALLOC', 'FREE') AND {} NOT IN ('N/A', '', 'host')";
-    std::string errMsg;
-    sql = StringUtil::FormatSqlUsingPlaceHolder(sql,
-                                                {std::string(EVENT::DEVICE_ID),
-                                                 std::string(EVENT::EVENT_TYPE),
-                                                 TABLE_LEAKS_DUMP,
-                                                 std::string(EVENT::EVENT),
-                                                 std::string(EVENT::DEVICE_ID)},
-                                                errMsg);
+    sql = StringUtil::FormatString(sql, EVENT::DEVICE_ID, EVENT::EVENT_TYPE, TABLE_LEAKS_DUMP,
+                                   EVENT::EVENT, EVENT::DEVICE_ID);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -712,10 +675,8 @@ bool LeaksMemoryDatabase::QueryEventsWithinTimeRangeByDeviceId(uint64_t startTim
     }
     std::string sql;
     std::string errMsg;
-    std::string COL_TIMESTAMP(EVENT::TIMESTAMP);
-    std::string COL_DEVICE_ID(EVENT::DEVICE_ID);
-    sql = StringUtil::FormatSqlUsingPlaceHolder("select * from {} where {} == ?  and {} >= ? and {} <= ? order by {}",
-        {TABLE_LEAKS_DUMP, COL_DEVICE_ID, COL_TIMESTAMP, COL_TIMESTAMP, COL_TIMESTAMP}, errMsg);
+    sql = StringUtil::FormatString("select * from {} where {} == ?  and {} >= ? and {} <= ? order by {}",
+        TABLE_LEAKS_DUMP, EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, EVENT::TIMESTAMP);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -736,14 +697,10 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocati
 {
     std::string sql;
     std::string errMsg;
-    std::string COL_TIMESTAMP(ALLOCATION::TIMESTAMP);
-    sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT * FROM {} WHERE {} == ? AND {} == ? AND {} <= ? "
-                                                "ORDER BY {} DESC LIMIT 1",
-                                                {memoryAllocationTable,
-                                                 std::string(ALLOCATION::DEVICE_ID),
-                                                 std::string(ALLOCATION::EVENT_TYPE),
-                                                 COL_TIMESTAMP, COL_TIMESTAMP},
-                                                errMsg);
+    sql = StringUtil::FormatString("SELECT * FROM {} WHERE {} == ? AND {} == ? AND {} <= ? "
+                                   "ORDER BY {} DESC LIMIT 1", memoryAllocationTable,
+                                   ALLOCATION::DEVICE_ID, ALLOCATION::EVENT_TYPE,
+                                   ALLOCATION::TIMESTAMP, ALLOCATION::TIMESTAMP);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -771,14 +728,9 @@ std::optional<Memory::MemoryAllocation> LeaksMemoryDatabase::QueryNextAllocation
 {
     std::string sql;
     std::string errMsg;
-    std::string COL_TIMESTAMP(ALLOCATION::TIMESTAMP);
-    sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT * FROM {} WHERE {} == ? AND {} == ? AND {} >= ? "
-                                                "ORDER BY {} ASC LIMIT 1",
-                                                {memoryAllocationTable,
-                                                 std::string(ALLOCATION::DEVICE_ID),
-                                                 std::string(ALLOCATION::EVENT_TYPE),
-                                                 COL_TIMESTAMP, COL_TIMESTAMP},
-                                                errMsg);
+    sql = StringUtil::FormatString("SELECT * FROM {} WHERE {} == ? AND {} == ? AND {} >= ? ORDER BY {} ASC LIMIT 1",
+                                   memoryAllocationTable, ALLOCATION::DEVICE_ID, ALLOCATION::EVENT_TYPE,
+                                   ALLOCATION::TIMESTAMP, ALLOCATION::TIMESTAMP);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -807,12 +759,11 @@ void LeaksMemoryDatabase::QueryMemoryBlocksOwnersReleasedAfterTimestamp(const st
 {
     std::string sql;
     std::string errMsg;
-    sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT DISTINCT {} FROM {} "
-                                                "WHERE {} <= ? AND {} > ? AND {} == ? AND {} == ?;",
-                                                {std::string(BLOCK::OWNER), memoryBlockTable,
-                                                 std::string(BLOCK::START_TIMESTAMP), std::string(BLOCK::END_TIMESTAMP),
-                                                 std::string(BLOCK::DEVICE_ID), std::string(BLOCK::EVENT_TYPE)},
-                                                errMsg);
+    sql = StringUtil::FormatString("SELECT DISTINCT {} FROM {} "
+                                   "WHERE {} <= ? AND {} > ? AND {} == ? AND {} == ?;",
+                                   BLOCK::OWNER, memoryBlockTable,
+                                   BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
+                                   BLOCK::DEVICE_ID, BLOCK::EVENT_TYPE);
     if (sql.empty()) {
         ServerLog::Error("[LeaksMemory] Failed to query block owners, error: ", errMsg);
         return;
@@ -849,12 +800,11 @@ uint64_t LeaksMemoryDatabase::QueryTotalSizeUntilTimestampUsingOwner(const std::
 {
     std::string sql;
     std::string errMsg;
-    sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT SUM({}) FROM {} "
-                                                "WHERE {} <= ? AND {} > ? AND {} == ? AND {} like ?;",
-                                                {std::string(BLOCK::SIZE), memoryBlockTable,
-                                                 std::string(BLOCK::START_TIMESTAMP), std::string(BLOCK::END_TIMESTAMP),
-                                                 std::string(BLOCK::DEVICE_ID), std::string(BLOCK::OWNER)},
-                                                errMsg);
+    sql = StringUtil::FormatString("SELECT SUM({}) FROM {} "
+                                   "WHERE {} <= ? AND {} > ? AND {} == ? AND {} like ?;",
+                                   BLOCK::SIZE, memoryBlockTable,
+                                   BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
+                                   BLOCK::DEVICE_ID, BLOCK::OWNER);
     if (sql.empty()) {
         ServerLog::Error("[LeaksMemory] Failed to query block total size, error: ", errMsg);
         return 0;
@@ -909,14 +859,11 @@ void LeaksMemoryDatabase::QueryPythonTracesUsingTableName(const std::string &tra
     }
     std::string timeCondition;
     BuildTimeConditionForQueryPythonTraces(timeCondition, queryParams);
-    std::string sql = StringUtil::FormatSqlUsingPlaceHolder("SELECT {}, ({} - ?) AS START, ({} - ?) AS END FROM {} "
-                                                            "WHERE NOT ({}) AND {} == ? AND END >= START "
-                                                            "ORDER BY {}",
-                                                            {std::string(TRACE::FUNC_INFO),
-                                                             COL_START_TIME, COL_END_TIME, traceTableName,
-                                                             timeCondition, std::string(TRACE::THREAD_ID),
-                                                             COL_START_TIME},
-                                                            errMsg);
+    std::string sql = StringUtil::FormatString("SELECT {}, ({} - ?) AS START, ({} - ?) AS END FROM {} "
+                                               "WHERE NOT ({}) AND {} == ? AND END >= START "
+                                               "ORDER BY {}", TRACE::FUNC_INFO, COL_START_TIME,
+                                               COL_END_TIME, traceTableName, timeCondition,
+                                               TRACE::THREAD_ID, COL_START_TIME);
     if (sql.empty()) {
         ServerLog::Error("[LeaksMemory] Failed to query python trace, error: ", errMsg);
         return;

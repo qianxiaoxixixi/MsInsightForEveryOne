@@ -138,7 +138,7 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
             }
             // 构造block
             MemoryBlock block(event->ptr, event->deviceId, eventExtendAttr.size, event->timestamp, maxTimestamp,
-                              eventExtendAttr.owner, event->eventType, "");
+                              eventExtendAttr.owner, event->eventType, "", event->processId, event->threadId);
             db->InsertMemoryBlock(block);
         }
     }
@@ -188,7 +188,7 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
         BuildBlockEventAttrFromEvent(*allocEvent, allocEventAttr);
         // 构造block
         MemoryBlock block(event.ptr, event.deviceId, std::abs(eventExtendAttr.size), allocEvent->timestamp,
-                          event.timestamp, allocEventAttr.owner, event.eventType, "");
+                          event.timestamp, allocEventAttr.owner, event.eventType, "", event.processId, event.threadId);
         db->InsertMemoryBlock(block);
         // 从申请表中去除内存申请事件
         allocMap.erase(event.ptr + event.eventType);

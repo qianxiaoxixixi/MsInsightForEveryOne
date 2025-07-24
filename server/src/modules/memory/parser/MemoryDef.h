@@ -106,10 +106,12 @@ struct MemoryBlock {
     std::string owner;
     std::string eventType;
     std::string otherAttr;
+    uint64_t processId;
+    uint64_t threadId;
 
     MemoryBlock() = default;
     MemoryBlock(std::string ptr, std::string deviceId, uint64_t size, uint64_t startTs, uint64_t endTs,
-                std::string owner, std::string eventType, std::string otherAttr)
+                std::string owner, std::string eventType, std::string otherAttr, uint64_t pid, uint64_t tid)
         : id(0),
           ptr(std::move(ptr)),
           deviceId(std::move(deviceId)),
@@ -118,7 +120,9 @@ struct MemoryBlock {
           endTimestamp(endTs),
           owner(std::move(owner)),
           eventType(std::move(eventType)),
-          otherAttr(std::move(otherAttr)) {}
+          otherAttr(std::move(otherAttr)),
+          processId(pid),
+          threadId(tid) {}
 };
 
 struct MemoryDetailTree {

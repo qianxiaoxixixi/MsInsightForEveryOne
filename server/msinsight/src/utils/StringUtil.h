@@ -428,7 +428,12 @@ static std::string CreateQuestionMarkString(uint64_t n)
     }
     return res.str();
 }
-
+template<size_t N>
+static std::string GenerateColumnString(const std::string_view (&cols)[N])
+{
+    std::vector<std::string> list(std::begin(cols), std::end(cols));
+    return StringUtil::join(list, " ,");
+}
 // 分隔用圆括号括起来的用逗号分割的字符串，如"(a, b, c, d)"，生成由a,b,c,d组成的数组,字符前后的空格会被删除
 static std::vector<std::string> SplitStringWithParenthesesByComma(std::string str)
 {
@@ -469,20 +474,27 @@ inline static std::string StrJoin(const std::string& first, Args... args)
     return first + StrJoin(args...);
 }
 // LCOV_EXCL_BR_STOP
-
-// 使用时传入string_view数组作为参数，使用{}作为占位符按顺序进行匹配和替换fmtStr, !!!注意在使用时需确保入参本身不存在注入问题
-static std::string FormatSqlUsingPlaceHolder(const std::string& fmtStr, const std::vector<std::string>& args,
-                                             std::string &errMsg)
+/**
+ * 使用时传入可变长的string或string_view作为参数，使用{}作为占位符按顺序进行匹配和替换fmtStr, !!!注意在使用时需确保入参本身不存在注入问题
+ *
+ * @param fmtStr 模式串
+ * @param stringArgs 待替换的字符串列表
+ * @param errMsg 异常信息
+ * @return 替换结果
+ */
+template<typename... StringArgs>
+static std::string FormatString(const std::string& fmtStr, StringArgs&&... stringArgs)
 {
     static const std::regex placeholder_regex("\\{\\}");
-
+    std::vector<std::string_view> strings;
+    (strings.push_back(std::forward<StringArgs>(stringArgs)), ...);
     // 统计占位符数量
     std::sregex_iterator it(fmtStr.begin(), fmtStr.end(), placeholder_regex);
     std::sregex_iterator end;
     int count = std::distance(it, end);
     uint64_t placeholder_count = static_cast<uint64_t>(count > 0 ? count : 0);
-    if (placeholder_count != args.size()) {
-        errMsg = "Number of placeholders does not match the number of arguments";
+    // Number of placeholders does not match the number of arguments
+    if (placeholder_count != strings.size()) {
         return "";
     }
     std::string result;
@@ -494,7 +506,7 @@ static std::string FormatSqlUsingPlaceHolder(const std::string& fmtStr, const st
         // 添加匹配前的内容
         result.append(match.prefix().first, match.prefix().second);
         // 添加替换内容
-        result.append(args[index++]);
+        result.append(strings[index++]);
         // 更新搜索起点
         search_start = match.suffix().first;
     }

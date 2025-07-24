@@ -178,3 +178,22 @@ TEST(StringUtil, StrJoin)
     EXPECT_EQ(StringUtil::StrJoin("test", "hello"), "testhello");
     EXPECT_EQ(StringUtil::StrJoin("test", " hello", " world"), "test hello world");
 }
+
+TEST(StringUtil, FormatStringUsingPlaceHolder)
+{
+    const std::string pattern = "Pattern format: {}, {}";
+    // 异常用例：args字符串数量大于占位符数量
+    std::string res = StringUtil::FormatString(pattern, "hello", "world", "!");
+    EXPECT_TRUE(res.empty());
+    // 异常用例： args字符串数量小于占位符数量
+    res = StringUtil::FormatString(pattern, "hello");
+    EXPECT_TRUE(res.empty());
+    // 正常用例：args字符串数量等于占位符数量
+    res = StringUtil::FormatString(pattern, "hello", "world");
+    std::string expectFormatResult = "Pattern format: hello, world";
+    EXPECT_EQ(res, expectFormatResult);
+    // 特殊用例：带有转义字符
+    res = StringUtil::FormatString(pattern, "\"hello\"", "\"world\"");
+    expectFormatResult = "Pattern format: \"hello\", \"world\"";
+    EXPECT_EQ(res, expectFormatResult);
+}
