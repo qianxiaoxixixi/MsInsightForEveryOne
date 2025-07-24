@@ -5,6 +5,7 @@
 import { makeAutoObservable } from 'mobx';
 import { OperatorDetail, StaticOperatorListDetail } from './memory';
 import type { CardRankInfo } from './session';
+import { SortOrder } from 'antd/lib/table/interface';
 
 export interface ConditionType<T, K> {
     options: T[];
@@ -63,6 +64,8 @@ export class MemorySession {
     maxSize: number = 0;
     defaultMinSize = 0;
     defaultMaxSize = 0;
+    order: SortOrder = null;
+    orderBy?: string;
     isBtnDisabled: boolean = true;
     // 是否仅查看在选中时间区间分配或释放内存的数据
     isOnlyShowAllocatedOrReleasedWithinInterval: boolean = DEFAULT_SHOW_WITHIN_INTERVAL;

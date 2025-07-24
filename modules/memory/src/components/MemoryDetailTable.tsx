@@ -17,6 +17,7 @@ import { AntTableChart, TableByComponent } from './AntTableChart';
 import { MemorySizeQueryCondition, OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
 import { fetchDynamicOperatorMaxMin, fetchStaticOperatorMaxMin, operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
 import { customConsole as console } from 'ascend-utils';
+import { SortOrder } from 'antd/lib/table/interface';
 
 const enum CompareSource {
     DIFFERENCE = 'Difference',
@@ -151,8 +152,6 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     const [memoryTableHead, setMemoryTableHead] = useState<any>([]);
     const [tableSpin, setTableSpin] = useState<boolean>(false);
     const [total, setTotal] = useState<number>(0);
-    const [orderBy, setOrderBy] = useState<string | undefined>(undefined);
-    const [order, setOrder] = useState<string | undefined>(undefined);
     const { t } = useTranslation('memory');
 
     const onRowSelected = (record?: any, rowIndex?: number): void => {
@@ -163,6 +162,18 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         runInAction(() => {
             memorySession.current = newCurrent;
             memorySession.pageSize = newPageSize;
+        });
+    };
+
+    const handleOrderChange = (newOrder: SortOrder): void => {
+        runInAction(() => {
+            memorySession.order = newOrder;
+        });
+    };
+
+    const handleOrderByChange = (newOrderBy: string): void => {
+        runInAction(() => {
+            memorySession.orderBy = newOrderBy;
         });
     };
 
@@ -201,8 +212,8 @@ const MemoryDetailTable = observer(({ session, memorySession }:
 
     const setParamOtherCondition = (param: any): any => {
         let newParam = param;
-        if (order !== undefined) {
-            newParam = { order, orderBy, ...param };
+        if (memorySession.order !== null) {
+            newParam = { order: memorySession.order, orderBy: memorySession.orderBy, ...param };
         };
         setTableSpin(true);
         runInAction(() => {
@@ -249,6 +260,14 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         } as CardInfo;
     }, [memorySession.selectedRankId]);
 
+    // 动静图切换时重置排序
+    useEffect(() => {
+        runInAction(() => {
+            memorySession.order = null;
+            memorySession.orderBy = undefined;
+        });
+    }, [memoryType]);
+
     useEffect(() => {
         if (memorySession.selectedRankId === '') {
             setDetailTableData();
@@ -272,7 +291,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     useEffect(() => {
         setDetailTableData();
     }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.current, memorySession.pageSize,
-        session.isAllMemoryCompletedSwitch, order, orderBy, t]);
+        session.isAllMemoryCompletedSwitch, memorySession.order, memorySession.orderBy, t]);
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
@@ -290,8 +309,8 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                             current={memorySession.current}
                             pageSize={memorySession.pageSize}
                             onPageChange={handlePageChanged}
-                            onOrderChange={setOrder}
-                            onOrderByChange={setOrderBy}
+                            onOrderChange={handleOrderChange}
+                            onOrderByChange={handleOrderByChange}
                             total={total}
                             isCompare={isCompare}
                             selectedCard={selectedCard}

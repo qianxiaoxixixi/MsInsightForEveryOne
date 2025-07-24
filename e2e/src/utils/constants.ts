@@ -28,7 +28,8 @@ export enum FilePath {
     // 专家负载均衡数据
     MOE_PROFILING = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\profiling',
     MOE_DUMP = 'D:\\GUI_TEST_DATA 路徑测试\\系统调优\\MoE_balancing\\dump',
-    LEAKS_DUMP='D:\\GUI_TEST_DATA 路徑测试\\系统调优\\leaks_dump_20250603145530.db'
+    LEAKS_DUMP='D:\\GUI_TEST_DATA 路徑测试\\系统调优\\leaks_dump_20250603145530.db',
+    MS_RANK_0 = 'D:\\GUI_TEST_DATA 路徑测试\\mindspore\\profile\\test123_3028773_20250617091627998_ascend_ms',
 }
 
 export const WEBSOCKET_URL = 'ws://localhost:9000/';
