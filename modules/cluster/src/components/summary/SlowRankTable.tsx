@@ -70,7 +70,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
         }
         if (!slowRankRes.hasSlowRank) {
             const res: JSX.Element = (
-                <div>
+                <div data-testid={'slow-rank-expert-advice'}>
                     <Advice text={t('No problem')} />
                 </div>
             );
@@ -86,7 +86,7 @@ export const SlowRankTable = ({ generateConditions, slowRankRes }: SlowRankConta
         const tableData = generateAntdTableData(keys, slowRankRes.topNElements);
 
         const resDiv: JSX.Element = (
-            <div>
+            <div data-testid={'slow-rank-expert-advice'}>
                 <div>
                     <Advice text={t('slow rank advice')} />
                 </div>

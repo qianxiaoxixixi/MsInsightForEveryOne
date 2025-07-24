@@ -24,6 +24,7 @@ export class SummaryPage {
     readonly parallelismGraph: Locator;
     readonly parallelismGraphLoading: Locator;
     readonly parallelismGraphPlaceholder: Locator;
+    readonly parallelismExpertAdvice: Locator;
     readonly communicationOverviewContainer: Locator;
     readonly pipelineChart: Locator;
     readonly performanceChart: Locator;
@@ -43,6 +44,7 @@ export class SummaryPage {
         this.parallelismGraph = this.summaryFrame.locator('.parallelism-graph');
         this.parallelismGraphLoading = this.summaryFrame.getByTestId('parallelism-graph-loading');
         this.parallelismGraphPlaceholder = this.summaryFrame.getByTestId('parallelism-graph-placeholder');
+        this.parallelismExpertAdvice = this.summaryFrame.getByTestId('slow-rank-expert-advice');
         this.communicationOverviewContainer = this.summaryFrame.locator('#communication-overview-panel');
         this.pipelineChart = this.summaryFrame.getByTestId('pipeline-chart');
         this.performanceChart = this.summaryFrame.getByTestId('performance-chart');
