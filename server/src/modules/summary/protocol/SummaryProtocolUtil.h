@@ -16,12 +16,6 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
 template <>
 std::optional<document_t> ToResponseJson<SummaryStatisticsResponse>(const SummaryStatisticsResponse &response);
 template <> std::optional<document_t> ToResponseJson<ComputeDetailResponse>(const ComputeDetailResponse &response);
-template <> std::optional<document_t> ToResponseJson<PipelineStepResponse>(const PipelineStepResponse &response);
-template <> std::optional<document_t> ToResponseJson<PipelineStageResponse>(const PipelineStageResponse &response);
-template <>
-std::optional<document_t> ToResponseJson<PipelineStageTimeResponse>(const PipelineStageTimeResponse &response);
-template <>
-std::optional<document_t> ToResponseJson<PipelineRankTimeResponse>(const PipelineRankTimeResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response);
 template <>

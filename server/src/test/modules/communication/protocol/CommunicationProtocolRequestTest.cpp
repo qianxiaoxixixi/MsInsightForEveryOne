@@ -57,13 +57,6 @@ TEST_F(CommunicationProtocolRequestTest, DistributionDataParamTest)
     EXPECT_EQ(param4.CheckParams(msg), false);
 }
 
-TEST_F(CommunicationProtocolRequestTest, RanksParamsTest)
-{
-    Dic::Protocol::RanksParams param1 = {";"};
-    std::string msg;
-    EXPECT_EQ(param1.CheckParams(msg), false);
-}
-
 TEST_F(CommunicationProtocolRequestTest, OperatorNamesParamsTest)
 {
     Dic::Protocol::OperatorNamesParams base;

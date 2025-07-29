@@ -100,11 +100,6 @@ struct IterationsOrRanksResponse : public Response {
     CompareData<std::vector<IterationsOrRanksObject>> body;
 };
 
-struct RanksResponse : public Response {
-    RanksResponse() : Response(REQ_RES_COMMUNICATION_RANKS) {}
-    std::vector<IterationsOrRanksObject> body;
-};
-
 struct OperatorNamesObject {
     std::string operatorName;
 

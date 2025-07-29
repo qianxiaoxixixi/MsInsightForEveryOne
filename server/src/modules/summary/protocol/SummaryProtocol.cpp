@@ -15,10 +15,6 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, ToTopNRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_STATISTIC, ToStatisticsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMPUTE_DETAIL, ToComputeDetailRequest);
-    jsonToReqFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STEPS, ToStepRequest);
-    jsonToReqFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, ToStagesRequest);
-    jsonToReqFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeRequest);
-    jsonToReqFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyRequest);
@@ -36,10 +32,6 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, ToTopNResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_STATISTIC, ToStatisticsResponse);
     resToJsonFactory.emplace(REQ_RES_COMPUTE_DETAIL, ToComputeDetailResponse);
-    resToJsonFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STEPS, ToStepResponse);
-    resToJsonFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, ToStagesResponse);
-    resToJsonFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeResponse);
-    resToJsonFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyResponse);
@@ -98,55 +90,6 @@ std::unique_ptr<Request> SummaryProtocol::ToComputeDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> SummaryProtocol::ToStepRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<PipelineStepRequest> reqPtr = std::make_unique<PipelineStepRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info of step request.";
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> SummaryProtocol::ToStagesRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<PipelineStageRequest> reqPtr = std::make_unique<PipelineStageRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info of stages request";
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> SummaryProtocol::ToStageTimeRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<PipelineStageTimeRequest> reqPtr = std::make_unique<PipelineStageTimeRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info of stage time request.";
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> SummaryProtocol::ToRankTimeRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<PipelineRankTimeRequest> reqPtr = std::make_unique<PipelineRankTimeRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info of rank time request.";
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
     return reqPtr;
 }
@@ -352,7 +295,7 @@ std::unique_ptr<Request> SummaryProtocol::ToSummarySlowRankAdvisorRequest(const 
 
 #pragma endregion
 
-#pragma region <<Json To Request>>
+#pragma region <<Response To Json>>
 
 std::optional<document_t> SummaryProtocol::ToTopNResponse(const Response &response)
 {
@@ -367,26 +310,6 @@ std::optional<document_t> SummaryProtocol::ToStatisticsResponse(const Response &
 std::optional<document_t> SummaryProtocol::ToComputeDetailResponse(const Response &response)
 {
     return ToResponseJson<ComputeDetailResponse>(dynamic_cast<const ComputeDetailResponse &>(response));
-}
-
-std::optional<document_t> SummaryProtocol::ToStepResponse(const Response &response)
-{
-    return ToResponseJson<PipelineStepResponse>(dynamic_cast<const PipelineStepResponse &>(response));
-}
-
-std::optional<document_t> SummaryProtocol::ToStagesResponse(const Response &response)
-{
-    return ToResponseJson<PipelineStageResponse>(dynamic_cast<const PipelineStageResponse &>(response));
-}
-
-std::optional<document_t> SummaryProtocol::ToStageTimeResponse(const Response &response)
-{
-    return ToResponseJson<PipelineStageTimeResponse>(dynamic_cast<const PipelineStageTimeResponse &>(response));
-}
-
-std::optional<document_t> SummaryProtocol::ToRankTimeResponse(const Response &response)
-{
-    return ToResponseJson<PipelineRankTimeResponse>(dynamic_cast<const PipelineRankTimeResponse &>(response));
 }
 
 std::optional<document_t> SummaryProtocol::ToCommunicationResponse(const Response &response)

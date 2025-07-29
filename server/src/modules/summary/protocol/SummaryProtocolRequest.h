@@ -62,48 +62,6 @@ struct SummaryStatisticRequest : public Request {
     SummaryStatisticParams params;
 };
 
-struct PipelineStepParam {
-    std::string clusterPath;
-
-    inline bool CheckParams(std::string& errMsg) const
-    {
-        std::string paramErr;
-        if (!CheckStrParamValid(clusterPath, paramErr)) {
-            errMsg = "[Summary] Failed to check cluster" + paramErr;
-            return false;
-        }
-        return true;
-    }
-};
-
-struct PipelineStepRequest : public Request {
-    PipelineStepRequest() : Request(REQ_RES_PIPELINE_GET_ALL_STEPS) {};
-    PipelineStepParam params;
-};
-
-struct PipelineStageParam {
-    std::string stepId;
-    std::string clusterPath;
-    bool CheckParams(std::string &errorMsg) const
-    {
-        std::string paramError;
-        if (!CheckStrParamValidEmptyAllowed(this->stepId, paramError)) {
-            errorMsg = "[Summary] Failed to check step id." + paramError;
-            return false;
-        }
-        if (!CheckStrParamValid(clusterPath, paramError)) {
-            errorMsg = "[Summary] Failed to check cluster." + paramError;
-            return false;
-        }
-        return true;
-    }
-};
-
-struct PipelineStageRequest : public Request {
-    PipelineStageRequest() : Request(REQ_RES_PIPELINE_GET_ALL_STAGES) {};
-    PipelineStageParam params;
-};
-
 struct PipelineStageTimeParam {
     std::string stepId;
     std::string stageId;
@@ -127,12 +85,7 @@ struct PipelineStageTimeParam {
     }
 };
 
-struct PipelineStageTimeRequest : public Request {
-    PipelineStageTimeRequest() : Request(REQ_RES_PIPELINE_STAGE_BUBBLE) {};
-    PipelineStageTimeParam params;
-};
-
-struct PipelineRankTimeParam {
+struct PipelineFwdBwdTimelineParam {
     std::string stepId;
     std::string stageId;
     std::string clusterPath;
@@ -155,14 +108,9 @@ struct PipelineRankTimeParam {
     }
 };
 
-struct PipelineRankTimeRequest : public Request {
-    PipelineRankTimeRequest() : Request(REQ_RES_PIPELINE_RANK_BUBBLE) {};
-    PipelineRankTimeParam params;
-};
-
 struct PipelineFwdBwdTimelineRequest : public Request {
     PipelineFwdBwdTimelineRequest() : Request(REQ_RES_PIPELINE_FWD_BWD_TIMELINE) {};
-    PipelineRankTimeParam params;
+    PipelineFwdBwdTimelineParam params;
 };
 
 struct ParallelismArrangement {

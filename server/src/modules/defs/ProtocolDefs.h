@@ -98,7 +98,6 @@ const std::string REQ_RES_COMMUNICATION_OPERATOR_LISTS = "communication/operator
 const std::string REQ_RES_COMMUNICATION_BANDWIDTH = "communication/bandwidth";
 const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/distribution";
 const std::string REQ_RES_COMMUNICATION_ITERATIONS = "communication/duration/iterations";
-const std::string REQ_RES_COMMUNICATION_RANKS = "communication/duration/ranks";
 const std::string REQ_RES_COMMUNICATION_OPERATORNAMES = "communication/duration/operatorNames";
 const std::string REQ_RES_COMMUNICATION_SORT_OP = "communication/matrix/sortOpNames";
 const std::string REQ_RES_COMMUNICATION_LIST = "communication/duration/list";
@@ -119,10 +118,6 @@ const std::string REQ_RES_QUERY_MODEL_INFO = "summary/queryModelInfo";
 const std::string REQ_RES_SUMMARY_SLOW_RANK_ADVISOR = "summary/slowRank/advisor";
 
 // pipeline
-const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllSteps";
-const std::string REQ_RES_PIPELINE_GET_ALL_STAGES = "parallelism/pipeline/getAllStages";
-const std::string REQ_RES_PIPELINE_STAGE_BUBBLE = "parallelism/pipeline/stageAndBubbleTime";
-const std::string REQ_RES_PIPELINE_RANK_BUBBLE = "parallelism/pipeline/rankAndBubbleTime";
 const std::string REQ_RES_PIPELINE_FWD_BWD_TIMELINE = "parallelism/pipeline/fwdBwdTimeline";
 
 // matrix

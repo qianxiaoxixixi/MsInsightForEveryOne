@@ -32,12 +32,6 @@ public:
     bool UpdatesClusterParseStatus(const std::string& status);
 
     virtual bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) = 0;
-    virtual bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody) = 0;
-    virtual bool GetStages(Protocol::PipelineStageParam &param, Protocol::PipelineStageResponseBody &responseBody) = 0;
-    virtual bool GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
-                                   Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
-    virtual bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
-                                  Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
     virtual std::vector<std::string> GetAllRankFromStepStatisticInfo() = 0;
     virtual std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) = 0;
     virtual bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) = 0;
@@ -109,13 +103,6 @@ protected:
                                                                   const std::string &tableName);
     bool ExecuteInsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap,
                                               const std::string &tableName);
-    bool ExecuteGetStepIdList(Protocol::PipelineStepResponseBody &responseBody, std::string sql);
-    bool ExecuteGetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody,
-        std::string sql);
-    bool ExecuteGetStageAndBubble(Protocol::PipelineStageTimeParam param, std::vector<std::string> stageIds,
-        Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
-    bool ExecuteGetRankAndBubble(const Protocol::PipelineRankTimeParam &param, std::vector<std::string> &&stageIds,
-                                 Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string &&sql);
     std::vector<std::string> ExecuteGetAllRankFromStepStatisticInfo(std::string &sql);
     std::vector<CommInfoUnderRank> ExecuteGetCommTimeForRankDim(std::string &sql, const std::string &step);
     bool ExecuteGetGroups(const std::string &iterationId, std::vector<std::string> &groupList, std::string sql);

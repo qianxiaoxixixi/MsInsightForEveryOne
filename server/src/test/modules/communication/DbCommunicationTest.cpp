@@ -77,8 +77,6 @@ TEST_F(DbCommunicationTest, QueryOperatorNameDataWithRank)
 TEST_F(DbCommunicationTest, QueryRanksData)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::RanksParams requestParam;
-    requestParam.iterationId = "2";
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryRanksHandler(responseBody);
     int expectSize = 8;
@@ -246,47 +244,6 @@ TEST_F(DbCommunicationTest, QueryBaseInfoSuccess)
     const unsigned int expectStepNum = 2;
     EXPECT_EQ(responseBody.baseInfo.compare.rankCount, expectRankCount);
     EXPECT_EQ(responseBody.baseInfo.compare.stepNum, expectStepNum);
-}
-
-TEST_F(DbCommunicationTest, GetStepIdListSuccess)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::PipelineStepResponseBody responseBody;
-    database->GetStepIdList(responseBody);
-    const int expectSize = 2;
-    EXPECT_EQ(responseBody.stepList.size(), expectSize);
-}
-
-TEST_F(DbCommunicationTest, GetStageAndBubbleSuccess)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::PipelineStageTimeParam requestParams;
-    requestParams.stepId = "1";
-    requestParams.stageId = "(0)";
-    Dic::Protocol::PipelineStageOrRankTimeResponseBody responseBody;
-    database->GetStageAndBubble(requestParams, responseBody);
-    const int expectSize = 1;
-    const double expectBubbleTime = 0;
-    const double expectStageTime = 10635932.446;
-    EXPECT_EQ(responseBody.bubbleDetails.size(), expectSize);
-    EXPECT_EQ(responseBody.bubbleDetails[0].bubbleTime, expectBubbleTime);
-    EXPECT_EQ(responseBody.bubbleDetails[0].stageTime, expectStageTime);
-}
-
-TEST_F(DbCommunicationTest, GetRankAndBubbleSuccess)
-{
-    auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::PipelineRankTimeParam requestParams;
-    requestParams.stepId = "1";
-    requestParams.stageId = "(0)";
-    Dic::Protocol::PipelineStageOrRankTimeResponseBody responseBody;
-    database->GetRankAndBubble(requestParams, responseBody);
-    const int expectSize = 1;
-    const double expectBubbleTime = 0;
-    const double expectStageTime = 10635932.446;
-    EXPECT_EQ(responseBody.bubbleDetails.size(), expectSize);
-    EXPECT_EQ(responseBody.bubbleDetails[0].bubbleTime, expectBubbleTime);
-    EXPECT_EQ(responseBody.bubbleDetails[0].stageTime, expectStageTime);
 }
 
 TEST_F(DbCommunicationTest, QueryExtremumTimestampSuccess)

@@ -14,7 +14,6 @@
 #include "MatrixListHandler.h"
 #include "MatrixSortOpNamesHandler.h"
 #include "OperatorNamesHandler.h"
-#include "RanksHandler.h"
 #include "DurationListHandler.h"
 #include "CommunicationAdvisorHandler.h"
 
@@ -202,25 +201,6 @@ TEST_F(HandlerTest, OperatorNamesHandlerWithExeSqlFail)
     request->params.stage = "1";
     request->params.clusterPath = "test";
     OperatorNamesHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, RanksHandlerParamError)
-{
-    auto request = std::make_unique<RanksRequest>();
-    request->params.iterationId = ";";
-    RanksHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, RanksHandlerWithExeSqlFail)
-{
-    auto request = std::make_unique<RanksRequest>();
-    request->params.iterationId = "1";
-    request->params.clusterPath = "test";
-    RanksHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }
