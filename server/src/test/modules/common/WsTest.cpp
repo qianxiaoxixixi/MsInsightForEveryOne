@@ -44,7 +44,7 @@ TEST_F(TestSuit, TestAllRequestHandler)
         EXPECT_EQ(err, "");
     }
     file.close();
-    int size = 131;
+    int size = 106;
     EXPECT_EQ(count, size);
     auto curSession = Server::WsSessionManager::Instance().GetSession();
     if (curSession != nullptr) {

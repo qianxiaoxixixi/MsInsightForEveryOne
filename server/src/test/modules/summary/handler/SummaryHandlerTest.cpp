@@ -9,13 +9,9 @@
 #include "QueryCommunicationDetailHandler.h"
 #include "QueryComputeDetailInfoHandler.h"
 #include "QueryParallelStrategyConfigHandler.h"
-#include "RankAndBubbleTimeHandler.h"
 #include "SetParallelStrategyConfigHandler.h"
-#include "StageAndBubbleTimeHandler.h"
 #include "QueryParallelismArrangementHandler.h"
 #include "QueryParallelismPerformanceHandler.h"
-#include "StageHandler.h"
-#include "StepHandler.h"
 #include "SummaryTopRankHandler.h"
 #include "ImportExpertDataHandler.h"
 #include "QueryExpertHotspotHandler.h"
@@ -93,39 +89,6 @@ TEST_F(HandlerTest, QueryParallelStrategyConfigHandlerWithExecuteSqlFail)
     auto request = std::make_unique<QueryParallelStrategyRequest>();
     request->params.clusterPath = "test";
     QueryParallelStrategyConfigHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithStepIdError)
-{
-    auto request = std::make_unique<PipelineRankTimeRequest>();
-    request->params.stepId = ";";
-    request->params.stageId = "1";
-    request->params.clusterPath = "test";
-    RankAndBubbleTimeHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithStageIdError)
-{
-    auto request = std::make_unique<PipelineRankTimeRequest>();
-    request->params.stepId = "1";
-    request->params.stageId = ";";
-    request->params.clusterPath = "test";
-    RankAndBubbleTimeHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, RankAndBubbleTimeHandlerWithExecuteSqlFail)
-{
-    auto request = std::make_unique<PipelineRankTimeRequest>();
-    request->params.stepId = "1";
-    request->params.stageId = "1";
-    request->params.clusterPath = "test";
-    RankAndBubbleTimeHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }
@@ -214,56 +177,6 @@ TEST_F(HandlerTest, QueryParallelismPerformanceHandlerShouldReturnTrue)
     QueryParallelismPerformanceHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, true);
-}
-
-TEST_F(HandlerTest, StageAndBubbleTimeHandlerWithParamError)
-{
-    auto request = std::make_unique<PipelineStageTimeRequest>();
-    request->params.stepId = ";";
-    request->params.stageId = "1";
-    request->params.clusterPath = "test";
-    StageAndBubbleTimeHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, StageAndBubbleTimeHandlerWithExecuteSqlFail)
-{
-    auto request = std::make_unique<PipelineStageTimeRequest>();
-    request->params.stepId = "1";
-    request->params.stageId = "1";
-    request->params.clusterPath = "test";
-    StageAndBubbleTimeHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, StageHandlerWithParamError)
-{
-    auto request = std::make_unique<PipelineStageRequest>();
-    request->params.stepId = ";";
-    StageHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, StageHandlerWithExecuteSqlFail)
-{
-    auto request = std::make_unique<PipelineStageRequest>();
-    request->params.stepId = "100";
-    request->params.clusterPath = "test";
-    StageHandler handler;
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
-}
-
-TEST_F(HandlerTest, StepHandlerWithExecuteSqlFail)
-{
-    auto request = std::make_unique<PipelineStepRequest>();
-    StepHandler handler;
-    request->params.clusterPath = "test";
-    bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
 }
 
 TEST_F(HandlerTest, SummaryTopRankHandlerHandleRequestReturnTrue)

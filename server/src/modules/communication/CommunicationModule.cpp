@@ -11,7 +11,6 @@
 #include "IterationsHandler.h"
 #include "DurationListHandler.h"
 #include "OperatorNamesHandler.h"
-#include "RanksHandler.h"
 #include "GroupHandler.h"
 #include "MatrixListHandler.h"
 #include "CommunicationAdvisorHandler.h"
@@ -39,7 +38,6 @@ void CommunicationModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, std::make_unique<DistributionHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_ITERATIONS,
                               std::make_unique<IterationsHandler>());
-    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_RANKS, std::make_unique<RanksHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, std::make_unique<OperatorNamesHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_SORT_OP, std::make_unique<MatrixSortOpNamesHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_LIST, std::make_unique<DurationListHandler>());

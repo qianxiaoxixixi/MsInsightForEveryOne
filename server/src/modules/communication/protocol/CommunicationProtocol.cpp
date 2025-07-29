@@ -19,7 +19,6 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationRequest);
-    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS, ToDurationRequest);
@@ -36,7 +35,6 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_SORT_OP, ToMatrixOpNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_LISTS, ToOperatorListResponse);
-    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ADVISOR, ToCommunicationAdvisorResponse);
@@ -171,18 +169,6 @@ std::unique_ptr<Request> CommunicationProtocol::ToDurationRequest(const json_t &
     return reqPtr;
 }
 
-std::unique_ptr<Request> CommunicationProtocol::ToRanksRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<RanksRequest> reqPtr = std::make_unique<RanksRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info of ranks request.";
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.clusterPath, json["params"], "clusterPath");
-    return reqPtr;
-}
-
 std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const json_t &json, std::string &error)
 {
     std::unique_ptr<OperatorNamesRequest> reqPtr = std::make_unique<OperatorNamesRequest>();
@@ -238,7 +224,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToCommunicationAdvisorRequest(
 }
 #pragma endregion
 
-#pragma region <<Json To Request>>
+#pragma region <<Response To Json>>
 
 std::optional<document_t> CommunicationProtocol::ToOperatorDetailsResponse(const Response &response)
 {
@@ -280,10 +266,6 @@ std::optional<document_t> CommunicationProtocol::ToOperatorListResponse(const Re
     return ToResponseJson<OperatorListsResponse>(dynamic_cast<const OperatorListsResponse &>(response));
 }
 
-std::optional<document_t> CommunicationProtocol::ToRanksResponse(const Response &response)
-{
-    return ToResponseJson<RanksResponse>(dynamic_cast<const RanksResponse &>(response));
-}
 std::optional<document_t> CommunicationProtocol::ToMatrixGroupResponse(const Response &response)
 {
     return ToResponseJson<MatrixGroupResponse>(dynamic_cast<const MatrixGroupResponse &>(response));

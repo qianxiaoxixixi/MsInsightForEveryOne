@@ -43,12 +43,6 @@ public:
     std::string QueryParseClusterStatus() override;
     void UpdateClusterParseStatus(std::string status) override;
     bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) override;
-    bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody) override;
-    bool GetStages(Protocol::PipelineStageParam &param, Protocol::PipelineStageResponseBody &responseBody) override;
-    bool GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
-                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
-    bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
-                          Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
     std::vector<std::string> GetAllRankFromStepStatisticInfo() override;
     std::vector<CommInfoUnderRank> GetCommTimeForRankDim(const std::string &stepId) override;
     bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
@@ -80,7 +74,6 @@ public:
     std::map<std::string, std::string> QueryBaseInfoByKeys(const std::vector<std::string> &keys) override;
     bool InsertDuplicateUpdateBaseInfo(const std::map<std::string, std::string> &baseInfoMap) override;
 
-    void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
     std::unordered_map<std::string, int64_t> GetAllGroupMap();
     bool QueryAllPerformanceDataByStep(const std::string &step,
                                        std::unordered_map<std::uint32_t, StepStatistic> &data) override;

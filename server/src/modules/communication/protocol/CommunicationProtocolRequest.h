@@ -176,29 +176,6 @@ struct DistributionDataRequest : public Request {
     DistributionDataParam params;
 };
 
-struct RanksParams {
-    std::string iterationId;
-    std::string clusterPath;
-    bool CheckParams(std::string &errorMsg) const
-    {
-        std::string paramError;
-        if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
-            errorMsg = "[Communication] Failed to check iteration id." + paramError;
-            return false;
-        }
-        if (!CheckStrParamValid(clusterPath, paramError)) {
-            errorMsg = "[Communication] Failed to check cluster." + paramError;
-            return false;
-        }
-        return true;
-    }
-};
-
-struct RanksRequest  : public Request {
-    RanksRequest() : Request(REQ_RES_COMMUNICATION_RANKS) {};
-    RanksParams params;
-};
-
 struct IterationsParams {
     bool isCompare = false;
     std::string clusterPath;

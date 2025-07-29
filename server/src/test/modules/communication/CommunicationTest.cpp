@@ -88,8 +88,6 @@ TEST_F(TestSuit, QueryParseClusterStatusSuccess)
 TEST_F(TestSuit, QueryRanksData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::RanksParams requestParam;
-    requestParam.iterationId = "2";
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryRanksHandler(responseBody);
     int expectSize = 16;

@@ -230,21 +230,6 @@ template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(cons
     return std::optional<document_t>{std::move(json)};
 }
 
-template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksResponse &response)
-{
-    document_t json(kObjectType);
-    auto &allocator = json.GetAllocator();
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json_t body(kObjectType);
-    json_t iterationOrRankId(kArrayType);
-    for (const IterationsOrRanksObject& object : response.body) {
-        iterationOrRankId.PushBack(json_t().SetString(object.iterationOrRankId.c_str(), allocator), allocator);
-    }
-    JsonUtil::AddMember(body, "iterationOrRankId", iterationOrRankId, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::optional<document_t>{std::move(json)};
-}
-
 template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response)
 {
     document_t json(kObjectType);

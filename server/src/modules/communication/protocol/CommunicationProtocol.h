@@ -25,7 +25,6 @@ private:
     static std::unique_ptr<Request> ToDistributionRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToIterationsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToDurationRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToRanksRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToOperatorNamesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMatrixOpNamesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMatrixGroupRequest(const json_t &json, std::string &error);
@@ -40,7 +39,6 @@ private:
     static std::optional<document_t> ToMatrixOpNamesResponse(const Response &response);
     static std::optional<document_t> ToDurationResponse(const Response &response);
     static std::optional<document_t> ToOperatorListResponse(const Response &response);
-    static std::optional<document_t> ToRanksResponse(const Response &response);
     static std::optional<document_t> ToMatrixGroupResponse(const Response &response);
     static std::optional<document_t> ToMatrixListResponse(const Response &response);
     static std::optional<document_t> ToCommunicationAdvisorResponse(const Response &response);

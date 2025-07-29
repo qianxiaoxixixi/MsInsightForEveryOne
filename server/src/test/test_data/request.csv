@@ -8,16 +8,12 @@
 {"id":11,"moduleName":"memory","type":"request","command":"Memory/view/memoryUsage","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1"}}
 {"id":12,"moduleName":"memory","type":"request","command":"Memory/view/operator","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","currentPage":1,"pageSize":10,"orderName":"","minSize":0,"maxSize":1000000}}
 {"id":13,"moduleName":"memory","type":"request","command":"Memory/view/memoryUsage","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
-{"id":15,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllSteps","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":16,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":[]}}
-{"id":17,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllSteps","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":18,"moduleName":"communication","type":"request","command":"communication/duration/iterations","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":19,"moduleName":"communication","type":"request","command":"communication/duration/iterations","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":20,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":[]}}
 {"id":21,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":[]}}
 {"id":22,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":[]}}
-{"id":23,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllSteps","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":24,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllSteps","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":25,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":[]}}
 {"id":26,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"compute","rankId":"8","stepId":""}}
 {"id":27,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"communication","rankId":"8","stepId":""}}
@@ -57,27 +53,13 @@
 {"id":224,"moduleName":"timeline","type":"request","command":"unit/threadTracesSummary","params":{"token":"Rd``OTxPVKtcJPt]","cardId":"0","processId":"140836602","startTime":0,"endTime":1000000000,"dataSource":{"remote":"127.0.0.1","port":9000,"dataPath":[""]},"timePerPx":230.5098493626883}}
 {"id":244,"moduleName":"timeline","type":"request","command":"flow/categoryList","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
 {"id":245,"moduleName":"timeline","type":"request","command":"flow/categoryList","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1"}}
-{"id":246,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
-{"id":247,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
-{"id":248,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
-{"id":249,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
 {"id":250,"moduleName":"operator","type":"request","command":"operator/more_info","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1","group":"Operator Type","topK":15,"custom":0,"current":1,"pageSize":10,"total":0,"order":"","orderBy":"","opType":"GatherV2","opName":"","shape":"\"6400,5120;2,8192;1\""}}
 {"id":251,"moduleName":"operator","type":"request","command":"operator/category","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","group":"Operator Type","topK":15,"custom":0}}
 {"id":252,"moduleName":"operator","type":"request","command":"operator/compute_unit","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","group":"Operator Type","topK":15,"custom":0}}
 {"id":253,"moduleName":"operator","type":"request","command":"operator/more_info","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","group":"Operator Type","topK":15,"custom":0,"current":1,"pageSize":10,"total":1,"order":"","orderBy":"","opType":"GatherV2","opName":"","shape":"\"6400,5120;2,8192;1\""}}
 {"id":254,"moduleName":"operator","type":"request","command":"operator/statistic","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","group":"Operator Type","topK":15,"custom":0,"current":1,"pageSize":10,"total":13,"order":"","orderBy":""}}
-{"id":255,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
-{"id":256,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
-{"id":257,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
-{"id":258,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
 {"id":259,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]}}
 {"id":260,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]}}
-{"id":261,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
-{"id":262,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
-{"id":263,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
-{"id":264,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
-{"id":265,"moduleName":"summary","type":"request","command":"parallelism/pipeline/stageAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
-{"id":266,"moduleName":"summary","type":"request","command":"parallelism/pipeline/rankAndBubbleTime","params":{"token":"Rd``OTxPVKtcJPt]","stepId":"2","stageId":"(8, 9, 10, 11, 12, 13, 14, 15)"}}
 {"id":267,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]}}
 {"id":268,"moduleName":"summary","type":"request","command":"summary/queryTopData","params":{"token":"Rd``OTxPVKtcJPt]","orderBy":"computingTime","stepIdList":[],"rankIdList":["10"]}}
 {"id":269,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"compute","rankId":"10","stepId":""}}
@@ -90,7 +72,6 @@
 {"id":276,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"communication","rankId":"8","stepId":"2"}}
 {"id":277,"moduleName":"communication","type":"request","command":"communication/duration/list","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","stage":"(0, 1, 2, 3, 4, 5, 6, 7)","rankIds":[],"operatorName":"hcom_broadcast__483_1","type":"CommunicationDurationAnalysis","rankList":[]}}
 {"id":278,"moduleName":"communication","type":"request","command":"communication/matrix/bandwidthInfo","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","stage":"(0, 1, 2, 3, 4, 5, 6, 7)","operatorName":"hcom_broadcast__483_1"}}
-{"id":279,"moduleName":"communication","type":"request","command":"communication/duration/ranks","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2"}}
 {"id":280,"moduleName":"communication","type":"request","command":"communication/duration/list","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","stage":"(0, 1, 2, 3, 4, 5, 6, 7)","rankIds":[],"operatorName":"hcom_broadcast__483_1","type":"CommunicationDurationAnalysis","rankList":[]}}
 {"id":281,"moduleName":"communication","type":"request","command":"communication/distribution","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","operatorName":"hcom_broadcast__483_1","transportType":"HCCS","stage":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
 {"id":282,"moduleName":"communication","type":"request","command":"communication/distribution","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","operatorName":"hcom_broadcast__483_1","transportType":"PCIE","stage":"(0, 1, 2, 3, 4, 5, 6, 7)"}}
@@ -103,18 +84,12 @@
 {"id":295,"moduleName":"timeline","type":"request","command":"unit/threadTraces","params":{"token":"Rd``OTxPVKtcJPt]","cardId":"1","processId":"14083671701","threadId":0,"startTime":0,"endTime":1000000000,"dataSource":{"remote":"127.0.0.1","port":9000,"dataPath":[""]},"timePerPx":230.5098493626883}}
 {"id":296,"moduleName":"memory","type":"request","command":"Memory/view/memoryUsage","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
 {"id":297,"moduleName":"memory","type":"request","command":"Memory/view/operator","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0","currentPage":1,"pageSize":10,"orderName":"","minSize":0,"maxSize":1000000}}
-{"id":299,"moduleName":"global","type":"request","command":"token.check","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":300,"moduleName":"global","type":"request","command":"token.heartCheck","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":301,"moduleName":"global","type":"request","command":"token.destroy","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":302,"moduleName":"global","type":"request","command":"token.create","params":{"token":"","deadTime":-1}}
 {"id":303,"moduleName":"summary","type":"request","command":"summary/queryCommunicationDetail","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":304,"moduleName":"summary","type":"request","command":"summary/queryCommunicationDetail","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1","pageSize":"2","currentPage":"1"}}
 {"id":305,"moduleName":"summary","type":"request","command":"summary/queryCommunicationDetail","params":{"token":""}}
 {"id":306,"moduleName":"summary","type":"request","command":"summary/queryComputeDetail","params":{"token":""}}
 {"id":307,"moduleName":"summary","type":"request","command":"summary/queryComputeDetail","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":308,"moduleName":"summary","type":"request","command":"summary/queryComputeDetail","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"1","timeFlag":"HCCL","currentPage":"1","pageSize":"2"}}
-{"id":309,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllStages","params":{"token":""}}
-{"id":310,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllStages","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":311,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"communication"}}
 {"id":312,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"compute","rankId":"0","stepId":"2"}}
 {"id":313,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","stage":"p2p","currentPage":1,"pageSize":10}}

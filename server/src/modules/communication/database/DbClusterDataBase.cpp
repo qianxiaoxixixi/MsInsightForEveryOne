@@ -84,48 +84,6 @@ bool DbClusterDataBase::InsertDuplicateUpdateBaseInfo(const std::map<std::string
     return ExecuteInsertDuplicateUpdateBaseInfo(baseInfoMap, TABLE_CLUSTER_BASE_INFO);
 }
 
-bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
-{
-    std::string sql = "select distinct step as stepId FROM " + TABLE_STEP_TRACE_TIME + " ORDER BY step";
-    return ExecuteGetStepIdList(responseBody, sql);
-}
-
-bool DbClusterDataBase::GetStages(Protocol::PipelineStageParam &param,
-                                  Protocol::PipelineStageResponseBody &responseBody)
-{
-    std::string sql = "SELECT DISTINCT stage as stageId "
-                      "FROM " + TABLE_STEP_TRACE_TIME + " WHERE stage != '' AND step = ?";
-    return ExecuteGetStages(param, responseBody, sql);
-}
-
-bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
-                                          Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
-{
-    std::string sql = "SELECT max(ROUND(stage, 4)) as stageTime, "
-                      "max(ROUND(bubble, 4)) as bubbleTime "
-                      "FROM " + TABLE_STEP_TRACE_TIME + " WHERE step = ?";
-
-    std::vector<std::string> stageIds;
-    PrepareForStageId(param.stageId, sql, stageIds);
-
-    return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
-}
-
-bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
-                                         Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
-{
-    std::string sql = "SELECT \"index\" as rankId, "
-                      "ROUND(stage, 4) as stageTime, "
-                      "ROUND(bubble, 4) as bubbleTime "
-                      " FROM " + TABLE_STEP_TRACE_TIME +
-                      " WHERE step = ? ";
-
-    std::vector<std::string> stageIds;
-    PrepareForStageId(param.stageId, sql, stageIds);
-
-    return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
-}
-
 bool DbClusterDataBase::GetGroups(const std::string &iterationId, std::vector<std::string> &groupList)
 {
     std::string sql = "SELECT DISTINCT m.rank_set as rank FROM " + TABLE_COMM_ANALYZER_MATRIX + " t"
@@ -418,32 +376,6 @@ bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &re
                       " ORDER BY t.hccl_op_name";
     requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
-}
-
-void DbClusterDataBase::PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds)
-{
-    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), '('), stageIdStr.end());
-    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), ')'), stageIdStr.end());
-    std::vector<std::string> stageIdArray = StringUtil::Split(stageIdStr, ",");
-    const int maxBindParam = 1000;
-    if (stageIdStr.size() > maxBindParam) {
-        Server::ServerLog::Error("Too many parameters, binding failed. stage id size:", stageIdStr.size());
-        return;
-    }
-    for (std::string stageId : stageIdArray) {
-        stageIds.push_back(StringUtil::Trim(stageId));
-    }
-
-    std::string rankSql;
-    for (size_t i = 0; i < stageIds.size(); i++) {
-        if (i == 0) {
-            rankSql.append("?");
-        }
-        rankSql.append(",?");
-    }
-    if (!rankSql.empty()) {
-        sql += "AND \"index\" IN (" + rankSql + ")";
-    }
 }
 
 void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)

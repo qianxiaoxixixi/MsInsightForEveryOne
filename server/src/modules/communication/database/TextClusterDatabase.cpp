@@ -586,46 +586,6 @@ void TextClusterDatabase::UpdateClusterParseStatus(std::string status)
     }
 }
 
-bool TextClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
-{
-    std::string sql = "select distinct step_id as stepId FROM " + TABLE_STEP_TRACE + " ORDER BY step_id";
-    return ExecuteGetStepIdList(responseBody, sql);
-}
-
-bool TextClusterDatabase::GetStages(Protocol::PipelineStageParam &param,
-                                    Protocol::PipelineStageResponseBody &responseBody)
-{
-    std::string sql = "SELECT DISTINCT stage_id as stageId "
-                      "FROM " + TABLE_STEP_TRACE + " WHERE stage_id != '' AND step_id = ?";
-    return ExecuteGetStages(param, responseBody, sql);
-}
-
-bool TextClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
-                                            Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
-{
-    std::string sql = "SELECT max(ROUND(stage_time, 4)) as stageTime, max(ROUND(bubble_time, 4)) as bubbleTime "
-                      "FROM " + TABLE_STEP_TRACE + " WHERE step_id = ?";
-
-    std::vector<std::string> stageIds;
-    PrepareForStageId(param.stageId, sql, stageIds);
-
-    return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
-}
-
-bool TextClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
-                                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
-{
-    std::string sql = "SELECT rank_id as rankId, "
-                      "ROUND(stage_time, 4) as stageTime, "
-                      "ROUND(bubble_time, 4) as bubbleTime "
-                      " FROM " + TABLE_STEP_TRACE +
-                      " WHERE step_id = ? ";
-    std::vector<std::string> stageIds;
-    PrepareForStageId(param.stageId, sql, stageIds);
-
-    return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
-}
-
 std::vector<std::string> TextClusterDatabase::GetAllRankFromStepStatisticInfo()
 {
     std::string sql = "SELECT DISTINCT rank_id as rankId FROM " + TABLE_STEP_TRACE + " WHERE rankId != ''";
@@ -1264,33 +1224,6 @@ bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
         operatorTimeDoList = ppOpTimeList;
     }
     return ppRes || collectiveRes;
-}
-
-void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string &sql,
-                                            std::vector<std::string> &stageIds)
-{
-    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), '('), stageIdStr.end());
-    stageIdStr.erase(std::remove(stageIdStr.begin(), stageIdStr.end(), ')'), stageIdStr.end());
-    std::vector<std::string> stageIdArray = StringUtil::Split(stageIdStr, ",");
-    const int maxBindParam = 1000;
-    if (stageIdStr.size() > maxBindParam) {
-        Server::ServerLog::Error("Too many parameters, binding failed. stage id size:", stageIdStr.size());
-        return;
-    }
-    for (std::string stageId : stageIdArray) {
-        stageIds.push_back(StringUtil::Trim(stageId));
-    }
-
-    std::string rankSql;
-    for (size_t i = 0; i < stageIds.size(); i++) {
-        if (i == 0) {
-            rankSql.append("?");
-        }
-        rankSql.append(",?");
-    }
-    if (!rankSql.empty()) {
-        sql += "AND rank_id IN (" + rankSql + ")";
-    }
 }
 
 bool TextClusterDatabase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
