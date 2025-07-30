@@ -389,6 +389,7 @@ bool LeaksMemoryService::ParseThreadPythonTrace(LeaksMemoryPythonTrace &trace)
             return false;
         }
         slice.depth = static_cast<int>(callStackDepth);
+        trace.maxDepth = std::max(slice.depth, trace.maxDepth);
         // 将当前函数入栈
         callStack.push(&slice);
     }

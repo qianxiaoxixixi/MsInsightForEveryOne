@@ -23,12 +23,11 @@ struct PythonTraceSlice {
           depth(depth) {}
 };
 struct LeaksMemoryPythonTrace {
-    uint64_t maxTimestamp;
-    uint64_t minTimestamp;
-    uint64_t threadId;
+    uint64_t maxTimestamp{};
+    uint64_t minTimestamp{INT64_MAX};
+    uint64_t threadId{};
     std::vector<PythonTraceSlice> slices;
-
-    LeaksMemoryPythonTrace() : maxTimestamp(0), minTimestamp(INT64_MAX), threadId(0) {}
+    int maxDepth{};
 
     [[nodiscard]] bool Empty() const
     {
