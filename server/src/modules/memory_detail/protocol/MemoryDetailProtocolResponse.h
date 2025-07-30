@@ -200,6 +200,7 @@ struct LeaksMemoryTracesResponse : public JsonResponse {
         JsonUtil::AddMember(body, "traces", tracesJson.value(), allocator);
         JsonUtil::AddMember(body, "minTimestamp", trace.minTimestamp, allocator);
         JsonUtil::AddMember(body, "maxTimestamp", trace.maxTimestamp, allocator);
+        JsonUtil::AddMember(body, "maxDepth", trace.maxDepth, allocator);
         JsonUtil::AddMember(json, "threadId", trace.threadId, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
