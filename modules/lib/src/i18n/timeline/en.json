@@ -161,6 +161,10 @@
     "RenderError": "Rendering failed. Please check if the data is correct",
     "Merged unit": "Merged unit",
     "MergeStreamOnly": "Only Stream units can be merged",
-    "MergeInSameCardOnly": "Please select Stream units from the same card"
+    "MergeInSameCardOnly": "Please select Stream units from the same card",
+    "KeyInfo": {
+      "Press": "Press",
+      "Create": "Create"
+    }
   }
 }

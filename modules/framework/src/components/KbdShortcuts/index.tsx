@@ -249,6 +249,10 @@ export const ShortcutsModal = ({ open, onClose }: {open: boolean;onClose: () => 
                     shortcuts={[KEYS.Q]}
                 />
                 <Shortcut
+                    label={t('shortcuts.Create Flag Mark')}
+                    shortcuts={[KEYS.K]}
+                />
+                <Shortcut
                     label={t('shortcuts.M selection')}
                     shortcuts={[KEYS.M]}
                 />

@@ -28,7 +28,7 @@ const ChartRowContainer = styled.div`
 const StartParseButton = styled(Button)`
     display: flex;
     align-items: center;
-    width: 200px;
+    width: 160px;
     height: 100%;
     border-radius: ${(props): string => props.theme.borderRadiusSmall};
     justify-content: center;

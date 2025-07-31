@@ -146,6 +146,7 @@ export const mouseLeaveAction = (interactorParams: InteractorParams, interactorM
         }
     }
     interactorMouseState.clickPos.current = undefined; interactorMouseState.lastPos.current = undefined;
+    runInAction(() => { session.hoverMouseX = null; });
     drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScaleRef, xScale, interactorMouseState }));
 };
 
@@ -295,6 +296,9 @@ export const handleMousePosChange = (interactorParams: InteractorParams, interac
             (canvasItem as HTMLElement).style.cursor = 'default';
         });
     }
+    runInAction(() => {
+        session.hoverMouseX = lastPos !== undefined ? lastPos.x : null;
+    });
     drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScaleRef, xScale, interactorMouseState }));
 };
 

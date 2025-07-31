@@ -6,6 +6,7 @@ import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import React, { useMemo, useEffect, useRef } from 'react';
 import { observable, runInAction } from 'mobx';
+import { Resizor } from 'ascend-resize';
 // hooks
 import { useWatchResize } from '../../utils/useWatchDomResize';
 // support utils/types
@@ -28,8 +29,8 @@ import { loopActionFactory } from '../../utils/FactoryActions';
 import { RenderEngineContext } from '../../context/context';
 import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
-import { Resizor } from 'ascend-resize';
 import { ActionManager } from '../../actions/manager';
+import KeyInfoTooltip from './KeyInfoTooltip';
 
 const DEFAULT_LANE_INFO_WIDTH = 250;
 const DEFAULT_LANE_CHART_WIDTH = 100;
@@ -209,6 +210,7 @@ export const ChartContainer = observer((props: Props) => {
             containerDom={containerDom}
             scrollerRef={scrollerRef}
         />
+        <KeyInfoTooltip session={session} />
     </Container>;
 });
 
