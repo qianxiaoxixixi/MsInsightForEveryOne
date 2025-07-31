@@ -45,7 +45,7 @@ TEST(TestInputFiles, ApiFiles)
         std::string errMsg;
         EXPECT_EQ(true, parser.CheckOperatorBinary(binFilePath, errMsg));
         std::string fileId = "testFile" + std::to_string(fuzzi);
-        EXPECT_TRUE(parser.Parse(std::vector<std::string>(), fileId, binFilePath));
+        EXPECT_TRUE(parser.Parse(std::vector<std::string>(), fileId, binFilePath, fileId));
     }
     DT_FUZZ_END()
 }
@@ -76,7 +76,7 @@ TEST(TestInputFile, JsonParse)
         char* content = DT_SetGetStringNum(&g_Element[0], 2, UINT64_MAX, "0");
         std::string contentStr(content);
         std::string jsonStr = std::string("{\"cat\":") + contentStr + "}";
-        const std::optional<document_t> &json = JsonUtil::TryParse(jsonStr, errMsg);
+        const std::optional<document_t> &json = JsonUtil::TryParse<kParseDefaultFlags>(jsonStr, errMsg);
         EXPECT_TRUE(json.has_value());
     }
     DT_FUZZ_END()
@@ -91,7 +91,7 @@ TEST(TestInputFile, JsonParseErr)
                     char* content = DT_SetGetStringNum(&g_Element[0], 2, UINT64_MAX, "0");
                     std::string contentStr(content);
                     std::string jsonStr = std::string(R"({"cat":")") + contentStr + "\"}, ";
-                    JsonUtil::TryParse(jsonStr, errMsg);
+                    JsonUtil::TryParse<kParseDefaultFlags>(jsonStr, errMsg);
                     EXPECT_EQ(errMsg.substr(0, 13), "Error code:2.");
                 }
     DT_FUZZ_END()
@@ -106,7 +106,7 @@ TEST(TestCompute, SourceFileParserCheckPath)
                     char* filePath = DTSetGetString(&g_Element[0], 5, PATH_MAX, "path", "selectedFile");
                     std::vector<std::string> filePaths = {};
                     std::string fileId(filePath);
-                    SourceFileParser::Instance().Parse(filePaths, fileId, filePath);
+                    SourceFileParser::Instance().Parse(filePaths, fileId, filePath, fileId);
                 }
     DT_FUZZ_END()
 }
@@ -125,7 +125,7 @@ TEST(TestCompute, SourceFileParserParseRandomContent)
                     binFile.close();
 
                     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
-                    parser.Parse(std::vector<std::string>(), binFilePath, binFilePath);
+                    parser.Parse(std::vector<std::string>(), binFilePath, binFilePath, binFilePath);
                 }
     DT_FUZZ_END()
 }
