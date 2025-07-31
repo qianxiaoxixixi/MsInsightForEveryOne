@@ -14,7 +14,7 @@ import { SessionAction } from '@/utils/enum';
 import { deleteProjectDataPath } from '@/utils/Project';
 
 // Scene：数据场景：默认、集群、算子调优、Jupter、Leaks、只trace.json文件
-export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson' | 'IE' | 'Leaks';
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter' | 'OnlyTraceJson' | 'IE' | 'Leaks' | 'RL';
 
 interface ContextMenu {
     visible: boolean;
@@ -94,6 +94,7 @@ export class Session {
     isFullDb: boolean = false;
     isOnlyTraceJson: boolean = false;
     isLeaks: boolean = false;
+    isRL: boolean = false;
     hasCachelineRecords: boolean = false;
     instrVersion: number = -1;
     // 解析状态
@@ -154,6 +155,8 @@ export class Session {
             scene = 'Jupyter';
         } else if (this.isIE) {
             scene = 'IE';
+        } else if (this.isRL) {
+            scene = 'RL';
         } else {
             scene = 'Default';
         }

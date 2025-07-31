@@ -11,7 +11,7 @@ interface ThemeType {
 }
 
 export default class ThemeStore {
-    currentTheme: ThemeItem;
+    currentTheme: ThemeItem = 'dark';
     theme: ThemeType;
     constructor(theme = { light: {}, dark: {} }) {
         makeAutoObservable(this);
@@ -31,6 +31,7 @@ export default class ThemeStore {
 
     setCurrentTheme(currentTheme: ThemeItem): void {
         this.currentTheme = currentTheme;
+        document.body.className = currentTheme === 'dark' ? 'theme_dark' : 'theme_light';
     }
 
     getTheme(): ThemeType {
@@ -38,6 +39,10 @@ export default class ThemeStore {
     }
 
     getThemeType(): Theme {
+        return this.theme[this.currentTheme];
+    }
+
+    get themeObject(): Theme {
         return this.theme[this.currentTheme];
     }
 }
