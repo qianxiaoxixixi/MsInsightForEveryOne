@@ -48,6 +48,15 @@ const restore = (session: any): void => {
     session.deviceIdOpts = [];
     session.typeOpts = [];
     session.threadOps = [];
+    session.maxTime = 0;
+    session.minTime = 0;
+    session.legendSelect = {};
+    session.synStartTime = 0;
+    session.synEndTime = 0;
+    session.searchFunc = [];
+    session.funcOptions = [];
+    session.threadFlag = false;
+    session.maxDepth = 0;
 };
 export const parseCompletedHandler = (data: any): void => {
     const session = store.sessionStore.activeSession;
