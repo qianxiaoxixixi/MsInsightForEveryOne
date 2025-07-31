@@ -14,7 +14,7 @@ import { ThemeProvider, useTheme } from '@emotion/react';
 import { themeInstance } from 'ascend-theme';
 import { adaptDpr } from 'ascend-utils';
 import { Button } from 'ascend-components';
-import type { Session } from '../entity/session';
+import type { Session, TimelineScale } from '../entity/session';
 import { getTimestamp } from '../utils/humanReadable';
 import { registerCrossUnitRenderer } from './charts/ChartInteractor';
 import type { TimelineAxisFlag } from '../entity/timeMaker';
@@ -84,7 +84,7 @@ export function drawFlag(
     ctx.scale(dpr, dpr); // MacOS重置变换矩阵后需要重新根据dpr展开画布
 }
 
-const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: TimelineAxisFlag, session: Session): void => {
+const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: TimelineAxisFlag): void => {
     if (item === undefined) { return; }
     drawFlag(ctx, beginX, item.color);
 };
@@ -163,7 +163,7 @@ export const drawTimelineFlags = ({ session, domain, canvas, range, t, isHead }:
             case 'point': {
                 if (!(item.timeStamp >= domain[0] && item.timeStamp <= domain[1])) { return; }
                 const x = transformTimeToLeft(domain[0], domain[1], item.timeStamp, canvasWidth);
-                isHead ? drawTimelineFlag(ctx, x, item, session) : drawVerticalLineUnderFlag(ctx, x, canvasHeight, item.color); // 在旗子下方绘制线条
+                isHead ? drawTimelineFlag(ctx, x, item) : drawVerticalLineUnderFlag(ctx, x, canvasHeight, item.color); // 在旗子下方绘制线条
                 break;
             }
             case 'range': {
@@ -211,7 +211,7 @@ export const transformTimeToLeft = (domainStart: number, domainEnd: number, time
     return canvasWidth * (timestamp - domainStart) / (domainEnd - domainStart);
 };
 
-const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): void => {
+export const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): void => {
     const maxNumber = generateDefaultNumber(session);
     const defaultDesc = `default-${maxNumber.toString()}`;
     const color = session.timelineMaker.timelineFlagColorList[maxNumber % session.timelineMaker.timelineFlagColorList.length];
@@ -320,14 +320,10 @@ export const getMouse = (e: MouseEvent, current: HTMLCanvasElement): { x: number
  *
  * @param e 鼠标事件
  * @param session session
- * @param range 区间大小
- * @param domains 可用时间区间
  * @param elements canvas画布元素dom节点, tooltip元素dom节点
  */
-export const handleMouseMove = (e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>,
-    domains: number[], elements: { canvas: HTMLCanvasElement | null; tooltip: HTMLDivElement | null }): void => {
+export const handleMouseMove = (e: MouseEvent, session: Session, elements: { canvas: HTMLCanvasElement | null; tooltip: HTMLDivElement | null }): void => {
     const { canvas: current, tooltip } = elements;
-    const [domainStart, domainEnd] = domains;
     const ctx = current?.getContext('2d');
 
     if (!current || !ctx || !tooltip) {
@@ -340,22 +336,22 @@ export const handleMouseMove = (e: MouseEvent, session: Session, range: React.Mu
     tooltip.style.display = 'none';
 
     // 判断鼠标位置是否为空，如果鼠标不在画布中，则直接返回
-    if (!mouse) {
-        return;
-    }
+    if (!mouse) { return; }
+    // 判断比例尺是否存在，不存在则直接返回
+    if (session.scaleBag.timelineMarkerXScale === null) { return; }
 
     let highlightFlag: DrawTimelineAxisFlag | undefined;
-    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
+    const xScale = session.scaleBag.timelineMarkerXScale;
     for (const flag of session.timelineMaker.timelineFlagList) {
-        const flagXOffset = xOffset(flag.timeStamp);
+        const flagXOffset = xScale(flag.timeStamp);
         const anotherMarkerTimestamp = flag.anotherTimeStamp;
         // 如果鼠标移动到旗帜上、或者移动到旗帜区间的另一个旗帜上时
         if (isInFlagXOffsetRange(e.offsetX, flagXOffset) ||
-            (anotherMarkerTimestamp !== undefined && isInFlagXOffsetRange(e.offsetX, xOffset(anotherMarkerTimestamp)))) {
+            (anotherMarkerTimestamp !== undefined && isInFlagXOffsetRange(e.offsetX, xScale(anotherMarkerTimestamp)))) {
             highlightFlag = {
                 ...flag,
                 offsetX: flagXOffset,
-                anotherOffsetX: anotherMarkerTimestamp !== undefined ? xOffset(anotherMarkerTimestamp) : undefined,
+                anotherOffsetX: anotherMarkerTimestamp !== undefined ? xScale(anotherMarkerTimestamp) : undefined,
             };
             const tooltipBeginX = e.clientX + 10; // 10 是旗帜的正常宽度
             tooltip.style.left = `${tooltipBeginX}px`;
@@ -372,26 +368,28 @@ export const handleMouseMove = (e: MouseEvent, session: Session, range: React.Mu
 };
 
 interface ISingleClickParams {
-    t: TFunction;
     event: MouseEvent;
     session: Session;
-    range: React.MutableRefObject<[number, number]>;
-    domainStart: number;
-    domainEnd: number;
     current: HTMLCanvasElement | null;
 }
 
-export const handleSingleClick = ({ t, event, session, range, domainStart, domainEnd, current }: ISingleClickParams): void => {
-    if (['waiting', 'recording', 'analyzing'].includes(session.phase) || session.selectedRange !== undefined) { return; }
-    const xScale = linearScaleFactory(range.current, [domainStart, domainEnd]);
-    const timeStamp = Math.floor(xScale(event.offsetX));
-    const timeDisplay = getTimestamp(timeStamp, { precision: session.isNsMode ? 'ns' : 'ms' });
-    if (current === null || session.endTimeAll === undefined || timeStamp > session.endTimeAll) { return; }
+function shouldReturnEarly({ session, current }: Pick<ISingleClickParams, 'session' | 'current'>): boolean {
+    const phases = ['waiting', 'recording', 'analyzing'];
+    return (phases.includes(session.phase) ||
+        session.selectedRange !== undefined ||
+        // 判断比例尺是否存在，不存在则直接返回
+        session.scaleBag.timelineMarkerTimeScale === null ||
+        session.scaleBag.timelineMarkerXScale === null ||
+        current === null
+    );
+}
+
+function isCanvasAvailable({ event, session, current }: ISingleClickParams): boolean {
     const ctx = current?.getContext('2d');
     const clickedElementStack = document.elementsFromPoint(event.clientX, event.clientY);
     if (clickedElementStack.length < 1 || clickedElementStack[0].tagName !== 'CANVAS') {
         // 点击不是从 canvas 触发的，直接返回
-        return;
+        return false;
     }
     const flagCanvas = clickedElementStack.find(element => element.id === 'timelineFlagCnvas');
     const canvasNow = clickedElementStack.find(element => element.classList.contains('drawCanvas'));
@@ -407,22 +405,31 @@ export const handleSingleClick = ({ t, event, session, range, domainStart, domai
                 session.timelineMaker.refreshTrigger = (++session.timelineMaker.refreshTrigger) % 10;
             });
         }
-        return;
+        return false;
     }
+    return true;
+}
+
+export const handleSingleClick = ({ event, session, current }: ISingleClickParams): void => {
+    if (shouldReturnEarly({ session, current })) { return; }
+    const timeScale = session.scaleBag.timelineMarkerTimeScale as TimelineScale;
+    const timeStamp = Math.floor(timeScale(event.offsetX));
+    const timeDisplay = getTimestamp(timeStamp, { precision: session.isNsMode ? 'ns' : 'ms' });
+    if (session.endTimeAll === undefined || timeStamp > session.endTimeAll) { return; }
+    if (!isCanvasAvailable({ event, session, current })) { return; }
     // 已放置标记,选中标记
-    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
+    const xScale = session.scaleBag.timelineMarkerXScale as TimelineScale;
     for (let index = 0; index < session.timelineMaker.timelineFlagList.length; index++) {
-        const flagXOffset = xOffset(session.timelineMaker.timelineFlagList[index].timeStamp);
+        const flagXOffset = xScale(session.timelineMaker.timelineFlagList[index].timeStamp);
         const anotherMakerTimeStamp = session.timelineMaker.timelineFlagList[index].anotherTimeStamp;
         if (isInFlagXOffsetRange(event.offsetX, flagXOffset)) {
-            setSelectFlag(session, index, event.offsetX, xOffset);
+            setSelectFlag(session, index, event.offsetX, xScale);
             return;
         }
-        if (anotherMakerTimeStamp !== undefined && isInFlagXOffsetRange(event.offsetX, xOffset(anotherMakerTimeStamp))) {
-            setSelectFlag(session, index, event.offsetX, xOffset);
+        if (anotherMakerTimeStamp !== undefined && isInFlagXOffsetRange(event.offsetX, xScale(anotherMakerTimeStamp))) {
+            setSelectFlag(session, index, event.offsetX, xScale);
             return;
         }
-        setSelectFlag(session, index, event.offsetX, xOffset);
     }
     // 未放置标记，则放置标记
     addNewFlag(session, timeStamp, timeDisplay);
@@ -662,27 +669,25 @@ const handleCancel = (session: Session, index: number): void => {
     Modal.destroyAll();
 };
 
-export const handleDoubleClick = (
-    e: MouseEvent, session: Session, range: React.MutableRefObject<[number, number]>, domainStart: number, domainEnd: number,
-): void => {
+export const handleDoubleClick = (e: MouseEvent, session: Session): void => {
     const clickedElementStack = document.elementsFromPoint(e.clientX, e.clientY);
     if (clickedElementStack.length < 1 || clickedElementStack[0].tagName !== 'CANVAS') {
         // 点击不是从 canvas 触发的，直接返回
         return;
     }
     const canvasNow = clickedElementStack.find(t => t.classList.contains('timeMakerAxis'));
-    if (!canvasNow) {
-        return;
-    }
-    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
+    if (!canvasNow) { return; }
+    // 判断比例尺是否存在，不存在则直接返回
+    if (session.scaleBag.timelineMarkerXScale === null) { return; }
+    const xScale = session.scaleBag.timelineMarkerXScale;
     for (let index = 0; index < session.timelineMaker.timelineFlagList.length; index++) {
-        const flagXOffset = Math.floor(xOffset(session.timelineMaker.timelineFlagList[index].timeStamp));
+        const flagXOffset = Math.floor(xScale(session.timelineMaker.timelineFlagList[index].timeStamp));
         const anotherMarkerTimestamp = session.timelineMaker.timelineFlagList[index].anotherTimeStamp;
         if (isInFlagXOffsetRange(e.offsetX, flagXOffset)) {
             popupEditor(session, index);
             return;
         }
-        if (anotherMarkerTimestamp !== undefined && isInFlagXOffsetRange(e.offsetX, xOffset(anotherMarkerTimestamp))) {
+        if (anotherMarkerTimestamp !== undefined && isInFlagXOffsetRange(e.offsetX, xScale(anotherMarkerTimestamp))) {
             // 框选标记双击框选结束时的标记也会弹出编辑框
             popupEditor(session, index);
             return;
@@ -793,6 +798,39 @@ const useFlagTooltip = (theme: Theme): React.MutableRefObject<HTMLDivElement | n
     return tooltipRef;
 };
 
+const useCreateFlagMarkKeyEffect = (canvas: React.RefObject<HTMLCanvasElement>, session: Session): void => {
+    React.useEffect(() => {
+        // 判断比例尺是否存在，不存在则直接返回
+        if (session.scaleBag.timelineMarkerTimeScale === null || session.scaleBag.timelineMarkerXScale === null) { return; }
+        // 判断基础信息是否具备：画布不存在，或者时间线最大时间未定义，或者画面中没有任何可以新建旗帜标记的位置
+        if (canvas.current === null || session.endTimeAll === undefined || !session.haveCreateFlagMarkPosition) {
+            runInAction(() => { session.showCreateFlagMarkKey = false; });
+            return;
+        }
+        const xScale = session.scaleBag.timelineMarkerXScale;
+        // 对于有框选区间的情况，优先框选区间创建旗帜区间标记
+        if (session.selectedRange !== undefined) {
+            const [start, end] = session.selectedRange;
+            // 检查选中区间前后线上是否对应有旗帜区间
+            const hasFlagRange = session.timelineMaker.timelineFlagList.some((flag) =>
+                flag.anotherTimeStamp !== undefined && flag.timeStamp === start && flag.anotherTimeStamp === end);
+            runInAction(() => { session.showCreateFlagMarkKey = !hasFlagRange; });
+            return;
+        }
+        // 对于只能用鼠标悬浮线位置创建旗帜标记，则鼠标悬浮线位置必须小于时间线最大时间
+        const timeScale = session.scaleBag.timelineMarkerTimeScale;
+        if (session.hoverMouseX !== null && Math.floor(timeScale(session.hoverMouseX)) > session.endTimeAll) {
+            runInAction(() => { session.showCreateFlagMarkKey = false; });
+            return;
+        }
+        // 检查鼠标悬浮线位置是否对应有旗帜
+        const hasFlagSingle = session.timelineMaker.timelineFlagList.some((flag) => session.hoverMouseX === Math.round(xScale(flag.timeStamp)) ||
+            (flag.anotherTimeStamp !== undefined && session.hoverMouseX === Math.round(xScale(flag.anotherTimeStamp))));
+        runInAction(() => { session.showCreateFlagMarkKey = !hasFlagSingle; });
+    }, [session.scaleBag.timelineMarkerXScale, session.scaleBag.timelineMarkerTimeScale, session.endTimeAll,
+        session.hoverMouseX, session.selectedRange, session.timelineMaker.refreshTrigger]);
+};
+
 export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarkerProps): JSX.Element => {
     const { t } = useTranslation();
     const range = useRef<[ number, number ]>([0, 0]);
@@ -807,34 +845,53 @@ export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarke
     const background = React.useRef<HTMLCanvasElement>(null);
 
     React.useEffect(() => {
-        const mouseMoveListener = (e: MouseEvent): void => handleMouseMove(e, session, range, [domainStart, domainEnd], {
+        if (!canvas.current) {
+            return;
+        }
+        range.current = [0, canvas.current.clientWidth];
+        runInAction(() => {
+            session.scaleBag.timelineMarkerXScale = linearScaleFactory([domainStart, domainEnd], range.current);
+            session.scaleBag.timelineMarkerTimeScale = linearScaleFactory(range.current, [domainStart, domainEnd]);
+        });
+    }, [width, domainStart, domainEnd]);
+
+    React.useEffect(() => {
+        // 清空画布与提示框
+        const ctx = flagCursor.current?.getContext('2d');
+        if (flagCursor.current && ctx) {
+            adaptDpr(flagCursor.current, ctx);
+            ctx.clearRect(0, 0, flagCursor.current.width, flagCursor.current.height);
+        }
+        if (flagTooltip.current) { flagTooltip.current.style.display = 'none'; }
+        // 更新鼠标监听事件
+        const mouseMoveListener = (e: MouseEvent): void => handleMouseMove(e, session, {
             canvas: flagCursor.current, tooltip: flagTooltip.current,
         });
         addEventListener('mousemove', mouseMoveListener);
         return () => {
             removeEventListener('mousemove', mouseMoveListener);
         };
-    }, [domainStart, domainEnd]);
+    }, [session.scaleBag.timelineMarkerXScale, session.scaleBag.timelineMarkerTimeScale]);
 
     React.useEffect(() => {
         if (!canvas.current) {
             return (): void => {};
         }
         const singleClickListener =
-            (e: MouseEvent): void => handleSingleClick({ t, event: e, session, range, domainStart, domainEnd, current: canvas.current });
-        const doubleClickListener = (e: MouseEvent): void => handleDoubleClick(e, session, range, domainStart, domainEnd);
+            (e: MouseEvent): void => handleSingleClick({ event: e, session, current: canvas.current });
+        const doubleClickListener = (e: MouseEvent): void => handleDoubleClick(e, session);
         if (session.name !== t('Realtime Monitor')) {
             addEventListener('click', singleClickListener);
             addEventListener('dblclick', doubleClickListener);
         }
         // 绘制旗帜头
         drawTimelineFlags({ session, domain: [domainStart, domainEnd], canvas: canvas.current, range, t, isHead: true });
-        range.current = [0, canvas.current.clientWidth];
         return () => {
             removeEventListener('click', singleClickListener);
             removeEventListener('dblclick', doubleClickListener);
         };
-    }, [width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
+    }, [domainStart, domainEnd, session.scaleBag.timelineMarkerXScale, session.scaleBag.timelineMarkerTimeScale,
+        session.timelineMaker.refreshTrigger, session.selectedRange]);
 
     // 当 height 改变，导致 verticalCanvas 高度改变
     // 改变 canvas 的尺寸会导致浏览器重新分配其位图数据，原有的绘图数据不会被保留
@@ -848,10 +905,14 @@ export const TimelineMarkerElement = observer(({ session, theme }: TimelineMarke
     // 绘制不可点击的区间
     React.useEffect(() => {
         if (!session.endTimeAll || background.current === null || session.name === t('Realtime Monitor')) { return; }
-        const xScale = linearScaleFactory([domainStart, domainEnd], range.current);
+        // 判断比例尺是否存在，不存在则直接返回
+        if (session.scaleBag.timelineMarkerXScale === null) { return; }
+        const xScale = session.scaleBag.timelineMarkerXScale;
         const maxX = Math.floor(xScale(session.endTimeAll));
         drawTimelineFlagAxisInvalidBackground(background.current, maxX, theme.bgColorLight);
-    }, [width, domainStart, domainEnd, session.endTimeAll, theme]);
+    }, [session.scaleBag.timelineMarkerXScale, session.endTimeAll, theme]);
+    // 控制创建旗帜标记快捷键的显示
+    useCreateFlagMarkKeyEffect(canvas, session);
     return <CanvasContainer ref={ref}>
         <canvas ref={background} width={width} height={TIME_MARKER_AXIS_HEIGHT}
             style={{ width, height: TIME_MARKER_AXIS_HEIGHT, position: 'absolute', top: 0, left: 0 }}/>

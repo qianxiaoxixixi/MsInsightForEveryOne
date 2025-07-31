@@ -33,3 +33,4 @@ export { actionLockSelection, actionUnLockSelection } from './actionLockSelectio
 export { actionSetCardAlias } from './actionSetCardAlias';
 export { actionParseCardsOfRelatedGroup } from './actionParseCardsOfRelatedGroup';
 export { actionMergeUnits, actionUnmergeUnits } from './actionMergeUnits';
+export { actionFlagMarkCreation } from './actionFlagMarkCreation';

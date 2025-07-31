@@ -3,7 +3,7 @@
  */
 
 import { observer } from 'mobx-react';
-import type { Session } from '../entity/session';
+import { Session } from '../entity/session';
 import { useRef, useState } from 'react';
 import { CustomButton } from './base/StyledButton';
 import { handleTimeMakerAction } from '../utils/TimeMakerUtils';
@@ -107,12 +107,12 @@ const handleSingleClick = (e: MouseEvent, session: Session, range: React.Mutable
     if (!rangeButtonCanvas || session.selectedRange === undefined) {
         return;
     }
-    const xOffset = linearScaleFactory([domainStart, domainEnd], range.current);
+    const xScale = linearScaleFactory([domainStart, domainEnd], range.current);
     const buttonWith = 20;
     const rangeStartTimestamp = session.selectedRange[0] < session.selectedRange[1] ? session.selectedRange[0] : session.selectedRange[1];
     const rangeStartTimeDisplay = getTimestamp(rangeStartTimestamp, { precision: session.isNsMode ? 'ns' : 'ms' });
     const rangeEndTimestamp = session.selectedRange[0] > session.selectedRange[1] ? session.selectedRange[0] : session.selectedRange[1];
-    const rangeEndOffset = Math.floor(xOffset(rangeEndTimestamp));
+    const rangeEndOffset = Math.floor(xScale(rangeEndTimestamp));
     if (e.offsetX > rangeEndOffset || e.offsetX < rangeEndOffset - buttonWith) {
         return;
     }

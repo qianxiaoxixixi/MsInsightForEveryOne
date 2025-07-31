@@ -88,6 +88,13 @@ export interface SelectedDataType extends Pick<ThreadTrace, 'duration' | 'startT
     showDetail?: boolean;
 }
 
+export type TimelineScale = (x: number) => number;
+
+interface ScaleBag {
+    timelineMarkerTimeScale: TimelineScale | null;
+    timelineMarkerXScale: TimelineScale | null;
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     id = '';
@@ -217,6 +224,12 @@ export class Session {
     // 是否处于拖拽场景下
     isDragging: boolean = false;
     debouncedSetZoomingHistory;
+    hoverMouseX: number | null = null; // 鼠标悬浮线的 x 轴坐标
+    showCreateFlagMarkKey: boolean = false; // 是否显示创建旗帜标记快捷键图标
+    scaleBag: ScaleBag = {
+        timelineMarkerTimeScale: null,
+        timelineMarkerXScale: null,
+    };
 
     private _selectedRange?: [ TimeStamp, TimeStamp ];
     private readonly _domain: Domain;
@@ -347,6 +360,12 @@ export class Session {
 
     get selectedRange(): [TimeStamp, TimeStamp] | undefined {
         return this._selectedRange;
+    }
+
+    get haveCreateFlagMarkPosition(): boolean {
+        // 1. 有区间框选时，可以创建旗帜标记
+        // 2. 没有区间框选，有鼠标悬浮线的坐标时，可以创建旗帜标记
+        return this._selectedRange !== undefined || this.hoverMouseX !== null;
     }
 
     set endTimeAll(endTimeAll: TimeStamp | undefined) {

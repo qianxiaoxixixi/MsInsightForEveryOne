@@ -567,6 +567,24 @@ test.describe('Timeline', () => {
         await expect(bottomPanel).toHaveScreenshot('test-keyword-q.png', { maxDiffPixels:100 });
     });
 
+    // 快捷键 - 测试快捷键 K
+    test('test_k', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const boundingBox = await chart.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.move(startX + 50, startY + 50);
+        await expect(timelineFrame.locator('#main-container > div > div > div > p > kbd')).toHaveText('K');
+        await page.keyboard.press('k');
+        await page.waitForTimeout(1000);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-keyword-k-flag.png', { maxDiffPixels:100 });
+    });
+
     // 图形化窗格 - 测试直方图的显示 如NPU_MEM
     test('test_npu_mem', async ({ timelinePage, page }) => {
         const { timelineFrame } = timelinePage;

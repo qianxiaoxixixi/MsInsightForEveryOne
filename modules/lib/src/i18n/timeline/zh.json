@@ -161,6 +161,10 @@
     "RenderError": "渲染失败，请检查数据是否正确",
     "Merged unit": "合并的泳道",
     "MergeStreamOnly": "只允许合并 Stream 泳道",
-    "MergeInSameCardOnly": "请选择同一张卡内的 Stream 泳道"
+    "MergeInSameCardOnly": "请选择同一张卡内的 Stream 泳道",
+    "KeyInfo": {
+      "Press": "按",
+      "Create": "创建"
+    }
   }
 }

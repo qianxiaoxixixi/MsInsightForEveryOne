@@ -54,7 +54,8 @@ export type ActionName =
   | 'mergeUnits'
   | 'unmergeUnits'
   | 'generateCurveByBlock'
-  | 'generateBubbleCurveByBlock';
+  | 'generateBubbleCurveByBlock'
+  | 'createFlagMark';
 
 export interface Action {
     name: ActionName;
