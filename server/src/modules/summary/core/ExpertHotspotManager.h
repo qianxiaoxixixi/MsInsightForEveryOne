@@ -57,7 +57,8 @@ private:
     static bool FillExpertInfo(std::vector<ExpertHotspotStruct> &hotspotInfos, const ModelInfo &modelInfo,
                                const std::vector<ExpertDeploymentStruct> &deployment);
     static std::map<std::string, ModelInfo> ParseHotspotData(const std::vector<std::string> &hotspotFiles,
-        std::string &errorMsg, std::shared_ptr<VirtualClusterDatabase> &database, const std::string version);
+        std::string &errorMsg, std::shared_ptr<VirtualClusterDatabase> &database, const std::string &version,
+        const ModelGenConfig &config);
     static std::map<std::string, ModelInfo> ParseDeploymentData(const std::vector<std::string> &deploymentFiles,
         std::string &errorMsg, std::shared_ptr<VirtualClusterDatabase> &database, const std::string version);
     static bool MergeAndSaveModelInfo(const std::map<std::string, ModelInfo> &hotspotModelInfo,
