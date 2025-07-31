@@ -13,6 +13,7 @@ export interface ModuleConfig {
     isJupyter?: boolean;
     isLeaks?: boolean;
     isIE?: boolean;
+    isRL?: boolean;
     hasCachelineRecords?: boolean;
     isOnlyTraceJson?: boolean;
 };
@@ -117,5 +118,13 @@ export const modulesConfig: ModuleConfig[] = [
             src: isDev ? 'http://localhost:3007/' : './plugins/Leaks/index.html',
         },
         isLeaks: true,
+    },
+    {
+        name: 'RL',
+        requestName: 'rl',
+        attributes: {
+            src: isDev ? 'http://localhost:3008/' : './plugins/RL/index.html',
+        },
+        isRL: true,
     },
 ];

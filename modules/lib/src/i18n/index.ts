@@ -30,6 +30,9 @@ import leaksEn from './leaks/en.json';
 import leaksZh from './leaks/zh.json';
 import statisticEn from './statistic/en.json';
 import statisticZh from './statistic/zh.json';
+import rlEn from './reinforcement-learning/en.json';
+import rlZh from './reinforcement-learning/zh.json';
+
 export const resources = {
     enUS: {
         ...en,
@@ -60,6 +63,8 @@ export const resources = {
         ...libZh,
         ...leaksZh,
         ...statisticZh,
+        ...rlEn,
+        ...rlZh,
     },
 };
 

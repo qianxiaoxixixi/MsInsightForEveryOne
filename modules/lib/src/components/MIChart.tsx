@@ -21,6 +21,8 @@ interface ChartProps {
 }
 
 export interface ChartsHandle {
+    chartDom: HTMLDivElement | null;
+    chartInstance: ECharts | null;
     getChartDom: () => HTMLDivElement | null;
     getInstance: () => ECharts | null;
 }
@@ -279,6 +281,8 @@ export const MIChart = forwardRef<ChartsHandle, ChartProps>(
         }, [loading]);
 
         useImperativeHandle(ref, (): ChartsHandle => ({
+            chartDom: chartRef.current,
+            chartInstance: chartInstanceRef.current,
             getChartDom: () => chartRef.current,
             getInstance: () => chartInstanceRef.current,
         }));

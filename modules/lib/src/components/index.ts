@@ -19,6 +19,7 @@ export { MIDropdown as Dropdown } from './MIDropdown';
 export { MIDynamicTooltip as DynamicTooltip } from './MIDynamicTooltip';
 export { MITabs as Tabs } from './MITabs';
 export { ContextMenu } from './MIContextMenu';
+export { Legend } from './Legend';
 export {
     Col,
     Row,
