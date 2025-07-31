@@ -36,7 +36,8 @@ bool QueryCommunicationKernelHandler::HandleRequest(std::unique_ptr<Protocol::Re
         }
     }
     if (!database->QueryCommunicationKernelInfo(request.params.name, request.params.rankId, response.body)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query communication kernel info.");
+        SendResponse(std::move(responsePtr), false, "Failed to query communication kernel info."
+            " Please ensure that timeline data has been fully parsed and then try again.");
         return false;
     }
 
