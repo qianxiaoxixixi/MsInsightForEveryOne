@@ -7,6 +7,75 @@
 #include <iostream>
 #include "FuzzDefs.h"
 
+const std::set<char> PathFuzzer::invalidPathChar = {'\0', '/'};
+const std::vector<std::string> PathFuzzer::specialChars = {" ", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
+                                                           "{", "}", "[", "]", "<", ">", "?", "+", "-", "=", "~", "|",
+                                                           "\\", "中文文件", "日本語ファイル", "한국어 파일"};
+void PathFuzzer::GenerateFilePathMutation(uint pathCount,
+                                          std::vector<std::string> &fileList,
+                                          std::vector<std::string> &dirList)
+{
+    fileList.clear();
+    dirList.clear();
+    uint i = 0;
+    while (static_cast<uint>(dirList.size() + fileList.size()) < pathCount || static_cast<uint>((i)/2) > pathCount) {
+        std::string filename = GenerateFileName(true, i++);
+        int typeInt = RandomInt(0, 99);
+        switch (typeInt % 10) {
+            case 0:
+                if (CreateRegularFileOrDir(filename, true)) fileList.emplace_back(filename);
+                break;
+            case 1:
+                if (CreateRegularFileOrDir(filename, false)) dirList.emplace_back(filename);
+                break;
+            case 2:
+                CreateBaseDirSymlink(filename);
+                break;
+            case 3:
+                CreateCircularSymlink(filename);
+                break;
+            case 4:
+                if (!CreateSpecialCharFileOrDir(filename, true, true).empty()) fileList.emplace_back(filename);
+                break;
+            case 5:
+                if (!CreateSpecialCharFileOrDir(filename, true, false).empty()) dirList.emplace_back(filename);
+                break;
+            case 6:
+                CreateSpecialCharFileOrDir(filename, false, false);
+                break;
+            case 7:
+                CreateSpecialCharFileOrDir(filename, false, true);
+                break;
+            case 8:
+                CreateInsecurityPermissionFileOrDir(filename, true);
+                break;
+            case 9:
+                CreateInsecurityPermissionFileOrDir(filename, false);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+std::string PathFuzzer::GenerateFileName(bool validPathCharOnly, uint index)
+{
+    char* fuzzString = DTSetGetString(&g_Element[index], 9, NAME_MAX, "filename", "FuzzFileNameString");
+    if (fuzzString == nullptr) {
+        return "";
+    }
+    if (!validPathCharOnly) {
+        return fuzzString;
+    }
+    std::string result;
+    for (char* p = fuzzString; *p != '\0'; ++p) {
+        if (invalidPathChar.find(*p) == invalidPathChar.end()) {
+            result += *p;
+        }
+    }
+    return result;
+}
+
 int GenerateFileMutation(const std::string& baseFilePath, char**  mutationContent, int& mutationContentLength)
 {
     // 打开文件

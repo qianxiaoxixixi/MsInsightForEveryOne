@@ -31,7 +31,7 @@ TEST(TraceFileParser, Parse)
                 std::vector<std::string> pathList = { outputFilePath };
                 std::string rankId = "0";
                 std::string folder = "folder";
-                Dic::Module::Timeline::TraceFileParser::Instance().Parse(pathList, rankId, folder);
+                Dic::Module::Timeline::TraceFileParser::Instance().Parse(pathList, rankId, folder, rankId);
 
             } else {
                 std::cout << "Generate mutation file failed." << std::endl;

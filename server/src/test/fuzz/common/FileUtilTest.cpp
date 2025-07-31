@@ -7,9 +7,11 @@
 #include "FuzzFileUtil.h"
 #include "FileUtil.h"
 #include "JsonUtil.h"
+#include "FileSelector.h"
 
 using namespace Dic;
-
+using namespace Dic::Protocol;
+using namespace Dic::Module::Global;
 TEST(TestFileUtil, IsAbsolutePath)
 {
     char testApi[] = "test_file_util_is_absolute_path";
@@ -70,10 +72,41 @@ TEST(JsonUtil, TryParse)
                         outputFile.write(fileContent, fileContentSize);
                         outputFile.close();
                         std::string errMsg;
-                        JsonUtil::TryParse(fileContent, errMsg);
+                        JsonUtil::TryParse<kParseDefaultFlags>(fileContent, errMsg);
                     } else {
                         std::cout << "Generate mutation file failed." << std::endl;
                     }
                 }
+    DT_FUZZ_END()
+}
+
+// 该用例用于测试在GetFilesHandler中的核心方法，获取某个目录下的子目录和文件等(在通过一系列安全校验的过滤下)
+TEST(TestFileUtil, GetFoldersAndFiles)
+{
+    char testApi[] = "test_get_folders_and_files";
+    PathFuzzer pathFuzzer;
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
+    {
+        if (!pathFuzzer.ClearBaseDir()) {
+            std::cout << "Init base dir failed." << std::endl;
+            return;
+        }
+
+        std::vector<std::string> fileList;
+        std::vector<std::string> dirList;
+        uint pathCount = 10;
+        pathFuzzer.GenerateFilePathMutation(pathCount, fileList, dirList);
+        std::vector<std::unique_ptr<Protocol::Folder>> childrenFolders;
+        std::vector<std::unique_ptr<Protocol::File>> childrenFiles;
+        bool exists = false;
+        FileSelector::GetFoldersAndFiles(pathFuzzer.baseDir, childrenFolders, childrenFiles, exists);
+        EXPECT_TRUE(exists);
+        EXPECT_EQ(childrenFolders.size(), dirList.size());
+        EXPECT_EQ(childrenFiles.size(), fileList.size());
+        if (!pathFuzzer.ClearBaseDir()) {
+            std::cout << "Clear base dir failed." << std::endl;
+            return;
+        }
+    }
     DT_FUZZ_END()
 }
