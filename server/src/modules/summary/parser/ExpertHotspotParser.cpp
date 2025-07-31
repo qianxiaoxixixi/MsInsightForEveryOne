@@ -20,12 +20,20 @@ namespace Dic::Module::Summary {
 
         // 读取文件，读取过程中会校验文件状态
         std::ifstream file = OpenReadFileSafely(filePath);
-        std::string line;
+        std::string lineRead;
         int rankId = NumberUtil::StringToInt(searchRes.value()[2]);
         std::string modelStage = searchRes.value()[1];
         int layer = 0;
         size_t expertCountPerRank = 0;
-        while (getline(file, line)) {
+        std::vector<std::string> lines;
+        while (std::getline(file, lineRead)) {
+            lines.push_back(lineRead);
+            // 数据来源处已校验moe layer不可能小于0
+            if (lines.size() > config.moeLayer) {
+                lines.erase(lines.begin());
+            }
+        }
+        for (const auto &line: lines) {
             std::vector<std::string> row = StringUtil::StringSplit(line);
             if (expertCountPerRank == 0) {
                 // 读取的第一行数据作为每个rank的专家数量

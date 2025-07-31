@@ -439,6 +439,19 @@ struct ModelInfo {
     int modelLayer = 0;
 };
 
+struct ModelGenConfig {
+    // 模型moe层数
+    uint64_t moeLayer = 0;
+    // 数据保存间隔
+    uint64_t collectionInterval = 0;
+    // 模型的专家数
+    uint64_t expertsNumber = 0;
+    // 一个token挑选的专家数
+    uint64_t expertsSelectedNumber = 0;
+    // 外置共享专家数
+    uint64_t expertsDanglingSharedNumber = 0;
+};
+
 const std::string KEY_DENSE_LAYER_LIST = "denseLayerList";
 const std::string KEY_MOE_LAYER = "moeLayer";
 const std::string KEY_RANK_NUMBER = "rankNumber";
@@ -447,6 +460,7 @@ const std::string KEY_MODEL_LAYER = "modelLayer";
 const int CACHE_SIZE = 1024;
 const std::string EXPERT_HOTSPOT_FILE_REG = R"((prefill|decode)_([0-9]{1,4})\.csv$)";
 const std::string EXPERT_DEPLOYMENT_FILE_REG = R"((prefill|decode)_global_deployment\.json$)";
+const std::string EXPERT_MODEL_GEN_CONFIG_REG = R"(model_gen_config\.json$)";
 
 const std::string PACKET_ANALYZER_TITLE = "Packet Analysis";
 struct PacketAnalyzerData {

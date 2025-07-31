@@ -12,20 +12,22 @@
 #include "RenderEngine.h"
 #include "CollectionUtil.h"
 #include "ExpertHotspotManager.h"
+#include "ModelGenConfigParser.h"
 
 namespace Dic {
 namespace Module {
 namespace Summary {
 
 std::map<std::string, ModelInfo> ExpertHotspotManager::ParseHotspotData(const std::vector<std::string> &hotspotFiles,
-    std::string &errorMsg, std::shared_ptr<VirtualClusterDatabase> &database, const std::string version)
+    std::string &errorMsg, std::shared_ptr<VirtualClusterDatabase> &database, const std::string &version,
+    const ModelGenConfig &config)
 {
     // 清空老数据
     if (!database->DeleteExpertHotspot("", version)) {
         errorMsg = "Failed to clear old expert hotspot data, version:" + version;
         return {};
     }
-    ExpertHotspotParser parser(database);
+    ExpertHotspotParser parser(database, config);
     for (const auto &item: hotspotFiles) {
         // 文件解析，单个文件解析失败不影响最终结果
         if (!parser.Parse(item, version)) {
@@ -112,16 +114,26 @@ bool ExpertHotspotManager::InitExpertHotspotData(const std::string &filePath, co
     }
 
     // 查找文件列表
+    auto modelConfigFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(EXPERT_MODEL_GEN_CONFIG_REG));
     auto hotspotFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(EXPERT_HOTSPOT_FILE_REG));
     auto deploymentFiles = FileUtil::FindAllFilesByRegex(realFilePath, std::regex(EXPERT_DEPLOYMENT_FILE_REG));
-    if (hotspotFiles.empty() && deploymentFiles.empty()) {
+    bool isParseHotspot = !modelConfigFiles.empty() && !hotspotFiles.empty();
+    bool isParseDeployment = !deploymentFiles.empty();
+    if (!isParseHotspot && !isParseDeployment) {
         errorMsg = "No parsable files found";
         return false;
     }
 
     // 文件内容解析并落库
-    auto hotspotModelInfo = ParseHotspotData(hotspotFiles, errorMsg, database, version);
-    auto deploymentModelInfo = ParseDeploymentData(deploymentFiles, errorMsg, database, version);
+    std::map<std::string, ModelInfo> hotspotModelInfo;
+    if (isParseHotspot) {
+        ModelGenConfig config = ModelGenConfigParser::ParserModelGenConfigByFilePath(modelConfigFiles[0], errorMsg);
+        hotspotModelInfo = ParseHotspotData(hotspotFiles, errorMsg, database, version, config);
+    }
+    std::map<std::string, ModelInfo> deploymentModelInfo;
+    if (isParseDeployment) {
+        deploymentModelInfo = ParseDeploymentData(deploymentFiles, errorMsg, database, version);
+    }
     if (!errorMsg.empty()) {
         return false;
     }

@@ -1,0 +1,7 @@
+{
+    "num_moe_layers": 59,
+    "collection_Interval": 8,
+    "num_of_experts": 256,
+    "num_of_selected_experts": 8,
+    "num_dangling_shared_experts": 0
+}
