@@ -222,8 +222,8 @@ export function FormItem({ name, style, content, nameStyle }:
 };
 
 export function getIndexByRankNameAndDeviceId(rankName: string, deviceId: string): number {
-    if (Number.isNaN(rankName) || rankName === '') {
-        return Number.isNaN(deviceId) ? 0 : Number(deviceId);
+    if (rankName === '' || isNaN(Number(rankName))) {
+        return isNaN(Number(deviceId)) ? 0 : Number(deviceId);
     } else {
         return Number(rankName);
     }
