@@ -238,7 +238,7 @@ const mouseUpFunc = ({ e, datasState, rangeAndDomain, rowHeight, session, metada
     }
     runInAction(() => {
         session.selectedData = clickedData
-            ? { ...clickedData, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' }
+            ? { ...clickedData, threadId: clickedData.threadId ?? (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' }
             : undefined;
         onClick?.(clickedData, session, metadata);
         session.selectedRangeData = undefined;
