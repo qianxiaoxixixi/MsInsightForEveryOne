@@ -238,7 +238,7 @@ function isSameUnit(selectedMeta?: SelectedDataType, currentMeta?: ThreadMetaDat
         return false;
     }
 
-    return Boolean(selectedMeta?.threadId === currentMeta.threadId || currentMeta.threadIdList?.includes(selectedMeta.threadId)) &&
+    return Boolean(currentMeta.threadIdList ? currentMeta.threadIdList?.includes(selectedMeta.threadId) : selectedMeta?.threadId === currentMeta.threadId) &&
         selectedMeta.processId === currentMeta.processId &&
         selectedMeta.cardId === currentMeta.cardId;
 }
@@ -375,7 +375,6 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 newLines[cat] = singleCatLinkLine;
             }
             runInAction(() => {
-                session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId ?? '', processId: (metadata as ThreadMetaData).processId ?? '' };
                 session.linkLines = newLines;
                 session.singleLinkLine = newLines;
                 session.renderTrigger = !session.renderTrigger;
