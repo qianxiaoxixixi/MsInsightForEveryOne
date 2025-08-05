@@ -9,13 +9,15 @@
 #include "StringIdsTable.h"
 #include "SliceRepoInterface.h"
 namespace Dic::Module::Timeline {
-class MstxRepo : public IBaseSliceRepo {
+class MstxRepo : public IBaseSliceRepo, public IFindSliceByNameList {
 public:
     void QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
         std::vector<SliceDomain> &sliceVec) override;
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+    bool QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params,
+                                        std::vector<CompeteSliceDomain> &res) override;
 protected:
     std::unique_ptr<MstxEventsTable> mstxEventsTable = std::make_unique<MstxEventsTable>();
     std::unique_ptr<EnumMstxEventTypeTable> enumMstxEventTypeTable = std::make_unique<EnumMstxEventTypeTable>();

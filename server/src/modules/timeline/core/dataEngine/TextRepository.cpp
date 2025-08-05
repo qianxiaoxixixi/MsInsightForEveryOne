@@ -242,9 +242,17 @@ bool TextRepository::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &
     // 从process表查询pid
     ProcessTable processTable;
     std::vector<ProcessPO> processPOS;
-    processTable.Select(ProcessColumn::PID)
-        .Eq(ProcessColumn::PROCESS_NAME, params.processName)
-        .ExcuteQuery(params.rankId, processPOS);
+    processTable.Select(ProcessColumn::PID);
+    if (!params.processName.empty()) {
+        processTable.Eq(ProcessColumn::PROCESS_NAME, params.processName);
+    }
+    if (!params.processNameExclusion.empty()) {
+        processTable.NotIn(ProcessColumn::PROCESS_NAME, params.processNameExclusion);
+    }
+    if (!params.processLabel.empty()) {
+        processTable.Eq(ProcessColumn::LABEL, params.processLabel);
+    }
+    processTable.ExcuteQuery(params.rankId, processPOS);
     if (processPOS.empty()) {
         return false;
     }
@@ -255,8 +263,7 @@ bool TextRepository::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &
     // 根据pid去查询track_id列表
     ThreadTable threadTable;
     std::vector<ThreadPO> threadPOVec;
-    threadTable.Select(ThreadColumn::TRACK_ID)
-        .In(ThreadColumn::PID, pidList)
+    threadTable.Select(ThreadColumn::TRACK_ID).In(ThreadColumn::PID, pidList)
         .ExcuteQuery(params.rankId, threadPOVec);
     if (threadPOVec.empty()) {
         return false;
@@ -270,8 +277,11 @@ bool TextRepository::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &
     std::vector<SlicePO> slicePOVec;
     sliceTable.Select(SliceColumn::TIMESTAMP, SliceColumn::DURATION, SliceColumn::NAME)
         .In(SliceColumn::TRACKID, trackIdList)
-        .In(SliceColumn::NAME, params.nameList)
-        .OrderBy(SliceColumn::TIMESTAMP, TableOrder::ASC)
+        .In(SliceColumn::NAME, params.nameList);
+    if (params.startTime < params.endTime) {
+        sliceTable.GreaterEq(SliceColumn::TIMESTAMP, params.startTime).LessEq(SliceColumn::ENDTIME, params.endTime);
+    }
+    sliceTable.OrderBy(SliceColumn::TIMESTAMP, TableOrder::ASC)
         .ExcuteQuery(params.rankId, slicePOVec);
     for (const auto &item: slicePOVec) {
         CompeteSliceDomain domain;

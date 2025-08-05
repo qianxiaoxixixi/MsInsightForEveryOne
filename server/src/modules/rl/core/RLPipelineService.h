@@ -5,7 +5,9 @@
 #ifndef PROFILER_SERVER_RLPIPELINESERVICE_H
 #define PROFILER_SERVER_RLPIPELINESERVICE_H
 
+#include <unordered_map>
 #include <vector>
+#include <set>
 #include "pch.h"
 #include "RLProtocolResponse.h"
 #include "VirtualTraceDatabase.h"
@@ -15,13 +17,26 @@
 namespace Dic::Module::RL {
 class RLPipelineService {
 public:
-    bool GetPipelineInfo(Protocol::RLPipelineResponse &response);
+    static bool GetPipelineInfo(Protocol::RLPipelineResponse &response);
 private:
-    std::vector<Protocol::RLPipelineNode> SearchNode(const std::string &fileId);
-    std::vector<Protocol::RLPipelineNode> QueryMicroBatch(const std::string &fileId, const RLMstxConfig &config,
-                                                          const Protocol::RLPipelineNode &node);
-    uint64_t minTime = UINT64_MAX;
-    uint64_t maxTime = 0;
+    static void Clear();
+    static std::vector<Protocol::RLPipelineNode> SearchNode(const std::string &fileId);
+    static std::vector<Protocol::RLPipelineNode> QueryMicroBatchByTask(const std::string &fileId,
+        const std::vector<Protocol::RLPipelineNode> &taskList);
+    static void QueryPipelineByRankId(const std::string &rankIdWithHost);
+    static void FillPipelineMap(const std::string &originHostName, const std::string &rankId,
+                                const std::vector<Protocol::RLPipelineNode> &pipeline,
+                                std::unordered_map<std::string, RLPipelineItem> &targetMap);
+    static std::vector<Protocol::RLPipelineNode> QueryMicroBatch(const std::string &fileId, const RLMstxConfig &config,
+                                                                 const Protocol::RLPipelineNode &node);
+    static void FillAndProcessPipelineData(std::unordered_map<std::string, RLPipelineItem> &pipelineMap,
+                                           std::vector<RLPipelineItem> &pipelineData);
+    static std::mutex mtx;
+    static uint64_t minTime;
+    static uint64_t maxTime;
+    static std::set<std::string> stageTypeList;
+    static std::unordered_map<std::string, RLPipelineItem> taskPipelineMap;
+    static std::unordered_map<std::string, RLPipelineItem> microBatchPipelineMap;
 };
 }
 #endif // PROFILER_SERVER_RLPIPELINESERVICE_H

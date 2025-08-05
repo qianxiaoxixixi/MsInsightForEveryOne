@@ -106,4 +106,33 @@ bool MstxRepo::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDo
     competeSliceDomain.args = JsonUtil::JsonDump(json);
     return true;
 }
+
+bool MstxRepo::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params, std::vector<CompeteSliceDomain> &res)
+{
+    std::unordered_map<uint64_t, std::string> strMap =
+            stringIdsTable->QueryStrMapByValues(params.nameList, params.rankId);
+    if (strMap.empty()) {
+        return false;
+    }
+    std::vector<uint64_t> stringIds;
+    std::transform(strMap.begin(), strMap.end(), std::back_inserter(stringIds),
+        [](const std::pair<uint64_t, std::string>& pair) { return pair.first; });
+    std::vector<MstxEventsPO> mstxPOs;
+    mstxEventsTable->Select(MstxEventsColumn::TIMESTAMP, MstxEventsColumn::ENDTIME, MstxEventsColumn::MESSAGE)
+            .In(MstxEventsColumn::MESSAGE, stringIds);
+    if (params.startTime < params.endTime) {
+        mstxEventsTable->GreaterEq(MstxEventsColumn::TIMESTAMP, params.startTime)
+            .LessEq(MstxEventsColumn::ENDTIME, params.endTime);
+    }
+    mstxEventsTable->OrderBy(MstxEventsColumn::TIMESTAMP, TableOrder::ASC)
+            .ExcuteQuery(params.rankId, mstxPOs);
+    for (const auto &item: mstxPOs) {
+        CompeteSliceDomain domain;
+        domain.name = strMap[item.message];
+        domain.timestamp = item.timestamp;
+        domain.endTime = item.endTime;
+        res.push_back(domain);
+    }
+    return true;
+}
 }

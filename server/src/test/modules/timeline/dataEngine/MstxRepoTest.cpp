@@ -116,6 +116,48 @@ TEST_F(MstxRepoTest, TestQuerySliceDetailInfoWhenIdNotExistThenReturnFalse)
     EXPECT_EQ(result, false);
 }
 
+TEST_F(MstxRepoTest, QuerySliceDetailInfoByNameListSuccess)
+{
+    class MstxRepoMock : public MstxRepo {
+    public:
+        void SetMock(MstxDependency &dependency)
+        {
+            mstxEventsTable = std::move(dependency.mstxEventsTableMock);
+            enumMstxEventTypeTable = std::move(dependency.enumMstxEventTypeTableMock);
+            stringIdsTable = std::move(dependency.stringIdsTableMock);
+        }
+    };
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    std::string mstxInsert = "INSERT INTO \"main\".\"MSTX_EVENTS\" (\"startNs\", \"endNs\", \"eventType\", "
+                             "\"rangeId\", \"category\", \"message\", \"globalTid\", \"endGlobalTid\", \"domainId\", "
+                             "\"connectionId\", \"depth\") VALUES (1718180918997410110, 1718180918997410110, 3, "
+                             "4294967295, 4294967295, 513, 8785587534250072, 8785587534250072, 65535, 4000000000, 0);";
+    std::string stringInsert = "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (377, 'mmmm');\n"
+                               "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (513, 'compute_log');";
+    DatabaseTestCaseMockUtil::InsertData(db, mstxInsert);
+    DatabaseTestCaseMockUtil::InsertData(db, stringInsert);
+    MstxDependency dependency;
+    dependency.stringIdsTableMock = std::make_unique<StringIdsTableMock>();
+    dependency.stringIdsTableMock->SetDb(db);
+    dependency.mstxEventsTableMock = std::make_unique<MstxEventsTableMock>();
+    dependency.mstxEventsTableMock->SetDb(db);
+    MstxRepoMock mstxRepoMock;
+    mstxRepoMock.SetMock(dependency);
+
+    SliceQueryByNameList params{"hhh", "", {"compute_log"}};
+    std::vector<CompeteSliceDomain> res;
+    bool result = mstxRepoMock.QuerySliceDetailInfoByNameList(params, res);
+    const uint64_t expectSize = 1;
+    const uint64_t expectTIme = 1718180918997410110;
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(res.size(), expectSize);
+    EXPECT_EQ(res[0].timestamp, expectTIme);
+    EXPECT_EQ(res[0].endTime, expectTIme);
+}
+
 /**
  * 测试全量DB的 mstxRepo 转化 SliceInterface 的情况
  */
@@ -125,9 +167,6 @@ TEST_F(MstxRepoTest, TestDynamicCastOfMultiSliceInterface)
     // 转 IPythonFuncSlice 失败
     const auto pythonFuncRepo = dynamic_cast<IPythonFuncSlice*>(mstxRepo.get());
     EXPECT_EQ(pythonFuncRepo, nullptr);
-    // 转 IFindSliceByNameList 失败
-    const auto findSliceByNameList = dynamic_cast<IFindSliceByNameList*>(mstxRepo.get());
-    EXPECT_EQ(findSliceByNameList, nullptr);
     // 转 IFindSliceByTimepointAndName 失败
     const auto findSliceByTimepointAndName = dynamic_cast<IFindSliceByTimepointAndName*>(mstxRepo.get());
     EXPECT_EQ(findSliceByTimepointAndName, nullptr);

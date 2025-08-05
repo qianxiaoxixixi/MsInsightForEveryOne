@@ -2,22 +2,152 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#include "RLPipelineService.h"
 #include "DataBaseManager.h"
 #include "RenderEngine.h"
 #include "NumberSafeUtil.h"
 #include "TrackInfoManager.h"
-#include "DataBaseManager.h"
+#include "RLMstxConfigManager.h"
+#include "ParserStatusManager.h"
+#include "RLPipelineService.h"
 
 namespace Dic::Module::RL {
+std::mutex RLPipelineService::mtx;
+uint64_t RLPipelineService::minTime = UINT64_MAX;
+uint64_t RLPipelineService::maxTime = 0;
+std::set<std::string> RLPipelineService::stageTypeList;
+std::unordered_map<std::string, RLPipelineItem> RLPipelineService::taskPipelineMap;
+std::unordered_map<std::string, RLPipelineItem> RLPipelineService::microBatchPipelineMap;
+
+void RLPipelineService::Clear()
+{
+    std::lock_guard<std::mutex> lock(mtx);
+    minTime = UINT64_MAX;
+    maxTime = 0;
+    stageTypeList.clear();
+    taskPipelineMap.clear();
+    microBatchPipelineMap.clear();
+}
+
 std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::string &fileId)
 {
-    return {};
+    // 查找mstx数据
+    FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataType();
+    std::vector<std::string> taskNameList = RLMstxConfigManager::Instance().GetMstxTaskNameList();
+    std::vector<FullDb::CompeteSliceDomain> mstxSliceList =
+        FullDb::RenderEngine::Instance()->QueryMstxRLDetail(fileId, dataType, taskNameList);
+    if (mstxSliceList.empty()) {
+        return {};
+    }
+    std::vector<Protocol::RLPipelineNode> res;
+    std::set<std::string> stageTypeListTemp;
+    uint64_t minTimeTemp = UINT64_MAX;
+    uint64_t maxTimeTemp = 0;
+    for (const auto &item: mstxSliceList) {
+        uint64_t duration = NumberSafe::Sub(item.endTime, item.timestamp);
+        std::string stageType = RLMstxConfigManager::Instance().GetTaskTypeByName(item.name);
+        Protocol::RLPipelineNode node{fileId, "Task", item.timestamp, duration, item.name, stageType};
+        res.push_back(node);
+
+        stageTypeListTemp.insert(stageType);
+        minTimeTemp = std::min(minTimeTemp, item.timestamp);
+        maxTimeTemp = std::max(maxTimeTemp, item.endTime);
+    }
+
+    std::lock_guard<std::mutex> lock(mtx);
+    stageTypeList.insert(stageTypeListTemp.begin(), stageTypeListTemp.end());
+    minTime = std::min(minTimeTemp, minTime);
+    maxTime = std::max(maxTimeTemp, maxTime);
+    return res;
+}
+
+void RLPipelineService::FillPipelineMap(const std::string &originHostName, const std::string &rankId,
+                                        const std::vector<Protocol::RLPipelineNode> &pipeline,
+                                        std::unordered_map<std::string, RLPipelineItem> &targetMap)
+{
+    std::string key = originHostName + " " + rankId;
+    std::lock_guard<std::mutex> lock(mtx);
+    auto taskIt = targetMap.find(key);
+    if (taskIt == targetMap.end()) {
+        RLPipelineItem taskPipelineItem{pipeline, rankId, originHostName};
+        targetMap[key] = taskPipelineItem;
+    } else {
+        targetMap[key].lists.insert(targetMap[key].lists.end(), pipeline.begin(), pipeline.end());
+    }
+}
+
+void RLPipelineService::QueryPipelineByRankId(const std::string &rankIdWithHost)
+{
+    std::string fileId = FullDb::DataBaseManager::Instance().GetFileIdByRankId(rankIdWithHost);
+    std::vector<std::string> rankIdWithHostAfterSplit = StringUtil::Split(rankIdWithHost, " ");
+    // 获取host，如果rankIdWithHost按空格分割后长度大于1，则倒数第二个是host，否则赋值为空
+    std::string hostName = rankIdWithHostAfterSplit.size() > 1 ?
+                           rankIdWithHostAfterSplit[rankIdWithHostAfterSplit.size() - 2] : "";
+    std::string originHostName = StringUtil::GetOriginHostName(hostName);
+    // 获取rankId，如果rankIdWithHost按空格分割后长度大于1，则最后一个是rankId，否则就是rankIdWithHost本身
+    std::string rankId = rankIdWithHostAfterSplit.size() > 1 ?
+                         rankIdWithHostAfterSplit[rankIdWithHostAfterSplit.size() - 1] : rankIdWithHost;
+
+    // 查询任务维度的数据
+    std::vector<Protocol::RLPipelineNode> taskPipelineNodeList = SearchNode(fileId);
+    FillPipelineMap(originHostName, rankId, taskPipelineNodeList, taskPipelineMap);
+
+    // 查询microBatch维度数据
+    std::vector<Protocol::RLPipelineNode> microBatchNodeList = QueryMicroBatchByTask(fileId,
+                                                                                     taskPipelineNodeList);
+    FillPipelineMap(originHostName, rankId, microBatchNodeList, microBatchPipelineMap);
 }
 
 bool RLPipelineService::GetPipelineInfo(Protocol::RLPipelineResponse &response)
 {
+    Clear();
+    ThreadPool threadPool = ThreadPool(4);
+    for (const auto &rankIdWithHost: FullDb::DataBaseManager::Instance().GetAllRankId()) {
+        threadPool.AddTask(QueryPipelineByRankId, rankIdWithHost);
+    }
+    threadPool.WaitForAllTasks();
+    threadPool.ShutDown();
+
+    std::lock_guard<std::mutex> lock(mtx);
+    FillAndProcessPipelineData(taskPipelineMap, response.body.taskData);
+    FillAndProcessPipelineData(microBatchPipelineMap, response.body.microBatchData);
+    response.body.minTime = minTime;
+    response.body.maxTime = maxTime;
+    response.body.stageTypeList.insert(response.body.stageTypeList.end(), stageTypeList.begin(), stageTypeList.end());
     return true;
+}
+
+std::vector<Protocol::RLPipelineNode> RLPipelineService::QueryMicroBatchByTask(const std::string &fileId,
+    const std::vector<Protocol::RLPipelineNode> &taskList)
+{
+    std::vector<Protocol::RLPipelineNode> microBatchNodeList;
+    for (const auto &item: taskList) {
+        auto microBatchUnderTask = QueryMicroBatch(fileId,
+            RLMstxConfigManager::Instance().GetMstxConfigByTaskName(item.name), item);
+        microBatchNodeList.insert(microBatchNodeList.end(), microBatchUnderTask.begin(), microBatchUnderTask.end());
+    }
+    return microBatchNodeList;
+}
+
+void RLPipelineService::FillAndProcessPipelineData(std::unordered_map<std::string, RLPipelineItem> &pipelineMap,
+                                                   std::vector<RLPipelineItem> &pipelineData)
+{
+    for (const auto &item: pipelineMap) {
+        if (item.second.lists.empty()) {
+            continue;
+        }
+        pipelineData.push_back(item.second);
+    }
+    std::sort(pipelineData.begin(), pipelineData.end(),
+        [](const RLPipelineItem &pipelineA, const RLPipelineItem &pipelineB) {
+            if (pipelineA.hostName != pipelineB.hostName) {
+                return pipelineA.hostName < pipelineB.hostName;
+            }
+            if (StringUtil::IsAllDigits(pipelineA.rankId) && StringUtil::IsAllDigits(pipelineB.rankId)) {
+                return StringUtil::StringToInt(pipelineA.rankId) < StringUtil::StringToInt(pipelineB.rankId);
+            } else {
+                return pipelineA.rankId < pipelineB.rankId;
+            }
+        });
 }
 
 std::vector<Protocol::RLPipelineNode> RLPipelineService::QueryMicroBatch(const std::string &fileId,

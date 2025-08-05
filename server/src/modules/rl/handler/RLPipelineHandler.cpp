@@ -5,18 +5,17 @@
 #include "RLPipelineHandler.h"
 #include "RLProtocolRequest.h"
 #include "RLProtocolResponse.h"
-#include "pch.h"
+#include "RLPipelineService.h"
 
 namespace Dic::Module::RL {
-using namespace Dic;
-using namespace Dic::Server;
 bool RLPipelineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<Protocol::RLPipelineRequest &>(*requestPtr);
     std::unique_ptr<Protocol::RLPipelineResponse> responsePtr = std::make_unique<Protocol::RLPipelineResponse>();
     RLPipelineResponse &response = *responsePtr;
+    bool res = RLPipelineService::GetPipelineInfo(response);
     SetBaseResponse(request, response);
-    SendResponse(std::move(responsePtr), true);
+    SendResponse(std::move(responsePtr), res);
     return true;
 }
 }

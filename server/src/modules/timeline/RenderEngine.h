@@ -33,7 +33,7 @@ public:
     std::vector<CompeteSliceDomain> QuerySliceDetailByNameList(const std::string &fileId,
         const DataType &type, const std::string &processName, const std::vector<std::string> &nameList);
     std::vector<CompeteSliceDomain> QueryMstxRLDetail(const std::string &fileId, const DataType &type,
-        const std::vector<std::string> &nameList, uint64_t startTime = 0, uint64_t endTime = UINT64_MAX);
+        const std::vector<std::string> &nameList, uint64_t startTime = UINT64_MAX, uint64_t endTime = 0);
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;
