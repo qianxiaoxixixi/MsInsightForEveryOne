@@ -911,10 +911,9 @@ uint64_t LeaksMemoryDatabase::QueryTotalSizeUntilTimestampUsingOwner(const std::
     std::string sql;
     std::string errMsg;
     sql = StringUtil::FormatString("SELECT SUM({}) FROM {} "
-                                   "WHERE {} <= ? AND {} > ? AND {} == ? AND {} like ?;",
-                                   BLOCK::SIZE, memoryBlockTable,
-                                   BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
-                                   BLOCK::DEVICE_ID, BLOCK::OWNER);
+                                   "WHERE {} <= ? AND {} > ? AND {} == ? AND ({} == ? OR {} like ?);",
+                                   BLOCK::SIZE, memoryBlockTable, BLOCK::START_TIMESTAMP,
+                                   BLOCK::END_TIMESTAMP, BLOCK::DEVICE_ID, BLOCK::OWNER, BLOCK::OWNER);
     if (sql.empty()) {
         ServerLog::Error("[LeaksMemory] Failed to query block total size, error: ", errMsg);
         return 0;
@@ -929,7 +928,8 @@ uint64_t LeaksMemoryDatabase::QueryTotalSizeUntilTimestampUsingOwner(const std::
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_int64(stmt, bindIdx++, timestamp);
     sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
-    std::string ownerPattern = owner + '%';
+    std::string ownerPattern = StringUtil::StrJoin(owner, "@%");
+    sqlite3_bind_text(stmt, bindIdx++, owner.c_str(), owner.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, bindIdx++, ownerPattern.c_str(), ownerPattern.length(), SQLITE_TRANSIENT);
     uint64_t totalSize = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {

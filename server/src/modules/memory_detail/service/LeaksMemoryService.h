@@ -42,6 +42,7 @@ struct LEAKS_DUMP_EVENT_TYPE {
     inline const static std::string MALLOC_FREE_MINDSPORE = "MINDSPORE"; // MINDSPORE内存池分配(从MINDSPORE内存池申请)
     inline const static std::string MALLOC_FREE_ATB = "ATB"; // ATB申请
     inline const static std::string MALLOC_FREE_HAL = "HAL"; // 从HAL申请
+    inline const static std::string MALLOC_FREE_PTA_WORKSPACE = "PTA_WORKSPACE"; // 从workspace申请
     // 内存访问事件 子类型
     inline const static std::string ACCESS_READ = "READ"; // 内存读事件
     inline const static std::string ACCESS_WRITE = "WRITE"; // 内存写事件
@@ -61,11 +62,13 @@ const std::unordered_map<std::string, std::set<std::string>> EVENT_TYPE_MAP = {
     {LEAKS_DUMP_EVENT::MALLOC, {LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA,
                                 LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_MINDSPORE,
                                 LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_ATB,
-                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL}},
+                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
+                                LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA_WORKSPACE}},
     {LEAKS_DUMP_EVENT::FREE, {LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA,
                               LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_MINDSPORE,
                               LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_ATB,
-                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL}},
+                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_HAL,
+                              LEAKS_DUMP_EVENT_TYPE::MALLOC_FREE_PTA_WORKSPACE}},
     {LEAKS_DUMP_EVENT::ACCESS, {LEAKS_DUMP_EVENT_TYPE::ACCESS_READ,
                                 LEAKS_DUMP_EVENT_TYPE::ACCESS_WRITE}},
     {LEAKS_DUMP_EVENT::OP_LAUNCH, {LEAKS_DUMP_EVENT_TYPE::OP_LAUNCH_ATEN_START,
