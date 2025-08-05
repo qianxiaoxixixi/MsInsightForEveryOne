@@ -105,7 +105,7 @@
     "SnapshotDescribe": "ArkTS heap snapshot interval",
     "TakeHeapSnapshot": "Take heap Snapshot",
     "CollectGarbage": "Collect garbage",
-    "PinButton": "Pin to top" ,
+    "PinButton": "Pin to top",
     "UnpinButton": "Unpin"
   },
   "tooltip": {
@@ -169,7 +169,23 @@
     "OutputShapes": "Output Shapes",
     "OutputDataTypes": "Output Data Types",
     "OutputFormats": "Output Formats",
-    "Open in Find Window": "Open in Find Window"
+    "Open in Find Window": "Open in Find Window",
+    "Attr": "Attr",
+    "DeviceId": "Device Id",
+    "EventType": "Event Type",
+    "Ptr": "Ptr",
+    "Event": "Event",
+    "ID": "ID",
+    "addr": "Addr",
+    "attr": "Attr",
+    "deviceId": "Device Id",
+    "eventType": "Event Type",
+    "owner": "Owner",
+    "processId": "Process ID",
+    "threadId": "Thread ID",
+    "Timestamp(ns)": "Timestamp(ns)",
+    "ProcessId": "Process ID",
+    "ThreadId": "Thread ID"
   },
   "chart": {
     "switchTooltip": "Click to Switch Chart Display and Hide"

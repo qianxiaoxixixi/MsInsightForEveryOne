@@ -57,6 +57,24 @@ const restore = (session: any): void => {
     session.funcOptions = [];
     session.threadFlag = false;
     session.maxDepth = 0;
+    session.blocksTableData = [];
+    session.blocksTableHeader = [];
+    session.blocksCurrentPage = 1;
+    session.blocksPageSize = 10;
+    session.blocksTotal = 0;
+    session.blocksOrder = '';
+    session.blocksOrderBy = '';
+    session.blocksFilters = {};
+    session.eventsTableData = [];
+    session.eventsTableHeader = [];
+    session.eventsCurrentPage = 1;
+    session.eventsPageSize = 10;
+    session.eventsTotal = 0;
+    session.eventsOrder = '';
+    session.eventsOrderBy = '';
+    session.eventsFilters = {};
+    session.tableType = 'blocks';
+    session.tableKey = (session.tableKey + 1) % 10;
 };
 export const parseCompletedHandler = (data: any): void => {
     const session = store.sessionStore.activeSession;

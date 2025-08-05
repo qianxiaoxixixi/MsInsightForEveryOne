@@ -3,16 +3,18 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Select } from 'ascend-components';
-import MemoryBarChart from './MemoryBarChart';
-import MemorySliceChart from './MemorySliceChart';
-import MemoryFunctionCall from './MemoryFunctionCall';
-import { Label } from './Common';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import MemoryBarChart from './MemoryBarChart';
+import MemorySliceChart from './MemorySliceChart';
+import MemoryFunctionCall from './MemoryFunctionCall';
+import MemoryTable from './MemoryTable';
+import { Label } from './Common';
 import { getFuncNewData, getBarNewData } from './dataHandler';
 import { Line, initLine, cancelLine } from './LineHandler';
-import { chartResize } from '../utils/utils';
+import { chartResize, convertNanoseconds } from '../utils/utils';
 
 const MemoryStack = observer(({ session }: { session: any }): React.ReactElement => {
     const { t } = useTranslation('leaks');
@@ -94,8 +96,8 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
         linkageHandle();
     }, [funcIns, barIns]);
     return (
-        <div>
-            <div style={{ marginLeft: 24, marginTop: 24 }}>
+        <>
+            {(session.threadOps.length > 0 && session.threadId !== '') && <CollapsiblePanel title={t('FlameGraph')} style={{ minWidth: 1000 }}>
                 <Label name={t('ThreadID')} />
                 <Select
                     id={'select-threadId'}
@@ -124,12 +126,12 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     maxTagTextLength={10}
                     maxTagCount={4}
                 />
-            </div>
-            <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                <Line id='funcLine' lineShow={lineShow} offset={offset} />
-                <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
-            </div>
-            <div style={{ marginLeft: 24 }}>
+                <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
+                    <Line id='funcLine' lineShow={lineShow} offset={offset} />
+                    <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
+                </div>
+            </CollapsiblePanel >}
+            <CollapsiblePanel title={t('LineBlockGraph')} style={{ minWidth: 1000 }}>
                 <Label name={t('DeviceID')} />
                 <Select
                     id={'select-deviceId'}
@@ -157,22 +159,29 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     }}
                     options={session.typeOpts}
                 />
-            </div>
-            <div id="barContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                <Line id="barLine" lineShow={lineShow} offset={offset} />
-                <MemoryBarChart session={session} setBarIns={setBarIns} />
-            </div>
+                <div id="barContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
+                    <Line id="barLine" lineShow={lineShow} offset={offset} />
+                    <MemoryBarChart session={session} setBarIns={setBarIns} />
+                </div>
+            </CollapsiblePanel>
             {session.memoryStamp
                 ? (
-                    <div id="detailsContent" style={{ position: 'relative' }}>
-                        <div style={{ position: 'absolute', left: '45%' }}>{`${t('Current Time')}: ${session.memoryStamp}ns`}</div>
-                        <MemorySliceChart session={session} />
-                    </div>
+                    <CollapsiblePanel title={t('DetailsDiagram')} collapsible style={{ minWidth: 1000 }}>
+                        <div id="detailsContent" style={{ position: 'relative' }}>
+                            <div style={{ position: 'absolute', left: '42%' }}>{`${t('Current Time')}: ${convertNanoseconds(session.memoryStamp)}`}</div>
+                            <MemorySliceChart session={session} />
+                        </div>
+                    </CollapsiblePanel>
                 )
                 : (
                     <></>
-                )}
-        </div>
+                )
+            }
+            <CollapsiblePanel title={t('DetailsTable')} collapsible style={{ minWidth: 1000 }} destroy={false}>
+                <MemoryTable session={session} />
+            </CollapsiblePanel>
+
+        </>
     );
 });
 

@@ -154,8 +154,8 @@ const getOptions = (session: Session, theme: Theme): EChartsOption => {
         tooltip: getTooltip(session),
         series: getSeries(session, theme),
         grid: {
-            left: '8%',
-            right: '4%',
+            left: 80,
+            right: 60,
         },
     };
 };
@@ -196,7 +196,7 @@ const MemoryFunctionCall = observer(({ session, setFuncIns }: {
         <MIChart
             ref={chartRef}
             height="500px"
-            width="calc(100vw - 80px)"
+            width="calc(100vw - 120px)"
             loading={loading}
             options={chartOptions}
         />

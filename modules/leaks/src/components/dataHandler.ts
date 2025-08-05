@@ -1,8 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
-
-import { getLeaksGraphData, getMemoryDetailData, getFuncData, type GraphParam, FuncParam } from '../utils/RequestUtils';
+import {
+    getLeaksGraphData, getMemoryDetailData, getFuncData, getBlockDetails, getEventDetails,
+    type GraphParam, FuncParam, BlockParam, EventParam,
+} from '../utils/RequestUtils';
 import { message } from 'antd';
 import { runInAction } from 'mobx';
 
@@ -63,6 +65,62 @@ export const getNewDetailData = async (session: any): Promise<void> => {
         const memoryDatas = await getMemoryDetailData(session.deviceId, session.memoryStamp, session.eventType);
         runInAction(() => {
             session.memoryData = memoryDatas;
+        });
+    } catch (error: any) {
+        message.error(error.message);
+    }
+};
+export const getBlockTableData = async (session: any): Promise<void> => {
+    try {
+        const blockParam: BlockParam = {
+            deviceId: session.deviceId,
+            relativeTime: true,
+            eventType: session.eventType,
+            isTable: true,
+            startTimestamp: session.minTime,
+            endTimestamp: session.maxTime,
+            currentPage: session.blocksCurrentPage,
+            pageSize: session.blocksPageSize,
+            desc: session.blocksOrder,
+        };
+        if (session.blocksOrderBy) {
+            blockParam.orderBy = session.blocksOrderBy;
+        }
+        if (Object.keys(session.blocksFilters).length > 0) {
+            blockParam.filters = session.blocksFilters;
+        }
+        const blockTableData = await getBlockDetails(blockParam);
+        runInAction(() => {
+            session.blocksTableData = blockTableData.blocks;
+            session.blocksTableHeader = blockTableData.headers;
+            session.blocksTotal = blockTableData.total;
+        });
+    } catch (error: any) {
+        message.error(error.message);
+    }
+};
+export const getEventTableData = async (session: any): Promise<void> => {
+    try {
+        const eventParam: EventParam = {
+            deviceId: session.deviceId,
+            relativeTime: true,
+            startTimestamp: session.minTime,
+            endTimestamp: session.maxTime,
+            currentPage: session.eventsCurrentPage,
+            pageSize: session.eventsPageSize,
+            desc: session.eventsOrder,
+        };
+        if (session.eventsOrderBy) {
+            eventParam.orderBy = session.eventsOrderBy;
+        }
+        if (Object.keys(session.eventsFilters).length > 0) {
+            eventParam.filters = session.eventsFilters;
+        }
+        const eventTableData = await getEventDetails(eventParam);
+        runInAction(() => {
+            session.eventsTableData = eventTableData.events;
+            session.eventsTableHeader = eventTableData.headers;
+            session.eventsTotal = eventTableData.total;
         });
     } catch (error: any) {
         message.error(error.message);

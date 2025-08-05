@@ -22,7 +22,7 @@ export interface Block {
     endTimestamp: number;
     owner: string;
     attr: string;
-    path: number[][];
+    path?: number[][];
 }
 export interface AllocationData {
     minTimestamp: number;
@@ -37,10 +37,10 @@ export interface Allocation {
 export interface GraphParam {
     deviceId: string;
     graph: 'blocks' | 'allocations';
+    eventType: string;
     relativeTime?: boolean;
     startTimestamp?: number;
     endTimestamp?: number;
-    eventType: string;
 }
 export interface FuncParam {
     deviceId: string;
@@ -48,6 +48,31 @@ export interface FuncParam {
     relativeTime?: boolean;
     startTimestamp?: number;
     endTimestamp?: number;
+}
+
+export interface BlockParam {
+    deviceId: string;
+    eventType: string;
+    isTable: boolean;
+    relativeTime?: boolean;
+    startTimestamp?: number;
+    endTimestamp?: number;
+    orderBy?: string;
+    desc?: boolean | string;
+    currentPage?: number;
+    pageSize?: number;
+    filters?: { [key: string]: string };
+}
+export interface EventParam {
+    deviceId: string;
+    relativeTime?: boolean;
+    startTimestamp?: number;
+    endTimestamp?: number;
+    orderBy?: string;
+    desc?: boolean;
+    currentPage?: number;
+    pageSize?: number;
+    filters?: { [key: string]: string };
 }
 export interface DetailData {
     size: number;
@@ -65,6 +90,34 @@ export interface FuncData {
     maxTimestamp: number;
     traces: Trace[];
     maxDepth: number;
+}
+interface TableHead {
+    name: string;
+    key: string;
+    sortable: boolean;
+    searchable: boolean;
+}
+interface TableDetail {
+    id: number;
+    event: string;
+    eventType: string;
+    name: string;
+    timestamp: number;
+    processId: number;
+    threadId: number;
+    deviceId: string;
+    ptr: string;
+    attr: string;
+}
+export interface BlocksTableData {
+    headers: TableHead[];
+    blocks: TableDetail[];
+    total: number;
+}
+export interface EventsTableData {
+    headers: TableHead[];
+    events: TableDetail[];
+    total: number;
 }
 /**
  * 获取图表信息
@@ -90,4 +143,20 @@ export const getMemoryDetailData = async (deviceId: string, timestamp: number, e
  */
 export const getFuncData = async (params: FuncParam): Promise<FuncData> => {
     return window.request({ command: 'Memory/leaks/traces', params: { ...params } });
+};
+/**
+ * 获取内存详情表（内存块视图）
+ * @param params 查询条件
+ * @returns 查询结果
+ */
+export const getBlockDetails = async (params: BlockParam): Promise<BlocksTableData> => {
+    return window.request({ command: 'Memory/leaks/blocks', params: { ...params } });
+};
+/**
+ * 获取内存详情表（内存事件视图）
+ * @param params 查询条件
+ * @returns 查询结果
+ */
+export const getEventDetails = async (params: EventParam): Promise<EventsTableData> => {
+    return window.request({ command: 'Memory/leaks/events', params: { ...params } });
 };

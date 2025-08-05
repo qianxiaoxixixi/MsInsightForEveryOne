@@ -71,7 +71,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
             <ColumnFilterIcon/>
         ),
         onFilter: (value, record) =>
-            record[dataIndex]
+            record?.[dataIndex] && record?.[dataIndex]
                 .toString()
                 .toLowerCase()
                 .includes((value as string).toLowerCase()),
