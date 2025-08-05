@@ -5,6 +5,14 @@
 import styled from '@emotion/styled';
 
 export const HeaderStyled = styled.div`
-    margin-left: 24px;
-    margin-right: 24px;
+    margin: 0 24px 6px 24px;
+`;
+
+export const SearchBoxStyled = styled.div`
+    display: flex;
+    align-items: center;
+
+    > div {
+        margin-right: 16px;
+    }
 `;

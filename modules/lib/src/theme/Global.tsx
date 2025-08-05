@@ -47,6 +47,10 @@ const formatterCss = css`
             justify-content: space-between;
             padding: 2px 0;
 
+            &.marker {
+                margin-bottom: 6px;
+            }
+
             .label{
                 margin-right: 16px;
             }
@@ -54,6 +58,7 @@ const formatterCss = css`
                 max-width: 240px;
                 white-space: normal;
                 font-weight: bold;
+                word-break: break-all;
             }
         }
     }

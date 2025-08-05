@@ -8,7 +8,7 @@ import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
 import { chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDefaultChartOptions, getLegendStyle } from './EchartUtils';
 import { Empty, message } from '../components/index';
-import { useTheme } from '@emotion/react';
+import { type Theme, useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import { t as i18nextT } from 'i18next';
 import { AlarmIcon, BulbIcon } from '../icon/Icon';
@@ -742,3 +742,18 @@ const dataFormat = ({ header, data }: TableHeaderAndData): string => {
     });
     return result;
 };
+
+export const colorPalette: Array<keyof Theme['colorPalette']> = [
+    'deepBlue',
+    'coralRed',
+    'tealGreen',
+    'aquaBlue',
+    'raspberryPink',
+    'vividBlue',
+    'vividRed',
+    'royalPurple',
+    'skyBlue',
+    'sunsetOrange',
+    'amethystPurple',
+    'limeGreen',
+];

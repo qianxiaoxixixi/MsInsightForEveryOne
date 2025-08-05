@@ -3,8 +3,8 @@
  */
 
 import { request } from '@/utils/request';
-import type { GetTraceDataParams, GetTraceDataResults } from '@/api/types';
+import type { GetTraceDataResults } from '@/api/types';
 
-export const getTraceData = (params: GetTraceDataParams): Promise<GetTraceDataResults> => {
-    return request({ command: 'RL/pipeline', params });
+export const getTraceData = (): Promise<GetTraceDataResults> => {
+    return request({ command: 'RL/pipeline' });
 };

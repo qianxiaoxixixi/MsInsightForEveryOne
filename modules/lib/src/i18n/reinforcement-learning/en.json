@@ -1,5 +1,8 @@
 {
   "RL": {
-    "Task Trace Timeline": "Task Trace Timeline"
+    "Task Trace Timeline": "Task Trace Timeline",
+    "Framework": "Framework",
+    "Algorithm": "Algorithm",
+    "Search": "Search"
   }
 }
