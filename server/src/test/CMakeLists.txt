@@ -69,6 +69,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/full_db/parserAlloc TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/base/core TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/jupyter/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/jupyter/parser TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/rl/core TEST)
 
 aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
 aux_source_directory(${HOME_DIR}/src/protocol TEST)

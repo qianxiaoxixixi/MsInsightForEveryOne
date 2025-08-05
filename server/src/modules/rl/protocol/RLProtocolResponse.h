@@ -12,6 +12,7 @@
 namespace Dic::Protocol {
 
 struct RLPipelineNode {
+    std::string fileId;
     std::string nodeType;
     uint64_t startTime = 0;
     uint64_t duration = 0;
@@ -20,15 +21,17 @@ struct RLPipelineNode {
 };
 
 struct RLPipelineItem {
-    std::string dbPath;
     std::vector<RLPipelineNode> lists;
     std::string rankId;
+    std::string hostName;
 };
 
 struct RLPipelineBody {
     uint64_t minTime = UINT64_MAX;
     uint64_t maxTime = 0;
-    std::vector<RLPipelineItem> data;
+    std::vector<RLPipelineItem> taskData;
+    std::vector<RLPipelineItem> microBatchData;
+    std::vector<std::string> stageTypeList;
 };
 
 struct RLPipelineResponse : public Response {

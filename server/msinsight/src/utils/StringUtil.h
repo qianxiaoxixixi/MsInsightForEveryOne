@@ -525,6 +525,15 @@ static std::string FindLCP(const std::string& str1, const std::string& str2)
     return str1.substr(0, i);
 }
 
+static std::string GetOriginHostName(const std::string &hostName)
+{
+    size_t lastUnderlinePos = hostName.find_last_of('_');
+    if (lastUnderlinePos != std::string::npos) {
+        return hostName.substr(0, lastUnderlinePos);
+    }
+    return hostName;
+}
+
 private:
 #ifdef _WIN32
     static inline char injectList[] = {

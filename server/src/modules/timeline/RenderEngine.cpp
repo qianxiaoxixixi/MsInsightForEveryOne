@@ -198,7 +198,15 @@ std::vector<CompeteSliceDomain> RenderEngine::QuerySliceDetailByNameList(const s
 std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::string &fileId, const DataType &type,
     const std::vector<std::string> &nameList, uint64_t startTime, uint64_t endTime)
 {
-    return {};
+    if (nameList.empty()) {
+        ServerLog::Warn("Fail to query mstx rl detail.");
+        return {};
+    }
+    PROCESS_TYPE processType = type == DataType::TEXT ? PROCESS_TYPE::TEXT : PROCESS_TYPE::MS_TX;
+    SliceQueryByNameList sliceQuery{fileId, "", nameList, processType, startTime, endTime, {"Python", "CANN"}, "CPU"};
+    std::vector<CompeteSliceDomain> res;
+    dataEngine->QuerySliceDetailInfoByNameList(sliceQuery, res);
+    return res;
 }
 
 void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, UnitThreadDetailBody &responseBody,

@@ -24,14 +24,27 @@ template<> std::optional<document_t> ToResponseJson<RLPipelineResponse>(const RL
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "minTime", response.body.minTime, allocator);
     JsonUtil::AddMember(body, "maxTime", response.body.maxTime, allocator);
-    json_t data(kArrayType);
-    for (const auto &item : response.body.data) {
+    std::optional<document_t> taskDataJson = RLPipelineListToJson(response.body.taskData, allocator);
+    std::optional<document_t> microBatchDataJson = RLPipelineListToJson(response.body.microBatchData, allocator);
+    JsonUtil::AddMember(body, "taskData", taskDataJson, allocator);
+    JsonUtil::AddMember(body, "microBatchData", microBatchDataJson, allocator);
+    JsonUtil::AddMember(body, "stageTypeList", response.body.stageTypeList, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::optional<document_t>{std::move(json)};
+}
+
+std::optional<document_t> RLPipelineListToJson(const std::vector<RLPipelineItem> &pipelineList,
+                                               Document::AllocatorType &allocator)
+{
+    document_t data(kArrayType);
+    for (const auto &item: pipelineList) {
         json_t pipelineItem(kObjectType);
-        JsonUtil::AddMember(pipelineItem, "dbPath", item.dbPath, allocator);
         JsonUtil::AddMember(pipelineItem, "rankId", item.rankId, allocator);
+        JsonUtil::AddMember(pipelineItem, "hostName", item.hostName, allocator);
         json_t nodeList(kArrayType);
         for (const auto &node: item.lists) {
             json_t nodeJson(kObjectType);
+            JsonUtil::AddMember(nodeJson, "fileId", node.fileId, allocator);
             JsonUtil::AddMember(nodeJson, "nodeType", node.nodeType, allocator);
             JsonUtil::AddMember(nodeJson, "startTime", node.startTime, allocator);
             JsonUtil::AddMember(nodeJson, "duration", node.duration, allocator);
@@ -42,8 +55,6 @@ template<> std::optional<document_t> ToResponseJson<RLPipelineResponse>(const RL
         JsonUtil::AddMember(pipelineItem, "lists", nodeList, allocator);
         data.PushBack(pipelineItem, allocator);
     }
-    JsonUtil::AddMember(body, "data", data, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::optional<document_t>{std::move(json)};
+    return std::optional<document_t>(std::move(data));
 }
 }

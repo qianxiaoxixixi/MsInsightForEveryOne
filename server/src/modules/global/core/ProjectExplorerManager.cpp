@@ -400,6 +400,9 @@ bool ProjectExplorerManager::UpdateParseFileInfo(const std::string &projectName,
     if (projectName.empty() || parseFileInfo.empty()) {
         return false;
     }
+    if (db == nullptr) {
+        return false;
+    }
     return db->InsertDuplicateUpdateParsedFile(parseFileInfo);
 }
 }

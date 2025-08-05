@@ -144,6 +144,24 @@ public:
         return *this;
     }
 
+    Table &NotIn(std::string_view str, const std::vector<std::string> &inputs)
+    {
+        ConditionStr() += " AND " + std::string(str) + " NOT IN ( ";
+        bool sqlInject = false;
+        for (const auto &item: inputs) {
+            if (!StringUtil::CheckSqlValid(item)) {
+                sqlInject = true;
+                break;
+            }
+        }
+        if (!sqlInject) {
+            std::string inputStr = StringUtil::Join4SqlGroup(inputs);
+            ConditionStr() += inputStr;
+        }
+        ConditionStr() += " ) ";
+        return *this;
+    }
+
     Table &OrderBy(std::string_view columnName, TableOrder order)
     {
         if (std::empty(OrderByStr())) {

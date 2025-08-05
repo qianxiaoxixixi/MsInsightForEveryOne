@@ -5,6 +5,7 @@
 #define PROFILER_SERVER_SLICEQUERY_H
 #include <string>
 #include "DomainObject.h"
+
 namespace Dic::Module::Timeline {
 struct SliceQuery {
     uint64_t trackId = 0;
@@ -57,8 +58,8 @@ struct SliceQueryByNameList {
     std::string processName;
     std::vector<std::string> nameList;
     PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
-    uint64_t startTime = 0;
-    uint64_t endTime = UINT64_MAX;
+    uint64_t startTime = UINT64_MAX;
+    uint64_t endTime = 0;
 
     // 以下字段目前只有text场景有效，如果其他场景也需要，请注意代码适配
     std::vector<std::string> processNameExclusion;
