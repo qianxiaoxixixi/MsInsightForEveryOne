@@ -8,11 +8,13 @@
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 #include "MemoryDetailDefs.h"
+#include "LeaksMemoryTableColumn.h"
 #include "LeaksMemoryDetailTreeNode.h"
 #include "LeaksMemoryPythonTrace.h"
 
 namespace Dic::Protocol {
 using namespace Dic::Module::MemoryDetail;
+
 struct MemoryBlockItem : MemoryBlock {
     std::vector<std::pair<std::uint64_t, std::uint64_t>> path;
     MemoryBlockItem() = default;
@@ -42,47 +44,61 @@ struct MemoryBlockItem : MemoryBlock {
         }
         path.emplace_back(timestamp, size);
     }
+};
 
-    std::optional<document_t> ToLeaksMemoryBlockJson(Document::AllocatorType& allocator) const
-    {
-        document_t json(kObjectType);
-        JsonUtil::AddMember(json, "id", id, allocator);
-        JsonUtil::AddMember(json, "addr", ptr, allocator);
-        JsonUtil::AddMember(json, "size", size, allocator);
-        JsonUtil::AddMember(json, "startTimestamp", startTimestamp, allocator);
-        JsonUtil::AddMember(json, "endTimestamp", endTimestamp, allocator);
-        JsonUtil::AddMember(json, "owner", owner, allocator);
-        JsonUtil::AddMember(json, "attr", otherAttr, allocator);
-        JsonUtil::AddMember(json, "processId", processId, allocator);
-        JsonUtil::AddMember(json, "threadId", threadId, allocator);
-        document_t pathJson(kArrayType);
-        for (auto& point : path) {
-            document_t pointJson(kArrayType);
-            pointJson.PushBack(json_t().SetUint64(point.first), allocator);
-            pointJson.PushBack(json_t().SetUint64(point.second), allocator);
-            pathJson.PushBack(pointJson, allocator);
+static document_t ToLeaksMemoryBlockJson(const std::shared_ptr<MemoryBlock>& blockPtr, const bool withPath,
+                                         Document::AllocatorType& allocator)
+{
+    document_t json(kObjectType);
+    JsonUtil::AddMember(json, "id", blockPtr->id, allocator);
+    JsonUtil::AddMember(json, "addr", blockPtr->ptr, allocator);
+    JsonUtil::AddMember(json, "size", blockPtr->size, allocator);
+    JsonUtil::AddMember(json, "startTimestamp", blockPtr->startTimestamp, allocator);
+    JsonUtil::AddMember(json, "endTimestamp", blockPtr->endTimestamp, allocator);
+    JsonUtil::AddMember(json, "owner", blockPtr->owner, allocator);
+    JsonUtil::AddMember(json, "attr", blockPtr->otherAttr, allocator);
+    JsonUtil::AddMember(json, "processId", blockPtr->processId, allocator);
+    JsonUtil::AddMember(json, "threadId", blockPtr->threadId, allocator);
+    JsonUtil::AddMember(json, "deviceId", blockPtr->deviceId, allocator);
+    JsonUtil::AddMember(json, "eventType", blockPtr->eventType, allocator);
+    document_t pathJson(kArrayType);
+    if (withPath) {
+        const std::shared_ptr<MemoryBlockItem> blockItemPtr = std::dynamic_pointer_cast<MemoryBlockItem>(blockPtr);
+        if (blockItemPtr) {
+            for (auto& point : blockItemPtr->path) {
+                document_t pointJson(kArrayType);
+                pointJson.PushBack(json_t().SetUint64(point.first), allocator);
+                pointJson.PushBack(json_t().SetUint64(point.second), allocator);
+                pathJson.PushBack(pointJson, allocator);
+            }
         }
         JsonUtil::AddMember(json, "path", pathJson, allocator);
-        return std::optional<document_t>{std::move(json)};
     }
-};
-struct LeaksMemoryBlocksResponse : public JsonResponse {
-    LeaksMemoryBlocksResponse()
-        : JsonResponse(REQ_RES_LEAKS_MEMORY_BLOCKS),
-          minTimestamp(0),
-          maxTimestamp(0),
-          minSize(0),
-          maxSize(0),
-          totalNum(0)
-    {
-    }
+    return json;
+}
 
-    std::vector<MemoryBlockItem> blocks;
-    uint64_t minTimestamp;
-    uint64_t maxTimestamp;
-    uint64_t minSize;
-    uint64_t maxSize;
-    uint64_t totalNum;
+static document_t ToTableHeaderJson(const SqliteDbTableColumn &tableHeader,
+                                    Document::AllocatorType& allocator)
+{
+    document_t headerJson(kObjectType);
+    std::string headerName = std::string(tableHeader.name);
+    StringUtil::StripDbColumnName(headerName);
+    JsonUtil::AddMember(headerJson, "name", headerName, allocator);
+    JsonUtil::AddMember(headerJson, "key", std::string(tableHeader.key), allocator);
+    JsonUtil::AddMember(headerJson, "sortable", tableHeader.sortable, allocator);
+    JsonUtil::AddMember(headerJson, "searchable", tableHeader.searchable, allocator);
+    return headerJson;
+}
+
+struct LeaksMemoryBlocksResponse : public JsonResponse {
+    LeaksMemoryBlocksResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_BLOCKS) {}
+    std::vector<std::shared_ptr<MemoryBlock>> blocks;
+    uint64_t minTimestamp{};
+    uint64_t maxTimestamp{};
+    uint64_t minSize{};
+    uint64_t maxSize{};
+    uint64_t total{};
+    bool withPath{};
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
     {
@@ -95,24 +111,28 @@ struct LeaksMemoryBlocksResponse : public JsonResponse {
         JsonUtil::AddMember(body, "maxTimestamp", maxTimestamp, allocator);
         JsonUtil::AddMember(body, "minSize", minSize, allocator);
         JsonUtil::AddMember(body, "maxSize", maxSize, allocator);
-        for (const auto& block : blocks) {
-            auto blockJson = block.ToLeaksMemoryBlockJson(allocator);
-            if (blockJson.has_value()) {
-                jsonBlocks.PushBack(blockJson.value(), allocator);
+        JsonUtil::AddMember(body, "total", total, allocator);
+        json_t jsonHeaders(kArrayType);
+        for (const auto& header : BLOCK_TABLE::FIELD_FULL_COLUMNS) {
+            if (header.visible) {
+                jsonHeaders.PushBack(ToTableHeaderJson(header, allocator), allocator);
             }
         }
+        for (const auto& block : blocks) {
+            auto blockJson = ToLeaksMemoryBlockJson(block, withPath, allocator);
+            jsonBlocks.PushBack(blockJson, allocator);
+        }
         JsonUtil::AddMember(body, "blocks", jsonBlocks, allocator);
+        JsonUtil::AddMember(body, "headers", jsonHeaders, allocator);
         JsonUtil::AddMember(json, "body", body, allocator);
         return std::optional<document_t>{std::move(json)};
     }
 };
 
 struct LeaksMemoryAllocationsResponse : public JsonResponse {
-    LeaksMemoryAllocationsResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_ALLOCATIONS), minTimestamp(0), maxTimestamp(0)
-    {
-    }
-    uint64_t minTimestamp;
-    uint64_t maxTimestamp;
+    LeaksMemoryAllocationsResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_ALLOCATIONS) {}
+    uint64_t minTimestamp{};
+    uint64_t maxTimestamp{};
     std::vector<MemoryAllocation> allocations;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
@@ -147,8 +167,8 @@ struct LeaksMemoryAllocationsResponse : public JsonResponse {
 };
 
 struct LeaksMemoryDetailsResponse : public JsonResponse {
-    LeaksMemoryDetailsResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_DETAILS), timestamp(0) {}
-    uint64_t timestamp;
+    LeaksMemoryDetailsResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_DETAILS) {}
+    uint64_t timestamp{};
     LeaksMemoryDetailTreeNode detail;
 
     [[nodiscard]] std::optional<document_t> ToJson() const override
@@ -219,6 +239,53 @@ struct LeaksMemoryTracesResponse : public JsonResponse {
             json.PushBack(traceJson, allocator);
         }
         return std::optional<document_t>{std::move(json)};
+    }
+};
+
+struct LeaksMemoryEventResponse : public JsonResponse {
+    LeaksMemoryEventResponse() : JsonResponse(REQ_RES_LEAKS_MEMORY_TRACES) {}
+    int64_t total{};
+    // 注意此处会将events转换为扁平data数组后返回给前端
+    std::vector<MemoryEvent> events;
+
+    [[nodiscard]] std::optional<document_t> ToJson() const override
+    {
+        document_t json(kObjectType);
+        auto& allocator = json.GetAllocator();
+        ProtocolUtil::SetResponseJsonBaseInfo(*this, json);
+        json_t body(kObjectType);
+        json_t headers(kArrayType);
+        for (auto const &header : EVENT_TABLE::FIELD_FULL_COLUMNS) {
+            if (header.visible) {
+                headers.PushBack(ToTableHeaderJson(header, allocator), allocator);
+            }
+        }
+        JsonUtil::AddMember(body, "headers", headers, allocator);
+        JsonUtil::AddMember(body, "events", ToTableDataJson(events, allocator), allocator);
+        JsonUtil::AddMember(body, "total", total, allocator);
+        JsonUtil::AddMember(json, "body", body, allocator);
+        return std::optional<document_t>{std::move(json)};
+    }
+
+    static document_t ToTableDataJson(const std::vector<MemoryEvent>& events,
+                                      Document::AllocatorType& allocator)
+    {
+        document_t dataJson(kArrayType);
+        for (auto &event : events) {
+            document_t eventJson(kObjectType);
+            JsonUtil::AddMember(eventJson, "id", event.id, allocator);
+            JsonUtil::AddMember(eventJson, "event", event.event, allocator);
+            JsonUtil::AddMember(eventJson, "eventType", event.eventType, allocator);
+            JsonUtil::AddMember(eventJson, "name", event.name, allocator);
+            JsonUtil::AddMember(eventJson, "timestamp", event.timestamp, allocator);
+            JsonUtil::AddMember(eventJson, "processId", event.processId, allocator);
+            JsonUtil::AddMember(eventJson, "threadId", event.threadId, allocator);
+            JsonUtil::AddMember(eventJson, "deviceId", event.deviceId, allocator);
+            JsonUtil::AddMember(eventJson, "ptr", event.ptr, allocator);
+            JsonUtil::AddMember(eventJson, "attr", event.attr, allocator);
+            dataJson.PushBack(eventJson, allocator);
+        }
+        return dataJson;
     }
 };
 }  // end of namespace Dic::Protocol

@@ -7,7 +7,7 @@
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "LeaksMemoryDatabase.h"
-#include "../../../TestSuit.cpp"
+#include "../../TestSuit.cpp"
 #include "LeaksMemoryService.h"
 
 using namespace Dic::Module::Timeline;
@@ -56,7 +56,7 @@ TEST_F(LeaksMemoryServiceTest, ParseEventsToAllocationsAndBlocks)
     blockParams.relativeTime = false;
     blockParams.eventType = "PTA";
     std::vector<MemoryBlock> blocks;
-    memoryDatabase->QueryMemoryBlocks(blockParams, blocks);
+    memoryDatabase->QueryMemoryBlocks(blockParams, false, blocks);
     // 校验allocations
     LeaksMemoryAllocationParams allocationParams;
     allocationParams.deviceId = "0";

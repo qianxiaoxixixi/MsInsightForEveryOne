@@ -7,21 +7,12 @@
 
 #include "MemoryDetailRequestHandler.h"
 
-namespace Dic {
-namespace Module {
-namespace MemoryDetail {
+namespace Dic::Module::MemoryDetail {
 class QueryLeaksMemoryDetailHandler : public MemoryDetailRequestHandler {
 public:
-    QueryLeaksMemoryDetailHandler()
-    {
-        command = Protocol::REQ_RES_LEAKS_MEMORY_DETAILS;
-    }
+    QueryLeaksMemoryDetailHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_DETAILS; }
     ~QueryLeaksMemoryDetailHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
-} // Memory
-} // Module
-} // Dic
-
-
-#endif // PROFILER_SERVER_QUERYLEAKSMEMORYDETAILHANDLER_H
+}  // namespace Dic::Module::MemoryDetail
+#endif  // PROFILER_SERVER_QUERYLEAKSMEMORYDETAILHANDLER_H

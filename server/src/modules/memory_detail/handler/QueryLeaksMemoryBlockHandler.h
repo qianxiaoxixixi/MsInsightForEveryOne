@@ -15,7 +15,14 @@ public:
     QueryLeaksMemoryBlockHandler() { command = Protocol::REQ_RES_LEAKS_MEMORY_BLOCKS; }
     ~QueryLeaksMemoryBlockHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-    static void BuildBlocksResponse(const std::vector<MemoryBlock>& blocks, LeaksMemoryBlocksResponse& response);
+    static void BuildBlocksViewResponse(const std::vector<MemoryBlock>& blocks, LeaksMemoryBlocksResponse& response);
+
+    static bool HandleBlocksTableRequest(LeaksMemoryBlockRequest& request,
+                                         LeaksMemoryBlocksResponse& response,
+                                         std::string &errorMsg);
+    static bool HandleBlocksViewRequest(LeaksMemoryBlockRequest& request,
+                                        LeaksMemoryBlocksResponse& response,
+                                        std::string &errorMsg);
 };
 }  // namespace MemoryDetail
 }  // namespace Module

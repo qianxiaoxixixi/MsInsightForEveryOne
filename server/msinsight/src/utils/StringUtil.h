@@ -524,6 +524,19 @@ static std::string FindLCP(const std::string& str1, const std::string& str2)
     }
     return str1.substr(0, i);
 }
+/***
+ * 处理db列名，部分列名可能被反引号包裹，如 "`Table Column`" 返回给前端展示时需要处理掉``
+ */
+static void StripDbColumnName(std::string &columnName)
+{
+    const char wrapperChar = '`';
+    if (columnName.length() <= 2) {
+        return;
+    }
+    if (columnName.front() == wrapperChar && columnName.back() == wrapperChar) {
+        columnName = columnName.substr(1, columnName.length() - 2);
+    }
+}
 
 static std::string GetOriginHostName(const std::string &hostName)
 {

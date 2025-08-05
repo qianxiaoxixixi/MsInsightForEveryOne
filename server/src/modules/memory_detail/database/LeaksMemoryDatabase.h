@@ -38,13 +38,14 @@ public:
     bool CreateMemoryAllocationAndBlockTable();
     bool DropMemoryAllocationAndBlockTable();
     bool QueryEntireEventsTable(std::vector<MemoryEvent>& eventDetails);
-    bool QueryEventsWithinTimeRangeByDeviceId(uint64_t startTimestamp, uint64_t endTimestamp,
-                                              const std::string& deviceId, std::vector<MemoryEvent>& events);
+    int64_t QueryEventsByRequestParams(const LeaksMemoryEventParams &queryParams, std::vector<MemoryEvent>& events);
     void QueryDeviceIds(std::set<std::string>& deviceIdSet);
     void QueryThreadIdsByProcessId(uint64_t processId, std::vector<uint64_t>& threadIds);
     void QueryMallocOrFreeEventTypeWithDeviceId(std::unordered_map<std::string, std::vector<std::string>>& resultMap);
     void QueryThreadIds(std::vector<uint64_t>& threadIds);
-    void QueryMemoryBlocks(const LeaksMemoryBlockParams& queryParams, std::vector<MemoryBlock>& blocks);
+    int64_t QueryMemoryBlocks(const LeaksMemoryBlockParams& queryParams,
+                              const bool isTable,
+                              std::vector<MemoryBlock>& blocks);
     void QueryMemoryBlocksOwnersReleasedAfterTimestamp(const std::string& deviceId, const std::string& eventType,
                                                        uint64_t timestamp, std::set<std::string>& owners);
     void QueryPythonTrace(const LeaksMemoryThreadPythonTraceParams& queryParams, LeaksMemoryPythonTrace& trace);
@@ -69,14 +70,33 @@ public:
     void FlushMemoryAllocationsCache();
 
 private:
-    bool QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events);
-    bool QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock>& blocks);
+    int64_t QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
+                                    uint64_t minTimestamp, const bool withExtraCountCol);
+    int64_t QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock>& blocks,
+                                    uint64_t minTimestamp, const bool withExtraCountCol);
     bool QueryMemoryAllocationsByStep(sqlite3_stmt* stmt, std::vector<MemoryAllocation>& allocations);
     bool QueryMemoryPythonTracesByStep(sqlite3_stmt* stmt, LeaksMemoryPythonTrace& trace);
-    void AppendMemoryBlockQueryConditionSqlByParams(const LeaksMemoryBlockParams& queryParams, std::string& querySql);
+    std::string BuildQueryEventsConditionSqlByParams(const LeaksMemoryEventParams &queryParams,
+                                                     bool &timeCondition,
+                                                     bool &filtersCondition);
+    std::string BuildQueryBlocksConditionSqlByParams(const LeaksMemoryBlockParams &queryParams,
+                                                     bool onlyAllocOrFreeInTimeRange,
+                                                     bool &timeCondition,
+                                                     bool &filtersCondition);
+    sqlite3_stmt* BuildQueryEventsByQueryParamsAndBindParam(std::string &selectColumns,
+                                                            const LeaksMemoryEventParams &queryParams);
+    sqlite3_stmt* BuildQueryBlocksByQueryParamsAndBindParam(const std::string &selectColumns,
+                                                            const LeaksMemoryBlockParams &queryParams,
+                                                            bool isTable);
+
+    static std::string BuildQueryFiltersConditionSqlByParams(const FiltersParam &filtersParam);
+    static std::string BuildQueryOrderSqlByParams(const OrderByParam &orderByParam);
+    void CommonBindFiltersParams(const FiltersParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
+    void CommonBindPaginationParams(const PaginationParam &queryParams, sqlite3_stmt* stmt, int &bindIdx);
     std::vector<std::string> GetPythonTraceTables();
     std::string GetCreateMemoryAllocationTableSql();
     std::string GetCreateMemoryBlockTableSql();
+
     // 内存折线图数据库中存储表名为memory_alloc, 包含优化前、后
     const std::string memoryAllocationTable = "memory_allocation";
     // 内存块图数据
