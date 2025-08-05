@@ -7,7 +7,10 @@
 #include "QueryLeaksMemoryDetailHandler.h"
 #include "QueryLeaksMemoryBlockHandler.h"
 #include "QueryLeaksMemoryAllocationHandler.h"
+#include "QueryLeaksMemoryEventHandler.h"
 #include "MemoryDetailModule.h"
+
+using namespace Dic::Module::MemoryDetail;
 
 namespace Dic {
 namespace Module {
@@ -28,6 +31,7 @@ void MemoryDetailModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, std::make_unique<QueryLeaksMemoryBlockHandler>());
     requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, std::make_unique<QueryLeaksMemoryDetailHandler>());
     requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_TRACES, std::make_unique<QueryLeaksMemoryPythonTraceHandler>());
+    requestHandlerMap.emplace(REQ_RES_LEAKS_MEMORY_EVENTS, std::make_unique<QueryLeaksMemoryEventHandler>());
 }
 
 void MemoryDetailModule::OnRequest(std::unique_ptr<Protocol::Request> request)

@@ -137,7 +137,7 @@ void LeaksMemoryService::ParseEventsToBlockAndAllocations(const std::vector<Memo
             }
             // 构造block
             MemoryBlock block(event->ptr, event->deviceId, eventExtendAttr.size, event->timestamp, maxTimestamp,
-                              eventExtendAttr.owner, event->eventType, "", event->processId, event->threadId);
+                              eventExtendAttr.owner, event->eventType, event->attr, event->processId, event->threadId);
             db->InsertMemoryBlock(block);
         }
     }
@@ -164,9 +164,8 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
     if (event.event == LEAKS_DUMP_EVENT::MALLOC) {
         // 已存在则忽略, 可能为重复申请
         if (allocMap.find(event.ptr + event.eventType) != allocMap.end()) {
-            Server::ServerLog::Warn("An invalid memory allocation event[" + event.ptr +
-                                    "] was detected: the address was already "
-                                    "allocated and not released.");
+            Server::ServerLog::Warn(StringUtil::FormatString("Invalid memory allocation event[{}]: the address "
+                                                             "was already allocated and not released.", event.ptr));
             return false;
         }
         // 加入申请表
@@ -176,9 +175,8 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
     if (event.event == LEAKS_DUMP_EVENT::FREE) {
         // 内存分配表中未找到匹配的分配事件，则忽略
         if (allocMap.find(event.ptr + event.eventType) == allocMap.end()) {
-            Server::ServerLog::Warn("An invalid memory free event[" + event.ptr +
-                                    "] was detected: no corresponding allocation was "
-                                    "recorded for the same address.");
+            Server::ServerLog::Warn(StringUtil::FormatString("Invalid memory free event[{}]: "
+                                                             "no corresponding allocation.", event.ptr));
             return false;
         }
 
@@ -187,7 +185,8 @@ bool LeaksMemoryService::SingleDeviceEventParse(const std::shared_ptr<FullDb::Le
         BuildBlockEventAttrFromEvent(*allocEvent, allocEventAttr);
         // 构造block
         MemoryBlock block(event.ptr, event.deviceId, std::abs(eventExtendAttr.size), allocEvent->timestamp,
-                          event.timestamp, allocEventAttr.owner, event.eventType, "", event.processId, event.threadId);
+                          event.timestamp, allocEventAttr.owner, event.eventType,
+                          allocEvent->attr, event.processId, event.threadId);
         db->InsertMemoryBlock(block);
         // 从申请表中去除内存申请事件
         allocMap.erase(event.ptr + event.eventType);

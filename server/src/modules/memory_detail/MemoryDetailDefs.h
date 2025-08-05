@@ -57,6 +57,7 @@ struct MemoryBlock {
     uint64_t threadId;
 
     MemoryBlock() = default;
+    virtual ~MemoryBlock() = default;
     MemoryBlock(std::string ptr, std::string deviceId, uint64_t size, uint64_t startTs, uint64_t endTs,
                 std::string owner, std::string eventType, std::string otherAttr, uint64_t pid, uint64_t tid)
         : id(0),

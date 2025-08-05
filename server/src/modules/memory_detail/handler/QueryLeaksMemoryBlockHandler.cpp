@@ -5,9 +5,7 @@
 #include "DataBaseManager.h"
 #include "QueryLeaksMemoryBlockHandler.h"
 
-namespace Dic {
-namespace Module {
-namespace MemoryDetail {
+namespace Dic::Module::MemoryDetail {
 enum class SimpleBlockEventType {
     MALLOC = 0,
     FREE = 1
@@ -32,22 +30,10 @@ bool QueryLeaksMemoryBlockHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
-    if (memoryDatabase == nullptr) {
-        Server::ServerLog::Error("Failed to query memory blocks: get database connection failed.");
-        SendResponse(std::move(responsePtr), false, errorMsg);
-        return false;
-    }
-    std::vector<MemoryBlock> blocks;
-    memoryDatabase->QueryMemoryBlocks(request.params, blocks);
-    if (blocks.empty()) {
-        Server::ServerLog::Warn("Query memory blocks: empty data.");
-        SendResponse(std::move(responsePtr), true);
-        return true;
-    }
-    BuildBlocksResponse(blocks, response);
-    SendResponse(std::move(responsePtr), true);
-    return true;
+    bool success = request.isTable ? HandleBlocksTableRequest(request, response, errorMsg) :
+                                     HandleBlocksViewRequest(request, response, errorMsg);
+    SendResponse(std::move(responsePtr), success, errorMsg);
+    return success;
 }
 static bool CompareEvent(const std::shared_ptr<SimpleBlockEvent>& base,
                          const std::shared_ptr<SimpleBlockEvent>& compare)
@@ -123,11 +109,11 @@ void BuildBlocksResponseBySortedEvent(std::vector<std::shared_ptr<SimpleBlockEve
         tempItemPtr->AddPathPoint(response.maxTimestamp, currentTotalSize);
         currentTotalSize = NumberSafe::Sub(currentTotalSize, tempItemPtr->size);
     }
-    response.totalNum = response.blocks.size();
+    response.total = response.blocks.size();
 }
 
-void QueryLeaksMemoryBlockHandler::BuildBlocksResponse(const std::vector<MemoryBlock> &blocks,
-                                                       LeaksMemoryBlocksResponse &response)
+void QueryLeaksMemoryBlockHandler::BuildBlocksViewResponse(const std::vector<MemoryBlock> &blocks,
+                                                           LeaksMemoryBlocksResponse &response)
 {
     if (blocks.empty()) {
         Server::ServerLog::Warn("Empty blocks.");
@@ -137,10 +123,47 @@ void QueryLeaksMemoryBlockHandler::BuildBlocksResponse(const std::vector<MemoryB
     std::vector<std::shared_ptr<MemoryBlockItem>> blockItemPtrList;
     SplitMemoryBlocks2Events(blocks, sortedEvents, blockItemPtrList);
     BuildBlocksResponseBySortedEvent(sortedEvents, response);
-    for (auto &blockItemPtr : blockItemPtrList) {
-        response.blocks.push_back(*blockItemPtr);
-    }
+    response.blocks.assign(blockItemPtrList.begin(), blockItemPtrList.end());
+    response.withPath = true;
 }
-} // Memory
-} // Module
-} // Dic
+bool QueryLeaksMemoryBlockHandler::HandleBlocksTableRequest(LeaksMemoryBlockRequest& request,
+                                                            LeaksMemoryBlocksResponse& response,
+                                                            std::string &errorMsg)
+{
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    if (memoryDatabase == nullptr) {
+        errorMsg = "Failed to query memory blocks: get database connection failed.";
+        return false;
+    }
+    std::vector<MemoryBlock> blocks;
+    int64_t total = memoryDatabase->QueryMemoryBlocks(request.params, request.isTable, blocks);
+    if (total < 0) {
+        errorMsg = "Failed to query memory blocks: query db failed.";
+        return false;
+    }
+    response.total = total;
+    std::transform(blocks.begin(), blocks.end(), std::back_inserter(response.blocks),
+                   [](const MemoryBlock& block) {
+                       return std::make_shared<MemoryBlock>(block);
+                   });
+    return true;
+}
+bool QueryLeaksMemoryBlockHandler::HandleBlocksViewRequest(LeaksMemoryBlockRequest& request,
+                                                           LeaksMemoryBlocksResponse& response,
+                                                           std::string &errorMsg)
+{
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetLeaksMemoryDatabase("");
+    if (memoryDatabase == nullptr) {
+        errorMsg = "Failed to query memory blocks: get database connection failed.";
+        return false;
+    }
+    std::vector<MemoryBlock> blocks;
+    memoryDatabase->QueryMemoryBlocks(request.params, request.isTable, blocks);
+    if (blocks.empty()) {
+        Server::ServerLog::Warn("Query memory blocks: empty data.");
+        return true;
+    }
+    BuildBlocksViewResponse(blocks, response);
+    return true;
+}
+} // Dic::Module::MemoryDetail

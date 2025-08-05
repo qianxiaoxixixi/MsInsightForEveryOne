@@ -8,7 +8,8 @@
 #include "TraceTime.h"
 #include "LeaksMemoryDatabase.h"
 #include "LeaksMemoryService.h"
-#include "../../../TestSuit.cpp"
+#include "LeaksMemoryTableColumn.h"
+#include "../../TestSuit.cpp"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -81,19 +82,6 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMinAndMaxTimestamp)
     EXPECT_EQ(maxTimestamp, expectMax);
 }
 
-TEST_F(LeaksMemoryDatabaseTest, QueryEventsWithinTimeRangeByDeviceId)
-{
-    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    const std::string deviceId = "0";
-    const uint64_t startTimestamp = 0;
-    const uint64_t duration = 1000000000;
-    const uint64_t endTimestamp = memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + duration;
-    std::vector<MemoryEvent> events;
-    memoryDatabase->QueryEventsWithinTimeRangeByDeviceId(startTimestamp, endTimestamp, deviceId, events);
-    const size_t expectSize = 12;
-    EXPECT_EQ(events.size(), expectSize);
-}
-
 TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
 {
     std::vector<MemoryEvent> events;
@@ -103,7 +91,7 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithNoTimeAndSizeCondition)
     params.relativeTime = false;
     params.eventType = "PTA";
     std::vector<MemoryBlock> blocks;
-    memoryDatabase->QueryMemoryBlocks(params, blocks);
+    memoryDatabase->QueryMemoryBlocks(params, false, blocks);
     const size_t expectSize = 468;
     EXPECT_EQ(blocks.size(), expectSize);
 }
@@ -119,9 +107,10 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockWithTimeAndSizeConditionAndRelat
     params.endTimestamp = endTimestamp;
     params.maxSize = maxSize;
     params.eventType = "PTA";
+    params.orderBy = std::string(MemoryBlockTableColumn::START_TIMESTAMP);
     std::vector<MemoryBlock> blocks;
     auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
-    memoryDatabase->QueryMemoryBlocks(params, blocks);
+    memoryDatabase->QueryMemoryBlocks(params, false, blocks);
     uint64_t minTimestamp = memoryDatabase->QueryMemoryEventExtremumTimestamp("0", true);
     const size_t expectSize = 228;
     EXPECT_EQ(blocks.size(), expectSize);
@@ -265,4 +254,141 @@ TEST_F(LeaksMemoryDatabaseTest, QueryPythonTraces)
     LeaksMemoryPythonTrace trace;
     memoryDatabase->QueryPythonTrace(params, trace);
     EXPECT_FALSE(trace.slices.empty());
+}
+/***
+ * 测试通过简易请求(仅deviceId)查询内存事件  应返回该deviceId下的所有事件
+ */
+TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithSimpleParams)
+{
+    LeaksMemoryEventParams simpleQueryParams;
+    simpleQueryParams.deviceId = "0";
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    std::vector<MemoryEvent> events;
+    int64_t totalSize = memoryDatabase->QueryEventsByRequestParams(simpleQueryParams, events);
+    int64_t expectTotalSize = 3111;
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(events.size(), totalSize);
+    events.clear();
+    simpleQueryParams.deviceId = "1";
+    expectTotalSize = 3195;
+    totalSize = memoryDatabase->QueryEventsByRequestParams(simpleQueryParams, events);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(events.size(), totalSize);
+}
+
+/***
+* 测试通过时间范围、字段、分页、排序参数请求内存事件
+*/
+TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithComplexParams)
+{
+    LeaksMemoryEventParams complexParams;
+    // 测试过滤后总量大于pageSize的情况，且根据Timestamp升序排序
+    complexParams.deviceId = "0";
+    complexParams.endTimestamp = 10000000000;
+    complexParams.relativeTime = true;
+    complexParams.currentPage = 1;
+    complexParams.pageSize = 20;
+    complexParams.orderBy = std::string(MemoryEventTableColumn::TIMESTAMP);
+    int64_t expectTotalSize = 1262;
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    std::vector<MemoryEvent> events;
+    int64_t totalSize = memoryDatabase->QueryEventsByRequestParams(complexParams, events);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(events.size(), complexParams.pageSize);
+    EXPECT_EQ(events[0].timestamp, 0);
+    // 测试过滤后总量小于pageSize的情况，且根据Ptr降序排序
+    complexParams.endTimestamp = 1000000000;
+    complexParams.orderBy = std::string(MemoryEventTableColumn::PTR);
+    complexParams.desc = true;
+    expectTotalSize = 12;
+    uint64_t expectFirstEventTimestamp = 21134460;
+    events.clear();
+    totalSize = memoryDatabase->QueryEventsByRequestParams(complexParams, events);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(events.size(), expectTotalSize);
+    EXPECT_EQ(events[0].timestamp, expectFirstEventTimestamp);
+    // 测试过滤后总量大于pageSize的情况，包括分页参数、filter、orderBy
+    complexParams.endTimestamp = 10000000000;
+    complexParams.filters.emplace(std::string(MemoryEventTableColumn::ATTR), "PTA");
+    expectTotalSize = 211;
+    events.clear();
+    totalSize = memoryDatabase->QueryEventsByRequestParams(complexParams, events);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(events.size(), complexParams.pageSize);
+    expectFirstEventTimestamp = 8626530200;
+    EXPECT_EQ(events[0].timestamp, expectFirstEventTimestamp);
+}
+
+// Memory Block 数据表相关查询
+
+/***
+* 测试查询某个deviceId+eventType下的全部数据
+*/
+TEST_F(LeaksMemoryDatabaseTest, QueryMemoryBlockTablesWithTimeRangeParams)
+{
+    LeaksMemoryBlockParams simpleQueryParams;
+    simpleQueryParams.deviceId = "0";
+    simpleQueryParams.eventType = "PTA";
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    std::vector<MemoryBlock> blocks;
+    int64_t totalSize = memoryDatabase->QueryMemoryBlocks(simpleQueryParams, true, blocks);
+    int64_t expectTotalSize = 468;
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(blocks.size(), totalSize);
+    blocks.clear();
+    simpleQueryParams.deviceId = "1";
+    simpleQueryParams.eventType = "HAL";
+    expectTotalSize = 80;
+    totalSize = memoryDatabase->QueryMemoryBlocks(simpleQueryParams, true, blocks);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(blocks.size(), totalSize);
+}
+
+/***
+* 测试通过时间范围、字段、分页、排序参数请求内存事件
+*/
+TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithPaginationParams)
+{
+    LeaksMemoryBlockParams complexParams;
+    // 测试过滤后总量大于pageSize的情况，且根据startTimestamp升序排序
+    complexParams.deviceId = "0";
+    complexParams.eventType = "PTA";
+    complexParams.endTimestamp = 10000000000;
+    complexParams.relativeTime = true;
+    complexParams.currentPage = 1;
+    complexParams.pageSize = 20;
+    complexParams.orderBy = std::string(MemoryBlockTableColumn::START_TIMESTAMP);
+    int64_t expectTotalSize = 211;
+    uint64_t expectFirstBlockStartTimestamp = 7707721000;
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    ASSERT_TRUE(memoryDatabase != nullptr);
+    std::vector<MemoryBlock> blocks;
+    int64_t totalSize = memoryDatabase->QueryMemoryBlocks(complexParams, true, blocks);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(blocks.size(), complexParams.pageSize);
+    EXPECT_EQ(blocks[0].startTimestamp, expectFirstBlockStartTimestamp);
+    // 测试过滤后总量小于pageSize的情况，且根据Ptr降序排序
+    complexParams.endTimestamp = 7838050340;
+    complexParams.orderBy = std::string(MemoryBlockTableColumn::ADDR);
+    complexParams.desc = true;
+    expectTotalSize = 9;
+    expectFirstBlockStartTimestamp = 7838050340;
+    blocks.clear();
+    totalSize = memoryDatabase->QueryMemoryBlocks(complexParams, true, blocks);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(blocks.size(), expectTotalSize);
+    EXPECT_EQ(blocks[0].startTimestamp, expectFirstBlockStartTimestamp);
+    // 测试过滤后总量大于pageSize的情况，包括分页参数、filter、orderBy
+    complexParams.endTimestamp = 10000000000;
+    complexParams.filters.emplace(std::string(MemoryBlockTableColumn::ADDR), "24");
+    expectTotalSize = 21;
+    expectFirstBlockStartTimestamp = 8625992740;
+    blocks.clear();
+    totalSize = memoryDatabase->QueryMemoryBlocks(complexParams, true, blocks);
+    EXPECT_EQ(totalSize, expectTotalSize);
+    EXPECT_EQ(blocks.size(), complexParams.pageSize);
+    EXPECT_EQ(blocks[0].startTimestamp, expectFirstBlockStartTimestamp);
 }

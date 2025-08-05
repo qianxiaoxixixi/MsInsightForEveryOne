@@ -3,16 +3,122 @@
 */
 #ifndef PROFILER_SERVER_MEMORY_DETAIL_PROTOCOL_REQUEST_H
 #define PROFILER_SERVER_MEMORY_DETAIL_PROTOCOL_REQUEST_H
-#include <string>
-#include <optional>
+
 #include "pch.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
-
+#include "LeaksMemoryTableColumn.h"
 
 namespace Dic::Protocol {
+using namespace Dic::Module::MemoryDetail;
+namespace BLOCK_TABLE = Dic::Module::MemoryDetail::MemoryBlockTableColumn;
+namespace ALLOCATION_TABLE = Dic::Module::MemoryDetail::MemoryAllocationTableColumn;
+namespace EVENT_TABLE = Dic::Module::MemoryDetail::MemoryEventTableColumn;
+namespace TRACE_TABLE = Dic::Module::MemoryDetail::MemoryPythonTraceTableColumn;
+
 const uint64_t MAX_LEAKS_MEMORY_BLOCK_SIZE = 1 * 1024 * 1024 * 1024;
-struct LeaksMemoryBlockParams {
+
+class PaginationParam {
+public:
+    int64_t currentPage{};
+    int64_t pageSize{};
+
+    bool Check(std::string& errorMsg) const
+    {
+        if (pageSize==0 && currentPage==0) {
+            return true;
+        }
+        if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
+            errorMsg = "Invalid pagination params, detail: " + errorMsg;
+            return false;
+        }
+        return true;
+    }
+
+    void SetPaginationParamFromJson(const json_t &json)
+    {
+        JsonUtil::SetByJsonKeyValue(currentPage, json, "currentPage");
+        JsonUtil::SetByJsonKeyValue(pageSize, json, "pageSize");
+    }
+};
+
+class FiltersParam {
+public:
+    std::unordered_map<std::string, std::string> filters;
+
+    bool SetFiltersFromJson(const json_t &json,
+                            const std::vector<SqliteDbTableColumn> &columns,
+                            std::string &errorMsg)
+    {
+        if (!json.IsObject()) {
+            errorMsg = "Failed to set filters params from param json object: json is null or type invalid";
+            return false;
+        }
+        if (!json.HasMember("filters")) {
+            return true;
+        }
+        const json_t& filters_json = json["filters"];
+        if (!filters_json.IsObject()) {
+            errorMsg = "Failed to set filters params from param json object: filter json is null or type invalid";
+            return false;
+        }
+        for (auto member = filters_json.MemberBegin(); member != filters_json.MemberEnd(); member++) {
+            auto &key  = member->name;
+            auto &value = member->value;
+            if (!key.IsString() || !value.IsString()) {
+                errorMsg = "Failed to set filters params from param json object: invalid type";
+                return false;
+            }
+            std::string strKey = key.GetString();
+            std::string strValue = value.GetString();
+            auto const columnIt = FindColumnByKey(strKey, columns);
+            if (columnIt == columns.end()) {
+                errorMsg = StringUtil::FormatString("Invalid filter, detail: Non-exist column '{}'", strKey);
+                return false;
+            }
+            filters.emplace(std::string(columnIt->name), strValue);
+        }
+        return true;
+    }
+};
+
+class OrderByParam {
+public:
+    std::string orderBy;
+    bool desc{};
+
+    bool SetOrderFromJson(const json_t &json,
+                          const std::vector<SqliteDbTableColumn> &columns,
+                          std::string &errorMsg)
+    {
+        if (!json.IsObject()) {
+            errorMsg = "Failed to set orderBy param from param json object: json is null or type invalid";
+            return false;
+        }
+        if (!json.HasMember("orderBy")) {
+            return true;
+        }
+        const json_t &orderByJson = json["orderBy"];
+        if (orderByJson.IsNull() || !orderByJson.IsString()) {
+            errorMsg = "Failed to set orderBy param from param json object: orderBy is null or type invalid";
+            return false;
+        }
+        std::string orderByStr = orderByJson.GetString();
+        if (orderByStr.empty()) {
+            return true;
+        }
+        auto const columnIt = FindColumnByKey(orderByStr, columns);
+        if (columnIt == columns.end()) {
+            errorMsg = "Failed to set orderBy param from param json object: Non-exist column " + orderByStr;
+            return false;
+        }
+        orderBy = std::string(columnIt->name);
+        JsonUtil::SetByJsonKeyValue(desc, json, "desc");
+        return true;
+    }
+};
+
+struct LeaksMemoryBlockParams : PaginationParam, FiltersParam, OrderByParam {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
     uint64_t minSize;
@@ -50,9 +156,10 @@ struct LeaksMemoryBlockParams {
             errorMsg = "Invalid eventType, detail: " + errorMsg;
             return false;
         }
-        return true;
+        return PaginationParam::Check(errorMsg);
     }
 };
+
 struct LeaksMemoryAllocationParams {
     uint64_t startTimestamp;
     uint64_t endTimestamp;
@@ -142,9 +249,37 @@ struct LeaksMemoryThreadPythonTraceParams {
     }
 };
 
+struct LeaksMemoryEventParams : public PaginationParam, FiltersParam, OrderByParam {
+    std::string deviceId;
+    uint64_t startTimestamp{};
+    uint64_t endTimestamp{};
+    bool relativeTime{};
+
+    LeaksMemoryEventParams() = default;
+
+    bool CommonCheck(std::string& errorMsg) const
+    {
+        if (!CheckStrParamValid(deviceId, errorMsg)) {
+            errorMsg = "Invalid deviceId, detail: " + errorMsg;
+            return false;
+        }
+        if (startTimestamp > endTimestamp) {
+            errorMsg = "The start timestamp (startTimestamp) should be less than the end timestamp (endTimestamp).";
+            return false;
+        }
+        if (endTimestamp > INT64_MAX) {
+            errorMsg = StringUtil::FormatString("Invalid timestamp, detail: exceeds the range of [{},{}]",
+                                                "0", std::to_string(INT64_MAX));
+            return false;
+        }
+        return PaginationParam::Check(errorMsg);
+    }
+};
+
 struct LeaksMemoryBlockRequest : public Request {
     LeaksMemoryBlockRequest() : Request(REQ_RES_LEAKS_MEMORY_BLOCKS) {};
     LeaksMemoryBlockParams params;
+    bool isTable{};
 
     static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
     {
@@ -160,6 +295,7 @@ struct LeaksMemoryBlockRequest : public Request {
             return nullptr;
         }
         const json_t& param_json = json["params"];
+        JsonUtil::SetByJsonKeyValue(reqPtr->isTable, param_json, "isTable");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, param_json, "minSize");
@@ -167,6 +303,18 @@ struct LeaksMemoryBlockRequest : public Request {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.eventType, param_json, "eventType");
+        if (reqPtr->isTable) {
+            reqPtr->params.SetPaginationParamFromJson(param_json);
+            if (!reqPtr->params.SetFiltersFromJson(param_json, BLOCK_TABLE::FIELD_FULL_COLUMNS, error)) {
+                return nullptr;
+            }
+            if (!reqPtr->params.SetOrderFromJson(param_json, BLOCK_TABLE::FIELD_FULL_COLUMNS, error)) {
+                return nullptr;
+            }
+        } else {
+            // 展示block图时，只可根据startTimestamp排序
+            reqPtr->params.orderBy = std::string(BLOCK_TABLE::START_TIMESTAMP);
+        }
         return reqPtr;
     }
 };
@@ -224,6 +372,7 @@ struct LeaksMemoryDetailRequest : public Request {
         return reqPtr;
     }
 };
+
 struct LeaksMemoryTraceRequest : public Request {
     LeaksMemoryTraceRequest() : Request(REQ_RES_LEAKS_MEMORY_TRACES) {};
     LeaksMemoryThreadPythonTraceParams params;
@@ -250,5 +399,37 @@ struct LeaksMemoryTraceRequest : public Request {
         return reqPtr;
     }
 };
-} // end of namespace Dic::Protocol
+
+struct LeaksMemoryEventRequest : public Request {
+    LeaksMemoryEventRequest() : Request(REQ_RES_LEAKS_MEMORY_EVENTS) {}
+    LeaksMemoryEventParams params;
+
+    static std::unique_ptr<Request> FromJson(const json_t& json, std::string& error)
+    {
+        std::unique_ptr<LeaksMemoryEventRequest> reqPtr = std::make_unique<LeaksMemoryEventRequest>();
+        if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+            error = "Failed to set request base info, command is: " + reqPtr->command;
+            return nullptr;
+        }
+        const json_t& param_json = json["params"];
+        if (param_json.IsNull() || !param_json.HasMember("deviceId")) {
+            error = "Request[requestId=" + std::to_string(reqPtr->id) +
+                    "] json lacks member params or deviceId.";
+            return nullptr;
+        }
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.deviceId, param_json, "deviceId");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.startTimestamp, param_json, "startTimestamp");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.endTimestamp, param_json, "endTimestamp");
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.relativeTime, param_json, "relativeTime");
+        reqPtr->params.SetPaginationParamFromJson(param_json);
+        if (!reqPtr->params.SetFiltersFromJson(param_json, EVENT_TABLE::FIELD_FULL_COLUMNS, error)) {
+            return nullptr;
+        }
+        if (!reqPtr->params.SetOrderFromJson(param_json, EVENT_TABLE::FIELD_FULL_COLUMNS, error)) {
+            return nullptr;
+        }
+        return reqPtr;
+    }
+};
+}  // end of namespace Dic::Protocol
 #endif  // PROFILER_SERVER_MEMORY_DETAIL_PROTOCOL_REQUEST_H

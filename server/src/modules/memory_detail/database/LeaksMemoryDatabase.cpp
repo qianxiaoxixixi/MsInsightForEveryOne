@@ -141,12 +141,14 @@ bool LeaksMemoryDatabase::UpdateParseStatus(const std::string &status)
     return UpdateValueIntoStatusInfoTable(leaksMemoryParseStatus, status);
 }
 
-bool LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent> &events)
+int64_t LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vector<MemoryEvent>& events,
+                                                     uint64_t minTimestamp, const bool withExtraCountCol)
 {
     if (stmt == nullptr) {
         ServerLog::Error("Query memory events by step failed: stmt ptr is null.");
-        return false;
+        return -1;
     }
+    int64_t count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         MemoryEvent event{};
@@ -154,15 +156,19 @@ bool LeaksMemoryDatabase::QueryMemoryEventsByStep(sqlite3_stmt* stmt, std::vecto
         event.event = sqlite3_column_string(stmt, col++);
         event.eventType = sqlite3_column_string(stmt, col++);
         event.name = sqlite3_column_string(stmt, col++);
-        event.timestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        uint64_t tmpUint64Num = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        event.timestamp = tmpUint64Num > minTimestamp ? tmpUint64Num - minTimestamp : 0;
         event.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         event.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         event.deviceId = sqlite3_column_string(stmt, col++);
         event.ptr = sqlite3_column_string(stmt, col++);
         event.attr = sqlite3_column_string(stmt, col++);
         events.emplace_back(event);
+        if (withExtraCountCol && count == 0) {
+            count = sqlite3_column_int64(stmt, col++);
+        }
     }
-    return true;
+    return count;
 }
 
 bool LeaksMemoryDatabase::QueryMemoryPythonTracesByStep(sqlite3_stmt *stmt,
@@ -211,7 +217,8 @@ bool LeaksMemoryDatabase::QueryEntireEventsTable(std::vector<MemoryEvent> &event
         ServerLog::Error("Query entire events table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
         return false;
     }
-    QueryMemoryEventsByStep(stmt, eventDetails);
+    // 取绝对时间
+    QueryMemoryEventsByStep(stmt, eventDetails, 0, false);
     sqlite3_finalize(stmt);
     return true;
 }
@@ -426,87 +433,52 @@ bool LeaksMemoryDatabase::DropMemoryAllocationAndBlockTable()
     return ExecSql(dropSql);
 }
 
-void LeaksMemoryDatabase::AppendMemoryBlockQueryConditionSqlByParams(const LeaksMemoryBlockParams &queryParams,
-                                                                     std::string &querySql)
-{
-    uint64_t minTimestamp = 0;
-    if (queryParams.relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
-    }
-    std::string minTimestampStr = std::to_string(minTimestamp);
-    std::string errMsg;
-    if (queryParams.endTimestamp > 0) {
-        querySql += " AND ((({} - {}) BETWEEN {} AND {}) OR (({} - {}) BETWEEN {} AND {}))";
-
-        querySql = StringUtil::FormatString(querySql, BLOCK::START_TIMESTAMP, minTimestampStr,
-                                            std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp),
-                                            BLOCK::END_TIMESTAMP, minTimestampStr,
-                                            std::to_string(queryParams.startTimestamp), std::to_string(queryParams.endTimestamp));
-    }
-    if (queryParams.maxSize > 0) {
-        querySql += " AND {} >= {} AND {} <= {}";
-        querySql = StringUtil::FormatString(querySql, BLOCK::SIZE, std::to_string(queryParams.minSize),
-                                            BLOCK::SIZE, std::to_string(queryParams.maxSize));
-    }
-}
-
-bool LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock> &blocks)
+int64_t LeaksMemoryDatabase::QueryMemoryBlocksByStep(sqlite3_stmt* stmt, std::vector<MemoryBlock>& blocks,
+                                                     uint64_t minTimestamp, const bool withExtraCountCol)
 {
     if (stmt == nullptr) {
         ServerLog::Error("Query memory blocks by step failed: stmt ptr is null.");
-        return false;
+        return -1;
     }
+    int64_t count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         MemoryBlock block;
         block.id = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.deviceId = sqlite3_column_string(stmt, col++);
         block.ptr = sqlite3_column_string(stmt, col++);
         block.size = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
-        block.startTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
-        block.endTimestamp = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        uint64_t tmpUint64Num = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.startTimestamp = tmpUint64Num > minTimestamp ? tmpUint64Num - minTimestamp : 0;
+        tmpUint64Num = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
+        block.endTimestamp = tmpUint64Num > minTimestamp ? tmpUint64Num - minTimestamp : 0;
+        block.eventType = sqlite3_column_string(stmt, col++);
         block.owner = sqlite3_column_string(stmt, col++);
         block.otherAttr = sqlite3_column_string(stmt, col++);
         block.processId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         block.threadId = NumberUtil::Int64ToUint64(sqlite3_column_int64(stmt, col++));
         blocks.emplace_back(block);
+        if (withExtraCountCol && count == 0) {
+            count = sqlite3_column_int64(stmt, col++);
+        }
     }
-    return true;
+    return count;
 }
-void LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams,
-                                            std::vector<MemoryBlock> &blocks)
+int64_t LeaksMemoryDatabase::QueryMemoryBlocks(const LeaksMemoryBlockParams &queryParams,
+                                               const bool isTable,
+                                               std::vector<MemoryBlock> &blocks)
 {
-    sqlite3_stmt *stmt;
-    std::string querySql;
-    uint64_t minTimestamp = 0;
-    if (queryParams.relativeTime) {
-        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
-    }
-    querySql = "SELECT {}, {}, {}, "
-               "({} - {}) AS {},"
-               "({} - {}) AS {},"
-               "{}, {}, {}, {} "
-               "FROM {} where {}=? AND {}=? ";
-    std::string errMsg;
-    std::string minTimestampStr = std::to_string(minTimestamp);
-    querySql = StringUtil::FormatString(querySql,
-                                        BLOCK::ID, BLOCK::ADDR,
-                                        BLOCK::SIZE, BLOCK::START_TIMESTAMP,
-                                        minTimestampStr, BLOCK::START_TIMESTAMP, BLOCK::END_TIMESTAMP,
-                                        minTimestampStr, BLOCK::END_TIMESTAMP, BLOCK::OWNER,
-                                        BLOCK::ATTR, BLOCK::PROCESS_ID, BLOCK::THREAD_ID,
-                                        memoryBlockTable, BLOCK::DEVICE_ID, BLOCK::EVENT_TYPE);
-    AppendMemoryBlockQueryConditionSqlByParams(queryParams, querySql);
-    querySql += " ORDER BY " + std::string(BLOCK::START_TIMESTAMP) + " ASC";
-    int result = sqlite3_prepare_v2(db, querySql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
+    std::string queryCountColumns = "*, COUNT(*) OVER()";
+    sqlite3_stmt* stmt = BuildQueryBlocksByQueryParamsAndBindParam(queryCountColumns, queryParams, isTable);
+    if (stmt == nullptr) {
         ServerLog::Error("Query blocks table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return;
+        return -1;
     }
-    int bindIdx = bindStartIndex;
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(), queryParams.deviceId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(), queryParams.eventType.length(), SQLITE_TRANSIENT);
-    QueryMemoryBlocksByStep(stmt, blocks);
+    uint64_t minTimestamp = queryParams.relativeTime ?
+                                QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true) : 0;
+    int64_t count = QueryMemoryBlocksByStep(stmt, blocks, minTimestamp, true);
     sqlite3_finalize(stmt);
+    return count;
 }
 
 bool LeaksMemoryDatabase::QueryMemoryAllocationsByStep(sqlite3_stmt *stmt,
@@ -655,32 +627,179 @@ void LeaksMemoryDatabase::QueryThreadIds(std::vector<uint64_t> &threadIds)
     }
 }
 
-bool LeaksMemoryDatabase::QueryEventsWithinTimeRangeByDeviceId(uint64_t startTimestamp,
-                                                               uint64_t endTimestamp,
-                                                               const std::string &deviceId,
-                                                               std::vector<MemoryEvent> &events)
+std::string LeaksMemoryDatabase::BuildQueryEventsConditionSqlByParams(const LeaksMemoryEventParams &queryParams,
+                                                                      bool &timeCondition,
+                                                                      bool &filtersCondition)
 {
-    if (startTimestamp > endTimestamp || startTimestamp >= INT64_MAX || endTimestamp >= INT64_MAX) {
-        ServerLog::Error("Query events table: invalid time range");
-        return false;
+    uint64_t minTimestamp = 0;
+    std::string conditionSql = " where ";
+    if (queryParams.relativeTime) {
+        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
     }
-    std::string sql;
-    std::string errMsg;
-    sql = StringUtil::FormatString("select * from {} where {} == ?  and {} >= ? and {} <= ? order by {}",
-        TABLE_LEAKS_DUMP, EVENT::DEVICE_ID, EVENT::TIMESTAMP, EVENT::TIMESTAMP, EVENT::TIMESTAMP);
+    std::string minTimestampStr = std::to_string(minTimestamp);
+    // 构造设备id参数
+    conditionSql = StringUtil::StrJoin(conditionSql, StringUtil::FormatString(" {} = ? ", EVENT::DEVICE_ID));
+    // 构造时间戳参数
+    if (queryParams.endTimestamp >= queryParams.startTimestamp && queryParams.endTimestamp > 0) {
+        timeCondition = true;
+        std::string timeConditionSql = StringUtil::FormatString(" AND (({} - {}) BETWEEN ? AND ?) ",
+                                                                EVENT::TIMESTAMP,  minTimestampStr);
+        conditionSql = StringUtil::StrJoin(conditionSql, timeConditionSql);
+    }
+    // 构造过滤参数，此前filters已经过存在性校验，并已转换成列名
+    if (!queryParams.filters.empty()) {
+        filtersCondition = true;
+        conditionSql.append(BuildQueryFiltersConditionSqlByParams(queryParams));
+    }
+    // 构造排序参数, 此前orderBy已经过存在性校验，并已转换成列名，列名无法通过参数化绑定
+    if (!queryParams.orderBy.empty()) {
+        conditionSql.append(BuildQueryOrderSqlByParams(queryParams));
+    }
+    // 构造LIMIT OFFSET
+    conditionSql.append(" LIMIT ? OFFSET ? ");
+    return conditionSql;
+}
+/***
+ * 构造查询memory_block的where语句
+ * @param queryParams 请求查询参数
+ * @param onlyAllocOrFreeInTimeRange 是否在请求区间内申请或释放的内存块
+ * @param timeCondition 添加了时间查询条件的flag
+ * @param filtersCondition 添加了字段过滤查询条件的flag
+ * @return
+ */
+std::string LeaksMemoryDatabase::BuildQueryBlocksConditionSqlByParams(const LeaksMemoryBlockParams& queryParams,
+                                                                      const bool onlyAllocOrFreeInTimeRange,
+                                                                      bool& timeCondition,
+                                                                      bool& filtersCondition)
+{
+    uint64_t minTimestamp = 0;
+    std::string conditionSql = " where ";
+    if (queryParams.relativeTime) {
+        minTimestamp = QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true);
+    }
+    std::string minTimestampStr = std::to_string(minTimestamp);
+    // 构造设备id参数
+    conditionSql = StringUtil::StrJoin(conditionSql, StringUtil::FormatString(" {} = ? ", BLOCK::DEVICE_ID));
+    // 构造eventType参数
+    conditionSql.append(StringUtil::FormatString(" AND {} = ? ", BLOCK::EVENT_TYPE));
+    // 构造Size参数
+    if (queryParams.maxSize > 0) {
+        conditionSql.append(StringUtil::FormatString(" AND ({} BETWEEN {} AND {}) ", BLOCK::SIZE,
+                                                     std::to_string(queryParams.minSize),
+                                                     std::to_string(queryParams.maxSize)));
+    }
+    // 构造时间戳参数
+    if (queryParams.endTimestamp >= queryParams.startTimestamp && queryParams.endTimestamp > 0) {
+        timeCondition = true;
+        // 是否仅在请求区间内申请或释放的内存块
+        std::string timeConditionSql = onlyAllocOrFreeInTimeRange ?
+                                           " AND (({} - {}) BETWEEN ? AND ? OR ({} - {}) BETWEEN ? AND ?) " :
+                                           " AND NOT (({} - {}) < ? OR ({} - {}) > ?) ";
+        timeConditionSql = StringUtil::FormatString(timeConditionSql,
+                                                    BLOCK::END_TIMESTAMP, minTimestampStr,
+                                                    BLOCK::START_TIMESTAMP, minTimestampStr);
+        conditionSql.append(timeConditionSql);
+    }
+    // 构造过滤参数，此前filters已经过存在性校验，并已转换成列名
+    if (!queryParams.filters.empty()) {
+        filtersCondition = true;
+        conditionSql.append(BuildQueryFiltersConditionSqlByParams(queryParams));
+    }
+    // 构造排序参数, 此前orderBy已经过存在性校验，并已转换成列名，列名无法通过参数化绑定；如果不指定排序，默认根据startTimestamp排序
+    if (!queryParams.orderBy.empty()) {
+        conditionSql.append(BuildQueryOrderSqlByParams(queryParams));
+    }
+    // 构造LIMIT OFFSET
+    conditionSql.append(" LIMIT ? OFFSET ? ");
+    return conditionSql;
+}
+
+sqlite3_stmt* LeaksMemoryDatabase::BuildQueryEventsByQueryParamsAndBindParam(std::string &selectColumns,
+                                                                             const LeaksMemoryEventParams &queryParams)
+{
+    bool timeCondition = false;
+    bool filtersCondition = false;
+    std::string conditionSql = BuildQueryEventsConditionSqlByParams(queryParams, timeCondition, filtersCondition);
+    std::string sql = StringUtil::FormatString("select {} from {} {} ",
+                                               selectColumns, TABLE_LEAKS_DUMP, conditionSql);
     sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    int result  = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query events table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
-        return false;
+        return nullptr;
     }
     int bindIdx = bindStartIndex;
-    sqlite3_bind_text(stmt, bindIdx++, deviceId.c_str(), deviceId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, bindIdx++, startTimestamp);
-    sqlite3_bind_int64(stmt, bindIdx++, endTimestamp);
-    QueryMemoryEventsByStep(stmt, events);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(),
+                      queryParams.deviceId.length(), SQLITE_TRANSIENT);
+    // 绑定时间戳参数
+    if (timeCondition) {
+        sqlite3_bind_int64(stmt, bindIdx++, queryParams.startTimestamp);
+        sqlite3_bind_int64(stmt, bindIdx++, queryParams.endTimestamp);
+    }
+    // 绑定filters参数
+    if (filtersCondition) {
+        CommonBindFiltersParams(queryParams, stmt, bindIdx);
+    }
+    // 绑定分页参数
+    CommonBindPaginationParams(queryParams, stmt, bindIdx);
+    return stmt;
+}
+
+sqlite3_stmt* LeaksMemoryDatabase::BuildQueryBlocksByQueryParamsAndBindParam(const std::string& selectColumns,
+                                                                             const LeaksMemoryBlockParams& queryParams,
+                                                                             const bool isTable)
+{
+    bool timeCondition = false;
+    bool filtersCondition = false;
+    bool onlyAllocOrFreeInTimeRange = !isTable;
+    std::string conditionSql = BuildQueryBlocksConditionSqlByParams(queryParams, onlyAllocOrFreeInTimeRange,
+                                                                    timeCondition, filtersCondition);
+    std::string sql = StringUtil::FormatString("select {} from {} {} ",
+                                               selectColumns, memoryBlockTable, conditionSql);
+    sqlite3_stmt *stmt = nullptr;
+    int result  = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query blocks table. Failed to prepare sql. Error: ", sqlite3_errmsg(db));
+        return nullptr;
+    }
+    int bindIdx = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.deviceId.c_str(),
+                      queryParams.deviceId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, bindIdx++, queryParams.eventType.c_str(),
+                      queryParams.eventType.length(), SQLITE_TRANSIENT);
+    // 绑定时间戳参数
+    if (timeCondition) {
+        sqlite3_bind_int64(stmt, bindIdx++, queryParams.startTimestamp);
+        sqlite3_bind_int64(stmt, bindIdx++, queryParams.endTimestamp);
+        if (onlyAllocOrFreeInTimeRange) {
+            sqlite3_bind_int64(stmt, bindIdx++, queryParams.startTimestamp);
+            sqlite3_bind_int64(stmt, bindIdx++, queryParams.endTimestamp);
+        }
+    }
+    // 绑定filters参数
+    if (filtersCondition) {
+        CommonBindFiltersParams(queryParams, stmt, bindIdx);
+    }
+    // 绑定分页参数
+    CommonBindPaginationParams(queryParams, stmt, bindIdx);
+    return stmt;
+}
+
+int64_t LeaksMemoryDatabase::QueryEventsByRequestParams(const LeaksMemoryEventParams &queryParams,
+                                                        std::vector<MemoryEvent>& events)
+{
+    sqlite3_stmt* stmt = nullptr;
+    std::string queryCountColumns = "*, COUNT(*) OVER()";
+    stmt = BuildQueryEventsByQueryParamsAndBindParam(queryCountColumns, queryParams);
+    if (stmt == nullptr) {
+        ServerLog::Error("Query events table by params failed. Failed to prepare sql.");
+        return -1;
+    }
+    int64_t count = QueryMemoryEventsByStep(stmt, events, queryParams.relativeTime ?
+                                              QueryMemoryEventExtremumTimestamp(queryParams.deviceId, true) : 0,
+                                            true);
     sqlite3_finalize(stmt);
-    return true;
+    return count;
 }
 
 std::optional<MemoryAllocation> LeaksMemoryDatabase::QueryLatestAllocationWithinTimestamp(
@@ -936,6 +1055,51 @@ void LeaksMemoryDatabase::QueryThreadIdsByProcessId(uint64_t processId, std::vec
         }
     }
     sqlite3_finalize(stmt);
+}
+/***
+ * 构造过滤sql，要求此前filters已经过存在性校验，并已转换成列名
+ * @param filtersParam 过滤参数
+ * @return 过滤sql
+ */
+std::string LeaksMemoryDatabase::BuildQueryFiltersConditionSqlByParams(const FiltersParam& filtersParam)
+{
+    std::string filtersSql;
+    for (auto &filterPair : filtersParam.filters) {
+        filtersSql.append(StringUtil::FormatString(" AND {} LIKE ? ", filterPair.first));
+    }
+    return filtersSql;
+}
+/***
+ * 构造排序sql，此前orderBy已经过存在性校验，并已转换为列名
+ * @param orderByParam 排序参数
+ * @return 排序sql
+ */
+std::string LeaksMemoryDatabase::BuildQueryOrderSqlByParams(const OrderByParam& orderByParam)
+{
+    return StringUtil::FormatString(" ORDER BY {} {} ",
+                                    orderByParam.orderBy, orderByParam.desc ? "DESC" : "ASC");
+}
+void LeaksMemoryDatabase::CommonBindFiltersParams(const FiltersParam& queryParams, sqlite3_stmt* stmt, int &bindIdx)
+{
+    for (auto &filterPair : queryParams.filters) {
+        std::string filterPattern = StringUtil::FormatString("%{}%", filterPair.second);
+        sqlite3_bind_text(stmt, bindIdx++, filterPattern.c_str(),
+                          filterPattern.length(), SQLITE_TRANSIENT);
+    }
+}
+void LeaksMemoryDatabase::CommonBindPaginationParams(const PaginationParam& queryParams, sqlite3_stmt* stmt,
+                                                     int& bindIdx)
+{
+    // 绑定分页参数
+    int64_t limit = -1;
+    int64_t offset = 0;
+    if (queryParams.pageSize > 0 && queryParams.currentPage > 0) {
+        limit = queryParams.pageSize;
+        // 入口处CommonCheck已做了校验，此处无需校验溢出/翻转问题
+        offset = (queryParams.currentPage - 1) * queryParams.pageSize;
+    }
+    sqlite3_bind_int64(stmt, bindIdx++, limit);
+    sqlite3_bind_int64(stmt, bindIdx++, offset);
 }
 }  // FullDb
 }  // Module

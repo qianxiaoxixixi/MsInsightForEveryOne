@@ -14,6 +14,7 @@ void MemoryDetailProtocolUtil::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryBlockRequest>);
     jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryDetailRequest>);
     jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_TRACES, ProtocolUtil::BuildRequestFromJson<LeaksMemoryTraceRequest>);
+    jsonToReqFactory.emplace(REQ_RES_LEAKS_MEMORY_EVENTS, ProtocolUtil::BuildRequestFromJson<LeaksMemoryEventRequest>);
 }
 
 void MemoryDetailProtocolUtil::RegisterResponseToJsonFuncs()
@@ -22,6 +23,7 @@ void MemoryDetailProtocolUtil::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_BLOCKS, ProtocolUtil::CommonResponseToJson);
     resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_DETAILS, ProtocolUtil::CommonResponseToJson);
     resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_TRACES, ProtocolUtil::CommonResponseToJson);
+    resToJsonFactory.emplace(REQ_RES_LEAKS_MEMORY_EVENTS, ProtocolUtil::CommonResponseToJson);
 }
 
 void MemoryDetailProtocolUtil::RegisterEventToJsonFuncs()
