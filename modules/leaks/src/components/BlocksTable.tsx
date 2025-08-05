@@ -1,0 +1,113 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+import React, { useEffect, useMemo, useState } from 'react';
+import i18n from 'ascend-i18n';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { runInAction } from 'mobx';
+import { observer } from 'mobx-react';
+import { ResizeTable, fetchColumnFilterProps } from 'ascend-resize';
+import { Tooltip } from 'ascend-components';
+import { Session } from '../entity/session';
+import { getBlockTableData } from './dataHandler';
+import { generateJsonShow } from '../utils/utils';
+
+const getTableColumns = (t: TFunction, session: Session): any => {
+    return session.blocksTableHeader.map((col: any) => {
+        const item = {
+            dataIndex: col.key,
+            key: col.key,
+            title: t(col.name, { defaultValue: col.name, keyPrefix: 'tableHead' }),
+            sorter: col.sortable,
+            ellipsis: {
+                showTitle: false,
+            },
+            showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
+                ? true
+                : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
+            render: (text: string): React.ReactNode => (<Tooltip
+                title={col.key === 'attr' && text ? generateJsonShow(text) : text || ''}
+                placement="top"
+            >
+                {text || ''}
+            </Tooltip>),
+        };
+        if (col.searchable) {
+            return { ...item, ...fetchColumnFilterProps(col.key, col.name.replace(' ', '')) };
+        } else {
+            return item;
+        }
+    });
+};
+
+const BlocksTable = observer(({ session }: { session: Session }): React.ReactElement => {
+    const { t } = useTranslation('leaks');
+    const {
+        deviceId, eventType, blocksTableData, blocksTableHeader, tableKey,
+        blocksCurrentPage, blocksPageSize, blocksTotal, blocksOrder, blocksOrderBy, blocksFilters, maxTime, minTime,
+    } = session;
+    const [loading, setLoading] = useState(false);
+    const defaultDataSource = (process.env.NODE_ENV === 'development' ? [{}] : []);
+    const columns = useMemo(() => getTableColumns(t, session), [JSON.stringify(blocksTableHeader), t]);
+    const onTableChange = (pagination: any, filters: any, sorter: any, extra: any): void => {
+        if (extra.action === 'sort') {
+            runInAction(() => {
+                if (sorter.order === undefined) {
+                    session.blocksOrder = '';
+                } else {
+                    session.blocksOrder = sorter.order !== 'ascend';
+                }
+                session.blocksOrderBy = sorter.field;
+            });
+        }
+        if (extra.action === 'filter') {
+            const newFilters: { [key: string]: string } = {};
+            const oldFilters = Object.keys(filters);
+            oldFilters.forEach((key: string) => {
+                if (filters[key]?.[0] !== undefined) {
+                    newFilters[key] = filters[key]?.[0];
+                }
+            });
+            runInAction(() => {
+                session.blocksFilters = newFilters;
+            });
+        }
+    };
+    const onChange = (newCurrent: number, newPageSize: number): void => {
+        runInAction(() => {
+            session.blocksCurrentPage = newCurrent;
+            session.blocksPageSize = newPageSize;
+        });
+    };
+    useEffect(() => {
+        if (deviceId === '' || maxTime === 0 || maxTime === undefined) return;
+        setLoading(true);
+        getBlockTableData(session);
+        setLoading(false);
+    }, [deviceId, eventType, maxTime, minTime, blocksCurrentPage, blocksPageSize, blocksOrder, blocksOrderBy, JSON.stringify(blocksFilters)]);
+    return (
+        <>
+            <ResizeTable
+                columns={columns}
+                dataSource={blocksTableData.length === 0 ? defaultDataSource : blocksTableData.map((item: any, index: number) => ({ ...item, key: `${item.name}_${index}` }))}
+                onChange={onTableChange}
+                pagination={{
+                    current: blocksCurrentPage,
+                    pageSize: blocksPageSize,
+                    pageSizeOptions: [10, 20, 30, 50, 100],
+                    onChange,
+                    total: blocksTotal,
+                    showTotal: (totalNum: number): string => i18n.t('PaginationTotal', { total: totalNum }),
+                    showQuickJumper: true,
+                }}
+                scroll={{ x: 150 * columns.length }}
+                style={{ height: 400 }}
+                loading={loading}
+                key={`${tableKey}_BLocks`}
+            />
+        </>
+    );
+});
+
+export default BlocksTable;

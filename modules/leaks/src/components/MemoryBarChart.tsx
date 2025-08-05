@@ -25,7 +25,7 @@ interface InitParam {
     source: number[][];
     t: TFunction;
 };
-const getXAxis = (session: Session): echarts.XAXisComponentOption => {
+const getXAxis = (session: Session, t: TFunction): echarts.XAXisComponentOption => {
     return {
         type: 'value',
         min: session.minTime,
@@ -40,16 +40,14 @@ const getXAxis = (session: Session): echarts.XAXisComponentOption => {
             show: false,
         },
         axisLabel: {
-            formatter: function (value: number): string {
-                return `${(value / 1000000000).toFixed(3)}s`;
-            },
+            formatter: (value: number): string => `${(value / 1000000000).toFixed(3)}s`,
         },
         splitLine: {
             show: false,
         },
     };
 };
-const getYAxis = (): echarts.YAXisComponentOption => {
+const getYAxis = (t: TFunction): echarts.YAXisComponentOption => {
     return {
         type: 'value',
         axisLine: {
@@ -59,9 +57,7 @@ const getYAxis = (): echarts.YAXisComponentOption => {
             show: false,
         },
         axisLabel: {
-            formatter: function (value: number): string {
-                return `${(value / 1024 / 1024).toFixed(3)}MB`;
-            },
+            formatter: (value: number): string => (value / 1024 / 1024).toFixed(3),
         },
         splitLine: {
             show: false,
@@ -70,6 +66,7 @@ const getYAxis = (): echarts.YAXisComponentOption => {
         axisPointer: {
             show: false,
         },
+        name: t('MemoryUsage'),
     };
 };
 const getSeries = (t: TFunction, source: InitParam['source'], lineSource: InitParam['lineSource']): any => {
@@ -139,8 +136,8 @@ const getTooltip = (blockData: InitParam['blockData']): echarts.TooltipComponent
 const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): EChartsOption => {
     return {
         tooltip: getTooltip(blockData),
-        xAxis: getXAxis(session),
-        yAxis: getYAxis(),
+        xAxis: getXAxis(session, t),
+        yAxis: getYAxis(t),
         legend: getLegend(t, session),
         series: getSeries(t, source, lineSource),
         toolbox: {
@@ -167,8 +164,8 @@ const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): E
             show: true,
         },
         grid: {
-            left: '8%',
-            right: '4%',
+            left: 80,
+            right: 60,
         },
     };
 };
@@ -255,7 +252,7 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; set
     return (
         <MIChart
             ref={chartRef}
-            width="calc(100vw - 80px)"
+            width="calc(100vw - 120px)"
             height="500px"
             loading={loading}
             options={chartOptions}

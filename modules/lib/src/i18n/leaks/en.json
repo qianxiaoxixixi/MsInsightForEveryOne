@@ -18,6 +18,35 @@
     "Weight": "Weight",
     "Gradient": "Gradient",
     "Current Time": "Current Time",
-    "Search": "Search"
+    "FlameGraph": "Function Stack Flame Graph",
+    "LineBlockGraph": "Memory Request/Release Line Graph & Memory Block Graph",
+    "DetailsDiagram": "Memory Details Disassembly Diagram",
+    "DetailsTable": "Memory Details Table",
+    "Search": "Search",
+    "Block View": "Block View",
+    "Event View": "Event View",
+    "MemoryUsage": "Memory Usage(MB)",
+    "tableHead": {
+      "Attr": "Attr",
+      "Thread Id": "Thread ID",
+      "Device Id": "Device ID",
+      "Process Id": "Process ID",
+      "Timestamp(ns)": "Timestamp(ns)",
+      "Event Type": "Event Type",
+      "Ptr": "Ptr",
+      "Event": "Event",
+      "Name": "Name",
+      "ID": "ID",
+      "addr": "Addr",
+      "attr": "Attr",
+      "deviceId": "Device ID",
+      "startTimestamp": "StartTimestamp(ns)",
+      "endTimestamp": "EndTimestamp(ns)",
+      "eventType": "Event Type",
+      "owner": "Owner",
+      "processId": "Process ID",
+      "threadId": "Thread ID",
+      "size": "Size"
+    }
   }
 }
