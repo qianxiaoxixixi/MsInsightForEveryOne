@@ -392,3 +392,34 @@ TEST_F(LeaksMemoryDatabaseTest, QueryMemoryEventsTableWithPaginationParams)
     EXPECT_EQ(blocks.size(), complexParams.pageSize);
     EXPECT_EQ(blocks[0].startTimestamp, expectFirstBlockStartTimestamp);
 }
+/***
+ * 该测试专用于针对以下场景：
+ *  1. msleaks新增了某固化标签(如在进程占用下新增了Workspace内存池，其标签为PTA_WORKSPACE)
+ *  2. 新增的标签 以原某固化标签为前缀，却并原固化标签分类的子分类(如新增的PTA_WORKSPACE, 与原固化标签PTA存在前缀关系，却并非PTA子类)
+ *  3. 测试统计标签分类总Size时是否可能误将上述新增固化标签误统计入内
+ */
+TEST_F(LeaksMemoryDatabaseTest, QueryTotalSizeUtilTimestampUsingOwnerWhenWorkspaceExists)
+{
+    auto memoryDatabase = DataBaseManager::Instance().GetLeaksMemoryDatabase("0");
+    const std::string deviceId = "0";
+    // 未插入新标签内存块前的总量统计
+    const uint64_t expectDuration = 10000000000;
+    const uint64_t timestamp =
+        memoryDatabase->QueryMemoryEventExtremumTimestamp(deviceId, true) + expectDuration;
+    uint64_t originPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
+                                                                                         "PTA");
+    uint64_t originPtaWorkspaceTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
+                                                                                                  "PTA_WORKSPACE");
+    EXPECT_EQ(originPtaWorkspaceTotalSize, 0);
+    EXPECT_GT(originPtaTotalSize, 0);
+    // 插入一条PTA_WORKSPACE数据, 内存块在之后释放
+    MemoryBlock mockPTAWorkspaceBlock("", deviceId, 1, 0, timestamp + 1,
+                                      "PTA_WORKSPACE", "PTA_WORKSPACE", "", 0, 0);
+    memoryDatabase->InsertMemoryBlock(mockPTAWorkspaceBlock);
+    memoryDatabase->FlushMemoryBlocksCache();
+    uint64_t newPtaTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp, "PTA");
+    uint64_t newPtaWorkspaceTotalSize = memoryDatabase->QueryTotalSizeUntilTimestampUsingOwner(deviceId, timestamp,
+                                                                                               "PTA_WORKSPACE");
+    EXPECT_EQ(newPtaTotalSize, originPtaTotalSize);
+    EXPECT_EQ(newPtaWorkspaceTotalSize, 1);
+}
