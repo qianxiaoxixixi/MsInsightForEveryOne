@@ -16,6 +16,11 @@ export class RootStore {
 
         makeAutoObservable(this, {}, { autoBind: true });
     }
+
+    reset(): void {
+        this.sessionStore.reset();
+        this.traceStore.reset();
+    }
 }
 
 export const rootStore = new RootStore();

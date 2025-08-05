@@ -2,49 +2,51 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { RootStore } from './RootStore';
-import { GetTraceDataParams, GetTraceDataResults } from '@/api/types';
+import { TraceDataType, GetTraceDataResults } from '@/api/types';
 import { getTraceData } from '@/api';
 import { message } from 'antd';
-
-export interface SelectOption {
-    label: string;
-    value: string;
-}
 
 export class TraceStore {
     rootStore: RootStore;
     loading = false;
-    formData: GetTraceDataParams = {};
-    traceData: GetTraceDataResults | null = null;
-    // 选项数据
-    frameworkOptions: SelectOption[] = [
-        { label: 'veRL', value: 'verl' },
-    ];
+    formData: TraceDataType = {
+        framework: 'verl',
+        algorithm: 'GRPO',
+    };
 
-    algorithmOptions: SelectOption[] = [
-        { label: 'GRPO', value: 'grpo' },
-    ];
+    traceData: GetTraceDataResults | null = null;
+    stageTypeList: string[] = [];
 
     constructor(rootStore: RootStore) {
         this.rootStore = rootStore;
         makeAutoObservable(this);
     }
 
-    setFormData(params: GetTraceDataParams): void {
-        this.formData = { ...this.formData, ...params };
+    setLoading(val: boolean): void {
+        this.loading = val;
     }
 
     getTraceData = async (): Promise<void> => {
-        this.loading = true;
+        this.setLoading(true);
 
         try {
-            this.traceData = await getTraceData(this.formData);
+            const res = await getTraceData();
+            runInAction(() => {
+                this.traceData = res;
+                this.stageTypeList = res.stageTypeList;
+            });
         } catch (error) {
             message.error('请求失败，请稍后重试');
         } finally {
-            this.loading = false;
+            this.setLoading(false);
         }
     };
+
+    reset(): void {
+        this.loading = false;
+        this.traceData = null;
+        this.stageTypeList = [];
+    }
 }

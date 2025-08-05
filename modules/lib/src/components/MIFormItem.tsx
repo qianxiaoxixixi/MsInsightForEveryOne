@@ -6,7 +6,7 @@ import React, { type ReactNode, type CSSProperties } from 'react';
 import styled from '@emotion/styled';
 
 interface FormItemProps {
-    label: string;
+    label?: string;
     colon?: boolean;
     children: ReactNode;
     style?: CSSProperties;
@@ -29,7 +29,7 @@ export const MIFormItem: React.FC<FormItemProps> = (props): JSX.Element => {
     return (
         <FormItem style={style}>
             <div className="label" style={labelStyle}>
-                {label}{colon ? ':' : ''}
+                {label}{label && colon ? ':' : ''}
             </div>
             <div className="content" style={contentStyle}>{children}</div>
         </FormItem>

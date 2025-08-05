@@ -42,7 +42,7 @@ const LegendItemWrapper = styled.div`
 const ColorBox = styled('span')<{
     color: string;
 }>`
-    width: 12px;
+    width: 24px;
     height: 12px;
     border-radius: 2px;
     background-color: ${({ color }) => color};

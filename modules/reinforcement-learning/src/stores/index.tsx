@@ -3,9 +3,8 @@
  */
 
 import React, { createContext, useContext } from 'react';
-import { RootStore } from './RootStore';
+import { rootStore, RootStore } from './RootStore';
 
-const rootStore = new RootStore();
 const StoreContext = createContext<RootStore | null>(null);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
