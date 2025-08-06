@@ -35,7 +35,7 @@ export const SearchForm: React.FC = observer(() => {
             </FormItem>
 
             <FormItem>
-                <Button type="primary" loading={loading} onClick={() => handleSearch()}>{t('Search')}</Button>
+                <Button type="primary" loading={loading} onClick={() => handleSearch()}>{t('Refresh')}</Button>
             </FormItem>
         </SearchBoxStyled>
     );
