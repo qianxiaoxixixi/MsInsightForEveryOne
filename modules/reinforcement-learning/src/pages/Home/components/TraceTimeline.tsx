@@ -289,7 +289,10 @@ export const TraceTimeline = observer((): JSX.Element => {
     }, [parseCompleted]);
 
     useEffect(() => {
-        if (traceData === null) { return; }
+        if (traceData === null) {
+            setChartOptions({});
+            return;
+        }
         hostAliasMap.clear();
 
         const { data, ranks } = formatData(traceData, theme);

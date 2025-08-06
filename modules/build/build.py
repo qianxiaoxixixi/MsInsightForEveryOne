@@ -27,6 +27,7 @@ MODULES_MAP = {
     'jupyter': 'Jupyter',
     'statistic': 'Statistic',
     'leaks': 'Leaks',
+    'reinforcement-learning': 'RL',
 }
 
 
