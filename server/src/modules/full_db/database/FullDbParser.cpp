@@ -14,6 +14,8 @@
 #include "CollectionTimeService.h"
 #include "LeaksMemoryDatabase.h"
 #include "LeaksMemoryService.h"
+#include "RLMstxConfigManager.h"
+#include "RenderEngine.h"
 #include "FullDbParser.h"
 
 namespace Dic::Module::FullDb {
@@ -215,6 +217,10 @@ void FullDbParser::SendHostEvent(const std::string &fileId)
         ServerLog::Error("Failed to convert virtual trace database to db trace dataBase in full db send host event.");
         return;
     }
+    std::vector<std::string> taskNameList = RL::RLMstxConfigManager::Instance().GetMstxTaskNameList();
+    auto mstxSliceList = FullDb::RenderEngine::Instance()->QueryMstxRLDetail(fileId,
+        Timeline::DataBaseManager::Instance().GetDataType(), taskNameList);
+    event->body.isRl = !mstxSliceList.empty();
     event->body.unit.metadata.cardId = database->QueryHostInfo()+"Host";
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     database->QueryHostMetadata(event->body.unit.children);

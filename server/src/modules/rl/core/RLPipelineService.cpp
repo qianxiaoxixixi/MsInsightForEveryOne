@@ -28,13 +28,13 @@ void RLPipelineService::Clear()
     microBatchPipelineMap.clear();
 }
 
-std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::string &fileId)
+std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::string &rankId)
 {
     // 查找mstx数据
     FullDb::DataType dataType = Timeline::DataBaseManager::Instance().GetDataType();
     std::vector<std::string> taskNameList = RLMstxConfigManager::Instance().GetMstxTaskNameList();
     std::vector<FullDb::CompeteSliceDomain> mstxSliceList =
-        FullDb::RenderEngine::Instance()->QueryMstxRLDetail(fileId, dataType, taskNameList);
+        FullDb::RenderEngine::Instance()->QueryMstxRLDetail(rankId, dataType, taskNameList);
     if (mstxSliceList.empty()) {
         return {};
     }
@@ -45,7 +45,7 @@ std::vector<Protocol::RLPipelineNode> RLPipelineService::SearchNode(const std::s
     for (const auto &item: mstxSliceList) {
         uint64_t duration = NumberSafe::Sub(item.endTime, item.timestamp);
         std::string stageType = RLMstxConfigManager::Instance().GetTaskTypeByName(item.name);
-        Protocol::RLPipelineNode node{fileId, "Task", item.timestamp, duration, item.name, stageType};
+        Protocol::RLPipelineNode node{rankId, "Task", item.timestamp, duration, item.name, stageType};
         res.push_back(node);
 
         stageTypeListTemp.insert(stageType);
@@ -88,11 +88,11 @@ void RLPipelineService::QueryPipelineByRankId(const std::string &rankIdWithHost)
                          rankIdWithHostAfterSplit[rankIdWithHostAfterSplit.size() - 1] : rankIdWithHost;
 
     // 查询任务维度的数据
-    std::vector<Protocol::RLPipelineNode> taskPipelineNodeList = SearchNode(fileId);
+    std::vector<Protocol::RLPipelineNode> taskPipelineNodeList = SearchNode(rankIdWithHost);
     FillPipelineMap(originHostName, rankId, taskPipelineNodeList, taskPipelineMap);
 
     // 查询microBatch维度数据
-    std::vector<Protocol::RLPipelineNode> microBatchNodeList = QueryMicroBatchByTask(fileId,
+    std::vector<Protocol::RLPipelineNode> microBatchNodeList = QueryMicroBatchByTask(rankIdWithHost,
                                                                                      taskPipelineNodeList);
     FillPipelineMap(originHostName, rankId, microBatchNodeList, microBatchPipelineMap);
 }

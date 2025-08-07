@@ -790,6 +790,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     JsonUtil::AddMember(body, "offset", event.body.offset, allocator);
     JsonUtil::AddMember(body, "startTimeUpdated", event.body.startTimeUpdated, allocator);
     JsonUtil::AddMember(body, "isFullDb", event.body.isFullDb, allocator);
+    JsonUtil::AddMember(body, "isRl", event.body.isRl, allocator);
     json_t unit(kObjectType);
     JsonUtil::AddMember(unit, "type", event.body.unit.type, allocator);
     json_t metadata(kObjectType);

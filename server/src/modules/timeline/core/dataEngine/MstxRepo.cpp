@@ -131,6 +131,7 @@ bool MstxRepo::QuerySliceDetailInfoByNameList(const SliceQueryByNameList &params
         domain.name = strMap[item.message];
         domain.timestamp = item.timestamp;
         domain.endTime = item.endTime;
+        domain.duration = NumberSafe::Sub(domain.endTime, domain.timestamp);
         res.push_back(domain);
     }
     return true;

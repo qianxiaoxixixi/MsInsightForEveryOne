@@ -109,10 +109,9 @@ public:
     void UpdateRankIdToDeviceId(const std::string &fileId,
                                 const std::string &rankId,
                                 const std::string &deviceId);
+    void SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId);
 
 private:
-    void SetRankIdFileIdMapping(const std::string &rankId, const std::string &fileId);
-    
     using RankId = std::string;
     using FileId = std::string;
     using DbPath = FileId;

@@ -32,7 +32,7 @@ public:
         const std::string &metaType) override;
     std::vector<CompeteSliceDomain> QuerySliceDetailByNameList(const std::string &fileId,
         const DataType &type, const std::string &processName, const std::vector<std::string> &nameList);
-    std::vector<CompeteSliceDomain> QueryMstxRLDetail(const std::string &fileId, const DataType &type,
+    std::vector<CompeteSliceDomain> QueryMstxRLDetail(const std::string &rankId, const DataType &type,
         const std::vector<std::string> &nameList, uint64_t startTime = UINT64_MAX, uint64_t endTime = 0);
 
 private:

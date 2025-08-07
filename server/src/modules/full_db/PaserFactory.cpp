@@ -22,6 +22,8 @@
 #include "ProjectAnalyze.h"
 #include "TrackInfoManager.h"
 #include "ExpertHotspotManager.h"
+#include "RLMstxConfigManager.h"
+#include "RenderEngine.h"
 #include "TrackInfoManager.h"
 namespace Dic::Module {
 using namespace Dic;
@@ -184,6 +186,10 @@ void ProjectParserBase::SendParseSuccessEvent(const std::string &rankId, const s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     event->body.offset = TraceTime::Instance().GetOffsetByFileId(rankId);
     event->body.fileId = fileId;
+    std::vector<std::string> taskNameList = RL::RLMstxConfigManager::Instance().GetMstxTaskNameList();
+    auto mstxSliceList = FullDb::RenderEngine::Instance()->QueryMstxRLDetail(rankId,
+        Timeline::DataBaseManager::Instance().GetDataType(), taskNameList);
+    event->body.isRl = !mstxSliceList.empty();
     event->body.rankList = TrackInfoManager::Instance().GetRankListByFileId(fileId, rankId);
     SearchMetaData(rankId, fileId, event->body.unit.children);
     SendEvent(std::move(event));

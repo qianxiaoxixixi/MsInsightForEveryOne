@@ -195,7 +195,7 @@ std::vector<CompeteSliceDomain> RenderEngine::QuerySliceDetailByNameList(const s
     return res;
 }
 
-std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::string &fileId, const DataType &type,
+std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::string &rankId, const DataType &type,
     const std::vector<std::string> &nameList, uint64_t startTime, uint64_t endTime)
 {
     if (nameList.empty()) {
@@ -203,7 +203,7 @@ std::vector<CompeteSliceDomain> RenderEngine::QueryMstxRLDetail(const std::strin
         return {};
     }
     PROCESS_TYPE processType = type == DataType::TEXT ? PROCESS_TYPE::TEXT : PROCESS_TYPE::MS_TX;
-    SliceQueryByNameList sliceQuery{fileId, "", nameList, processType, startTime, endTime, {"Python", "CANN"}, "CPU"};
+    SliceQueryByNameList sliceQuery{rankId, "", nameList, processType, startTime, endTime, {"Python", "CANN"}, "CPU"};
     std::vector<CompeteSliceDomain> res;
     dataEngine->QuerySliceDetailInfoByNameList(sliceQuery, res);
     return res;

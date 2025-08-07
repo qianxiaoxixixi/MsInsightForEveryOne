@@ -174,6 +174,7 @@ void ProjectParserDb::GetReportFilesOneFile(const Dic::Module::Global::ProjectEx
             std::string rankName = rank;
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
+            DataBaseManager::Instance().SetRankIdFileIdMapping(host + rank, file);
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
             TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankIdDeviceMap);
             TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
