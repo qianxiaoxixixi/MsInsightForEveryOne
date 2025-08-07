@@ -384,8 +384,8 @@ export const StatisticsTable = (props: {step: string; rankId: string; dbPath: st
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
-            <div data-testid="statistics-table-container">
-                <div style={{ marginBottom: '20px' }}>
+            <div>
+                <div data-testid="statistics-table-container" style={{ marginBottom: '20px' }}>
                     <CollapsiblePanel
                         secondary
                         title={`${getTitle('compute', t)} ( Rank ${rankId} )`}
