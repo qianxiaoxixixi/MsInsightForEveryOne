@@ -4,7 +4,7 @@
 
 import styled from '@emotion/styled';
 
-export const Line = styled.div<{ lineShow: string; offset: number }>`
+export const Line = styled.div<{ lineShow: string; offset: number; color: string }>`
     position: absolute;
     top: 45px;
     width: 1.2px;
@@ -14,7 +14,7 @@ export const Line = styled.div<{ lineShow: string; offset: number }>`
     display: ${(props): string => props.lineShow};
     transform: translateX(${(props): number => props.offset - 24}px);
     z-index: 10;
-    border-left: 1px dashed #999;
+    border-left: 1px dashed ${(props): string => props.color};
 `;
 
 export const initLine = (mouseEnter: any, mouseMove: any, mouseLeave: any): void => {

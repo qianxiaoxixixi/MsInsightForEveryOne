@@ -75,6 +75,13 @@ const restore = (session: any): void => {
     session.eventsFilters = {};
     session.tableType = 'blocks';
     session.tableKey = (session.tableKey + 1) % 10;
+    session.firstOffset = 0;
+    session.lastOffset = 0;
+    session.markLineshow = 'none';
+    session.contextMenu = { visible: false, xPos: 0, yPos: 0 };
+    session.allowMark = true;
+    session.menuItems = [];
+    session.firstLastStamps = { first: 0, last: 0 };
 };
 export const parseCompletedHandler = (data: any): void => {
     const session = store.sessionStore.activeSession;

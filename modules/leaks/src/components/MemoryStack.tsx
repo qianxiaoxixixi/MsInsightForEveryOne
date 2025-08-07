@@ -127,7 +127,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     maxTagCount={4}
                 />
                 <div id="funcContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                    <Line id='funcLine' lineShow={lineShow} offset={offset} />
+                    <Line id='funcLine' lineShow={lineShow} offset={offset} color='#999'/>
                     <MemoryFunctionCall session={session} setFuncIns={setFuncIns} />
                 </div>
             </CollapsiblePanel >}
@@ -160,7 +160,7 @@ const MemoryStack = observer(({ session }: { session: any }): React.ReactElement
                     options={session.typeOpts}
                 />
                 <div id="barContent" style={{ overflow: 'auto', padding: 0, position: 'relative' }}>
-                    <Line id="barLine" lineShow={lineShow} offset={offset} />
+                    <Line id="barLine" lineShow={lineShow} offset={offset} color='#999' />
                     <MemoryBarChart session={session} setBarIns={setBarIns} />
                 </div>
             </CollapsiblePanel>

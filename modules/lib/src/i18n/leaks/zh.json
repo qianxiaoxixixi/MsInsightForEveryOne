@@ -26,6 +26,8 @@
     "Block View": "内存块视图",
     "Event View": "内存事件视图",
     "MemoryUsage": "内存使用(MB)",
+    "markFirstLastTime": "标记首末次访问时间",
+    "cancelMarkTime": "取消标记首末次访问时间",
     "tableHead": {
       "Attr": "属性",
       "Thread Id": "线程ID",
