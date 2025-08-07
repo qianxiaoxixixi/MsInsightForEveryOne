@@ -26,6 +26,8 @@
     "Block View": "Block View",
     "Event View": "Event View",
     "MemoryUsage": "Memory Usage(MB)",
+    "markFirstLastTime": "Mark the first/last visit time",
+    "cancelMarkTime": "Cancel marking the first/last visit time",
     "tableHead": {
       "Attr": "Attr",
       "Thread Id": "Thread ID",

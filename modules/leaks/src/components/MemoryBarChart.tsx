@@ -7,7 +7,7 @@ import * as d3 from 'd3';
 import { useTranslation } from 'react-i18next';
 import { MIChart } from 'ascend-components';
 import type { ChartsHandle } from 'ascend-components/MIChart';
-import { safeStr } from 'ascend-utils';
+import { safeStr, safeJSONParse } from 'ascend-utils';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { useTheme } from '@emotion/react';
@@ -17,6 +17,8 @@ import type { BlockData } from '../utils/RequestUtils';
 import { getBarNewData, getFuncNewData } from './dataHandler';
 import { chartResize } from '../utils/utils';
 import { Session } from '../entity/session';
+import { ContextMenu, type MenuItemModel } from './ContextMenu';
+import { Line } from './LineHandler';
 const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
 interface InitParam {
     session: Session;
@@ -25,7 +27,23 @@ interface InitParam {
     source: number[][];
     t: TFunction;
 };
-const getXAxis = (session: Session, t: TFunction): echarts.XAXisComponentOption => {
+const getSource = (session: Session): number[][] => {
+    const blockSource: number[][] = [];
+    session.blockData.blocks.forEach((block: any, index: number) => {
+        const other: number[][] = [];
+        block.path.forEach((item: number[]) => {
+            other.unshift([item[0], item[1] + block.size]);
+        });
+        const arr = [...block.path, ...other];
+        const length = block.path.length;
+        const realSource = [index, block.path[0][0], block.path[0][1],
+            block.path[length - 1][0], block.path[length - 1][1],
+            other[0][0], other[0][1], other[other.length - 1][0], other[other.length - 1][1]];
+        blockSource.push([...realSource, ...arr].flat());
+    });
+    return blockSource;
+};
+const getXAxis = (session: Session): echarts.XAXisComponentOption => {
     return {
         type: 'value',
         min: session.minTime,
@@ -136,7 +154,7 @@ const getTooltip = (blockData: InitParam['blockData']): echarts.TooltipComponent
 const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): EChartsOption => {
     return {
         tooltip: getTooltip(blockData),
-        xAxis: getXAxis(session, t),
+        xAxis: getXAxis(session),
         yAxis: getYAxis(t),
         legend: getLegend(t, session),
         series: getSeries(t, source, lineSource),
@@ -169,31 +187,119 @@ const getOptions = ({ session, blockData, lineSource, source, t }: InitParam): E
         },
     };
 };
+const handleDblclick = (barIns: echarts.ECharts | null | undefined, session: Session): void => {
+    if (barIns === undefined || barIns === null) return;
+    barIns?.off('dblclick');
+    barIns?.on('dblclick', (params: any): void => {
+        const info = session.blockData.blocks[params.dataIndex];
+        if (!info) {
+            return;
+        }
+        runInAction(() => {
+            if (session.threadId !== info.threadId) {
+                session.searchFunc = [];
+            } else {
+                const funcSet = new Set(session.searchFunc);
+                session.searchFunc = funcSet.size ? session.funcOptions.filter((item: any) => funcSet.has(item.value)).map((i: any) => i.value) : [];
+            }
+            session.threadFlag = true;
+            session.threadId = info.threadId;
+            getBarNewData(session, info.startTimestamp, info.endTimestamp);
+            getFuncNewData(session, info.startTimestamp, info.endTimestamp);
+        });
+    });
+};
+const handleContextMenu = (barIns: echarts.ECharts | null | undefined, session: Session): void => {
+    if (barIns === undefined || barIns === null) return;
+    barIns?.off('contextmenu');
+    const contextmenuCb = (params: any): void => {
+        const index = params?.dataIndex;
+        const attr = safeJSONParse(session.blockData.blocks[index].attr);
+        if (attr === null || typeof attr === 'number') return;
+        if (attr.first_access_timestamp === 0 || attr.first_access_timestamp === undefined) {
+            const event = params.event.event;
+            runInAction(() => {
+                session.allowMark = false;
+                session.contextMenu.xPos = event.clientX;
+                session.contextMenu.yPos = event.clientY;
+                session.contextMenu.visible = true;
+            });
+        } else {
+            const startPoint = barIns?.convertToPixel('xAxis', attr.first_access_timestamp);
+            const endPoint = barIns?.convertToPixel('xAxis', attr.last_access_timestamp);
+            const event = params.event.event;
+            runInAction(() => {
+                session.allowMark = true;
+                session.firstLastStamps = {
+                    first: startPoint,
+                    last: endPoint,
+                };
+                session.contextMenu.xPos = event.clientX;
+                session.contextMenu.yPos = event.clientY;
+                session.contextMenu.visible = true;
+            });
+        }
+    };
+    barIns?.on('contextmenu', contextmenuCb);
+};
+const handleZrClick = (barIns: echarts.ECharts | null | undefined, session: Session, chartRef: React.RefObject<ChartsHandle>, t: TFunction): void => {
+    if (barIns === undefined || barIns === null) return;
+    barIns?.getZr()?.off('click');
+    barIns?.getZr()?.on('click', (params) => {
+        if (params.target?.constructor?.name === 'ECPolyline' || params.target?.constructor?.name === 'Polygon' ||
+            params.target?.constructor?.name === undefined) {
+            const pointInPixel = [params.offsetX, params.offsetY];
+            const pointInGrid = chartRef.current?.getInstance()?.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
+            const xValue = pointInGrid?.[0];
+            if (xValue === undefined || xValue < session.minTime || xValue > session.maxTime) return;
+            runInAction(() => {
+                session.memoryStamp = Number(xValue?.toFixed(0));
+            });
+        }
+    });
+};
+const restoreLine = (session: Session): void => {
+    runInAction(() => {
+        session.markLineshow = 'none';
+        session.firstOffset = 0;
+        session.lastOffset = 0;
+        session.firstLastStamps = { first: 0, last: 0 };
+    });
+};
 const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; setBarIns: (value: echarts.ECharts | null) => void }): React.ReactElement => {
     const { t } = useTranslation('leaks');
     const chartRef = useRef<ChartsHandle>(null);
     const [loading, setLoading] = useState(false);
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
-    const { blockData, allocationData, deviceId, eventType, threadId, threadFlag } = session;
+    const { blockData, allocationData, deviceId, eventType, threadId, threadFlag, markLineshow, firstOffset, lastOffset, firstLastStamps } = session;
     const lineSource = allocationData.allocations.map((line: any) => [line.timestamp, line.totalSize]);
-    const source: number[][] = useMemo(() => {
-        const blockSource: number[][] = [];
-        blockData.blocks.forEach((block: any, index: number) => {
-            const other: number[][] = [];
-            block.path.forEach((item: number[]) => {
-                other.unshift([item[0], item[1] + block.size]);
-            });
-            const arr = [...block.path, ...other];
-            const length = block.path.length;
-            const realSource = [index, block.path[0][0], block.path[0][1],
-                block.path[length - 1][0], block.path[length - 1][1],
-                other[0][0], other[0][1], other[other.length - 1][0], other[other.length - 1][1]];
-            blockSource.push([...realSource, ...arr].flat());
-        });
-        return blockSource;
-    }, [JSON.stringify(blockData.blocks)]);
+    const source: number[][] = useMemo(() => getSource(session), [JSON.stringify(blockData.blocks)]);
     const initParam: InitParam = { session, blockData, lineSource, source, t };
     const theme = useTheme();
+    const getMenuItems = (): MenuItemModel[] => {
+        const allMenuItems: MenuItemModel[] = [
+            {
+                label: t('markFirstLastTime'),
+                key: 'markFirstLastTime',
+                action: (): void => {
+                    runInAction(() => {
+                        session.markLineshow = 'block';
+                        session.firstOffset = firstLastStamps.first;
+                        session.lastOffset = firstLastStamps.last;
+                    });
+                },
+                visible: true,
+                disabled: !session.allowMark,
+            },
+            {
+                label: t('cancelMarkTime'),
+                key: 'cancelMarkTime',
+                action: (): void => { runInAction(() => { session.markLineshow = 'none'; }); },
+                visible: session.markLineshow === 'block',
+            },
+        ];
+        return allMenuItems.filter(menuItem => menuItem.visible !== false);
+    };
     useEffect(() => {
         if (deviceId === '' || threadFlag) return;
         setLoading(true);
@@ -202,44 +308,15 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; set
     useEffect(() => {
         const param: EChartsOption = getOptions(initParam);
         setChartOptions(param);
+        restoreLine(session);
         const barIns: echarts.ECharts | null | undefined = chartRef.current?.getInstance();
         if (barIns !== null && barIns !== undefined) {
             setBarIns(barIns);
         }
         setLoading(false);
-        barIns?.off('dblclick');
-        barIns?.on('dblclick', (params: any): void => {
-            const info = blockData.blocks[params.dataIndex];
-            if (!info) {
-                return;
-            }
-            runInAction(() => {
-                if (session.threadId !== info.threadId) {
-                    session.searchFunc = [];
-                } else {
-                    const funcSet = new Set(session.searchFunc);
-                    session.searchFunc = funcSet.size ? session.funcOptions.filter((item: any) => funcSet.has(item.value)).map((i: any) => i.value) : [];
-                }
-                session.threadFlag = true;
-                session.threadId = info.threadId;
-                getBarNewData(session, info.startTimestamp, info.endTimestamp);
-                getFuncNewData(session, info.startTimestamp, info.endTimestamp);
-            });
-        });
-        barIns?.getZr()?.off('click');
-        barIns?.getZr()?.on('click', (params) => {
-            if (params.target?.constructor?.name === 'ECPolyline' || params.target?.constructor?.name === 'Polygon' ||
-                params.target?.constructor?.name === undefined) {
-                const pointInPixel = [params.offsetX, params.offsetY];
-                const pointInGrid = chartRef.current?.getInstance()?.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
-                const xValue = pointInGrid?.[0];
-                if (xValue && xValue >= session.minTime && xValue <= session.maxTime) {
-                    runInAction(() => {
-                        session.memoryStamp = Number(xValue?.toFixed(0));
-                    });
-                }
-            }
-        });
+        handleDblclick(barIns, session);
+        handleContextMenu(barIns, session);
+        handleZrClick(barIns, session, chartRef, t);
         chartResize(barIns);
     }, [threadId, JSON.stringify(blockData), JSON.stringify(allocationData), session.maxTime, session.minTime, t]);
     useEffect(() => {
@@ -250,13 +327,18 @@ const MemoryBarChart = observer(({ session, setBarIns }: { session: Session; set
         });
     }, [chartOptions, theme]);
     return (
-        <MIChart
-            ref={chartRef}
-            width="calc(100vw - 120px)"
-            height="500px"
-            loading={loading}
-            options={chartOptions}
-        />
+        <>
+            <MIChart
+                ref={chartRef}
+                width="calc(100vw - 120px)"
+                height="500px"
+                loading={loading}
+                options={chartOptions}
+            />
+            <Line id="firstLine" lineShow={markLineshow} offset={firstOffset} color='green' />
+            <Line id="lastLine" lineShow={markLineshow} offset={lastOffset} color='green' />
+            <ContextMenu session={session} menuItems={getMenuItems()} />
+        </>
     );
 });
 export default MemoryBarChart;

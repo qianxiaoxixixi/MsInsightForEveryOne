@@ -3,9 +3,19 @@
 */
 import { makeAutoObservable } from 'mobx';
 import { type BlocksTableData, EventsTableData } from '../utils/RequestUtils';
+import { type MenuItemModel } from '../components/ContextMenu';
 interface TypeOption {
     label: string | number;
     value: string | number;
+}
+interface ContextMenu {
+    visible: boolean;
+    xPos: number;
+    yPos: number;
+}
+interface MarkStamps {
+    first: number;
+    last: number;
 }
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
@@ -50,6 +60,13 @@ export class Session {
     blocksTotal: number = 0;
     eventsTotal: number = 0;
     tableKey: number = 0;
+    firstOffset: number = 0;
+    lastOffset: number = 0;
+    firstLastStamps: MarkStamps = { first: 0, last: 0 };
+    markLineshow: 'none' | 'block' = 'none';
+    allowMark: boolean = true;
+    contextMenu: ContextMenu = { visible: false, xPos: 0, yPos: 0 };
+    menuItems: MenuItemModel[] = [];
     constructor() {
         makeAutoObservable(this);
     }

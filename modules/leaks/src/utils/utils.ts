@@ -18,6 +18,7 @@ export const chartResize = (ins: echarts.ECharts | null | undefined): void => {
 export const generateJsonShow = (text: string): string => {
     if (text === '{}' || text === '') return text;
     const jsonObj = safeJSONParse(text);
+    if (jsonObj === null || typeof jsonObj === 'number') return text;
     let res = '';
     Object.keys(jsonObj).forEach((key: string) => { res += `${key}:${jsonObj[key]}\n`; });
     return res;
