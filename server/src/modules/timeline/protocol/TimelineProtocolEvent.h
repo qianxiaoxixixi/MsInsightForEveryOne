@@ -50,6 +50,7 @@ struct ParseSuccessEventBody {
     Unit unit;
     bool startTimeUpdated = false;
     bool isFullDb = false;
+    bool isRl = false;
     uint64_t maxTimeStamp = 0;
     uint64_t offset = 0;
     std::string fileId;

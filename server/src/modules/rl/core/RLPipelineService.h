@@ -20,7 +20,7 @@ public:
     static bool GetPipelineInfo(Protocol::RLPipelineResponse &response);
 private:
     static void Clear();
-    static std::vector<Protocol::RLPipelineNode> SearchNode(const std::string &fileId);
+    static std::vector<Protocol::RLPipelineNode> SearchNode(const std::string &rankId);
     static std::vector<Protocol::RLPipelineNode> QueryMicroBatchByTask(const std::string &fileId,
         const std::vector<Protocol::RLPipelineNode> &taskList);
     static void QueryPipelineByRankId(const std::string &rankIdWithHost);
